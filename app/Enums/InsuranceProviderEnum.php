@@ -6,36 +6,36 @@ namespace App\Enums;
 
 enum InsuranceProviderEnum: string
 {
-    case ADNIC = 'ADNIC';
+    case ADNIC = 'ADNIC';   // ABU_DHABI_NATIONAL_INSURANCE
     case ADNT = 'ADNT';
     case AIG = 'AIG';
     case ALJALIL = 'ALJALIL';
-    case ALNC = 'ALNC';
+    case ALNC = 'ALNC';    // ALLIANCE_INSURANCE
     case AMJ = 'AMJ';
-    case AXA = 'AXA';
+    case AXA = 'AXA';      // GIG_INSURANCE
     case BUP = 'BUP';
-    case CIG = 'CIG';
-    case DIC = 'DIC';
-    case DNIRC = 'DNIRC';
-    case EI = 'EI';
+    case CIG = 'CIG';      // CIGNA_INSURANCE
+    case DIC = 'DIC';      // DUBAI_INSURANCE_COMPANY
+    case DNIRC = 'DNIRC';  // DUBAI_NATIONAL_INSURANCE
+    case EI = 'EI';        // EMIRATES_INSURANCE
     case FID = 'FID';
     case IHC = 'IHC';
-    case MTL = 'MTL';
+    case MTL = 'MTL';      // METLIFE_INSURANCE
     case NA = 'NA';
-    case NGI = 'NGI';
+    case NGI = 'NGI';      // NATIONAL_GENERAL_INSURANCE
     case NIA = 'NIA';
-    case NT = 'NT';
+    case NT = 'NT';        // WATANIA_TAKAFUL
     case OI = 'OI';
-    case OI2 = 'OI2';
-    case OIC = 'OIC';
+    case OI2 = 'OI2';      // ORIENT_INSURANCE
+    case OIC = 'OIC';      // SUKOON_OMAN_INSURANCE
     case OTHER = 'Other';
     case PAK = 'Pak';
-    case QIC = 'QIC';
-    case RAK = 'RAK';
-    case RSA = 'RSA';
-    case SI = 'SI';
-    case TE = 'TE';
-    case TM = 'TM';
+    case QIC = 'QIC';      // QATAR_INSURANCE
+    case RAK = 'RAK';      // RAK_INSURANCE
+    case RSA = 'RSA';      // LIVANA_INSURANCE
+    case SI = 'SI';        // SALAMA_INSURANCE
+    case TE = 'TE';        // TAKAFUL_EMARAT_INSURANCE
+    case TM = 'TM';        // TOKIO_MARINE
     case UI = 'UI';
     case OUNB = 'OUNB';
     case ASCANA = 'ASCANA';
@@ -55,51 +55,27 @@ enum InsuranceProviderEnum: string
     case OALLIANZ = 'OALLIANZ';
     case NHICD = 'NHICD';
 
-    public function getFullName(): string
-    {
-        return match ($this) {
-            self::AXA => 'GIG Insurance',
-            self::QIC => 'Qatar Insurance',
-            self::RAK => 'RAK Insurance',
-            self::TM => 'Tokio Marine',
-            self::ALNC => 'Alliance Insurance',
-            self::ADNIC => 'Abu Dhabi National Insurance',
-            self::OIC => 'Sukoon Oman Insurance',
-            self::NT => 'Watania Takaful',
-            self::OI2 => 'Orient Insurance',
-            self::RSA => 'Livana Insurance',
-            self::EI => 'Emirates Insurance',
-            self::TE => 'Takaful Emarat Insurance',
-            self::NGI => 'National General Insurance',
-            self::MTL => 'MetLife Insurance',
-            self::DNIRC => 'Dubai National Insurance',
-            self::DIC => 'Dubai Insurance Company',
-            self::CIG => 'Cigna Insurance',
-            default => $this->value,
-        };
-    }
 
+    
     public static function getProviderCode(string $code): ?string
     {
-        return match ($code) {
-            'AXA' => self::AXA,
-            'QIC' => self::QIC,
-            'RAK' => self::RAK,
-            'TM' => self::TM,
-            'ALNC' => self::ALNC,
-            'ADNIC' => self::ADNIC,
-            'OIC' => self::OIC,
-            'NT' => self::NT,
-            'OI2' => self::OI2,
-            'RSA' => self::RSA,
-            'EI' => self::EI,
-            'TE' => self::TE,
-            'NGI' => self::NGI,
-            'MTL' => self::MTL,
-            'DNIRC' => self::DNIRC,
-            'DIC' => self::DIC,
-            'CIG' => self::CIG,
-            default => self::tryFrom($code),
-        };
+        $provider = self::tryFrom($code);
+        return $provider?->value;
+    }
+    
+    public function isEligibleForAccuracyMatrix(): bool
+    {
+        return in_array($this, [
+            self::AXA,  // GIG Insurance
+            self::OIC,  // Sukoon Oman Insurance
+            self::TE,   // Takaful Emarat Insurance
+            self::OI2,  // Orient Insurance
+            self::NGI,  // National General Insurance
+            self::MTL,  // MetLife Insurance
+            self::DNIRC, // Dubai National Insurance
+            self::DIC,  // Dubai Insurance Company
+            self::CIG,  // Cigna Insurance
+            self::SI,   // Salama Insurance
+        ]);
     }
 }

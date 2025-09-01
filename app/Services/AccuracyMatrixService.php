@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\InsurerProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
@@ -23,18 +24,6 @@ class AccuracyMatrixService
     private const ELIGIBLE_QUOTE_TYPES = [
         QuoteTypes::HOME,
         QuoteTypes::BUSINESS,
-    ];
-    private const ELIGIBLE_PROVIDERS = [
-        InsurerProviderEnum::GIG_INSURANCE,
-        InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
-        InsurerProviderEnum::TAKAFUL_EMARAT_INSURANCE,
-        InsurerProviderEnum::ORIENT_INSURANCE,
-        InsurerProviderEnum::NATIONAL_GENERAL_INSURANCE,
-        InsurerProviderEnum::METLIFE_INSURANCE,
-        InsurerProviderEnum::DUBAI_NATIONAL_INSURANCE,
-        InsurerProviderEnum::DUBAI_INSURANCE_COMPANY,
-        InsurerProviderEnum::CIGNA_INSURANCE,
-        InsurerProviderEnum::SALAMA_INSURANCE,
     ];
 
     private function getCacheKey(int $quoteId, string $quoteType): string
@@ -93,7 +82,14 @@ class AccuracyMatrixService
         }
 
         $providerCode = $this->getProviderCode($quote);
-        $isEligible = $providerCode && in_array($providerCode, self::ELIGIBLE_PROVIDERS);
+        
+        // Check eligibility using the native enum's method
+        if ($providerCode) {
+            $provider = InsuranceProviderEnum::tryFrom($providerCode);
+            $isEligible = $provider && $provider->isEligibleForAccuracyMatrix();
+        } else {
+            $isEligible = false;
+        }
 
         LoggerService::info('AccuracyMatrixService::isEligibleQuote - Provider eligibility check', [
             'quote_id' => $quote->id,
@@ -124,9 +120,12 @@ class AccuracyMatrixService
             if ($latestPayment && $latestPayment->insuranceProvider) {
                 $providerCode = $latestPayment->insuranceProvider->code;
                 
+                $provider = InsuranceProviderEnum::tryFrom($providerCode);
+                $isEligible = $provider && $provider->isEligibleForAccuracyMatrix();
+                
                 LoggerService::info('AccuracyMatrixService::getProviderCode - Provider found', [
                     'provider_code' => $providerCode,
-                    'is_eligible' => in_array($providerCode, self::ELIGIBLE_PROVIDERS)
+                    'is_eligible' => $isEligible
                 ]);
                 
                 return $providerCode;
