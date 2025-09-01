@@ -22,25 +22,6 @@ class EvaluateTeamPipe extends BaseAllocationPipe
 
         $teamId = $this->evaluateTeamId($lead);
 
-        // For AIG Lead with SIC advisor request
-        if ($this->allocationRequest->isAIG() && empty($teamId) && $lead->sic_advisor_requested) {
-            $teamId = getTeamId(TeamNameEnum::ORGANIC);
-            $this->allocationRequest->setTeamId($teamId);
-            LoggerService::info('AIG lead detected with SIC advisor requested. Assigning to Organic team.');
-        }
-
-        if ($this->allocationRequest->isSIC() && $lead->isPaymentAuthorizedOrDeclined() && ! $lead->isPaymentLinkRequested()) {
-            LoggerService::info('SIC lead detected with payment authorized only. Assigning to SIC Unassisted team.');
-            $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-            $this->allocationRequest->setTeamId($teamId);
-        }
-
-        if ($this->allocationRequest->isSIC() && $lead->isPaymentLinkRequested()) {
-            // if payment link requested, then no team id should be set and it should be assigned to mapped nationality users
-            LoggerService::info('SIC lead detected with payment link requested. Assigning to mapped nationality users.');
-            $teamId = null;
-            $this->allocationRequest->setTeamId($teamId);
-        }
         $this->allocationRequest->setTeamId($teamId);
 
         return $next($request);
@@ -65,7 +46,7 @@ class EvaluateTeamPipe extends BaseAllocationPipe
                 'isPUA' => $lead->isPUA(),
                 'sicAdvisorRequested' => $lead->sic_advisor_requested,
             ]);
-        } elseif ($isSIC && $lead->isPaymentAuthorizedOnly() && ! $lead->isPaymentLinkRequested()) {
+        } elseif ($isSIC && $lead->isPaymentAuthorizedOrDeclined() && ! $lead->isPaymentLinkRequested()) {
             $teamName = TeamNameEnum::SIC_UNASSISTED;
             LoggerService::info('SIC lead detected with payment authorized only. Assigning to SIC Unassisted team.');
         } elseif ($isSIC && $lead->isPaymentLinkRequested()) {
