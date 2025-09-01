@@ -10,7 +10,7 @@ use App\Enums\QuoteTypes;
 use App\Models\BusinessQuote;
 use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
-use App\Services\AccuracyMatrixCacheService;
+use App\Services\AccuracyMatrixService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
@@ -149,7 +149,7 @@ trait OcrUtils
         object $data,
         DocumentType $documentType
     ): void {
-        $accuracyMatrixService = app(AccuracyMatrixCacheService::class);
+        $accuracyMatrixService = app(AccuracyMatrixService::class);
 
         LoggerService::info('OcrUtils::updateAccuracyMatrix called', [
             'quote_id' => $quote->id,

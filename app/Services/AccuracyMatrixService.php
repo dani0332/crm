@@ -11,7 +11,7 @@ use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
-class AccuracyMatrixCacheService
+class AccuracyMatrixService
 {
     private const CACHE_PREFIX = 'accuracy_matrix';
     private const TTL_HOURS = 24;
@@ -41,7 +41,7 @@ class AccuracyMatrixCacheService
     {
         $cacheKey = self::CACHE_PREFIX.":{$quoteId}:{$quoteType}";
         $cacheKey = str_replace(' ', '_', $cacheKey);
-        LoggerService::info('AccuracyMatrixCacheService::getCacheKey', [
+        LoggerService::info('AccuracyMatrixService::getCacheKey', [
             'quote_id' => $quoteId,
             'quote_type' => $quoteType,
             'cache_key' => $cacheKey
@@ -57,7 +57,7 @@ class AccuracyMatrixCacheService
         // If this is a Group Medical quote, check eligibility as a Business quote
         if ($quoteType === QuoteTypes::GROUP_MEDICAL) {
             $checkQuoteType = QuoteTypes::BUSINESS;
-            LoggerService::info('AccuracyMatrixCacheService::isEligibleQuote - Group Medical detected, checking as Business', [
+            LoggerService::info('AccuracyMatrixService::isEligibleQuote - Group Medical detected, checking as Business', [
                 'quote_id' => $quote->id,
                 'original_quote_type' => $quoteType->value,
                 'check_quote_type' => $checkQuoteType->value
@@ -65,7 +65,7 @@ class AccuracyMatrixCacheService
         }
         
         if (! in_array($checkQuoteType, self::ELIGIBLE_QUOTE_TYPES)) {
-            LoggerService::info('AccuracyMatrixCacheService::isEligibleQuote - Quote type not eligible', [
+            LoggerService::info('AccuracyMatrixService::isEligibleQuote - Quote type not eligible', [
                 'quote_id' => $quote->id,
                 'quote_type' => $quoteType->value,
                 'check_quote_type' => $checkQuoteType->value,
@@ -84,7 +84,7 @@ class AccuracyMatrixCacheService
             }
 
             if (! $isGroupMedical) {
-                LoggerService::info('AccuracyMatrixCacheService::isEligibleQuote - Not a Group Medical quote', [
+                LoggerService::info('AccuracyMatrixService::isEligibleQuote - Not a Group Medical quote', [
                     'quote_id' => $quote->id,
                     'quote_type' => $quoteType->value,
                 ]);
@@ -95,7 +95,7 @@ class AccuracyMatrixCacheService
         $providerCode = $this->getProviderCode($quote);
         $isEligible = $providerCode && in_array($providerCode, self::ELIGIBLE_PROVIDERS);
 
-        LoggerService::info('AccuracyMatrixCacheService::isEligibleQuote - Provider eligibility check', [
+        LoggerService::info('AccuracyMatrixService::isEligibleQuote - Provider eligibility check', [
             'quote_id' => $quote->id,
             'quote_type' => $quoteType->value,
             'provider_code' => $providerCode,
@@ -107,7 +107,7 @@ class AccuracyMatrixCacheService
 
     private function getProviderCode(Model $quote): ?string
     {
-        LoggerService::info('AccuracyMatrixCacheService::getProviderCode - Start', [
+        LoggerService::info('AccuracyMatrixService::getProviderCode - Start', [
             'quote_id' => $quote->id,
             'has_payments' => isset($quote->payments) && $quote->payments !== null,
             'payments_count' => isset($quote->payments) ? $quote->payments->count() : 0
@@ -116,7 +116,7 @@ class AccuracyMatrixCacheService
         if ($quote->payments && $quote->payments->isNotEmpty()) {
             $latestPayment = $quote->payments->first();
             
-            LoggerService::info('AccuracyMatrixCacheService::getProviderCode - Payment found', [
+            LoggerService::info('AccuracyMatrixService::getProviderCode - Payment found', [
                 'payment_id' => $latestPayment->id ?? null,
                 'has_insurance_provider' => isset($latestPayment->insuranceProvider) && $latestPayment->insuranceProvider !== null
             ]);
@@ -124,7 +124,7 @@ class AccuracyMatrixCacheService
             if ($latestPayment && $latestPayment->insuranceProvider) {
                 $providerCode = $latestPayment->insuranceProvider->code;
                 
-                LoggerService::info('AccuracyMatrixCacheService::getProviderCode - Provider found', [
+                LoggerService::info('AccuracyMatrixService::getProviderCode - Provider found', [
                     'provider_code' => $providerCode,
                     'is_eligible' => in_array($providerCode, self::ELIGIBLE_PROVIDERS)
                 ]);
@@ -133,7 +133,7 @@ class AccuracyMatrixCacheService
             }
         }
 
-        LoggerService::info('AccuracyMatrixCacheService::getProviderCode - No provider found', []);
+        LoggerService::info('AccuracyMatrixService::getProviderCode - No provider found', []);
         return null;
     }
 
@@ -146,7 +146,7 @@ class AccuracyMatrixCacheService
         bool $ocrCompleted = false
     ): void {
         // Debug log to check if this method is being called
-        LoggerService::info('AccuracyMatrixCacheService::updateDocumentData called', [
+        LoggerService::info('AccuracyMatrixService::updateDocumentData called', [
             'quote_id' => $quoteId,
             'quote_type' => $quoteType,
             'doc_type' => $documentType->value,
@@ -156,7 +156,7 @@ class AccuracyMatrixCacheService
         
         // Validate inputs
         if ($quoteId <= 0 || empty($quoteType) || empty($docId)) {
-            LoggerService::info('AccuracyMatrixCacheService::updateDocumentData - Invalid inputs', [
+            LoggerService::info('AccuracyMatrixService::updateDocumentData - Invalid inputs', [
                 'quote_id' => $quoteId,
                 'quote_type' => $quoteType,
                 'doc_id' => $docId,
@@ -168,7 +168,7 @@ class AccuracyMatrixCacheService
         $cacheQuoteType = $quoteType;
         if ($quoteType === QuoteTypes::GROUP_MEDICAL->value) {
             $cacheQuoteType = QuoteTypes::BUSINESS->value;
-            LoggerService::info('AccuracyMatrixCacheService::updateDocumentData - Group Medical detected, storing as Business', [
+            LoggerService::info('AccuracyMatrixService::updateDocumentData - Group Medical detected, storing as Business', [
                 'quote_id' => $quoteId,
                 'original_quote_type' => $quoteType,
                 'cache_quote_type' => $cacheQuoteType
@@ -211,7 +211,7 @@ class AccuracyMatrixCacheService
         $cacheQuoteType = $quoteType;
         if ($quoteType === QuoteTypes::GROUP_MEDICAL->value) {
             $cacheQuoteType = QuoteTypes::BUSINESS->value;
-            LoggerService::info('AccuracyMatrixCacheService::removeDocument - Group Medical detected, using Business cache', [
+            LoggerService::info('AccuracyMatrixService::removeDocument - Group Medical detected, using Business cache', [
                 'quote_id' => $quoteId,
                 'original_quote_type' => $quoteType,
                 'cache_quote_type' => $cacheQuoteType
@@ -243,7 +243,7 @@ class AccuracyMatrixCacheService
 
     public function getMatrixStatus(int $quoteId, string $quoteType): ?array
     {
-        LoggerService::info('AccuracyMatrixCacheService::getMatrixStatus - Start', [
+        LoggerService::info('AccuracyMatrixService::getMatrixStatus - Start', [
             'quote_id' => $quoteId,
             'quote_type' => $quoteType
         ]);
@@ -252,7 +252,7 @@ class AccuracyMatrixCacheService
         $cacheQuoteType = $quoteType;
         if ($quoteType === QuoteTypes::GROUP_MEDICAL->value) {
             $cacheQuoteType = QuoteTypes::BUSINESS->value;
-            LoggerService::info('AccuracyMatrixCacheService::getMatrixStatus - Group Medical detected, checking Business cache', [
+            LoggerService::info('AccuracyMatrixService::getMatrixStatus - Group Medical detected, checking Business cache', [
                 'quote_id' => $quoteId,
                 'original_quote_type' => $quoteType,
                 'cache_quote_type' => $cacheQuoteType
@@ -263,21 +263,21 @@ class AccuracyMatrixCacheService
         $data = Cache::get($cacheKey);
 
         if (! $data) {
-            LoggerService::info('AccuracyMatrixCacheService::getMatrixStatus - No data in cache', [
+            LoggerService::info('AccuracyMatrixService::getMatrixStatus - No data in cache', [
                 'cache_key' => $cacheKey
             ]);
             return null;
         }
         
         if (! isset($data['matrix_status'])) {
-            LoggerService::info('AccuracyMatrixCacheService::getMatrixStatus - No matrix status in data', [
+            LoggerService::info('AccuracyMatrixService::getMatrixStatus - No matrix status in data', [
                 'cache_key' => $cacheKey,
                 'data_keys' => array_keys($data)
             ]);
             return null;
         }
 
-        LoggerService::info('AccuracyMatrixCacheService::getMatrixStatus - Matrix status found', [
+        LoggerService::info('AccuracyMatrixService::getMatrixStatus - Matrix status found', [
             'cache_key' => $cacheKey,
             'matrix_status' => $data['matrix_status']
         ]);
@@ -291,7 +291,7 @@ class AccuracyMatrixCacheService
         $cacheQuoteType = $quoteType;
         if ($quoteType === QuoteTypes::GROUP_MEDICAL->value) {
             $cacheQuoteType = QuoteTypes::BUSINESS->value;
-            LoggerService::info('AccuracyMatrixCacheService::clearValidation - Group Medical detected, clearing Business cache', [
+            LoggerService::info('AccuracyMatrixService::clearValidation - Group Medical detected, clearing Business cache', [
                 'quote_id' => $quoteId,
                 'original_quote_type' => $quoteType,
                 'cache_quote_type' => $cacheQuoteType
@@ -323,7 +323,7 @@ class AccuracyMatrixCacheService
         $quoteId = $data['quote_id'] ?? null;
         $quoteType = $data['quote_type'] ?? null;
         
-        LoggerService::info('AccuracyMatrixCacheService::validateAccuracyMatrix - Start', [
+        LoggerService::info('AccuracyMatrixService::validateAccuracyMatrix - Start', [
             'quote_id' => $quoteId,
             'quote_type' => $quoteType
         ]);
@@ -333,7 +333,7 @@ class AccuracyMatrixCacheService
         $allOcrCompleted = true;
         $policyNumbers = [];
 
-        LoggerService::info('AccuracyMatrixCacheService::validateAccuracyMatrix - Document count check', [
+        LoggerService::info('AccuracyMatrixService::validateAccuracyMatrix - Document count check', [
             'mandatory_docs_count' => count($mandatoryDocs),
             'required_docs_count' => count(self::MANDATORY_DOC_TYPES),
             'all_docs_present' => $allDocsPresent,
@@ -342,7 +342,7 @@ class AccuracyMatrixCacheService
         ]);
 
         foreach ($mandatoryDocs as $docKey => $docData) {
-            LoggerService::info('AccuracyMatrixCacheService::validateAccuracyMatrix - Checking document', [
+            LoggerService::info('AccuracyMatrixService::validateAccuracyMatrix - Checking document', [
                 'doc_key' => $docKey,
                 'doc_id' => $docData['doc_id'] ?? null,
                 'ocr_completed' => $docData['ocr_completed'] ?? false,
@@ -351,7 +351,7 @@ class AccuracyMatrixCacheService
             
             if (! $docData['ocr_completed']) {
                 $allOcrCompleted = false;
-                LoggerService::info('AccuracyMatrixCacheService::validateAccuracyMatrix - OCR not completed for document', [
+                LoggerService::info('AccuracyMatrixService::validateAccuracyMatrix - OCR not completed for document', [
                     'doc_key' => $docKey
                 ]);
                 break;
@@ -360,7 +360,7 @@ class AccuracyMatrixCacheService
             $policyNumber = trim($docData['policy_number'] ?? '');
             if (empty($policyNumber)) {
                 $allOcrCompleted = false;
-                LoggerService::info('AccuracyMatrixCacheService::validateAccuracyMatrix - Policy number missing', [
+                LoggerService::info('AccuracyMatrixService::validateAccuracyMatrix - Policy number missing', [
                     'doc_key' => $docKey
                 ]);
                 break;
@@ -378,7 +378,7 @@ class AccuracyMatrixCacheService
                 'last_validated' => now()->toISOString(),
             ];
             
-            LoggerService::info('AccuracyMatrixCacheService::validateAccuracyMatrix - Matrix hidden', [
+            LoggerService::info('AccuracyMatrixService::validateAccuracyMatrix - Matrix hidden', [
                 'all_docs_present' => $allDocsPresent,
                 'all_ocr_completed' => $allOcrCompleted,
                 'reason' => !$allDocsPresent ? 'Missing documents' : 'OCR incomplete or policy number missing'
@@ -397,7 +397,7 @@ class AccuracyMatrixCacheService
                 'last_validated' => now()->toISOString(),
             ];
             
-            LoggerService::info('AccuracyMatrixCacheService::validateAccuracyMatrix - Matrix visible', [
+            LoggerService::info('AccuracyMatrixService::validateAccuracyMatrix - Matrix visible', [
                 'policy_numbers' => $policyNumbers,
                 'unique_policy_numbers' => $uniquePolicyNumbers,
                 'policy_numbers_match' => $policyNumbersMatch,
@@ -418,7 +418,7 @@ class AccuracyMatrixCacheService
             default => null,
         };
         
-        LoggerService::info('AccuracyMatrixCacheService::getDocumentTypeKey', [
+        LoggerService::info('AccuracyMatrixService::getDocumentTypeKey', [
             'document_type' => $documentType->value,
             'document_type_key' => $key,
             'is_mandatory' => $key !== null
@@ -429,7 +429,7 @@ class AccuracyMatrixCacheService
 
     public function extractPolicyNumberFromOcrData(object $data, OCRDocumentTypeEnum $documentType): ?string
     {
-        LoggerService::info('AccuracyMatrixCacheService::extractPolicyNumberFromOcrData - Start', [
+        LoggerService::info('AccuracyMatrixService::extractPolicyNumberFromOcrData - Start', [
             'document_type' => $documentType->value,
             'data_properties' => get_object_vars($data)
         ]);
@@ -450,7 +450,7 @@ class AccuracyMatrixCacheService
             default => null,
         };
         
-        LoggerService::info('AccuracyMatrixCacheService::extractPolicyNumberFromOcrData - Result', [
+        LoggerService::info('AccuracyMatrixService::extractPolicyNumberFromOcrData - Result', [
             'document_type' => $documentType->value,
             'extracted_policy_number' => $policyNumber
         ]);
@@ -462,7 +462,7 @@ class AccuracyMatrixCacheService
     {
         $value = $data->{$property} ?? null;
         
-        LoggerService::info('AccuracyMatrixCacheService::resolveProp', [
+        LoggerService::info('AccuracyMatrixService::resolveProp', [
             'property' => $property,
             'value_exists' => $value !== null,
             'value_type' => $value !== null ? gettype($value) : null,

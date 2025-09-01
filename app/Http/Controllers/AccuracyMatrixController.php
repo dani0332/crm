@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\QuoteTypes;
-use App\Services\AccuracyMatrixCacheService;
+use App\Services\AccuracyMatrixService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +16,7 @@ class AccuracyMatrixController extends Controller
     use GenericQueriesAllLobs;
 
     public function __construct(
-        private readonly AccuracyMatrixCacheService $accuracyMatrixService
+        private readonly AccuracyMatrixService $accuracyMatrixService
     ) {}
 
     public function getMatrixStatus(string $quoteType, int $quoteId): JsonResponse

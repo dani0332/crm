@@ -16,7 +16,7 @@ use App\Models\DocumentType;
 use App\Models\MemberCategory;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
-use App\Services\AccuracyMatrixCacheService;
+use App\Services\AccuracyMatrixService;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
@@ -418,7 +418,7 @@ class QuoteDocumentController extends Controller
     {
 
         try {
-            $accuracyMatrixService = app(AccuracyMatrixCacheService::class);
+            $accuracyMatrixService = app(AccuracyMatrixService::class);
 
             // Get the quote using the correct relationship and properties
             $quote = $document->quoteDocumentable;
