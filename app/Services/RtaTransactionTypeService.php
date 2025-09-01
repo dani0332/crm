@@ -90,6 +90,18 @@ class RtaTransactionTypeService
                     'rta_plate_category' => ['required' => true, 'locked' => false, 'auto_calculated' => false, 'disabled' => false, 'optional' => false],
                 ]);
                 break;
+
+            case self::RTA_VEHICLE_RENEWAL_WITH_CHANGE_NUMBER:
+                $config = array_merge($config, [
+                    'policy_effective_date' => ['required' => false, 'locked' => false, 'auto_calculated' => false, 'disabled' => false, 'optional' => false],
+                    'policy_expiry_date' => ['required' => false, 'locked' => false, 'auto_calculated' => false, 'disabled' => false, 'optional' => false],
+                    'certificate_start_date' => ['required' => false, 'locked' => false, 'auto_calculated' => false, 'disabled' => false, 'optional' => false],
+                    'certificate_end_date' => ['required' => false, 'locked' => true, 'auto_calculated' => false, 'disabled' => false, 'optional' => false],
+                    'plate_code' => ['required' => false, 'locked' => false, 'auto_calculated' => false, 'disabled' => false, 'optional' => false],
+                    'plate_number' => ['required' => false, 'locked' => false, 'auto_calculated' => false, 'disabled' => false, 'optional' => false],
+                    'rta_plate_category' => ['required' => false, 'locked' => false, 'auto_calculated' => false, 'disabled' => false, 'optional' => false],
+                ]);
+                break;
         }
 
         return $config;
