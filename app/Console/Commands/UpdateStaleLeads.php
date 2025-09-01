@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
@@ -91,6 +92,10 @@ class UpdateStaleLeads extends Command
                 ->whereNot('source', LeadSourceEnum::INSLY)
                 ->where('quote_status_date', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))->endOfDay())
                 ->where('quote_status_date', '>=', Carbon::parse('2023-05-23')->startOfDay())
+                ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
+                    $businessQuote->where('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical))
+                        ->where('quote_status_date', '>=', Carbon::today()->startOfDay());
+                })
                 ->when($eligibleQuoteType == PersonalQuote::class, function ($personalQuote) {
                     $personalQuote->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle]);
                 })->chunkById(1000, function ($quoteDetails) {
