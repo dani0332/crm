@@ -784,7 +784,7 @@ class AMLService
 
         if (
             $quoteTypeId == QuoteTypes::CAR->id() &&
-            in_array($paymentDetails?->insuranceProvider?->code, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA]) &&
+            $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA &&
             $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD
         ) {
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload quote. Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
