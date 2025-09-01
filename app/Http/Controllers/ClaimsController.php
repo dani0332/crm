@@ -12,6 +12,7 @@ use App\Http\Requests\ClaimSendNotificationRequest;
 use App\Http\Requests\ClaimStatusUpdateRequest;
 use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
+use App\Http\Requests\ClaimExportValidationRequest;
 use App\Http\Requests\SearchPoliciesRequest;
 use App\Models\ClaimRequest;
 use App\Models\ClaimStatus;
@@ -20,6 +21,7 @@ use App\Services\ClaimsService;
 use App\Services\CustomerService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
+use App\Exports\ClaimsExport;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -272,9 +274,9 @@ class ClaimsController extends Controller
             return redirect()->back()->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim details - Claim UUID: '.$uuid, extra: [
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim details - Claim UUID: '.$claim->uuid, extra: [
                 'error' => $e->getMessage(),
-                'claim_request_id' => $uuid,
+                'claim_request_id' => $claim->uuid,
                 'data' => $request->validatedForUpdate(),
                 'user_id' => Auth::id(),
             ]);
@@ -291,9 +293,9 @@ class ClaimsController extends Controller
             return redirect()->back()->with('success', 'Claim status updated successfully.');
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim status - Claim UUID: '.$uuid, extra: [
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim status - Claim UUID: '.$claim->uuid, extra: [
                 'error' => $e->getMessage(),
-                'claim_request_id' => $uuid,
+                'claim_request_id' => $claim->uuid,
                 'data' => $request->validated(),
                 'user_id' => Auth::id(),
             ]);
@@ -305,9 +307,40 @@ class ClaimsController extends Controller
     /**
      * Export claims data
      */
-    public function export(Request $request)
+    public function export(ClaimExportValidationRequest $request)
     {
-        //
+        try {
+            $requestParams = $request->all();
+
+            // Check export type for email vs download
+            if ($request->input('exportType') === 'email') {
+                $requestParams['recipientEmail'] = auth()->user()->email;
+                return app(ClaimsExport::class, [
+                    'claimsService' => app(ClaimsService::class),
+                    'requestParams' => $requestParams
+                ])->emailCSV('Claims-List', $requestParams);
+            }
+
+
+            return app(ClaimsExport::class, [
+                'claimsService' => app(ClaimsService::class),
+                'requestParams' => $requestParams
+            ])->download('Claims-List');
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error exporting claims data', extra: [
+                'error' => $e->getMessage(),
+                'export_params' => $request->all(),
+                'user_id' => Auth::id(),
+            ]);
+            dd($e);
+
+            if ($request->input('exportType') === 'email') {
+                return response()->json(['success' => false, 'message' => 'Failed to initiate claims export. Please try again.'], 500);
+            }
+
+            return redirect()->back()->with('error', 'Failed to export claims data. Please try again.');
+        }
     }
 
     /**

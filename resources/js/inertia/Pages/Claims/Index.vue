@@ -1,7 +1,12 @@
 <script setup>
 import NProgress from 'nprogress';
 import {
-  formattedDateDmyWithTime, formattedDateYmd 
+  formattedDateDmyWithTime,
+  formattedDateYmd,
+  calculateDaysDifference,
+  calculateMonthsDifference,
+  logAndExportQuotes,
+  useObjToUrl
 } from '@/inertia/Composables/utilities.js';
 import { formattedDateYmdWithTime } from '../../Composables/utilities';
 
@@ -19,7 +24,8 @@ const permissionsEnum = page.props.permissionsEnum;
 const quoteTypeIds = page.props.quoteTypeIds;
 const can = permission => useCan(permission);
 
-let availableFilters = { 
+let availableFilters = {
+  exportType: 'download',
   page: 1,
 };
 
@@ -101,7 +107,7 @@ const managersOptions = computed(() => {
       label: manager.name,
     })) || []
   );
-}); 
+});
 
 const complaintStatusOptions = computed(() => {
   return (
@@ -174,7 +180,7 @@ function searchClaims(isValid) {
     }
     if (filters.next_followup_datetime) {
       filters.next_followup_datetime = formattedDateYmd(filters.next_followup_datetime);
-    } 
+    }
 
     NProgress.start();
     router.visit(route('claims.index'), {
@@ -190,30 +196,126 @@ function searchClaims(isValid) {
 }
 
 function onReset() {
-  NProgress.start(); 
+  NProgress.start();
   router.visit('/claim', {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
     onBefore: () => (loader.table = true),
-    onSuccess: () => (loader.table = false), 
+    onSuccess: () => (loader.table = false),
   });
-  NProgress.done(); 
-}
-
-function exportClaims() {
-  NProgress.start();
-  loader.export = true;
-  window.location.href = '/claim/export?' + new URLSearchParams(filters);
-  setTimeout(() => {
-    loader.export = false;
-  }, 3000);
   NProgress.done();
 }
+
+const exportLoader = ref(false);
+
+const onDataExport = (exportType) => {
+  // Check date range restriction for created dates
+  if (filters.created_at_start && filters.created_at_end) {
+    let diff, maxLimit, maxPeriod;
+
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
+
+    if (diff > maxLimit) {
+      notification.error({
+        message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
+        position: 'top',
+      });
+      return;
+    }
+  }
+
+  // Format dates for export
+  if (filters.created_at_start) {
+    filters.created_at_start = useDateFormat(filters.created_at_start, 'YYYY-MM-DD').value;
+  }
+  if (filters.created_at_end) {
+    filters.created_at_end = useDateFormat(filters.created_at_end, 'YYYY-MM-DD').value;
+  }
+
+  console.log('filters', filters , exportType);
+
+  filters.exportType = exportType;
+
+  exportLoader.value = true;
+
+  // Use axios for both download and email exports
+  axios.post(route('claims.export'), filters, {
+    responseType: exportType === 'download' ? 'blob' : 'json'
+  })
+    .then(result => {
+      if (exportType === 'download') {
+        // Handle file download
+        const url = window.URL.createObjectURL(new Blob([result.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'Claims-List.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        notification.success({
+          title: 'Claims export downloaded successfully',
+          position: 'top',
+        });
+      } else {
+        // Handle email export response
+        if (result.data.message) {
+          notification.success({
+            title: result.data.message,
+            position: 'top',
+          });
+        }
+      }
+
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+    })
+    .catch(err => {
+      console.error('Export error:', err);
+      notification.error({
+        title: err.response?.data?.message || `Unable to ${exportType === 'email' ? 'start email export' : 'download export'}`,
+        position: 'top',
+      });
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+    });
+};
 
 // Check if selected line of business is car
 const isCarLOB = computed(() => {
   return quoteTypeIds.Car === filters.quote_type_id;
+});
+
+// Check if export is available based on date filters
+const canExport = computed(() => {
+  return (filters.created_at_start && filters.created_at_end) ||
+         Object.keys(filters).some(key =>
+           key !== 'created_at_start' &&
+           key !== 'created_at_end' &&
+           filters[key] !== null &&
+           filters[key] !== undefined &&
+           filters[key] !== ''
+         );
 });
 
 // Watcher to clear vehicle-specific filters when line of business changes away from car/bike
@@ -314,7 +416,7 @@ watch(
           format="yyyy-MM-dd"
         />
 
-        
+
         <x-select
           v-model="filters.quote_type_id"
           label="Line of Business"
@@ -340,7 +442,7 @@ watch(
           filterable
           filterPlaceholder="Filter Claim Sub Status...."
           clearable
-        /> 
+        />
 
         <x-select
           v-model="filters.manager_id"
@@ -436,16 +538,42 @@ watch(
         </template>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-4">
-        <x-button
-          v-if="can(permissionsEnum.CLAIMS_EXPORT_DATA)"
-          size="sm"
-          color="emerald"
-          class="justify-self-start mr-3"
-          @click="exportClaims"
-          :loading="loader.export"
-        >
-          Export
-        </x-button>
+        <div v-if="can(permissionsEnum.CLAIMS_EXPORT_DATA)">
+          <template v-if="canExport">
+            <x-button
+              size="sm"
+              color="emerald"
+              :loading="exportLoader"
+              @click.prevent="onDataExport('download')"
+              class="justify-self-start mr-3"
+            >
+              Export
+            </x-button>
+            <x-button
+              size="sm"
+              color="emerald"
+              :loading="exportLoader"
+              @click.prevent="onDataExport('email')"
+              class="justify-self-start mr-3"
+            >
+              Export via email
+            </x-button>
+          </template>
+          <x-tooltip v-else placement="right">
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export
+            </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export via email
+            </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Created dates or other filter criteria are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
+        </div>
+        <div v-else />
         <div class="flex gap-3 justify-self-end">
           <x-button size="sm" color="#ff5e00" :loading="loader.table" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset" :loading="loader.table">

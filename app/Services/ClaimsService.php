@@ -108,6 +108,22 @@ class ClaimsService extends BaseService
         return $query->simplePaginate($this->perPage)->withQueryString();
     }
 
+    /**
+     * Get claims data for export with all necessary relationships
+     */
+    public function getClaimsDataForExport(array $requestParams = [])
+    {
+        $query = $this->query;
+
+        // Apply filters if provided using the same filtering logic as regular claims listing
+        if (!empty($requestParams)) {
+            // Use the same filter structure as getClaimsData
+            $query = $this->applyFilters($query, $requestParams);
+        }
+
+        return $query->orderBy('created_at', 'desc');
+    }
+
     public function applyFilters($query, $filters)
     {
         if (! empty($filters['code'])) {
@@ -162,6 +178,15 @@ class ClaimsService extends BaseService
             $query->where('policy_number', $filters['policy_number']);
         }
 
+        // Assignment status filtering
+        if (! empty($filters['assigned_status'])) {
+            if ($filters['assigned_status'] === 'assigned') {
+                $query->whereNotNull('manager_id');
+            } elseif ($filters['assigned_status'] === 'un-assigned') {
+                $query->whereNull('manager_id');
+            }
+        }
+
         // Date filtering - handle start date, end date, or both
         if (! empty($filters['created_at_start']) && ! empty($filters['created_at_end'])) {
             $query->whereBetween('created_at', [$filters['created_at_start'], $filters['created_at_end']]);
@@ -207,16 +232,17 @@ class ClaimsService extends BaseService
             'created_at_end',
             'claim_status_id',
             'claim_sub_status_id',
-            'manager_id',  
+            'manager_id',
             'manager_assigned_date',
             'quote_type_id',
             'policy_number',
             'complaint_status_id',
             'next_followup_datetime',
+            'assigned_status',
             'plat_number',
             'car_make',
             'car_model',
-            'model_year', 
+            'model_year',
         ]);
     }
 
@@ -760,7 +786,7 @@ class ClaimsService extends BaseService
                 'new_claim_status_id' => $claimRequest->claim_status_id,
                 'old_claim_sub_status_id' => $claimRequest->getOriginal('claim_sub_status_id'),
                 'new_claim_sub_status_id' => $claimRequest->claim_sub_status_id,
-                'updated_by' => auth()->id(),
+                'updated_by' => Auth::id(),
             ]);
 
             return $claimRequest->fresh(['claimStatus', 'claimSubStatus', 'manager']);
@@ -771,7 +797,7 @@ class ClaimsService extends BaseService
                 'trace' => $e->getTraceAsString(),
                 'claim_request_id' => $claimRequest->uuid,
                 'data' => $request,
-                'updated_by' => auth()->id(),
+                'updated_by' => Auth::id(),
             ]);
 
             throw $e;
@@ -840,7 +866,7 @@ class ClaimsService extends BaseService
                         'document_id' => $document->id ?? null,
                         'document_name' => $document->original_name ?? 'Unknown',
                         'document_type' => $documentData['document_type_code'],
-                        'user_id' => auth()->id(),
+                        'user_id' => Auth::id(),
                     ]);
                 } else {
                     $errors[] = "Failed to upload document: {$file->getClientOriginalName()}";
@@ -852,7 +878,7 @@ class ClaimsService extends BaseService
                     'claim_uuid' => $claim->uuid,
                     'file_name' => $file->getClientOriginalName(),
                     'error' => $e->getMessage(),
-                    'user_id' => auth()->id(),
+                    'user_id' => Auth::id(),
                 ], exception: $e);
             }
         }
@@ -1300,7 +1326,7 @@ class ClaimsService extends BaseService
                 'error' => $e->getMessage(),
                 'claim_id' => $claim->id,
                 'complaint_status_id' => $complaintStatusId,
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
             ]);
 
             throw $e;

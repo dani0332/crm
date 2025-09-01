@@ -255,6 +255,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('claim/{claim:uuid}/complaint-status-logs', [ClaimsController::class, 'getComplaintStatusLogs'])->name('claims.complaint-status-logs');
         Route::get('claim/{claim:uuid}/next-follow-up-logs', [ClaimsController::class, 'getNextFollowUpLogs'])->name('claims.next-follow-up-logs');
         Route::post('claim/{claim:uuid}/make-additional-contact-primary', [ClaimsController::class, 'makeAdditionalContactPrimary'])->name('claims.make-additional-contact-primary');
+        Route::post('claim/export', [ClaimsController::class, 'export'])->name('claims.export');
 
         Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
         Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
