@@ -46,7 +46,7 @@ class EvaluateTeamPipe extends BaseAllocationPipe
                 'isPUA' => $lead->isPUA(),
                 'sicAdvisorRequested' => $lead->sic_advisor_requested,
             ]);
-        } elseif ($isSIC && $lead->isPaymentAuthorizedOnly() && ! $lead->isPaymentLinkRequested()) {
+        } elseif ($isSIC && $lead->isPaymentAuthorizedOrDeclined() && ! $lead->isPaymentLinkRequested()) {
             $teamName = TeamNameEnum::SIC_UNASSISTED;
             LoggerService::info('SIC lead detected with payment authorized only. Assigning to SIC Unassisted team.');
         } elseif ($isSIC && $lead->isPaymentLinkRequested()) {
