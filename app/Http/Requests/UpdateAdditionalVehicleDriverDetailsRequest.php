@@ -37,11 +37,15 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         if (isset($this->additional_vehicle_transaction_details) && $this->additional_vehicle_transaction_details == true) {
             $rules['rta_transaction_type'] = 'required';
             $rules['traffic_code_number'] = 'required';
-            $rules['engine_number'] = 'required';
-            $rules['chassis_number'] = 'required';
-            $rules['vehicle_color'] = 'required';
             $rules['bank_loan'] = 'required';
-            $rules['first_registration_date'] = 'required|date';
+
+            if(!$isLivaRenewal) {
+                $rules['engine_number'] = 'required';
+                $rules['chassis_number'] = 'required';
+                $rules['vehicle_color'] = 'required';
+                $rules['first_registration_date'] = 'required|date';
+            }
+
             if ($this->insurance_provider_code === InsuranceProvidersEnum::RSA) {
                 if($this->source !== LeadSourceEnum::RENEWAL_UPLOAD) {
                     $rules['policy_effective_date'] = 'required|after_or_equal:today';

@@ -239,6 +239,11 @@ const isGigRenewal = computed(() => {
          additionalVehicleTransactionDetailsForm.previous_policy_provider === RTA_CONSTANTS.GIG_PROVIDER_CODE;
 });
 
+const isLivaRenewal = computed(() => {
+  return page.props.quoteRequest?.source === page.props.leadSource.RENEWAL_UPLOAD
+    && page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.RSA;
+});
+
 // Field configuration computed properties
 const isFieldDisabled = (fieldName) => {
   return fieldConfig.value[fieldName]?.disabled || fieldConfig.value[fieldName]?.readonly || fieldConfig.value[fieldName]?.hidden || false;
@@ -628,7 +633,7 @@ watch(
             placeholder="Select Plate Code"
             :options="plateCodeOptions"
             class="w-full"
-            :disabled="hasNotEditPermission"
+            :disabled="hasNotEditPermission || isLivaRenewal"
             label="Plate Code"
             :tooltip="`Official plate code and registration number`"
           />
@@ -653,7 +658,7 @@ watch(
             :required="registrationNoValidation"
             placeholder="Plate Number"
             type="text"
-            :disabled="isFieldDisabled('plate_number') || hasNotEditPermission"
+            :disabled="isFieldDisabled('plate_number') || hasNotEditPermission || isLivaRenewal"
             :readonly="fieldConfig.plate_number?.readonly"
             label="Plate Number"
             :tooltip="`Official plate code and registration number`"
@@ -680,7 +685,7 @@ watch(
             placeholder="Chassis Number"
             type="text"
             :error="additionalVehicleTransactionDetailsForm.errors.chassis_number"
-            :disabled="isFieldDisabled('chassis_number') || hasNotEditPermission"
+            :disabled="isFieldDisabled('chassis_number') || hasNotEditPermission || isLivaRenewal"
             required
             label="Chassis Number"
             :tooltip="`Vehicle chassis number`"
@@ -693,7 +698,7 @@ watch(
             :required="isFieldRequired('engine_number')"
             placeholder="Engine Number"
             type="text"
-            :disabled="isFieldDisabled('engine_number') || hasNotEditPermission"
+            :disabled="isFieldDisabled('engine_number') || hasNotEditPermission || isLivaRenewal"
             label="Engine Number"
             :tooltip="`Vehicle engine number`"
           />
@@ -706,7 +711,7 @@ watch(
             :required="isFieldRequired('rta_plate_category')"
             :options="rtaPlateCategoryOptions"
             placeholder="Select RTA Plate Category"
-            :disabled="isFieldDisabled('rta_plate_category') || hasNotEditPermission"
+            :disabled="isFieldDisabled('rta_plate_category') || hasNotEditPermission || isLivaRenewal"
             label="RTA Plate Category"
             :tooltip="`Vehicle plate type as defined by the traffic department (e.g., private, commercial)`"
           />
@@ -719,7 +724,7 @@ watch(
             :rules="[isRequired]"
             required
             placeholder="Select Vehicle Color"
-            :disabled="isFieldDisabled('vehicle_color') || hasNotEditPermission"
+            :disabled="isFieldDisabled('vehicle_color') || hasNotEditPermission || isLivaRenewal"
             class="w-full"
             label="Vehicle Color"
             :tooltip="`Vehicle color as per the official documentation`"
@@ -785,7 +790,7 @@ watch(
             :rules="getFieldRules('first_registration_date')"
             :required="isFieldRequired('first_registration_date')"
             placeholder="First Registration Date"
-            :disabled="isFieldDisabled('first_registration_date') || hasNotEditPermission"
+            :disabled="isFieldDisabled('first_registration_date') || hasNotEditPermission || isLivaRenewal"
             label="First Registration Date"
             :tooltip="`Date the vehicle was first registered with the traffic department`"
           />
@@ -796,7 +801,7 @@ watch(
             :rules="getFieldRules('policy_effective_date')"
             :required="isFieldRequired('policy_effective_date')"
             placeholder="Policy Effective Date"
-            :disabled="isFieldDisabled('policy_effective_date') || hasNotEditPermission || (isLIVA && isRenewal)"
+            :disabled="isFieldDisabled('policy_effective_date') || hasNotEditPermission || isLivaRenewal"
             :readonly="fieldConfig.policy_effective_date?.readonly"
             label="Policy Effective Date"
             :tooltip="`Start date of the insurance policy coverage`"
@@ -808,7 +813,7 @@ watch(
             :rules="getFieldRules('policy_expiry_date')"
             :required="isFieldRequired('policy_expiry_date')"
             placeholder="Policy Expiry Date"
-            disabled
+            :disabled="isLivaRenewal"
             :readonly="fieldConfig.policy_expiry_date?.readonly"
             label="Policy Expiry Date"
             :tooltip="`Expiry date of the insurance policy coverage`"
