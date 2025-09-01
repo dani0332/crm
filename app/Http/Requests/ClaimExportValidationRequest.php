@@ -71,7 +71,7 @@ class ClaimExportValidationRequest extends FormRequest
             'plat_number' => 'nullable|string|max:20',
             'car_make' => 'nullable|string|max:100',
             'car_model' => 'nullable|string|max:100',
-            'model_year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
+            'model_year' => 'nullable|integer|min:1900|max:'.(date('Y') + 1),
         ];
     }
 
@@ -122,7 +122,7 @@ class ClaimExportValidationRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            if (!$validator->errors()->any()) {
+            if (! $validator->errors()->any()) {
                 $this->validateDateRange($validator);
                 $this->validateEmailExportRequirements($validator);
             }

@@ -116,7 +116,7 @@ class ClaimsService extends BaseService
         $query = $this->query;
 
         // Apply filters if provided using the same filtering logic as regular claims listing
-        if (!empty($requestParams)) {
+        if (! empty($requestParams)) {
             // Use the same filter structure as getClaimsData
             $query = $this->applyFilters($query, $requestParams);
         }

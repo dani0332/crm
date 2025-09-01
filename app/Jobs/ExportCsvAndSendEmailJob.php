@@ -133,7 +133,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             if ($this->exportClass === 'App\\Exports\\ClaimsExport') {
                 return app($this->exportClass, [
                     'claimsService' => app(\App\Services\ClaimsService::class),
-                    'requestParams' => $this->requestParams
+                    'requestParams' => $this->requestParams,
                 ]);
             }
 

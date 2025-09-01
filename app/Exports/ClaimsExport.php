@@ -7,9 +7,9 @@ namespace App\Exports;
 use App\Contracts\CsvExportableInterface;
 use App\Services\ClaimsService;
 use App\Traits\ModernCsvExportable;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Carbon\Carbon;
 
 class ClaimsExport implements CsvExportableInterface
 {
@@ -30,7 +30,8 @@ class ClaimsExport implements CsvExportableInterface
     {
         // If request params were provided in constructor, use those
         // Otherwise use the params passed to this method
-        $params = !empty($this->requestParams) ? $this->requestParams : $requestParams;
+        $params = ! empty($this->requestParams) ? $this->requestParams : $requestParams;
+
         return $this->claimsService->getClaimsDataForExport($params)->get();
     }
 
@@ -42,7 +43,8 @@ class ClaimsExport implements CsvExportableInterface
     {
         // If request params were provided in constructor, use those
         // Otherwise use the params passed to this method
-        $params = !empty($this->requestParams) ? $this->requestParams : $requestParams;
+        $params = ! empty($this->requestParams) ? $this->requestParams : $requestParams;
+
         return $this->claimsService->getClaimsDataForExport($params);
     }
 
@@ -138,7 +140,6 @@ class ClaimsExport implements CsvExportableInterface
             $claim->claimRequestDetails?->request_reference_number ?? '',
         ];
     }
-
 
     /**
      * Get export metadata with claims-specific information
