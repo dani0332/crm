@@ -8,7 +8,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
-use App\Facades\Capi;
+use App\Facades\CustomerPortalApiFacade;
 use App\Jobs\SendGoogleReviewEmailJob;
 use App\Models\CarMake;
 use App\Models\ClaimActivity;
@@ -351,7 +351,7 @@ class ClaimsService extends BaseService
             }
 
             // Make API call to create claim
-            $response = Capi::request('/api/v2-claims', 'post', $apiData);
+            $response = CustomerPortalApiFacade::request('/api/v2-claims', 'post', $apiData);
 
             if (isset($response->claimUID) && $response->claimUID) {
                 // Send Claim Intimation Email

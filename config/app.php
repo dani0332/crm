@@ -165,6 +165,7 @@ return [
         Laravel\Socialite\SocialiteServiceProvider::class,
         App\Providers\RepositoryServiceProvider::class,
         App\Providers\PostMarkServiceProvider::class,
+        App\Providers\CustomerPortalApiProvider::class,
 
         /*
          * Package Service Providers...
@@ -244,6 +245,7 @@ return [
         'CapiService' => \App\Services\CapiService::class,
         'KyoService' => \App\Services\KyoService::class,
         'PostMark' => \App\Facades\PostMark::class,
+        'CustomerPortalApi' => \App\Facades\CustomerPortalApiFacade::class,
     ],
 
 ];
