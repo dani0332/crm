@@ -765,7 +765,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
                     $process = $process->refresh();
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Triggering next automation step: Policy Booking');
-                    (new PolicyIssuanceService)->executePolicyIssuanceAutomationSteps();
+                    // (new PolicyIssuanceService)->executePolicyIssuanceAutomationSteps();
                 })
                 ->catch(function (Batch $batch, Throwable $e) use ($quote) {
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR batch processing failed completely: '.$e->getMessage());
