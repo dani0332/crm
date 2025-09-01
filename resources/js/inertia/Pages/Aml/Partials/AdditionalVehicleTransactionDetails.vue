@@ -86,7 +86,7 @@ const rules = {
   policyEffectiveDateValidation: v => {
     // Get current RTA type each time validation is called
     const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
-    
+
     // Only validate for New Vehicle or Change Vehicle Ownership
     if (rtaType !== RTA_CONSTANTS.NEW_VEHICLE_REGISTRATION && rtaType !== RTA_CONSTANTS.CHANGE_VEHICLE_OWNERSHIP && (rtaType == RTA_CONSTANTS.VEHICLE_RENEWAL && isGigRenewal.value)) {
       return true;
@@ -104,7 +104,7 @@ const rules = {
     if (selectedDate > maxDate) {
       // Use validation message from rta_validation_summaries prop
       const validationKey = 'policy_effective_date_max_days_validation';
-      const errorMessage = props.rta_validation_summaries[validationKey] || 
+      const errorMessage = props.rta_validation_summaries[validationKey] ||
              `Policy effective date should not be more than ${RTA_CONSTANTS.POLICY_EFFECTIVE_DATE_MAX_DAYS} days from current date`;
       console.log('Policy effective date validation failed:', errorMessage);
       return errorMessage;
@@ -130,7 +130,7 @@ const rules = {
     if (selectedDate < currentDate) {
       // Use validation message from rta_validation_summaries prop
       const validationKey = 'certificate_start_date_back_date_validation';
-      const errorMessage = props.rta_validation_summaries[validationKey] || 
+      const errorMessage = props.rta_validation_summaries[validationKey] ||
              'Certificate start date cannot be back dated';
       return errorMessage;
     }
@@ -147,28 +147,32 @@ const carDetail = computed(() => {
   return page.props.quoteRequest?.car_quote_request_detail;
 });
 
+const vehicleDriverDetail = computed(() => {
+  return page.props.quoteRequest?.vehicle_driver_detail;
+});
+
 const additionalVehicleTransactionDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: page.props.quoteRequest?.uuid,
   insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
   additional_vehicle_transaction_details: true,
-  rta_transaction_type: carDetail.value?.rta_transaction_type?.toString() ?? '',
-  plate_code: carDetail.value?.plate_code ?? '',
-  plate_number: carDetail.value?.plate_number ?? '',
-  traffic_code_number: carDetail.value?.traffic_code_number ?? '',
+  rta_transaction_type: vehicleDriverDetail.value?.rta_transaction_type?.toString() ?? '',
+  plate_code: vehicleDriverDetail.value?.vehicle_plate_code ?? '',
+  plate_number: vehicleDriverDetail.value?.vehicle_plate_number ?? '',
+  traffic_code_number: vehicleDriverDetail.value?.traffic_code_number ?? '',
   chassis_number: carDetail.value?.chassis_number ?? '',
-  engine_number: carDetail.value?.engine_number ?? '',
-  rta_plate_category: carDetail.value?.rta_plate_category ?? '',
-  vehicle_color: carDetail.value?.vehicle_color ?? '',
-  plate_color: carDetail.value?.plate_color ?? '',
-  bank_loan: carDetail.value?.bank_loan?.toString() ?? '',
-  bank_name: carDetail.value?.bank_name ?? '',
-  first_registration_date: carDetail.value?.first_registration_date ?? '',
-  policy_effective_date: carDetail.value?.policy_effective_date ?? '',
-  policy_expiry_date: carDetail.value?.policy_expiry_date ?? '',
-  certificate_start_date: carDetail.value?.certificate_start_date ?? '',
-  certificate_end_date: carDetail.value?.certificate_end_date ?? '',
-  annual_mileage_estimate: carDetail.value?.annual_mileage_estimate?.toString() ?? '',
+  engine_number: vehicleDriverDetail.value?.vehicle_engine_number ?? '',
+  rta_plate_category: vehicleDriverDetail.value?.rta_plate_category ?? '',
+  vehicle_color: vehicleDriverDetail.value?.vehicle_color ?? '',
+  plate_color: vehicleDriverDetail.value?.vehicle_plate_color ?? '',
+  bank_loan: vehicleDriverDetail.value?.bank_loan?.toString() ?? '',
+  bank_name: vehicleDriverDetail.value?.bank_name ?? '',
+  first_registration_date: vehicleDriverDetail.value?.first_registration_date ?? '',
+  policy_effective_date: page.props.quoteRequest.value?.policy_start_date ?? '',
+  policy_expiry_date: page.props.quoteRequest.value?.policy_expiry_date ?? '',
+  certificate_start_date: page.props.quoteRequest.value?.certificate_start_date ?? '',
+  certificate_end_date: page.props.quoteRequest.value?.certificate_end_date ?? '',
+  annual_mileage_estimate: vehicleDriverDetail.value?.annual_mileage_estimate?.toString() ?? '',
   previous_policy_provider: page.props.quoteRequest?.currently_insured_with?.toString() ?? '',
   lead_source: page.props.quoteRequest?.source?.toString() ?? '',
 });
@@ -182,18 +186,18 @@ watch(() => props.insurerPortalSyncData, (vehicleTransactionDetails) => {
     const fieldMappings = {
       vehicleTransactionDetails: {
         rta_transaction_type: 'rta_transaction_type',
-        plate_code: 'plate_code',
-        plate_number: 'plate_number',
+        vehicle_plate_code: 'plate_code',
+        vehicle_plate_number: 'plate_number',
         traffic_code_number: 'traffic_code_number',
         chassis_number: 'chassis_number',
-        engine_number: 'engine_number',
+        vehicle_engine_number: 'engine_number',
         rta_plate_category: 'rta_plate_category',
         vehicle_color: 'vehicle_color',
-        plate_color: 'plate_color',
+        vehicle_plate_color: 'plate_color',
         bank_loan: 'bank_loan',
         bank_name: 'bank_name',
         first_registration_date: 'first_registration_date',
-        policy_effective_date: 'policy_effective_date',
+        policy_start_date: 'policy_effective_date',
         policy_expiry_date: 'policy_expiry_date',
         certificate_start_date: 'certificate_start_date',
         certificate_end_date: 'certificate_end_date',
@@ -403,7 +407,7 @@ const loadFieldConfigurationFromProps = () => {
 watch(() => additionalVehicleTransactionDetailsForm.rta_transaction_type, (newRtaType) => {
   if (newRtaType) {
     loadFieldConfigurationFromProps();
-    
+
     // Re-validate policy effective date when RTA type changes
     if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
       const validationResult = rules.policyEffectiveDateValidation(additionalVehicleTransactionDetailsForm.policy_effective_date);
@@ -413,7 +417,7 @@ watch(() => additionalVehicleTransactionDetailsForm.rta_transaction_type, (newRt
         additionalVehicleTransactionDetailsForm.clearErrors('policy_effective_date');
       }
     }
-    
+
     // Re-validate certificate start date when RTA type changes (for GIG renewals)
     if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
       const validationResult = rules.certificateStartDateValidation(additionalVehicleTransactionDetailsForm.certificate_start_date);
@@ -430,7 +434,7 @@ watch(() => additionalVehicleTransactionDetailsForm.rta_transaction_type, (newRt
 watch(() => additionalVehicleTransactionDetailsForm.previous_policy_provider, () => {
   if (additionalVehicleTransactionDetailsForm.rta_transaction_type) {
     loadFieldConfigurationFromProps();
-    
+
     // Re-validate certificate start date when previous policy provider changes (affects GIG renewal status)
     if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
       const validationResult = rules.certificateStartDateValidation(additionalVehicleTransactionDetailsForm.certificate_start_date);
@@ -447,7 +451,7 @@ watch(() => additionalVehicleTransactionDetailsForm.previous_policy_provider, ()
 watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newValue) => {
   console.log('policy_effective_date watcher triggered', newValue);
   applyAutoCalculations();
-  
+
   // Manually trigger validation for policy effective date
   if (newValue) {
     const validationResult = rules.policyEffectiveDateValidation(newValue);
@@ -464,7 +468,7 @@ watch(() => additionalVehicleTransactionDetailsForm.certificate_start_date, (new
   if (isGigRenewal.value || isVehicleRenewalNonUpload.value) {
     applyAutoCalculations();
   }
-  
+
   // Manually trigger validation for certificate start date in GIG renewals
   if (isGigRenewal.value && newValue) {
     const validationResult = rules.certificateStartDateValidation(newValue);
