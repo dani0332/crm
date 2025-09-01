@@ -40,6 +40,7 @@ class AccuracyMatrixCacheService
     private function getCacheKey(int $quoteId, string $quoteType): string
     {
         $cacheKey = self::CACHE_PREFIX.":{$quoteId}:{$quoteType}";
+        $cacheKey = str_replace(' ', '_', $cacheKey);
         LoggerService::info('AccuracyMatrixCacheService::getCacheKey', [
             'quote_id' => $quoteId,
             'quote_type' => $quoteType,
