@@ -333,7 +333,6 @@ class ClaimsController extends Controller
                 'export_params' => $request->all(),
                 'user_id' => Auth::id(),
             ]);
-            dd($e);
 
             if ($request->input('exportType') === 'email') {
                 return response()->json(['success' => false, 'message' => 'Failed to initiate claims export. Please try again.'], 500);
