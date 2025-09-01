@@ -3,16 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
+use App\Exports\ClaimsExport;
 use App\Http\Requests\ClaimComplaintStatusUpdateRequest;
 use App\Http\Requests\ClaimDetailsUpdateRequest;
 use App\Http\Requests\ClaimDocumentRequest;
+use App\Http\Requests\ClaimExportValidationRequest;
 use App\Http\Requests\ClaimMakeAdditionalContactPrimaryRequest;
 use App\Http\Requests\ClaimNextFollowUpUpdateRequest;
 use App\Http\Requests\ClaimSendNotificationRequest;
 use App\Http\Requests\ClaimStatusUpdateRequest;
 use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
-use App\Http\Requests\ClaimExportValidationRequest;
 use App\Http\Requests\SearchPoliciesRequest;
 use App\Models\ClaimRequest;
 use App\Models\ClaimStatus;
@@ -21,7 +22,6 @@ use App\Services\ClaimsService;
 use App\Services\CustomerService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
-use App\Exports\ClaimsExport;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -315,16 +315,16 @@ class ClaimsController extends Controller
             // Check export type for email vs download
             if ($request->input('exportType') === 'email') {
                 $requestParams['recipientEmail'] = auth()->user()->email;
+
                 return app(ClaimsExport::class, [
                     'claimsService' => app(ClaimsService::class),
-                    'requestParams' => $requestParams
+                    'requestParams' => $requestParams,
                 ])->emailCSV('Claims-List', $requestParams);
             }
 
-
             return app(ClaimsExport::class, [
                 'claimsService' => app(ClaimsService::class),
-                'requestParams' => $requestParams
+                'requestParams' => $requestParams,
             ])->download('Claims-List');
 
         } catch (Exception $e) {
