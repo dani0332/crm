@@ -14,10 +14,10 @@ use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\UserManager;
+use App\Services\Logger\LoggerService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class LeadAllocationController extends Controller
 {
@@ -37,7 +37,9 @@ class LeadAllocationController extends Controller
             QuoteTypes::HOME => PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD,
             QuoteTypes::SAVINGS => PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
             QuoteTypes::GROUP_MEDICAL => PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD,
+            QuoteTypes::TRAVEL => PermissionsEnum::TRAVEL_LEAD_ALLOCATION_DASHBOARD,
         };
+
         $this->middleware("permission:{$permission}", ['only' => ['index']]);
     }
 
@@ -79,8 +81,8 @@ class LeadAllocationController extends Controller
                 ->join('lead_allocation as la', 'la.user_id', 'users.id')
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', 'user_team.team_id')
-                ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
-                ->join('roles as r', 'r.id', '=', 'mhr.role_id')
+                ->join('model_has_roles as mhr', 'mhr.model_id', 'users.id')
+                ->join('roles as r', 'r.id', 'mhr.role_id')
                 ->where('la.quote_type_id', in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL]) ? QuoteTypes::BUSINESS->id() : $this->quoteType->id())
                 ->whereIn('r.name', $advisorRoles)
                 ->when($this->quoteType !== QuoteTypes::SAVINGS, function ($query) use ($managerRoleIds) {
@@ -94,10 +96,12 @@ class LeadAllocationController extends Controller
                     });
                 })
                 ->groupBy('users.name', 'users.id', 'la.id');
+
             if (! auth()->user()->hasRole(RolesEnum::Admin)) {
                 $userTeamIds = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
                 $users = $users->whereIn('teams.id', $userTeamIds);
             }
+
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $userIds = UserManager::where('manager_id', Auth::id())->pluck('user_id')->toArray();
                 $users = $users->whereIn('users.id', $userIds);
@@ -105,7 +109,7 @@ class LeadAllocationController extends Controller
 
             return $users->get();
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error($e->getMessage());
 
             return [];
         }
