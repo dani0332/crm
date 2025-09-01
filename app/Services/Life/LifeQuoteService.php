@@ -151,6 +151,38 @@ class LifeQuoteService extends BaseService
                         break;
                 }
             })
+            ->when(! empty(request()->authorize_date), function ($query) {
+                $authorizeDates = request()->authorize_date;
+                if (is_array($authorizeDates) && count($authorizeDates) >= 2) {
+                    $startDate = $authorizeDates[0];
+                    $endDate = $authorizeDates[1];
+
+                    if ($startDate && $endDate) {
+                        $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('authorized_at', [
+                                Carbon::parse($startDate)->startOfDay(),
+                                Carbon::parse($endDate)->endOfDay(),
+                            ]);
+                        });
+                    }
+                }
+            })
+            ->when(! empty(request()->captured_date), function ($query) {
+                $capturedDates = request()->captured_date;
+                if (is_array($capturedDates) && count($capturedDates) >= 2) {
+                    $startDate = $capturedDates[0];
+                    $endDate = $capturedDates[1];
+
+                    if ($startDate && $endDate) {
+                        $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('captured_at', [
+                                Carbon::parse($startDate)->startOfDay(),
+                                Carbon::parse($endDate)->endOfDay(),
+                            ]);
+                        });
+                    }
+                }
+            })
             ->filter(! $isExportRequest, $isTotalLeadCountRequest)
             ->withFakeLeadCriteria($isTotalLeadCountRequest);
 
@@ -711,7 +743,7 @@ class LifeQuoteService extends BaseService
             'plans' => [$data],
         ];
 
-        LoggerService::info('fn: lifePlanCreateQuote', context: [
+        LoggerService::info('fn: lifePlanCreateQuote', extra: [
             'data' => $reqData,
             'url' => '/save-manual-life-quote-plan',
         ]);
@@ -885,7 +917,7 @@ class LifeQuoteService extends BaseService
 
     public function toggleLifePlanVisibility(array $data)
     {
-        LoggerService::info('fn: toggleLifePlanVisibility', context: [
+        LoggerService::info('fn: toggleLifePlanVisibility', extra: [
             'data' => $data,
         ]);
 

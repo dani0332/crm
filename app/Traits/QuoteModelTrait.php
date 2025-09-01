@@ -8,7 +8,6 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\PuaEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -306,7 +305,7 @@ trait QuoteModelTrait
         }
 
         return CarQuotePlanDetail::where('quote_uuid', $this->uuid)
-            ->whereIn('pua_type', PuaEnum::TAGS)
+            ->whereNotNull('pua_premium')
             ->where('plan_id', $this->plan_id)
             ->exists();
     }

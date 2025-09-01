@@ -7,7 +7,6 @@ use App\Enums\TravelQuoteEnum;
 use App\Models\TravelQuote;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
 {
@@ -81,7 +80,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'quoteRequestEntityMapping.entity:id,code,trade_license_no,company_name,company_address,industry_type_code,emirate_of_registration_id',
             'quotePlan',
             'paymentStatus:id,text',
-            'payment:id,paymentable_id,paymentable_type,authorized_at',
+            'payments:id,paymentable_id,paymentable_type,authorized_at',
             'insuranceProvider:id,text,code',
             'quoteStatus:id,text',
             'plan:id,text',
@@ -136,6 +135,42 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByAdvisorAssignedDates('travelQuoteRequestDetail', 'advisor_assigned_date')
             ->filterBySegment('travel_quote_request')
             ->filterByPrivateClient(request('private_client'))
+            ->when($this->hasFilterValue('authorize_date', $requestParams), function ($query) use ($requestParams) {
+                $authorizedAtRange = $this->getFilterValue('authorize_date', $requestParams);
+
+                // Handle authorize_date as an array of two dates [start_date, end_date]
+                if (is_array($authorizedAtRange) && count($authorizedAtRange) >= 2) {
+                    $startDate = $authorizedAtRange[0];
+                    $endDate = $authorizedAtRange[1];
+
+                    if ($startDate && $endDate) {
+                        $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('authorized_at', [
+                                $this->parseDate($startDate, true),
+                                $this->parseDate($endDate, false),
+                            ]);
+                        });
+                    }
+                }
+            })
+            ->when($this->hasFilterValue('captured_date', $requestParams), function ($query) use ($requestParams) {
+                $capturedAtRange = $this->getFilterValue('captured_date', $requestParams);
+
+                // Handle captured_date as an array of two dates [start_date, end_date]
+                if (is_array($capturedAtRange) && count($capturedAtRange) >= 2) {
+                    $startDate = $capturedAtRange[0];
+                    $endDate = $capturedAtRange[1];
+
+                    if ($startDate && $endDate) {
+                        $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('captured_at', [
+                                $this->parseDate($startDate, true),
+                                $this->parseDate($endDate, false),
+                            ]);
+                        });
+                    }
+                }
+            })
             ->when($this->hasFilterValue('previous_quote_policy_number', $requestParams), function ($query) use ($requestParams) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number', requestParams: $requestParams)->orWhere->filterBy('previous_quote_policy_number', 'policy_number', requestParams: $requestParams));
             })
