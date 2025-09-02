@@ -20,15 +20,29 @@ class GroupMedicalActivityScheduleSeeder extends Seeder
      */
     public function run()
     {
-        // Get role and team IDs
-        $gmAdvisorRole = Role::where('name', RolesEnum::GMAdvisor)->first();
-        $gmManagerRole = Role::where('name', RolesEnum::GMManager)->first();
+        // Fetch all required roles in a single query
+        $roles = Role::whereIn('name', [
+            RolesEnum::GMAdvisor,
+            RolesEnum::GMManager,
+        ])->get()->keyBy('name');
 
-        // Get teams for Group Medical - using multiple teams as shown in screenshot
-        $entryLevelTeam = Team::where('name', TeamNameEnum::EBP)->first(); // Entry-Level
-        $goodTeam = Team::where('name', TeamNameEnum::RM_SPEED)->first(); // Good
-        $bestTeam = Team::where('name', TeamNameEnum::RM_NB)->first(); // Best
-        $renewalTeam = Team::where('name', TeamNameEnum::RM_RENEWALS)->first(); // RM-Renewals
+        // Fetch all required teams in a single query
+        $teams = Team::whereIn('name', [
+            TeamNameEnum::EBP,
+            TeamNameEnum::RM_SPEED,
+            TeamNameEnum::RM_NB,
+            TeamNameEnum::RM_RENEWALS,
+        ])->get()->keyBy('name');
+
+        // Filter and assign roles to respective variables
+        $gmAdvisorRole = $roles->get(RolesEnum::GMAdvisor);
+        $gmManagerRole = $roles->get(RolesEnum::GMManager);
+
+        // Filter and assign teams to respective variables
+        $entryLevelTeam = $teams->get(TeamNameEnum::EBP); // Entry-Level
+        $goodTeam = $teams->get(TeamNameEnum::RM_SPEED); // Good
+        $bestTeam = $teams->get(TeamNameEnum::RM_NB); // Best
+        $renewalTeam = $teams->get(TeamNameEnum::RM_RENEWALS); // RM-Renewals
 
         if (! $gmAdvisorRole || ! $gmManagerRole) {
             $this->command->error('Required GM roles not found. Please ensure GM_ADVISOR and GM_MANAGER roles exist.');
