@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\OcrLogsRequest;
+use App\Models\CarQuote;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
@@ -14,6 +15,7 @@ use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -83,63 +85,42 @@ class AuditableController extends Controller
     {
 
         $quoteId = $request->get('quote_id');
-        $quoteType = $request->get('quote_type');
+        $modelType = $request->get('model_type');
         $insuranceProviderId = $request->get('insurance_provider_id');
 
         $extraLogs = [
             'quote_id' => $quoteId,
-            'quote_type' => $quoteType,
-            'insurance_provider_id' => $insuranceProviderId,
+            'model_type' => $modelType,
+            'insurance_provider_id' => $insuranceProviderId
         ];
 
         try {
             $request->validate([
                 'quote_id' => 'required|integer',
-                'quote_type' => 'required|string',
+                'model_type' => 'required|string',
                 'insurance_provider_id' => 'required|integer',
             ]);
+
+            if (!in_array($modelType, [CarQuote::class])) {
+                LoggerService::error('Policy issuance API logs only supported for CarQuote', extra: [...$extraLogs]);
+                return response()->json([
+                    'error' => 'Policy issuance API logs only supported for CarQuote.'
+                ], 403);
+            }
 
             LoggerService::info('Loading policy issuance API logs', extra: $extraLogs);
 
             // Get the table name dynamically based on quote type
-            $quoteModel = new $quoteType;
-            $quoteTableName = $quoteModel->getTable();
-
-            $policyIssuanceLogs = DB::table($quoteTableName.' as q')
-                ->select([
-                    'q.id as quote_id',
-                    'q.uuid as quote_uuid',
-                    'pi.id as policy_issuance_id',
-                    'pi.model_id',
-                    'pi.model_type',
-                    'pi.insurance_provider_id',
-                    'pi.completed_step',
-                    'ip.id as insurance_provider_id',
-                    'ip.code as insurance_provider_code',
-                    'ip.text as insurance_provider_text',
-                    'pi_logs.id',
-                    'pi_logs.step',
-                    'pi_logs.status',
-                    'pi_logs.created_at',
-                    'pi_logs.policy_issuance_id',
-                    'pi_logs.endPoint',
-                    'pi_logs.payload',
-                    'pi_logs.response',
-                ])
-                ->leftJoin('policy_issuance as pi', function ($join) use ($quoteType) {
-                    $join->on('pi.model_id', '=', 'q.id')
-                        ->where('pi.model_type', '=', $quoteType);
-                })
-                ->leftJoin('insurance_provider as ip', 'pi.insurance_provider_id', '=', 'ip.id')
-                ->leftJoin('policy_issuance_logs as pi_logs', 'pi_logs.policy_issuance_id', '=', 'pi.id')
-                ->where('q.id', $quoteId);
+            $policyIssuanceLogs = app(PolicyIssuanceService::class)->getQueryBuilderForPolicyIssuanceApiLogs($quoteId, $modelType);
 
             if ($insuranceProviderId) {
-                $policyIssuanceLogs = $policyIssuanceLogs->where('pi.insurance_provider_id', $insuranceProviderId);
+                $policyIssuanceLogs = $policyIssuanceLogs->whereHas('policyIssuance', 
+                    fn ($query) => $query->where('insurance_provider_id', $insuranceProviderId)
+                );
             }
 
             $policyIssuanceLogs = $policyIssuanceLogs
-                ->orderBy('pi_logs.created_at', 'desc')
+                ->orderBy('created_at', 'desc')
                 ->get();
 
             return $policyIssuanceLogs;

@@ -6,7 +6,9 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\PolicyIssuanceJob;
+use App\Models\CarQuote;
 use App\Models\PolicyIssuance;
+use App\Models\PolicyIssuanceLog;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use Carbon\Carbon;
@@ -25,6 +27,27 @@ class PolicyIssuanceService
             },
             default => null,
         };
+    }
+
+    public function getQueryBuilderForPolicyIssuanceApiLogs(int $quoteId, string $modelType)
+    {
+        $policyIssuanceLogs = PolicyIssuanceLog::with([
+                'policyIssuance' => fn($q) => $q->select('id','completed_step', 'insurance_provider_id'),
+                'policyIssuance.insuranceProvider' => fn($q) => $q->select('id', 'text', 'code')
+            ])
+            ->select('policy_issuance_logs.*')
+            ->where('model_id', $quoteId)
+            ->where('model_type', $modelType);
+
+        if(in_array($modelType, [CarQuote::class])) {
+            $quoteModel = new $modelType;
+            $quoteTableName = $quoteModel->getTable();
+
+            $policyIssuanceLogs->join($quoteTableName.' as quote', 'quote.id', '=', 'model_id')
+                ->addSelect('quote.uuid as quote_uuid');
+        }
+
+        return $policyIssuanceLogs;
     }
 
     public function checkAllowedAutomations($quoteType, $quote)

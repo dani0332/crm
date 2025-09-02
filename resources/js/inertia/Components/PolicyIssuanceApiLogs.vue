@@ -48,10 +48,10 @@ const apiLogs = reactive({
   table: [
     { text: 'ID', value: 'id' },
     { text: 'REF-ID', value: 'quote_uuid' },
-    { text: 'Completed Step', value: 'completed_step' },
+    { text: 'Completed Step', value: 'policy_issuance.completed_step' },
     { text: 'Step', value: 'step' },
     { text: 'Status', value: 'status' },
-    { text: 'Provider Name', value: 'insurance_provider_text' },
+    { text: 'Provider Name', value: 'policy_issuance.insurance_provider.text' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Action', value: 'action' },
   ],
@@ -72,7 +72,7 @@ const onLoadAuditLogData = async () => {
 
   let data = { 
     quote_id: props.id, 
-    quote_type: props.quoteType ?? props.type,
+    model_type: props.type,
     insurance_provider_id: page.props.quote?.insurance_provider_id,
     jsonData: true
   };
@@ -187,7 +187,7 @@ const onLoadAuditLogData = async () => {
 
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Completed Step:</dt>
-          <dd>{{ selectedLog.completed_step }}</dd>
+          <dd>{{ selectedLog.policy_issuance?.completed_step }}</dd>
         </div>
         
         <div class="grid sm:grid-cols-2">
@@ -210,7 +210,7 @@ const onLoadAuditLogData = async () => {
 
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Provider Name:</dt>
-          <dd>{{ selectedLog.insurance_provider_text }}</dd>
+          <dd>{{ selectedLog.policy_issuance?.insurance_provider?.text }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Created At:</dt>
