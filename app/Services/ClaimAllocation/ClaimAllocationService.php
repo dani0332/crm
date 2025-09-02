@@ -26,14 +26,14 @@ use Illuminate\Support\Facades\Pipeline;
 
 class ClaimAllocationService
 {
-    public function execute(string $quoteUuid, int $quoteTypeId)
+    public function execute(string $claimUuid, int $quoteTypeId)
     {
-        LoggerService::startQuoteLogging($quoteUuid, LoggerFeatureEnum::CLAIM_ALLOCATION);
+        LoggerService::startQuoteLogging($claimUuid, LoggerFeatureEnum::CLAIM_ALLOCATION);
         $quoteType = QuoteTypes::getName($quoteTypeId);
 
         $allocationRequest = new AllocationRequest(
             quoteType: $quoteType,
-            quoteUUID: $quoteUuid,
+            claimUUID: $claimUuid,
             assignmentType: AssignmentTypeEnum::SYSTEM_REASSIGNED,
             isReassignmentJob: false,
         );
@@ -70,7 +70,7 @@ class ClaimAllocationService
             }
 
             $data = [
-                'advisorId' => $request->getAdvisor()?->id ?? $lead?->advisor_id,
+                'managerId' => $request->getAdvisor()?->id ?? $lead?->manager_id,
                 'message' => $message,
                 'status' => Response::HTTP_OK,
             ];
@@ -79,7 +79,7 @@ class ClaimAllocationService
         }
 
         if ($request->isFailed()) {
-            $this->leadAllocationFailedForClaim($request->getQuoteUUID(), $request->getQuoteType());
+            $this->leadAllocationFailedForClaim($request->getClaimUUID(), $request->getQuoteType());
         }
 
         return [

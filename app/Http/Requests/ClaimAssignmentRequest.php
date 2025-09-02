@@ -24,7 +24,7 @@ class ClaimAssignmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quoteUUID' => ['required'],
+            'claimUUID' => ['required'],
             'quoteTypeId' => ['required', Rule::in(QuoteTypeId::asArray())],
             'triggerOCB' => ['sometimes', 'boolean'],
         ];

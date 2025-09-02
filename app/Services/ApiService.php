@@ -506,14 +506,14 @@ class ApiService
     {
         // Extract request parameters
         $quoteTypeId = $request->input('quoteTypeId');
-        $quoteUuid = $request->input('quoteUUID');
+        $claimUuid = $request->input('claimUUID');
 
         try {
-            $result = app(ClaimAllocationService::class)->execute($quoteUuid, $quoteTypeId);
+            $result = app(ClaimAllocationService::class)->execute($claimUuid, $quoteTypeId);
 
             return apiResponse($result, Response::HTTP_OK, 'Claim assignment processed successfully.');
-        } catch (\Throwable $e) {
-            LoggerService::error('Error processing claim assignment', exception: $e);
+        } catch (\Exception $e) {
+            LoggerService::error('Error processing claim assignment',exception: $e);
 
             return apiResponse(
                 null,

@@ -40,7 +40,7 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
     protected function startQuoteLogging()
     {
         LoggerService::startQuoteLogging(
-            $this->allocationRequest->getQuoteUUID(),
+            $this->allocationRequest->getClaimUUID(),
             LoggerFeatureEnum::CLAIM_ALLOCATION
         );
     }
@@ -52,7 +52,7 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
 
     protected function resolveLead()
     {
-        $lead = $this->allocationRequest->model()->where('uuid', $this->allocationRequest->getQuoteUUID())->first();
+        $lead = $this->allocationRequest->model()->where('uuid', $this->allocationRequest->getClaimUUID())->first();
         if (! $lead) {
             LoggerService::info('Claim lead not found');
 
@@ -66,7 +66,7 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
 
     protected function getClaimBaseQuery()
     {
-        return $this->allocationRequest->model()->where('uuid', $this->allocationRequest->getQuoteUUID());
+        return $this->allocationRequest->model()->where('uuid', $this->allocationRequest->getClaimUUID());
     }
 
     protected function throw(string $message, int $code = 500)
