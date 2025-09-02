@@ -132,8 +132,8 @@ const onLoadAuditLogData = async () => {
             :items="filteredLogs || []"
             border-cell
             hide-rows-per-page
-            :rows-per-page="5"
-            :hide-footer="apiLogs.data?.length < 5"
+            :rows-per-page="15"
+            :hide-footer="apiLogs.data?.length < 15"
           >
             <template #item-status="{ status }">
               <x-tag
