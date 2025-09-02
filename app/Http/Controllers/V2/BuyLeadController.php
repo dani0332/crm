@@ -10,6 +10,7 @@ use App\Http\Requests\BuyLeads\BuyLeadsRateFetchRequest;
 use App\Http\Requests\BuyLeads\RequestBuyLeadsRequest;
 use App\Services\BuyLeads\BuyLeadService;
 use App\Services\Logger\LoggerService;
+use App\Services\UserService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -80,11 +81,16 @@ class BuyLeadController extends Controller
 
     public function exportBuyLeadsData(Request $request)
     {
+
+        LoggerService::debug("exportBuyLeadsData".print_r([
+            'request' => $request->all(),
+            ], true));
+
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
         $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
 
         // Query 1
-        $results1 = DB::table('buy_lead_requests as blr')
+        $query1 = DB::table('buy_lead_requests as blr')
             ->selectRaw('
             users.name AS advisor,
             SUM(blr.requested_count) AS requested_count,
@@ -97,23 +103,23 @@ class BuyLeadController extends Controller
             ->join('user_team as ut', 'blr.user_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->whereBetween('blr.created_at', [$startDate, $endDate])
-            ->whereIn('t.parent_team_id', [3, 8])
-            ->groupBy('blr.user_id')
-            ->get();
+            ->whereIn('t.parent_team_id', [3, 8]);
+
+        $query1 = $query1->groupBy('blr.user_id');
+
+        // Log Query 1 SQL
+        LoggerService::sql("Buy Leads Export - Query 1", $query1);
+
+        $results1 = $query1->get();
 
         // Query 2
-        $results2 = DB::table('buy_lead_request_logs as blrl')
+        $query2 = DB::table('buy_lead_request_logs as blrl')
             ->selectRaw("
             CASE
                 WHEN blr.quote_type_id = 1 THEN cqr.code
                 WHEN blr.quote_type_id = 3 THEN hqr.code
                 ELSE NULL
             END AS RefID,
-            CASE
-                WHEN blr.quote_type_id = 1 THEN 'NA'
-                WHEN blr.quote_type_id = 3 THEN hqr.health_team_type
-                ELSE NULL
-            END AS TeamType,
             CASE
                 WHEN blr.quote_type_id = 1 THEN (CASE WHEN cqr.sic_advisor_requested = 1 THEN 'Yes' ELSE 'No' END)
                 WHEN blr.quote_type_id = 3 THEN (CASE WHEN hqr.sic_advisor_requested = 1 THEN 'Yes' ELSE 'No' END)
@@ -129,12 +135,10 @@ class BuyLeadController extends Controller
                 WHEN blr.quote_type_id = 3 THEN hqr.created_at
                 ELSE NULL
             END AS lead_created_at,
-            CASE
-                WHEN blr.quote_type_id = 1 THEN cqr.premium
-                WHEN blr.quote_type_id = 3 THEN hqr.premium
-                ELSE NULL
-            END AS premium,
             users.name AS advisor,
+            users.code AS advisor_code,
+            users.email AS advisor_email,
+            departments.name AS department,
             qs.text AS lead_status,
             blr.cost_per_lead AS cost,
             (
@@ -142,12 +146,12 @@ class BuyLeadController extends Controller
                 FROM user_team ut2
                 JOIN teams t2 ON ut2.team_id = t2.id
                 WHERE ut2.user_id = blr.user_id AND t2.parent_team_id IN (3,8)
-            ) AS teams,
-            blrl.re_assigned_at,
-            blrl.created_at
+            ) AS teams
         ")
             ->join('buy_lead_requests as blr', 'blr.id', '=', 'blrl.buy_lead_request_id')
             ->join('users', 'users.id', '=', 'blr.user_id')
+            ->leftJoin('user_departments', 'user_departments.user_id', '=', 'users.id')
+            ->leftJoin('departments', 'departments.id', '=', 'user_departments.department_id')
             ->leftJoin('car_quote_request as cqr', function ($join) {
                 $join->on('cqr.id', '=', 'blrl.quote_id')
                     ->where('blr.quote_type_id', '=', 1);
@@ -159,18 +163,73 @@ class BuyLeadController extends Controller
             ->leftJoin('quote_status as qs', function ($join) {
                 $join->on('qs.id', '=', DB::raw('CASE WHEN blr.quote_type_id = 1 THEN cqr.quote_status_id WHEN blr.quote_type_id = 3 THEN hqr.quote_status_id ELSE NULL END'));
             })
-            ->whereBetween('blrl.created_at', [$startDate, $endDate])
-            ->groupBy('blrl.quote_id', 'blrl.quote_type_id')
-            ->orderBy('blrl.created_at', 'asc')
-            ->get();
+            ->whereBetween('blrl.created_at', [$startDate, $endDate]);
+
+        $query2 = $query2->groupBy('blrl.quote_id', 'blrl.quote_type_id')
+            ->orderBy('blrl.created_at', 'asc');
+
+        // Log Query 2 SQL
+        LoggerService::sql("Buy Leads Export - Query 2", $query2);
+
+        $results2 = $query2->get();
+
+        // Fetch HRM codes for users with null advisor_code
+        $emailsWithNullCodes = $results2->where('advisor_code', null)
+            ->pluck('advisor_email')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $hrmCodeResults = [];
+        if (!empty($emailsWithNullCodes)) {
+            LoggerService::info('BuyLeadController::exportBuyLeadsData - Fetching HRM codes for users with null codes', [
+                'emails_count' => count($emailsWithNullCodes),
+                'emails' => $emailsWithNullCodes,
+            ]);
+
+            $hrmResponse = UserService::fetchUserCodes($emailsWithNullCodes);
+
+            if ($hrmResponse['success'] && !empty($hrmResponse['results'])) {
+                // Create a map of email => code for quick lookup
+                foreach ($hrmResponse['results'] as $result) {
+                    if ($result['status'] === 'updated' && isset($result['new_code'])) {
+                        $hrmCodeResults[$result['email']] = $result['new_code'];
+                    }
+                }
+
+                LoggerService::info('BuyLeadController::exportBuyLeadsData - HRM codes fetched successfully', [
+                    'codes_retrieved' => count($hrmCodeResults),
+                    'codes_map' => $hrmCodeResults,
+                ]);
+
+                // Update results2 with the fetched codes
+                $results2 = $results2->map(function ($item) use ($hrmCodeResults) {
+                    if ($item->advisor_code === null && isset($item->advisor_email) && isset($hrmCodeResults[$item->advisor_email])) {
+                        $item->advisor_code = $hrmCodeResults[$item->advisor_email];
+
+                        LoggerService::debug('BuyLeadController::exportBuyLeadsData - Updated advisor code in export data', [
+                            'advisor_email' => $item->advisor_email,
+                            'new_code' => $item->advisor_code,
+                        ]);
+                    }
+                    return $item;
+                });
+            } else {
+                LoggerService::warning('BuyLeadController::exportBuyLeadsData - Failed to fetch HRM codes', [
+                    'hrm_response' => $hrmResponse,
+                ]);
+            }
+        }
 
         // File paths
         $start = $startDate->format('d-m-Y');
         $end = $endDate->format('d-m-Y');
+
         $file1 = "buy_leads_summary_{$start}_{$end}.xlsx";
         $file2 = "buy_leads_detailed_{$start}_{$end}.xlsx";
         // Create ZIP using robust logic (mirroring CentralController)
-        $zipFileName = 'buy_leads_export_'.now()->format('Ymd_His').'.zip';
+        $zipFileName = "buy_leads_export_".now()->format('Ymd_His').'.zip';
         $zipFilePath = storage_path('temp/'.$zipFileName);
         $zip = new \ZipArchive;
 
