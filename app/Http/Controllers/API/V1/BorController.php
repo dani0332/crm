@@ -178,7 +178,6 @@ class BorController extends Controller
         }
 
         $documentTypes = $documentQuery->get();
-        dd($documentTypes);
         return response()->json(['data' => $documentTypes]);
     }
 
