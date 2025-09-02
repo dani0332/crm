@@ -150,8 +150,7 @@ class BuyLeadController extends Controller
         ")
             ->join('buy_lead_requests as blr', 'blr.id', '=', 'blrl.buy_lead_request_id')
             ->join('users', 'users.id', '=', 'blr.user_id')
-            ->leftJoin('user_departments', 'user_departments.user_id', '=', 'users.id')
-            ->leftJoin('departments', 'departments.id', '=', 'user_departments.department_id')
+            ->leftJoin('departments', 'departments.id', '=', 'users.department_id')
             ->leftJoin('car_quote_request as cqr', function ($join) {
                 $join->on('cqr.id', '=', 'blrl.quote_id')
                     ->where('blr.quote_type_id', '=', 1);
