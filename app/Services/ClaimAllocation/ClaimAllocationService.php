@@ -185,7 +185,7 @@ class ClaimAllocationService
                 $user = $users->get($item['userId']);
                 if ($user) {
                     $user->status = $reason;
-                    LoggerService::info('user status is going to change on id : ' . $user->id . ' and status : ' . $user->status);
+                    LoggerService::info('user status is going to change on id : '.$user->id.' and status : '.$user->status);
                     $user->save();
                 }
             }
