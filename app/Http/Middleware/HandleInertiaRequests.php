@@ -322,7 +322,7 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         // CLAIM_ALLOCATION_DASHBOARD
                         auth()->user()->can(PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD),
-                        'Claim Allocation',
+                        'Claims',
                         route('claim-allocation-dashboard'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     );
