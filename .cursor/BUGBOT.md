@@ -227,7 +227,7 @@ This file contains automated code review rules for Laravel PHP applications usin
           'email' => 'required|email|unique:users',
           'password' => 'required|min:8',
       ]);
-      
+
       return User::create($request->all());
   }
 
@@ -579,7 +579,6 @@ This file contains automated code review rules for Laravel PHP applications usin
 - **Pattern**: API keys, passwords, or secrets in code or config files
 - **Fix**: Use environment variables and proper `.env` management
 
-
 ## Testing Rules
 
 ### Feature vs Unit Tests
@@ -693,7 +692,6 @@ This file contains automated code review rules for Laravel PHP applications usin
 - **Rule**: Validate file uploads properly
 - **Pattern**: File uploads without size, type, or security validation
 - **Fix**: Use validation rules like `file`, `mimes`, `max`
-
 
 ## Authorization Rules
 
@@ -833,7 +831,6 @@ This file contains automated code review rules for Laravel PHP applications usin
 - **Rule**: Use appropriate queue connections for different job types
 - **Pattern**: All jobs using default queue connection
 - **Fix**: Use different connections (sync, database, redis) based on job requirements
-
 
 ## Laravel Naming Conventions
 
