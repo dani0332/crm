@@ -421,6 +421,7 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_LEADPOOL = 'corpline-leadpool';
     public const CYCLE_LEADPOOL = 'cycle-leadpool';
     public const GROUP_MEDICAL_LEADPOOL = 'group-medical-leadpool';
+    public const TRAVEL_LEADPOOL = 'travel-leadpool';
     public const POLICY_DETAILS_ADD_VAT = 'policy-details-add-vat';
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';

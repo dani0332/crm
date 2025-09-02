@@ -1,5 +1,12 @@
 <script setup>
+import {
+  toggleResetCap,
+  statusSubmit,
+  toggleNormalAllocation,
+  toggleHardStop
+} from '../../Services/LeadAllocation';
 const page = usePage();
+const { isRequired } = useRules();
 
 const refreshGrid = useStorage('refresh-user-counts');
 
@@ -9,6 +16,10 @@ const props = defineProps({
     default: () => [],
   },
   quoteType: String,
+  userBLStatuses: {
+    type: Array,
+    default: () => []
+  },
   totalAssignedLeadCount: {
     type: Number,
     default: 0,
@@ -49,7 +60,6 @@ const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 const lobSpecificLeadAllocation = page.props.lobSpecificLeadAllocation;
 const notification = useToast();
-
 const statusModal = getStatusModal();
 
 const loaders = reactive({
@@ -62,16 +72,31 @@ const statusText = statusId => resolveUserStatusText(statusId);
 const tableHeader = ref([
   { text: 'Name', value: 'userName', width: '240' },
   { text: 'Teams', value: 'teamNames', sortable: true },
-  {
-    text: 'Total Assigned Leads',
-    value: 'allocationCount',
-    sortable: true,
-  },
+  { text: 'Total Assigned Leads', value: 'allocationCount', sortable: true },
+  ...(page.props.quoteType === 'Travel')
+    ? [{ text: 'M.Assigned', value: 'manualAllocationCount', sortable: true }]
+    : [],
+  ...(page.props.quoteType === 'Travel')
+    ? [{ text: 'A.Assigned', value: 'autoAllocationCount', sortable: true }]
+    : [],
   { text: 'Last Allocations', value: 'lastAllocation', sortable: true },
   { text: 'Max Cap Limit', value: 'maxCapacity', sortable: true },
   { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
+  ...(page.props.quoteType === 'Travel')
+    ? [{ text: 'Norm Allo.', value: 'normalAllocationEnabled', sortable: true}]
+    :[],
   { text: 'Reset Cap', value: 'reset_cap', width: '100' },
+  ...(page.props.quoteType === 'Travel')
+    ? [{ text: 'Hard Stop', value: 'isHardStop', sortable: true}]
+    : [],
+  ...(page.props.quoteType === 'Travel')
+    ? [{ text: 'Last Login', value: 'lastLogin', sortable: true}]
+    : []
 ]);
+
+const filters = reactive({
+  userBLStatus: null
+});
 
 const leadData = ref([
   {
@@ -117,6 +142,7 @@ const isCapChanged = computed(() => {
 
 const onStatusModalClose = event => {
   const item = leadData?.value.find(item => item.id === statusModal?.data.id);
+
   if (!event) {
     item.reset = true;
     setTimeout(() => {
@@ -131,31 +157,32 @@ const onStatusSubmit = async () => {
   const item = leadData.value.find(item => item.id === statusModal.data.id);
 
   item.loading = true;
-  await axios
-    .post(`/lead-allocation/${page.props.quoteType}/update-availability`, [
-      {
-        userId: statusModal.data.userId,
-        id: statusModal.data.id,
-        reason: statusModal.data.reason,
-      },
-    ])
-    .then(res => {
-      router.reload({
+
+  try {
+    await statusSubmit(statusModal.data.userId, statusModal.data.id, statusModal.data.reason, page.props.quoteType);
+  } catch (error) {
+    notification.error({
+      title: 'Error',
+      description: 'Something went wrong!',
+      position: 'top'
+    });
+  } finally {
+    router.reload({
         only: ['data'],
         preserveScroll: true,
         preserveState: true,
       });
-    })
-    .finally(() => {
+
       statusModal.loader = false;
       item.loading = false;
       statusModal.show = false;
-    });
+  }
 };
 
 const onToggleStatus = (status, id, userId) => {
   statusModal.data.id = id;
   statusModal.data.userId = userId;
+
   if (status) {
     statusModal.data.reason = 1;
     onStatusSubmit();
@@ -167,15 +194,50 @@ const onToggleStatus = (status, id, userId) => {
 
 const onToggleResetCap = async (active, userId, leadAllocationId) => {
   loaders.table = true;
-  await axios
-    .post('/lead-allocation/toggle-reset-cap', {
-      leadId: leadAllocationId,
-      userId,
-      resetCap: active,
-    })
-    .finally(() => {
-      loaders.table = false;
+  
+  try {
+    await toggleResetCap(active, userId, leadAllocationId);
+  } catch (error) {
+    notification.error({
+      title: 'Error',
+      description: 'Something went wrong!',
+      position: 'top',
     });
+  } finally {
+    loaders.table = false;
+  }
+};
+
+const onToggleNormalAllocation = async (active, userId, laId) => {
+  loaders.table = true;
+
+  try {
+    await toggleNormalAllocation(active, userId, laId);
+  } catch (error) {
+    notification.error({
+      title: 'Error',
+      description: 'Something went wrong!',
+      position: 'top',
+    });
+  } finally {
+    loaders.table = false;
+  }
+};
+
+const onToggleHardStop = async (status, userId) => {
+  loaders.table = true;
+  
+  try {
+    await toggleHardStop(status, userId);
+  } catch(error) {
+    notification.error({
+      title: 'Error',
+      description: 'Something went wrong!',
+      position: 'top',
+    })
+  } finally {
+    loaders.table = false;
+  }
 };
 
 async function fetchData() {
@@ -185,6 +247,29 @@ async function fetchData() {
     preserveState: true,
   });
 }
+
+const onReset = () => {
+  router.visit(`/allocation-dashboard/${page.props.quoteType}`, {
+    method: 'get',
+    data: {},
+    preserveScroll: true,
+    onBefore: () => (loaders.reset = true),
+    onSuccess: () => (loaders.reset = false)
+  });
+}
+
+const onSubmit = isValid => {
+  if (isValid) {
+    router.visit(`/allocation-dashboard/${page.props.quoteType}`, {
+      method: 'get',
+      data: { ...filters },
+      preserveState: true,
+      preserveScroll: true,
+      onBefore: () => (loaders.search = true),
+      onFinish: () => (loaders.search = false),
+    });
+  }
+};
 
 const onSubmitChanges = async () => {
   loaders.submit = true;
@@ -196,6 +281,7 @@ const onSubmitChanges = async () => {
         maxCap: item.cap,
       };
     });
+
   await axios
     .post(`/lead-allocation/${page.props.quoteType}/update-cap`, { max_cap })
     .then(response => {
@@ -254,6 +340,7 @@ onMounted(() => {
     }
     return column;
   });
+
   leadData.value = props.data.map(item => {
     return {
       id: item.id,
@@ -272,7 +359,9 @@ onMounted(() => {
 
     <Head :title="quoteType + ' Lead Allocation'" />
     <div class="flex justify-between items-center">
-      <div></div>
+      <div>
+        <h2 class="text-lg font-semibold">{{ quoteType }} Lead Allocation Management</h2>
+      </div>
       <div
         class="flex gap-1"
         v-if="
@@ -336,6 +425,44 @@ onMounted(() => {
       </TransitionGroup>
     </div>
 
+    <!-- Filters -->
+    <div v-if="page.props.quoteType === 'Travel'">
+    <x-divider class="my-4" />
+    <x-form @submit="onSubmit" :auto-focus="false">
+      <div class="grid sm:grid-cols-2 gap-4">
+        <x-select
+        label="Buy Lead Status of Users"
+          required
+          placeholder="Select Status"
+          :options="userBLStatuses || []"
+          filterable
+          v-model="filters.userBlStatus"
+          :rules="[isRequired]"
+        ></x-select>
+      </div>
+      <div class="flex justify-end gap-3 mb-4">
+        <x-button
+          size="md"
+          color="orange"
+          type="submit"
+          :loading="loaders.search"
+        >
+          Search
+        </x-button>
+        <x-button
+          size="md"
+          color="primary"
+          type="submit"
+          :loading="loaders.reset"
+          @click.prevent="onReset()"
+        >
+          Reset
+        </x-button>
+      </div>
+    </x-form>
+    </div>
+
+
     <DataTable
       table-class-name="compact"
       :headers="tableHeader"
@@ -397,6 +524,18 @@ onMounted(() => {
         </div>
       </template>
 
+      <template
+        #item-normalAllocationEnabled="{ normalAllocationEnabled, userId, id }"
+      >
+        <div class="text-center">
+          <ItemToggler
+            :is-active="normalAllocationEnabled"
+            :id="id"
+            @toggle="onToggleNormalAllocation($event.active, userId, id)"
+          />
+        </div>
+      </template>
+
       <template #item-reset_cap="{ reset_cap, userId, id }">
         <div class="text-center">
           <ItemToggler
@@ -406,6 +545,17 @@ onMounted(() => {
           />
         </div>
       </template>
+      
+      <template #item-isHardStop="{ isHardStop, userId, id }">
+        <div class="text-center">
+          <ItemToggler
+            :is-active="isHardStop"
+            :id="id"
+            @toggle="onToggleHardStop($event.active, userId)"
+          />
+        </div>
+      </template>
+
     </DataTable>
 
     <x-modal
