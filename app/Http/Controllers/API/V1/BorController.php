@@ -151,18 +151,34 @@ class BorController extends Controller
             $borDocTypes = [DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YACHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_PET, DocumentTypeCode::BAL_BS, DocumentTypeCode::GM_BOL, DocumentTypeCode::BUS_BAL];
         }
 
-        $documentTypes = DocumentType::whereIn('code', $borDocTypes)
+        $documentQuery = DocumentType::whereIn('code', $borDocTypes)
             ->when(($request->has('quote_type_id')), function ($query) use ($request) {
                 $query->where('quote_type_id', $request->input('quote_type_id'));
             })
-            ->when($request->has('business_type_of_insurance_id'), function ($query) use ($request) {
-                $query->where(function ($query) use ($request) {
-                    $query->where('business_type_of_insurance_id', $request->input('business_type_of_insurance_id'))->orWhereNull('business_type_of_insurance_id');
-                });
+            ->when(!$request->has('business_type_of_insurance_id'), function ($query) use ($request) {
+                $query->where('business_type_of_insurance_id', null);
             })
-            ->where('is_active', 1)
-            ->get();
+            ->where('is_active', 1);
+
+        // Check if business_type_of_insurance_id filter should be applied
+        if ($request->has('business_type_of_insurance_id')) {
+            $businessTypeId = $request->input('business_type_of_insurance_id');
             
+            // Clone the query to test if records exist with the business_type_of_insurance_id
+            $testQuery = clone $documentQuery;
+            $recordsExist = $testQuery->where('business_type_of_insurance_id', $businessTypeId)->exists();
+            
+            if ($recordsExist) {
+                // Apply the filter if records exist
+                $documentQuery->where('business_type_of_insurance_id', $businessTypeId);
+            } else {
+                // Fall back to null business_type_of_insurance_id if no records found
+                $documentQuery->where('business_type_of_insurance_id', null);
+            }
+        }
+
+        $documentTypes = $documentQuery->get();
+        dd($documentTypes);
         return response()->json(['data' => $documentTypes]);
     }
 
