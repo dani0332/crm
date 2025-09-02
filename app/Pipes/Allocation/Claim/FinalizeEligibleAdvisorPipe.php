@@ -18,13 +18,12 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
             $this->throw('No eligible advisors found', self::OK);
         }
         $availableUserIds = collect($eligibleAdvisors ?? [])->pluck('user_id')->filter()->toArray();
-      
 
         LoggerService::info('Available User IDs are: '.json_encode($availableUserIds));
 
         $advisorId = $this->getFinalAdvisorId($availableUserIds);
         $advisor = User::find($advisorId);
-  
+
         if (empty($advisor)) {
             LoggerService::warning('No advisor found');
             $this->allocationRequest->markAsFailed();

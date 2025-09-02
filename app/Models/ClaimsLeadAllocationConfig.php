@@ -21,7 +21,6 @@ class ClaimsLeadAllocationConfig extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $table = 'claims_lead_allocation_config';
-
     protected $fillable = [
         'user_id',
         'quote_type_id',
@@ -32,7 +31,6 @@ class ClaimsLeadAllocationConfig extends Model implements AuditableContract
         'last_allocated',
         'reset_cap',
     ];
-
     protected $casts = [
         'max_capacity' => 'integer',
         'allocation_count' => 'integer',
