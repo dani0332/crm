@@ -82,7 +82,7 @@ class AutomationFailedJob implements ShouldQueue
             'recipientName' => $this->recipientName,
             'imcrmReferenceNumber' => $this->quote->code,
             'insurerApiStatus' => $this->statusAPIFailed,
-            'insurerName' => $this->quote->first_name.' '.$this->quote->last_name,
+            'insurerName' => $this->quote?->latestInsured?->first_name.' '.$this->quote?->latestInsured?->last_name,
             'processInvolved' => $this->processInvolved,
             'workflowType' => $this->workflowType,
         ];
