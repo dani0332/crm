@@ -513,7 +513,7 @@ class ApiService
 
             return apiResponse($result, Response::HTTP_OK, 'Claim assignment processed successfully.');
         } catch (\Exception $e) {
-            LoggerService::error('Error processing claim assignment',exception: $e);
+            LoggerService::error('Error processing claim assignment', exception: $e);
 
             return apiResponse(
                 null,
