@@ -89,7 +89,7 @@ class AuditableController extends Controller
         $extraLogs = [
             'quote_id' => $quoteId,
             'quote_type' => $quoteType,
-            'insurance_provider_id' => $insuranceProviderId
+            'insurance_provider_id' => $insuranceProviderId,
         ];
 
         try {
@@ -105,7 +105,7 @@ class AuditableController extends Controller
             $quoteModel = new $quoteType;
             $quoteTableName = $quoteModel->getTable();
 
-            $policyIssuanceLogs = DB::table($quoteTableName . ' as q')
+            $policyIssuanceLogs = DB::table($quoteTableName.' as q')
                 ->select([
                     'q.id as quote_id',
                     'q.uuid as quote_uuid',
@@ -124,7 +124,7 @@ class AuditableController extends Controller
                     'pi_logs.policy_issuance_id',
                     'pi_logs.endPoint',
                     'pi_logs.payload',
-                    'pi_logs.response'
+                    'pi_logs.response',
                 ])
                 ->leftJoin('policy_issuance as pi', function ($join) use ($quoteType) {
                     $join->on('pi.model_id', '=', 'q.id')
@@ -144,7 +144,7 @@ class AuditableController extends Controller
 
             return $policyIssuanceLogs;
         } catch (\Exception $e) {
-            LoggerService::info('Error loading policy issuance API logs', 
+            LoggerService::info('Error loading policy issuance API logs',
                 extra: [...$extraLogs, 'error' => $e->getMessage()]
             );
 
