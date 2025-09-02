@@ -85,6 +85,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     private const POLICY_DOC_TAX_INVOICE_BY_BUYER = 'Tax invoice by buyer';
     private const POLICY_DOC_RECEIPT = 'Receipt with reference';
     private const POLICY_DOC_POLICY_SCHEDULE = 'Motor Insurance Policy Schedule';
+    private const POLICY_DOC_RENEWAL_POLICY_SCHEDULE = 'Motor Renewal Policy Schedule';
     private const POLICY_DOC_CERTIFICATE_OF_INSURANCE = 'Certificate of Insurance';
     private const RTA_UPLOAD_STATUS_DONE = '1';
     private const RTA_UPLOAD_STATUS_PENDING = '0';
@@ -808,6 +809,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             self::POLICY_DOC_RECEIPT => DocumentTypeCode::CPD_RECEIPT,
             self::POLICY_DOC_POLICY_SCHEDULE => DocumentTypeCode::CPS,
             self::POLICY_DOC_CERTIFICATE_OF_INSURANCE => DocumentTypeCode::CPC,
+            self::POLICY_DOC_RENEWAL_POLICY_SCHEDULE => DocumentTypeCode::CPS,
         ];
 
         $docCode = $documentCodeMapping[$docName] ?? null;
