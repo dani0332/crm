@@ -218,20 +218,20 @@ class BorService
 
         // Map LOB to document type code
         $lobToDocumentType = [
-            'car' => DocumentTypeCode::BAL,
-            'bike' => DocumentTypeCode::BAL_BIKE,
-            'travel' => DocumentTypeCode::BAL_TRVL,
-            'home' => DocumentTypeCode::BAL_HOME,
-            'pet' => DocumentTypeCode::BAL_PET,
-            'health' => DocumentTypeCode::BAL_HLTH,
-            'life' => DocumentTypeCode::BAL_LIFE,
-            'cycle' => DocumentTypeCode::BAL_CYCLE,
-            'yacht' => DocumentTypeCode::BAL_YACHT,
-            'business' => [DocumentTypeCode::BUS_BAL, DocumentTypeCode::BAL_BS],
-            'group_medical' => DocumentTypeCode::GM_BOL,
+            'Car' => DocumentTypeCode::BAL,
+            'Bike' => DocumentTypeCode::BAL_BIKE,
+            'Travel' => DocumentTypeCode::BAL_TRVL,
+            'Home' => DocumentTypeCode::BAL_HOME,
+            'Pet' => DocumentTypeCode::BAL_PET,
+            'Health' => DocumentTypeCode::BAL_HLTH,
+            'Life' => DocumentTypeCode::BAL_LIFE,
+            'Cycle' => DocumentTypeCode::BAL_CYCLE,
+            'Yacht' => DocumentTypeCode::BAL_YACHT,
+            'Business' => array(DocumentTypeCode::BUS_BAL, DocumentTypeCode::BAL_BS),
+            'Group Medical' => DocumentTypeCode::GM_BOL,
         ];
 
-        return $lobToDocumentType[strtolower($quoteType)] ?? 'BAL';
+        return $lobToDocumentType[$quoteType] ?? 'BAL';
     }
 
     /**
