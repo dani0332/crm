@@ -1088,7 +1088,7 @@ class AMLController extends Controller
     public function getQuoteDetailsFromInsurer(Request $request)
     {
         $result = app(AMLService::class)->getQuoteDetailsFromInsurer($request->quoteTypeId, $request->quoteUID);
-        
+
         return response()->json($result);
     }
 }
