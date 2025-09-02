@@ -376,6 +376,7 @@ class ClaimsService extends BaseService
             $apiData['serviceTypeId'] = $data['service_type_id'];
             $apiData['requestReferenceNumber'] = $data['request_reference_number'];
         }
+
         return $apiData;
     }
 
