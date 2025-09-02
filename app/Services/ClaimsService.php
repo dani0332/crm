@@ -324,13 +324,6 @@ class ClaimsService extends BaseService
                 'claimTypeId' => $data['claim_type_id'] ?? null,
             ];
 
-            if (! empty($data['customer_id'])) {
-                $apiData['customerId'] = $data['customer_id'];
-            }
-            if (! empty($data['insurance_provider_id'])) {
-                $apiData['insuranceProviderId'] = $data['insurance_provider_id'];
-            }
-
             // Add vehicle information if available
             if (! empty($data['car_make'])) {
                 $apiData['carMake'] = $data['car_make'];
@@ -368,6 +361,22 @@ class ClaimsService extends BaseService
             ]);
             throw $e;
         }
+    }
+
+    private function addLineOfBusinessData(array $apiData, array $data): array
+    {
+        $quoteTypeId = $data['quote_type_id'] ?? null;
+        $isCarQuoteType = $quoteTypeId == QuoteTypeId::Car;
+        $isHealthQuoteType = $quoteTypeId == QuoteTypeId::Health;
+        if ($isCarQuoteType) {
+            $apiData['carMake'] = $data['car_make'];
+        }
+        if ($isHealthQuoteType) {
+            $apiData['claimRequestTypeId'] = $data['claim_request_type_id'];
+            $apiData['serviceTypeId'] = $data['service_type_id'];
+            $apiData['requestReferenceNumber'] = $data['request_reference_number'];
+        }
+        return $apiData;
     }
 
     /**

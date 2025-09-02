@@ -20,7 +20,6 @@ class ClaimUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        $claimId = $this->route('claim')?->id ?? $this->route('id');
 
         return [
             // Required basic fields

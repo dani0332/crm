@@ -273,7 +273,7 @@ enum ClaimsEnum: string
             self::CLAIM_SUB_STATUS_NEW_CLAIM->value,
             self::CLAIM_SUB_STATUS_CLAIM_INITIATED->value,
             self::CLAIM_SUB_STATUS_ADDITIONAL_DOCUMENTS_AWAITED->value,
-            self::CLAIM_SUB_STATUS_CLAIMS_REGISTERED->value,
+            self::CLAIM_SUB_STATUS_CLAIM_REGISTERED->value,
             self::CLAIM_SUB_STATUS_CLAIM_UNDER_REVIEW->value,
             self::CLAIM_SUB_STATUS_CLAIM_APPROVED->value,
             self::CLAIM_SUB_STATUS_CLAIM_PARTIALLY_APPROVED->value,
