@@ -812,19 +812,19 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         $docCode = $documentCodeMapping[$docName] ?? null;
         if ($docCode) {
-            info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Document Mapping found for : '.$docName, ['key' => $docName, 'code' => $docCode]);
+            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Document Mapping found for : '.$docName, ['key' => $docName, 'code' => $docCode]);
 
             return ['key' => $docName, 'code' => $docCode];
         }
 
         if (str_contains($docName, self::POLICY_DOC_CERTIFICATE_OF_INSURANCE)) {
             $docCode = QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE;
-            info($this->getLogPrefix(__FUNCTION__).' Document Name : '.$docName.' - ', ['key' => $docName, 'code' => $docCode]);
+            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Document Name : '.$docName.' - ', ['key' => $docName, 'code' => $docCode]);
 
             return ['key' => $docName, 'code' => $docCode];
         }
 
-        info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Document Mapping not found for : '.$docName);
+        LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Document Mapping not found for : '.$docName);
 
         return null;
     }
