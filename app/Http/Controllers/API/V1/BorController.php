@@ -150,16 +150,19 @@ class BorController extends Controller
         } else {
             $borDocTypes = [DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YACHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_PET, DocumentTypeCode::BAL_BS, DocumentTypeCode::GM_BOL, DocumentTypeCode::BUS_BAL];
         }
-        
+
         $documentTypes = DocumentType::whereIn('code', $borDocTypes)
-            ->when(($request->has('quote_type_id') && $request->input('quote_type_id') == QuoteTypeId::Car), function ($query) use ($request) {
+            ->when(($request->has('quote_type_id')), function ($query) use ($request) {
                 $query->where('quote_type_id', $request->input('quote_type_id'));
             })
             ->when($request->has('business_type_of_insurance_id'), function ($query) use ($request) {
-                $query->where('business_type_of_insurance_id', $request->input('business_type_of_insurance_id'))->orWhere('business_type_of_insurance_id', null);
+                $query->where(function ($query) use ($request) {
+                    $query->where('business_type_of_insurance_id', $request->input('business_type_of_insurance_id'))->orWhereNull('business_type_of_insurance_id');
+                });
             })
             ->where('is_active', 1)
             ->get();
+            
         return response()->json(['data' => $documentTypes]);
     }
 
