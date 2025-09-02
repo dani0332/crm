@@ -3,12 +3,12 @@
 namespace App\Jobs\Claim;
 
 use App\Models\ClaimRequest;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Services\Logger\LoggerService;
 
 class ClaimIntroEmail implements ShouldQueue
 {
@@ -36,9 +36,9 @@ class ClaimIntroEmail implements ShouldQueue
 
         if (! $claim) {
             LoggerService::error(self::class.' - Claim not found');
+
             return;
         }
 
-        
     }
 }
