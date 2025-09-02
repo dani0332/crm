@@ -381,7 +381,7 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => !empty($attachments) ? $attachments : null,
+                'attachment' => ! empty($attachments) ? $attachments : null,
             ];
 
             $ccAdvisor = [];
