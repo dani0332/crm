@@ -507,6 +507,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         // Sync latest Car Quote Info to Quote
         app(CentralService::class)->syncLatestCarQuoteInfoToQuote($quote);
+        LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Latest Car Quote Info synced to quote');
 
         $response['status'] = true;
         $response['message'] = 'Policy issued successfully';
@@ -537,6 +538,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
     public function getAndUploadPolicyDocumentsToIMCRM($quote, $process): array
     {
+        LoggerService::startQuoteLogging($quote);
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Policy documents upload to IMCRM started');
         $response = ['status' => false, 'completed_step' => self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, 'error' => null, 'message' => null];
 
