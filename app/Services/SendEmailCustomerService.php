@@ -341,6 +341,7 @@ class SendEmailCustomerService extends BaseService
         try {
             LoggerService::info('fn: sendRenewalsOcbEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
 
+            $attachments = [];
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
 
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
@@ -348,7 +349,6 @@ class SendEmailCustomerService extends BaseService
             if ($emailAttachments) {
                 LoggerService::info('fn: sendRenewalsOcbEmail - emailAttachments exists');
 
-                $attachments = [];
                 foreach ($emailAttachments as $emailAttachment) {
                     $attachments[] = [
                         'url' => $emailAttachment,
@@ -364,6 +364,7 @@ class SendEmailCustomerService extends BaseService
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,
                 ];
+                LoggerService::info('attachments: ', extra: ['attachments' => $attachments]);
             }
 
             $body = [
@@ -380,7 +381,7 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => isset($attachments) ? $attachments : null,
+                'attachment' => !empty($attachments) ? $attachments : null,
             ];
 
             $ccAdvisor = [];
