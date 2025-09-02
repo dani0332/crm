@@ -33,7 +33,6 @@ enum QuoteFlowType: int
             QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS => 'home_automated_followups',
             QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS => 'home_renewal_automated_followups',
             QuoteFlowType::MOTOR_PCP_FOLLOWUPS => 'motor_pcp_followups',
-            QuoteFlowType::CAR_CQF_RENEWAL_FOLLOWUPS => 'car_cqf_renewal_followups',
             QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA => 'sic_health_followups_wa',
             QuoteFlowType::LIFE_AUTOMATED_FOLLOWUPS => 'life_automated_followups',
             QuoteFlowType::LIFE_ADVANCE_BIRTHDAY_WISH => 'life_advance_birthday_wish',

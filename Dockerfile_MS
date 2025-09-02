@@ -73,7 +73,7 @@ wget \
 libfreetype6 \
 libjpeg62-turbo \
 libpng16-16 \
-libzip4 \
+libzip-dev \
 zlib1g \
 libicu-dev \
 libmemcached11 \
