@@ -485,6 +485,14 @@ const isRenewalUpload = computed(() => {
   return page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD;
 });
 
+const isGIG = computed(() => {
+  return page.props.quote?.plan_provider_code === page.props.insuranceProviderCodeEnum.AXA;
+});
+
+const isLIVA = computed(() => {
+  return page.props.quote?.plan_provider_code === page.props.insuranceProviderCodeEnum.RSA;
+});
+
 const leadStatusOptions = computed(() => {
   const canUpdateToFakeDuplicate = can(
     permissionEnum.UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE,
@@ -4330,6 +4338,13 @@ function handleOcrNotification(event) {
 
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
+    :type="modelClass"
+    :id="$page.props.record.id"
+    :expanded="sectionExpanded"
+  />
+
+  <PolicyIssuanceApiLogs
+    v-if="isGIG || isLIVA"
     :type="modelClass"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"

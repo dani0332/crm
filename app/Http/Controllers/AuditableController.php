@@ -79,6 +79,82 @@ class AuditableController extends Controller
         return $query->orderBy('created_at', 'desc')->get();
     }
 
+    public function loadPolicyIssuanceApiLogs(Request $request)
+    {
+
+        $quoteId = $request->get('quote_id');
+        $quoteType = $request->get('quote_type');
+        $insuranceProviderId = $request->get('insurance_provider_id');
+
+        $extraLogs = [
+            'quote_id' => $quoteId,
+            'quote_type' => $quoteType,
+            'insurance_provider_id' => $insuranceProviderId,
+        ];
+
+        try {
+            $request->validate([
+                'quote_id' => 'required|integer',
+                'quote_type' => 'required|string',
+                'insurance_provider_id' => 'required|integer',
+            ]);
+
+            LoggerService::info('Loading policy issuance API logs', extra: $extraLogs);
+
+            // Get the table name dynamically based on quote type
+            $quoteModel = new $quoteType;
+            $quoteTableName = $quoteModel->getTable();
+
+            $policyIssuanceLogs = DB::table($quoteTableName.' as q')
+                ->select([
+                    'q.id as quote_id',
+                    'q.uuid as quote_uuid',
+                    'pi.id as policy_issuance_id',
+                    'pi.model_id',
+                    'pi.model_type',
+                    'pi.insurance_provider_id',
+                    'pi.completed_step',
+                    'ip.id as insurance_provider_id',
+                    'ip.code as insurance_provider_code',
+                    'ip.text as insurance_provider_text',
+                    'pi_logs.id',
+                    'pi_logs.step',
+                    'pi_logs.status',
+                    'pi_logs.created_at',
+                    'pi_logs.policy_issuance_id',
+                    'pi_logs.endPoint',
+                    'pi_logs.payload',
+                    'pi_logs.response',
+                ])
+                ->leftJoin('policy_issuance as pi', function ($join) use ($quoteType) {
+                    $join->on('pi.model_id', '=', 'q.id')
+                        ->where('pi.model_type', '=', $quoteType);
+                })
+                ->leftJoin('insurance_provider as ip', 'pi.insurance_provider_id', '=', 'ip.id')
+                ->leftJoin('policy_issuance_logs as pi_logs', 'pi_logs.policy_issuance_id', '=', 'pi.id')
+                ->where('q.id', $quoteId);
+
+            if ($insuranceProviderId) {
+                $policyIssuanceLogs = $policyIssuanceLogs->where('pi.insurance_provider_id', $insuranceProviderId);
+            }
+
+            $policyIssuanceLogs = $policyIssuanceLogs
+                ->orderBy('pi_logs.created_at', 'desc')
+                ->get();
+
+            return $policyIssuanceLogs;
+        } catch (\Exception $e) {
+            LoggerService::info('Error loading policy issuance API logs',
+                extra: [...$extraLogs, 'error' => $e->getMessage()]
+            );
+
+            return response()->json([
+                'error' => 'An error occurred while loading policy issuance API logs.',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function loadApiLogs(Request $request)
     {
         try {
