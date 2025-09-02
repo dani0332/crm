@@ -87,4 +87,25 @@ class OcrUtils
 
         return is_array($data) ? $data : [];
     }
+
+    public static function extractPlateCodeNumber(?string $plateNumber): ?array
+    {
+        if (empty($plateNumber)) {
+            return null;
+        }
+
+        $cleaned = trim($plateNumber);
+        if (strpos($cleaned, '/') !== false) {
+            $parts = explode('/', $cleaned, 2);
+            return [
+                'place_code' => trim($parts[0]),
+                'plate_number' => trim($parts[1])
+            ];
+        }
+
+        return [
+            'place_code' => null,
+            'plate_number' => null
+        ];
+    }
 }
