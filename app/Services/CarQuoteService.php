@@ -1905,6 +1905,8 @@ class CarQuoteService extends BaseService
 
     public function exportnonPUAAuthorized($requestParams = [])
     {
+        LoggerService::info('CarQuoteService::exportnonPUAAuthorized - Method called for Car PUA export');
+
         if (! empty($requestParams)) {
             $request = new \Illuminate\Http\Request($requestParams);
         } else {
@@ -1957,14 +1959,14 @@ class CarQuoteService extends BaseService
             })
             ->when($request->filled('authorize_date'), function ($query) use ($request) {
                 $authorizeDate = $request->input('authorize_date');
-                if (is_array($authorizeDate) && count($authorizeDate) >= 2) {
-                    $startDate = Carbon::parse($authorizeDate[0])->startOfDay()->toDateTimeString();
-                    $endDate = Carbon::parse($authorizeDate[1])->endOfDay()->toDateTimeString();
-                    $query->whereBetween('p.authorized_at', [$startDate, $endDate]);
+                if ($authorizeDate) {
+                    $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
                 }
             })
-            ->orderBy('q.paid_at', 'desc')
-            ->get();
+            ->orderBy('q.paid_at', 'desc');
+
+        LoggerService::sql('Car exportnonPUAAuthorized Query', $nonPUAAuthLead);
+        $nonPUAAuthLead = $nonPUAAuthLead->get();
 
         $nonPUAAuthTeamCount = DB::table('car_quote_request as q')
             ->select(
@@ -1992,20 +1994,22 @@ class CarQuoteService extends BaseService
             })
             ->when($request->filled('authorize_date'), function ($query) use ($request) {
                 $authorizeDate = $request->input('authorize_date');
-                if (is_array($authorizeDate) && count($authorizeDate) >= 2) {
-                    $startDate = Carbon::parse($authorizeDate[0])->startOfDay()->toDateTimeString();
-                    $endDate = Carbon::parse($authorizeDate[1])->endOfDay()->toDateTimeString();
-                    $query->whereBetween('p.authorized_at', [$startDate, $endDate]);
+                if ($authorizeDate) {
+                    $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
                 }
             })
-            ->groupBy('t.name')
-            ->get();
+            ->groupBy('t.name');
+
+        LoggerService::sql('Car exportnonPUAAuthorized Team Count Query', $nonPUAAuthTeamCount);
+        $nonPUAAuthTeamCount = $nonPUAAuthTeamCount->get();
 
         return [$nonPUAAuthLead, $nonPUAAuthTeamCount];
     }
 
     public function exportPUAAuthorized($requestParams = [])
     {
+        LoggerService::info('CarQuoteService::exportPUAAuthorized - Method called for Car PUA export');
+
         if (! empty($requestParams)) {
             $request = new \Illuminate\Http\Request($requestParams);
         } else {
@@ -2050,14 +2054,13 @@ class CarQuoteService extends BaseService
             ->where('t.parent_team_id', '=', $carTeam->id)
             ->when($request->filled('authorize_date'), function ($query) use ($request) {
                 $authorizeDate = $request->input('authorize_date');
-                if (is_array($authorizeDate) && count($authorizeDate) >= 2) {
-                    $startDate = Carbon::parse($authorizeDate[0])->startOfDay()->toDateTimeString();
-                    $endDate = Carbon::parse($authorizeDate[1])->endOfDay()->toDateTimeString();
-                    $query->whereBetween('p.authorized_at', [$startDate, $endDate]);
+                if ($authorizeDate) {
+                    $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
                 }
             })
             ->orderBy('q.paid_at', 'desc');
 
+        LoggerService::sql('Car exportPUAAuthorized Query', $puaAuthUpdate);
         $puaAuthUpdate = $puaAuthUpdate->get();
 
         $puaAuthTeamUpdate = DB::table('car_quote_plan_details as cqp')
@@ -2082,20 +2085,22 @@ class CarQuoteService extends BaseService
             ->where('t.parent_team_id', '=', $carTeam->id)
             ->when($request->filled('authorize_date'), function ($query) use ($request) {
                 $authorizeDate = $request->input('authorize_date');
-                if (is_array($authorizeDate) && count($authorizeDate) >= 2) {
-                    $startDate = Carbon::parse($authorizeDate[0])->startOfDay()->toDateTimeString();
-                    $endDate = Carbon::parse($authorizeDate[1])->endOfDay()->toDateTimeString();
-                    $query->whereBetween('p.authorized_at', [$startDate, $endDate]);
+                if ($authorizeDate) {
+                    $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
                 }
             })
-            ->groupBy('t.name')
-            ->get();
+            ->groupBy('t.name');
+
+        LoggerService::sql('Car exportPUAAuthorized Team Count Query', $puaAuthTeamUpdate);
+        $puaAuthTeamUpdate = $puaAuthTeamUpdate->get();
 
         return [$puaAuthUpdate, $puaAuthTeamUpdate];
     }
 
     public function exportPUAUpdates($requestParams = [])
     {
+        LoggerService::info('CarQuoteService::exportPUAUpdates - Method called for Car PUA export');
+
         if (! empty($requestParams)) {
             $request = new \Illuminate\Http\Request($requestParams);
         } else {
@@ -2107,7 +2112,7 @@ class CarQuoteService extends BaseService
         $startDate = Carbon::now()->subDay()->startOfDay();
         $endDate = Carbon::now()->subDay()->endOfDay();
 
-        return DB::table('car_quote_plan_details as cqp')
+        $puaUpdatesQuery = DB::table('car_quote_plan_details as cqp')
             ->join('car_quote_request as cqr', 'cqp.quote_uuid', '=', 'cqr.uuid')
             ->leftJoin('payments as p', function ($join) {
                 $join->on('p.paymentable_id', '=', 'cqr.id')
@@ -2131,12 +2136,14 @@ class CarQuoteService extends BaseService
             ->whereColumn('cqp.plan_id', 'cqr.plan_id')
             ->when($request->filled('captured_date'), function ($query) use ($request) {
                 $capturedDate = $request->input('captured_date');
-                if (is_array($capturedDate) && count($capturedDate) >= 2) {
-                    $startDate = Carbon::parse($capturedDate[0])->startOfDay()->toDateTimeString();
-                    $endDate = Carbon::parse($capturedDate[1])->endOfDay()->toDateTimeString();
-                    $query->whereBetween('p.captured_at', [$startDate, $endDate]);
+                if ($capturedDate) {
+                    $query->whereDate('p.captured_at', Carbon::parse($capturedDate)->toDateString());
                 }
             });
+
+        LoggerService::sql('Car exportPUAUpdates Query', $puaUpdatesQuery);
+
+        return $puaUpdatesQuery;
     }
 
     public function pauseAndResumeFollowUpCounters($data)
