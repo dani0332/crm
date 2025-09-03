@@ -588,7 +588,7 @@ class ApplicationStorageSeeder extends Seeder
     private function seedOcrSendUpdateLogFlag()
     {
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::OCR_SEND_UPDATE_LOG_FLAG],
+            ['key_name' => ApplicationStorageEnums::ENABLE_SENDUPDATE_OCR],
             [
                 'value' => 0,
                 'created_at' => now(),
