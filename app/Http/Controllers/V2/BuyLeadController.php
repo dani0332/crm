@@ -82,9 +82,9 @@ class BuyLeadController extends Controller
     public function exportBuyLeadsData(Request $request)
     {
 
-        LoggerService::debug("exportBuyLeadsData".print_r([
+        LoggerService::debug('exportBuyLeadsData'.print_r([
             'request' => $request->all(),
-            ], true));
+        ], true));
 
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
         $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
@@ -108,7 +108,7 @@ class BuyLeadController extends Controller
         $query1 = $query1->groupBy('blr.user_id');
 
         // Log Query 1 SQL
-        LoggerService::sql("Buy Leads Export - Query 1", $query1);
+        LoggerService::sql('Buy Leads Export - Query 1', $query1);
 
         $results1 = $query1->get();
 
@@ -168,7 +168,7 @@ class BuyLeadController extends Controller
             ->orderBy('blrl.created_at', 'asc');
 
         // Log Query 2 SQL
-        LoggerService::sql("Buy Leads Export - Query 2", $query2);
+        LoggerService::sql('Buy Leads Export - Query 2', $query2);
 
         $results2 = $query2->get();
 
@@ -181,7 +181,7 @@ class BuyLeadController extends Controller
             ->toArray();
 
         $hrmCodeResults = [];
-        if (!empty($emailsWithNullCodes)) {
+        if (! empty($emailsWithNullCodes)) {
             LoggerService::info('BuyLeadController::exportBuyLeadsData - Fetching HRM codes for users with null codes', [
                 'emails_count' => count($emailsWithNullCodes),
                 'emails' => $emailsWithNullCodes,
@@ -189,7 +189,7 @@ class BuyLeadController extends Controller
 
             $hrmResponse = UserService::fetchUserCodes($emailsWithNullCodes);
 
-            if ($hrmResponse['success'] && !empty($hrmResponse['results'])) {
+            if ($hrmResponse['success'] && ! empty($hrmResponse['results'])) {
                 // Create a map of email => code for quick lookup
                 foreach ($hrmResponse['results'] as $result) {
                     if ($result['status'] === 'updated' && isset($result['new_code'])) {
@@ -212,6 +212,7 @@ class BuyLeadController extends Controller
                             'new_code' => $item->advisor_code,
                         ]);
                     }
+
                     return $item;
                 });
             } else {
@@ -228,7 +229,7 @@ class BuyLeadController extends Controller
         $file1 = "buy_leads_summary_{$start}_{$end}.xlsx";
         $file2 = "buy_leads_detailed_{$start}_{$end}.xlsx";
         // Create ZIP using robust logic (mirroring CentralController)
-        $zipFileName = "buy_leads_export_".now()->format('Ymd_His').'.zip';
+        $zipFileName = 'buy_leads_export_'.now()->format('Ymd_His').'.zip';
         $zipFilePath = storage_path('temp/'.$zipFileName);
         $zip = new \ZipArchive;
 
