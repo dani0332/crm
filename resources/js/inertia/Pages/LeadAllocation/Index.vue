@@ -16,6 +16,7 @@ const props = defineProps({
     default: () => [],
   },
   quoteType: String,
+  quoteTypes: Array,
   totalAssignedLeadCount: {
     type: Number,
     default: 0,
@@ -57,6 +58,12 @@ const rolesEnum = page.props.rolesEnum;
 const lobSpecificLeadAllocation = page.props.lobSpecificLeadAllocation;
 const notification = useToast();
 const statusModal = getStatusModal();
+const quoteTypeOptions = computed(() => {
+  return props.quoteTypes.reduce((acc, quoteType) => {
+    acc[quoteType.value] = quoteType.label;
+    return acc;
+  }, {});
+});
 
 const loaders = reactive({
   submit: false,
@@ -69,23 +76,23 @@ const tableHeader = ref([
   { text: 'Name', value: 'userName', width: '240' },
   { text: 'Teams', value: 'teamNames', sortable: true },
   { text: 'Total Assigned Leads', value: 'allocationCount', sortable: true },
-  ...(page.props.quoteType === 'Travel')
+  ...(page.props.quoteType === quoteTypeOptions.value.Travel)
     ? [{ text: 'M.Assigned', value: 'manualAllocationCount', sortable: true }]
     : [],
-  ...(page.props.quoteType === 'Travel')
+  ...(page.props.quoteType === quoteTypeOptions.value.Travel)
     ? [{ text: 'A.Assigned', value: 'autoAllocationCount', sortable: true }]
     : [],
   { text: 'Last Allocations', value: 'lastAllocation', sortable: true },
   { text: 'Max Cap Limit', value: 'maxCapacity', sortable: true },
   { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
-  ...(page.props.quoteType === 'Travel')
+  ...(page.props.quoteType === quoteTypeOptions.value.Travel)
     ? [{ text: 'Norm Allo.', value: 'normalAllocationEnabled', sortable: true}]
     :[],
   { text: 'Reset Cap', value: 'reset_cap', width: '100' },
-  ...(page.props.quoteType === 'Travel')
+  ...(page.props.quoteType === quoteTypeOptions.value.Travel)
     ? [{ text: 'Hard Stop', value: 'isHardStop', sortable: true}]
     : [],
-  ...(page.props.quoteType === 'Travel')
+  ...(page.props.quoteType === quoteTypeOptions.value.Travel)
     ? [{ text: 'Last Login', value: 'lastLogin', sortable: true}]
     : []
 ]);
