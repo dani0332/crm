@@ -39,5 +39,4 @@ final class WorkflowTypeEnum extends Enum
     public const SIC_HEALTH_FOLLOWUPS_WA = 'sic_health_followups_wa';
     public const OE_ASSIGNMENT = 'oe_assignment';
     public const CAR_CQF_RENEWAL_FOLLOWUPS = 'car_cqf_renewal_followups';
-
 }
