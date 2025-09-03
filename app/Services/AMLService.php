@@ -931,7 +931,7 @@ class AMLService
                     'code' => $vehicleDriverDetail?->vehicle_plate_color ?? null,
                     'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_plate_color] ?? null,
                 ];
-                $insurerScreeningPayload['bankLoan'] = $vehicleDriverDetail?->bank_loan !== null ? (bool) $vehicleDriverDetail->bank_loan : null;
+                $insurerScreeningPayload['bankLoan'] = $vehicleDriverDetail->bank_loan !== null ? (bool) $vehicleDriverDetail->bank_loan : null;
                 $insurerScreeningPayload['bankName'] = [
                     'code' => $vehicleDriverDetail?->bank_name ?? null,
                     'value' => $bankName?->text ?? null,
@@ -952,7 +952,7 @@ class AMLService
                 $insurerScreeningPayload['uaeDrivingExperience'] = $vehicleDriverDetail?->driver_uae_driving_experience ?? null;
                 $insurerScreeningPayload['homeCountryLicenseInsurance'] = $nationality?->text ?? null;
                 $insurerScreeningPayload['homeCountryDrivingExperience'] = $vehicleDriverDetail?->driver_home_country_driving_experience ?? null;
-                $insurerScreeningPayload['insuredAndDriverSame'] = $vehicleDriverDetail?->is_insured_and_driver_same !== null ? (bool) $vehicleDriverDetail->is_insured_and_driver_same : null;
+                $insurerScreeningPayload['insuredAndDriverSame'] = $vehicleDriverDetail->is_insured_and_driver_same !== null ? (bool) $vehicleDriverDetail->is_insured_and_driver_same : null;
             }
 
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurer AML Screening API called - Ref-ID: '.$quoteDetails->code);
