@@ -60,6 +60,7 @@ class LeadAllocationController extends Controller
             'todayTotalLeadCount' => $todayTotalLeadCount,
             'todayTotalUnAssignedLeadCount' => $todayTotalUnAssignedLeadCount,
             'quoteType' => $quoteType->value,
+            'quoteTypes' => QuoteTypes::withLabels(),
             'data' => $data,
             'lobSpecificLeadAllocation' => $this->lobSpecificLeadAllocation(),
             'isSavings' => $quoteType == QuoteTypes::SAVINGS,

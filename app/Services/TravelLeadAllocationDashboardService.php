@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -19,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 
 class TravelLeadAllocationDashboardService extends BaseService
 {
-    public function getSicUsersGridData(?string $BlStatus = null)
+    public function getSicUsersGridData()
     {
         try {
             $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
@@ -71,15 +70,7 @@ class TravelLeadAllocationDashboardService extends BaseService
                 $users = $users->whereIn('users.id', $userIds);
             }
 
-            $data = $users->get();
-
-            // Filters
-            if ($BlStatus) {
-                $userBlStatus = LeadAllocationUserBLStatusFiltersEnum::from($BlStatus);
-                $data = $userBlStatus->applyFilter($data);
-            }
-
-            return $data;
+            return $users->get();
         } catch (\Exception $e) {
             // Log the error with relevant context for debugging
             LoggerService::error('Failed to retrieve SIC 2.0 Unassisted users', [

@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
-use App\Enums\QuoteTypes;
 use App\Http\Requests\UpdateLeadAllocationRequest;
 use App\Models\LeadAllocation;
 use App\Services\Logger\LoggerService;
@@ -23,14 +21,14 @@ class TravelLeadAllocationController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
         if (Gate::allows('view-lead-allocation', auth()->user())) {
             $availableUsers = 0;
             $unAvailableUsers = 0;
             $totalAssignedLeadCount = 0;
             $todayTotalUnAssignedLeadCount = $this->travelLeadAllocationService->getTodaysTotalUnAssignedLeadsCount();
-            $data = $this->travelLeadAllocationService->getSicUsersGridData($request->userBlStatus);
+            $data = $this->travelLeadAllocationService->getSicUsersGridData();
 
             foreach ($data as $row) {
                 $totalAssignedLeadCount = $totalAssignedLeadCount + $row->allocationCount;
@@ -38,7 +36,6 @@ class TravelLeadAllocationController extends Controller
             }
 
             return inertia('LeadAllocation/Travel', [
-                'userBLStatuses' => LeadAllocationUserBLStatusFiltersEnum::withLabels(),
                 'quoteType' => QuoteTypes::TRAVEL->value,
                 'availableUsers' => $availableUsers,
                 'unAvailableUsers' => $unAvailableUsers,
