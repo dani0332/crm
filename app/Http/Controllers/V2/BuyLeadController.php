@@ -101,7 +101,10 @@ class BuyLeadController extends Controller
             ->join('user_team as ut', 'blr.user_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->whereBetween('blr.created_at', [$startDate, $endDate])
-            ->whereIn('t.parent_team_id', [3, 8]);
+            ->whereIn('t.parent_team_id', [
+                TeamNameEnum::getTeamID(TeamNameEnum::LIFE),
+                TeamNameEnum::getTeamID(TeamNameEnum::RENEWALS)
+            ]);
 
         $summaryQuery = $summaryQuery->groupBy('blr.user_id');
 
