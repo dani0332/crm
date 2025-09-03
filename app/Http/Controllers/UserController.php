@@ -552,11 +552,11 @@ class UserController extends Controller
                 ->where('is_active', 1)
                 ->first();
 
-            if (!$advisor) {
+            if (! $advisor) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Advisor not found or inactive',
-                    'data' => null
+                    'data' => null,
                 ], 404);
             }
 
@@ -567,7 +567,7 @@ class UserController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'No manager found for this advisor',
-                    'data' => null
+                    'data' => null,
                 ], 200);
             }
 
@@ -588,15 +588,15 @@ class UserController extends Controller
                         'name' => $firstManager->name,
                         'email' => $firstManager->email,
                         'is_active' => $firstManager->is_active,
-                    ]
-                ]
+                    ],
+                ],
             ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while retrieving the manager',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
