@@ -285,7 +285,6 @@ function onSubmit(isValid) {
           :model-value="branchName"
           class="w-full"
           label="BRANCH"
-          disabled
         />
 
         <x-input
