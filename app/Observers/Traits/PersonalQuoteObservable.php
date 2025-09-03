@@ -67,7 +67,7 @@ trait PersonalQuoteObservable
             $isFollowupExecuted = app(BirdService::class)
                 ->isFollowupExecuted($personalQuote->uuid, QuoteTypes::HOME->id(), QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->value);
 
-            if ($isFollowupExecuted) {
+            if ($isFollowupExecuted && !$personalQuote->isDirty('quote_status_id')) {
                 LoggerService::info(self::class." - HOME_RENEWAL_AUTOMATED_FOLLOWUPS - Followup already executed {$personalQuote->uuid}");
 
                 return;
