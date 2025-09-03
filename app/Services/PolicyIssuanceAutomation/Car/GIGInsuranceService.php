@@ -1261,7 +1261,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quoteDetails->code.' - Updating quote details');
                     $carQuoteRequestDetails->update($getQuoteResponseMapping);
                     $quoteDetails->update($quoteDetailsData);
-                    $quoteDetails->vehicleDriverDetail->update($vehicleDriverDetailsData); // TODO: need to discuss update or create.
+                    $quoteDetails->vehicleDriverDetail()->updateOrCreate([], $vehicleDriverDetailsData); // TODO: need to discuss update or create.
                 }
 
                 $getQuoteResponseMapping['uwApprovalStatus'] = $responseData['uwApprovalStatus'] ?? null;
