@@ -3,10 +3,14 @@
 namespace App\Services\OCR;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCategory;
 use App\Enums\InsurerProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
+use App\Services\OCR\DrivingLicense\DrivingLicenseDataProcessor;
+use App\Services\OCR\EmiratesId\EmiratesIdDataProcessor;
+use App\Services\OCR\Mulkiya\MulkiyaDataProcessor;
 use App\Services\SplitPaymentService;
 use Carbon\Carbon;
 use Exception;
@@ -48,7 +52,7 @@ trait OcrFillable
         try {
             return $date ? Carbon::parse($date)->format($format) : $default;
         } catch (Exception $e) {
-            LoggerService::error(self::class.' - Exception occurred during date parsing', exception: $e);
+            LoggerService::error(self::class.' - Exception occurred during date parsing: ', exception: $e);
 
             return $default;
         }
@@ -164,11 +168,8 @@ trait OcrFillable
             $dataToUpdate['insurer_commmission_invoice_number'] = $this->resolveProp($data, 'taxInvoiceNumber') ?? $quote->payment?->insurer_commmission_invoice_number;
         }
 
-        if ($this->isEnabled($quote, $providersWithCommissionVatApplicable)) {
-            if (! $quote->payment?->commission_vat_applicable) {
-                $dataToUpdate['commission_vat_applicable'] = $this->resolveProp($commission, 'baseAmount') ?? $quote->payment?->commission_vat_applicable;
-            }
-
+        if ($this->isEnabled($quote, $providersWithCommissionVatApplicable) && ! $quote->payment?->commission_vat_applicable) {
+            $dataToUpdate['commission_vat_applicable'] = $this->resolveProp($commission, 'baseAmount') ?? $quote->payment?->commission_vat_applicable;
         }
 
         if (! empty($dataToUpdate)) {
@@ -236,16 +237,94 @@ trait OcrFillable
         return true;
     }
 
+    private function fillEmiratesId(Model $quote, object $data)
+    {
+        try {
+            $success = (new EmiratesIdDataProcessor($quote, $data))->processEmiratesIdData();
+
+            if ($success) {
+                // we can remove after testing
+                $summary = (new EmiratesIdDataProcessor($quote, $data))->getProcessingSummary();
+
+                LoggerService::info(self::class.' - Emirates ID data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
+                    'processing_summary' => $summary,
+                ]);
+            } else {
+                LoggerService::warning(self::class.' - Emirates ID data processing failed - Quote UUID: '.$quote->uuid);
+            }
+
+            return $success;
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during Emirates ID data filling - Quote UUID: '.$quote->uuid, exception: $e);
+
+            return false;
+        }
+    }
+
+    private function fillMulkiya(Model $quote, object $data)
+    {
+        try {
+            $success = (new MulkiyaDataProcessor($quote, $data))->processMulkiyaData();
+
+            if ($success) {
+                // we can remove after testing
+                $summary = (new MulkiyaDataProcessor($quote, $data))->getProcessingSummary();
+
+                LoggerService::info(self::class.' - Mulkiya data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
+                    'processing_summary' => $summary,
+                ]);
+            } else {
+                LoggerService::warning(self::class.' - Mulkiya data processing failed - Quote UUID: '.$quote->uuid);
+            }
+
+            return $success;
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during Mulkiya data filling - Quote UUID: '.$quote->uuid, exception: $e);
+
+            return false;
+        }
+    }
+
+    private function fillDrivingLicense(Model $quote, object $data)
+    {
+        try {
+            $success = (new DrivingLicenseDataProcessor($quote, $data))->processDrivingLicenseData();
+
+            if ($success) {
+                // we can remove after testing
+                $summary = (new DrivingLicenseDataProcessor($quote, $data))->getProcessingSummary();
+
+                LoggerService::info(self::class.' - Driving License data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
+                    'processing_summary' => $summary,
+                ]);
+            } else {
+                LoggerService::warning(self::class.' - Driving License data processing failed - Quote UUID: '.$quote->uuid);
+            }
+
+            return $success;
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during Driving License data filling - Quote UUID: '.$quote->uuid, exception: $e);
+
+            return false;
+        }
+    }
+
     private function fill(
         Model $quote,
         OCRDocumentTypeEnum $documentType,
-        object $data
+        object $data,
+        $documentCategory
     ) {
-        if (! $this->isSupportedProvider($quote)) {
+        if (! $this->isSupportedProvider($quote) && $documentCategory != DocumentTypeCategory::QUOTE) {
             LoggerService::info(self::class.' - Not a Valid Provider');
 
             return false;
         }
+
+        LoggerService::startQuoteLogging($quote);
 
         try {
 
@@ -254,10 +333,13 @@ trait OcrFillable
                 OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER => $this->fillTaxInvoiceRaisedByBuyer($quote, $data),
                 OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE => $this->fillCertificateOfIssuance($quote, $data),
                 OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE => $this->fillMotorInsurancePolicySchedule($quote, $data),
+                OCRDocumentTypeEnum::ID_CARD => $this->fillEmiratesId($quote, $data),
+                OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data),
+                OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data),
                 default => false,
             };
         } catch (Exception $e) {
-            LoggerService::error(self::class.' - Exception occurred during data fill', exception: $e);
+            LoggerService::error(self::class.' - Exception occurred during data fill: ', exception: $e);
 
             return false;
         }

@@ -24,13 +24,11 @@ use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\GroupMedicalExport;
 use App\Exports\HealthQuotesExport;
 use App\Exports\LifeQuotesExport;
-use App\Exports\NonPUAQuoteExport;
 use App\Exports\PersonalQuotesExport;
-use App\Exports\PUAQuoteExport;
-use App\Exports\PUAUpdatesExport;
 use App\Exports\RetentionReportExport;
 use App\Exports\RMQuotesExport;
 use App\Exports\TravelQuoteExport;
+use App\Factories\PUAExportFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
@@ -353,6 +351,7 @@ class CentralController extends Controller
             return response()->json(['message' => 'Quote status updated to Policy Sent To Customer. Documents are being sent to the customer in background.'], 200);
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
+
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
@@ -444,6 +443,11 @@ class CentralController extends Controller
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::SELECT_PLAN);
         LoggerService::info("Select plan for Ecom lead Quote Type: {$quoteType}, Code: {$request->code}, with Insurance Provider: {$request->provider_code}");
+
+        $errorsMessages = (new CentralService)->validateIsPlanSelectable($quoteType, $request->all());
+        if (! empty($errorsMessages)) {
+            return response()->json(['errors' => $errorsMessages], 422);
+        }
 
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
@@ -742,13 +746,25 @@ class CentralController extends Controller
 
         return app(RMQuotesExport::class)->download('RM-Leads-List');
     }
-    public function exportPUAUpdates(Request $request)
+    public function exportPUAUpdates(Request $request, string $quoteType)
     {
-        if (! auth()->user()->can(PermissionsEnum::EXPORT_CAR_PUA_UPDATES)) {
-            return response()->json(['message' => 'User Has No Permission to Download PUA Updates.'], 403);
+        // Validate quote type using the factory
+        if (! PUAExportFactory::isValidQuoteType($quoteType)) {
+            return response()->json(['message' => "Invalid quote type: {$quoteType}"], 400);
         }
 
-        $zipFileName = 'PUA-UPDATES.zip';
+        // Dynamic permission check based on quote type
+        $permission = match ($quoteType) {
+            'Car' => PermissionsEnum::EXPORT_CAR_PUA_UPDATES,
+            'Home' => PermissionsEnum::EXPORT_HOME_PUA_UPDATES,
+            default => PermissionsEnum::EXPORT_CAR_PUA_UPDATES, // Fallback to car permission
+        };
+
+        if (! auth()->user()->can($permission)) {
+            return response()->json(['message' => "User Has No Permission to Download {$quoteType} PUA Updates."], 403);
+        }
+
+        $zipFileName = "PUA-UPDATES-{$quoteType}.zip";
         $zipFilePath = storage_path('temp/'.$zipFileName);
         $zip = new \ZipArchive;
 
@@ -757,15 +773,26 @@ class CentralController extends Controller
         }
 
         try {
-            $puaUpdateExport = app(PUAQuoteExport::class)->download('PUA-AUTHORIZED.xlsx');
-            $nonPuaUpdateExport = app(NonPUAQuoteExport::class)->download('NON-PUA-AUTHORIZED.xlsx');
-            $puaUpdatesExport = app(PUAUpdatesExport::class)->download('PUA-UPDATES.xlsx');
+            $exports = PUAExportFactory::createExports($quoteType, $request->all());
 
-            $files = [
-                ['path' => $puaUpdateExport->getFile()->getRealPath(), 'name' => 'PUA-AUTHORIZED.xlsx'],
-                ['path' => $nonPuaUpdateExport->getFile()->getRealPath(), 'name' => 'NON-PUA-AUTHORIZED.xlsx'],
-                ['path' => $puaUpdatesExport->getFile()->getRealPath(), 'name' => 'PUA-UPDATES.xlsx'],
-            ];
+            $files = [];
+
+            if (! empty($exports)) {
+                LoggerService::info('PUA export starting', ['quote_type' => $quoteType]);
+                $puaUpdateExport = $exports['pua_quote']->download("{$quoteType}-PUA-AUTHORIZED.xlsx");
+                $nonPuaUpdateExport = $exports['non_pua_quote']->download("{$quoteType}-NON-PUA-AUTHORIZED.xlsx");
+                $puaUpdatesExport = $exports['pua_updates']->download("{$quoteType}-PUA-UPDATES.xlsx");
+
+                $files = [
+                    ['path' => $puaUpdateExport->getFile()->getRealPath(), 'name' => "{$quoteType}-PUA-AUTHORIZED.xlsx"],
+                    ['path' => $nonPuaUpdateExport->getFile()->getRealPath(), 'name' => "{$quoteType}-NON-PUA-AUTHORIZED.xlsx"],
+                    ['path' => $puaUpdatesExport->getFile()->getRealPath(), 'name' => "{$quoteType}-PUA-UPDATES.xlsx"],
+                ];
+            } else {
+                $zip->close();
+
+                return response()->json(['message' => "No PUA exports available for {$quoteType} quote type."], 400);
+            }
 
             foreach ($files as $file) {
                 if (file_exists($file['path'])) {
@@ -775,7 +802,18 @@ class CentralController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error processing exports: '.$e->getMessage()], 500);
+            $appTrace = collect($e->getTrace())
+                ->filter(function ($trace) {
+                    // Check if any value in the trace contains 'App/' or 'app/'
+                    return collect($trace)->contains(function ($value) {
+                        return is_string($value) && (str_contains($value, 'App/') || str_contains($value, 'app/'));
+                    });
+                })
+                ->values(); // Re-index the array
+
+            LoggerService::error('PUA Export Error - App Trace:', $appTrace->toArray());
+
+            return response()->json(['message' => 'Error processing exports: '.$e->getMessage().' file:'.$e->getFile().'line:'.$e->getLine()], 500);
         }
 
         $zip->close();
@@ -916,15 +954,16 @@ class CentralController extends Controller
 
     public function getPlansPaymentGateway(GetPlansPaymentGatewayRequest $request, $quoteType, $quoteCcode)
     {
-        LoggerService::info('getPlansPaymentGateway called: ', extra: $request->plan_ids, context: ['ref_id' => $quoteCcode]);
+        LoggerService::startQuoteLogging($quoteCcode);
+        LoggerService::info('getPlansPaymentGateway called: ', extra: $request->plan_ids);
         try {
             $result = app(CentralService::class)->getPlansPaymentGateway($request, $quoteType);
 
-            LoggerService::info('getPlansPaymentGateway response: ', extra: $result, context: ['ref_id' => $quoteCcode]);
+            LoggerService::info('getPlansPaymentGateway response: ', extra: $result);
 
             return response()->json(['plans' => $result]);
         } catch (\Throwable $th) {
-            LoggerService::error('getPlansPaymentGateway error: ', exception: $th, context: ['ref_id' => $quoteCcode]);
+            LoggerService::error('getPlansPaymentGateway error: ', exception: $th);
 
             return response()->json(['error' => $th->getMessage()], 500);
         }

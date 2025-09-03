@@ -45,7 +45,7 @@ const onLoadMore = id => {
   };
   axios
     .post(
-      route('life-quotes-load-more-cards', {
+      route('loadMoreRecords', {
         page: quotes.value.pages[id],
         modelType: props.quoteType,
         status: id,

@@ -4,7 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Exports\Reports\TransactionReportExport;
+use App\Enums\QuoteTypeId;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -20,7 +20,7 @@ class TransactionReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::TRANSACTION;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::APPROVED_TRANSACTIONS;
@@ -75,6 +75,7 @@ class TransactionReportService extends ManagementReport
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
                 'u.name as advisor',
+                'support_user.name as support_user',
                 'dp.name as department',
                 'pi.name as policy_issuer',
                 'p.invoice_description as invoice_description',
@@ -91,12 +92,15 @@ class TransactionReportService extends ManagementReport
                 'personal_quotes.source',
                 'personal_quotes.policy_booking_date',
                 'ps.sage_reciept_id',
-                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted')
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+                'ciw.text as currently_insured_with_text',
+                'cqr.currently_insured_with as currently_insured_with'
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
+            ->leftJoin('users as support_user', 'personal_quotes.support_user_id', '=', 'support_user.id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
@@ -106,7 +110,12 @@ class TransactionReportService extends ManagementReport
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id')
             ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
-            ->join('quote_status as qs', 'qs.id', '=', 'personal_quotes.quote_status_id');
+            ->join('quote_status as qs', 'qs.id', '=', 'personal_quotes.quote_status_id')
+            ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
+            ->leftJoin('car_quote_request as cqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'cqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            });
 
         $this->applyFilters($query, $request, isSSR: true);
 
@@ -118,13 +127,20 @@ class TransactionReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+        $query = $this->getReportQueryBuilder($request);
+
         LoggerService::sql(self::class.' - Transaction Report Query', $query);
 
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
 
-            return (new TransactionReportExport($data))->download("Transaction Report {$this->reportDateRange}.xlsx");
+            return $data;
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
@@ -136,7 +152,7 @@ class TransactionReportService extends ManagementReport
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
             $item->transactions = $this->concatValues([$item->insurer_invoice_number, $item->notes, $item->reference], '-');
@@ -147,8 +163,11 @@ class TransactionReportService extends ManagementReport
             $item->collects = strtoupper($item->collects);
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
-            $item->commmission_percentage = number_format($item->commmission_percentage, 2);
+            $item->commmission_percentage = number_format(strToFloat($item->commmission_percentage), 2);
             $item->policy_booking_date = ! empty($item->policy_booking_date) ? Carbon::parse($item->policy_booking_date)->format('Y-m-d') : null;
+            $item->currently_insured_with_text = $item->quote_type_id == QuoteTypeId::Car
+                ? ($item->currently_insured_with_text ?? $item->currently_insured_with ?? 'N/A')
+                : ($item->currently_insured_with_text ?? 'N/A');
         });
     }
 

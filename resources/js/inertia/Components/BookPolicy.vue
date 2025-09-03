@@ -62,6 +62,10 @@ const props = defineProps({
     type: Function,
     default: () => () => false,
   },
+  isPlanDetailSectionEnabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const isLoading = ref(false);
@@ -118,6 +122,10 @@ const dateToDMYWithTime = date => {
   }
   return '';
 };
+
+let isHealthAUHLead = ref(
+  page.props.bookPolicyDetails.isHealthAUHLead || false,
+);
 
 const commissionErrorMessage =
   'The commission percentage exceeds the allowed maximum or falls below the minimum threshold.';
@@ -579,7 +587,7 @@ const disableCommissionVatApplicable = computed(() => {
 });
 
 const showCurrencyFields = computed(() => {
-  return isLifeLead;
+  return isLifeLead && !props.isPlanDetailSectionEnabled;
 });
 
 const showNonAEDFields = computed(() => {
@@ -619,6 +627,11 @@ const showSendAndBookPolicyButtonBlock = computed(() => {
   return [TransactionApproved, POLICY_BOOKING_FAILED, PolicyIssued].includes(
     quote_status_id,
   );
+});
+
+const isSendTypeSage = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  return sendPolicyType == sendPolicyTypeEnum.SAGE;
 });
 
 const showSendAndBookPolicyButton = computed(() => {
@@ -1041,7 +1054,7 @@ const isDocTypeLoading = docType => {
                 <template v-if="isShowingTransactionPaymentStatus">
                   <x-tooltip placement="left">
                     <dd class="border-b border-dotted border-black inline">
-                      {{ bpForm.transaction_payment_status }}
+                      {{ bpForm.transaction_payment_status ?? 'N/A' }}
                     </dd>
                     <template #tooltip>
                       {{ bpForm.transaction_payment_status_tool_tip }}
@@ -1481,6 +1494,21 @@ const isDocTypeLoading = docType => {
                   </x-tooltip>
                 </dt>
                 <dd>{{ bpForm.total_commission }}</dd>
+              </div>
+              <div
+                v-if="
+                  props.quoteType === quoteTypeCodeEnum.Health.toLowerCase()
+                "
+                class="grid sm:grid-cols-2"
+              >
+                <dt class="font-medium uppercase">Branch</dt>
+                <dd>
+                  {{
+                    page.props.branchOptions?.find(
+                      item => item.id === props.quote.emirate_of_your_visa_id,
+                    )?.branch
+                  }}
+                </dd>
               </div>
             </dl>
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
@@ -1954,6 +1982,11 @@ const isDocTypeLoading = docType => {
                 </template>
               </template>
             </div>
+            <template v-if="isHealthAUHLead">
+              <p class="text-gray-500 text-sm text-right mt-3 mb-2 mx-4">
+                {{ productionProcessTooltipEnum.HEALTH_AUH_BOOKING_NOTE }}
+              </p>
+            </template>
           </div>
         </x-form>
       </template>

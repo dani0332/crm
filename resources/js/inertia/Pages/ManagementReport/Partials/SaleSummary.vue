@@ -104,6 +104,10 @@ watchEffect(() => {
       text: 'Advisor',
       tooltip: 'The advisor assigned to the policy.',
     },
+    support_user: {
+      text: 'OE/AE',
+      tooltip: 'The OE/AE assigned to the policy.',
+    },
     policy_issuer: {
       text: 'Policy Issuer',
       tooltip: 'The user who booked the policy.',
@@ -139,7 +143,7 @@ watchEffect(() => {
     ? tableHeader.unshift(newItem)
     : tableHeader.splice(0, 1, newItem);
 
-  if (props.groupBy === 'advisor') {
+  if (props.groupBy === 'advisor' || props.groupBy === 'support_user') {
     if (!tableHeader.some(item => item.value === 'department')) {
       tableHeader.unshift({ ...headerMap.department, value: 'department' });
     }
