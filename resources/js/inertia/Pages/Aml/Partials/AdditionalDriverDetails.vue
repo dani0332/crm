@@ -22,8 +22,8 @@ const driverGenderOptions = computed(() => [
   { value: 'female', label: 'Female' },
 ])
 
-const carDetail = computed(() => {
-  return page.props.quoteRequest?.car_quote_request_detail;
+const vehicleDriverDetail = computed(() => {
+  return page.props.quoteRequest?.vehicle_driver_detail;
 });
 
 const additionalDriverDetailsForm = useForm({
@@ -31,18 +31,18 @@ const additionalDriverDetailsForm = useForm({
   quote_uuid: page.props.quoteRequest?.uuid,
   source: page.props.quoteRequest?.source,
   insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
-  is_insured_and_driver_same: carDetail.value?.is_insured_and_driver_same?.toString() ?? '',
-  driver_first_name: carDetail.value?.driver_first_name ?? '',
-  driver_last_name: carDetail.value?.driver_last_name ?? '',
-  driver_dob: carDetail.value?.driver_dob ?? '',
-  driver_gender: carDetail.value?.driver_gender ?? '',
-  driver_license_number: carDetail.value?.driver_license_number ?? '',
-  license_issue_place: carDetail.value?.driver_license_issue_place ?? null,
-  license_issue_date: carDetail.value?.driver_license_issue_date ?? '',
-  license_expiry_date: carDetail.value?.driver_license_expiry_date ?? '',
-  uae_driving_experience: carDetail.value?.driver_uae_driving_experience?.toString() ?? null,
-  home_country_license_issuance: carDetail.value?.home_country_license_issuance ?? '',
-  home_country_driving_experience: carDetail.value?.home_country_driving_experience?.toString() ?? null,
+  is_insured_and_driver_same: vehicleDriverDetail.value?.is_insured_and_driver_same?.toString() ?? '',
+  driver_first_name: vehicleDriverDetail.value?.driver_first_name ?? '',
+  driver_last_name: vehicleDriverDetail.value?.driver_last_name ?? '',
+  driver_dob: vehicleDriverDetail.value?.driver_dob ?? '',
+  driver_gender: vehicleDriverDetail.value?.driver_gender ?? '',
+  driver_license_number: vehicleDriverDetail.value?.driver_license_number ?? '',
+  license_issue_place: vehicleDriverDetail.value?.driver_license_issue_place?.toString() ?? '',
+  license_issue_date: vehicleDriverDetail.value?.driver_license_issue_date ?? '',
+  license_expiry_date: vehicleDriverDetail.value?.driver_license_expiry_date ?? '',
+  uae_driving_experience: vehicleDriverDetail.value?.driver_uae_driving_experience?.toString() ?? '',
+  home_country_license_issuance: vehicleDriverDetail.value?.driver_home_country_license_issuance ?? '',
+  home_country_driving_experience: vehicleDriverDetail.value?.driver_home_country_driving_experience?.toString() ?? '',
 });
 
 const hasNotEditPermission = computed(() => {

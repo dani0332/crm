@@ -271,7 +271,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::put('customer/{uuid}', [V2CustomerController::class, 'update'])->name('customers-update');
 
         Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
-        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
+        Route::get('{quoteType}/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
         Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->middleware(SetReadDbConnection::class)->name('export-rm-leads');
 
         Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
@@ -766,6 +766,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('sage-api-logs/{sectionId}/latest-error', [SageApi::class, 'getLastSageError'])->name('sage-api-logs-latest-error');
 
     Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
+    Route::post('policy-issuance-logs', [AuditableController::class, 'loadPolicyIssuanceApiLogs']);
     Route::post('ocr-logs', [AuditableController::class, 'loadOcrLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
@@ -895,7 +896,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     })->name('run-policy-bulk-send');
 
     Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
-        // Dispatch job to background queue instead of running synchronously
+        // Dispatch job to background queue instead of running synchronously to check the handbook documents
         \App\Jobs\CheckHandbookDocumentsJob::dispatch($quoteType, Carbon::now()->format('YmdHi'));
 
         return response()->json([

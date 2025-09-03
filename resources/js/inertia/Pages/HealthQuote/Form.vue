@@ -3,6 +3,7 @@ const props = defineProps({
   dropdownSource: Object,
   model: String,
   genderOptions: Object,
+  branchOptions: Object,
   quote: {
     type: Object,
     default: {},
@@ -29,6 +30,18 @@ const genderSelect = computed(() => {
     value: status,
     label: props.genderOptions[status],
   }));
+});
+
+const branchName = computed(() => {
+  if (!quoteForm.emirate_of_your_visa_id || !props.branchOptions) {
+    return '';
+  }
+
+  const branchMapping = props.branchOptions.find(
+    item => item.id === quoteForm.emirate_of_your_visa_id,
+  );
+
+  return branchMapping ? branchMapping.branch : '';
 });
 
 const quoteForm = useForm({
@@ -266,6 +279,13 @@ function onSubmit(isValid) {
           class="w-full"
           label="EMIRATE OF YOUR VISA"
           required
+        />
+
+        <x-input
+          :model-value="branchName"
+          class="w-full"
+          label="BRANCH"
+          disabled
         />
 
         <x-input

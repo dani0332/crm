@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\OcrLogsRequest;
+use App\Models\CarQuote;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
@@ -14,6 +15,7 @@ use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -77,6 +79,61 @@ class AuditableController extends Controller
         }
 
         return $query->orderBy('created_at', 'desc')->get();
+    }
+
+    public function loadPolicyIssuanceApiLogs(Request $request)
+    {
+
+        $quoteId = $request->get('quote_id');
+        $modelType = $request->get('model_type');
+        $insuranceProviderId = $request->get('insurance_provider_id');
+
+        $extraLogs = [
+            'quote_id' => $quoteId,
+            'model_type' => $modelType,
+            'insurance_provider_id' => $insuranceProviderId
+        ];
+
+        try {
+            $request->validate([
+                'quote_id' => 'required|integer',
+                'model_type' => 'required|string',
+                'insurance_provider_id' => 'required|integer',
+            ]);
+
+            if (!in_array($modelType, [CarQuote::class])) {
+                LoggerService::error('Policy issuance API logs only supported for CarQuote', extra: [...$extraLogs]);
+                return response()->json([
+                    'error' => 'Policy issuance API logs only supported for CarQuote.'
+                ], 403);
+            }
+
+            LoggerService::info('Loading policy issuance API logs', extra: $extraLogs);
+
+            // Get the table name dynamically based on quote type
+            $policyIssuanceLogs = app(PolicyIssuanceService::class)->getQueryBuilderForPolicyIssuanceApiLogs($quoteId, $modelType);
+
+            if ($insuranceProviderId) {
+                $policyIssuanceLogs = $policyIssuanceLogs->whereHas('policyIssuance', 
+                    fn ($query) => $query->where('insurance_provider_id', $insuranceProviderId)
+                );
+            }
+
+            $policyIssuanceLogs = $policyIssuanceLogs
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return $policyIssuanceLogs;
+        } catch (\Exception $e) {
+            LoggerService::info('Error loading policy issuance API logs',
+                extra: [...$extraLogs, 'error' => $e->getMessage()]
+            );
+
+            return response()->json([
+                'error' => 'An error occurred while loading policy issuance API logs.',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function loadApiLogs(Request $request)
