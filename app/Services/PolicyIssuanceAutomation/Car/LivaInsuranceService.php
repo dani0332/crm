@@ -467,6 +467,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $retrieveRequest = $this->httpCall($endPoint, $payload, 'RetrieveResponse');
             $payload['RetrieveRequest']['Documents']['DocsDetails'][$keyLIVA] = false;
 
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Response', extra: ['response' => $retrieveRequest]);
+
             app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $retrieveRequest, $this->baseUrl.$endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $retrieveRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
             if (! $retrieveRequest['status']) {
@@ -626,7 +628,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         ];
 
         $issuePolicy = $this->httpCall($endPoint, $payload, self::POLICY_ISSUANCE_RESPONSE);
-
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Response', extra: ['response' => $issuePolicy]);
         app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $issuePolicy, $this->baseUrl.$endPoint, self::ISSUE_POLICY, $issuePolicy['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
 
         if (! $issuePolicy['status']) {
@@ -772,6 +774,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Payload created with '.count($attachments).' attachments');
 
         $response = $this->httpCall($endPoint, $payload, self::UPLOAD_DOCUMENTS_RESPONSE);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Response', extra: ['response' => $response]);
         app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $response, $this->baseUrl.$endPoint, self::UPLOAD_DOCUMENTS, $response['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
 
         if (! $response['status']) {
