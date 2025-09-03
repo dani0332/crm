@@ -8,10 +8,8 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\Role;
 use App\Models\User;
-use App\Services\HRMRequestService;
 use App\Services\Logger\LoggerService;
 use DB;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
@@ -19,8 +17,7 @@ class UserService extends BaseService
 {
     public function __construct(
         private readonly HRMRequestService $hrmRequestService
-    ) {
-    }
+    ) {}
     public static function getRolesByUserId($userId)
     {
         return DB::select('select * from model_has_roles where model_id = ?', [$userId])->get();

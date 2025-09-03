@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
 use App\Exports\BuyLeadsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BuyLeads\BuyLeadsRateFetchRequest;
@@ -14,7 +15,6 @@ use App\Services\UserService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Enums\TeamNameEnum;
 
 class BuyLeadController extends Controller
 {

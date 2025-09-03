@@ -11,9 +11,9 @@ class HRMRequestService
     /**
      * Send HTTP request to HRM API
      *
-     * @param string $endpointPath The API endpoint path (e.g., '/v1/employees/codes')
-     * @param array $payload The request payload
-     * @param string $method HTTP method (default: 'POST')
+     * @param  string  $endpointPath  The API endpoint path (e.g., '/v1/employees/codes')
+     * @param  array  $payload  The request payload
+     * @param  string  $method  HTTP method (default: 'POST')
      * @return array|false Returns decoded response on success, false on failure
      */
     private function sendRequest(string $endpointPath, array $payload = [], string $method = 'POST'): array|false
@@ -32,7 +32,7 @@ class HRMRequestService
                 return false;
             }
 
-            $fullUrl = rtrim($apiEndPoint, '/') . '/' . ltrim($endpointPath, '/');
+            $fullUrl = rtrim($apiEndPoint, '/').'/'.ltrim($endpointPath, '/');
 
             LoggerService::info(static::class.'::sendRequest - Making API request', [
                 'method' => $method,
@@ -67,11 +67,13 @@ class HRMRequestService
             if ($response->successful()) {
                 if (isset($responseData['status']) && $responseData['status'] === true) {
                     LoggerService::info(static::class.'::sendRequest - API request successful');
+
                     return $responseData;
                 } else {
                     LoggerService::warning(static::class.'::sendRequest - API returned unsuccessful status', [
                         'response' => $responseData,
                     ]);
+
                     return false;
                 }
             } else {
@@ -79,6 +81,7 @@ class HRMRequestService
                     'status_code' => $statusCode,
                     'response' => $responseData,
                 ]);
+
                 return false;
             }
 
@@ -112,12 +115,13 @@ class HRMRequestService
 
         if ($apiResponse !== false) {
             LoggerService::info(static::class.'::getEmployeeCodes - Successfully retrieved employee codes');
+
             return $apiResponse['data'] ?? [];
         }
 
         LoggerService::error(static::class.'::getEmployeeCodes - Failed to retrieve employee codes');
+
         return false;
     }
-
 
 }
