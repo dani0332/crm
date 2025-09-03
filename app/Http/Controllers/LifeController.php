@@ -160,7 +160,14 @@ class LifeController extends Controller
             'version' => 'required',
         ]);
 
-        $model = $this->lifeQuoteService->selectPlan($request->quoteId, $request->planId, $request->version, $request?->saveQuote, $request?->isUW);
+        $model = $this->lifeQuoteService->selectPlan(
+            $request->quoteId, 
+            $request->planId, 
+            $request->version, 
+            $request?->saveQuote, 
+            $request?->isUW,
+            $request?->callSource
+        );
 
         LoggerService::info('fn: lifePlanSelected -  Plan selected for life quote');
 
