@@ -48,7 +48,7 @@ final class TeamNameEnum extends Enum
     /**
      * Get team ID by team name
      *
-     * @param string $teamName The team name constant
+     * @param  string  $teamName  The team name constant
      * @return int|null The team ID or null if not found
      */
     public static function getTeamID(string $teamName)

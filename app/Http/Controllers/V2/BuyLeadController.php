@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
 use App\Exports\BuyLeadsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BuyLeads\BuyLeadsRateFetchRequest;
@@ -14,7 +15,6 @@ use App\Services\UserService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Enums\TeamNameEnum;
 
 class BuyLeadController extends Controller
 {
@@ -103,7 +103,7 @@ class BuyLeadController extends Controller
             ->whereBetween('blr.created_at', [$startDate, $endDate])
             ->whereIn('t.parent_team_id', [
                 TeamNameEnum::getTeamID(TeamNameEnum::LIFE),
-                TeamNameEnum::getTeamID(TeamNameEnum::RENEWALS)
+                TeamNameEnum::getTeamID(TeamNameEnum::RENEWALS),
             ]);
 
         $summaryQuery = $summaryQuery->groupBy('blr.user_id');
@@ -143,12 +143,12 @@ class BuyLeadController extends Controller
                 SELECT GROUP_CONCAT(DISTINCT t2.name ORDER BY t2.name SEPARATOR ', ')
                 FROM user_team ut2
                 JOIN teams t2 ON ut2.team_id = t2.id
-                WHERE ut2.user_id = blr.user_id AND t2.parent_team_id IN (" .
-                    TeamNameEnum::getTeamID(TeamNameEnum::LIFE) . "," .
-                    TeamNameEnum::getTeamID(TeamNameEnum::RENEWALS) .
-                ")
+                WHERE ut2.user_id = blr.user_id AND t2.parent_team_id IN (".
+                    TeamNameEnum::getTeamID(TeamNameEnum::LIFE).','.
+                    TeamNameEnum::getTeamID(TeamNameEnum::RENEWALS).
+                ')
             ) AS teams
-        ")
+        ')
             ->join('buy_lead_requests as blr', 'blr.id', '=', 'blrl.buy_lead_request_id')
             ->join('users', 'users.id', '=', 'blr.user_id')
             ->leftJoin('departments', 'departments.id', '=', 'users.department_id')
