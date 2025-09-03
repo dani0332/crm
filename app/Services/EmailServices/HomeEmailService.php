@@ -374,25 +374,27 @@ class HomeEmailService extends BaseService
     private function getCurrentPlanData($personalQuote)
     {
         try {
-            LoggerService::info('getCurrentPlanData - Getting current plan data for quote: ' . $personalQuote->uuid);
+            LoggerService::info('getCurrentPlanData - Getting current plan data for quote: '.$personalQuote->uuid);
 
             // Get plan_id from the PersonalQuote model
             $planId = $personalQuote->plan_id;
-            
-            if (!$planId) {
-                LoggerService::info('getCurrentPlanData - No plan_id found in PersonalQuote: ' . $personalQuote->uuid);
+
+            if (! $planId) {
+                LoggerService::info('getCurrentPlanData - No plan_id found in PersonalQuote: '.$personalQuote->uuid);
+
                 return [];
             }
 
             // Get insurance provider name using the relation
             $insuranceProviderCode = $personalQuote->insuranceProvider?->code ?? '';
-            
-            if (!$insuranceProviderCode) {
-                LoggerService::info('getCurrentPlanData - No insurance provider found for quote: ' . $personalQuote->uuid);
+
+            if (! $insuranceProviderCode) {
+                LoggerService::info('getCurrentPlanData - No insurance provider found for quote: '.$personalQuote->uuid);
+
                 return [];
             }
 
-            LoggerService::info('getCurrentPlanData - Found plan_id: ' . $planId . ' and provider: ' . $insuranceProviderCode);
+            LoggerService::info('getCurrentPlanData - Found plan_id: '.$planId.' and provider: '.$insuranceProviderCode);
 
             // Call your API here with the required parameters
             $currentPlan = $this->callCurrentPlanApi($planId, $personalQuote->uuid, $insuranceProviderCode);
@@ -405,6 +407,7 @@ class HomeEmailService extends BaseService
 
         } catch (\Exception $e) {
             LoggerService::error('getCurrentPlanData - Error getting current plan data', exception: $e);
+
             return [];
         }
     }
@@ -415,7 +418,7 @@ class HomeEmailService extends BaseService
     private function callCurrentPlanApi($planId, $quoteUuid, $insuranceProviderCode)
     {
         try {
-            LoggerService::info('callCurrentPlanApi - Calling KEN API with plan_id: ' . $planId . ', quote_uuid: ' . $quoteUuid . ', insuranceProvider: ' . $insuranceProvider);
+            LoggerService::info('callCurrentPlanApi - Calling KEN API with plan_id: '.$planId.', quote_uuid: '.$quoteUuid.', insuranceProvider: '.$insuranceProvider);
 
             // Get KEN API configuration
             $kenApiEndpoint = config('constants.KEN_API_ENDPOINT');
@@ -423,49 +426,50 @@ class HomeEmailService extends BaseService
             $kenApiTimeout = config('constants.KEN_API_TIMEOUT');
             $kenApiUser = config('constants.KEN_API_USER');
             $kenApiPassword = config('constants.KEN_API_PWD');
-            
+
             // Create basic auth header
-            $authBasic = base64_encode($kenApiUser . ':' . $kenApiPassword);
-            
+            $authBasic = base64_encode($kenApiUser.':'.$kenApiPassword);
+
             // Build the full endpoint URL
-            $apiUrl = $kenApiEndpoint . '/fetch-home-provider-plan';
-            
+            $apiUrl = $kenApiEndpoint.'/fetch-home-provider-plan';
+
             // Prepare request data
             $requestData = [
                 'planId' => $planId,
                 'quoteUID' => $quoteUuid,
                 'providerCode' => $insuranceProviderCode,
-                'lang' => "en",
+                'lang' => 'en',
             ];
 
-            LoggerService::info('callCurrentPlanApi - Making request to: ' . $apiUrl, $requestData);
+            LoggerService::info('callCurrentPlanApi - Making request to: '.$apiUrl, $requestData);
 
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $response = $client->post($apiUrl, [
                 'json' => $requestData,
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'Accept' => 'application/json',
                     'x-api-token' => $kenApiToken,
-                    'Authorization' => 'Basic ' . $authBasic,
+                    'Authorization' => 'Basic '.$authBasic,
                 ],
                 'timeout' => $kenApiTimeout,
             ]);
 
             $statusCode = $response->getStatusCode();
-            
+
             if ($statusCode === 200) {
                 $responseBody = $response->getBody()->getContents();
                 $responseData = json_decode($responseBody, true);
-                
+
                 LoggerService::info('callCurrentPlanApi - API call successful', [
                     'status_code' => $statusCode,
-                    'response_data' => $responseData
+                    'response_data' => $responseData,
                 ]);
-                
+
                 return $responseData;
             } else {
-                LoggerService::error('callCurrentPlanApi - API call failed with status: ' . $statusCode);
+                LoggerService::error('callCurrentPlanApi - API call failed with status: '.$statusCode);
+
                 return [];
             }
 
@@ -473,21 +477,21 @@ class HomeEmailService extends BaseService
             $response = $e->getResponse();
             $responseBody = $response ? $response->getBody()->getContents() : '';
             $statusCode = $response ? $response->getStatusCode() : 'unknown';
-            
+
             LoggerService::error('callCurrentPlanApi - Bad response from KEN API', [
                 'status_code' => $statusCode,
                 'response_body' => $responseBody,
-                'exception_message' => $e->getMessage()
+                'exception_message' => $e->getMessage(),
             ]);
-            
+
             return [];
         } catch (\Exception $e) {
             LoggerService::error('callCurrentPlanApi - Error calling KEN API', [
                 'exception_message' => $e->getMessage(),
                 'exception_line' => $e->getLine(),
-                'exception_file' => $e->getFile()
+                'exception_file' => $e->getFile(),
             ]);
-            
+
             return [];
         }
     }
