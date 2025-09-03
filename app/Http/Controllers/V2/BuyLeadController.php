@@ -87,6 +87,12 @@ class BuyLeadController extends Controller
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
         $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
 
+        // Get team IDs from database by name (environment-safe)
+        $eligibleParentTeamIds = [
+            getTeamId(TeamNameEnum::LIFE),
+            getTeamId(TeamNameEnum::RENEWALS)
+        ];
+
         // Summary Query - Aggregated data for summary report
         $summaryQuery = DB::table('buy_lead_requests as blr')
             ->selectRaw('
@@ -101,10 +107,7 @@ class BuyLeadController extends Controller
             ->join('user_team as ut', 'blr.user_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->whereBetween('blr.created_at', [$startDate, $endDate])
-            ->whereIn('t.parent_team_id', [
-                TeamNameEnum::getTeamID(TeamNameEnum::LIFE),
-                TeamNameEnum::getTeamID(TeamNameEnum::RENEWALS)
-            ]);
+            ->whereIn('t.parent_team_id', $eligibleParentTeamIds);
 
         $summaryQuery = $summaryQuery->groupBy('blr.user_id');
 
@@ -143,10 +146,7 @@ class BuyLeadController extends Controller
                 SELECT GROUP_CONCAT(DISTINCT t2.name ORDER BY t2.name SEPARATOR ', ')
                 FROM user_team ut2
                 JOIN teams t2 ON ut2.team_id = t2.id
-                WHERE ut2.user_id = blr.user_id AND t2.parent_team_id IN (" .
-                    TeamNameEnum::getTeamID(TeamNameEnum::LIFE) . "," .
-                    TeamNameEnum::getTeamID(TeamNameEnum::RENEWALS) .
-                ")
+                WHERE ut2.user_id = blr.user_id AND t2.parent_team_id IN (" . implode(',', $eligibleParentTeamIds) . ")
             ) AS teams
         ")
             ->join('buy_lead_requests as blr', 'blr.id', '=', 'blrl.buy_lead_request_id')

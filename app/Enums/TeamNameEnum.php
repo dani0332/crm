@@ -55,8 +55,6 @@ final class TeamNameEnum extends Enum
     {
         $teamIDs = [
             self::CAR => 2,
-            self::RENEWALS => 8,
-            self::LIFE => 3,
         ];
 
         return $teamIDs[$teamName] ?? null;
