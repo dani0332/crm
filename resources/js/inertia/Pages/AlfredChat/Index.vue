@@ -55,14 +55,6 @@ const reportButtonCon = computed(() => {
   if (filters.report == null) {
     data.disable = true;
     data.msg = 'Please select the report type';
-  } else if (filters.quoteId || filters.email || filters.mobile_no) {
-    data.disable = false;
-  } else if (
-    filters.chat_initiated_at == null ||
-    filters.chat_initiated_at == []
-  ) {
-    data.disable = true;
-    data.msg = 'Please select the Start Date and End Date ';
   }
 
   return data;
@@ -378,13 +370,10 @@ const exportReport = async (exportType = 'download') => {
         :rules="
           filters.quoteId || filters.email || filters.mobile_no
             ? []
-            : [isRequired, maxDateRangeArray(30)]
+            : [maxDateRangeArray(30)]
         "
         :onlySelect="true"
         tooltip="Date range of customer interaction with InstantAlfred (Maximum 30 days allowed)"
-        :required="
-          filters.quoteId || filters.email || filters.mobile_no ? false : true
-        "
       />
       <DatePicker
         v-model="filters.lead_created_at"
