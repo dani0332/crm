@@ -161,10 +161,10 @@ class LifeController extends Controller
         ]);
 
         $model = $this->lifeQuoteService->selectPlan(
-            $request->quoteId, 
-            $request->planId, 
-            $request->version, 
-            $request?->saveQuote, 
+            $request->quoteId,
+            $request->planId,
+            $request->version,
+            $request?->saveQuote,
             $request?->isUW,
             $request?->callSource
         );
