@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Pipeline;
 
 class ClaimAllocationService
 {
-    public function execute(string $claimUuid, int $quoteTypeId)
+    public function execute(string $claimUuid, int $quoteTypeId , bool $isReassignmentJob = false)
     {
         LoggerService::startQuoteLogging($claimUuid, LoggerFeatureEnum::CLAIM_ALLOCATION);
         $quoteType = QuoteTypes::getName($quoteTypeId);
@@ -237,6 +237,40 @@ class ClaimAllocationService
             ->keyBy(function ($item) {
                 return $item->user_id.'-'.$item->id;
             });
+    }
+
+    public function fetchReAssignmentLeads($advisorId)
+    {
+        $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
+        LoggerService::info(self::class."::fetchReAssignmentLeads - leads will be picked up in reassignment from : {$from}");
+
+        return ClaimRequest::whereBetween('created_at', [$from, now()])
+       
+            ->when($advisorId, function ($q) use ($advisorId) {
+                $q->where('advisor_id', $advisorId);
+            }, function ($q) {
+                $advisors = $this->getUnavailableAdvisor();
+                $advisorIds = $advisors->pluck('user_id');
+                $q->whereIn('advisor_id', $advisorIds);
+            })
+            ->get();
+    }
+
+    public function getUnavailableAdvisor()
+    {
+        // Query to fetch unavailable advisors
+        $query =ClaimsLeadAllocationConfig::with('user')
+            ->whereHas('user', function ($query) {
+                $query->where('is_active', 1)
+                    ->whereIn('status', [
+                        UserStatusEnum::UNAVAILABLE,
+                        UserStatusEnum::LEAVE,
+                        UserStatusEnum::SICK,
+                    ]);
+            })
+            ->orderBy('last_allocated');
+
+        return $query->get();
     }
 
 }

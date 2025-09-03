@@ -66,56 +66,8 @@ class ClaimsLeadAllocationConfig extends Model implements AuditableContract
         return QuoteTypes::getName($this->quote_type_id);
     }
 
-    /**
-     * Check if the user has reached their maximum capacity
-     */
-    public function hasReachedMaxCapacity(): bool
-    {
-        return $this->allocation_count >= $this->max_capacity;
-    }
+  
 
-    /**
-     * Get the remaining capacity
-     */
-    public function getRemainingCapacity(): int
-    {
-        return max(0, $this->max_capacity - $this->allocation_count);
-    }
-
-    /**
-     * Increment allocation counters
-     */
-    public function incrementAllocationCounters(): bool
-    {
-        return $this->update([
-            'allocation_count' => $this->allocation_count + 1,
-            'auto_assignment_count' => $this->auto_assignment_count + 1,
-            'last_allocated' => now()->timestamp,
-        ]);
-    }
-
-    /**
-     * Increment manual assignment counter
-     */
-    public function incrementManualAssignmentCount(): bool
-    {
-        return $this->update([
-            'allocation_count' => $this->allocation_count + 1,
-            'manual_assignment_count' => $this->manual_assignment_count + 1,
-            'last_allocated' => now()->timestamp,
-        ]);
-    }
-
-    /**
-     * Reset allocation counters
-     */
-    public function resetCounters(): bool
-    {
-        return $this->update([
-            'allocation_count' => 0,
-            'auto_assignment_count' => 0,
-            'manual_assignment_count' => 0,
-            'reset_cap' => $this->reset_cap + 1,
-        ]);
-    }
+  
+   
 }
