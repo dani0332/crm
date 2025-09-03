@@ -90,7 +90,7 @@ class BuyLeadController extends Controller
         // Get team IDs from database by name (environment-safe)
         $eligibleParentTeamIds = [
             getTeamId(TeamNameEnum::LIFE),
-            getTeamId(TeamNameEnum::RENEWALS)
+            getTeamId(TeamNameEnum::RENEWALS),
         ];
 
         // Summary Query - Aggregated data for summary report
@@ -146,9 +146,9 @@ class BuyLeadController extends Controller
                 SELECT GROUP_CONCAT(DISTINCT t2.name ORDER BY t2.name SEPARATOR ', ')
                 FROM user_team ut2
                 JOIN teams t2 ON ut2.team_id = t2.id
-                WHERE ut2.user_id = blr.user_id AND t2.parent_team_id IN (" . implode(',', $eligibleParentTeamIds) . ")
+                WHERE ut2.user_id = blr.user_id AND t2.parent_team_id IN (".implode(',', $eligibleParentTeamIds).')
             ) AS teams
-        ")
+        ')
             ->join('buy_lead_requests as blr', 'blr.id', '=', 'blrl.buy_lead_request_id')
             ->join('users', 'users.id', '=', 'blr.user_id')
             ->leftJoin('departments', 'departments.id', '=', 'users.department_id')
