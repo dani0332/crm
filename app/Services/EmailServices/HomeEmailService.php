@@ -418,7 +418,7 @@ class HomeEmailService extends BaseService
     private function callCurrentPlanApi($planId, $quoteUuid, $insuranceProviderCode)
     {
         try {
-            LoggerService::info('callCurrentPlanApi - Calling KEN API with plan_id: ' . $planId . ', quote_uuid: ' . $quoteUuid . ', insuranceProvider: ' . $insuranceProviderCode);
+            LoggerService::info('callCurrentPlanApi - Calling KEN API with plan_id: '.$planId.', quote_uuid: '.$quoteUuid.', insuranceProvider: '.$insuranceProviderCode);
 
             // Get KEN API configuration
             $kenApiEndpoint = config('constants.KEN_API_ENDPOINT');
