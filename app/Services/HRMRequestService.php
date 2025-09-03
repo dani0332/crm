@@ -27,7 +27,7 @@ class HRMRequestService
             $apiEndPoint = config('constants.HRM_API_ENDPOINT').'/v1/employees/codes';
             $apiUsername = config('constants.HRM_API_USERNAME');
             $apiPassword = config('constants.HRM_API_PASSWORD');
-            $apiTimeout = config('constants.HRM_API_TIMEOUT', 30);
+            $apiTimeout = config('constants.HRM_API_TIMEOUT', 2);
 
             if (empty($apiEndPoint) || empty($apiUsername) || empty($apiPassword)) {
                 LoggerService::error(self::class.'::getEmployeeCodes - Missing API configuration');
