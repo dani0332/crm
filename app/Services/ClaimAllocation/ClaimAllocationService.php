@@ -155,15 +155,8 @@ class ClaimAllocationService
 
         // Eager load all relevant users and configs to minimize queries
         $userIds = collect($items)->pluck('userId')->unique()->toArray();
-        $configIds = collect($items)->pluck('id')->unique()->toArray();
-
         $users = User::whereIn('id', $userIds)->get()->keyBy('id');
-        $configs = ClaimsLeadAllocationConfig::whereIn('user_id', $userIds)
-            ->whereIn('id', $configIds)
-            ->get()
-            ->keyBy(function ($item) {
-                return $item->user_id.'-'.$item->id;
-            });
+        $configs =(object) $this->getConfigs($items);
 
         foreach ($items as $item) {
             $configKey = $item['userId'].'-'.$item['id'];
@@ -200,16 +193,7 @@ class ClaimAllocationService
             return;
         }
 
-        $userIds = collect($items)->pluck('userId')->unique()->toArray();
-        $configIds = collect($items)->pluck('id')->unique()->toArray();
-
-        $users = User::whereIn('id', $userIds)->get()->keyBy('id');
-        $configs = ClaimsLeadAllocationConfig::whereIn('user_id', $userIds)
-            ->whereIn('id', $configIds)
-            ->get()
-            ->keyBy(function ($item) {
-                return $item->user_id.'-'.$item->id;
-            });
+        $configs =(object) $this->getConfigs($items);
 
         foreach ($items as $item) {
             $configKey = $item['userId'].'-'.$item['id'];
@@ -227,16 +211,7 @@ class ClaimAllocationService
     public function resetCap($request): void
     {
         $items = is_array($request) ? $request : $request->all();
-
-        $userIds = collect($items)->pluck('userId')->unique()->toArray();
-        $configIds = collect($items)->pluck('id')->unique()->toArray();
-
-        $configs = ClaimsLeadAllocationConfig::whereIn('user_id', $userIds)
-            ->whereIn('id', $configIds)
-            ->get()
-            ->keyBy(function ($item) {
-                return $item->user_id.'-'.$item->id;
-            });
+        $configs =(object) $this->getConfigs($items);
 
         foreach ($items as $item) {
             $configKey = $item['userId'].'-'.$item['id'];
@@ -249,6 +224,17 @@ class ClaimAllocationService
             $claimAllocationConfig->save();
         }
 
+    }
+
+    public function getConfigs($items){
+        $userIds = collect($items)->pluck('userId')->unique()->toArray();
+        $configIds = collect($items)->pluck('id')->unique()->toArray();
+        return ClaimsLeadAllocationConfig::whereIn('user_id', $userIds)
+            ->whereIn('id', $configIds)
+            ->get()
+            ->keyBy(function ($item) {
+                return $item->user_id.'-'.$item->id;
+            });
     }
 
 }
