@@ -84,8 +84,8 @@ class BuyLeadController extends Controller
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
         $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
 
-        // Query 1
-        $query1 = DB::table('buy_lead_requests as blr')
+        // Summary Query - Aggregated data for summary report
+        $summaryQuery = DB::table('buy_lead_requests as blr')
             ->selectRaw('
             users.name AS advisor,
             SUM(blr.requested_count) AS requested_count,
@@ -100,12 +100,12 @@ class BuyLeadController extends Controller
             ->whereBetween('blr.created_at', [$startDate, $endDate])
             ->whereIn('t.parent_team_id', [3, 8]);
 
-        $query1 = $query1->groupBy('blr.user_id');
+        $summaryQuery = $summaryQuery->groupBy('blr.user_id');
 
-        $results1 = $query1->get();
+        $summaryResults = $summaryQuery->get();
 
-        // Query 2
-        $query2 = DB::table('buy_lead_request_logs as blrl')
+        // Detail Query - Individual lead records for detailed report
+        $detailQuery = DB::table('buy_lead_request_logs as blrl')
             ->selectRaw("
             CASE
                 WHEN blr.quote_type_id = 1 THEN cqr.code
@@ -156,13 +156,13 @@ class BuyLeadController extends Controller
             })
             ->whereBetween('blrl.created_at', [$startDate, $endDate]);
 
-        $query2 = $query2->groupBy('blrl.quote_id', 'blrl.quote_type_id')
+        $detailQuery = $detailQuery->groupBy('blrl.quote_id', 'blrl.quote_type_id')
             ->orderBy('blrl.created_at', 'asc');
 
-        $results2 = $query2->get();
+        $detailResults = $detailQuery->get();
 
         // Fetch HRM codes for users with null advisor_code
-        $emailsWithNullCodes = $results2->where('advisor_code', null)
+        $emailsWithNullCodes = $detailResults->where('advisor_code', null)
             ->pluck('advisor_email')
             ->filter()
             ->unique()
@@ -191,8 +191,8 @@ class BuyLeadController extends Controller
                     'codes_map' => $hrmCodeResults,
                 ]);
 
-                // Update results2 with the fetched codes
-                $results2 = $results2->map(function ($item) use ($hrmCodeResults) {
+                // Update detail results with the fetched codes
+                $detailResults = $detailResults->map(function ($item) use ($hrmCodeResults) {
                     if ($item->advisor_code === null && isset($item->advisor_email) && isset($hrmCodeResults[$item->advisor_email])) {
                         $item->advisor_code = $hrmCodeResults[$item->advisor_email];
 
@@ -227,8 +227,8 @@ class BuyLeadController extends Controller
         }
 
         try {
-            $summaryExport = app(BuyLeadsExport::class, ['data' => $results1, 'type' => 'summary'])->download('buy_leads_summary.xlsx');
-            $detailedExport = app(BuyLeadsExport::class, ['data' => $results2, 'type' => 'detailed'])->download('buy_leads_detailed.xlsx');
+            $summaryExport = app(BuyLeadsExport::class, ['data' => $summaryResults, 'type' => 'summary'])->download('buy_leads_summary.xlsx');
+            $detailedExport = app(BuyLeadsExport::class, ['data' => $detailResults, 'type' => 'detailed'])->download('buy_leads_detailed.xlsx');
             $files = [
                 ['path' => $summaryExport->getFile()->getRealPath(), 'name' => $file1],
                 ['path' => $detailedExport->getFile()->getRealPath(), 'name' => $file2],
