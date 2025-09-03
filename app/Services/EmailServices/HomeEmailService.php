@@ -392,6 +392,7 @@ class HomeEmailService extends BaseService
             'automatedFlowExecuted' => ! empty($homeQuote?->automated_flow_executed_at),
 
             // Advisor-related data
+            'advisor' => $advisor,
             'advisorId' => $advisor?->id,
             'advisorName' => $advisor?->name ?? '',
             'advisorEmail' => $advisor?->email ?? '',
