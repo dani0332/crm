@@ -1109,32 +1109,44 @@ class HealthQuoteService extends BaseService
         $response['priceWithVAT'] = '';
         $response['priceWithLP'] = ''; // Premium with loading price
 
-        $planData = HealthQuotePlan::where('health_quote_request_id', $data->id)->first();
-        if ($planData) {
-            $planPayload = json_decode($planData->plan_payload, true);
-            if (isset($planPayload['plans'])) {
-                foreach ($planPayload['plans'] as $plan) {
-                    if ($plan['id'] == $data->plan_id) {
-                        $response['providerName'] = $plan['providerName'];
-                        $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
-                        $response['paidAt'] = GenericRequestEnum::NotApplicable;
-                        $response['planName'] = $plan['name'];
-                        if (isset($plan['ratesPerCopay'])) {
-                            foreach ($plan['ratesPerCopay'] as $ratePerCopay) {
-                                if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
-                                    $response['priceWithVAT'] = (float) $ratePerCopay['discountPremium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
-                                    $response['priceWithLP'] = (float) $ratePerCopay['discountPremium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
-                                }
-                            }
-                        }
-                        $response['priceWithVAT'] = ((float) $response['priceWithVAT'] ?? 0) + ((isset($plan['basmah']) ? (float) $plan['basmah'] : 0)) + ((isset($plan['policyFee']) ? (float) $plan['policyFee'] : 0)) + ((isset($plan['icpFee']) ? (float) $plan['icpFee'] : 0));
-                        if (isset($plan['benefits'], $plan['benefits']['feature'])) {
-                            foreach ($plan['benefits']['feature'] as $value) {
-                                if ($value['code'] == GenericRequestEnum::TPA_Code) {
-                                    $response['network'] = $value['value'];
-                                }
-                            }
-                        }
+        if (empty($data->plan_id)) {
+            return $response;
+        }
+
+        $kenResponse = Ken::request('/fetch-health-selected-plan', 'post', [
+            'quoteUID' => $data->uuid,
+        ]);
+
+        $plans = collect($kenResponse['plans'] ?? []);
+
+        $plan = (object) $plans->first();
+
+        if ($plan) {
+            $response['providerName'] = $plan->providerName;
+            $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
+            $response['paidAt'] = GenericRequestEnum::NotApplicable;
+            $response['planName'] = $plan->name;
+
+            if (property_exists($plan, 'ratesPerCopay')) {
+                foreach ($plan->ratesPerCopay as $ratePerCopay) {
+                    if (isset($ratePerCopay['healthPlanCoPaymentId']) && $ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
+                        $response['priceWithVAT'] = (float) $ratePerCopay['discountPremium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
+                        $response['priceWithLP'] = (float) $ratePerCopay['discountPremium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
+                    }
+                }
+            }
+
+            $basmah = property_exists($plan, 'basmah') ? (float) $plan->basmah : 0;
+            $policyFee = property_exists($plan, 'policyFee') ? (float) $plan->policyFee : 0;
+            $icpFee = property_exists($plan, 'icpFee') ? (float) $plan->icpFee : 0;
+
+            $response['priceWithVAT'] = ((float) $response['priceWithVAT'] ?? 0) + $basmah + $policyFee + $icpFee;
+            $benefits = property_exists($plan, 'benefits') ? $plan->benefits : [];
+            if (isset($benefits['feature'])) {
+                $features = $benefits['feature'];
+                foreach ($features as $value) {
+                    if (isset($value['code']) && $value['code'] == GenericRequestEnum::TPA_Code) {
+                        $response['network'] = $value['value'];
                     }
                 }
             }
