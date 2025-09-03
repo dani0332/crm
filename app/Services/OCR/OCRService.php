@@ -348,6 +348,15 @@ class OCRService
         $documentCategory = $documentType->category;
         $result = null;
 
+        // Only run OCR for quotes with Transaction Approved status
+        if (property_exists($quote, 'quote_status_id') && $quote->quote_status_id != QuoteStatusEnum::TransactionApproved) {
+            LoggerService::info('OCR processing skipped - Quote is not in Transaction Approved status - Quote UUID: '.$quote->uuid, [
+                'quote_status_id' => $quote->quote_status_id,
+                'required_status' => QuoteStatusEnum::TransactionApproved,
+            ]);
+            return null;
+        }
+
         LoggerService::info('Starting OCR processing - Quote UUID: '.$quote->uuid);
 
         // Check if OCR service is available
