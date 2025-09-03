@@ -16,10 +16,6 @@ const props = defineProps({
     default: () => [],
   },
   quoteType: String,
-  userBLStatuses: {
-    type: Array,
-    default: () => []
-  },
   totalAssignedLeadCount: {
     type: Number,
     default: 0,
@@ -93,10 +89,6 @@ const tableHeader = ref([
     ? [{ text: 'Last Login', value: 'lastLogin', sortable: true}]
     : []
 ]);
-
-const filters = reactive({
-  userBLStatus: null
-});
 
 const leadData = ref([
   {
@@ -247,29 +239,6 @@ async function fetchData() {
     preserveState: true,
   });
 }
-
-const onReset = () => {
-  router.visit(`/allocation-dashboard/${page.props.quoteType}`, {
-    method: 'get',
-    data: {},
-    preserveScroll: true,
-    onBefore: () => (loaders.reset = true),
-    onSuccess: () => (loaders.reset = false)
-  });
-}
-
-const onSubmit = isValid => {
-  if (isValid) {
-    router.visit(`/allocation-dashboard/${page.props.quoteType}`, {
-      method: 'get',
-      data: { ...filters },
-      preserveState: true,
-      preserveScroll: true,
-      onBefore: () => (loaders.search = true),
-      onFinish: () => (loaders.search = false),
-    });
-  }
-};
 
 const onSubmitChanges = async () => {
   loaders.submit = true;
@@ -424,44 +393,6 @@ onMounted(() => {
         </div>
       </TransitionGroup>
     </div>
-
-    <!-- Filters -->
-    <div v-if="page.props.quoteType === 'Travel'">
-    <x-divider class="my-4" />
-    <x-form @submit="onSubmit" :auto-focus="false">
-      <div class="grid sm:grid-cols-2 gap-4">
-        <x-select
-        label="Buy Lead Status of Users"
-          required
-          placeholder="Select Status"
-          :options="userBLStatuses || []"
-          filterable
-          v-model="filters.userBlStatus"
-          :rules="[isRequired]"
-        ></x-select>
-      </div>
-      <div class="flex justify-end gap-3 mb-4">
-        <x-button
-          size="md"
-          color="orange"
-          type="submit"
-          :loading="loaders.search"
-        >
-          Search
-        </x-button>
-        <x-button
-          size="md"
-          color="primary"
-          type="submit"
-          :loading="loaders.reset"
-          @click.prevent="onReset()"
-        >
-          Reset
-        </x-button>
-      </div>
-    </x-form>
-    </div>
-
 
     <DataTable
       table-class-name="compact"
