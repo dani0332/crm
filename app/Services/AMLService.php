@@ -782,7 +782,9 @@ class AMLService
         $providerName = InsuranceProvidersEnum::getTextByCode($paymentDetails?->insuranceProvider?->code);
         $isLIVA = $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::RSA;
 
-        $isRenewalUpload = $quoteTypeId == QuoteTypes::CAR->id() && $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA && $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD;
+        $isRenewalUpload = $quoteTypeId == QuoteTypes::CAR->id() &&
+            $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA &&
+            $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD;
 
         if ($isRenewalUpload) {
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload quote. Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Processing without Update Quote API call');

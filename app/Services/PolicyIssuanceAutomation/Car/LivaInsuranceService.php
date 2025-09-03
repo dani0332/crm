@@ -925,25 +925,20 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $driverFirstName = $nameParts[0] ?? '';
             $driverLastName = $nameParts[1] ?? '';
 
-            $getQuoteResponseMapping = [
+            $vehicleDriverDetailsData = [
+                'is_insured_and_driver_same' => ($responseData['DriverDetails'][0]['AdditionalDriverDetails']['MainDriverInd'] ?? '') === 'Y' ? '1' : '0',
                 'rta_transaction_type' => (string) ($responseData['VehicleDetails']['RtaTransactionType'] ?? ''),
-                'plate_code' => $responseData['VehicleDetails']['RegnNoText'] ?? '', // optional
-                'plate_number' => $responseData['VehicleDetails']['RegnNoNumber'] ?? '', // optional
+                'vehicle_plate_code' => $responseData['VehicleDetails']['RegnNoText'] ?? '', // optional
+                'vehicle_plate_number' => $responseData['VehicleDetails']['RegnNoNumber'] ?? '', // optional
                 'traffic_code_number' => $responseData['VehicleDetails']['TcfNo'] ?? '',
-                'chassis_number' => $responseData['VehicleDetails']['ChassisNo'] ?? '',
                 'engine_number' => $responseData['VehicleDetails']['EngineNo'] ?? '',
                 'rta_plate_category' => (string) ($responseData['VehicleDetails']['PlateCategory'] ?? ''),
                 'vehicle_color' => (string) ($responseData['VehicleDetails']['ColorCode'] ?? ''),
-                'plate_color' => '', // Not available in response
+                'vehicle_plate_color' => '', // Not available in response
                 'bank_loan' => ! empty($responseData['VehicleDetails']['CarFinanceCode']) ? '1' : '0',
                 'bank_name' => $responseData['VehicleDetails']['CarFinanceCode'] ?? '', // optional
                 'first_registration_date' => $responseData['VehicleDetails']['DateOfRegn'] ?? '',
-                'policy_effective_date' => $responseData['PolicyEffectiveDate'] ?? '',
-                'policy_expiry_date' => $responseData['PolicyExpiryDate'] ?? '', // optional
-                'certificate_start_date' => $responseData['VehicleDetails']['CertificateStartDate'] ?? '',
-                'certificate_end_date' => $responseData['VehicleDetails']['CertificateEndDate'] ?? '', // optional
                 // 'annual_mileage_estimate' => '', // Not available in response
-                'is_insured_and_driver_same' => ($responseData['DriverDetails'][0]['AdditionalDriverDetails']['MainDriverInd'] ?? '') === 'Y' ? '1' : '0',
                 'driver_first_name' => $driverFirstName, // optional
                 'driver_last_name' => $driverLastName, // optional
                 'driver_dob' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverDOB'] ?? '', // optional
@@ -951,15 +946,31 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'driver_license_number' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['LicenseNo'] ?? '',
                 'driver_license_issue_place' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
                 'driver_uae_driving_experience' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['LocalLicense'] ?? 0, // optional
-                'home_country_license_issuance' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
-                'home_country_driving_experience' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['OtherLicense'] ?? 0, // optional
+                'driver_home_country_license_issuance' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
+                'driver_home_country_driving_experience' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['OtherLicense'] ?? 0, // optional
+            ];
+
+            $quoteDetailsData = [
+                'policy_start_date' => $responseData['PolicyEffectiveDate'] ?? '',
+                'policy_expiry_date' => $responseData['PolicyExpiryDate'] ?? '', // optional
+                'certificate_start_date' => $responseData['VehicleDetails']['CertificateStartDate'] ?? '',
+                'certificate_end_date' => $responseData['VehicleDetails']['CertificateEndDate'] ?? '', // optional
+            ];
+
+            $getQuoteResponseMapping = [
+                'chassis_number' => $responseData['VehicleDetails']['ChassisNo'] ?? '',
             ];
 
             if (! isset($response['errors'])) {
                 $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
                 if ($carQuoteRequestDetails) {
+                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Updating quote details');
                     $carQuoteRequestDetails->update($getQuoteResponseMapping);
+                    $quoteDetails->update($quoteDetailsData);
+                    $quoteDetails->vehicleDriverDetail()->updateOrCreate([], $vehicleDriverDetailsData); // TODO: need to discuss update or create.
                 }
+
+                $getQuoteResponseMapping = array_merge($getQuoteResponseMapping, $vehicleDriverDetailsData, $quoteDetailsData);
 
                 return response()->json([
                     'success' => true,

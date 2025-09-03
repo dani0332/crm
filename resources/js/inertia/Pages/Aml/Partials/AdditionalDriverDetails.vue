@@ -181,8 +181,8 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
         driver_license_issue_date: 'license_issue_date',
         driver_license_expiry_date: 'license_expiry_date',
         driver_uae_driving_experience: 'uae_driving_experience',
-        home_country_license_issuance: 'home_country_license_issuance',
-        home_country_driving_experience: 'home_country_driving_experience',
+        driver_home_country_license_issuance: 'home_country_license_issuance',
+        driver_home_country_driving_experience: 'home_country_driving_experience',
       },
     };
 
