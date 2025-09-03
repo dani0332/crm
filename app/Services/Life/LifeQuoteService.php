@@ -6,6 +6,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\LeadSourceEnum;
 use App\Enums\LifeRiderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTermEnum;
@@ -682,7 +683,7 @@ class LifeQuoteService extends BaseService
             'quoteUID' => $uuid,
             'getLatestRating' => $getLatestRating,
             'lang' => 'en',
-            'callSource' => 'imcrm',
+            'callSource' => strtolower(LeadSourceEnum::IMCRM),
         ];
 
         $client = new \GuzzleHttp\Client;
@@ -778,7 +779,7 @@ class LifeQuoteService extends BaseService
             'version' => $version,
             'isUW' => $isUW,
             'quoteTypeId' => QuoteTypes::getIdFromValue('Life'),
-            'callSource' => 'imcrm',
+            'callSource' => strtolower(LeadSourceEnum::IMCRM),
         ];
 
         if ($saveQuote) {
