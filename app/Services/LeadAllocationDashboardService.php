@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\InvestmentFrequencyEnum;
-use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -22,7 +21,7 @@ class LeadAllocationDashboardService extends BaseService
 {
     use TeamHierarchyTrait;
 
-    public function getAdvisors($quoteType, ?string $BlStatus = null)
+    public function getAdvisors($quoteType)
     {
         try {
             $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
@@ -88,15 +87,7 @@ class LeadAllocationDashboardService extends BaseService
                 $users = $users->whereIn('users.id', $userIds);
             }
 
-            $users = $users->get();
-
-            // Filters
-            if ($BlStatus && $BlStatus !== LeadAllocationUserBLStatusFiltersEnum::ALL->value) {
-                $userBlStatus = LeadAllocationUserBLStatusFiltersEnum::from($BlStatus);
-                $users = $userBlStatus->applyFilter($users);
-            }
-
-            return $users;
+            return $users->get();
         } catch (\Exception $e) {
             LoggerService::error($e->getMessage());
 

@@ -38,7 +38,7 @@ class LeadAllocationController extends Controller
         $this->middleware("permission:{$permission}", ['only' => ['index']]);
     }
 
-    public function index(QuoteTypes $quoteType, Request $request)
+    public function index(QuoteTypes $quoteType)
     {
         $totalAssignedLeadCount = 0;
         $availableUsers = 0;
@@ -46,7 +46,7 @@ class LeadAllocationController extends Controller
 
         $todayTotalLeadCount = $this->leadAllocationDashboardService->getTodaysTotalLeadsCount($quoteType);
         $todayTotalUnAssignedLeadCount = $this->leadAllocationDashboardService->getTodaysTotalUnAssignedLeadsCount($quoteType);
-        $data = $this->leadAllocationDashboardService->getAdvisors($quoteType, $request->userBlStatus);
+        $data = $this->leadAllocationDashboardService->getAdvisors($quoteType);
 
         foreach ($data as $value) {
             $totalAssignedLeadCount = $totalAssignedLeadCount + $value->allocationCount;
@@ -54,7 +54,6 @@ class LeadAllocationController extends Controller
         }
 
         $data = [
-            'userBLStatuses' => LeadAllocationUserBLStatusFiltersEnum::withLabels(),
             'totalAssignedLeadCount' => $totalAssignedLeadCount,
             'availableUsers' => $availableUsers,
             'unAvailableUsers' => $unAvailableUsers,
