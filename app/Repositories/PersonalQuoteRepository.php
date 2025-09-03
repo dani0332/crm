@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -220,9 +221,10 @@ class PersonalQuoteRepository extends BaseRepository
 
     private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR)
     {
+        $isOcrSendUpdateLogFlagEnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_SEND_UPDATE_LOG_FLAG, useCache: true) == '1';
         // For SendUpdateLog, get the quote type from the quote_type_id
         $quoteTypeParam = null;
-        if ($quote instanceof SendUpdateLog) {
+        if ($quote instanceof SendUpdateLog && $isOcrSendUpdateLogFlagEnabled) {
             // Get the quote type name for the SendUpdateLog
             $quoteTypeParam = QuoteTypes::getName($quote->quote_type_id)?->value;
             LoggerService::info('Determined quote type for SendUpdateLog', [
@@ -230,7 +232,13 @@ class PersonalQuoteRepository extends BaseRepository
                 'quote_type_id' => $quote->quote_type_id,
                 'quote_type_param' => $quoteTypeParam,
             ]);
+        } else {
+            $isSendUpdateEligibleForOCR = false;
         }
+        LoggerService::info('check OCR Send Update Log Flag', [
+            'isOcrSendUpdateLogFlagEnabled' => $isOcrSendUpdateLogFlagEnabled,
+            'isSendUpdateEligibleForOCR' => $isSendUpdateEligibleForOCR,
+        ]);
 
         app(OCRService::class)->dispatchJobIfEligible(
             $documentType,

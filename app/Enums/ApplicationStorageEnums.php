@@ -251,4 +251,7 @@ final class ApplicationStorageEnums extends Enum
     public const HOME_LEAD_POOL_BCC = 'HOME_LEAD_POOL_BCC';
     public const SAVINGS_LEAD_POOL_BCC = 'SAVINGS_LEAD_POOL_BCC';
     public const BIRD_OE_ASSIGNMENT_WORKFLOW = 'BIRD_OE_ASSIGNMENT_WORKFLOW';
+
+    // OCR NRO Send Update Log Flag
+    public const OCR_SEND_UPDATE_LOG_FLAG = 'OCR_SEND_UPDATE_LOG_FLAG';
 }
