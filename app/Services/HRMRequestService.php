@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\Logger\LoggerService;
 use Exception;
 use GuzzleHttp\Client;

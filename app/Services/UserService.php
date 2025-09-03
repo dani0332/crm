@@ -8,7 +8,6 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\Role;
 use App\Models\User;
-use App\Services\HRMRequestService;
 use App\Services\Logger\LoggerService;
 use DB;
 use Illuminate\Http\Request;
@@ -288,6 +287,7 @@ class UserService extends BaseService
                     LoggerService::warning(self::class.'::fetchUserCodes - Employee data missing email', [
                         'employee_data' => $employee,
                     ]);
+
                     continue;
                 }
 
@@ -304,6 +304,7 @@ class UserService extends BaseService
                         'status' => 'user_not_found',
                         'code' => $code,
                     ];
+
                     continue;
                 }
 
