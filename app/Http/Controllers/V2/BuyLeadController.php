@@ -14,11 +14,14 @@ use App\Services\UserService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Enums\TeamNameEnum;
 
 class BuyLeadController extends Controller
 {
-    public function __construct(public BuyLeadService $buyLeadService)
-    {
+    public function __construct(
+        public BuyLeadService $buyLeadService,
+        private readonly UserService $userService
+    ) {
         $this->middleware('permission:'.PermissionsEnum::BUY_LEADS, ['only' => ['show', 'tracking']]);
         $this->middleware('permission:'.PermissionsEnum::BUY_LEADS_EXPORT, ['only' => ['export', 'exportBuyLeadsData']]);
     }
@@ -128,7 +131,7 @@ class BuyLeadController extends Controller
                 ELSE NULL
             END AS lead_created_at,
             users.name AS advisor,
-            users.code AS advisor_code,
+            users.employee_code AS advisor_code,
             users.email AS advisor_email,
             departments.name AS department,
             qs.text AS lead_status,
@@ -137,7 +140,10 @@ class BuyLeadController extends Controller
                 SELECT GROUP_CONCAT(DISTINCT t2.name ORDER BY t2.name SEPARATOR ', ')
                 FROM user_team ut2
                 JOIN teams t2 ON ut2.team_id = t2.id
-                WHERE ut2.user_id = blr.user_id AND t2.parent_team_id IN (3,8)
+                WHERE ut2.user_id = blr.user_id AND t2.parent_team_id IN (" .
+                    TeamNameEnum::getTeamID(TeamNameEnum::LIFE) . "," .
+                    TeamNameEnum::getTeamID(TeamNameEnum::RENEWALS) .
+                ")
             ) AS teams
         ")
             ->join('buy_lead_requests as blr', 'blr.id', '=', 'blrl.buy_lead_request_id')
@@ -162,7 +168,7 @@ class BuyLeadController extends Controller
         $detailResults = $detailQuery->get();
 
         // Fetch HRM codes for users with null advisor_code
-        $emailsWithNullCodes = $detailResults->where('advisor_code', null)
+        $emailsWithNullCodes = $detailResults->whereNull('advisor_code')
             ->pluck('advisor_email')
             ->filter()
             ->unique()
@@ -176,13 +182,13 @@ class BuyLeadController extends Controller
                 'emails' => $emailsWithNullCodes,
             ]);
 
-            $hrmResponse = UserService::fetchUserCodes($emailsWithNullCodes);
+            $hrmResponse = $this->userService->fetchUserCodes($emailsWithNullCodes);
 
             if ($hrmResponse['success'] && ! empty($hrmResponse['results'])) {
                 // Create a map of email => code for quick lookup
                 foreach ($hrmResponse['results'] as $result) {
-                    if ($result['status'] === 'updated' && isset($result['new_code'])) {
-                        $hrmCodeResults[$result['email']] = $result['new_code'];
+                    if ($result['status'] === 'updated' && isset($result['new_employee_code'])) {
+                        $hrmCodeResults[$result['email']] = $result['new_employee_code'];
                     }
                 }
 
