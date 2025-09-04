@@ -165,9 +165,9 @@ class BuyLeadController extends Controller
                     SELECT GROUP_CONCAT(DISTINCT t2.name ORDER BY t2.name SEPARATOR ', ')
                     FROM user_team ut2
                     JOIN teams t2 ON ut2.team_id = t2.id
-                    WHERE ut2.user_id = blr.user_id AND t2.parent_team_id IN (".implode(',', $teamIds).")
+                    WHERE ut2.user_id = blr.user_id AND t2.parent_team_id IN (".implode(',', $teamIds).')
                 ) AS teams
-            ")
+            ')
             ->join('buy_lead_requests as blr', 'blr.id', '=', 'blrl.buy_lead_request_id')
             ->join('users', 'users.id', '=', 'blr.user_id')
             ->leftJoin('departments', 'departments.id', '=', 'users.department_id')
@@ -209,8 +209,9 @@ class BuyLeadController extends Controller
 
         $hrmResponse = $this->userService->fetchUserCodes($emailsWithNullCodes);
 
-        if (!($hrmResponse['success'] ?? false) || empty($hrmResponse['results'])) {
+        if (! ($hrmResponse['success'] ?? false) || empty($hrmResponse['results'])) {
             LoggerService::warning('Failed to fetch HRM codes', ['hrm_response' => $hrmResponse]);
+
             return $detailResults;
         }
 
@@ -232,6 +233,7 @@ class BuyLeadController extends Controller
                     'new_code' => $item->advisor_code,
                 ]);
             }
+
             return $item;
         });
     }
