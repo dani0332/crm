@@ -231,8 +231,6 @@ const isGigRenewal = computed(() => {
         (additionalVehicleTransactionDetailsForm.lead_source == RTA_CONSTANTS.RENEWALS_UPLOADS && additionalVehicleTransactionDetailsForm.previous_policy_provider === RTA_CONSTANTS.PREVIOUS_GIG_PROVIDER);
 });
 
-console.log(isGigRenewal.value);
-
 // Check if current quote source is NOT renewals_uploads
 const isNonRenewalsUploadSource = computed(() => {
   return page.props.quoteRequest?.source !== RTA_CONSTANTS.RENEWALS_UPLOADS;
@@ -304,6 +302,7 @@ const calculateDatesForNewVehicleOrOwnershipChange = () => {
     // Policy Expiry Date = Policy Effective Date + 13 months
     const policyExpiryDate = new Date(policyEffectiveDate);
     policyExpiryDate.setMonth(policyExpiryDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
+    policyExpiryDate.setDate(policyExpiryDate.getDate() - 1);
 
     // Certificate Start Date = Policy Effective Date
     // Certificate End Date = Policy Expiry Date
@@ -351,6 +350,7 @@ const calculateDatesForVehicleRenewalNonUpload = () => {
     // Certificate End Date = Certificate Start Date + 13 months
     const certificateEndDate = new Date(certificateStartDate);
     certificateEndDate.setMonth(certificateEndDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
+    certificateEndDate.setDate(certificateEndDate.getDate() - 1);
 
     additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
   }
