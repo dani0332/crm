@@ -4346,6 +4346,7 @@ function handleOcrNotification(event) {
   <PolicyIssuanceApiLogs
     v-if="isGIG || isLIVA"
     :type="modelClass"
+    :quoteTypeId="$page.props.quoteTypeId"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
   />

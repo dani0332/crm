@@ -520,6 +520,11 @@ class CarQuote extends BaseModel
             ->latest('customer_insured.updated_at');
     }
 
+    public function policyIssuance()
+    {
+        return $this->morphOne(PolicyIssuance::class, 'model');
+    }
+
     /**
      * Get quote tags for this car quote
      */
