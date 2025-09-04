@@ -360,10 +360,11 @@ class OCRService
         LoggerService::info('Starting OCR processing - Quote UUID: '.$quote->uuid);
 
         // Check if OCR service is available
-        $serviceCheck = $this->handleServiceAvailability($quote, $documentType, $userId);
-        if (! $serviceCheck) {
-            return false;
-        }
+        // TODO: Uncomment this when Customer OCR service is available & OCR Health Check is implemented by OCR team on Stage
+        // $serviceCheck = $this->handleServiceAvailability($quote, $documentType, $userId);
+        // if (! $serviceCheck) {
+        //     return false;
+        // }
 
         // Skip OCR for non-eligible providers
         if (! $this->isProviderEligibleForOcr($quoteType, $quote)) {
@@ -451,6 +452,15 @@ class OCRService
         ?string $quoteTypeParam = null,
         bool $isSendUpdateEligibleForOCR = false
     ): void {
+
+
+        // early return if Customer OCR Journey is not supported on prod
+        $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
+        if (in_array($docType, [OCRDocumentTypeEnum::ID_CARD, OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE, OCRDocumentTypeEnum::DRIVING_LICENSE])) {
+            LoggerService::info(self::class.' - Customer OCR Journey is not supported for now');
+
+            return;
+        }
 
         // Skip OCR only for SendUpdate logs that are NOT eligible (e.g., Car SendUpdate)
         if ($quote instanceof SendUpdateLog && ! $isSendUpdateEligibleForOCR) {
