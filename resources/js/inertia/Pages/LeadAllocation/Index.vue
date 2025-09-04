@@ -159,6 +159,7 @@ const onStatusSubmit = async () => {
 
   try {
     await statusSubmit(statusModal.data.userId, statusModal.data.id, statusModal.data.reason, page.props.quoteType);
+    await fetchData(); // to refresh the analytics (available/unavailable users)
   } catch (error) {
     notification.error({
       title: 'Error',
@@ -166,15 +167,9 @@ const onStatusSubmit = async () => {
       position: 'top'
     });
   } finally {
-    router.reload({
-        only: ['data'],
-        preserveScroll: true,
-        preserveState: true,
-      });
-
-      statusModal.loader = false;
-      item.loading = false;
-      statusModal.show = false;
+    statusModal.loader = false;
+    statusModal.show = false;
+    item.loading = false;
   }
 };
 
