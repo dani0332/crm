@@ -43,7 +43,7 @@ trait OcrFillable
                 $this->isSendUpdateEligibleForOCR,
                 $this->providerCode
             );
-            
+
             $success = $processor->processTaxInvoiceData();
 
             if ($success) {
@@ -76,7 +76,7 @@ trait OcrFillable
                 $this->isSendUpdateEligibleForOCR,
                 $this->providerCode
             );
-            
+
             $success = $processor->processTaxInvoiceRaisedByBuyerData();
 
             if ($success) {
@@ -145,7 +145,7 @@ trait OcrFillable
         try {
             // Create a single instance of the processor to reuse
             $processor = new EmiratesIdDataProcessor($quote, $data);
-            
+
             $success = $processor->processEmiratesIdData();
 
             if ($success) {
@@ -173,7 +173,7 @@ trait OcrFillable
         try {
             // Create a single instance of the processor to reuse
             $processor = new MulkiyaDataProcessor($quote, $data);
-            
+
             $success = $processor->processMulkiyaData();
 
             if ($success) {
@@ -201,7 +201,7 @@ trait OcrFillable
         try {
             // Create a single instance of the processor to reuse
             $processor = new DrivingLicenseDataProcessor($quote, $data);
-            
+
             $success = $processor->processDrivingLicenseData();
 
             if ($success) {
@@ -234,7 +234,7 @@ trait OcrFillable
                 $this->isSendUpdateEligibleForOCR,
                 $this->providerCode
             );
-            
+
             $success = $processor->processPolicyScheduleData();
 
             if ($success) {

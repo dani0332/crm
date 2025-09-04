@@ -183,7 +183,7 @@ class TaxInvoiceDataProcessor
     private function handlePaymentUpdates()
     {
         $paymentDataToUpdate = [];
-        
+
         // Get the payment record based on model type
         $payment = null;
         if ($this->quote instanceof SendUpdateLog) {
@@ -191,7 +191,7 @@ class TaxInvoiceDataProcessor
         } else {
             $payment = $this->quote->payment ?? null;
         }
-        
+
         if ($this->isFieldEnabled($this->providerCode, 'payment.insurer_invoice_date')) {
             $invoiceDate = $this->parseDate($this->resolveProp($this->data, 'invoiceDate'), $payment?->insurer_invoice_date);
             $paymentDataToUpdate['insurer_invoice_date'] = $invoiceDate;

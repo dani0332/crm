@@ -70,16 +70,17 @@ enum InsuranceProviderEnum: string
             self::SI,   // Salama Insurance
         ]);
     }
-    
+
     public static function asArray(): array
     {
         $result = [];
         foreach (self::cases() as $case) {
             $result[$case->name] = $case->value;
         }
+
         return $result;
     }
-    
+
     public static function getProviderCodeFromConstantName(string $constant): ?string
     {
         return match ($constant) {

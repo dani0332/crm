@@ -354,6 +354,7 @@ class OCRService
                 'quote_status_id' => $quote->quote_status_id,
                 'required_status' => QuoteStatusEnum::TransactionApproved,
             ]);
+
             return null;
         }
 
@@ -452,7 +453,6 @@ class OCRService
         ?string $quoteTypeParam = null,
         bool $isSendUpdateEligibleForOCR = false
     ): void {
-
 
         // early return if Customer OCR Journey is not supported on prod
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
@@ -599,17 +599,17 @@ class OCRService
     public function getEligibleProviders(): array
     {
         $quoteTypes = QuoteTypes::cases();
-        
+
         $providers = InsuranceProviderEnum::asArray();
-        
+
         $eligibleProviders = [];
         $quoteTypeNames = [];
-        
+
         foreach ($quoteTypes as $quoteType) {
             $quoteTypeNames[$quoteType->value] = $quoteType->value;
-            
+
             $eligibleForType = [];
-            
+
             foreach ($providers as $providerName => $providerValue) {
                 if ($this->isSupportedProvider($quoteType, $providerValue)) {
                     $eligibleForType[] = [
@@ -618,12 +618,12 @@ class OCRService
                     ];
                 }
             }
-            
-            if (!empty($eligibleForType)) {
+
+            if (! empty($eligibleForType)) {
                 $eligibleProviders[$quoteType->value] = $eligibleForType;
             }
         }
-        
+
         return [
             'providers' => $eligibleProviders,
             'quoteTypeNames' => $quoteTypeNames,

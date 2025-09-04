@@ -192,13 +192,12 @@ class PersonalQuoteRepository extends BaseRepository
 
                 LoggerService::info(self::class.' - fn: populateDocumentData called - Quote UUID: '.$data['quote_uuid']);
                 $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR);
-                
+
                 if ($isWaterMarkQualifyDoc && $quoteDocument) {
                     WatermarkDocumentsJob::dispatch(
                         $quoteDocument->id, $data['quote_uuid'], $documentType->id
                     )->afterCommit();
                 }
-
 
                 if (! $insuranceProviderId && $isSendUpdate) {
                     LoggerService::info('File Uploaded - Insurance Provider is required to generate broker invoice number');

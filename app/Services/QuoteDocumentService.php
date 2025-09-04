@@ -254,7 +254,7 @@ class QuoteDocumentService extends BaseService
                     $documentType->id
                 )->afterCommit();
             }
-            
+
             return $quoteDocument;
         } catch (\Exception $exception) {
             LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'], exception: $exception);

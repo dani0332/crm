@@ -162,6 +162,7 @@ trait OcrUtils
                 'quote_id' => $quote->id,
                 'quote_type' => $quoteType->value,
             ]);
+
             return;
         }
 
@@ -169,28 +170,29 @@ trait OcrUtils
             LoggerService::info('OcrUtils::updateAccuracyMatrix - Document type does not require OCR notifications', [
                 'quote_id' => $quote->id,
                 'quote_type' => $quoteType->value,
-                'doc_type' => $docType->value
+                'doc_type' => $docType->value,
             ]);
+
             return;
         }
-        
+
         LoggerService::info('OcrUtils::updateAccuracyMatrix - Document eligible for accuracy matrix', [
             'quote_id' => $quote->id,
             'quote_type' => $quoteType->value,
             'doc_type' => $docType->value,
             'document_type_id' => $documentType->id,
-            'document_type_code' => $documentType->code
+            'document_type_code' => $documentType->code,
         ]);
 
         $policyNumber = $accuracyMatrixService->extractPolicyNumberFromOcrData($data, $docType);
         $docId = $this->generateDocumentId($quote, $documentType);
-        
+
         LoggerService::info('OcrUtils::updateAccuracyMatrix - Extracted policy number', [
             'quote_id' => $quote->id,
             'quote_type' => $quoteType->value,
             'doc_type' => $docType->value,
             'policy_number' => $policyNumber,
-            'doc_id' => $docId
+            'doc_id' => $docId,
         ]);
 
         $accuracyMatrixService->updateDocumentData(
@@ -201,13 +203,13 @@ trait OcrUtils
             $policyNumber,
             true
         );
-        
+
         LoggerService::info('OcrUtils::updateAccuracyMatrix - Document data updated in accuracy matrix', [
             'quote_id' => $quote->id,
             'quote_type' => $quoteType->value,
             'doc_type' => $docType->value,
             'policy_number' => $policyNumber,
-            'doc_id' => $docId
+            'doc_id' => $docId,
         ]);
     }
 
@@ -218,9 +220,9 @@ trait OcrUtils
     public function requiresOcrNotifications(OCRDocumentTypeEnum $docType): bool
     {
         LoggerService::info('OcrUtils::requiresOcrNotifications - Start', [
-            'doc_type' => $docType->value
+            'doc_type' => $docType->value,
         ]);
-        
+
         // Get all enabled types across all quote types
         $allEnabledTypes = [];
 
@@ -233,13 +235,13 @@ trait OcrUtils
 
         // Remove duplicates and check if the document type's value is in the enabled list
         $allEnabledTypes = array_unique($allEnabledTypes);
-        
+
         $isEnabled = in_array($docType->value, $allEnabledTypes);
-        
+
         LoggerService::info('OcrUtils::requiresOcrNotifications - Result', [
             'doc_type' => $docType->value,
             'is_enabled' => $isEnabled,
-            'all_enabled_types' => $allEnabledTypes
+            'all_enabled_types' => $allEnabledTypes,
         ]);
 
         return $isEnabled;
@@ -248,14 +250,14 @@ trait OcrUtils
     private function generateDocumentId(Model $quote, DocumentType $documentType): string
     {
         $docId = "{$documentType->code}_{$quote->uuid}_".uniqid();
-        
+
         LoggerService::info('OcrUtils::generateDocumentId', [
             'quote_id' => $quote->id,
             'quote_uuid' => $quote->uuid,
             'document_type_code' => $documentType->code,
-            'document_id' => $docId
+            'document_id' => $docId,
         ]);
-        
+
         return $docId;
     }
 
@@ -346,7 +348,7 @@ trait OcrUtils
     public function extractProviderCode(Model $quote): ?string
     {
         $providerCode = null;
-        
+
         // First priority: Check payments for all model types
         if ($quote->payments && $quote->payments->isNotEmpty()) {
             $latestPayment = $quote->payments->first();
@@ -354,12 +356,12 @@ trait OcrUtils
                 $providerCode = $latestPayment->insuranceProvider->code;
             }
         }
-        
+
         // Second priority: For SendUpdateLog, use insuranceProvider if payments didn't yield a result
         if ($providerCode === null && $quote instanceof SendUpdateLog && $quote->insuranceProvider) {
             $providerCode = $quote->insuranceProvider->code;
         }
-        
+
         // Log the result for debugging
         LoggerService::info('Provider code extraction result - Quote UUID: '.$quote->uuid, [
             'model_type' => get_class($quote),
@@ -376,7 +378,8 @@ trait OcrUtils
     {
         if ($quote instanceof SendUpdateLog) {
             $prefix = QuoteTypes::getName($quote->quote_type_id)->shortCode();
-            return $prefix . $quote->code;
+
+            return $prefix.$quote->code;
         }
 
         return $quote->code;
