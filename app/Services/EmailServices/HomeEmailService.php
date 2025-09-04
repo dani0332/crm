@@ -509,6 +509,7 @@ class HomeEmailService extends BaseService
 
         $data = [
             // Base quote data
+            'id' => $personalQuote->id,
             'quoteUID' => $personalQuote->uuid,
             'quoteUUID' => $personalQuote->uuid,
             'refID' => $personalQuote->code,
