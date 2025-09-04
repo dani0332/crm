@@ -2198,6 +2198,49 @@ class AMLService
         return true;
     }
 
+    /**
+     * Check if insurer sync is enabled for the given quote type and request.
+     */
+    public function isInsurerSyncEnabled($quoteType, $quote): bool
+    {
+        $insurerScreenType = [
+            InsuranceProvidersEnum::AXA => AMLScreeningTypeEnum::INSURER_AXA,
+            InsuranceProvidersEnum::RSA => AMLScreeningTypeEnum::INSURER_RSA,
+        ];
+        $payment = $quote->payments()->mainLeadPayment()->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType->text);
+
+        if (! in_array($insuranceProvider?->code, array_keys($insurerScreenType))) {
+            return false;
+        }
+
+        $kycLogs = KycLog::withTrashed()->where([
+            'quote_request_id' => $quote->id,
+            'quote_type_id' => $quoteType->id,
+        ])->where('screening_type', $insurerScreenType[$insuranceProvider->code])->latest()->first();
+
+        if (! $kycLogs) {
+            return false;
+        }
+
+        $screeningResult = json_decode($kycLogs->results);
+
+        if (
+            $insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
+            isset($screeningResult->quoteStatus) &&
+            $screeningResult->quoteStatus == 20
+        ) {
+            return true;
+        }
+
+        if (! isset($screeningResult->uwApprovalStatus, $screeningResult->quoteStatus)) {
+            return false;
+        }
+
+        return $screeningResult->uwApprovalStatus === GenericRequestEnum::EBAO_UW_APPROVAL_STATUS_NO
+            && $screeningResult->quoteStatus === GenericRequestEnum::EBAO_QUOTE_STATUS;
+    }
+
     public function getQuoteDetailsFromInsurer($quoteTypeId, $quoteUID)
     {
         try {
