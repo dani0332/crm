@@ -472,8 +472,6 @@ class ApiController extends Controller
     /**
      * Get all email statuses for a specific quote
      *
-     * @param int $quoteTypeId
-     * @param int $quoteId
      * @return \Illuminate\Http\JsonResponse
      */
     public function getEmailStatus(int $quoteTypeId, int $quoteId)
@@ -490,7 +488,7 @@ class ApiController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $emailStatuses,
-                'message' => 'Email statuses retrieved successfully'
+                'message' => 'Email statuses retrieved successfully',
             ], Response::HTTP_OK);
 
         } catch (\Exception $e) {
@@ -503,7 +501,7 @@ class ApiController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve email statuses',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

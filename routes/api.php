@@ -82,7 +82,7 @@ Route::prefix('v1')->group(function () {
     Route::get('quotes/{quoteType}/export-plans-pdf-link', [GenericLobController::class, 'exportPlansPdfLink'])->name('exportPlansPdfLink');
 
     Route::post('quotes/send-ocb-email', [GenericLobController::class, 'getQuoteForOCBEmail'])->name('getQuoteForOCBEmail');
-    
+
     Route::get('quotes/{quoteTypeId}/{quoteId}/email-status', [ApiController::class, 'getEmailStatus'])->name('getEmailStatus');
 
     Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
