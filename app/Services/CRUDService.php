@@ -915,7 +915,7 @@ class CRUDService extends BaseService
 
     public function scoreEntityBreakdown($quote)
     {
-        LoggerService::info("fn:scoreEntityBreakdown - Start");
+        LoggerService::info('fn:scoreEntityBreakdown - Start');
         $scoreList = [];
         $entityScore = 0;
         if (! isset($quote->quoteRequestEntityMapping)) {
@@ -1151,7 +1151,7 @@ class CRUDService extends BaseService
     public function calculateScore($quote, $type)
     {
         LoggerService::startQuoteLogging($quote);
-        LoggerService::info("fn:calculateScore - Start");
+        LoggerService::info('fn:calculateScore - Start');
         if (strtolower($type) == 'business') {
             $pdfName = 'Entity';
             $results = $this->scoreEntityBreakdown($quote);
@@ -1178,7 +1178,7 @@ class CRUDService extends BaseService
 
             app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false);
         }
-        LoggerService::info("fn:calculateScore - End");
+        LoggerService::info('fn:calculateScore - End');
     }
 
     public function hasAtleastOneStatusPolicyIssued($record): bool
