@@ -945,16 +945,16 @@ class CRUDService extends BaseService
         }
 
         // TODO: check with Bilal Saeed
-        /* if (isset($entity->industry_type_code) && $entity->industry_type_code != '') {
-            $industryTypeCode = in_array(strtolower($entity->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_ONE_RATING) ? 1 : (in_array(strtolower($entity->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_TWO_RATING) ? 2 : 3);
-            $industryType = Lookup::where(['key' => LookupsEnum::COMPANY_TYPE, 'code' => $entity->industry_type_code])->first();
-            $industryTypeValue = $entity->industry_type_code;
+        if (isset($quote->latestInsured->industry_type_code) && $quote->latestInsured->industry_type_code != '') {
+            $industryTypeCode = in_array(strtolower($quote->latestInsured->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_ONE_RATING) ? 1 : (in_array(strtolower($quote->latestInsured->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_TWO_RATING) ? 2 : 3);
+            $industryType = Lookup::where(['key' => LookupsEnum::COMPANY_TYPE, 'code' => $quote->latestInsured->industry_type_code])->first();
+            $industryTypeValue = $quote->latestInsured->industry_type_code;
             if (isset($industryType->text)) {
                 $industryTypeValue = $industryType->text;
             }
             $scoreList[] = ['score' => $industryTypeCode, 'text' => 'Nature Of Business', 'value' => $industryTypeValue];
             $entityScore += $industryTypeCode;
-        } */
+        }
 
         // sanctions
         if ($entity->in_sanction_list == 1) {
