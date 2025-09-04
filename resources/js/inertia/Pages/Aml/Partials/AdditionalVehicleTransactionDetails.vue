@@ -850,7 +850,7 @@ watch(
   </div>
 </template>
 <style>
-  .x-popover-container .min-w-\[280px\] {
+  /* .x-popover-container .min-w-\[280px\] {
     overflow-x: auto;
   }
 
@@ -860,5 +860,9 @@ watch(
 
   .x-popover-container .x-menu-item:hover {
     width: max-content;
+  } */
+
+  .v-popper__wrapper {
+    width: fit-content !important;
   }
 </style>
