@@ -279,29 +279,29 @@ class ClaimsService extends BaseService
                 'insurance_provider.text as currently_insured_with',
                 'quote_type.text as product',
                 // Car-specific fields
-                DB::raw("CASE WHEN personal_quotes.quote_type_id = " . QuoteTypeId::Car . " THEN car_make.text ELSE NULL END as car_make"),
-                DB::raw("CASE WHEN personal_quotes.quote_type_id = " . QuoteTypeId::Car . " THEN car_model.text ELSE NULL END as car_model"),
-                DB::raw("CASE WHEN personal_quotes.quote_type_id = " . QuoteTypeId::Car . " THEN car_quote_request.year_of_manufacture ELSE NULL END as model_year"),
-                DB::raw("CASE WHEN personal_quotes.quote_type_id = " . QuoteTypeId::Car . " THEN car_quote_request_detail.plate_number ELSE NULL END as plate_number"),
+                DB::raw('CASE WHEN personal_quotes.quote_type_id = '.QuoteTypeId::Car.' THEN car_make.text ELSE NULL END as car_make'),
+                DB::raw('CASE WHEN personal_quotes.quote_type_id = '.QuoteTypeId::Car.' THEN car_model.text ELSE NULL END as car_model'),
+                DB::raw('CASE WHEN personal_quotes.quote_type_id = '.QuoteTypeId::Car.' THEN car_quote_request.year_of_manufacture ELSE NULL END as model_year'),
+                DB::raw('CASE WHEN personal_quotes.quote_type_id = '.QuoteTypeId::Car.' THEN car_quote_request_detail.plate_number ELSE NULL END as plate_number'),
             ])
             ->leftJoin('insurance_provider', 'personal_quotes.insurance_provider_id', '=', 'insurance_provider.id')
             ->leftJoin('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             // Car-specific joins - only when quote_type_id is Car
             ->leftJoin('car_quote_request', function ($join) {
                 $join->on('car_quote_request.uuid', '=', 'personal_quotes.uuid')
-                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
             })
             ->leftJoin('car_make', function ($join) {
                 $join->on('car_make.id', '=', 'car_quote_request.car_make_id')
-                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
             })
             ->leftJoin('car_model', function ($join) {
                 $join->on('car_model.id', '=', 'car_quote_request.car_model_id')
-                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
             })
             ->leftJoin('car_quote_request_detail', function ($join) {
                 $join->on('car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
-                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
             })
             ->whereNotNull('personal_quotes.policy_number')
             ->when($quoteTypeId, function ($query) use ($quoteTypeId) {
@@ -354,10 +354,10 @@ class ClaimsService extends BaseService
                 'requestReferenceNumber' => $data['request_reference_number'] ?? null,
             ];
 
-            //dd($apiData, $data);
+            // dd($apiData, $data);
             // Remove null values from $apiData before sending request
             $apiData = array_filter($apiData, function ($value) {
-                return !is_null($value);
+                return ! is_null($value);
             });
             // Make API call to create claim
             $response = CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $apiData);
