@@ -90,8 +90,8 @@ class BuyLeadController extends Controller
 
         // Step 2: Get eligible parent teams
         $eligibleParentTeamIds = [
-            getTeamId(TeamNameEnum::LIFE),
-            getTeamId(TeamNameEnum::RENEWALS),
+            getTeamId(TeamNameEnum::CAR),
+            getTeamId(TeamNameEnum::HEALTH),
         ];
 
         // Step 3: Run queries
@@ -278,5 +278,5 @@ class BuyLeadController extends Controller
 
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
-    
+
 }
