@@ -4346,16 +4346,17 @@ function handleOcrNotification(event) {
   <PolicyIssuanceApiLogs
     v-if="isGIG || isLIVA"
     :type="modelClass"
+    :quoteTypeId="$page.props.quoteTypeId"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
   />
 
-  <!-- <OcrLogs
+  <OcrLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="modelClass"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
-  /> -->
+  />
 
   <ClientInquiryLogs
     v-if="clientInquiryLogs?.length > 0"

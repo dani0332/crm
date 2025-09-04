@@ -16,6 +16,7 @@ use App\Services\OCR\OcrUtils;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use App\Models\CarQuote;
 
 class EmiratesIdDataProcessor
 {
@@ -45,17 +46,44 @@ class EmiratesIdDataProcessor
 
             $insuredUpdated = $this->updateInsuredTable($insured);
             $kycUpdated = $this->updateInsuredKycTable($insured);
+            $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
 
             DB::commit();
 
             LoggerService::info('Emirates ID data processing completed successfully');
 
-            return $insuredUpdated || $kycUpdated;
+            return $insuredUpdated || $kycUpdated || $vehicleDriverDetailUpdated;
 
         } catch (Exception $e) {
             DB::rollBack();
 
             LoggerService::error('Emirates ID data processing failed', exception: $e);
+
+            return false;
+        }
+    }
+
+    private function updateVehicleDriverDetail($quote): bool
+    {
+        try {
+
+            $fieldsToUpdate = OcrUtils::getCleanData([
+                'driver_gender' => $this->extractedData['sex'],
+            ]);
+
+            if (!empty($fieldsToUpdate)) {
+                $quote->vehicleDriverDetail()->updateOrCreate(
+                    ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
+                    $fieldsToUpdate
+                );
+
+                LoggerService::info('VehicleDriverDetail updated successfully');
+            }
+
+            return true;
+
+        } catch (Exception $e) {
+            LoggerService::error('VehicleDriverDetail update failed', exception: $e);
 
             return false;
         }

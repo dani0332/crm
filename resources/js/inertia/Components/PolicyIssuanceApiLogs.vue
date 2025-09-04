@@ -10,8 +10,8 @@ const props = defineProps({
     required: true,
     type: [String, Number],
   },
-  quoteType: {
-    required: false,
+  quoteTypeId: {
+    required: true,
     type: String,
   },
   expanded: {
@@ -47,7 +47,7 @@ const apiLogs = reactive({
   data: null,
   table: [
     { text: 'ID', value: 'id' },
-    { text: 'REF-ID', value: 'quote_uuid' },
+    { text: 'REF-ID', value: 'policy_issuance.model.uuid' },
     { text: 'Completed Step', value: 'policy_issuance.completed_step' },
     { text: 'Step', value: 'step' },
     { text: 'Status', value: 'status' },
@@ -60,7 +60,7 @@ const apiLogs = reactive({
 const filteredLogs = computed(() => {
   if (insuranceProviderId.value != null)
     return apiLogs.data.filter(
-      item => item.insurance_provider.id == insuranceProviderId.value,
+      item => item.policy_issuance.insurance_provider.id == insuranceProviderId.value,
     );
   else return apiLogs.data;
 });
@@ -71,32 +71,33 @@ const onLoadAuditLogData = async () => {
   let url = '/policy-issuance-logs';
 
   let data = { 
-    quote_id: props.id, 
-    model_type: props.type,
-    insurance_provider_id: page.props.quote?.insurance_provider_id,
+    quoteId: props.id, 
+    quoteTypeId: props.quoteTypeId,
     jsonData: true
   };
 
   axios
     .post(url, data)
     .then(res => {
-      apiLogs.data = res.data;
-      notification.success({
-        title: 'Policy Issuance API Logs Loaded Successfully',
-        position: 'top',
-      });
+      if (res.data.success) {
+        apiLogs.data = res.data.data;
+        notification.success({
+          title: 'Policy Issuance API Logs Loaded Successfully',
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: res.data.message || `Failed to load Policy Issuance API logs`,
+          position: 'top',
+        });
+      }
     })
     .catch(err => {
-      console.log('ERR', err);
-      let errorMessage = 'Something went wrong. Please try again later.';
-      if (err.response && err.response.data && err.response.data.error) {
-        errorMessage = err.response.data.error;
-      }
-
       notification.error({
-        title: `Failed to load Policy Issuance API logs: ${errorMessage}`,
+        title: `Something went wrong. Please try again later`,
         position: 'top',
       });
+      console.log('Policy Issuance Api Logs Error', err);
     })
     .finally(() => {
       apiLogs.loading = false;
@@ -126,6 +127,23 @@ const onLoadAuditLogData = async () => {
           </x-button>
         </div>
         <div v-else>
+          <div class="flex items-center gap-4 my-3">
+            <x-select
+              class="flex-1 mt-1"
+              v-model="insuranceProviderId"
+              :options="insuranceProviders"
+              placeholder="Insurance Provider"
+              filterable
+            />
+            <x-button
+              size="sm"
+              color="primary"
+              @click="insuranceProviderId = null"
+              class="h-10"
+            >
+              Reset
+            </x-button>
+          </div>
           <DataTable
             table-class-name="compact tablefixed"
             :headers="apiLogs.table"
@@ -178,7 +196,7 @@ const onLoadAuditLogData = async () => {
 
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">REF-ID:</dt>
-          <dd>{{ selectedLog.quote_uuid }}</dd>
+          <dd>{{ selectedLog.policy_issuance?.model?.uuid }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Step:</dt>
