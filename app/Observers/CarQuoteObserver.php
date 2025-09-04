@@ -58,7 +58,7 @@ class CarQuoteObserver
         $dirty = $lead->getDirty();
         $changes = [];
 
-        if (Route::currentRouteName() == 'car.update' && $this->checkIfAnythingDirty($dirty, ['name', 'email', 'phone', 'updated_at', 'is_quote_locked', 'quote_updated_at', 'advisor_id'])) {
+        if (Route::currentRouteName() == 'car.update' && $this->checkIfAnythingDirty($dirty, ['first_name', 'last_name', 'email', 'mobile_no', 'updated_at', 'is_quote_locked', 'quote_updated_at', 'advisor_id'])) {
             LoggerService::info('CarQuoteObserver - Going to get quote plans again because of dirty fields with latest rating', ['uuid' => $lead->uuid, 'dirty' => $dirty]);
             app(CarQuoteService::class)->getQuotePlans($lead->uuid, getLatestRating: true);
         }
