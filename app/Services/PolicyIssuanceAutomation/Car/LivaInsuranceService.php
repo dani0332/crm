@@ -605,7 +605,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'IsPaymentProcessed' => 'Success',
                 'PartnerTrnReferenceNumber' => $quote->uuid,
                 'PaymtMode' => 7,
-                'PaymtTransactionDate' => $payment?->authorized_at ? Carbon::parse($payment?->authorized_at)->format('d/m/Y H:i') : '',
+                'PaymtTransactionDate' => $payment?->authorized_at ? Carbon::parse($payment?->authorized_at)->format('Y-m-d H:i:s') : '',
                 'PaymtTransactionNumber' => $splitPayment?->payment_receipt_id,
                 'Amount' => $payment?->price_vat_applicable,
                 'AuthCode' => $splitPayment?->payment_auth_code,

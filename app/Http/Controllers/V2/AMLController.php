@@ -324,7 +324,7 @@ class AMLController extends Controller
             'defaultNationality' => GenericRequestEnum::DEFAULT_NATIONALITY,
             'screeningType' => $screeningType,
             'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
-            'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType->id, $quoteRequest->id, $quoteRequest?->insuranceProvider?->code),
+            'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType, $quoteRequest),
             'isAnyEscalated' => $isAnyEscalated,
             'isPrivateCar' => ! InsuranceProviderRepository::isCommercialVehicles($quoteRequest),
         ], $businessPayload ?? []));
