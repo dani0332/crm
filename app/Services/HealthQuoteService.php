@@ -1122,10 +1122,10 @@ class HealthQuoteService extends BaseService
         $plan = (object) $plans->first();
 
         if ($plan) {
-            $response['providerName'] = $plan->providerName;
+            $response['providerName'] = property_exists($plan, 'providerName') ? $plan->providerName : '';
             $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
             $response['paidAt'] = GenericRequestEnum::NotApplicable;
-            $response['planName'] = $plan->name;
+            $response['planName'] = property_exists($plan, 'name') ? $plan->name : '';
 
             if (property_exists($plan, 'ratesPerCopay')) {
                 foreach ($plan->ratesPerCopay as $ratePerCopay) {
