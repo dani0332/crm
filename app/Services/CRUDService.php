@@ -766,7 +766,7 @@ class CRUDService extends BaseService
                 if ($amlStatus == true) {
                     $amlLogsValue = ['score' => 3, 'value' => 'Yes'];
                 }
-                // TODO: need to check validation for customerDetail
+
                 if (isset($quote->latestInsured)) {
                     $customerDetail = $quote->latestInsured->insuredKyc;
                     $jobType = Lookup::where(['key' => LookupsEnum::PROFESSIONAL_TITLE, 'code' => $customerDetail->job_title])->first();
@@ -944,7 +944,6 @@ class CRUDService extends BaseService
             $entityScore += $legalStructureScore;
         }
 
-        // TODO: check with Bilal Saeed
         if (isset($quote->latestInsured->industry_type_code) && $quote->latestInsured->industry_type_code != '') {
             $industryTypeCode = in_array(strtolower($quote->latestInsured->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_ONE_RATING) ? 1 : (in_array(strtolower($quote->latestInsured->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_TWO_RATING) ? 2 : 3);
             $industryType = Lookup::where(['key' => LookupsEnum::COMPANY_TYPE, 'code' => $quote->latestInsured->industry_type_code])->first();
@@ -998,7 +997,6 @@ class CRUDService extends BaseService
         $scoreList[] = ['score' => $score, 'text' => 'Is There A Sanction Match On The Owner/Partners/Bod, Senior Management, Group Company, Holding Company Or Related Company Names?', 'value' => $text];
         $entityScore += $score;
 
-        // TODO: old value ($entity->corporationCountry)
         if (isset($entity->nationality)) {
             $corporationScore = in_array(strtolower($entity->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
             $scoreList[] = ['score' => $corporationScore, 'text' => 'Country Of Incorporation', 'value' => $entity->nationality->country_name];
