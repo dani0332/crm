@@ -1810,6 +1810,7 @@ class SageApiService
                     }
 
                     $aPInvoicePaymentsSchedule = $postedResponse['payload'];
+                    $resp = $postedResponse['response'] ?? [];
                 } else {
                     LoggerService::info('SAGE API :  Prepare Patch payload for SpitPayments  for '.$quote->code);
                     $aPInvoicePaymentsScheduleResponse = (new SageCustomApiService)->getAPInvoicePaymentScheduleByBatchNumber($postedResponse['BatchNumber']);
