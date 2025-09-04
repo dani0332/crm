@@ -161,4 +161,10 @@ return [
     'OCR_API_KEY' => env('OCR_API_KEY', ''),
     'OCR_API_TIMEOUT' => env('OCR_API_TIMEOUT', 90),
     'LIFE_EMAIL_DATA_SOURCE' => env('LIFE_EMAIL_DATA_SOURCE', 'Life-Insurance-UAT'),
+
+    /* HRM API */
+    'HRM_API_ENDPOINT' => env('HRM_API_ENDPOINT', ''),
+    'HRM_API_USERNAME' => env('HRM_API_USERNAME', ''),
+    'HRM_API_PASSWORD' => env('HRM_API_PASSWORD', ''),
+    'HRM_API_TIMEOUT' => env('HRM_API_TIMEOUT', 30),
 ];

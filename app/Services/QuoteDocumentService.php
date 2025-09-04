@@ -151,7 +151,7 @@ class QuoteDocumentService extends BaseService
         try {
 
             if (data_get($data, 'is_base_64', 0) == 1) {
-                $originalName = 'Base 64 file';
+                $originalName = data_get($data, 'file_name', 'Base 64 file');
                 @[$extension, $fileMimeType, $file_data] = getBase64FileInfo($fileOrBase64);
 
                 // Generate a unique filename
