@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLStatusCode;
+use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\DocumentTypeCode;
@@ -346,7 +347,7 @@ class AMLController extends Controller
             'isAnyEscalated' => $isAnyEscalated,
             'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType, $quoteRequest),
             'permissionsEnum' => PermissionsEnum::asArray(),
-            'isPrivateCar' => ! InsuranceProviderRepository::isCommercialVehicles($quoteRequest),
+            'isPrivateCar' => $quoteRequest?->registration_type === CarRegistrationType::PERSONAL,
         ], $businessPayload ?? [], $rtaConfigurationData));
     }
 
