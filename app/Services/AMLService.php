@@ -911,12 +911,18 @@ class AMLService
                 $insurerScreeningPayload['chassisNumber'] = $carQuoteRequestDetails?->chassis_number ?? '';
 
                 $insurerScreeningPayload['rtaTransactionType'] = [
-                    'code' => $vehicleDriverDetail?->rta_transaction_type ?? null,
-                    'value' => $rtaTransactionType?->text ?? null,
+                    'code' => $vehicleDriverDetail->rta_transaction_type ?? null,
+                    'value' => $isLIVA ? app(LivaInsuranceService::class)->registrationType($vehicleDriverDetail->rta_transaction_type) : ($rtaTransactionType?->text ?? null),
                     'authority' => 'RTA',
                 ];
 
-                $insurerScreeningPayload['plateCodeNumber'] = $vehicleDriverDetail?->vehicle_plate_code.$vehicleDriverDetail?->vehicle_plate_number ?? null;
+                if ($isLIVA) {
+                    $insurerScreeningPayload['plateCode'] = $vehicleDriverDetail->vehicle_plate_code ?? null;
+                    $insurerScreeningPayload['plateNumber'] = $vehicleDriverDetail->vehicle_plate_number ?? null;
+                } else {
+                    $insurerScreeningPayload['plateCodeNumber'] = $vehicleDriverDetail->vehicle_plate_code.$vehicleDriverDetail->vehicle_plate_number ?? null;
+                }
+
                 $insurerScreeningPayload['trafficCodeNumber'] = $vehicleDriverDetail?->traffic_code_number ?? null;
                 $insurerScreeningPayload['engineNumber'] = $vehicleDriverDetail?->vehicle_engine_number ?? null;
                 $insurerScreeningPayload['rtaPlateCategory'] = $rtaPlateCategory?->text ?? null;
