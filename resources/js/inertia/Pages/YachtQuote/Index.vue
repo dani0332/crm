@@ -55,6 +55,8 @@ let availableFilters = {
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
   private_client: 'all',
+  authorize_date: '',
+  captured_date: '',
 };
 
 const filters = reactive(availableFilters);
@@ -760,6 +762,22 @@ const insurerAMLStatusOption = computed(() => {
           range
           format="dd-MM-yyyy"
         />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
 
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
@@ -857,6 +875,7 @@ const insurerAMLStatusOption = computed(() => {
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
+          :canAssignLeadAdvisor="permissionAssignLeads"
           :quoteType="quoteType"
           @success="onLeadAssigned"
         />

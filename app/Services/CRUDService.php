@@ -710,6 +710,7 @@ class CRUDService extends BaseService
 
     public function scoreBreakdown($quote, $type)
     {
+        LoggerService::info("fn:scoreBreakdown - Start - Type:{$type}");
         if ($type == 'business') {
             return $this->scoreEntityBreakdown($quote);
         } else {
@@ -765,8 +766,9 @@ class CRUDService extends BaseService
                 if ($amlStatus == true) {
                     $amlLogsValue = ['score' => 3, 'value' => 'Yes'];
                 }
-                if (isset($quote->customer->customerDetail)) {
-                    $customerDetail = $quote->customer->customerDetail;
+
+                if (isset($quote?->latestInsured?->insuredKyc) && ! empty($quote?->latestInsured?->insuredKyc)) {
+                    $customerDetail = $quote->latestInsured->insuredKyc;
                     $jobType = Lookup::where(['key' => LookupsEnum::PROFESSIONAL_TITLE, 'code' => $customerDetail->job_title])->first();
                     $jobTypeValue = $customerDetail->job_title;
                     if (isset($jobType->text)) {
@@ -913,6 +915,7 @@ class CRUDService extends BaseService
 
     public function scoreEntityBreakdown($quote)
     {
+        LoggerService::info('fn:scoreEntityBreakdown - Start');
         $scoreList = [];
         $entityScore = 0;
         if (! isset($quote->quoteRequestEntityMapping)) {
@@ -926,7 +929,12 @@ class CRUDService extends BaseService
             $amlLogsValue = ['score' => 3, 'value' => 'Yes'];
         }
 
-        $entity = Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->first();
+        // $entity = Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->first();
+        $entity = $quote?->latestInsured?->insuredKyc ?? null;
+
+        if (! $entity) {
+            return;
+        }
 
         $paymentTopScore = 0;
         if (isset($entity->legal_structure) && $entity->legal_structure != '') {
@@ -940,11 +948,10 @@ class CRUDService extends BaseService
             $entityScore += $legalStructureScore;
         }
 
-        // s
-        if (isset($entity->industry_type_code) && $entity->industry_type_code != '') {
-            $industryTypeCode = in_array(strtolower($entity->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_ONE_RATING) ? 1 : (in_array(strtolower($entity->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_TWO_RATING) ? 2 : 3);
-            $industryType = Lookup::where(['key' => LookupsEnum::COMPANY_TYPE, 'code' => $entity->industry_type_code])->first();
-            $industryTypeValue = $entity->industry_type_code;
+        if (isset($quote->latestInsured->industry_type_code) && $quote->latestInsured->industry_type_code != '') {
+            $industryTypeCode = in_array(strtolower($quote->latestInsured->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_ONE_RATING) ? 1 : (in_array(strtolower($quote->latestInsured->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_TWO_RATING) ? 2 : 3);
+            $industryType = Lookup::where(['key' => LookupsEnum::COMPANY_TYPE, 'code' => $quote->latestInsured->industry_type_code])->first();
+            $industryTypeValue = $quote->latestInsured->industry_type_code;
             if (isset($industryType->text)) {
                 $industryTypeValue = $industryType->text;
             }
@@ -994,9 +1001,9 @@ class CRUDService extends BaseService
         $scoreList[] = ['score' => $score, 'text' => 'Is There A Sanction Match On The Owner/Partners/Bod, Senior Management, Group Company, Holding Company Or Related Company Names?', 'value' => $text];
         $entityScore += $score;
 
-        if (isset($entity->corporationCountry)) {
-            $corporationScore = in_array(strtolower($entity->corporationCountry->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
-            $scoreList[] = ['score' => $corporationScore, 'text' => 'Country Of Incorporation', 'value' => $entity->corporationCountry->country_name];
+        if (isset($entity->nationality)) {
+            $corporationScore = in_array(strtolower($entity->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
+            $scoreList[] = ['score' => $corporationScore, 'text' => 'Country Of Incorporation', 'value' => $entity->nationality->country_name];
             $entityScore += $corporationScore;
         }
         // FATF
@@ -1145,6 +1152,8 @@ class CRUDService extends BaseService
 
     public function calculateScore($quote, $type)
     {
+        LoggerService::startQuoteLogging($quote);
+        LoggerService::info('fn:calculateScore - Start');
         if (strtolower($type) == 'business') {
             $pdfName = 'Entity';
             $results = $this->scoreEntityBreakdown($quote);
@@ -1171,6 +1180,7 @@ class CRUDService extends BaseService
 
             app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false);
         }
+        LoggerService::info('fn:calculateScore - End');
     }
 
     public function hasAtleastOneStatusPolicyIssued($record): bool

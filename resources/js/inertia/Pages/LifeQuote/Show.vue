@@ -16,6 +16,7 @@ import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CreatePlanVariant from './Partials/CreateVariant.vue';
 import EditPlan from './Partials/EditPlan.vue';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 
 const page = usePage();
 const props = defineProps({
@@ -275,7 +276,10 @@ const sendOCAEmail = () => {
   axios
     .post(route('life-quotes-send-oca-email'), {
       quote_uuid: page.props.quote.uuid,
-      plan_ids: selectedPlans.value.map(plan => plan.planId),
+      // Add the version to the plan ID to ensure each selected plan is uniquely identified
+      plan_ids: selectedPlans.value.map(
+        plan => plan.planId + '_v' + plan.version,
+      ),
     })
     .then(res => {
       notification.success({
@@ -330,7 +334,10 @@ const downloadComparisionPdf = () => {
       route('life-quotes-download-comparision-pdf'),
       {
         quote_uuid: page.props.quote.uuid,
-        plan_ids: selectedPlans.value.map(plan => plan.planId),
+        // Add the version to the plan ID to ensure each selected plan is uniquely identified
+        plan_ids: selectedPlans.value.map(
+          plan => plan.planId + '_v' + plan.version,
+        ),
       },
       {
         responseType: 'blob',
@@ -2794,40 +2801,7 @@ const getTotalAnnualPriceAED = () => {
       :quote-type="quoteType"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
+    <LeadHistory :quote="$page.props.quote" />
 
     <FtcEmailTrack
       :quoteType="$page.props.modelType"
