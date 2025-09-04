@@ -767,7 +767,7 @@ class CRUDService extends BaseService
                     $amlLogsValue = ['score' => 3, 'value' => 'Yes'];
                 }
 
-                if (isset($quote->latestInsured->insuredKyc) && ! empty($quote->latestInsured->insuredKyc)) {
+                if (isset($quote?->latestInsured?->insuredKyc) && ! empty($quote?->latestInsured?->insuredKyc)) {
                     $customerDetail = $quote->latestInsured->insuredKyc;
                     $jobType = Lookup::where(['key' => LookupsEnum::PROFESSIONAL_TITLE, 'code' => $customerDetail->job_title])->first();
                     $jobTypeValue = $customerDetail->job_title;
