@@ -108,7 +108,6 @@ const uploadFile = async (doc, filesWithInfo) => {
       preserveScroll: true,
       preserveState: true,
     });
-
   } catch (error) {
     console.error('Upload error:', error);
     errorMsg.value[doc.id] =
@@ -195,7 +194,6 @@ const confirmDeleteDoc = async () => {
       preserveScroll: true,
       preserveState: true,
     });
-
   } catch (error) {
     console.error('Delete error:', error);
     notification.error({

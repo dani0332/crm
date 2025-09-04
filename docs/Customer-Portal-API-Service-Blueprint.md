@@ -7,6 +7,7 @@ The Customer Portal API Service (`CustomerPortalApiService`) is designed to hand
 ## Architecture
 
 ### Service Structure
+
 ```
 app/Services/CustomerPortalApiService.php    - Main service class
 app/Providers/CustomerPortalApiProvider.php  - Service provider for DI
@@ -15,6 +16,7 @@ config/constants.php                         - Configuration constants
 ```
 
 ### Design Patterns
+
 - **Service Layer Pattern**: Encapsulates all Customer Portal API logic
 - **Facade Pattern**: Provides static access via `CustomerPortalApi` facade
 - **Dependency Injection**: Registered as singleton for performance
@@ -23,6 +25,7 @@ config/constants.php                         - Configuration constants
 ## Configuration
 
 ### Environment Variables
+
 Add these to your `.env` file:
 
 ```env
@@ -35,6 +38,7 @@ CUSTOMER_PORTAL_API_TIMEOUT=30
 ```
 
 ### Constants Configuration
+
 Located in `config/constants.php`:
 
 ```php
@@ -49,6 +53,7 @@ Located in `config/constants.php`:
 ## Service Registration
 
 ### Service Provider
+
 The service is registered in `app/Providers/CustomerPortalApiProvider.php`:
 
 ```php
@@ -61,6 +66,7 @@ public function register()
 ```
 
 ### Application Registration
+
 Add to `config/app.php` providers array:
 
 ```php
@@ -68,6 +74,7 @@ App\Providers\CustomerPortalApiProvider::class,
 ```
 
 ### Facade Registration
+
 Add to `config/app.php` aliases array:
 
 ```php
@@ -83,6 +90,7 @@ Add to `config/app.php` aliases array:
 Base method for all API communications.
 
 **Parameters:**
+
 - `$path`: API endpoint path (e.g., '/api/v1/customers')
 - `$method`: HTTP method ('get', 'post', 'put', 'delete')
 - `$data`: Request payload array
@@ -91,6 +99,7 @@ Base method for all API communications.
 **Returns:** Object containing API response
 
 **Example:**
+
 ```php
 $response = CustomerPortalApi::request('/api/v1/customers', 'get');
 ```
@@ -102,9 +111,11 @@ $response = CustomerPortalApi::request('/api/v1/customers', 'get');
 Creates a new customer account in the portal.
 
 **Parameters:**
+
 - `$customerData`: Array containing customer information
 
 **Example:**
+
 ```php
 $customerData = [
     'email' => 'customer@example.com',
@@ -122,10 +133,12 @@ $response = CustomerPortalApi::createCustomerAccount($customerData);
 Updates existing customer account information.
 
 **Parameters:**
+
 - `$customerId`: Unique customer identifier
 - `$customerData`: Array containing updated customer data
 
 **Example:**
+
 ```php
 $response = CustomerPortalApi::updateCustomerAccount('12345', [
     'mobile_no' => '+971507654321',
@@ -138,9 +151,11 @@ $response = CustomerPortalApi::updateCustomerAccount('12345', [
 Retrieves customer information from the portal.
 
 **Parameters:**
+
 - `$customerId`: Unique customer identifier
 
 **Example:**
+
 ```php
 $customerInfo = CustomerPortalApi::getCustomerInfo('12345');
 ```
@@ -152,10 +167,12 @@ $customerInfo = CustomerPortalApi::getCustomerInfo('12345');
 Synchronizes customer policies with the portal.
 
 **Parameters:**
+
 - `$customerId`: Unique customer identifier
 - `$policies`: Array of policy data
 
 **Example:**
+
 ```php
 $policies = [
     [
@@ -178,10 +195,12 @@ $response = CustomerPortalApi::syncCustomerPolicies('12345', $policies);
 Sends notifications to customers via the portal.
 
 **Parameters:**
+
 - `$customerId`: Unique customer identifier
 - `$notificationData`: Notification content and metadata
 
 **Example:**
+
 ```php
 $notificationData = [
     'type' => 'policy_renewal',
@@ -201,10 +220,12 @@ $response = CustomerPortalApi::sendCustomerNotification('12345', $notificationDa
 Updates customer portal preferences and settings.
 
 **Parameters:**
+
 - `$customerId`: Unique customer identifier
 - `$preferences`: Array of preference settings
 
 **Example:**
+
 ```php
 $preferences = [
     'email_notifications' => true,
@@ -226,6 +247,7 @@ Quick health check to verify API availability.
 **Returns:** Boolean indicating if the API is responsive
 
 **Example:**
+
 ```php
 if (CustomerPortalApi::ping()) {
     // API is available
@@ -243,6 +265,7 @@ Detailed health status information.
 **Returns:** Array with health status details
 
 **Example:**
+
 ```php
 $health = CustomerPortalApi::getHealthStatus();
 // Returns:
@@ -279,7 +302,7 @@ class CustomerController extends Controller
         ];
 
         $response = $this->customerPortalApiService->updateCustomerAccount(
-            $customerId, 
+            $customerId,
             $customerData
         );
 
@@ -343,7 +366,7 @@ class CustomerSyncService
             ];
 
             $response = CustomerPortalApi::createCustomerAccount($customerData);
-            
+
             // Store portal customer ID for future reference
             $customer->update(['portal_customer_id' => $response->customerId]);
 
@@ -353,7 +376,7 @@ class CustomerSyncService
                 'customer_id' => $customer->id,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return false;
         }
     }
@@ -380,7 +403,7 @@ class CustomerSyncService
                 ->toArray();
 
             CustomerPortalApi::syncCustomerPolicies(
-                $customer->portal_customer_id, 
+                $customer->portal_customer_id,
                 $policies
             );
 
@@ -390,7 +413,7 @@ class CustomerSyncService
                 'customer_id' => $customer->id,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return false;
         }
     }
@@ -400,6 +423,7 @@ class CustomerSyncService
 ## Error Handling
 
 ### Exception Handling
+
 The service implements comprehensive error handling:
 
 1. **HTTP Errors**: 4XX and 5XX responses trigger detailed logging
@@ -408,11 +432,13 @@ The service implements comprehensive error handling:
 4. **Authentication Errors**: Basic auth and token validation
 
 ### Logging Strategy
+
 - **Info Level**: Successful requests and responses
 - **Warning Level**: Service unavailability (ping failures)
 - **Error Level**: API errors, authentication failures, timeouts
 
 ### Error Response Format
+
 ```php
 // Successful Response
 {
@@ -433,6 +459,7 @@ The service implements comprehensive error handling:
 ## Integration Patterns
 
 ### Observer Integration
+
 ```php
 <?php
 
@@ -471,6 +498,7 @@ class CustomerObserver
 ```
 
 ### Job Queue Integration
+
 ```php
 <?php
 
@@ -507,16 +535,19 @@ class SyncCustomerToPortalJob implements ShouldQueue
 ## Security Considerations
 
 ### Authentication
+
 - **Basic Auth**: Username/password authentication
 - **API Token**: Additional token-based security layer
 - **HTTPS Only**: All communications over secure connections
 
 ### Data Protection
+
 - **Input Sanitization**: All data is JSON-encoded and validated
 - **Sensitive Data**: Customer PII is handled with care
 - **Audit Logging**: All customer operations are logged for compliance
 
 ### Rate Limiting
+
 - **Timeout Configuration**: Configurable request timeouts
 - **Retry Logic**: Built-in retry mechanisms for transient failures
 - **Circuit Breaker**: Service availability checks before operations
@@ -524,6 +555,7 @@ class SyncCustomerToPortalJob implements ShouldQueue
 ## Testing Strategy
 
 ### Unit Tests
+
 ```php
 <?php
 
@@ -550,6 +582,7 @@ class CustomerPortalApiServiceTest extends TestCase
 ```
 
 ### Integration Tests
+
 ```php
 <?php
 
@@ -569,7 +602,7 @@ class CustomerPortalApiIntegrationTest extends TestCase
         ];
 
         $response = CustomerPortalApi::createCustomerAccount($customerData);
-        
+
         $this->assertIsObject($response);
         $this->assertObjectHasProperty('customerId', $response);
     }
@@ -579,12 +612,14 @@ class CustomerPortalApiIntegrationTest extends TestCase
 ## Performance Considerations
 
 ### Optimization Strategies
+
 1. **Singleton Registration**: Service is registered as singleton for reuse
 2. **Connection Pooling**: HTTP client reuses connections
 3. **Chunked Processing**: Large data sets are processed in chunks
 4. **Async Operations**: Use job queues for non-critical operations
 
 ### Monitoring
+
 - **Response Times**: Log request/response times for performance monitoring
 - **Error Rates**: Track API error rates and patterns
 - **Availability**: Monitor service availability via ping checks
@@ -592,6 +627,7 @@ class CustomerPortalApiIntegrationTest extends TestCase
 ## Best Practices
 
 ### Usage Guidelines
+
 1. **Always use try-catch blocks** when calling API methods
 2. **Log important operations** for audit and debugging
 3. **Use job queues** for non-critical synchronization
@@ -601,6 +637,7 @@ class CustomerPortalApiIntegrationTest extends TestCase
 ### Code Examples
 
 #### Controller Usage
+
 ```php
 public function syncCustomer(Request $request, Customer $customer)
 {
@@ -625,6 +662,7 @@ public function syncCustomer(Request $request, Customer $customer)
 ```
 
 #### Service Layer Usage
+
 ```php
 public function handleCustomerUpdate(Customer $customer, array $updates)
 {
@@ -642,18 +680,22 @@ public function handleCustomerUpdate(Customer $customer, array $updates)
 ## API Endpoints Reference
 
 ### Customer Endpoints
+
 - `POST /api/v1/customers` - Create customer account
 - `GET /api/v1/customers/{id}` - Get customer information
 - `PUT /api/v1/customers/{id}` - Update customer account
 - `PUT /api/v1/customers/{id}/preferences` - Update preferences
 
 ### Policy Endpoints
+
 - `POST /api/v1/customers/policies` - Sync customer policies
 
 ### Communication Endpoints
+
 - `POST /api/v1/notifications` - Send customer notifications
 
 ### System Endpoints
+
 - `GET /api/v1/ping` - Service availability check
 - `GET /api/v1/health` - Detailed health status
 
@@ -662,24 +704,31 @@ public function handleCustomerUpdate(Customer $customer, array $updates)
 ### Common Issues
 
 #### Service Instantiation Error
+
 ```
 Target class [CustomerPortalApiService] does not exist.
 ```
+
 **Solution:** Ensure the service provider is registered in `config/app.php`
 
 #### Timeout Errors
+
 ```
 TypeError: timeout(): Argument #1 must be of type int|float, string given
 ```
+
 **Solution:** Ensure `CUSTOMER_PORTAL_API_TIMEOUT` is a numeric value in `.env`
 
 #### Authentication Failures
+
 ```
 401 Unauthorized
 ```
+
 **Solution:** Verify API credentials in environment configuration
 
 ### Debug Mode
+
 Enable detailed logging by setting log level to `debug` in `config/logging.php`:
 
 ```php
@@ -689,6 +738,7 @@ Enable detailed logging by setting log level to `debug` in `config/logging.php`:
 ## Future Enhancements
 
 ### Planned Features
+
 1. **Webhook Support**: Handle incoming webhooks from Customer Portal
 2. **Batch Operations**: Support for bulk customer/policy operations
 3. **Real-time Sync**: WebSocket integration for real-time updates
@@ -696,6 +746,7 @@ Enable detailed logging by setting log level to `debug` in `config/logging.php`:
 5. **Metrics Collection**: Detailed performance and usage metrics
 
 ### Extensibility
+
 The service is designed to be easily extended with additional methods following the established patterns:
 
 ```php
@@ -714,12 +765,14 @@ public function newCustomerPortalMethod(string $param, array $data): object
 ## Maintenance
 
 ### Regular Tasks
+
 1. **Monitor API health** using ping and health status methods
 2. **Review error logs** for patterns and issues
 3. **Update API credentials** as needed
 4. **Performance monitoring** of request times and success rates
 
 ### Version Management
+
 - Follow semantic versioning for service updates
 - Maintain backward compatibility for existing integrations
 - Document breaking changes in release notes

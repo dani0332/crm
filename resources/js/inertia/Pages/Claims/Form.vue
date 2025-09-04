@@ -894,7 +894,6 @@ watch(approvedCashLossAmount, (newValue, oldValue) => {
                     car_model,
                     model_year,
                     plate_number,
-
                   })
                 "
               >

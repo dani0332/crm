@@ -6,7 +6,7 @@ import {
   calculateDaysDifference,
   calculateMonthsDifference,
   logAndExportQuotes,
-  useObjToUrl
+  useObjToUrl,
 } from '@/inertia/Composables/utilities.js';
 import { formattedDateYmdWithTime } from '../../Composables/utilities';
 
@@ -176,10 +176,14 @@ function searchClaims(isValid) {
       filters.created_at_end = formattedDateYmd(filters.created_at_end);
     }
     if (filters.manager_assigned_date) {
-      filters.manager_assigned_date = formattedDateYmd(filters.manager_assigned_date);
+      filters.manager_assigned_date = formattedDateYmd(
+        filters.manager_assigned_date,
+      );
     }
     if (filters.next_followup_datetime) {
-      filters.next_followup_datetime = formattedDateYmd(filters.next_followup_datetime);
+      filters.next_followup_datetime = formattedDateYmd(
+        filters.next_followup_datetime,
+      );
     }
 
     NProgress.start();
@@ -209,7 +213,7 @@ function onReset() {
 
 const exportLoader = ref(false);
 
-const onDataExport = (exportType) => {
+const onDataExport = exportType => {
   // Check date range restriction for created dates
   if (filters.created_at_start && filters.created_at_end) {
     let diff, maxLimit, maxPeriod;
@@ -243,22 +247,29 @@ const onDataExport = (exportType) => {
 
   // Format dates for export
   if (filters.created_at_start) {
-    filters.created_at_start = useDateFormat(filters.created_at_start, 'YYYY-MM-DD').value;
+    filters.created_at_start = useDateFormat(
+      filters.created_at_start,
+      'YYYY-MM-DD',
+    ).value;
   }
   if (filters.created_at_end) {
-    filters.created_at_end = useDateFormat(filters.created_at_end, 'YYYY-MM-DD').value;
+    filters.created_at_end = useDateFormat(
+      filters.created_at_end,
+      'YYYY-MM-DD',
+    ).value;
   }
 
-  console.log('filters', filters , exportType);
+  console.log('filters', filters, exportType);
 
   filters.exportType = exportType;
 
   exportLoader.value = true;
 
   // Use axios for both download and email exports
-  axios.post(route('claims.export'), filters, {
-    responseType: exportType === 'download' ? 'blob' : 'json'
-  })
+  axios
+    .post(route('claims.export'), filters, {
+      responseType: exportType === 'download' ? 'blob' : 'json',
+    })
     .then(result => {
       if (exportType === 'download') {
         // Handle file download
@@ -292,7 +303,9 @@ const onDataExport = (exportType) => {
     .catch(err => {
       console.error('Export error:', err);
       notification.error({
-        title: err.response?.data?.message || `Unable to ${exportType === 'email' ? 'start email export' : 'download export'}`,
+        title:
+          err.response?.data?.message ||
+          `Unable to ${exportType === 'email' ? 'start email export' : 'download export'}`,
         position: 'top',
       });
       setTimeout(() => {
@@ -308,14 +321,17 @@ const isCarLOB = computed(() => {
 
 // Check if export is available based on date filters
 const canExport = computed(() => {
-  return (filters.created_at_start && filters.created_at_end) ||
-         Object.keys(filters).some(key =>
-           key !== 'created_at_start' &&
-           key !== 'created_at_end' &&
-           filters[key] !== null &&
-           filters[key] !== undefined &&
-           filters[key] !== ''
-         );
+  return (
+    (filters.created_at_start && filters.created_at_end) ||
+    Object.keys(filters).some(
+      key =>
+        key !== 'created_at_start' &&
+        key !== 'created_at_end' &&
+        filters[key] !== null &&
+        filters[key] !== undefined &&
+        filters[key] !== '',
+    )
+  );
 });
 
 // Watcher to clear vehicle-specific filters when line of business changes away from car/bike
@@ -415,7 +431,6 @@ watch(
           placeholder="Select Date To"
           format="yyyy-MM-dd"
         />
-
 
         <x-select
           v-model="filters.quote_type_id"
@@ -560,12 +575,22 @@ watch(
               Export via email
             </x-button>
           </template>
-
         </div>
         <div v-else />
         <div class="flex gap-3 justify-self-end">
-          <x-button size="sm" color="#ff5e00" :loading="loader.table" type="submit">Search</x-button>
-          <x-button size="sm" color="primary" @click.prevent="onReset" :loading="loader.table">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            :loading="loader.table"
+            type="submit"
+            >Search</x-button
+          >
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="onReset"
+            :loading="loader.table"
+          >
             Reset
           </x-button>
         </div>
