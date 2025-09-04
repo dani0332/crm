@@ -182,7 +182,7 @@ class AuditableController extends Controller
                         'document_type_name' => $log->document_type_name,
                         'status' => $log->status,
                         'formatted_execution_time' => $log->formatted_execution_time,
-                        'provider_name' => $log->provider?->name ?? 'N/A',
+                        'provider_name' => $log->provider?->text ?? 'N/A',
                         'uploaded_through' => $log->uploaded_through,
                         'user_name' => $log->user?->name ?? null,
                         'created_at' => $log->created_at->format('Y-m-d H:i:s'),

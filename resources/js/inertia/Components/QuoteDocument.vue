@@ -180,6 +180,16 @@ const confirmDeleteDoc = () => {
           title: 'File Deleted',
           position: 'top',
         });
+
+        // Emit custom event for accuracy matrix updates
+        window.dispatchEvent(
+          new CustomEvent('document-deleted', {
+            detail: {
+              docId: confirmDeleteData.doc_id,
+              docUuid: confirmDeleteData.doc_uuid,
+            },
+          }),
+        );
       },
     },
   );
@@ -260,6 +270,7 @@ onUnmounted(() => {
           class="flex gap-2 mb-4 justify-end"
           v-if="readOnlyMode.isDisable === true"
         >
+        <!-- TODO: Uncomment this when Customer OCR Journey is supported on prod/stage -->
           <!-- <x-tag
             v-if="quoteType == quoteTypeCodeEnum.Car"
             :color="documentVerificationStatus ? 'success' : 'amber'"
