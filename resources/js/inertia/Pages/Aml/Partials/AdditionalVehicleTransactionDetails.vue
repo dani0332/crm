@@ -92,29 +92,34 @@ const carDetail = computed(() => {
   return page.props.quoteRequest?.car_quote_request_detail;
 });
 
+const vehicleDriverDetail = computed(() => {
+  return page.props.quoteRequest?.vehicle_driver_detail;
+});
+
 const additionalVehicleTransactionDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: page.props.quoteRequest?.uuid,
   insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
   additional_vehicle_transaction_details: true,
-  rta_transaction_type: carDetail.value?.rta_transaction_type?.toString() ?? '',
-  plate_code: carDetail.value?.plate_code ?? '',
-  plate_number: carDetail.value?.plate_number ?? '',
-  traffic_code_number: carDetail.value?.traffic_code_number ?? '',
+  rta_transaction_type: vehicleDriverDetail.value?.rta_transaction_type?.toString() ?? '',
+  plate_code: vehicleDriverDetail.value?.vehicle_plate_code ?? '',
+  plate_number: vehicleDriverDetail.value?.vehicle_plate_number ?? '',
+  traffic_code_number: vehicleDriverDetail.value?.traffic_code_number ?? '',
   chassis_number: carDetail.value?.chassis_number ?? '',
-  engine_number: carDetail.value?.engine_number ?? '',
-  rta_plate_category: carDetail.value?.rta_plate_category ?? '',
-  vehicle_color: carDetail.value?.vehicle_color ?? '',
-  plate_color: carDetail.value?.plate_color ?? '',
-  bank_loan: carDetail.value?.bank_loan?.toString() ?? '',
-  bank_name: carDetail.value?.bank_name ?? '',
-  first_registration_date: carDetail.value?.first_registration_date ?? '',
-  policy_effective_date: carDetail.value?.policy_effective_date ?? '',
-  policy_expiry_date: carDetail.value?.policy_expiry_date ?? '',
-  certificate_start_date: carDetail.value?.certificate_start_date ?? '',
-  certificate_end_date: carDetail.value?.certificate_end_date ?? '',
-  annual_mileage_estimate: carDetail.value?.annual_mileage_estimate?.toString() ?? '',
-  previous_policy_provider: '', // For GIG renewal detection
+  engine_number: vehicleDriverDetail.value?.vehicle_engine_number ?? '',
+  rta_plate_category: vehicleDriverDetail.value?.rta_plate_category ?? '',
+  vehicle_color: vehicleDriverDetail.value?.vehicle_color ?? '',
+  plate_color: vehicleDriverDetail.value?.vehicle_plate_color ?? '',
+  bank_loan: vehicleDriverDetail.value?.bank_loan?.toString() ?? '',
+  bank_name: vehicleDriverDetail.value?.bank_name ?? '',
+  first_registration_date: vehicleDriverDetail.value?.first_registration_date ?? '',
+  policy_effective_date: page.props.quoteRequest?.policy_start_date ?? '',
+  policy_expiry_date: page.props.quoteRequest?.policy_expiry_date ?? '',
+  certificate_start_date: page.props.quoteRequest?.certificate_start_date ?? '',
+  certificate_end_date: page.props.quoteRequest?.certificate_end_date ?? '',
+  annual_mileage_estimate: vehicleDriverDetail.value?.annual_mileage_estimate?.toString() ?? '',
+  previous_policy_provider: page.props.quoteRequest?.currently_insured_with?.toString() ?? '',
+  lead_source: page.props.quoteRequest?.source?.toString() ?? '',
 });
 
 const hasNotEditPermission = computed(() => {
@@ -126,18 +131,18 @@ watch(() => props.insurerPortalSyncData, (vehicleTransactionDetails) => {
     const fieldMappings = {
       vehicleTransactionDetails: {
         rta_transaction_type: 'rta_transaction_type',
-        plate_code: 'plate_code',
-        plate_number: 'plate_number',
+        vehicle_plate_code: 'plate_code',
+        vehicle_plate_number: 'plate_number',
         traffic_code_number: 'traffic_code_number',
         chassis_number: 'chassis_number',
-        engine_number: 'engine_number',
+        vehicle_engine_number: 'engine_number',
         rta_plate_category: 'rta_plate_category',
         vehicle_color: 'vehicle_color',
-        plate_color: 'plate_color',
+        vehicle_plate_color: 'plate_color',
         bank_loan: 'bank_loan',
         bank_name: 'bank_name',
         first_registration_date: 'first_registration_date',
-        policy_effective_date: 'policy_effective_date',
+        policy_start_date: 'policy_effective_date',
         policy_expiry_date: 'policy_expiry_date',
         certificate_start_date: 'certificate_start_date',
         certificate_end_date: 'certificate_end_date',
