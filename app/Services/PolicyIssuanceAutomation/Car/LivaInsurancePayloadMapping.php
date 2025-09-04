@@ -211,11 +211,8 @@ class LivaInsurancePayloadMapping
         };
     }
 
-    public function fitlerRtaTransactionType($source): array
+    public function renewalRtaTransactionType(): array
     {
-        $forRenewal = ['40', '50'];
-        $forNewBusiness = ['10', '20', '30'];
-
-        return $source == LeadSourceEnum::RENEWAL_UPLOAD ? $forRenewal : $forNewBusiness;
+        return ['40', '50'];
     }
 }

@@ -1194,11 +1194,13 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             LookupsEnum::DRIVING_EXPERIENCE,
         ])->toArray();
 
-        $rtaTransactionType = array_filter($additionalLookups['rta_transaction_type'], function ($item) use ($quoteRequest) {
-            return in_array($item['code'], app(LivaInsurancePayloadMapping::class)->fitlerRtaTransactionType($quoteRequest?->source));
-        });
-
-        $additionalLookups['rta_transaction_type'] = array_values($rtaTransactionType);
+        if ($quoteRequest?->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+            $rtaTransactionType = array_filter($additionalLookups['rta_transaction_type'], function ($item) {
+                return in_array($item['code'], app(LivaInsurancePayloadMapping::class)->renewalRtaTransactionType());
+            });
+    
+            $additionalLookups['rta_transaction_type'] = array_values($rtaTransactionType);
+        }
 
         return $additionalLookups;
     }
