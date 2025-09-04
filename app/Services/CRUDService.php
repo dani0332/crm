@@ -930,7 +930,11 @@ class CRUDService extends BaseService
         }
 
         // $entity = Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->first();
-        $entity = $quote->latestInsured->insuredKyc;
+        $entity = $quote?->latestInsured?->insuredKyc ?? null;
+
+        if (! $entity) {
+            return;
+        }
 
         $paymentTopScore = 0;
         if (isset($entity->legal_structure) && $entity->legal_structure != '') {
