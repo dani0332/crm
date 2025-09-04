@@ -7,7 +7,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -273,7 +273,7 @@ class TravelController extends Controller
         $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($record, self::TYPE);
 
         $insuranceProvider = $record?->plan?->insuranceProvider ?? $record->insuranceProvider;
-        if ($insuranceProvider?->code === InsuranceProvidersEnum::ALNC) {
+        if ($insuranceProvider?->code === InsuranceProviderEnum::ALNC->value) {
             $travelType = $record->direction_code === TravelQuoteEnum::TRAVEL_UAE_OUTBOUND ? TravelQuoteEnum::ALLIANCE_OUT_BOUND : TravelQuoteEnum::ALLIANCE_IN_BOUND;
             $record->days_cover_for = (new AllianceInsuranceService)->calculateCoverDaysForExpiryDate($record, $travelType);
         }
@@ -360,7 +360,7 @@ class TravelController extends Controller
             'lockStatusOfPolicyIssuanceSteps' => $lockStatusOfPolicyIssuanceSteps,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
-            'isAllianceProvider' => $insuranceProvider?->code === InsuranceProvidersEnum::ALNC,
+            'isAllianceProvider' => $insuranceProvider?->code === InsuranceProviderEnum::ALNC->value,
             'customerAddressData' => $customerAddressData,
         ]);
     }

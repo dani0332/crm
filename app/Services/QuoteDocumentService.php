@@ -151,7 +151,7 @@ class QuoteDocumentService extends BaseService
         try {
 
             if (data_get($data, 'is_base_64', 0) == 1) {
-                $originalName = 'Base 64 file';
+                $originalName = data_get($data, 'file_name', 'Base 64 file');
                 @[$extension, $fileMimeType, $file_data] = getBase64FileInfo($fileOrBase64);
 
                 // Generate a unique filename
@@ -245,6 +245,9 @@ class QuoteDocumentService extends BaseService
                 LoggerService::info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
             }
 
+            LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
+            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
+
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL) {
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id,
@@ -252,9 +255,6 @@ class QuoteDocumentService extends BaseService
                     $documentType->id
                 )->afterCommit();
             }
-
-            LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
-            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
 
             return $quoteDocument;
         } catch (\Exception $exception) {

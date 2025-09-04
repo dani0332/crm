@@ -185,7 +185,7 @@ class InstantAlfredService extends BaseService
 
         $partialQuery->whereNotNull('chat_initiated_at');
 
-        if ($request->email == null && $request->mobile_no == null && $request->quoteId == null && empty($request->chat_initiated_at)) {
+        if ($request->email == null && $request->mobile_no == null && $request->quoteId == null && empty($request->chat_initiated_at) && empty($request->lead_created_at)) {
             // Default to current day if no dates are provided
             $dateFrom = now()->startOfDay();
             $dateTo = now()->endOfDay();

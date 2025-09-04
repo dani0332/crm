@@ -4,7 +4,7 @@ namespace App\Services\PolicyIssuanceAutomation\Travel;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
@@ -40,7 +40,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     private mixed $baseUrl;
     private mixed $authParam;
 
-    public const INSURER_CODE = InsuranceProvidersEnum::ALNC;
     public const TYPE = quoteTypeCode::Travel;
     public const TYPE_ID = QuoteTypeId::Travel;
 
@@ -478,7 +477,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function getNextStep($completedStep = null): ?string
     {
-        $allSteps = PolicyIssuanceEnum::getPolicyIssuanceSteps(self::INSURER_CODE, self::TYPE);
+        $allSteps = PolicyIssuanceEnum::getPolicyIssuanceSteps(InsuranceProviderEnum::ALNC->value, self::TYPE);
 
         if (! $completedStep) {
             return $allSteps[0]; // Return the first step if completedStep is null
