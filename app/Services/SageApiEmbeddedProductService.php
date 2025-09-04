@@ -1230,7 +1230,7 @@ class SageApiEmbeddedProductService
 
         // Payload creation logic for default scenario
         $commissionTaxClass = 2; // if commission vat not applicable added
-        if($sageRequestEmbeddedProduct->brokerCommissionVatAmount > 0){
+        if ($sageRequestEmbeddedProduct->brokerCommissionVatAmount > 0) {
             $commissionTaxClass = 1; // if commission vat applicable added
         }
         $premiumDescription = 'P.'.$sageRequestEmbeddedProduct->invoiceDescription;
