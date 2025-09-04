@@ -117,28 +117,6 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-
-        Lookup::firstOrCreate([
-            'quote_type_id' => QuoteTypeId::Car,
-            'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
-            'code' => '60',
-            'text' => 'Update Registration Information',
-            'insurance_provider_id' => $this->insuranceProviderId,
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        Lookup::firstOrCreate([
-            'quote_type_id' => QuoteTypeId::Car,
-            'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
-            'code' => '70',
-            'text' => 'Export Certificate',
-            'insurance_provider_id' => $this->insuranceProviderId,
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
     }
 
     private function rtaPlateCategory()
