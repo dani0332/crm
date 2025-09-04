@@ -384,7 +384,6 @@ function policyNotListed() {
   claimForm.policy_not_listed = true;
   claimForm.selected_policy_id = null;
   claimForm.selected_quote_uuid = null;
-  claimForm.policy_number = null;
   claimForm.customer_id = null;
   claimForm.insurance_provider_id = null;
 }

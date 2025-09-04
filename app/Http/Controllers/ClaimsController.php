@@ -155,11 +155,11 @@ class ClaimsController extends Controller
         try {
             $claim = $this->claimsService->createClaim($request->validated());
 
-            if (! empty($claim->errors)) {
-                vAbort($claim->errors);
+            if (! $claim['success']) {
+                vAbort($claim['errors']);
             }
 
-            return redirect()->route('claims.show', $claim->claimUID)->with('success', "Claim {$claim->claimUID} has been created successfully.");
+            return redirect()->route('claims.show', $claim['claimUID'])->with('success', "Claim {$claim['claimUID']} has been created successfully.");
         } catch (Exception $e) {
             LoggerService::warning(self::class.'::'.__FUNCTION__.' - Error creating claim', extra: [
                 'error' => $e->getMessage(),

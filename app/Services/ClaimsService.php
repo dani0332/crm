@@ -310,47 +310,40 @@ class ClaimsService extends BaseService
         try {
             // Prepare data for API call
             $apiData = [
-                'firstName' => $data['first_name'] ?? '',
-                'lastName' => $data['last_name'] ?? '',
-                'email' => $data['email'] ?? '',
-                'mobileNo' => $data['mobile_no'] ?? '',
-                'incident' => $data['incident_story'] ?? '',
+                'firstName' => $data['first_name'] ?? null,
+                'lastName' => $data['last_name'] ?? null,
+                'email' => $data['email'] ?? null,
+                'mobileNo' => $data['mobile_no'] ?? null,
+                'incident' => $data['incident_story'] ?? null,
                 'customerId' => $data['customer_id'] ?? null,
-                'policyNumber' => $data['policy_number'] ?? '',
+                'policyNumber' => $data['policy_number'] ?? null,
                 'insuranceProviderId' => $data['insurance_provider_id'] ?? null,
                 'quoteTypeId' => $data['quote_type_id'] ?? null,
                 'source' => $data['source'] ?? config('constants.SOURCE_NAME', 'system'),
-                'quoteUID' => $data['selected_quote_uuid'] ?? '',
+                'quoteUID' => $data['selected_quote_uuid'] ?? null,
                 'claimTypeId' => $data['claim_type_id'] ?? null,
+                'carMake' => $data['car_make'] ?? null,
+                'carModel' => $data['car_model'] ?? null,
+                'modelYear' => $data['model_year'] ?? null,
+                'platNumber' => $data['plat_number'] ?? null,
+                'claimRequestTypeId' => $data['claim_request_type_id'] ?? null,
+                'serviceTypeId' => $data['service_type_id'] ?? null,
+                'requestReferenceNumber' => $data['request_reference_number'] ?? null,
             ];
 
-            // Add vehicle information if available
-            if (! empty($data['car_make'])) {
-                $apiData['carMake'] = $data['car_make'];
-            }
-            if (! empty($data['car_model'])) {
-                $apiData['carModel'] = $data['car_model'];
-            }
 
-            // Add Health information if available
-            if (! empty($data['claim_request_type_id'])) {
-                $apiData['claimRequestTypeId'] = $data['claim_request_type_id'];
-            }
-            if (! empty($data['service_type_id'])) {
-                $apiData['serviceTypeId'] = $data['service_type_id'];
-            }
-            if (! empty($data['request_reference_number'])) {
-                $apiData['requestReferenceNumber'] = $data['request_reference_number'];
-            }
-
+            // Remove null values from $apiData before sending request
+            $apiData = array_filter($apiData, function ($value) {
+                return !is_null($value);
+            });
             // Make API call to create claim
-            $response = CustomerPortalApiFacade::request('/api/v2-claims', 'post', $apiData);
+            $response = CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $apiData);
 
-            if (isset($response->claimUID) && $response->claimUID) {
+            if ($response->data['success']) {
                 // Send Claim Intimation Email
             }
 
-            return $response;
+            return $response->data;
 
         } catch (\Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Error creating claim request', extra: [
