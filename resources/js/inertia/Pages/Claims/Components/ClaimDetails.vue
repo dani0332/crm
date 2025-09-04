@@ -27,7 +27,7 @@ const claimForm = useForm({
   quote_type_id: props.claim?.quote_type_id,
 
   // Car-specific fields (visible when editing)
-  plat_number: props.claim?.claim_request_details?.plat_number || '',
+  plate_number: props.claim?.claim_request_details?.plate_number || '',
   car_make: props.claim?.claim_request_details?.car_make || '',
   car_model: props.claim?.claim_request_details?.car_model || '',
   model_year: props.claim?.claim_request_details?.model_year || '',
@@ -244,11 +244,11 @@ const validateCarFields = () => {
 
   if (isCarLOB.value) {
     // For car LOB, all car fields are required
-    if (!claimForm.plat_number?.trim()) {
-      errors.plat_number = 'Vehicle plate number is required.';
+    if (!claimForm.plate_number?.trim()) {
+      errors.plate_number = 'Vehicle plate number is required.';
     } else {
-      const platValidation = validationRules.platNumber(claimForm.plat_number);
-      if (platValidation !== true) errors.plat_number = platValidation;
+      const platValidation = validationRules.platNumber(claimForm.plate_number);
+      if (platValidation !== true) errors.plate_number = platValidation;
     }
 
     if (!claimForm.car_make?.trim()) {
@@ -375,8 +375,8 @@ const prepareFormData = data => {
   return {
     ...data,
     // Trim and normalize string fields
-    plat_number: data.plat_number
-      ? data.plat_number.trim().toUpperCase()
+    plate_number: data.plate_number
+      ? data.plate_number.trim().toUpperCase()
       : null,
     car_make: data.car_make ? data.car_make.trim() : null,
     car_model: data.car_model ? data.car_model.trim() : null,
@@ -487,11 +487,11 @@ watch(
                     </dt>
                     <dd>
                       <x-input
-                        v-model="claimForm.plat_number"
+                        v-model="claimForm.plate_number"
                         type="text"
                         placeholder="Enter Plate Number"
                         class="w-full"
-                        :error="claimForm.errors.plat_number"
+                        :error="claimForm.errors.plate_number"
                         :rules="[validationRules.platNumber]"
                       />
                     </dd>

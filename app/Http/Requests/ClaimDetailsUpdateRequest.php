@@ -27,7 +27,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
     {
         return [
             // Car-specific fields (only when quote_type_id is Car)
-            'plat_number' => [
+            'plate_number' => [
                 'nullable',
                 'string',
                 'max:20',
@@ -93,8 +93,8 @@ class ClaimDetailsUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'plat_number.regex' => 'Plate number can only contain letters, numbers, hyphens, and spaces.',
-            'plat_number.max' => 'Plate number cannot exceed 20 characters.',
+            'plate_number.regex' => 'Plate number can only contain letters, numbers, hyphens, and spaces.',
+            'plate_number.max' => 'Plate number cannot exceed 20 characters.',
             'car_make.max' => 'Vehicle make cannot exceed 100 characters.',
             'car_model.max' => 'Vehicle model cannot exceed 100 characters.',
             'model_year.min' => 'Vehicle year must be after 1900.',
@@ -122,7 +122,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'plat_number' => 'plate number',
+            'plate_number' => 'plate number',
             'car_make' => 'vehicle make',
             'car_model' => 'vehicle model',
             'model_year' => 'vehicle year',
@@ -142,7 +142,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
     {
         // Trim whitespace from string fields and normalize data
         $this->merge([
-            'plat_number' => $this->plat_number ? trim(strtoupper($this->plat_number)) : null,
+            'plate_number' => $this->plate_number ? trim(strtoupper($this->plate_number)) : null,
             'car_make' => $this->car_make ? trim($this->car_make) : null,
             'car_model' => $this->car_model ? trim($this->car_model) : null,
             'claim_number' => $this->claim_number ? trim($this->claim_number) : null,
@@ -190,8 +190,8 @@ class ClaimDetailsUpdateRequest extends FormRequest
             $validator->errors()->add('car_make', 'Vehicle make is required when vehicle model is specified.');
         }
 
-        if (! $this->filled('plat_number')) {
-            $validator->errors()->add('plat_number', 'Vehicle plate number is required when vehicle model is specified.');
+        if (! $this->filled('plate_number')) {
+            $validator->errors()->add('plate_number', 'Vehicle plate number is required when vehicle model is specified.');
         }
 
         if (! $this->filled('model_year')) {

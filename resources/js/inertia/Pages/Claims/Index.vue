@@ -332,7 +332,7 @@ watch(
 
       // Clear vehicle-specific filters if not a vehicle type
       if (!isVehicleType) {
-        filters.plat_number = '';
+        filters.plate_number = '';
         filters.car_make = '';
         filters.car_model = '';
         filters.model_year = '';
@@ -500,9 +500,9 @@ watch(
         <template v-if="isCarLOB">
           <!-- Vehicle specific filters -->
           <x-input
-            v-model="filters.plat_number"
+            v-model="filters.plate_number"
             type="text"
-            name="plat_number"
+            name="plate_number"
             label="Plate Number"
             placeholder="Search by Plate Number"
             class="w-full"
@@ -632,8 +632,8 @@ watch(
         {{ insurer_claim_number }}
       </template>
 
-      <template #item-plat_number="{ claim_request_details }">
-        {{ claim_request_details.plat_number }}
+      <template #item-plate_number="{ claim_request_details }">
+        {{ claim_request_details.plate_number }}
       </template>
 
       <template #item-car_make="{ claim_request_details }">

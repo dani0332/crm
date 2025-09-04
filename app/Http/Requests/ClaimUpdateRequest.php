@@ -108,7 +108,7 @@ class ClaimUpdateRequest extends FormRequest
             ],
 
             // Car-specific fields
-            'plat_number' => [
+            'plate_number' => [
                 'nullable',
                 'string',
                 'max:20',
@@ -217,7 +217,7 @@ class ClaimUpdateRequest extends FormRequest
             'quote_type_id' => 'line of business',
             'claim_type_id' => 'claim type',
             'policy_number' => 'policy number',
-            'plat_number' => 'plat number',
+            'plate_number' => 'plat number',
             'car_make' => 'vehicle make',
             'car_model' => 'vehicle model',
             'car_model_year' => 'vehicle year',
@@ -253,7 +253,7 @@ class ClaimUpdateRequest extends FormRequest
             'mobile_no' => $this->mobile_no ? trim($this->mobile_no) : null,
             'claim_number' => $this->claim_number ? trim($this->claim_number) : null,
             'policy_number' => $this->policy_number ? trim($this->policy_number) : null,
-            'plat_number' => $this->plat_number ? trim(strtoupper($this->plat_number)) : null,
+            'plate_number' => $this->plate_number ? trim(strtoupper($this->plate_number)) : null,
             'car_make' => $this->car_make ? trim($this->car_make) : null,
             'car_model' => $this->car_model ? trim($this->car_model) : null,
             'incident_story' => $this->incident_story ? trim($this->incident_story) : null,

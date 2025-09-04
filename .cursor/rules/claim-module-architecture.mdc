@@ -16,7 +16,7 @@ alwaysApply: false
 ## LOB-Based Validation Rules
 
 ### Car Claims (QuoteTypes::CAR->id() == 1)
-- Required fields: `plat_number`, `car_make`, `car_model`, `model_year`
+- Required fields: `plate_number`, `car_make`, `car_model`, `model_year`
 - Plate number validation: `/^[A-Za-z0-9\-\s]+$/`
 - Model year range: 1900 to current year + 1
 - Conditional validation in `validateCarFields()` method

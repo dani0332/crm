@@ -68,7 +68,7 @@ class ClaimExportValidationRequest extends FormRequest
             'assigned_status' => 'nullable|in:assigned,un-assigned',
 
             // Car-specific filters
-            'plat_number' => 'nullable|string|max:20',
+            'plate_number' => 'nullable|string|max:20',
             'car_make' => 'nullable|string|max:100',
             'car_model' => 'nullable|string|max:100',
             'model_year' => 'nullable|integer|min:1900|max:'.(date('Y') + 1),
@@ -95,7 +95,7 @@ class ClaimExportValidationRequest extends FormRequest
             'insurance_provider_id' => 'insurance provider',
             'manager_assigned_date' => 'manager assigned date',
             'next_followup_datetime' => 'next follow-up date',
-            'plat_number' => 'plate number',
+            'plate_number' => 'plate number',
             'car_make' => 'car make',
             'car_model' => 'car model',
             'model_year' => 'model year',

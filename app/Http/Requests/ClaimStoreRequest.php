@@ -122,7 +122,7 @@ class ClaimStoreRequest extends FormRequest
                 'string',
                 'max:100',
             ],
-            'car_model_year' => [
+            'model_year' => [
                 'nullable',
                 'integer',
                 'min:1900',
@@ -188,8 +188,8 @@ class ClaimStoreRequest extends FormRequest
             'quote_type_id.exists' => 'Selected line of business is invalid.',
             'claim_type_id.required' => 'Claim type is required.',
             'claim_type_id.exists' => 'Selected claim type is invalid.',
-            'car_model_year.min' => 'Vehicle year must be after 1900.',
-            'car_model_year.max' => 'Vehicle year cannot be more than one year in the future.',
+            'model_year.min' => 'Vehicle year must be after 1900.',
+            'model_year.max' => 'Vehicle year cannot be more than one year in the future.',
             'approved_repair_amount.numeric' => 'Approved repair amount must be a number.',
             'approved_repair_amount.min' => 'Approved repair amount must be greater than or equal to 0.',
             'approved_total_loss_amount.numeric' => 'Approved total loss amount must be a number.',
@@ -219,7 +219,7 @@ class ClaimStoreRequest extends FormRequest
             'plate_number' => 'plate number',
             'car_make' => 'vehicle make',
             'car_model' => 'vehicle model',
-            'car_model_year' => 'vehicle year',
+            'model_year' => 'vehicle year',
             'customer_id' => 'customer ID',
             'insurance_provider_id' => 'insurance provider',
             'claim_number' => 'claim number',

@@ -130,7 +130,7 @@ class ClaimsExport implements CsvExportableInterface
             $claim->created_at ? Carbon::parse($claim->created_at)->format(config('constants.datetime_format')) : '',
             $claim->updated_at ? Carbon::parse($claim->updated_at)->format(config('constants.datetime_format')) : '',
             // Car-specific fields
-            $claim->claimRequestDetails?->plat_number ?? '',
+            $claim->claimRequestDetails?->plate_number ?? '',
             $claim->claimRequestDetails?->car_make ?? '',
             $claim->claimRequestDetails?->car_model ?? '',
             $claim->claimRequestDetails?->model_year ?? '',

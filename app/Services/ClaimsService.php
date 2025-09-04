@@ -211,9 +211,9 @@ class ClaimsService extends BaseService
             });
         }
 
-        if (! empty($filters['plat_number'])) {
+        if (! empty($filters['plate_number'])) {
             $query->whereHas('claimRequestDetails', function ($subQuery) use ($filters) {
-                $subQuery->where('plat_number', $filters['plat_number']);
+                $subQuery->where('plate_number', $filters['plate_number']);
             });
         }
 
@@ -239,7 +239,7 @@ class ClaimsService extends BaseService
             'complaint_status_id',
             'next_followup_datetime',
             'assigned_status',
-            'plat_number',
+            'plate_number',
             'car_make',
             'car_model',
             'model_year',
@@ -278,9 +278,31 @@ class ClaimsService extends BaseService
                 'personal_quotes.quote_status_id',
                 'insurance_provider.text as currently_insured_with',
                 'quote_type.text as product',
+                // Car-specific fields
+                DB::raw("CASE WHEN personal_quotes.quote_type_id = " . QuoteTypeId::Car . " THEN car_make.text ELSE NULL END as car_make"),
+                DB::raw("CASE WHEN personal_quotes.quote_type_id = " . QuoteTypeId::Car . " THEN car_model.text ELSE NULL END as car_model"),
+                DB::raw("CASE WHEN personal_quotes.quote_type_id = " . QuoteTypeId::Car . " THEN car_quote_request.year_of_manufacture ELSE NULL END as model_year"),
+                DB::raw("CASE WHEN personal_quotes.quote_type_id = " . QuoteTypeId::Car . " THEN car_quote_request_detail.plate_number ELSE NULL END as plate_number"),
             ])
             ->leftJoin('insurance_provider', 'personal_quotes.insurance_provider_id', '=', 'insurance_provider.id')
             ->leftJoin('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
+            // Car-specific joins - only when quote_type_id is Car
+            ->leftJoin('car_quote_request', function ($join) {
+                $join->on('car_quote_request.uuid', '=', 'personal_quotes.uuid')
+                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
+            ->leftJoin('car_make', function ($join) {
+                $join->on('car_make.id', '=', 'car_quote_request.car_make_id')
+                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
+            ->leftJoin('car_model', function ($join) {
+                $join->on('car_model.id', '=', 'car_quote_request.car_model_id')
+                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
+            ->leftJoin('car_quote_request_detail', function ($join) {
+                $join->on('car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
             ->whereNotNull('personal_quotes.policy_number')
             ->when($quoteTypeId, function ($query) use ($quoteTypeId) {
                 $query->where('personal_quotes.quote_type_id', $quoteTypeId);
@@ -315,23 +337,24 @@ class ClaimsService extends BaseService
                 'email' => $data['email'] ?? null,
                 'mobileNo' => $data['mobile_no'] ?? null,
                 'incident' => $data['incident_story'] ?? null,
+                'incidentDate' => $data['incident_date'] ?? null,
                 'customerId' => $data['customer_id'] ?? null,
                 'policyNumber' => $data['policy_number'] ?? null,
                 'insuranceProviderId' => $data['insurance_provider_id'] ?? null,
                 'quoteTypeId' => $data['quote_type_id'] ?? null,
-                'source' => $data['source'] ?? config('constants.SOURCE_NAME', 'system'),
+                'source' => $data['source'] ?? config('constants.SOURCE_NAME', 'IMCRM'),
                 'quoteUID' => $data['selected_quote_uuid'] ?? null,
                 'claimTypeId' => $data['claim_type_id'] ?? null,
                 'carMake' => $data['car_make'] ?? null,
                 'carModel' => $data['car_model'] ?? null,
                 'modelYear' => $data['model_year'] ?? null,
-                'platNumber' => $data['plat_number'] ?? null,
+                'plateNumber' => $data['plate_number'] ?? null,
                 'claimRequestTypeId' => $data['claim_request_type_id'] ?? null,
                 'serviceTypeId' => $data['service_type_id'] ?? null,
                 'requestReferenceNumber' => $data['request_reference_number'] ?? null,
             ];
 
-
+            //dd($apiData, $data);
             // Remove null values from $apiData before sending request
             $apiData = array_filter($apiData, function ($value) {
                 return !is_null($value);
@@ -413,7 +436,7 @@ class ClaimsService extends BaseService
                 $detailData['car_make'] = null;
                 $detailData['car_model'] = null;
                 $detailData['model_year'] = null;
-                $detailData['plat_number'] = null;
+                $detailData['plate_number'] = null;
             } else {
                 // Clear both car and health detail fields
                 $detailData['service_type_id'] = null;
@@ -421,7 +444,7 @@ class ClaimsService extends BaseService
                 $detailData['car_make'] = null;
                 $detailData['car_model'] = null;
                 $detailData['model_year'] = null;
-                $detailData['plat_number'] = null;
+                $detailData['plate_number'] = null;
             }
 
             if (! empty($detailData)) {
@@ -472,7 +495,7 @@ class ClaimsService extends BaseService
             // Get allowed detail fields from model fillable array (filtered for this specific update method)
             $claimRequestDetailFillable = (new ClaimRequestDetail)->getFillable();
             $claimRequestDetailFields = array_intersect($claimRequestDetailFillable, [
-                'plat_number',
+                'plate_number',
                 'car_make',
                 'car_model',
                 'model_year',
@@ -757,7 +780,7 @@ class ClaimsService extends BaseService
         $isRequiredFieldsFilled = false;
 
         if ($isCarQuoteType) {
-            $isRequiredFieldsFilled = $claimRequestDetails->plat_number && $claimRequestDetails->car_make && $claimRequestDetails->car_model && $claimRequestDetails->model_year;
+            $isRequiredFieldsFilled = $claimRequestDetails->plate_number && $claimRequestDetails->car_make && $claimRequestDetails->car_model && $claimRequestDetails->model_year;
         } else {
 
             $isRequiredFieldsFilled = $claimRequest->policy_number && $claimRequest->claim_number && $claimRequest->incident_date;

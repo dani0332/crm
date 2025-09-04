@@ -27,7 +27,7 @@ const claimForm = useForm({
   claim_number: props.claim?.claim_number || '',
 
   // Car-specific fields (visible when editing)
-  plat_number: props.claim?.claim_request_details?.plat_number || '',
+  plate_number: props.claim?.claim_request_details?.plate_number || '',
   car_make: props.claim?.claim_request_details?.car_make || '',
   car_model: props.claim?.claim_request_details?.car_model || '',
   model_year: props.claim?.claim_request_details?.model_year || '',
@@ -209,7 +209,7 @@ watch(
       claimForm.request_reference_number = null;
     } else if (newQuoteTypeId === healthQuoteTypeId) {
       // Clear car-related fields when Health is selected
-      claimForm.plat_number = null;
+      claimForm.plate_number = null;
       claimForm.car_make = null;
       claimForm.car_model = null;
       claimForm.model_year = null;
@@ -221,7 +221,7 @@ watch(
       claimForm.request_reference_number = null;
 
       // Car fields
-      claimForm.plat_number = null;
+      claimForm.plate_number = null;
       claimForm.car_make = null;
       claimForm.car_model = null;
       claimForm.model_year = null;
@@ -371,16 +371,22 @@ function handlePageChange(newPage) {
 
 // Select policy function
 function selectPolicy(policy) {
+  console.log('selectPolicy', policy);
   claimForm.policy_not_listed = false;
   claimForm.selected_policy_id = policy.id;
   claimForm.selected_quote_uuid = policy.uuid;
   claimForm.policy_number = policy.policy_number;
   claimForm.customer_id = policy.customer_id;
   claimForm.insurance_provider_id = policy.insurance_provider_id;
+  claimForm.car_make = policy.car_make;
+  claimForm.car_model = policy.car_model;
+  claimForm.model_year = policy.model_year;
+  claimForm.plate_number = policy.plate_number;
 }
 
 // Policy not listed function
 function policyNotListed() {
+  console.log('policyNotListed');
   claimForm.policy_not_listed = true;
   claimForm.selected_policy_id = null;
   claimForm.selected_quote_uuid = null;
@@ -390,6 +396,7 @@ function policyNotListed() {
 
 // Reset policy selection
 function resetPolicySelection() {
+  console.log('resetPolicySelection');
   policySearch.showPolicies = false;
   policySearch.searched = false;
   claimForm.selected_policy_id = null;
@@ -712,6 +719,9 @@ watch(approvedCashLossAmount, (newValue, oldValue) => {
             label="Incident Date"
             placeholder="Select Incident Date"
             :hasError="claimForm.errors.incident_date"
+            type="date"
+            max-date="today"
+            :utc="true"
           />
           <x-input
             v-model="claimForm.policy_number"
@@ -753,12 +763,12 @@ watch(approvedCashLossAmount, (newValue, oldValue) => {
               :error="claimForm.errors.model_year"
             />
             <x-input
-              v-model="claimForm.plat_number"
+              v-model="claimForm.plate_number"
               type="text"
               label="Plate Number"
               placeholder="Enter Plate Number"
               class="w-full"
-              :error="claimForm.errors.plat_number"
+              :error="claimForm.errors.plate_number"
             />
           </template>
           <template v-if="isEdit">
@@ -861,6 +871,10 @@ watch(approvedCashLossAmount, (newValue, oldValue) => {
                 policy_number,
                 customer_id,
                 insurance_provider_id,
+                car_make,
+                car_model,
+                model_year,
+                plate_number,
               }"
             >
               <x-button
@@ -876,6 +890,11 @@ watch(approvedCashLossAmount, (newValue, oldValue) => {
                     customer_id,
                     insurance_provider_id,
                     ref_id,
+                    car_make,
+                    car_model,
+                    model_year,
+                    plate_number,
+
                   })
                 "
               >

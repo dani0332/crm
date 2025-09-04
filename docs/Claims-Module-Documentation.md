@@ -298,7 +298,7 @@ The system automatically updates claim statuses based on:
 
 - Primary key: `id`
 - Foreign key: `claim_request_id`
-- Car details: `car_make`, `car_model`, `model_year`, `plat_number`
+- Car details: `car_make`, `car_model`, `model_year`, `plate_number`
 - Health details: `service_type_id`, `request_reference_number`
 - Tracking: `user_ip`
 
