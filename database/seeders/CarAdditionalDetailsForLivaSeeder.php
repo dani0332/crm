@@ -31,12 +31,12 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
      */
     public function run(): void
     {
-        // $this->plateCode();
-        // $this->rtaTransactionType();
-        // $this->rtaPlateCategory();
-        // $this->vehicleColor();
-        // $this->bankName();
-        // $this->annualMileageEstimate();
+        $this->plateCode();
+        $this->rtaTransactionType();
+        $this->rtaPlateCategory();
+        $this->vehicleColor();
+        $this->bankName();
+        $this->annualMileageEstimate();
         $this->nationalityList();
         $this->drivingExperience();
     }
