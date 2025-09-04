@@ -83,10 +83,10 @@ class AuditableController extends Controller
 
     public function loadPolicyIssuanceApiLogs(Request $request)
     {
-        $quoteType = QuoteTypes::getName($request->quoteTypeId)->value;
+        $quoteType = QuoteTypes::getName($request->quoteTypeId)->value ?? '';
         $quote = $this->getQuoteObject($quoteType, $request->quoteId);
 
-        if (empty($quote) || $quoteType !== QuoteTypes::CAR->value) {
+        if (empty($quote) || empty($quoteType) || $quoteType !== QuoteTypes::CAR->value) {
             return response()->json([
                 'success' => false,
                 'message' => empty($quote) ? 'Quote not found' : 'Quote type not supported',

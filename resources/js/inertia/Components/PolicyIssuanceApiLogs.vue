@@ -70,7 +70,7 @@ const onLoadAuditLogData = async () => {
 
   let url = '/policy-issuance-logs';
 
-  let data = { 
+  let data = {
     quoteId: props.id, 
     quoteTypeId: props.quoteTypeId,
     jsonData: true
