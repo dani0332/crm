@@ -215,4 +215,16 @@ class LivaInsurancePayloadMapping
     {
         return ['40', '50'];
     }
+
+    public function rtaTransactionTypeEnum(): array
+    {
+        return [
+            'REGISTRATION_OF_NEW_VEHICLE' => '10',
+            'CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_VALID' => '20',
+            'CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_TO_EXPIRE' => '30',
+            'RENEWAL_OF_VEHICLE_WITH_CURRENT_NUMBER_PLATE' => '40',
+            'RENEWAL_OF_VEHICLE_WITH_NEW_NUMBER_PLATE' => '50',
+        ];
+    }
+
 }

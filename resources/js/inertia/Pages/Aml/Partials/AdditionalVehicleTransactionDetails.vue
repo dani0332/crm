@@ -42,6 +42,7 @@ const RTA_CONSTANTS = {
 
 // Field configuration state
 const fieldConfig = ref({});
+const livaConfig = ref({});
 const calculatedDates = ref({});
 
 // Computed options for dropdowns
@@ -213,7 +214,7 @@ const isGigRenewal = computed(() => {
 
 const isLivaRenewal = computed(() => {
   return page.props.quoteRequest?.source === page.props.leadSource.RENEWAL_UPLOAD
-    && page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.RSA;
+    && isLIVA.value;
 });
 
 // Field configuration computed properties
@@ -342,6 +343,10 @@ const loadFieldConfigurationFromProps = () => {
   if (!additionalVehicleTransactionDetailsForm.rta_transaction_type) {
     fieldConfig.value = {};
     return;
+  }
+
+  if (isLIVA.value) {
+    livaValidations(additionalVehicleTransactionDetailsForm.rta_transaction_type);
   }
 
   const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
@@ -517,11 +522,12 @@ const isRenewal = computed(() => {
 watch(
   () => additionalVehicleTransactionDetailsForm.certificate_start_date,
   (newVal) => {
-  if (isLIVA.value && newVal && isRenewal.value) {
+  if (isLIVA.value && newVal && true) {
     // Add 13 months to policy_effective_date for policy_expiry_date
     const effectiveDate = new Date(newVal);
     const expiryDate = new Date(effectiveDate);
     expiryDate.setMonth(expiryDate.getMonth() + 13);
+    expiryDate.setDate(expiryDate.getDate() - 1);
 
     // Format date as YYYY-MM-DD for the form
     const formattedExpiryDate = expiryDate.toISOString().split('T')[0];
@@ -529,6 +535,33 @@ watch(
     additionalVehicleTransactionDetailsForm.policy_expiry_date = formattedExpiryDate;
   }
 });
+
+const LIVAEnums = page.props.LIVAEnums;
+
+const livaValidations = (rtaTransactionType) => {
+  if (isLivaRenewal.value) {
+    livaConfig.value.certificate_start_date = false;
+    livaConfig.value.certificate_end_date = true;
+  } else {
+    if (
+      [
+        LIVAEnums.REGISTRATION_OF_NEW_VEHICLE,
+        LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_VALID,
+        LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_TO_EXPIRE].
+        includes(rtaTransactionType)
+    ) {
+      livaConfig.value.policy_effective_date = false;
+      livaConfig.value.policy_expiry_date = true;
+      livaConfig.value.certificate_start_date = true;
+      livaConfig.value.certificate_end_date = true;
+    } else {
+      livaConfig.value.policy_effective_date = false;
+      livaConfig.value.policy_expiry_date = false;
+      livaConfig.value.certificate_start_date = false;
+      livaConfig.value.certificate_end_date = true;
+    }
+  }
+};
 </script>
 
 <template>
@@ -745,7 +778,7 @@ watch(
             :rules="getFieldRules('policy_effective_date')"
             :required="isFieldRequired('policy_effective_date')"
             placeholder="Policy Effective Date"
-            :disabled="isFieldDisabled('policy_effective_date') || hasNotEditPermission || isLivaRenewal"
+            :disabled="isFieldDisabled('policy_effective_date') || hasNotEditPermission || livaConfig.policy_effective_date"
             :readonly="fieldConfig.policy_effective_date?.readonly"
             label="Policy Effective Date"
             :tooltip="`Start date of the insurance policy coverage`"
@@ -757,7 +790,7 @@ watch(
             :rules="getFieldRules('policy_expiry_date')"
             :required="isFieldRequired('policy_expiry_date')"
             placeholder="Policy Expiry Date"
-            :disabled="isLIVA"
+            :disabled="livaConfig.policy_expiry_date"
             :readonly="fieldConfig.policy_expiry_date?.readonly"
             label="Policy Expiry Date"
             :tooltip="`Expiry date of the insurance policy coverage`"
@@ -769,7 +802,7 @@ watch(
             :rules="getFieldRules('certificate_start_date')"
             :required="isFieldRequired('certificate_start_date')"
             placeholder="Certificate Start Date"
-            :disabled="! (isLIVA && isRenewal)"
+            :disabled="livaConfig.certificate_start_date"
             :readonly="fieldConfig.certificate_start_date?.readonly"
             label="Certificate Start Date"
             :tooltip="`Start date for the insurance certificate validity period`"
@@ -781,7 +814,7 @@ watch(
             :rules="getFieldRules('certificate_end_date')"
             :required="isFieldRequired('certificate_end_date')"
             placeholder="Certificate End Date"
-            disabled
+            :disabled="isFieldDisabled('certificate_end_date') || hasNotEditPermission || (livaConfig.certificate_end_date)"
             :readonly="fieldConfig.certificate_end_date?.readonly"
             label="Certificate End Date"
             :tooltip="`End date for the insurance certificate validity period`"

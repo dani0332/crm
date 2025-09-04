@@ -241,6 +241,8 @@ class AMLController extends Controller
     {
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
+        $payment = $quoteRequest->payments()->mainLeadPayment()->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType->text);
 
         LoggerService::startQuoteLogging($quoteRequest, LoggerFeatureEnum::AML_SCREENING);
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
@@ -254,11 +256,9 @@ class AMLController extends Controller
             return $log['decision'] == AMLDecisionStatusEnum::ESCALATED;
         })) : 0;
 
+        $isLIVA = $insuranceProvider?->code == InsuranceProvidersEnum::RSA;
         $lookups = app(AMLService::class)->getAMLLookups();
-        if (
-            $quoteType->code == quoteTypeCode::Car ||
-            $quoteRequest->plan?->insuranceProvider?->code == InsuranceProvidersEnum::RSA
-        ) {
+        if ($quoteType->code == quoteTypeCode::Car || $isLIVA) {
             $lookups = array_merge($lookups->toArray(), app(LivaInsuranceService::class)->getLIVALookups($quoteRequest));
         }
 
@@ -311,6 +311,7 @@ class AMLController extends Controller
             'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType, $quoteRequest),
             'isAnyEscalated' => $isAnyEscalated,
             'isPrivateCar' => ! InsuranceProviderRepository::isCommercialVehicles($quoteRequest),
+            'LIVAEnums' => app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
         ], $businessPayload ?? []));
     }
 
