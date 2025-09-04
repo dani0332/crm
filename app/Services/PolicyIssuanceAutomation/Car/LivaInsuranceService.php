@@ -7,6 +7,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\quoteTypeCode;
@@ -20,7 +21,9 @@ use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
+use App\Models\InsuranceProvider;
 use App\Models\Payment;
+use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
@@ -1175,5 +1178,28 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         ]);
 
         return $response;
+    }
+
+    public function getLIVALookups($quoteRequest)
+    {
+        $insuranceProviderId = InsuranceProvider::where('code', InsuranceProvidersEnum::RSA)->first()->id;
+        $additionalLookups = app(AMLService::class)->getAMLLookups($insuranceProviderId, [
+            LookupsEnum::RTA_TRANSACTION_TYPE,
+            LookupsEnum::RTA_PLATE_CATEGORY,
+            LookupsEnum::VEHICLE_COLOR,
+            LookupsEnum::BANK_NAME,
+            LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
+            LookupsEnum::PLATE_CODE,
+            LookupsEnum::NATIONALITY_LIST,
+            LookupsEnum::DRIVING_EXPERIENCE,
+        ])->toArray();
+
+        $rtaTransactionType = array_filter($additionalLookups['rta_transaction_type'], function ($item) use ($quoteRequest) {
+            return in_array($item['code'], app(LivaInsurancePayloadMapping::class)->fitlerRtaTransactionType($quoteRequest?->source));
+        });
+
+        $additionalLookups['rta_transaction_type'] = array_values($rtaTransactionType);
+
+        return $additionalLookups;
     }
 }

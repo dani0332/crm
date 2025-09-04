@@ -255,27 +255,11 @@ class AMLController extends Controller
         })) : 0;
 
         $lookups = app(AMLService::class)->getAMLLookups();
-        if ($quoteType->code == quoteTypeCode::Car || $quoteRequest->plan?->insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
-            $additionalLookups = app(AMLService::class)->getAMLLookups($quoteRequest?->plan?->provider_id, [
-                LookupsEnum::RTA_TRANSACTION_TYPE,
-                LookupsEnum::RTA_PLATE_CATEGORY,
-                LookupsEnum::VEHICLE_COLOR,
-                LookupsEnum::BANK_NAME,
-                LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
-                LookupsEnum::PLATE_CODE,
-                LookupsEnum::NATIONALITY_LIST,
-                LookupsEnum::DRIVING_EXPERIENCE,
-            ]);
-
-            $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
-
-            if ($quoteRequest?->source == LeadSourceEnum::RENEWAL_UPLOAD) {
-                $rtaTransactionType = array_filter($lookups['rta_transaction_type'], function ($item) {
-                    return in_array($item['code'], app(LivaInsurancePayloadMapping::class)->renewalRtaTransactionType());
-                });
-
-                $lookups['rta_transaction_type'] = array_values($rtaTransactionType);
-            }
+        if (
+            $quoteType->code == quoteTypeCode::Car ||
+            $quoteRequest->plan?->insuranceProvider?->code == InsuranceProvidersEnum::RSA
+        ) {
+            $lookups = array_merge($lookups->toArray(), app(LivaInsuranceService::class)->getLIVALookups($quoteRequest));
         }
 
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);

@@ -2,6 +2,8 @@
 
 namespace App\Services\PolicyIssuanceAutomation\Car;
 
+use App\Enums\LeadSourceEnum;
+
 class LivaInsurancePayloadMapping
 {
     public function useCode($useCode)
@@ -209,8 +211,11 @@ class LivaInsurancePayloadMapping
         };
     }
 
-    public function renewalRtaTransactionType(): array
+    public function fitlerRtaTransactionType($source): array
     {
-        return ['40', '50'];
+        $forRenewal = ['40', '50'];
+        $forNewBusiness = ['10', '20', '30'];
+
+        return $source == LeadSourceEnum::RENEWAL_UPLOAD ? $forRenewal : $forNewBusiness;
     }
 }
