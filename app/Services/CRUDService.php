@@ -895,7 +895,7 @@ class CRUDService extends BaseService
                             $customerScore += $deliveryModeScore;
                         }
 
-                        $contactScore = '';
+                        $contactScore = 0;
                         $modTypeValue = '';
                         if (isset($customerDetail->mode_of_contact)) {
                             $contactScore = in_array(strtolower($customerDetail->mode_of_contact), Kyc::MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
@@ -910,7 +910,6 @@ class CRUDService extends BaseService
                     } catch (\Throwable $e) {
                         LoggerService::error('scoreBreakdown insuredKyc block failed.', extra: [
                             'message' => $e->getMessage(),
-                            'file' => $e->getFile(),
                             'line' => $e->getLine(),
                             'trace' => $e->getTraceAsString(),
                         ]);
@@ -1145,7 +1144,6 @@ class CRUDService extends BaseService
         } catch (\Throwable $e) {
             LoggerService::error('scoreEntityBreakdown insuredKyc block failed.', extra: [
                 'message' => $e->getMessage(),
-                'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
