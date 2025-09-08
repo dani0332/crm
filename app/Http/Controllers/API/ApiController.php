@@ -48,6 +48,7 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
+use App\Exports\EmailStatusExport;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -501,6 +502,35 @@ class ApiController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve email statuses',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Export email status logs as Excel file for a specific quote
+     *
+     * @param int $quoteTypeId
+     * @param int $quoteId
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
+    public function exportEmailStatusLogs(int $quoteTypeId, int $quoteId)
+    {
+        try {
+            $export = new EmailStatusExport($quoteId, $quoteTypeId);
+            $fileName = "email-status-logs-quote-{$quoteId}-type-{$quoteTypeId}";
+            
+            return $export->download($fileName);
+        } catch (\Exception $e) {
+            Log::error('Failed to export email status logs', [
+                'quote_id' => $quoteId,
+                'quote_type_id' => $quoteTypeId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export email status logs',
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }

@@ -84,6 +84,7 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/send-ocb-email', [GenericLobController::class, 'getQuoteForOCBEmail'])->name('getQuoteForOCBEmail');
 
     Route::get('quotes/{quoteTypeId}/{quoteId}/email-status', [ApiController::class, 'getEmailStatus'])->name('getEmailStatus');
+    Route::get('quotes/{quoteTypeId}/{quoteId}/email-status/export', [ApiController::class, 'exportEmailStatusLogs'])->name('exportEmailStatusLogs');
 
     Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
