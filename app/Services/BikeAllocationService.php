@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\BikePlanType;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -90,7 +90,7 @@ class BikeAllocationService extends AllocationService
         } else {
             $valuations = $this->getValuation($bikeLead->bikeQuote->model_detail_id, $bikeLead->bikeQuote->year_of_manufacture);
 
-            $axaProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
+            $axaProvider = InsuranceProvider::where('code', InsuranceProviderEnum::AXA->value)->first();
 
             $axaValuation = array_filter($valuations, function ($provider) use ($axaProvider) {
                 return $provider->providerId == $axaProvider->id;
@@ -265,7 +265,7 @@ class BikeAllocationService extends AllocationService
 
     private function getBikeValueFromAxa(array $valuations): float
     {
-        $axaProviderId = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->value('id');
+        $axaProviderId = InsuranceProvider::where('code', InsuranceProviderEnum::AXA->value)->value('id');
 
         if (empty($axaProviderId)) {
             LoggerService::info('AXA insurance provider not found.');

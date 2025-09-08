@@ -15,6 +15,7 @@ enum OCRDocumentTypeEnum: string
     case VISA = 'VI';
     case PASSPORT = 'PP';
     case REGISTRATION_CERTIFICATE = 'RC'; // Car Registration Certificate - Mulkiya
+    case POLICY_SCHEDULE = 'PS';
 
     public static function getDocumentType(DocumentType $documentType): ?self
     {
@@ -28,6 +29,14 @@ enum OCRDocumentTypeEnum: string
             'CEID' => self::ID_CARD,
             'CAR_MULKIY' => self::REGISTRATION_CERTIFICATE,
             'EID_CAR' => self::ID_CARD,
+
+            'PS' => self::POLICY_SCHEDULE,
+            'GH_PS' => self::MOTOR_INSURANCE_POLICY_SCHEDULE, // Group Health Policy Schedule
+            // Send Update document types
+            'SUTAXINV' => self::TAX_INVOICE, // Send Update Tax Invoice
+            'SUTAXINVRB' => self::TAX_INVOICE_RAISED_BY_BUYER, // Send Update Tax Invoice Raised Buyer
+            'SUPC' => self::CERTIFICATE_OF_ISSUANCE, // Send Update Policy Certificate
+            'SUPS' => self::MOTOR_INSURANCE_POLICY_SCHEDULE, // Send Update Policy Schedule
             default => null,
         };
     }
@@ -50,6 +59,18 @@ enum OCRDocumentTypeEnum: string
                 self::ID_CARD,
                 self::REGISTRATION_CERTIFICATE,
                 self::DRIVING_LICENSE,
+            ],
+            QuoteTypes::GROUP_MEDICAL => [
+                self::TAX_INVOICE,
+                self::TAX_INVOICE_RAISED_BY_BUYER,
+                self::POLICY_SCHEDULE,
+                self::MOTOR_INSURANCE_POLICY_SCHEDULE,
+            ],
+            QuoteTypes::HOME => [
+                self::TAX_INVOICE,
+                self::TAX_INVOICE_RAISED_BY_BUYER,
+                self::POLICY_SCHEDULE,
+                self::MOTOR_INSURANCE_POLICY_SCHEDULE,
             ],
             default => [],
         };

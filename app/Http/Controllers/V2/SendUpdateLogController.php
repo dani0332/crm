@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
@@ -274,6 +275,7 @@ class SendUpdateLogController extends Controller
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'cancelOptions' => app(LookupService::class)->getSendUpdateCancelOptions(),
             'isEndorsementBookingActionDisabled' => $this->sendUpdateLogService->isEndorsementBookingActionDisabled($sendUpdateLog),
+            'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
         ]);
     }
 
