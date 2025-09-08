@@ -256,10 +256,27 @@ class AMLController extends Controller
             return $log['decision'] == AMLDecisionStatusEnum::ESCALATED;
         })) : 0;
 
-        $isLIVA = $insuranceProvider?->code == InsuranceProvidersEnum::RSA;
+        $isLIVA = $insuranceProvider->code == InsuranceProvidersEnum::RSA;
+        $isGIG = $insuranceProvider->code == InsuranceProvidersEnum::AXA;
         $lookups = app(AMLService::class)->getAMLLookups();
-        if ($quoteType->code == quoteTypeCode::Car || $isLIVA) {
-            $lookups = array_merge($lookups->toArray(), app(LivaInsuranceService::class)->getLIVALookups($quoteRequest));
+        
+        if ($quoteType->code == quoteTypeCode::Car && ($isLIVA || $isGIG)) {
+            if ($isGIG) {
+                $additionalLookups = app(AMLService::class)->getAMLLookups($quoteRequest?->plan?->provider_id, [
+                    LookupsEnum::RTA_TRANSACTION_TYPE,
+                    LookupsEnum::RTA_PLATE_CATEGORY,
+                    LookupsEnum::VEHICLE_COLOR,
+                    LookupsEnum::BANK_NAME,
+                    LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
+                    LookupsEnum::PLATE_CODE,
+                    LookupsEnum::NATIONALITY_LIST,
+                    LookupsEnum::DRIVING_EXPERIENCE,
+                ]);
+        
+                $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
+            } else {
+                $lookups = array_merge($lookups->toArray(), app(LivaInsuranceService::class)->getLIVALookups($quoteRequest));
+            }
         }
 
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);
