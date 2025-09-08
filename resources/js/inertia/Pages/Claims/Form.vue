@@ -165,8 +165,7 @@ const carModelOptions = computed(() => {
 const getCarModel = reset => {
   let carMakeCode = props.dropdowns?.carMake.find(
     item => item.text === claimForm.car_make,
-  )?.id;
-  console.log('carMakeCode', carMakeCode, ', reset', reset);
+  )?.id; 
 
   axios.get(`/car-model-by-id?id=${carMakeCode}`).then(({ data }) => {
     props.dropdowns.carModel = data;
@@ -370,8 +369,7 @@ function handlePageChange(newPage) {
 }
 
 // Select policy function
-function selectPolicy(policy) {
-  console.log('selectPolicy', policy);
+function selectPolicy(policy) { 
   claimForm.policy_not_listed = false;
   claimForm.selected_policy_id = policy.id;
   claimForm.selected_quote_uuid = policy.uuid;
@@ -385,8 +383,7 @@ function selectPolicy(policy) {
 }
 
 // Policy not listed function
-function policyNotListed() {
-  console.log('policyNotListed');
+function policyNotListed() { 
   claimForm.policy_not_listed = true;
   claimForm.selected_policy_id = null;
   claimForm.selected_quote_uuid = null;
@@ -395,8 +392,7 @@ function policyNotListed() {
 }
 
 // Reset policy selection
-function resetPolicySelection() {
-  console.log('resetPolicySelection');
+function resetPolicySelection() { 
   policySearch.showPolicies = false;
   policySearch.searched = false;
   claimForm.selected_policy_id = null;
@@ -432,8 +428,7 @@ function onSubmit(isValid) {
         )?.label,
       }))
       .submit(method, url, {
-        onError: errors => {
-          console.log('Form errors:', errors);
+        onError: errors => { 
 
           // Handle different types of errors
           if (typeof errors === 'object' && errors !== null) {
@@ -463,17 +458,8 @@ function onSubmit(isValid) {
           }
         },
         onSuccess: page => {
-          // Show success message from backend
-          const message =
-            page.props?.flash?.success ||
-            page.props?.message ||
-            'Claim saved successfully!';
-          console.log('Form submission finished', message);
-        },
-        onFinish: () => {
-          // Always called after success or error
-          console.log('Form submission finished');
-        },
+          //  do nothing
+        }, 
       });
   } else {
     notification.error({

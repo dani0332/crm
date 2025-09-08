@@ -39,8 +39,7 @@ const subStatusOptions = computed(() => {
   );
 });
 
-const updateClaimSubStatusAndCustomer = async isValid => {
-  console.log('updateClaimStatus');
+const updateClaimSubStatusAndCustomer = async isValid => { 
 
   try {
     NProgress.start();
@@ -50,8 +49,6 @@ const updateClaimSubStatusAndCustomer = async isValid => {
       route('claims.send-notification', props.claim?.uuid),
       claimSubStatusAndCustomerForm.data(),
     );
-
-    console.log('response', response.data);
 
     // Show success notification
     if (response.data.success) {

@@ -102,8 +102,7 @@ const carModelYearOptions = computed(() => {
 const getCarModel = reset => {
   let carMakeCode = props.dropdowns?.carMake.find(
     item => item.text === claimForm.car_make,
-  )?.id;
-  console.log('carMakeCode', carMakeCode, ', reset', reset);
+  )?.id; 
 
   axios.get(`/car-model-by-id?id=${carMakeCode}`).then(({ data }) => {
     props.dropdowns.carModel = data;
@@ -223,8 +222,7 @@ const validationRules = {
 
     const today = new Date();
     today.setHours(23, 59, 59, 999); // Set to end of today to allow today's date
-
-    console.log('Original value:', v, 'Parsed date:', date, 'Today:', today);
+ 
 
     if (isNaN(date.getTime())) {
       return 'Incident date must be a valid date.';
@@ -412,8 +410,7 @@ const updateClaim = isValid => {
     .transform(data => prepareFormData(data))
     .post(route('claims.update.details', props.claim?.uuid), {
       preserveScroll: true,
-      onSuccess: response => {
-        console.log('response', response);
+      onSuccess: response => { 
         router.visit(route('claims.show', props.claim?.uuid), {
           preserveScroll: true,
         });
@@ -431,8 +428,7 @@ const updateClaim = isValid => {
 
 watch(
   () => claimForm.claim_request_type_id,
-  newClaimRequestId => {
-    console.log('newClaimRequestId', newClaimRequestId);
+  newClaimRequestId => { 
     let requestTypeCode = props.dropdowns?.claimRequestTypes.find(
       item => item.id === newClaimRequestId,
     )?.code;
@@ -443,13 +439,7 @@ watch(
       isPendingClaimRequestType.value = false;
     } else {
       isPendingClaimRequestType.value = true;
-    }
-    console.log(
-      'requestTypeCode',
-      requestTypeCode,
-      'isPendingClaimRequestType',
-      isPendingClaimRequestType.value,
-    );
+    } 
   },
 );
 </script>
