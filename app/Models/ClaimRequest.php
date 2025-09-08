@@ -59,7 +59,7 @@ class ClaimRequest extends Model implements AuditableContract
         'created_at',
         'updated_at',
     ];
-    protected $casts = [ 
+    protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
