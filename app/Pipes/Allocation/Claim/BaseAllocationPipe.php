@@ -122,14 +122,14 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
         return $statuses;
     }
 
-    protected function findAvailableAdvisor($teamId = null)
+    protected function findAvailableManager($teamId = null)
     {
 
         $statusOrder = $this->getOnlineStatusesInOrder();
 
         foreach ($statusOrder as $status) {
-            info(self::class." - trying to get advisors with current status as {$status} and team id: {$teamId}");
-            $eligibleUser = $this->getAdvisorByStatus($status);
+            info(self::class." - trying to get managers with current status as {$status} and team id: {$teamId}");
+            $eligibleUser = $this->getManagerByStatus($status);
 
             if ($eligibleUser) {
                 info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
@@ -141,7 +141,7 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
         return null;
     }
 
-    protected function getAdvisorByStatus($onlineStatus)
+    protected function getManagerByStatus($onlineStatus)
     {
         /*
             override this method in child classes to get the advisor by status
@@ -163,28 +163,29 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
         return $assignmentType;
     }
 
-    protected function assignToAdvisor()
+    protected function assignToManager()
     {
-        $advisor = $this->allocationRequest->getAdvisor();
+        $manager = $this->allocationRequest->getManager();
         $assignmentType = $this->resolveAssignmentType();
 
         if (! empty($this->lead->manager_id)) {
-            LoggerService::info("Was previously assigned to User ID: {$this->lead->manager_id} and is now being assigned to User ID: {$advisor->id}");
+            LoggerService::info("Was previously assigned to User ID: {$this->lead->manager_id} and is now being assigned to User ID: {$manager->id}");
         }
 
-        LoggerService::info(self::class.' - assignLead: Going to Assign Advisor');
-        $this->lead->manager_id = $advisor->id;
+
+        LoggerService::info(self::class.' - assignLead: Going to Assign Manager');
+        $this->lead->manager_id = $manager->id;
         $this->lead->manager_assigned_date = now();
 
-        $this->updateClaimAllocationConfig($advisor->id, $this->allocationRequest->getQuoteType()->id());
+        $this->updateClaimAllocationConfig($manager->id, $this->allocationRequest->getQuoteType()->id());
         $this->lead->save();
 
         $this->lead->endAllocation();
 
         return [
-            'advisor' => $advisor,
+            'manager' => $manager,
             'assignmentType' => $assignmentType,
-            'previousAdvisorId' => $this->lead->manager_id,
+            'previousManagerId' => $this->lead->manager_id,
             'previousAssignmentType' => $this->lead->assignment_type,
             'isReAssignment' => ! empty($this->lead->manager_id),
         ];
@@ -196,19 +197,19 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
 
         try {
             [
-                'advisor' => $advisor,
+                'manager' => $manager,
                 'assignmentType' => $assignmentType,
-                'previousAdvisorId' => $previousAdvisorId,
+                'previousManagerId' => $previousManagerId,
                 'previousAssignmentType' => $previousAssignmentType,
                 'isReAssignment' => $isReAssignment,
-            ] = $this->assignToAdvisor();
+            ] = $this->assignToManager();
 
             $this->allocationRequest->markAsAllocated();
 
             DB::commit();
 
             if ($afterAssign) {
-                $afterAssign($isReAssignment, $previousAdvisorId, $previousAssignmentType);
+                $afterAssign($isReAssignment, $previousManagerId, $previousAssignmentType);
             }
         } catch (Exception $e) {
             DB::rollBack();
@@ -220,18 +221,18 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
         }
     }
 
-    protected function verifyIfAdvisorIsSameAsPreviousAdvisor(User $advisor)
+    protected function verifyIfManagerIsSameAsPreviousManager(User $manager)
     {
         if (! $this->lead->manager_id) {
             return;
         }
 
-        if ($advisor->id == $this->lead->manager_id) {
-            LoggerService::info('Advisor is same as previous advisor. Skipping for now.');
+        if ($manager->id == $this->lead->manager_id) {
+            LoggerService::info('Manager is same as previous manager. Skipping for now.');
 
-            $this->allocationRequest->markAsSameAdvisor();
+            $this->allocationRequest->markAsSameManager();
 
-            $this->throw('Eligible Advisor is already assigned to this lead', self::OK);
+            $this->throw('Eligible Manager is already assigned to this lead', self::OK);
         }
 
     }

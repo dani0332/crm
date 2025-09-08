@@ -13,9 +13,9 @@ use App\Models\ClaimRequest;
 use App\Models\ClaimsLeadAllocationConfig;
 use App\Models\User;
 use App\Pipes\Allocation\Claim\AssignLeadPipe;
-use App\Pipes\Allocation\Claim\FetchEligibleAdvisorsPipe;
+use App\Pipes\Allocation\Claim\FetchEligibleManagersPipe;
 use App\Pipes\Allocation\Claim\FetchLeadPipe;
-use App\Pipes\Allocation\Claim\FinalizeEligibleAdvisorPipe;
+use App\Pipes\Allocation\Claim\FinalizeEligibleManagerPipe;
 use App\Pipes\Allocation\Claim\MakeResponsePipe;
 use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use App\Services\Logger\LoggerService;
@@ -38,20 +38,20 @@ class ClaimAllocationService
             isReassignmentJob: false,
         );
 
-        try {
+        // try {
             $result = Pipeline::send($allocationRequest)->through([
                 FetchLeadPipe::class,
-                FetchEligibleAdvisorsPipe::class,
-                FinalizeEligibleAdvisorPipe::class,
+                FetchEligibleManagersPipe::class,
+                FinalizeEligibleManagerPipe::class,
                 AssignLeadPipe::class,
                 MakeResponsePipe::class,
             ])->thenReturn();
 
             return $result;
-        } catch (Exception $e) {
+        // } catch (Exception $e) {
 
             return $this->resolveAllocationResponse($allocationRequest, $e);
-        }
+        // }
 
     }
 
@@ -61,16 +61,16 @@ class ClaimAllocationService
         if ($lead = $request->getLead()) {
             $lead->endAllocation();
         }
+        dd($request->isAllocated());
+        if ($request->isAllocated() || $request->isSameManager()) {
+            $message = 'Manager assigned successfully!';
 
-        if ($request->isAllocated() || $request->isSameAdvisor()) {
-            $message = 'Advisor assigned successfully!';
-
-            if ($request->isSameAdvisor()) {
-                $message = 'Found same advisor as previous advisor so further allocation is skipped';
+            if ($request->isSameManager()) {
+                $message = 'Found same manager as previous manager so further allocation is skipped';
             }
 
             $data = [
-                'managerId' => $request->getAdvisor()?->id ?? $lead?->manager_id,
+                'managerId' => $request->getManager()?->id ?? $lead?->manager_id,
                 'message' => $message,
                 'status' => Response::HTTP_OK,
             ];
@@ -83,8 +83,8 @@ class ClaimAllocationService
         }
 
         return [
-            'advisorId' => 0,
-            'message' => $exception ? $exception->getMessage() : 'Lead allocation failed',
+            'managerId' => 0,
+            'message' => $exception ? $exception->getMessage() : 'Claim allocation failed',
             'status' => $exception ? $exception->getCode() : Response::HTTP_INTERNAL_SERVER_ERROR,
         ];
     }
@@ -239,24 +239,23 @@ class ClaimAllocationService
             });
     }
 
-    public function fetchReAssignmentLeads($advisorId)
+    public function fetchReAssignmentLeads($managerId)
     {
         $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
         LoggerService::info(self::class."::fetchReAssignmentLeads - leads will be picked up in reassignment from : {$from}");
 
         return ClaimRequest::whereBetween('created_at', [$from, now()])
-       
-            ->when($advisorId, function ($q) use ($advisorId) {
-                $q->where('advisor_id', $advisorId);
+            ->when($managerId, function ($q) use ($managerId) {
+                $q->where('manager_id', $managerId);
             }, function ($q) {
-                $advisors = $this->getUnavailableAdvisor();
-                $advisorIds = $advisors->pluck('user_id');
-                $q->whereIn('advisor_id', $advisorIds);
+                $managers = $this->getUnavailableManager();
+                $managerIds = $managers->pluck('user_id');
+                $q->whereIn('manager_id', $managerIds);
             })
             ->get();
     }
 
-    public function getUnavailableAdvisor()
+    public function getUnavailableManager()
     {
         // Query to fetch unavailable advisors
         $query =ClaimsLeadAllocationConfig::with('user')

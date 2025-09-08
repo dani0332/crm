@@ -10,7 +10,7 @@ use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
 
-class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
+class FetchEligibleManagersPipe extends BaseAllocationPipe
 {
     /**
      * Handle the incoming request.
@@ -19,48 +19,47 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        if ($this->allocationRequest->get('skipAdvisorEligibilityFetch', false)) {
+        if ($this->allocationRequest->get('skipManagerEligibilityFetch', false)) {
             return $next($request);
         }
         $lead = $request->getLead();
 
-        $eligibleAdvisors = $this->fetchEligibleUsersByStatus($lead);
-        $request->set('eligibleAdvisors', $eligibleAdvisors);
-
+        $eligibleManagers = $this->fetchEligibleUsersByStatus($lead);
+        $request->set('eligibleManagers', $eligibleManagers);
         return $next($request);
     }
 
     private function fetchEligibleUsersByStatus(ClaimRequest $lead)
     {
 
-        $advisors = [];
+        $managers = [];
 
-        if (empty($advisors)) {
-            $advisors = $this->fetchAdvisors('getAdvisorsByStatus');
+        if (empty($managers)) {
+            $managers = $this->fetchManagers('getManagersByStatus');
         }
 
-        return $advisors ?? [];
+        return $managers ?? [];
     }
 
-    private function fetchAdvisors()
+    private function fetchManagers()
     {
         $statusOrder = $this->getOnlineStatusesInOrder();
 
         foreach ($statusOrder as $status) {
 
-            $eligibleUsers = $this->getAdvisorsByStatus($status);
+            $eligibleUsers = $this->getManagersByStatus($status);
             if ($eligibleUsers && count($eligibleUsers) > 0) {
-                LoggerService::info(self::class.'::getAdvisorsByStatus - Eligble Users found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+                LoggerService::info(self::class.'::getManagersByStatus - Eligble Users found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
 
                 return $eligibleUsers->toArray();
             }
-            LoggerService::info(self::class.'::getAdvisorsByStatus - No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+            LoggerService::info(self::class.'::getManagersByStatus - No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
         }
 
         return [];
     }
 
-    protected function getAdvisorsByStatus(int $onlineStatus)
+    protected function getManagersByStatus(int $onlineStatus)
     {
         // Use subquery to calculate allocation_count < max_capacity in the join condition for better
         $roles = [RolesEnum::ClaimsManager];

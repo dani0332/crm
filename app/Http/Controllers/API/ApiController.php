@@ -469,7 +469,7 @@ class ApiController extends Controller
     {
         return $this->apiService->documentNotification($request);
     }
-    public function assignClaimToQuote(ClaimAssignmentRequest $request)
+    public function assignClaim(ClaimAssignmentRequest $request)
     {
         return $this->apiService->processClaimAssignment($request);
     }

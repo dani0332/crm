@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Pipes\Allocation\Handlers;
+namespace App\Pipes\Allocation\Handlers\Claim;
 
 trait AllocationRequestMarkable
 {
@@ -24,13 +24,13 @@ trait AllocationRequestMarkable
         return $this->get('failed', false);
     }
 
-    public function markAsSameAdvisor()
+    public function markAsSameManager()
     {
-        $this->set('same_advisor', true);
+        $this->set('same_manager', true);
     }
 
-    public function isSameAdvisor()
+    public function isSameManager()
     {
-        return $this->get('same_advisor', false);
+        return $this->get('same_manager', false);
     }
 }

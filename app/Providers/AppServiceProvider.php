@@ -47,6 +47,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use App\Models\ClaimRequest;
+use App\Observers\ClaimRequestObserver;
 
 class AppServiceProvider extends ServiceProvider
 {

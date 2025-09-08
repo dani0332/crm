@@ -17,23 +17,23 @@ trait AllocationRequestable
         return $this->get('lead');
     }
 
-    public function setAdvisor(User $advisor)
+    public function setManager(User $manager)
     {
-        $this->set('advisor', $advisor);
+        $this->set('manager', $manager);
     }
 
-    public function getAdvisor()
+    public function getManager()
     {
-        return $this->get('advisor');
+        return $this->get('manager');
     }
 
-    public function setAdvisorIDs(array $advisorIds)
+    public function setManagerIDs(array $managerIds)
     {
-        $this->set('advisor_ids', $advisorIds);
+        $this->set('manager_ids', $managerIds);
     }
 
-    public function getAdvisorIDs()
+    public function getManagerIDs()
     {
-        return $this->get('advisor_ids', []);
+        return $this->get('manager_ids', []);
     }
 }
