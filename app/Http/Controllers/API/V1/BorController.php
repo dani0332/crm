@@ -130,7 +130,7 @@ class BorController extends Controller
                     }
                     
                     // Check if BOR process is completed
-                    if ($borLog->status === BorStatusEnum::DOCUMENT_SIGNED || $borLog->status === BorStatusEnum::DOCUMENT_UPLOADED) {
+                    if ($borLog->status == BorStatusEnum::DOCUMENT_SIGNED || $borLog->status == BorStatusEnum::DOCUMENT_UPLOADED) {
                         LoggerService::info('SSE BOR process completed, ending stream', [
                             'bor_ref_id' => $borRefId,
                             'status' => $borLog->status
@@ -145,7 +145,7 @@ class BorController extends Controller
                     }
 
                     $iteration++;
-                    sleep(5);
+                    sleep(3);
                 }
                 
                 if ($iteration >= $maxIterations) {
