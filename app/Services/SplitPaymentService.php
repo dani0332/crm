@@ -689,7 +689,7 @@ class SplitPaymentService
                 'amountCollected' => $amountCollected,
                 'isFromJob' => $isFromJob,
             ];
-            LoggerService::error("processSplitPaymentApprove: Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}", extra: $extra);
+            LoggerService::info("processSplitPaymentApprove: Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}", extra: $extra);
             if ($isFromJob) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => PaymentProcessJobEnum::QUOTE_NOTFOUND_MESSAGE]);
 
