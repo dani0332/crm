@@ -3,13 +3,11 @@
 namespace App\Http\Controllers\Allocations;
 
 use App\Enums\InvestmentFrequencyEnum;
-use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Services\LeadAllocationDashboardService;
 use App\Traits\TeamHierarchyTrait;
-use Illuminate\Http\Request;
 
 class LeadAllocationController extends Controller
 {

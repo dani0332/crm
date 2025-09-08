@@ -20,6 +20,9 @@ use App\Services\LeadAllocationService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Http\JsonResponse;
+use App\Http\Requests\UpdateLeadAllocationRequest;
+use App\Services\Logger\LoggerService;
 
 class LeadAllocationController extends Controller
 {
@@ -303,6 +306,52 @@ class LeadAllocationController extends Controller
             $leadAllocationObj = $leadAllocationObj->first();
             $leadAllocationObj->buy_lead_reset_capacity = (int) $request->blResetCap;
             $leadAllocationObj->save();
+        }
+    }
+
+    public function updateUserHardStopStatus(UpdateLeadAllocationRequest $request): JsonResponse
+    {
+        try {
+            $validated = $request->validated();
+
+            $leadAllocation = LeadAllocation::select(['id'])
+                ->whereHas('leadAllocationUser', function ($query) use ($validated) {
+                    $query->where('id', $validated['userId']);
+                })
+                ->activeUser()
+                ->travelQuote()
+                ->first();
+
+            if (! $leadAllocation) {
+                LoggerService::error('Lead allocation record not found for user', [
+                    'user_id' => $validated['userId'],
+                ]);
+
+                return response()->json([
+                    'message' => 'Lead allocation record not found for the specified user.',
+                ], 404);
+            }
+
+            $leadAllocation->update(['is_hardstop' => $validated['status']]);
+
+            LoggerService::info('Successfully updated is_hardstop status', [
+                'user_id' => $validated['userId'],
+                'status' => $validated['status'],
+            ]);
+
+            return response()->json([
+                'message' => 'Hard stop status updated successfully.',
+            ], 200);
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to update is_hardstop status', [
+                'user_id' => $request->input('userId'),
+                'status' => $request->input('status'),
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'An error occurred while updating hard stop status.',
+            ], 500);
         }
     }
 

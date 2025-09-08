@@ -39,7 +39,7 @@ export const toggleNormalAllocation = async (active, userId, laId) => {
 
 export const toggleHardStop = async (status, userId) => {
     await axios.post(
-        '/travel-lead-allocation/update-hard-stop', {
+        '/lead-allocation/update-hard-stop', {
           userId,
           status,
         })
