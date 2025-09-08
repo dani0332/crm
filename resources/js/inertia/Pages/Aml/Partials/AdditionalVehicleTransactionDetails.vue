@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 const { isRequired } = useRules();
 
 const props = defineProps({
@@ -44,6 +44,16 @@ const RTA_CONSTANTS = {
 // Field configuration state
 const fieldConfig = ref({});
 const calculatedDates = ref({});
+
+// Track user manual modifications to prevent auto-calculation override
+const userModifiedDates = ref({
+  policy_expiry_date: false,
+  certificate_start_date: false,
+  certificate_end_date: false
+});
+
+// Track if component has finished initial mounting
+const isComponentMounted = ref(false);
 
 // Computed options for dropdowns
 const rtaTransactionTypeOptions = computed(() => {
@@ -177,6 +187,20 @@ const additionalVehicleTransactionDetailsForm = useForm({
   lead_source: page.props.quoteRequest?.source?.toString() ?? '',
 });
 
+// Initialize user modification flags based on existing saved values
+// If dates exist from database, mark them as user-modified to prevent overwriting
+if (additionalVehicleTransactionDetailsForm.policy_expiry_date) {
+  userModifiedDates.value.policy_expiry_date = true;
+}
+
+if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
+  userModifiedDates.value.certificate_start_date = true;
+}
+
+if (additionalVehicleTransactionDetailsForm.certificate_end_date) {
+  userModifiedDates.value.certificate_end_date = true;
+}
+
 const hasNotEditPermission = computed(() => {
   return !hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
 });
@@ -294,7 +318,7 @@ const formatDate = (date) => {
 };
 
 // Calculate dates for New Vehicle Registration and Change Vehicle Ownership
-const calculateDatesForNewVehicleOrOwnershipChange = () => {
+const calculateDatesForNewVehicleOrOwnershipChange = (forceCalculation = false) => {
   console.log('calculateDatesForNewVehicleOrOwnershipChange', additionalVehicleTransactionDetailsForm.policy_effective_date);
   if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
     const policyEffectiveDate = new Date(additionalVehicleTransactionDetailsForm.policy_effective_date);
@@ -306,14 +330,23 @@ const calculateDatesForNewVehicleOrOwnershipChange = () => {
 
     // Certificate Start Date = Policy Effective Date
     // Certificate End Date = Policy Expiry Date
-    additionalVehicleTransactionDetailsForm.policy_expiry_date = formatDate(policyExpiryDate);
-    additionalVehicleTransactionDetailsForm.certificate_start_date = additionalVehicleTransactionDetailsForm.policy_effective_date;
-    additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(policyExpiryDate);
+    // Only calculate if field is empty or force calculation is requested
+    if (forceCalculation || !additionalVehicleTransactionDetailsForm.policy_expiry_date || !userModifiedDates.value.policy_expiry_date) {
+      additionalVehicleTransactionDetailsForm.policy_expiry_date = formatDate(policyExpiryDate);
+    }
+
+    if (forceCalculation || !additionalVehicleTransactionDetailsForm.certificate_start_date || !userModifiedDates.value.certificate_start_date) {
+      additionalVehicleTransactionDetailsForm.certificate_start_date = additionalVehicleTransactionDetailsForm.policy_effective_date;
+    }
+
+    if (forceCalculation || !additionalVehicleTransactionDetailsForm.certificate_end_date || !userModifiedDates.value.certificate_end_date) {
+      additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(policyExpiryDate);
+    }
   }
 };
 
 // Calculate dates for Non-GIG Vehicle Renewal
-const calculateDatesForNonGigRenewal = () => {
+const calculateDatesForNonGigRenewal = (forceCalculation = false) => {
   if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
     const policyEffectiveDate = new Date(additionalVehicleTransactionDetailsForm.policy_effective_date);
 
@@ -323,14 +356,22 @@ const calculateDatesForNonGigRenewal = () => {
     const certificateEndDate = new Date(policyEffectiveDate);
     certificateEndDate.setMonth(certificateEndDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
 
-    additionalVehicleTransactionDetailsForm.certificate_start_date = additionalVehicleTransactionDetailsForm.policy_effective_date;
-    additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
-    additionalVehicleTransactionDetailsForm.policy_expiry_date = formatDate(certificateEndDate);
+    if (forceCalculation || !additionalVehicleTransactionDetailsForm.certificate_start_date || !userModifiedDates.value.certificate_start_date) {
+      additionalVehicleTransactionDetailsForm.certificate_start_date = additionalVehicleTransactionDetailsForm.policy_effective_date;
+    }
+
+    if (forceCalculation || !additionalVehicleTransactionDetailsForm.certificate_end_date || !userModifiedDates.value.certificate_end_date) {
+      additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
+    }
+
+    if (forceCalculation || !additionalVehicleTransactionDetailsForm.policy_expiry_date || !userModifiedDates.value.policy_expiry_date) {
+      additionalVehicleTransactionDetailsForm.policy_expiry_date = formatDate(certificateEndDate);
+    }
   }
 };
 
 // Calculate dates for GIG Vehicle Renewal
-const calculateDatesForGigRenewal = () => {
+const calculateDatesForGigRenewal = (forceCalculation = false) => {
   if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
     const certificateStartDate = new Date(additionalVehicleTransactionDetailsForm.certificate_start_date);
 
@@ -338,12 +379,26 @@ const calculateDatesForGigRenewal = () => {
     const certificateEndDate = new Date(certificateStartDate);
     certificateEndDate.setMonth(certificateEndDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
 
-    additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
+    if (forceCalculation || !additionalVehicleTransactionDetailsForm.certificate_end_date || !userModifiedDates.value.certificate_end_date) {
+      additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
+    }
   }
 };
 
 // Calculate dates for Vehicle Renewal with non-renewals_uploads source
-const calculateDatesForVehicleRenewalNonUpload = () => {
+const calculateDatesForVehicleRenewalNonUpload = (forceCalculation = false) => {
+  if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
+    const policyEffectiveDate = new Date(additionalVehicleTransactionDetailsForm.policy_effective_date);
+    // Policy Expiry Date = Policy Effective Date + 13 months
+    const policyExpiryDate = new Date(policyEffectiveDate);
+    policyExpiryDate.setMonth(policyExpiryDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
+    policyExpiryDate.setDate(policyExpiryDate.getDate() - 1);
+
+    if (forceCalculation || !additionalVehicleTransactionDetailsForm.policy_expiry_date || !userModifiedDates.value.policy_expiry_date) {
+      additionalVehicleTransactionDetailsForm.policy_expiry_date = formatDate(policyExpiryDate);
+    }
+  }
+
   if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
     const certificateStartDate = new Date(additionalVehicleTransactionDetailsForm.certificate_start_date);
 
@@ -352,37 +407,49 @@ const calculateDatesForVehicleRenewalNonUpload = () => {
     certificateEndDate.setMonth(certificateEndDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
     certificateEndDate.setDate(certificateEndDate.getDate() - 1);
 
-    additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
+    if (forceCalculation || !additionalVehicleTransactionDetailsForm.certificate_end_date || !userModifiedDates.value.certificate_end_date) {
+      additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
+    }
   }
 };
 
 // Apply auto-calculations based on current form data
-const applyAutoCalculations = () => {
+const applyAutoCalculations = (forceCalculation = false) => {
   const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
 
   if (!rtaType) return;
 
+  // LIVA-specific calculations take precedence
+  if (isLIVA.value) {
+    calculateDatesForLiva(forceCalculation);
+    return;
+  }
+
   switch (rtaType) {
     case RTA_CONSTANTS.NEW_VEHICLE_REGISTRATION:
     case RTA_CONSTANTS.CHANGE_VEHICLE_OWNERSHIP:
-      calculateDatesForNewVehicleOrOwnershipChange();
+      calculateDatesForNewVehicleOrOwnershipChange(forceCalculation);
+      break;
+
+    case RTA_CONSTANTS.VEHICLE_RENEWAL_WITH_CHANGE_NUMBER:
+      calculateDatesForVehicleRenewalNonUpload(forceCalculation);
       break;
 
     case RTA_CONSTANTS.VEHICLE_RENEWAL:
       if (isVehicleRenewalNonUpload.value) {
-        calculateDatesForVehicleRenewalNonUpload();
+        calculateDatesForVehicleRenewalNonUpload(forceCalculation);
       } else if (isGigRenewal.value) {
         console.log('isGigRenewal');
-        calculateDatesForGigRenewal();
+        calculateDatesForGigRenewal(forceCalculation);
       } else {
-        calculateDatesForNonGigRenewal();
+        calculateDatesForNonGigRenewal(forceCalculation);
       }
       break;
   }
 };
 
 // Get field configuration from props (no API call needed)
-const loadFieldConfigurationFromProps = () => {
+const loadFieldConfigurationFromProps = (shouldAutoCalculate = false) => {
   if (!additionalVehicleTransactionDetailsForm.rta_transaction_type) {
     fieldConfig.value = {};
     return;
@@ -399,14 +466,25 @@ const loadFieldConfigurationFromProps = () => {
     fieldConfig.value = {};
   }
 
-  // Apply auto-calculations after configuration is loaded
-  applyAutoCalculations();
+  // Apply auto-calculations only when explicitly requested (e.g., on user field changes)
+  if (shouldAutoCalculate) {
+    applyAutoCalculations();
+  }
 };
 
 // Watch for RTA transaction type changes
-watch(() => additionalVehicleTransactionDetailsForm.rta_transaction_type, (newRtaType) => {
+watch(() => additionalVehicleTransactionDetailsForm.rta_transaction_type, (newRtaType, oldRtaType) => {
   if (newRtaType) {
-    loadFieldConfigurationFromProps();
+    // Only reset user modification flags and auto-calculate if this is a real user change (not initial load)
+    const isInitialLoad = oldRtaType === undefined;
+    if (!isInitialLoad) {
+      // Reset user modification flags when RTA type changes
+      userModifiedDates.value.policy_expiry_date = false; // New changes
+      userModifiedDates.value.certificate_start_date = false; // New changes
+      userModifiedDates.value.certificate_end_date = false; // New changes
+    }
+
+    loadFieldConfigurationFromProps(!isInitialLoad); // Auto-calculate only when RTA type changes by user, not on initial load
 
     // Re-validate policy effective date when RTA type changes
     if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
@@ -450,7 +528,12 @@ watch(() => additionalVehicleTransactionDetailsForm.previous_policy_provider, ()
 // Watch for policy effective date changes to trigger auto-calculations and validation
 watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newValue) => {
   console.log('policy_effective_date watcher triggered', newValue);
-  applyAutoCalculations();
+  // applyAutoCalculations();
+  // Only apply auto-calculations after component is mounted (not during initial load)
+  if (isComponentMounted.value) {
+    // Force recalculation when user changes policy effective date
+    applyAutoCalculations(true);
+  }
 
   // Manually trigger validation for policy effective date
   if (newValue) {
@@ -465,8 +548,9 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newV
 
 // Watch for certificate start date changes (for GIG renewals and Vehicle Renewal with non-renewals_uploads source)
 watch(() => additionalVehicleTransactionDetailsForm.certificate_start_date, (newValue) => {
-  if (isGigRenewal.value || isVehicleRenewalNonUpload.value) {
-    applyAutoCalculations();
+  if (isComponentMounted.value && (isGigRenewal.value || isVehicleRenewalNonUpload.value)) {
+    // Force recalculation when user changes certificate start date
+    applyAutoCalculations(true);
   }
 
   // Manually trigger validation for certificate start date in GIG renewals
@@ -477,6 +561,22 @@ watch(() => additionalVehicleTransactionDetailsForm.certificate_start_date, (new
     } else {
       additionalVehicleTransactionDetailsForm.clearErrors('certificate_start_date');
     }
+  }
+});
+
+
+// Watch for manual changes to auto-calculated fields to track user modifications -- New changes for prevent auto-calculation override
+watch(() => additionalVehicleTransactionDetailsForm.policy_expiry_date, () => {
+  // Only mark as user-modified after component is mounted (not during initial load)
+  if (isComponentMounted.value) {
+    userModifiedDates.value.policy_expiry_date = true;
+  }
+});
+
+watch(() => additionalVehicleTransactionDetailsForm.certificate_end_date, () => {
+  // Only mark as user-modified after component is mounted (not during initial load)
+  if (isComponentMounted.value) {
+    userModifiedDates.value.certificate_end_date = true;
   }
 });
 
@@ -518,7 +618,7 @@ const submitAdditionalVehicleTransactionDetailsForm = async (isValid) => {
     additionalVehicleTransactionDetailsForm.clearErrors();
 
     // Apply final auto-calculations before submission
-    applyAutoCalculations();
+    // applyAutoCalculations();
     additionalVehicleTransactionDetailsForm.processing = true;
     try {
       const response = await axios.post('/kyc/update-additional-vehicle-driver-details', additionalVehicleTransactionDetailsForm);
@@ -647,24 +747,34 @@ onMounted(() => {
   if (additionalVehicleTransactionDetailsForm.rta_transaction_type) {
     loadFieldConfigurationFromProps();
   }
+
+  // Mark component as mounted so watchers can track user modifications
+  nextTick(() => {
+    isComponentMounted.value = true;
+  });
 });
-// for new business only.
-watch(
-  () => additionalVehicleTransactionDetailsForm.policy_effective_date,
-  (newVal) => {
-  if (isLIVA.value && newVal) {
-    // Add 13 months to policy_effective_date for policy_expiry_date
-    const effectiveDate = new Date(newVal);
+
+// LIVA-specific date calculation (for new business only)
+const calculateDatesForLiva = (forceCalculation = false) => {
+  if (isLIVA.value && additionalVehicleTransactionDetailsForm.policy_effective_date) {
+    const effectiveDate = new Date(additionalVehicleTransactionDetailsForm.policy_effective_date);
     const expiryDate = new Date(effectiveDate);
     expiryDate.setMonth(expiryDate.getMonth() + 13);
+    const formattedExpiryDate = formatDate(expiryDate);
 
-    // Format date as YYYY-MM-DD for the form
-    const formattedExpiryDate = expiryDate.toISOString().split('T')[0];
-    additionalVehicleTransactionDetailsForm.policy_expiry_date = formattedExpiryDate;
-    additionalVehicleTransactionDetailsForm.certificate_end_date = formattedExpiryDate;
-    additionalVehicleTransactionDetailsForm.certificate_start_date = newVal;
+    if (forceCalculation || !additionalVehicleTransactionDetailsForm.policy_expiry_date || !userModifiedDates.value.policy_expiry_date) {
+      additionalVehicleTransactionDetailsForm.policy_expiry_date = formattedExpiryDate;
+    }
+
+    if (forceCalculation || !additionalVehicleTransactionDetailsForm.certificate_end_date || !userModifiedDates.value.certificate_end_date) {
+      additionalVehicleTransactionDetailsForm.certificate_end_date = formattedExpiryDate;
+    }
+
+    if (forceCalculation || !additionalVehicleTransactionDetailsForm.certificate_start_date || !userModifiedDates.value.certificate_start_date) {
+      additionalVehicleTransactionDetailsForm.certificate_start_date = additionalVehicleTransactionDetailsForm.policy_effective_date;
+    }
   }
-});
+};
 
 const registrationNoValidation = ref(false);
 
