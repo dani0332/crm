@@ -73,7 +73,7 @@ class HealthQuoteObserver
         if (
             isset($dirty['quote_status_id'])
         ) {
-            if ($healthQuote->quote_status_id === QuoteStatusEnum::ApplicationSubmitted) {
+            if ($healthQuote->quote_status_id === QuoteStatusEnum::ApplicationPending) {
                 SendApplicationSubmittedEmailJob::dispatch($healthQuote);
             }
         }
