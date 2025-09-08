@@ -5,7 +5,7 @@ namespace App\Pipes\Allocation\Car;
 use App\Enums\CarPlanType;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TiersIdEnum;
 use App\Models\CarMake;
@@ -245,7 +245,7 @@ class EvaluateTierPipe extends BaseAllocationPipe
                 LoggerService::info(self::class.'- Commercial lead. No valuation');
             }
 
-            $axaProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
+            $axaProvider = InsuranceProvider::where('code', InsuranceProviderEnum::AXA->value)->first();
 
             $axaValuation = array_filter($valuations, function ($provider) use ($axaProvider) {
                 return $provider->providerId == $axaProvider->id;

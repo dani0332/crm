@@ -428,4 +428,9 @@ enum QuoteTypes: string
         };
     }
 
+    public function isGroupMedical(Model $quote): bool
+    {
+        return $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+    }
+
 }
