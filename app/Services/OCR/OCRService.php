@@ -338,10 +338,11 @@ class OCRService
         LoggerService::info('Starting OCR processing - Quote UUID: '.$quote->uuid);
 
         // Check if OCR service is available
-        $serviceCheck = $this->handleServiceAvailability($quote, $documentType, $userId);
-        if (! $serviceCheck) {
-            return false;
-        }
+        // TODO: Uncomment this when Customer OCR service is available & OCR Health Check is implemented by OCR team
+        // $serviceCheck = $this->handleServiceAvailability($quote, $documentType, $userId);
+        // if (! $serviceCheck) {
+        //     return false;
+        // }
 
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
 
@@ -416,6 +417,14 @@ class OCRService
         string $fileMimeType,
         ?string $quoteTypeParam = null
     ): void {
+
+        // early return if Customer OCR Journey is not supported on prod
+        $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
+        if (in_array($docType, [OCRDocumentTypeEnum::ID_CARD, OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE, OCRDocumentTypeEnum::DRIVING_LICENSE])) {
+            LoggerService::info(self::class.' - Customer OCR Journey is not supported for now');
+
+            return;
+        }
 
         if ($quote instanceof SendUpdateLog) {
             LoggerService::info('OCR Dispatch - Skipping for SendUpdateLog - Quote UUID: '.$quote->uuid);
