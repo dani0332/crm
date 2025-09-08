@@ -801,7 +801,6 @@
                     @endforeach
                 </tr>
                 {{-- buy now row --}}
-                @if($isAUH)
                     <tr>
                         <th class="bg-light-blue">
                             <p class="quote-info">Health insurance comparison for: <b>{{ $quote->first_name }}
@@ -821,7 +820,6 @@
                             </th>
                             @endforeach
                     </tr>
-                @endif
             </thead>
             <tbody>
                 @foreach ($features as $feature)
@@ -885,12 +883,10 @@
                                         </div>
                                     @endif
 
-                                    @if($isAUH)
                                         <p class="text-left" style="text-decoration: underline; font-style: italic;"><a
                                                 target="_blank"
                                                 href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . (isset($plans[$planId]->addons['coPayment']['id']) ? '&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id'] : '') }}">See
                                                 full list</a></p>
-                                    @endif
                                 </td>
                             @endforeach
 
@@ -911,7 +907,6 @@
                                     @elseif($feature['type'] == 'prop')
                                         {!! $plans[$planId]->{$feature['code']} !!}
                                     @elseif($feature['type'] == 'buy')
-                                        @if($isAUH)
                                             @if ($plans[$planId]->discountPremium)
                                                 <a target="_blank" class="btn-buy"
                                                     href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId }}">APPLY
@@ -919,7 +914,6 @@
                                             @else
                                                 N/A
                                             @endif
-                                        @endif
                                     @elseif(is_array($feature['type']))
                                         @php $value = "Excluded"; @endphp
                                         @foreach ($feature['type'] as $type)
@@ -943,7 +937,6 @@
                         @endforeach
                     </tr>
                 @endforeach
-                @if($isAUH)
                     <tr>
                         <td colspan="{{ sizeof($planIds) + 1 }}" class="no-border text-center">
                             <a target="_blank" class="btn-all-quotes"
@@ -951,7 +944,6 @@
                                 quotes</a>
                         </td>
                     </tr>
-                @endif
             </tbody>
         </table>
 
