@@ -8,7 +8,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -844,7 +844,7 @@ class CentralController extends Controller
                 $insurerAMLScreeningResponse = AML::where([
                     'quote_type_id' => $request->quoteType,
                     'quote_request_id' => $request->quoteRequestId,
-                    'screening_type' => 'INSURER_'.InsuranceProvidersEnum::AXA,
+                    'screening_type' => 'INSURER_'.InsuranceProviderEnum::AXA->value,
                 ])->latest()->first();
 
                 $amlResponse = ! empty($insurerAMLScreeningResponse) ? json_decode($insurerAMLScreeningResponse->results) : [];
