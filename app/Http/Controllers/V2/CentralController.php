@@ -748,6 +748,12 @@ class CentralController extends Controller
     }
     public function exportPUAUpdates(Request $request, string $quoteType)
     {
+        // Log all request data
+        LoggerService::info('PUA Export Request - All Data', [
+            'request_all' => $request->all(),
+            'quote_type' => $quoteType,
+        ]);
+
         // Validate quote type using the factory
         if (! PUAExportFactory::isValidQuoteType($quoteType)) {
             return response()->json(['message' => "Invalid quote type: {$quoteType}"], 400);
