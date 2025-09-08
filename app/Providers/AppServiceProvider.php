@@ -46,6 +46,7 @@ use App\Services\LeadsCountService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use App\Models\ClaimRequest;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -91,6 +92,7 @@ class AppServiceProvider extends ServiceProvider
         PaymentSplits::observe(PaymentSplitsObserver::class);
         CustomerAddress::observe(CustomerAddressObserver::class);
         SendUpdateLog::observe(SendUpdateLogObserver::class);
+        ClaimRequest::observe(ClaimRequestObserver::class);
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,
