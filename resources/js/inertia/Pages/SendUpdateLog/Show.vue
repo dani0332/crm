@@ -169,7 +169,7 @@ function handleOcrNotification(event) {
     if (supportedDocTypes.includes(docType)) {
       ocrLoadingDocTypes.delete(docType);
     }
-    
+
     router.reload({
       onSuccess: () => {
         console.log('onSuccess');
@@ -181,7 +181,13 @@ function handleOcrNotification(event) {
       },
       preserveState: true,
       preserveScroll: true,
-      only: ['payments', 'bookPolicyDetails', 'sendUpdateLog', 'quote', 'quoteDocuments'],
+      only: [
+        'payments',
+        'bookPolicyDetails',
+        'sendUpdateLog',
+        'quote',
+        'quoteDocuments',
+      ],
     });
   }
 }
@@ -191,7 +197,7 @@ onMounted(() => {
     decodeURIComponent(page.url.split('?')[1]),
   );
   state.redirectURL = params.get('refURL');
-  
+
   // Add event listener for OCR notifications
   window.addEventListener('ocr-notification', handleOcrNotification);
 });
