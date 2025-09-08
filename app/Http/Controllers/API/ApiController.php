@@ -7,6 +7,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Exports\EmailStatusExport;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AIGWorkflowRequest;
@@ -48,7 +49,6 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
-use App\Exports\EmailStatusExport;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -510,8 +510,6 @@ class ApiController extends Controller
     /**
      * Export email status logs as Excel file for a specific quote
      *
-     * @param int $quoteTypeId
-     * @param int $quoteId
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      */
     public function exportEmailStatusLogs(int $quoteTypeId, int $quoteId)
@@ -519,7 +517,7 @@ class ApiController extends Controller
         try {
             $export = new EmailStatusExport($quoteId, $quoteTypeId);
             $fileName = "email-status-logs-quote-{$quoteId}-type-{$quoteTypeId}";
-            
+
             return $export->download($fileName);
         } catch (\Exception $e) {
             Log::error('Failed to export email status logs', [
