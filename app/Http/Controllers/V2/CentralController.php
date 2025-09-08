@@ -752,8 +752,6 @@ class CentralController extends Controller
         LoggerService::info('PUA Export Request - All Data', [
             'request_all' => $request->all(),
             'quote_type' => $quoteType,
-            'user_id' => auth()->id(),
-            'user_email' => auth()->user()->email ?? 'N/A'
         ]);
 
         // Validate quote type using the factory

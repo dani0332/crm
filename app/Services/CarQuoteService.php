@@ -1965,7 +1965,6 @@ class CarQuoteService extends BaseService
             })
             ->orderBy('q.paid_at', 'desc');
 
-        LoggerService::sql('Car exportnonPUAAuthorized Query', $nonPUAAuthLead);
         $nonPUAAuthLead = $nonPUAAuthLead->get();
 
         $nonPUAAuthTeamCount = DB::table('car_quote_request as q')
@@ -2000,7 +1999,6 @@ class CarQuoteService extends BaseService
             })
             ->groupBy('t.name');
 
-        LoggerService::sql('Car exportnonPUAAuthorized Team Count Query', $nonPUAAuthTeamCount);
         $nonPUAAuthTeamCount = $nonPUAAuthTeamCount->get();
 
         return [$nonPUAAuthLead, $nonPUAAuthTeamCount];
@@ -2060,7 +2058,6 @@ class CarQuoteService extends BaseService
             })
             ->orderBy('q.paid_at', 'desc');
 
-        LoggerService::sql('Car exportPUAAuthorized Query', $puaAuthUpdate);
         $puaAuthUpdate = $puaAuthUpdate->get();
 
         $puaAuthTeamUpdate = DB::table('car_quote_plan_details as cqp')
@@ -2091,7 +2088,6 @@ class CarQuoteService extends BaseService
             })
             ->groupBy('t.name');
 
-        LoggerService::sql('Car exportPUAAuthorized Team Count Query', $puaAuthTeamUpdate);
         $puaAuthTeamUpdate = $puaAuthTeamUpdate->get();
 
         return [$puaAuthUpdate, $puaAuthTeamUpdate];
@@ -2140,8 +2136,6 @@ class CarQuoteService extends BaseService
                     $query->whereDate('p.captured_at', Carbon::parse($capturedDate)->toDateString());
                 }
             });
-
-        LoggerService::sql('Car exportPUAUpdates Query', $puaUpdatesQuery);
 
         return $puaUpdatesQuery;
     }
