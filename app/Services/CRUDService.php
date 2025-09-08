@@ -776,6 +776,7 @@ class CRUDService extends BaseService
                     }
                     $jobScore = in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_TWO_RATING) ? 2 : 1);
                     $scoreList[] = ['score' => $jobScore, 'text' => 'Profession - Professional Job Title', 'value' => $jobTypeValue];
+                    LoggerService::info('fn:scoreBreakdown - jobScore', extra: ['jobScore' => $jobScore]);
                     $customerScore += $jobScore;
 
                     $residentScore = in_array(strtolower($customerDetail->residential_status), Kyc::RESIDENT_STATUS_THREE_RATING) ? 3 : 1;
@@ -785,6 +786,7 @@ class CRUDService extends BaseService
                         $residentTypeValue = $residentType->text;
                     }
                     $scoreList[] = ['score' => $residentScore, 'text' => 'Resident Status', 'value' => $residentTypeValue];
+                    LoggerService::info('fn:scoreBreakdown - residentScore', extra: ['residentScore' => $residentScore]);
                     $customerScore += $residentScore;
 
                     if ($customerDetail->in_sanction_list == 1) {
@@ -795,20 +797,24 @@ class CRUDService extends BaseService
                         $score = 1;
                     }
                     $scoreList[] = ['score' => $score, 'text' => 'Is the Natural Person listed in any Sanction/OOL/SIP list?', 'value' => $text];
+                    LoggerService::info('fn:scoreBreakdown - score', extra: ['score' => $score]);
                     $customerScore += $score;
 
                     $adverseMedia = $this->getAMLcompliance($quote->id, 'in_adverse_media', $amlLogsValue);
                     $scoreList[] = ['score' => $adverseMedia['score'], 'text' => 'Is the Natural Person listed in any adverse media?', 'value' => $adverseMedia['value']];
+                    LoggerService::info('fn:scoreBreakdown - adverseMediaScore', extra: ['adverseMediaScore' => $adverseMedia['score']]);
                     $customerScore += $adverseMedia['score'];
 
                     // any PEP List/ Adverse Media not dynamic yet
                     $ownerPep = $this->getAMLcompliance($quote->id, 'is_owner_pep', $amlLogsValue);
                     $scoreList[] = ['score' => $ownerPep['score'], 'text' => 'Is the Natural Person listed in PEP/FPEP/HIO?', 'value' => $ownerPep['value']];
+                    LoggerService::info('fn:scoreBreakdown - ownerPepScore', extra: ['ownerPepScore' => $ownerPep['score']]);
                     $customerScore += $ownerPep['score'];
 
                     $tenScore = in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_TWO_RATING) ? 2 : 1);
                     $tenureValue = $tenScore == 1 ? '3 years and above' : ($tenScore == 2 ? 'Less than two years' : 'Less than 6 months');
                     $scoreList[] = ['score' => $tenScore, 'text' => 'Tenure of Relationship in years', 'value' => $tenureValue];
+                    LoggerService::info('fn:scoreBreakdown - tenScore', extra: ['tenScore' => $tenScore]);
                     $customerScore += $tenScore;
                     $empScore = in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_TWO_RATING) ? 2 : 1);
                     $empType = Lookup::where(['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => $customerDetail->employment_sector])->first();
@@ -817,6 +823,7 @@ class CRUDService extends BaseService
                         $empTypeValue = $empType->text;
                     }
                     $scoreList[] = ['score' => $empScore, 'text' => 'Employment Sector', 'value' => $empTypeValue];
+                    LoggerService::info('fn:scoreBreakdown - empScore', extra: ['empScore' => $empScore]);
                     $customerScore += $empScore;
 
                     if ($customerDetail->is_partner == 1) {
@@ -833,6 +840,7 @@ class CRUDService extends BaseService
                     if (isset($quote->customer->nationality)) {
                         $nationalityScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
                         $scoreList[] = ['score' => $nationalityScore, 'text' => 'Nationality', 'value' => $quote->customer->nationality->country_name];
+                        LoggerService::info('fn:scoreBreakdown - nationalityScore', extra: ['nationalityScore' => $nationalityScore]);
                         $customerScore += $nationalityScore;
                     }
 
@@ -844,6 +852,7 @@ class CRUDService extends BaseService
                         $score = 1;
                     }
                     $scoreList[] = ['score' => $score, 'text' => 'Does the Natural Person hold "Dual Nationality"?', 'value' => $text];
+                    LoggerService::info('fn:scoreBreakdown - dualNationalityScore', extra: ['dualNationalityScore' => $score]);
                     $customerScore += $score;
 
                     if ($customerDetail->deal_sanction_list == 1) {
@@ -854,6 +863,7 @@ class CRUDService extends BaseService
                         $score = 1;
                     }
                     $scoreList[] = ['score' => $score, 'text' => 'Does the Natural Person intend to provide professional services in any sanctions-listed country/ies?', 'value' => $text];
+                    LoggerService::info('fn:scoreBreakdown - dealSanctionListScore', extra: ['dealSanctionListScore' => $score]);
                     $customerScore += $score;
 
                     if ($customerDetail->is_operation_high_risk == 1) {
@@ -865,6 +875,7 @@ class CRUDService extends BaseService
                     }
 
                     $scoreList[] = ['score' => $score, 'text' => 'Is the Natural Person controlling/involved in any business listed in High-Risk Countries?', 'value' => $text];
+                    LoggerService::info('fn:scoreBreakdown - highRiskCountriesScore', extra: ['highRiskCountriesScore' => $score]);
                     $customerScore += $score;
 
                     // Product type
@@ -873,6 +884,7 @@ class CRUDService extends BaseService
                     if (isset($customerDetail->premium_tenure)) {
                         $transactionVolumesScore = in_array(strtolower($customerDetail->premium_tenure), Kyc::PREMIUM_TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->premium_tenure), Kyc::PREMIUM_TENURE_TWO_RATING) ? 2 : 1);
                         $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Premium Tenure', 'value' => Kyc::PREMIUM_TENURE[$customerDetail->premium_tenure]];
+                        LoggerService::info('fn:scoreBreakdown - transactionVolumesScore', extra: ['transactionVolumesScore' => $transactionVolumesScore]);
                         $customerScore += $transactionVolumesScore;
                     }
                     // Payment amount Transaction value / Premium (AED)
@@ -883,6 +895,7 @@ class CRUDService extends BaseService
                     if (isset($customerDetail->transaction_pattern)) {
                         $transactionVolumesScore = in_array(strtolower($customerDetail->transaction_pattern), Kyc::TRANSACTION_PATTERN_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->transaction_pattern), Kyc::TRANSACTION_PATTERN_ZERO_RATING) ? 0 : 1);
                         $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Pattern changes', 'value' => Kyc::TRANSACTION_PATTERN[$customerDetail->transaction_pattern]];
+                        LoggerService::info('fn:scoreBreakdown - transactionVolumesScore', extra: ['transactionVolumesScore' => $transactionVolumesScore]);
                         $customerScore += $transactionVolumesScore;
                     }
                     // payment mode
@@ -891,6 +904,7 @@ class CRUDService extends BaseService
                     if (isset($customerDetail->mode_of_delivery)) {
                         $deliveryModeScore = in_array(strtolower($customerDetail->mode_of_delivery), Kyc::MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
                         $scoreList[] = ['score' => $deliveryModeScore, 'text' => 'Delivery Channel', 'value' => Kyc::MODE_OF_DELIVERY[$customerDetail->mode_of_delivery]];
+                        LoggerService::info('fn:scoreBreakdown - deliveryModeScore', extra: ['deliveryModeScore' => $deliveryModeScore]);
                         $customerScore += $deliveryModeScore;
                     }
 
@@ -905,6 +919,7 @@ class CRUDService extends BaseService
                         }
                     }
                     $scoreList[] = ['score' => $contactScore, 'text' => 'Mode Of Contact', 'value' => $modTypeValue];
+                    LoggerService::info('fn:scoreBreakdown - contactScore', extra: ['contactScore' => $contactScore]);
                     $customerScore += $contactScore;
                 }
 
@@ -945,6 +960,7 @@ class CRUDService extends BaseService
                 $legalStatusValue = $legalType->text;
             }
             $scoreList[] = ['score' => $legalStructureScore, 'text' => 'Legal Status Of The Entity', 'value' => $legalStatusValue];
+            LoggerService::info('fn:scoreBreakdown - legalStructureScore', extra: ['legalStructureScore' => $legalStructureScore]);
             $entityScore += $legalStructureScore;
         }
 
@@ -956,6 +972,7 @@ class CRUDService extends BaseService
                 $industryTypeValue = $industryType->text;
             }
             $scoreList[] = ['score' => $industryTypeCode, 'text' => 'Nature Of Business', 'value' => $industryTypeValue];
+            LoggerService::info('fn:scoreBreakdown - industryTypeCode', extra: ['industryTypeCode' => $industryTypeCode]);
             $entityScore += $industryTypeCode;
         }
 
@@ -968,26 +985,31 @@ class CRUDService extends BaseService
             $score = 1;
         }
         $scoreList[] = ['score' => $score, 'text' => 'Does the Company name or Subsidiary/Affiliate entities feature in any sanction list?', 'value' => $text];
+        LoggerService::info('fn:scoreBreakdown - sanctionListScore', extra: ['sanctionListScore' => $score]);
         $entityScore += $score;
 
         // Advers media not dynamic yet
         $adverseMedia = $this->getAMLcompliance($quoteId, 'in_adverse_media', $amlLogsValue);
         $scoreList[] = ['score' => $adverseMedia['score'], 'text' => 'Does the Company name or subsidiary / Affiliate entities feature in any adverse media?', 'value' => $adverseMedia['value']];
+        LoggerService::info('fn:scoreBreakdown - adverseMediaScore', extra: ['adverseMediaScore' => $adverseMedia['score']]);
         $entityScore += $adverseMedia['score'];
 
         // any PEP List/ Adverse Media not dynamic yet
         $ownerPep = $this->getAMLcompliance($quoteId, 'is_owner_pep', $amlLogsValue);
         $scoreList[] = ['score' => $ownerPep['score'], 'text' => 'Does the owner/ Shareholder/Partner of the company feature in any PEP List/ Adverse Media?', 'value' => $ownerPep['value']];
+        LoggerService::info('fn:scoreBreakdown - ownerPepScore', extra: ['ownerPepScore' => $ownerPep['score']]);
         $entityScore += $ownerPep['score'];
 
         // Tenure of Relationship in years
         $customerTenureScore = ($entity->customer_tenure == 3 || $entity->customer_tenure > 3) ? 1 : (($entity->customer_tenure <= 2 && $entity->customer_tenure > 1) ? 2 : 1);
         $tenureValue = $customerTenureScore == 1 ? '3 years and above' : ($customerTenureScore == 2 ? 'Less than two years' : 'Less than 6 months');
         $scoreList[] = ['score' => $customerTenureScore, 'text' => 'Tenure of Relationship in years', 'value' => $tenureValue];
+        LoggerService::info('fn:scoreBreakdown - customerTenureScore', extra: ['customerTenureScore' => $customerTenureScore]);
         $entityScore += $customerTenureScore;
 
         $controlling = $this->getAMLcompliance($quoteId, 'is_controlling_pep', $amlLogsValue);
         $scoreList[] = ['score' => $controlling['score'], 'text' => 'Is the controlling person a PEP/HIO/FPEP/Government Organization?', 'value' => $controlling['value']];
+        LoggerService::info('fn:scoreBreakdown - controllingScore', extra: ['controllingScore' => $controlling['score']]);
         $entityScore += $controlling['score'];
 
         // sanction Match
@@ -999,11 +1021,13 @@ class CRUDService extends BaseService
             $score = 1;
         }
         $scoreList[] = ['score' => $score, 'text' => 'Is There A Sanction Match On The Owner/Partners/Bod, Senior Management, Group Company, Holding Company Or Related Company Names?', 'value' => $text];
+        LoggerService::info('fn:scoreBreakdown - sanctionMatchScore', extra: ['sanctionMatchScore' => $score]);
         $entityScore += $score;
 
         if (isset($entity->nationality)) {
             $corporationScore = in_array(strtolower($entity->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
             $scoreList[] = ['score' => $corporationScore, 'text' => 'Country Of Incorporation', 'value' => $entity->nationality->country_name];
+            LoggerService::info('fn:scoreBreakdown - corporationScore', extra: ['corporationScore' => $corporationScore]);
             $entityScore += $corporationScore;
         }
         // FATF
@@ -1015,6 +1039,7 @@ class CRUDService extends BaseService
             $score = 1;
         }
         $scoreList[] = ['score' => $score, 'text' => 'Does the company have any subsidiary, affiliate, branch, or group/holding company in FATF-listed high-risk monitored jurisdiction?', 'value' => $text];
+        LoggerService::info('fn:scoreBreakdown - fatfScore', extra: ['fatfScore' => $score]);
         $entityScore += $score;
 
         $ubos = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
@@ -1034,6 +1059,7 @@ class CRUDService extends BaseService
         }
 
         $scoreList[] = ['score' => $score, 'text' => 'Does the owner/ Shareholder/ Partner/Director of the company from High-Risk countries?', 'value' => $text];
+        LoggerService::info('fn:scoreBreakdown - highRiskCountriesScore', extra: ['highRiskCountriesScore' => $score]);
         $entityScore += $score;
 
         // New Field
@@ -1046,6 +1072,7 @@ class CRUDService extends BaseService
             $score = 1;
         }
         $scoreList[] = ['score' => $score, 'text' => 'Does the customer intend to deal with any country listed in the Sanctions List?', 'value' => $text];
+        LoggerService::info('fn:scoreBreakdown - sanctionListScore', extra: ['sanctionListScore' => $score]);
         $entityScore += $score;
 
         //
@@ -1058,6 +1085,7 @@ class CRUDService extends BaseService
             $score = 1;
         }
         $scoreList[] = ['score' => $score, 'text' => 'Do the customer or subsidiary/ affiliate entities have operations in any High-Risk Countries?', 'value' => $text];
+        LoggerService::info('fn:scoreBreakdown - highRiskCountriesScore', extra: ['highRiskCountriesScore' => $score]);
         $entityScore += $score;
 
         // products
@@ -1067,6 +1095,7 @@ class CRUDService extends BaseService
         if (isset($entity->transaction_volume) && $entity->transaction_volume != '') {
             $transactionVolumesScore = in_array(strtolower($entity->transaction_volume), Kyc::ENTITY_TRANSACTION_VOLUME_THREE_RATING) ? 3 : (in_array(strtolower($entity->transaction_volume), Kyc::ENTITY_TRANSACTION_VOLUME_TWO_RATING) ? 2 : 1);
             $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Volume', 'value' => Kyc::TRANSACTION_VOLUME[$entity->transaction_volume]];
+            LoggerService::info('fn:scoreBreakdown - transactionVolumesScore', extra: ['transactionVolumesScore' => $transactionVolumesScore]);
             $entityScore += $transactionVolumesScore;
         }
 
@@ -1112,24 +1141,29 @@ class CRUDService extends BaseService
         if (isset($entity->transaction_activities)) {
             $transactionVolumesScore = in_array(strtolower($entity->transaction_activities), Kyc::TRANSACTION_ACTIVITIES_THREE_RATING) ? 3 : (in_array(strtolower($entity->transaction_activities), Kyc::TRANSACTION_ACTIVITIES_TWO_RATING) ? 2 : 1);
             $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Activities', 'value' => Kyc::TRANSACTION_ACTIVITIES[$entity->transaction_activities]];
+            LoggerService::info('fn:scoreBreakdown - transactionVolumesScore', extra: ['transactionVolumesScore' => $transactionVolumesScore]);
             $entityScore += $transactionVolumesScore;
         }
 
         if (isset($entity->transaction_pattern)) {
             $transactionVolumesScore = in_array(strtolower($entity->transaction_pattern), Kyc::TRANSACTION_PATTERN_THREE_RATING) ? 3 : (in_array(strtolower($entity->transaction_pattern), Kyc::TRANSACTION_PATTERN_ZERO_RATING) ? 0 : 1);
             $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Pattern changes', 'value' => Kyc::TRANSACTION_PATTERN[$entity->transaction_pattern]];
+            LoggerService::info('fn:scoreBreakdown - transactionVolumesScore', extra: ['transactionVolumesScore' => $transactionVolumesScore]);
             $entityScore += $transactionVolumesScore;
         }
         $scoreList[] = ['score' => $paymentTopScore, 'text' => 'Payment Mode', 'value' => $paymentMethod];
+        LoggerService::info('fn:scoreBreakdown - paymentTopScore', extra: ['paymentTopScore' => $paymentTopScore]);
         $entityScore += $paymentTopScore;
         if (isset($entity->mode_of_contact)) {
             $transactionVolumesScore = in_array(strtolower($entity->mode_of_contact), Kyc::ENTITY_MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
             $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Mode of Contact', 'value' => $entity->mode_of_contact];
+            LoggerService::info('fn:scoreBreakdown - transactionVolumesScore', extra: ['transactionVolumesScore' => $transactionVolumesScore]);
             $entityScore += $transactionVolumesScore;
         }
         if (isset($entity->mode_of_delivery)) {
             $transactionVolumesScore = in_array(strtolower($entity->mode_of_delivery), Kyc::ENTITY_MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
             $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Delivery Channel', 'value' => Kyc::MODE_OF_DELIVERY[$entity->mode_of_delivery]];
+            LoggerService::info('fn:scoreBreakdown - transactionVolumesScore', extra: ['transactionVolumesScore' => $transactionVolumesScore]);
             $entityScore += $transactionVolumesScore;
         }
 
@@ -1138,6 +1172,7 @@ class CRUDService extends BaseService
 
     public function getAMLCompliance($quoteId, $column, $amlLogsValue)
     {
+        LoggerService::info('fn:getAMLCompliance - Start');
         $amlProperty = AML::where('quote_request_id', $quoteId)->where($column, 1)->first();
         if (isset($amlProperty->id)) {
             return ['score' => 3, 'value' => 'Yes'];
