@@ -29,13 +29,11 @@ const listen = () => {
     // Only show notifications to the user who uploaded the document, same quote, and only on allowed pages
     // For send-update pages, we need to check sendUpdateLog.uuid instead of quote.uuid
     const isSendUpdatePage = currentUrl.includes('/send-update/');
-    const quoteUuid = isSendUpdatePage ? page.props?.sendUpdateLog?.uuid : page.props?.quote?.uuid;
-    
-    if (
-      e.data.uuid === quoteUuid &&
-      isCurrentUser &&
-      isAllowedPage
-    ) {
+    const quoteUuid = isSendUpdatePage
+      ? page.props?.sendUpdateLog?.uuid
+      : page.props?.quote?.uuid;
+
+    if (e.data.uuid === quoteUuid && isCurrentUser && isAllowedPage) {
       // Only show toast notification for 'start' status and CERTIFICATE_OF_ISSUANCE document type
       // Still show 'fail' status notifications for all supported document types
       if (

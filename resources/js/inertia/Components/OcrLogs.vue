@@ -31,9 +31,13 @@ const ocrLogs = reactive({
   ],
 });
 
-const eligibleProviders = computed(() => page.props.eligibleOcrProviders?.providers || {});
+const eligibleProviders = computed(
+  () => page.props.eligibleOcrProviders?.providers || {},
+);
 
-const dynamicQuoteTypeNames = computed(() => page.props.eligibleOcrProviders?.quoteTypeNames || {});
+const dynamicQuoteTypeNames = computed(
+  () => page.props.eligibleOcrProviders?.quoteTypeNames || {},
+);
 
 const selectedLog = ref({});
 const modals = reactive({
@@ -68,35 +72,35 @@ const onLoadOcrLogData = async () => {
 // Format the providers data for display in the tooltip
 const formattedProviders = computed(() => {
   const formatted = [];
-  
+
   // Group providers by name
   const providerMap = {};
-  
+
   Object.entries(eligibleProviders.value).forEach(([quoteType, providers]) => {
     const quoteTypeName = dynamicQuoteTypeNames.value[quoteType] || quoteType;
-    
+
     providers.forEach(provider => {
       if (!providerMap[provider.name]) {
         providerMap[provider.name] = [];
       }
-      
+
       if (!providerMap[provider.name].includes(quoteTypeName)) {
         providerMap[provider.name].push(quoteTypeName);
       }
     });
   });
-  
+
   // Convert to array format for display
   Object.entries(providerMap).forEach(([providerName, quoteTypes]) => {
     // Replace underscores with spaces in provider names
     const formattedName = providerName.replace(/_/g, ' ');
-    
+
     formatted.push({
       name: formattedName,
-      types: quoteTypes.join(', ')
+      types: quoteTypes.join(', '),
     });
   });
-  
+
   return formatted.sort((a, b) => a.name.localeCompare(b.name));
 });
 </script>
@@ -107,7 +111,7 @@ const formattedProviders = computed(() => {
       <template #header>
         <div class="flex items-center gap-2">
           <h3 class="font-semibold text-primary-800 text-lg">OCR AI Logs</h3>
-          
+
           <!-- Info Icon with tooltip showing eligible providers -->
           <x-tooltip>
             <button
@@ -131,24 +135,32 @@ const formattedProviders = computed(() => {
             <template #tooltip>
               <div class="max-w-xs">
                 <p class="font-medium mb-1">Eligible Insurance Providers:</p>
-                
+
                 <!-- Providers list -->
-                <ul v-if="formattedProviders.length > 0" class="list-disc pl-4 text-xs space-y-0.5">
-                  <li v-for="(provider, index) in formattedProviders" :key="index">
+                <ul
+                  v-if="formattedProviders.length > 0"
+                  class="list-disc pl-4 text-xs space-y-0.5"
+                >
+                  <li
+                    v-for="(provider, index) in formattedProviders"
+                    :key="index"
+                  >
                     {{ provider.name }} ({{ provider.types }})
                   </li>
                 </ul>
-                
+
                 <!-- Fallback state -->
                 <div v-else class="text-xs py-1">
                   No eligible providers found.
                 </div>
-                
-                <p class="text-xs mt-1 italic">OCR logs are only displayed for these eligible providers.</p>
+
+                <p class="text-xs mt-1 italic">
+                  OCR logs are only displayed for these eligible providers.
+                </p>
               </div>
             </template>
           </x-tooltip>
-          
+
           <!-- Refresh Icon - Only visible after logs are loaded -->
           <button
             v-if="ocrLogs.data !== null"

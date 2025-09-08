@@ -270,7 +270,7 @@ onUnmounted(() => {
           class="flex gap-2 mb-4 justify-end"
           v-if="readOnlyMode.isDisable === true"
         >
-        <!-- TODO: Uncomment this when Customer OCR Journey is supported on prod/stage -->
+          <!-- TODO: Uncomment this when Customer OCR Journey is supported on prod/stage -->
           <!-- <x-tag
             v-if="quoteType == quoteTypeCodeEnum.Car"
             :color="documentVerificationStatus ? 'success' : 'amber'"
