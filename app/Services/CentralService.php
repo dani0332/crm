@@ -8,8 +8,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
-use App\Enums\InsuranceProvidersEnum;
-use App\Enums\InsurerProviderEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
@@ -427,10 +426,10 @@ class CentralService extends BaseService
         $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
 
         $insurersWithoutCCRenewal = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::EMIRATES_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+            InsuranceProviderEnum::AXA->value,    // GIG_INSURANCE
+            InsuranceProviderEnum::EI->value,     // EMIRATES_INSURANCE
+            InsuranceProviderEnum::RSA->value,    // LIVANA_INSURANCE
+            InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 
         info('Updating payment method for home renewal lead', [
@@ -503,7 +502,7 @@ class CentralService extends BaseService
         $isTravelQuote = ucfirst($quoteType) == QuoteTypes::TRAVEL->value;
         $isNormalPlan = $data['planType'] == 'normalPlans';
         $isSourceIMCRM = $data['quoteSource'] == LeadSourceEnum::IMCRM;
-        $isALNCProvider = $data['provider_code'] == InsuranceProvidersEnum::ALNC;
+        $isALNCProvider = $data['provider_code'] == InsuranceProviderEnum::ALNC->value;
 
         if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isALNCProvider) {
             $quoteModelObject = $this->getModelObject(strtolower($quoteType));
@@ -1257,6 +1256,11 @@ class CentralService extends BaseService
         }
 
         $quote = $this->getQuoteObject($type, $id);
+        if (! $quote) {
+            info("Quote not found for type: {$type}, id: {$id}");
+
+            return;
+        }
         $quoteCode = $quote->code;
         $currentQuoteStatus = $quote->quote_status_id;
         // Check if quote status is locked - if so, don't change status due to document uploads
@@ -1374,8 +1378,8 @@ class CentralService extends BaseService
         // Get broker commission details
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId, $quote);
 
-        $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
-        $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE && $quoteTypeId == QuoteTypeId::Health;
+        $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsuranceProviderEnum::AXA->value;    // GIG_INSURANCE
+        $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsuranceProviderEnum::ADNIC->value && $quoteTypeId == QuoteTypeId::Health;    // ABU_DHABI_NATIONAL_INSURANCE
 
         // Check if multiple payments are enabled for the provider
         $isMultiplePaymentsEnabled = $insuranceProvider && $insuranceProvider->multiple_payments;
@@ -1549,24 +1553,24 @@ class CentralService extends BaseService
     {
         // Capture are enabled for the all LOB's against specific providers
         $enabledProviders = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::RAK_INSURANCE,
-            InsurerProviderEnum::TOKIO_MARINE,
-            InsurerProviderEnum::QATAR_INSURANCE,
-            InsurerProviderEnum::ALLIANCE_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+            InsuranceProviderEnum::AXA->value,    // GIG_INSURANCE
+            InsuranceProviderEnum::RAK->value,    // RAK_INSURANCE
+            InsuranceProviderEnum::TM->value,     // TOKIO_MARINE
+            InsuranceProviderEnum::QIC->value,    // QATAR_INSURANCE
+            InsuranceProviderEnum::ALNC->value,   // ALLIANCE_INSURANCE
+            InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 
         if ($quoteTypeId == QuoteTypeId::Health) {
-            $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
+            $enabledProviders[] = InsuranceProviderEnum::ADNIC->value;   // ABU_DHABI_NATIONAL_INSURANCE
         }
 
         // if ($quoteTypeId == QuoteTypeId::Car) {
-        //     $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
+        //     $enabledProviders[] = InsuranceProviderEnum::NT->value;   // WATANIA_TAKAFUL
         // }
 
         if ($quoteTypeId == QuoteTypeId::Travel) {
-            $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
+            $enabledProviders[] = InsuranceProviderEnum::OI2->value;   // ORIENT_INSURANCE
         }
 
         return in_array($insuranceProviderCode, $enabledProviders);

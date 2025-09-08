@@ -7,6 +7,7 @@ use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
@@ -954,7 +955,7 @@ class SplitPaymentService
 
             $successMessage = 'Processing master payment approval completed';
 
-            if (($masterPayment->insuranceProvider->code == InsuranceProvidersEnum::ALNC && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
+            if (($masterPayment->insuranceProvider->code == InsuranceProviderEnum::ALNC->value && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
                 if ($sendUpdateId) {
                     app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
@@ -986,7 +987,7 @@ class SplitPaymentService
                 // Log for creating duplicate lead for TRAVEL
                 if ($quoteTypeId == QuoteTypeId::Travel && $totalPaymentsCount > 1 && ! $sendUpdateId) {
                     $quoteStatusId = $quoteModel->quote_status_id;
-                    if ($masterPayment->insuranceProvider->code == InsuranceProvidersEnum::ALNC && $isFromJob && $totalApproved != $totalPaymentsCount) {
+                    if ($masterPayment->insuranceProvider->code == InsuranceProviderEnum::ALNC->value && $isFromJob && $totalApproved != $totalPaymentsCount) {
                         $quoteStatusId = QuoteStatusEnum::PaymentPending;
                     }
                     if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel, $quoteStatusId)) {

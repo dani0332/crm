@@ -54,7 +54,7 @@ final class PolicyIssuanceEnum extends Enum
     {
         return match (ucfirst($quoteType)) {
             QuoteTypes::TRAVEL->value => match ($insurerCode) {
-                InsuranceProvidersEnum::ALNC => self::getTravelAlliancePolicyIssuanceSteps(),
+                InsuranceProviderEnum::ALNC->value => self::getTravelAlliancePolicyIssuanceSteps(),
                 default => null,
             },
             default => null,

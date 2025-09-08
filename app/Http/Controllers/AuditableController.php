@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QuoteTypes;
 use App\Http\Requests\OcrLogsRequest;
-use App\Models\CarQuote;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
@@ -83,57 +83,25 @@ class AuditableController extends Controller
 
     public function loadPolicyIssuanceApiLogs(Request $request)
     {
+        $quoteType = QuoteTypes::getName($request->quoteTypeId)->value ?? '';
+        $quote = $this->getQuoteObject($quoteType, $request->quoteId);
 
-        $quoteId = $request->get('quote_id');
-        $modelType = $request->get('model_type');
-        $insuranceProviderId = $request->get('insurance_provider_id');
-
-        $extraLogs = [
-            'quote_id' => $quoteId,
-            'model_type' => $modelType,
-            'insurance_provider_id' => $insuranceProviderId
-        ];
-
-        try {
-            $request->validate([
-                'quote_id' => 'required|integer',
-                'model_type' => 'required|string',
-                'insurance_provider_id' => 'required|integer',
-            ]);
-
-            if (!in_array($modelType, [CarQuote::class])) {
-                LoggerService::error('Policy issuance API logs only supported for CarQuote', extra: [...$extraLogs]);
-                return response()->json([
-                    'error' => 'Policy issuance API logs only supported for CarQuote.'
-                ], 403);
-            }
-
-            LoggerService::info('Loading policy issuance API logs', extra: $extraLogs);
-
-            // Get the table name dynamically based on quote type
-            $policyIssuanceLogs = app(PolicyIssuanceService::class)->getQueryBuilderForPolicyIssuanceApiLogs($quoteId, $modelType);
-
-            if ($insuranceProviderId) {
-                $policyIssuanceLogs = $policyIssuanceLogs->whereHas('policyIssuance', 
-                    fn ($query) => $query->where('insurance_provider_id', $insuranceProviderId)
-                );
-            }
-
-            $policyIssuanceLogs = $policyIssuanceLogs
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            return $policyIssuanceLogs;
-        } catch (\Exception $e) {
-            LoggerService::info('Error loading policy issuance API logs',
-                extra: [...$extraLogs, 'error' => $e->getMessage()]
-            );
-
+        if (empty($quote) || empty($quoteType) || $quoteType !== QuoteTypes::CAR->value) {
             return response()->json([
-                'error' => 'An error occurred while loading policy issuance API logs.',
-                'message' => $e->getMessage(),
-            ], 500);
+                'success' => false,
+                'message' => empty($quote) ? 'Quote not found' : 'Quote type not supported',
+            ]);
         }
+
+        $policyIssuanceLogs = $quote->policyIssuance?->policyIssuanceLogs()
+            ->with(['policyIssuance.insuranceProvider:id,code,text', 'policyIssuance.model:id,uuid'])->get()
+            ->sortByDesc('created_at')->values();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Policy issuance API logs retrieved successfully',
+            'data' => $policyIssuanceLogs
+        ]);
     }
 
     public function loadApiLogs(Request $request)
@@ -239,7 +207,7 @@ class AuditableController extends Controller
                         'document_type_name' => $log->document_type_name,
                         'status' => $log->status,
                         'formatted_execution_time' => $log->formatted_execution_time,
-                        'provider_name' => $log->provider?->name ?? 'N/A',
+                        'provider_name' => $log->provider?->text ?? 'N/A',
                         'uploaded_through' => $log->uploaded_through,
                         'user_name' => $log->user?->name ?? null,
                         'created_at' => $log->created_at->format('Y-m-d H:i:s'),

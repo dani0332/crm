@@ -244,6 +244,9 @@ class QuoteDocumentService extends BaseService
                 LoggerService::info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
             }
 
+            LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
+            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
+
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL) {
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id,
@@ -251,9 +254,6 @@ class QuoteDocumentService extends BaseService
                     $documentType->id
                 )->afterCommit();
             }
-
-            LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
-            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
 
             return $quoteDocument;
         } catch (\Exception $exception) {

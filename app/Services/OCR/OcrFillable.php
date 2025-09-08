@@ -2,30 +2,25 @@
 
 namespace App\Services\OCR;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCategory;
-use App\Enums\InsurerProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
-use App\Services\ApplicationStorageService;
+use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\DrivingLicense\DrivingLicenseDataProcessor;
 use App\Services\OCR\EmiratesId\EmiratesIdDataProcessor;
 use App\Services\OCR\Mulkiya\MulkiyaDataProcessor;
-use App\Services\SplitPaymentService;
-use Carbon\Carbon;
+use App\Services\OCR\PolicySchedule\PolicyScheduleDataProcessor;
+use App\Services\OCR\TaxInvoice\TaxInvoiceDataProcessor;
+use App\Services\OCR\TaxInvoiceRaisedByBuyer\TaxInvoiceRaisedByBuyerDataProcessor;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 
 trait OcrFillable
 {
-    private function isSupportedProvider(Model $quote): bool
-    {
-        return $quote->isProvider(InsurerProviderEnum::GIG_INSURANCE) ||
-            $quote->isProvider(InsurerProviderEnum::SUKOON_OMAN_INSURANCE) ||
-            $quote->isProvider(InsurerProviderEnum::QATAR_INSURANCE) ||
-            $quote->isProvider(InsurerProviderEnum::LIVANA_INSURANCE) ||
-            $quote->isProvider(InsurerProviderEnum::TOKIO_MARINE);
-    }
+    use OcrUtils , OcrValidator;
+
+    private $providerCode = '';
+    private $isSendUpdateEligibleForOCR = false;
 
     private function isEnabled(Model $quote, array $providers): bool
     {
@@ -38,173 +33,81 @@ trait OcrFillable
         return false;
     }
 
-    private function resolveProp($object, $prop)
-    {
-        if (is_object($object) && property_exists($object, $prop)) {
-            return $object->$prop;
-        }
-
-        return null;
-    }
-
-    private function parseDate($date, $default = null, $format = 'Y-m-d')
-    {
-        try {
-            return $date ? Carbon::parse($date)->format($format) : $default;
-        } catch (Exception $e) {
-            LoggerService::error(self::class.' - Exception occurred during date parsing: ', exception: $e);
-
-            return $default;
-        }
-    }
-
     private function fillTaxInvoice(Model $quote, object $data)
     {
-        $providersWithPolicyIssuanceDate = [];
+        try {
+            // Create a single instance of the processor to reuse
+            $processor = new TaxInvoiceDataProcessor(
+                $quote,
+                $data,
+                $this->isSendUpdateEligibleForOCR,
+                $this->providerCode
+            );
 
-        $providersWithPriceVatApplicable = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
-            InsurerProviderEnum::QATAR_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::TOKIO_MARINE,
-        ];
+            $success = $processor->processTaxInvoiceData();
 
-        $dataToUpdate = [];
+            if ($success) {
+                // Get processing summary from the same processor instance
+                $summary = $processor->getProcessingSummary();
 
-        $price = $this->resolveProp($data, 'price');
+                LoggerService::info(self::class.' - Tax Invoice data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
+                    'processing_summary' => $summary,
+                ]);
+            } else {
+                LoggerService::warning(self::class.' - Tax Invoice data processing failed - Quote UUID: '.$quote->uuid);
+            }
 
-        if ($this->isEnabled($quote, $providersWithPriceVatApplicable)) {
-            $vatPercentage = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
-            $priceVatApplicable = $this->resolveProp($price, 'baseAmount') ?? $quote->price_vat_applicable;
-            $vatAmount = $priceVatApplicable * $vatPercentage / 100;
-            $priceWithVat = $priceVatApplicable + $vatAmount;
-            $dataToUpdate['price_with_vat'] = $priceWithVat;
-            $dataToUpdate['vat'] = $vatAmount;
-            $dataToUpdate['price_vat_applicable'] = $priceVatApplicable;
+            return $success;
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during Tax Invoice data filling - Quote UUID: '.$quote->uuid, exception: $e);
+
+            return false;
         }
-
-        if ($this->isEnabled($quote, $providersWithPolicyIssuanceDate)) {
-            $dataToUpdate['vat'] = $this->resolveProp($price, 'VAT') ?? $quote->vat;
-            $dataToUpdate['price_with_vat'] = $this->resolveProp($price, 'totalAmount') ?? $quote->price_with_vat;
-            $dataToUpdate['policy_issuance_date'] = $this->parseDate($this->resolveProp($data, 'issuanceDate'), $quote->policy_issuance_date);
-        }
-
-        if (! empty($dataToUpdate)) {
-            $quote->update($dataToUpdate);
-        }
-
-        $providersWithInsurerInvoiceDate = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
-            InsurerProviderEnum::QATAR_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::TOKIO_MARINE,
-        ];
-
-        $providersWithInsurerTaxNumber = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
-            InsurerProviderEnum::QATAR_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::TOKIO_MARINE,
-        ];
-
-        $paymentDataToUpdate = [];
-
-        if ($this->isEnabled($quote, $providersWithInsurerInvoiceDate)) {
-            $paymentDataToUpdate['insurer_invoice_date'] = $this->parseDate($this->resolveProp($data, 'invoiceDate'), $quote->payment?->insurer_invoice_date);
-        }
-
-        if ($this->isEnabled($quote, $providersWithInsurerTaxNumber)) {
-            $taxInvoiceNumber = $this->resolveProp($data, 'taxInvoiceNumber');
-
-            $paymentDataToUpdate['insurer_tax_number'] = $taxInvoiceNumber ?? $quote->payment?->insurer_tax_number;
-            $paymentDataToUpdate['tax_invoice_number'] = $taxInvoiceNumber ?? $quote->payment?->tax_invoice_number;
-        }
-
-        if (! empty($paymentDataToUpdate) && $quote->payment) {
-            $quote->payment->update($paymentDataToUpdate);
-        }
-
-        return true;
     }
 
     private function fillTaxInvoiceRaisedByBuyer(Model $quote, object $data)
     {
-        $providersWithCommission = [];
+        try {
+            // Create a single instance of the processor to reuse
+            $processor = new TaxInvoiceRaisedByBuyerDataProcessor(
+                $quote,
+                $data,
+                $this->isSendUpdateEligibleForOCR,
+                $this->providerCode
+            );
 
-        $providersWithTaxInvoiceNumber = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
-            InsurerProviderEnum::QATAR_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::TOKIO_MARINE,
-        ];
+            $success = $processor->processTaxInvoiceRaisedByBuyerData();
 
-        $providersWithCommissionVatApplicable = [
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
-            InsurerProviderEnum::QATAR_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::TOKIO_MARINE,
-        ];
+            if ($success) {
+                // Get processing summary from the same processor instance
+                $summary = $processor->getProcessingSummary();
 
-        $dataToUpdate = [];
+                LoggerService::info(self::class.' - Tax Invoice Raised By Buyer data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
+                    'processing_summary' => $summary,
+                ]);
+            } else {
+                LoggerService::warning(self::class.' - Tax Invoice Raised By Buyer data processing failed - Quote UUID: '.$quote->uuid);
+            }
 
-        $commission = $this->resolveProp($data, 'commission');
+            return $success;
 
-        if ($this->isEnabled($quote, $providersWithCommission)) {
-            $commissionVat = $this->resolveProp($commission, 'VAT') ?? ($quote->payment?->comission_vat ?: 0);
-            $commissionPercentageDivisor = 1 + ($commissionVat > 0 ? .05 : 0);
-            $commissionWithoutVat = $dataToUpdate['commission'] - $commissionVat;
-            $premiumWithoutVat = $quote->payment->total_price / $commissionPercentageDivisor;
-            $commissionPercentage = roundNumber((($commissionWithoutVat / $premiumWithoutVat) * 100)) ?? $quote->payment?->comission_percentage;
-            $dataToUpdate['commission_vat'] = $commissionVat;
-            $dataToUpdate['commission'] = $this->resolveProp($commission, 'totalAmount') ?? $quote->payment?->comission;
-            $dataToUpdate['commmission_percentage'] = $commissionPercentage;
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during Tax Invoice Raised By Buyer data filling - Quote UUID: '.$quote->uuid, exception: $e);
+
+            return false;
         }
-
-        if ($this->isEnabled($quote, $providersWithTaxInvoiceNumber)) {
-            $dataToUpdate['insurer_commmission_invoice_number'] = $this->resolveProp($data, 'taxInvoiceNumber') ?? $quote->payment?->insurer_commmission_invoice_number;
-        }
-
-        if ($this->isEnabled($quote, $providersWithCommissionVatApplicable) && ! $quote->payment?->commission_vat_applicable) {
-            $dataToUpdate['commission_vat_applicable'] = $this->resolveProp($commission, 'baseAmount') ?? $quote->payment?->commission_vat_applicable;
-        }
-
-        if (! empty($dataToUpdate)) {
-            $quote->payment?->update($dataToUpdate);
-            (new SplitPaymentService)->updateCommissionSchedule($quote->payment);
-        }
-
-        return true;
     }
 
     private function fillCertificateOfIssuance(Model $quote, object $data)
     {
-        $providersWithPolicyNumber = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
-            InsurerProviderEnum::QATAR_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::TOKIO_MARINE,
-        ];
-
-        $providersWithPolicyDates = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
-            InsurerProviderEnum::QATAR_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::TOKIO_MARINE,
-        ];
-
         $dataToUpdate = [];
 
-        if ($this->isEnabled($quote, $providersWithPolicyNumber)) {
+        if ($this->isFieldEnabled($this->providerCode, 'quote.policy_number')) {
             $dataToUpdate['policy_number'] = $this->resolveProp($data, 'policyNumber') ?? $quote->policy_number;
         }
 
-        if ($this->isEnabled($quote, $providersWithPolicyDates)) {
+        if ($this->isFieldEnabled($this->providerCode, 'quote.policy_start_date') && $this->isFieldEnabled($this->providerCode, 'quote.policy_expiry_date')) {
             $dataToUpdate['policy_start_date'] = $this->parseDate($this->resolveProp($data, 'policyStartDate'), $quote->policy_start_date);
             $dataToUpdate['policy_expiry_date'] = $this->parseDate($this->resolveProp($data, 'policyExpiryDate'), $quote->policy_expiry_date);
         }
@@ -240,11 +143,14 @@ trait OcrFillable
     private function fillEmiratesId(Model $quote, object $data)
     {
         try {
-            $success = (new EmiratesIdDataProcessor($quote, $data))->processEmiratesIdData();
+            // Create a single instance of the processor to reuse
+            $processor = new EmiratesIdDataProcessor($quote, $data);
+
+            $success = $processor->processEmiratesIdData();
 
             if ($success) {
-                // we can remove after testing
-                $summary = (new EmiratesIdDataProcessor($quote, $data))->getProcessingSummary();
+                // Get processing summary from the same processor instance
+                $summary = $processor->getProcessingSummary();
 
                 LoggerService::info(self::class.' - Emirates ID data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
@@ -265,11 +171,14 @@ trait OcrFillable
     private function fillMulkiya(Model $quote, object $data)
     {
         try {
-            $success = (new MulkiyaDataProcessor($quote, $data))->processMulkiyaData();
+            // Create a single instance of the processor to reuse
+            $processor = new MulkiyaDataProcessor($quote, $data);
+
+            $success = $processor->processMulkiyaData();
 
             if ($success) {
-                // we can remove after testing
-                $summary = (new MulkiyaDataProcessor($quote, $data))->getProcessingSummary();
+                // Get processing summary from the same processor instance
+                $summary = $processor->getProcessingSummary();
 
                 LoggerService::info(self::class.' - Mulkiya data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
@@ -290,11 +199,14 @@ trait OcrFillable
     private function fillDrivingLicense(Model $quote, object $data)
     {
         try {
-            $success = (new DrivingLicenseDataProcessor($quote, $data))->processDrivingLicenseData();
+            // Create a single instance of the processor to reuse
+            $processor = new DrivingLicenseDataProcessor($quote, $data);
+
+            $success = $processor->processDrivingLicenseData();
 
             if ($success) {
-                // we can remove after testing
-                $summary = (new DrivingLicenseDataProcessor($quote, $data))->getProcessingSummary();
+                // Get processing summary from the same processor instance
+                $summary = $processor->getProcessingSummary();
 
                 LoggerService::info(self::class.' - Driving License data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
@@ -312,13 +224,51 @@ trait OcrFillable
         }
     }
 
+    private function fillPolicySchedule(Model $quote, object $data)
+    {
+        try {
+            // Create a single instance of the processor to reuse
+            $processor = new PolicyScheduleDataProcessor(
+                $quote,
+                $data,
+                $this->isSendUpdateEligibleForOCR,
+                $this->providerCode
+            );
+
+            $success = $processor->processPolicyScheduleData();
+
+            if ($success) {
+                // Get processing summary from the same processor instance
+                $summary = $processor->getProcessingSummary();
+
+                LoggerService::info(self::class.' - Policy Schedule data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
+                    'processing_summary' => $summary,
+                ]);
+            } else {
+                LoggerService::warning(self::class.' - Policy Schedule data processing failed - Quote UUID: '.$quote->uuid);
+            }
+
+            return $success;
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during Policy Schedule data filling - Quote UUID: '.$quote->uuid, exception: $e);
+
+            return false;
+        }
+    }
+
     private function fill(
         Model $quote,
         OCRDocumentTypeEnum $documentType,
         object $data,
-        $documentCategory
+        $documentCategory,
+        bool $isSendUpdateEligibleForOCR,
+        QuoteTypes $quoteType
     ) {
-        if (! $this->isSupportedProvider($quote) && $documentCategory != DocumentTypeCategory::QUOTE) {
+        $this->providerCode = $this->getProvider($quote);
+        $this->isSendUpdateEligibleForOCR = $isSendUpdateEligibleForOCR;
+
+        if (! $this->isSupportedProvider($quoteType, $this->providerCode) && $documentCategory != DocumentTypeCategory::QUOTE) {
             LoggerService::info(self::class.' - Not a Valid Provider');
 
             return false;
@@ -332,10 +282,13 @@ trait OcrFillable
                 OCRDocumentTypeEnum::TAX_INVOICE => $this->fillTaxInvoice($quote, $data),
                 OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER => $this->fillTaxInvoiceRaisedByBuyer($quote, $data),
                 OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE => $this->fillCertificateOfIssuance($quote, $data),
-                OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE => $this->fillMotorInsurancePolicySchedule($quote, $data),
                 OCRDocumentTypeEnum::ID_CARD => $this->fillEmiratesId($quote, $data),
                 OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data),
                 OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data),
+                OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE => in_array($quoteType, [QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL], true)
+                    ? $this->fillPolicySchedule($quote, $data)
+                    : $this->fillMotorInsurancePolicySchedule($quote, $data),
+                OCRDocumentTypeEnum::POLICY_SCHEDULE => $this->fillPolicySchedule($quote, $data), // for home and group medical policy schedule
                 default => false,
             };
         } catch (Exception $e) {
