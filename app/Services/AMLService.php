@@ -11,6 +11,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProviderEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
