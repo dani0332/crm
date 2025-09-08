@@ -258,18 +258,40 @@ const exportReport = async (exportType = 'download') => {
       return;
     }
 
-    const days = calculateDaysDifference(
-      filters.chat_initiated_at[0],
-      filters.chat_initiated_at[1],
-    );
+    // Check chat_initiated_at date range
+    if (filters.chat_initiated_at && filters.chat_initiated_at.length === 2) {
+      const chatDays = calculateDaysDifference(
+        filters.chat_initiated_at[0],
+        filters.chat_initiated_at[1],
+      );
 
-    if (days > 30) {
-      notification.error({
-        position: 'top',
-        title: 'Export Error',
-        message: 'Maximum 30 days are allowed.',
-      });
-      return;
+      if (chatDays > 30) {
+        notification.error({
+          position: 'top',
+          title: 'Export Error',
+          message:
+            'Maximum 30 days are allowed for Chat Initiated At date range.',
+        });
+        return;
+      }
+    }
+
+    // Check lead_created_at date range
+    if (filters.lead_created_at && filters.lead_created_at.length === 2) {
+      const leadDays = calculateDaysDifference(
+        filters.lead_created_at[0],
+        filters.lead_created_at[1],
+      );
+
+      if (leadDays > 30) {
+        notification.error({
+          position: 'top',
+          title: 'Export Error',
+          message:
+            'Maximum 30 days are allowed for Lead Created At date range.',
+        });
+        return;
+      }
     }
 
     const data = {

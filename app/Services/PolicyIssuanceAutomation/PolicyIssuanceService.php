@@ -3,6 +3,7 @@
 namespace App\Services\PolicyIssuanceAutomation;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -34,7 +35,7 @@ class PolicyIssuanceService
     {
         return match (ucfirst($quoteType)) {
             QuoteTypes::TRAVEL->value => match ($insurerCode) {
-                InsuranceProvidersEnum::ALNC => new AllianceInsuranceService,
+                InsuranceProviderEnum::ALNC->value => new AllianceInsuranceService,
                 default => null,
             },
             QuoteTypes::CAR->value => match ($insurerCode) {

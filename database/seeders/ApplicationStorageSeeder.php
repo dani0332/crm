@@ -128,6 +128,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedSukoonMedexProductSlug();
         $this->seedLOBCutOffDates();
         $this->seedTravelEnquiryEmail();
+        $this->seedOcrSendUpdateLogFlag();
     }
 
     private function seedBirdWorkflowUrls()
@@ -604,6 +605,19 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'travel-enquiries@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
+            ]
+        );
+    }
+
+    private function seedOcrSendUpdateLogFlag()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_SENDUPDATE_OCR],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
     }

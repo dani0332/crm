@@ -10,7 +10,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
@@ -1361,7 +1361,7 @@ class AMLService
     {
         LoggerService::info("Clearing AML status called. Quote Type: {$quoteType}, Code: {$code}, Insurance Provider: {$providerCode}");
 
-        if ($providerCode == InsuranceProvidersEnum::AXA) {
+        if ($providerCode == InsuranceProviderEnum::AXA->value) {
             LoggerService::info("Insurance Provider is GIG(AXA). Skipping AML status clearing for Quote Code: {$code}");
 
             return false;

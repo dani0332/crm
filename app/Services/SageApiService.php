@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\PaymentChargesEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayEnum;
@@ -3718,7 +3718,7 @@ class SageApiService
 
     public function allowedProviderForSageEPBooking()
     {
-        return [InsuranceProvidersEnum::OIC];
+        return [InsuranceProviderEnum::OIC->value];
     }
 
 }

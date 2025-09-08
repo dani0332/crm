@@ -8,7 +8,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -749,6 +749,12 @@ class CentralController extends Controller
     }
     public function exportPUAUpdates(Request $request, string $quoteType)
     {
+        // Log all request data
+        LoggerService::info('PUA Export Request - All Data', [
+            'request_all' => $request->all(),
+            'quote_type' => $quoteType,
+        ]);
+
         // Validate quote type using the factory
         if (! PUAExportFactory::isValidQuoteType($quoteType)) {
             return response()->json(['message' => "Invalid quote type: {$quoteType}"], 400);

@@ -16,10 +16,11 @@ use App\Services\OCR\OcrUtils;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use App\Models\CarQuote;
 
 class EmiratesIdDataProcessor
 {
+    use OcrUtils;
+
     private EmiratesIdExtractor $emiratesIdExtractor;
     private array $extractedData = [];
 
@@ -46,44 +47,17 @@ class EmiratesIdDataProcessor
 
             $insuredUpdated = $this->updateInsuredTable($insured);
             $kycUpdated = $this->updateInsuredKycTable($insured);
-            $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
 
             DB::commit();
 
             LoggerService::info('Emirates ID data processing completed successfully');
 
-            return $insuredUpdated || $kycUpdated || $vehicleDriverDetailUpdated;
+            return $insuredUpdated || $kycUpdated;
 
         } catch (Exception $e) {
             DB::rollBack();
 
             LoggerService::error('Emirates ID data processing failed', exception: $e);
-
-            return false;
-        }
-    }
-
-    private function updateVehicleDriverDetail($quote): bool
-    {
-        try {
-
-            $fieldsToUpdate = OcrUtils::getCleanData([
-                'driver_gender' => $this->extractedData['sex'],
-            ]);
-
-            if (!empty($fieldsToUpdate)) {
-                $quote->vehicleDriverDetail()->updateOrCreate(
-                    ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
-                    $fieldsToUpdate
-                );
-
-                LoggerService::info('VehicleDriverDetail updated successfully');
-            }
-
-            return true;
-
-        } catch (Exception $e) {
-            LoggerService::error('VehicleDriverDetail update failed', exception: $e);
 
             return false;
         }
@@ -119,7 +93,7 @@ class EmiratesIdDataProcessor
 
     private function createInsuredRecord(): Insured
     {
-        $insuredData = OcrUtils::getCleanData([
+        $insuredData = $this->getCleanData([
             'customer_type' => 'Individual',
             'first_name' => $this->extractFirstName($this->extractedData['name'] ?? ''),
             'last_name' => $this->extractLastName($this->extractedData['name'] ?? ''),
@@ -168,7 +142,7 @@ class EmiratesIdDataProcessor
             }
 
             // Update all fields with OCR data
-            $dataToUpdate = OcrUtils::getFieldsToUpdate($updateData);
+            $dataToUpdate = $this->getFieldsToUpdate($updateData);
 
             if (! empty($dataToUpdate)) {
                 $insured->update($dataToUpdate);
@@ -233,7 +207,7 @@ class EmiratesIdDataProcessor
 
             if ($insuredKyc) {
                 // Update all fields with OCR data
-                $dataToUpdate = OcrUtils::getFieldsToUpdate($kycData);
+                $dataToUpdate = $this->getFieldsToUpdate($kycData);
 
                 if (! empty($dataToUpdate)) {
                     $insuredKyc->update($dataToUpdate);

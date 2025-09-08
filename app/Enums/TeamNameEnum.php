@@ -45,6 +45,12 @@ final class TeamNameEnum extends Enum
     public const TRAVEL_RENEWALS = 'Travel - Renewals';
     public const TRAVEL_TEAM = 'Travel - Team';
 
+    /**
+     * Get team ID by team name
+     *
+     * @param  string  $teamName  The team name constant
+     * @return int|null The team ID or null if not found
+     */
     public static function getTeamID(string $teamName)
     {
         $teamIDs = [
