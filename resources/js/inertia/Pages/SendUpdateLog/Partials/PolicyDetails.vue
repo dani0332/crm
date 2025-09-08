@@ -500,7 +500,10 @@ const rules = {
                     v-if="isCPD || isCIR"
                     :loading="
                       props.showOcrNotification &&
-                      localIsDocTypeLoading(ocrDocumentTypeEnum?.MOTOR_INSURANCE_POLICY_SCHEDULE?.value)
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.MOTOR_INSURANCE_POLICY_SCHEDULE
+                          ?.value,
+                      )
                     "
                   >
                     <x-input
@@ -564,7 +567,10 @@ const rules = {
                     v-if="isCPD || isCIR"
                     :loading="
                       props.showOcrNotification &&
-                      localIsDocTypeLoading(ocrDocumentTypeEnum?.MOTOR_INSURANCE_POLICY_SCHEDULE?.value)
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.MOTOR_INSURANCE_POLICY_SCHEDULE
+                          ?.value,
+                      )
                     "
                   >
                     <DatePicker
@@ -600,7 +606,10 @@ const rules = {
                   <FieldLoader
                     :loading="
                       props.showOcrNotification &&
-                      localIsDocTypeLoading(ocrDocumentTypeEnum?.MOTOR_INSURANCE_POLICY_SCHEDULE?.value)
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.MOTOR_INSURANCE_POLICY_SCHEDULE
+                          ?.value,
+                      )
                     "
                   >
                     <DatePicker
@@ -608,10 +617,10 @@ const rules = {
                       name="expiry_date"
                       :rules="[rules.expiry_date]"
                       :disabled="!state.isEdit"
-                    placeholder="dd-mm-yyyy"
-                    class="w-full"
-                    :custom-error="policyDetailsForm.errors.expiry_date"
-                  />
+                      placeholder="dd-mm-yyyy"
+                      class="w-full"
+                      :custom-error="policyDetailsForm.errors.expiry_date"
+                    />
                   </FieldLoader>
                 </dd>
               </div>

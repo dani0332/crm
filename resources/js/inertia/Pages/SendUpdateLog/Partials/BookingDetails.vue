@@ -136,7 +136,6 @@ const props = defineProps({
     type: Function,
     required: false,
   },
-
 });
 
 const state = reactive({
@@ -1972,7 +1971,9 @@ watch(
                   <FieldLoader
                     :loading="
                       props.showOcrNotification &&
-                      localIsDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE?.value)
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+                      )
                     "
                   >
                     <DatePicker
@@ -2031,7 +2032,9 @@ watch(
                   <FieldLoader
                     :loading="
                       props.showOcrNotification &&
-                      localIsDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE?.value)
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+                      )
                     "
                   >
                     <x-input
@@ -2094,7 +2097,9 @@ watch(
                   <FieldLoader
                     :loading="
                       props.showOcrNotification &&
-                      localIsDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+                      )
                     "
                   >
                     <x-input
@@ -2170,7 +2175,9 @@ watch(
                   <FieldLoader
                     :loading="
                       props.showOcrNotification &&
-                      localIsDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE?.value)
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+                      )
                     "
                   >
                     <x-input
@@ -2336,7 +2343,10 @@ watch(
                     <FieldLoader
                       :loading="
                         props.showOcrNotification &&
-                        localIsDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)
+                        localIsDocTypeLoading(
+                          ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER
+                            ?.value,
+                        )
                       "
                     >
                       <x-input
@@ -2364,7 +2374,9 @@ watch(
                     v-else
                     :loading="
                       props.showOcrNotification &&
-                      localIsDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+                      )
                     "
                   >
                     <x-input
@@ -2376,11 +2388,15 @@ watch(
                       @change="calculateCommission"
                       class="!mb-0 w-full"
                       :class="isNegativeValue ? ' icon-padding' : ''"
-                      :disabled="!state.isEdit || disableCommissionVatApplicable"
+                      :disabled="
+                        !state.isEdit || disableCommissionVatApplicable
+                      "
                       placeholder="Enter Commission Amount"
                       :rules="[isRequired]"
                       size="xs"
-                      :error="bookingDetailsForm.errors.commission_vat_applicable"
+                      :error="
+                        bookingDetailsForm.errors.commission_vat_applicable
+                      "
                       :icon-left="isNegativeValue ? 'minus' : ''"
                     />
                   </FieldLoader>
