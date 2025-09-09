@@ -6,6 +6,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\LeadSourceEnum;
 use App\Enums\LifeRiderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTermEnum;
@@ -682,7 +683,7 @@ class LifeQuoteService extends BaseService
             'quoteUID' => $uuid,
             'getLatestRating' => $getLatestRating,
             'lang' => 'en',
-            'callSource' => 'imcrm',
+            'callSource' => strtolower(LeadSourceEnum::IMCRM),
         ];
 
         $client = new \GuzzleHttp\Client;
@@ -761,7 +762,7 @@ class LifeQuoteService extends BaseService
     }
 
     /* This function will select the Plan details in the Quote */
-    public function selectPlan(string $quoteId, int $planId, int $version = 0, $saveQuote = false, $isUW = false)
+    public function selectPlan(string $quoteId, int $planId, int $version = 0, $saveQuote = false, $isUW = false, $callSource = null)
     {
         LoggerService::info('fn: selectPlan', extra: [
             'planId' => $planId,
@@ -769,6 +770,7 @@ class LifeQuoteService extends BaseService
             'saveQuote' => $saveQuote,
             'isUW' => $isUW,
             'quoteTypeId' => QuoteTypes::getIdFromValue('Life'),
+            'callSource' => $callSource,
         ]);
 
         // Creating Form Data
@@ -778,6 +780,7 @@ class LifeQuoteService extends BaseService
             'version' => $version,
             'isUW' => $isUW,
             'quoteTypeId' => QuoteTypes::getIdFromValue('Life'),
+            'callSource' => $callSource ?? strtolower(LeadSourceEnum::IMCRM),
         ];
 
         if ($saveQuote) {

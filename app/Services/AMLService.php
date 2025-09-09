@@ -10,7 +10,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\Kyc;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
@@ -772,8 +772,8 @@ class AMLService
             'paymentable_id' => $quoteDetails->id,
         ])->first();
 
-        if ($paymentDetails?->insuranceProvider?->code !== InsuranceProvidersEnum::AXA) {
-            LoggerService::info('fn:amlScreeningGIG - Insurance provider is not ('.InsuranceProvidersEnum::AXA.'). Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+        if ($paymentDetails?->insuranceProvider?->code !== InsuranceProviderEnum::AXA->value) {
+            LoggerService::info('fn:amlScreeningGIG - Insurance provider is not ('.InsuranceProviderEnum::AXA->value.'). Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
 
             return false;
         }
@@ -1161,7 +1161,7 @@ class AMLService
     {
         LoggerService::info("Clearing AML status called. Quote Type: {$quoteType}, Code: {$code}, Insurance Provider: {$providerCode}");
 
-        if ($providerCode == InsuranceProvidersEnum::AXA) {
+        if ($providerCode == InsuranceProviderEnum::AXA->value) {
             LoggerService::info("Insurance Provider is GIG(AXA). Skipping AML status clearing for Quote Code: {$code}");
 
             return false;

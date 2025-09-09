@@ -2,6 +2,7 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
+use App\Http\Controllers\AccuracyMatrixController;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
 use App\Http\Controllers\AgeDiscountController;
@@ -249,6 +250,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('/savings', SavingsQuoteController::class)->names(generateRouteNames('savings-quotes'));
         });
         Route::resource('personal-quotes/home', HomeQuoteController::class)->names(generateRouteNames('home-quotes'));
+
+        // Accuracy Matrix API routes for IMCRM
+        Route::get('accuracy-matrix/{quoteType}/{quoteId}', [AccuracyMatrixController::class, 'getMatrixStatus']);
 
         Route::group(['prefix' => 'quotes/'], function () {
             Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('carrevival-quotes-list');
