@@ -32,10 +32,10 @@ const statusOptions = computed(() => {
   );
 });
 
-const updateClaimStatus = isValid => { 
+const updateClaimStatus = isValid => {
   claimStatusForm.post(route('claims.update.status', props.claim?.uuid), {
     preserveScroll: true,
-    onSuccess: response => { 
+    onSuccess: response => {
       router.visit(route('claims.show', props.claim?.uuid), {
         preserveScroll: true,
       });

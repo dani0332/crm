@@ -39,8 +39,7 @@ const subStatusOptions = computed(() => {
   );
 });
 
-const updateClaimSubStatusAndCustomer = async isValid => { 
-
+const updateClaimSubStatusAndCustomer = async isValid => {
   try {
     NProgress.start();
     claimSubStatusAndCustomerForm.processing = true;

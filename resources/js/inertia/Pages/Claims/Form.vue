@@ -165,7 +165,7 @@ const carModelOptions = computed(() => {
 const getCarModel = reset => {
   let carMakeCode = props.dropdowns?.carMake.find(
     item => item.text === claimForm.car_make,
-  )?.id; 
+  )?.id;
 
   axios.get(`/car-model-by-id?id=${carMakeCode}`).then(({ data }) => {
     props.dropdowns.carModel = data;
@@ -369,7 +369,7 @@ function handlePageChange(newPage) {
 }
 
 // Select policy function
-function selectPolicy(policy) { 
+function selectPolicy(policy) {
   claimForm.policy_not_listed = false;
   claimForm.selected_policy_id = policy.id;
   claimForm.selected_quote_uuid = policy.uuid;
@@ -383,7 +383,7 @@ function selectPolicy(policy) {
 }
 
 // Policy not listed function
-function policyNotListed() { 
+function policyNotListed() {
   claimForm.policy_not_listed = true;
   claimForm.selected_policy_id = null;
   claimForm.selected_quote_uuid = null;
@@ -392,7 +392,7 @@ function policyNotListed() {
 }
 
 // Reset policy selection
-function resetPolicySelection() { 
+function resetPolicySelection() {
   policySearch.showPolicies = false;
   policySearch.searched = false;
   claimForm.selected_policy_id = null;
@@ -428,8 +428,7 @@ function onSubmit(isValid) {
         )?.label,
       }))
       .submit(method, url, {
-        onError: errors => { 
-
+        onError: errors => {
           // Handle different types of errors
           if (typeof errors === 'object' && errors !== null) {
             // Field-specific validation errors
@@ -459,7 +458,7 @@ function onSubmit(isValid) {
         },
         onSuccess: page => {
           //  do nothing
-        }, 
+        },
       });
   } else {
     notification.error({
