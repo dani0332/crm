@@ -1340,7 +1340,6 @@ class RenewalsUploadService
                 $lastName = implode(' ', $memberNameArray);
                 $fullNameKey = strtolower(trim($firstName.' '.$lastName));
                 LoggerService::info('Renewal: Health Plan Update Base Price Plan Member Premium Breakdown', ['fullNameKey' => $fullNameKey, 'memberPremiums' => isset($memberPremiums[$index])], ['ref_id' => $quote->uuid]);
-                
 
                 $memberPremium = isset($memberPremiums[$index]) ? $memberPremiums[$index] ?? 0 : 0;
                 if (isset($existingCustomersMember[$fullNameKey]) && isset($memberPremium)) {
