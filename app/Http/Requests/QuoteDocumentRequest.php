@@ -43,6 +43,7 @@ class QuoteDocumentRequest extends FormRequest
             'quote_uuid' => 'required',
             'member_detail_id' => 'nullable',
             'is_base_64' => 'nullable',
+            'file_name' => 'nullable|string|max:100', // only for base 64 file name to be used as original name
         ];
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->first())) {
