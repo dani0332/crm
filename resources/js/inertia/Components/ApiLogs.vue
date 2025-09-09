@@ -150,10 +150,10 @@ const onLoadAuditLogData = async () => {
               outlined
               :loading="apiLogs.loading"
               class="h-10"
-              title="Reload"
+              title="Refresh"
               @click.prevent="loadApiLogs"
             >
-              <x-icon icon="reset" class="mr-1" size="sm" />
+              <x-icon icon="refresh" class="mr-1" size="sm" />
             </x-button>
           </div>
           <DataTable
