@@ -252,7 +252,7 @@ const exportReport = async (exportType = 'download') => {
     if (!filters.report) {
       notification.error({
         position: 'top',
-        title: 'Export Error',
+        title: 'Export Error!',
         text: 'Please select a report type before exporting.',
       });
       return;
@@ -268,7 +268,7 @@ const exportReport = async (exportType = 'download') => {
       if (chatDays > 30) {
         notification.error({
           position: 'top',
-          title: 'Export Error',
+          title: 'Export Error!',
           message:
             'Maximum 30 days are allowed for Chat Initiated At date range.',
         });
