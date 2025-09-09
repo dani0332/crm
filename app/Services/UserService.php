@@ -8,12 +8,16 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 class UserService extends BaseService
 {
+    public function __construct(
+        private readonly HRMRequestService $hrmRequestService
+    ) {}
     public static function getRolesByUserId($userId)
     {
         return DB::select('select * from model_has_roles where model_id = ?', [$userId])->get();
@@ -241,5 +245,139 @@ class UserService extends BaseService
         });
 
         return $returnFormat === 'array' ? $result->toArray() : $result;
+    }
+
+    /**
+     * Fetch user codes from HRM API and update users table
+     *
+     * @param  array  $emails  Array of email addresses
+     * @return array Returns array with success status and processed data
+     */
+    public function fetchUserCodes(array $emails): array
+    {
+        try {
+            // Call HRM API to get employee codes
+            $employeeData = $this->hrmRequestService->getEmployeeCodes($emails);
+
+            if ($employeeData === false) {
+
+                return [
+                    'success' => false,
+                    'message' => 'Failed to fetch employee codes from HRM API',
+                    'processed' => 0,
+                    'updated' => 0,
+                    'not_found' => count($emails),
+                ];
+            }
+
+            $processed = 0;
+            $updated = 0;
+            $notFound = 0;
+            $results = [];
+
+            foreach ($employeeData as $employee) {
+                $processed++;
+                $email = $employee['email'] ?? null;
+                $code = $employee['code'] ?? null;
+
+                if (! $email) {
+                    LoggerService::warning(static::class.'::fetchUserCodes - Employee data missing email', [
+                        'employee_data' => $employee,
+                    ]);
+
+                    continue;
+                }
+
+                // Find user by email
+                $user = User::where('email', $email)->first();
+
+                if (! $user) {
+                    LoggerService::info(static::class.'::fetchUserCodes - User not found for email', [
+                        'email' => $email,
+                    ]);
+                    $notFound++;
+                    $results[] = [
+                        'email' => $email,
+                        'status' => 'user_not_found',
+                        'code' => $code,
+                    ];
+
+                    continue;
+                }
+
+                // Update user employee_code only if current employee_code is NULL and we have a valid code
+                if ($code !== null) {
+                    if ($user->employee_code === null) {
+                        $user->employee_code = $code;
+                        $user->save();
+
+                        LoggerService::info(static::class.'::fetchUserCodes - Updated user employee_code', [
+                            'user_id' => $user->id,
+                            'email' => $email,
+                            'old_employee_code' => null,
+                            'new_employee_code' => $code,
+                        ]);
+
+                        $updated++;
+                        $results[] = [
+                            'email' => $email,
+                            'user_id' => $user->id,
+                            'status' => 'updated',
+                            'old_employee_code' => null,
+                            'new_employee_code' => $code,
+                        ];
+                    } else {
+                        $results[] = [
+                            'email' => $email,
+                            'user_id' => $user->id,
+                            'status' => 'already_has_employee_code',
+                            'existing_employee_code' => $user->employee_code,
+                            'hrm_employee_code' => $code,
+                        ];
+                    }
+                } else {
+                    LoggerService::info(static::class.'::fetchUserCodes - No employee_code returned for user', [
+                        'user_id' => $user->id,
+                        'email' => $email,
+                    ]);
+
+                    $results[] = [
+                        'email' => $email,
+                        'user_id' => $user->id,
+                        'status' => 'no_employee_code_returned',
+                        'employee_code' => null,
+                    ];
+                }
+            }
+
+            LoggerService::info(static::class.'::fetchUserCodes - Process completed', [
+                'processed' => $processed,
+                'updated' => $updated,
+                'not_found' => $notFound,
+                'total_emails' => count($emails),
+            ]);
+
+            return [
+                'success' => true,
+                'message' => "Successfully processed {$processed} employees, updated {$updated} users",
+                'processed' => $processed,
+                'updated' => $updated,
+                'not_found' => $notFound,
+                'results' => $results,
+            ];
+
+        } catch (\Exception $e) {
+            LoggerService::error(static::class.'::fetchUserCodes - UserService exception occurred', [
+                'emails_count' => count($emails),
+            ], exception: $e);
+
+            return [
+                'success' => false,
+                'message' => 'An error occurred while processing user codes: '.$e->getMessage(),
+                'processed' => 0,
+                'updated' => 0,
+                'not_found' => count($emails),
+            ];
+        }
     }
 }
