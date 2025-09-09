@@ -48,7 +48,6 @@ const apiLogs = reactive({
   table: [
     { text: 'ID', value: 'id' },
     { text: 'REF-ID', value: 'policy_issuance.model.uuid' },
-    { text: 'Completed Step', value: 'policy_issuance.completed_step' },
     { text: 'Step', value: 'step' },
     { text: 'Status', value: 'status' },
     { text: 'Provider Name', value: 'policy_issuance.insurance_provider.text' },
@@ -65,15 +64,15 @@ const filteredLogs = computed(() => {
   else return apiLogs.data;
 });
 
-const onLoadAuditLogData = async () => {
+const loadPolicyIssuanceLogs = async () => {
   apiLogs.loading = true;
 
   let url = '/policy-issuance-logs';
 
   let data = {
-    quoteId: props.id, 
+    quoteId: props.id,
     quoteTypeId: props.quoteTypeId,
-    jsonData: true
+    jsonData: true,
   };
 
   axios
@@ -102,6 +101,10 @@ const onLoadAuditLogData = async () => {
     .finally(() => {
       apiLogs.loading = false;
     });
+};
+
+const onLoadAuditLogData = async () => {
+  await loadPolicyIssuanceLogs();
 };
 </script>
 
@@ -143,6 +146,17 @@ const onLoadAuditLogData = async () => {
             >
               Reset
             </x-button>
+            <x-button
+              size="sm"
+              color="primary"
+              outlined
+              :loading="apiLogs.loading"
+              class="h-10"
+              title="Reload"
+              @click.prevent="loadPolicyIssuanceLogs"
+            >
+              <x-icon icon="reset" class="mr-1" size="sm" />
+            </x-button>
           </div>
           <DataTable
             table-class-name="compact tablefixed"
@@ -152,6 +166,7 @@ const onLoadAuditLogData = async () => {
             hide-rows-per-page
             :rows-per-page="15"
             :hide-footer="apiLogs.data?.length < 15"
+            :loading="apiLogs.loading"
           >
             <template #item-status="{ status }">
               <x-tag
