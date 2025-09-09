@@ -4401,7 +4401,7 @@ function handleOcrNotification(event) {
     :type="modelClass"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
-  />
+  /> -->
 
   <ClientInquiryLogs
     v-if="clientInquiryLogs?.length > 0"
