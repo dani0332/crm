@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\PaymentChargesEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayEnum;
@@ -248,32 +248,38 @@ class SageApiService
         $preparedData['quoteDetails'] = $quoteModelObject::where('id', $request->quoteRefId)->first();
         $preparedData['sendUpdateLog'] = $sendUpdateLog;
 
-        // create AR Prepayment Premium Receipt
-        if (! empty($preparedData['payment']?->send_update_log_id)) {
-            $createPrepayment = $this->createARPrepaymentPremiumReceipts([$sageRequestPayload, $mainQuote, $preparedData['payment'], $preparedData['splitPayments']]);
-            if (! $createPrepayment['status']) {
-                return $createPrepayment;
-            }
-        }
+        $isEndorsementActionDisabled = app(SendUpdateLogService::class)->isEndorsementBookingActionDisabled($sendUpdateLog);
+        if (! $isEndorsementActionDisabled) {
 
-        // create AP Prepayment Premium Receipt
-        /*$createPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
-        if (! $createPremiumPrepayment['status']) {
-            return $createPremiumPrepayment;
-        }*/
-
-        if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
-            if (empty($reversalInvoiceLogs)) {
-                return ['status' => false, 'message' => 'Reversal invoice logs not found for reverse and correction'];
+            // create AR Prepayment Premium Receipt
+            if (! empty($preparedData['payment']?->send_update_log_id)) {
+                $createPrepayment = $this->createARPrepaymentPremiumReceipts([$sageRequestPayload, $mainQuote, $preparedData['payment'], $preparedData['splitPayments']]);
+                if (! $createPrepayment['status']) {
+                    return $createPrepayment;
+                }
             }
 
-            $response = $this->bookReversalEndorsementOnSage($request, $preparedData, $sageRequestPayload, $sageLogsArray, $reversalInvoiceLogs, $sendUpdateLog);
+            // create AP Prepayment Premium Receipt
+            /*$createPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
+            if (! $createPremiumPrepayment['status']) {
+                return $createPremiumPrepayment;
+            }*/
+
+            if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
+                if (empty($reversalInvoiceLogs)) {
+                    return ['status' => false, 'message' => 'Reversal invoice logs not found for reverse and correction'];
+                }
+
+                $response = $this->bookReversalEndorsementOnSage($request, $preparedData, $sageRequestPayload, $sageLogsArray, $reversalInvoiceLogs, $sendUpdateLog);
+            } else {
+                $response = $this->bookStraightEndorsementOnSage($preparedData, $sageRequestPayload, $sageLogsArray, $request);
+            }
+
+            if (! $response['status']) {
+                return $response;
+            }
         } else {
-            $response = $this->bookStraightEndorsementOnSage($preparedData, $sageRequestPayload, $sageLogsArray, $request);
-        }
-
-        if (! $response['status']) {
-            return $response;
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Endorsement booking invoice creation on Sage is disabled - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
         }
 
         $response = app(SendUpdateLogService::class)->updatesMoveToLead([$request, $sendUpdateLog, $preparedData]);
@@ -672,6 +678,34 @@ class SageApiService
             return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
         } else {
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Payment Code: '.$payment->code.' - Capture payment process skip & proceeding with Policy Book process - Unpaid payment count: '.$unpaidPaymentCount.' - Is Insurer Payment: '.$isInsurerPayment);
+        }
+
+        $isHealthAUHLead = $this->isHealthAUHLead($quoteType, $quote);
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote code: '.$quote->code.' - Is Health AUH Lead Check ', extra : [
+            'isHealthAUHLead' => $isHealthAUHLead,
+        ]);
+        if ($isHealthAUHLead) {
+
+            if (! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
+                LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
+                // dispath job to send email
+                SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
+            }
+
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : mark status as policy booked for : '.$quote->code.' ##################################');
+
+            $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked, auth()->id());
+
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : Status updated to: '.$quote->quote_status_id.' for '.$quote->code.' ##################################');
+
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : straightforwardPayments for : '.$quote->code.' ##################################');
+            (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : straightforwardPayments for : '.$quote->code.' done ##################################');
+
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ########## End of Policy Booked for : '.$quote->code.' ##########');
+
+            return ['status' => true, 'message' => 'Policy is Booked'];
+
         }
 
         // Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
@@ -1763,33 +1797,6 @@ class SageApiService
             }
 
             if ($sageEntryType != SageEnum::SCT_REVERSAL) {
-                LoggerService::info('SAGE API :  Prepare Patch payload for SpitPayments  for '.$quote->code);
-                $aPInvoicePaymentsScheduleResponse = (new SageCustomApiService)->getAPInvoicePaymentScheduleByBatchNumber($postedResponse['BatchNumber']);
-
-                if ($aPInvoicePaymentsScheduleResponse['status']) {
-                    $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
-                    foreach ($aPInvoicePaymentsSchedule as $key => $aPInvoicePaymentSchedule) {
-                        // add discount amount to amount due for the first child payment in sage for balancing the amount
-                        $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
-                        $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
-                        if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                            $dueDate = $invoicePaymentSchedulesDueDate;
-                        } else {
-                            $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
-                        }
-
-                        $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
-                        $aPInvoicePaymentSchedule->amtdue = $dueAmount;
-                        $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
-                        $aPInvoicePaymentSchedule->audtorg = $this->sageDBName;
-                    }
-                } else {
-                    $errorMessage = 'Error while getting split payment schedule from sage';
-                    $message = $aPInvoicePaymentsScheduleResponse['error'];
-
-                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, [], [], $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId], false);
-                }
-                // 7
                 $isLiveApiCallStep7 = true;
                 if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                     LoggerService::info('SAGE API :  Patch Request  Sent Already for '.$quote->code);
@@ -1801,7 +1808,37 @@ class SageApiService
                     if (! is_array($postedResponse)) {
                         $postedResponse = [];
                     }
+
+                    $aPInvoicePaymentsSchedule = $postedResponse['payload'];
+                    $resp = $postedResponse['response'] ?? [];
                 } else {
+                    LoggerService::info('SAGE API :  Prepare Patch payload for SpitPayments  for '.$quote->code);
+                    $aPInvoicePaymentsScheduleResponse = (new SageCustomApiService)->getAPInvoicePaymentScheduleByBatchNumber($postedResponse['BatchNumber']);
+
+                    if ($aPInvoicePaymentsScheduleResponse['status']) {
+                        $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
+                        foreach ($aPInvoicePaymentsSchedule as $key => $aPInvoicePaymentSchedule) {
+                            // add discount amount to amount due for the first child payment in sage for balancing the amount
+                            $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
+                            $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
+                            if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                                $dueDate = $invoicePaymentSchedulesDueDate;
+                            } else {
+                                $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                            }
+
+                            $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+                            $aPInvoicePaymentSchedule->amtdue = $dueAmount;
+                            $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
+                            $aPInvoicePaymentSchedule->audtorg = $this->sageDBName;
+                        }
+                    } else {
+                        $errorMessage = 'Error while getting split payment schedule from sage';
+                        $message = $aPInvoicePaymentsScheduleResponse['error'];
+
+                        return $this->logErrorAndReturn([$quote, $message, $errorMessage, [], [], $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId], false);
+                    }
+
                     LoggerService::info('SAGE API :  Send Patch Request  for '.$quote->code);
                     $resp = (new SageCustomApiService)->updateAPInvoicePaymentSchedule($postedResponse['BatchNumber'], $aPInvoicePaymentsSchedule);
                     $postedResponse['response'] = $resp;
@@ -3679,7 +3716,7 @@ class SageApiService
 
     public function allowedProviderForSageEPBooking()
     {
-        return [InsuranceProvidersEnum::OIC];
+        return [InsuranceProviderEnum::OIC->value];
     }
 
 }

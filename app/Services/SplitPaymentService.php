@@ -7,7 +7,7 @@ use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentFrequency;
@@ -41,6 +41,7 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\CentralTrait;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\SageLoggable;
 use Carbon\Carbon;
@@ -54,6 +55,7 @@ use stdClass;
 class SplitPaymentService
 {
     use CentralTrait;
+    use GenericQueriesAllLobs;
     use HandlesDeadlockRetries;
     use SageLoggable;
 
@@ -720,10 +722,10 @@ class SplitPaymentService
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
             // Log message for creating Sage receipt
             LoggerService::info("Creating Sage receipt for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} - Current Sage receipt ID: {$paymentSplit->sage_reciept_id}");
-
+            $isHealthAUH = $this->isHealthAUHLead($modelType, $mainLeadObject);
             $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quoteModel, $paymentSplit); /* Handle NRA case where payment is approved after policy/send update is booked */
             info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' trigger creation of Premium Sage receipt  : ', ['shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
-            if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && empty($paymentSplit->sage_reciept_id)) {
+            if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && ! $isHealthAUH && empty($paymentSplit->sage_reciept_id)) {
                 // Create an empty Request object
                 $sageRequest = new stdClass;
                 $sageRequest->userId = auth()->id();
@@ -939,7 +941,7 @@ class SplitPaymentService
 
             $successMessage = 'Processing master payment approval completed';
 
-            if (($masterPayment->insuranceProvider->code == InsuranceProvidersEnum::ALNC && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
+            if (($masterPayment->insuranceProvider->code == InsuranceProviderEnum::ALNC->value && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
                 if ($sendUpdateId) {
                     app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
@@ -971,7 +973,7 @@ class SplitPaymentService
                 // Log for creating duplicate lead for TRAVEL
                 if ($quoteTypeId == QuoteTypeId::Travel && $totalPaymentsCount > 1 && ! $sendUpdateId) {
                     $quoteStatusId = $quoteModel->quote_status_id;
-                    if ($masterPayment->insuranceProvider->code == InsuranceProvidersEnum::ALNC && $isFromJob && $totalApproved != $totalPaymentsCount) {
+                    if ($masterPayment->insuranceProvider->code == InsuranceProviderEnum::ALNC->value && $isFromJob && $totalApproved != $totalPaymentsCount) {
                         $quoteStatusId = QuoteStatusEnum::PaymentPending;
                     }
                     if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel, $quoteStatusId)) {
@@ -1366,7 +1368,7 @@ class SplitPaymentService
 
         // Check if it's from a job and the model type is a travel quote with a specific insurance provider
         $isTravelQuoteFromJob = $isFromJob && $modelType == QuoteTypes::TRAVEL->value;
-        $isAlncInsurance = $paymentSplit->payment->insuranceProvider->code == InsuranceProvidersEnum::ALNC;
+        $isAlncInsurance = $paymentSplit->payment->insuranceProvider->code == InsuranceProviderEnum::ALNC->value;
 
         return $paymentNotApproved && (! $isFromJob || ($isTravelQuoteFromJob && $isAlncInsurance));
     }

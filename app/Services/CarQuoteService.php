@@ -1903,8 +1903,18 @@ class CarQuoteService extends BaseService
         return collect($results);
     }
 
-    public function exportnonPUAAuthorized()
+    public function exportnonPUAAuthorized($requestParams = [])
     {
+        LoggerService::info('CarQuoteService::exportnonPUAAuthorized - Method called for Car PUA export');
+
+        if (! empty($requestParams)) {
+            $request = new \Illuminate\Http\Request($requestParams);
+        } else {
+            $request = request();
+        }
+
+        LoggerService::info('exportnonPUAAuthorized', ['request_params' => $request->all()]);
+
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
 
         $nonPUAAuthLead = DB::table('car_quote_request as q')
@@ -1919,6 +1929,10 @@ class CarQuoteService extends BaseService
                 'cmd.text as model',
                 'u.email as assignedadvisoremail'
             )
+            ->leftJoin('payments as p', function ($join) {
+                $join->on('p.paymentable_id', '=', 'q.id')
+                    ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
+            })
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
@@ -1943,14 +1957,25 @@ class CarQuoteService extends BaseService
                     ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
                     ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
             })
-            ->orderBy('q.paid_at', 'desc')
-            ->get();
+            ->when($request->filled('authorize_date'), function ($query) use ($request) {
+                $authorizeDate = $request->input('authorize_date');
+                if ($authorizeDate) {
+                    $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
+                }
+            })
+            ->orderBy('q.paid_at', 'desc');
+
+        $nonPUAAuthLead = $nonPUAAuthLead->get();
 
         $nonPUAAuthTeamCount = DB::table('car_quote_request as q')
             ->select(
                 't.name as Team',
                 DB::raw('COUNT(*) as Total')
             )
+            ->leftJoin('payments as p', function ($join) {
+                $join->on('p.paymentable_id', '=', 'q.id')
+                    ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
+            })
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
@@ -1966,14 +1991,31 @@ class CarQuoteService extends BaseService
                     ->whereNotNull('cqp.pua_premium')
                     ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
             })
-            ->groupBy('t.name')
-            ->get();
+            ->when($request->filled('authorize_date'), function ($query) use ($request) {
+                $authorizeDate = $request->input('authorize_date');
+                if ($authorizeDate) {
+                    $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
+                }
+            })
+            ->groupBy('t.name');
+
+        $nonPUAAuthTeamCount = $nonPUAAuthTeamCount->get();
 
         return [$nonPUAAuthLead, $nonPUAAuthTeamCount];
     }
 
-    public function exportPUAAuthorized()
+    public function exportPUAAuthorized($requestParams = [])
     {
+        LoggerService::info('CarQuoteService::exportPUAAuthorized - Method called for Car PUA export');
+
+        if (! empty($requestParams)) {
+            $request = new \Illuminate\Http\Request($requestParams);
+        } else {
+            $request = request();
+        }
+
+        LoggerService::info('exportPUAAuthorized', ['request_params' => $request->all()]);
+
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
 
         $puaAuthUpdate = DB::table('car_quote_plan_details as cqp')
@@ -1989,6 +2031,10 @@ class CarQuoteService extends BaseService
                 'u.email as assignedadvisoremail'
             )
             ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+            ->leftJoin('payments as p', function ($join) {
+                $join->on('p.paymentable_id', '=', 'q.id')
+                    ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
+            })
             ->leftJoin('car_plan as cp', 'q.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
@@ -2004,8 +2050,15 @@ class CarQuoteService extends BaseService
             ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
             ->where('t.parent_team_id', '=', $carTeam->id)
-            ->orderBy('q.paid_at', 'desc')
-            ->get();
+            ->when($request->filled('authorize_date'), function ($query) use ($request) {
+                $authorizeDate = $request->input('authorize_date');
+                if ($authorizeDate) {
+                    $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
+                }
+            })
+            ->orderBy('q.paid_at', 'desc');
+
+        $puaAuthUpdate = $puaAuthUpdate->get();
 
         $puaAuthTeamUpdate = DB::table('car_quote_plan_details as cqp')
             ->select(
@@ -2013,6 +2066,10 @@ class CarQuoteService extends BaseService
                 DB::raw('COUNT(*) as Total')
             )
             ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+            ->leftJoin('payments as p', function ($join) {
+                $join->on('p.paymentable_id', '=', 'q.id')
+                    ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
+            })
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
@@ -2023,19 +2080,40 @@ class CarQuoteService extends BaseService
             ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
             ->where('t.parent_team_id', '=', $carTeam->id)
-            ->groupBy('t.name')
-            ->get();
+            ->when($request->filled('authorize_date'), function ($query) use ($request) {
+                $authorizeDate = $request->input('authorize_date');
+                if ($authorizeDate) {
+                    $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
+                }
+            })
+            ->groupBy('t.name');
+
+        $puaAuthTeamUpdate = $puaAuthTeamUpdate->get();
 
         return [$puaAuthUpdate, $puaAuthTeamUpdate];
     }
 
-    public function exportPUAUpdates()
+    public function exportPUAUpdates($requestParams = [])
     {
+        LoggerService::info('CarQuoteService::exportPUAUpdates - Method called for Car PUA export');
+
+        if (! empty($requestParams)) {
+            $request = new \Illuminate\Http\Request($requestParams);
+        } else {
+            $request = request();
+        }
+
+        LoggerService::info('exportPUAUpdates', ['request_params' => $request->all()]);
+
         $startDate = Carbon::now()->subDay()->startOfDay();
         $endDate = Carbon::now()->subDay()->endOfDay();
 
-        return DB::table('car_quote_plan_details as cqp')
+        $puaUpdatesQuery = DB::table('car_quote_plan_details as cqp')
             ->join('car_quote_request as cqr', 'cqp.quote_uuid', '=', 'cqr.uuid')
+            ->leftJoin('payments as p', function ($join) {
+                $join->on('p.paymentable_id', '=', 'cqr.id')
+                    ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
+            })
             ->join('car_make as cmk', 'cqr.car_make_id', '=', 'cmk.id')
             ->join('car_model as cmd', 'cqr.car_model_id', '=', 'cmd.id')
             ->join('nationality as n', 'cqr.nationality_id', '=', 'n.id')
@@ -2051,7 +2129,15 @@ class CarQuoteService extends BaseService
             })
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
             ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
-            ->whereColumn('cqp.plan_id', 'cqr.plan_id');
+            ->whereColumn('cqp.plan_id', 'cqr.plan_id')
+            ->when($request->filled('captured_date'), function ($query) use ($request) {
+                $capturedDate = $request->input('captured_date');
+                if ($capturedDate) {
+                    $query->whereDate('p.captured_at', Carbon::parse($capturedDate)->toDateString());
+                }
+            });
+
+        return $puaUpdatesQuery;
     }
 
     public function pauseAndResumeFollowUpCounters($data)

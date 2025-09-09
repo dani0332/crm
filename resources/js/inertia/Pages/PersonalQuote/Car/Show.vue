@@ -1624,6 +1624,22 @@ const bookPolicyReloadKey = ref(0);
 const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
 const ocrLoadingDocTypes = reactive(new Set());
 
+// Check if all required policy fields are filled (moved from OcrNotification to avoid duplicates)
+const checkRequiredPolicyFields = () => {
+  const quote = usePage().props?.quote;
+  if (!quote) return false;
+  const requiredFields = [
+    { field: 'policy_number', property: 'quote_policy_number' },
+    { field: 'policy_start_date', property: 'quote_policy_start_date' },
+    { field: 'policy_expiry_date', property: 'quote_policy_expiry_date' },
+    { field: 'price_vat_applicable', property: 'price_vat_applicable' },
+  ];
+  return requiredFields.every(item => {
+    const value = quote[item.field] || quote[item.property];
+    return value !== null && value !== undefined && String(value).trim() !== '';
+  });
+};
+
 // Helper function to check if a document type is currently being processed
 const isDocTypeLoading = docType => {
   const result = ocrLoadingDocTypes.has(docType);
@@ -1688,6 +1704,21 @@ function handleOcrNotification(event) {
         ocrLoadingDocTypes.clear();
         policyDetailReloadKey.value++;
         bookPolicyReloadKey.value++;
+
+        // Check policy fields completion after data reload (only for CERTIFICATE_OF_ISSUANCE)
+        if (
+          status === 'end' &&
+          !event.detail?.error &&
+          docType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value
+        ) {
+          const allFieldsFilled = checkRequiredPolicyFields();
+          if (!allFieldsFilled) {
+            notification.info({
+              title: 'Some required fields are still missing in Policy details',
+              position: 'top',
+            });
+          }
+        }
       },
       preserveState: true,
       preserveScroll: true,
@@ -4335,12 +4366,12 @@ function handleOcrNotification(event) {
     :expanded="sectionExpanded"
   />
 
-  <!-- <OcrLogs
+  <OcrLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="modelClass"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
-  /> -->
+  />
 
   <ClientInquiryLogs
     v-if="clientInquiryLogs?.length > 0"
