@@ -61,7 +61,7 @@ class ClaimAllocationService
         if ($lead = $request->getLead()) {
             $lead->endAllocation();
         }
-        dd($request->isAllocated());
+       
         if ($request->isAllocated() || $request->isSameManager()) {
             $message = 'Manager assigned successfully!';
 

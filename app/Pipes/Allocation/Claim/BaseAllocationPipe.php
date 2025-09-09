@@ -193,6 +193,7 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
 
     protected function assign(?callable $afterAssign = null)
     {
+       
         DB::beginTransaction();
 
         try {
@@ -226,13 +227,10 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
         if (! $this->lead->manager_id) {
             return;
         }
-
         if ($manager->id == $this->lead->manager_id) {
             LoggerService::info('Manager is same as previous manager. Skipping for now.');
-
             $this->allocationRequest->markAsSameManager();
-
-            $this->throw('Eligible Manager is already assigned to this lead', self::OK);
+            LoggerService::info('Eligible Manager is already assigned to this lead');
         }
 
     }

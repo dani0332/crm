@@ -22,17 +22,17 @@ class FinalizeEligibleManagerPipe extends BaseAllocationPipe
         LoggerService::info('Available User IDs are: '.json_encode($availableUserIds));
 
         $managerId = $this->getFinalManagerId($availableUserIds);
-        $manager = User::find($managerId);
+        $manager = User::where('id', $managerId)->first();
         if (empty($manager)) {
             LoggerService::warning('No manager found');
             $this->allocationRequest->markAsFailed();
             $this->throw('Manager not found', self::OK);
         }
-
+      
         $this->allocationRequest->setManager($manager);
-
+       
         $this->verifyIfManagerIsSameAsPreviousManager($manager);
-
+    
         return $next($request);
     }
 
