@@ -372,9 +372,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $bookPolicyRequest->withValidator($validator);
 
             if ($validator->fails()) {
-                LoggerService::info('fn:'.__FUNCTION__.' testing validator fails: ', extra: [
-                    'validator' => json_encode($validator->errors()),
-                ]);
                 $response['status'] = false;
                 $response['error'] = $validator->errors()->first() ?? 'BookPolicyRequest validation failed';
                 $response['message'] = $validator->errors()->first();
@@ -1095,10 +1092,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         ];
 
         if ($policyIssuance?->status === PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS) {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1066', extra: [
-                'policyIssuance_status' => $policyIssuance->status,
-                'completed_step' => $policyIssuance->completed_step,
-            ]);
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';
@@ -1110,15 +1103,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS ||
             ($policyIssuance->completed_step && $policyIssuance?->status == '')
         ) {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1081', extra: [
-                'policyIssuance_status' => $policyIssuance->status,
-                'completed_step' => $policyIssuance->completed_step,
-            ]);
             if (! $policyIssuance->completed_step || $policyIssuance->completed_step === self::UPLOAD_DOCUMENTS) {
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1086', extra: [
-                    'policyIssuance_status' => $policyIssuance->status,
-                    'completed_step' => $policyIssuance->completed_step,
-                ]);
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'All Steps are editable';
@@ -1126,10 +1111,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 return $response;
             }
             if ($policyIssuance->completed_step === self::ISSUE_POLICY) {
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1097', extra: [
-                    'policyIssuance_status' => $policyIssuance->status,
-                    'completed_step' => $policyIssuance->completed_step,
-                ]);
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Upload Documents and Update Booking Details are editable';
@@ -1137,28 +1118,15 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 return $response;
             }
             if ($policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1108', extra: [
-                    'policyIssuance_status' => $policyIssuance->status,
-                    'completed_step' => $policyIssuance->completed_step,
-                ]);
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Booking Details is editable';
 
                 return $response;
             }
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1118', extra: [
-                'policyIssuance_status' => $policyIssuance->status,
-                'completed_step' => $policyIssuance->completed_step,
-            ]);
 
-            // getting status processing here, that's why it's not editable
             return $response;
         } elseif (! $policyIssuance) {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1126', extra: [
-                'policyIssuance_status' => $policyIssuance?->status ?? 'null',
-                'completed_step' => $policyIssuance?->completed_step ?? 'null',
-            ]);
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';
@@ -1174,11 +1142,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
             return $response;
         }
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1148', extra: [
-            'policyIssuance_status' => $policyIssuance?->status ?? 'null',
-            'completed_step' => $policyIssuance?->completed_step ?? 'null',
-        ]);
 
         return $response;
     }
