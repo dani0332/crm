@@ -106,7 +106,8 @@ const rules = {
       return true; // Let required validation handle empty values
     }
 
-    const selectedDate = new Date(v);
+    // Use consistent date parsing that respects dd/MM/yyyy format
+    const selectedDate = parseDateString(v);
     const currentDate = new Date();
     const maxDate = new Date();
     maxDate.setDate(currentDate.getDate() + RTA_CONSTANTS.POLICY_EFFECTIVE_DATE_MAX_DAYS);
@@ -132,7 +133,8 @@ const rules = {
       return true; // Let required validation handle empty values
     }
 
-    const selectedDate = new Date(v);
+    // Use consistent date parsing that respects dd/MM/yyyy format
+    const selectedDate = parseDateString(v);
     const currentDate = new Date();
     // Set currentDate to start of day for fair comparison
     currentDate.setHours(0, 0, 0, 0);
@@ -317,11 +319,35 @@ const formatDate = (date) => {
   return date.toISOString().split('T')[0];
 };
 
+// Parse date string in dd/MM/yyyy or dd/MM/yyyy format consistently
+const parseDateString = (dateString) => {
+  if (!dateString) return null;
+  
+  // Handle both dd/MM/yyyy and dd-MM-yyyy formats
+  const cleanedString = dateString.replace(/-/g, '/');
+  
+  // Check if it matches dd/MM/yyyy or d/M/yyyy format
+  const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+  const match = cleanedString.match(dateRegex);
+  
+  if (match) {
+    const day = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10) - 1; // Month is 0-indexed in JavaScript Date
+    const year = parseInt(match[3], 10);
+    
+    // Create date with explicit day, month, year to avoid ambiguity
+    return new Date(year, month, day);
+  }
+  
+  // For ISO format (YYYY-MM-DD) or other formats, use native parsing
+  return new Date(dateString);
+};
+
 // Calculate dates for New Vehicle Registration and Change Vehicle Ownership
 const calculateDatesForNewVehicleOrOwnershipChange = (forceCalculation = false) => {
   console.log('calculateDatesForNewVehicleOrOwnershipChange', additionalVehicleTransactionDetailsForm.policy_effective_date);
   if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
-    const policyEffectiveDate = new Date(additionalVehicleTransactionDetailsForm.policy_effective_date);
+    const policyEffectiveDate = parseDateString(additionalVehicleTransactionDetailsForm.policy_effective_date);
 
     // Policy Expiry Date = Policy Effective Date + 13 months
     const policyExpiryDate = new Date(policyEffectiveDate);
@@ -348,7 +374,7 @@ const calculateDatesForNewVehicleOrOwnershipChange = (forceCalculation = false) 
 // Calculate dates for Non-GIG Vehicle Renewal
 const calculateDatesForNonGigRenewal = (forceCalculation = false) => {
   if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
-    const policyEffectiveDate = new Date(additionalVehicleTransactionDetailsForm.policy_effective_date);
+    const policyEffectiveDate = parseDateString(additionalVehicleTransactionDetailsForm.policy_effective_date);
 
     // Certificate Start Date = Policy Effective Date
     // Certificate End Date = Policy Effective Date + 13 months
@@ -373,7 +399,7 @@ const calculateDatesForNonGigRenewal = (forceCalculation = false) => {
 // Calculate dates for GIG Vehicle Renewal
 const calculateDatesForGigRenewal = (forceCalculation = false) => {
   if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
-    const certificateStartDate = new Date(additionalVehicleTransactionDetailsForm.certificate_start_date);
+    const certificateStartDate = parseDateString(additionalVehicleTransactionDetailsForm.certificate_start_date);
 
     // Certificate End Date = Certificate Start Date + 13 months
     const certificateEndDate = new Date(certificateStartDate);
@@ -388,7 +414,7 @@ const calculateDatesForGigRenewal = (forceCalculation = false) => {
 // Calculate dates for Vehicle Renewal with non-renewals_uploads source
 const calculateDatesForVehicleRenewalNonUpload = (forceCalculation = false) => {
   if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
-    const policyEffectiveDate = new Date(additionalVehicleTransactionDetailsForm.policy_effective_date);
+    const policyEffectiveDate = parseDateString(additionalVehicleTransactionDetailsForm.policy_effective_date);
     // Policy Expiry Date = Policy Effective Date + 13 months
     const policyExpiryDate = new Date(policyEffectiveDate);
     policyExpiryDate.setMonth(policyExpiryDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
@@ -400,7 +426,7 @@ const calculateDatesForVehicleRenewalNonUpload = (forceCalculation = false) => {
   }
 
   if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
-    const certificateStartDate = new Date(additionalVehicleTransactionDetailsForm.certificate_start_date);
+    const certificateStartDate = parseDateString(additionalVehicleTransactionDetailsForm.certificate_start_date);
 
     // Certificate End Date = Certificate Start Date + 13 months
     const certificateEndDate = new Date(certificateStartDate);
@@ -757,7 +783,7 @@ onMounted(() => {
 // LIVA-specific date calculation (for new business only)
 const calculateDatesForLiva = (forceCalculation = false) => {
   if (isLIVA.value && additionalVehicleTransactionDetailsForm.policy_effective_date) {
-    const effectiveDate = new Date(additionalVehicleTransactionDetailsForm.policy_effective_date);
+    const effectiveDate = parseDateString(additionalVehicleTransactionDetailsForm.policy_effective_date);
     const expiryDate = new Date(effectiveDate);
     expiryDate.setMonth(expiryDate.getMonth() + 13);
     const formattedExpiryDate = formatDate(expiryDate);

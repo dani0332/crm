@@ -4396,7 +4396,7 @@ function handleOcrNotification(event) {
     :expanded="sectionExpanded"
   />
 
-  <!-- <OcrLogs
+  <OcrLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="modelClass"
     :id="$page.props.record.id"
