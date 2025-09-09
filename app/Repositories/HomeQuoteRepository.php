@@ -814,6 +814,7 @@ class HomeQuoteRepository extends BaseRepository
                         },
                     ]);
                 },
+                'transactionType',
             ])
             ->select([
                 $this->getTable().'.*',

@@ -963,6 +963,8 @@ const confirmSendEmail = () => {
   loader.value.link = true;
 };
 
+const leadSourceEnum = page.props.leadSource;
+
 const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
   selectPlanLoader.value[planUuid] = true;
   axios
@@ -971,6 +973,7 @@ const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
       quoteId: quoteId,
       version: version,
       isUW: isUW,
+      callSource: leadSourceEnum?.IMCRM?.toLowerCase(),
     })
     .then(response => {
       selectPlanLoader.value[planUuid] = false;

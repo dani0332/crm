@@ -13,7 +13,7 @@ use App\Enums\CoverageTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
@@ -2265,7 +2265,7 @@ class RenewalsUploadService
                                     if ($leadData->driver_cover_amount == '') {
                                         $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
                                     }
-                                    if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProvidersEnum::TM && ! $leadData->car_hire) {
+                                    if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProviderEnum::TM->value && ! $leadData->car_hire) {
                                         $leadValidationErrors->push('Rent a car is required with TPL & TM');
                                     }
                                     if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
@@ -2315,7 +2315,7 @@ class RenewalsUploadService
 
                                         if (
                                             $leadData->plan_type == CarPlanType::TPL &&
-                                            $leadData->insurer == InsuranceProvidersEnum::TM &&
+                                            $leadData->insurer == InsuranceProviderEnum::TM->value &&
                                             $addonCode == CarPlanAddonsCode::CAR_HIRE
                                         ) {
                                             continue;
