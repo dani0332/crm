@@ -5,9 +5,7 @@ namespace App\Pipes\Allocation\Handlers\Claim;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\ClaimRequest;
-
 use Illuminate\Support\Collection;
-use App\Pipes\Allocation\Handlers\Claim\AllocationRequestMarkable;
 
 class AllocationRequest
 {

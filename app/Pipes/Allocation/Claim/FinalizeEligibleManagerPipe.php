@@ -28,11 +28,11 @@ class FinalizeEligibleManagerPipe extends BaseAllocationPipe
             $this->allocationRequest->markAsFailed();
             $this->throw('Manager not found', self::OK);
         }
-      
+
         $this->allocationRequest->setManager($manager);
-       
+
         $this->verifyIfManagerIsSameAsPreviousManager($manager);
-    
+
         return $next($request);
     }
 

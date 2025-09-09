@@ -2,20 +2,21 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\ClaimAllocation\ClaimAllocationService;
 use App\Services\Logger\LoggerService;
-use App\Enums\ApplicationStorageEnums;
 use Carbon\Carbon;
-use App\Enums\Logger\LoggerFeatureEnum;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class ClaimReassignJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
+
     public $tries = 2;
     public $timeout = 15;
     public $backoff = 30;
@@ -40,7 +41,7 @@ class ClaimReassignJob implements ShouldQueue
     }
     public function handle()
     {
-        LoggerService::info(self::class."::handle - Reassignment job started at : ".now());
+        LoggerService::info(self::class.'::handle - Reassignment job started at : '.now());
         if (! $this->shouldProceed() && ! now()->isWeekend()) {
             LoggerService::info('Reassignment job is not proceeding as per business timings');
 
@@ -50,8 +51,8 @@ class ClaimReassignJob implements ShouldQueue
         $leads = app(ClaimAllocationService::class)->fetchReAssignmentLeads($this->managerId);
 
         if ($leads->count() === 0) {
-            LoggerService::info(self::class."::handle - No  lead found or either lead is not under assignment criteria");
-            LoggerService::info(self::class."::handle - Reassignment job ended at : ".now());
+            LoggerService::info(self::class.'::handle - No  lead found or either lead is not under assignment criteria');
+            LoggerService::info(self::class.'::handle - Reassignment job ended at : '.now());
 
             return false; // when lead is not on criteria or not found
         }
@@ -70,8 +71,8 @@ class ClaimReassignJob implements ShouldQueue
             info(self::class.'::handle - Reassignment ended ---------');
         }
 
-            LoggerService::endLogging();
-            LoggerService::info(self::class."::handle - Reassignment job ended at ");
+        LoggerService::endLogging();
+        LoggerService::info(self::class.'::handle - Reassignment job ended at ');
     }
 
     public function middleware()

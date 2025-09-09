@@ -1,14 +1,14 @@
-<?php 
+<?php
 
 namespace App\Services\EmailServices;
 
-use App\Services\BaseService;
-use App\Models\ClaimRequest;
-use App\Services\Logger\LoggerService;
-use App\Models\User;
-use App\Enums\WorkflowTypeEnum;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\WorkflowTypeEnum;
+use App\Models\ClaimRequest;
+use App\Models\User;
+use App\Services\BaseService;
 use App\Services\BirdService;
+use App\Services\Logger\LoggerService;
 
 class ClaimEmailService extends BaseService
 {
@@ -21,7 +21,6 @@ class ClaimEmailService extends BaseService
             LoggerService::error(self::class.' - ClaimRequest not found');
         }
         $advisor = User::where('id', $claimRequest->manager_id)->first() ?? null;
-
 
         $payload = [
             'customerEmail' => $claimRequest->email,

@@ -7,6 +7,7 @@ use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\ClaimRequest;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\CycleQuote;
@@ -26,6 +27,7 @@ use App\Observers\BusinessQuoteDetailObserver;
 use App\Observers\BusinessQuoteObserver;
 use App\Observers\CarQuoteDetailObserver;
 use App\Observers\CarQuoteObserver;
+use App\Observers\ClaimRequestObserver;
 use App\Observers\CustomerAddressObserver;
 use App\Observers\CustomerObserver;
 use App\Observers\CycleQuoteObserver;
@@ -46,8 +48,6 @@ use App\Services\LeadsCountService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
-use App\Models\ClaimRequest;
-use App\Observers\ClaimRequestObserver;
 
 class AppServiceProvider extends ServiceProvider
 {

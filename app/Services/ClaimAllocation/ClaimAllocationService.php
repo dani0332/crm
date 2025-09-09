@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Pipeline;
 
 class ClaimAllocationService
 {
-    public function execute(string $claimUuid, int $quoteTypeId , bool $isReassignmentJob = false)
+    public function execute(string $claimUuid, int $quoteTypeId, bool $isReassignmentJob = false)
     {
         LoggerService::startQuoteLogging($claimUuid, LoggerFeatureEnum::CLAIM_ALLOCATION);
         $quoteType = QuoteTypes::getName($quoteTypeId);
@@ -39,18 +39,18 @@ class ClaimAllocationService
         );
 
         // try {
-            $result = Pipeline::send($allocationRequest)->through([
-                FetchLeadPipe::class,
-                FetchEligibleManagersPipe::class,
-                FinalizeEligibleManagerPipe::class,
-                AssignLeadPipe::class,
-                MakeResponsePipe::class,
-            ])->thenReturn();
+        $result = Pipeline::send($allocationRequest)->through([
+            FetchLeadPipe::class,
+            FetchEligibleManagersPipe::class,
+            FinalizeEligibleManagerPipe::class,
+            AssignLeadPipe::class,
+            MakeResponsePipe::class,
+        ])->thenReturn();
 
-            return $result;
+        return $result;
         // } catch (Exception $e) {
 
-            return $this->resolveAllocationResponse($allocationRequest, $e);
+        return $this->resolveAllocationResponse($allocationRequest, $e);
         // }
 
     }
@@ -61,7 +61,7 @@ class ClaimAllocationService
         if ($lead = $request->getLead()) {
             $lead->endAllocation();
         }
-       
+
         if ($request->isAllocated() || $request->isSameManager()) {
             $message = 'Manager assigned successfully!';
 
@@ -258,7 +258,7 @@ class ClaimAllocationService
     public function getUnavailableManager()
     {
         // Query to fetch unavailable advisors
-        $query =ClaimsLeadAllocationConfig::with('user')
+        $query = ClaimsLeadAllocationConfig::with('user')
             ->whereHas('user', function ($query) {
                 $query->where('is_active', 1)
                     ->whereIn('status', [

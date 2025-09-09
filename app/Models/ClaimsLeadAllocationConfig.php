@@ -66,8 +66,4 @@ class ClaimsLeadAllocationConfig extends Model implements AuditableContract
         return QuoteTypes::getName($this->quote_type_id);
     }
 
-  
-
-  
-   
 }

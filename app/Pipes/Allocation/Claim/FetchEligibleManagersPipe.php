@@ -26,6 +26,7 @@ class FetchEligibleManagersPipe extends BaseAllocationPipe
 
         $eligibleManagers = $this->fetchEligibleUsersByStatus($lead);
         $request->set('eligibleManagers', $eligibleManagers);
+
         return $next($request);
     }
 

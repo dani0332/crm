@@ -172,7 +172,6 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
             LoggerService::info("Was previously assigned to User ID: {$this->lead->manager_id} and is now being assigned to User ID: {$manager->id}");
         }
 
-
         LoggerService::info(self::class.' - assignLead: Going to Assign Manager');
         $this->lead->manager_id = $manager->id;
         $this->lead->manager_assigned_date = now();
@@ -193,7 +192,7 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
 
     protected function assign(?callable $afterAssign = null)
     {
-       
+
         DB::beginTransaction();
 
         try {
