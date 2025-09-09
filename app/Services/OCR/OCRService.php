@@ -361,11 +361,10 @@ class OCRService
         LoggerService::info('Starting OCR processing - Quote UUID: '.$quote->uuid);
 
         // Check if OCR service is available
-        // TODO: Uncomment this when Customer OCR service is available & OCR Health Check is implemented by OCR team on Stage
-        // $serviceCheck = $this->handleServiceAvailability($quote, $documentType, $userId);
-        // if (! $serviceCheck) {
-        //     return false;
-        // }
+        $serviceCheck = $this->handleServiceAvailability($quote, $documentType, $userId);
+        if (! $serviceCheck) {
+            return false;
+        }
 
         // Skip OCR for non-eligible providers
         if (! $this->isProviderEligibleForOcr($quoteType, $quote)) {

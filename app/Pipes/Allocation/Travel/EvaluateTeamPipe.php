@@ -55,10 +55,6 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             $teamId = $sicUnassistedTeamId;
             $reason = $isAIG ? 'AIG with payment authorized or link requested' :
                               'SIC with payment authorized or link requested';
-        } elseif ($isNonSICNonAIGWithPayment) {
-            // Rule 3: Non-SIC, Non-AIG leads with payment authorized or link requested
-            $teamId = $sicUnassistedTeamId;
-            $reason = 'Non-SIC, Non-AIG lead with payment authorized or link requested';
         } else {
             // Rule 4: Default - all other leads have no specific team
             $teamId = $defaultTeamId;
