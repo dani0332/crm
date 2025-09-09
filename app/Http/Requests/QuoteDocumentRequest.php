@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\InsurerProviderEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
@@ -59,7 +59,6 @@ class QuoteDocumentRequest extends FormRequest
         }
 
         return $rules;
-
     }
 
     /**
@@ -97,7 +96,10 @@ class QuoteDocumentRequest extends FormRequest
                 // validate if payment is authorized
                 if (request()->quoteType != strtolower(quoteTypeCode::Travel) && isset($quote->insurance_provider_id)) {
                     if (! $this->isPlanBProviderSelected($quote)) {
-                        if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
+                        if (empty($quote->payment) ||
+                            ($quote->payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
+                             $quote->payment->payment_gateway_id != PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK)
+                        ) {
                             $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
                         }
                     }
@@ -116,10 +118,10 @@ class QuoteDocumentRequest extends FormRequest
         $insuranceProvider = InsuranceProvider::find($quote->insurance_provider_id);
 
         $insurersWithoutCCRenewal = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::EMIRATES_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+            InsuranceProviderEnum::AXA->value,    // GIG_INSURANCE
+            InsuranceProviderEnum::EI->value,     // EMIRATES_INSURANCE
+            InsuranceProviderEnum::RSA->value,    // LIVANA_INSURANCE
+            InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 
         if (! $insuranceProvider) {

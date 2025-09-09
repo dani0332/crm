@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CarRegistrationType;
-use App\Enums\InsurerProviderEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\QuoteTypeId;
@@ -69,7 +69,7 @@ class BrokerCommissionService
                                 : false;
 
         $insurersWithoutCCRenewal = [
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+            InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 
         try {

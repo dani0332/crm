@@ -6,7 +6,7 @@ use App\Enums\CarPlanType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
