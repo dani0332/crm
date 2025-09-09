@@ -987,7 +987,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 ]);
             }
         } catch (\Exception $e) {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Error: '.$e->getMessage());
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Failed', extra: [
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+            ]);
 
             return response()->json([
                 'success' => false,

@@ -1081,6 +1081,9 @@ class AMLController extends Controller
     {
         $quoteType = QuoteTypes::getName($request->quoteTypeId)->value;
         $quoteDetails = $this->getQuoteObjectBy($quoteType, $request->quoteUID, 'uuid');
+        LoggerService::startQuoteLogging($quoteDetails);
+        LoggerService::info('fn: '.__FUNCTION__.' - Started');
+
         $insurerCode = getInsuranceProvider($quoteDetails->payments()->mainLeadPayment()->first(), $quoteType);
 
         return match (ucfirst($quoteType)) {
