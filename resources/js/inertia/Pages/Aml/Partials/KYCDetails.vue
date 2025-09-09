@@ -1136,13 +1136,14 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] = 
       </x-field>
     </dl>
     <div class="flex justify-end my-5 gap-x-2">
+      <!-- :disabled="!isSyncEnabled || !can(permissionsEnum.AMLList)" -->
       <x-button
         size="sm"
         color="primary"
         type="button"
         class="px-6"
         @click="syncInsurerPortalUpdates"
-        :disabled="!isSyncEnabled || !can(permissionsEnum.AMLList)"
+        :disabled="!isSyncEnabled"
         :loading="syncProcessLoading"
       >
         Sync
