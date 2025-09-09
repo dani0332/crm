@@ -8,6 +8,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -1180,6 +1181,20 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     public function getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails)
     {
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quoteDetails->code.' started');
+        $colors = collect(app(AMLService::class)->getAMLLookups($quoteDetails?->plan?->provider_id, [
+            LookupsEnum::VEHICLE_COLOR,
+        ])->toArray()['vehicle_color'] ?? [])->pluck('text', 'code')->toArray();
+
+        $othersColorCode = collect($colors ?? [])->filter(function($text, $code) {
+            return stripos($text, 'other') !== false;
+        })->keys()->first();
+
+        $validateColorCode = function($colorCode) use ($colors, $othersColorCode) {
+            if ($colorCode && isset($colors[$colorCode])) {
+                return $colorCode; // Color exists, return original
+            }
+            return $othersColorCode; // Fallback to Others option
+        };
 
         try {
             $response = Ken::request('/get-quote-from-insurer?quoteTypeId='.$quoteTypeId.'&quoteUID='.$quoteDetails->uuid, 'get');
@@ -1236,16 +1251,16 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                     'driver_uae_driving_experience' => $responseData['policyHolder']['policyHolderDrivingExperience'] ?? '',
                     'traffic_code_number' => $responseData['motorInformation']['trafficFileNumber'] ?? null,
                     'rta_transaction_type' => $responseData['authorityTransactionDetails']['code'] ?? null,
-                    'vehicle_plate_code' => isset($responseData['plateNumber']) ? $this->extractPlateCode($responseData['plateNumber']) : null,
-                    'vehicle_plate_number' => isset($responseData['plateNumber']) ? $this->extractPlateNumber($responseData['plateNumber']) : null,
+                    'vehicle_plate_code' => isset($responseData['motorInformation']['plateNumber']) ? $this->extractPlateCode($responseData['motorInformation']['plateNumber']) : null,
+                    'vehicle_plate_number' => isset($responseData['motorInformation']['plateNumber']) ? $this->extractPlateNumber($responseData['motorInformation']['plateNumber']) : null,
                     'vehicle_engine_number' => $responseData['motorInformation']['engineNumber'] ?? null,
                     'rta_plate_category' => $responseData['motorInformation']['rtaPlateCategory'] ?? '',
-                    'vehicle_color' => $responseData['motorInformation']['vehicleColor']['code'] ?? null,
-                    'vehicle_plate_color' => $responseData['motorInformation']['plateColor']['code'] ?? null,
+                    'vehicle_color' => $validateColorCode($responseData['motorInformation']['vehicleColor']['code'] ?? null),
+                    'vehicle_plate_color' => $validateColorCode($responseData['motorInformation']['plateColor']['code'] ?? null),
                     'bank_loan' => $responseData['motorInformation']['isVehicleMortgaged'] ?? null,
                     'bank_name' => ! empty($responseData['motorInformation']['isVehicleMortgaged']) ? ($responseData['motorInformation']['bankName'] ?? '') : '',
                     'first_registration_date' => $responseData['policySchedule']['creationDate'] ?? null,
-                    'annual_mileage_estimate' => $responseData['annualMileageEstimate'] ?? '', // TODO: need to discuss
+                    'annual_mileage_estimate' => $responseData['annualMileageEstimate'] ?? '',
                 ];
 
                 $quoteDetailsData = [
