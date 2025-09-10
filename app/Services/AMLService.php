@@ -2224,6 +2224,7 @@ class AMLService
         }
 
         if (
+            $insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
             $quote->source == LeadSourceEnum::RENEWAL_UPLOAD &&
             auth()->user()->can(PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
         ) {
