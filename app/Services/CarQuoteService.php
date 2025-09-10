@@ -2024,6 +2024,8 @@ class CarQuoteService extends BaseService
                         $startDate->startOfDay()->toDateTimeString(),
                         $endDate->endOfDay()->toDateTimeString(),
                     ]);
+
+                    $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
                 }
             }, function ($query) {
                 // Default date range when no authorize_date is provided
