@@ -572,9 +572,11 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newV
   }
 });
 
-// Watch for certificate start date changes (for GIG renewals and Vehicle Renewal with non-renewals_uploads source)
+// Watch for certificate start date changes (for GIG renewals, Vehicle Renewal with non-renewals_uploads source, and Vehicle Renewal with Change Number)
 watch(() => additionalVehicleTransactionDetailsForm.certificate_start_date, (newValue) => {
-  if (isComponentMounted.value && (isGigRenewal.value || isVehicleRenewalNonUpload.value)) {
+  const isRTT10 = additionalVehicleTransactionDetailsForm.rta_transaction_type === RTA_CONSTANTS.VEHICLE_RENEWAL_WITH_CHANGE_NUMBER;
+  
+  if (isComponentMounted.value && (isGigRenewal.value || isVehicleRenewalNonUpload.value || isRTT10)) {
     // Force recalculation when user changes certificate start date
     applyAutoCalculations(true);
   }

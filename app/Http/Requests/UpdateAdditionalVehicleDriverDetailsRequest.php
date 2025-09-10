@@ -48,12 +48,12 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['is_insured_and_driver_same'] = 'required|integer';
             $rules['driver_first_name'] = 'nullable|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
             $rules['driver_last_name'] = 'nullable|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
-            $rules['driver_dob'] = 'required|date|before:today';
+            $rules['driver_dob'] = 'nullable|date|before:today';
             $rules['driver_gender'] = 'required|string|in:male,female';
             $rules['driver_license_number'] = 'required|string|max:255';
-            $rules['uae_driving_experience'] = 'required|numeric|min:0|max:50';
-            $rules['home_country_license_issuance'] = 'required_if:is_insured_and_driver_same,0|string|max:255';
-            $rules['home_country_driving_experience'] = 'required_if:is_insured_and_driver_same,0|numeric|min:0|max:50';
+            $rules['uae_driving_experience'] = 'nullable|numeric|min:0|max:50';
+            $rules['home_country_license_issuance'] = 'nullable|string|max:255';
+            $rules['home_country_driving_experience'] = 'nullable|numeric|min:0|max:50';
             $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
         }
 
