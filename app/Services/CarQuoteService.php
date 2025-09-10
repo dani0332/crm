@@ -2203,10 +2203,13 @@ class CarQuoteService extends BaseService
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
             ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
             ->whereColumn('cqp.plan_id', 'cqr.plan_id')
-            ->when($request->filled('captured_date'), function ($query) use ($request) {
+            ->when($request->filled('captured_date'), function ($query) use ($request, $startDate, $endDate) {
                 $capturedDate = $request->input('captured_date');
                 if ($capturedDate) {
-                    $query->whereDate('p.captured_at', Carbon::parse($capturedDate)->toDateString());
+                    $query->whereBetween('p.captured_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
                 }
             });
 
