@@ -279,13 +279,14 @@ class RenewalsUploadService
 
         try {
             $jobs = null;
-
+            $delayCounter = 0;
             RenewalQuoteProcess::where([
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
-            ])->chunkById(50, function ($leads) use (&$jobs) {
+            ])->chunkById(50, function ($leads) use (&$jobs, &$delayCounter) {
                 foreach ($leads as $lead) {
-                    $jobs[] = (new CreateRenewalQuotesJob($lead))->delay(now()->addSeconds(2));
+                    $jobs[] = (new CreateRenewalQuotesJob($lead))->delay(now()->addSeconds(2 + $delayCounter));
+                    $delayCounter += 2;
                 }
             });
 
@@ -322,13 +323,14 @@ class RenewalsUploadService
 
         try {
             $jobs = null;
-
+            $delayCounter = 0;
             RenewalQuoteProcess::where([
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
-            ])->chunkById(50, function ($leads) use (&$jobs) {
+            ])->chunkById(50, function ($leads) use (&$jobs, &$delayCounter) {
                 foreach ($leads as $lead) {
-                    $jobs[] = (new UpdateRenewalQuotesJob($lead))->delay(now()->addSeconds(2));
+                    $jobs[] = (new UpdateRenewalQuotesJob($lead))->delay(now()->addSeconds(2 + $delayCounter));
+                    $delayCounter += 2;
                 }
             });
 
@@ -393,7 +395,7 @@ class RenewalsUploadService
         try {
             $jobs = null;
             $totalSkipped = 0;
-
+            $delayCounter = 0;
             $query = RenewalQuoteProcess::where([
                 'status' => RenewalProcessStatuses::PROCESSED,
                 'quote_type' => QuoteTypeShortCode::CAR,
@@ -402,10 +404,11 @@ class RenewalsUploadService
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
             ])->with(['renewalUploadLead', 'carQuote']);
 
-            $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
+            $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped, &$delayCounter) {
                 foreach ($leads as $lead) {
                     if (! $lead->renewalUploadLead->skip_plans) {
-                        $jobs[] = (new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess))->delay(now()->addSeconds(10));
+                        $jobs[] = (new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess))->delay(now()->addSeconds(10 + $delayCounter));
+                        $delayCounter += 10;
                     } else {
                         LoggerService::info($logPrefix.' skipping fetch plans for uuid : '.$lead->carQuote->uuid);
                         $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
@@ -2077,11 +2080,12 @@ class RenewalsUploadService
 
         try {
             $jobs = null;
-
+            $delayCounter = 0;
             $this->getOcbLeadsQuery($batch)
-                ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail) {
+                ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail, &$delayCounter) {
                     foreach ($leads as $lead) {
-                        $jobs[] = (new RenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead))->delay(now()->addSeconds(1));
+                        $jobs[] = (new RenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead))->delay(now()->addSeconds(1 + $delayCounter));
+                        $delayCounter += 1;
                     }
                 });
 
@@ -2226,13 +2230,14 @@ class RenewalsUploadService
 
         try {
             $jobs = null;
-
+            $delayCounter = 0;
             RenewalQuoteProcess::where([
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
-            ])->chunkById(50, function ($leads) use (&$jobs) {
+            ])->chunkById(50, function ($leads) use (&$jobs, &$delayCounter) {
                 foreach ($leads as $lead) {
-                    $jobs[] = (new CreateTravelRenewalQuotesJob($lead))->delay(now()->addSeconds(2));
+                    $jobs[] = (new CreateTravelRenewalQuotesJob($lead))->delay(now()->addSeconds(2 + $delayCounter));
+                    $delayCounter += 2;
                 }
             });
 

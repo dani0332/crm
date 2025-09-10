@@ -69,8 +69,10 @@ class DttFollowUp extends Command
         $logPrefix = 'carRevivalFollowUpEmailJob -';
 
         $jobs = [];
+        $delayCounter = 0;
         foreach ($unreplied as $item) {
-            $jobs[] = (new CarRevivalFollowUpEmailJob($item))->delay(now()->addSeconds(10));
+            $jobs[] = (new CarRevivalFollowUpEmailJob($item))->delay(now()->addSeconds(10 + $delayCounter));
+            $delayCounter += 10;
         }
 
         if ($jobs != null && count($jobs)) {

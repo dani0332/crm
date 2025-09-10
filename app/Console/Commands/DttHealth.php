@@ -118,8 +118,10 @@ class DttHealth extends Command
         info($logPrefix.' count - '.count($filteredLeads).' - '.json_encode($filteredLeads->pluck('uuid')->toArray()));
 
         $jobs = [];
+        $delayCounter = 0;
         foreach ($filteredLeads as $item) {
-            $jobs[] = (new HealthRevivalLeadsCreationJob($item))->delay(now()->addSeconds(30));
+            $jobs[] = (new HealthRevivalLeadsCreationJob($item))->delay(now()->addSeconds(30 + $delayCounter));
+            $delayCounter += 30;
         }
 
         if ($jobs != null && count($jobs)) {

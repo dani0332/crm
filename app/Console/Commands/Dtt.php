@@ -121,10 +121,12 @@ class Dtt extends Command
 
         info($logPrefix.' count - '.count($leads).' - '.json_encode($leads->pluck('uuid')->toArray()));
 
+        $delayCounter = 0;
         foreach ($leads as $carLead) {
             $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
             if (! $isTierR) {
-                $jobs[] = (new CarRevivalLeadsCreationJob($carLead))->delay(now()->addSeconds(30));
+                $jobs[] = (new CarRevivalLeadsCreationJob($carLead))->delay(now()->addSeconds(30 + $delayCounter));
+                $delayCounter += 30;
             }
         }
 
