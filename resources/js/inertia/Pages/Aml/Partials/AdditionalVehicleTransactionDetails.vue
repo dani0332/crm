@@ -508,11 +508,6 @@ onMounted(() => {
   if (additionalVehicleTransactionDetailsForm.rta_transaction_type) {
     loadFieldConfigurationFromProps();
   }
-
-  if (isLivaRenewal.value) {
-    livaConfig.value.policy_effective_date = true;
-    livaConfig.value.policy_expiry_date = true;
-  }
 });
 // for new business only.
 watch(
