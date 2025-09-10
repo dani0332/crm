@@ -931,7 +931,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'vehicle_plate_code' => $responseData['VehicleDetails']['RegnNoText'] ?? '', // optional
                 'vehicle_plate_number' => $responseData['VehicleDetails']['RegnNoNumber'] ?? '', // optional
                 'traffic_code_number' => $responseData['VehicleDetails']['TcfNo'] ?? '',
-                'engine_number' => $responseData['VehicleDetails']['EngineNo'] ?? '',
+                'vehicle_engine_number' => $responseData['VehicleDetails']['EngineNo'] ?? '',
                 'rta_plate_category' => (string) ($responseData['VehicleDetails']['PlateCategory'] ?? ''),
                 'vehicle_color' => (string) ($responseData['VehicleDetails']['ColorCode'] ?? ''),
                 'vehicle_plate_color' => '', // Not available in response

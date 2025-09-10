@@ -110,7 +110,7 @@ const additionalVehicleTransactionDetailsForm = useForm({
   chassis_number: carDetail.value?.chassis_number ?? '',
   engine_number: vehicleDriverDetail.value?.vehicle_engine_number ?? '',
   rta_plate_category: vehicleDriverDetail.value?.rta_plate_category ?? '',
-  vehicle_color: vehicleDriverDetail.value?.vehicle_color ?? '',
+  vehicle_color: vehicleDriverDetail.value?.vehicle_color?.toString() ?? '',
   plate_color: vehicleDriverDetail.value?.vehicle_plate_color ?? '',
   bank_loan: vehicleDriverDetail.value?.bank_loan?.toString() ?? '',
   bank_name: vehicleDriverDetail.value?.bank_name ?? '',
@@ -338,6 +338,33 @@ const applyAutoCalculations = () => {
   }
 };
 
+const LIVAEnums = page.props.LIVAEnums;
+
+const livaValidations = (rtaTransactionType) => {
+  if (isLivaRenewal.value) {
+    livaConfig.value.certificate_start_date = false;
+    livaConfig.value.certificate_end_date = true;
+  } else {
+    if (
+      [
+        LIVAEnums.REGISTRATION_OF_NEW_VEHICLE,
+        LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_VALID,
+        LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_TO_EXPIRE].
+        includes(rtaTransactionType)
+    ) {
+      livaConfig.value.policy_effective_date = false;
+      livaConfig.value.policy_expiry_date = true;
+      livaConfig.value.certificate_start_date = true;
+      livaConfig.value.certificate_end_date = true;
+    } else {
+      livaConfig.value.policy_effective_date = false;
+      livaConfig.value.policy_expiry_date = false;
+      livaConfig.value.certificate_start_date = false;
+      livaConfig.value.certificate_end_date = true;
+    }
+  }
+};
+
 // Get field configuration from props (no API call needed)
 const loadFieldConfigurationFromProps = () => {
   if (!additionalVehicleTransactionDetailsForm.rta_transaction_type) {
@@ -540,33 +567,6 @@ watch(
     additionalVehicleTransactionDetailsForm.policy_expiry_date = formattedExpiryDate;
   }
 });
-
-const LIVAEnums = page.props.LIVAEnums;
-
-const livaValidations = (rtaTransactionType) => {
-  if (isLivaRenewal.value) {
-    livaConfig.value.certificate_start_date = false;
-    livaConfig.value.certificate_end_date = true;
-  } else {
-    if (
-      [
-        LIVAEnums.REGISTRATION_OF_NEW_VEHICLE,
-        LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_VALID,
-        LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_TO_EXPIRE].
-        includes(rtaTransactionType)
-    ) {
-      livaConfig.value.policy_effective_date = false;
-      livaConfig.value.policy_expiry_date = true;
-      livaConfig.value.certificate_start_date = true;
-      livaConfig.value.certificate_end_date = true;
-    } else {
-      livaConfig.value.policy_effective_date = false;
-      livaConfig.value.policy_expiry_date = false;
-      livaConfig.value.certificate_start_date = false;
-      livaConfig.value.certificate_end_date = true;
-    }
-  }
-};
 </script>
 
 <template>

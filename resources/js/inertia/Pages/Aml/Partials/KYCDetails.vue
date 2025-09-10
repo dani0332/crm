@@ -276,7 +276,7 @@ const syncInsurerPortalUpdates = () => {
       quoteUID: page.props.quoteRequest.uuid
     })
     .then(response => {
-      if (response.data.success) {
+      if (response.data.success || response.status === 200) {
         notification.success({
           title: 'Quote details synced successfully from insurer portal',
           position: 'top',
@@ -284,6 +284,9 @@ const syncInsurerPortalUpdates = () => {
 
         if (response.data.data) {
           emit('update:insurerPortalSyncData', response.data.data);
+        }
+        if (response.data.original.data) {
+          emit('update:insurerPortalSyncData', response.data.original.data);
         }
       } else {
         notification.error({
