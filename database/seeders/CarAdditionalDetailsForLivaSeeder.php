@@ -48,7 +48,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
         ];
 
         foreach ($plateCodes as $plateCode) {
-            Lookup::firstOrCreate([
+            Lookup::updateOrCreate([
                 'quote_type_id' => QuoteTypeId::Car,
                 'key' => LookupsEnum::PLATE_CODE,
                 'code' => $plateCode,
@@ -63,7 +63,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
     private function rtaTransactionType()
     {
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '10',
@@ -74,7 +74,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '20',
@@ -85,7 +85,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '30',
@@ -96,7 +96,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '40',
@@ -107,7 +107,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '50',
@@ -121,7 +121,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
     private function rtaPlateCategory()
     {
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '14',
@@ -132,7 +132,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '18',
@@ -143,7 +143,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '39',
@@ -154,7 +154,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '42',
@@ -165,7 +165,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '45',
@@ -176,7 +176,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '36',
@@ -190,104 +190,411 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
     private function vehicleColor()
     {
-        Lookup::firstOrCreate([
-            'quote_type_id' => QuoteTypeId::Car,
-            'key' => LookupsEnum::VEHICLE_COLOR,
-            'code' => '1',
-            'text' => 'WHITE',
-            'insurance_provider_id' => $this->insuranceProviderId,
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $vehicleColorList = [
+            ['20', 'ADRIATIC'],
+            ['21', 'ADRIATIC BLUE'],
+            ['22', 'AEGEAN BLUE'],
+            ['23', 'ALABASTER BLACK'],
+            ['24', 'ALABASTER GREY'],
+            ['1177', 'ALABASTER SILVER'],
+            ['25', 'ALABASTER WHITE'],
+            ['26', 'ALASKAN WHITE'],
+            ['27', 'ALFA RED'],
+            ['28', 'ALLOY'],
+            ['29', 'ALPINE WHITE'],
+            ['30', 'ALPINE WHITE METALLIC'],
+            ['31', 'ALVESTON RED'],
+            ['32', 'AM PURPLE/Q.SILVER'],
+            ['1141', 'AMATHAYEST'],
+            ['1165', 'AMBER'],
+            ['33', 'AMBER BRONZE METALLIC'],
+            ['34', 'AMBER RED'],
+            ['35', 'AMETHYST GREY'],
+            ['36', 'ANTIQUE GREEN'],
+            ['37', 'APPLE GREEN'],
+            ['38', 'AQUA'],
+            ['39', 'AQUA BLUE'],
+            ['40', 'AQUA METALLIC'],
+            ['41', 'AQUA SILVER'],
+            ['42', 'ARCTIC'],
+            ['43', 'ARCTIC BLUE'],
+            ['44', 'ARCTIC FROST'],
+            ['45', 'ARCTIC SILVER'],
+            ['46', 'ARENA RED'],
+            ['47', 'AROMA RED'],
+            ['48', 'ARTIC WHITE'],
+            ['49', 'ASCOT GREEN'],
+            ['50', 'ASH GOLD'],
+            ['51', 'ASH GOLD METALLIC'],
+            ['52', 'ASTLER BLUE'],
+            ['53', 'ATACAMA SAND'],
+            ['54', 'ATLAS GREY'],
+            ['55', 'AUBERGINE'],
+            ['56', 'AUTUMN BLAZE'],
+            ['57', 'AUTUMN COPPER'],
+            ['58', 'AZURE BLUE'],
+            ['1236', 'Aluminum/Black/Grey/White/Silver'],
+            ['59', 'BAHIA BEIGE'],
+            ['60', 'BARENTS BLUE METALLIC'],
+            ['1167', 'BAROSSA'],
+            ['61', 'BASALT BLACK'],
+            ['62', 'BASALT BLACK METALLIC'],
+            ['63', 'BEIGE BLACK'],
+            ['64', 'BEIGE GREY'],
+            ['65', 'BEIGE METALLIC'],
+            ['66', 'BEIGE MICA METALLIC'],
+            ['67', 'BEIGE PEARL'],
+            ['68', 'BEIGE/BLUE'],
+            ['69', 'BEIGE/BROWN'],
+            ['1188', 'BEIGE/BROWN/ORANGE'],
+            ['70', 'BEIGE/CASHMERE'],
+            ['71', 'BEIGE/GREEN'],
+            ['72', 'BEIGE/GREEN/RED'],
+            ['73', 'BEIGE/GREY'],
+            ['74', 'BEIGE/MAROON'],
+            ['1163', 'BEIGE/MAROON/BLACK'],
+            ['75', 'BEIGE/OLIVE GREEN'],
+            ['76', 'BEIGE/RED'],
+            ['77', 'BEIGE/SILVER'],
+            ['78', 'BEIGE/WHITE'],
+            ['79', 'BELUGA'],
+            ['80', 'BIANCA WHITE'],
+            ['81', 'BIARRITZ BLUE'],
+            ['1198', 'BIKINI PEARL COAT'],
+            ['82', 'BILLET SILVER METALLIC'],
+            ['83', 'BIZZARD'],
+            ['2', 'BLACK'],
+            ['84', 'BLACK'],
+            ['85', 'BLACK BEIGE'],
+            ['1134', 'BLACK CHERRY'],
+            ['86', 'BLACK CLEARCOAT'],
+            ['87', 'BLACK GREEN'],
+            ['88', 'BLACK II'],
+            ['89', 'BLACK JAVA'],
+            ['90', 'BLACK MAROON'],
+            ['119', 'BLACK METALLIC'],
+            ['91', 'BLACK MICA'],
+            ['92', 'BLACK OBSIMET'],
+            ['93', 'BLACK PEARL'],
+            ['94', 'BLACK RAVEN'],
+            ['95', 'BLACK SAPPHIRE'],
+            ['96', 'BLACK SPARKLING METALLIC'],
+            ['97', 'BLACK WHITE MAROON'],
+            ['98', 'BLACK/BEIGE'],
+            ['99', 'BLACK/BLACK'],
+            ['100', 'BLACK/BLUE'],
+            ['1219', 'BLACK/BLUE/YELLOW'],
+            ['101', 'BLACK/BROWN'],
+            ['102', 'BLACK/COPPER'],
+            ['103', 'BLACK/EBONY'],
+            ['104', 'BLACK/GOLD'],
+            ['105', 'BLACK/GOLDEN'],
+            ['106', 'BLACK/GREEN'],
+            ['107', 'BLACK/GREY'],
+            ['108', 'BLACK/IVORY'],
+            ['109', 'BLACK/LEATHER TRIM'],
+            ['110', 'BLACK/LIGHT BLUE'],
+            ['111', 'BLACK/ORANGE'],
+            ['112', 'BLACK/ORANGE/GREEN'],
+            ['113', 'BLACK/RED'],
+            ['114', 'BLACK/SILVER'],
+            ['115', 'BLACK/WHITE'],
+            ['116', 'BLACK/WHITE/BLUE'],
+            ['117', 'BLACK/WHITE/ORANGE'],
+            ['118', 'BLACK/YELLOW'],
+            ['1186', 'BLACK/YELLOW/SILVER'],
+            ['4', 'BLUE'],
+            ['120', 'BLUE'],
+            ['121', 'BLUE CHIP'],
+            ['122', 'BLUE COOLSILVER'],
+            ['123', 'BLUE GRAPHITE'],
+            ['124', 'BLUE GREEN SILVER'],
+            ['125', 'BLUE GREY'],
+            ['126', 'BLUE GREY SILVER'],
+            ['127', 'BLUE JADE'],
+            ['128', 'BLUE METALLIC'],
+            ['129', 'BLUE MICA'],
+            ['130', 'BLUE MYSTIC'],
+            ['131', 'BLUE ORANGE'],
+            ['132', 'BLUE OVER SILVER'],
+            ['133', 'BLUE PEARL'],
+            ['134', 'BLUE PURPLE'],
+            ['135', 'BLUE RED GREY'],
+            ['136', 'BLUE SILVER'],
+            ['137', 'BLUE WATER'],
+            ['138', 'BLUE/BEIGE'],
+            ['139', 'BLUE/BEIGE/ORANGE'],
+            ['140', 'BLUE/BROWN'],
+            ['1187', 'BLUE/GOLD'],
+            ['141', 'BLUE/GREEN'],
+            ['142', 'BLUE/GREEN/WHITE'],
+            ['143', 'BLUE/GREEN/YELLOW'],
+            ['144', 'BLUE/GREY'],
+            ['145', 'BLUE/GREY/LEAD'],
+            ['146', 'BLUE/GREY/SILVER'],
+            ['147', 'BLUE/GREY/YELLOW'],
+            ['148', 'BLUE/LIGHT GREY'],
+            ['149', 'BLUE/MILKY'],
+            ['150', 'BLUE/ORANGE'],
+            ['151', 'BLUE/RED'],
+            ['152', 'BLUE/RED/BLACK'],
+            ['153', 'BLUE/RED/GREY'],
+            ['154', 'BLUE/RED/WHITE'],
+            ['155', 'BLUE/SILVER'],
+            ['1130', 'BLUE/SILVER/BLACK'],
+            ['156', 'BLUE/SILVER/GREY'],
+            ['157', 'BLUE/SLATE'],
+            ['1196', 'BLUE/VIOLET/BLACK'],
+            ['158', 'BLUE/WHITE'],
+            ['159', 'BLUE/YELLOW'],
+            ['160', 'BLUEGREEN CRYSTAL'],
+            ['161', 'BLUEISH BLACK'],
+            ['162', 'BLUEISH PEARL'],
+            ['163', 'BLUEISH SILVER METALLIC'],
+            ['164', 'BLUISH GREEN'],
+            ['165', 'BLUISH GREY'],
+            ['166', 'BLUISH PEARL'],
+            ['167', 'BLUISH RED'],
+            ['168', 'BLUISH SILVER'],
+            ['169', 'BOLD BEIGE METALLIC'],
+            ['170', 'BONATTI GREY'],
+            ['171', 'BORDEAUX PONTEVECCHI'],
+            ['172', 'BORNITE (PURPLE)'],
+            ['173', 'BORREGO BEIGE'],
+            ['174', 'BOTANY BLUE'],
+            ['175', 'BOTTLE GREEN'],
+            ['176', 'BOULDER GREY'],
+            ['1124', 'BOURNVILLE'],
+            ['177', 'BRICK RED'],
+            ['178', 'BRIGHT GOLDEN'],
+            ['179', 'BRIGHT GREEN'],
+            ['180', 'BRIGHT PLATINUM'],
+            ['181', 'BRIGHT SILVER'],
+            ['182', 'BRIGHT WHITE'],
+            ['1139', 'BRILLIANT BLACK'],
+            ['183', 'BRILLIANT SILVER'],
+            ['184', 'BRONZE'],
+            ['185', 'BRONZE METALLIC'],
+            ['186', 'BROWN'],
+            ['187', 'BROWN GREEN BLACK'],
+            ['188', 'BROWN GREY'],
+            ['189', 'BROWN SILVER'],
+            ['190', 'BROWN/BEIGE'],
+            ['191', 'BROWN/BLUE'],
+            ['192', 'BROWN/GOLD'],
+            ['193', 'BROWN/GOLDEN'],
+            ['194', 'BROWN/GREEN'],
+            ['195', 'BROWN/GREY'],
+            ['196', 'BROWN/SILVER'],
+            ['197', 'BROWN/WHITE'],
+            ['198', 'BROWNISH'],
+            ['199', 'BROWNISH GREY'],
+            ['200', 'BUCKINGHAM BLUE'],
+            ['201', 'BURGUNDY'],
+            ['202', 'BURGUNDY SILVER'],
+            ['203', 'BURNING RED'],
+            ['204', 'BVO BEIGE'],
+            ['13', 'Beige'],
+            ['1203', 'Black Gray Yellow'],
+            ['1174', 'Black/Blue/Grey'],
+            ['1238', 'Black/Green/Silver'],
+            ['1154', 'Black/Red/Grey'],
+            ['1147', 'Blackish Red'],
+            ['9', 'Bronze'],
+            ['7', 'Brown'],
+            ['205', 'C. GREEN'],
+            ['206', 'C. GREEN PEARL'],
+            ['207', 'C. RED'],
+            ['208', 'C.BLUE'],
+            ['209', 'C.GREY'],
+            ['210', 'C.SILVER'],
+            ['211', 'C.SILVER/GREY'],
+            ['212', 'CAIRNS BLUE'],
+            ['213', 'CALCITE WHITE'],
+            ['214', 'CALYPSO RED'],
+            ['215', 'CANAL BLUE'],
+            ['216', 'CANARY YELLOW'],
+            ['217', 'CANDY RUBY RED'],
+            ['218', 'CANDY SWORD BLUE'],
+            ['219', 'CANDY WHITE'],
+            ['220', 'CANYON RED'],
+            ['221', 'CARBON'],
+            ['222', 'CARBON BLACK'],
+            ['223', 'CARBON GREY'],
+            ['224', 'CASABLANCA'],
+            ['225', 'CASHMERE'],
+            ['226', 'CASHMERE (BEIGE)'],
+            ['227', 'CASHMERE METALLIC'],
+            ['1137', 'CASHMERE SILVER'],
+            ['228', 'CASHMERE STEEL'],
+            ['1133', 'CATTLEYA'],
+            ['1151', 'CAVIAR'],
+            ['229', 'CELESTIAL BLUE PEARL'],
+            ['230', 'CHAMPAGNE'],
+            ['231', 'CHAMPAGNE'],
+            ['232', 'CHAMPAGNE GOLD'],
+            ['233', 'CHAMPAGNE GREY'],
+            ['234', 'CHAMPAGNE METALLIC'],
+            ['235', 'CHAMPAGNE MICA'],
+            ['236', 'CHAMPAGNE PEARL'],
+            ['237', 'CHAMPAGNE SILVER'],
+            ['238', 'CHAMPAGNE/GOLDEN'],
+            ['239', 'CHAR GOLD'],
+            ['240', 'CHARCOAL GREY'],
+            ['241', 'CHASTE WHITE'],
+            ['242', 'CHAWTON WHITE'],
+            ['243', 'CHERRY BROWN'],
+            ['244', 'CHERRY RED'],
+            ['245', 'CHERRY WHITE'],
+            ['246', 'CHINA BLUE'],
+            ['1189', 'CHROME/BLACK'],
+            ['247', 'CINNAMON BROWN'],
+            ['248', 'CINNAMON GLAZE'],
+            ['249', 'CLOVER GREEN'],
+            ['250', 'COBALT BLUE'],
+            ['1229', 'CODE ORANGE'],
+            ['251', 'CONCORD PURPLE'],
+            ['252', 'CONE SILVER'],
+            ['253', 'COOL SILVER'],
+            ['254', 'COOL SILVER METALLIC'],
+            ['255', 'COOL WHITE'],
+            ['256', 'COPPER'],
+            ['257', 'COPPER BLACK'],
+            ['258', 'CORAL'],
+            ['259', 'CORN YELLOW'],
+            ['260', 'CREAM'],
+            ['261', 'CREAM BROWN'],
+            ['262', 'CREAM WHITE'],
+            ['1244', 'CREAMY WHITE-BLACK'],
+            ['263', 'CRIMSON RED'],
+            ['264', 'CRYSTAL'],
+            ['265', 'CRYSTAL ICE'],
+            ['266', 'CRYSTAL ICE METALLIC'],
+            ['267', 'CRYSTAL ICE WHITE'],
+            ['268', 'CRYSTAL SILVER'],
+            ['269', 'CUBANITE SILVER'],
+            ['270', 'CYAN'],
+            ['271', 'CYPRUS GREEN'],
+            ['1223', 'Charente Grey'],
+            ['1237', 'Crayon'],
+            ['1243', 'Crystal White Pearl Metallic'],
+            ['272', 'D B GREY'],
+            ['273', 'DARD GREEN'],
+            ['274', 'DARK BEIGE'],
+            ['275', 'DARK BLUE'],
+            ['276', 'DARK BLUE METALLIC'],
+            ['277', 'DARK BLUE MICA METAL'],
+            ['278', 'DARK BLUE WHITE'],
+            ['279', 'DARK BLUISH GREY'],
+            ['280', 'DARK BROWN'],
+            ['281', 'DARK CANDY'],
+            ['282', 'DARK CHERRY'],
+            ['283', 'DARK CHESTNUT'],
+            ['284', 'DARK DENIM GREY'],
+            ['285', 'DARK EMERALD'],
+            ['286', 'DARK GARNET RED'],
+            ['287', 'DARK GREEN'],
+            ['288', 'DARK GREY'],
+            ['289', 'DARK GREY METALLIC'],
+            ['290', 'DARK GREY MICA'],
+            ['1127', 'DARK INDIGO'],
+            ['291', 'DARK KAKHI'],
+            ['1216', 'DARK KNIGHT'],
+            ['292', 'DARK MAROON'],
+            ['293', 'DARK MICA GREEN'],
+            ['294', 'DARK ORANGE'],
+            ['295', 'DARK RED'],
+            ['296', 'DARK RED METALLIC'],
+            ['297', 'DARK RED MICA'],
+            ['298', 'DARK SHADOW GREY'],
+            ['299', 'DARK SILVER'],
+            ['300', 'DARK STONE'],
+            ['301', 'DARK TORQUOISE PEARL'],
+            ['302', 'DARK WHITE'],
+            ['303', 'DEEP BLUE'],
+            ['304', 'DEEP BLUE METALLIC'],
+            ['305', 'DEEP BLUE MICA'],
+            ['306', 'DEEP BLUE MIST'],
+            ['307', 'DEEP LAVA RED'],
+            ['308', 'DEEP NAVY'],
+            ['309', 'DEEP SEA BLUE METALLIC'],
+            ['310', 'DESERT MIST METALLIC'],
+            ['311', 'DESERT PLATINUM'],
+            ['312', 'DESERT ROCK METALLIC'],
+            ['1126', 'DESERT STONE'],
+            ['313', 'DESERT VIOLET'],
+            ['314', 'DIABLO RED'],
+            ['315', 'DIAMOND GRAPHITE'],
+            ['316', 'DIAMOND SILVER'],
+            ['317', 'DIAMOND SILVER METALLIC'],
+            ['318', 'DIAMOND WHITE'],
+            ['319', 'DOVE SILVER'],
+            ['320', 'DRIFTWOOD METALLIC'],
+            ['321', 'DUSTY GOLD'],
+            ['1148', 'Dark Sapphire'],
+            ['1206', 'Deep Crystal Blue'],
+            ['1228', 'Diamond Black Crystal Pearl'],
+            ['1170', 'Diamond Black Silver'],
+            ['16', 'EBONY'],
+            ['322', 'EBONY'],
+            ['323', 'EBONY BEIGE'],
+            ['324', 'ECLIPE GREY'],
+            ['325', 'EISEN GREY'],
+            ['326', 'ELECTRIC SILVER'],
+            ['327', 'EMBER BLACK'],
+            ['328', 'EMERALD GREEN'],
+            ['329', 'ENABI'],
+            ['330', 'ENABI RED'],
+            ['331', 'ENABI(RASPBERRY)'],
+            ['332', 'ENABI/SILVER'],
+            ['333', 'EPSON GREEN'],
+            ['1213', 'ESSENCE BROWN'],
+            ['334', 'ETERNAL BLUE'],
+            ['335', 'EVO BEIGE'],
+            ['336', 'EVOKE'],
+            ['337', 'EXEC. BLACK'],
+            ['1240', 'Earthy Brass Metallic'],
+            ['338', 'F.BEIGE'],
+            ['339', 'FAIRY WHITE'],
+            ['340', 'FALAN RED'],
+            ['341', 'FERN WHITE'],
+            ['342', 'FIRE OPAL'],
+            ['343', 'FIRE OPAL(RED)'],
+            ['344', 'FIRE RED'],
+            ['345', 'FLAME RED'],
+            ['346', 'FLASH RED'],
+            ['347', 'FR BEIGE'],
+            ['348', 'FRASER BEIGE'],
+            ['349', 'FRESCO GREEN'],
+            ['350', 'FROST BLUE'],
+            ['351', 'FROZEN WHITE'],
+            ['1227', 'FUJI WHITE'],
+            ['352', 'GALAXY BEIGE'],
+            ['353', 'GALAXY BLACK'],
+            ['354', 'GALAXY BLUE'],
+            ['355', 'GALAXY CAPTIVA'],
+            ['356', 'GALAXY GREY'],
+            ['357', 'GALAXY METALLIC'],
+            ['358', 'GALAXY SILVER'],
+            ['359', 'GALAXY WHITE'],
+            ['360', 'GENESIS BLUE'],
+            ['1161', 'GLACIER'],
+            ['361', 'GLACIER GREEN'],
+            ['362', 'GLACIER WHITE/BLUE'],
+        ];
 
-        Lookup::firstOrCreate([
-            'quote_type_id' => QuoteTypeId::Car,
-            'key' => LookupsEnum::VEHICLE_COLOR,
-            'code' => '2',
-            'text' => 'BLACK',
-            'insurance_provider_id' => $this->insuranceProviderId,
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        Lookup::firstOrCreate([
-            'quote_type_id' => QuoteTypeId::Car,
-            'key' => LookupsEnum::VEHICLE_COLOR,
-            'code' => '3',
-            'text' => 'RED',
-            'insurance_provider_id' => $this->insuranceProviderId,
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        Lookup::firstOrCreate([
-            'quote_type_id' => QuoteTypeId::Car,
-            'key' => LookupsEnum::VEHICLE_COLOR,
-            'code' => '4',
-            'text' => 'BLUE',
-            'insurance_provider_id' => $this->insuranceProviderId,
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        Lookup::firstOrCreate([
-            'quote_type_id' => QuoteTypeId::Car,
-            'key' => LookupsEnum::VEHICLE_COLOR,
-            'code' => '5',
-            'text' => 'YELLOW',
-            'insurance_provider_id' => $this->insuranceProviderId,
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        Lookup::firstOrCreate([
-            'quote_type_id' => QuoteTypeId::Car,
-            'key' => LookupsEnum::VEHICLE_COLOR,
-            'code' => '6',
-            'text' => 'GREEN',
-            'insurance_provider_id' => $this->insuranceProviderId,
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        Lookup::firstOrCreate([
-            'quote_type_id' => QuoteTypeId::Car,
-            'key' => LookupsEnum::VEHICLE_COLOR,
-            'code' => '7',
-            'text' => 'Brown',
-            'insurance_provider_id' => $this->insuranceProviderId,
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        Lookup::firstOrCreate([
-            'quote_type_id' => QuoteTypeId::Car,
-            'key' => LookupsEnum::VEHICLE_COLOR,
-            'code' => '8',
-            'text' => 'SILVER',
-            'insurance_provider_id' => $this->insuranceProviderId,
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        Lookup::firstOrCreate([
-            'quote_type_id' => QuoteTypeId::Car,
-            'key' => LookupsEnum::VEHICLE_COLOR,
-            'code' => '9',
-            'text' => 'Bronze',
-            'insurance_provider_id' => $this->insuranceProviderId,
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        foreach ($vehicleColorList as $color) {
+            Lookup::updateOrCreate([
+                'quote_type_id' => QuoteTypeId::Car,
+                'key' => LookupsEnum::VEHICLE_COLOR,
+                'code' => $color[0],
+                'text' => $color[1],
+                'insurance_provider_id' => $this->insuranceProviderId,
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     private function bankName()
@@ -536,7 +843,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
         ];
 
         foreach ($banks as $bank) {
-            Lookup::firstOrCreate([
+            Lookup::updateOrCreate([
                 'quote_type_id' => QuoteTypeId::Car,
                 'key' => LookupsEnum::BANK_NAME,
                 'code' => $bank[0],
@@ -551,7 +858,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
     private function annualMileageEstimate()
     {
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
             'code' => '1',
@@ -562,7 +869,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
             'code' => '2',
@@ -573,7 +880,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
             'code' => '3',
@@ -584,7 +891,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
             'code' => '4',
@@ -595,7 +902,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
             'code' => '5',
@@ -606,7 +913,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
+        Lookup::updateOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
             'code' => '6',
@@ -844,7 +1151,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
         ];
 
         foreach ($nationalities as $nationality) {
-            Lookup::firstOrCreate([
+            Lookup::updateOrCreate([
                 'quote_type_id' => QuoteTypeId::Car,
                 'key' => LookupsEnum::NATIONALITY_LIST,
                 'code' => $nationality['id'],
@@ -866,7 +1173,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
                 default => $i . ' Years',
             };
 
-            Lookup::firstOrCreate([
+            Lookup::updateOrCreate([
                 'quote_type_id' => QuoteTypeId::Car,
                 'key' => LookupsEnum::DRIVING_EXPERIENCE,
                 'code' => $i,
