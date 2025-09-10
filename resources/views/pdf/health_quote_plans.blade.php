@@ -285,9 +285,10 @@
             border: none;
         }
 
-        footer {
+     footer {
             position: fixed;
-            bottom: 0px;
+            bottom: 0;
+            top: 50px;
             left: 0px;
             right: 0px;
             padding: 0px;
@@ -297,7 +298,7 @@
             text-align: center;
             position: fixed;
             bottom: 0px;
-            height: 145px;
+            height: 180px;
             z-index: 1500;
         }
 
@@ -318,7 +319,7 @@
             color: #ffffff;
             border: none;
             font-size: 14px;
-        }
+        } */
 
         .text-left {
             text-align: left;
@@ -344,6 +345,151 @@
         .text-underline {
             text-decoration: underline
         }
+         /* Separator Styling */
+    .separator {
+        color: #D3D3D3; /* Match border color */
+        font-weight: normal; /* Ensure it's not bold */
+        padding: 0 5px; /* Adjust spacing */
+    }
+
+    .footer {
+        position: fixed;
+        bottom: 0;
+        /* top: 50px !important; */
+        left: 0;
+        right: 0;
+        width: 100%;
+        background-color: #1d83bc;
+        color: #ffffff;
+        padding: 10px 10px 10px 10px;
+        text-align: left;
+        height: 155px !important;
+    }
+
+   
+
+    .footer-table {
+        width: 100%;
+        margin-top: -4px;
+        table-layout: fixed;
+        border-collapse: collapse;
+        color: #ffffff;
+    }
+
+    .footer-td {
+        padding: 10px;
+        vertical-align: top;
+        border: none;
+    }
+
+    .footer-box {
+        border-radius: 24px;
+        border: 2px solid #CF9E3C;
+        padding: 5px 5px;
+        text-align: left;
+    }
+
+    .footer-link {
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    .footer-link:hover {
+        text-decoration: underline;
+    }
+
+    .material-icons {
+        font-size: 14px;
+        color: #ffffff;
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+
+    .footer-header {
+        font-size: 12px;
+        font-weight: bold;
+        text-align: left;
+    }
+
+    .footer-content-1{
+        font-size: 8px !important;
+        align-items: center;
+        text-align: center;
+        line-height: 0.7 !important;
+    }
+
+    .footer-content-2{
+        font-size: 10px !important;
+    }
+
+    .advisor-section {
+        display: table;
+        width: 100%;
+    }
+
+    .advisor-photo-container {
+        display: table-cell;
+        vertical-align: middle;
+        width: 70px;
+    }
+
+    .advisor-photo, .alfred-photo {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: block;
+        margin: auto;
+    }
+
+    .advisor-details {
+        display: table-cell;
+        vertical-align: middle;
+        line-height: 0.9;
+        padding-left: 10px;
+    }
+
+    .advisor-name {
+        font-weight: bold;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .advisor-role {
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .advisor-contact {
+        font-size: 14px;
+        line-height: 1;
+    }
+
+    .advisor-contact .icon {
+        width: 10px;
+        height: 10px;
+        vertical-align: baseline;
+        display: inline-block;
+    }
+
+    .alfred-details{
+        display: table-cell;
+        vertical-align: middle;
+        padding-top: 0px;
+        padding-left: 8px;
+    }
+
+    .alfred-details p {
+        font-size: 10px;
+
+    }
+
+    .alfred-details p.title {
+        font-size: 13px;
+        margin-top: 0px;
+        line-height: 0.9;
+        padding: 2px 0px 10px 0px;
+    }
+
     </style>
 </head>
 
@@ -692,47 +838,156 @@
     </header>
 
     {{-- PDF Page Footer --}}
-    <footer>
-        <table class="tbl-footer">
-            <div style="float: left;">
-                <img style="height: 110px; border-radius: 50%;"
-                    src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}">
-            </div>
-            <div style="float: left; margin-left: 10px; margin-top: 20px">
-                @if (isset($quote->advisor->name) && !empty($quote->advisor->name))
-                    <p class="text-left text-white text-xl">Name: {{ $quote->advisor?->name }}</p>
-                @endif
-                @if (isset($quote->advisor->email) && !empty($quote->advisor->email))
-                    <p class="text-left text-white text-xl">Email: <a class="text-white"
-                            href="mailto:{{ $quote->advisor->email }}">{{ $quote->advisor->email }}</a></p>
-                @endif
-                @if (isset($quote->advisor->mobile_no) && !empty($quote->advisor->mobile_no))
-                    <p class="text-left text-white text-xl mar">Mobile number:
-                        {{ formatMobileNumber($quote->advisor->mobile_no) }} <span class="text-white"
-                            style="margin-top:3px"><img style="height:20px;"
-                                src="{{ public_path('images/whatsapp-small.png') }}"></span></p>
-                @endif
-                @if (isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no))
-                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white"
-                            href="tel:{{ $quote->advisor->landline_no }}">{{ formatLandlineNumber($quote->advisor->landline_no) }}</a>
-                    </p>
-                @endif
+    <div class="footer">
+        <h4 class="footer-header">
+            InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC
+        </h4>
 
-            </div>
-            <div>
-                <h4 class="text-right text-white">InsuranceMarket.ae</h4>
-                <p class="text-right text-white text-xl"><a class="text-white" href="tel:+800253733">Happiness Center:
-                        800 ALFRED (800-253-733)</a></p>
-                <p class="text-right text-white text-xl"><a class="text-white"
-                        href="https://insurancemarket.ae">www.insurancemarket.ae</a></p>
-                <p class="text-right text-white text-xl">27th Floor, Control Tower, Motor City, Dubai,</p>
-                <p class="text-right text-white text-xl">United Arab Emirates, PO Box 26423 <a
-                        class="text-white text-underline"
-                        href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">(map)</a>
-                </p>
-            </div>
+        <table class="footer-table" align="center">
+            <tr>
+                <td class="footer-td" style="width: 42%">
+                    <div class="footer-box" style="line-height: 0.8;">
+                        <p class="footer-content-1">
+                            Licensed and regulated by the 
+                            <a href="https://www.centralbank.ae/en/licensing/" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                                Central Bank of the UAE
+                            </a> 
+                            | <a href="https://cdn.alfred.ae/docs/CB-License-2024.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">Registration No. 85</a>
+                        </p>
+                        <p class="footer-content-1">
+                            Trade License issued by Department of Economy & Tourism, Dubai | 
+                            <a href="https://eservices.dubaided.gov.ae/Pages/Anon/GstHme.aspx?dedqs=PM671p6QBb0lV1okx2JABgxoLLKXOgPx" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                                <a href="https://cdn.alfred.ae/docs/AFIA-Trade-License-2023-24.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                                    License No. 238534
+                                </a>
+                            </a>
+                        </p>
+                        <p class="footer-content-1">Health Insurance Intermediary Permit issued by Dubai Health Authority | ID: BRK-00003</p>
+                        <p class="footer-content-1">
+                            <a href="https://www.added.gov.ae/en" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                                Abu Dhabi Department of Economic Development
+                            </a> | ADED License no. CN-5385024
+                        </p>
+                        <p class="footer-content-1">
+                            <a href="https://www.doh.gov.ae/en/" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                                Department of Health Abu Dhabi
+                            </a> | License no. B092
+
+                        </p>
+                        <p class="footer-content-1">Member of the DIFC Insurance Association | Membership No. 10049</p>
+                        <p class="footer-content-1">
+                            Member of the Insurance Business Group under Dubai Chamber of Commerce | Membership No. 34774
+
+                        </p>
+                        <p class="footer-content-1">
+                            <a href="https://cdn.alfred.ae/docs/GIF-Membership-Certificate.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                                Member of the Gulf Insurance Federation
+                            </a>
+                        </p>
+                        <p class="footer-content-1">
+                            <a href="https://eiauae.net/En/10/brokers/694/afia-insurance-brokerage-services--llc" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                                Member of the Emirates Insurance Federation
+                            </a> | 
+                            <a href="https://cdn.alfred.ae/docs/EIA-Membership.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                                Membership No. B6
+                            </a>
+                        </p>
+                    </div>
+                </td>
+                <td class="footer-td" style="width: 28%">
+                    <div class="footer-box" style="margin-top: 5px; line-height: 0.8; position: relative;">
+                        <p class="footer-content-2">
+                          Head Office: 27th floor, Control Tower, Detroit Road,<br>Motor City, PO Box - 26423,<br>Dubai, United Arab Emirates.
+                        </p>
+                        <p class="footer-content-2">
+                           Branch Office: Amal Mohammed Sharif Mohammed Saleh Hamza Building, Al Dana, East 1, Abu Dhabi, UAE
+                        </p>
+                        <p class="footer-content-2">Happiness Center number: 800 ALFRED (800 256 733)</p>
+               
+                
+                        <p class="footer-content-2">
+                            Email:    <a href="mailto:askalfred@insurancemarket.ae" style="color: #ffffff; text-decoration: underline;">
+                                askalfred@insurancemarket.ae
+                            </a>
+                        </p>
+                        <p class="footer-content-2">
+                            Web: <a href="https://insurancemarket.ae" style="color: #ffffff; text-decoration: underline;">insurancemarket.ae</a>
+                        </p>
+                        <div class="open-new-icon" style="position: absolute; right:5px; top:42px;">
+                            <a
+                            class="text-white"
+                            href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">
+                                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}"
+                                style="width: 22px; height: 22px; vertical-align: baseline; display: inline-block;">
+                            </a>
+                        </div>
+                    </div>
+                </td>
+
+                <td class="footer-td" style="width: 30%;">
+                <div class="footer-box" style="margin-top: 5px; padding: 5px 10px">
+                        <div class="advisor-section">
+                            @if($quote->advisor)
+                                <div class="advisor-photo-container">
+                                    <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('images/headset-with-bg.png') }}"
+                                         alt="Advisor Photo" class="advisor-photo">
+                                </div>
+                                <div class="advisor-details">
+                                    <p class="advisor-name">{{ $quote->advisor->name }}</p>
+                                <p class="advisor-role">Insurance Advisor</p>
+                                    <p class="advisor-contact">
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon">
+                                        @if (strlen($quote->advisor->email) > 35)
+                                        <span style="text-decoration: underline; font-size:10px">{{ $quote->advisor->email }}</span>
+                                        @else
+                                        <span style="text-decoration: underline;">{{ $quote->advisor->email }}</span>
+                                        @endif
+                                        <br>
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon">
+                                        <a href="tel:{{ removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) }}" class="text-white" style="color: #ffffff; text-decoration: none;">
+                                            <span>{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
+                                        </a>
+                                        <a href="https://wa.me/{{ removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) }}">
+                                            <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon" style="margin-left: 1px;">
+                                        </a>
+                                        <br>
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon">
+                                        <a href="tel:{{ removeSpaces($quote->advisor->landline_no) }}" class="text-white" style="color: #ffffff; text-decoration: none;">
+                                            <span>{{ $quote->advisor->landline_no }}</span>
+                                        </a>
+                                    </p>
+                                </div>
+                            @else
+                                <div class="advisor-photo-container">
+                                    <img src="{{ public_path('images/headset-with-bg.png') }}"
+                                         alt="Alfred Image" class="alfred-photo">
+                                </div>
+                                <div class="alfred-details ">
+                                    <div class="" style="vertical-align: middle;">
+                                        <p class="title">Chat with InstantAlfred instantly</p>
+
+                                        <div class="open-new-icon" style="position: absolute; right:25px; top:62px;">
+                                            <a
+                                                class="text-white"
+                                                href="{{$ecomInsuranceLink."/?IA=true"}}">
+                                                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}"
+                                                     style="width: 22px; height: 22px; vertical-align: baseline; display: inline-block;">
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <p class="" style="line-height: 0.7;">You're in the driver's seat - no advisor calls
+                                        <br>will come your way without your request</p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </td>
+
+            </tr>
         </table>
-    </footer>
+    </div>
+
 
     {{-- PDF Page Inner Content --}}
     <main>
