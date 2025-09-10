@@ -254,7 +254,13 @@ const onLoadAuditLogData = async () => {
           <dt class="font-medium">Updated At:</dt>
           <dd>{{ dateFormat(selectedLog.updated_at).value }}</dd>
         </div>
+      </dl>
 
+      <dl class="mt-5">
+        <div class="grid sm:grid-cols-1">
+          <dt class="font-medium">Endpoint: <span class="text-primary ml-5">{{ selectedLog.endPoint }}</span></dt>
+          
+        </div>
       </dl>
 
       <x-divider class="my-5" />
