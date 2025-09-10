@@ -1961,8 +1961,8 @@ class CarQuoteService extends BaseService
                             $startDate = $endDate->copy()->subDays(30);
                             
                             $subQuery->whereBetween('q.paid_at', [
-                                $startDate->toDateTimeString(),
-                                $endDate->toDateTimeString()
+                                $startDate->startOfDay()->toDateTimeString(),
+                                $endDate->endOfDay()->toDateTimeString()
                             ]);
                         }
                     }, function ($subQuery) {
@@ -1978,8 +1978,8 @@ class CarQuoteService extends BaseService
                     $startDate = $endDate->copy()->subDays(30);
                     
                     $query->whereBetween('q.paid_at', [
-                        $startDate->toDateTimeString(),
-                        $endDate->toDateTimeString()
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString()
                     ]);
                     
                     $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
@@ -2022,8 +2022,8 @@ class CarQuoteService extends BaseService
                     $startDate = $endDate->copy()->subDays(30);
 
                     $query->whereBetween('q.paid_at', [
-                        $startDate->toDateTimeString(),
-                        $endDate->toDateTimeString()
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString()
                     ]);
                 }
             }, function ($query) {
@@ -2089,8 +2089,8 @@ class CarQuoteService extends BaseService
                     $startDate = $endDate->copy()->subDays(30);
                     
                     $query->whereBetween('q.paid_at', [
-                        $startDate->toDateTimeString(),
-                        $endDate->toDateTimeString()
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString()
                     ]);
                     
                     $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
@@ -2129,8 +2129,8 @@ class CarQuoteService extends BaseService
                     $startDate = $endDate->copy()->subDays(30);
                     
                     $query->whereBetween('q.paid_at', [
-                        $startDate->toDateTimeString(),
-                        $endDate->toDateTimeString()
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString()
                     ]);
                     
                     $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
