@@ -18,6 +18,7 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -2185,6 +2186,18 @@ class AMLService
 
         if (! in_array($insuranceProvider?->code, array_keys($insurerScreenType))) {
             return false;
+        }
+
+        if ($insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
+            if ($quote->source == LeadSourceEnum::RENEWAL_UPLOAD &&
+                auth()->user()->can(PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
+            ) {
+                return true;
+            }
+
+            if (isset($screeningResult->quoteStatus) &&$screeningResult->quoteStatus == 20) {
+                return true;
+            }
         }
 
         $kycLogs = KycLog::withTrashed()->where([

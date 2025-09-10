@@ -276,18 +276,28 @@ const syncInsurerPortalUpdates = () => {
       quoteUID: page.props.quoteRequest.uuid
     })
     .then(response => {
-      if (response.data.success) {
+      // Safely check response.data exists and has expected structure
+      const hasValidData = response.data && response.data.success == true;
+      
+      if (hasValidData) {
         notification.success({
           title: 'Quote details synced successfully from insurer portal',
           position: 'top',
         });
         
-        if (response.data.data) {
+        // Safely check nested data properties
+        if (response.data?.data) {
           emit('update:insurerPortalSyncData', response.data.data);
         }
+        if (response.data?.original?.data) {
+          emit('update:insurerPortalSyncData', response.data.original.data);
+        }
       } else {
+        // Handle case where request succeeded but data indicates failure
         notification.error({
-          title: response.data.message || 'Failed to sync quote details from insurer portal',
+          title:
+            response.data?.message ||
+            'Failed to sync quote details from insurer portal',
           position: 'top',
         });
       }
