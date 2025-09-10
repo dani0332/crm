@@ -862,7 +862,12 @@
                                 </a>
                             </a>
                         </p>
-                        <p class="footer-content-1">Health Insurance Intermediary Permit issued by Dubai Health Authority | ID: BRK-00003</p>
+                        <p class="footer-content-1">
+                            Health Insurance Intermediary Permit issued by 
+                            <a href="https://www.isahd.ae/Home/PermittedIntermediaries" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                                Dubai Health Authority
+                            </a> | ID: BRK-00003
+                        </p>
                         <p class="footer-content-1">
                             <a href="https://www.added.gov.ae/en" target="_blank" style="color: #ffffff; text-decoration: underline;">
                                 Abu Dhabi Department of Economic Development
