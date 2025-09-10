@@ -361,9 +361,9 @@
         width: 100%;
         background-color: #1d83bc;
         color: #ffffff;
-        padding: 10px 10px 10px 10px;
+        padding: 5px 5px 5px 5px;
         text-align: left;
-        height: 155px !important;
+        height: 150px !important;
     }
 
    
@@ -377,16 +377,13 @@
     }
 
     .footer-td {
-        padding: 10px;
+        padding: 5px;
         vertical-align: top;
         border: none;
     }
 
     .footer-box {
-        border-radius: 24px;
-        border: 2px solid #CF9E3C;
-        padding: 5px 5px;
-        text-align: left;
+        width: 100%;
     }
 
     .footer-link {
@@ -408,19 +405,48 @@
     .footer-header {
         font-size: 12px;
         font-weight: bold;
+        text-align: center;
+    }
+
+    .footer-content-1 {
+        font-size: 8px !important;
+        line-height: 0.7 !important;
+        word-break: break-word;
+        white-space: normal !important;
+        width: 100%;
+        box-sizing: border-box;
+        align-items: left;
         text-align: left;
     }
 
-    .footer-content-1{
-        font-size: 8px !important;
-        align-items: center;
-        text-align: center;
-        line-height: 0.7 !important;
+    @media (max-width: 600px) {
+        .footer-content-1 {
+            font-size: 8px !important;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
     }
 
     .footer-content-2{
-        font-size: 10px !important;
+        font-size: 9px !important;
+        align-items: center;
+        text-align: center;
+        line-height: 0.8 !important;
+        word-break: break-word;
+        white-space: normal !important;
+        width: 100%;
+        box-sizing: border-box;
+        align-items: left;
+        text-align: left;
     }
+    @media (max-width: 600px) {
+        .footer-content-2 {
+            font-size: 9px !important;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
+    }
+
 
     .advisor-section {
         display: table;
@@ -843,10 +869,10 @@
             InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC
         </h4>
 
-        <table class="footer-table" align="center">
+        <table class="footer-table" >
             <tr>
-                <td class="footer-td" style="width: 42%">
-                    <div class="footer-box" style="line-height: 0.8;">
+                <td class="footer-td" style="width:40%">
+                    <div class="footer-box" >
                         <p class="footer-content-1">
                             Licensed and regulated by the 
                             <a href="https://www.centralbank.ae/en/licensing/" target="_blank" style="color: #ffffff; text-decoration: underline;">
@@ -899,7 +925,7 @@
                         </p>
                     </div>
                 </td>
-                <td class="footer-td" style="width: 28%">
+                <td class="footer-td" style="width:30%">
                     <div class="footer-box" style="margin-top: 5px; line-height: 0.8; position: relative;">
                         <p class="footer-content-2">
                           Head Office: 27th floor, Control Tower, Detroit Road,<br>Motor City, PO Box - 26423,<br>Dubai, United Arab Emirates.
@@ -918,14 +944,14 @@
                         <p class="footer-content-2">
                             Web: <a href="https://insurancemarket.ae" style="color: #ffffff; text-decoration: underline;">insurancemarket.ae</a>
                         </p>
-                        <div class="open-new-icon" style="position: absolute; right:5px; top:42px;">
+                        {{-- <div class="open-new-icon" style="position: absolute; right:5px; top:42px;">
                             <a
                             class="text-white"
                             href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">
                                 <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}"
                                 style="width: 22px; height: 22px; vertical-align: baseline; display: inline-block;">
                             </a>
-                        </div>
+                        </div> --}}
                     </div>
                 </td>
 
