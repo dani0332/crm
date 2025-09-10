@@ -295,7 +295,7 @@ class OCRService
         string $fileMimeType,
         int $userId,
         float $startTime
-    ): void {
+    ): bool {
         $endTime = microtime(true);
         $executionTime = round(($endTime - $startTime) * 1000, 2);
 
@@ -318,7 +318,7 @@ class OCRService
             $userId
         );
 
-        throw $e;
+        return false;
     }
 
     public function process(
@@ -394,7 +394,7 @@ class OCRService
                 );
             }
         } catch (\Exception $e) {
-            $this->handleProcessingException(
+            $result = $this->handleProcessingException(
                 $e,
                 $quote,
                 $quoteType,
