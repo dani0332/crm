@@ -2,6 +2,8 @@
 import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 
 const props = defineProps({
   quote: Object,
@@ -378,6 +380,10 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  window.addEventListener('ocr-notification', handleOcrNotification);
+});
+onUnmounted(() => {
+  window.removeEventListener('ocr-notification', handleOcrNotification);
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -410,10 +416,93 @@ const allowStatusUpdate = computed(() => {
     page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
   );
 });
+
+// OCR loader state for GM (align with Car/Home)
+const ocrLoadingDocType = ref(null);
+const ocrLoadingDocTypes = reactive(new Set());
+const isDocTypeLoading = docType => ocrLoadingDocTypes.has(docType);
+const hasOcrInProgress = computed(() => ocrLoadingDocTypes.size > 0);
+const ocrDocumentTypeEnum = usePage().props.ocrDocumentTypeEnum;
+// Check if all required policy fields are filled (moved from OcrNotification to avoid duplicates)
+const checkRequiredPolicyFields = () => {
+  const quote = usePage().props?.quote;
+  if (!quote) return false;
+  const requiredFields = [
+    { field: 'policy_number', property: 'quote_policy_number' },
+    { field: 'policy_start_date', property: 'quote_policy_start_date' },
+    { field: 'policy_expiry_date', property: 'quote_policy_expiry_date' },
+    { field: 'price_vat_applicable', property: 'price_vat_applicable' },
+  ];
+  return requiredFields.every(item => {
+    const value = quote[item.field] || quote[item.property];
+    return value !== null && value !== undefined && String(value).trim() !== '';
+  });
+};
+// Reload keys for forced component re-renders after OCR
+const policyDetailReloadKey = ref(0);
+const bookPolicyReloadKey = ref(0);
+function handleOcrNotification(event) {
+  const { docType, status, userId } = event.detail || {};
+  const currentUserId = usePage().props.auth.user.id;
+  // Only process notifications for the current user
+  if (userId !== currentUserId) {
+    return;
+  }
+  // For 'start' status, add document type to loading set
+  if (status === 'start') {
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+    ];
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.add(docType);
+      // Also set the old ref for backwards compatibility
+      ocrLoadingDocType.value = docType;
+    }
+  } else {
+    // For 'end' or 'fail' status, remove document type from loading set and reload data
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+    ];
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.delete(docType);
+    }
+    router.reload({
+      onSuccess: () => {
+        // Clear both the old ref and the reactive Set for immediate UI update
+        ocrLoadingDocType.value = null;
+        ocrLoadingDocTypes.clear();
+        policyDetailReloadKey.value++;
+        bookPolicyReloadKey.value++;
+        // Check policy fields completion after data reload (only for CERTIFICATE_OF_ISSUANCE)
+        if (
+          status === 'end' &&
+          !event.detail?.error &&
+          docType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value
+        ) {
+          const allFieldsFilled = checkRequiredPolicyFields();
+          if (!allFieldsFilled) {
+            notification.info({
+              title: 'Some required fields are still missing in Policy details',
+              position: 'top',
+            });
+          }
+        }
+      },
+      preserveState: true,
+      preserveScroll: true,
+      only: ['payments', 'bookPolicyDetails', 'quote', 'quoteDocuments'],
+    });
+  }
+}
 </script>
 
 <template>
   <div>
+    <OcrNotification />
     <Head title="Group Medical Lead Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <div class="flex items-center gap-2">
@@ -1175,9 +1264,14 @@ const allowStatusUpdate = computed(() => {
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
+      :key="policyDetailReloadKey"
       :quote="quote"
       modelType="Business"
       :expanded="sectionExpanded"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <QuoteDocument
@@ -1189,6 +1283,10 @@ const allowStatusUpdate = computed(() => {
       :expanded="sectionExpanded"
       quoteType="Business"
       :bookPolicyDetails="bookPolicyDetails"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <BookPolicy
@@ -1199,6 +1297,7 @@ const allowStatusUpdate = computed(() => {
           permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
+      :key="bookPolicyReloadKey"
       :quote="quote"
       quoteType="Business"
       modelType="Group Medical"
@@ -1265,6 +1364,13 @@ const allowStatusUpdate = computed(() => {
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+    />
+
+    <OcrLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
     />
 
     <AuditLogs

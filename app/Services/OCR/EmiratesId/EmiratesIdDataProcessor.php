@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\DB;
 
 class EmiratesIdDataProcessor
 {
+    use OcrUtils;
+
     private EmiratesIdExtractor $emiratesIdExtractor;
     private array $extractedData = [];
 
@@ -91,7 +93,7 @@ class EmiratesIdDataProcessor
 
     private function createInsuredRecord(): Insured
     {
-        $insuredData = OcrUtils::getCleanData([
+        $insuredData = $this->getCleanData([
             'customer_type' => 'Individual',
             'first_name' => $this->extractFirstName($this->extractedData['name'] ?? ''),
             'last_name' => $this->extractLastName($this->extractedData['name'] ?? ''),
@@ -140,7 +142,7 @@ class EmiratesIdDataProcessor
             }
 
             // Update all fields with OCR data
-            $dataToUpdate = OcrUtils::getFieldsToUpdate($updateData);
+            $dataToUpdate = $this->getFieldsToUpdate($updateData);
 
             if (! empty($dataToUpdate)) {
                 $insured->update($dataToUpdate);
@@ -205,7 +207,7 @@ class EmiratesIdDataProcessor
 
             if ($insuredKyc) {
                 // Update all fields with OCR data
-                $dataToUpdate = OcrUtils::getFieldsToUpdate($kycData);
+                $dataToUpdate = $this->getFieldsToUpdate($kycData);
 
                 if (! empty($dataToUpdate)) {
                     $insuredKyc->update($dataToUpdate);
