@@ -1980,8 +1980,10 @@ class CarQuoteService extends BaseService
                         $startDate->startOfDay()->toDateTimeString(),
                         $endDate->endOfDay()->toDateTimeString(),
                     ]);
-
-                    $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
+                    $query->whereBetween('p.authorized_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
                 }
             }, function ($query) {
                 // Default date range when no authorize_date is provided
@@ -2025,7 +2027,10 @@ class CarQuoteService extends BaseService
                         $endDate->endOfDay()->toDateTimeString(),
                     ]);
 
-                    $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
+                    $query->whereBetween('p.authorized_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
                 }
             }, function ($query) {
                 // Default date range when no authorize_date is provided
@@ -2094,7 +2099,10 @@ class CarQuoteService extends BaseService
                         $endDate->endOfDay()->toDateTimeString(),
                     ]);
 
-                    $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
+                    $query->whereBetween('p.authorized_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
                 }
             }, function ($query) {
                 // Default date range when no authorize_date is provided
@@ -2134,7 +2142,10 @@ class CarQuoteService extends BaseService
                         $endDate->endOfDay()->toDateTimeString(),
                     ]);
 
-                    $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
+                    $query->whereBetween('p.authorized_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
                 }
             }, function ($query) {
                 // Default date range when no authorize_date is provided
