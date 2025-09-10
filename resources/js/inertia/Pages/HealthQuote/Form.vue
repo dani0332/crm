@@ -281,7 +281,12 @@ function onSubmit(isValid) {
           required
         />
 
-        <x-input :model-value="branchName" class="w-full" label="BRANCH" />
+        <x-input
+          :model-value="branchName"
+          class="w-full"
+          label="BRANCH"
+          disabled
+        />
 
         <x-input
           v-model="quoteForm.preference"
