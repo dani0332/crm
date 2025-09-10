@@ -34,10 +34,7 @@ class EvaluateTeamPipe extends BaseAllocationPipe
         $isSIC = $this->allocationRequest->isSIC();
         $isAIG = $this->allocationRequest->isAIG();
 
-        if (
-            ($isSIC && $lead->isPUA()) ||
-            ($isAIG && $lead->sic_advisor_requested)
-        ) {
+        if ($lead->isPUA() || ($isAIG && $lead->sic_advisor_requested)) {
             $teamName = TeamNameEnum::ORGANIC;
 
             LoggerService::info('Lead is PUA or AIG with SIC advisor requested. Assigning to Organic team.', [
