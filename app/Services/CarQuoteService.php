@@ -1944,7 +1944,6 @@ class CarQuoteService extends BaseService
             ->where('t.parent_team_id', $carTeam->id)
             ->whereNotIn('q.uuid', function ($query) use ($request) {
 
-
                 $query->select('q.uuid')
                     ->from('car_quote_plan_details as cqp')
                     ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
@@ -1959,16 +1958,16 @@ class CarQuoteService extends BaseService
                         if ($authorizeDate) {
                             $endDate = Carbon::parse($authorizeDate)->subDay();
                             $startDate = $endDate->copy()->subDays(30);
-                            
+
                             $subQuery->whereBetween('q.paid_at', [
                                 $startDate->startOfDay()->toDateTimeString(),
-                                $endDate->endOfDay()->toDateTimeString()
+                                $endDate->endOfDay()->toDateTimeString(),
                             ]);
                         }
                     }, function ($subQuery) {
                         // Default date range when no authorize_date is provided
                         $subQuery->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
-                                 ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY');
+                            ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY');
                     });
             })
             ->when($request->filled('authorize_date'), function ($query) use ($request) {
@@ -1976,18 +1975,18 @@ class CarQuoteService extends BaseService
                 if ($authorizeDate) {
                     $endDate = Carbon::parse($authorizeDate)->subDay();
                     $startDate = $endDate->copy()->subDays(30);
-                    
+
                     $query->whereBetween('q.paid_at', [
                         $startDate->startOfDay()->toDateTimeString(),
-                        $endDate->endOfDay()->toDateTimeString()
+                        $endDate->endOfDay()->toDateTimeString(),
                     ]);
-                    
+
                     $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
                 }
             }, function ($query) {
                 // Default date range when no authorize_date is provided
                 $query->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
-                      ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY');
+                    ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY');
             })
             ->orderBy('q.paid_at', 'desc');
 
@@ -2023,13 +2022,13 @@ class CarQuoteService extends BaseService
 
                     $query->whereBetween('q.paid_at', [
                         $startDate->startOfDay()->toDateTimeString(),
-                        $endDate->endOfDay()->toDateTimeString()
+                        $endDate->endOfDay()->toDateTimeString(),
                     ]);
                 }
             }, function ($query) {
                 // Default date range when no authorize_date is provided
                 $query->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
-                      ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY');
+                    ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY');
             })
             ->groupBy('t.name');
 
@@ -2087,18 +2086,18 @@ class CarQuoteService extends BaseService
                 if ($authorizeDate) {
                     $endDate = Carbon::parse($authorizeDate)->subDay();
                     $startDate = $endDate->copy()->subDays(30);
-                    
+
                     $query->whereBetween('q.paid_at', [
                         $startDate->startOfDay()->toDateTimeString(),
-                        $endDate->endOfDay()->toDateTimeString()
+                        $endDate->endOfDay()->toDateTimeString(),
                     ]);
-                    
+
                     $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
                 }
             }, function ($query) {
                 // Default date range when no authorize_date is provided
                 $query->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
-                      ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'));
+                    ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'));
             })
             ->orderBy('q.paid_at', 'desc');
 
@@ -2127,18 +2126,18 @@ class CarQuoteService extends BaseService
                 if ($authorizeDate) {
                     $endDate = Carbon::parse($authorizeDate)->subDay();
                     $startDate = $endDate->copy()->subDays(30);
-                    
+
                     $query->whereBetween('q.paid_at', [
                         $startDate->startOfDay()->toDateTimeString(),
-                        $endDate->endOfDay()->toDateTimeString()
+                        $endDate->endOfDay()->toDateTimeString(),
                     ]);
-                    
+
                     $query->whereDate('p.authorized_at', Carbon::parse($authorizeDate)->toDateString());
                 }
             }, function ($query) {
                 // Default date range when no authorize_date is provided
                 $query->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
-                      ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'));
+                    ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'));
             })
             ->groupBy('t.name');
 
