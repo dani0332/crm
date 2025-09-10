@@ -14,7 +14,6 @@ use Carbon\Carbon;
 use Closure;
 use Exception;
 use Illuminate\Support\Facades\Bus;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class AssignLeadPipe extends BaseAllocationPipe
 {

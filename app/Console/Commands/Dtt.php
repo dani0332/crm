@@ -13,7 +13,6 @@ use App\Services\LeadAllocationService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class Dtt extends Command
 {
