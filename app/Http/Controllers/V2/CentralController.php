@@ -8,7 +8,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProviderEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
