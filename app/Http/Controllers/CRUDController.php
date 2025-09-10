@@ -122,6 +122,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CRUDController extends Controller
 {
@@ -1276,6 +1277,9 @@ class CRUDController extends Controller
                 ]));
             }
         } catch (Exception $e) {
+            if ($e instanceof NotFoundHttpException) {
+                abort(404);
+            }
             LoggerService::error('Error Occurred in CRUDController@show', exception: $e);
 
             throw $e;
