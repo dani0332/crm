@@ -92,7 +92,7 @@ trait PersonalQuoteObservable
     protected function handleIntroEmails(PersonalQuote $personalQuote, $oldAdvisorId = null): void
     {
 
-        if ($personalQuote->isHome()) {
+        if (suppressIntroEmailByStatus($personalQuote->quote_status_id) && $personalQuote->isHome()) {
             info(self::class." - sending home intro email for quote: {$personalQuote->uuid}");
             SendHomeOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(Carbon::now()->addMinutes(1));
             info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid);
@@ -183,14 +183,14 @@ trait PersonalQuoteObservable
 
     private function IntroAndReassignEmail(PersonalQuote $personalQuote, $oldAdvisorId = null): void
     {
-        $isEligibleForEmail = $personalQuote->source != LeadSourceEnum::IMCRM;
+        $isEligibleForEmail =  $personalQuote->source != LeadSourceEnum::IMCRM;
 
         // for Savings, we need to send email to customer even if the source is IMCRM
         if ($personalQuote->isSavings()) {
             $isEligibleForEmail = true;
         }
 
-        if ($isEligibleForEmail) {
+        if (suppressIntroEmailByStatus($personalQuote->quote_status_id) && $isEligibleForEmail) {
             $quoteType = QuoteTypes::getName($personalQuote->quote_type_id);
             info(self::class." - Quote Type: {$quoteType->value} quote:  {$personalQuote->uuid}");
             $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
