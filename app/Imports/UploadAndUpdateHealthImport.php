@@ -120,7 +120,7 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
                 $data = $validator->getData();
                 $currentRow = $data[$index];
 
-                $premiumCount = $currentRow[7] == 0 || $currentRow[7] == null || $currentRow[7] == '' ? 1 : count(array_filter(explode('|', $currentRow[7])));
+                $premiumCount = $currentRow[7] == 0 || $currentRow[7] == null || $currentRow[7] == '' ? count(array_filter(explode('|', $value))) : count(array_filter(explode('|', $currentRow[7])));
                 $memberCount = count(array_filter(explode('|', $value)));
                 $dobCount = count(array_filter(explode('|', $currentRow[10])));
                 $nationalityCount = count(array_filter(explode('|', $currentRow[11])));

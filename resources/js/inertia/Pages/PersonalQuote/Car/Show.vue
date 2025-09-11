@@ -488,11 +488,17 @@ const isRenewalUpload = computed(() => {
 });
 
 const isGIG = computed(() => {
-  return page.props.quote?.plan_provider_code === page.props.insuranceProviderCodeEnum.AXA;
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.AXA
+  );
 });
 
 const isLIVA = computed(() => {
-  return page.props.quote?.plan_provider_code === page.props.insuranceProviderCodeEnum.RSA;
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.RSA
+  );
 });
 
 const leadStatusOptions = computed(() => {
@@ -4401,7 +4407,8 @@ function handleOcrNotification(event) {
     :type="modelClass"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
-  /> -->
+  />
+  -->
 
   <ClientInquiryLogs
     v-if="clientInquiryLogs?.length > 0"
