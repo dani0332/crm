@@ -21,7 +21,7 @@ const patternFieldDisable = ref(true);
 const isSyncEnabled = ref(page.props.isInsurerSyncEnabled ?? false);
 const syncProcessLoading = ref(false);
 
-const emit = defineEmits(['update:insurerPortalSyncData']); 
+const emit = defineEmits(['update:insurerPortalSyncData']);
 
 const insuredDetails = page.props.insuredDetails;
 const lookups = page.props.lookups;
@@ -273,18 +273,18 @@ const syncInsurerPortalUpdates = () => {
   axios
     .post('/get-quote-details-from-insurer', {
       quoteTypeId: page.props.quoteType.id,
-      quoteUID: page.props.quoteRequest.uuid
+      quoteUID: page.props.quoteRequest.uuid,
     })
     .then(response => {
       // Safely check response.data exists and has expected structure
       const hasValidData = response.data && response.data.success == true;
-      
+
       if (hasValidData) {
         notification.success({
           title: 'Quote details synced successfully from insurer portal',
           position: 'top',
         });
-        
+
         // Safely check nested data properties
         if (response.data?.data) {
           emit('update:insurerPortalSyncData', response.data.data);
@@ -323,28 +323,38 @@ const submitInsuredKycForm = isValid => {
       .post('/update-insured-kyc', kycFormDetails)
       .then(response => {
         console.log('response', response); // TODO:: this log is temporary
-        if(response.data.insurer_screening) {
-          if(response.data.insurer_screening.status == 'AML_SCREENING_FAILED') {
+        if (response.data.insurer_screening) {
+          if (
+            response.data.insurer_screening.status == 'AML_SCREENING_FAILED'
+          ) {
             notification.error({
-              title: response.data.insurer_screening.message || 'GIG server connection issue. Please check API logs for details of the error',
+              title:
+                response.data.insurer_screening.message ||
+                'GIG server connection issue. Please check API logs for details of the error',
               position: 'top',
             });
-          } else if(response.data.insurer_screening.status == 'AML_SCREENING_CLEARED') {
-            if(response.data.insurer_screening.autoCaptureStatus == 'success') {
+          } else if (
+            response.data.insurer_screening.status == 'AML_SCREENING_CLEARED'
+          ) {
+            if (
+              response.data.insurer_screening.autoCaptureStatus == 'success'
+            ) {
               notification.success({
                 title: response.data.insurer_screening.autoCaptureMessage,
                 timeout: 30000,
               });
             }
-            if(response.data.insurer_screening.autoCaptureStatus == 'failed') {
+            if (response.data.insurer_screening.autoCaptureStatus == 'failed') {
               notification.error({
-                title: response.data.insurer_screening.autoCaptureMessage ?? 'Auto capture payment process failed',
+                title:
+                  response.data.insurer_screening.autoCaptureMessage ??
+                  'Auto capture payment process failed',
                 position: 'top',
                 timeout: 30000,
               });
             }
           }
-        } 
+        }
         if (response.data.success) {
           notification.success({
             title: 'KYC Document uploaded successfully',
@@ -362,7 +372,6 @@ const submitInsuredKycForm = isValid => {
           });
           kycFormDetails.processing = false;
         }
-        
       })
       .catch(errors => {
         Object.keys(errors.response.data.errors).forEach(function (key) {
@@ -537,8 +546,8 @@ watch(
   },
 );
 
-const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] = createReusableTemplate();
-
+const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] =
+  createReusableTemplate();
 </script>
 <template>
   <x-form @submit="submitInsuredKycForm" :auto-focus="false">
@@ -1168,21 +1177,30 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] = 
       </x-button>
       <SubmitInsuredKycFormBtnTemplate>
         <x-button
-            size="sm"
-            color="orange"
-            type="submit"
-            class="px-6"
-            :loading="kycFormDetails.processing"
-            :disabled="(!can(permissionsEnum.AMLList)) || (!kycFormDetails.insured_id)"
+          size="sm"
+          color="orange"
+          type="submit"
+          class="px-6"
+          :loading="kycFormDetails.processing"
+          :disabled="
+            !can(permissionsEnum.AMLList) || !kycFormDetails.insured_id
+          "
         >
           Save
         </x-button>
       </SubmitInsuredKycFormBtnTemplate>
 
-      <x-tooltip v-if="(!can(permissionsEnum.AMLList)) || (!kycFormDetails.insured_id)" placement="left">
+      <x-tooltip
+        v-if="!can(permissionsEnum.AMLList) || !kycFormDetails.insured_id"
+        placement="left"
+      >
         <SubmitInsuredKycFormBtnReuseTemplate />
         <template #tooltip>
-            {{ kycFormDetails.insured_id ? 'You don\'t have permission to edit this section' : 'Search the Insured\'s ID number' }}
+          {{
+            kycFormDetails.insured_id
+              ? "You don't have permission to edit this section"
+              : "Search the Insured's ID number"
+          }}
         </template>
       </x-tooltip>
       <template v-else>

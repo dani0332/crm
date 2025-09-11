@@ -159,9 +159,9 @@ const createOrUpdateMember = async (memberForm, isMemberEditEnabled) => {
     }
   } catch (err) {
     notification.error({
-        title: err.response.data.message || 'Something went wrong',
-        position: 'top',
-      });
+      title: err.response.data.message || 'Something went wrong',
+      position: 'top',
+    });
   } finally {
     isLoading.value = false;
   }
@@ -194,8 +194,8 @@ function memberSubmit(isValid) {
   createOrUpdateMember(memberForm, isMemberEditEnabled.value);
 }
 
-const [AddMemberUBOPayerBtnTemplate, AddMemberUBOPayerBtnReuseTemplate] = createReusableTemplate();
-
+const [AddMemberUBOPayerBtnTemplate, AddMemberUBOPayerBtnReuseTemplate] =
+  createReusableTemplate();
 </script>
 <template>
   <x-form @submit="memberSubmit" auto-focus="false">
@@ -385,10 +385,7 @@ const [AddMemberUBOPayerBtnTemplate, AddMemberUBOPayerBtnReuseTemplate] = create
         }}
         <x-tag size="sm">{{ computedMembers.length || 0 }}</x-tag>
       </h3>
-      <x-tooltip
-        v-if="!can(permissionsEnum.AMLList)"
-        placement="bottom"
-      >
+      <x-tooltip v-if="!can(permissionsEnum.AMLList)" placement="bottom">
         <AddMemberUBOPayerBtnReuseTemplate />
         <template #tooltip>
           {{
