@@ -24,47 +24,70 @@ const nextFollowUpForm = useForm({
 // Client-side validation rules
 const validationErrors = ref({});
 const hasInteracted = ref(false);
+const dateHasChanged = ref(false);
 
-// Computed properties for date constraints
+// Store original date as timestamp for efficient comparison
+const originalDateTimestamp = computed(() => {
+  const original = props.claim?.next_followup_datetime;
+  if (!original) return null;
+  const date = new Date(original);
+  return isNaN(date.getTime()) ? null : date.getTime();
+});
+
+// Helper function to normalize date to timestamp
+const getDateTimestamp = (date) => {
+  if (!date) return null;
+  const dateObj = date instanceof Date ? date : new Date(date);
+  return isNaN(dateObj.getTime()) ? null : dateObj.getTime();
+};
+
+// Helper function to check if date has changed
+const hasDateChanged = () => {
+  const currentTimestamp = getDateTimestamp(nextFollowUpForm.next_follow_up_date);
+  const originalTimestamp = originalDateTimestamp.value;
+  return currentTimestamp !== originalTimestamp;
+};
+
+// Computed properties for date constraints (cached for better performance)
 const minDate = computed(() => new Date());
-const maxDate = computed(() => new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)); // 15 days from now
+const maxDate = computed(() => {
+  const fifteenDaysInMs = 15 * 24 * 60 * 60 * 1000;
+  return new Date(Date.now() + fifteenDaysInMs);
+});
 
 const validateForm = (showRequiredErrors = true) => {
   const errors = {};
+  const currentDate = nextFollowUpForm.next_follow_up_date;
 
-  // Validate next_follow_up_date - required (only show required error if user has interacted or explicitly requested)
-  if (!nextFollowUpForm.next_follow_up_date) {
+  // Validate next_follow_up_date - required
+  if (!currentDate) {
     if (showRequiredErrors && hasInteracted.value) {
       errors.next_follow_up_date = 'The next follow-up date field is required.';
     }
-  } else {
-    // DatePicker returns Date object, so handle accordingly
-    const selectedDate =
-      nextFollowUpForm.next_follow_up_date instanceof Date
-        ? nextFollowUpForm.next_follow_up_date
-        : new Date(nextFollowUpForm.next_follow_up_date);
-    const now = new Date();
-    const maxDateValue = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000); // 15 days from now
+  } else if (dateHasChanged.value) {
+    // Only validate date constraints if the date has been changed by the user
+    const selectedDate = currentDate instanceof Date ? currentDate : new Date(currentDate);
 
     // Validate date format
     if (isNaN(selectedDate.getTime())) {
-      errors.next_follow_up_date =
-        'The next follow-up date must be a valid date.';
-    }
-    // Validate future date (after now)
-    else if (selectedDate <= now) {
-      errors.next_follow_up_date =
-        'The next follow-up date must be in the future.';
-    }
-    // Validate maximum 15 days in future
-    else if (selectedDate > maxDateValue) {
-      errors.next_follow_up_date =
-        'The next follow-up date cannot be more than 15 days in the future.';
+      errors.next_follow_up_date = 'The next follow-up date must be a valid date.';
+    } else {
+      const now = new Date();
+      const maxDateValue = maxDate.value;
+
+      // Validate future date (after now)
+      if (selectedDate <= now) {
+        errors.next_follow_up_date = 'The next follow-up date must be in the future.';
+      }
+      // Validate maximum 15 days in future
+      else if (selectedDate > maxDateValue) {
+        errors.next_follow_up_date = 'The next follow-up date cannot be more than 15 days in the future.';
+      }
     }
   }
 
   // Validate notes - max 250 characters
-  if (nextFollowUpForm.notes && nextFollowUpForm.notes.length > 250) {
+  if (nextFollowUpForm.notes?.length > 250) {
     errors.notes = 'The notes must be less than 250 characters.';
   }
 
@@ -78,15 +101,30 @@ const isFormValid = ref(true);
 // Method to validate form on input change
 const validateFormOnChange = () => {
   hasInteracted.value = true;
+
+  // Check if the date has actually changed using optimized helper
+  if (hasDateChanged()) {
+    dateHasChanged.value = true;
+  }
+
   isFormValid.value = validateForm();
 };
 
-// Watch for changes and validate
+// Watch for changes and validate (optimized with debouncing for better performance)
+const debouncedValidation = useDebounceFn(() => {
+  // Don't show required errors on initial load, only validate format/range errors
+  isFormValid.value = validateForm(false);
+}, 150);
+
 watch(
   [() => nextFollowUpForm.next_follow_up_date, () => nextFollowUpForm.notes],
   () => {
-    // Don't show required errors on initial load, only validate format/range errors
-    isFormValid.value = validateForm(false);
+    if (hasInteracted.value) {
+      debouncedValidation();
+    } else {
+      // Immediate validation on initial load without debounce
+      isFormValid.value = validateForm(false);
+    }
   },
   { immediate: true },
 );
@@ -161,11 +199,15 @@ const isSubmitDisabled = computed(() => {
   return nextFollowUpForm.processing || !isFormValid.value;
 });
 
-const updateNextFollowUp = isValid => {
-  console.log('updateNextFollowUp');
+const updateNextFollowUp = () => {
+  // On submit, temporarily enable date validation to catch any issues
+  const wasDateChanged = dateHasChanged.value;
+  dateHasChanged.value = true;
 
   // Perform client-side validation with all errors including required errors
   if (!validateForm(true)) {
+    // Restore original state if validation fails
+    dateHasChanged.value = wasDateChanged;
     // Show validation errors only on submit
     Object.keys(validationErrors.value).forEach(function (key) {
       notification.error({
