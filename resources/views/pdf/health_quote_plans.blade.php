@@ -881,13 +881,14 @@
                             | Registration No. <a href="https://cdn.alfred.ae/docs/CB-License-2024.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;"> 85</a>
                         </p>
                         <p class="footer-content-1">
-                            Trade License issued by Department of Economy & Tourism, Dubai | 
+                            Trade License issued by 
                             <a href="https://eservices.dubaided.gov.ae/Pages/Anon/GstHme.aspx?dedqs=PM671p6QBb0lV1okx2JABgxoLLKXOgPx" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                            Department of Economy & Tourism </a>, Dubai | 
+                          
                                 License No. 
                                 <a href="https://cdn.alfred.ae/docs/AFIA-Trade-License-2023-24.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
                                     238534
-                                </a>
-                            </a>
+                            
                         </p>
                         <p class="footer-content-1">
                             Health Insurance Intermediary Permit issued by 
@@ -921,9 +922,9 @@
                             Member of the
                             <a href="https://eiauae.net/En/10/brokers/694/afia-insurance-brokerage-services--llc" target="_blank" style="color: #ffffff; text-decoration: underline;">
                                 Emirates Insurance Federation
-                            </a> | 
+                            </a> | Membership No.
                             <a href="https://cdn.alfred.ae/docs/EIA-Membership.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                                Membership No. B6
+                                 B6
                             </a>
                         </p>
                     </div>
