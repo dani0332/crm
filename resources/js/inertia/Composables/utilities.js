@@ -363,7 +363,7 @@ export const calculateDaysDifference = (start_date, end_date) => {
     const end = new Date(end_date);
     const diffTime = Math.abs(end - start);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    return diffDays + 1;
   }
   return 0;
 };
