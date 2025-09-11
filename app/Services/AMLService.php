@@ -965,6 +965,18 @@ class AMLService
                 $insurerScreeningPayload['homeCountryLicenseInsurance'] = $nationality?->text ?? null;
                 $insurerScreeningPayload['homeCountryDrivingExperience'] = $vehicleDriverDetail?->driver_home_country_driving_experience ?? null;
                 $insurerScreeningPayload['insuredAndDriverSame'] = $vehicleDriverDetail->is_insured_and_driver_same !== null ? (bool) $vehicleDriverDetail->is_insured_and_driver_same : null;
+                if ($isLIVA && $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+                    $vehcileColor = Lookup::where([
+                        'key' => LookupsEnum::VEHICLE_COLOR,
+                        'insurance_provider_id' => $paymentDetails->insurance_provider_id,
+                        'code' => $vehicleDriverDetail?->vehicle_color,
+                    ])->first();
+
+                    $insurerScreeningPayload['vehicleColor'] = [
+                        'code' => $vehicleDriverDetail?->vehicle_color ?? null,
+                        'value' => $vehcileColor?->text ?? null,
+                    ];
+                }
             }
 
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurer AML Screening API called - Ref-ID: '.$quoteDetails->code);
