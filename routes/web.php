@@ -912,7 +912,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 });
 
 
-// Will remove this route after testing or before staging
+// Will remove this route after testing or before staging and prod
 Route::get('/sqs-test/{code}', function ($code) {
     $carQuote = CarQuote::where('code', $code)->first();
     if ($carQuote) {
