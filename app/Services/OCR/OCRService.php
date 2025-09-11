@@ -645,8 +645,8 @@ class OCRService
     private function isTimeoutException(ConnectionException $exception): bool
     {
         $message = $exception->getMessage();
-        
-        return str_contains($message, 'cURL error 28') || 
+
+        return str_contains($message, 'cURL error 28') ||
                str_contains($message, 'Operation timed out') ||
                str_contains($message, 'Connection timed out') ||
                str_contains($message, 'timeout');
