@@ -59,4 +59,14 @@ final class InsuranceProvidersEnum extends Enum
     public const AAIC = 'AAIC';
     public const OALLIANZ = 'OALLIANZ';
     public const NHICD = 'NHICD';
+
+    public static function getTextByCode($value)
+    {
+        return match ($value) {
+            self::RSA => 'Liva',
+            self::AXA => 'GIG',
+            self::OIC => 'Sukoon',
+            default => 'GIG',
+        };
+    }
 }
