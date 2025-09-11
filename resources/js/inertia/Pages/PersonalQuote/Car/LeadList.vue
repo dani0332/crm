@@ -1531,7 +1531,7 @@ const onConfirmPUAExport = () => {
           v-model="puaExportModal.payment_date"
           label="Payment Date"
           class="w-full"
-          :max-date="yesterday"
+          :max-date="new Date()"
         />
       </div>
 
