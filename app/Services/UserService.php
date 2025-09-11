@@ -10,8 +10,8 @@ use App\Models\Role;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class UserService extends BaseService
 {
