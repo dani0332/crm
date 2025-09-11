@@ -190,6 +190,10 @@ const customerTypeOptions = computed(() => {
 });
 
 const showVehicleAndDrvicerDetails = computed(() => {
+  console.log('page.props.quoteType.id', page.props.quoteType.id, page.props.quoteTypeIdEnum.Car, page.props.quoteType.id === page.props.quoteTypeIdEnum.Car);
+  console.log('page.props.insuranceProviderCodeEnum.AXA', page.props.quoteRequest?.plan?.insurance_provider.code, page.props.insuranceProviderCodeEnum.AXA);
+  console.log('page.props.isPrivateCar', page.props.isPrivateCar);
+
   return (
     page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
     [
@@ -200,6 +204,8 @@ const showVehicleAndDrvicerDetails = computed(() => {
     (page.props.isPrivateCar ?? false)
   );
 });
+
+console.log('showVehicleAndDrvicerDetails', showVehicleAndDrvicerDetails.value);
 
 const screeningFormDetails = useForm({
   customer_type: null,
