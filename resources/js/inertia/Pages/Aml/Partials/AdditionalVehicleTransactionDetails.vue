@@ -163,6 +163,19 @@ const vehicleDriverDetail = computed(() => {
   return page.props.quoteRequest?.vehicle_driver_detail;
 });
 
+const dateToYMD = date => {
+  if (date) {
+    // Check if date is already in YMD format
+    const ymdRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+    if (ymdRegex.test(date)) {
+      return date.split(' ')[0]; // Return only the date part
+    }
+    const [day, month, year] = date.split('-');
+    return `${year}-${month}-${day}`;
+  }
+  return '';
+};
+
 const additionalVehicleTransactionDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: page.props.quoteRequest?.uuid,
@@ -180,7 +193,7 @@ const additionalVehicleTransactionDetailsForm = useForm({
   bank_loan: vehicleDriverDetail.value?.bank_loan?.toString() ?? '',
   bank_name: vehicleDriverDetail.value?.bank_name ?? '',
   first_registration_date: vehicleDriverDetail.value?.first_registration_date ?? '',
-  policy_effective_date: page.props.quoteRequest?.policy_start_date ?? '',
+  policy_effective_date: dateToYMD(page.props.quoteRequest?.policy_start_date) ?? '',
   policy_expiry_date: page.props.quoteRequest?.policy_expiry_date ?? '',
   certificate_start_date: page.props.quoteRequest?.certificate_start_date ?? '',
   certificate_end_date: page.props.quoteRequest?.certificate_end_date ?? '',
