@@ -10,8 +10,8 @@ const props = defineProps({
     required: true,
     type: [String, Number],
   },
-  quoteType: {
-    required: false,
+  quoteTypeId: {
+    required: true,
     type: String,
   },
   expanded: {
@@ -47,10 +47,10 @@ const apiLogs = reactive({
   data: null,
   table: [
     { text: 'ID', value: 'id' },
-    { text: 'REF-ID', value: 'quote_uuid' },
-    { text: 'Call Type', value: 'call_type' },
+    { text: 'REF-ID', value: 'policy_issuance.model.uuid' },
+    { text: 'Step', value: 'step' },
     { text: 'Status', value: 'status' },
-    { text: 'Provider Name', value: 'insurance_provider.text' },
+    { text: 'Provider Name', value: 'policy_issuance.insurance_provider.text' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Action', value: 'action' },
   ],
@@ -59,42 +59,44 @@ const apiLogs = reactive({
 const filteredLogs = computed(() => {
   if (insuranceProviderId.value != null)
     return apiLogs.data.filter(
-      item => item.insurance_provider.id == insuranceProviderId.value,
+      item => item.policy_issuance.insurance_provider.id == insuranceProviderId.value,
     );
   else return apiLogs.data;
 });
 
-const loadApiLogs = async () => {
+const loadPolicyIssuanceLogs = async () => {
   apiLogs.loading = true;
 
-  let url = '/insurer-logs';
+  let url = '/policy-issuance-logs';
 
   let data = {
-    ...(props.quoteType === undefined
-      ? { auditableType: props.type, auditableId: props.id }
-      : { quote_type: props.quoteType, auditable_id: props.id }),
+    quoteId: props.id,
+    quoteTypeId: props.quoteTypeId,
     jsonData: true,
   };
+
   axios
     .post(url, data)
     .then(res => {
-      apiLogs.data = res.data;
-      notification.success({
-        title: 'API Logs Loaded Successfully',
-        position: 'top',
-      });
+      if (res.data.success) {
+        apiLogs.data = res.data.data;
+        notification.success({
+          title: 'Policy Issuance API Logs Loaded Successfully',
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: res.data.message || `Failed to load Policy Issuance API logs`,
+          position: 'top',
+        });
+      }
     })
     .catch(err => {
-      console.log('ERR', err);
-      let errorMessage = 'Something went wrong. Please try again later.';
-      if (err.response && err.response.data && err.response.data.error) {
-        errorMessage = err.response.data.error;
-      }
-
       notification.error({
-        title: `Failed to load API logs: ${errorMessage}`,
+        title: `Something went wrong. Please try again later`,
         position: 'top',
       });
+      console.log('Policy Issuance Api Logs Error', err);
     })
     .finally(() => {
       apiLogs.loading = false;
@@ -102,7 +104,7 @@ const loadApiLogs = async () => {
 };
 
 const onLoadAuditLogData = async () => {
-  await loadApiLogs();
+  await loadPolicyIssuanceLogs();
 };
 </script>
 
@@ -111,7 +113,7 @@ const onLoadAuditLogData = async () => {
     <Collapsible :expanded="expanded">
       <template #header>
         <div>
-          <h3 class="font-semibold text-primary-800 text-lg">API Logs</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">Policy Issuance API Logs</h3>
         </div>
       </template>
       <template #body>
@@ -124,7 +126,7 @@ const onLoadAuditLogData = async () => {
             @click.prevent="onLoadAuditLogData"
             :loading="apiLogs.loading"
           >
-            Load API Logs
+            Load Policy Issuance API Logs
           </x-button>
         </div>
         <div v-else>
@@ -151,7 +153,7 @@ const onLoadAuditLogData = async () => {
               :loading="apiLogs.loading"
               class="h-10"
               title="Refresh"
-              @click.prevent="loadApiLogs"
+              @click.prevent="loadPolicyIssuanceLogs"
             >
               <x-icon icon="refresh" class="mr-1" size="sm" />
             </x-button>
@@ -200,27 +202,27 @@ const onLoadAuditLogData = async () => {
   <x-modal
     v-model="modals.apiLog"
     size="lg"
-    :title="`Insurance Request Response Details:  ${selectedLog?.id}`"
+    :title="`Policy Issuance Request Response Details:  ${selectedLog?.id}`"
     show-close
     backdrop
   >
     <div>
       <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5">
+
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">REF-ID:</dt>
-          <dd>{{ selectedLog.quote_uuid }}</dd>
+          <dd>{{ selectedLog.policy_issuance?.model?.uuid }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Step:</dt>
+          <dd>{{ selectedLog.step }}</dd>
         </div>
 
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Call Type:</dt>
-          <dd>{{ selectedLog.call_type }}</dd>
+          <dt class="font-medium">Completed Step:</dt>
+          <dd>{{ selectedLog.policy_issuance?.completed_step }}</dd>
         </div>
-
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Execution Method:</dt>
-          <dd>{{ selectedLog.execution_method }}</dd>
-        </div>
-
+        
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Status:</dt>
           <dd>
@@ -238,27 +240,30 @@ const onLoadAuditLogData = async () => {
             </x-tag>
           </dd>
         </div>
+
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Provider Name:</dt>
-          <dd>{{ selectedLog.insurance_provider.text }}</dd>
+          <dd>{{ selectedLog.policy_issuance?.insurance_provider?.text }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Created At:</dt>
           <dd>{{ dateFormat(selectedLog.created_at).value }}</dd>
         </div>
+
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Updated At:</dt>
           <dd>{{ dateFormat(selectedLog.updated_at).value }}</dd>
         </div>
+
       </dl>
 
       <x-divider class="my-5" />
       <dl class="">
-        <dt class="font-medium mb-2">Request:</dt>
+        <dt class="font-medium mb-2">Payload:</dt>
         <div
           class="text-sm h-auto w-auto break-words p-3.5 bg-[#d5edfd] text-[#060404] rounded"
         >
-          {{ selectedLog.request }}
+          {{ selectedLog.payload }}
         </div>
       </dl>
       <dl class="mt-5">

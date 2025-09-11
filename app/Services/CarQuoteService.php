@@ -491,6 +491,9 @@ class CarQuoteService extends BaseService
                 'cqr.pc_qualified',
                 DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
                 DB::raw(CarQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
+                'cqr.api_issuance_status_id',
+                'cqr.insurer_api_status_id',
+                'cqr.rta_upload_status',
                 'cqr.documents_verified',
             )
             ->leftJoin('payments as py', function ($join) {

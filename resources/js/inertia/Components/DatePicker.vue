@@ -138,4 +138,8 @@ const iconPosition = computed(() => {
 .dp__cell_disabled {
   @apply opacity-20;
 }
+
+.dp--clear-btn {
+  top: 2.75rem !important;
+}
 </style>
