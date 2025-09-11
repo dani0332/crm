@@ -86,8 +86,9 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
     Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
-
+    Route::post('send-my-alfred-welcome-email', [GenericLobController::class, 'sendMyAlfredWelcomeEmail']);
 });
+
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
 Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);
@@ -95,5 +96,3 @@ Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);
 Route::get('/heath-check', function () {
     return response()->json(['success' => true]);
 });
-
-Route::post('v1/send-my-alfred-welcome-email', [GenericLobController::class, 'sendMyAlfredWelcomeEmail']);

@@ -9,8 +9,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-
+use Throwable;
 class ExtendCustomerSubscriptionViaSQS implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -63,6 +64,7 @@ class ExtendCustomerSubscriptionViaSQS implements ShouldQueue
         $customerDataArr['email'] = $this->customer->email;
         $customerDataArr['source'] = $this->source;
         $customerDataArr['tag'] = $this->tag;
+        
         $customerDataJson = json_encode($customerDataArr);
         
         $sqsApiKey = config('constants.SQS_API_KEY');
@@ -95,5 +97,21 @@ class ExtendCustomerSubscriptionViaSQS implements ShouldQueue
             LoggerService::error('SQS Service - extendCustomerSubscriptionViaSQS - Exception - Customer ID: '.$this->customer->id.' - Message: '.$e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->customer->id))->dontRelease()];
+    }
+
+    /**
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage() . ' - Customer ID: '.$this->customer->id);
     }
 }
