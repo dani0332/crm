@@ -980,7 +980,9 @@ class AMLService
                 }
             }
 
-            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurer AML Screening API called - Ref-ID: '.$quoteDetails->code);
+            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurer AML Screening API called - Ref-ID: '.$quoteDetails->code, extra: [
+                'payload' => json_encode($insurerScreeningPayload),
+            ]);
             $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', $insurerScreeningPayload);
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - '.$providerName.' Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.json_encode($screeningResponse));
             $screeningResponse['screening_type'] = $screeningType;
