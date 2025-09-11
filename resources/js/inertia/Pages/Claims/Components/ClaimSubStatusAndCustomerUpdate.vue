@@ -141,6 +141,7 @@ const optimizeMessage = async () => {
       ),
       {
         message: claimSubStatusAndCustomerForm.customer_message,
+        claim_uuid: props.claim?.uuid,
       },
     );
 

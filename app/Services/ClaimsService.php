@@ -8,6 +8,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Facades\InstantWriterAIFacade;
 use App\Facades\CustomerPortalApiFacade;
 use App\Jobs\SendGoogleReviewEmailJob;
 use App\Models\CarMake;
@@ -1468,6 +1469,26 @@ class ClaimsService extends BaseService
             ->toArray();
 
         return $audits;
+    }
+
+    public function optimizeMessageWithAI(string $message, string $claimUuid)
+    {
+        $apiData = [
+            'original_message' => $message,
+            'claim_reference' => $claimUuid,
+        ];
+
+        try {
+
+            return InstantWriterAIFacade::request('/message-optimizer/optimize', 'post', $apiData);
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error optimizing message', extra: [
+                'error' => $e->getMessage(),
+                'message' => $message,
+            ]);
+
+            throw $e;
+        }
     }
 
 }

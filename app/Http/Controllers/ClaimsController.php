@@ -349,14 +349,19 @@ class ClaimsController extends Controller
     {
         $request->validate([
             'message' => 'required|string|max:1000',
+            'claim_uuid' => 'required|string|max:255',
         ]);
 
         try {
-            $optimizedMessage = $this->optimizeMessageWithAI($request->message);
+            $optimizedMessageResponse = $this->claimsService->optimizeMessageWithAI($request->message, $request->claim_uuid);
+
+            if (! $optimizedMessageResponse->success) {
+                return response()->json(['status' => false, 'message' => $optimizedMessageResponse->error], 500);
+            }
 
             return response()->json([
                 'status' => true,
-                'optimized_message' => $optimizedMessage,
+                'optimized_message' => $optimizedMessageResponse->optimized_message,
             ], 200);
         } catch (Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Error optimizing message', extra: [
@@ -731,20 +736,5 @@ class ClaimsController extends Controller
         }
     }
 
-    /**
-     * Placeholder for AI message optimization
-     */
-    private function optimizeMessageWithAI(string $message): string
-    {
-        // This is a placeholder implementation
-        // In real implementation, this would integrate with an AI service
 
-        $optimizedMessage = "Dear Customer,\n\n";
-        $optimizedMessage .= 'Thank you for your patience regarding your claim. ';
-        $optimizedMessage .= trim($message);
-        $optimizedMessage .= "\n\nIf you have any questions, please don't hesitate to contact us.";
-        $optimizedMessage .= "\n\nBest regards,\nClaims Team";
-
-        return $optimizedMessage;
-    }
 }
