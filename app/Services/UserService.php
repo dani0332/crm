@@ -9,8 +9,8 @@ use App\Enums\TeamTypeEnum;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 
 class UserService extends BaseService
@@ -308,8 +308,11 @@ class UserService extends BaseService
                 // Update user employee_code only if current employee_code is NULL and we have a valid code
                 if ($code !== null) {
                     if ($user->employee_code === null) {
-                        $user->employee_code = $code;
-                        $user->save();
+                        // Use write connection with transaction for safe database operation
+                        DB::connection('mysql')->transaction(function () use ($user, $code) {
+                            $user->employee_code = $code;
+                            $user->setConnection('mysql')->save();
+                        });
 
                         LoggerService::info(static::class.'::fetchUserCodes - Updated user employee_code', [
                             'user_id' => $user->id,
