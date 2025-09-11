@@ -3,8 +3,8 @@
 namespace App\Services\PolicyIssuanceAutomation;
 
 use App\Enums\DocumentTypeCode;
-use App\Enums\InsuranceProvidersEnum;
 use App\Enums\InsuranceProviderEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -15,8 +15,6 @@ use App\Enums\WorkflowTypeEnum;
 use App\Jobs\AutomationFailedJob;
 use App\Jobs\PolicyIssuanceJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
-use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
-use App\Models\CarQuote;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;

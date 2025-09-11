@@ -32,15 +32,15 @@ const props = defineProps({
   // RTA Configuration (only available for Car quotes)
   rta_transaction_types: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   },
   rta_field_configurations: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   },
   rta_validation_summaries: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   },
   isPrivateCar: Boolean,
 });

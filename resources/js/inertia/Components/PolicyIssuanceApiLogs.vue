@@ -59,7 +59,8 @@ const apiLogs = reactive({
 const filteredLogs = computed(() => {
   if (insuranceProviderId.value != null)
     return apiLogs.data.filter(
-      item => item.policy_issuance.insurance_provider.id == insuranceProviderId.value,
+      item =>
+        item.policy_issuance.insurance_provider.id == insuranceProviderId.value,
     );
   else return apiLogs.data;
 });
@@ -113,7 +114,9 @@ const onLoadAuditLogData = async () => {
     <Collapsible :expanded="expanded">
       <template #header>
         <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Policy Issuance API Logs</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Policy Issuance API Logs
+          </h3>
         </div>
       </template>
       <template #body>
@@ -208,7 +211,6 @@ const onLoadAuditLogData = async () => {
   >
     <div>
       <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5">
-
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">REF-ID:</dt>
           <dd>{{ selectedLog.policy_issuance?.model?.uuid }}</dd>
@@ -222,7 +224,7 @@ const onLoadAuditLogData = async () => {
           <dt class="font-medium">Completed Step:</dt>
           <dd>{{ selectedLog.policy_issuance?.completed_step }}</dd>
         </div>
-        
+
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Status:</dt>
           <dd>
@@ -254,7 +256,6 @@ const onLoadAuditLogData = async () => {
           <dt class="font-medium">Updated At:</dt>
           <dd>{{ dateFormat(selectedLog.updated_at).value }}</dd>
         </div>
-
       </dl>
 
       <x-divider class="my-5" />

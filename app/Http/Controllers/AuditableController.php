@@ -15,7 +15,6 @@ use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
-use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -100,7 +99,7 @@ class AuditableController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Policy issuance API logs retrieved successfully',
-            'data' => $policyIssuanceLogs
+            'data' => $policyIssuanceLogs,
         ]);
     }
 

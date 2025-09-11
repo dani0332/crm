@@ -10,15 +10,15 @@ const props = defineProps({
   // RTA Configuration props (for Car quotes)
   rta_transaction_types: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   },
   rta_field_configurations: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   },
   rta_validation_summaries: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   },
 });
 const page = usePage();
@@ -746,12 +746,12 @@ const handleModalClose = () => {
   customerTypeConfirmationModel.value = false;
 };
 
-const updateInsurerPortalSyncData = (data) => {
+const updateInsurerPortalSyncData = data => {
   insurerPortalSyncData.value = data;
 };
 
-const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] = createReusableTemplate();
-
+const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
+  createReusableTemplate();
 </script>
 <template>
   <x-modal
@@ -1023,7 +1023,7 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] = crea
       <div
         v-if="
           (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
-          page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
+            page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
           !showVehicleAndDrvicerDetails
         "
       >
@@ -1101,12 +1101,11 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] = crea
       </x-button>
     </SubmitForScreeningBtnTemplate>
     <div class="flex justify-center my-5">
-      <x-tooltip
-        v-if="!can(permissionsEnum.AMLList)"
-        placement="bottom"
-      >
-        <SubmitForScreeningBtnReuseTemplate/>
-        <template #tooltip>You don't have permission to edit this section</template>
+      <x-tooltip v-if="!can(permissionsEnum.AMLList)" placement="bottom">
+        <SubmitForScreeningBtnReuseTemplate />
+        <template #tooltip
+          >You don't have permission to edit this section</template
+        >
       </x-tooltip>
       <template v-else>
         <SubmitForScreeningBtnReuseTemplate />

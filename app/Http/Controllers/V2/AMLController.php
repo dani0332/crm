@@ -49,7 +49,6 @@ use App\Models\KycLog;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
-use App\Models\PolicyIssuance;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
@@ -58,13 +57,11 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
-use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
-use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\QuoteDocumentService;
 use App\Services\RtaTransactionTypeService;
 use App\Services\SIBService;
@@ -87,7 +84,7 @@ class AMLController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('permission:' . PermissionsEnum::AMLList . '|' . PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS,
+        $this->middleware('permission:'.PermissionsEnum::AMLList.'|'.PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS,
             ['only' => ['index']]);
         $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
     }
