@@ -675,8 +675,8 @@
                 'row_class' => 'row-spacing',
             ],
             [
-                'code' => 'icpFee',
-                'title' => 'ICP',
+                'code' => $isAUH ? 'icpFee' : 'basmah',
+                'title' => $isAUH ? 'ICP' : 'BASMAH',
                 'type' => 'info',
                 'heading_class' => 'text-heading',
                 'row_class' => 'row-spacing',
