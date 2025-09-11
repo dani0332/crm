@@ -92,25 +92,25 @@ trait PersonalQuoteObservable
     protected function handleIntroEmails(PersonalQuote $personalQuote, $oldAdvisorId = null): void
     {
 
-        if (suppressIntroEmailByStatus($personalQuote->quote_status_id) && $personalQuote->isHome()) {
-            info(self::class." - sending home intro email for quote: {$personalQuote->uuid}");
+        if ( $personalQuote->isHome()) {
+            LoggerService::info(self::class." - sending home intro email for quote: {$personalQuote->uuid} Quote Status: {$personalQuote->quote_status_id}");
             SendHomeOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(Carbon::now()->addMinutes(1));
-            info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid);
-            info(self::class." - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
-            if ($personalQuote->source != LeadSourceEnum::IMCRM && ! empty($oldAdvisorId)) {
-                if ($oldAdvisorId != $personalQuote->advisor_id) {
-                    info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
+            LoggerService::info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid);
+            LoggerService::info(self::class." - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
+            if (suppressIntroEmailByStatus($personalQuote->quote_status_id) && $personalQuote->source != LeadSourceEnum::IMCRM && ! empty($oldAdvisorId)) {
+                if (  $oldAdvisorId != $personalQuote->advisor_id) {
+                    LoggerService::info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
 
                     $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
-                    info(self::class." Sending {$emailType} email to customer for home quote {$personalQuote->uuid}");
+                    LoggerService::info(self::class." Sending {$emailType} email to customer for home quote {$personalQuote->uuid}");
                     app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, QuoteTypes::HOME->value, $oldAdvisorId);
-                    info(self::class." | {$emailType} email sent to customer for home quote {$personalQuote->uuid}");
+                    LoggerService::info(self::class." | {$emailType} email sent to customer for home quote {$personalQuote->uuid}");
                 } else {
-                    info(self::class." - Advisor ID not updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
+                    LoggerService::info(self::class." - Advisor ID not updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
                 }
 
             } else {
-                info(self::class." - lead source: {$personalQuote->source} |  - Old Advisor ID: {$oldAdvisorId} |  Advisor ID: {$personalQuote->advisor_id}");
+                LoggerService::info(self::class." - lead source: {$personalQuote->source} |  - Old Advisor ID: {$oldAdvisorId} |  Advisor ID: {$personalQuote->advisor_id} Quote Status: {$personalQuote->quote_status_id}");
             }
         }
     }

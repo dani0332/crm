@@ -59,7 +59,7 @@ class LifeQuoteObserver
                 LoggerService::info(self::class." | {$emailType} email sent to customer for life quote {$lifeQuote->uuid} ");
 
             } else {
-                LoggerService::info("LifeQuoteObserver - lead source: {$lifeQuote->source} |  Advisor ID: {$lifeQuote->advisor_id} ");
+                LoggerService::info("LifeQuoteObserver - lead source: {$lifeQuote->source} |  Advisor ID: {$lifeQuote->advisor_id}  Quote Status: {$lifeQuote->quote_status_id} ");
             }
         }
         // $this->syncQuote($lifeQuote, $dirty);
