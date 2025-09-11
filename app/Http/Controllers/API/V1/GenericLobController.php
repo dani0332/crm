@@ -6,16 +6,22 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ExportPlansPdfLinkRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Http\Requests\MaWelcomEmailRequest;
 use App\Http\Requests\OCBEmailRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\DeleteTempOCBPDFFileJob;
+use App\Jobs\MAWelcomeJob;
 use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
+use App\Models\Customer;
+use App\Services\Logger\LoggerService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class GenericLobController extends Controller
 {
+
     /**
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      *
@@ -114,4 +120,33 @@ class GenericLobController extends Controller
         return $service->exportPlansPdf($quoteType, $request->validated());
     }
 
+    
+    public function sendMyAlfredWelcomeEmail(MaWelcomEmailRequest $request)
+    {
+        LoggerService::info('MyAlfred Welcome Email - Request received', [
+            'customer_email' => $request->email,
+            'code' => $request->code,
+            'source' => $request->source,
+            'tag' => $request->tag,
+        ]);
+        
+        $hasToSendMAWelcomeEmail = $request->code == 'CUSTOMER_NOT_FOUND';
+        
+        if ($hasToSendMAWelcomeEmail) {
+            $customer = Customer::where('email', $request->email)->first();
+            
+            LoggerService::info('MyAlfred Welcome Email - Dispatching job', [
+                'customer_email' => $customer->email,
+            ]);
+
+            MAWelcomeJob::dispatch($customer, $request->source, $request->tag);
+        } else {
+            LoggerService::info('MyAlfred Welcome Email - Skipped - Code is not CUSTOMER_NOT_FOUND', [
+                'code' => $request->code,
+                'customer_email' => $request->email,
+            ]);
+        }
+
+        return response()->json(['message' => 'Welcome email sent successfully']);
+    }
 }

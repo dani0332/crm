@@ -10,7 +10,7 @@ use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\CourtesyEmailJob;
-use App\Jobs\MAWelcomeJob;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendAutomatedLifeFollowup;
 use App\Jobs\SendFICEmailForLife;
 use App\Jobs\SendHomeOCBIntroEmailJob;
@@ -136,7 +136,7 @@ trait PersonalQuoteObservable
     private function handlePolicyBookedOrSentToCustomer(PersonalQuote $personalQuote): void
     {
         CourtesyEmailJob::dispatch(['quoteTypeId' => $personalQuote->quote_type_id, 'quoteUID' => $personalQuote->uuid]);
-        MAWelcomeJob::dispatch(
+        ExtendCustomerSubscriptionViaSQS::dispatch(
             $personalQuote->customer,
             'LEAD_STATUS_UPDATE',
             'lead-status-update-myalfred-we'

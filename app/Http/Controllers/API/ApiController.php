@@ -51,7 +51,6 @@ use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
@@ -471,4 +470,5 @@ class ApiController extends Controller
     {
         return $this->apiService->documentNotification($request);
     }
+
 }

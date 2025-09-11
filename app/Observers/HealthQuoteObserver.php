@@ -13,7 +13,7 @@ use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\Health\SendApplicationSubmittedEmailJob;
 use App\Jobs\IntroEmailJob;
-use App\Jobs\MAWelcomeJob;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Models\HealthQuote;
 use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -107,7 +107,7 @@ class HealthQuoteObserver
             in_array($healthQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Health, 'quoteUID' => $healthQuote->uuid]);
-            MAWelcomeJob::dispatch(
+            ExtendCustomerSubscriptionViaSQS::dispatch(
                 $healthQuote->customer,
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'

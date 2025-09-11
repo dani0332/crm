@@ -2,6 +2,7 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Http\Controllers\AccuracyMatrixController;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
@@ -93,6 +94,9 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Models\CarQuote;
+use App\Models\Customer;
 use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
@@ -905,4 +909,21 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             'status' => 'dispatched',
         ]);
     });
+});
+
+
+// Will remove this route after testing or before staging
+Route::get('/sqs-test/{code}', function ($code) {
+    $carQuote = CarQuote::where('code', $code)->first();
+    if ($carQuote) {
+        $carQuote->update(['quote_status_id' => QuoteStatusEnum::TransactionApproved]);
+        $carQuote->update(['quote_status_id' => QuoteStatusEnum::PolicySentToCustomer]);
+    }
+
+    $sqsApiKey = config('constants.SQS_API_KEY');
+    $sqsEndpoint = config('constants.SQS_API_ENDPOINT');
+
+    echo "SQS end point {$sqsEndpoint} <br/>";
+    echo "SQS api key {$sqsApiKey}";
+    echo "Done";
 });
