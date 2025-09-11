@@ -164,38 +164,40 @@ const updateComplaintStatus = isValid => {
         <x-form :form="complaintStatusForm" @submit="updateComplaintStatus">
           <div class="space-y-4 flex flex-col gap-4">
             <!-- Status Dropdown -->
-            <div class="w-1/2">
-              <x-select
-                v-model="complaintStatusForm.complaint_status_id"
-                :error="
-                  complaintStatusForm.errors.complaint_status_id ||
-                  validationErrors.complaint_status_id
-                "
-                :options="complaintStatusOptions"
-                placeholder="N/A"
-                label="Status"
-                class="w-full"
-                filterable
-                required
-                @update:model-value="validateFormOnChange"
-              />
-            </div>
-            <div class="w-1/2">
-              <DatePicker
-                v-model="complaintStatusForm.complaint_datetime"
-                label="Complaint Date"
-                :error="
-                  complaintStatusForm.errors.complaint_datetime ||
-                  validationErrors.complaint_datetime
-                "
-                placeholder="Please select complaint date"
-                class="w-full"
-                :max-date="maxDate"
-                required
-                :utc="true"
-                :is-24="true"
-                @update:model-value="validateFormOnChange"
-              />
+            <div class="flex flex-row gap-4">
+              <div class="w-1/2">
+                <x-select
+                  v-model="complaintStatusForm.complaint_status_id"
+                  :error="
+                    complaintStatusForm.errors.complaint_status_id ||
+                    validationErrors.complaint_status_id
+                  "
+                  :options="complaintStatusOptions"
+                  placeholder="N/A"
+                  label="Status"
+                  class="w-full"
+                  filterable
+                  required
+                  @update:model-value="validateFormOnChange"
+                />
+              </div>
+              <div class="w-1/2">
+                <DatePicker
+                  v-model="complaintStatusForm.complaint_datetime"
+                  label="Complaint Date"
+                  :error="
+                    complaintStatusForm.errors.complaint_datetime ||
+                    validationErrors.complaint_datetime
+                  "
+                  placeholder="Please select complaint date"
+                  class="w-full"
+                  :max-date="maxDate"
+                  required
+                  :utc="true"
+                  :is-24="true"
+                  @update:model-value="validateFormOnChange"
+                />
+              </div>
             </div>
 
             <!-- Notes -->
