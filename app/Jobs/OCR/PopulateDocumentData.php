@@ -64,16 +64,17 @@ class PopulateDocumentData implements ShouldQueue
             return;
         }
 
-        $isSuccess = app(OCRService::class)->process(
-            $this->quoteType,
-            $this->quote,
-            $this->documentType,
-            $this->documentPath,
-            $this->fileMimeType,
-            $this->userId,
-            $this->isEcom,
-            $this->isSendUpdateEligibleForOCR
-        );
+        try {
+            $isSuccess = app(OCRService::class)->process(
+                $this->quoteType,
+                $this->quote,
+                $this->documentType,
+                $this->documentPath,
+                $this->fileMimeType,
+                $this->userId,
+                $this->isEcom,
+                $this->isSendUpdateEligibleForOCR
+            );
 
             if ($isSuccess === null) {
                 LoggerService::info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
