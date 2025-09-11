@@ -878,13 +878,14 @@
                             <a href="https://www.centralbank.ae/en/licensing/" target="_blank" style="color: #ffffff; text-decoration: underline;">
                                 Central Bank of the UAE
                             </a> 
-                            | <a href="https://cdn.alfred.ae/docs/CB-License-2024.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">Registration No. 85</a>
+                            | Registration No. <a href="https://cdn.alfred.ae/docs/CB-License-2024.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;"> 85</a>
                         </p>
                         <p class="footer-content-1">
                             Trade License issued by Department of Economy & Tourism, Dubai | 
                             <a href="https://eservices.dubaided.gov.ae/Pages/Anon/GstHme.aspx?dedqs=PM671p6QBb0lV1okx2JABgxoLLKXOgPx" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                                License No. 
                                 <a href="https://cdn.alfred.ae/docs/AFIA-Trade-License-2023-24.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                                    License No. 238534
+                                    238534
                                 </a>
                             </a>
                         </p>
@@ -892,7 +893,7 @@
                             Health Insurance Intermediary Permit issued by 
                             <a href="https://www.isahd.ae/Home/PermittedIntermediaries" target="_blank" style="color: #ffffff; text-decoration: underline;">
                                 Dubai Health Authority
-                            </a> | ID: BRK-00003
+                            </a> | ID:   <a href="https://www.isahd.ae/Home/PermittedIntermediaries" target="_blank" style="color: #ffffff; text-decoration: underline;">BRK-00003</a>
                         </p>
                         <p class="footer-content-1">
                             <a href="https://www.added.gov.ae/en" target="_blank" style="color: #ffffff; text-decoration: underline;">
@@ -911,13 +912,15 @@
 
                         </p>
                         <p class="footer-content-1">
+                            Member of the
                             <a href="https://cdn.alfred.ae/docs/GIF-Membership-Certificate.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                                Member of the Gulf Insurance Federation
+                                Gulf Insurance Federation
                             </a>
                         </p>
                         <p class="footer-content-1">
+                            Member of the
                             <a href="https://eiauae.net/En/10/brokers/694/afia-insurance-brokerage-services--llc" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                                Member of the Emirates Insurance Federation
+                                Emirates Insurance Federation
                             </a> | 
                             <a href="https://cdn.alfred.ae/docs/EIA-Membership.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
                                 Membership No. B6
