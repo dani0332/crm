@@ -1905,6 +1905,8 @@ class CarQuoteService extends BaseService
 
     public function exportnonPUAAuthorized($requestParams = [])
     {
+        LoggerService::info('CarQuoteService::exportnonPUAAuthorized - Method called for Car PUA export');
+
         if (! empty($requestParams)) {
             $request = new \Illuminate\Http\Request($requestParams);
         } else {
@@ -1939,10 +1941,9 @@ class CarQuoteService extends BaseService
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
             ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
-            ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
-            ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
             ->where('t.parent_team_id', $carTeam->id)
-            ->whereNotIn('q.uuid', function ($query) {
+            ->whereNotIn('q.uuid', function ($query) use ($request) {
+
                 $query->select('q.uuid')
                     ->from('car_quote_plan_details as cqp')
                     ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
@@ -1951,20 +1952,47 @@ class CarQuoteService extends BaseService
                     ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
                     ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
                     ->whereNotNull('cqp.pua_premium')
-                    ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
-                    ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
-                    ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
+                    ->whereColumn('cqp.plan_id', '=', 'q.plan_id')
+                    ->when($request->filled('authorize_date'), function ($subQuery) use ($request) {
+                        $authorizeDate = $request->input('authorize_date');
+                        if ($authorizeDate) {
+                            $endDate = Carbon::parse($authorizeDate)->subDay();
+                            $startDate = $endDate->copy()->subDays(30);
+
+                            $subQuery->whereBetween('q.paid_at', [
+                                $startDate->startOfDay()->toDateTimeString(),
+                                $endDate->endOfDay()->toDateTimeString(),
+                            ]);
+                        }
+                    }, function ($subQuery) {
+                        // Default date range when no authorize_date is provided
+                        $subQuery->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+                            ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY');
+                    });
             })
             ->when($request->filled('authorize_date'), function ($query) use ($request) {
                 $authorizeDate = $request->input('authorize_date');
-                if (is_array($authorizeDate) && count($authorizeDate) >= 2) {
-                    $startDate = Carbon::parse($authorizeDate[0])->startOfDay()->toDateTimeString();
-                    $endDate = Carbon::parse($authorizeDate[1])->endOfDay()->toDateTimeString();
-                    $query->whereBetween('p.authorized_at', [$startDate, $endDate]);
+                if ($authorizeDate) {
+                    $endDate = Carbon::parse($authorizeDate)->subDay();
+                    $startDate = $endDate->copy()->subDays(30);
+
+                    $query->whereBetween('q.paid_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
+                    $query->whereBetween('p.authorized_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
                 }
+            }, function ($query) {
+                // Default date range when no authorize_date is provided
+                $query->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+                    ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY');
             })
-            ->orderBy('q.paid_at', 'desc')
-            ->get();
+            ->orderBy('q.paid_at', 'desc');
+
+        $nonPUAAuthLead = $nonPUAAuthLead->get();
 
         $nonPUAAuthTeamCount = DB::table('car_quote_request as q')
             ->select(
@@ -1981,8 +2009,6 @@ class CarQuoteService extends BaseService
             ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->where('t.parent_team_id', $carTeam->id)
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
-            ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
-            ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
             ->whereNotIn('q.uuid', function ($query) {
                 $query->select('q.uuid')
                     ->from('car_quote_plan_details as cqp')
@@ -1992,20 +2018,36 @@ class CarQuoteService extends BaseService
             })
             ->when($request->filled('authorize_date'), function ($query) use ($request) {
                 $authorizeDate = $request->input('authorize_date');
-                if (is_array($authorizeDate) && count($authorizeDate) >= 2) {
-                    $startDate = Carbon::parse($authorizeDate[0])->startOfDay()->toDateTimeString();
-                    $endDate = Carbon::parse($authorizeDate[1])->endOfDay()->toDateTimeString();
-                    $query->whereBetween('p.authorized_at', [$startDate, $endDate]);
+                if ($authorizeDate) {
+                    $endDate = Carbon::parse($authorizeDate)->subDay();
+                    $startDate = $endDate->copy()->subDays(30);
+
+                    $query->whereBetween('q.paid_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
+
+                    $query->whereBetween('p.authorized_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
                 }
+            }, function ($query) {
+                // Default date range when no authorize_date is provided
+                $query->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+                    ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY');
             })
-            ->groupBy('t.name')
-            ->get();
+            ->groupBy('t.name');
+
+        $nonPUAAuthTeamCount = $nonPUAAuthTeamCount->get();
 
         return [$nonPUAAuthLead, $nonPUAAuthTeamCount];
     }
 
     public function exportPUAAuthorized($requestParams = [])
     {
+        LoggerService::info('CarQuoteService::exportPUAAuthorized - Method called for Car PUA export');
+
         if (! empty($requestParams)) {
             $request = new \Illuminate\Http\Request($requestParams);
         } else {
@@ -2044,17 +2086,28 @@ class CarQuoteService extends BaseService
             ->where('q.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
             ->whereNotNull('cqp.pua_premium')
-            ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
-            ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
             ->where('t.parent_team_id', '=', $carTeam->id)
             ->when($request->filled('authorize_date'), function ($query) use ($request) {
                 $authorizeDate = $request->input('authorize_date');
-                if (is_array($authorizeDate) && count($authorizeDate) >= 2) {
-                    $startDate = Carbon::parse($authorizeDate[0])->startOfDay()->toDateTimeString();
-                    $endDate = Carbon::parse($authorizeDate[1])->endOfDay()->toDateTimeString();
-                    $query->whereBetween('p.authorized_at', [$startDate, $endDate]);
+                if ($authorizeDate) {
+                    $endDate = Carbon::parse($authorizeDate)->subDay();
+                    $startDate = $endDate->copy()->subDays(30);
+
+                    $query->whereBetween('q.paid_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
+
+                    $query->whereBetween('p.authorized_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
                 }
+            }, function ($query) {
+                // Default date range when no authorize_date is provided
+                $query->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
+                    ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'));
             })
             ->orderBy('q.paid_at', 'desc');
 
@@ -2076,26 +2129,40 @@ class CarQuoteService extends BaseService
             ->where('q.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
             ->whereNotNull('cqp.pua_premium')
-            ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
-            ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
             ->where('t.parent_team_id', '=', $carTeam->id)
             ->when($request->filled('authorize_date'), function ($query) use ($request) {
                 $authorizeDate = $request->input('authorize_date');
-                if (is_array($authorizeDate) && count($authorizeDate) >= 2) {
-                    $startDate = Carbon::parse($authorizeDate[0])->startOfDay()->toDateTimeString();
-                    $endDate = Carbon::parse($authorizeDate[1])->endOfDay()->toDateTimeString();
-                    $query->whereBetween('p.authorized_at', [$startDate, $endDate]);
+                if ($authorizeDate) {
+                    $endDate = Carbon::parse($authorizeDate)->subDay();
+                    $startDate = $endDate->copy()->subDays(30);
+
+                    $query->whereBetween('q.paid_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
+
+                    $query->whereBetween('p.authorized_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
                 }
+            }, function ($query) {
+                // Default date range when no authorize_date is provided
+                $query->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
+                    ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'));
             })
-            ->groupBy('t.name')
-            ->get();
+            ->groupBy('t.name');
+
+        $puaAuthTeamUpdate = $puaAuthTeamUpdate->get();
 
         return [$puaAuthUpdate, $puaAuthTeamUpdate];
     }
 
     public function exportPUAUpdates($requestParams = [])
     {
+        LoggerService::info('CarQuoteService::exportPUAUpdates - Method called for Car PUA export');
+
         if (! empty($requestParams)) {
             $request = new \Illuminate\Http\Request($requestParams);
         } else {
@@ -2104,10 +2171,17 @@ class CarQuoteService extends BaseService
 
         LoggerService::info('exportPUAUpdates', ['request_params' => $request->all()]);
 
-        $startDate = Carbon::now()->subDay()->startOfDay();
-        $endDate = Carbon::now()->subDay()->endOfDay();
+        // Use selected date if provided, otherwise default to yesterday
+        if ($request->filled('captured_date')) {
+            $selectedDate = Carbon::parse($request->input('captured_date'))->subDay();
+            $startDate = $selectedDate->startOfDay();
+            $endDate = $selectedDate->copy()->endOfDay();
+        } else {
+            $startDate = Carbon::now()->subDay()->startOfDay();
+            $endDate = Carbon::now()->subDay()->endOfDay();
+        }
 
-        return DB::table('car_quote_plan_details as cqp')
+        $puaUpdatesQuery = DB::table('car_quote_plan_details as cqp')
             ->join('car_quote_request as cqr', 'cqp.quote_uuid', '=', 'cqr.uuid')
             ->leftJoin('payments as p', function ($join) {
                 $join->on('p.paymentable_id', '=', 'cqr.id')
@@ -2129,14 +2203,17 @@ class CarQuoteService extends BaseService
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
             ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
             ->whereColumn('cqp.plan_id', 'cqr.plan_id')
-            ->when($request->filled('captured_date'), function ($query) use ($request) {
+            ->when($request->filled('captured_date'), function ($query) use ($request, $startDate, $endDate) {
                 $capturedDate = $request->input('captured_date');
-                if (is_array($capturedDate) && count($capturedDate) >= 2) {
-                    $startDate = Carbon::parse($capturedDate[0])->startOfDay()->toDateTimeString();
-                    $endDate = Carbon::parse($capturedDate[1])->endOfDay()->toDateTimeString();
-                    $query->whereBetween('p.captured_at', [$startDate, $endDate]);
+                if ($capturedDate) {
+                    $query->whereBetween('p.captured_at', [
+                        $startDate->startOfDay()->toDateTimeString(),
+                        $endDate->endOfDay()->toDateTimeString(),
+                    ]);
                 }
             });
+
+        return $puaUpdatesQuery;
     }
 
     public function pauseAndResumeFollowUpCounters($data)
