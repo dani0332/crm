@@ -661,7 +661,6 @@
             $quotePlan->total += $policyFee;
 
             $quotePlan->icpFee = isset($quotePlan->icpFee) ? $quotePlan->icpFee : 0;
-            $quotePlan->total += $quotePlan->icpFee;
         }
 
         $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
