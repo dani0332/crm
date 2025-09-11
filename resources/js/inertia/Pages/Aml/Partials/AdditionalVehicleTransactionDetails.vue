@@ -194,7 +194,7 @@ const additionalVehicleTransactionDetailsForm = useForm({
   bank_name: vehicleDriverDetail.value?.bank_name ?? '',
   first_registration_date: vehicleDriverDetail.value?.first_registration_date ?? '',
   policy_effective_date: dateToYMD(page.props.quoteRequest?.policy_start_date) ?? '',
-  policy_expiry_date: page.props.quoteRequest?.policy_expiry_date ?? '',
+  policy_expiry_date: dateToYMD(page.props.quoteRequest?.policy_expiry_date) ?? '',
   certificate_start_date: page.props.quoteRequest?.certificate_start_date ?? '',
   certificate_end_date: page.props.quoteRequest?.certificate_end_date ?? '',
   annual_mileage_estimate: vehicleDriverDetail.value?.annual_mileage_estimate?.toString() ?? '',
