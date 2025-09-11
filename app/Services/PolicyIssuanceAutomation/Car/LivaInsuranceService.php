@@ -999,11 +999,11 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     public function registrationType($rtaTransactionType)
     {
         return match ($rtaTransactionType) {
-            '10' => 'NVR',
-            '20' => 'CO',
-            '30' => 'CO',
-            '40' => 'VR',
-            '50' => 'VR',
+            '10' => '3',
+            '20' => '2',
+            '30' => '2',
+            '40' => '1',
+            '50' => '1',
         };
     }
 

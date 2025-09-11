@@ -918,16 +918,17 @@ class AMLService
 
                 // Ensure chassis number is sourced from CarQuoteRequestDetail as requested
                 $insurerScreeningPayload['chassisNumber'] = $carQuoteRequestDetails?->chassis_number ?? '';
-
+                
                 $insurerScreeningPayload['rtaTransactionType'] = [
                     'code' => $vehicleDriverDetail->rta_transaction_type ?? null,
-                    'value' => $isLIVA ? app(LivaInsuranceService::class)->registrationType($vehicleDriverDetail->rta_transaction_type) : ($rtaTransactionType?->text ?? null),
+                    'value' => $rtaTransactionType?->text ?? null,
                     'authority' => 'RTA',
                 ];
 
                 if ($isLIVA) {
                     $insurerScreeningPayload['plateCode'] = $vehicleDriverDetail->vehicle_plate_code ?? null;
                     $insurerScreeningPayload['plateNumber'] = $vehicleDriverDetail->vehicle_plate_number ?? null;
+                    $insurerScreeningPayload['registrationType'] = app(LivaInsuranceService::class)->registrationType($vehicleDriverDetail->rta_transaction_type);
                 } else {
                     $insurerScreeningPayload['plateCodeNumber'] = $vehicleDriverDetail->vehicle_plate_code.$vehicleDriverDetail->vehicle_plate_number ?? null;
                 }
