@@ -431,7 +431,7 @@
         font-size: 9px !important;
         align-items: center;
         text-align: center;
-        line-height: 0.8 !important;
+        line-height: 0.9 !important;
         word-break: break-word;
         white-space: normal !important;
         width: 100%;
@@ -928,21 +928,31 @@
                 <td class="footer-td" style="width:30%">
                     <div class="footer-box" style="margin-top: 5px; line-height: 0.8; position: relative;">
                         <p class="footer-content-2">
-                          Head Office: 27th floor, Control Tower, Detroit Road,<br>Motor City, PO Box - 26423,<br>Dubai, United Arab Emirates.
+                          
+                            <a href="https://maps.google.com/?q=Control+Tower+Motor+City+Dubai" target="_blank" style="color: #ffffff; ">  
+                                <strong> Head Office:
+                            </strong>
+                            27th Floor, Control Tower, Motor City, PO Box 26423, Dubai, UAE
+                        </a>
                         </p>
                         <p class="footer-content-2">
-                           Branch Office: Amal Mohammed Sharif Mohammed Saleh Hamza Building, Al Dana, East 1, Abu Dhabi, UAE
+                          
+                                <a href="https://maps.google.com/?q=Control+Tower+Motor+City+Dubai" target="_blank" style="color: #ffffff; ">
+                                    <strong>Branch Office:
+                                </strong>
+                            Amal Mohammed Sharif Mohammed Saleh Hamza Building, Al Dana, East 1, Abu Dhabi, UAE
+                        </a>
                         </p>
-                        <p class="footer-content-2">Happiness Center number: 800 ALFRED (800 256 733)</p>
+                        <p class="footer-content-2"><strong>Happiness Center number:</strong> Toll-Free 800 ALFRED (800-253-733)</p>
                
                 
                         <p class="footer-content-2">
-                            Email:    <a href="mailto:askalfred@insurancemarket.ae" style="color: #ffffff; text-decoration: underline;">
+                            <strong> Email: </strong>   <a href="mailto:askalfred@insurancemarket.ae" style="color: #ffffff; text-decoration: underline;">
                                 askalfred@insurancemarket.ae
                             </a>
                         </p>
                         <p class="footer-content-2">
-                            Web: <a href="https://insurancemarket.ae" style="color: #ffffff; text-decoration: underline;">insurancemarket.ae</a>
+                            <strong> Web: </strong> <a href="https://insurancemarket.ae" style="color: #ffffff; text-decoration: underline;">insurancemarket.ae</a>
                         </p>
                         {{-- <div class="open-new-icon" style="position: absolute; right:5px; top:42px;">
                             <a
