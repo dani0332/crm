@@ -98,5 +98,5 @@ class CustomerPortalApiService
 
         return (object) $response->json();
     }
- 
+
 }

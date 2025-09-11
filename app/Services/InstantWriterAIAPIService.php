@@ -99,5 +99,4 @@ class InstantWriterAIAPIService
         return (object) $response->json();
     }
 
-    
 }

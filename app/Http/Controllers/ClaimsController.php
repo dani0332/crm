@@ -736,5 +736,4 @@ class ClaimsController extends Controller
         }
     }
 
-
 }
