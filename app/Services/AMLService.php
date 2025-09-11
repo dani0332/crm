@@ -2195,7 +2195,7 @@ class AMLService
                 return true;
             }
 
-            if (isset($screeningResult->quoteStatus) &&$screeningResult->quoteStatus == 20) {
+            if (isset($screeningResult->quoteStatus) && $screeningResult->quoteStatus == 20) {
                 return true;
             }
         }
@@ -2232,14 +2232,14 @@ class AMLService
 
                     default => [
                         'success' => false,
-                        'message' => 'Insurer not supported for quote type: ' . $quoteType,
-                        'data' => null
+                        'message' => 'Insurer not supported for quote type: '.$quoteType,
+                        'data' => null,
                     ],
                 },
                 default => [
                     'success' => false,
-                    'message' => 'Quote type not supported: ' . $quoteType,
-                    'data' => null
+                    'message' => 'Quote type not supported: '.$quoteType,
+                    'data' => null,
                 ],
             };
         } catch (\Exception $e) {
@@ -2247,8 +2247,8 @@ class AMLService
 
             return [
                 'success' => false,
-                'message' => 'Exception occurred: ' . $e->getMessage(),
-                'data' => null
+                'message' => 'Exception occurred: '.$e->getMessage(),
+                'data' => null,
             ];
         }
     }

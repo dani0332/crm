@@ -1470,10 +1470,8 @@ class CentralService extends BaseService
 
     /**
      * Send automation email to Bird
-     * @param $lead
-     * @param $emailData | should be object
-     * @param $quoteTypeId
-     * @param $emailType
+     *
+     * @param  $emailData  | should be object
      * @return int|null
      */
     public function sendAutomationEmail($lead, $emailData, $quoteTypeId, $emailType)
@@ -1873,7 +1871,7 @@ class CentralService extends BaseService
     {
         $return = ['status' => true, 'message' => 'Latest Car Quote Info API response synced to the quote.'];
 
-        LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'. $quote->code.' - Sync latest Car Quote Info to Quote started');
+        LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Sync latest Car Quote Info to Quote started');
         $latestCarQuoteInfo = InsurerRequestResponse::where([
             'quote_uuid' => $quote->uuid,
             'call_type' => GenericRequestEnum::CALL_TYPE_QUOTE_INFO,
@@ -1881,10 +1879,10 @@ class CentralService extends BaseService
         ])->latest()->first();
 
         if (! $latestCarQuoteInfo) {
-            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'. $quote->code.' - Latest Car Quote Info API response not found');
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Latest Car Quote Info API response not found');
             $return = [
                 'status' => false,
-                'message' => 'Latest Car Quote Info API response not found for the given quote.'
+                'message' => 'Latest Car Quote Info API response not found for the given quote.',
             ];
         }
 
@@ -1908,12 +1906,12 @@ class CentralService extends BaseService
                 'price_with_vat' => $responseData['selectedPlan']['premium']['grossPremium']['amount'],
             ]);
 
-            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'. $quote->code.' - Sync latest Car Quote Info to Quote completed');
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Sync latest Car Quote Info to Quote completed');
 
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'. $quote->code.' - Transaction failed', [
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Transaction failed', [
                 'error' => $e->getMessage(),
             ]);
 

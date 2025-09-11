@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Repositories\PaymentRepository;
@@ -28,24 +27,24 @@ class ManualCommissionUpdateService extends BaseService
 
         $totalCommissionInPercentage = ($totalCommissionWithoutVat / $totalPriceWithoutVat) * 100;
 
-		$commissionPercentageMin = 0;
-		$commissionPercentageMax = 0;
-		$commissionPercentageExceedsLimit = false;
+        $commissionPercentageMin = 0;
+        $commissionPercentageMax = 0;
+        $commissionPercentageExceedsLimit = false;
 
-		$fixedCommission = 0.0;
-		if ($brokerCommission !== null && isset($brokerCommission->fixed_commission)) {
-			$fixedCommission = (float) $brokerCommission->fixed_commission;
-		}
+        $fixedCommission = 0.0;
+        if ($brokerCommission !== null && isset($brokerCommission->fixed_commission)) {
+            $fixedCommission = (float) $brokerCommission->fixed_commission;
+        }
 
-		$commissionPercentageMin = max(($fixedCommission - 2.5), 0.0);
-		$commissionPercentageMax = $fixedCommission > 0.0 ? $fixedCommission + 2.5 : 0.0;
+        $commissionPercentageMin = max(($fixedCommission - 2.5), 0.0);
+        $commissionPercentageMax = $fixedCommission > 0.0 ? $fixedCommission + 2.5 : 0.0;
 
-		if ($commissionPercentageMin != 0.0 && $commissionPercentageMax != 0.0) {
-			if ($totalCommissionInPercentage < $commissionPercentageMin ||
-				$totalCommissionInPercentage > $commissionPercentageMax) {
-				$commissionPercentageExceedsLimit = true;
-			}
-		}
+        if ($commissionPercentageMin != 0.0 && $commissionPercentageMax != 0.0) {
+            if ($totalCommissionInPercentage < $commissionPercentageMin ||
+                $totalCommissionInPercentage > $commissionPercentageMax) {
+                $commissionPercentageExceedsLimit = true;
+            }
+        }
 
         return [
             'min_percentage' => $commissionPercentageMin,

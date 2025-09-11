@@ -12,6 +12,7 @@ class RtaTransactionTypeService
      * RTA Transaction Type constants
      */
     public const RTA_NEW_VEHICLE_REGISTRATION = 'RTT01';
+
     public const RTA_CHANGE_VEHICLE_OWNERSHIP = 'RTT03';
     public const RTA_VEHICLE_RENEWAL = 'RTT04';
     public const RTA_UPDATE_REGISTRATION = 'RTT07';

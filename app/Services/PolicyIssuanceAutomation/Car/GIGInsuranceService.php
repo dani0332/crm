@@ -81,7 +81,6 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     private const CAR_REGISTRATION_CARD_DOC_TYPE_CODE = 'DT01';
     private const DRIVING_LICENSE_DOC_TYPE_CODE = 'DT02';
     private const NATIONAL_ID_DOC_TYPE_CODE = 'DT03';
-
     private const POLICY_DOC_TAX_INVOICE = 'Tax invoice';
     private const POLICY_DOC_TAX_INVOICE_BY_BUYER = 'Tax invoice by buyer';
     private const POLICY_DOC_RECEIPT = 'Receipt with reference';
@@ -566,7 +565,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         foreach ($policyDocuments as $policyDocument) {
             // TODO:: this is a temporary fix to skip certificate of insurance document, this will be removed when the certificate of insurance document is uploaded to IMCRM on PROD
             // Reminder:: Commission statement is same as Tax invoice raised by buyer
-            if(str_contains($policyDocument->name, 'Certificate of Insurance') || str_contains($policyDocument->name, 'Commission statement')) {
+            if (str_contains($policyDocument->name, 'Certificate of Insurance') || str_contains($policyDocument->name, 'Commission statement')) {
                 continue;
             }
 
@@ -744,7 +743,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             if ($documentType) {
                 $documentOCRJobs[] = new PopulateDocumentData(QuoteTypes::CAR, $quote, $documentType, $document->doc_url, $document->doc_mime_type, $happinessUser->id);
             } else {
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document type not found against document code: '. $document->document_type_code);
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document type not found against document code: '.$document->document_type_code);
             }
         }
 
@@ -1185,14 +1184,15 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             LookupsEnum::VEHICLE_COLOR,
         ])->toArray()['vehicle_color'] ?? [])->pluck('text', 'code')->toArray();
 
-        $othersColorCode = collect($colors ?? [])->filter(function($text, $code) {
+        $othersColorCode = collect($colors ?? [])->filter(function ($text, $code) {
             return stripos($text, 'other') !== false;
         })->keys()->first();
 
-        $validateColorCode = function($colorCode) use ($colors, $othersColorCode) {
+        $validateColorCode = function ($colorCode) use ($colors, $othersColorCode) {
             if ($colorCode && isset($colors[$colorCode])) {
                 return $colorCode; // Color exists, return original
             }
+
             return $othersColorCode; // Fallback to Others option
         };
 
@@ -1237,14 +1237,14 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                     'driver_license_number' => isset($responseData['policyHolder']['documents']) && is_array($responseData['policyHolder']['documents'])
                         ? (
                             collect($responseData['policyHolder']['documents'])
-                                ->first(fn($doc) => isset($doc['docType']['code']) && $doc['docType']['code'] === self::DRIVING_LICENSE_DOC_TYPE_CODE)['docId']
+                                ->first(fn ($doc) => isset($doc['docType']['code']) && $doc['docType']['code'] === self::DRIVING_LICENSE_DOC_TYPE_CODE)['docId']
                                 ?? null
                         )
                         : null,
                     'driver_license_expiry_date' => isset($responseData['policyHolder']['documents']) && is_array($responseData['policyHolder']['documents'])
                         ? (
                             collect($responseData['policyHolder']['documents'])
-                                ->first(fn($doc) => isset($doc['docType']['code']) && $doc['docType']['code'] === self::DRIVING_LICENSE_DOC_TYPE_CODE)['docExpiryDate']
+                                ->first(fn ($doc) => isset($doc['docType']['code']) && $doc['docType']['code'] === self::DRIVING_LICENSE_DOC_TYPE_CODE)['docExpiryDate']
                                 ?? null
                         )
                         : null,
@@ -1273,7 +1273,6 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 $getQuoteResponseMapping = [
                     'chassis_number' => $responseData['motorInformation']['chassisNumber'] ?? null,
                 ];
-
 
                 $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
                 if ($carQuoteRequestDetails) {
