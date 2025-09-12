@@ -4,13 +4,15 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
-use App\Enums\InsurerProviderEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentCaptureValidationEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -24,19 +26,24 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Facades\Marshall;
+use App\Http\Requests\SplitPaymentApproveRequest;
+use App\Jobs\AutomationFailedJob;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
 use App\Models\BrokerCommission;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CustomerMembers;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
+use App\Models\InsurerRequestResponse;
 use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -46,13 +53,16 @@ use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteExportLog;
+use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
+use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
+use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
@@ -62,7 +72,7 @@ use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class CentralService extends BaseService
 {
@@ -416,10 +426,10 @@ class CentralService extends BaseService
         $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
 
         $insurersWithoutCCRenewal = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::EMIRATES_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+            InsuranceProviderEnum::AXA->value,    // GIG_INSURANCE
+            InsuranceProviderEnum::EI->value,     // EMIRATES_INSURANCE
+            InsuranceProviderEnum::RSA->value,    // LIVANA_INSURANCE
+            InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 
         info('Updating payment method for home renewal lead', [
@@ -466,6 +476,87 @@ class CentralService extends BaseService
                 'new_method' => $newPaymentMethod,
             ]);
         }
+    }
+
+    public function validateIsPlanSelectable($quoteType, $data): array
+    {
+        return match (ucfirst($quoteType)) {
+            QuoteTypes::TRAVEL->value => $this->validateIsTravelPlanSelectable($quoteType, $data),
+            default => [],
+        };
+    }
+
+    public function validateIsTravelPlanSelectable($quoteType, $data): array
+    {
+        $validator = Validator::make($data, [
+            'quoteId' => 'required',
+            'quoteSource' => 'required',
+            'planType' => 'required',
+            'provider_code' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $validator->errors()->toArray();
+        }
+
+        $isTravelQuote = ucfirst($quoteType) == QuoteTypes::TRAVEL->value;
+        $isNormalPlan = $data['planType'] == 'normalPlans';
+        $isSourceIMCRM = $data['quoteSource'] == LeadSourceEnum::IMCRM;
+        $isALNCProvider = $data['provider_code'] == InsuranceProviderEnum::ALNC->value;
+
+        if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isALNCProvider) {
+            $quoteModelObject = $this->getModelObject(strtolower($quoteType));
+            $customerMembers = CustomerMembers::where([
+                'quote_type' => ltrim($quoteModelObject, '\\'),
+                'quote_id' => $data['quoteId'] ?? null,
+                'customer_type' => CustomerTypeEnum::Individual,
+                'deleted_at' => null,
+            ])
+                ->select('id', 'code', 'first_name', 'last_name', 'passport')
+                ->get();
+
+            $errorsMessages = $this->validateCustomerMembersInfo($customerMembers->toArray());
+
+            return $errorsMessages;
+        }
+
+        return [];
+    }
+
+    public function validateCustomerMembersInfo(array $members): array
+    {
+        $validator = Validator::make(
+            ['members' => $members],
+            [
+                'members' => 'required|array|min:1',
+                'members.*.first_name' => 'required',
+                'members.*.last_name' => 'required',
+                'members.*.passport' => 'required',
+            ]
+        );
+
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+
+            $finalErrors = [];
+
+            if ($errors->has('members')) {
+                $finalErrors['members_count'] = ['At least one customer member is required.'];
+            }
+            if ($errors->has('members.*.first_name')) {
+                $finalErrors['first_name'] = ['Please enter first_name for all members before selecting a plan.'];
+            }
+            if ($errors->has('members.*.last_name')) {
+                $finalErrors['last_name'] = ['Please enter last_name for all members before selecting a plan.'];
+            }
+            if ($errors->has('members.*.passport')) {
+                $finalErrors['passport'] = ['Please enter passport numbers for all members before selecting a plan.'];
+            }
+
+            return $finalErrors;
+        }
+
+        return [];
     }
 
     public function updateSelectedPlan($quoteType, $uuid, $data)
@@ -1158,57 +1249,104 @@ class CentralService extends BaseService
     public function updateQuoteInformation($type, $id)
     {
         if ($type == 'send-update') {
-            return true;
+            return;
         }
         if (request()->has('quote_type')) {
             $type = request()->quote_type;
         }
 
         $quote = $this->getQuoteObject($type, $id);
-        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
+        if (! $quote) {
+            info("Quote not found for type: {$type}, id: {$id}");
 
-        LoggerService::info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called quote status id '.$quote->quote_status_id.' policy issuance status id '.$quote->policy_issuance_status_id);
-        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyIssued]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
-            $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
-            LoggerService::info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
-            if ($isPolicyDetailsFilled) {
-                $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
-                $hasTransactionApprovedStatus = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
-                    ->where('quote_request_id', $quote->id)
-                    ->where(function ($query) {
-                        $query->where('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
-                            ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved);
-                    })->exists();
-
-                $isCurrentlyTransactionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
-                $hasRequiredDocuments = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote);
-
-                if (($hasTransactionApprovedStatus || $isCurrentlyTransactionApproved) && $hasRequiredDocuments) {
-                    $oldQuoteStatus = $quote->quote_status_id;
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-                        'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
-                        'policy_issuance_status_other' => '',
-                    ]);
-                    LoggerService::info('Quote code: '.$quote->code.' - Old Quote Status: '.$oldQuoteStatus.' New Quote Status: '.$quote->quote_status_id);
-
-                    // If lead status is policy issued and policy issuance status is not policy issued then only update the policy issuance status
-                    // No need to create quote status log
-                    if ($oldQuoteStatus != $quote->quote_status_id) {
-                        QuoteStatusLog::create([
-                            'quote_type_id' => $quoteTypeId,
-                            'quote_request_id' => $quote->id,
-                            'current_quote_status_id' => $quote->quote_status_id,
-                            'previous_quote_status_id' => $oldQuoteStatus,
-                            'created_at' => Carbon::now(),
-                            'updated_at' => Carbon::now(),
-                        ]);
-                        (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
-                    }
-                    LoggerService::info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
-                }
-            }
+            return;
         }
+        $quoteCode = $quote->code;
+        $currentQuoteStatus = $quote->quote_status_id;
+        // Check if quote status is locked - if so, don't change status due to document uploads
+        if ($this->isQuoteStatusLocked($quote)) {
+            LoggerService::info("Quote Code: {$quoteCode} - Status is LOCKED {$currentQuoteStatus}, preventing document uploads from changing status");
+
+            return;
+        }
+
+        $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
+        LoggerService::info("Quote Code: {$quoteCode} - Policy details filled: ".($isPolicyDetailsFilled ? 'YES' : 'NO'));
+
+        if ($isPolicyDetailsFilled) {
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
+
+            if ($this->canUpdateToPolicyIssued($type, $id, $quote, $quoteTypeId)) {
+                $previousQuoteStatus = $quote->quote_status_id;
+                $updateData = [
+                    'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+                    'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
+                    'policy_issuance_status_other' => '',
+                ];
+
+                $quote->update($updateData);
+
+                LoggerService::info("Quote Code: {$quoteCode} - Status updated: {$previousQuoteStatus} → {$quote->quote_status_id}");
+
+                // Create status log and trigger journey if status actually changed
+                if ($previousQuoteStatus != $quote->quote_status_id) {
+                    app(QuoteStatusLogService::class)->createQuoteStatusLog($quoteTypeId, $quote, $previousQuoteStatus);
+                    (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
+                    LoggerService::info("Quote Code: {$quoteCode} - Status log created and journey triggered");
+                } else {
+                    LoggerService::info("Quote Code: {$quoteCode} - No status change, skipping log creation");
+                }
+            } else {
+                LoggerService::info("Quote Code: {$quoteCode} - Cannot update to Policy Issued, requirements not met");
+            }
+        } else {
+            LoggerService::info("Quote Code: {$quoteCode} - Policy details not filled, skipping status update");
+        }
+    }
+
+    /**
+     * Check if quote is in a locked status that prevents document uploads from changing status
+     */
+    private function isQuoteStatusLocked($quote): bool
+    {
+        $statusesThatPreventDocumentUploads = [
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+            // These statuses prevent document uploads from changing quote status
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
+        ];
+
+        return in_array($quote->quote_status_id, $statusesThatPreventDocumentUploads);
+    }
+
+    /**
+     * Determine if a quote can be updated to Policy Issued status.
+     */
+    private function canUpdateToPolicyIssued($type, $id, $quote, $quoteTypeId): bool
+    {
+        $quoteCode = $quote->code;
+
+        // First, check if all required documents are uploaded (most expensive check first)
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
+        $hasAllRequiredDocuments = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote);
+
+        LoggerService::info("Quote Code: {$quoteCode} - Document check: Required docs uploaded=".($hasAllRequiredDocuments ? 'YES' : 'NO'));
+
+        // If documents are not uploaded, no need to check other conditions
+        if (! $hasAllRequiredDocuments) {
+            return false;
+        }
+
+        // Only check transaction approved status if documents are uploaded
+        $hasTransactionApprovedHistory = app(QuoteStatusLogService::class)->hasTransactionApprovedStatus($quoteTypeId, $quote->id);
+        $isCurrentlyTransactionApproved = $quote->quote_status_id === QuoteStatusEnum::TransactionApproved;
+
+        return $hasTransactionApprovedHistory || $isCurrentlyTransactionApproved;
     }
 
     /**
@@ -1240,8 +1378,8 @@ class CentralService extends BaseService
         // Get broker commission details
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId, $quote);
 
-        $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
-        $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE && $quoteTypeId == QuoteTypeId::Health;
+        $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsuranceProviderEnum::AXA->value;    // GIG_INSURANCE
+        $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsuranceProviderEnum::ADNIC->value && $quoteTypeId == QuoteTypeId::Health;    // ABU_DHABI_NATIONAL_INSURANCE
 
         // Check if multiple payments are enabled for the provider
         $isMultiplePaymentsEnabled = $insuranceProvider && $insuranceProvider->multiple_payments;
@@ -1330,6 +1468,65 @@ class CentralService extends BaseService
         return ['status' => true, 'message' => 'Void payment processed'];
     }
 
+    /**
+     * Send automation email to Bird
+     *
+     * @param  $emailData  | should be object
+     * @return int|null
+     */
+    public function sendAutomationEmail($lead, $emailData, $quoteTypeId, $emailType)
+    {
+        LoggerService::startQuoteLogging($lead);
+        $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
+
+        try {
+            LoggerService::info("Sending {$quoteType} followups email for {$emailType} uuid: ".$lead->uuid.' | Time: '.now());
+            $birdUrlKey = ApplicationStorageEnums::BIRD_AUTOMATION_WORKFLOW_URL;
+
+            $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
+            if ($birdUrl) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdUrl?->value, $emailData);
+                LoggerService::info("{$quoteType} response: ".json_encode($response)." | {$emailType} uuid: {$lead->uuid} |Time: ".now());
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, strtoupper($emailData->workflowType));
+                }
+            } else {
+                LoggerService::info("{$birdUrlKey} key not found for {$emailType} uuid: {$lead->uuid} |Time: ".now());
+            }
+
+            return $response?->status_code ?? null;
+        } catch (\Exception $ex) {
+            $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for {$emailType}: uuid: {$lead->uuid} | Time: ".now();
+            LoggerService::info($errorMessage);
+            LoggerService::info("{$birdUrlKey}-Error: {$ex->getMessage()} | uuid: {$lead->uuid} | Time: ".now());
+        }
+    }
+
+    public function createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, $workflowType)
+    {
+        try {
+            $flowType = constant("App\Enums\QuoteFlowType::{$workflowType}");
+
+            $runId = collect($response->headers['Run-Id'])->first();
+            if (! empty($runId)) {
+                QuoteFlowDetails::create([
+                    'quote_uuid' => $lead->uuid,
+                    'quote_type_id' => $quoteTypeId,
+                    'flow_type' => $flowType,
+                    'flow_id' => $runId,
+                ]);
+                LoggerService::info("{$emailType} run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            } else {
+                LoggerService::info("{$emailType} run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            }
+        } catch (\Exception $ex) {
+            $errorMessage = "{$emailType}-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            LoggerService::info($errorMessage);
+            LoggerService::info("{$emailType}-Error: {$ex->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+        }
+    }
+
     public function removeInsurerPaymentLink($request)
     {
         $quote = $this->getQuoteObject($request->quoteType, $request->quoteId);
@@ -1354,24 +1551,24 @@ class CentralService extends BaseService
     {
         // Capture are enabled for the all LOB's against specific providers
         $enabledProviders = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::RAK_INSURANCE,
-            InsurerProviderEnum::TOKIO_MARINE,
-            InsurerProviderEnum::QATAR_INSURANCE,
-            InsurerProviderEnum::ALLIANCE_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+            InsuranceProviderEnum::AXA->value,    // GIG_INSURANCE
+            InsuranceProviderEnum::RAK->value,    // RAK_INSURANCE
+            InsuranceProviderEnum::TM->value,     // TOKIO_MARINE
+            InsuranceProviderEnum::QIC->value,    // QATAR_INSURANCE
+            InsuranceProviderEnum::ALNC->value,   // ALLIANCE_INSURANCE
+            InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 
         if ($quoteTypeId == QuoteTypeId::Health) {
-            $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
+            $enabledProviders[] = InsuranceProviderEnum::ADNIC->value;   // ABU_DHABI_NATIONAL_INSURANCE
         }
 
         // if ($quoteTypeId == QuoteTypeId::Car) {
-        //     $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
+        //     $enabledProviders[] = InsuranceProviderEnum::NT->value;   // WATANIA_TAKAFUL
         // }
 
         if ($quoteTypeId == QuoteTypeId::Travel) {
-            $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
+            $enabledProviders[] = InsuranceProviderEnum::OI2->value;   // ORIENT_INSURANCE
         }
 
         return in_array($insuranceProviderCode, $enabledProviders);
@@ -1501,6 +1698,161 @@ class CentralService extends BaseService
         return $paymentGatewayIds;
     }
 
+    public function updateBookingDetails($validatedData, $bookPolicyRequest)
+    {
+        $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
+        $paymentInformation = [
+            'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
+            'transaction_payment_status' => $validatedData['transaction_payment_status'],
+            'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
+            'broker_invoice_number' => $validatedData['broker_invoice_number'],
+            'insurer_invoice_date' => $validatedData['invoice_date'],
+            'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
+            'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
+            'commmission_percentage' => $validatedData['commission_percentage'],
+            'commission_vat' => $validatedData['vat_on_commission'],
+            'commission' => $validatedData['total_commission'],
+            'invoice_description' => $validatedData['invoice_description'],
+
+            // for life only
+            'commission_based_on_currency' => $bookPolicyRequest?->commission_based_on_currency ?? null,
+            'exchange_rate' => $bookPolicyRequest?->exchange_rate ?? null,
+            'currency' => $bookPolicyRequest?->currency ?? null,
+        ];
+
+        $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->first();
+
+        if ($isDuplicateOrCIRLead && empty($payment)) {
+            $payment = Payment::where([
+                'paymentable_id' => $quote->id,
+                'paymentable_type' => $quote->getMorphClass(),
+            ])->mainLeadPayment()->first();
+        }
+
+        $payment->update($paymentInformation);
+        LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
+
+        $response = (new SplitPaymentService)->updateCommissionSchedule($payment);
+
+        if (! $response['status']) {
+            return ['status' => false, 'message' => $response['message']];
+        }
+
+        LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
+
+        return ['status' => true, 'message' => 'Book policy details update successfully'];
+    }
+
+    public function autoCapturePaymentProcess($quoteTypeId, $quote, $premiumCheckEnabled = true)
+    {
+        $quoteType = QuoteType::where('id', $quoteTypeId)->first();
+        $payment = $quote->payments()->mainLeadPayment()->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
+
+        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+
+        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
+            LoggerService::info('fn:autoCaptureAMLValidationCheck failed - Going to dispatch AutomationFailedJob');
+            AutomationFailedJob::dispatch(
+                $quote,
+                QuoteTypeId::Car,
+                'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                'Quote Referred To Insurer UW',
+                'Payment Capture',
+                WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+            )->onQueue('policy-issuance-automation');
+
+            return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
+        }
+
+        if ($premiumCheckEnabled) {
+            // Premium check call to check if the premium is valid
+            $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $payment->total_amount, $quote->code);
+            $logExtra = [
+                'paymentCode' => $payment->code,
+                'quoteTypeId' => $quoteType->id,
+                'responseStatus' => isset($capturePaymentResponse['status']) ? $capturePaymentResponse['status'] : null,
+                'responseMessage' => isset($capturePaymentResponse['message']) ? $capturePaymentResponse['message'] : null,
+                'responsePremiumAmount' => isset($capturePaymentResponse['premiumAmount']) ? $capturePaymentResponse['premiumAmount'] : null,
+            ];
+
+            // responsePremiumAmount (GetQuote : (Premium >  Total Price) or (Premium <  Total Price)) in this case line 7 validation text
+            // responsePremiumAmount GetQuote: UW = N & Premium >  Total Price in this case line 8 validation text
+
+            if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
+                LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
+
+                // TODO:: This should be dynamic as per insurance provider and need to check with API team about the response message
+                // $messages = [
+                //     'Capture amount exceeds the authorized amount' => 'Capture amount in IMCRM and either is greater than Authorized amount',
+                //     'Capture amount exceeds the authorized amount and differs from premium in GIG portal' => 'Capture amount in IMCRM and both are greater than Authorized amount',
+                //     'Premium mismatch with GIG portal' => 'Capture amount in IMCRM and both are less than or equal to Authorized amount',
+                //     'Premium in GIG portal exceeds the authorized amount and differs from capture amount' => 'Capture amount in IMCRM and getQuote premium is greater than Authorized amount, but the Capture amount is less than or equal to the Authorized amount',
+                //     'Capture amount exceeds authorized amount and differs from premium in GIG  portal' => 'Capture amount in IMCRM and getQuote premium is less than or equal to the Authorized amount, but the Capture amount is greater than Authorized amount',
+                // ];
+
+                if ($capturePaymentResponse['premiumAmount'] > $payment->total_amount) {
+                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob');
+                    AutomationFailedJob::dispatch(
+                        $quote,
+                        QuoteTypeId::Car,
+                        'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                        'Premium Not Matched With Insurer',
+                        'Payment Capture',
+                        WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+                    )->onQueue('policy-issuance-automation');
+                } elseif ($capturePaymentResponse['premiumAmount'] != $payment->total_amount) {
+                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob');
+                    AutomationFailedJob::dispatch(
+                        $quote,
+                        QuoteTypeId::Car,
+                        'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
+                        'Quote Referred To Insurer UW',
+                        'Payment Capture',
+                        WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+                    )->onQueue('policy-issuance-automation');
+                }
+
+                $message = $capturePaymentResponse['message'] ?? 'Premium mismatch on Insurer portal';
+
+                return ['status' => false, 'message' => $message, 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to '.$message];
+            }
+
+            LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' success', extra: $logExtra);
+        }
+
+        $paymentSplits = $payment->paymentSplits;
+        $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
+
+        $splitPaymentApprovalRequest = new SplitPaymentApproveRequest([
+            'modelType' => $quoteType->code,
+            'quote_id' => $quote->id,
+            'plan_id' => $payment->plan_id,
+            'payment_code' => $payment->code,
+            'customer_id' => $quote->customer_id,
+            'collection_amount' => $collectionAmount,
+            'is_declined' => 0,
+            'is_capture' => 1,
+            'is_approved' => 0,
+            'declined_reason' => $payment->declined_reason,
+            'send_update_id' => null,
+            'collection_type' => $payment->collection_type,
+        ]);
+
+        $response = app(PaymentRepository::class)->handlePaymentApprove($splitPaymentApprovalRequest);
+        LoggerService::info(__FUNCTION__.' - Split payment approval process completed', extra: ['paymentCode' => $payment->code]);
+
+        if (is_string($response)) {
+            return ['message' => $response, 'autoCaptureStatus' => GenericRequestEnum::SUCCESS, 'autoCaptureMessage' => 'Auto capture payment process started'];
+        }
+
+        $response['autoCaptureStatus'] = GenericRequestEnum::SUCCESS;
+        $response['autoCaptureMessage'] = 'Auto capture payment process started';
+
+        return $response;
+    }
+
     public function checkInsurerReceiptNumber($quoteType, $receiptNumber)
     {
         $count = PaymentSplits::where('insurer_receipt_number', $receiptNumber)->count();
@@ -1513,5 +1865,62 @@ class CentralService extends BaseService
         LoggerService::info('fn:checkInsurerReceiptNumber - Receipt number does not exist: '.$receiptNumber);
 
         return ['status' => true, 'message' => 'Receipt number does not exist'];
+    }
+
+    public function syncLatestCarQuoteInfoToQuote($quote): array
+    {
+        $return = ['status' => true, 'message' => 'Latest Car Quote Info API response synced to the quote.'];
+
+        LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Sync latest Car Quote Info to Quote started');
+        $latestCarQuoteInfo = InsurerRequestResponse::where([
+            'quote_uuid' => $quote->uuid,
+            'call_type' => GenericRequestEnum::CALL_TYPE_QUOTE_INFO,
+            'status' => GenericRequestEnum::PASSED,
+        ])->latest()->first();
+
+        if (! $latestCarQuoteInfo) {
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Latest Car Quote Info API response not found');
+            $return = [
+                'status' => false,
+                'message' => 'Latest Car Quote Info API response not found for the given quote.',
+            ];
+        }
+
+        $responseData = json_decode($latestCarQuoteInfo->response, true);
+        $payment = $quote->payments()->mainLeadPayment()->first();
+
+        DB::beginTransaction();
+
+        try {
+            $payment->update([
+                'policy_expiry_date' => $responseData['policySchedule']['expirationDate'],
+                'commission_vat_applicable' => $responseData['selectedPlan']['premium']['commission']['amount'],
+            ]);
+
+            $quote->update([
+                'policy_issuance_date' => $responseData['policySchedule']['creationDate'],
+                'policy_start_date' => $responseData['policySchedule']['effectiveDate'],
+                'policy_expiry_date' => $responseData['policySchedule']['expirationDate'],
+                'price_vat_applicable' => $responseData['selectedPlan']['premium']['premium']['amount'],
+                'vat' => $responseData['selectedPlan']['premium']['vatOnPremium']['amount'],
+                'price_with_vat' => $responseData['selectedPlan']['premium']['grossPremium']['amount'],
+            ]);
+
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Sync latest Car Quote Info to Quote completed');
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Transaction failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            $return = [
+                'status' => false,
+                'message' => 'Latest Car Quote Info API response synced to the quote failed',
+            ];
+        }
+
+        return $return;
     }
 }

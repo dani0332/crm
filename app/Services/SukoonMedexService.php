@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -22,6 +22,7 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -46,6 +47,7 @@ class SukoonMedexService
     private $paymentPlan;
     private $amountDisclaimerText;
     private array $sukoonReqDocTypeCodes;
+    private array $sukoonInitialDocTypeCodes;
     private $providerId;
     private $modelType;
     private string $logPrefix = 'SukoonMedex - Service:';
@@ -55,6 +57,7 @@ class SukoonMedexService
     {
         $this->sukoonRequestUrl = config('constants.SUKOON_API_URL').'/api/v'.config('constants.SUKOON_API_VERSION');
         $this->sukoonReqDocTypeCodes = QuoteDocumentsEnum::getSukoonAllDocTypes();
+        $this->sukoonInitialDocTypeCodes = QuoteDocumentsEnum::getSukoonInitialDocTypes();
     }
 
     private function viewQuotePolicy()
@@ -103,7 +106,7 @@ class SukoonMedexService
 
             $this->productSlug = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_MEDEX_PRODUCT_SLUG)->value('value');
             $this->paymentGateway = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY)->value('value');
-            $this->providerId = InsuranceProvider::where('code', InsuranceProvidersEnum::OIC)->value('id');
+            $this->providerId = InsuranceProvider::where('code', InsuranceProviderEnum::OIC->value)->value('id');
 
         } catch (Exception $e) {
             throw $e;
@@ -181,15 +184,20 @@ class SukoonMedexService
 
             // sync documents then update commission
             // STEPS (#12 getPolicyScheduleCoi), (#13 getCustomerTaxInvoice), (#14 listGeneratedDocument), (#15 downloadDocument), (#16 viewQuotePolicy)
-            $this->syncSukoonDocuments();
+            $this->syncAndProcessSukoonDocuments();
 
             if ($isSendEmail) {
-                $missingEmailDocTypes = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $this->transaction->documents->pluck('document_type_code')->toArray());
+                $reqWatermarkedDocumentTypes = $this->transaction->documents
+                    ->whereIn('document_type_code', $this->sukoonInitialDocTypeCodes)
+                    ->where('is_watermarked', true)->pluck('document_type_code')->toArray();
 
-                if (empty($missingEmailDocTypes)) {
+                $missingReqWatermarkedDocTypes = array_diff($this->sukoonInitialDocTypeCodes, $reqWatermarkedDocumentTypes);
+
+                // make sure email required watermarked documents is not missing
+                if (empty($missingReqWatermarkedDocTypes)) {
                     $this->sendDocuments();
                 } else {
-                    LoggerService::info("{$this->logPrefix} Email documents are not saved, skipping sendDocuments");
+                    LoggerService::info("{$this->logPrefix} Email watermarked documents are not saved, skipping sendDocuments");
                 }
             }
 
@@ -204,15 +212,124 @@ class SukoonMedexService
         }
     }
 
-    public function sendDocuments()
+    private function sendDocuments()
     {
         LoggerService::info("{$this->logPrefix} sendDocuments in process");
         EmbeddedProductRepository::sendDocument([
             'epId' => $this->transaction->product->embeddedProduct->id ?? null,
             'modelType' => $this->modelType,
             'quoteId' => $this->currentQuote->id,
-            'forceSendEmail' => true,
         ]);
+    }
+
+    public function watermarkDocument(QuoteDocument $quoteDocument): QuoteDocument|false
+    {
+        $extraLog = [
+            'document_id' => $quoteDocument?->id,
+            'document_type_code' => $quoteDocument?->document_type_code,
+            'quoteUID' => $this->currentQuote->uuid,
+        ];
+
+        if (! $quoteDocument) {
+            LoggerService::warning('Document not found', extra: $extraLog);
+
+            return false;
+        }
+
+        $documentType = DocumentType::where('code', $quoteDocument->document_type_code)->where('quote_type_id', $this->quoteTypeId)->first();
+
+        // Ensure the quoteDocument and documentType exist
+        if (! $documentType) {
+            LoggerService::warning('DocumentType not found', extra: $extraLog);
+
+            return false;
+        }
+
+        $lockKey = "watermark_{$quoteDocument->id}_{$this->currentQuote->uuid}_{$documentType->id}";
+
+        // Check if the file is already being processed
+        if ($this->isFileBeingProcessed($lockKey)) {
+            LoggerService::info("File is already being processed. Retrying later. Document ID: {$quoteDocument->id}, UUID: {$this->currentQuote->uuid}");
+
+            return false;
+        }
+
+        // Check if the source file exists
+        if (empty($quoteDocument->doc_url) || ! $this->fileExists($quoteDocument->doc_url)) {
+            LoggerService::error("Source file does not exist: {$quoteDocument->doc_url}");
+
+            return false;
+        }
+
+        try {
+            // Perform watermarking based on file type
+            $watermarkService = app()->make(QuoteDocumentService::class);
+            $fileMimeType = $quoteDocument->doc_mime_type;
+            $docName = str_replace('original_', '', $quoteDocument->doc_name);
+
+            $extension = strtolower(pathinfo($quoteDocument->doc_name, PATHINFO_EXTENSION));
+
+            if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf' || $extension == 'pdf') {
+                $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->currentQuote->uuid, $documentType);
+            } else {
+                LoggerService::error("Unsupported file type: fileMimeType: {$fileMimeType}, extension: {$extension}");
+
+                return false;
+            }
+
+            // Update the document with watermark data
+            if (isset($watermarkData['watermarked_doc_name']) && isset($watermarkData['watermarked_doc_url'])) {
+                $quoteDocument->update([
+                    'watermarked_doc_name' => $watermarkData['watermarked_doc_name'],
+                    'watermarked_doc_url' => $watermarkData['watermarked_doc_url'],
+                ]);
+                LoggerService::info('watermark job completed for '.$this->currentQuote->uuid);
+            }
+
+            return $quoteDocument;
+        } catch (\Exception $e) {
+            LoggerService::error("Error processing watermark for document ID: {$quoteDocument->id}, UUID: {$this->currentQuote->uuid}. Error: ".$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Check if the file is already being processed
+     */
+    private function isFileBeingProcessed($lockKey)
+    {
+        // Use cache to track processing status
+        $cacheKey = "processing_{$lockKey}";
+        $lockAcquired = cache()->add($cacheKey, true, now()->addMinutes(5));
+
+        return ! $lockAcquired;
+    }
+
+    /**
+     * Check if a file exists
+     */
+    private function fileExists(string $path): bool
+    {
+        try {
+            // For local storage
+            if (Storage::disk('azureIM')->exists($path)) {
+                return true;
+            }
+
+            // For remote URLs
+            if (filter_var($path, FILTER_VALIDATE_URL)) {
+                $headers = get_headers($path);
+
+                return $headers && strpos($headers[0], '200') !== false;
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            LoggerService::error("Error checking file existence: {$path}. Error: ".$e->getMessage());
+
+            return false;
+        }
     }
 
     private function syncSukoonCommissions()
@@ -303,6 +420,50 @@ class SukoonMedexService
         }
     }
 
+    public function syncAndProcessSukoonDocuments()
+    {
+        $savedDocuments = $this->syncSukoonDocuments();
+
+        if (count($savedDocuments) > 0) {
+            $this->transaction->load('documents');
+        }
+
+        // STEP #16 viewQuotePolicy
+        $this->syncSukoonCommissions();
+
+        $sukoonDocuments = $this->transaction->documents()->whereIn('document_type_code', $this->sukoonReqDocTypeCodes)->get();
+        $watermarkedDocuments = $this->processWatermarkDocuments($sukoonDocuments);
+        $this->transaction->load('documents');
+
+        return $watermarkedDocuments;
+    }
+
+    public function processWatermarkDocuments(Collection $sukoonDocuments): array
+    {
+        $watermarkedDocuments = [];
+        if ((count($sukoonDocuments) > 0)) {
+            foreach ($sukoonDocuments as $documentItem) {
+
+                // skip iteration when document_type_code is not from initial document types
+                if (! in_array($documentItem->document_type_code, $this->sukoonInitialDocTypeCodes)) {
+                    continue;
+                }
+
+                // skip iteration when document is already watermarked
+                if ($documentItem->is_watermarked) {
+                    continue;
+                }
+
+                $savedWatermarkedDocument = $this->watermarkDocument($documentItem);
+                if (! empty($savedWatermarkedDocument)) {
+                    $watermarkedDocuments[] = $savedWatermarkedDocument;
+                }
+            }
+        }
+
+        return $watermarkedDocuments;
+    }
+
     public function syncSukoonDocuments()
     {
         try {
@@ -321,31 +482,19 @@ class SukoonMedexService
                 $this->getCustomerTaxInvoice();
             }
 
+            $savedDocuments = [];
             if (! empty($missingReqDocTypes)) {
                 // STEP #14 listGeneratedDocument
                 $listGeneratedDocumentResponse = $this->listGeneratedDocument();
 
-                // STEP #15 downloadDocument
                 $generatedDocCount = count($listGeneratedDocumentResponse['documents'] ?? []);
+                // STEP #15 downloadDocument
                 if ($generatedDocCount > 0) {
-                    $savedDocs = $this->syncGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
-
-                    $skippedDocCount = count($savedDocs['skipped'] ?? []);
-                    $createdDocCount = count($savedDocs['created'] ?? []);
-                    $updatedDocCount = count($savedDocs['updated'] ?? []);
-
-                    LoggerService::info("{$this->logPrefix} Sync & Saved Documents: ".($createdDocCount + $updatedDocCount)." out of {$generatedDocCount}, ".
-                        "created: {$createdDocCount}, updated: {$updatedDocCount}, skipped: {$skippedDocCount}", extra: ['docs' => $savedDocs]);
-
-                    if (($createdDocCount + $updatedDocCount) > 0) {
-                        $this->transaction->load('documents');
-                    }
-
+                    $savedDocuments = $this->syncGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
                 }
             }
 
-            // STEP #16 viewQuotePolicy
-            $this->syncSukoonCommissions();
+            return $savedDocuments;
 
         } catch (Exception $e) {
             throw $e;
@@ -382,7 +531,7 @@ class SukoonMedexService
         }
 
         $missingDocTypes = array_diff($this->sukoonReqDocTypeCodes, $savedDocTypes);
-        $missingInitialDocuments = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $savedDocTypes);
+        $missingInitialDocuments = array_diff($this->sukoonInitialDocTypeCodes, $savedDocTypes);
         if (empty($missingInitialDocuments) && $this->policyStatus == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED) {
             $this->policyStatus = $data['policy_status'] = EmbeddedTransactionEnum::STATUS_BOOKED;
         }
@@ -533,7 +682,12 @@ class SukoonMedexService
         }
 
         $stepNumber = SukoonMedexEnum::getStepNumber($parentFunction);
-        LoggerService::info("{$this->logPrefix} API {$status} Step: #{$stepNumber} {$parentFunction}", context: ['ref_id' => $this->currentQuote->code, 'message' => $message, 'endPoint' => Str::limit($endPoint ?? '', 50), ...$logData]);
+        LoggerService::info("{$this->logPrefix} API {$status} Step: #{$stepNumber} {$parentFunction}", extra: [
+            'ref_id' => $this->currentQuote->code,
+            'message' => $message,
+            'endPoint' => Str::limit($endPoint ?? '', 50),
+            ...$logData,
+        ]);
     }
 
     /**
@@ -546,7 +700,7 @@ class SukoonMedexService
      */
     private function logFailure($operation, $message, $data = [])
     {
-        LoggerService::info($this->logPrefix.' Failure', context: [
+        LoggerService::info($this->logPrefix.' Failure', extra: [
             'ref_id' => $this->currentQuote->code,
             'operation' => $operation,
             'message' => $message,
@@ -995,15 +1149,16 @@ class SukoonMedexService
         return Str::match('/-(\d{14})\.[^.]+$/', $docName);
     }
 
-    public function syncGeneratedDocuments($documents, $quote, $embeddedTransaction)
+    public function syncGeneratedDocuments($listGeneratedDocuments, $quote, $embeddedTransaction)
     {
         try {
             $docStatus = ['created' => [], 'updated' => [], 'skipped' => []];
+            $savedDocuments = [];
 
-            foreach (($documents ?? []) as $document) {
+            foreach (($listGeneratedDocuments ?? []) as $listedDocumentItem) {
 
-                $docId = $document['doc_id'] ?? '';
-                $docName = $document['name'] ?? '';
+                $docId = $listedDocumentItem['doc_id'] ?? '';
+                $docName = $listedDocumentItem['name'] ?? '';
 
                 $docNamePrefix = explode('-', $docName)[0];
                 $docCode = match ($docNamePrefix) {
@@ -1030,16 +1185,43 @@ class SukoonMedexService
                     }
                 }
 
-                $downloadResult = $this->downloadDocument($quote, $embeddedTransaction, $docId, $docCode);
-                if (! empty($downloadResult)) {
-                    $createdOrUpdated = array_keys($downloadResult)[0];
-                    array_push($docStatus[$createdOrUpdated], $downloadResult[$createdOrUpdated]);
+                $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', $this->quoteTypeId)->first();
+                if (empty($documentType)) {
+                    $this->logFailure('DocumentType is missing', "DocumentType is not available for doc_code: {$docCode} & quote_type_id: {$this->quoteTypeId}");
+
+                    $docStatus['skipped'][] = $docName;
+
+                    continue;
+                }
+
+                $logContext = ['ref_id' => $quote->code, 'ep_code' => $embeddedTransaction->code];
+                $documentData = $this->downloadDocument($docId, $documentType, $logContext);
+                if (! empty($documentData)) {
+
+                    if (isset($document)) {
+                        $document->update($documentData);
+                        $docStatus['updated'][] = $documentData['original_name'] ?? $docName;
+                    } else {
+                        $document = $embeddedTransaction->documents()->create($documentData);
+                        $docStatus['created'][] = $documentData['original_name'] ?? $docName;
+                    }
+
+                    $savedDocuments[] = $documentData;
+
                 } else {
                     $docStatus['skipped'][] = $docName;
                 }
             }
 
-            return $docStatus;
+            $generatedDocCount = count($listGeneratedDocuments ?? []);
+            $skippedDocCount = count($docStatus['skipped'] ?? []);
+            $createdDocCount = count($docStatus['created'] ?? []);
+            $updatedDocCount = count($docStatus['updated'] ?? []);
+
+            LoggerService::info("{$this->logPrefix} Sync & Saved Documents: ".($createdDocCount + $updatedDocCount)." out of {$generatedDocCount}, ".
+                "created: {$createdDocCount}, updated: {$updatedDocCount}, skipped: {$skippedDocCount}", extra: ['docs' => $docStatus]);
+
+            return $savedDocuments;
 
         } catch (Exception $e) {
             throw $e;
@@ -1047,28 +1229,25 @@ class SukoonMedexService
     }
 
     /**
-     * Download, upload & save the document
-     *  - Download from sukoon-api
-     *  - Upload document to azure
-     *  - Save into database
+     * Download document from Sukoon API and upload to Azure storage
      *
-     * @param  mixed  $quote  The quote object
-     * @param  mixed  $embeddedTransaction  The embedded transaction object
-     * @param  string  $docId  The document ID
-     * @param  string  $docCode  The document code
-     * @return array|bool The result of the document save operation
+     * This method performs the following operations:
+     *  - Downloads document content from Sukoon API using document ID
+     *  - Uploads document to Azure storage
+     *  - Prepares document data array for database operations
      *
-     * @throws Exception If the document save operation fails
+     * @param  string  $docId  Document identifier from Sukoon API
+     * @param  array  $logContext  Additional context for logging (optional)
+     * @return array|false Success: Document data array with fields matching App\Models\QuoteDocument for create/update operations
+     *                     Failure: false when document is unavailable or upload fails
+     *
+     * @throws Exception Throws exceptions for critical failures
      */
-    public function downloadDocument($quote, $embeddedTransaction, $docId, $docCode)
+    public function downloadDocument($docId, DocumentType $documentType, array $logContext = [])
     {
-        try {
-            $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', $this->quoteTypeId)->first();
-            if (empty($documentType)) {
-                $this->logFailure('DocumentType is missing', "DocumentType is not available for doc_code: {$docCode} & quote_type_id: {$this->quoteTypeId}");
+        $docCode = $documentType->code ?? '';
 
-                return false;
-            }
+        try {
 
             $result = $this->request('/policy/download-document/'.$docId, 'get', headers: ['x-session-id' => $this->sessionId]);
             $content = $result->body();
@@ -1109,7 +1288,6 @@ class SukoonMedexService
                     return false;
                 }
 
-                $document = $embeddedTransaction->documents()->where('document_type_code', $docCode)->first();
                 $documentData = [
                     'original_name' => $originalName,
                     'doc_name' => $uploadedDocument->doc_name ?? null,
@@ -1119,18 +1297,11 @@ class SukoonMedexService
                     'document_type_text' => $documentType->text,
                     'doc_uuid' => $docUuid,
                     'created_by_id' => null,
+                    'watermarked_doc_name' => null,
+                    'watermarked_doc_url' => null,
                 ];
 
-                $result = false;
-                if (isset($document)) {
-                    $document->update($documentData);
-                    $result = ['updated' => $originalName];
-                } else {
-                    $embeddedTransaction->documents()->create($documentData);
-                    $result = ['created' => $originalName];
-                }
-
-                return $result;
+                return $documentData;
             } else {
                 $message = 'Unable to determine filename from the response headers.';
                 $this->logFailure($message.' doc_code : '.$docCode, $message);
@@ -1138,7 +1309,7 @@ class SukoonMedexService
                 return false;
             }
         } catch (Exception $e) {
-            $this->logFailure('Get Document doc_code : '.$docCode, $e->getMessage(), ['ref_id' => $quote->code, 'embeddedTransaction' => $embeddedTransaction]);
+            $this->logFailure('downloadDocument', $e->getMessage(), [...$logContext, 'doc_code' => $docCode]);
             throw new Exception('downloadDocument ERROR: '.$e->getMessage());
         }
     }

@@ -61,6 +61,7 @@ const props = defineProps({
   capturePaymentValidationErrorMessage: String,
   selectedPaymentForEdit: Object,
   isInsurerReceiptNumberExistsModalOpen: Boolean,
+  isLifePlanDetailsEnabled: Boolean,
 });
 
 const fileUploadModels = ref([]);
@@ -1972,6 +1973,7 @@ const uploadDocument = (doc, files, count) => {
       .post(url, {
         preserveScroll: true,
         preserveState: true,
+        only: ['quoteDocuments', 'quote'],
         onError: errors => {
           documentForm.setError(errors.error);
           notification.error({
@@ -2347,7 +2349,10 @@ const getPlanName = computed(() => {
     return props.quoteRequest?.insurance_provider_plan?.text || 'Not Available';
   }
 
-  if (props.quoteType === quoteTypeCodeEnum.Life) {
+  if (
+    !props.isLifePlanDetailsEnabled &&
+    props.quoteType === quoteTypeCodeEnum.Life
+  ) {
     if (props.quoteRequest?.insurance_provider_plan?.text && plan) {
       lifePlanText.value = props.quoteRequest.insurance_provider_plan.text;
     }
@@ -2644,6 +2649,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       :paymentStatusEnum="paymentStatusEnum"
       :quoteType="quoteType"
       :quoteTypeCodeEnum="quoteTypeCodeEnum"
+      :isLifePlanDetailsEnabled="isLifePlanDetailsEnabled"
       @handle-collection-type-change="handleCollectionTypeChange"
       @handle-frequency-change="handleFrequencyChange"
       @calculate-payment-breakup="calculatePaymentBreakup"

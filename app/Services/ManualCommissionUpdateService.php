@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Repositories\PaymentRepository;
@@ -32,10 +31,15 @@ class ManualCommissionUpdateService extends BaseService
         $commissionPercentageMax = 0;
         $commissionPercentageExceedsLimit = false;
 
-        if ($brokerCommission && $brokerCommission->fixed_commission) {
-            $commissionPercentageMin = max(($brokerCommission->fixed_commission - 2.5), 0);
-            $commissionPercentageMax = $brokerCommission->fixed_commission + 2.5;
+        $fixedCommission = 0.0;
+        if ($brokerCommission !== null && isset($brokerCommission->fixed_commission)) {
+            $fixedCommission = (float) $brokerCommission->fixed_commission;
+        }
 
+        $commissionPercentageMin = max(($fixedCommission - 2.5), 0.0);
+        $commissionPercentageMax = $fixedCommission > 0.0 ? $fixedCommission + 2.5 : 0.0;
+
+        if ($commissionPercentageMin != 0.0 && $commissionPercentageMax != 0.0) {
             if ($totalCommissionInPercentage < $commissionPercentageMin ||
                 $totalCommissionInPercentage > $commissionPercentageMax) {
                 $commissionPercentageExceedsLimit = true;
@@ -95,33 +99,14 @@ class ManualCommissionUpdateService extends BaseService
         return $result;
     }
 
-    public function updateCommissionForLeads()
+    public function updateCommissionForLeads(array $carQuoteRefIds = [])
     {
         $results = [];
-        $carQuoteRefIds = [];
+        $carQuoteRefIds = $carQuoteRefIds ?? [];
 
         foreach ($carQuoteRefIds as $refId) {
             try {
                 $carQuoteDetails = CarQuote::where('code', $refId)->first();
-
-                if (! $carQuoteDetails) {
-                    $results[$refId] = [
-                        'success' => false,
-                        'error' => 'Car quote not found',
-                    ];
-
-                    continue;
-                }
-
-                if ($carQuoteDetails->quote_status_id !== QuoteStatusEnum::PolicyBooked) {
-                    $results[$refId] = [
-                        'success' => false,
-                        'error' => 'Policy is not booked yet',
-                    ];
-
-                    continue;
-                }
-
                 $payment = $carQuoteDetails->payment;
                 $insuranceProvider = getInsuranceProvider($payment, QuoteTypes::CAR->value, $carQuoteDetails);
                 $insuranceProviderId = $insuranceProvider ? $insuranceProvider->id : null;
@@ -135,13 +120,26 @@ class ManualCommissionUpdateService extends BaseService
                     $commissionDetails = $this->calculateCommissionDetails($carQuoteDetails, $payment, $brokerCommission);
 
                     if ($commissionDetails['commission_percentage_exceeds_limit']) {
-                        $results[$refId] = [
+                        // $results[$refId] = [
+                        //     'status' => false,
+                        //     'success' => false,
+                        //     'error' => 'Commission percentage exceeds limit',
+                        //     'message' => 'Commission percentage exceeds limit',
+                        //     'commission_details' => $commissionDetails,
+                        // ];
+
+                        // TODO:: this is temp code to update commission and always work on single lead
+                        $results = [
+                            'status' => false,
                             'success' => false,
                             'error' => 'Commission percentage exceeds limit',
+                            'message' => 'Commission percentage exceeds limit',
                             'commission_details' => $commissionDetails,
                         ];
 
-                        continue;
+                        return $results;
+
+                        // continue;
                     }
 
                     $payment->update([
@@ -151,36 +149,38 @@ class ManualCommissionUpdateService extends BaseService
                         'commission' => $commissionDetails['total_commission'],
                     ]);
 
-                    $results[$refId] = ['success' => true, 'commission_details' => $commissionDetails];
+                    $results = ['status' => true, 'success' => true, 'commission_details' => $commissionDetails];
 
                 }
             } catch (\Exception $e) {
                 LoggerService::info('__class: '.self::class.' fn: '.__FUNCTION__.' Error while processing commission for ref_id: '.$refId, extra: ['error' => $e->getMessage()]);
-                $results[$refId] = ['success' => false, 'error' => 'Error processing commission: '.$e->getMessage()];
+                $results = ['status' => false, 'success' => false, 'error' => 'Error processing commission: '.$e->getMessage()];
             }
         }
 
-        $successfullRefIds = array_filter($results, fn ($r) => $r['success']);
-        $successfullRefIds = array_keys($successfullRefIds);
+        // $successfullRefIds = array_filter($results, fn ($r) => $r['success']);
+        // $successfullRefIds = array_keys($successfullRefIds);
 
-        $failedRefIds = array_filter($results, fn ($r) => ! $r['success']);
-        $failedRefIds = array_keys($failedRefIds);
+        // $failedRefIds = array_filter($results, fn ($r) => ! $r['success']);
+        // $failedRefIds = array_keys($failedRefIds);
 
-        LoggerService::info('__class: '.self::class.' fn: '.__FUNCTION__.' Commission processing completed', context: [
-            'total_processed' => count($carQuoteRefIds),
-            'successful' => count($successfullRefIds),
-            'failed' => count($failedRefIds),
-            'successfull_ref_ids' => $successfullRefIds,
-            'failed_ref_ids' => $failedRefIds,
-        ]);
+        // LoggerService::info('__class: '.self::class.' fn: '.__FUNCTION__.' Commission processing completed', context: [
+        //     'total_processed' => count($carQuoteRefIds),
+        //     'successful' => count($successfullRefIds),
+        //     'failed' => count($failedRefIds),
+        //     'successfull_ref_ids' => $successfullRefIds,
+        //     'failed_ref_ids' => $failedRefIds,
+        // ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Commission processing completed',
-            'total_processed' => count($carQuoteRefIds),
-            'successfull_ref_ids' => $successfullRefIds,
-            'failed_ref_ids' => $failedRefIds,
-            'results' => $results,
-        ]);
+        return $results;
+
+        // return response()->json([
+        //     'success' => true,
+        //     'message' => 'Commission processing completed',
+        //     'total_processed' => count($carQuoteRefIds),
+        //     'successfull_ref_ids' => $successfullRefIds,
+        //     'failed_ref_ids' => $failedRefIds,
+        //     'results' => $results,
+        // ]);
     }
 }

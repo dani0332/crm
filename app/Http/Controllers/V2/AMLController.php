@@ -4,11 +4,13 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLStatusCode;
+use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\DocumentTypeCode;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -28,6 +30,7 @@ use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
 use App\Http\Requests\InsuredKycRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
+use App\Http\Requests\UpdateAdditionalVehicleDriverDetailsRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Jobs\InsurerAMLScreeningJob;
@@ -60,6 +63,7 @@ use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
+use App\Services\RtaTransactionTypeService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -80,7 +84,8 @@ class AMLController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('permission:aml-list', ['only' => ['index']]);
+        $this->middleware('permission:'.PermissionsEnum::AMLList.'|'.PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS,
+            ['only' => ['index']]);
         $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
     }
 
@@ -248,6 +253,19 @@ class AMLController extends Controller
         })) : 0;
 
         $lookups = app(AMLService::class)->getAMLLookups();
+        if ($quoteType->code == quoteTypeCode::Car || $quoteRequest->plan?->insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
+            $additionalLookups = app(AMLService::class)->getAMLLookups($quoteRequest?->plan?->provider_id, [
+                LookupsEnum::RTA_TRANSACTION_TYPE,
+                LookupsEnum::RTA_PLATE_CATEGORY,
+                LookupsEnum::VEHICLE_COLOR,
+                LookupsEnum::BANK_NAME,
+                LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
+                LookupsEnum::PLATE_CODE,
+            ]);
+
+            $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
+        }
+
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);
         $entityDetails = app(AMLService::class)->getEntityDetails($quoteTypeId, $quoteRequestId); // TODO:: this will only for customer member mapping, this will remove when customer member mapping updated with insured
         $nationalities = NationalityRepository::withActive()->get();
@@ -268,6 +286,35 @@ class AMLController extends Controller
             $businessPayload['businessTypeCode'] = BusinessQuoteType::where('id', $quoteRequest->business_type_of_insurance_id)->value('code');
             $businessPayload['businessCoverTypeText'] = BusinessCoverType::where('id', $quoteRequest->business_cover_type_id)->value('text');
             $businessPayload['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
+        }
+
+        // Add RTA configuration data for Car quotes
+        $rtaConfigurationData = [];
+        if ($quoteType->code == quoteTypeCode::Car) {
+            $rtaService = app(RtaTransactionTypeService::class);
+
+            // Get all RTA transaction types with their configurations
+            $rtaTransactionTypes = [
+                'RTT01' => 'New Vehicle Registration',
+                'RTT03' => 'Change Vehicle Ownership',
+                'RTT04' => 'Vehicle Renewal',
+            ];
+
+            $rtaConfigurationData = [
+                'rta_transaction_types' => $rtaTransactionTypes,
+                'rta_field_configurations' => [],
+                'rta_validation_summaries' => [],
+            ];
+
+            // Pre-generate configurations for all RTA types and both GIG/Non-GIG scenarios
+            foreach (array_keys($rtaTransactionTypes) as $rtaType) {
+                foreach ([false, true] as $isGigRenewal) {
+                    $configKey = $rtaType.($isGigRenewal ? '_GIG' : '');
+
+                    $rtaConfigurationData['rta_field_configurations'][$configKey] = $rtaService->getFrontendFieldConfig($rtaType, $isGigRenewal);
+                    $rtaConfigurationData['rta_validation_summaries'][$configKey] = $rtaService->getValidationSummary($rtaType, $isGigRenewal);
+                }
+            }
         }
 
         return inertia('Aml/DetailPage', array_merge([
@@ -295,7 +342,10 @@ class AMLController extends Controller
             'screeningType' => $screeningType,
             'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
             'isAnyEscalated' => $isAnyEscalated,
-        ], $businessPayload ?? []));
+            'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType, $quoteRequest),
+            'permissionsEnum' => PermissionsEnum::asArray(),
+            'isPrivateCar' => $quoteRequest?->registration_type === CarRegistrationType::PERSONAL,
+        ], $businessPayload ?? [], $rtaConfigurationData));
     }
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
@@ -396,9 +446,7 @@ class AMLController extends Controller
             });
 
             session()->put('amlResponseCheck', []);
-            $insurerAMLScreeningResponse = [];
             $isEntity = $AMLCheckRequest->customer_type == CustomerTypeEnum::Entity;
-
             if ($shouldApplicableForScreening) {
                 if ($isEntity) {
                     $getEntityDetailsForScreening = [
@@ -433,19 +481,11 @@ class AMLController extends Controller
                 $this->updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote);
             }
 
-            if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
-                $this->InsurerScreening($quoteTypeId, $AMLCheckRequest, $updateQuote);
-            }
-
             // Process members (UBO or regular members)
             if (empty($getMemberOrUBODetails->toArray()) && ! $shouldApplicableForScreening) {
                 LoggerService::info('AML Screening Bridger - No Member Found for Screening, AML Screening Cleared');
-                $response = app(AMLService::class)->handleResponse(true, 'AML Screening Completed', $isAutomation);
-                if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
-                    $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
-                }
 
-                return $response;
+                return app(AMLService::class)->handleResponse(true, 'AML Screening Completed', $isAutomation);
             }
 
             $bridgerInsightService = new BridgerInsightService;
@@ -455,12 +495,7 @@ class AMLController extends Controller
             LoggerService::info('AML Screening Bridger - AML Screening Job Dispatched for Members');
             $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
 
-            $response = app(AMLService::class)->handleResponse(true, 'Quote is updated', $isAutomation);
-            if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
-                $response = $response->with('info', ['message' => $insurerAMLScreeningResponse['message'], 'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched']]);
-            }
-
-            return $response;
+            return app(AMLService::class)->handleResponse(true, 'Quote is updated', $isAutomation);
         }
 
         return app(AMLService::class)->handleResponse(false, 'Something went wrong', $isAutomation);
@@ -469,6 +504,7 @@ class AMLController extends Controller
     private function InsurerScreening($quoteTypeId, $AMLCheckRequest, $updateQuote)
     {
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
+        $insurerAMLScreeningResponse = [];
 
         if (isTapEnabled()) {
             LoggerService::info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process start');
@@ -482,17 +518,25 @@ class AMLController extends Controller
                 session()->put('insurerAMLScreeningResponse');
                 InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
                 $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
-                if (! empty($insurerAMLScreeningResponse)) {
+                if (! empty($getInsurerScreeningResponse)) {
                     $insurerAMLScreeningResponse = [
                         'status' => $getInsurerScreeningResponse['status'],
                         'message' => $getInsurerScreeningResponse['message'],
                         'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
+                        'isRenewalLead' => $getInsurerScreeningResponse['isRenewalLead'] ?? false,
                     ];
+
+                    if (isset($getInsurerScreeningResponse['autoCaptureStatus'])) {
+                        $insurerAMLScreeningResponse['autoCaptureStatus'] = $getInsurerScreeningResponse['autoCaptureStatus'];
+                        $insurerAMLScreeningResponse['autoCaptureMessage'] = $getInsurerScreeningResponse['autoCaptureMessage'];
+                    }
                 }
                 session()->forget('insurerAMLScreeningResponse');
             }
             LoggerService::info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process completed');
         }
+
+        return $insurerAMLScreeningResponse;
     }
 
     private function updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote)
@@ -850,13 +894,29 @@ class AMLController extends Controller
         $quote = $this->getQuoteObjectBy($quoteType, $insuredKycRequest->quote_uuid, 'uuid');
         LoggerService::startQuoteLogging($quote);
 
-        $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
+        $response = ['success' => false];
+        $insurerAMLScreeningResponse = [];
 
-        if ($preparedFormData) {
-            return response()->json(['success' => true]);
+        if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
+            $insurerAMLScreeningResponse = $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
+
+            if (! empty($insurerAMLScreeningResponse)) {
+                $response['insurer_screening'] = [
+                    'status' => $insurerAMLScreeningResponse['status'],
+                    'message' => $insurerAMLScreeningResponse['message'],
+                    'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched'] ?? false,
+                    'autoCaptureStatus' => $insurerAMLScreeningResponse['autoCaptureStatus'] ?? null,
+                    'autoCaptureMessage' => $insurerAMLScreeningResponse['autoCaptureMessage'] ?? null,
+                ];
+            }
         }
 
-        return response()->json(['success' => false]);
+        if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared) {
+            $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
+            $response['success'] = $preparedFormData;
+        }
+
+        return response()->json($response);
     }
 
     public function stopHapexReminder($quote)
@@ -1009,5 +1069,24 @@ class AMLController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function updateAddtionalVehicleDriverDetails(UpdateAdditionalVehicleDriverDetailsRequest $updateAdditionalVehicleDriverDetailsRequest)
+    {
+        $quoteType = QuoteTypes::getName($updateAdditionalVehicleDriverDetailsRequest->quote_type_id)->value;
+        $quote = $this->getQuoteObjectBy($quoteType, $updateAdditionalVehicleDriverDetailsRequest->quote_uuid, 'uuid');
+
+        LoggerService::startQuoteLogging($quote);
+
+        $response = app(AMLService::class)->saveAdditionalVehicleAndDriverDetails($updateAdditionalVehicleDriverDetailsRequest, $quote);
+
+        return response()->json(['success' => $response['status'], 'message' => $response['message']]);
+    }
+
+    public function getQuoteDetailsFromInsurer(Request $request)
+    {
+        $result = app(AMLService::class)->getQuoteDetailsFromInsurer($request->quoteTypeId, $request->quoteUID);
+
+        return response()->json($result);
     }
 }

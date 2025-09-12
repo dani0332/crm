@@ -34,14 +34,14 @@ class EvaluateTeamPipe extends BaseAllocationPipe
 
         $isSIC = $this->allocationRequest->isSIC();
         $isAIG = $this->allocationRequest->isAIG();
-        $isPaymentAuthorizedOrLinkRequested = $this->lead->isPaymentAuthorizedOrLinkRequested();
+        $isPaymentAuthorizedOrLinkRequestedOrDeclined = $this->lead->isPaymentAuthorizedOrLinkRequestedOrDeclined();
         $isLeadFromInstantAlfred = $this->lead->isLeadFromInstantAlfred();
 
         $sicUnassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
         $isAIGWithInstantAlfred = $isAIG && $isLeadFromInstantAlfred;
-        $isSICOrAIGWithPayment = (($isSIC && ! $isAIG) || $isAIG) && $isPaymentAuthorizedOrLinkRequested;
-        $isNonSICNonAIGWithPayment = (! $isSIC && ! $isAIG) && $isPaymentAuthorizedOrLinkRequested;
+        $isSICOrAIGWithPayment = (($isSIC && ! $isAIG) || $isAIG) && $isPaymentAuthorizedOrLinkRequestedOrDeclined;
+        $isNonSICNonAIGWithPayment = (! $isSIC && ! $isAIG) && $isPaymentAuthorizedOrLinkRequestedOrDeclined;
 
         $teamId = null;
 
@@ -55,10 +55,6 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             $teamId = $sicUnassistedTeamId;
             $reason = $isAIG ? 'AIG with payment authorized or link requested' :
                               'SIC with payment authorized or link requested';
-        } elseif ($isNonSICNonAIGWithPayment) {
-            // Rule 3: Non-SIC, Non-AIG leads with payment authorized or link requested
-            $teamId = $sicUnassistedTeamId;
-            $reason = 'Non-SIC, Non-AIG lead with payment authorized or link requested';
         } else {
             // Rule 4: Default - all other leads have no specific team
             $teamId = $defaultTeamId;
@@ -71,7 +67,7 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             'teamId' => $teamId,
             'isSIC' => $isSIC,
             'isAIG' => $isAIG,
-            'isPaymentAuthorizedOrLinkRequested' => $isPaymentAuthorizedOrLinkRequested,
+            'isPaymentAuthorizedOrLinkRequestedOrDeclined' => $isPaymentAuthorizedOrLinkRequestedOrDeclined,
             'isLeadFromInstantAlfred' => $isLeadFromInstantAlfred,
         ]);
 
@@ -80,10 +76,10 @@ class EvaluateTeamPipe extends BaseAllocationPipe
 
     private function shouldSkipNationalityValidation(): void
     {
-        $isPaymentAuthorizedOrLinkRequested = $this->lead->isPaymentAuthorizedOrLinkRequested();
+        $isPaymentAuthorizedOrLinkRequestedOrDeclined = $this->lead->isPaymentAuthorizedOrLinkRequestedOrDeclined();
 
-        if ($isPaymentAuthorizedOrLinkRequested) {
-            LoggerService::info('Skipping nationality validation for travel quote with payment authorized or link requested');
+        if ($isPaymentAuthorizedOrLinkRequestedOrDeclined) {
+            LoggerService::info('Skipping nationality validation for travel quote with payment authorized or link requested or declined or failed');
             $this->allocationRequest->set('skipNationalityValidation', true);
         }
     }

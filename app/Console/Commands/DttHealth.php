@@ -83,7 +83,7 @@ class DttHealth extends Command
             ->where('created_at', '<', $dateTwo)
             ->whereNotIn('source', $excludeSources)
             ->where(function ($q) {
-                $q->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved]);
+                $q->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked]);
                 $q->orWhereNull('quote_status_id');
             })
             ->where(function ($q) {
