@@ -35,7 +35,7 @@ class InstantWriterAIAPIService
             ->withHeaders([
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-                'x-api-token' => config('constants.INSTANT_WRITER_AI_API_TOKEN'),
+                'X-API-Key' => config('constants.INSTANT_WRITER_AI_API_TOKEN'),
             ])
             ->timeout((int) config('constants.INSTANT_WRITER_AI_API_TIMEOUT'));
     }
