@@ -189,7 +189,9 @@
         <div class="document-header-entity">
             <div class="header-row clearfix">
                 <div class="header-left">
-                    <strong>To:</strong> {{ $insurance_company ?? '' }}
+                    @if(isset($insurance_company) && !empty($insurance_company))
+                    <strong>To:</strong> {{ $insurance_company }}<br>
+                    @endif
                 </div>
                 <div class="header-right">
                     <strong>Date:</strong> {{ $current_date ?? now()->format('d/m/Y') }}
@@ -199,8 +201,12 @@
         @else
         <div class="document-header">
             <strong>Date:</strong> {{ $current_date ?? now()->format('d/m/Y') }}<br>
-            <strong>To:</strong> {{ $insurance_company ?? '' }}<br>
-            <strong>Policy Number:</strong> {{ $policy_number ?? '[IMCRM or client updated]' }}
+            @if(isset($insurance_company) && !empty($insurance_company))
+            <strong>To:</strong> {{ $insurance_company }}<br>
+            @endif
+            @if(isset($policy_number) && !empty($policy_number))
+            <strong>Policy Number:</strong> {{ $policy_number }}
+            @endif
         </div>
         @endif
         
