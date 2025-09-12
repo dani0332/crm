@@ -562,7 +562,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $policyDocuments = json_decode($getPolicyIssuanceResponse?->response)?->data?->documents;
         $policyId = json_decode($getPolicyIssuanceResponse?->response)?->data?->policyId;
         $certificateOfInsuranceAvailable = false;
-        $isNonProduction = !(config('constants.APP_ENV') == EnvEnum::PRODUCTION);
+        $isNonProduction = ! (config('constants.APP_ENV') == EnvEnum::PRODUCTION);
 
         foreach ($policyDocuments as $policyDocument) {
             // Skip certificate of insurance document in non-production environments only
