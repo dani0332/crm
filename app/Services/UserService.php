@@ -255,6 +255,7 @@ class UserService extends BaseService
      */
     public function fetchAndUpdateUserCodes(): array
     {
+        $emails = [];
         try {
             $emails = User::whereNull('employee_code')
                 ->pluck('email')
