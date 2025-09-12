@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             LookupSeeder::class,
             ClaimStatusesSeeder::class, // ClaimStatusesSeeder is dependent on LookupSeeder
             SavingsQuoteDataSeeder::class,
+            GenericDocumentTypesSeeder::class,
             // ILAGMPermissionSeeder::class,
             // TravelRenewalTeamSeeder::class,
             // QuoteTypeTableSeeder::class,
