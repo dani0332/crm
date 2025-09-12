@@ -3,7 +3,6 @@ import {
   toggleResetCap,
   statusSubmit,
   toggleNormalAllocation,
-  toggleHardStop
 } from '../../Services/LeadAllocation';
 const page = usePage();
 const { isRequired } = useRules();
@@ -89,9 +88,6 @@ const tableHeader = ref([
     ? [{ text: 'Norm Allo.', value: 'normalAllocationEnabled', sortable: true}]
     :[],
   { text: 'Reset Cap', value: 'reset_cap', width: '100' },
-  ...(page.props.quoteType === quoteTypeOptions.value.Travel)
-    ? [{ text: 'Hard Stop', value: 'isHardStop', sortable: true}]
-    : [],
   ...(page.props.quoteType === quoteTypeOptions.value.Travel)
     ? [{ text: 'Last Login', value: 'lastLogin', sortable: true}]
     : []
@@ -213,22 +209,6 @@ const onToggleNormalAllocation = async (active, userId, laId) => {
       description: 'Something went wrong!',
       position: 'top',
     });
-  } finally {
-    loaders.table = false;
-  }
-};
-
-const onToggleHardStop = async (status, userId) => {
-  loaders.table = true;
-  
-  try {
-    await toggleHardStop(status, userId);
-  } catch(error) {
-    notification.error({
-      title: 'Error',
-      description: 'Something went wrong!',
-      position: 'top',
-    })
   } finally {
     loaders.table = false;
   }
@@ -475,16 +455,6 @@ onMounted(() => {
             :is-active="reset_cap"
             :id="id"
             @toggle="onToggleResetCap($event.active, userId, id)"
-          />
-        </div>
-      </template>
-      
-      <template #item-isHardStop="{ isHardStop, userId, id }">
-        <div class="text-center">
-          <ItemToggler
-            :is-active="isHardStop"
-            :id="id"
-            @toggle="onToggleHardStop($event.active, userId)"
           />
         </div>
       </template>
