@@ -215,8 +215,14 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     info($logPrefix.'ParentLead - '.$this->lead->uuid.' - childLead - '.$capiResponse->quoteUID.' - emailSent - '.$emailData->customerEmail);
 
                     $healthRevival->update(['email_sent' => true]);
+
+                    $quoteStatusId = ($healthQuote->isAUHLead() && $healthQuote->isLeadSourceRevivalOrInsuranceWallet())
+                        ? QuoteStatusEnum::NewLead
+                        : QuoteStatusEnum::Quoted;
+
                     // update child lead
-                    HealthQuote::find($healthQuote->id)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
+                    HealthQuote::find($healthQuote->id)->update(['quote_status_id' => $quoteStatusId]);
+
                     // update parent lead
                     HealthQuote::find($this->lead->id)->update(['is_revived' => true]);
                 } else {
