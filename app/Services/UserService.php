@@ -253,9 +253,15 @@ class UserService extends BaseService
      * @param  array  $emails  Array of email addresses
      * @return array Returns array with success status and processed data
      */
-    public function fetchUserCodes(array $emails): array
+    public function fetchAndUpdateUserCodes(): array
     {
         try {
+            $emails = User::whereNull('employee_code')
+                ->pluck('email')
+                ->filter()
+                ->values()
+                ->toArray();
+
             // Call HRM API to get employee codes
             $employeeData = $this->hrmRequestService->getEmployeeCodes($emails);
 
@@ -281,7 +287,7 @@ class UserService extends BaseService
                 $code = $employee['code'] ?? null;
 
                 if (! $email) {
-                    LoggerService::warning(static::class.'::fetchUserCodes - Employee data missing email', [
+                    LoggerService::warning(static::class.'::fetchAndUpdateUserCodes - Employee data missing email', [
                         'employee_data' => $employee,
                     ]);
 
@@ -292,7 +298,7 @@ class UserService extends BaseService
                 $user = User::where('email', $email)->first();
 
                 if (! $user) {
-                    LoggerService::info(static::class.'::fetchUserCodes - User not found for email', [
+                    LoggerService::info(static::class.'::fetchAndUpdateUserCodes - User not found for email', [
                         'email' => $email,
                     ]);
                     $notFound++;
@@ -311,7 +317,7 @@ class UserService extends BaseService
                         $user->employee_code = $code;
                         $user->save();
 
-                        LoggerService::info(static::class.'::fetchUserCodes - Updated user employee_code', [
+                        LoggerService::info(static::class.'::fetchAndUpdateUserCodes - Updated user employee_code', [
                             'user_id' => $user->id,
                             'email' => $email,
                             'old_employee_code' => null,
@@ -336,10 +342,6 @@ class UserService extends BaseService
                         ];
                     }
                 } else {
-                    LoggerService::info(static::class.'::fetchUserCodes - No employee_code returned for user', [
-                        'user_id' => $user->id,
-                        'email' => $email,
-                    ]);
 
                     $results[] = [
                         'email' => $email,
@@ -350,7 +352,7 @@ class UserService extends BaseService
                 }
             }
 
-            LoggerService::info(static::class.'::fetchUserCodes - Process completed', [
+            LoggerService::info(static::class.'::fetchAndUpdateUserCodes - Process completed', [
                 'processed' => $processed,
                 'updated' => $updated,
                 'not_found' => $notFound,
@@ -367,7 +369,7 @@ class UserService extends BaseService
             ];
 
         } catch (\Exception $e) {
-            LoggerService::error(static::class.'::fetchUserCodes - UserService exception occurred', [
+            LoggerService::error(static::class.'::fetchAndUpdateUserCodes - UserService exception occurred', [
                 'emails_count' => count($emails),
             ], exception: $e);
 

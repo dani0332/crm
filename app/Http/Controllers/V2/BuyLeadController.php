@@ -230,45 +230,11 @@ class BuyLeadController extends Controller
     /**
      * Update employee codes for advisors with null codes
      */
-    public function updateEmployeeCodes(UpdateEmployeeCodesRequest $request)
+    public function updateEmployeeCodes(Request $request)
     {
         try {
-            // Step 1: Validate and parse dates
-            $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
-            $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
 
-            // Step 2: Get eligible parent teams
-            $eligibleParentTeamIds = [
-                getTeamId(TeamNameEnum::CAR),
-                getTeamId(TeamNameEnum::HEALTH),
-            ];
-
-            // Step 3: Get advisor emails with null codes from EXPORT dataset
-            $emailsWithNullCodes = $this->buyLeadService->getAdvisorEmailsWithNullCodes(
-                $startDate,
-                $endDate,
-                $eligibleParentTeamIds
-            );
-
-            if (empty($emailsWithNullCodes)) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'No employees with null codes found',
-                    'emails_processed' => 0,
-                ]);
-            }
-
-            LoggerService::info('UpdateEmployeeCodes: Processing emails with null codes', [
-                'emails_count' => count($emailsWithNullCodes),
-                'emails' => $emailsWithNullCodes,
-                'date_range' => [
-                    'start_date' => $startDate->format('Y-m-d H:i:s'),
-                    'end_date' => $endDate->format('Y-m-d H:i:s'),
-                ],
-            ]);
-
-            // Step 4: Fetch user codes from HRM service
-            $hrmResponse = $this->userService->fetchUserCodes($emailsWithNullCodes);
+            $hrmResponse = $this->userService->fetchAndUpdateUserCodes();
 
             if (! ($hrmResponse['success'] ?? false) || empty($hrmResponse['results'])) {
                 LoggerService::warning('UpdateEmployeeCodes: Failed to fetch HRM codes', [
@@ -278,7 +244,7 @@ class BuyLeadController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to fetch employee codes from HRM service',
-                    'emails_processed' => count($emailsWithNullCodes),
+                    'emails_processed' => $hrmResponse['processed'],
                 ], 422);
             }
 
@@ -287,7 +253,7 @@ class BuyLeadController extends Controller
                 ->count();
 
             LoggerService::info('UpdateEmployeeCodes: HRM codes fetched successfully', [
-                'emails_processed' => count($emailsWithNullCodes),
+                'emails_processed' => $hrmResponse['processed'],
                 'codes_updated' => $updatedCodesCount,
                 'hrm_response_summary' => [
                     'success' => $hrmResponse['success'] ?? false,
@@ -298,7 +264,7 @@ class BuyLeadController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Employee codes updated successfully',
-                'emails_processed' => count($emailsWithNullCodes),
+                'emails_processed' => $hrmResponse['processed'],
                 'codes_updated' => $updatedCodesCount,
             ]);
 
