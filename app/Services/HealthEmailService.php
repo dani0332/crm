@@ -323,7 +323,7 @@ class HealthEmailService extends BaseService
     {
         try {
             LoggerService::info(self::class." - Inside for UUID: {$healthQuote->uuid}");
-            $emailData = $this->mapDataForFollowupEmail($healthQuote, $healthQuote->advisor, WorkflowTypeEnum::HEALTH_APPLICATION_PENDING);
+            $emailData = $this->mapDataForFollowupEmail($healthQuote, $healthQuote->advisor, WorkflowTypeEnum::HEALTH_APPLICATION_SUBMITTED);
             $workflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW);
             LoggerService::info(self::class." - Triggering Bird triggerWebHookRequest for UUID: {$healthQuote->uuid}");
             $response = app(BirdService::class)->triggerWebHookRequest($workflow, $emailData);

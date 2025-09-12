@@ -73,9 +73,9 @@ class HealthQuoteObserver
         if (
             isset($dirty['quote_status_id'])
         ) {
-            // if ($healthQuote->quote_status_id === QuoteStatusEnum::ApplicationPending) {
-            //     SendApplicationSubmittedEmailJob::dispatch($healthQuote);
-            // }
+            if ($healthQuote->quote_status_id === QuoteStatusEnum::ApplicationSubmitted) {
+                SendApplicationSubmittedEmailJob::dispatch($healthQuote);
+            }
         }
 
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($healthQuote->quote_status_id)) {
