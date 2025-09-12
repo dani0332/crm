@@ -67,4 +67,9 @@ class InsuranceProvider extends BaseModel implements AuditableContract
     {
         return $this->code === $code;
     }
+
+    public function genericDocuments()
+    {
+        return $this->morphMany(GenericDocument::class, 'documentable');
+    }
 }

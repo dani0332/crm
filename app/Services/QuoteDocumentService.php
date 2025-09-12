@@ -51,13 +51,15 @@ class QuoteDocumentService extends BaseService
      *
      * @return mixed
      */
-    public function getQuoteDocumentsToReceive($quoteTypeId)
+    public function getQuoteDocumentsToReceive($quoteTypeId, $documentTypeCategory = null)
     {
         return DocumentType::where([
             'is_active' => 1,
             'receive_from_customer' => 1,
             'quote_type_id' => $quoteTypeId,
-        ])
+        ])->when($documentTypeCategory, function ($query) use ($documentTypeCategory) {
+            $query->where('category', $documentTypeCategory);
+        })
             ->orderBy('sort_order')
             ->get();
     }

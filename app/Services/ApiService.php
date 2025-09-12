@@ -30,6 +30,7 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use App\Models\InsuranceProvider;
 
 class ApiService
 {
@@ -499,5 +500,15 @@ class ApiService
 
             return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Document notification processing failed!');
         }
+    }
+
+    public function getGenericDocuments($request)
+    {
+        $insuranceProvider = InsuranceProvider::find($request->insurance_provider_id);
+        $quoteTypeId = $request->quote_type_id;
+        $genericDocuments = $insuranceProvider?->genericDocuments()->when($quoteTypeId, function ($query) use ($quoteTypeId) {
+            $query->where('quote_type_id', $quoteTypeId);
+        })->get();
+        return $genericDocuments ?? [];
     }
 }

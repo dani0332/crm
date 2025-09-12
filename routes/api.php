@@ -87,6 +87,9 @@ Route::prefix('v1')->group(function () {
     Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
 
+
+    Route::get('generic-documents/{insuranceProviderId?}/{quoteType?}', [ApiController::class, 'getGenericDocuments']);
+
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 

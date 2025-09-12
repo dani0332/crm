@@ -54,6 +54,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Http\Resources\GenericDocumentResource;
 
 class ApiController extends Controller
 {
@@ -478,5 +479,11 @@ class ApiController extends Controller
     public function documentNotification(DocumentNotificationRequest $request)
     {
         return $this->apiService->documentNotification($request);
+    }
+
+
+    public function getGenericDocuments(Request $request)
+    {
+        return GenericDocumentResource::collection($this->apiService->getGenericDocuments($request));
     }
 }

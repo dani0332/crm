@@ -10,6 +10,7 @@ use App\Http\Resources\QuoteDocumentResource;
 use App\Services\ActivitiesService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\Request;
 
 class QuoteDocumentController extends Controller
 {
@@ -41,10 +42,11 @@ class QuoteDocumentController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function getQuoteDocumentsToReceive($quoteType, ActivitiesService $activitiesService)
+    public function getQuoteDocumentsToReceive($quoteType, ActivitiesService $activitiesService, Request $request)
     {
+        $documentTypeCategory = $request->category;
         $quoteTypeId = $activitiesService->getQuoteTypeId($quoteType);
-        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId);
+        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId, $documentTypeCategory);
 
         return DocumentTypeResource::collection($documentTypes);
     }
