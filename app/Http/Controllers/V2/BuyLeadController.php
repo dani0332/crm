@@ -253,7 +253,7 @@ class BuyLeadController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'No employees with null codes found',
-                    'emails_processed' => 0
+                    'emails_processed' => 0,
                 ]);
             }
 
@@ -262,8 +262,8 @@ class BuyLeadController extends Controller
                 'emails' => $emailsWithNullCodes,
                 'date_range' => [
                     'start_date' => $startDate->format('Y-m-d H:i:s'),
-                    'end_date' => $endDate->format('Y-m-d H:i:s')
-                ]
+                    'end_date' => $endDate->format('Y-m-d H:i:s'),
+                ],
             ]);
 
             // Step 4: Fetch user codes from HRM service
@@ -271,13 +271,13 @@ class BuyLeadController extends Controller
 
             if (! ($hrmResponse['success'] ?? false) || empty($hrmResponse['results'])) {
                 LoggerService::warning('UpdateEmployeeCodes: Failed to fetch HRM codes', [
-                    'hrm_response' => $hrmResponse
+                    'hrm_response' => $hrmResponse,
                 ]);
 
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to fetch employee codes from HRM service',
-                    'emails_processed' => count($emailsWithNullCodes)
+                    'emails_processed' => count($emailsWithNullCodes),
                 ], 422);
             }
 
@@ -290,28 +290,28 @@ class BuyLeadController extends Controller
                 'codes_updated' => $updatedCodesCount,
                 'hrm_response_summary' => [
                     'success' => $hrmResponse['success'] ?? false,
-                    'results_count' => count($hrmResponse['results'] ?? [])
-                ]
+                    'results_count' => count($hrmResponse['results'] ?? []),
+                ],
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Employee codes updated successfully',
                 'emails_processed' => count($emailsWithNullCodes),
-                'codes_updated' => $updatedCodesCount
+                'codes_updated' => $updatedCodesCount,
             ]);
 
         } catch (\Exception $e) {
             LoggerService::error('UpdateEmployeeCodes: Exception occurred', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while updating employee codes',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
