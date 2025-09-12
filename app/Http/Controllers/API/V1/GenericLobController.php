@@ -15,7 +15,6 @@ use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Services\Logger\LoggerService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -130,22 +129,13 @@ class GenericLobController extends Controller
             'tag' => $request->tag,
         ]);
         
-        $hasToSendMAWelcomeEmail = $request->code == 'CUSTOMER_NOT_FOUND';
-        
-        if ($hasToSendMAWelcomeEmail) {
-            $customer = Customer::where('email', $request->email)->first();
+        $customer = Customer::where('email', $request->email)->first();
             
-            LoggerService::info('MyAlfred Welcome Email - Dispatching job', [
-                'customer_email' => $customer->email,
-            ]);
+        LoggerService::info('MyAlfred Welcome Email - Dispatching job', [
+            'customer_email' => $customer->email,
+        ]);
 
-            MAWelcomeJob::dispatch($customer, $request->source, $request->tag);
-        } else {
-            LoggerService::info('MyAlfred Welcome Email - Skipped - Code is not CUSTOMER_NOT_FOUND', [
-                'code' => $request->code,
-                'customer_email' => $request->email,
-            ]);
-        }
+        MAWelcomeJob::dispatch($customer, $request->source, $request->tag);
 
         return response()->json(['message' => 'Welcome email sent successfully']);
     }
