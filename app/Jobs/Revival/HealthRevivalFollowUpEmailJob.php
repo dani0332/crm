@@ -15,15 +15,16 @@ use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use Carbon\Carbon;
-use Illuminate\Bus\Batchable;
+use Sammyjo20\LaravelHaystack\Concerns\Stackable;
+use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 
-class HealthRevivalFollowUpEmailJob implements ShouldQueue
+class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, Stackable;
 
     public $tries = 3;
     public $timeout = 120;

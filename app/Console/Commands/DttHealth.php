@@ -13,9 +13,8 @@ use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use Illuminate\Bus\Batch;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Bus;
 use Throwable;
-
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 class DttHealth extends Command
 {
     /**
@@ -119,26 +118,25 @@ class DttHealth extends Command
         info($logPrefix.' count - '.count($filteredLeads).' - '.json_encode($filteredLeads->pluck('uuid')->toArray()));
 
         $jobs = [];
-        $delayInSeconds = 0;
         foreach ($filteredLeads as $item) {
-            $jobs[] = (new HealthRevivalLeadsCreationJob($item))->delay(now()->addSeconds($delayInSeconds));
-            $delayInSeconds += 30;
+            $jobs[] = new HealthRevivalLeadsCreationJob($item);
         }
 
         if ($jobs != null && count($jobs)) {
-            Bus::batch($jobs)
-                ->then(function (Batch $batch) use ($logPrefix) {
+            Haystack::build()
+                ->addJobs($jobs)
+                ->then(function () use ($logPrefix) {
                     info($logPrefix.' all jobs completed successfully');
                 })
-                ->catch(function (Batch $batch, Throwable $e) use ($logPrefix) {
+                ->catch(function () use ($logPrefix) {
                     info($logPrefix.' one of batch is failed.');
                 })
-                ->finally(function (Batch $batch) use ($logPrefix) {
+                ->finally(function () use ($logPrefix) {
                     info($logPrefix.' everything done');
                 })
                 ->allowFailures()
                 ->onQueue('renewals')
-                ->name('Health DTT Batch Jobs')
+                ->withDelay(30)
                 ->dispatch();
         } else {
             info($logPrefix.'------No lead Found------');

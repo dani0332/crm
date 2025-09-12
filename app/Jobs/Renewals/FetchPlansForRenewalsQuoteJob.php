@@ -14,11 +14,13 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Sammyjo20\LaravelHaystack\Concerns\Stackable;
+use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
 
-class FetchPlansForRenewalsQuoteJob implements ShouldQueue
+class FetchPlansForRenewalsQuoteJob implements ShouldQueue, StackableJob
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
 
     protected $renewalQuoteProcess;
     protected $renewalStatusProcess;

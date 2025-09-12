@@ -10,8 +10,7 @@ use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Bus;
-
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 class DttHealthFollowUp extends Command
 {
     /**
@@ -108,14 +107,13 @@ class DttHealthFollowUp extends Command
         LoggerService::info($logPrefix.'count - '.$revivalLeads->count().' - leads - '.$revivalLeads->pluck('uuid')->toJson());
 
         $jobs = [];
-        $delayInSeconds = 0;
         foreach ($revivalLeads as $item) {
-            $jobs[] = (new HealthRevivalFollowUpEmailJob($item['uuid'], $item['type']))->delay(now()->addSeconds($delayInSeconds));
-            $delayInSeconds += 10;
+            $jobs[] = new HealthRevivalFollowUpEmailJob($item['uuid'], $item['type']);
         }
 
         if ($jobs != null && count($jobs)) {
-            Bus::batch($jobs)
+            Haystack::build()
+                ->addJobs($jobs)
                 ->then(function () use ($logPrefix) {
                     LoggerService::info($logPrefix.' all jobs completed successfully');
                 })
@@ -126,7 +124,7 @@ class DttHealthFollowUp extends Command
                     LoggerService::info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->name('DTT Health Follow Up Batch Jobs')
+                ->withDelay(10)
                 ->dispatch();
         } else {
             LoggerService::info($logPrefix.'No HealthRevivalFollowUpEmailJobs Found');

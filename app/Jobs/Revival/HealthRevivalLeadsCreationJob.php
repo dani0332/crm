@@ -15,18 +15,19 @@ use App\Models\QuoteBatches;
 use App\Services\SendEmailCustomerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
-use Illuminate\Bus\Batchable as BusBatchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
+use Sammyjo20\LaravelHaystack\Concerns\Stackable;
+use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
 
-class HealthRevivalLeadsCreationJob implements ShouldQueue
+class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 {
-    use AddPremiumAllLobs, BusBatchable, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable;
+    use AddPremiumAllLobs, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, Stackable;
 
     public $tries = 3;
     public $timeout = 300;
