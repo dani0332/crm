@@ -25,7 +25,7 @@ class GenericDocumentTypesSeeder extends Seeder
                 'code' => 'CLAIM_FORM',
                 'text' => 'Claim form',
                 'description' => 'download and upload your signed and completed claim form.',
-            ]
+            ],
         ];
 
         foreach ($genericDocumentTypes as $documentType) {

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Traits\FilterCriteria;
 use App\Enums\FilterTypes;
+use App\Traits\FilterCriteria;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -19,7 +19,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  */
 class GenericDocumentType extends Model implements AuditableContract
 {
-    use Auditable, HasFactory, FilterCriteria;
+    use Auditable, FilterCriteria, HasFactory;
 
     /**
      * The table associated with the model.
@@ -105,7 +105,6 @@ class GenericDocumentType extends Model implements AuditableContract
 
         return $this->asDateTime($value)->timezone(config('app.timezone'))->format($date_time_format);
     }
-
 
     /**
      * Relationship with generic documents.
