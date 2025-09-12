@@ -191,6 +191,11 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
     private function vehicleColor()
     {
         $vehicleColorList = [
+            ['1', 'WHITE'],
+            ['3', 'RED'],
+            ['5', 'YELLOW'],
+            ['6', 'GREEN'],
+            ['8', 'SILVER'],
             ['20', 'ADRIATIC'],
             ['21', 'ADRIATIC BLUE'],
             ['22', 'AEGEAN BLUE'],
