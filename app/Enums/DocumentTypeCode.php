@@ -80,6 +80,8 @@ class DocumentTypeCode extends Enum
     const AUDIT = 'AUDIT';
     const TRVLPAS = 'TRVLPAS';
     const Illustration_Document = 'LIFE_ID';
+    const CPS = 'CPS'; // Car Policy Schedule
+    const CPC = 'CPC'; // Car Policy Certificate
 
     // HOME SAL
     const HOME_SAL = 'HOME_SAL';

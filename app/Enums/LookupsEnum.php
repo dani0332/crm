@@ -53,6 +53,12 @@ enum LookupsEnum: string
     case SAVINGS_PURPOSE = 'savings_purpose';
     case INVESTMENT_TYPE = 'investment_type';
     case SAVINGS_TENURE = 'tenure';
+    case RTA_TRANSACTION_TYPE = 'rta-transaction-type';
+    case PLATE_CODE = 'plate-code';
+    case RTA_PLATE_CATEGORY = 'rta-plate-category';
+    case VEHICLE_COLOR = 'vehicle-color';
+    case BANK_NAME = 'bank-name';
+    case ANNUAL_MILEAGE_ESTIMATE = 'annual-mileage-estimate';
 
     // Claims
     case CLAIM_TYPES = 'claim-types';
