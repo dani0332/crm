@@ -129,6 +129,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedLOBCutOffDates();
         $this->seedTravelEnquiryEmail();
         $this->seedOcrSendUpdateLogFlag();
+        $this->seedProductionApprovalEmails();
     }
 
     private function seedBirdWorkflowUrls()
@@ -618,6 +619,26 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
+            ]
+        );
+    }
+
+    private function seedProductionApprovalEmails()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PRODUCTION_APPROVAL_EMAIL],
+            [
+                'value' => 'production.approval@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::APPROVAL_PRODUCTION_EMAIL],
+            [
+                'value' => 'approval.production@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
             ]
         );
     }
