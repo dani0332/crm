@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claim Creation Process - Claims Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .breadcrumb {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .breadcrumb a {
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        
+        .breadcrumb a:hover {
+            opacity: 1;
+        }
+        
+        .breadcrumb span {
+            color: #fff;
+            margin: 0 10px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        
+        .content-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .content-section h2 {
+            color: #2c3e50;
+            font-size: 2em;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .content-section h3 {
+            color: #34495e;
+            font-size: 1.5em;
+            margin: 25px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .step-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin: 25px 0;
+        }
+        
+        .step-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #3498db;
+            position: relative;
+        }
+        
+        .step-item .step-number {
+            position: absolute;
+            left: -2px;
+            top: -2px;
+            background: #3498db;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .step-item h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            margin-left: 30px;
+        }
+        
+        .step-item p {
+            color: #7f8c8d;
+            margin-left: 30px;
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .validation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .validation-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .validation-item strong {
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .api-endpoint {
+            background: #27ae60;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-family: monospace;
+            font-size: 0.9em;
+            display: inline-block;
+            margin: 5px 0;
+        }
+        
+        .method-get { background: #27ae60; }
+        .method-post { background: #3498db; }
+        .method-put { background: #f39c12; }
+        .method-delete { background: #e74c3c; }
+        
+        .lob-specific {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+        
+        .lob-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .lob-card.motor { border-left-color: #e74c3c; }
+        .lob-card.health { border-left-color: #27ae60; }
+        .lob-card.life { border-left-color: #3498db; }
+        
+        .lob-card h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .lob-card ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .lob-card li {
+            margin-bottom: 8px;
+            padding-left: 15px;
+            position: relative;
+            color: #555;
+        }
+        
+        .lob-card li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .error-handling {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .error-handling h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .lob-specific {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/docs/index.html">📚 Documentation Home</a>
+            <span>></span>
+            <a href="/docs/claims-process/index.html">Claims Management</a>
+            <span>></span>
+            <span>Claim Creation Process</span>
+        </div>
+
+        <div class="header">
+            <h1>🆕 Claim Creation Process</h1>
+            <p>Comprehensive guide to creating new insurance claims with CAPI integration</p>
+        </div>
+
+        <div class="content-section">
+            <h2>📋 Overview</h2>
+            <p>The claim creation process is the entry point for all new insurance claims in the system. It involves policy search and verification through CAPI integration, customer information validation, LOB-specific field collection, and initial claim registration with automatic status assignment.</p>
+            
+            <div class="step-flow">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <h4>Access Control & Navigation</h4>
+                    <p>User must have <code>CLAIM_CREATE</code> permission to access the claim creation form</p>
+                    <div class="api-endpoint method-get">GET /claim/create</div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <h4>Policy Search via CAPI</h4>
+                    <p>Search for active policies using customer email, policy number, and line of business</p>
+                    <div class="api-endpoint method-post">POST /claim/search-policies</div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <h4>LOB-Specific Information Collection</h4>
+                    <p>Collect required fields based on selected Line of Business (Motor, Health, Life)</p>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <h4>Validation & Submission</h4>
+                    <p>Comprehensive validation through ClaimStoreRequest with LOB-specific rules</p>
+                    <div class="api-endpoint method-post">POST /claim</div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">5</div>
+                    <h4>CAPI Claim Creation</h4>
+                    <p>Create claim in external system via CAPI integration with full audit logging</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔍 Policy Search Integration</h2>
+            <h3>🔌 CAPI Integration Details</h3>
+            <p>The policy search functionality integrates with the Customer Portal API (CAPI) to retrieve active policies for claim creation.</p>
+            
+            <div class="code-block">
+// ClaimsService::searchActivePolicies() method
+public function searchActivePolicies(
+    ?string $email = null, 
+    ?string $policyNumber = null, 
+    ?int $quoteTypeId = null, 
+    int $page = 1
+): array {
+    $policies = PersonalQuote::query()
+        ->select([
+            'personal_quotes.id',
+            'personal_quotes.uuid',
+            'personal_quotes.code as ref_id',
+            'personal_quotes.policy_number',
+            // ... additional fields
+        ])
+        ->whereNotNull('personal_quotes.policy_number')
+        ->whereIn('personal_quotes.quote_status_id', [QuoteStatusEnum::PolicyBooked])
+        ->when($email || $policyNumber, function ($query) use ($email, $policyNumber) {
+            // Search logic implementation
+        })
+        ->simplePaginate($this->perPage);
+    
+    return $policies;
+}
+            </div>
+            
+            <div class="validation-grid">
+                <div class="validation-item">
+                    <strong>Search Parameters</strong>
+                    Email, Policy Number, Quote Type ID, Page Number
+                </div>
+                <div class="validation-item">
+                    <strong>Active Policy Filter</strong>
+                    Only policies with PolicyBooked status
+                </div>
+                <div class="validation-item">
+                    <strong>LOB-Specific Data</strong>
+                    Car-specific fields (make, model, year, plate) when applicable
+                </div>
+                <div class="validation-item">
+                    <strong>Pagination</strong>
+                    15 results per page with simple pagination
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>📝 LOB-Specific Validation Rules</h2>
+            <p>Each Line of Business has unique validation requirements enforced through the ClaimStoreRequest validation class.</p>
+            
+            <div class="lob-specific">
+                <div class="lob-card motor">
+                    <h4>🚗 Motor/Car & Bike Claims</h4>
+                    <ul>
+                        <li><strong>Plate Number:</strong> Required, regex pattern <code>/^[A-Za-z0-9\-\s]+$/</code></li>
+                        <li><strong>Car Make:</strong> Required string, max 100 characters</li>
+                        <li><strong>Car Model:</strong> Required string, max 100 characters</li>
+                        <li><strong>Model Year:</strong> Required integer, range 1900 to current year + 1</li>
+                        <li><strong>Interdependency:</strong> If any vehicle field is provided, all must be provided</li>
+                        <li><strong>Auto-formatting:</strong> Plate number converted to uppercase</li>
+                        <li><strong>Shared Logic:</strong> Car and Bike use identical validation (isCarOrBikeLOB method)</li>
+                    </ul>
+                </div>
+                
+                <div class="lob-card health">
+                    <h4>🏥 Health & Group Medical Claims</h4>
+                    <ul>
+                        <li><strong>Claim Request Type:</strong> Required (reimbursement, pending-approvals, ask-a-question)</li>
+                        <li><strong>Service Type:</strong> Required for pending-approvals type</li>
+                        <li><strong>Service Types:</strong> In-patient or Out-patient requests</li>
+                        <li><strong>Reference Number:</strong> Optional for tracking purposes</li>
+                        <li><strong>Conditional Logic:</strong> Service type validation based on request type</li>
+                        <li><strong>Lookup Validation:</strong> All IDs validated against lookups table</li>
+                        <li><strong>Group Medical:</strong> Corporate health insurance with additional validation</li>
+                    </ul>
+                </div>
+                
+                <div class="lob-card life">
+                    <h4>💼 Life Claims</h4>
+                    <ul>
+                        <li><strong>Standard Fields:</strong> Basic claim information only</li>
+                        <li><strong>Simplified Validation:</strong> No LOB-specific required fields</li>
+                        <li><strong>Policy Information:</strong> Policy number and incident details</li>
+                        <li><strong>Incident Date:</strong> Required, must be before today</li>
+                        <li><strong>Claim Type:</strong> Selected from available life claim types</li>
+                        <li><strong>Processing:</strong> Direct path to claim processing</li>
+                    </ul>
+                </div>
+
+                <div class="lob-card" style="border-left-color: #e67e22;">
+                    <h4>🏠 Other LOBs (Home, Travel, Pet, etc.)</h4>
+                    <ul>
+                        <li><strong>Standard Processing:</strong> Basic claim workflow without complex validation</li>
+                        <li><strong>Supported LOBs:</strong> Home, Travel, Yacht, Pet, Cycle, Jetski, Business, CorpLine, Savings</li>
+                        <li><strong>Common Fields:</strong> Policy number, incident date, incident story</li>
+                        <li><strong>Document Types:</strong> LOB-specific document requirements from lookups</li>
+                        <li><strong>Status Flow:</strong> Standard Open → Closed workflow</li>
+                        <li><strong>Validation:</strong> Basic field validation without LOB-specific business rules</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔒 Validation Implementation</h2>
+            <h3>📋 ClaimStoreRequest Validation Rules</h3>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Validation Rules</th>
+                            <th>LOB Applicability</th>
+                            <th>Required</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>first_name</td>
+                            <td>required|string|max:255|regex:/^[a-zA-Z\s\'-\.]+$/</td>
+                            <td>All</td>
+                            <td>Yes</td>
+                        </tr>
+                        <tr>
+                            <td>last_name</td>
+                            <td>required|string|max:255|regex:/^[a-zA-Z\s\'-\.]+$/</td>
+                            <td>All</td>
+                            <td>Yes</td>
+                        </tr>
+                        <tr>
+                            <td>mobile_no</td>
+                            <td>required|string|max:20|regex:/^[\+]?[0-9\s\-\(\)]+$/</td>
+                            <td>All</td>
+                            <td>Yes</td>
+                        </tr>
+                        <tr>
+                            <td>email</td>
+                            <td>required|email:rfc,dns|max:255</td>
+                            <td>All</td>
+                            <td>Yes</td>
+                        </tr>
+                        <tr>
+                            <td>plate_number</td>
+                            <td>nullable|string|max:20</td>
+                            <td>Motor/Car</td>
+                            <td>Conditional</td>
+                        </tr>
+                        <tr>
+                            <td>car_make</td>
+                            <td>nullable|string|max:100</td>
+                            <td>Motor/Car</td>
+                            <td>Conditional</td>
+                        </tr>
+                        <tr>
+                            <td>car_model</td>
+                            <td>nullable|string|max:100</td>
+                            <td>Motor/Car</td>
+                            <td>Conditional</td>
+                        </tr>
+                        <tr>
+                            <td>model_year</td>
+                            <td>nullable|integer|min:1900|max:(current_year + 1)</td>
+                            <td>Motor/Car</td>
+                            <td>Conditional</td>
+                        </tr>
+                        <tr>
+                            <td>claim_request_type_id</td>
+                            <td>nullable|integer|exists:lookups,id</td>
+                            <td>Health</td>
+                            <td>Conditional</td>
+                        </tr>
+                        <tr>
+                            <td>service_type_id</td>
+                            <td>nullable|integer|exists:lookups,id</td>
+                            <td>Health</td>
+                            <td>Conditional</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="error-handling">
+                <h4>⚠️ Data Preparation & Normalization</h4>
+                <p>The <code>prepareForValidation()</method> method automatically:</p>
+                <ul>
+                    <li>Trims whitespace from all string fields</li>
+                    <li>Converts email to lowercase</li>
+                    <li>Converts plate number to uppercase</li>
+                    <li>Normalizes phone number format</li>
+                    <li>Sanitizes incident story and other text fields</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔄 Claim Creation Workflow</h2>
+            <h3>⚙️ ClaimsService::createClaim() Implementation</h3>
+            
+            <div class="code-block">
+public function createClaim(array $data): array
+{
+    try {
+        // Prepare API data for CAPI integration
+        $apiData = [
+            'firstName' => $data['first_name'] ?? null,
+            'lastName' => $data['last_name'] ?? null,
+            'email' => $data['email'] ?? null,
+            'mobileNo' => $data['mobile_no'] ?? null,
+            'incident' => $data['incident_story'] ?? null,
+            'incidentDate' => $data['incident_date'] ?? null,
+            'customerId' => $data['customer_id'] ?? null,
+            'policyNumber' => $data['policy_number'] ?? null,
+            'insuranceProviderId' => $data['insurance_provider_id'] ?? null,
+            'quoteTypeId' => $data['quote_type_id'] ?? null,
+            'source' => $data['source'] ?? config('constants.SOURCE_NAME', 'IMCRM'),
+            // LOB-specific fields added based on quote type
+        ];
+        
+        // Remove null values and make CAPI request
+        $apiData = array_filter($apiData, fn($value) => !is_null($value));
+        $response = CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $apiData);
+        
+        return $response->data;
+    } catch (\Exception $e) {
+        // Comprehensive error logging
+        LoggerService::error(self::class.'::'.__FUNCTION__.' - Error creating claim request', [
+            'error' => $e->getMessage(),
+            'data' => $data,
+            'api_data' => $apiData ?? null,
+        ]);
+        throw $e;
+    }
+}
+            </div>
+            
+            <div class="validation-grid">
+                <div class="validation-item">
+                    <strong>Data Filtering</strong>
+                    Null values removed before API call
+                </div>
+                <div class="validation-item">
+                    <strong>Source Assignment</strong>
+                    Default source set to 'IMCRM' if not provided
+                </div>
+                <div class="validation-item">
+                    <strong>LOB Field Addition</strong>
+                    Car and Health specific fields added conditionally
+                </div>
+                <div class="validation-item">
+                    <strong>Error Logging</strong>
+                    Comprehensive logging with context data
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🎯 Observer Pattern Integration</h2>
+            <h3>🔄 Automatic Status Assignment</h3>
+            <p>Upon claim creation, the ClaimRequestObserver automatically sets the initial sub-status based on LOB:</p>
+            
+            <div class="code-block">
+// ClaimRequestObserver::creating() method
+public function creating(ClaimRequest $claimRequest): void
+{
+    $claimsService = new ClaimsService;
+    
+    // If claim number is provided during creation, set status to "Claim registered"
+    if (!empty($claimRequest->claim_number)) {
+        $claimsService->updateClaimSubStatusToClaimRegistered($claimRequest);
+    }
+}
+            </div>
+            
+            <div class="lob-specific">
+                <div class="lob-card motor">
+                    <h4>🚗 Motor Claims Initial Status</h4>
+                    <ul>
+                        <li><strong>Default:</strong> "New claim"</li>
+                        <li><strong>With Claim Number:</strong> "Claim registered and awaiting inspection"</li>
+                        <li><strong>Auto-Assignment:</strong> Based on QuoteTypeId::Car detection</li>
+                    </ul>
+                </div>
+                
+                <div class="lob-card health">
+                    <h4>🏥 Health Claims Initial Status</h4>
+                    <ul>
+                        <li><strong>Default:</strong> "New claim" or "New request" based on type</li>
+                        <li><strong>With Claim Number:</strong> "Claims registered"</li>
+                        <li><strong>Request-Specific:</strong> Different flows for reimbursement vs approvals</li>
+                    </ul>
+                </div>
+                
+                <div class="lob-card life">
+                    <h4>💼 Life Claims Initial Status</h4>
+                    <ul>
+                        <li><strong>Default:</strong> "New claim"</li>
+                        <li><strong>With Claim Number:</strong> "Claims registered"</li>
+                        <li><strong>Simplified Flow:</strong> Direct path to processing</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🚨 Error Handling & Recovery</h2>
+            <h3>⚠️ Common Error Scenarios</h3>
+            
+            <div class="error-handling">
+                <h4>CAPI Integration Failures</h4>
+                <ul>
+                    <li><strong>Network Timeout:</strong> Graceful handling with retry logic</li>
+                    <li><strong>Authentication Failure:</strong> Clear error messages and logging</li>
+                    <li><strong>Invalid Policy:</strong> User-friendly feedback with suggestions</li>
+                    <li><strong>API Rate Limiting:</strong> Appropriate delays and user notification</li>
+                </ul>
+            </div>
+            
+            <div class="error-handling">
+                <h4>Validation Failures</h4>
+                <ul>
+                    <li><strong>LOB Mismatch:</strong> Clear field requirement explanations</li>
+                    <li><strong>Missing Required Fields:</strong> Specific field-level error messages</li>
+                    <li><strong>Format Validation:</strong> Regex pattern guidance for users</li>
+                    <li><strong>Business Rule Violations:</strong> Context-aware error descriptions</li>
+                </ul>
+            </div>
+            
+            <div class="code-block">
+// Error logging implementation in ClaimStoreRequest
+protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
+{
+    $errors = $validator->errors();
+    
+    // Log validation failures for debugging
+    \App\Services\Logger\LoggerService::info('Claim store validation failed', extra: [
+        'errors' => $errors->toArray(),
+        'input' => $this->except(['password', 'password_confirmation']),
+        'user_id' => Auth::id(),
+    ]);
+    
+    parent::failedValidation($validator);
+}
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Claim Creation Process Documentation</strong></p>
+            <p>Part of the Claims Management System Technical Documentation</p>
+        </div>
+    </div>
+</body>
+</html>

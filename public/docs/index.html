@@ -60,10 +60,10 @@
         
         .documentation-grid {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 25px;
             margin-top: 30px;
-            max-width: 600px;
+            max-width: 1200px;
             margin-left: auto;
             margin-right: auto;
         }
@@ -179,7 +179,14 @@
             }
             
             .documentation-grid {
+                grid-template-columns: 1fr;
                 max-width: 100%;
+            }
+        }
+        
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .documentation-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
@@ -213,6 +220,28 @@
                     <li>Comprehensive Audit Trail</li>
                 </ul>
                 <a href="/docs/booking-process/index.html" class="doc-link">Explore Sage Integration →</a>
+            </div>
+
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">🛡️</span>
+                    Claims Management System
+                </h3>
+                <p>
+                    Complete technical documentation for the insurance claims processing system covering 
+                    multi-LOB claim workflows, status management, and comprehensive business logic.
+                </p>
+                <ul class="features">
+                    <li>Multi-LOB Claim Processing (Motor, Health, Life)</li>
+                    <li>CAPI Integration & Policy Search</li>
+                    <li>Automatic Status Transition Logic</li>
+                    <li>AI-Powered Customer Notifications</li>
+                    <li>Document Management & S3 Integration</li>
+                    <li>Vue 3 Component Architecture</li>
+                    <li>Observer Pattern Business Rules</li>
+                    <li>Comprehensive Security & Permissions</li>
+                </ul>
+                <a href="/docs/claims-process/index.html" class="doc-link">Explore Claims System →</a>
             </div>
         </div>
         

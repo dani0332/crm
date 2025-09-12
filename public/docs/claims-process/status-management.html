@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status Management - Claims Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .breadcrumb {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .breadcrumb a {
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        
+        .breadcrumb a:hover {
+            opacity: 1;
+        }
+        
+        .breadcrumb span {
+            color: #fff;
+            margin: 0 10px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        
+        .content-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .content-section h2 {
+            color: #2c3e50;
+            font-size: 2em;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .content-section h3 {
+            color: #34495e;
+            font-size: 1.5em;
+            margin: 25px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-hierarchy {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 25px 0;
+        }
+        
+        .status-column {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .status-column.main-status {
+            border-left-color: #e74c3c;
+        }
+        
+        .status-column.sub-status {
+            border-left-color: #27ae60;
+        }
+        
+        .status-column h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .status-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .status-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            position: relative;
+        }
+        
+        .status-item.open { border-left-color: #27ae60; }
+        .status-item.closed { border-left-color: #e74c3c; }
+        .status-item.processing { border-left-color: #f39c12; }
+        
+        .status-item h5 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .status-item p {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .lob-specific {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin: 25px 0;
+        }
+        
+        .lob-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .lob-card.motor { border-left-color: #e74c3c; }
+        .lob-card.health { border-left-color: #27ae60; }
+        .lob-card.life { border-left-color: #3498db; }
+        
+        .lob-card h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .transition-flow {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .transition-arrow {
+            text-align: center;
+            color: #3498db;
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+        
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .observer-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .observer-section h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .trigger-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .trigger-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f39c12;
+        }
+        
+        .trigger-item strong {
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .ai-integration {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .ai-integration h4 {
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .notification-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .notification-step {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 120px;
+            position: relative;
+        }
+        
+        .notification-step:not(:last-child):after {
+            content: "→";
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2em;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .status-hierarchy {
+                grid-template-columns: 1fr;
+            }
+            
+            .lob-specific {
+                grid-template-columns: 1fr;
+            }
+            
+            .notification-flow {
+                flex-direction: column;
+            }
+            
+            .notification-step:not(:last-child):after {
+                content: "↓";
+                right: 50%;
+                top: 100%;
+                transform: translateX(50%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/docs/index.html">📚 Documentation Home</a>
+            <span>></span>
+            <a href="/docs/claims-process/index.html">Claims Management</a>
+            <span>></span>
+            <span>Status Management</span>
+        </div>
+
+        <div class="header">
+            <h1>⚙️ Status Management</h1>
+            <p>Comprehensive guide to claim status workflows and transition logic</p>
+        </div>
+
+        <div class="content-section">
+            <h2>📊 Status Hierarchy Overview</h2>
+            <p>The Claims Management System uses a two-tier status system: <strong>Main Status</strong> for high-level claim state and <strong>Sub-Status</strong> for detailed workflow tracking.</p>
+            
+            <div class="status-hierarchy">
+                <div class="status-column main-status">
+                    <h4>🎯 Main Status (Team Lead Management)</h4>
+                    <div class="status-flow">
+                        <div class="status-item open">
+                            <h5>Open</h5>
+                            <p>Active claims being processed</p>
+                        </div>
+                        <div class="status-item closed">
+                            <h5>Closed</h5>
+                            <p>Completed or terminated claims</p>
+                        </div>
+                    </div>
+                    <p><strong>Managed by:</strong> Team Leads with <code>CLAIMS_STATUS_UPDATE</code> permission</p>
+                    <p><strong>Database Key:</strong> <code>status_type = 'statuses'</code></p>
+                </div>
+                
+                <div class="status-column sub-status">
+                    <h4>🔄 Sub-Status (Detailed Workflow)</h4>
+                    <div class="status-flow">
+                        <div class="status-item processing">
+                            <h5>New Claim</h5>
+                            <p>Initial registration state</p>
+                        </div>
+                        <div class="status-item processing">
+                            <h5>Claim Registered</h5>
+                            <p>Claim number assigned</p>
+                        </div>
+                        <div class="status-item processing">
+                            <h5>Under Review</h5>
+                            <p>Assessment in progress</p>
+                        </div>
+                        <div class="status-item closed">
+                            <h5>Claim Settled</h5>
+                            <p>Payment completed</p>
+                        </div>
+                    </div>
+                    <p><strong>Managed by:</strong> Claims Managers with <code>CLAIMS_SUB_STATUS_UPDATE</code> permission</p>
+                    <p><strong>Database Key:</strong> <code>status_type = 'sub-statuses'</code></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔄 Observer Pattern - Automatic Transitions</h2>
+            <p>The ClaimRequestObserver automatically triggers status updates based on field changes, implementing sophisticated business logic for each Line of Business.</p>
+            
+            <div class="observer-section">
+                <h4>🎯 Monitored Field Changes</h4>
+                <p>The observer monitors specific field changes and triggers appropriate business logic:</p>
+            </div>
+            
+            <div class="trigger-grid">
+                <div class="trigger-item">
+                    <strong>claim_number</strong>
+                    When claim number is entered, automatically updates sub-status to "Claim Registered" (or "Awaiting Inspection" for Car claims)
+                </div>
+                <div class="trigger-item">
+                    <strong>claim_sub_status_id</strong>
+                    Evaluates closure logic based on LOB-specific closure states and automatically closes claims when appropriate
+                </div>
+                <div class="trigger-item">
+                    <strong>approved_repair_amount</strong>
+                    Car/Bike LOB: Updates sub-status to "Repair approved & work in progress" when amount is entered
+                </div>
+                <div class="trigger-item">
+                    <strong>approved_total_loss_amount</strong>
+                    Car/Bike LOB: Updates sub-status to "Total Loss Offer Letter shared" when amount is entered
+                </div>
+                <div class="trigger-item">
+                    <strong>approved_cash_loss_amount</strong>
+                    Car/Bike LOB: Updates sub-status to "Cash loss approved" when amount is entered
+                </div>
+                <div class="trigger-item">
+                    <strong>claim_status_id</strong>
+                    Prepared for Google review email dispatch when claim is closed (currently commented out)
+                </div>
+            </div>
+            
+            <div class="code-block">
+// ClaimRequestObserver::updating() method
+public function updating(ClaimRequest $claimRequest): void
+{
+    $claimService = new ClaimsService;
+    
+    // Monitor claim number changes
+    if ($claimRequest->isDirty('claim_number')) {
+        $originalClaimNumber = $claimRequest->getOriginal('claim_number');
+        $newClaimNumber = $claimRequest->claim_number;
+        
+        if (empty($originalClaimNumber) && !empty($newClaimNumber)) {
+            $claimService->updateClaimSubStatusToClaimRegistered($claimRequest);
+        }
+    }
+    
+    // Monitor sub-status changes for closure logic
+    if ($claimRequest->isDirty('claim_sub_status_id')) {
+        $newClaimSubStatusId = $claimRequest->claim_sub_status_id;
+        $shouldCloseTheClaim = $claimService->checkSubStatusForClaimClosure(
+            $claimRequest, 
+            $newClaimSubStatusId
+        );
+        
+        if ($shouldCloseTheClaim) {
+            $claimService->markClaimAsClosed($claimRequest);
+        }
+    }
+}
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🏢 LOB-Specific Closure Logic</h2>
+            <p>Each Line of Business has unique closure criteria implemented in the <code>checkSubStatusForClaimClosure()</code> method.</p>
+            
+            <div class="lob-specific">
+                <div class="lob-card motor">
+                    <h4>🚗 Motor/Car & Bike Claims Closure States</h4>
+                    <div class="transition-flow">
+                        <strong>Closure Triggers:</strong>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>Repair completed and claim settled</li>
+                            <li>Total loss paid and claim settled</li>
+                            <li>Cash loss paid and claim settled</li>
+                            <li>Claim withdrawn</li>
+                            <li>Claim denied</li>
+                        </ul>
+                    </div>
+                    <div class="code-block">
+// Car and Bike LOBs share identical closure logic
+if ($isCarQuoteType || $isBikeQuoteType) {
+    $subStatusListForClaimClosed = [
+        ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_COMPLETED_AND_CLAIM_SETTLED->value,
+        ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_PAID_AND_CLAIM_SETTLED->value,
+        ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_PAID_AND_CLAIM_SETTLED->value,
+        ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_WITHDRAWN->value,
+        ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED->value,
+    ];
+}
+                    </div>
+                </div>
+                
+                <div class="lob-card health">
+                    <h4>🏥 Health & Group Medical Claims Closure States</h4>
+                    <div class="transition-flow">
+                        <strong>Base Closure Triggers:</strong>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>Claim paid</li>
+                            <li>Claim withdrawn</li>
+                            <li>Claim denied</li>
+                        </ul>
+                        <strong>Additional for Health & Group Medical:</strong>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>Request approved</li>
+                            <li>Answered and closed</li>
+                        </ul>
+                    </div>
+                    <div class="code-block">
+if ($isHealthQuoteType || $isGroupMedicalQuoteType) {
+    $subStatusListForClaimClosed = array_merge($subStatusListForClaimClosed, [
+        ClaimsEnum::CLAIM_SUB_STATUS_REQUEST_APPROVED->value,
+        ClaimsEnum::CLAIM_SUB_STATUS_ANSWERED_AND_CLOSED->value,
+    ]);
+}
+                    </div>
+                </div>
+                
+                <div class="lob-card life">
+                    <h4>💼 Life Claims Closure States</h4>
+                    <div class="transition-flow">
+                        <strong>Simplified Closure Logic:</strong>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>Claim paid</li>
+                            <li>Claim denied</li>
+                        </ul>
+                    </div>
+                    <div class="code-block">
+if ($isLifeQuoteType) {
+    $subStatusListForClaimClosed = [
+        ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_PAID->value,
+        ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED->value,
+    ];
+}
+                    </div>
+                </div>
+
+                <div class="lob-card" style="border-left-color: #e67e22;">
+                    <h4>🏠 Other LOBs (Home, Travel, Pet, etc.) Closure States</h4>
+                    <div class="transition-flow">
+                        <strong>Standard Closure Logic:</strong>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>Claim paid</li>
+                            <li>Claim withdrawn</li>
+                            <li>Claim denied</li>
+                        </ul>
+                        <strong>Supported LOBs:</strong> Home, Travel, Yacht, Pet, Cycle, Jetski, Business, CorpLine, Savings
+                    </div>
+                    <div class="code-block">
+// Default closure logic for all other LOBs
+$subStatusListForClaimClosed = [
+    ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_PAID->value,
+    ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_WITHDRAWN->value,
+    ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED->value,
+];
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🤖 AI-Powered Customer Notifications</h2>
+            
+            <div class="ai-integration">
+                <h4>🧠 InstantWriter AI Integration</h4>
+                <p>The Claims Management System integrates with InstantWriter AI to optimize customer communication messages before sending notifications.</p>
+                
+                <div class="notification-flow">
+                    <div class="notification-step">
+                        <strong>1. Draft Message</strong>
+                        <div>Claims manager writes initial message</div>
+                    </div>
+                    <div class="notification-step">
+                        <strong>2. AI Optimization</strong>
+                        <div>InstantWriter AI enhances message</div>
+                    </div>
+                    <div class="notification-step">
+                        <strong>3. Review & Send</strong>
+                        <div>Manager reviews and sends notification</div>
+                    </div>
+                    <div class="notification-step">
+                        <strong>4. Status Update</strong>
+                        <div>Sub-status updated automatically</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="code-block">
+// ClaimsService::optimizeMessageWithAI() method
+public function optimizeMessageWithAI(string $message, string $claimUuid)
+{
+    $apiData = [
+        'original_message' => $message,
+        'claim_reference' => $claimUuid,
+    ];
+    
+    try {
+        return InstantWriterAIFacade::request('/message-optimizer/optimize', 'post', $apiData);
+    } catch (\Exception $e) {
+        LoggerService::error(self::class.'::'.__FUNCTION__.' - Error optimizing message', [
+            'error' => $e->getMessage(),
+            'message' => $message,
+        ]);
+        throw $e;
+    }
+}
+            </div>
+            
+            <div class="observer-section">
+                <h4>📧 Notification Workflow</h4>
+                <ol>
+                    <li><strong>Message Creation:</strong> Claims manager drafts customer message</li>
+                    <li><strong>AI Optimization:</strong> Optional AI enhancement via InstantWriter API</li>
+                    <li><strong>Validation:</strong> ClaimSendNotificationRequest validates both messages and sub-status</li>
+                    <li><strong>Status Update:</strong> Sub-status updated and closure logic evaluated</li>
+                    <li><strong>Activity Logging:</strong> ClaimActivity record created with both messages</li>
+                    <li><strong>Customer Notification:</strong> Message sent to customer via preferred channel</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>📈 Status History & Audit Logging</h2>
+            <h3>🕒 Activity Tracking</h3>
+            <p>All status changes are tracked through the ClaimActivity model with comprehensive audit logging.</p>
+            
+            <div class="code-block">
+// ClaimActivity::createForClaim() static method
+public static function createForClaim(
+    int $claimRequestId,
+    string $claimUuid,
+    int $statusId,
+    ?string $comment = null,
+    ?string $commentAi = null,
+    ?int $createdById = null
+): self {
+    return self::create([
+        'claim_request_id' => $claimRequestId,
+        'claim_uuid' => $claimUuid,
+        'status_id' => $statusId,
+        'comment' => $comment,
+        'comment_ai' => $commentAi,
+        'created_by_id' => $createdById ?? Auth::id(),
+    ]);
+}
+            </div>
+            
+            <h3>📊 History Retrieval Methods</h3>
+            <div class="trigger-grid">
+                <div class="trigger-item">
+                    <strong>getClaimLeadHistory()</strong>
+                    Retrieves main status changes for team lead tracking with chronological ordering for client-side pagination
+                </div>
+                <div class="trigger-item">
+                    <strong>getClaimSubStatusLogs()</strong>
+                    Retrieves sub-status changes for manager audit with detailed transition tracking
+                </div>
+                <div class="trigger-item">
+                    <strong>getComplaintStatusLogs()</strong>
+                    Retrieves complaint status history from audit trail with change tracking
+                </div>
+                <div class="trigger-item">
+                    <strong>getNextFollowUpLogs()</strong>
+                    Retrieves follow-up scheduling history with date and note changes
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🎛️ Frontend Status Management</h2>
+            <h3>🎨 Vue Component Architecture</h3>
+            <p>Status management is handled through specialized Vue components with permission-based rendering and real-time updates.</p>
+            
+            <div class="trigger-grid">
+                <div class="trigger-item">
+                    <strong>ClaimStatus.vue</strong>
+                    Main status management by team leads with dropdown selection and notes
+                </div>
+                <div class="trigger-item">
+                    <strong>ClaimSubStatusAndCustomerUpdate.vue</strong>
+                    Sub-status updates with AI-powered customer notifications and message optimization
+                </div>
+                <div class="trigger-item">
+                    <strong>ClaimLeadHistory.vue</strong>
+                    DataTable showing main status transitions with client-side pagination (15 rows per page)
+                </div>
+                <div class="trigger-item">
+                    <strong>ClaimSubStatusLogs.vue</strong>
+                    DataTable showing sub-status changes with comprehensive audit information
+                </div>
+            </div>
+            
+            <div class="code-block">
+// Vue component permission check example
+const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
+
+// Status update permissions
+const canUpdateMainStatus = can(permissionsEnum.CLAIMS_STATUS_UPDATE);
+const canUpdateSubStatus = can(permissionsEnum.CLAIMS_SUB_STATUS_UPDATE);
+
+// Conditional rendering based on permissions
+&lt;ClaimStatus v-if="canUpdateMainStatus" :claim="claim" /&gt;
+&lt;ClaimSubStatusAndCustomerUpdate v-if="canUpdateSubStatus" :claim="claim" /&gt;
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Status Management Documentation</strong></p>
+            <p>Part of the Claims Management System Technical Documentation</p>
+        </div>
+    </div>
+</body>
+</html>
