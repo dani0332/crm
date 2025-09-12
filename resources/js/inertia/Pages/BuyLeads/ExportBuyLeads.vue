@@ -1,8 +1,11 @@
 <script setup>
+import axios from 'axios';
+
 const { isRequired, maxDateRange } = useRules();
 const date = ref(null);
+const isLoading = ref(false);
 
-const onSubmit = isValid => {
+const onSubmit = async isValid => {
   if (!isValid) return;
 
   let params = {};
@@ -13,8 +16,21 @@ const onSubmit = isValid => {
     params = date.value;
   }
 
-  const url = route('buy-leads.request.export-data');
-  window.open(url + '?' + new URLSearchParams(params).toString());
+  try {
+    isLoading.value = true;
+    
+    // First, update employee codes
+    await axios.post(route('buy-leads.request.update-employee-codes'), params);
+
+    // Proceed with export after successful update
+    const exportUrl = route('buy-leads.request.export-data');
+    window.open(exportUrl + '?' + new URLSearchParams(params).toString());
+
+  } catch (error) {
+    console.error('Error updating employee codes:', error);
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>
 
@@ -39,7 +55,9 @@ const onSubmit = isValid => {
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">
-      <x-button size="md" color="primary" type="submit"> Export </x-button>
+      <x-button size="md" color="primary" type="submit" :loading="isLoading">
+        Export
+      </x-button>
     </div>
   </x-form>
 </template>

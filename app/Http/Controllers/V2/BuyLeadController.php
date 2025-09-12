@@ -98,10 +98,7 @@ class BuyLeadController extends Controller
         $summaryResults = $this->getSummaryResults($startDate, $endDate, $eligibleParentTeamIds);
         $detailResults = $this->getDetailResults($startDate, $endDate, $eligibleParentTeamIds);
 
-        // Step 4: Enrich missing advisor codes from HRM
-        $detailResults = $this->enrichAdvisorCodes($detailResults);
-
-        // Step 5: Export to Excel and zip files
+        // Step 4: Export to Excel and zip files
         return $this->exportAsZip($summaryResults, $detailResults, $startDate, $endDate);
     }
 
@@ -187,58 +184,6 @@ class BuyLeadController extends Controller
     }
 
     /**
-     * Enrich advisor codes from HRM service
-     */
-    private function enrichAdvisorCodes($detailResults)
-    {
-        $emailsWithNullCodes = $detailResults->whereNull('advisor_code')
-            ->pluck('advisor_email')
-            ->filter()
-            ->unique()
-            ->values()
-            ->toArray();
-
-        if (empty($emailsWithNullCodes)) {
-            return $detailResults;
-        }
-
-        LoggerService::info('Fetching HRM codes for users with null codes', [
-            'emails_count' => count($emailsWithNullCodes),
-            'emails' => $emailsWithNullCodes,
-        ]);
-
-        $hrmResponse = $this->userService->fetchUserCodes($emailsWithNullCodes);
-
-        if (! ($hrmResponse['success'] ?? false) || empty($hrmResponse['results'])) {
-            LoggerService::warning('Failed to fetch HRM codes', ['hrm_response' => $hrmResponse]);
-
-            return $detailResults;
-        }
-
-        $hrmCodeMap = collect($hrmResponse['results'])
-            ->filter(fn ($r) => $r['status'] === 'updated' && isset($r['new_employee_code']))
-            ->mapWithKeys(fn ($r) => [$r['email'] => $r['new_employee_code']])
-            ->toArray();
-
-        LoggerService::info('HRM codes fetched successfully', [
-            'codes_retrieved' => count($hrmCodeMap),
-            'codes_map' => $hrmCodeMap,
-        ]);
-
-        return $detailResults->map(function ($item) use ($hrmCodeMap) {
-            if ($item->advisor_code === null && isset($item->advisor_email, $hrmCodeMap[$item->advisor_email])) {
-                $item->advisor_code = $hrmCodeMap[$item->advisor_email];
-                LoggerService::debug('Updated advisor code in export data', [
-                    'advisor_email' => $item->advisor_email,
-                    'new_code' => $item->advisor_code,
-                ]);
-            }
-
-            return $item;
-        });
-    }
-
-    /**
      * Export summary + detail to Excel, zip them, and return response
      */
     private function exportAsZip($summaryResults, $detailResults, Carbon $startDate, Carbon $endDate)
@@ -281,4 +226,93 @@ class BuyLeadController extends Controller
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 
+    /**
+     * Update employee codes for advisors with null codes
+     */
+    public function updateEmployeeCodes(Request $request)
+    {
+        try {
+            // Step 1: Validate and parse dates
+            $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+            $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
+
+            // Step 2: Get eligible parent teams
+            $eligibleParentTeamIds = [
+                getTeamId(TeamNameEnum::CAR),
+                getTeamId(TeamNameEnum::HEALTH),
+            ];
+
+            // Step 3: Get advisor emails with null codes from EXPORT dataset
+            $emailsWithNullCodes = $this->buyLeadService->getAdvisorEmailsWithNullCodes(
+                $startDate,
+                $endDate,
+                $eligibleParentTeamIds
+            );
+
+            if (empty($emailsWithNullCodes)) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'No employees with null codes found',
+                    'emails_processed' => 0
+                ]);
+            }
+
+            LoggerService::info('UpdateEmployeeCodes: Processing emails with null codes', [
+                'emails_count' => count($emailsWithNullCodes),
+                'emails' => $emailsWithNullCodes,
+                'date_range' => [
+                    'start_date' => $startDate->format('Y-m-d H:i:s'),
+                    'end_date' => $endDate->format('Y-m-d H:i:s')
+                ]
+            ]);
+
+            // Step 4: Fetch user codes from HRM service
+            $hrmResponse = $this->userService->fetchUserCodes($emailsWithNullCodes);
+
+            if (! ($hrmResponse['success'] ?? false) || empty($hrmResponse['results'])) {
+                LoggerService::warning('UpdateEmployeeCodes: Failed to fetch HRM codes', [
+                    'hrm_response' => $hrmResponse
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to fetch employee codes from HRM service',
+                    'emails_processed' => count($emailsWithNullCodes)
+                ], 422);
+            }
+
+            $updatedCodesCount = collect($hrmResponse['results'])
+                ->filter(fn ($r) => $r['status'] === 'updated' && isset($r['new_employee_code']))
+                ->count();
+
+            LoggerService::info('UpdateEmployeeCodes: HRM codes fetched successfully', [
+                'emails_processed' => count($emailsWithNullCodes),
+                'codes_updated' => $updatedCodesCount,
+                'hrm_response_summary' => [
+                    'success' => $hrmResponse['success'] ?? false,
+                    'results_count' => count($hrmResponse['results'] ?? [])
+                ]
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Employee codes updated successfully',
+                'emails_processed' => count($emailsWithNullCodes),
+                'codes_updated' => $updatedCodesCount
+            ]);
+
+        } catch (\Exception $e) {
+            LoggerService::error('UpdateEmployeeCodes: Exception occurred', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating employee codes',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

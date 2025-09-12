@@ -8,8 +8,10 @@ use App\Models\BuyLeadConfiguration;
 use App\Models\BuyLeadRequest;
 use App\Models\BuyLeadRequestLog;
 use App\Models\LeadAllocation;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PDF;
 
@@ -171,5 +173,43 @@ class BuyLeadService
         $pdfName = 'InsuranceMarket.ae™ Buy Leads Tracking Report.pdf';
 
         return $pdf->download($pdfName);
+    }
+
+    /**
+     * Get advisor emails with null employee codes from export dataset
+     */
+    public function getAdvisorEmailsWithNullCodes(Carbon $startDate, Carbon $endDate, array $teamIds): array
+    {
+        LoggerService::info('BuyLeadService getAdvisorEmailsWithNullCodes', [
+            'start_date' => $startDate->format('Y-m-d H:i:s'),
+            'end_date' => $endDate->format('Y-m-d H:i:s'),
+            'team_ids' => $teamIds,
+        ]);
+
+        $emails = DB::table('buy_lead_request_logs as blrl')
+            ->select('users.email')
+            ->join('buy_lead_requests as blr', 'blr.id', '=', 'blrl.buy_lead_request_id')
+            ->join('users', 'users.id', '=', 'blr.user_id')
+            ->whereNull('users.employee_code')
+            ->whereBetween('blrl.created_at', [$startDate, $endDate])
+            ->whereExists(function ($query) use ($teamIds) {
+                $query->select(DB::raw(1))
+                    ->from('user_team as ut')
+                    ->join('teams as t', 'ut.team_id', '=', 't.id')
+                    ->whereColumn('ut.user_id', 'blr.user_id')
+                    ->whereIn('t.parent_team_id', $teamIds);
+            })
+            ->groupBy('users.email')
+            ->pluck('users.email')
+            ->filter()
+            ->values()
+            ->toArray();
+
+        LoggerService::info('BuyLeadService: Extracted advisor emails with null codes', [
+            'emails_count' => count($emails),
+            'emails' => $emails,
+        ]);
+
+        return $emails;
     }
 }
