@@ -9,6 +9,7 @@ use App\Exports\BuyLeadsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BuyLeads\BuyLeadsRateFetchRequest;
 use App\Http\Requests\BuyLeads\RequestBuyLeadsRequest;
+use App\Http\Requests\BuyLeads\UpdateEmployeeCodesRequest;
 use App\Services\BuyLeads\BuyLeadService;
 use App\Services\Logger\LoggerService;
 use App\Services\UserService;
@@ -23,7 +24,7 @@ class BuyLeadController extends Controller
         private readonly UserService $userService
     ) {
         $this->middleware('permission:'.PermissionsEnum::BUY_LEADS, ['only' => ['show', 'tracking']]);
-        $this->middleware('permission:'.PermissionsEnum::BUY_LEADS_EXPORT, ['only' => ['export', 'exportBuyLeadsData']]);
+        $this->middleware('permission:'.PermissionsEnum::BUY_LEADS_EXPORT, ['only' => ['export', 'exportBuyLeadsData', 'updateEmployeeCodes']]);
     }
 
     public function fetchRate(BuyLeadsRateFetchRequest $request)
@@ -229,7 +230,7 @@ class BuyLeadController extends Controller
     /**
      * Update employee codes for advisors with null codes
      */
-    public function updateEmployeeCodes(Request $request)
+    public function updateEmployeeCodes(UpdateEmployeeCodesRequest $request)
     {
         try {
             // Step 1: Validate and parse dates
