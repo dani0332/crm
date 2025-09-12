@@ -20,14 +20,16 @@ const onSubmit = async isValid => {
     isLoading.value = true;
 
     // First, update employee codes and wait for success
-    const updateResponse = await axios.post(route('buy-leads.request.update-employee-codes'), params);
+    const updateResponse = await axios.post(
+      route('buy-leads.request.update-employee-codes'),
+      params,
+    );
 
     // Only proceed with export after successful AJAX response (200)
     if (updateResponse.status === 200) {
       const exportUrl = route('buy-leads.request.export-data');
       window.open(exportUrl + '?' + new URLSearchParams(params).toString());
     }
-
   } catch (error) {
     console.error('Error updating employee codes:', error);
     // Do not open export window if AJAX failed
