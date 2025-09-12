@@ -23,6 +23,7 @@ use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Jobs\SendHealthSICWAFollowupJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
+use App\Models\InsuranceProvider;
 use App\Models\MyAlFredUser;
 use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
@@ -30,7 +31,6 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
-use App\Models\InsuranceProvider;
 
 class ApiService
 {
@@ -509,6 +509,7 @@ class ApiService
         $genericDocuments = $insuranceProvider?->genericDocuments()->when($quoteTypeId, function ($query) use ($quoteTypeId) {
             $query->where('quote_type_id', $quoteTypeId);
         })->get();
+
         return $genericDocuments ?? [];
     }
 }

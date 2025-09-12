@@ -28,6 +28,7 @@ use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
+use App\Http\Resources\GenericDocumentResource;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Models\HealthQuote;
@@ -54,7 +55,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use App\Http\Resources\GenericDocumentResource;
 
 class ApiController extends Controller
 {
@@ -480,7 +480,6 @@ class ApiController extends Controller
     {
         return $this->apiService->documentNotification($request);
     }
-
 
     public function getGenericDocuments(Request $request)
     {
