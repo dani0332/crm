@@ -46,7 +46,6 @@ class LeadAllocationDashboardService extends BaseService
                     'la.manual_assignment_count as manualAllocationCount',
                     'la.auto_assignment_count as autoAllocationCount',
                     'la.normal_allocation_enabled as normalAllocationEnabled',
-                    'la.is_hardstop as isHardStop',
                     'la.reset_cap',
                     DB::RAW("
                         GROUP_CONCAT(
