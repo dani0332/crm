@@ -66,7 +66,7 @@ class HandleCarAdvisorUpdated
         if ($lead->sic_flow_enabled) {
 
             info('Lead is SIC enabled so send SIC notification to advisor against: '.$lead->uuid);
-            $user = app(new UserService)->getUserById($lead->advisor_id);
+            $user = app(UserService::class)->getUserById($lead->advisor_id);
             $responseCode = $this->carEmailService->sendSICNotificationToAdvisor($lead, $user);
 
             if (in_array($responseCode, [200, 201])) {
