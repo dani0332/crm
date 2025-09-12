@@ -9,7 +9,6 @@ use App\Exports\BuyLeadsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BuyLeads\BuyLeadsRateFetchRequest;
 use App\Http\Requests\BuyLeads\RequestBuyLeadsRequest;
-use App\Http\Requests\BuyLeads\UpdateEmployeeCodesRequest;
 use App\Services\BuyLeads\BuyLeadService;
 use App\Services\Logger\LoggerService;
 use App\Services\UserService;

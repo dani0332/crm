@@ -8,10 +8,8 @@ use App\Models\BuyLeadConfiguration;
 use App\Models\BuyLeadRequest;
 use App\Models\BuyLeadRequestLog;
 use App\Models\LeadAllocation;
-use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PDF;
 
