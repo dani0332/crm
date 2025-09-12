@@ -134,20 +134,24 @@ The Claims Module follows a layered architecture pattern:
 The Claims module implements comprehensive validation through multiple Form Request classes:
 
 #### `ClaimStoreRequest`
+
 - **Purpose**: Validates initial claim creation with full field validation
 - **Key Features**: LOB-specific validation, comprehensive field validation, CAPI integration support
 - **Validation Patterns**: Name regex, phone regex, email validation, plate number formatting
 
 #### `ClaimDetailsUpdateRequest`
+
 - **Purpose**: Validates claim detail updates with LOB-specific rules
 - **Key Features**: Interdependent field validation, conditional LOB validation, business rule enforcement
 - **Special Logic**: Car fields are interdependent, Health validation for pending-approvals
 
 #### `ClaimSendNotificationRequest`
+
 - **Purpose**: Validates notification sending with AI optimization
 - **Key Features**: Message validation, sub-status validation, AI integration support
 
 #### Other Validation Classes
+
 - `ClaimStatusUpdateRequest` - Status transition validation
 - `ClaimComplaintStatusUpdateRequest` - Complaint status updates
 - `ClaimNextFollowUpUpdateRequest` - Follow-up scheduling
@@ -168,6 +172,7 @@ The Claims module implements comprehensive validation through multiple Form Requ
   - **Comprehensive Logging**: All changes logged with user context
 
 #### Monitored Fields
+
 - `claim_number` - Triggers sub-status update to registered status
 - `claim_sub_status_id` - Triggers closure logic evaluation
 - `approved_repair_amount` - Car/Bike specific status update
@@ -180,12 +185,14 @@ The Claims module implements comprehensive validation through multiple Form Requ
 ### LOB-Specific Business Rules
 
 #### Car/Motor Claims
+
 - **Required Fields**: plate_number, car_make, car_model, model_year (all interdependent)
 - **Status Flow**: New Claim → Claim Registered Awaiting Inspection → Various repair/settlement states
 - **Approval Amounts**: Three types - Repair, Total Loss, Cash Loss (each triggers specific status updates)
 - **Closure States**: Repair completed and settled, Total loss paid and settled, Cash loss paid and settled, Claim denied, Claim withdrawn
 
-#### Health Claims  
+#### Health Claims
+
 - **Request Types**: Reimbursement, Pending Approvals, Ask a Question
 - **Required Fields**: claim_request_type_id, service_type_id (for pending approvals)
 - **Status Flow**: Different flows based on request type
@@ -193,6 +200,7 @@ The Claims module implements comprehensive validation through multiple Form Requ
 - **Closure States**: Claim paid, Request approved, Answered & closed, Claim denied, Claim withdrawn
 
 #### Life Claims
+
 - **Simplified Flow**: Basic claim processing with minimal sub-statuses
 - **Closure States**: Claim paid, Claim denied
 
@@ -208,16 +216,19 @@ The Claims module implements sophisticated status transition logic:
 ### Integration Points
 
 #### CAPI Integration
+
 - **Policy Search**: Used only during claim creation for policy lookup
 - **Claim Creation**: New claims are created through CAPI integration
 - **Error Handling**: Graceful handling of CAPI timeouts and errors
 
 #### AI Integration
+
 - **Message Optimization**: AI-powered customer message optimization
 - **Dual Messages**: Support for both customer and AI-optimized messages
 - **Integration Points**: Connected to InstantWriter AI service
 
 #### Document Management
+
 - **S3 Integration**: Document storage and retrieval via Azure Storage
 - **ZIP Creation**: Bulk document download functionality
 - **Document Types**: LOB-specific document type management
@@ -228,6 +239,7 @@ The Claims module implements sophisticated status transition logic:
 The Claims module uses a comprehensive Vue.js component architecture:
 
 ### Main Pages
+
 - **`Index.vue`**: Claims listing with advanced filtering and pagination
 - **`Show.vue`**: Comprehensive claim details page with all sub-components
 - **`Create.vue`**: Claim creation form with policy search integration
@@ -235,6 +247,7 @@ The Claims module uses a comprehensive Vue.js component architecture:
 - **`Form.vue`**: Reusable form component
 
 ### Component Architecture
+
 - **`ClaimDetails.vue`**: Main claim information display and editing with LOB-specific validation
 - **`ClaimStatus.vue`**: Status management by team leads (main claim status updates)
 - **`ClaimSubStatusAndCustomerUpdate.vue`**: Sub-status updates with AI-powered customer notifications
@@ -249,6 +262,7 @@ The Claims module uses a comprehensive Vue.js component architecture:
 - **`CustomerAdditionalContacts.vue`**: Additional customer contact management
 
 ### Frontend Patterns
+
 - **Composition API**: Modern Vue 3 with `<script setup>` syntax
 - **Permission System**: Integrated permission checking with `useCan()` and `useCanAny()`
 - **Event-Driven Architecture**: Component communication via custom events
@@ -260,8 +274,9 @@ The Claims module uses a comprehensive Vue.js component architecture:
 ## Permissions & Security
 
 ### Required Permissions
+
 - `CLAIM_LIST` - View claims listing
-- `CLAIM_CREATE` - Create new claims  
+- `CLAIM_CREATE` - Create new claims
 - `CLAIM_EDIT` - Edit existing claims
 - `CLAIM_SHOW` - View individual claims
 - `CLAIMS_EXPORT_DATA` - Export claim data
@@ -273,6 +288,7 @@ The Claims module uses a comprehensive Vue.js component architecture:
 - `CLAIM_DOWNLOAD_ALL_DOCUMENTS` - Download all documents as ZIP
 
 ### Security Features
+
 - **Route Model Binding**: UUID-based routing for enhanced security
 - **Permission Middleware**: Applied to all controller methods
 - **Input Sanitization**: Comprehensive data cleaning and validation
@@ -283,6 +299,7 @@ The Claims module uses a comprehensive Vue.js component architecture:
 ## API Endpoints
 
 ### Claim Routes
+
 - `GET /claim` - Claims listing (claims.index)
 - `GET /claim/create` - Claim creation form (claims.create)
 - `POST /claim` - Store new claim (claims.store)
@@ -297,12 +314,14 @@ The Claims module uses a comprehensive Vue.js component architecture:
 - `GET /claim/{uuid}/sub-status-logs` - Get sub-status logs (claims.sub-status-logs)
 
 ### Document Routes
+
 - `POST /claim/{uuid}/documents` - Upload documents (claims.documents.store)
 - `DELETE /claim/{uuid}/documents/{document}` - Delete document (claims.documents.destroy)
 - `POST /claim/documents/get-s3-temp-url` - Get S3 temp URL (claims.documents.get-s3-temp-url)
 - `GET /claim/{uuid}/documents/download-all` - Download all as ZIP (claims.documents.download-all)
 
 ### Additional Routes
+
 - `POST /claim/{uuid}/update-complaint-status` - Update complaint status
 - `POST /claim/{uuid}/update-next-follow-up` - Update next follow-up
 - `GET /claim/{uuid}/complaint-status-logs` - Get complaint logs
@@ -313,6 +332,7 @@ The Claims module uses a comprehensive Vue.js component architecture:
 ## Development Guidelines
 
 ### Code Standards
+
 - **Strict Typing**: All classes use `declare(strict_types=1)`
 - **Laravel Conventions**: Follow Laravel directory structure and naming conventions
 - **Documentation**: Comprehensive inline documentation with PHPDoc blocks
@@ -320,18 +340,21 @@ The Claims module uses a comprehensive Vue.js component architecture:
 - **Validation**: Server-side validation with client-side mirroring
 
 ### Testing Strategy
+
 - **Feature Tests**: Controller endpoints with permission testing
 - **Unit Tests**: Service layer methods and business logic
 - **Database Transactions**: Test isolation with database rollbacks
 - **Mock Dependencies**: External APIs and services properly mocked
 
 ### Performance Considerations
+
 - **Eager Loading**: Optimized queries with specific field selection
 - **Pagination**: Client-side pagination for large datasets
 - **Caching**: Strategic caching for dropdown data
 - **Query Optimization**: Avoiding N+1 queries through proper relationships
 
 ### Maintenance Guidelines
+
 - **Audit Logging**: All changes tracked with user context
 - **Error Logging**: Structured logging with contextual data
 - **Documentation Updates**: Keep documentation synchronized with code changes
@@ -343,26 +366,31 @@ The Claims module uses a comprehensive Vue.js component architecture:
 ### ClaimsEnum Constants Reference
 
 #### Status Type Keys
+
 - `CLAIM_STATUSES_STATUS_KEY = 'statuses'` - Main claim statuses
-- `CLAIM_STATUSES_SUB_STATUS_KEY = 'sub-statuses'` - Claim sub-statuses  
+- `CLAIM_STATUSES_SUB_STATUS_KEY = 'sub-statuses'` - Claim sub-statuses
 - `CLAIM_STATUSES_COMPLAINT_STATUS_KEY = 'complaint-statuses'` - Complaint statuses
 
 #### Lookup Keys
+
 - `CLAIM_TYPES_KEY = 'claim-types'` - Claim types lookup
 - `CLAIM_REQUEST_TYPES_KEY = 'claim-request-types'` - Health claim request types
 - `CLAIM_SERVICE_TYPES_KEY = 'claim-service-types'` - Health service types
 
 #### Main Status Constants
+
 - `CLAIM_STATUS_OPEN = 'Open'` - Open claim status
 - `CLAIM_STATUS_CLOSED = 'Close'` - Closed claim status
 
 #### Complaint Status Constants
+
 - `CLAIM_STATUS_OPEN_COMPLAINT = 'Complaint Open'`
 - `CLAIM_STATUS_CLOSED_COMPLAINT = 'Complaint Closed'`
 
 ### Claim Type Codes
 
 #### Motor/Car Claim Types
+
 - `CLAIM_TYPE_OWN_DAMAGE_CLAIM_CODE = 'own-damage-claim'`
 - `CLAIM_TYPE_RECOVERABLE_CLAIM_CODE = 'recoverable-claim'`
 - `CLAIM_TYPE_UNKNOWN_DAMAGE_CLAIM_CODE = 'unknown-damage-claim'`
@@ -372,17 +400,20 @@ The Claims module uses a comprehensive Vue.js component architecture:
 - `CLAIM_TYPE_WINDSCREEN_ONLY_CODE = 'windscreen-only'`
 
 ### Health Claim Request Types
+
 - `CLAIM_REQUEST_TYPE_REIMBURSEMENT_CODE = 'reimbursement'`
 - `CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE = 'pending-approvals'`
 - `CLAIM_REQUEST_TYPE_ASK_A_QUESTION_CODE = 'ask-a-question'`
 
 ### Health Service Types
+
 - `CLAIM_SERVICE_TYPE_IN_PATIENT_REQUEST_CODE = 'in-patient-request'`
 - `CLAIM_SERVICE_TYPE_OUT_PATIENT_REQUEST_CODE = 'out-patient-request'`
 
 ### Sub-Status Constants
 
 #### General Sub-Statuses
+
 - `CLAIM_SUB_STATUS_NEW_CLAIM = 'New claim'`
 - `CLAIM_SUB_STATUS_CLAIM_INITIATED = 'Claim initiated'`
 - `CLAIM_SUB_STATUS_CLAIM_REGISTERED = 'Claims registered'`
@@ -399,6 +430,7 @@ The Claims module uses a comprehensive Vue.js component architecture:
 - `CLAIM_SUB_STATUS_SETTLEMENT_IN_PROGRESS = 'Settlement in progress'`
 
 #### Motor/Car Specific Sub-Statuses
+
 - `CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS = 'Repair approved & work in progress'`
 - `CLAIM_SUB_STATUS_PARTS_ORDERED = 'Parts ordered'`
 - `CLAIM_SUB_STATUS_PARTS_ON_BACKORDER = 'Parts on backorder'`
@@ -419,11 +451,13 @@ The Claims module uses a comprehensive Vue.js component architecture:
 - `CLAIM_SUB_STATUS_CASH_LOSS_PAID_AND_CLAIM_SETTLED = 'Cash loss paid and claim settled'`
 
 #### Document Related Sub-Statuses
+
 - `CLAIM_SUB_STATUS_ADDITIONAL_DOCUMENTS_AWAITED = 'Additional documents awaited'`
 - `CLAIM_SUB_STATUS_DOCUMENTS_UPLOADED = 'Documents uploaded'`
 - `CLAIM_SUB_STATUS_CLAIM_PENDING_FOR_ADDITIONAL_INFORMATION = 'Claim Pending for Additional Information'`
 
 #### Health Specific Sub-Statuses
+
 - `CLAIM_SUB_STATUS_CLAIM_REPROCESSING = 'Claim Reprocessing'`
 - `CLAIM_SUB_STATUS_NEW_REQUEST = 'New request'`
 - `CLAIM_SUB_STATUS_UNDER_EVALUATION = 'Under Evaluation'`
@@ -435,12 +469,14 @@ The Claims module uses a comprehensive Vue.js component architecture:
 - `CLAIM_SUB_STATUS_ANSWERED_AND_CLOSED = 'Answered & Closed'`
 
 #### Legacy Sub-Statuses
+
 - `CLAIM_SUB_STATUS_PAYMENT_INITIATED = 'Payment initiated'`
 - `CLAIM_SUB_STATUS_PAYMENT_COMPLETED = 'Payment completed'`
 
 ### Helper Methods in ClaimsEnum
 
 #### Grouped Status Methods
+
 - `getClaimTypeCodes(): array` - Returns all claim type codes
 - `getClaimRequestTypeCodes(): array` - Returns all request type codes
 - `getClaimServiceTypeCodes(): array` - Returns all service type codes
@@ -448,6 +484,7 @@ The Claims module uses a comprehensive Vue.js component architecture:
 - `getClaimSubStatuses(): array` - Returns all sub-status values
 
 #### LOB-Specific Status Methods
+
 - `getMotorClaimSubStatuses(): array` - Returns motor/car specific sub-statuses
 - `getHealthReimbursementClaimSubStatuses(): array` - Returns health reimbursement sub-statuses
 - `getHealthPendingApprovalsSubStatuses(): array` - Returns health pending approvals sub-statuses
@@ -456,6 +493,7 @@ The Claims module uses a comprehensive Vue.js component architecture:
 ### Status Transition Logic
 
 #### Motor/Car Claims Closure States
+
 - `REPAIR_COMPLETED_AND_CLAIM_SETTLED`
 - `TOTAL_LOSS_PAID_AND_CLAIM_SETTLED`
 - `CASH_LOSS_PAID_AND_CLAIM_SETTLED`
@@ -463,6 +501,7 @@ The Claims module uses a comprehensive Vue.js component architecture:
 - `CLAIM_DENIED`
 
 #### Health Claims Closure States
+
 - `CLAIM_PAID`
 - `REQUEST_APPROVED`
 - `ANSWERED_AND_CLOSED`
@@ -470,6 +509,7 @@ The Claims module uses a comprehensive Vue.js component architecture:
 - `CLAIM_WITHDRAWN`
 
 #### Life Claims Closure States
+
 - `CLAIM_PAID`
 - `CLAIM_DENIED`
 
