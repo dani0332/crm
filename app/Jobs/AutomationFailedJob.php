@@ -76,13 +76,17 @@ class AutomationFailedJob implements ShouldQueue
             return;
         }
 
+        $payment = $this->quote->payments()->mainLeadPayment()->first();
+        $quoteType = QuoteType::where('id', $this->quoteTypeId)->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
+
         $emailData = (object) [
             'actionRequired' => $this->actionRequired,
             'recipientEmail' => $this->recipientEmail,
             'recipientName' => $this->recipientName,
             'imcrmReferenceNumber' => $this->quote->code,
             'insurerApiStatus' => $this->statusAPIFailed,
-            'insurerName' => $this->quote?->latestInsured?->first_name.' '.$this->quote?->latestInsured?->last_name,
+            'insurerName' => $insuranceProvider?->text ?? '',
             'processInvolved' => $this->processInvolved,
             'workflowType' => $this->workflowType,
         ];
