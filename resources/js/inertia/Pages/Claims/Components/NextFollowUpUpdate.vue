@@ -35,7 +35,7 @@ const originalDateTimestamp = computed(() => {
 });
 
 // Helper function to normalize date to timestamp
-const getDateTimestamp = (date) => {
+const getDateTimestamp = date => {
   if (!date) return null;
   const dateObj = date instanceof Date ? date : new Date(date);
   return isNaN(dateObj.getTime()) ? null : dateObj.getTime();
@@ -43,7 +43,9 @@ const getDateTimestamp = (date) => {
 
 // Helper function to check if date has changed
 const hasDateChanged = () => {
-  const currentTimestamp = getDateTimestamp(nextFollowUpForm.next_follow_up_date);
+  const currentTimestamp = getDateTimestamp(
+    nextFollowUpForm.next_follow_up_date,
+  );
   const originalTimestamp = originalDateTimestamp.value;
   return currentTimestamp !== originalTimestamp;
 };
@@ -66,22 +68,26 @@ const validateForm = (showRequiredErrors = true) => {
     }
   } else if (dateHasChanged.value) {
     // Only validate date constraints if the date has been changed by the user
-    const selectedDate = currentDate instanceof Date ? currentDate : new Date(currentDate);
+    const selectedDate =
+      currentDate instanceof Date ? currentDate : new Date(currentDate);
 
     // Validate date format
     if (isNaN(selectedDate.getTime())) {
-      errors.next_follow_up_date = 'The next follow-up date must be a valid date.';
+      errors.next_follow_up_date =
+        'The next follow-up date must be a valid date.';
     } else {
       const now = new Date();
       const maxDateValue = maxDate.value;
 
       // Validate future date (after now)
       if (selectedDate <= now) {
-        errors.next_follow_up_date = 'The next follow-up date must be in the future.';
+        errors.next_follow_up_date =
+          'The next follow-up date must be in the future.';
       }
       // Validate maximum 15 days in future
       else if (selectedDate > maxDateValue) {
-        errors.next_follow_up_date = 'The next follow-up date cannot be more than 15 days in the future.';
+        errors.next_follow_up_date =
+          'The next follow-up date cannot be more than 15 days in the future.';
       }
     }
   }
