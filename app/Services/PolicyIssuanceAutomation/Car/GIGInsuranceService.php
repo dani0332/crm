@@ -568,7 +568,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             // Skip certificate of insurance document in non-production environments only
             // In production, we want to upload the actual certificate of insurance
             // Reminder:: Commission statement is same as Tax invoice raised by buyer
-            if ((!$isProduction && str_contains($policyDocument->name, 'Certificate of Insurance')) || str_contains($policyDocument->name, 'Commission statement')) {
+            if ((! $isProduction && str_contains($policyDocument->name, 'Certificate of Insurance')) || str_contains($policyDocument->name, 'Commission statement')) {
                 continue;
             }
 
@@ -612,7 +612,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             // Upload duplicate certificate only in non-production environments for testing purposes
             // In production, the actual certificate of insurance will be processed above
             // If Policy Schedule (CPS) uploaded, also upload the same content as CPC to simulate Certificate of Insurance without API call
-            if (!$isProduction && $docMapping && isset($docMapping['code']) && $docMapping['code'] === DocumentTypeCode::CPS && ($quoteDocument?->id ?? false)) {
+            if (! $isProduction && $docMapping && isset($docMapping['code']) && $docMapping['code'] === DocumentTypeCode::CPS && ($quoteDocument?->id ?? false)) {
                 $duplicateDocName = self::POLICY_DOC_CERTIFICATE_OF_INSURANCE;
                 $cpcDocument = $this->uploadAndAttachToQuoteDocuments(
                     $quote,
