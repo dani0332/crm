@@ -86,7 +86,6 @@ use App\Services\SendEmailCustomerService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -686,7 +685,7 @@ class CentralController extends Controller
                 $healthQuote->quote_status_id = QuoteStatusEnum::Quoted;
                 $healthQuote->quote_status_date = now();
                 $healthQuote->save();
-              
+
             }
             LoggerService::info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
 

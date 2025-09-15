@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -14,16 +16,14 @@ use App\Jobs\CourtesyEmailJob;
 use App\Jobs\Health\SendApplicationSubmittedEmailJob;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\OCAHealthFollowupEmailJob;
+use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Models\ApplicationStorage;
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\LeadSourceEnum;
-use App\Jobs\OCAHealthFollowupEmailJob;
 
 class HealthQuoteObserver
 {
@@ -86,10 +86,9 @@ class HealthQuoteObserver
                 // Send Automated Followup Email Job if Health Auto-Followups is enabled.
                 if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                     $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
-                    if($healthQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-                      OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(now()->addMinutes(2));
+                    if ($healthQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
+                        OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(now()->addMinutes(2));
                     }
-                    
 
                 }
             }
