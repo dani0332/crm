@@ -253,7 +253,7 @@ class AMLController extends Controller
         })) : 0;
 
         $lookups = app(AMLService::class)->getAMLLookups();
-        
+
         if ($quoteType->code == quoteTypeCode::Car && ($quoteRequest?->plan?->insuranceProvider?->code == InsuranceProvidersEnum::AXA)) {
             $additionalLookups = app(AMLService::class)->getAMLLookups($quoteRequest?->plan?->provider_id, [
                 LookupsEnum::RTA_TRANSACTION_TYPE,
@@ -261,7 +261,7 @@ class AMLController extends Controller
                 LookupsEnum::VEHICLE_COLOR,
                 LookupsEnum::BANK_NAME,
             ]);
-    
+
             $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
         }
 
@@ -428,6 +428,7 @@ class AMLController extends Controller
 
             if (! $status) {
                 LoggerService::info('AML Screening Bridger - Preparation of Screening Data Failed');
+
                 return app(AMLService::class)->handleResponse($status, $message, $isAutomation);
             }
 
