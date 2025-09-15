@@ -258,6 +258,7 @@ class UserService extends BaseService
         $emails = [];
         try {
             $emails = User::whereNull('employee_code')
+                ->activeUser()
                 ->pluck('email')
                 ->filter()
                 ->values()
