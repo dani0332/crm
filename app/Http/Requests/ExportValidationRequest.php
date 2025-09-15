@@ -61,10 +61,10 @@ class ExportValidationRequest extends FormRequest
                 $rules['transaction_approved_dates.*'] = 'required|date';
             } else {
                 $rules = [
-                    'created_at_start' => 'nullable|required_without:policy_expiry_date,policy_expiry_date_end|date',
-                    'created_at_end' => 'nullable|required_without:policy_expiry_date,policy_expiry_date_end|date',
-                    'policy_expiry_date' => 'nullable|required_without:created_at_start,created_at_end|date',
-                    'policy_expiry_date_end' => 'nullable|required_without:created_at_start,created_at_end|date',
+                    'created_at_start' => 'nullable|required_without:policy_expiry_date,policy_expiry_date_end,renewal_batch|date',
+                    'created_at_end' => 'nullable|required_without:policy_expiry_date,policy_expiry_date_end,renewal_batch|date',
+                    'policy_expiry_date' => 'nullable|required_without:created_at_start,created_at_end,renewal_batch|date',
+                    'policy_expiry_date_end' => 'nullable|required_without:created_at_start,created_at_end,renewal_batch|date',
                 ];
             }
         }
