@@ -104,6 +104,8 @@ defineProps({
   isFuncsEnabled: Array,
   insurerAMLStatus: String,
   businessActivities: Object,
+  apiIssuanceStatus: String,
+  insurerApiStatus: String,
 });
 
 const page = usePage();
@@ -483,6 +485,20 @@ const paymentItems = computed(() => {
 
 const isRenewalUpload = computed(() => {
   return page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD;
+});
+
+const isGIG = computed(() => {
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.AXA
+  );
+});
+
+const isLIVA = computed(() => {
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.RSA
+  );
 });
 
 const leadStatusOptions = computed(() => {
@@ -1876,6 +1892,18 @@ function handleOcrNotification(event) {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT REFERENCE</dt>
                 <dd>{{ record.payment_reference ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ insurerApiStatus ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ apiIssuanceStatus ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">RTA UPLOAD STATUS</dt>
+                <dd>{{ record.rta_upload_status ? 'Done' : 'Pending' }}</dd>
               </div>
             </dl>
             <div class="grid sm:grid-cols-1 mt-3">
@@ -4362,6 +4390,14 @@ function handleOcrNotification(event) {
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="modelClass"
+    :id="$page.props.record.id"
+    :expanded="sectionExpanded"
+  />
+
+  <PolicyIssuanceApiLogs
+    v-if="isGIG || isLIVA"
+    :type="modelClass"
+    :quoteTypeId="$page.props.quoteTypeId"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
   />

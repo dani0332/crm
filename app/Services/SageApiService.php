@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PaymentChargesEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayEnum;
@@ -1797,33 +1798,6 @@ class SageApiService
             }
 
             if ($sageEntryType != SageEnum::SCT_REVERSAL) {
-                LoggerService::info('SAGE API :  Prepare Patch payload for SpitPayments  for '.$quote->code);
-                $aPInvoicePaymentsScheduleResponse = (new SageCustomApiService)->getAPInvoicePaymentScheduleByBatchNumber($postedResponse['BatchNumber']);
-
-                if ($aPInvoicePaymentsScheduleResponse['status']) {
-                    $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
-                    foreach ($aPInvoicePaymentsSchedule as $key => $aPInvoicePaymentSchedule) {
-                        // add discount amount to amount due for the first child payment in sage for balancing the amount
-                        $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
-                        $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
-                        if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                            $dueDate = $invoicePaymentSchedulesDueDate;
-                        } else {
-                            $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
-                        }
-
-                        $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
-                        $aPInvoicePaymentSchedule->amtdue = $dueAmount;
-                        $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
-                        $aPInvoicePaymentSchedule->audtorg = $this->sageDBName;
-                    }
-                } else {
-                    $errorMessage = 'Error while getting split payment schedule from sage';
-                    $message = $aPInvoicePaymentsScheduleResponse['error'];
-
-                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, [], [], $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId], false);
-                }
-                // 7
                 $isLiveApiCallStep7 = true;
                 if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                     LoggerService::info('SAGE API :  Patch Request  Sent Already for '.$quote->code);
@@ -1835,7 +1809,37 @@ class SageApiService
                     if (! is_array($postedResponse)) {
                         $postedResponse = [];
                     }
+
+                    $aPInvoicePaymentsSchedule = $postedResponse['payload'];
+                    $resp = $postedResponse['response'] ?? [];
                 } else {
+                    LoggerService::info('SAGE API :  Prepare Patch payload for SpitPayments  for '.$quote->code);
+                    $aPInvoicePaymentsScheduleResponse = (new SageCustomApiService)->getAPInvoicePaymentScheduleByBatchNumber($postedResponse['BatchNumber']);
+
+                    if ($aPInvoicePaymentsScheduleResponse['status']) {
+                        $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
+                        foreach ($aPInvoicePaymentsSchedule as $key => $aPInvoicePaymentSchedule) {
+                            // add discount amount to amount due for the first child payment in sage for balancing the amount
+                            $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
+                            $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
+                            if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                                $dueDate = $invoicePaymentSchedulesDueDate;
+                            } else {
+                                $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                            }
+
+                            $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+                            $aPInvoicePaymentSchedule->amtdue = $dueAmount;
+                            $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
+                            $aPInvoicePaymentSchedule->audtorg = $this->sageDBName;
+                        }
+                    } else {
+                        $errorMessage = 'Error while getting split payment schedule from sage';
+                        $message = $aPInvoicePaymentsScheduleResponse['error'];
+
+                        return $this->logErrorAndReturn([$quote, $message, $errorMessage, [], [], $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId], false);
+                    }
+
                     LoggerService::info('SAGE API :  Send Patch Request  for '.$quote->code);
                     $resp = (new SageCustomApiService)->updateAPInvoicePaymentSchedule($postedResponse['BatchNumber'], $aPInvoicePaymentsSchedule);
                     $postedResponse['response'] = $resp;
@@ -2722,8 +2726,13 @@ class SageApiService
 
             /* if the Policy Issuance exist for the Insurer and LOB than assign the Advisor */
             if ($insuranceProviderAutomation) {
-                LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy Book: Quote '.$quote?->code.' - assign advisor and update insurer and api issuance status of quote');
-                $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote);
+                LoggerService::info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor and update insurer and api issuance status of quote');
+                if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
+                    app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType);
+                } else {
+                    // TODO:: This should be updated with the new function in PolicyIssuanceService
+                    $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote);
+                }
             } else {
                 LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy Book: Quote '.$quote?->code.' - Insurer: '.$insuranceProvider?->code.' automation class not found');
             }

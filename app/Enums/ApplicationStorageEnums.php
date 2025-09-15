@@ -193,6 +193,8 @@ final class ApplicationStorageEnums extends Enum
     public const TRAVEL_RENEWALS_DAYS_THRESHOLD = 'TRAVEL_RENEWALS_DAYS_THRESHOLD';
     public const ENABLE_TAP_INTEGRATION = 'ENABLE_TAP_INTEGRATION';
     public const USER_UNAVAILABLE_TIME_THRESHOLD = 'USER_UNAVAILABLE_TIME_THRESHOLD';
+    public const ENABLE_GIG_CAR_POLICY_ISSUANCE = 'ENABLE_GIG_CAR_POLICY_ISSUANCE';
+    public const ENABLE_RETRY_TIMEOUT_GIG_CAR_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_GIG_CAR_POLICY_ISSUANCE';
 
     /* Bike LMS Intro Email BCC */
     public const LMS_INTRO_BIKE_EMAIL_BCC = 'LMS_INTRO_BIKE_EMAIL_BCC';
@@ -245,6 +247,7 @@ final class ApplicationStorageEnums extends Enum
     /* Cut Off Dates */
     public const HOME_CUT_OFF_DATE = 'HOME_CUT_OFF_DATE';
     public const LIFE_CUT_OFF_DATE = 'LIFE_CUT_OFF_DATE';
+    public const BIRD_AUTOMATION_WORKFLOW_URL = 'BIRD_AUTOMATION_WORKFLOW_URL';
     public const TRAVEL_ENQUIRIES_EMAIL = 'TRAVEL_ENQUIRIES_EMAIL';
 
     /* CPA Australia Home CC Emails */
@@ -256,4 +259,6 @@ final class ApplicationStorageEnums extends Enum
 
     // OCR NRO Send Update Log Flag
     public const ENABLE_SENDUPDATE_OCR = 'ENABLE_SENDUPDATE_OCR';
+    public const PRODUCTION_APPROVAL_EMAIL = 'PRODUCTION_APPROVAL_EMAIL';
+    public const APPROVAL_PRODUCTION_EMAIL = 'APPROVAL_PRODUCTION_EMAIL';
 }

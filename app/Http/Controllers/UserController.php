@@ -186,7 +186,7 @@ class UserController extends Controller
             }
         }
 
-        $user->assignRole($request->input('roles'));
+        $user->syncRoles($request->input('roles'));
 
         // if Corpline Advisor exists, then set Business Types otherwise set it as empty
         $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ? request('businessTypes', []) : []);
@@ -406,8 +406,7 @@ class UserController extends Controller
         $user->syncPermissions($permissions);
 
         // Updating user roles
-        DB::table('model_has_roles')->where('model_id', $user->id)->delete();
-        $user->assignRole($request->input('roles'));
+        $user->syncRoles($request->input('roles'));
 
         // if Corpline Advisor exists, then set Business Types otherwise set it as empty
         $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ? request('businessTypes', []) : []);

@@ -17,6 +17,7 @@ final class QuoteDocumentsEnum extends Enum
     public const FINAL_TERMS_AND_CONDITIONS = 'CTC';
     public const POLICY_HANDBOOK = 'PHB';
     public const EP = 'EP';
+    public const RECEIPT = 'RECEIPT';
     public const CAR_MULKIY = 'CAR_MULKIY';
 
     // Life Quote
@@ -44,6 +45,8 @@ final class QuoteDocumentsEnum extends Enum
     public const SAVINGS_RECEIPT = 'SPDR';
     public const SAVINGS_ADDITIONAL_EMAIL_ATTACHMENTS = 'TAEA';
     // End of Savings Quote
+
+    public const CAR_REGISTRATION_CARD = 'CAR_MULKIY';
 
     public static function getSukoonAllDocTypes(): array
     {

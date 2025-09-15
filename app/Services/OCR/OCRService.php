@@ -17,6 +17,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -48,6 +49,14 @@ class OCRService
                 );
 
             return $this->handleResponse($response, $endpoint);
+        } catch (ConnectionException $e) {
+            if ($this->isTimeoutException($e)) {
+                LoggerService::info(self::class.' - API request timed out', ['endpoint' => $endpoint, 'message' => $e->getMessage()]);
+            } else {
+                LoggerService::info(self::class.' - Connection exception occurred during API call', ['endpoint' => $endpoint, 'message' => $e->getMessage()]);
+            }
+
+            return ['ok' => false, 'object' => null, 'message' => $e->getMessage()];
         } catch (Exception $e) {
             LoggerService::error(self::class.' - Exception occurred during API call', exception: $e);
 
@@ -113,8 +122,12 @@ class OCRService
                 ->get('/health');
 
             return $response->successful() && $response->status() === Response::HTTP_OK;
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            LoggerService::error('OCR Service Connection Failed: ', exception: $e);
+        } catch (ConnectionException $e) {
+            if ($this->isTimeoutException($e)) {
+                LoggerService::info('OCR Service health check timed out', ['message' => $e->getMessage()]);
+            } else {
+                LoggerService::info('OCR Service Connection Failed: ', ['message' => $e->getMessage()]);
+            }
 
             return false;
         } catch (Exception $e) {
@@ -361,11 +374,10 @@ class OCRService
         LoggerService::info('Starting OCR processing - Quote UUID: '.$quote->uuid);
 
         // Check if OCR service is available
-        // TODO: Uncomment this when Customer OCR service is available & OCR Health Check is implemented by OCR team on Stage
-        // $serviceCheck = $this->handleServiceAvailability($quote, $documentType, $userId);
-        // if (! $serviceCheck) {
-        //     return false;
-        // }
+        $serviceCheck = $this->handleServiceAvailability($quote, $documentType, $userId);
+        if (! $serviceCheck) {
+            return false;
+        }
 
         // Skip OCR for non-eligible providers
         if (! $this->isProviderEligibleForOcr($quoteType, $quote)) {
@@ -628,5 +640,15 @@ class OCRService
             'providers' => $eligibleProviders,
             'quoteTypeNames' => $quoteTypeNames,
         ];
+    }
+
+    private function isTimeoutException(ConnectionException $exception): bool
+    {
+        $message = $exception->getMessage();
+
+        return str_contains($message, 'cURL error 28') ||
+               str_contains($message, 'Operation timed out') ||
+               str_contains($message, 'Connection timed out') ||
+               str_contains($message, 'timeout');
     }
 }

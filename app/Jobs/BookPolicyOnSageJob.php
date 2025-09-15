@@ -94,9 +94,13 @@ class BookPolicyOnSageJob implements ShouldQueue
         }
 
         if ($this->isFailedDueToAttemptsOrTimeout($message)) {
-            LoggerService::info('Policy Book : BookPolicyOnSageJob failed: '.$this->quote->code.' - Code : '.$code.' - Error : '.$message);
+            LoggerService::info('Policy Book : BookPolicyOnSageJob failed: '.$this->quote->code.' - Code : '.$code.' - Error : '.$message, extra: [
+                'errorTraceMessage' => $exception->getTraceAsString(),
+            ]);
         } else {
-            LoggerService::error('Policy Book : BookPolicyOnSageJob failed: '.$this->quote->code.' - Code : '.$code.' - Error : '.$message);
+            LoggerService::error('Policy Book : BookPolicyOnSageJob failed: '.$this->quote->code.' - Code : '.$code.' - Error : '.$message, extra: [
+                'errorTraceMessage' => $exception->getTraceAsString(),
+            ]);
         }
 
         LoggerService::info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' updating status to failed');
