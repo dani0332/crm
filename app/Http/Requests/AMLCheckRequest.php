@@ -3,8 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\CustomerTypeEnum;
-use App\Enums\InsuranceProvidersEnum;
-use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;
@@ -59,7 +57,7 @@ class AMLCheckRequest extends FormRequest
 
         $rules['customer_type'] = 'required|string';
 
-        if ( $this->quote_type == QuoteTypes::CAR->value ) {
+        if ($this->quote_type == QuoteTypes::CAR->value) {
             LoggerService::info('AML Check Request - Chassis Number Required');
             $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
         }
@@ -81,6 +79,7 @@ class AMLCheckRequest extends FormRequest
     public function messages(): array
     {
         LoggerService::info('AML Check Request - Messages');
+
         return [
             'chassis_number' => 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm',
             'get_quote_email_gig' => 'Email in GIG portal must be a valid email address',
