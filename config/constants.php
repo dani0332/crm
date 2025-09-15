@@ -1,4 +1,4 @@
-Meny <?php
+<?php
 
 return [
     'social_driver' => 'google',
