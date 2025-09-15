@@ -239,6 +239,11 @@ class AMLController extends Controller
     {
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
+        $payment = $quoteRequest->payments()->mainLeadPayment()->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType->text);
+        if (! $insuranceProvider) {
+            $insuranceProvider = $quoteRequest?->plan?->insuranceProvider;
+        }
 
         LoggerService::startQuoteLogging($quoteRequest, LoggerFeatureEnum::AML_SCREENING);
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
@@ -252,19 +257,19 @@ class AMLController extends Controller
             return $log['decision'] == AMLDecisionStatusEnum::ESCALATED;
         })) : 0;
 
+        $isGIG = $insuranceProvider?->code == InsuranceProvidersEnum::AXA;
         $lookups = app(AMLService::class)->getAMLLookups();
-        /* if ($quoteType->code == quoteTypeCode::Car || $quoteRequest->plan?->insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
+        
+        if ($quoteType->code == quoteTypeCode::Car && ($isGIG)) {
             $additionalLookups = app(AMLService::class)->getAMLLookups($quoteRequest?->plan?->provider_id, [
                 LookupsEnum::RTA_TRANSACTION_TYPE,
                 LookupsEnum::RTA_PLATE_CATEGORY,
                 LookupsEnum::VEHICLE_COLOR,
                 LookupsEnum::BANK_NAME,
-                LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
-                LookupsEnum::PLATE_CODE,
             ]);
-
+    
             $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
-        } */
+        }
 
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);
         $entityDetails = app(AMLService::class)->getEntityDetails($quoteTypeId, $quoteRequestId); // TODO:: this will only for customer member mapping, this will remove when customer member mapping updated with insured
