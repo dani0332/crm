@@ -428,6 +428,7 @@ class AMLController extends Controller
             [$status, $message, $getMemberOrUBODetails, $getLastScreening] = app(AMLService::class)->prepareScreeningData($AMLCheckRequest, $quoteType, $updateQuote);
 
             if (! $status) {
+                LoggerService::info('AML Screening Bridger - Preparation of Screening Data Failed');
                 return app(AMLService::class)->handleResponse($status, $message, $isAutomation);
             }
 
@@ -442,6 +443,8 @@ class AMLController extends Controller
                     'quoteRequestId' => $quoteRequestId,
                 ], $updateQuote);
 
+                LoggerService::info('AML Screening Bridger - Returned from processInsuredDataForScreening');
+
                 return [$shouldApplicableForScreening, $insured, $entityId];
             });
 
@@ -449,6 +452,7 @@ class AMLController extends Controller
             $isEntity = $AMLCheckRequest->customer_type == CustomerTypeEnum::Entity;
             if ($shouldApplicableForScreening) {
                 if ($isEntity) {
+                    LoggerService::info('AML Screening Bridger - Entity Screening payload generated');
                     $getEntityDetailsForScreening = [
                         'company_name' => $insured->company_name,
                         'code' => CustomerTypeEnum::EntityShort.'-'.$entityId, // TODO:: code should be updated with insured id (Required FR for this)
@@ -467,6 +471,7 @@ class AMLController extends Controller
                     }
                 } else {
                     // Handle individual screening
+                    LoggerService::info('AML Screening Bridger - Individual Screening payload generated');
                     $getMemberOrUBODetails[] = [
                         'first_name' => $insured->first_name,
                         'last_name' => $insured->last_name,
@@ -497,6 +502,8 @@ class AMLController extends Controller
 
             return app(AMLService::class)->handleResponse(true, 'Quote is updated', $isAutomation);
         }
+
+        LoggerService::info('AML Screening Bridger - Something went wrong');
 
         return app(AMLService::class)->handleResponse(false, 'Something went wrong', $isAutomation);
     }
