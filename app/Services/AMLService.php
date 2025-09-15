@@ -1005,8 +1005,14 @@ class AMLService
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningFailed];
 
-                /* LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob');
-                AutomationFailedJob::dispatch(
+                LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob', extra: [
+                    'quoteTypeId' => QuoteTypeId::Car,
+                    'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
+                    'statusAPIFailed' => 'Quote Finalized But Premium Not Matched',
+                    'processInvolved' => 'Quote Finalization',
+                    'workflowType' => WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
+                ]);
+                /* AutomationFailedJob::dispatch(
                     $quoteDetails,
                     QuoteTypeId::Car,
                     'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
