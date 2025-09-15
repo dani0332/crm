@@ -1753,7 +1753,7 @@ class CentralService extends BaseService
         LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
 
         if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
-            LoggerService::info('fn:autoCaptureAMLValidationCheck failed - Going to dispatch AutomationFailedJob');
+            /* LoggerService::info('fn:autoCaptureAMLValidationCheck failed - Going to dispatch AutomationFailedJob');
             AutomationFailedJob::dispatch(
                 $quote,
                 QuoteTypeId::Car,
@@ -1761,7 +1761,7 @@ class CentralService extends BaseService
                 'Quote Referred To Insurer UW',
                 'Payment Capture',
                 WorkflowTypeEnum::CAR_AUTOMATION_FAILED
-            )->onQueue('policy-issuance-automation');
+            )->onQueue('policy-issuance-automation'); */
 
             return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
         }
@@ -1792,7 +1792,7 @@ class CentralService extends BaseService
                 //     'Capture amount exceeds authorized amount and differs from premium in GIG  portal' => 'Capture amount in IMCRM and getQuote premium is less than or equal to the Authorized amount, but the Capture amount is greater than Authorized amount',
                 // ];
 
-                if ($capturePaymentResponse['premiumAmount'] > $payment->total_amount) {
+                /* if ($capturePaymentResponse['premiumAmount'] > $payment->total_amount) {
                     LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob');
                     AutomationFailedJob::dispatch(
                         $quote,
@@ -1812,7 +1812,7 @@ class CentralService extends BaseService
                         'Payment Capture',
                         WorkflowTypeEnum::CAR_AUTOMATION_FAILED
                     )->onQueue('policy-issuance-automation');
-                }
+                } */
 
                 $message = $capturePaymentResponse['message'] ?? 'Premium mismatch on Insurer portal';
 
