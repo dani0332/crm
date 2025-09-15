@@ -592,7 +592,10 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::AMLList)) {
+        if (auth()->user()->hasAnyPermission([
+            PermissionsEnum::AMLList,
+            PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS,
+        ])) {
             $nav = $nav->add('AML', '', function (Section $section) {
                 $section
                     ->add('All Quotes', route('aml.index'), fn ($s) => $s->attributes(['icon' => 'box']));

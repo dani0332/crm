@@ -447,6 +447,7 @@ final class PermissionsEnum extends Enum
 
     // End of Savings Permissions
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
+    public const EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS = 'edit-vehicle-transaction-driver-details';
 
     // Claim Allocation Permissions
     public const CLAIM_ALLOCATION_DASHBOARD = 'claim-allocation-dashboard';
