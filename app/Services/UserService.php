@@ -260,7 +260,17 @@ class UserService extends BaseService
             $emails = User::whereNull('employee_code')
                 ->activeUser()
                 ->pluck('email')
-                ->filter()
+                ->filter(function ($email) {
+                    if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                        LoggerService::warning(static::class.'::fetchAndUpdateUserCodes - Invalid email format', [
+                            'email' => $email,
+                        ]);
+
+                        return false;
+                    }
+
+                    return true;
+                })
                 ->values()
                 ->toArray();
 
