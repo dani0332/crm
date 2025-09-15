@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\CarModelDetail;
 
 class CarCQFRenewalService
 {
@@ -322,8 +323,8 @@ class CarCQFRenewalService
             'product_type' => null,
             'advisor' => null,
             'policy_number' => $quote->policy_number,
-            'start_date' => $quote->policy_start_date,
-            'end_date' => $quote->policy_expiry_date,
+            'start_date' => $quote->policy_start_date ? Carbon::parse($quote->policy_start_date)->format('d/m/Y') : null,
+            'end_date' => $quote->policy_expiry_date ? Carbon::parse($quote->policy_expiry_date)->format('d/m/Y') : null,
             'batch' => null,
             'make' => $quote->carMake?->text ?? null,
             'model' => $quote->carModel?->text ?? null,
@@ -401,7 +402,6 @@ class CarCQFRenewalService
 
         LoggerService::info(self::class.' - Car Quote Request Detail not found for quote');
     }
-
     public function generateUUID()
     {
 
@@ -453,6 +453,7 @@ class CarCQFRenewalService
             'car_type_insurance_id' => $quote->car_type_insurance_id,
             'vehicle_type_id' => $quote->vehicle_type_id,
             'cylinder' => $quote->cylinder,
+            'car_model_detail_id' => $quote->car_model_detail_id,
             'seat_capacity' => $quote->seat_capacity,
             'is_modified' => $quote->is_modified,
             'is_bank_financed' => $quote->is_bank_financed,
