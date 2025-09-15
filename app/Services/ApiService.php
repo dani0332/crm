@@ -310,7 +310,7 @@ class ApiService
     public function sendHealthApplyNowEmail(SendHealthApplyNowEmailRequest $request)
     {
         LoggerService::startQuoteLogging($request->quoteUuid);
-        LoggerService::info("------ Request received to send Apply Now email for lead ------");
+        LoggerService::info('------ Request received to send Apply Now email for lead ------');
         $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
 
         if (! $lead) {
@@ -327,7 +327,8 @@ class ApiService
             return apiResponse(null, Response::HTTP_OK, 'Email Sent');
         }
 
-        LoggerService::info("------ Apply Now email already sent for lead ------");
+        LoggerService::info('------ Apply Now email already sent for lead ------');
+
         return apiResponse(null, Response::HTTP_OK, 'Email Already Sent!');
     }
 
