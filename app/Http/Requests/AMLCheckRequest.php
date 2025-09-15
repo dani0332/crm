@@ -7,6 +7,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
+use App\Services\Logger\LoggerService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AMLCheckRequest extends FormRequest
@@ -28,6 +29,7 @@ class AMLCheckRequest extends FormRequest
     {
         $rules = [];
         if ($this->customer_type == CustomerTypeEnum::Individual) {
+            LoggerService::info('AML Check Request - Individual Customer Validation');
             $rules = [
                 'nationality_id' => 'required',
                 'dob' => 'required',
@@ -36,11 +38,13 @@ class AMLCheckRequest extends FormRequest
             ];
 
             if (in_array($this->quote_type, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value, QuoteTypes::HOME->value])) {
+                LoggerService::info('AML Check Request - Email Validation');
                 $rules['get_quote_email_gig'] = 'nullable|email:rfc,dns';
             }
         }
 
         if ($this->customer_type == CustomerTypeEnum::Entity) {
+            LoggerService::info('AML Check Request - Entity Customer Validation');
             $rules = [
                 'trade_license_no' => 'required|max:200',
                 'company_name' => 'required|max:200',
@@ -53,13 +57,8 @@ class AMLCheckRequest extends FormRequest
 
         $rules['customer_type'] = 'required|string';
 
-        if (
-            $this->quote_type == QuoteTypes::CAR->value &&
-            ! (
-                $this->lead_source == LeadSourceEnum::RENEWAL_UPLOAD &&
-                in_array($this->insurance_provider_code, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA])
-            )
-        ) {
+        if ( $this->quote_type == QuoteTypes::CAR->value ) {
+            LoggerService::info('AML Check Request - Chassis Number Required');
             $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
         }
 
@@ -70,6 +69,7 @@ class AMLCheckRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             if (! auth()->user()->can(PermissionsEnum::AMLList)) {
+                LoggerService::error('AML Check Request - Permission Denied');
                 $validator->errors()->add('error', 'You don\'t have permission to edit this section.');
             }
         });
