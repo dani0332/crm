@@ -62,8 +62,8 @@ use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\LookupRepository;
 use App\Services\Logger\LoggerService;
-use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -789,7 +789,7 @@ class AMLService
         $isRenewalUpload = $quoteTypeId == QuoteTypes::CAR->id() &&
             $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA &&
             $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD;
-        
+
         if ($isLIVA) {
             $emailLIVA = $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD
                 ? 'test@ae.livainsurance.com' // TODO just for testing envs
@@ -919,7 +919,7 @@ class AMLService
 
                 // Ensure chassis number is sourced from CarQuoteRequestDetail as requested
                 $insurerScreeningPayload['chassisNumber'] = $carQuoteRequestDetails?->chassis_number ?? '';
-                
+
                 $insurerScreeningPayload['rtaTransactionType'] = [
                     'code' => $vehicleDriverDetail->rta_transaction_type ?? null,
                     'value' => $rtaTransactionType?->text ?? null,

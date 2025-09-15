@@ -563,7 +563,7 @@ class CarQuote extends BaseModel
     {
         return $this->morphOne(PolicyIssuance::class, 'model');
     }
-    
+
     public function kycDocumentUser()
     {
         return $this->morphOne(QuoteDocument::class, 'quote_documentable')

@@ -1171,11 +1171,11 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
     private function drivingExperience()
     {
-        for ($i=0; $i <= 51; $i++) {
+        for ($i = 0; $i <= 51; $i++) {
             $text = match (true) {
                 $i === 0 => 'No Experience',
                 $i === 1 => '1 Year',
-                default => $i . ' Years',
+                default => $i.' Years',
             };
 
             Lookup::updateOrCreate([

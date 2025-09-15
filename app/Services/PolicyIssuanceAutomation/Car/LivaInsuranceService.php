@@ -30,12 +30,12 @@ use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Carbon\Carbon;
 
 class LivaInsuranceService implements PolicyIssuanceInterface
 {
@@ -380,7 +380,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
                 return $response;
             }
-
 
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Updating booking details');
             $updateBookingDetailsResponse = app(CentralService::class)->updateBookingDetails($updateBookingRequest, $bookPolicyRequest);
@@ -1164,7 +1163,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $rtaTransactionType = array_filter($additionalLookups['rta_transaction_type'], function ($item) {
                 return in_array($item['code'], app(LivaInsurancePayloadMapping::class)->renewalRtaTransactionType());
             });
-    
+
             $additionalLookups['rta_transaction_type'] = array_values($rtaTransactionType);
         }
 

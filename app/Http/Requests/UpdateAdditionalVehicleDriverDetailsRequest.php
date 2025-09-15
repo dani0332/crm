@@ -39,7 +39,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['traffic_code_number'] = 'required';
             $rules['bank_loan'] = 'required';
 
-            if(!$isLivaRenewal) {
+            if (! $isLivaRenewal) {
                 $rules['engine_number'] = 'required';
                 $rules['chassis_number'] = 'required';
                 $rules['vehicle_color'] = 'required';
@@ -47,7 +47,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             }
 
             if ($this->insurance_provider_code === InsuranceProvidersEnum::RSA) {
-                if($this->source !== LeadSourceEnum::RENEWAL_UPLOAD) {
+                if ($this->source !== LeadSourceEnum::RENEWAL_UPLOAD) {
                     $rules['policy_effective_date'] = 'required|after_or_equal:today';
                 }
             } else {
@@ -55,8 +55,8 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             }
         } else {
 
-            if(!$isLivaRenewal) {
-                $rules['license_expiry_date'] = 'required|date|after:license_issue_date';                
+            if (! $isLivaRenewal) {
+                $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
             }
 
             $rules['is_insured_and_driver_same'] = 'required|integer';

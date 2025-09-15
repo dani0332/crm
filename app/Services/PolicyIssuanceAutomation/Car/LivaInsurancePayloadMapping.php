@@ -2,8 +2,6 @@
 
 namespace App\Services\PolicyIssuanceAutomation\Car;
 
-use App\Enums\LeadSourceEnum;
-
 class LivaInsurancePayloadMapping
 {
     public function useCode($useCode)

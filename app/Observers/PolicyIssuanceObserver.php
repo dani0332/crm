@@ -35,7 +35,7 @@ class PolicyIssuanceObserver
             try {
                 $policyIssuance->update([
                     'status' => PolicyIssuanceEnum::PENDING_STATUS,
-                    'message' => 'null'
+                    'message' => 'null',
                 ]);
             } catch (\Exception $ex) {
                 LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [

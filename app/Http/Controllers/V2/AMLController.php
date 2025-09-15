@@ -11,7 +11,6 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
-use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -258,7 +257,7 @@ class AMLController extends Controller
         $isLIVA = $quoteRequest?->plan?->insuranceProvider?->code == InsuranceProvidersEnum::RSA;
         $isGIG = $quoteRequest?->plan?->insuranceProvider?->code == InsuranceProvidersEnum::AXA;
         $lookups = app(AMLService::class)->getAMLLookups();
-        
+
         if ($quoteType->code == quoteTypeCode::Car && ($isLIVA || $isGIG)) {
             if ($isGIG) {
                 $additionalLookups = app(AMLService::class)->getAMLLookups($quoteRequest?->plan?->provider_id, [
@@ -267,7 +266,7 @@ class AMLController extends Controller
                     LookupsEnum::VEHICLE_COLOR,
                     LookupsEnum::BANK_NAME,
                 ]);
-        
+
                 $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
             } else {
                 $lookups = array_merge($lookups->toArray(), app(LivaInsuranceService::class)->getLIVALookups($quoteRequest));
