@@ -20,6 +20,10 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Models\ApplicationStorage;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
+use App\Jobs\OCAHealthFollowupEmailJob;
 
 class HealthQuoteObserver
 {
@@ -76,6 +80,20 @@ class HealthQuoteObserver
             if ($healthQuote->quote_status_id === QuoteStatusEnum::ApplicationSubmitted) {
                 SendApplicationSubmittedEmailJob::dispatch($healthQuote);
             }
+            $eligibleStatuses = [QuoteStatusEnum::Quoted, QuoteStatusEnum::ApplicationPending];
+            if (in_array($healthQuote->quote_status_id, $eligibleStatuses)) {
+                $healthAutoFollowupSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH)->first();
+                // Send Automated Followup Email Job if Health Auto-Followups is enabled.
+                if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
+                    $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
+                    if($healthQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
+                      OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(now()->addMinutes(2));
+                    }
+                    
+
+                }
+            }
+
         }
 
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($healthQuote->quote_status_id)) {
