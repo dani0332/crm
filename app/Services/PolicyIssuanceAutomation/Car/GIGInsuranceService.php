@@ -6,6 +6,7 @@ namespace App\Services\PolicyIssuanceAutomation\Car;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
+use App\Enums\EnvEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
@@ -561,16 +562,18 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $policyDocuments = json_decode($getPolicyIssuanceResponse?->response)?->data?->documents;
         $policyId = json_decode($getPolicyIssuanceResponse?->response)?->data?->policyId;
         $certificateOfInsuranceAvailable = false;
+        $isProduction = (config('constants.APP_ENV') == EnvEnum::PRODUCTION);
 
         foreach ($policyDocuments as $policyDocument) {
-            // TODO:: this is a temporary fix to skip certificate of insurance document, this will be removed when the certificate of insurance document is uploaded to IMCRM on PROD
+            // Skip certificate of insurance document in non-production environments only
+            // In production, we want to upload the actual certificate of insurance
             // Reminder:: Commission statement is same as Tax invoice raised by buyer
-            if (str_contains($policyDocument->name, 'Certificate of Insurance') || str_contains($policyDocument->name, 'Commission statement')) {
+            if ((! $isProduction && str_contains($policyDocument->name, 'Certificate of Insurance')) || str_contains($policyDocument->name, 'Commission statement')) {
                 continue;
             }
 
             $quoteDocument = null;
-            $docName = $policyDocument->name ?? 'Unknown Document'; // Initialize with fallback name
+            $docName = $policyDocument->name ?? 'Unknown Document';
             $docMapping = null;
 
             $header = [
@@ -606,9 +609,10 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 'document' => $quoteDocument,
             ]);
 
-            // TODO:: This is a temporary fix to upload the same content as CPC to simulate Certificate of Insurance without API call just for testing purposes
+            // Upload duplicate certificate only in non-production environments for testing purposes
+            // In production, the actual certificate of insurance will be processed above
             // If Policy Schedule (CPS) uploaded, also upload the same content as CPC to simulate Certificate of Insurance without API call
-            if ($docMapping && isset($docMapping['code']) && $docMapping['code'] === DocumentTypeCode::CPS && ($quoteDocument?->id ?? false)) {
+            if (! $isProduction && $docMapping && isset($docMapping['code']) && $docMapping['code'] === DocumentTypeCode::CPS && ($quoteDocument?->id ?? false)) {
                 $duplicateDocName = self::POLICY_DOC_CERTIFICATE_OF_INSURANCE;
                 $cpcDocument = $this->uploadAndAttachToQuoteDocuments(
                     $quote,
@@ -620,7 +624,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 $uploadedDocumentsToIMCRM->push([
                     'name' => $duplicateDocName,
                     'uploaded' => $cpcDocument?->id ? true : false,
-                    'message' => 'Uploaded as CPC duplicate of Policy Schedule',
+                    'message' => 'Uploaded as CPC duplicate of Policy Schedule (non-production only)',
                     'document' => $cpcDocument,
                 ]);
 

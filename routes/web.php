@@ -577,6 +577,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::post('submit', [BuyLeadController::class, 'submit'])->name('buy-leads.request.submit');
             Route::get('export', [BuyLeadController::class, 'export'])->name('buy-leads.request.export');
             Route::get('export-data', [BuyLeadController::class, 'exportBuyLeadsData'])->middleware(SetReadDbConnection::class)->name('buy-leads.request.export-data');
+            Route::post('update-employee-codes', [BuyLeadController::class, 'updateEmployeeCodes'])->name('buy-leads.request.update-employee-codes');
         });
     });
 
