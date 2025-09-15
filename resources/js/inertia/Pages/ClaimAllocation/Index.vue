@@ -61,7 +61,7 @@ const statusText = statusId => resolveUserStatusText(statusId);
 const tableHeader = ref([
   { text: 'Name', value: 'userName', width: '240' },
   { text: 'Line of Business', value: 'quoteTypeCode', width: '100' },
-//   { text: 'Team', value: 'teamNames', sortable: true },
+  //   { text: 'Team', value: 'teamNames', sortable: true },
   {
     text: 'Total Assigned Leads',
     value: 'allocationCount',
@@ -132,17 +132,15 @@ const onStatusSubmit = async () => {
 
   item.loading = true;
   await axios
-    .post(`/claim-allocation/update-availability`, 
-      {
-        items: [
-          {
-            userId: statusModal.data.userId,
-            id: statusModal.data.id,
-            reason: statusModal.data.reason,
-          },
-        ],
-      }
-    )
+    .post(`/claim-allocation/update-availability`, {
+      items: [
+        {
+          userId: statusModal.data.userId,
+          id: statusModal.data.id,
+          reason: statusModal.data.reason,
+        },
+      ],
+    })
     .then(res => {
       router.reload({
         only: ['data'],
@@ -176,22 +174,21 @@ const onToggleStatus = (status, id, userId) => {
 const onToggleResetCap = async (active, userId, leadAllocationId) => {
   loaders.table = true;
   await axios
-    .post(`/claim-allocation/toggle-reset-cap`,
-      {
-        items: [
-          {
-            userId: userId,
-            id: leadAllocationId,
-            resetCap: active,
-          },
-        ],
-      }
-).then(res => {
-  notification.success({
-    title: res.data.message,
-    position: 'top',
-  });
-})
+    .post(`/claim-allocation/toggle-reset-cap`, {
+      items: [
+        {
+          userId: userId,
+          id: leadAllocationId,
+          resetCap: active,
+        },
+      ],
+    })
+    .then(res => {
+      notification.success({
+        title: res.data.message,
+        position: 'top',
+      });
+    })
     .finally(() => {
       loaders.table = false;
     });
@@ -217,7 +214,7 @@ const onSubmitChanges = async () => {
       };
     });
   await axios
-    .post(`/claim-allocation/update-cap`, {items: max_cap })
+    .post(`/claim-allocation/update-cap`, { items: max_cap })
     .then(response => {
       notification.success({
         title: response.data.message,
@@ -367,7 +364,6 @@ onMounted(() => {
       hide-rows-per-page
       hide-footer
     >
-    
       <template #item-maxCapacity="{ maxCapacity, id }">
         <div v-if="!currentRow(id)" @click="editCap(id)">
           {{ maxCapacity }}
