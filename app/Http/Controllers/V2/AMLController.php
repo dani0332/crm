@@ -242,11 +242,6 @@ class AMLController extends Controller
     {
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
-        $payment = $quoteRequest->payments()->mainLeadPayment()->first();
-        $insuranceProvider = getInsuranceProvider($payment, $quoteType->text);
-        if (! $insuranceProvider) {
-            $insuranceProvider = $quoteRequest?->plan?->insuranceProvider;
-        }
 
         LoggerService::startQuoteLogging($quoteRequest, LoggerFeatureEnum::AML_SCREENING);
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
@@ -260,8 +255,8 @@ class AMLController extends Controller
             return $log['decision'] == AMLDecisionStatusEnum::ESCALATED;
         })) : 0;
 
-        $isLIVA = $insuranceProvider?->code == InsuranceProvidersEnum::RSA;
-        $isGIG = $insuranceProvider?->code == InsuranceProvidersEnum::AXA;
+        $isLIVA = $quoteRequest?->plan?->insuranceProvider?->code == InsuranceProvidersEnum::RSA;
+        $isGIG = $quoteRequest?->plan?->insuranceProvider?->code == InsuranceProvidersEnum::AXA;
         $lookups = app(AMLService::class)->getAMLLookups();
         
         if ($quoteType->code == quoteTypeCode::Car && ($isLIVA || $isGIG)) {
@@ -271,10 +266,6 @@ class AMLController extends Controller
                     LookupsEnum::RTA_PLATE_CATEGORY,
                     LookupsEnum::VEHICLE_COLOR,
                     LookupsEnum::BANK_NAME,
-                    LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
-                    LookupsEnum::PLATE_CODE,
-                    LookupsEnum::NATIONALITY_LIST,
-                    LookupsEnum::DRIVING_EXPERIENCE,
                 ]);
         
                 $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
