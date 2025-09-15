@@ -190,8 +190,17 @@ const customerTypeOptions = computed(() => {
 });
 
 const showVehicleAndDrvicerDetails = computed(() => {
-  console.log('page.props.quoteType.id', page.props.quoteType.id, page.props.quoteTypeIdEnum.Car, page.props.quoteType.id === page.props.quoteTypeIdEnum.Car);
-  console.log('page.props.insuranceProviderCodeEnum.AXA', page.props.quoteRequest?.plan?.insurance_provider.code, page.props.insuranceProviderCodeEnum.AXA);
+  console.log(
+    'page.props.quoteType.id',
+    page.props.quoteType.id,
+    page.props.quoteTypeIdEnum.Car,
+    page.props.quoteType.id === page.props.quoteTypeIdEnum.Car,
+  );
+  console.log(
+    'page.props.insuranceProviderCodeEnum.AXA',
+    page.props.quoteRequest?.plan?.insurance_provider.code,
+    page.props.insuranceProviderCodeEnum.AXA,
+  );
   console.log('page.props.isPrivateCar', page.props.isPrivateCar);
 
   return (

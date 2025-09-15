@@ -257,4 +257,6 @@ final class ApplicationStorageEnums extends Enum
 
     // OCR NRO Send Update Log Flag
     public const ENABLE_SENDUPDATE_OCR = 'ENABLE_SENDUPDATE_OCR';
+    public const PRODUCTION_APPROVAL_EMAIL = 'PRODUCTION_APPROVAL_EMAIL';
+    public const APPROVAL_PRODUCTION_EMAIL = 'APPROVAL_PRODUCTION_EMAIL';
 }

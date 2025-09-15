@@ -2,9 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\EnvEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
+use App\Models\QuoteType;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -36,6 +39,9 @@ class AutomationFailedJob implements ShouldQueue
     private $processInvolved;
     private $workflowType;
     private $userToSendEmail;
+    private $appEnv;
+    private $insuranceProvider;
+    private $insurerName;
 
     public function __construct($quote, $quoteTypeId, $actionRequired, $statusAPIFailed, $processInvolved, $workflowType, $sendTo = null)
     {
@@ -46,6 +52,7 @@ class AutomationFailedJob implements ShouldQueue
         $this->statusAPIFailed = $statusAPIFailed;
         $this->workflowType = $workflowType;
         $this->userToSendEmail = $sendTo;
+        $this->appEnv = config('constants.APP_ENV');
     }
 
     /**
@@ -55,7 +62,12 @@ class AutomationFailedJob implements ShouldQueue
     {
         LoggerService::startQuoteLogging($this->quote);
         LoggerService::info('job:AutomationFailedJob - Job started');
-        // $providerName = InsuranceProvidersEnum::getTextByCode($this->quote?->insuranceProvider?->code);
+
+        $payment = $this->quote->payments()->mainLeadPayment()->first();
+        $quoteType = QuoteType::where('id', $this->quoteTypeId)->first();
+        $this->insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
+        $this->insurerName = InsuranceProvidersEnum::getTextByCode($this->insuranceProvider?->code);
+
         if ($this->userToSendEmail == UserNameEnum::PA_USER) {
             $this->recipientEmail = $this->quote?->kycDocumentUser?->createdBy?->email;
             $this->recipientName = $this->quote?->kycDocumentUser?->createdBy?->name;
@@ -64,14 +76,25 @@ class AutomationFailedJob implements ShouldQueue
                 $this->recipientEmail = $this->quote->advisor->email;
                 $this->recipientName = $this->quote->advisor->name;
             } else {
-                LoggerService::info('job:AutomationFailedJob - No advisor assigned, stopping job - Quote Code: '.$this->quote->code);
+                LoggerService::info('job:AutomationFailedJob - No advisor assigned, stopping job - Insurer: '.$this->insurerName);
 
                 return;
             }
         }
 
+        $cc['approvalemail'] = null;
+        $cc['prodemail'] = null;
+        $cc['advisoremail'] = null;
+        if (in_array($this->appEnv, [EnvEnum::PRODUCTION, EnvEnum::STAGING])) {
+            $approvalEmail = getAppStorageValueByKey(ApplicationStorageEnums::APPROVAL_PRODUCTION_EMAIL);
+            $prodEmail = getAppStorageValueByKey(ApplicationStorageEnums::PRODUCTION_APPROVAL_EMAIL);
+            $cc['approvalemail'] = $approvalEmail;
+            $cc['prodemail'] = $prodEmail;
+            $cc['advisoremail'] = $this->quote?->advisor?->email ?? '';
+        }
+
         if (! $this->recipientEmail || ! $this->recipientName) {
-            LoggerService::info('job:AutomationFailedJob - Recipient details missing, stopping job - Quote Code: '.$this->quote->code);
+            LoggerService::info('job:AutomationFailedJob - Recipient details missing, stopping job - Insurer: '.$this->insurerName);
 
             return;
         }
@@ -82,8 +105,9 @@ class AutomationFailedJob implements ShouldQueue
             'recipientName' => $this->recipientName,
             'imcrmReferenceNumber' => $this->quote->code,
             'insurerApiStatus' => $this->statusAPIFailed,
-            'insurerName' => $this->quote->first_name.' '.$this->quote->last_name,
+            'insurerName' => $this->insuranceProvider?->text ?? '',
             'processInvolved' => $this->processInvolved,
+            'cc' => $cc,
             'workflowType' => $this->workflowType,
         ];
 
@@ -91,9 +115,11 @@ class AutomationFailedJob implements ShouldQueue
         LoggerService::info('job:AutomationFailedJob - Job Response ', extra: ['emailData' => json_encode($response)]);
 
         if ($response == 200) {
-            LoggerService::info('job:AutomationFailedJob - email sent successfully');
+            LoggerService::info('job:AutomationFailedJob - email sent successfully - Insurer: '.$this->insurerName);
         } else {
-            LoggerService::info('job:AutomationFailedJob - Job failed');
+            LoggerService::info('job:AutomationFailedJob - Job failed - Insurer: '.$this->insurerName, extra: [
+                'response' => json_encode($response),
+            ]);
         }
 
         LoggerService::info('job:AutomationFailedJob - Job completed - Quote Code: '.$this->quote->code);
@@ -101,7 +127,7 @@ class AutomationFailedJob implements ShouldQueue
 
     public function failed(Throwable $exception)
     {
-        LoggerService::info('job:AutomationFailedJob - Quote Code: '.$this->quote->code.' Error: '.$exception->getMessage());
+        LoggerService::info('job:AutomationFailedJob - Insurer: '.($this->insurerName ?? null).' Error: '.$exception->getMessage());
     }
 
     public function middleware()
