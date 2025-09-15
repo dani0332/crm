@@ -11,6 +11,7 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class ExportCsvAndSendEmailJob implements ShouldQueue
 {
@@ -90,6 +91,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         } finally {
             // Always reset database connection back to default
             DB::setDefaultConnection('mysql');
+            Auth::logout();
             gc_collect_cycles();
         }
     }
