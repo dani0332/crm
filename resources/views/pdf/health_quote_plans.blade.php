@@ -659,8 +659,6 @@
                 : 0;
             $quotePlan->discountPremium += $policyFee;
             $quotePlan->total += $policyFee;
-
-            $quotePlan->icpFee = isset($quotePlan->icpFee) ? $quotePlan->icpFee : 0;
         }
 
         $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
@@ -669,13 +667,6 @@
             [
                 'code' => 'vat',
                 'title' => 'VAT',
-                'type' => 'info',
-                'heading_class' => 'text-heading',
-                'row_class' => 'row-spacing',
-            ],
-            [
-                'code' => $isAUH ? 'icpFee' : 'basmah',
-                'title' => $isAUH ? 'ICP' : 'BASMAH',
                 'type' => 'info',
                 'heading_class' => 'text-heading',
                 'row_class' => 'row-spacing',
@@ -912,7 +903,7 @@
                                                     Now</a>
                                             @else
                                                 N/A
-                                            @endif
+                                        @endif
                                     @elseif(is_array($feature['type']))
                                         @php $value = "Excluded"; @endphp
                                         @foreach ($feature['type'] as $type)
