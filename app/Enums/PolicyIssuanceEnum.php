@@ -17,6 +17,8 @@ final class PolicyIssuanceEnum extends Enum
     const COMPLETED_STATUS = 'completed';
     const FAILED_STATUS = 'failed';
     const SUCCESS_STATUS = 'success';
+    const BOOKING_PENDING_STATUS = 'booking_pending';
+    const BOOKING_PROCESSING_STATUS = 'booking_processing';
 
     /* Insurer API Generic Status */
 

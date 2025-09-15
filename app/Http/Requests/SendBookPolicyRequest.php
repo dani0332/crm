@@ -44,7 +44,7 @@ class SendBookPolicyRequest extends FormRequest
     {
         $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
 
-        if ($quote->quote_type_id == QuoteTypeId::Savings) {
+        if ($quote?->quote_type_id == QuoteTypeId::Savings) {
             $validator->after(function ($validator) use ($quote) {
                 $uploadedDocuments = $quote?->documents()->pluck('document_type_code')->toArray();
                 $requiredDocuments = [
@@ -76,14 +76,14 @@ class SendBookPolicyRequest extends FormRequest
         }
 
         if (request()->send_policy_type == 'sage') {
-            if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
+            if (! request()->has('through_automation') && ! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
                 ]], 403);
             }
             $validator->after(function ($validator) use ($quote) {
                 if ($quote) {
-                    if ($quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                    if ($quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! request()->has('through_automation') && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                         $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
                     }
                     $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
