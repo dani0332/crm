@@ -763,11 +763,12 @@ class SplitPaymentService
 
             if (! in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])) {
                 $createdBy = null;
-                if ($modelType == quoteTypeCode::Car) {
+                // this is only for car main lead payment, whenever this function is called from automation job.
+                if ($modelType == quoteTypeCode::Car && ! $sendUpdateId) {
                     $mainLeadPayment = $quoteModel->payments()->mainLeadPayment()->first();
                     $insuranceProvider = getInsuranceProvider($mainLeadPayment, $modelType, $quoteModel);
                     if (in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA])) {
-                        $createdBy = $quoteModel->kycDocumentUser?->createdBy?->sting;
+                        $createdBy = $quoteModel->kycDocumentUser?->createdBy?->email;
                     }
                 }
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
