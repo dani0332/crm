@@ -36,7 +36,6 @@
     "phpoffice/phpword": "^1.2",
     "predis/predis": "^2.2",
     "pusher/pusher-php-server": "^7.2",
-    "sammyjo20/laravel-haystack": "^2.2.0",
     "sentry/sentry-laravel": "^4.4.1",
     "setasign/fpdf": "^1.8",
     "setasign/fpdi": "^2.6",
