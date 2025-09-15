@@ -439,6 +439,7 @@ class CRUDController extends Controller
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'branchOptions' => EmirateEnum::getBranchMapping(),
+                'emirateEnum' => EmirateEnum::asArray(),
             ]);
         }
 
@@ -1330,6 +1331,7 @@ class CRUDController extends Controller
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
                 'branchOptions' => EmirateEnum::getBranchMapping(),
+                'emirateEnum' => EmirateEnum::asArray(),
             ]);
         }
 
