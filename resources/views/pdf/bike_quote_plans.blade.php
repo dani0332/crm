@@ -478,37 +478,13 @@
 
     <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_first_page.jpg') }}" class="full-page-image" />
 
-    <footer>
-        <table class="tbl-footer">
-            <tr>
-                <td colspan="2" class="text-center">
-                    <h4>InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC</h4>
-                </td>
-            </tr>
-            <tr>
-                <td class="text-left">UAE Central Bank Registration number 85</td>
-                <td class="text-right">27th Floor, Control Tower, Motor City</td>
-            </tr>
-            <tr>
-                <td class="text-left">Registered member of the Emirates Insurance Association</td>
-                <td class="text-right">Dubai, United Arab Emirates, P.O Box 26423</td>
-            </tr>
-            <tr>
-                <td class="text-left">Department of Economy & Tourism in Dubai Trade License number 238534</td>
-                <td class="text-right">Tel: <a href="tel:+800253733">800 ALFRED (800-253-733)</a> </td>
-            </tr>
-            <tr>
-                <td class="text-left">Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai
-                    Health Authority</td>
-                <td class="text-right"> <a href="https://insurancemarket.ae">www.insurancemarket.ae</a> </td>
-            </tr>
-            <tr>
-                <td class="text-left">Registered member of Insurance Business Group under the Dubai Chamber of Commerce
-                    and Industry</td>
-            </tr>
-
-        </table>
-    </footer>
+  
+    {{-- PDF Page Footer Section --}}
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+    @endcomponent
+{{-- End of PDF Page Footer Section --}}
 
     <div class="font">
 

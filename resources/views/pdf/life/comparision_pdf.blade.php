@@ -446,118 +446,6 @@
         padding: 0 5px; /* Adjust spacing */
     }
 
-    .footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        background-color: #1d83bc;
-        color: #ffffff;
-        padding: 10px 10px 15px 10px;
-        text-align: center;
-        height: 140px;
-    }
-
-    .footer-table {
-        width: 100%;
-        table-layout: fixed;
-        border-collapse: collapse;
-        color: #ffffff;
-    }
-
-    .footer-td {
-        padding: 10px;
-        vertical-align: top;
-        border: none;
-    }
-
-    .footer-box {
-        border-radius: 24px;
-        border: 2px solid #CF9E3C;
-        padding: 6px 10px;
-        text-align: left;
-    }
-
-    .footer-link {
-        color: #ffffff;
-        text-decoration: none;
-    }
-
-    .footer-link:hover {
-        text-decoration: underline;
-    }
-
-    .material-icons {
-        font-size: 14px;
-        color: #ffffff;
-        margin-right: 5px;
-        vertical-align: middle;
-    }
-
-    .footer-header {
-        font-size: 14px;
-        font-weight: bold;
-        text-align: center;
-    }
-
-    .footer-content-1{
-        font-size: 9px !important;
-    }
-
-    .footer-content-2{
-        font-size: 13px !important;
-    }
-
-    .advisor-section {
-        display: table;
-        width: 100%;
-    }
-
-    .advisor-photo-container {
-        display: table-cell;
-        vertical-align: middle;
-        width: 70px;
-    }
-
-    .advisor-photo {
-        width: 70px;
-        height: 70px;
-        border-radius: 50%;
-        display: block;
-        margin: auto;
-    }
-
-    .advisor-details {
-        display: table-cell;
-        vertical-align: middle;
-        line-height: 0.9;
-        padding-left: 10px;
-    }
-
-    .advisor-name {
-        font-weight: bold;
-        font-size: 12px;
-        margin: 0;
-    }
-
-    .advisor-role {
-        font-size: 10px;
-        margin: 0;
-    }
-
-    .advisor-contact {
-        font-size: 12px;
-        line-height: 1;
-    }
-
-    .advisor-contact .icon {
-        width: 10px;
-        height: 10px;
-        vertical-align: baseline;
-        display: inline-block;
-    }
-
     .section-header {
         background-color: #1D83BC !important;
         color: white !important;
@@ -570,6 +458,20 @@
     }
     .not-applicable{
         color: red; 
+    }
+
+    .footer {
+        position: fixed;
+        bottom: 0;
+        /* top: 50px !important; */
+        left: 0;
+        right: 0;
+        width: 100%;
+        background-color: #1d83bc;
+        color: #ffffff;
+        padding: 5px 5px 5px 5px;
+        text-align: left;
+        height: 145px !important;
     }
 </style>
 </head>
@@ -926,92 +828,9 @@
     </main>
 
     {{-- PDF Page Footer --}}
-    <div class="footer">
-        <h4 class="footer-header">
-            InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC
-        </h4>
-    
-        <table class="footer-table" align="center">
-            <tr>
-                <td class="footer-td" style="width: 42%">
-                    <div class="footer-box" style="line-height: 0.8;">
-                        <p class="footer-content-1">UAE Central Bank Registration No. 85</p>
-                        <p class="footer-content-1">Registered Member of Gulf Insurance Federation</p>
-                        <p class="footer-content-1">Registered Member of Emirates Insurance Federation, number B6</p>
-                        <p class="footer-content-1">Department of Economy & Tourism in Dubai Trade Licence No. 238534</p>
-                        <p class="footer-content-1">Registered member of the DIFC Insurance Association with membership number 10049</p>
-                        <p class="footer-content-1">Holder of Health Insurance Intermediary Permit ID No. BRK-00003 from Dubai Health Authority</p>
-                        <p class="footer-content-1">Registered member of Insurance Business Group under the Dubai Chamber of Commerce and Industry, number 34774</p>
-                    </div>
-                </td>
-    
-                <td class="footer-td" style="width: 28%">
-                    <div class="footer-box" style="margin-top: 8px; line-height: 0.8; position: relative;">
-                        <p class="footer-content-2">27th floor, Control Tower, Detroit Road,<br>Motor City, PO Box - 26423,<br>Dubai, United Arab Emirates.
-                        </p>
-                        <p class="footer-content-2">Happiness Center number:</p>
-                        <p class="footer-content-2">800 ALFRED (800 256 733)</p>
-                        <div class="open-new-icon" style="position: absolute; right:5px; top:42px;">
-                            <a
-                            class="text-white"
-                            href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">
-                                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
-                                style="width: 22px; height: 22px; vertical-align: baseline; display: inline-block;">
-                            </a>
-                        </div>
-                    </div>
-                </td>
-    
-                <td class="footer-td" style="width: 30%;">
-                    <div class="footer-box" style="margin-right: 20px; padding: 5px 10px">
-                        <div class="advisor-section">
-                            @if($quote->advisor)
-                                <div class="advisor-photo-container">
-                                    <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('image/alfred-theme.png') }}"
-                                         alt="Advisor Photo" class="advisor-photo">
-                                </div>
-                                <div class="advisor-details">
-                                    <p class="advisor-name">{{ $quote->advisor->name }}</p>
-                                    <p class="advisor-role">Insurance Advisor</p>
-                                    <p class="advisor-contact">
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
-                                        @if (strlen($quote->advisor->email) > 35)
-                                        <span style="text-decoration: underline; font-size:10px">{{ $quote->advisor->email }}</span>
-                                        @else
-                                        <span style="text-decoration: underline;">{{ $quote->advisor->email }}</span>
-                                        @endif
-                                        <br>
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon"> 
-                                        <a href="tel:{{ removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) }}" class="text-white" style="color: #ffffff; text-decoration: none;">
-                                            <span>{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
-                                        </a>
-                                        <a href="https://wa.me/{{ removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) }}">
-                                            <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon" style="margin-left: 1px;">
-                                        </a>
-                                        <br>
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon"> 
-                                        <a href="tel:{{ removeSpaces($quote->advisor->landline_no) }}" class="text-white" style="color: #ffffff; text-decoration: none;">
-                                            <span>{{ $quote->advisor->landline_no }}</span>
-                                        </a>
-                                    </p>
-                                </div>
-                            @else
-                                <div style="text-align: center; width: 100%;">
-                                    <img src="{{ public_path('image/alfred-theme.png') }}"
-                                         alt="Advisor Photo" class="advisor-photo" style="margin: 0 auto; display: block;">
-                                    <p class="advisor-contact" style="text-align: center; margin-top: 8px;">
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
-                                        <span>800 ALFRED (800 253 733)</span>
-                                    </p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </td>
-                
-            </tr>
-        </table>
-    </div>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL').$quote->uuid])
+        
+    @endcomponent   
 
     {{-- Third Page --}}
     <div style="page-break-after: always;"></div>

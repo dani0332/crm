@@ -279,41 +279,7 @@
             border: none;
         }
 
-        footer {
-            position: fixed;
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
-            padding: 0px;
-            margin: 80px 0 0 0;
-            background-color: #1d83bc;
-            color: black;
-            text-align: center;
-            position: fixed;
-            bottom: 0px;
-            height: 145px;
-            z-index: 1500;
-        }
-
-        table.tbl-footer {
-            padding: 18px 12px;
-            margin: 0;
-            width: 100%;
-            border: none;
-        }
-
-        th.provider-name {
-            padding: 0;
-            margin: 0;
-        }
-
-        table.tbl-footer tr td,
-        table.tbl-footer tr td a {
-            color: #ffffff;
-            border: none;
-            font-size: 14px;
-        }
-
+       
         .text-left {
             text-align: left;
         }
@@ -377,6 +343,8 @@
             text-align: right;
             padding-right: 18px;
         }
+
+       
     </style>
 </head>
 
@@ -702,50 +670,13 @@ foreach ($quotePlan->addons as &$addon) {
         </div>
     </header>
 
-    {{-- PDF Page Footer --}}
-    <footer>
-        <table class="tbl-footer">
-            <div style="float: left;">
-                <img style="height: 110px; border-radius: 50%;"
-                    src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
-                    alt="advisor">
-            </div>
-            <div style="float: left; margin-left: 10px; margin-top: 10px">
-                @if (isset($quote->advisor->name) && !empty($quote->advisor->name))
-                    <p class="text-left text-white text-xl">Name: {{ $quote->advisor?->name }}</p>
-                @endif
-                @if (isset($quote->advisor->email) && !empty($quote->advisor->email))
-                    <p class="text-left text-white text-xl">Email: <a class="text-white"
-                            href="mailto:{{ $quote->advisor->email }}">{{ $quote->advisor->email }}</a></p>
-                @endif
-                @if (isset($quote->advisor->mobile_no) && !empty($quote->advisor->mobile_no))
-                    <p class="text-left text-white text-xl mar">Mobile number:
-                        {{ formatMobileNumber($quote->advisor->mobile_no) }} <span class="text-white"
-                            style="margin-top:3px"><img style="height:20px;"
-                                src="{{ public_path('images/whatsapp-small.png') }}" alt="advisor phone"></span></p>
-                @endif
-                @if (isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no))
-                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white"
-                            href="tel:{{ $quote->advisor->landline_no }}">{{ $quote->advisor->landline_no }}</a></p>
-                @endif
-
-            </div>
-            <div>
-                <h4 class="text-right text-white">InsuranceMarket.ae</h4>
-                <p class="text-right text-white text-xl"><a class="text-white" href="tel:+800253733">Happiness Center:
-                        800 ALFRED (800-253-733)</a></p>
-                <p class="text-right text-white text-xl"><a class="text-white"
-                        href="https://insurancemarket.ae">www.insurancemarket.ae</a></p>
-                <p class="text-right text-white text-xl">27th Floor, Control Tower, Motor City, Dubai,</p>
-                <p class="text-right text-white text-xl">United Arab Emirates, PO Box 26423 <a
-                        class="text-white text-underline"
-                        href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">(map)</a>
-                </p>
-            </div>
-        </table>
-    </footer>
-
-    {{-- PDF Page Inner Content --}}
+  
+    {{-- PDF Page Footer Section --}}
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$quote->uuid])
+        
+     
+    @endcomponent
+{{-- End of PDF Page Footer Section --}}
     <main>
         <table class="table-fixed text-center tbl-plans"
             style="position: relative;top: 90px;margin-bottom: 70px;table-layout: fixed">
