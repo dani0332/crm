@@ -73,6 +73,7 @@ const quoteForm = useForm({
   has_worldwide_cover: props.quote?.has_worldwide_cover || null,
   has_home: props.quote?.has_home || null,
   plan_type_id: props.quote?.health_plan_type_id || null,
+  pec: props.quote?.pec || null,
 });
 
 const memberCategorySalaryMapping = {
@@ -126,6 +127,10 @@ watch(
   },
   { immediate: true },
 );
+
+const pecRules = computed(() => {
+  return [isRequired];
+});
 
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {
@@ -415,6 +420,18 @@ function onSubmit(isValid) {
             label="HOME COUNTRY COVER"
             color="primary"
           />
+
+          <div class="grid md:grid-cols-2">
+            <x-label>
+              Does the member need to declare any chronic or pre-existing
+              medical conditions, pregnancy, plans to conceive, or fertility
+              treatment?
+            </x-label>
+            <x-form-group v-model="quoteForm.pec" :rules="pecRules">
+              <x-radio :value="1" label="Yes" :disabled="pecRules.isDisable" />
+              <x-radio :value="2" label="No" :disabled="pecRules.isDisable" />
+            </x-form-group>
+          </div>
         </div>
       </div>
       <x-divider class="my-4" />
