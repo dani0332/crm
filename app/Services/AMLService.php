@@ -864,7 +864,7 @@ class AMLService
                 'quoteTypeId' => (int) $quoteTypeId,
                 'emirateDetails' => [
                     'emirateId' => $insuredDetails?->id_type == 'emiratesId' ? str_replace('-', '', $insuredDetails?->id_number) : null,
-                    'expiryDate' => ($insuredPersonDetails?->customer?->emirates_id_expiry_date ?? $request['id_expiry_date']) ?? null,
+                    'expiryDate' => ($request['id_expiry_date'] ?? $insuredPersonDetails?->customer?->emirates_id_expiry_date) ?? null,
                 ],
                 'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
                 'chassisNumber' => $request['chassis_number'] ?? '',
