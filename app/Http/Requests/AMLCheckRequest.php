@@ -27,6 +27,7 @@ class AMLCheckRequest extends FormRequest
      */
     public function rules(): array
     {
+        LoggerService::info('AML Check Request - Validation Rules');
         $rules = [];
         if ($this->customer_type == CustomerTypeEnum::Individual) {
             LoggerService::info('AML Check Request - Individual Customer Validation');
@@ -67,6 +68,7 @@ class AMLCheckRequest extends FormRequest
 
     public function withValidator($validator): void
     {
+        LoggerService::info('AML Check Request - With Validator');
         $validator->after(function ($validator) {
             if (! auth()->user()->can(PermissionsEnum::AMLList)) {
                 LoggerService::error('AML Check Request - Permission Denied');
@@ -77,6 +79,7 @@ class AMLCheckRequest extends FormRequest
 
     public function messages(): array
     {
+        LoggerService::info('AML Check Request - Messages');
         return [
             'chassis_number' => 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm',
             'get_quote_email_gig' => 'Email in GIG portal must be a valid email address',
