@@ -83,7 +83,7 @@ const tableHeader = [
   { text: 'ECOMMERCE', value: 'is_ecommerce' },
   { text: 'TIER NAME', value: 'tier.name' },
   { text: 'VISIT COUNT', value: 'quote_view_count.visit_count' },
-  { text: 'INSURER', value: 'plan.insurance_provider.text' },
+  { text: 'INSURER', value: 'insurance_provider.text' },
   {
     text: 'FOLLOW UP DATE',
     value: 'car_quote_request_detail.next_followup_date_formatted',
