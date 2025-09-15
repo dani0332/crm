@@ -28,6 +28,7 @@ class AMLCheckRequest extends FormRequest
     public function rules(): array
     {
         LoggerService::info('AML Check Request - Validation Rules');
+        LoggerService::info('AML Check Request - Request Data', ['extra' => json_encode(request()->all())]);
         $rules = [];
         if ($this->customer_type == CustomerTypeEnum::Individual) {
             LoggerService::info('AML Check Request - Individual Customer Validation');
