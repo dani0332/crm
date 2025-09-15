@@ -262,11 +262,13 @@ class UserService extends BaseService
                 ->pluck('email')
                 ->filter(function ($email) {
                     if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-                        LoggerService::warning(static::class . '::fetchAndUpdateUserCodes - Invalid email format', [
-                            'email' => $email
+                        LoggerService::warning(static::class.'::fetchAndUpdateUserCodes - Invalid email format', [
+                            'email' => $email,
                         ]);
+
                         return false;
                     }
+
                     return true;
                 })
                 ->values()
