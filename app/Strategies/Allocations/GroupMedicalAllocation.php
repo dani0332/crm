@@ -139,9 +139,9 @@ class GroupMedicalAllocation extends BaseAllocation
                 if ($employeeRange === self::EMPLOYEE_RANGE_0_5) {
                     return self::TEAM_MICRO;
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_6_50) {
-                    return self::TEAM_MICRO;
+                    return self::TEAM_NON_MICRO;
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_51_100) {
-                    return self::TEAM_MICRO;
+                    return self::TEAM_NON_MICRO;
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_101_PLUS) {
                     return self::TEAM_NON_MICRO;
                 }

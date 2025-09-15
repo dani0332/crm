@@ -2,6 +2,7 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
+use App\Http\Controllers\AccuracyMatrixController;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
 use App\Http\Controllers\AgeDiscountController;
@@ -250,6 +251,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
         Route::resource('personal-quotes/home', HomeQuoteController::class)->names(generateRouteNames('home-quotes'));
 
+        // Accuracy Matrix API routes for IMCRM
+        Route::get('accuracy-matrix/{quoteType}/{quoteId}', [AccuracyMatrixController::class, 'getMatrixStatus']);
+
         Route::group(['prefix' => 'quotes/'], function () {
             Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('carrevival-quotes-list');
             Route::get('revival/{uuid}/edit', [CarRevivalQuoteController::class, 'edit'])->name('carrevival-quotes-edit');
@@ -271,7 +275,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::put('customer/{uuid}', [V2CustomerController::class, 'update'])->name('customers-update');
 
         Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
-        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
+        Route::get('{quoteType}/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
         Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->middleware(SetReadDbConnection::class)->name('export-rm-leads');
 
         Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
@@ -308,6 +312,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['middleware' => ['permission:'.PermissionsEnum::EXTRACT_REPORT]], function () {
         Route::get('/reports/management-report/export', [ReportsController::class, 'exportManagementReport'])->name('management-report-export');
+        Route::get('/reports/conversion-as-at/export', [ReportsController::class, 'exportConversionAsAtReport'])->name('conversion-as-at-export');
         Route::post('/reports/conversion-as-at/pdf', [ReportsController::class, 'conversionAsAtReportPdf']);
     });
 
@@ -572,6 +577,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::post('submit', [BuyLeadController::class, 'submit'])->name('buy-leads.request.submit');
             Route::get('export', [BuyLeadController::class, 'export'])->name('buy-leads.request.export');
             Route::get('export-data', [BuyLeadController::class, 'exportBuyLeadsData'])->middleware(SetReadDbConnection::class)->name('buy-leads.request.export-data');
+            Route::post('update-employee-codes', [BuyLeadController::class, 'updateEmployeeCodes'])->name('buy-leads.request.update-employee-codes');
         });
     });
 
@@ -709,6 +715,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('export', [AMLController::class, 'export'])->middleware(SetReadDbConnection::class);
         Route::post('temp-skip-bridger-aml', [AMLController::class, 'tempSkipBridgerAML'])->name('temp-skip-bridger-aml');
         Route::post('aml-ctf-report-export', [AMLController::class, 'amlCtfReportExport'])->name('aml-ctf-report-export')->middleware(SetReadDbConnection::class);
+        Route::post('update-additional-vehicle-driver-details', [AMLController::class, 'updateAddtionalVehicleDriverDetails'])->name('update-additional-vehicle-driver-details');
     });
     Route::post('aml/update-quote-comment', [AMLController::class, 'updateQuoteComment'])->name('aml-update-quote-comment');
 
@@ -764,6 +771,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('sage-api-logs/{sectionId}/latest-error', [SageApi::class, 'getLastSageError'])->name('sage-api-logs-latest-error');
 
     Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
+    Route::post('policy-issuance-logs', [AuditableController::class, 'loadPolicyIssuanceApiLogs']);
     Route::post('ocr-logs', [AuditableController::class, 'loadOcrLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
@@ -771,6 +779,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/commercial-car-model-by-id', [AjaxController::class, 'commercialCarModelBasedOnCarMakeId']);
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     Route::post('update-insured-kyc', [AMLController::class, 'insuredKycDetailsUpdate'])->name('update-insured-kyc');
+    Route::post('get-quote-details-from-insurer', [AMLController::class, 'getQuoteDetailsFromInsurer'])->name('get-quote-details-from-insurer');
     Route::post('/{quoteType}/update-risk', [AjaxController::class, 'updateRisk']);
     Route::get('/{quoteType}/quote-detail/{quoteId}', [AjaxController::class, 'quoteDetail']);
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
@@ -892,7 +901,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     })->name('run-policy-bulk-send');
 
     Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
-        // Dispatch job to background queue instead of running synchronously
+        // Dispatch job to background queue instead of running synchronously to check the handbook documents
         \App\Jobs\CheckHandbookDocumentsJob::dispatch($quoteType, Carbon::now()->format('YmdHi'));
 
         return response()->json([

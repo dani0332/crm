@@ -2,11 +2,14 @@
 
 namespace App\Services\OCR;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Events\OcrNotifications;
 use App\Jobs\OCR\PopulateDocumentData;
+use App\Models\BusinessQuote;
 use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
@@ -14,15 +17,15 @@ use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class OCRService
 {
-    use Ocrable, OcrFillable;
+    use Ocrable, OcrFillable, OcrUtils, OcrValidator;
 
     public const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
 
@@ -46,6 +49,14 @@ class OCRService
                 );
 
             return $this->handleResponse($response, $endpoint);
+        } catch (ConnectionException $e) {
+            if ($this->isTimeoutException($e)) {
+                LoggerService::info(self::class.' - API request timed out', ['endpoint' => $endpoint, 'message' => $e->getMessage()]);
+            } else {
+                LoggerService::info(self::class.' - Connection exception occurred during API call', ['endpoint' => $endpoint, 'message' => $e->getMessage()]);
+            }
+
+            return ['ok' => false, 'object' => null, 'message' => $e->getMessage()];
         } catch (Exception $e) {
             LoggerService::error(self::class.' - Exception occurred during API call', exception: $e);
 
@@ -64,19 +75,14 @@ class OCRService
         string $docUrl,
         OCRDocumentTypeEnum $docType
     ) {
-        $providerCode = null;
-
-        if ($quote->payments && $quote->payments->isNotEmpty()) {
-            $latestPayment = $quote->payments->first();
-            if ($latestPayment && $latestPayment->insuranceProvider) {
-                $providerCode = $latestPayment->insuranceProvider->code;
-            }
-        }
+        $providerCode = $this->extractProviderCode($quote);
 
         LoggerService::info('Provider Code - Quote UUID: '.$quote->uuid);
 
+        $refId = $this->getRefId($quote);
+
         $requestData = [
-            'ref_id' => $quote->code,
+            'ref_id' => $refId,
             'uuid' => $quote->uuid,
             'quote_type_id' => $quoteType->id(),
             'doc_url' => $docUrl,
@@ -85,7 +91,10 @@ class OCRService
             'image' => false,
         ];
 
-        LoggerService::info('OCR API Request - Quote UUID: '.$quote->uuid);
+        // Detailed logging for API debugging
+        LoggerService::info(self::class.'::getData - OCR API Request Details', [
+            'request_data' => $requestData,
+        ]);
 
         $response = $this->sendRequest('/process-document', $requestData);
 
@@ -113,8 +122,12 @@ class OCRService
                 ->get('/health');
 
             return $response->successful() && $response->status() === Response::HTTP_OK;
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            LoggerService::error('OCR Service Connection Failed: ', exception: $e);
+        } catch (ConnectionException $e) {
+            if ($this->isTimeoutException($e)) {
+                LoggerService::info('OCR Service health check timed out', ['message' => $e->getMessage()]);
+            } else {
+                LoggerService::info('OCR Service Connection Failed: ', ['message' => $e->getMessage()]);
+            }
 
             return false;
         } catch (Exception $e) {
@@ -205,18 +218,22 @@ class OCRService
         string $documentCategory,
         float $startTime,
         float $apiCallStartTime,
-        object $data
+        object $data,
+        bool $isSendUpdateEligibleForOCR = false
     ): ?bool {
         $apiCallEndTime = microtime(true);
         $apiCallExecutionTime = round(($apiCallEndTime - $apiCallStartTime) * 1000, 2);
 
         LoggerService::info('OCR API call completed - Quote UUID: '.$quote->uuid);
-        LoggerService::info(self::class.'::process - Data received from getData - Quote UUID: '.$quote->uuid.' - apiCallEndTime: '.$apiCallEndTime.' - apiCallExecutionTime: '.$apiCallExecutionTime);
+        LoggerService::info(self::class.'::process - Data received from getData - Quote UUID: '.$quote->uuid.' - apiCallEndTime: '.$apiCallEndTime.' - apiCallExecutionTime: '.$apiCallExecutionTime, [
+            'is_send_update_eligible_for_ocr' => $isSendUpdateEligibleForOCR,
+        ]);
 
-        $dataFilledResponse = $this->fill($quote, $docType, $data, $documentCategory);
+        $dataFilledResponse = $this->fill($quote, $docType, $data, $documentCategory, $isSendUpdateEligibleForOCR, $quoteType);
 
         $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
         if ($isQuoteStatusTransectionApproved) {
+            $quoteType = $this->checkIfQuoteTypeIsGroupMedical($quoteType);
             (new CentralService)->updateQuoteInformation($quoteType->value, $quote->id);
         } elseif (! $isEcom) {
             event(new OcrNotifications($quote, 'end', 'Lead is not Transaction Approved.', null, $docType?->value, $userId));
@@ -225,6 +242,14 @@ class OCRService
         // Send end notification for successful processing (skip for ecom)
         if (! $isEcom && $this->requiresOcrNotifications($docType) && $dataFilledResponse) {
             event(new OcrNotifications($quote, 'end', 'OCR processing completed successfully', null, $docType?->value, $userId));
+        }
+
+        // Update Accuracy Matrix cache after successful OCR processing
+        try {
+            $this->updateAccuracyMatrix($quoteType, $quote, $docType, $data, $documentType);
+        } catch (\Exception $e) {
+            // Log error but don't interrupt OCR flow
+            LoggerService::error('Accuracy Matrix update failed but OCR completed successfully - ', exception: $e);
         }
 
         // Calculate execution time and log success
@@ -329,20 +354,41 @@ class OCRService
         string $fileMimeType,
         int $userId,
         bool $isEcom,
+        bool $isSendUpdateEligibleForOCR
     ): ?bool {
         // Record start time for OCR processing
         $startTime = microtime(true);
         $documentCategory = $documentType->category;
         $result = null;
 
+        // Only run OCR for quotes with Transaction Approved status
+        if (property_exists($quote, 'quote_status_id') && $quote->quote_status_id != QuoteStatusEnum::TransactionApproved) {
+            LoggerService::info('OCR processing skipped - Quote is not in Transaction Approved status - Quote UUID: '.$quote->uuid, [
+                'quote_status_id' => $quote->quote_status_id,
+                'required_status' => QuoteStatusEnum::TransactionApproved,
+            ]);
+
+            return null;
+        }
+
         LoggerService::info('Starting OCR processing - Quote UUID: '.$quote->uuid);
 
         // Check if OCR service is available
-        // TODO: Uncomment this when Customer OCR service is available & OCR Health Check is implemented by OCR team
-        // $serviceCheck = $this->handleServiceAvailability($quote, $documentType, $userId);
-        // if (! $serviceCheck) {
-        //     return false;
-        // }
+        $serviceCheck = $this->handleServiceAvailability($quote, $documentType, $userId);
+        if (! $serviceCheck) {
+            return false;
+        }
+
+        // Skip OCR for non-eligible providers
+        if (! $this->isProviderEligibleForOcr($quoteType, $quote)) {
+            $providerCode = $this->extractProviderCode($quote);
+            LoggerService::info('OCR processing skipped - Provider not eligible for OCR - Quote UUID: '.$quote->uuid, [
+                'quote_type' => $quoteType->value,
+                'provider_code' => $providerCode ?? 'null',
+            ]);
+
+            return false;
+        }
 
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
 
@@ -379,7 +425,8 @@ class OCRService
                     $documentCategory,
                     $startTime,
                     $apiCallStartTime,
-                    $data
+                    $data,
+                    $isSendUpdateEligibleForOCR
                 );
             } else {
                 $result = $this->handleProcessingFailure(
@@ -415,7 +462,8 @@ class OCRService
         $quote,
         string $filePathAzure,
         string $fileMimeType,
-        ?string $quoteTypeParam = null
+        ?string $quoteTypeParam = null,
+        bool $isSendUpdateEligibleForOCR = false
     ): void {
 
         // early return if Customer OCR Journey is not supported on prod
@@ -426,18 +474,59 @@ class OCRService
             return;
         }
 
-        if ($quote instanceof SendUpdateLog) {
-            LoggerService::info('OCR Dispatch - Skipping for SendUpdateLog - Quote UUID: '.$quote->uuid);
+        // Skip OCR only for SendUpdate logs that are NOT eligible (e.g., Car SendUpdate)
+        if ($quote instanceof SendUpdateLog && ! $isSendUpdateEligibleForOCR) {
+            LoggerService::info(self::class.'::populateDocumentData - Send Update Log found but not eligible for OCR, skipping document data population', [
+                'quote_uuid' => $quote->uuid,
+                'quote_type' => ucfirst(request('quote_type')),
+                'document_type' => $documentType->code,
+                'reason' => 'Send Update not eligible for OCR for this LOB',
+                'eligible_lobs' => 'HOME, GROUP_MEDICAL only',
+            ]);
 
             return;
         }
 
         $quoteType = $this->determineQuoteType($quoteTypeParam);
+
+        // If quote type is not available from request and this is a Send Update Log, get it from the model
+        if (! $quoteType && $quote instanceof SendUpdateLog) {
+            $quoteType = $this->getCorrectQuoteTypeForOCR($quote);
+            LoggerService::info('PopulateDocumentData - Quote type derived from Send Update Log', [
+                'quote_type_id' => $quote->quote_type_id,
+                'derived_quote_type' => $quoteType?->value,
+                'quote_uuid' => $quote->uuid,
+                'is_group_medical_override' => $this->isGroupMedicalBusiness($quote),
+            ]);
+        }
+
+        // For regular Business quotes, check if they are Group Medical and adjust quote type accordingly
+        if ($quoteType === QuoteTypes::BUSINESS && $this->isGroupMedicalBusiness($quote)) {
+            $quoteType = QuoteTypes::GROUP_MEDICAL;
+            LoggerService::info('PopulateDocumentData - Business quote type overridden to Group Medical', [
+                'original_quote_type' => 'Business',
+                'new_quote_type' => $quoteType->value,
+                'quote_uuid' => $quote->uuid,
+                'quote_model' => get_class($quote),
+            ]);
+        }
+
+        // Final check if we still couldn't determine the quote type
         if (! $quoteType) {
-            LoggerService::info('OCR Dispatch - Unable to determine quote type - Quote UUID: '.$quote->uuid);
+            LoggerService::info('OCR Dispatch - Unable to determine quote type after all attempts - Quote UUID: '.$quote->uuid);
 
             return;
         }
+
+        LoggerService::info('PopulateDocumentData - About to dispatch OCR job', [
+            'parsed_quote_type' => $quoteType?->value,
+            'quote_uuid' => $quote->uuid ?? 'N/A',
+            'quote_code' => $quote->code ?? 'N/A',
+            'is_send_update_eligible_for_ocr' => $isSendUpdateEligibleForOCR,
+            'will_dispatch_ocr_job' => ! is_null($quoteType) && ! is_null($quote) && ! is_null($filePathAzure),
+            'document_type' => $documentType->code,
+            'user_id' => Auth::user()->id ?? 'Not authenticated',
+        ]);
 
         $userId = Auth::id();
 
@@ -455,6 +544,7 @@ class OCRService
                 $fileMimeType,
                 $userId ?? 0,
                 $isEcom,
+                $isSendUpdateEligibleForOCR
             );
         } else {
             LoggerService::warning('OCR Dispatch - Missing required parameters - Quote UUID: '.$quote->uuid);
@@ -479,18 +569,86 @@ class OCRService
         return null;
     }
 
-    /**
-     * Check if the document type requires OCR notifications
-     */
-    public function requiresOcrNotifications(OCRDocumentTypeEnum $docType): bool
+    private function getCorrectQuoteTypeForOCR($quote)
     {
-        return in_array($docType, [
-            OCRDocumentTypeEnum::TAX_INVOICE,
-            OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER,
-            OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE,
-            OCRDocumentTypeEnum::ID_CARD,
-            OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE,
-            OCRDocumentTypeEnum::DRIVING_LICENSE,
-        ]);
+        // For Group Medical business quotes, return GROUP_MEDICAL instead of BUSINESS
+        if ($this->isGroupMedicalBusiness($quote)) {
+            return QuoteTypes::GROUP_MEDICAL;
+        }
+
+        // For all other cases, use the normal mapping
+        return QuoteTypes::getName($quote->quote_type_id);
+    }
+
+    public function isGroupMedicalBusiness($quote)
+    {
+        try {
+            // Handle direct BusinessQuote instances
+            if ($quote instanceof BusinessQuote) {
+                return $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+            }
+
+            // Handle SendUpdateLog instances
+            if ($quote instanceof SendUpdateLog && $quote->quote_type_id == QuoteTypes::getId(QuoteTypes::BUSINESS)) {
+                $actualQuote = BusinessQuote::where('uuid', $quote->quote_uuid)->first();
+
+                return $actualQuote && $actualQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            LoggerService::error('Error checking Group Medical business type', [
+                'error' => $e->getMessage(),
+                'quote_type' => get_class($quote),
+                'quote_id' => $quote->id ?? 'N/A',
+                'quote_uuid' => $quote->uuid ?? 'N/A',
+            ]);
+
+            return false;
+        }
+    }
+
+    public function getEligibleProviders(): array
+    {
+        $quoteTypes = QuoteTypes::cases();
+
+        $providers = InsuranceProviderEnum::asArray();
+
+        $eligibleProviders = [];
+        $quoteTypeNames = [];
+
+        foreach ($quoteTypes as $quoteType) {
+            $quoteTypeNames[$quoteType->value] = $quoteType->value;
+
+            $eligibleForType = [];
+
+            foreach ($providers as $providerName => $providerValue) {
+                if ($this->isSupportedProvider($quoteType, $providerValue)) {
+                    $eligibleForType[] = [
+                        'code' => $providerValue,
+                        'name' => $providerName,
+                    ];
+                }
+            }
+
+            if (! empty($eligibleForType)) {
+                $eligibleProviders[$quoteType->value] = $eligibleForType;
+            }
+        }
+
+        return [
+            'providers' => $eligibleProviders,
+            'quoteTypeNames' => $quoteTypeNames,
+        ];
+    }
+
+    private function isTimeoutException(ConnectionException $exception): bool
+    {
+        $message = $exception->getMessage();
+
+        return str_contains($message, 'cURL error 28') ||
+               str_contains($message, 'Operation timed out') ||
+               str_contains($message, 'Connection timed out') ||
+               str_contains($message, 'timeout');
     }
 }

@@ -14,13 +14,17 @@ use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\SendFailedPaymentEmailJob;
 use App\Models\CarQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
+use App\Services\Logger\LoggerService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 
 class CarQuoteObserver
 {
@@ -33,6 +37,17 @@ class CarQuoteObserver
         }
     }
 
+    private function checkIfAnythingDirty(array $dirty, array $exclude = []): bool
+    {
+        foreach ($dirty as $attribute => $value) {
+            if (! in_array($attribute, $exclude)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Handle the "updated" event.
      *
@@ -42,6 +57,11 @@ class CarQuoteObserver
     {
         $dirty = $lead->getDirty();
         $changes = [];
+
+        if (Route::currentRouteName() == 'car.update' && $this->checkIfAnythingDirty($dirty, ['first_name', 'last_name', 'email', 'mobile_no', 'updated_at', 'is_quote_locked', 'quote_updated_at', 'advisor_id'])) {
+            LoggerService::info('CarQuoteObserver - Going to get quote plans again because of dirty fields with latest rating', ['uuid' => $lead->uuid, 'dirty' => $dirty]);
+            app(CarQuoteService::class)->getQuotePlans($lead->uuid, getLatestRating: true);
+        }
 
         foreach ($dirty as $attribute => $value) {
             $changes[$attribute] = [
@@ -56,6 +76,7 @@ class CarQuoteObserver
                 $oldAdvisorId = $changes['advisor_id']['old'];
 
                 LogAllocation::dispatch($lead, QuoteTypes::CAR);
+                SendFailedPaymentEmailJob::dispatch($lead->uuid, QuoteTypes::CAR);
 
                 event(new CarQuoteAdvisorUpdated($lead, $oldAdvisorId));
             } catch (Exception $e) {

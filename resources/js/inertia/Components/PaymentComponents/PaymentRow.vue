@@ -450,12 +450,7 @@ const amlAndKycTooltip = computed(() => {
             Delete
           </x-button>
         </template>
-        <template
-          v-if="
-            can(permissionEnum.ApprovePayments) &&
-            (!isChildPaymentDeletable || index > 0)
-          "
-        >
+        <template v-if="can(permissionEnum.ApprovePayments)">
           <x-button
             v-if="getCaptureOption === 'capture' && getCaptureValidation"
             size="xs"

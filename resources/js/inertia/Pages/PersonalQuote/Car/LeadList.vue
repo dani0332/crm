@@ -295,6 +295,8 @@ const filters = reactive({
   vehicle_use: '',
   company_name: '',
   private_client: 'all',
+  authorize_date: '',
+  captured_date: '',
 });
 
 const teamUsers =
@@ -316,6 +318,13 @@ const loader = reactive({
 const quotesSelected = ref([]);
 const canExport = ref(false);
 const canExportLeadsAndPlan = ref(false);
+
+// PUA Export Modal state
+const puaExportModal = reactive({
+  show: false,
+  exportType: 'all',
+  payment_date: '',
+});
 
 watch(
   () => filters,
@@ -735,6 +744,37 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
+
+const yesterday = computed(() => {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  return date;
+});
+
+const canExportPUA = computed(() => {
+  return puaExportModal.payment_date;
+});
+
+const onPUAExport = () => {
+  // Open the PUA export modal
+  puaExportModal.show = true;
+};
+
+const onConfirmPUAExport = () => {
+  // Use the single date for both authorize and capture date filters
+  const filtersForExport = {
+    authorize_date: puaExportModal.payment_date,
+    captured_date: puaExportModal.payment_date,
+  };
+
+  const data = objToUrl(filtersForExport);
+  const url = `/Car/pua-leads-export?${data}`;
+
+  puaExportModal.show = false; // Close modal
+
+  // Reuse the existing onExport function
+  onExport(url, true);
+};
 </script>
 
 <template>
@@ -1159,6 +1199,22 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           :single="true"
         />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_invoice_number"
@@ -1287,7 +1343,7 @@ const insurerAMLStatusOption = computed(() => {
             size="sm"
             color="emerald"
             :loading="exportLoader"
-            @click="onExport('/pua-leads-export', true)"
+            @click="onPUAExport"
             class="justify-self-start mr-3"
           >
             Export PUA Updates
@@ -1457,6 +1513,47 @@ const insurerAMLStatusOption = computed(() => {
           @click.prevent="onConfirmCreateLead"
         >
           Confirm
+        </x-button>
+      </template>
+    </x-modal>
+
+    <!-- PUA Export Modal -->
+    <x-modal
+      v-model="puaExportModal.show"
+      size="lg"
+      title="Export Car PUA Updates"
+      show-close
+      backdrop
+      persistent
+    >
+      <div class="grid grid-cols-1 gap-4">
+        <DatePicker
+          v-model="puaExportModal.payment_date"
+          label="Payment Date"
+          class="w-full"
+          :max-date="new Date()"
+        />
+      </div>
+
+      <template #secondary-action>
+        <x-button
+          ghost
+          tabindex="-1"
+          size="sm"
+          @click.prevent="puaExportModal.show = false"
+        >
+          Cancel
+        </x-button>
+      </template>
+      <template #primary-action>
+        <x-button
+          v-if="canExportPUA"
+          size="sm"
+          color="emerald"
+          :loading="exportLoader"
+          @click="onConfirmPUAExport"
+        >
+          Export Data
         </x-button>
       </template>
     </x-modal>
