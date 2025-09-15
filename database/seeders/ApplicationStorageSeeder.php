@@ -101,10 +101,12 @@ class ApplicationStorageSeeder extends Seeder
         $this->savingsLOB();
 
         $this->seedOcrEnabled();
+        $this->seedGIGCarPolicyIssuance();
         $this->seedSukoonMedexProductSlug();
         $this->seedLOBCutOffDates();
         $this->seedTravelEnquiryEmail();
         $this->seedOcrSendUpdateLogFlag();
+        $this->seedProductionApprovalEmails();
     }
 
     private function seedBirdWorkflowUrls()
@@ -537,6 +539,28 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedGIGCarPolicyIssuance()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_GIG_CAR_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_GIG_CAR_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+    }
+
     private function seedSukoonMedexProductSlug()
     {
         ApplicationStorage::firstOrCreate(
@@ -594,6 +618,26 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
+            ]
+        );
+    }
+
+    private function seedProductionApprovalEmails()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PRODUCTION_APPROVAL_EMAIL],
+            [
+                'value' => 'production.approval@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::APPROVAL_PRODUCTION_EMAIL],
+            [
+                'value' => 'approval.production@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
             ]
         );
     }
