@@ -1005,7 +1005,7 @@ class AMLService
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningFailed];
 
-                LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob');
+                /* LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob');
                 AutomationFailedJob::dispatch(
                     $quoteDetails,
                     QuoteTypeId::Car,
@@ -1013,7 +1013,7 @@ class AMLService
                     'Quote Finalized But Premium Not Matched',
                     'Quote Finalization',
                     WorkflowTypeEnum::CAR_AUTOMATION_FAILED
-                )->onQueue('policy-issuance-automation');
+                )->onQueue('policy-issuance-automation'); */
             }
         }
 
