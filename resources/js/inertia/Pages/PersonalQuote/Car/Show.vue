@@ -104,7 +104,7 @@ defineProps({
   isFuncsEnabled: Array,
   insurerAMLStatus: String,
   businessActivities: Object,
-  previousQuote:Object,
+  previousQuote: Object,
   apiIssuanceStatus: String,
   insurerApiStatus: String,
 });
@@ -2763,8 +2763,7 @@ function handleOcrNotification(event) {
       :quote_type="quoteType"
       :expanded="sectionExpanded"
     />
-   
-  
+
     <LastYearPolicyDetail
       :canAddBatchNumber="hasRole(rolesEnum.CarManager)"
       :expanded="sectionExpanded"
