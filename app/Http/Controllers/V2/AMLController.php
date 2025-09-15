@@ -239,11 +239,6 @@ class AMLController extends Controller
     {
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
-        $payment = $quoteRequest->payments()->mainLeadPayment()->first();
-        $insuranceProvider = getInsuranceProvider($payment, $quoteType->text);
-        if (! $insuranceProvider) {
-            $insuranceProvider = $quoteRequest?->plan?->insuranceProvider;
-        }
 
         LoggerService::startQuoteLogging($quoteRequest, LoggerFeatureEnum::AML_SCREENING);
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
@@ -257,10 +252,9 @@ class AMLController extends Controller
             return $log['decision'] == AMLDecisionStatusEnum::ESCALATED;
         })) : 0;
 
-        $isGIG = $insuranceProvider?->code == InsuranceProvidersEnum::AXA;
         $lookups = app(AMLService::class)->getAMLLookups();
         
-        if ($quoteType->code == quoteTypeCode::Car && ($isGIG)) {
+        if ($quoteType->code == quoteTypeCode::Car && ($quoteRequest?->plan?->insuranceProvider?->code == InsuranceProvidersEnum::AXA)) {
             $additionalLookups = app(AMLService::class)->getAMLLookups($quoteRequest?->plan?->provider_id, [
                 LookupsEnum::RTA_TRANSACTION_TYPE,
                 LookupsEnum::RTA_PLATE_CATEGORY,
