@@ -91,7 +91,9 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         } finally {
             // Always reset database connection back to default
             DB::setDefaultConnection('mysql');
-            Auth::logout();
+            if (Auth::check()) {
+                Auth::logout();
+            }
             gc_collect_cycles();
         }
     }
