@@ -1753,15 +1753,21 @@ class CentralService extends BaseService
         LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
 
         if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
-            LoggerService::info('fn:autoCaptureAMLValidationCheck failed - Going to dispatch AutomationFailedJob');
-            AutomationFailedJob::dispatch(
+            LoggerService::info('fn:autoCaptureAMLValidationCheck failed - Going to dispatch AutomationFailedJob', extra: [
+                'quoteTypeId' => QuoteTypeId::Car,
+                'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                'statusAPIFailed' => 'Quote Referred To Insurer UW',
+                'processInvolved' => 'Payment Capture',
+                'workflowType' => WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
+            ]);
+            /* AutomationFailedJob::dispatch(
                 $quote,
                 QuoteTypeId::Car,
                 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                 'Quote Referred To Insurer UW',
                 'Payment Capture',
                 WorkflowTypeEnum::CAR_AUTOMATION_FAILED
-            )->onQueue('policy-issuance-automation');
+            )->onQueue('policy-issuance-automation'); */
 
             return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
         }
@@ -1793,25 +1799,37 @@ class CentralService extends BaseService
                 // ];
 
                 if ($capturePaymentResponse['premiumAmount'] > $payment->total_amount) {
-                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob');
-                    AutomationFailedJob::dispatch(
+                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
+                        'quoteTypeId' => QuoteTypeId::Car,
+                        'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                        'statusAPIFailed' => 'Premium Not Matched With Insurer',
+                        'processInvolved' => 'Payment Capture',
+                        'workflowType' => WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
+                    ]);
+                    /* AutomationFailedJob::dispatch(
                         $quote,
                         QuoteTypeId::Car,
                         'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                         'Premium Not Matched With Insurer',
                         'Payment Capture',
                         WorkflowTypeEnum::CAR_AUTOMATION_FAILED
-                    )->onQueue('policy-issuance-automation');
+                    )->onQueue('policy-issuance-automation'); */
                 } elseif ($capturePaymentResponse['premiumAmount'] != $payment->total_amount) {
-                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob');
-                    AutomationFailedJob::dispatch(
+                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
+                        'quoteTypeId' => QuoteTypeId::Car,
+                        'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                        'statusAPIFailed' => 'Premium Not Matched With Insurer',
+                        'processInvolved' => 'Payment Capture',
+                        'workflowType' => WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
+                    ]);
+                    /* AutomationFailedJob::dispatch(
                         $quote,
                         QuoteTypeId::Car,
                         'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
                         'Quote Referred To Insurer UW',
                         'Payment Capture',
                         WorkflowTypeEnum::CAR_AUTOMATION_FAILED
-                    )->onQueue('policy-issuance-automation');
+                    )->onQueue('policy-issuance-automation'); */
                 }
 
                 $message = $capturePaymentResponse['message'] ?? 'Premium mismatch on Insurer portal';
