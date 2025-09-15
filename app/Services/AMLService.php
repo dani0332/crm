@@ -1006,20 +1006,18 @@ class AMLService
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningFailed];
 
                 LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob', extra: [
-                    'quoteTypeId' => QuoteTypeId::Car,
                     'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
                     'statusAPIFailed' => 'Quote Finalized But Premium Not Matched',
                     'processInvolved' => 'Quote Finalization',
-                    'workflowType' => WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
                 ]);
-                /* AutomationFailedJob::dispatch(
+                AutomationFailedJob::dispatch(
                     $quoteDetails,
                     QuoteTypeId::Car,
                     'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
                     'Quote Finalized But Premium Not Matched',
                     'Quote Finalization',
                     WorkflowTypeEnum::CAR_AUTOMATION_FAILED
-                )->onQueue('policy-issuance-automation'); */
+                )->onQueue('policy-issuance-automation');
             }
         }
 

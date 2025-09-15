@@ -253,18 +253,17 @@ class AMLController extends Controller
         })) : 0;
 
         $lookups = app(AMLService::class)->getAMLLookups();
-        /* if ($quoteType->code == quoteTypeCode::Car || $quoteRequest->plan?->insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
+
+        if ($quoteType->code == quoteTypeCode::Car && ($quoteRequest?->plan?->insuranceProvider?->code == InsuranceProvidersEnum::AXA)) {
             $additionalLookups = app(AMLService::class)->getAMLLookups($quoteRequest?->plan?->provider_id, [
                 LookupsEnum::RTA_TRANSACTION_TYPE,
                 LookupsEnum::RTA_PLATE_CATEGORY,
                 LookupsEnum::VEHICLE_COLOR,
                 LookupsEnum::BANK_NAME,
-                LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
-                LookupsEnum::PLATE_CODE,
             ]);
 
             $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
-        } */
+        }
 
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);
         $entityDetails = app(AMLService::class)->getEntityDetails($quoteTypeId, $quoteRequestId); // TODO:: this will only for customer member mapping, this will remove when customer member mapping updated with insured
@@ -428,6 +427,8 @@ class AMLController extends Controller
             [$status, $message, $getMemberOrUBODetails, $getLastScreening] = app(AMLService::class)->prepareScreeningData($AMLCheckRequest, $quoteType, $updateQuote);
 
             if (! $status) {
+                LoggerService::info('AML Screening Bridger - Preparation of Screening Data Failed');
+
                 return app(AMLService::class)->handleResponse($status, $message, $isAutomation);
             }
 
@@ -442,6 +443,8 @@ class AMLController extends Controller
                     'quoteRequestId' => $quoteRequestId,
                 ], $updateQuote);
 
+                LoggerService::info('AML Screening Bridger - Returned from processInsuredDataForScreening');
+
                 return [$shouldApplicableForScreening, $insured, $entityId];
             });
 
@@ -449,6 +452,7 @@ class AMLController extends Controller
             $isEntity = $AMLCheckRequest->customer_type == CustomerTypeEnum::Entity;
             if ($shouldApplicableForScreening) {
                 if ($isEntity) {
+                    LoggerService::info('AML Screening Bridger - Entity Screening payload generated');
                     $getEntityDetailsForScreening = [
                         'company_name' => $insured->company_name,
                         'code' => CustomerTypeEnum::EntityShort.'-'.$entityId, // TODO:: code should be updated with insured id (Required FR for this)
@@ -467,6 +471,7 @@ class AMLController extends Controller
                     }
                 } else {
                     // Handle individual screening
+                    LoggerService::info('AML Screening Bridger - Individual Screening payload generated');
                     $getMemberOrUBODetails[] = [
                         'first_name' => $insured->first_name,
                         'last_name' => $insured->last_name,
@@ -497,6 +502,8 @@ class AMLController extends Controller
 
             return app(AMLService::class)->handleResponse(true, 'Quote is updated', $isAutomation);
         }
+
+        LoggerService::info('AML Screening Bridger - Something went wrong');
 
         return app(AMLService::class)->handleResponse(false, 'Something went wrong', $isAutomation);
     }
