@@ -41,21 +41,15 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             LoggerService::info(self::class."::verifyPreChecks - Lead is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
         } elseif ($lead->hasExemptedSource()) {
             LoggerService::info(self::class."::verifyPreChecks - Lead has exempted source {$lead->source}, skipping assignment");
-        } elseif (($isSICFlowEnabled || $isAIG) && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
+        } elseif (($isSICFlowEnabled || $isAIG) && $lead->isAdvisorRequestedOrAuthorizedOrRequestedLinkOrDeclined()) {
             if ($isSICFlowEnabled) {
-                LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow enabled and either requested for an advisor or payment authorized, continuing assignment');
+                LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow enabled and either requested for an advisor or payment authorized or link requested or declined or failed, continuing assignment');
             } else {
-                LoggerService::info(self::class.'::verifyPreChecks - Lead is AIG and either requested for an advisor or payment authorized, continuing assignment');
+                LoggerService::info(self::class.'::verifyPreChecks - Lead is AIG and either requested for an advisor or payment authorized or link requested or declined or failed, continuing assignment');
             }
             $continueAssignment = true;
-        } elseif (($isSICFlowDisabled || ! $isAIG) && ! $lead->isRenewalUpload()) {
-            if ($isSICFlowDisabled) {
-                LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow disabled and not Renewal Upload, continuing assignment');
-            } elseif (! $isAIG) {
-                LoggerService::info(self::class.'::verifyPreChecks - Lead is not AIG and not Renewal Upload, continuing assignment');
-            } else {
-                LoggerService::info(self::class.'::verifyPreChecks - Lead meets other criteria and not Renewal Upload, continuing assignment');
-            }
+        } elseif ($isSICFlowDisabled && ! $isAIG && ! $lead->isRenewalUpload()) {
+            LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow disabled, is not AIG, and not Renewal Upload, continuing assignment');
             $continueAssignment = true;
         } elseif ($lead->isRenewalTierEmailSent()) {
             LoggerService::info(self::class.'::verifyPreChecks - Lead has renewal tier email sent, skipping assignment');

@@ -242,12 +242,15 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCHES_LIST = 'renewal-batches-list';
     public const RENEWAL_BATCHES_EDIT = 'renewal-batches-edit';
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
+    public const RENEWAL_UPLOAD_NONMOTOR = 'renewal-upload-nonmotor';
+    public const RENEWALS_BATCHES_NONMOTOR = 'renewals-batches-nonmotor';
     public const REVIVAL_CONVERSION_REPORT_VIEW = 'revival-conversion-report-view';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
     public const EMBEDDED_PRODUCT_VIEW = 'embedded-product-view';
     public const EMBEDDED_PRODUCT_PAYMENT_CANCEL = 'embedded-product-payment-cancel';
     public const EMBEDDED_PRODUCT_CONFIG = 'embedded-product-config';
     public const EMBEDDED_PRODUCT_PAYMENT_VOID = 'embedded-product-payment-void';
+    public const EMBEDDED_PRODUCT_MANUAL_OVERRIDE = 'embedded-product-manual-override';
     public const BOOK_POLICY_EDIT = 'book-policy-edit';
     public const SEND_UPDATE_CREATE = 'send-update-create';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
@@ -267,6 +270,7 @@ final class PermissionsEnum extends Enum
     public const YACHT_CARD_VIEW = 'yacht-quotes-card';
     public const CYCLE_CARD_VIEW = 'cycle-quotes-card';
     public const CORPLINE_CARD_VIEW = 'business-cards';
+    public const LIFE_CARD_VIEW = 'life-quotes-card';
     public const ADVISOR_CAPACITY_MANAGEMENT = 'advisor-capacity-management';
     public const MANAGEMENT_REPORT = 'management-report';
     public const ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION = 'proforma-payment-request-add';
@@ -381,6 +385,7 @@ final class PermissionsEnum extends Enum
     public const UPLOAD_HEALTH_COVERAGES = 'upload-health-coverages';
     public const EXPORT_RM_LEADS = 'export-rm-leads';
     public const EXPORT_CAR_PUA_UPDATES = 'export-car-pua-updates';
+    public const EXPORT_HOME_PUA_UPDATES = 'export-home-pua-updates';
     public const CORPLINE_LEAD_ALLOCATION_DASHBOARD = 'corpline-lead-allocation-dashboard';
     public const CYCLE_LEAD_ALLOCATION_DASHBOARD = 'cycle-lead-allocation-dashboard';
     public const YACHT_LEAD_ALLOCATION_DASHBOARD = 'yacht-lead-allocation-dashboard';
@@ -405,6 +410,7 @@ final class PermissionsEnum extends Enum
     public const ENABLE_IMPERSONATION = 'enable-impersonation';
     public const PAYMENTS_VOID = 'payments-void';
     public const SKIP_BRIDGER_AML = 'skip-bridger-aml';
+    public const PAYMENT_VERIFICATION_LOWER_AMOUNT = 'payment-verification-lower-amount';
     public const PERMISSION_LIST = 'permission-list';
     public const INSURER_PAYMENT_LINK = 'insurer-payment-link';
     public const CANCEL_SEND_UPDATE = 'cancel-send-update';
@@ -415,11 +421,33 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_LEADPOOL = 'corpline-leadpool';
     public const CYCLE_LEADPOOL = 'cycle-leadpool';
     public const GROUP_MEDICAL_LEADPOOL = 'group-medical-leadpool';
-    public const SAVINGS_LEADPOOL = 'savings-leadpool';
     public const POLICY_DETAILS_ADD_VAT = 'policy-details-add-vat';
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
+    public const VIEW_PCP = 'view-pc-qualified';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
+    public const RETRY_PREPAYMENT_BUTTON = 'retry-prepayment-button';
+    public const PLAN_DETAILS_EDIT = 'plan-details-edit';
+    public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
+    public const LEADS_BY_EMAIL = 'leads-by-email';
+    public const ASSIGN_CLIENT_SUPPORT = 'oe-ae-assign-client-support';
+    public const ASSIGN_LEAD_ADVISOR = 'pe-oe-assign-leads-advisor';
+
+    // Savings Permissions
+    public const SAVINGS_QUOTES_LIST = 'savings-quotes-list';
+    public const SAVINGS_QUOTES_CREATE = 'savings-quotes-create';
+    public const SAVINGS_QUOTES_EDIT = 'savings-quotes-edit';
+    public const SAVINGS_QUOTES_SHOW = 'savings-quotes-show';
+    public const SAVINGS_COMPREHENSIVE_DASHBOARD = 'savings-comprehensive-dashboard';
+    public const SAVINGS_CONVERSION_REPORT = 'savings-conversion-report';
+    public const SAVINGS_DISTRIBUTION_REPORT = 'savings-distribution-report';
+    public const SAVINGS_LEAD_ALLOCATION_DASHBOARD = 'savings-lead-allocation-dashboard';
+    public const SAVINGS_AS_AT_REPORT_MANAGER = 'savings-as-at-report-manager';
+    public const SAVINGS_LEADPOOL = 'savings-leadpool';
+    // End of Savings Permissions
+
+    public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
+    public const EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS = 'edit-vehicle-transaction-driver-details';
 
     public static function getAdvisorConversionReportPermissions()
     {
@@ -435,6 +463,7 @@ final class PermissionsEnum extends Enum
             self::YACHT_CONVERSION_REPORT,
             self::CORPLINE_CONVERSION_REPORT,
             self::GROUPMEDICAL_CONVERSION_REPORT,
+            self::SAVINGS_CONVERSION_REPORT,
         ];
     }
 
@@ -452,6 +481,7 @@ final class PermissionsEnum extends Enum
             self::YACHT_COMPREHENSIVE_DASHBOARD,
             self::CORPLINE_COMPREHENSIVE_DASHBOARD,
             self::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
+            self::SAVINGS_COMPREHENSIVE_DASHBOARD,
         ];
     }
 
@@ -469,6 +499,7 @@ final class PermissionsEnum extends Enum
             self::YACHT_DISTRIBUTION_REPORT,
             self::CORPLINE_DISTRIBUTION_REPORT,
             self::GROUPMEDICAL_DISTRIBUTION_REPORT,
+            self::SAVINGS_DISTRIBUTION_REPORT,
         ];
     }
 

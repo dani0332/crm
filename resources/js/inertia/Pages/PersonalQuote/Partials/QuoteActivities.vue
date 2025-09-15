@@ -55,7 +55,7 @@ const activityForm = useForm({
   quote_id: page.props.quote.id,
   quote_type: page.props.quoteType,
   title: null,
-  description: null,
+  description: '',
   due_date: null,
   assignee_id: page.props?.auth?.user?.id,
   status: null,
@@ -243,6 +243,7 @@ onMounted(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onSubmit"
     >
       <div class="grid gap-4">
@@ -251,13 +252,16 @@ onMounted(() => {
           label="Title*"
           :rules="[rules.isRequired]"
           class="w-full"
+          required
         />
 
         <x-textarea
           v-model="activityForm.description"
-          label="Description*"
+          label="Description"
           :adjust-to-text="false"
           class="w-full"
+          :rules="[rules.isRequired]"
+          required
         />
 
         <x-select
@@ -267,6 +271,7 @@ onMounted(() => {
           :rules="[rules.isRequired]"
           placeholder="Select Assignee"
           class="w-full"
+          required
         />
 
         <x-input
@@ -275,6 +280,7 @@ onMounted(() => {
           type="datetime-local"
           :rules="[rules.isRequired]"
           class="w-full"
+          required
         />
       </div>
 

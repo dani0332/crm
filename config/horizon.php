@@ -206,7 +206,7 @@ return [
         // 'uat2' => [
         //     'supervisor-uat2' => [
         //         'connection' => 'redis',
-        //         'queue' => ['default', 'renewals'],
+        //         'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
         //         'balance' => 'auto',
         //         'minProcesses' => 1,
         //         'maxProcesses' => 3,

@@ -4,7 +4,9 @@ const page = usePage();
 const notification = useNotifications('toast');
 import SageAPILogs from '@/inertia/Components/SageAPILogs.vue';
 import NProgress from 'nprogress';
+import BookPolicyOverrideCommissionLimitModal from '@/inertia/Components/BookPolicyOverrideCommissionLimitModal.vue';
 const { isRequired } = useRules();
+import { h, defineComponent } from 'vue';
 
 const props = defineProps({
   quote: {
@@ -40,6 +42,30 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  showOcrNotification: {
+    required: false,
+    type: Boolean,
+    default: false,
+  },
+  ocrLoadingDocType: {
+    required: false,
+    type: [String, null],
+    default: null,
+  },
+  ocrLoadingDocTypes: {
+    required: false,
+    type: Object,
+    default: () => new Set(),
+  },
+  isDocTypeLoading: {
+    required: false,
+    type: Function,
+    default: () => () => false,
+  },
+  isPlanDetailSectionEnabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const isLoading = ref(false);
@@ -58,6 +84,8 @@ const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeIdEnum = page.props.quoteBusinessTypeIdEnum;
 const policyIssuanceEnum = page.props.policyIssuanceEnum;
+const commissionPercentageExceedsLimit = ref(false);
+const showCommissionPercentageExceedsLimitAlert = ref(false);
 
 const dateToYMD = date => {
   if (date) {
@@ -95,8 +123,12 @@ const dateToDMYWithTime = date => {
   return '';
 };
 
+let isHealthAUHLead = ref(
+  page.props.bookPolicyDetails.isHealthAUHLead || false,
+);
+
 const commissionErrorMessage =
-  'The commission amount you entered is outside the permitted range.';
+  'The commission percentage exceeds the allowed maximum or falls below the minimum threshold.';
 const bp = reactive({
   isEditing: false,
   isAllowedToUpdateCommission: true,
@@ -209,11 +241,17 @@ const bpForm = useForm({
     page.props?.bookPolicyDetails?.disabledCommissionTooltip,
   isTapCaptureProcessStart:
     page.props?.bookPolicyDetails?.isTapCaptureProcessStart,
+  currency: page.props?.payments[0]?.currency || 'AED',
+  commission_based_on_currency:
+    page.props?.payments[0]?.commission_based_on_currency || '',
+  exchange_rate: page.props?.payments[0]?.exchange_rate || '',
 });
 
 let is_lacking_payment = ref(
   page.props.bookPolicyDetails.isLackingOfPayment || false,
 );
+
+const isLifeLead = props.quoteType === quoteTypeCodeEnum.Life.toLowerCase();
 
 watch(
   () => page.props.bookPolicyDetails.isLackingOfPayment,
@@ -223,30 +261,37 @@ watch(
 );
 
 const onUpdateBookPolicyDetails = isValid => {
-  if (!bp.isAllowedToUpdateCommission) {
-    notification.error({
-      title: commissionErrorMessage,
-      position: 'top',
-    });
-    return;
-  }
-  showInsufficientPaymentAlert();
-  if (isValid) {
-    bpForm.post('/quotes/update-booking-policy', {
-      preserveScroll: true,
-      onSuccess: () => {
-        bp.isEditing = false;
-      },
-      onError: errors => {
-        Object.keys(errors).forEach(function (key) {
-          notification.error({
-            title: errors[key],
-            position: 'top',
+  return new Promise((resolve, reject) => {
+    if (!bp.isAllowedToUpdateCommission) {
+      notification.error({
+        title: commissionErrorMessage,
+        position: 'top',
+      });
+      reject(false);
+      return;
+    }
+    showInsufficientPaymentAlert();
+    if (isValid) {
+      bpForm.post('/quotes/update-booking-policy', {
+        preserveScroll: true,
+        onSuccess: () => {
+          bp.isEditing = false;
+          resolve(true);
+        },
+        onError: errors => {
+          Object.keys(errors).forEach(function (key) {
+            notification.error({
+              title: errors[key],
+              position: 'top',
+            });
           });
-        });
-      },
-    });
-  }
+          reject(false);
+        },
+      });
+    } else {
+      reject(false);
+    }
+  });
 };
 
 const isAllowedToSendPolicy = ref(false);
@@ -257,7 +302,27 @@ const modals = reactive({
   sendPolicyPopup: false,
 });
 
+let isBookingDetailsUpdated = computed(
+  () =>
+    page.props.payments[0]?.commmission_percentage > 0 &&
+    page.props.payments[0]?.commission_vat > 0 &&
+    page.props.payments[0]?.commission > 0,
+);
+
 const confirmSendPolicy = () => {
+  if (
+    !isBookingDetailsUpdated.value &&
+    (bpForm.commission_vat_applicable > 0 ||
+      bpForm.commission_vat_not_applicable > 0)
+  ) {
+    calculateCommission();
+    if (!bp.isAllowedToUpdateCommission) {
+      disableCommissionVatApplicable.value = false;
+      bp.isEditing = true;
+      return;
+    }
+  }
+
   if (page.props.bookPolicyDetails.isInsufficientPayment) {
     modals.sendPolicyPopup = true;
   } else {
@@ -265,8 +330,37 @@ const confirmSendPolicy = () => {
   }
 };
 
-const submitPolicy = () => {
+const executeUpdateBookingPolicy = async () => {
+  if (
+    bpForm.commission_vat_applicable > 0 ||
+    bpForm.commission_vat_not_applicable > 0
+  ) {
+    try {
+      const result = await onUpdateBookPolicyDetails(true);
+      if (!result) {
+        modals.sendPolicyConfirm = false;
+        return false;
+      }
+      return true;
+    } catch (error) {
+      modals.sendPolicyConfirm = false;
+      return false;
+    }
+  }
+  return true;
+};
+
+const submitPolicy = async () => {
   isLoading.value = true;
+
+  let isSuccessfullyExecuted = true;
+  if (!isBookingDetailsUpdated.value) {
+    isSuccessfullyExecuted = await executeUpdateBookingPolicy();
+    if (!isSuccessfullyExecuted) {
+      return;
+    }
+  }
+
   let url = '/quotes/send-booking-policy';
   let data = {
     send_policy_type: props.bookPolicyDetails.sendPolicyType,
@@ -276,10 +370,9 @@ const submitPolicy = () => {
     transaction_payment_status: bpForm.transaction_payment_status,
     modelType: props.modelType,
   };
-  axios
+  await axios
     .post(url, data)
     .then(response => {
-      console.log(response);
       if (response.status == 200) {
         notification.success({
           title: response.data.message,
@@ -318,18 +411,29 @@ const calculateCommissionPercentage = (
   totalCommissionWithoutVat,
   totalPriceWithoutVat,
 ) => {
+  commissionPercentageExceedsLimit.value = false;
   if (totalCommissionWithoutVat > 0) {
     let totalCommissionInPercentage =
       (totalCommissionWithoutVat / totalPriceWithoutVat) * 100;
     let brokerCommission = props.bookPolicyDetails.brokerCommission;
-    let commission_percentage_min =
-      brokerCommission?.commission_percentage_min || 0;
-    let commission_percentage_max =
-      brokerCommission?.commission_percentage_max || 0;
+    let commission_percentage_min = Math.max(
+      (Number(brokerCommission?.fixed_commission) ?? 0) - 2.5,
+      0,
+    );
+    let commission_percentage_max = brokerCommission?.fixed_commission
+      ? Number(brokerCommission?.fixed_commission) + 2.5
+      : 0;
     if (commission_percentage_min != 0 && commission_percentage_max != 0) {
       if (
         totalCommissionInPercentage < commission_percentage_min ||
         totalCommissionInPercentage > commission_percentage_max
+      ) {
+        commissionPercentageExceedsLimit.value = true;
+      }
+      if (
+        (totalCommissionInPercentage < commission_percentage_min ||
+          totalCommissionInPercentage > commission_percentage_max) &&
+        !can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT)
       ) {
         bp.isAllowedToUpdateCommission = false;
       } else {
@@ -339,6 +443,22 @@ const calculateCommissionPercentage = (
     return useRoundIt(totalCommissionInPercentage);
   } else {
     return 0;
+  }
+};
+
+const calculateCommissionBasedOnCurrency = () => {
+  if (isLifeLead && bpForm.currency !== 'AED') {
+    const exchangeRate = Number(bpForm.exchange_rate) || 0;
+    const commissionBasedOnCurrency =
+      Number(bpForm.commission_based_on_currency) || 0;
+
+    if (exchangeRate > 0 && commissionBasedOnCurrency > 0) {
+      bpForm.commission_vat_not_applicable = useRoundIt(
+        commissionBasedOnCurrency * exchangeRate,
+      );
+    } else {
+      bpForm.commission_vat_not_applicable = '';
+    }
   }
 };
 
@@ -376,7 +496,10 @@ const calculateCommission = () => {
     bpForm.total_commission = 0;
   }
 };
-let isLifeLead = page.props.quoteType == quoteTypeCodeEnum.Life;
+
+let isComissionVatApplicableEnabled =
+  page.props.quoteType == quoteTypeCodeEnum.Life ||
+  page.props.quoteType == quoteTypeCodeEnum.SAVINGS;
 let isBusinessLead = page.props.quoteType == quoteTypeCodeEnum.Business;
 
 const commissionVatNotApplicableTooltip = computed(() => {
@@ -385,7 +508,7 @@ const commissionVatNotApplicableTooltip = computed(() => {
     return bpForm.disabledCommissionTooltip;
   }*/
   if (bpForm.commission_vat_applicable > 0) {
-    if (isLifeLead) {
+    if (isComissionVatApplicableEnabled) {
       toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE_FILLED;
     } else if (isBusinessLead) {
       let insuranceBusinessType =
@@ -410,7 +533,7 @@ const commissionVatApplicableTooltip = computed(() => {
     return bpForm.disabledCommissionTooltip;
   }*/
   if (bpForm.commission_vat_not_applicable > 0) {
-    if (isLifeLead) {
+    if (isComissionVatApplicableEnabled) {
       toolTip =
         productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE_FILLED;
     } else if (isBusinessLead) {
@@ -432,7 +555,16 @@ const commissionVatApplicableTooltip = computed(() => {
 });
 
 const disableCommissionVatNotApplicable = computed(() => {
+  // for life only
   if (isLifeLead) {
+    if (bpForm.currency !== 'AED') {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  if (isComissionVatApplicableEnabled) {
     return !bp.isEditing || bpForm.commission_vat_applicable > 0;
   } else if (isBusinessLead) {
     let insuranceBusinessType = page.props.quote?.business_type_of_insurance_id;
@@ -453,6 +585,21 @@ const disableCommissionVatApplicable = computed(() => {
   // Enable Commission vat not applicable for all LOBs or when commission vat not applicable is  empty
   return !bp.isEditing || bpForm.commission_vat_not_applicable > 0;
 });
+
+const showCurrencyFields = computed(() => {
+  return isLifeLead && !props.isPlanDetailSectionEnabled;
+});
+
+const showNonAEDFields = computed(() => {
+  return isLifeLead && bpForm.currency !== 'AED';
+});
+
+const currencyOptions = [
+  { value: 'AED', label: 'AED' },
+  { value: 'USD', label: 'USD' },
+  { value: 'GBP', label: 'GBP' },
+  { value: 'EUR', label: 'EUR' },
+];
 
 const showSendAndBookPolicyButtonBlock = computed(() => {
   if (bpForm.isTapCaptureProcessStart || !isAllPaymentAuthorized()) {
@@ -482,6 +629,11 @@ const showSendAndBookPolicyButtonBlock = computed(() => {
   );
 });
 
+const isSendTypeSage = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  return sendPolicyType == sendPolicyTypeEnum.SAGE;
+});
+
 const showSendAndBookPolicyButton = computed(() => {
   let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
   let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
@@ -501,14 +653,6 @@ const disableSendAndBookPolicyButton = computed(() => {
   let isPolicyStatusCancellationPending =
     props.quote.quote_status_id ==
     page.props.quoteStatusEnum.CancellationPending;
-  console.log(
-    'disableSendAndBookPolicyButton',
-    props.bookPolicyDetails,
-    !props.bookPolicyDetails?.sendButton,
-    !isPolicyStatusCancellationPending,
-    disableIfPolicyFailedAndNoBookingFailedEditPermission.value,
-    !can(permission),
-  );
   return (
     !props.bookPolicyDetails?.sendButton &&
     !isPolicyStatusCancellationPending &&
@@ -554,11 +698,6 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
 });
 
 const showBookingFailedAlert = () => {
-  console.log(
-    'showBookingFailedAlert',
-    disableIfPolicyFailedAndNoBookingFailedEditPermission.value &&
-      isPolicyBookingFailed,
-  );
   if (
     disableIfPolicyFailedAndNoBookingFailedEditPermission.value &&
     isPolicyBookingFailed
@@ -659,6 +798,31 @@ watch(
   },
 );
 
+watch(
+  [() => bpForm.exchange_rate, () => bpForm.commission_based_on_currency],
+  () => {
+    if (showNonAEDFields.value) {
+      calculateCommissionBasedOnCurrency();
+    }
+  },
+);
+
+watch(
+  () => bpForm.currency,
+  newCurrency => {
+    if (isLifeLead) {
+      if (newCurrency === 'AED') {
+        // Clear calculated fields when switching to AED
+        bpForm.commission_based_on_currency = '';
+        bpForm.exchange_rate = '';
+      } else {
+        // Clear commission_vat_not_applicable when switching away from AED
+        bpForm.commission_vat_not_applicable = '';
+      }
+    }
+  },
+);
+
 const sendPolicyConfirmation = () => {
   if (page.props.bookPolicyDetails.isInsufficientPayment) {
     isAllowedToSendPolicy.value = true;
@@ -704,7 +868,6 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
-
 const filterCCPayments = payment => {
   return payment.payment_splits.filter(
     item => item.payment_method.code === 'CC',
@@ -743,6 +906,71 @@ const isDisabledSendPCB = computed(() => {
     }
   }
 });
+
+const FieldLoader = defineComponent({
+  props: {
+    loading: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  setup(props, { slots }) {
+    return () =>
+      h('div', { class: 'relative' }, [
+        slots.default && slots.default(),
+        props.loading &&
+          h(
+            'div',
+            {
+              class:
+                'absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center rounded z-10',
+            },
+            [
+              h('div', {
+                class:
+                  'animate-spin h-5 w-5 border-2 border-gray-600 border-t-transparent rounded-full',
+              }),
+            ],
+          ),
+      ]);
+  },
+});
+
+// --- OCR Loading Logic ---
+const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
+
+// Helper function to check if a document type is currently being processed
+const isDocTypeLoading = docType => {
+  let result = false;
+  let source = 'none';
+
+  // Handle both function and string types for backwards compatibility
+  if (typeof props.ocrLoadingDocType === 'function') {
+    result = props.ocrLoadingDocType(docType);
+    source = 'function';
+  }
+  // Check the reactive Set if available
+  else if (
+    props.ocrLoadingDocTypes &&
+    props.ocrLoadingDocTypes.has &&
+    props.ocrLoadingDocTypes.has(docType)
+  ) {
+    result = true;
+    source = 'reactiveSet';
+  }
+  // Check the function prop if available
+  else if (typeof props.isDocTypeLoading === 'function') {
+    result = props.isDocTypeLoading(docType);
+    source = 'functionProp';
+  }
+  // Fall back to old string comparison
+  else {
+    result = props.ocrLoadingDocType === docType;
+    source = 'stringComparison';
+  }
+
+  return result;
+};
 </script>
 
 <template>
@@ -826,7 +1054,7 @@ const isDisabledSendPCB = computed(() => {
                 <template v-if="isShowingTransactionPaymentStatus">
                   <x-tooltip placement="left">
                     <dd class="border-b border-dotted border-black inline">
-                      {{ bpForm.transaction_payment_status }}
+                      {{ bpForm.transaction_payment_status ?? 'N/A' }}
                     </dd>
                     <template #tooltip>
                       {{ bpForm.transaction_payment_status_tool_tip }}
@@ -870,14 +1098,21 @@ const isDisabledSendPCB = computed(() => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <DatePicker
-                    v-model="bpForm.invoice_date"
-                    type="date"
-                    placeholder="Insurer Invoice Date"
-                    class="w-full"
-                    :disabled="!bp.isEditing"
-                    :rules="[isRequired]"
-                  />
+                  <FieldLoader
+                    :loading="
+                      showOcrNotification &&
+                      isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE?.value)
+                    "
+                  >
+                    <DatePicker
+                      v-model="bpForm.invoice_date"
+                      type="date"
+                      placeholder="Insurer Invoice Date"
+                      class="w-full"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                    />
+                  </FieldLoader>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -912,13 +1147,22 @@ const isDisabledSendPCB = computed(() => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-input
-                    v-model="bpForm.insurer_tax_invoice_number"
-                    placeholder="Insurer Tax Invoice Number"
-                    class="w-full"
-                    :disabled="!bp.isEditing"
-                    :rules="[isRequired]"
-                  />
+                  <FieldLoader
+                    :loading="
+                      showOcrNotification &&
+                      isDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+                      )
+                    "
+                  >
+                    <x-input
+                      v-model="bpForm.insurer_tax_invoice_number"
+                      placeholder="Insurer Tax Invoice Number"
+                      class="w-full"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                    />
+                  </FieldLoader>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -957,13 +1201,22 @@ const isDisabledSendPCB = computed(() => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-input
-                    v-model="bpForm.insurer_commmission_invoice_number"
-                    placeholder="Insurer Commission Tax Invoice Number"
-                    class="w-full"
-                    :disabled="!bp.isEditing"
-                    :rules="[isRequired]"
-                  />
+                  <FieldLoader
+                    :loading="
+                      showOcrNotification &&
+                      isDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+                      )
+                    "
+                  >
+                    <x-input
+                      v-model="bpForm.insurer_commmission_invoice_number"
+                      placeholder="Insurer Commission Tax Invoice Number"
+                      class="w-full"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                    />
+                  </FieldLoader>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -983,6 +1236,77 @@ const isDisabledSendPCB = computed(() => {
                 </dt>
                 <dd>{{ bpForm.commission_percentage }}%</dd>
               </div>
+              <template v-if="showCurrencyFields">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                    >
+                      Currency *
+                    </label>
+                  </dt>
+                  <dd>
+                    <x-select
+                      v-model="bpForm.currency"
+                      placeholder="Select Currency"
+                      class="w-full"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                      :options="currencyOptions"
+                    />
+                  </dd>
+                </div>
+
+                <div></div>
+
+                <div v-if="showNonAEDFields" class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                    >
+                      Commission based on Currency *
+                    </label>
+                  </dt>
+                  <dd>
+                    <x-input
+                      v-model="bpForm.commission_based_on_currency"
+                      @input="calculateCommissionBasedOnCurrency"
+                      @change="calculateCommissionBasedOnCurrency"
+                      placeholder="Commission based on Currency"
+                      class="w-full"
+                      type="number"
+                      step="0.01"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                    />
+                  </dd>
+                </div>
+                <div></div>
+
+                <div v-if="showNonAEDFields" class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                    >
+                      Exchange Rate *
+                    </label>
+                  </dt>
+                  <dd>
+                    <x-input
+                      v-model="bpForm.exchange_rate"
+                      @input="calculateCommissionBasedOnCurrency"
+                      @change="calculateCommissionBasedOnCurrency"
+                      placeholder="Exchange Rate"
+                      class="w-full"
+                      type="number"
+                      step="0.0001"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                    />
+                  </dd>
+                </div>
+                <div></div>
+              </template>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
@@ -1006,7 +1330,10 @@ const isDisabledSendPCB = computed(() => {
                         @change="calculateCommission"
                         placeholder="Commission VAT NOT APPLICABLE"
                         class="w-full"
-                        :disabled="disableCommissionVatNotApplicable"
+                        :disabled="
+                          disableCommissionVatNotApplicable ||
+                          bpForm.isCommissionDisabled
+                        "
                       />
                       <div
                         v-if="
@@ -1083,9 +1410,56 @@ const isDisabledSendPCB = computed(() => {
                 <dd>
                   <template v-if="commissionVatApplicableTooltip">
                     <x-tooltip class="w-full">
+                      <FieldLoader
+                        :loading="
+                          showOcrNotification &&
+                          isDocTypeLoading(
+                            ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER
+                              ?.value,
+                          )
+                        "
+                      >
+                        <x-input
+                          v-model="bpForm.commission_vat_applicable"
+                          @change="calculateCommission"
+                          @input="calculateCommission"
+                          placeholder="Commission VAT APPLICABLE"
+                          class="w-full"
+                          :disabled="disableCommissionVatApplicable"
+                        />
+                        <div
+                          v-if="
+                            !disableCommissionVatApplicable &&
+                            !bp.isAllowedToUpdateCommission
+                          "
+                          class="x-input-footer text-xs mt-1"
+                        >
+                          <p class="text-error-500 dark:text-error-400">
+                            {{ commissionErrorMessage }}
+                          </p>
+                        </div>
+                      </FieldLoader>
+                      <template #tooltip>
+                        <span class="custom-tooltip-content">{{
+                          commissionVatApplicableTooltip
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </template>
+                  <template v-else>
+                    <FieldLoader
+                      :loading="
+                        showOcrNotification &&
+                        isDocTypeLoading(
+                          ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER
+                            ?.value,
+                        )
+                      "
+                    >
                       <x-input
                         v-model="bpForm.commission_vat_applicable"
                         @change="calculateCommission"
+                        @input="calculateCommission"
                         placeholder="Commission VAT APPLICABLE"
                         class="w-full"
                         :disabled="disableCommissionVatApplicable"
@@ -1101,33 +1475,7 @@ const isDisabledSendPCB = computed(() => {
                           {{ commissionErrorMessage }}
                         </p>
                       </div>
-
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          commissionVatApplicableTooltip
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </template>
-                  <template v-else>
-                    <x-input
-                      v-model="bpForm.commission_vat_applicable"
-                      @change="calculateCommission"
-                      placeholder="Commission VAT APPLICABLE"
-                      class="w-full"
-                      :disabled="disableCommissionVatApplicable"
-                    />
-                    <div
-                      v-if="
-                        !disableCommissionVatApplicable &&
-                        !bp.isAllowedToUpdateCommission
-                      "
-                      class="x-input-footer text-xs mt-1"
-                    >
-                      <p class="text-error-500 dark:text-error-400">
-                        {{ commissionErrorMessage }}
-                      </p>
-                    </div>
+                    </FieldLoader>
                   </template>
                 </dd>
               </div>
@@ -1146,6 +1494,21 @@ const isDisabledSendPCB = computed(() => {
                   </x-tooltip>
                 </dt>
                 <dd>{{ bpForm.total_commission }}</dd>
+              </div>
+              <div
+                v-if="
+                  props.quoteType === quoteTypeCodeEnum.Health.toLowerCase()
+                "
+                class="grid sm:grid-cols-2"
+              >
+                <dt class="font-medium uppercase">Branch</dt>
+                <dd>
+                  {{
+                    page.props.branchOptions?.find(
+                      item => item.id === props.quote.emirate_of_your_visa_id,
+                    )?.branch
+                  }}
+                </dd>
               </div>
             </dl>
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
@@ -1215,7 +1578,8 @@ const isDisabledSendPCB = computed(() => {
                               <td>
                                 {{
                                   formatAmount(
-                                    item.commission_vat_applicable != 0
+                                    item.commission_vat_applicable != null &&
+                                      item.commission_vat_applicable != 0
                                       ? item.commission_vat_applicable
                                       : item.commission_vat_not_applicable,
                                   )
@@ -1387,6 +1751,16 @@ const isDisabledSendPCB = computed(() => {
                     <span>{{ 'Please update the booking details.' }}</span>
                   </template>
                 </x-tooltip>
+                <BookPolicyOverrideCommissionLimitModal
+                  :showCommissionPercentageExceedsLimitAlert="
+                    showCommissionPercentageExceedsLimitAlert
+                  "
+                  :bpForm="bpForm"
+                  @modalClosed="
+                    showCommissionPercentageExceedsLimitAlert = false
+                  "
+                />
+
                 <template v-if="is_lacking_payment || isDisabledSendPCB">
                   <x-tooltip>
                     <x-button
@@ -1608,6 +1982,11 @@ const isDisabledSendPCB = computed(() => {
                 </template>
               </template>
             </div>
+            <template v-if="isHealthAUHLead">
+              <p class="text-gray-500 text-sm text-right mt-3 mb-2 mx-4">
+                {{ productionProcessTooltipEnum.HEALTH_AUH_BOOKING_NOTE }}
+              </p>
+            </template>
           </div>
         </x-form>
       </template>

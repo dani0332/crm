@@ -17,6 +17,8 @@ final class QuoteDocumentsEnum extends Enum
     public const FINAL_TERMS_AND_CONDITIONS = 'CTC';
     public const POLICY_HANDBOOK = 'PHB';
     public const EP = 'EP';
+    public const RECEIPT = 'RECEIPT';
+    public const CAR_MULKIY = 'CAR_MULKIY';
 
     // Life Quote
     public const LIFE_POLICY_SCHEDULE = 'PS_LIFE';
@@ -33,4 +35,26 @@ final class QuoteDocumentsEnum extends Enum
     public const TRAVEL_TAX_INVOICE = 'TI';
     public const TRAVEL_TAX_INVOICE_RAISE_BY_BUYER = 'CTIRBB';
     public const TRAVEL_POLICY_CERTIFICATE = 'CPC';
+
+    // Savings Quote
+    public const SAVINGS_POLICY_SCHEDULE = 'PS_SAV';
+    public const SAVINGS_POLICY_CERTIFICATE = 'PC_SAV';
+    public const SAVINGS_APPLICATION_COPY = 'AC_SAV';
+    public const SAVINGS_TAX_INVOICE = 'TI';
+    public const SAVINGS_TAX_INVOICE_RAISE_BY_BUYER = 'CTIRBB';
+    public const SAVINGS_RECEIPT = 'SPDR';
+    public const SAVINGS_ADDITIONAL_EMAIL_ATTACHMENTS = 'TAEA';
+    // End of Savings Quote
+
+    public const CAR_REGISTRATION_CARD = 'CAR_MULKIY';
+
+    public static function getSukoonAllDocTypes(): array
+    {
+        return [self::CAR_TAX_INVOICE, self::POLICY_SCHEDULE, self::CAR_TAX_INVOICE_RAISE_BY_BUYER];
+    }
+
+    public static function getSukoonInitialDocTypes(): array
+    {
+        return [self::CAR_TAX_INVOICE, self::POLICY_SCHEDULE];
+    }
 }

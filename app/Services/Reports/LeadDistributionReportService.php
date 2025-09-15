@@ -21,6 +21,7 @@ use App\Models\Tier;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -42,6 +43,8 @@ class LeadDistributionReportService extends BaseService
 
         $filters = $this->getFilters($request);
         $reportDataQuery = $this->buildQuery($lob, $filters);
+
+        LoggerService::sql(self::class.' - Lead Distribution Report Query', $reportDataQuery);
 
         return $reportDataQuery->paginate(15)->withQueryString();
     }
@@ -289,6 +292,7 @@ class LeadDistributionReportService extends BaseService
             quoteTypeCode::Cycle => ['cycle_quote_request', 'cycle_quote_request.personal_quote_id', 'personal_quotes.id'],
             quoteTypeCode::Jetski => ['jetski_quote_request', 'jetski_quote_request.personal_quote_id', 'personal_quotes.id'],
             quoteTypeCode::Business => ['business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid'],
+            quoteTypeCode::SAVINGS => ['savings_quote_request', 'savings_quote_request.personal_quote_id', 'personal_quotes.id'],
         ];
 
         // Apply join based on LOB

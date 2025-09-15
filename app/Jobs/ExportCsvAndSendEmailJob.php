@@ -2,18 +2,19 @@
 
 namespace App\Jobs;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ExportCsvAndSendEmailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 600; // 300 (5 minutes) 900 (15 minutes)
     public $tries = 2;
@@ -24,6 +25,10 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
     /**
      * Create a new job instance.
+     *
+     * @param  string  $exportClass  - The export class name (string, not instance)
+     * @param  string  $recipientEmail  - Recipient email address
+     * @param  array  $requestParams  - Clean array of parameters (no Request objects or models)
      */
     public function __construct(
         string $exportClass,
@@ -50,8 +55,12 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         Log::info("CSV export job started for {$this->requestParams['fileName']}. Memory: {$initialMemory}MB, Attempt: {$this->attempts()}");
 
         try {
-            // Instantiate the export class
-            $exportInstance = app($this->exportClass);
+            // Instantiate the export class with constructor parameters if needed
+            $exportInstance = $this->instantiateExportClass();
+
+            if (empty($this->requestParams['user']) && ! empty($this->requestParams['user_id'])) {
+                $this->requestParams['user'] = User::with(['permissions', 'roles.permissions'])->findOrFail($this->requestParams['user_id']);
+            }
 
             // Process CSV and send email
             $exportInstance->sendEmailWithCSVAttachment(
@@ -79,9 +88,8 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
             throw $e;
         } finally {
-            // Clean up resources
+            // Always reset database connection back to default
             DB::setDefaultConnection('mysql');
-            Auth::logout();
             gc_collect_cycles();
         }
     }
@@ -92,6 +100,39 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
     public function failed(\Throwable $exception)
     {
         Log::error("CSV export job for {$this->requestParams['fileName']} has permanently failed: {$exception->getMessage()}");
+    }
+
+    /**
+     * Instantiate the export class with appropriate constructor parameters
+     */
+    private function instantiateExportClass()
+    {
+        // Handle PersonalQuotesExport which needs quoteType in constructor
+        if ($this->exportClass === 'App\\Exports\\PersonalQuotesExport') {
+            $quoteType = $this->requestParams['quoteType'] ?? null;
+
+            return app($this->exportClass, ['quoteType' => $quoteType]);
+        }
+
+        // Handle exportClass which needs requestParams in constructor
+        $exportWithRequestParams = [
+            'App\\Exports\\AmlCftReportExport',
+            'App\\Exports\\Reports\\SaleSummaryReportExport',
+            'App\\Exports\\Reports\\SaleDetailReportExport',
+            'App\\Exports\\Reports\\EndingPoliciesReportExport',
+            'App\\Exports\\Reports\\TransactionReportExport',
+            'App\\Exports\\Reports\\ActivePoliciesReportExport',
+            'App\\Exports\\Reports\\EndorsementReportExport',
+            'App\\Exports\\Reports\\InstallmentReportExport',
+            'App\\Exports\\Reports\\ConversionAsAtReportExport',
+        ];
+
+        if (in_array($this->exportClass, $exportWithRequestParams)) {
+            return app($this->exportClass, ['requestParams' => $this->requestParams]);
+        }
+
+        // For other export classes, use default instantiation
+        return app($this->exportClass);
     }
 
     /**

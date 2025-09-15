@@ -160,6 +160,7 @@ class ActivitiesService extends BaseService
             quoteTypeCode::Yacht => QuoteTypeId::Yacht,
             quoteTypeCode::GroupMedical => QuoteTypeId::Business,
             quoteTypeCode::CompanyCar => QuoteTypeId::CompanyCar,
+            quoteTypeCode::SAVINGS => QuoteTypeId::Savings,
         ];
 
         $modelType = ucwords($modelType);

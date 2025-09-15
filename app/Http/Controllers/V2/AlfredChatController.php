@@ -10,6 +10,7 @@ use App\Exports\InstantChatConsolidatedExport;
 use App\Exports\InstantChatDetailedExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
+use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Models\AlfredChat;
 use App\Models\Lookup;
 use App\Models\QuoteBatches;
@@ -17,6 +18,7 @@ use App\Models\QuoteStatus;
 use App\Services\InstantAlfredService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AlfredChatController extends Controller
 {
@@ -136,8 +138,7 @@ class AlfredChatController extends Controller
 
     public function exportChat(Request $request)
     {
-        $fileName = $request->report.' '.Carbon::now()->format('Y-m-d_H-i-s').'.xlsx';
-
+        $fileName = $request->report;
         switch ($request->report) {
             case InstantChatReportsEnum::CONSOLIDATED_REPORT:
                 return (new InstantChatConsolidatedExport)->download($fileName);
@@ -148,6 +149,75 @@ class AlfredChatController extends Controller
             default:
                 abort(400, 'Invalid report type requested.');
         }
+    }
 
+    public function exportChatToEmail(Request $request)
+    {
+        // Validate request parameters
+        $request->validate([
+            'report' => 'required|string',
+            'recipientEmail' => 'sometimes|email',
+            'subject' => 'sometimes|string',
+            'ccRecipients' => 'sometimes|array',
+            'ccRecipients.*' => 'email',
+        ]);
+
+        $exportClassMap = [
+            InstantChatReportsEnum::CONSOLIDATED_REPORT => InstantChatConsolidatedExport::class,
+            InstantChatReportsEnum::DETAILED_REPORT => InstantChatDetailedExport::class,
+        ];
+
+        // Check if the requested report type is supported
+        if (! array_key_exists($request->report, $exportClassMap)) {
+            return response()->json([
+                'error' => 'Invalid report type requested.',
+                'available_reports' => array_keys($exportClassMap),
+            ], 400);
+        }
+
+        // Set default recipient email to current user if not provided
+        $recipientEmail = $request->recipientEmail ?? (Auth::check() ? Auth::user()->email : null);
+
+        if (! $recipientEmail) {
+            return response()->json([
+                'error' => 'Recipient email is required.',
+                'message' => 'Please provide a recipient email or ensure you are authenticated.',
+            ], 400);
+        }
+
+        $fileName = $request->report.' '.Carbon::now()->format('Y-m-d_H-i-s');
+        $subject = $request->subject ?? "Chat Report: {$request->report}";
+
+        $requestParams = array_merge($request->all(), [
+            'recipientEmail' => $recipientEmail,
+            'subject' => $subject,
+            'fileName' => $fileName,
+            'ccRecipients' => $request->ccRecipients ?? [],
+            'exportTitle' => 'Chat Report',
+        ]);
+
+        // Get the export class
+        $exportClass = $exportClassMap[$request->report];
+        try {
+            // Dispatch the job using the existing ExportCsvAndSendEmailJob
+            ExportCsvAndSendEmailJob::dispatch(
+                $exportClass,
+                $recipientEmail,
+                $requestParams
+            );
+
+            return response()->json([
+                'message' => 'Your export is being processed. You will receive an email with the CSV file shortly.',
+                'report_type' => $request->report,
+                'recipient' => $recipientEmail,
+                'subject' => $subject,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to initiate export.',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

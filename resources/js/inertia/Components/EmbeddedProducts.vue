@@ -90,6 +90,7 @@ const sendDocumentLoader = ref(false);
 const viewDocumentLoader = ref(false);
 const downloadDocumentLoader = ref(false);
 const addDocumentLoader = ref(false);
+const bookEPOnSageLoader = ref(false);
 const sendDocumentForm = useForm({
   quoteId: props.quote.id,
   modelType: props.modelType,
@@ -142,6 +143,10 @@ const sendDcoument = id => {
 
 const downloadFile = download => {
   const save = document.createElement('a');
+  const documentPath = download.is_watermarked
+    ? download.watermarked_doc_path
+    : download.path;
+
   if (typeof save.download !== 'undefined') {
     // if the download attribute is supported, save.download will return empty string, if not supported, it will return undefined
     // if you are using helper method, such as isNone in ember, you can also do isNone(save.download)
@@ -150,7 +155,7 @@ const downloadFile = download => {
       '//' +
       window.location.host +
       '/embedded-products/download/force?path=' +
-      download.path;
+      documentPath;
     save.target = '_blank';
     save.download = download.name;
     save.dispatchEvent(new MouseEvent('click'));
@@ -160,7 +165,7 @@ const downloadFile = download => {
       '//' +
       window.location.host +
       '/embedded-products/download/force?path=' +
-      download.path; // so that it opens new tab for IE11
+      documentPath; // so that it opens new tab for IE11
   }
 
   downloadLoader.value = true;
@@ -196,6 +201,49 @@ const viewDocument = id => {
       viewDocumentLoader.value = false;
     });
 };
+const rescheduleEPBooking = async item => {
+  try {
+    let epTransactionId = getFirstPriceWithTransaction(item.prices)
+      ?.transactions[0]?.id;
+    if (!epTransactionId) {
+      notification.error({
+        title: 'System failed to schedule booking of Embedded Product',
+        position: 'top',
+      });
+      return;
+    }
+    bookEPOnSageLoader.value = true;
+    const response = await axios.post(
+      route('embedded-products.reschedule-sage-booking'),
+      {
+        quoteId: props.quote.id,
+        modelType: props.modelType,
+        epTransactionId: epTransactionId,
+        insuranceProviderId: item.insurance_provider_id,
+      },
+    );
+    bookEPOnSageLoader.value = false;
+    if (response.data.success) {
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
+      router.visit(location.href);
+    } else {
+      notification.error({
+        title: response.data.message,
+        position: 'top',
+      });
+      router.visit(location.href);
+    }
+  } catch (err) {
+    bookEPOnSageLoader.value = false;
+    notification.error({
+      title: 'Embedded Product Booking Failed',
+      position: 'top',
+    });
+  }
+};
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
@@ -225,6 +273,18 @@ const epTable = reactive({
     {
       text: 'Payment Status',
       value: 'payment_status',
+    },
+    {
+      text: 'Api Status',
+      value: 'policy_status',
+    },
+    {
+      text: 'Sage AR Receipt ID',
+      value: 'sage_ar_payment_receipt_id',
+    },
+    {
+      text: 'Sage Status',
+      value: 'sage_status',
     },
     {
       text: 'Actions',
@@ -268,6 +328,11 @@ const onCopyText = () => {
     page.props.quoteTypeCodeEnum.Bike.toLowerCase()
   ) {
     providerCode = props.quote.car_plan?.insurance_provider?.code;
+  } else if (
+    props.modelType.toLowerCase() ==
+    page.props.quoteTypeCodeEnum.Home.toLowerCase()
+  ) {
+    providerCode = props.quote.insurance_provider?.code;
   }
 
   let paymentLink =
@@ -412,7 +477,7 @@ const onVoidSubmit = isValid => {
       voidPaymentForm.processing = false;
     });
 };
-const hasAnyRole = roles => useHasAnyRole(roles);
+
 const canAny = permissions => useCanAny(permissions);
 const can = permission => useCan(permission);
 const readOnlyMode = reactive({
@@ -572,6 +637,26 @@ const onAddDocumentSubmit = event => {
             }}
           </template>
 
+          <template #item-sage_ar_payment_receipt_id="{ prices }">
+            {{
+              getFirstPriceWithTransaction(prices)?.transactions[0]
+                ?.sage_ar_payment_receipt_id ?? '-'
+            }}
+          </template>
+          <template #item-sage_status="{ prices }">
+            {{
+              getFirstPriceWithTransaction(prices)?.transactions[0]
+                ?.sage_status ?? '-'
+            }}
+          </template>
+
+          <template #item-policy_status="{ prices }">
+            {{
+              getFirstPriceWithTransaction(prices)?.transactions[0]
+                ?.policy_status ?? '-'
+            }}
+          </template>
+
           <template #item-updated_at="item">
             <span
               v-if="
@@ -645,7 +730,10 @@ const onAddDocumentSubmit = event => {
                         embeddedProductTypeEnum.NON_INSURANCE &&
                       getFirstPriceWithTransaction(item.prices)?.transactions[0]
                         ?.payments[0]?.payment_gateway_id ==
-                        paymentGatewayEnum.PAYMENT_GATEWAY_TAP))
+                        paymentGatewayEnum.PAYMENT_GATEWAY_TAP) ||
+                    (getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payment_status_id == paymentStatusEnum.CAPTURED &&
+                      can(permissionsEnum.EMBEDDED_PRODUCT_MANUAL_OVERRIDE)))
                 "
                 size="xs"
                 color="#ff5e00"
@@ -671,13 +759,19 @@ const onAddDocumentSubmit = event => {
           </template>
         </DataTable>
         <x-modal
-          v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
+          v-if="
+            canAny([
+              permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL,
+              permissionsEnum.EMBEDDED_PRODUCT_MANUAL_OVERRIDE,
+            ])
+          "
           title="Cancel Payment"
           v-model="modals.cancelPayment"
           size="md"
           show-close
           backdrop
           is-form
+          persistent
           @submit="onActivitySubmit"
         >
           <div class="grid gap-4">
@@ -725,6 +819,7 @@ const onAddDocumentSubmit = event => {
           show-close
           backdrop
           is-form
+          persistent
           @submit="onVoidSubmit"
         >
           <div>
@@ -786,13 +881,24 @@ const onAddDocumentSubmit = event => {
             hide-footer
             :loading="viewDocumentLoader"
           >
+            <template #item-document_type="item">
+              <div
+                class="flex flex-row gap-3"
+                :class="item.is_watermarked ? 'text-primary' : 'text-secondary'"
+              >
+                {{ item.document_type }}
+              </div>
+            </template>
+
             <template #item-actions="item">
               <div class="flex flex-row gap-3">
                 <x-button
                   size="xs"
                   color="primary"
                   outlined
-                  :href="item.url"
+                  :href="
+                    item.is_watermarked ? item.watermarked_doc_url : item.url
+                  "
                   target="_blank"
                 >
                   View
@@ -818,6 +924,7 @@ const onAddDocumentSubmit = event => {
           show-close
           backdrop
           is-form
+          persistent
           @submit="onAddDocumentSubmit"
         >
           <template #header>

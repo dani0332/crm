@@ -3,6 +3,7 @@
 namespace App\Pipes\Allocation\Car;
 
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\BuyLeadRequest;
@@ -10,7 +11,6 @@ use App\Models\CarQuote;
 use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\Tier;
-use App\Models\User;
 use App\Models\UserTeams;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -25,6 +25,10 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
     public function handle(AllocationRequest $request, Closure $next)
     {
         $this->setRequest($request);
+
+        if ($this->allocationRequest->get('skipAdvisorEligibilityFetch', false)) {
+            return $next($request);
+        }
 
         $tierUserIds = $request->get('tierUserIds');
         $lead = $request->getLead();
@@ -67,11 +71,11 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
             $eligibleUsers = $this->{$findAdvisorFn}($status, $tier, $tierUserIds);
 
             if ($eligibleUsers && count($eligibleUsers) > 0) {
-                LoggerService::info(self::class.'::fetchAdvisors - Eligble Users found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+                LoggerService::info(self::class."::{$findAdvisorFn} - Eligble Users found with the availability status of: ".UserStatusEnum::getUserStatusText($status));
 
                 return $eligibleUsers->toArray();
             }
-            LoggerService::info(self::class.'::fetchAdvisors - No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+            LoggerService::info(self::class."::{$findAdvisorFn} - No Users were found with the availability status of: ".UserStatusEnum::getUserStatusText($status));
         }
 
         return [];
@@ -99,7 +103,9 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         $excludedUserIds = $this->allocationRequest->get('excludedUserIds');
 
         return LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($status) {
-            $query->where('status', $status);
+            $query->where('status', $status)->whereDoesntHave('roles', function ($query) {
+                $query->whereIn('name', [RolesEnum::CLIENTSUPPORT, RolesEnum::CLIENTSUPPORTLEAD]);
+            });
         })
             ->whereIn('user_id', $userIds)
             ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {

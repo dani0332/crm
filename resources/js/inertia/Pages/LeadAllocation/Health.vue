@@ -175,39 +175,86 @@ const onUpdateConfirm = async () => {
 };
 
 const tableHeader = ref([
-  { text: 'Name', value: 'userName', width: '240' },
-  { text: 'Team Type', value: 'teamName', sortable: true },
+  { text: 'Name', value: 'userName', width: '240', tooltip: "Advisor's name" },
+  {
+    text: 'Team Type',
+    value: 'teamName',
+    sortable: true,
+    tooltip: "Advisor's team type",
+  },
+  {
+    text: 'IM Total Assigned Leads',
+    value: 'im_total_assigned_leads',
+    sortable: true,
+    tooltip: "Advisor's IM lead count",
+  },
   {
     text: 'Total Assigned Leads',
     value: 'allocation_count',
     sortable: true,
+    tooltip: 'All assigned leads per advisor',
   },
-  { text: 'Last Allocations', value: 'last_allocated', sortable: true },
-  { text: 'Max Cap Limit', value: 'max_capacity', sortable: true },
-  { text: 'Status', value: 'is_available', sortable: true, width: '100' },
+  {
+    text: 'Last Allocations',
+    value: 'last_allocated',
+    sortable: true,
+    tooltip: 'Last lead assigned date & time',
+  },
+  {
+    text: 'Max Cap Limit',
+    value: 'max_capacity',
+    sortable: true,
+    tooltip: 'Daily lead cap limit',
+  },
+  {
+    text: 'Status',
+    value: 'is_available',
+    sortable: true,
+    width: '100',
+    tooltip: 'Advisor system status',
+  },
   {
     text: 'Norm Allo.',
     value: 'normalAllocationEnabled',
     sortable: true,
     width: '100',
+    tooltip: 'Standard (non-buy leads) allocation',
   },
-  { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
+  {
+    text: 'Reset Cap',
+    value: 'reset_cap',
+    sortable: true,
+    width: '100',
+    tooltip: 'Daily lead cap reset',
+  },
   {
     text: 'BL Cap Limit',
     value: 'BLMaxCapacity',
     sortable: true,
     width: '100',
+    tooltip: "Advisor's buy lead cap",
   },
-  { text: 'BL Status', value: 'BLStatus', sortable: true, width: '100' },
+  {
+    text: 'BL Status',
+    value: 'BLStatus',
+    sortable: true,
+    width: '100',
+    tooltip: "Advisor's buy lead status",
+  },
   {
     text: 'BL Assigned',
     value: 'BLAllocationCount',
     sortable: true,
     width: '100',
-    tooltip:
-      'The BL ASSIGNED count shows only the leads requested through Buy Leads. It excludes system-assigned leads. Check the TOT. ASSIGNED column for the total number of assigned leads.',
+    tooltip: 'Assigned buy leads count',
   },
-  { text: 'BL Reset CAP', value: 'blResetCap', sortable: true, width: '100' },
+  {
+    text: 'BL Reset CAP',
+    value: 'blResetCap',
+    sortable: true,
+    width: '100',
+    tooltip: 'Daily buy cap reset',
+  },
 ]);
 
 const onStatusSubmit = async () => {
@@ -490,7 +537,115 @@ const onSubmit = isValid => {
     hide-rows-per-page
     hide-footer
   >
+    <template #header-userName="header">
+      <x-tooltip placement="top">
+        <p class="underline decoration-dotted decoration-primary-600">
+          {{ header.text }}
+        </p>
+        <template #tooltip>{{ header.tooltip }}</template>
+      </x-tooltip>
+    </template>
+
+    <template #header-teamName="header">
+      <x-tooltip placement="top">
+        <p class="underline decoration-dotted decoration-primary-600">
+          {{ header.text }}
+        </p>
+        <template #tooltip>{{ header.tooltip }}</template>
+      </x-tooltip>
+    </template>
+
+    <template #header-im_total_assigned_leads="header">
+      <x-tooltip placement="top">
+        <p class="underline decoration-dotted decoration-primary-600">
+          {{ header.text }}
+        </p>
+        <template #tooltip>{{ header.tooltip }}</template>
+      </x-tooltip>
+    </template>
+
+    <template #header-allocation_count="header">
+      <x-tooltip placement="top">
+        <p class="underline decoration-dotted decoration-primary-600">
+          {{ header.text }}
+        </p>
+        <template #tooltip>{{ header.tooltip }}</template>
+      </x-tooltip>
+    </template>
+
+    <template #header-last_allocated="header">
+      <x-tooltip placement="top">
+        <p class="underline decoration-dotted decoration-primary-600">
+          {{ header.text }}
+        </p>
+        <template #tooltip>{{ header.tooltip }}</template>
+      </x-tooltip>
+    </template>
+
+    <template #header-max_capacity="header">
+      <x-tooltip placement="top">
+        <p class="underline decoration-dotted decoration-primary-600">
+          {{ header.text }}
+        </p>
+        <template #tooltip>{{ header.tooltip }}</template>
+      </x-tooltip>
+    </template>
+
+    <template #header-is_available="header">
+      <x-tooltip placement="top">
+        <p class="underline decoration-dotted decoration-primary-600">
+          {{ header.text }}
+        </p>
+        <template #tooltip>{{ header.tooltip }}</template>
+      </x-tooltip>
+    </template>
+
+    <template #header-normalAllocationEnabled="header">
+      <x-tooltip placement="top">
+        <p class="underline decoration-dotted decoration-primary-600">
+          {{ header.text }}
+        </p>
+        <template #tooltip>{{ header.tooltip }}</template>
+      </x-tooltip>
+    </template>
+
+    <template #header-reset_cap="header">
+      <x-tooltip placement="top">
+        <p class="underline decoration-dotted decoration-primary-600">
+          {{ header.text }}
+        </p>
+        <template #tooltip>{{ header.tooltip }}</template>
+      </x-tooltip>
+    </template>
+
+    <template #header-BLMaxCapacity="header">
+      <x-tooltip placement="top">
+        <p class="underline decoration-dotted decoration-primary-600">
+          {{ header.text }}
+        </p>
+        <template #tooltip>{{ header.tooltip }}</template>
+      </x-tooltip>
+    </template>
+
+    <template #header-BLStatus="header">
+      <x-tooltip placement="top">
+        <p class="underline decoration-dotted decoration-primary-600">
+          {{ header.text }}
+        </p>
+        <template #tooltip>{{ header.tooltip }}</template>
+      </x-tooltip>
+    </template>
+
     <template #header-BLAllocationCount="header">
+      <x-tooltip placement="top">
+        <p class="underline decoration-dotted decoration-primary-600">
+          {{ header.text }}
+        </p>
+        <template #tooltip>{{ header.tooltip }}</template>
+      </x-tooltip>
+    </template>
+
+    <template #header-blResetCap="header">
       <x-tooltip placement="top">
         <p class="underline decoration-dotted decoration-primary-600">
           {{ header.text }}

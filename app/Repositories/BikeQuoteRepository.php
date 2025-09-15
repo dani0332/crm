@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -14,6 +13,7 @@ use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
 use App\Services\DropdownSourceService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -148,10 +148,10 @@ class BikeQuoteRepository extends BaseRepository
                 'currentlyInsuredWith',
                 'transactionType',
                 'insuranceProvider',
-                'insured' => function ($q) use ($quoteTypeId) {
+                'latestInsured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
-                'insured.insuredKyc:id,insured_id',
+                'latestInsured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',
@@ -187,24 +187,19 @@ class BikeQuoteRepository extends BaseRepository
                 'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
-                \DB::raw('IF(EXISTS (
-                    SELECT *
-                    FROM quote_request_entity_mapping
-                    WHERE quote_type_id = '.QuoteTypeId::Bike.' AND quote_request_id = '.$this->getTable().'.id),
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                as customer_type'),
                 DB::raw('YEAR(CURDATE()) - YEAR('.$this->getTable().'.dob) AS customer_age'),
             ])
             ->firstOrFail();
 
+        $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Individual;
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
-        if (isset($data['insured'][0])) {
-            $quote->emirates_id_number = $data['insured'][0]['id_type'] == 'emiratesId' ? $data['insured'][0]['id_number'] : null;
+        if (isset($data['latestInsured'])) {
+            $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;
         }
 
         return $quote;
@@ -230,11 +225,16 @@ class BikeQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'renewalBatchModel',
+            'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypes::BIKE->id());
+            },
+            'customer',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
             })
-            ->filter(! $forExport)
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria()
             ->select([
                 '*',
@@ -252,11 +252,63 @@ class BikeQuoteRepository extends BaseRepository
         $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+        // Apply authorize_date filter
+        $query->when(! empty($this->getFilterValue('authorize_date', $requestParams)), function ($q) use ($requestParams) {
+            $authorizeDates = $this->getFilterValue('authorize_date', $requestParams);
+            if (is_array($authorizeDates) && count($authorizeDates) >= 2) {
+                $startDate = Carbon::parse($authorizeDates[0])->startOfDay();
+                $endDate = Carbon::parse($authorizeDates[1])->endOfDay();
+                $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                    $paymentQuery->whereBetween('authorized_at', [$startDate, $endDate]);
+                });
+            }
+        });
 
-        // logger()->debug('Bike toRawSql: '.$query->toRawSql());
+        // Apply captured_date filter
+        $query->when(! empty($this->getFilterValue('captured_date', $requestParams)), function ($q) use ($requestParams) {
+            $capturedDates = $this->getFilterValue('captured_date', $requestParams);
+            if (is_array($capturedDates) && count($capturedDates) >= 2) {
+                $startDate = Carbon::parse($capturedDates[0])->startOfDay();
+                $endDate = Carbon::parse($capturedDates[1])->endOfDay();
+                $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                    $paymentQuery->whereBetween('captured_at', [$startDate, $endDate]);
+                });
+            }
+        });
+
+        $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 
         return $query;
+    }
+
+    /**
+     * Get filter value from requestParams or request object.
+     */
+    private function getFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            return $requestParams[$filterName];
+        }
+
+        // Fallback to request object
+        return request($filterName);
+    }
+
+    /**
+     * Check if filter value exists in requestParams or request object.
+     */
+    private function hasFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            $value = $requestParams[$filterName];
+
+            return ! empty($value) || (is_array($value) && count($value) > 0);
+        }
+
+        // Fallback to request object
+        return request()->filled($filterName);
     }
 
     public function fetchExport()

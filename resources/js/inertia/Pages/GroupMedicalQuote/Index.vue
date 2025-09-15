@@ -1,11 +1,16 @@
 <script setup>
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+
 defineProps({
   model: String,
   leadStatuses: Array,
   advisors: Array,
+  supportUsers: Array,
   isManagerORDeputy: Boolean,
   quotes: Object,
   isManualAllocationAllowed: Boolean,
+  canAssignClientSupport: Boolean,
+  canAssignLeadAdvisor: Boolean,
   authorizedDays: Number,
   insurerAMLStatus: Array,
 });
@@ -42,6 +47,9 @@ const loader = reactive({
   export: false,
 });
 
+const manualAssignmentSuccess = () => {
+  quotesSelected.value = [];
+};
 const filters = reactive({
   code: '',
   first_name: '',
@@ -53,6 +61,7 @@ const filters = reactive({
   leadStatus: [],
   insurer_aml_status: [],
   advisor_id: '',
+  support_user_id: '',
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
@@ -64,6 +73,8 @@ const filters = reactive({
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   advisor_assigned_date: [],
+  authorize_date: '',
+  captured_date: '',
 });
 
 const leadStatusOptions = computed(() => {
@@ -79,6 +90,34 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
+
+const supportUserOptions = computed(() => {
+  return page.props.supportUsers.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
+const assignableSupportUserOptions = computed(() => {
+  // Check if user has only OE_AE_CLIENT_SUPPORT role and not OE_AE_CLIENT_SUPPORT_LEAD
+  const userRoles = page.props.auth.roles;
+  const hasOnlyClientSupport =
+    userRoles.includes('OE_AE_CLIENT_SUPPORT') &&
+    !userRoles.includes('OE_AE_CLIENT_SUPPORT_LEAD');
+
+  // Filter support users based on user's role
+  const filteredSupportUsers = hasOnlyClientSupport
+    ? page.props.supportUsers.filter(
+        advisor => advisor.id === page.props.auth.user.id,
+      )
+    : page.props.supportUsers;
+
+  return filteredSupportUsers.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
 const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
@@ -88,6 +127,7 @@ const tableHeader = [
   { text: 'LEAD STATUS', value: 'leadStatus' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'OE / AE', value: 'support_user_name' },
   { text: 'PRICE', value: 'premium' },
   { text: 'Company Name', value: 'company_name' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
@@ -226,15 +266,29 @@ const permissionsEnum = page.props.permissionsEnum;
 const exportLoader = ref(false);
 const onDataExport = (exportType = 'download') => {
   if (filters.created_at_start && filters.created_at_end) {
-    let diff = calculateDaysDifference(
-      filters.created_at_start,
-      filters.created_at_end,
-    );
+    let diff, maxLimit, maxPeriod;
 
-    if (diff > 31) {
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
+
+    if (diff > maxLimit) {
       notification.error({
-        message:
-          'Maximum of 31 days (created date) are allowed to be exported.',
+        message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
         position: 'top',
       });
       return;
@@ -621,6 +675,29 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
 
+        <x-select
+          v-model="filters.support_user_id"
+          name="support_user_id"
+          placeholder="Search by OE / AE"
+          :options="supportUserOptions"
+          class="w-full"
+          filterable
+          label="OE / AE"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.support_user_id = supportUserOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.support_user_id = []"
+            />
+          </template>
+        </x-select>
+
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
@@ -649,6 +726,22 @@ const insurerAMLStatusOption = computed(() => {
         <DatePicker
           v-model="filters.booking_date"
           label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
           class="w-full"
           range
           multi-calendars
@@ -724,35 +817,16 @@ const insurerAMLStatusOption = computed(() => {
 
     <Transition name="fade">
       <div v-if="quotesSelected.length > 0" class="mb-4">
-        <div
-          class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
-          v-if="isManualAllocationAllowed == true"
-        >
-          <x-form @submit="onAssignLead" :auto-focus="false">
-            <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-select
-                v-model="assignForm.assigned_to_id_new"
-                label="Assign Advisor"
-                :options="advisorOptions"
-                placeholder="Select Advisor"
-                class="flex-1 w-auto"
-                :error="assignForm.errors.assigned_to_id_new"
-                v-if="readOnlyMode.isDisable === true"
-                filterable
-              />
-              <div class="mb-3 md:pt-6">
-                <x-button
-                  color="orange"
-                  size="sm"
-                  type="submit"
-                  :loading="assignForm.processing"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Assign
-                </x-button>
-              </div>
-            </div>
-          </x-form>
+        <div v-if="isManualAllocationAllowed == true">
+          <LeadAssignment
+            :selected="quotesSelected.map(e => e.id)"
+            :advisors="advisorOptions"
+            :supportUsers="assignableSupportUserOptions"
+            :canAssignClientSupport="canAssignClientSupport"
+            :canAssignLeadAdvisor="canAssignLeadAdvisor"
+            quoteType="business"
+            @success="manualAssignmentSuccess"
+          />
         </div>
       </div>
     </Transition>

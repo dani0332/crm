@@ -115,7 +115,6 @@ const insuredFormDetails = useForm({
   id_issuance_place: props.entityDetails?.entity?.id_issuance_place ?? null,
   id_issuance_authority:
     props.entityDetails?.entity?.id_issuance_authority ?? null,
-
   screening_id_type: props.insuredPersonDetails?.insured?.id_type ?? null,
   screening_id_number: props.insuredPersonDetails?.insured?.id_number ?? null,
 

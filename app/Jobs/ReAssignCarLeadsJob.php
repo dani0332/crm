@@ -19,6 +19,7 @@ use App\Pipes\Allocation\Car\FetchTierUsersPipe;
 use App\Pipes\Allocation\Car\FinalizeEligibleAdvisorPipe;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
+use App\Pipes\Allocation\Common\ResetNationalityConfigPipe;
 use App\Pipes\Allocation\Common\ValidateNationalityConfigPipe;
 use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -40,15 +41,13 @@ class ReAssignCarLeadsJob implements ShouldQueue
     public $timeout = 15;
     public $backoff = 30;
     private $advisorId;
-    private AllocationService $allocationService;
 
     public function __construct($advisorId)
     {
         $this->advisorId = $advisorId;
-        $this->allocationService = app(AllocationService::class);
     }
 
-    public function handle()
+    public function handle(AllocationService $allocationService)
     {
         LoggerService::info('-------- Reassignment car job started ---------');
 
@@ -90,12 +89,15 @@ class ReAssignCarLeadsJob implements ShouldQueue
                     FetchTierUsersPipe::class,
                     ApplyRuleExclusionPipe::class,
                     FetchEligibleAdvisorsPipe::class,
+                    ResetNationalityConfigPipe::class,
+                    ApplyRuleExclusionPipe::class,
+                    FetchEligibleAdvisorsPipe::class,
                     FinalizeEligibleAdvisorPipe::class,
                     AssignLeadPipe::class,
                     MakeResponsePipe::class,
                 ])->thenReturn();
             } catch (Exception $e) {
-                $this->allocationService->resolveAllocationResponse($allocationRequest, $e);
+                $allocationService->resolveAllocationResponse($allocationRequest, $e);
             }
 
             LoggerService::info('--------------- ReAssignment processing ended ---------------');
@@ -107,7 +109,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
 
     private function shouldProceed(): bool
     {
-        return $this->allocationService->shouldProceedWithReAllocation('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH');
+        return app(AllocationService::class)->shouldProceedWithReAllocation('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH');
     }
 
     public function fetchLeadsForReAssignment()
@@ -144,7 +146,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
             LoggerService::info('Inside reassignment single run and selected advisor is: '.$advisorId);
         } else {
             // If advisor ID is not provided, get unavailable advisors and filter leads by them
-            $advisors = $this->allocationService->getUnavailableAdvisor();
+            $advisors = app(AllocationService::class)->getUnavailableAdvisor();
             if (count($advisors) > 0) {
                 $advisorIds = $advisors->pluck('user_id');
                 LoggerService::info('Inside reassignment general run');

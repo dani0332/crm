@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -24,7 +26,7 @@ class HealthQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
-    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted'];
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted'];
     protected $table = 'health_quote_request';
     protected $fillable = [];
     public $filterables = [
@@ -82,7 +84,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function currentlyInsured()
     {
-        return $this->hasOne(InsuranceProvider::class, 'id', 'currently_insured_id');
+        return $this->hasOne(InsuranceProvider::class, 'id', 'currently_insured_with_id');
     }
 
     public function nationality()
@@ -345,6 +347,33 @@ class HealthQuote extends Model implements AuditableContract
         }
     }
 
+    // TODO:: Need to verify this function
+    public function insuredDetails()
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // Foreign key on customer_insured
+            'id',               // Foreign key on insured
+            'id',               // Local key on health_quote_requests
+            'insured_id'        // Local key on customer_insured
+        )->where('quote_type_id', QuoteTypeId::Health);
+    }
+
+    // Get the latest/most recent insured record for this quote
+    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // health_quote_requests.id
+            'insured_id' // customer_insured.insured_id
+        )->where('customer_insured.quote_type_id', QuoteTypeId::Health)
+            ->latest('customer_insured.updated_at');
+    }
+
     /******************************* Quote Status Logs Related Methods Below *******************************/
     /**
      * Get all quote status logs for this model
@@ -419,7 +448,7 @@ class HealthQuote extends Model implements AuditableContract
     public function getPaymentsWithInsurerPaymentLink()
     {
         return $this->payments()
-            ->whereHas('PaymentSplits', function ($query) {
+            ->whereHas('paymentSplits', function ($query) {
                 $query->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
             })
             ->get();
@@ -433,7 +462,7 @@ class HealthQuote extends Model implements AuditableContract
     public function getLastPaymentWithInsurerPaymentLink()
     {
         return $this->payments()
-            ->whereHas('PaymentSplits', function ($query) {
+            ->whereHas('paymentSplits', function ($query) {
                 $query->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
             })
             ->latest()
@@ -462,5 +491,10 @@ class HealthQuote extends Model implements AuditableContract
     public function ftcEmailLogs()
     {
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
+    }
+
+    public function isAUHLead(bool $shouldCheckSource = true)
+    {
+        return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI && ($shouldCheckSource ? $this->source === LeadSourceEnum::IMCRM : true);
     }
 }

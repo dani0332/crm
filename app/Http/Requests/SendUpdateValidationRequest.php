@@ -140,6 +140,12 @@ class SendUpdateValidationRequest extends FormRequest
                     SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
                 ];
 
+                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::CPD && ! $checkTransactionApprovedInSUStatusLogs &&
+                    ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
+                    ! in_array($sendUpdateLog->status, $bypassStatuses)) {
+                    $validator->errors()->add('error', 'Transaction approval is required');
+                }
+
                 if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && ! $checkTransactionApprovedInSUStatusLogs &&
                     ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
                     ! in_array($sendUpdateLog->status, $bypassStatuses) &&

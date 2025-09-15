@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -34,6 +35,11 @@ class QuoteDocument extends Model implements AuditableContract
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
+    public function getIsWatermarkedAttribute()
+    {
+        return ! (empty($this->watermarked_doc_name) || empty($this->watermarked_doc_url));
+    }
+
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by_id', 'id');
@@ -57,5 +63,17 @@ class QuoteDocument extends Model implements AuditableContract
     public function paymentDocuments()
     {
         return $this->belongsTo(PaymentSplits::class, 'payment_split_id', 'id');
+    }
+
+    public function documentType()
+    {
+        return $this->belongsTo(DocumentType::class, 'document_type_code', 'code');
+    }
+
+    public function documentUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => storageUrl().$this->doc_url,
+        );
     }
 }

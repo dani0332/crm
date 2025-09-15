@@ -12,6 +12,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\EmailServices\TravelEmailService;
 use App\Services\HttpRequestService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendSmsCustomerService;
 use App\Services\SIBService;
 use App\Services\UserService;
@@ -38,12 +39,14 @@ class HandleTravelAdvisorUpdated
      */
     public function handle(TravelQuoteAdvisorUpdated $event): void
     {
+
         info(self::class.' - inside handle travel update advisor');
 
         $lead = $event->lead;
 
         if ($lead) {
             SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::TRAVEL)->delay(now()->addSeconds(5));
+            LoggerService::info(self::class." - FTCEmailJob dispatched for lead uuid : {$lead->uuid}");
         }
         $skippableSources = [LeadSourceEnum::INSLY, LeadSourceEnum::RENEWAL_UPLOAD];
         if (in_array($lead->source, $skippableSources)) {
@@ -60,7 +63,7 @@ class HandleTravelAdvisorUpdated
 
         if ($lead->sic_flow_enabled) {
             info(self::class." - Lead is SIC enabled so send SIC notification to advisor against: {$lead->uuid}");
-            $user = (new UserService)->getUserById($lead->advisor_id);
+            $user = app(UserService::class)->getUserById($lead->advisor_id);
             $responseCode = $this->travelEmailService->sendSICNotificationToAdvisor($lead, $user);
 
             if (in_array($responseCode, [200, 201])) {

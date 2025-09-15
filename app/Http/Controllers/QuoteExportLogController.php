@@ -24,6 +24,7 @@ class QuoteExportLogController extends Controller
         $quoteLogData = $request->validated();
         $quoteLogData['user_id'] = auth()->user()->id;
         $quoteLogData['ip_address'] = $request->ip_address ?? $request->ip();
+        $quoteLogData['type'] = $request->type ?? null;
 
         $result = $this->quoteExportLogService->saveLog($quoteLogData);
 

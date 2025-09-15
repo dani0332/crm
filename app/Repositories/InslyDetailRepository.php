@@ -15,8 +15,10 @@ use App\Models\CycleQuote;
 use App\Models\HomeQuote;
 use App\Models\InslyAdvisor;
 use App\Models\InslyDetail;
+use App\Models\LifeQuote;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
+use App\Models\SavingsQuote;
 use App\Models\YachtQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\CapiRequestService;
@@ -417,8 +419,12 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::LIFE->value:
-                            $obj->lifeQuoteRequestDetail()->updateOrCreate(
-                                ['life_quote_request_id' => $obj->id],
+                            $obj->lifeQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new LifeQuote)->allowedColumns())
+                            );
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
                                 ['insly_id' => $policy->_id]
                             );
                             break;
@@ -481,6 +487,16 @@ class InslyDetailRepository extends BaseRepository
                             $obj->yachtQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
                                 Arr::only($payLoad, (new YachtQuote)->allowedColumns())
+                            );
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                ['insly_id' => $policy->_id]
+                            );
+                            break;
+                        case QuoteTypes::SAVINGS->value:
+                            $obj->savingsQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new SavingsQuote)->fillable)
                             );
                             $obj->quoteDetail()->updateOrCreate(
                                 ['personal_quote_id' => $id],
@@ -663,6 +679,10 @@ class InslyDetailRepository extends BaseRepository
 
             $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::YACHT->value]);
         }
+        if ($user->hasRole(RolesEnum::SavingsAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::SAVINGS->value]);
+        }
         if (! empty($coverage)) {
             // converted all values to lower case because some time data in mongodb have different case values.
             $lowerCaseCoverageValues = array_map('strtolower', $coverage);
@@ -685,8 +705,20 @@ class InslyDetailRepository extends BaseRepository
         $hostUrl = config('constants.APP_URL');
         if ($url) {
             $parsedUrl = parse_url($url);
+            $pathArray = explode('/', $parsedUrl['path']);
+            // remove empty values and reset indexes
+            $pathArray = array_values(array_filter($pathArray, function ($value) {
+                return ! empty($value) || $value === 0;
+            }));
+            $quoteType = $pathArray[1] ?? null;
+            $uuid = $pathArray[2] ?? null;
+            if (! $quoteType || ! $uuid) {
+                return null;
+            }
+            $isPersonalQuote = checkPersonalQuotes(ucfirst($quoteType));
+            $path = $isPersonalQuote ? '/personal-quotes/'.strtolower($quoteType).'/'.$uuid : '/quotes/'.strtolower($quoteType).'/'.$uuid;
 
-            return $hostUrl.$parsedUrl['path'];
+            return $hostUrl.$path;
         }
 
         return null;

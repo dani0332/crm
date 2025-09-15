@@ -3,14 +3,17 @@
 namespace App\Models;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCode;
 use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +27,7 @@ class CarQuote extends BaseModel
     protected $casts = [
         'dob' => 'datetime',
     ];
-    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted'];
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'api_issuance_status', 'insurer_api_status'];
     protected $guarded = [];
     public $filterables = [
         'code' => FilterTypes::EXACT,
@@ -88,6 +91,26 @@ class CarQuote extends BaseModel
     public function getFullNameAttribute()
     {
         return $this->first_name.' '.$this->last_name;
+    }
+
+    public function getApiIssuanceStatusAttribute()
+    {
+        return $this->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($this->api_issuance_status_id) : null;
+    }
+
+    public function getInsurerApiStatusAttribute()
+    {
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this, QuoteTypes::CAR->value) : null;
+    }
+
+    public function isBookingFailed()
+    {
+        return $this->insurer_api_status_id === app(PolicyIssuanceService::class)->getFailedBookingInsurerAPIStatus($this, QuoteTypes::CAR->value);
+    }
+
+    public function isPolicyIssuanceFailed()
+    {
+        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getFailedPolicyIssuanceAPIStatuses($this, QuoteTypes::CAR->value));
     }
 
     public function fullName()
@@ -159,14 +182,14 @@ class CarQuote extends BaseModel
     {
         $date_time_format = config('constants.DATETIME_DISPLAY_FORMAT');
 
-        return Carbon::parse($value)->format($date_time_format);
+        return $this->asDateTime($value)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
     public function getUpdatedAtAttribute($value)
     {
         $date_time_format = config('constants.DATETIME_DISPLAY_FORMAT');
 
-        return Carbon::parse($value)->format($date_time_format);
+        return $this->asDateTime($value)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
     /*****  NewRelationships so old should not effect */
@@ -488,5 +511,73 @@ class CarQuote extends BaseModel
     public function isRenewalTierEmailSent()
     {
         return $this->is_renewal_tier_email_sent == 1;
+    }
+
+    public function isProvider($code)
+    {
+        return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
+    }
+
+    public function insured()
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // Foreign key on customer_insured
+            'id',               // Foreign key on insured
+            'id',               // Local key on car_quote_requests
+            'insured_id'        // Local key on customer_insured
+        )->where('quote_type_id', QuoteTypeId::Car);
+    }
+
+    // Get the latest/most recent insured record for this quote
+    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // car_quote_requests.id
+            'insured_id' // customer_insured.insured_id
+        )->where('customer_insured.quote_type_id', QuoteTypeId::Car)
+            ->latest('customer_insured.updated_at');
+    }
+
+    public function policyIssuance()
+    {
+        return $this->morphOne(PolicyIssuance::class, 'model');
+    }
+
+    /**
+     * Get quote tags for this car quote
+     */
+    public function quoteTags()
+    {
+        return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
+            ->where('quote_type_id', QuoteTypeId::Car);
+    }
+
+    public function kycDocumentUser()
+    {
+        return $this->morphOne(QuoteDocument::class, 'quote_documentable')
+            ->where('document_type_code', DocumentTypeCode::KYCDOC)
+            ->whereNotNull('created_by_id')
+            ->latest('updated_at');
+    }
+
+    public function registrationCertificate()
+    {
+        return $this->morphOne(RegistrationCertificate::class, 'certificatable');
+    }
+
+    public function drivingLicenseDetail()
+    {
+        return $this->morphOne(DrivingLicenseDetail::class, 'licensable');
+    }
+
+    public function vehicleDriverDetail()
+    {
+        return $this->morphOne(VehicleDriverDetail::class, 'quoteable');
     }
 }

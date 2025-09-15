@@ -9,6 +9,7 @@ const props = defineProps({
   businessInsuranceTypes: Array,
   insuranceProviders: Array,
   advisors: Array,
+  supportUsers: Array,
   departments: Array,
   sendUpdateStatuses: Array,
   sendUpdateTypes: Array,
@@ -92,10 +93,11 @@ let tableData = props.leadsOrEndorsementData.data;
 function getTableHeader() {
   return [
     { text: 'Ref-ID', value: 'code', sortingOrder: 1 },
-    { text: 'First Name', value: 'first_name', sortingOrder: 2 },
-    { text: 'Last Name', value: 'last_name', sortingOrder: 3 },
-    { text: 'Company Name', value: 'company_name', sortingOrder: 4 },
-    { text: 'Line of Business', value: 'quote_type', sortingOrder: 5 },
+    { text: 'Private Client', value: 'pcp_tag_formatted', sortingOrder: 2 },
+    { text: 'First Name', value: 'first_name', sortingOrder: 3 },
+    { text: 'Last Name', value: 'last_name', sortingOrder: 4 },
+    { text: 'Company Name', value: 'company_name', sortingOrder: 5 },
+    { text: 'Line of Business', value: 'quote_type', sortingOrder: 6 },
     {
       text: 'Business Insurance Type',
       value: 'business_insurance_type',
@@ -164,6 +166,7 @@ const availableFilters = reactive({
   currently_insured_with: [],
   department: [],
   advisors: [],
+  support_users: [],
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   update_status: [],
@@ -654,6 +657,7 @@ onMounted(() => {
       title="Search Filters"
       show-close
       backdrop
+      persistent
     >
       <x-form :auto-focus="false" @keydown.enter="onSubmit">
         <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -971,6 +975,34 @@ onMounted(() => {
                   availableFilters.advisors = advisors.map(item => item.id)
                 "
                 @clear="availableFilters.advisors = []"
+              />
+            </template>
+          </x-select>
+
+          <x-select
+            v-model="availableFilters.support_users"
+            placeholder="Search by OE/AE"
+            :options="
+              supportUsers.map(item => ({
+                value: item.id,
+                label: item.name,
+              }))
+            "
+            class="w-full"
+            label="OE/AE"
+            multiple
+            truncate
+            filterable
+            filterPlaceholder="Filter OE/AE...."
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  availableFilters.support_users = supportUsers.map(
+                    item => item.id,
+                  )
+                "
+                @clear="availableFilters.support_users = []"
               />
             </template>
           </x-select>

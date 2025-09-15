@@ -31,6 +31,7 @@ class DeleteSplitPaymentRequest extends FormRequest
             'quote_id' => 'required|integer',
             'payment_split_id' => 'required|integer',
             'payment_status_id' => 'required|integer',
+            'code' => 'required|string',
         ];
     }
 

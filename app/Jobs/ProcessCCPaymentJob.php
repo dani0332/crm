@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
@@ -55,6 +56,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle()
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CC_PAYMENT_PROCESS);
         $splitPaymentCode = $this->splitPaymentCode;
 
         LoggerService::info("Processing CC Payment Job: {$this->ccPaymentProcessId}, Payment Split Code: {$splitPaymentCode}");

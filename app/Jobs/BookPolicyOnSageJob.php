@@ -73,7 +73,7 @@ class BookPolicyOnSageJob implements ShouldQueue
                 (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, 'BookPolicyOnSageJob : '.$this->quote->code);
             }
 
-            LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Finished', extra : ['Response' => json_encode($response)]);
+            LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Finished ', extra: ['Response' => json_encode($response)]);
         } else {
             LoggerService::info('job:BookPolicyOnSageJob - Process Skipped - Sage Process ID : '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
         }
@@ -85,6 +85,7 @@ class BookPolicyOnSageJob implements ShouldQueue
     public function failed(Throwable $exception)
     {
         $message = $exception->getMessage();
+        $code = $exception->getCode();
 
         if (str_contains($message, SageEnum::SAGE_TIMEOUT_REQUEST_MESSAGE)) {
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_TIMEOUT_STATUS, $message);
@@ -92,10 +93,14 @@ class BookPolicyOnSageJob implements ShouldQueue
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
         }
 
-        if ($this->isFailedDueToAttempts($message)) {
-            LoggerService::info('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$message);
+        if ($this->isFailedDueToAttemptsOrTimeout($message)) {
+            LoggerService::info('Policy Book : BookPolicyOnSageJob failed: '.$this->quote->code.' - Code : '.$code.' - Error : '.$message, extra: [
+                'errorTraceMessage' => $exception->getTraceAsString(),
+            ]);
         } else {
-            LoggerService::error('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$message);
+            LoggerService::error('Policy Book : BookPolicyOnSageJob failed: '.$this->quote->code.' - Code : '.$code.' - Error : '.$message, extra: [
+                'errorTraceMessage' => $exception->getTraceAsString(),
+            ]);
         }
 
         LoggerService::info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' updating status to failed');
@@ -112,11 +117,11 @@ class BookPolicyOnSageJob implements ShouldQueue
         return [(new WithoutOverlapping($this->quote->code.'-'.$this->lockPostfix))->dontRelease()];
     }
 
-    private function isFailedDueToAttempts($errorMessage): bool
+    private function isFailedDueToAttemptsOrTimeout($errorMessage): bool
     {
         $errorMessage = strtolower($errorMessage);
 
-        return str_contains($errorMessage, 'has been attempted too many times');
+        return str_contains($errorMessage, 'has been attempted too many times') || str_contains($errorMessage, 'has timed out');
     }
 
 }

@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             // HealthRevivalQuotesSeeder::class,
             // QuoteStatusSeeder::class,
             LookupSeeder::class,
+            SavingsQuoteDataSeeder::class,
             // ILAGMPermissionSeeder::class,
             // TravelRenewalTeamSeeder::class,
             // QuoteTypeTableSeeder::class,
@@ -27,6 +28,11 @@ class DatabaseSeeder extends Seeder
             // RuleNameSeeder::class,
             // BusinessActivitiesSeeder::class,
             // PaymentMethodsAddSeeder::class,
+            PermissionSeeder::class,
+            // CarAdditionalDetailsForLivaSeeder::class,
+            CarGIGVehicleTransactionDriverDetailsForAMLSeeder::class,
+            CPARulesSeeder::class,
+            AutomationSeeder::class,
         ]);
     }
 }

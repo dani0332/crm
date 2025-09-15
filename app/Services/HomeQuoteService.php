@@ -18,6 +18,7 @@ use App\Models\DocumentType;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\InsuranceProvider;
+use App\Models\InsuranceProviderPlan;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
@@ -113,12 +114,7 @@ class HomeQuoteService extends BaseService
             'hqr.customer_id',
             'hqr.parent_duplicate_quote_id',
             'hqr.renewal_import_code',
-            DB::raw('IF(EXISTS (
-                SELECT *
-                FROM quote_request_entity_mapping
-                WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = hqr.id),
-                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-            as customer_type'),
+            DB::raw('COALESCE(insured.customer_type, "'.CustomerTypeEnum::Individual.'") as customer_type'),
             'insured.first_name as insured_first_name',
             'insured.last_name as insured_last_name',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
@@ -157,7 +153,7 @@ class HomeQuoteService extends BaseService
             ')
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
+            ->leftJoin('payment_status  as ps', 'ps.id', '=', 'py.payment_status_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
@@ -176,7 +172,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Home));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'hqr.id');
-                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = hqr.id)', [QuoteTypeId::Home]);
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = hqr.id ORDER BY customer_insured.updated_at DESC LIMIT 1)', [QuoteTypeId::Home]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
@@ -353,8 +349,9 @@ class HomeQuoteService extends BaseService
         }
 
         // payment_status_id filter
+        // No option in front side for now to filter payments
         if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
-            $this->query->whereIn('hqr.payment_status_id', $request->payment_status);
+            $this->query->whereIn('py.payment_status_id', $request->payment_status);
         }
 
         // is_cold filter
@@ -795,7 +792,12 @@ class HomeQuoteService extends BaseService
 
         return 'true';
     }
-
+    /**
+     * Get Quote Plans from KEN API
+     *
+     * @param  string  $id
+     * @param  bool  $latestRating
+     */
     public function getQuotePlans($id, $extraData = [])
     {
         $quoteUuId = PersonalQuote::where('uuid', '=', $id)->value('uuid');
@@ -1031,7 +1033,7 @@ class HomeQuoteService extends BaseService
     {
         $logPrefix = self::class.' fn: isPlanModifyAllowed ';
         $quote = PersonalQuote::where('uuid', $data['plan']['quote_uuid'])->with('paymentStatus')->first();
-        LoggerService::startQuoteLogging($quote);
+        LoggerService::startQuoteLogging(QuoteTypes::HOME->refId($quote->uuid));
 
         $isAllowed = false;
 
@@ -1045,17 +1047,17 @@ class HomeQuoteService extends BaseService
                 $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
 
                 if (Auth::user()->hasRole(RolesEnum::HomeAdvisor) && $today->lte($dateLimitForAdvisor)) {
-                    info($logPrefix.' plan modify allowed to advisor and captured days diff is '.$paymentCapturedAt);
+                    LoggerService::info($logPrefix.' plan modify allowed to advisor and captured days diff is '.$paymentCapturedAt);
                     $isAllowed = true;
                 } elseif (Auth::user()->hasRole(RolesEnum::HomeManager) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager)) {
-                    info($logPrefix.' plan modify allowed to home manager and captured days diff is '.$paymentCapturedAt);
+                    LoggerService::info($logPrefix.' plan modify allowed to home manager and captured days diff is '.$paymentCapturedAt);
                     $isAllowed = true;
                 }
             }
         }
 
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) && Auth::user()->hasAnyRole([RolesEnum::HomeAdvisor, RolesEnum::HomeManager])) {
-            info($logPrefix.' plan modify allowed to advisor');
+            LoggerService::info($logPrefix.' plan modify allowed to advisor');
             $isAllowed = true;
         }
 
@@ -1064,12 +1066,12 @@ class HomeQuoteService extends BaseService
             (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT]) &&
                 Auth::user()->hasAnyRole([RolesEnum::HomeAdvisor, RolesEnum::HomeManager]))
         ) {
-            info($logPrefix.' plan modify allowed');
+            LoggerService::info($logPrefix.' plan modify allowed');
             $isAllowed = true;
         }
 
         if (! $isAllowed) {
-            info($logPrefix.' plan modification is not allowed');
+            LoggerService::info($logPrefix.' plan modification is not allowed');
 
             return 'Plan Modification is not allowed';
         }
@@ -1125,6 +1127,7 @@ class HomeQuoteService extends BaseService
 
     public function syncSAL($request)
     {
+        LoggerService::startQuoteLogging(QuoteTypes::HOME->refId($request->quoteUID));
         try {
             $quote = $this->getQuoteObject(QuoteTypes::HOME->value, $request->quoteUID);
             if (! $quote) {
@@ -1146,9 +1149,13 @@ class HomeQuoteService extends BaseService
 
             $items = $this->getSALItems($quote->uuid);
             if ($items->isEmpty()) {
-                throw new \Exception('No items found for SAL for quote: '.$quote->uuid);
+                LoggerService::info('No SAL items found for quote. Generating SAL document with empty items list.');
+                $data['items'] = collect();
+                $data['has_items'] = false;
+            } else {
+                $data['items'] = $items;
+                $data['has_items'] = true;
             }
-            $data['items'] = $items;
 
             $pdfFile = $this->generateHomeSALPdf($data);
 
@@ -1167,10 +1174,7 @@ class HomeQuoteService extends BaseService
 
             return $document;
         } catch (\Exception $e) {
-            Log::error('Error in syncSAL: '.$e->getMessage(), [
-                'quoteUID' => $request->quoteUID ?? 'N/A',
-                'exception' => $e,
-            ]);
+            LoggerService::error('Error in syncSAL', exception: $e);
 
             return ['error' => $e->getMessage()];
         }
@@ -1260,7 +1264,7 @@ class HomeQuoteService extends BaseService
                 ->where('quote_uuid', $uuid)
                 ->get();
         } catch (\Exception $e) {
-            Log::error('Error fetching SAL items: '.$e->getMessage().' for quote '.$uuid);
+            LoggerService::error('Error fetching SAL items', exception: $e);
 
             return collect();
         }
@@ -1300,6 +1304,11 @@ class HomeQuoteService extends BaseService
 
         // Get quote details with relations
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+
+        if (! $quote) {
+            throw ValidationException::withMessages(['error' => 'Quote not found with the provided UUID.']);
+        }
+
         $quote->load(['advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer', 'homeQuote']);
@@ -1326,9 +1335,58 @@ class HomeQuoteService extends BaseService
         $pdfName = $this->generatePdfFilename($quote);
 
         // Log PDF generation
-        info('Home Quote Plans PDF generated for quote: '.$data['quote_uuid']);
+        LoggerService::info('Home Quote Plans PDF generated for quote: '.$data['quote_uuid']);
 
         return ['pdf' => $pdf, 'name' => $pdfName];
+    }
+
+    public function createRenewalPlan(string $quoteUID, array $data)
+    {
+        $planId = InsuranceProviderPlan::whereRaw('LOWER(text) = ?', [strtolower(trim($data['plan_name']))])
+            ->where('quote_type_id', QuoteTypeId::Home)
+            ->value('id');
+
+        if (! $planId) {
+            LoggerService::error('No plan found for plan name: '.$data['plan_name']);
+
+            return false;
+        }
+        $request = [[
+            'planId' => $planId,
+            'actualPremium' => $data['premium'],
+            'discountPremium' => $data['premium'],
+            'isDisabled' => false,
+            'isManualUpdate' => false,
+            'insurerQuoteNumber' => $data['insurer_quote_no'] ?? null,
+        ]];
+
+        return $this->createManualPlan($quoteUID, $request, false, true);
+    }
+
+    public function createManualPlan(string $quoteUID, array $data, $isUpdate = false, $isRenewal = false)
+    {
+
+        $request = [
+            'quoteUID' => $quoteUID,
+            'update' => $isUpdate,
+            'plans' => $data,
+        ];
+
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-home-quote-plan';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+
+        $apiCreds = [
+            'apiEndPoint' => $apiEndPoint,
+            'apiToken' => $apiToken,
+            'apiTimeout' => $apiTimeout,
+            'apiUserName' => $apiUserName,
+            'apiPassword' => $apiPassword,
+        ];
+
+        return $this->httpService->processRequest($request, $apiCreds);
     }
 
     private function getHomeQuoteFlags($homeQuote): array

@@ -51,12 +51,20 @@ const props = defineProps({
     default: '',
   },
   range: {
-    type: Boolean,
+    type: [Boolean, Object],
     default: false,
   },
   required: {
     type: Boolean,
     default: false,
+  },
+  minTime: {
+    type: Object,
+    default: null,
+  },
+  maxTime: {
+    type: Object,
+    default: null,
   },
 });
 
@@ -66,7 +74,6 @@ const selectedData = computed({
   },
   set(newValue) {
     emit('update:modelValue', newValue);
-    return;
   },
 });
 
@@ -85,11 +92,15 @@ const iconPosition = computed(() => {
     :disabled="props.disabled"
     position="left"
     class="w-full"
-    auto-apply
     :clearable="!props.disabled"
     :range="range"
+    :min-time="props.minTime"
+    :max-time="props.maxTime"
     text-input
+    :teleport-center="false"
+    teleport="body"
   >
+    <!-- auto-apply -->
     <template #dp-input="{ value, onEnter, onTab, onBlur, onInput, onPaste }">
       <x-input
         :model-value="value"
@@ -103,11 +114,11 @@ const iconPosition = computed(() => {
         :tooltip="props.tooltip"
         :placeholder="props.placeholder"
         :hide-footer="props.hideFooter"
-        @keydown.tab="onTab"
-        @change="onInput"
-        @blur="onBlur"
-        @paste="onPaste"
+        @update:modelValue="onInput"
         @keydown.enter.prevent="onEnter"
+        @blur="onBlur"
+        @keydown.tab="onTab"
+        @paste="onPaste"
         :error="props.error"
         :required="props.required"
       />
@@ -122,10 +133,13 @@ const iconPosition = computed(() => {
 
 .dp__icon.dp__clear_icon {
   @apply !text-orange-500;
-  /* top: v-bind(iconPosition) !important; */
 }
 
 .dp__cell_disabled {
   @apply opacity-20;
+}
+
+.dp--clear-btn {
+  top: 2.75rem !important;
 }
 </style>

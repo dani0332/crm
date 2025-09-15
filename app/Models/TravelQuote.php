@@ -39,6 +39,9 @@ class TravelQuote extends Model implements AuditableContract
         'policy_number' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
         'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'start_date' => FilterTypes::DATE,
+        'end_date' => FilterTypes::DATE,
+        'assignment_type' => FilterTypes::EXACT,
     ];
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
@@ -50,6 +53,8 @@ class TravelQuote extends Model implements AuditableContract
         'insurer_aml_status_text',
         'previous_policy_expiry_date_formatted',
         'dob_formatted',
+        'pc_qualified_formatted',
+        'assignment_type_text',
     ];
 
     protected static function booted()
@@ -113,6 +118,11 @@ class TravelQuote extends Model implements AuditableContract
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    public function paymentSplits()
+    {
+        return $this->hasMany(PaymentSplits::class, 'code', 'code');
     }
 
     public function plan()
@@ -342,5 +352,46 @@ class TravelQuote extends Model implements AuditableContract
     public function isPaymentAuthorizedOrPaymentLinkRequested()
     {
         return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
+    }
+
+    // TODO:: Need to verify this function
+    public function insured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id, relation between travel_quote and customer_insured
+            'id', // insured.id
+            'id', // travel_quote_request.id
+            'insured_id' // customer_insured.insured_id
+        )->where('customer_insured.quote_type_id', QuoteTypeId::Travel);
+    }
+
+    // Get the latest/most recent insured record for this quote
+    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // travel_quote_request.id
+            'insured_id' // customer_insured.insured_id
+        )->where('customer_insured.quote_type_id', QuoteTypeId::Travel)
+            ->latest('customer_insured.updated_at');
+    }
+
+    public function embeddedTransactions()
+    {
+        return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
+    }
+
+    /**
+     * Get quote tags for this car quote
+     */
+    public function quoteTags()
+    {
+        return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
+            ->where('quote_type_id', QuoteTypeId::Travel);
     }
 }

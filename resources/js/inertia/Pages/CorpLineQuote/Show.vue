@@ -382,7 +382,7 @@ const activityForm = useForm({
   parentType: 'Business',
   quoteType: 5,
   title: null,
-  description: null,
+  description: '',
   due_date: null,
   assignee_id: page.props?.auth?.user?.id,
   status: null,
@@ -392,7 +392,7 @@ const activityForm = useForm({
 
 const addActivity = () => {
   activityForm.title = null;
-  activityForm.description = null;
+  activityForm.description = '';
   activityForm.due_date = null;
   activityForm.assignee_id = null;
   activityForm.status = null;
@@ -433,11 +433,7 @@ const activityEdit = data => {
   activityForm.uuid = data.uuid;
   activityForm.title = data.title;
   activityForm.description = data.description;
-  activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
-      'T' +
-      data.due_date.split(' ')[1]
-    : null;
+  activityForm.due_date = useformatDateTimeForPicker(data.due_date);
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
 };
@@ -445,12 +441,6 @@ const activityEdit = data => {
 const onActivitySubmit = isValid => {
   if (!isValid) return;
   if (activityActionEdit.value) {
-    let date = new Date(activityForm.due_date);
-    date =
-      date.toISOString().split('T')[0] +
-      ' ' +
-      date.toTimeString().split(' ')[0];
-    activityForm.due_date = date;
     activityForm.post(route('activities.update.activity', activityForm.uuid), {
       preserveScroll: true,
       onSuccess: () => {
@@ -464,12 +454,6 @@ const onActivitySubmit = isValid => {
       },
     });
   } else {
-    let date = new Date(activityForm.due_date);
-    date =
-      date.toISOString().split('T')[0] +
-      ' ' +
-      date.toTimeString().split(' ')[0];
-    activityForm.due_date = date;
     activityForm.post(route('activities.create.activity'), {
       preserveScroll: true,
       onFinish: () => {
@@ -573,13 +557,15 @@ const isProfileUpdateAllow = computed(() => {
     page.props.rolesEnum.NRA,
   ]);
 });
+
+const enabledCustomerType =
+  page.props.quote.customer_type ?? page.props.customerTypeEnum.Entity;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type: enabledCustomerType,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
-
   insured_first_name:
     page.props.quote.insured_first_name ??
     page.props.quote.customer_insured_first_name ??
@@ -813,6 +799,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -919,7 +906,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY NAME</dt>
@@ -1272,7 +1259,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     </x-modal>
 
     <UBODetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -1584,6 +1571,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         show-close
         backdrop
         is-form
+        persistent
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">
@@ -1592,6 +1580,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             label="Title"
             :rules="[isRequired]"
             class="w-full"
+            required
           />
 
           <x-textarea
@@ -1599,6 +1588,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             label="Description"
             :adjust-to-text="false"
             class="w-full"
+            :rules="[isRequired]"
+            required
           />
 
           <x-select
@@ -1608,16 +1599,21 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             :rules="[isRequired]"
             placeholder="Select Assignee"
             class="w-full"
+            required
           />
 
           <DatePicker
-            :format="format"
             v-model="activityForm.due_date"
             label="Due Date"
             :rules="[isRequired]"
             class="w-full"
             withTime
             :min-date="new Date()"
+            :min-time="{
+              hours: new Date().getHours(),
+              minutes: new Date().getMinutes(),
+            }"
+            required
           />
         </div>
 
@@ -1730,6 +1726,13 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         :hide-footer="historyData.length < 15"
       />
     </div> -->
+
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
 
     <AuditLogs
       :quoteType="$page.props.modelType"

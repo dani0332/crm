@@ -13,6 +13,13 @@ class ValidateNationalityConfigPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
+        if ($this->allocationRequest->get('skipNationalityValidation', false)) {
+            LoggerService::info('Skipping nationality validation due to skipNationalityValidation flag');
+            $this->resolveExcludedAdvisorIds();
+
+            return $next($request);
+        }
+
         $config = $this->getNationalityConfig();
 
         if (! $config) {
@@ -35,16 +42,5 @@ class ValidateNationalityConfigPipe extends BaseAllocationPipe
     private function getNationalityConfig()
     {
         return NationalityAllocationService::find($this->allocationRequest->getQuoteType(), $this->lead->nationality_id);
-    }
-
-    private function resolveExcludedAdvisorIds()
-    {
-        $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds($this->allocationRequest->getQuoteType());
-
-        if (empty($excludedAdvisorIds)) {
-            return;
-        }
-
-        $this->allocationRequest->excludedAdvisorIds($excludedAdvisorIds);
     }
 }

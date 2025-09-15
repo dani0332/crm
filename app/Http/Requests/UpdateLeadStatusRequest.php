@@ -2,8 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\AMLDecisionStatusEnum;
-use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
@@ -13,7 +11,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\Customer;
-use App\Models\KycLog;
 use App\Models\RenewalBatch;
 use App\Services\AMLService;
 use App\Services\TravelQuoteService;
@@ -45,6 +42,31 @@ class UpdateLeadStatusRequest extends FormRequest
             'modelType' => 'required',
             'quote_uuid' => 'required',
             'leadStatus' => 'required',
+            'current_quote_status_id' => [
+                function ($attribute, $value, $fail) {
+
+                    // Only validate for Car quotes
+                    if (strtolower($this->input('modelType')) !== strtolower(quoteTypeCode::Car)) {
+                        return;
+                    }
+
+                    // Check if lead status requires current_quote_status_id
+                    $requiredStatuses = [
+                        QuoteStatusEnum::PolicyIssued,          // 33
+                        QuoteStatusEnum::PolicyCancelled,       // 58
+                        QuoteStatusEnum::PolicyCancelledReissued, // 74
+                    ];
+
+                    $leadStatus = (int) $this->input('leadStatus');
+                    $isRequiredStatus = in_array($leadStatus, $requiredStatuses);
+                    $isEmpty = empty($value);
+
+                    // Convert leadStatus to int for comparison and check if field is required
+                    if ($isRequiredStatus && $isEmpty) {
+                        $fail('The current quote status id field is required when the lead status is Policy Issued, Policy Cancelled, or Policy Cancelled Reissued for Car quotes.');
+                    }
+                },
+            ],
             'notes' => 'nullable',
             'lost_notes' => 'nullable|max:500',
             'approve_reason_id' => 'nullable',
@@ -55,7 +77,8 @@ class UpdateLeadStatusRequest extends FormRequest
          * advisor can mark car quote lead status to car sold / un-contactable with proof document required
          * && auth()->user()->hasRole(RolesEnum::CarAdvisor)
          */
-        if (! empty(request()->leadStatus) && ! empty(request()->modelType) && strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)
+        if (
+            ! empty(request()->leadStatus) && ! empty(request()->modelType) && strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)
             && isCarLostStatus(request()->leadStatus)
         ) {
             // check for valid quote
@@ -78,8 +101,10 @@ class UpdateLeadStatusRequest extends FormRequest
                 $q->where('quote_status_id', request()->leadStatus);
             })->first();
 
-            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor]) &&
-                isset($batch->deadline)) {
+            if (
+                auth()->user()->hasAnyRole([RolesEnum::CarAdvisor]) &&
+                isset($batch->deadline)
+            ) {
                 if (now()->gt(($batch->deadline->deadline_date.' 23:59:59'))) {
                     vAbort('Not possible to select the lead status after the deadline has passed.');
                 }
@@ -134,36 +159,27 @@ class UpdateLeadStatusRequest extends FormRequest
                 $validator->errors()->add('value', 'The lead is marked as '.quoteStatusCode::LOST.' and cannot be changed.');
             }
 
-            $fetchLastAMLCheck = KycLog::withTrashed()->where([
-                'quote_request_id' => request()->leadId,
-                'quote_type_id' => $quoteTypesIds[request()->modelType] ?? '',
-            ])->where(function ($ryuFilter) {
-                $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
-                $ryuFilter->orWhereNull('decision');
-            })->where(function ($aml) {
-                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
-                $aml->orWhereNull('screening_type');
-            })->whereNull('screenshot')->latest()->first();
-
             $isTravelLeadTransactionApproved = false;
+            $fetchLastAMLCheck = app(AMLService::class)->getLatestScreening(request()->leadId, $quoteTypesIds[request()->modelType]);
+
             if ((auth()->user()->hasPermissionTo(PermissionsEnum::TRAVEL_HAPEX) && strtolower(request()->modelType) === strtolower(quoteTypeCode::Travel))) {
                 $transactionApprovedQuoteStatus = app(TravelQuoteService::class)->getTransactionApprovedQuoteStatus(request()->leadId);
                 if (isset($transactionApprovedQuoteStatus->id)) {
                     $isTravelLeadTransactionApproved = true;
                 }
             }
+
             if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort && $isTravelLeadTransactionApproved == false) {
-                $customer = Customer::with([
-                    'insured' => function ($query) use ($quoteTypesIds) {
-                        $query->where('quote_request_id', request()->leadId)
-                            ->where('quote_type_id', $quoteTypesIds[request()->modelType]);
-                    },
-                ])->where('id', $quoteObject->customer_id)->first();
+
+                $customer = Customer::with(['latestInsured' => function ($query) use ($quoteTypesIds) {
+                    $query->where('quote_request_id', request()->leadId)
+                        ->where('quote_type_id', $quoteTypesIds[request()->modelType]);
+                }])->where('id', $quoteObject->customer_id)->first();
 
                 $customerProfileDetails = [
-                    'insured_first_name' => ($customer?->insured?->first_name ?? $customer->insured_first_name) ?? null,
-                    'insured_last_name' => ($customer?->insured?->last_name ?? $customer->insured_last_name) ?? null,
-                    'emirates_id_number' => ($customer?->insured?->id_type == 'emiratesId') ? $customer?->insured?->id_number : ($customer->emirates_id_number ?? null),
+                    'insured_first_name' => ($customer?->latestInsured?->first_name ?? $customer->insured_first_name) ?? null,
+                    'insured_last_name' => ($customer?->latestInsured?->last_name ?? $customer->insured_last_name) ?? null,
+                    'emirates_id_number' => ($customer?->latestInsured?->id_type == 'emiratesId') ? $customer?->latestInsured?->id_number : ($customer->emirates_id_number ?? null),
                     'emirates_id_expiry_date' => $customer->emirates_id_expiry_date ?? null,
                 ];
 
@@ -178,7 +194,8 @@ class UpdateLeadStatusRequest extends FormRequest
 
             if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Health)) {
                 if (($quoteObject->health_team_type == null || $quoteObject->health_team_type == quoteTypeCode::WCU) &&
-                    request()->leadStatus == QuoteStatusEnum::Qualified) {
+                    request()->leadStatus == QuoteStatusEnum::Qualified
+                ) {
                     $validator->errors()->add('value', 'Please select team type before moving to '.quoteStatusCode::QUALIFIED.' status');
                 }
             }

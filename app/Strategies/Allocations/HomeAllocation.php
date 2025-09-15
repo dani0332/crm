@@ -8,6 +8,8 @@ use App\Enums\TeamNameEnum;
 use App\Models\HomeQuote;
 use App\Models\RangeLookup;
 use App\Models\Team;
+use App\Services\Logger\LoggerService;
+use App\Services\RuleService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -21,7 +23,7 @@ class HomeAllocation extends BaseAllocation
 
     protected function fetchAdvisor(int $onlineStatus)
     {
-        Log::info('HomeAllocation: fetchAdvisor started', [
+        LoggerService::info('HomeAllocation: fetchAdvisor started', extra: [
             'leadId' => $this->lead->id ?? null,
             'uuid' => $this->lead->uuid ?? null,
             'onlineStatus' => $onlineStatus,
@@ -30,31 +32,32 @@ class HomeAllocation extends BaseAllocation
         // corp advisors logic needs to be implemented once its approved from business
         // If UUID is provided and the property is rented, fetch Corp Team advisors
         if ($this->lead->uuid !== null && $this->isPropertyRentedForHolidayHome($this->lead->uuid)) {
-            Log::info('HomeAllocation: Property is rented for holiday home, using Corp Team logic', [
+            LoggerService::info('HomeAllocation: Property is rented for holiday home, using Corp Team logic', extra: [
                 'leadId' => $this->lead->id ?? null,
                 'uuid' => $this->lead->uuid ?? null,
             ]);
             // return $this->fetchCorpLineAdvisor($onlineStatus);
-            Log::info('HomeAllocation: Corp advisors logic not implemented, returning empty array');
+            LoggerService::info('HomeAllocation: Corp advisors logic not implemented, returning null');
 
-            return []; // Corp advisors logic is not implemented yet so returning empty array and lead should be unassigned in this case
+            return null; // Corp advisors logic is not implemented yet so returning null and lead should be unassigned in this case
         }
 
         // Default behavior: Fetch value or volume advisors (Home Advisors)
-        Log::info('HomeAllocation: Fetching Home Advisor');
+        LoggerService::info('HomeAllocation: Fetching Home Advisor');
         $advisor = $this->fetchHomeAdvisor($onlineStatus);
-        Log::info('HomeAllocation: Home Advisor fetch result', ['advisorFound' => ! empty($advisor), 'advisor' => $advisor]);
+        LoggerService::info('HomeAllocation: Home Advisor fetch result', extra: ['advisorFound' => ! empty($advisor), 'advisor' => $advisor]);
 
         return $advisor;
     }
 
     private function getHomeQuoteData(string $uuid): ?HomeQuote
     {
-        Log::info('HomeAllocation: Fetching HomeQuote data', ['uuid' => $uuid]);
+        LoggerService::startQuoteLogging($uuid);
+        LoggerService::info('HomeAllocation: Fetching HomeQuote data');
         $homeQuote = HomeQuote::with('subArea:id,text')
             ->where('uuid', $uuid)
             ->first();
-        Log::info('HomeAllocation: HomeQuote data result', [
+        LoggerService::info('HomeAllocation: HomeQuote data result', extra: [
             'found' => ! is_null($homeQuote),
             'subArea' => $homeQuote?->subArea?->text ?? null,
         ]);
@@ -65,42 +68,43 @@ class HomeAllocation extends BaseAllocation
     private function matchesTargetLocations(string $address): bool
     {
         $targetKeywords = ['arabian ranches', 'palm jumeriah'];
-        Log::info('HomeAllocation: Checking if address matches target locations', ['address' => $address, 'targetKeywords' => $targetKeywords]);
+        LoggerService::info('HomeAllocation: Checking if address matches target locations', extra: ['address' => $address, 'targetKeywords' => $targetKeywords]);
 
         foreach ($targetKeywords as $keyword) {
             if (Str::contains($address, $keyword)) {
-                Log::info('HomeAllocation: Address matches target location', ['address' => $address, 'matchedKeyword' => $keyword]);
+                LoggerService::info('HomeAllocation: Address matches target location', extra: ['address' => $address, 'matchedKeyword' => $keyword]);
 
                 return true;
             }
         }
 
-        Log::info('HomeAllocation: Address does not match any target location', ['address' => $address]);
+        LoggerService::info('HomeAllocation: Address does not match any target location', extra: ['address' => $address]);
 
         return false;
     }
 
     private function isValueLocation(HomeQuote $lead): bool
     {
-        Log::info('HomeAllocation: Checking if location is a value location', ['uuid' => $this->lead->uuid ?? null]);
+        LoggerService::startQuoteLogging($lead->uuid);
+        LoggerService::info('HomeAllocation: Checking if location is a value location');
 
         $address = Str::lower($lead?->subArea?->text ?? '');
-        Log::info('HomeAllocation: Processing address for value location check', ['address' => $address]);
+        LoggerService::info('HomeAllocation: Processing address for value location check', extra: ['address' => $address]);
 
         $isValueLocation = $this->matchesTargetLocations($address);
-        Log::info('HomeAllocation: Value location check result', ['isValueLocation' => $isValueLocation]);
+        LoggerService::info('HomeAllocation: Value location check result', extra: ['isValueLocation' => $isValueLocation]);
 
         return $isValueLocation;
     }
 
     public function isValueLead(HomeQuote $lead): bool
     {
-        Log::info('HomeAllocation: Checking if lead is a value lead', ['leadId' => $this->lead->id ?? null]);
+        LoggerService::info('HomeAllocation: Checking if lead is a value lead', ['leadId' => $lead->id ?? null]);
         $hasHighValueAssets = $this->hasHighValueAssets($lead);
         $isValueLocation = $this->isValueLocation($lead);
         $result = $hasHighValueAssets || $isValueLocation;
 
-        Log::info('HomeAllocation: Value lead check result', [
+        LoggerService::info('HomeAllocation: Value lead check result', [
             'isValueLead' => $result,
             'hasHighValueAssets' => $hasHighValueAssets,
             'isValueLocation' => $isValueLocation,
@@ -117,7 +121,7 @@ class HomeAllocation extends BaseAllocation
     private function inRange($thresholdValue, ?RangeLookup $rangeLookup): bool
     {
         if (is_null($rangeLookup)) {
-            Log::info('HomeAllocation: Range lookup is null, returning false');
+            LoggerService::info('HomeAllocation: Range lookup is null, returning false');
 
             return false;
         }
@@ -125,7 +129,7 @@ class HomeAllocation extends BaseAllocation
         $min = $rangeLookup->min_value ?? 0;
         $max = $rangeLookup->max_value ?? 0;
 
-        Log::info('HomeAllocation: Checking if value is in range', [
+        LoggerService::info('HomeAllocation: Checking if value is in range', [
             'thresholdValue' => $thresholdValue,
             'min' => $min,
             'max' => $max,
@@ -140,7 +144,7 @@ class HomeAllocation extends BaseAllocation
             ($lead->hasPersonalBelongings() && $this->inRange(self::PERSONAL_BELONGINGS_VALUE_THRESHOLD, $lead->personalBelongings)) ||
             ($lead->hasBuilding() && $lead->building_value > self::BUILDING_VALUE_THRESHOLD);
 
-        Log::info('HomeAllocation: High value assets check result', [
+        LoggerService::info('HomeAllocation: High value assets check result', extra: [
             'hasHighValueAssets' => $result,
             'hasContents' => $lead->hasContents(),
             'hasPersonalBelongings' => $lead->hasPersonalBelongings(),
@@ -155,11 +159,11 @@ class HomeAllocation extends BaseAllocation
      */
     protected function getCorpTeamAdvisorEmails(): array
     {
-        Log::info('HomeAllocation: Fetching Corp Team advisor emails');
+        LoggerService::info('HomeAllocation: Fetching Corp Team advisor emails');
         $corpTeamId = Team::where('name', TeamNameEnum::MOTOR_COOPERATE_RENEWALS)->value('id');
 
         if (! $corpTeamId) {
-            Log::warning('HomeAllocation: Corp Team not found');
+            LoggerService::warning('HomeAllocation: Corp Team not found');
 
             return [];
         }
@@ -171,7 +175,7 @@ class HomeAllocation extends BaseAllocation
             ->pluck('users.email')
             ->toArray();
 
-        Log::info('HomeAllocation: Corp Team advisor emails fetched', ['count' => count($emails), 'emails' => $emails]);
+        LoggerService::info('HomeAllocation: Corp Team advisor emails fetched', extra: ['count' => count($emails), 'emails' => $emails]);
 
         return $emails;
     }
@@ -181,21 +185,34 @@ class HomeAllocation extends BaseAllocation
      */
     protected function getAdvisorEmailsBasedOnLeadType(): array
     {
-        Log::info('HomeAllocation: Getting advisor emails based on lead type', ['leadId' => $this->lead->id ?? null]);
+        LoggerService::info('HomeAllocation: Getting advisor emails based on lead type');
 
         $homeQuote = $this->getHomeQuoteData($this->lead->uuid);
+        if (! $homeQuote) {
+            LoggerService::warning('HomeAllocation: No home quote data found');
+
+            return [];
+        }
+        $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
+        if (count($emails) > 0) {
+            LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", extra: ['emails' => $emails]);
+
+            return $emails;
+        }
+
+        $this->skipRuleUsers = true;
 
         if ($this->isValueLead($homeQuote)) {
-            Log::info('HomeAllocation: Lead is a value lead, fetching value advisors');
+            LoggerService::info('HomeAllocation: Lead is a value lead, fetching value advisors');
 
             return $this->getAdvisorEmails(ApplicationStorageEnums::HOME_VALUE_ADVISORS);
         } elseif ($this->isVolumeLead($homeQuote)) {
-            Log::info('HomeAllocation: Lead is a volume lead, fetching volume advisors');
+            LoggerService::info('HomeAllocation: Lead is a volume lead, fetching volume advisors');
 
             return $this->getAdvisorEmails(ApplicationStorageEnums::HOME_VOLUME_ADVISORS);
         }
 
-        Log::warning('HomeAllocation: Lead is neither value nor volume, returning empty array');
+        LoggerService::warning('HomeAllocation: Lead is neither value nor volume, returning empty array');
 
         return [];
     }
@@ -207,7 +224,7 @@ class HomeAllocation extends BaseAllocation
      */
     protected function fetchHomeAdvisor(int $onlineStatus)
     {
-        Log::info('HomeAllocation: Fetching Home Advisor', ['onlineStatus' => $onlineStatus, 'leadId' => $this->lead->id ?? null]);
+        LoggerService::info('HomeAllocation: Fetching Home Advisor', extra: ['onlineStatus' => $onlineStatus, 'leadId' => $this->lead->id ?? null]);
 
         $emails = $this->getAdvisorEmailsBasedOnLeadType();
         if (empty($emails)) {
@@ -216,12 +233,13 @@ class HomeAllocation extends BaseAllocation
             return null; // No eligible advisors found
         }
 
-        Log::info('HomeAllocation: Getting advisor from base query', ['emailsCount' => count($emails), 'roleId' => RolesEnum::HomeAdvisor]);
+        LoggerService::info('HomeAllocation: Getting advisor from base query', extra: ['emailsCount' => count($emails), 'roleId' => RolesEnum::HomeAdvisor]);
         $advisor = $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::HomeAdvisor])
             ->whereIn('users.email', $emails)
+            ->logRawSql()
             ->first();
 
-        Log::info('HomeAllocation: Home Advisor fetch result', [
+        LoggerService::info('HomeAllocation: Home Advisor fetch result', extra: [
             'advisorFound' => ! is_null($advisor),
             'advisorId' => $advisor->id ?? null,
             'advisorName' => $advisor->name ?? null,
@@ -238,21 +256,21 @@ class HomeAllocation extends BaseAllocation
      */
     protected function fetchCorpLineAdvisor(int $onlineStatus)
     {
-        Log::info('HomeAllocation: Fetching Corp Line Advisor', ['onlineStatus' => $onlineStatus, 'leadId' => $this->lead->id ?? null]);
+        LoggerService::info('HomeAllocation: Fetching Corp Line Advisor', extra: ['onlineStatus' => $onlineStatus, 'leadId' => $this->lead->id ?? null]);
 
         $corpTeamEmails = $this->getCorpTeamAdvisorEmails();
         if (empty($corpTeamEmails)) {
-            Log::warning('HomeAllocation: No Corp Team emails found');
+            LoggerService::warning('HomeAllocation: No Corp Team emails found');
 
             return null;
         }
 
-        Log::info('HomeAllocation: Getting Corp Line Advisor from base query', ['emailsCount' => count($corpTeamEmails), 'roleId' => RolesEnum::CorpLineAdvisor]);
+        LoggerService::info('HomeAllocation: Getting Corp Line Advisor from base query', extra: ['emailsCount' => count($corpTeamEmails), 'roleId' => RolesEnum::CorpLineAdvisor]);
         $advisor = $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::CorpLineAdvisor])
             ->whereIn('users.email', $corpTeamEmails)
             ->first();
 
-        Log::info('HomeAllocation: Corp Line Advisor fetch result', [
+        LoggerService::info('HomeAllocation: Corp Line Advisor fetch result', extra: [
             'advisorFound' => ! is_null($advisor),
             'advisorId' => $advisor->id ?? null,
             'advisorName' => $advisor->name ?? null,
@@ -267,7 +285,7 @@ class HomeAllocation extends BaseAllocation
      */
     private function isPropertyRentedForHolidayHome(string $uuid): bool
     {
-        Log::info('HomeAllocation: Checking if property is rented for holiday home', ['uuid' => $uuid]);
+        LoggerService::info('HomeAllocation: Checking if property is rented for holiday home', extra: ['uuid' => $uuid]);
 
         $quoteRequest = HomeQuote::where('uuid', $uuid)
             ->with(['rangeLookup' => function ($query) {
@@ -276,14 +294,14 @@ class HomeAllocation extends BaseAllocation
             ->first();
 
         if (! $quoteRequest || ! $quoteRequest->rangeLookup) {
-            Log::info('HomeAllocation: No matching record found for holiday home check', ['uuid' => $uuid]);
+            LoggerService::info('HomeAllocation: No matching record found for holiday home check', extra: ['uuid' => $uuid]);
 
             return false;
         }
 
         // Compare the owner_occupancy_type_id with the range lookup's id
         $result = $quoteRequest->owner_occupancy_type_id === $quoteRequest->rangeLookup->id;
-        Log::info('HomeAllocation: Property rented for holiday home check result', [
+        LoggerService::info('HomeAllocation: Property rented for holiday home check result', extra: [
             'isRented' => $result,
             'owner_occupancy_type_id' => $quoteRequest->owner_occupancy_type_id ?? null,
             'rangeLookupId' => $quoteRequest->rangeLookup->id ?? null,

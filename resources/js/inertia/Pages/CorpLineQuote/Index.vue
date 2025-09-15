@@ -81,6 +81,8 @@ const filters = reactive({
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   advisors: [],
+  authorize_date: '',
+  captured_date: '',
 });
 
 watch(
@@ -339,15 +341,29 @@ const onDataExport = (exportType = 'download') => {
   let copyFilters = JSON.parse(JSON.stringify(cleanObj(filters)));
 
   if (copyFilters.created_at_start && copyFilters.created_at_end) {
-    let diff = calculateDaysDifference(
-      copyFilters.created_at_start ?? copyFilters.booking_date[0],
-      copyFilters.created_at_end ?? copyFilters.booking_date[1],
-    );
+    let diff, maxLimit, maxPeriod;
 
-    if (diff > 31) {
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        copyFilters.created_at_start ?? copyFilters.booking_date[0],
+        copyFilters.created_at_end ?? copyFilters.booking_date[1],
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        copyFilters.created_at_start ?? copyFilters.booking_date[0],
+        copyFilters.created_at_end ?? copyFilters.booking_date[1],
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
+
+    if (diff > maxLimit) {
       notification.error({
-        message:
-          'Maximum of 31 days (created date) are allowed to be exported.',
+        message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
         position: 'top',
       });
       return;
@@ -904,6 +920,22 @@ const insurerAMLStatusOption = computed(() => {
         <DatePicker
           v-model="filters.booking_date"
           label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
           class="w-full"
           range
           multi-calendars

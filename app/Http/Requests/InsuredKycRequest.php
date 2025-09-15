@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\PermissionsEnum;
 use App\Models\Insured;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -19,22 +20,6 @@ class InsuredKycRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
-    }
-
-    /**
-     * Prepare the data for validation.
-     */
-    protected function prepareForValidation()
-    {
-        // Get the insured record to determine customer type
-        /*if ($this->has('insured_id') && $this->insured_id) {
-            $insured = Insured::find($this->insured_id);
-            if ($insured) {
-                $this->customerType = $insured->customer_type;
-            }
-        }*/
-
-        // TODO:: Need to add validation if customer type entity then trade license is required
     }
 
     /**
@@ -121,5 +106,14 @@ class InsuredKycRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if (! auth()->user()->can(PermissionsEnum::AMLList)) {
+                $validator->errors()->add('error', 'You don\'t have permission to edit this section.');
+            }
+        });
     }
 }

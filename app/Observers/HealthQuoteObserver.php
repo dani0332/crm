@@ -8,6 +8,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\Health\HealthTransactionApproved;
 use App\Events\HealthQuoteAdvisorUpdated;
+use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\Health\SendApplicationSubmittedEmailJob;
@@ -111,6 +112,7 @@ class HealthQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+            event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
         }
 
         if (
@@ -119,7 +121,7 @@ class HealthQuoteObserver
         ) {
             $payment = $healthQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($healthQuote, $payment, QuoteTypes::HEALTH->value);
-
+            event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
         }
     }
 }

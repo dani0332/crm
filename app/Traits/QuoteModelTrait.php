@@ -8,15 +8,14 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\PuaEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeShortCode;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\CarQuotePlanDetail;
 use App\Models\Payment;
-use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use App\Traits\QuoteTraits\QuoteAllocatable;
@@ -27,7 +26,7 @@ use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
-    use Filterable, Logable, QuoteAllocatable;
+    use Filterable, Logable, Optionable, QuoteAllocatable, QuotePaymentable;
 
     /**
      * @return mixed|void
@@ -127,7 +126,25 @@ trait QuoteModelTrait
                         ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
                 });
-            });
+            })->when($segmentFilter === QuoteSegmentEnum::FIC->value, function ($query) use ($alias, $quoteTypeId) {
+                $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
+                        ->where('quote_tags.quote_type_id', $quoteTypeId);
+                });
+            })
+                ->when($segmentFilter === QuoteSegmentEnum::NON_FIC->value, function ($query) use ($alias, $quoteTypeId) {
+                    $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+                        $query->distinct()
+                            ->select('quote_uuid')
+                            ->from('quote_tags')
+                            ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
+                            ->where('quote_tags.quote_type_id', $quoteTypeId);
+                    });
+                });
         }
     }
 
@@ -288,7 +305,7 @@ trait QuoteModelTrait
         }
 
         return CarQuotePlanDetail::where('quote_uuid', $this->uuid)
-            ->whereIn('pua_type', PuaEnum::TAGS)
+            ->whereNotNull('pua_premium')
             ->where('plan_id', $this->plan_id)
             ->exists();
     }
@@ -302,13 +319,37 @@ trait QuoteModelTrait
     {
         return Attribute::make(
             get: function () {
-                $exists = QuoteRequestEntityMapping::where('quote_type_id', QuoteTypeId::Health)
-                    ->where('quote_request_id', $this->id)
-                    ->exists();
+                // Extract the prefix from the quote code (before the first dash)
+                $codePrefix = explode('-', $this->code)[0] ?? '';
 
-                return $exists ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+                // Get the latest insured record and return its customer_type
+                // If code prefix is BUS, default to Entity, otherwise default to Individual
+                $defaultType = ($codePrefix === QuoteTypeShortCode::BUS)
+                    ? CustomerTypeEnum::Entity
+                    : CustomerTypeEnum::Individual;
+
+                return $this->latestInsured?->customer_type ?? $defaultType;
             }
         );
+    }
+
+    public function pcQualifiedFormatted(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return $this->pc_qualified === true || $this->pc_qualified === 1 ? 'Yes' : 'No';
+            }
+        );
+    }
+
+    public static function formattedPcQualifiedCase(): string
+    {
+        return "
+            CASE
+                WHEN pc_qualified = 1 THEN 'Yes'
+                ELSE 'No'
+            END
+        ";
     }
 
     public function hasOneOfPaidStatus(): bool
@@ -331,12 +372,9 @@ trait QuoteModelTrait
             return $segment->label();
         }
 
-        // Fetch all relevant tags in one query
-        $tagNames = QuoteTag::where('quote_uuid', $lead->uuid)
-            ->where('quote_type_id', $quoteTypeId)
-            ->pluck('name')
-            ->map(fn ($name) => strtolower($name))
-            ->toArray();
+        // Strategy 1: Use preloaded relationship if available
+        // Strategy 2: Fallback to original database query
+        $tagNames = $this->getTagNames($lead, $quoteTypeId);
 
         $leadSource = $lead->source;
 
@@ -383,5 +421,27 @@ trait QuoteModelTrait
         }
 
         return implode(', ', $matchedSegments);
+    }
+
+    /**
+     * Get tag names using optimized relationship or fallback to database query
+     */
+    private function getTagNames($lead, $quoteTypeId): array
+    {
+        // Strategy 1: Use preloaded relationship if available (optimized)
+        if (method_exists($lead, 'quoteTags') && $lead->relationLoaded('quoteTags')) {
+            return collect($lead->quoteTags ?? [])
+                ->pluck('name')
+                ->map(fn ($name) => strtolower($name))
+                ->toArray();
+
+        }
+
+        // Strategy 2: Fallback to original database query (backward compatible)
+        return QuoteTag::where('quote_uuid', $lead->uuid)
+            ->where('quote_type_id', $quoteTypeId)
+            ->pluck('name')
+            ->map(fn ($name) => strtolower($name))
+            ->toArray();
     }
 }

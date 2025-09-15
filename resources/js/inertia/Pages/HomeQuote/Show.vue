@@ -1,5 +1,8 @@
 <script setup>
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import {
+  applyEmiratesNumberMasking,
+  useIsQuoteCreatedAfterCutoff,
+} from '@/inertia/Composables/utilities.js';
 
 import MemberDetails from '../../Components/MemberDetails.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
@@ -7,6 +10,8 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 
 const props = defineProps({
   quote: Object,
@@ -57,6 +62,7 @@ const props = defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   quoteStatuses: Object,
+  homeCutOffDate: String,
 });
 
 const page = usePage();
@@ -373,15 +379,18 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType =
+  page.props.quote?.latest_insured?.customer_type ??
+  page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type: page.props.quote?.insured?.customer_type || null,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.insured?.first_name || '',
-  insured_last_name: page.props.quote?.insured?.last_name || '',
+  insured_first_name: page.props.quote?.latest_insured?.first_name || '',
+  insured_last_name: page.props.quote?.latest_insured?.last_name || '',
   emirates_id_number: page.props.quote.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer?.emirates_id_expiry_date || null,
@@ -510,44 +519,11 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
-
-  if (page.props.quote.source === page.props.leadSource.RENEWAL_UPLOAD) {
-    // Only check all these conditions if it's a RENEWAL_UPLOAD lead
-    if (
-      page.props.quote.advisor.name &&
-      page.props.quote.advisor.mobile_no &&
-      page.props.quote.email &&
-      page.props.quote.customerAddressData?.floor_number &&
-      page.props.quote.customerAddressData?.building_name &&
-      page.props.quote.customerAddressData?.street &&
-      page.props.quote.home_quote?.sub_area_id &&
-      page.props.quote.home_quote?.possession_type_id &&
-      page.props.quote.home_quote?.accommodation_type_id &&
-      page.props.quote.home_quote?.has_claimed_losses !== undefined &&
-      ((page.props.quote.home_quote?.possession_type_id ==
-        page.props.homePossessionTypeEnum.TENANT &&
-        page.props.quote.home_quote?.owner_occupancy_type_id) ||
-        (page.props.quote.home_quote?.possession_type_id ==
-          page.props.homePossessionTypeEnum.OWNER_RENTING &&
-          page.props.quote.home_quote?.personal_belongings_value_id &&
-          page.props.quote.home_quote.contents_value_id) ||
-        (page.props.quote.home_quote?.possession_type_id ==
-          page.props.homePossessionTypeEnum.OWNER_RENTING &&
-          page.props.quote.home_quote.contents_value_id) ||
-        (page.props.quote.home_quote?.possession_type_id ==
-          page.props.homePossessionTypeEnum.LANDLORD &&
-          page.props.quote.home_quote?.building_value) ||
-        (page.props.quote.home_quote?.possession_type_id ==
-          page.props.homePossessionTypeEnum.LANDLORD &&
-          page.props.quote.home_quote?.contents_value_id))
-    ) {
-      // Only run onLoadAvailablePlansData for RENEWAL_UPLOAD leads if all conditions are met
-      onLoadAvailablePlansData();
-    }
-  } else {
-    // For all non-renewal upload leads, always run onLoadAvailablePlansData
-    onLoadAvailablePlansData();
-  }
+  onLoadAvailablePlansData();
+  window.addEventListener('ocr-notification', handleOcrNotification);
+});
+onUnmounted(() => {
+  window.removeEventListener('ocr-notification', handleOcrNotification);
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -1055,42 +1031,11 @@ const isPlanDetailEnabled = computed(() => {
 // New computed property to check lead date
 const shouldShowPlanDetailsSection = computed(() => {
   // First check if lead is created before the cutoff date
-  const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
-  const str = page.props.quote.created_at;
+  const cutoffDate = props.homeCutOffDate
+    ? new Date(props.homeCutOffDate)
+    : new Date('2025-04-10 21:30:00');
 
-  const match = str.match(
-    /^(\d{1,2})-([A-Za-z]{3,9})-(\d{4})\s+(\d{1,2}):(\d{2})(am|pm)$/i,
-  );
-  if (!match) return false;
-
-  const [_, day, monthStr, year, hour, min, ampm] = match;
-  const months = {
-    jan: 0,
-    feb: 1,
-    mar: 2,
-    apr: 3,
-    may: 4,
-    jun: 5,
-    jul: 6,
-    aug: 7,
-    sep: 8,
-    oct: 9,
-    nov: 10,
-    dec: 11,
-  };
-  let h = parseInt(hour, 10);
-  if (ampm.toLowerCase() === 'pm' && h < 12) h += 12;
-  if (ampm.toLowerCase() === 'am' && h === 12) h = 0;
-
-  const createdDate = new Date(
-    parseInt(year),
-    months[monthStr.toLowerCase().slice(0, 3)],
-    parseInt(day),
-    h,
-    parseInt(min),
-  );
-
-  if (createdDate >= cutoffDate) {
+  if (useIsQuoteCreatedAfterCutoff(page.props.quote.created_at, cutoffDate)) {
     return false;
   }
 
@@ -1114,10 +1059,93 @@ const shouldShowPlanDetailsSection = computed(() => {
     hasRequiredValueFields
   );
 });
+
+// OCR loader state (align with Car implementation)
+const ocrLoadingDocType = ref(null);
+const ocrLoadingDocTypes = reactive(new Set());
+const isDocTypeLoading = docType => ocrLoadingDocTypes.has(docType);
+const hasOcrInProgress = computed(() => ocrLoadingDocTypes.size > 0);
+const ocrDocumentTypeEnum = usePage().props.ocrDocumentTypeEnum;
+// Check if all required policy fields are filled (moved from OcrNotification to avoid duplicates)
+const checkRequiredPolicyFields = () => {
+  const quote = usePage().props?.quote;
+  if (!quote) return false;
+  const requiredFields = [
+    { field: 'policy_number', property: 'quote_policy_number' },
+    { field: 'policy_start_date', property: 'quote_policy_start_date' },
+    { field: 'policy_expiry_date', property: 'quote_policy_expiry_date' },
+    { field: 'price_vat_applicable', property: 'price_vat_applicable' },
+  ];
+  return requiredFields.every(item => {
+    const value = quote[item.field] || quote[item.property];
+    return value !== null && value !== undefined && String(value).trim() !== '';
+  });
+};
+// Reload keys for forced component re-renders after OCR
+const policyDetailReloadKey = ref(0);
+const bookPolicyReloadKey = ref(0);
+function handleOcrNotification(event) {
+  const { docType, status, userId } = event.detail || {};
+  const currentUserId = usePage().props.auth.user.id;
+  // Only process notifications for the current user
+  if (userId !== currentUserId) {
+    return;
+  }
+  // For 'start' status, add document type to loading set
+  if (status === 'start') {
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+    ];
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.add(docType);
+      // Also set the old ref for backwards compatibility
+      ocrLoadingDocType.value = docType;
+    }
+  } else {
+    // For 'end' or 'fail' status, remove document type from loading set and reload data
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+    ];
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.delete(docType);
+    }
+    router.reload({
+      onSuccess: () => {
+        // Clear both the old ref and the reactive Set for immediate UI update
+        ocrLoadingDocType.value = null;
+        ocrLoadingDocTypes.clear();
+        policyDetailReloadKey.value++;
+        bookPolicyReloadKey.value++;
+        // Check policy fields completion after data reload (only for CERTIFICATE_OF_ISSUANCE)
+        if (
+          status === 'end' &&
+          !event.detail?.error &&
+          docType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value
+        ) {
+          const allFieldsFilled = checkRequiredPolicyFields();
+          if (!allFieldsFilled) {
+            notification.info({
+              title: 'Some required fields are still missing in Policy details',
+              position: 'top',
+            });
+          }
+        }
+      },
+      preserveState: true,
+      preserveScroll: true,
+      only: ['payments', 'bookPolicyDetails', 'quote', 'quoteDocuments'],
+    });
+  }
+}
 </script>
 
 <template>
   <div>
+    <OcrNotification />
     <Head title="Home Detail" />
     <StickyHeader>
       <template v-slot:header>
@@ -1128,6 +1156,14 @@ const shouldShowPlanDetailsSection = computed(() => {
         >
           Stale for {{ countDays }}
         </p>
+        <x-button
+          v-if="quote?.customer.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
       </template>
       <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
@@ -1188,6 +1224,7 @@ const shouldShowPlanDetailsSection = computed(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -1329,7 +1366,7 @@ const shouldShowPlanDetailsSection = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY NAME</dt>
@@ -1435,6 +1472,10 @@ const shouldShowPlanDetailsSection = computed(() => {
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDITIONAL NOTES</dt>
+                <dd>{{ quote.additional_notes }}</dd>
+              </div>
             </dl>
           </div>
 
@@ -1525,6 +1566,13 @@ const shouldShowPlanDetailsSection = computed(() => {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-QUALIFIED</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -1537,7 +1585,7 @@ const shouldShowPlanDetailsSection = computed(() => {
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                quote.customer_type == page.props.customerTypeEnum.Individual
+                enabledCustomerType == page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
               }}
@@ -1558,7 +1606,7 @@ const shouldShowPlanDetailsSection = computed(() => {
             <div class="text-sm">
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Individual
+                  enabledCustomerType == page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
@@ -1671,13 +1719,14 @@ const shouldShowPlanDetailsSection = computed(() => {
                   <dt class="font-medium">STREET NAME</dt>
                   <dd>{{ page?.props?.customerAddressData?.street }}</dd>
                 </div>
-
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
-                v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Entity
-                "
+                v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
@@ -1880,7 +1929,7 @@ const shouldShowPlanDetailsSection = computed(() => {
     </x-modal>
 
     <MemberDetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
       :quote="quote"
       :membersDetails="membersDetails"
       :nationalities="nationalities"
@@ -1891,7 +1940,7 @@ const shouldShowPlanDetailsSection = computed(() => {
     />
 
     <UBODetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -2089,6 +2138,16 @@ const shouldShowPlanDetailsSection = computed(() => {
                   >
                     Hidden
                   </x-tag>
+
+                  <x-tag
+                    v-if="item.isRenewal"
+                    size="xs"
+                    color="success"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Renewal Plan
+                  </x-tag>
+
                   <x-tooltip>
                     <x-tag
                       v-if="item.puaType"
@@ -2256,11 +2315,16 @@ const shouldShowPlanDetailsSection = computed(() => {
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
+      :key="policyDetailReloadKey"
       :quote="quote"
       modelType="home"
       :expanded="sectionExpanded"
       :policyIssuanceStatus="policyIssuanceStatus"
       :payments="payments"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <QuoteDocument
@@ -2283,12 +2347,17 @@ const shouldShowPlanDetailsSection = computed(() => {
           permissionEnum.VIEW_ALL_LEADS,
         ])
       "
+      :key="bookPolicyReloadKey"
       :quote="quote"
       quoteType="home"
       :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <SendUpdates
@@ -2331,6 +2400,13 @@ const shouldShowPlanDetailsSection = computed(() => {
       :quote-type="quoteType"
     />
 
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
+
     <AuditLogs
       :id="$page.props.quote.id"
       :quote-type="quoteType"
@@ -2340,10 +2416,17 @@ const shouldShowPlanDetailsSection = computed(() => {
     <AuditLogs
       :title="'KYC Audit Logs'"
       :type="'App\\Models\\InsuredKyc'"
-      :id="quote?.insured?.insured_kyc?.id"
+      :id="quote?.latest_insured?.insured_kyc?.id"
     />
 
     <ApiLogs :type="modelClassHome" :id="$page.props?.quote?.home_quote?.id" />
+
+    <OcrLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props?.quote?.id"
+      :expanded="sectionExpanded"
+    />
 
     <LeadHistory :quote="$page.props.quote" />
 

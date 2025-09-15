@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -123,6 +124,7 @@ class BaseService
             ->join('users', 'audits.user_id', 'users.id')
             ->where('auditable_id', $auditableId)
             ->where('auditable_type', $auditableType)
+            ->orderBy('created_at', 'desc')
             ->get();
     }
 
@@ -353,6 +355,13 @@ class BaseService
             return;
         }
 
+        // Skip allocation count updates for IMCRM source leads
+        if ($lead->source === LeadSourceEnum::IMCRM) {
+            LoggerService::info('Skipping allocation count update for IMCRM source lead: '.$lead->uuid);
+
+            return;
+        }
+
         LoggerService::info('Previous assignment type is : '.$previousAssignmentType);
         // Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
@@ -471,7 +480,7 @@ class BaseService
         $lead->save();
     }
 
-    public function selfAssign(QuoteTypes $quoteType, string $uuid)
+    public function selfAssign(QuoteTypes $quoteType, string $uuid, bool $sendAdvisorAssignedEmail = false)
     {
         $lead = $quoteType->model()->where('uuid', $uuid)->first();
 
@@ -491,6 +500,10 @@ class BaseService
             $lead->saveQuietly();
 
             LogAllocation::dispatch($lead, $quoteType);
+
+            if ($sendAdvisorAssignedEmail) {
+                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($lead, $quoteType->value);
+            }
         }
     }
 }

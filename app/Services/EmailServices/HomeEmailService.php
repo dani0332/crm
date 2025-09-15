@@ -3,19 +3,27 @@
 namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Models\ApplicationStorage;
 use App\Models\HomeQuote;
+use App\Models\PersonalQuote;
 use App\Models\QuoteFlowDetails;
+use App\Models\RenewalQuoteProcess;
+use App\Models\RenewalsBatchEmails;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\HomeQuoteService;
 use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class HomeEmailService extends BaseService
@@ -85,8 +93,58 @@ class HomeEmailService extends BaseService
         }
     }
 
+    public function sendRenewalOCBEmail(RenewalsBatchEmails $renewalsBatchEmail, RenewalQuoteProcess $renewalQuoteProcess)
+    {
+        try {
+            // Find Home Quote
+            $lead = PersonalQuote::find($renewalQuoteProcess->quote_id);
+            $homeQuote = $lead->homeQuote;
+
+            LoggerService::startQuoteLogging($lead);
+
+            LoggerService::info('Home Renewals OCB Email started');
+
+            // Get Lead Advisor
+            $advisor = User::where('id', $lead->advisor_id)->first();
+
+            // Map Data for Home Renewal OCB Email
+            $emailData = $this->mapDataForRenewalOCBEmail($homeQuote, $advisor, WorkflowTypeEnum::HOME_RENEWAL_OCB);
+
+            $workflowUrl = ApplicationStorage::where('key_name', WorkflowTypeEnum::HOME_RENEWAL_OCB)->first()?->value;
+
+            if ($workflowUrl) {
+                app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
+
+                LoggerService::info('Renewals OCB Email Flow triggered', extra: [
+                    'email' => $lead->email,
+                ]);
+
+                RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
+                RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
+
+                // update lead status to quoted
+                $lead->quote_status_id = QuoteStatusEnum::Quoted;
+                $lead->save();
+
+            } else {
+                LoggerService::error('Home Renewals OCB Email failed', extra: [
+                    'email' => $lead->email,
+                ]);
+            }
+
+        } catch (\Exception $exception) {
+            LoggerService::error('Home Renewals OCB Email failed', exception: $exception);
+            RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+        }
+    }
+
     public function buildEmailData($lead, $advisor, $workflowType, $homeQuote)
     {
+        $bccEmails = [];
+        $bccEmails[] = getAppStorageValueByKey(ApplicationStorageEnums::HOME_LEAD_POOL_BCC);
+        if ($lead->source === LeadSourceEnum::CPA_AUSTRALIA_HOME) {
+            $bccEmails = array_merge($bccEmails, explode(',', getAppStorageValueByKey(ApplicationStorageEnums::CPA_AUSTRALIA_HOME_BCC_EMAILS)));
+        }
         $data = [
             // Lead-related data
             'quoteUID' => $lead->uuid,
@@ -114,12 +172,63 @@ class HomeEmailService extends BaseService
 
             // Workflow-related data
             'workflowType' => $workflowType,
+            'bccEmails' => $bccEmails ?? [],
         ];
 
         $tempUrlPDF = $this->attachHomeOCBPDFToEmail($lead->uuid);
 
         if (! empty($tempUrlPDF)) {
             $data['tempUrlPDF'] = $tempUrlPDF;
+        }
+
+        return (object) $data;
+    }
+
+    private function mapDataForRenewalOCBEmail($lead, $advisor, $workflowType)
+    {
+        $fullName = trim("{$lead->first_name} {$lead->last_name}");
+        $advisorName = trim("{$advisor->name}");
+        $advisorEmail = $advisor?->email ?? '';
+        $advisorDetails = $advisor ?? null;
+        $advisorId = $advisor?->id ?? null;
+        $automatedFlowExecuted = empty($lead->automated_flow_executed_at) ? true : false;
+        $flowExecutedAt = empty($lead->flow_executed_at) ? null : $lead->flow_executed_at;
+        $triggerDate = $this->getOCBTriggerTimestamp($lead->previous_policy_expiry_date);
+        $mobileNoWithoutSpaces = (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : '');
+        $whatsappConsent = getWhatsappConsent(QuoteTypes::HOME, uuid: $lead->uuid);
+        $landLine = (! empty($advisor?->landline_no) ? $advisor->landline_no : '');
+        $mobilePhone = (! empty($advisor?->mobile_no) ? $advisor->mobile_no : '');
+        $whatsAppNumber = (! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '');
+        $customerMobile = (! empty($lead->mobile_no) ? $lead->mobile_no : '');
+
+        $data = (object) [
+            'quoteUID' => $lead->uuid,
+            'customerEmail' => $lead->email,
+            'refID' => $lead->code,
+            'automatedFlowExecuted' => $automatedFlowExecuted,
+            'uuid' => $lead->uuid,
+            'customerFullName' => $fullName,
+            'customerName' => $fullName,
+            'advisorId' => $advisorId,
+            'advisorName' => $advisorName,
+            'advisorEmail' => $advisorEmail,
+            'advisorDetails' => $advisorDetails,
+            'flowExecutedAt' => $flowExecutedAt,
+            'landLine' => $landLine,
+            'mobilePhone' => $mobilePhone,
+            'whatsAppNumber' => $whatsAppNumber,
+            'mobileNoWithoutSpaces' => $mobileNoWithoutSpaces,
+            'workflowType' => $workflowType,
+            'customerMobile' => $customerMobile,
+            'triggerDate' => $triggerDate,
+            'whatsappConsent' => $whatsappConsent,
+            'hasClaimedLosses' => $lead->has_claimed_losses ? 'Yes' : 'No',
+        ];
+
+        $tempUrlPDF = $this->attachHomeOCBPDFToEmail($lead->uuid, 64800);
+
+        if (! empty($tempUrlPDF)) {
+            $data->tempUrlPDF = $tempUrlPDF;
         }
 
         return (object) $data;
@@ -132,7 +241,7 @@ class HomeEmailService extends BaseService
             ->first();
     }
 
-    public function attachHomeOCBPDFToEmail($quoteUID)
+    public function attachHomeOCBPDFToEmail($quoteUID, int $pdfExpiry = 120)
     {
         try {
             LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Generating PDF');
@@ -170,7 +279,7 @@ class HomeEmailService extends BaseService
             // Generate a public URL
             $publicUrl = Storage::disk('azureIM')->temporaryUrl(
                 $tempFilePath,
-                now()->addMinutes(120)
+                now()->addMinutes($pdfExpiry)
             );
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
@@ -213,5 +322,49 @@ class HomeEmailService extends BaseService
             throw $th;
         }
 
+    }
+
+    /**
+     * Get timestamp for OCB trigger date based on policy expiry date
+     * OCB date is 30 days before expiry, adjusted for weekends
+     *
+     * @param  string|Carbon  $expiryDate  The policy expiry date
+     * @return string Timestamp for the OCB trigger date
+     */
+    public function getOCBTriggerTimestamp($expiryDate): string
+    {
+        // Ensure Carbon instance
+        $expiry = Carbon::parse($expiryDate);
+
+        // Subtract 30 days to get the OCB trigger date
+        $ocbDate = $expiry->copy()->subDays(30);
+
+        // Adjust for weekend rules
+        switch ($ocbDate->dayOfWeek) {
+            case Carbon::SATURDAY:
+                $ocbDate->subDay();
+                break;
+            case Carbon::SUNDAY:
+                $ocbDate->addDay();
+                break;
+            default:
+                break;
+        }
+
+        // Get current time
+        $now = Carbon::now();
+
+        LoggerService::info('fn: getOCBTriggerTimestamp', [
+            'expiryDate' => $expiryDate,
+            'ocbDate' => $ocbDate,
+        ]);
+
+        // If OCB date is already in the past, return timestamp for 10 minutes from now
+        if ($ocbDate->lessThanOrEqualTo($now)) {
+            return (string) strtotime('+10 minutes');
+        }
+
+        // Return timestamp for the OCB date
+        return (string) $ocbDate->timestamp;
     }
 }

@@ -2,14 +2,17 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Models\HealthPlanCoPayment;
 use App\Models\QuoteTag;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\ActivitiesService;
+use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -53,6 +56,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SEND_AND_BOOK_POLICY_EMAIL_JOB);
+
         info('Quote Code: '.$this->code.' job: SendBookPolicyDocumentsJob started');
         $insuranceType = '';
         $planName = '';
@@ -62,6 +67,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($this->data->model_type));
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
+
+        $isAUHHealthLead = strtolower($this->data->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead();
 
         info('job: SendBookPolicyDocumentsJob Code: '.$quote->code.' , Quote Type: '.$this->data->model_type.', Type Id: '.$quoteTypeId);
 
@@ -78,7 +85,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             return;
         }
 
-        $handBookDocuments = [];
+        $handBookDocuments = $policyWordingDoc = [];
 
         try {
             // This will give handbook document from relevant policy wording table only for mentioned LOB's
@@ -103,6 +110,14 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         }
         if ($modelType == quoteTypeCode::Health) {
             $planName = $quote->plan->text;
+        } elseif ($modelType == quoteTypeCode::SAVINGS) {
+            $planName = $quote?->insuranceProviderPlan?->text ?? '';
+
+            // TODO : need to discuss this, because file size is exceed.
+            $policyWordingDoc = [
+                'watermarked_doc_url' => $quote->insuranceProviderPlan?->policyWordings?->link,
+                'document_type_text' => 'Policy Wording/handbook',
+            ];
         }
 
         $quote->load('advisor');
@@ -115,9 +130,11 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData = new \stdClass;
             $emailData->code = $quote->code;
             $emailData->customerEmail = $quote->email;
+            $emailData->customerId = $quote->customer_id;
             $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
             $emailData->clientFirstName = $quote->first_name;
             $emailData->policy_number = $quote->policy_number;
+            $emailData->policyNumber = $quote->policy_number;
             $emailData->renewalDueDate = date('d/m/Y', strtotime($quote['policy_expiry_date']));
             $emailData->policyStartDate = date('d/m/Y', strtotime($quote['policy_start_date']));
             $emailData->quoteDocuments = $docs;
@@ -158,6 +175,10 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->emailTemplateId = $templateId;
             $emailData->handBookDocuments = $handBookDocuments;
             $emailData->roadsideAssistance = $roadsideAssistance;
+            $emailData->quoteTypeId = $quoteTypeId;
+            $emailData->quoteId = $quote->id;
+            $emailData->policyWordingHandbook = $policyWordingDoc;
+            $emailData->isHealthAUH = $isAUHHealthLead;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
             info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));

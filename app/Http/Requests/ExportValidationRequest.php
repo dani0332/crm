@@ -72,6 +72,26 @@ class ExportValidationRequest extends FormRequest
         return $rules;
     }
 
+    /**
+     * Calculate months difference between two dates
+     */
+    private function calculateMonthsDifference($startDate, $endDate)
+    {
+        $start = Carbon::parse($startDate);
+        $end = Carbon::parse($endDate);
+
+        // Calculate year and month difference
+        $yearDiff = $end->year - $start->year;
+        $monthDiff = $end->month - $start->month;
+
+        // Total months difference
+        $totalMonths = $yearDiff * 12 + $monthDiff;
+
+        // Return absolute difference in months
+        // (e.g., March 31 to April 1 = 1 month, March 15 to March 20 = 0 months)
+        return abs($totalMonths);
+    }
+
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
@@ -80,6 +100,7 @@ class ExportValidationRequest extends FormRequest
                 $diffInDays = 31;
                 $exportTye = $this->route('exportTye');
                 $quoteType = $this->route('quoteType');
+                $isEmailExport = $this->input('exportType') === 'email';
 
                 if ((ucfirst($quoteType) == QuoteTypes::CAR->value) || $quoteType == RetentionReportEnum::RETENTION) {
                     $diffInDays = 31;
@@ -123,11 +144,22 @@ class ExportValidationRequest extends FormRequest
                     }
 
                     if ($start && $end) {
-                        $diff = $start->diffInDays($end);
-                        if ($diff >= $diffInDays) {
-                            $message = "Maximum of {$diffInDays} days ({$error_fields}) are allowed to be exported.";
-                            // logger()->error('ExportValidationRequest: '.$message);
-                            $validator->errors()->add('flash', $message);
+                        if ($isEmailExport) {
+                            // For email exports, use months-based validation
+                            $monthsDiff = $this->calculateMonthsDifference($start, $end);
+                            $maxMonths = 3;
+
+                            if ($monthsDiff > $maxMonths) {
+                                $message = "Maximum of {$maxMonths} months ({$error_fields}) are allowed to be exported.";
+                                $validator->errors()->add('flash', $message);
+                            }
+                        } else {
+                            // For download exports, use days-based validation
+                            $diff = $start->diffInDays($end);
+                            if ($diff >= $diffInDays) {
+                                $message = "Maximum of {$diffInDays} days ({$error_fields}) are allowed to be exported.";
+                                $validator->errors()->add('flash', $message);
+                            }
                         }
                     }
 

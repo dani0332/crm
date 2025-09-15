@@ -11,6 +11,7 @@ use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
 use App\Models\LifeQuote;
 use App\Models\PetQuote;
+use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use BenSampo\Enum\Enum;
@@ -54,6 +55,7 @@ class quoteTypeCode extends Enum
     const Jetski = 'Jetski';
     const Aml = 'Aml';
     const TRA = 'TRA';
+    const SAVINGS = 'Savings';
     const Marine = 'Marine';
     const CompanyCar = 'CompanyCar';
 
@@ -71,6 +73,7 @@ class quoteTypeCode extends Enum
             PetQuote::class => self::Pet,
             CycleQuote::class => self::Cycle,
             JetskiQuote::class => self::Jetski,
+            SavingsQuote::class => self::SAVINGS,
         };
     }
 }

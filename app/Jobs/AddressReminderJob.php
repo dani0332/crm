@@ -7,7 +7,6 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
-use App\Models\CarQuote;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -24,16 +23,19 @@ class AddressReminderJob implements ShouldQueue
     public $backoff = 300;
 
     /**
-     * The CarQuote instance.
+     * The lead instance.
      */
-    private CarQuote $lead;
+    private $lead;
+
+    private $modelType;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(CarQuote $lead)
+    public function __construct($lead, $modelType)
     {
         $this->lead = $lead;
+        $this->modelType = $modelType;
     }
 
     /**
@@ -53,9 +55,10 @@ class AddressReminderJob implements ShouldQueue
             if ($courierEmbeddedTransaction?->firstWhere('is_selected', 1)?->payment_status_id === PaymentStatusEnum::CAPTURED) {
                 info('Triggering Bird Courier Flow for policy reminder for lead : '.$this->lead->uuid);
                 $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
+                $quoteTypeId = QuoteTypes::getIdFromValue($this->modelType);
                 $payload = [
                     'quoteUID' => $this->lead->uuid,
-                    'quoteTypeId' => (int) QuoteTypes::CAR->id(),
+                    'quoteTypeId' => $quoteTypeId,
                     'actionType' => BirdFlowStatusEnum::POLICY_ISSUED,
                     'refId' => $embeddedTransactionRefId,
                 ];

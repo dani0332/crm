@@ -12,6 +12,7 @@ defineProps({
   insuranceProviders: Array,
   travelPlans: Array,
   insurerAMLStatus: Object,
+  assignmentTypes: Object,
 });
 
 let params = useUrlSearchParams('history');
@@ -83,6 +84,12 @@ const filters = reactive({
   insurance_provider_ids: [],
   plan_name: [],
   travel_start_date: '',
+  travel_end_date: '',
+  assignment_type: '',
+  private_client: 'all',
+  age_group: 'all',
+  authorize_date: '',
+  captured_date: '',
 });
 
 const loader = reactive({
@@ -149,6 +156,8 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch.name' },
+  { text: 'Age Group', value: 'age_group' },
+  { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
 ];
 
 const paymentStatusOptions = computed(() => {
@@ -341,13 +350,67 @@ function onAssignLead(isValid) {
 }
 
 function setQueryFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
+  // Define which fields should have integer values
+  const integerFields = [
+    'quote_status_id',
+    'insurer_aml_status',
+    'advisor_id',
+    'renewal_batches',
+    'payment_status_id',
+    'amlStatus',
+    'insurance_provider_ids',
+    'plan_name',
+    'page',
+  ];
+
+  // Group array parameters
+  const arrayParams = {};
+  const singleParams = {};
+
+  for (const [key, value] of Object.entries(params)) {
+    // Check for indexed array format like authorize_date[0], authorize_date[1]
+    const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+
+    if (arrayMatch) {
+      const [, fieldName, index] = arrayMatch;
+      if (!arrayParams[fieldName]) {
+        arrayParams[fieldName] = [];
+      }
+      arrayParams[fieldName][parseInt(index)] = value;
+    } else if (key.includes('[]')) {
+      // Handle simple array format like quote_status_id[]
+      const fieldName = key.substring(0, key.length - 2);
+      arrayParams[fieldName] = Array.isArray(value) ? value : [value];
     } else {
-      filters[key] = isNaN(parseInt(params[key]))
-        ? params[key]
-        : parseInt(params[key]);
+      // Single parameters
+      singleParams[key] = value;
+    }
+  }
+
+  // Process array parameters
+  for (const [fieldName, values] of Object.entries(arrayParams)) {
+    // Filter out undefined values and convert to correct type
+    const cleanValues = values.filter(v => v !== undefined);
+
+    if (integerFields.includes(fieldName)) {
+      filters[fieldName] = cleanValues
+        .map(v => parseInt(v))
+        .filter(v => !isNaN(v));
+    } else {
+      filters[fieldName] = cleanValues;
+    }
+  }
+
+  // Process single parameters
+  for (const [key, value] of Object.entries(singleParams)) {
+    if (integerFields.includes(key) && !isNaN(parseInt(value))) {
+      filters[key] = parseInt(value);
+    } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
+      // Boolean-like fields
+      filters[key] = parseInt(value);
+    } else {
+      // Keep as string for dates, text fields, enums, etc.
+      filters[key] = value;
     }
   }
 }
@@ -357,6 +420,37 @@ const permissionsEnum = page.props.permissionsEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
 const exportLoader = ref(false);
 const onDataExport = (exportType = 'download') => {
+  // Check date range restriction for created dates
+  if (filters.created_at_start && filters.created_at_end) {
+    let diff, maxLimit, maxPeriod;
+
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
+
+    if (diff > maxLimit) {
+      notification.error({
+        message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
+        position: 'top',
+      });
+      return;
+    }
+  }
+
   filters.created_at_start = filters.created_at_start
     ? useDateFormat(filters.created_at_start, 'YYYY-MM-DD').value
     : '';
@@ -552,6 +646,48 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
+
+const calculateAge = dateOfBirth => {
+  if (!dateOfBirth) return 0;
+
+  const today = new Date();
+  let birthDate;
+
+  // Handle both DD-MM-YYYY and YYYY-MM-DD formats
+  if (typeof dateOfBirth === 'string' && dateOfBirth.includes('-')) {
+    const parts = dateOfBirth.split('-');
+
+    // Check if first part is a 4-digit year (YYYY-MM-DD format)
+    if (parts[0].length === 4) {
+      // YYYY-MM-DD format
+      const [year, month, day] = parts;
+      birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      // DD-MM-YYYY format
+      const [day, month, year] = parts;
+      birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+  } else {
+    birthDate = new Date(dateOfBirth);
+  }
+
+  // Check if the date is valid
+  if (isNaN(birthDate.getTime())) {
+    return 0;
+  }
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+
+  return age;
+};
 </script>
 
 <template>
@@ -837,6 +973,22 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars
           multi-calendars-solo
         />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
 
         <x-select
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
@@ -997,6 +1149,47 @@ const insurerAMLStatusOption = computed(() => {
           v-model="filters.travel_start_date"
           label="Travel Start Date"
           format="dd-MM-yyyy"
+        />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
+        <DatePicker
+          v-model="filters.travel_end_date"
+          label="Travel End Date"
+          format="dd-MM-yyyy"
+        />
+
+        <x-select
+          v-model="filters.assignment_type"
+          name="assignment_type"
+          class="w-full"
+          placeholder="Search by Assignment Type"
+          :options="assignmentTypes"
+          label="Assignment Type"
+          filterable
+        />
+        <ComboBox
+          v-model="filters.age_group"
+          label="Age group"
+          placeholder="Search by age group"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: '0_64', label: '0 - 64' },
+            { value: '65_plus', label: '65 and above' },
+            { value: 'both', label: 'Both' },
+          ]"
+          class="w-full"
+          :single="true"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -1191,6 +1384,11 @@ const insurerAMLStatusOption = computed(() => {
       </template>
       <template #item-aml_status="{ aml_status }">
         <span>{{ aml_status?.replace(/_/g, ' ') }}</span>
+      </template>
+      <template #item-age_group="item">
+        <span v-if="item.child || item.parent"> Both </span>
+        <span v-else-if="calculateAge(item.dob) < 65"> 0 - 64 </span>
+        <span v-else-if="calculateAge(item.dob) >= 65"> 65 and above </span>
       </template>
     </DataTable>
 

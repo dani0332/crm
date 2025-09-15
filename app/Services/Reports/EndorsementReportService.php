@@ -5,9 +5,11 @@ namespace App\Services\Reports;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Exports\Reports\EndorsementReportExport;
+use App\Enums\QuoteTypeId;
+use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\SendUpdateLog;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -20,19 +22,19 @@ class EndorsementReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ENDORSEMENT;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
 
         if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
-            $this->reportDateRange = Carbon::parse($request['policyBookDate'][0])->toDateString()
+            $this->reportDateRange = (isset($request['policyBookDate'][0]) && $request['policyBookDate'][0] != null && $request['policyBookDate'][0] != 'null' ? Carbon::parse($request['policyBookDate'][0])->toDateString() : today()->toDateString())
                 .' - '.
-                Carbon::parse($request['policyBookDate'][1])->toDateString();
+                (isset($request['policyBookDate'][1]) && $request['policyBookDate'][1] != null && $request['policyBookDate'][1] != 'null' ? Carbon::parse($request['policyBookDate'][1])->toDateString() : today()->toDateString());
         } elseif ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
-            $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
+            $this->reportDateRange = (isset($request['paymentDueDate'][0]) && $request['paymentDueDate'][0] != null && $request['paymentDueDate'][0] != 'null' ? Carbon::parse($request['paymentDueDate'][0])->toDateString() : today()->toDateString())
                 .' - '.
-                Carbon::parse($request['paymentDueDate'][1])->toDateString();
+                (isset($request['paymentDueDate'][1]) && $request['paymentDueDate'][1] != null && $request['paymentDueDate'][1] != 'null' ? Carbon::parse($request['paymentDueDate'][1])->toDateString() : today()->toDateString());
         }
 
         // lookupQuery
@@ -126,6 +128,9 @@ class EndorsementReportService extends ManagementReport
                 'personal_quotes.source',
                 'send_update_logs.status',
                 'ps.sage_reciept_id',
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+                'ciw.text as currently_insured_with_text',
+                'cqr.currently_insured_with as currently_insured_with'
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -144,6 +149,12 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
+            ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
+            ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
+            ->leftJoin('car_quote_request as cqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'cqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $query);
@@ -216,6 +227,9 @@ class EndorsementReportService extends ManagementReport
                 'personal_quotes.source',
                 'send_update_logs.status',
                 DB::raw("'N/A' as sage_reciept_id"),
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+                'ciw.text as currently_insured_with_text',
+                'cqr.currently_insured_with as currently_insured_with'
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -232,6 +246,12 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
+            ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
+            ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
+            ->leftJoin('car_quote_request as cqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'cqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
@@ -259,11 +279,22 @@ class EndorsementReportService extends ManagementReport
         $query = $query->unionAll($reversalQuery);
         $query = $query->orderBy('id', 'desc');
 
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+
+        $query = $this->getReportQueryBuilder($request);
+
+        LoggerService::sql(self::class.' - Endorsement Report Query', $query);
+
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
 
-            return (new EndorsementReportExport($data))->download("Endorsement Report {$this->reportDateRange}.xlsx");
+            return $data;
+
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
@@ -275,7 +306,7 @@ class EndorsementReportService extends ManagementReport
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
 
@@ -289,8 +320,11 @@ class EndorsementReportService extends ManagementReport
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
-            $item->commmission_percentage = number_format($item->commmission_percentage, 2);
+            $item->commmission_percentage = is_numeric($item->commmission_percentage) ? number_format($item->commmission_percentage, 2) : 0;
             $item->status = ucwords(str_replace('_', ' ', strtolower($item->status)));
+            $item->currently_insured_with_text = $item->quote_type_id == QuoteTypeId::Car
+                ? ($item->currently_insured_with_text ?? $item->currently_insured_with ?? 'N/A')
+                : ($item->currently_insured_with_text ?? 'N/A');
         });
     }
 

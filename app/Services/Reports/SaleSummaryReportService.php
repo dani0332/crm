@@ -5,10 +5,10 @@ namespace App\Services\Reports;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Exports\Reports\SaleSummaryReportExport;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -24,19 +24,33 @@ class SaleSummaryReportService extends ManagementReport
 
     public function getReportData(Request $request)
     {
+        $query = $this->getReportQueryBuilder($request);
+
+        // $data = $query->get();
+
+        if ($request->export == 1) {
+
+            return $this->getProcessedReportData($query, $request);
+        } else {
+            return $query->get();
+        }
+    }
+
+    public function getReportQueryBuilder(Request $request)
+    {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_SUMMARY;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
         $request['groupBy'] = $request->groupBy ?? 'advisor';
         $this->groupByColumn = $request['groupBy'];
 
         if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
-            $this->reportDateRange = Carbon::parse($request['policyBookDate'][0])->toDateString()
+            $this->reportDateRange = (isset($request['policyBookDate'][0]) && $request['policyBookDate'][0] != null && $request['policyBookDate'][0] != 'null' ? Carbon::parse($request['policyBookDate'][0])->toDateString() : today()->toDateString())
                 .' - '.
-                Carbon::parse($request['policyBookDate'][1])->toDateString();
+                (isset($request['policyBookDate'][1]) && $request['policyBookDate'][1] != null && $request['policyBookDate'][1] != 'null' ? Carbon::parse($request['policyBookDate'][1])->toDateString() : today()->toDateString());
         } elseif ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
-            $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
+            $this->reportDateRange = (isset($request['paymentDueDate'][0]) && $request['paymentDueDate'][0] != null && $request['paymentDueDate'][0] != 'null' ? Carbon::parse($request['paymentDueDate'][0])->toDateString() : today()->toDateString())
             .' - '.
-            Carbon::parse($request['paymentDueDate'][1])->toDateString();
+            (isset($request['paymentDueDate'][1]) && $request['paymentDueDate'][1] != null && $request['paymentDueDate'][1] != 'null' ? Carbon::parse($request['paymentDueDate'][1])->toDateString() : today()->toDateString());
         }
 
         // Subquery to get distinct payment splits with minimum due_date
@@ -45,7 +59,9 @@ class SaleSummaryReportService extends ManagementReport
 
         $query = PersonalQuote::query()
             ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
+            ->leftJoin('users as support_user', 'personal_quotes.support_user_id', '=', 'support_user.id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
+            ->leftJoin('departments as support_dp', 'support_dp.id', '=', 'support_user.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
@@ -80,6 +96,12 @@ class SaleSummaryReportService extends ManagementReport
             $query
                 ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
                 ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
+        }
+
+        if ($request->groupBy == 'support_user') {
+            $query
+                ->addSelect(DB::raw('IFNULL(support_user.name, "N/A") as support_user'))
+                ->addSelect(DB::raw('IFNULL(support_dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'department') {
@@ -123,26 +145,30 @@ class SaleSummaryReportService extends ManagementReport
         }
         $this->applyFilters($query, $request, false, true);
 
-        $data = $query->get();
+        LoggerService::sql(self::class.' - Sale Summary Report Query', $query);
 
-        if ($request->export == 1) {
+        return $query;
+    }
 
-            /**
-             * Get endorsements data
-             */
-            $endorsementsData = $this->getEndorsementsData($request);
+    public function getProcessedReportData($query, Request $request)
+    {
+        /*if ($data === null) {
+            $data = $this->getReportData($request);
+        }*/
 
-            /**
-             * Process endorsements data for pdf
-             */
-            $processedData = $this->processEndorsementsData($data, $endorsementsData, $request);
+        /**
+         * Get endorsements data
+         */
+        $endorsementsData = $this->getEndorsementsData($request);
 
-            $this->formatData($processedData);
+        /**
+         * Process endorsements data for CSV
+         */
+        $processedData = $this->processEndorsementsData($query->get(), $endorsementsData, $request);
 
-            return (new SaleSummaryReportExport($processedData, $this->groupByColumn))->download("Sale Summary Report {$this->reportDateRange}.xlsx");
-        } else {
-            return $data;
-        }
+        $this->formatData($processedData);
+
+        return $processedData;
     }
 
     /**
@@ -152,6 +178,7 @@ class SaleSummaryReportService extends ManagementReport
      */
     public function getEndorsementsData(Request $request)
     {
+        LoggerService::info('getEndorsementsData');
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_SUMMARY;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
         $request['groupBy'] = $request->groupBy ?? 'advisor';
@@ -179,7 +206,9 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
+            ->leftJoin('users as support_user', 'personal_quotes.support_user_id', '=', 'support_user.id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
+            ->leftJoin('departments as support_dp', 'support_dp.id', '=', 'support_user.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->select(
@@ -217,6 +246,12 @@ class SaleSummaryReportService extends ManagementReport
             $query
                 ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
                 ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
+        }
+
+        if ($request->groupBy == 'support_user') {
+            $query
+                ->addSelect(DB::raw('IFNULL(support_user.name, "N/A") as support_user'))
+                ->addSelect(DB::raw('IFNULL(support_dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'department') {
@@ -259,7 +294,9 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('send_update_logs as S2', 'send_update_logs.reversal_invoice', '=', 's2.insurer_tax_invoice_number')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
+            ->leftJoin('users as support_user', 'personal_quotes.support_user_id', '=', 'support_user.id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
+            ->leftJoin('departments as support_dp', 'support_dp.id', '=', 'support_user.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->whereNotNull('send_update_logs.reversal_invoice')
@@ -298,6 +335,12 @@ class SaleSummaryReportService extends ManagementReport
             $reversalQuery
                 ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
                 ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
+        }
+
+        if ($request->groupBy == 'support_user') {
+            $reversalQuery
+                ->addSelect(DB::raw('IFNULL(support_user.name, "N/A") as support_user'))
+                ->addSelect(DB::raw('IFNULL(support_dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'department') {
@@ -388,6 +431,7 @@ class SaleSummaryReportService extends ManagementReport
             'customer_group' => 'personal_quotes.customer_id',
             'insurer' => 'p.insurance_provider_id',
             'advisor' => 'u.name',
+            'support_user' => 'support_user.name',
             'line_of_business' => 'quote_type.code',
             'department' => 'u.department_id',
         ];

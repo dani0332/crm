@@ -110,10 +110,10 @@ class JetskiQuoteRepository extends BaseRepository
                 'nationality',
                 'advisor',
                 'quoteDetail.lostReason',
-                'insured' => function ($q) use ($quoteTypeId) {
+                'latestInsured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
-                'insured.insuredKyc:id,insured_id',
+                'latestInsured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable']);
                 },
@@ -145,11 +145,15 @@ class JetskiQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'renewalBatchModel',
+            'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypes::JETSKI->id());
+            },
+            'customer',
         ])->when(auth()->user() && auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
             $query->where('advisor_id', auth()->id());
         })
-            ->when(request()->filled('advisor_assigned_date'), function ($query) {
-                $dateArray = request('advisor_assigned_date');
+            ->when($this->hasFilterValue('advisor_assigned_date', $requestParams), function ($query) use ($requestParams) {
+                $dateArray = $this->getFilterValue('advisor_assigned_date', $requestParams);
                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
                 $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
@@ -157,6 +161,7 @@ class JetskiQuoteRepository extends BaseRepository
                 });
             })
             ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',
@@ -174,9 +179,63 @@ class JetskiQuoteRepository extends BaseRepository
         $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        $query->orderBy('personal_quotes.'.(request()->get('sortBy') ?? 'created_at'), request()->get('sortType') ?? 'desc');
+        // Apply authorize_date filter
+        $query->when(! empty($this->getFilterValue('authorize_date', $requestParams)), function ($q) use ($requestParams) {
+            $authorizeDates = $this->getFilterValue('authorize_date', $requestParams);
+            if (is_array($authorizeDates) && count($authorizeDates) >= 2) {
+                $startDate = Carbon::parse($authorizeDates[0])->startOfDay();
+                $endDate = Carbon::parse($authorizeDates[1])->endOfDay();
+                $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                    $paymentQuery->whereBetween('authorized_at', [$startDate, $endDate]);
+                });
+            }
+        });
+
+        // Apply captured_date filter
+        $query->when(! empty($this->getFilterValue('captured_date', $requestParams)), function ($q) use ($requestParams) {
+            $capturedDates = $this->getFilterValue('captured_date', $requestParams);
+            if (is_array($capturedDates) && count($capturedDates) >= 2) {
+                $startDate = Carbon::parse($capturedDates[0])->startOfDay();
+                $endDate = Carbon::parse($capturedDates[1])->endOfDay();
+                $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                    $paymentQuery->whereBetween('captured_at', [$startDate, $endDate]);
+                });
+            }
+        });
+
+        $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 
         return $query;
+    }
+
+    /**
+     * Get filter value from requestParams or request object.
+     */
+    private function getFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            return $requestParams[$filterName];
+        }
+
+        // Fallback to request object
+        return request($filterName);
+    }
+
+    /**
+     * Check if filter value exists in requestParams or request object.
+     */
+    private function hasFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            $value = $requestParams[$filterName];
+
+            return ! empty($value) || (is_array($value) && count($value) > 0);
+        }
+
+        // Fallback to request object
+        return request()->filled($filterName);
     }
 
 }

@@ -15,9 +15,9 @@ use PDF;
 
 class BuyLeadService
 {
-    private function todaysRequestsCount(QuoteTypes $quoteType): int
+    private function activeRequestsCount(QuoteTypes $quoteType): int
     {
-        return (int) BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->notExpired()->today()->sum('requested_count');
+        return (int) BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->active()->sum('requested_count');
     }
 
     public function getBlLeadRemainingLimit(QuoteTypes $quoteType)
@@ -30,7 +30,7 @@ class BuyLeadService
 
         $buyLeadMaxCap = $leadAllocation?->buy_lead_max_capacity ?? 0;
 
-        return $buyLeadMaxCap - $this->todaysRequestsCount($quoteType);
+        return $buyLeadMaxCap - $this->activeRequestsCount($quoteType);
     }
 
     public function isRequestAlreadySubmitted(QuoteTypes $quoteType): bool
@@ -126,21 +126,26 @@ class BuyLeadService
         return null;
     }
 
-    public function getTodaysRequests()
+    public function getActiveRequests()
     {
         return BuyLeadRequest::select('id', 'quote_type_id', 'requested_count', 'allocated_count', 'cost_per_lead', 'created_at')
             ->selectRaw('CONCAT(ROUND(requested_count * cost_per_lead, 0), " AED") as total_cost')
             ->with('quoteType:id,code')
             ->where('user_id', Auth::id())
             ->latest()
-            ->today()
+            ->active()
             ->simplePaginate(20)
             ->withQueryString();
     }
 
     public function getTrackingData(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate, bool $isExport = false)
     {
-        return BuyLeadRequestLog::select('buy_lead_request_logs.id', 'buy_lead_request_logs.quote_type_id', 'buy_lead_request_logs.uuid as ref_id', 'buy_lead_requests.created_at', 'departments.name as department')
+        return BuyLeadRequestLog::select(
+            'buy_lead_request_logs.id',
+            'buy_lead_request_logs.quote_type_id',
+            'buy_lead_request_logs.uuid as ref_id',
+            'buy_lead_requests.created_at',
+            'departments.name as department')
             ->selectRaw('CONCAT(ROUND(buy_lead_requests.cost_per_lead, 0), " AED") as cost')
             ->with('quoteType:id,code')
             ->join('buy_lead_requests', 'buy_lead_requests.id', '=', 'buy_lead_request_logs.buy_lead_request_id')

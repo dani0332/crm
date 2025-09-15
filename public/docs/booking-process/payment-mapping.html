@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Mapping & Apply Prepayment - Sage Integration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Global overflow and text wrapping fix */
+        * {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* Prevent horizontal scrolling */
+        html, body {
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .breadcrumb {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .breadcrumb a {
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            opacity: 1;
+        }
+
+        .breadcrumb span {
+            color: #fff;
+            margin: 0 10px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .content-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            word-wrap: break-word;
+        }
+
+        .content-section h2 {
+            color: #2c3e50;
+            font-size: 2em;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #9b59b6;
+            padding-bottom: 10px;
+        }
+
+        .content-section h3 {
+            color: #34495e;
+            font-size: 1.5em;
+            margin: 25px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            word-break: break-word;
+        }
+
+        .content-section p {
+            color: #555;
+            margin-bottom: 15px;
+            line-height: 1.7;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .mapping-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .mapping-type {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(155, 89, 182, 0.3);
+            position: relative;
+            overflow: hidden;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .mapping-type::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #27ae60, #e74c3c);
+        }
+
+        .mapping-type .icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .mapping-type h4 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+
+        .mapping-type p {
+            font-size: 0.95em;
+            opacity: 0.9;
+            line-height: 1.5;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            margin: 0;
+        }
+
+        .process-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .process-step {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);
+            position: relative;
+            overflow: hidden;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .process-step::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #f39c12, #e74c3c, #3498db);
+        }
+
+        .process-step .step-number {
+            background: rgba(255, 255, 255, 0.2);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .process-step h4 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .process-step p {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            margin: 0;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: 'PHP';
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: #9b59b6;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #c0392b;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow: hidden;
+        }
+
+        .highlight h4 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .highlight p {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            margin: 0;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 25px;
+            border-left: 5px solid #9b59b6;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow: hidden;
+        }
+
+        .info-card h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .info-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .info-card li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #555;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .info-card li::before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: #9b59b6;
+            font-weight: bold;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+        }
+
+        .mapping-flow {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 25px 0;
+        }
+
+        .mapping-flow h4 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .flow-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .flow-step {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 120px;
+            position: relative;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            flex: 1;
+            margin: 5px;
+        }
+
+        .flow-step:not(:last-child):after {
+            content: "→";
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5em;
+        }
+
+        th {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .api-endpoint {
+            background: #27ae60;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            display: inline-block;
+            margin: 5px 0;
+        }
+
+        .method-badge {
+            background: #9b59b6;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .method-badge.post { background: #3498db; }
+        .method-badge.patch { background: #f39c12; }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .content-section {
+                padding: 20px;
+            }
+
+            .mapping-types {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .process-flow {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .flow-steps {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .flow-step {
+                margin: 0;
+                min-width: auto;
+                width: 100%;
+            }
+
+            .flow-step:not(:last-child):after {
+                content: "↓";
+                right: 50%;
+                top: 100%;
+                transform: translateX(50%);
+                position: relative;
+                right: auto;
+                top: auto;
+                transform: none;
+                display: block;
+                margin: 5px 0;
+            }
+
+            .code-block {
+                padding: 15px;
+                font-size: 0.9em;
+            }
+
+            .table-container {
+                font-size: 0.9em;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/docs/index.html">📚 Documentation Home</a>
+            <span>></span>
+            <a href="/docs/booking-process/index.html">Booking Process</a>
+            <span>></span>
+            <span>Payment Mapping & Apply Prepayment</span>
+        </div>
+
+        <div class="header">
+            <h1>🔗 Payment Mapping & Apply Prepayment</h1>
+            <p>Comprehensive guide to payment receipt-to-invoice mapping and prepayment application in Sage 300</p>
+        </div>
+
+        <div class="content-section">
+            <h2>🎯 Overview</h2>
+            <p>
+                The Payment Mapping & Apply Prepayment process manages the critical third step of Sage integration:
+                linking previously created payment receipts to newly generated invoices. This process ensures proper
+                financial reconciliation by applying prepayments to outstanding invoice balances in both AR and AP modules.
+            </p>
+
+            <div class="highlight">
+                <h4>💡 Core Payment Mapping Operations</h4>
+                <p>
+                    Automatic Receipt-to-Invoice Mapping for upfront payments, Split Payment Application for installment-based policies,
+                    AR/AP Prepayment Processing for customer and vendor payments, and systematic balance reconciliation through
+                    Sage 300 payment application workflow with comprehensive error handling and recovery mechanisms.
+                </p>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>🔧 Function Types in This Documentation</h4>
+                    <ul>
+                        <li><strong style="color: #9b59b6;">Sage API Service Methods:</strong> Handle actual API calls to Sage 300</li>
+                        <li><strong style="color: #27ae60;">Payload Factory Methods:</strong> Generate API request structures</li>
+                        <li><strong>Location:</strong> SageApiService.php & SagePayloadFactory.php</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🗄️ Database Dependencies</h4>
+                    <ul>
+                        <li><strong>Receipt References:</strong> payment_splits.sage_reciept_id</li>
+                        <li><strong>Invoice Numbers:</strong> payments.tax_invoice_number</li>
+                        <li><strong>Mapping Logs:</strong> sage_api_logs table for all operations</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>📋 Payment Mapping Types</h2>
+
+            <div class="mapping-types">
+                <div class="mapping-type">
+                    <span class="icon">🔗</span>
+                    <h4>Upfront Payment Mapping</h4>
+                    <p>Direct one-to-one mapping between single prepayment receipt and invoice for upfront payment policies. Complete balance settlement.</p>
+                </div>
+
+                <div class="mapping-type">
+                    <span class="icon">📊</span>
+                    <h4>Split Payment Mapping</h4>
+                    <p>Partial payment application for installment-based policies. Maps individual installment receipts to corresponding invoice portions.</p>
+                </div>
+
+                <div class="mapping-type">
+                    <span class="icon">🔄</span>
+                    <h4>AR/AP Cross-Mapping</h4>
+                    <p>Coordinated mapping for both customer receipts (AR) and vendor payments (AP) to ensure complete financial reconciliation.</p>
+                </div>
+
+                <div class="mapping-type">
+                    <span class="icon">⚖️</span>
+                    <h4>Balance Reconciliation</h4>
+                    <p>Automatic balance adjustment and validation to ensure invoice balances match applied payment amounts in Sage 300.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔄 Payment Mapping Workflow</h2>
+
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="step-number">1</div>
+                    <h4>Validation Check</h4>
+                    <p>Verify receipt and invoice existence before mapping</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">2</div>
+                    <h4>Payment Application</h4>
+                    <p>Apply prepayment receipts to outstanding invoices</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">3</div>
+                    <h4>Balance Reconciliation</h4>
+                    <p>Validate payment amounts match invoice balances</p>
+                </div>
+            </div>
+
+            <div class="mapping-flow">
+                <h4>📊 Payment Mapping Process Flow</h4>
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <strong>RECEIPT CREATED</strong>
+                        <div>Prepayment Available</div>
+                    </div>
+                    <div class="flow-step">
+                        <strong>INVOICE GENERATED</strong>
+                        <div>Outstanding Balance</div>
+                    </div>
+                    <div class="flow-step">
+                        <strong>MAPPING APPLIED</strong>
+                        <div>Balance Reduced</div>
+                    </div>
+                    <div class="flow-step">
+                        <strong>RECONCILED</strong>
+                        <div>Process Complete</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🛠️ Core Payment Mapping Functions</h2>
+            <p><strong>📍 Function Type:</strong> These are <span style="color: #9b59b6; font-weight: bold;">Sage API Service Methods</span> that orchestrate payment mapping processes.</p>
+
+            <h3>🔗 applyPaymentARInvoices() - API Service Method</h3>
+            <p>Main orchestrator function in <strong>SageApiService</strong> that applies AR prepayment receipts to AR invoices based on payment frequency.</p>
+
+            <div class="code-block">
+                <pre>public function applyPaymentARInvoices($sageRequestDataArray)
+{
+    $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+    [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+    $isTotalPriceZero = $payment->total_price == 0;
+
+    /* Start: Temporary code for historic data to allow book policy after m2 launch */
+    $isQuoteFallUnderSkippableCriteria = $this->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $paymentSplits);
+    if ($isQuoteFallUnderSkippableCriteria['status']) {
+        return $isQuoteFallUnderSkippableCriteria;
+    }
+
+    /* applyPaymentARInvoices */
+    $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
+
+    if ($isTransactionPaidAndFrequencyUpfront && !$isTotalPriceZero) {
+        return $this->applyUpfrontPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+    } elseif ($isTotalPriceZero) {
+        LoggerService::info('########## applyUpfrontPaymentARInvoices skipped for : '.$quote->code.' due to zero price ##########');
+    }
+
+    $isFrequencySplitAndFirstChildPaymentPaid = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
+
+    if ($isFrequencySplitAndFirstChildPaymentPaid) {
+        return $this->applySplitPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+    }
+
+    $isFrequencyUpfrontOrSplit = in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
+    $isFirstPaymentPaidOrCaptured = in_array($paymentSplits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+
+    if (!$isFrequencyUpfrontOrSplit && $isFirstPaymentPaidOrCaptured) {
+        return $this->applyNonSplitNonUpfrontPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+    }
+
+    $returnMessage['status'] = true;
+    $returnMessage['message'] = 'Apply Prepayment completed';
+
+    return $returnMessage;
+}</pre>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔧 Individual Payment Mapping Methods</h2>
+            <p><strong>📍 Function Type:</strong> These are <span style="color: #9b59b6; font-weight: bold;">Sage API Service Methods</span> that handle specific payment mapping scenarios.</p>
+
+            <h3>🔗 applyUpfrontPaymentARInvoices() - API Service Method</h3>
+            <p>Applies upfront prepayment receipts to AR invoices in <strong>SageApiService</strong> for complete balance settlement.</p>
+
+            <div class="code-block">
+                <pre>private function applyUpfrontPaymentARInvoices($sageRequestDataArray)
+{
+    [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+    $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+    LoggerService::info('########## Start applyPaymentARInvoices for : '.$quote->code.' ##########');
+
+    $totalSteps = 15;
+    $currentStep = 13;
+    $isLiveApiCallStep13 = true;
+
+    // Check if payment application already completed
+    if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
+        LoggerService::info('SAGE API : createPaymentReceiptOneInvoice Sent Already for '.$quote->code);
+        $isLiveApiCallStep13 = false;
+        $postedResponse = json_decode($sageLogArray[$currentStep]['response'], true);
+    } else {
+        LoggerService::info('SAGE API : Send createPaymentReceiptOneInvoice for '.$quote->code);
+
+        // Create payment receipt mapping payload
+        $payLoadOptions = SagePayloadFactory::createPaymentReceiptOneInvoice(
+            $quote,
+            $sageRequest->customerId,
+            $payment,
+            $paymentSplits
+        );
+
+        $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+        $postedResponse = json_decode($resp, true);
+
+        // Log the API call
+        if ($isLiveApiCallStep13) {
+            $this->logSageApiCall($payLoadOptions, $postedResponse, $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+        }
+    }
+
+    // Process Ready to Post and Post operations
+    if (!empty($postedResponse['BatchNumber'])) {
+        // Ready to Post step
+        $currentStep = 14;
+        $readyToPostPayload = SagePayloadFactory::readyToPostReceiptAr($postedResponse['BatchNumber']);
+        $readyToPostResponse = $this->postToSage300($readyToPostPayload['endPoint'], $readyToPostPayload['payload'], 'PATCH');
+
+        // Post to GL step
+        $currentStep = 15;
+        $postPayload = SagePayloadFactory::aRPostReceiptsPayment($postedResponse['BatchNumber']);
+        $finalResponse = $this->postToSage300($postPayload['endPoint'], $postPayload['payload']);
+
+        LoggerService::info('########## End applyPaymentARInvoices for : '.$quote->code.' ##########');
+        $returnMessage['status'] = true;
+        $returnMessage['message'] = 'Prepayments applied on sage';
+    }
+
+    return $returnMessage;
+}</pre>
+            </div>
+
+            <h3>📊 applySplitPaymentARInvoices() - API Service Method</h3>
+            <p>Applies split payment receipts to AR invoices in <strong>SageApiService</strong> for installment-based payment mapping.</p>
+
+            <div class="code-block">
+                <pre>private function applySplitPaymentARInvoices($sageRequestDataArray)
+{
+    [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+    $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+
+    LoggerService::info('########## Start arSplitPrepaymentPayload for : '.$quote->code.' ##########');
+    $totalSteps = 15;
+    $currentStep = 13;
+
+    // Get paid payment splits only
+    $paidPaymentSplits = $paymentSplits->whereIn('payment_status_id', [
+        PaymentStatusEnum::PAID,
+        PaymentStatusEnum::CAPTURED
+    ]);
+
+    // Check if split payment receipts already applied
+    if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
+        LoggerService::info('SAGE API : arSplitPrepaymentPayload Sent Already for '.$quote->code);
+        $postedResponse = json_decode($sageLogArray[$currentStep]['response'], true);
+    } else {
+        LoggerService::info('SAGE API : Send arSplitPrepaymentPayload for '.$quote->code);
+
+        // Create split payment receipt mapping payload
+        $payLoadOptions = SagePayloadFactory::arSplitPrepaymentPayload(
+            $quote,
+            $sageRequest->customerId,
+            $payment,
+            $paidPaymentSplits
+        );
+
+        $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+        $postedResponse = json_decode($resp, true);
+
+        $this->logSageApiCall($payLoadOptions, $postedResponse, $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+    }
+
+    // Process Ready to Post and Post operations for split payments
+    if (!empty($postedResponse['BatchNumber'])) {
+        // Ready to Post step
+        $readyToPostPayload = SagePayloadFactory::readyToPostReceiptAr($postedResponse['BatchNumber']);
+        $readyToPostResponse = $this->postToSage300($readyToPostPayload['endPoint'], $readyToPostPayload['payload'], 'PATCH');
+
+        // Post to GL step
+        $postPayload = SagePayloadFactory::aRPostReceiptsPayment($postedResponse['BatchNumber']);
+        $finalResponse = $this->postToSage300($postPayload['endPoint'], $postPayload['payload']);
+
+        $returnMessage['status'] = true;
+        $returnMessage['message'] = 'Split Payment Prepayments applied on sage';
+    }
+
+    return $returnMessage;
+}</pre>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🏭 Payload Factory Methods</h2>
+            <p><strong>📍 Function Type:</strong> These are <span style="color: #27ae60; font-weight: bold;">Payload Factory Methods</span> that generate Sage 300 API request structures for payment mapping.</p>
+
+            <h3>🔗 createPaymentReceiptOneInvoice() - Payload Factory Method</h3>
+            <p>Static method in <strong>SagePayloadFactory</strong> that creates the payment receipt mapping payload for upfront payments.</p>
+
+            <div class="code-block">
+                <pre>public static function createPaymentReceiptOneInvoice($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
+{
+    $entryType = SageEnum::SCT_STRAIGHT;
+
+    $payLoad = [
+        'BatchRecordType' => 'CA',  // AR Receipt Batch
+        'BankCode' => SageEnum::BANK_CODE_INS,
+        'ReceiptsAdjustments' => [
+            [
+                'BatchType' => 'CA',
+                'CustomerNumber' => $sage_customer_number,
+                'BankCode' => SageEnum::BANK_CODE_INS,
+                'ReceiptTransactionType' => 'Receipt',  // Payment application type
+                'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustmentsForAR(
+                    $quote,
+                    $sage_customer_number,
+                    $payment,
+                    $splitPayments,
+                    $isPosAllSplitPayment
+                ),
+            ],
+        ],
+    ];
+
+    return [
+        'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
+        'payload' => $payLoad,
+        'sage_request_type' => SageEnum::SRT_CREATE_PAY_REC_ONE_INV,
+        'entry_type' => $entryType,
+    ];
+}</pre>
+            </div>
+
+            <h3>📊 arSplitPrepaymentPayload() - Payload Factory Method</h3>
+            <p>Static method in <strong>SagePayloadFactory</strong> that creates payment mapping payload for split payment installments.</p>
+
+            <div class="code-block">
+                <pre>public static function arSplitPrepaymentPayload($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
+{
+    $entryType = SageEnum::SCT_STRAIGHT;
+
+    $payLoad = [
+        'BatchRecordType' => 'CA',
+        'BankCode' => SageEnum::BANK_CODE_INS,
+        'ReceiptsAdjustments' => [
+            [
+                'BatchType' => 'CA',
+                'CustomerNumber' => $sage_customer_number,
+                'BankCode' => SageEnum::BANK_CODE_INS,
+                'ReceiptTransactionType' => 'Receipt',
+                'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustmentsForAR(
+                    $quote,
+                    $sage_customer_number,
+                    $payment,
+                    $splitPayments,
+                    $isPosAllSplitPayment
+                ),
+            ],
+        ],
+    ];
+
+    return [
+        'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
+        'payload' => $payLoad,
+        'sage_request_type' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
+        'entry_type' => $entryType,
+    ];
+}</pre>
+            </div>
+
+            <h3>🔗 createAppliedReceiptsAdjustmentsForAR() - Payload Factory Method</h3>
+            <p>Helper method that creates the applied receipts adjustments array for AR payment mapping.</p>
+
+            <div class="code-block">
+                <pre>private static function createAppliedReceiptsAdjustmentsForAR($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
+{
+    $appliedReceiptsAdjustments = [];
+
+    foreach ($splitPayments as $index => $item) {
+        // Skip if payment split doesn't have sage receipt ID
+        if (empty($item->sage_reciept_id)) {
+            continue;
+        }
+
+        // Create receipt application entry
+        $receiptData = self::createReceiptDataForAR($item, $sage_customer_number, $payment, $index + 1);
+        $appliedReceiptsAdjustments[] = $receiptData;
+
+        // Create prepayment application entry
+        $prePaymentData = self::createPrePaymentDataForAR($item, $sage_customer_number, $payment);
+        $appliedReceiptsAdjustments[] = $prePaymentData;
+    }
+
+    return $appliedReceiptsAdjustments;
+}</pre>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🗄️ Database Tables & Columns</h2>
+
+            <h3>📊 Primary Tables for Payment Mapping</h3>
+
+            <h4>1. payment_splits Table</h4>
+            <p>Individual payment installments with receipt references for mapping.</p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Purpose</th>
+                            <th>Usage in Payment Mapping</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>sage_reciept_id</td>
+                            <td>VARCHAR(100) NULLABLE</td>
+                            <td>AR receipt document number</td>
+                            <td>Required for payment mapping - links receipt to invoice</td>
+                        </tr>
+                        <tr>
+                            <td>sage_ap_payment_receipt_id</td>
+                            <td>VARCHAR(100) NULLABLE</td>
+                            <td>AP payment document number</td>
+                            <td>Used for AP payment mapping processes</td>
+                        </tr>
+                        <tr>
+                            <td>payment_status_id</td>
+                            <td>INT</td>
+                            <td>Split payment status</td>
+                            <td>Must be PAID/CAPTURED for mapping eligibility</td>
+                        </tr>
+                        <tr>
+                            <td>payment_amount</td>
+                            <td>DECIMAL(15,2)</td>
+                            <td>Amount for this installment</td>
+                            <td>Used in CustomerReceiptAmount for mapping</td>
+                        </tr>
+                        <tr>
+                            <td>collection_amount</td>
+                            <td>DECIMAL(15,2)</td>
+                            <td>Actually collected amount</td>
+                            <td>Used when different from payment_amount</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4>2. payments Table</h4>
+            <p>Main payment information for mapping coordination.</p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Purpose</th>
+                            <th>Usage in Payment Mapping</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>tax_invoice_number</td>
+                            <td>VARCHAR(255)</td>
+                            <td>Invoice document number</td>
+                            <td>Target invoice for payment application</td>
+                        </tr>
+                        <tr>
+                            <td>frequency</td>
+                            <td>ENUM</td>
+                            <td>Payment frequency type</td>
+                            <td>Determines mapping strategy (UPFRONT vs SPLIT_PAYMENTS)</td>
+                        </tr>
+                        <tr>
+                            <td>total_price</td>
+                            <td>DECIMAL(15,2)</td>
+                            <td>Total payment amount</td>
+                            <td>Validation for complete payment mapping</td>
+                        </tr>
+                        <tr>
+                            <td>discount_value</td>
+                            <td>DECIMAL(15,2)</td>
+                            <td>Applied discount amount</td>
+                            <td>Included in first installment mapping</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>📊 Payment Mapping API Endpoints</h2>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Operation</th>
+                            <th>Method</th>
+                            <th>Endpoint</th>
+                            <th>Purpose</th>
+                            <th>Payload Factory Method</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Apply Payment</td>
+                            <td><span class="method-badge post">POST</span></td>
+                            <td><span class="api-endpoint">AR/ARReceiptAndAdjustmentBatches</span></td>
+                            <td>Apply receipt to invoice (OPEN status)</td>
+                            <td>createPaymentReceiptOneInvoice()</td>
+                        </tr>
+                        <tr>
+                            <td>Ready to Post</td>
+                            <td><span class="method-badge patch">PATCH</span></td>
+                            <td><span class="api-endpoint">AR/ARReceiptAndAdjustmentBatches</span></td>
+                            <td>Mark payment application ready</td>
+                            <td>readyToPostReceiptAr()</td>
+                        </tr>
+                        <tr>
+                            <td>Post to GL</td>
+                            <td><span class="method-badge post">POST</span></td>
+                            <td><span class="api-endpoint">AR/ARPostReceiptsAndAdjustments</span></td>
+                            <td>Post payment application to GL</td>
+                            <td>aRPostReceiptsPayment()</td>
+                        </tr>
+                        <tr>
+                            <td>Split Payment</td>
+                            <td><span class="method-badge post">POST</span></td>
+                            <td><span class="api-endpoint">AR/ARReceiptAndAdjustmentBatches</span></td>
+                            <td>Apply multiple installment receipts</td>
+                            <td>arSplitPrepaymentPayload()</td>
+                        </tr>
+                        <tr>
+                            <td>AP Payment</td>
+                            <td><span class="method-badge post">POST</span></td>
+                            <td><span class="api-endpoint">AP/APPaymentAndAdjustmentBatches</span></td>
+                            <td>Apply AP payments to invoices</td>
+                            <td>createUpfrontApplyPaymentAPInvoice()</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔧 Integration Points & Dependencies</h2>
+
+            <h3>📞 Called From</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>BookPolicyOnSageJob</h4>
+                    <ul>
+                        <li>Main policy booking orchestrator</li>
+                        <li>Calls after AR/AP invoice creation</li>
+                        <li>Final step in booking process</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>PostPrepaymentToSageJob</h4>
+                    <ul>
+                        <li>Handles delayed payment mapping</li>
+                        <li>Processes split payment installments</li>
+                        <li>Manages payment schedule updates</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>🏗️ Dependencies</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>Prerequisites</h4>
+                    <ul>
+                        <li>Payment receipts must exist (sage_reciept_id)</li>
+                        <li>Invoices must be created and posted</li>
+                        <li>Payment status must be PAID/CAPTURED</li>
+                        <li>Customer must exist in Sage 300</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>Services & Models</h4>
+                    <ul>
+                        <li>SagePayloadFactory</li>
+                        <li>LoggerService</li>
+                        <li>Payment & PaymentSplits models</li>
+                        <li>SageApiLog for audit trail</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Payment Mapping & Apply Prepayment Documentation</strong> - Sage Integration</p>
+            <p>Part of the Afia Brokerage LLC Technical Documentation</p>
+        </div>
+    </div>
+</body>
+</html>

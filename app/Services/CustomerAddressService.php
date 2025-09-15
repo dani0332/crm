@@ -2,8 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\BirdFlowStatusEnum;
+use App\Enums\EmbeddedProductEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Facades\Ken;
 use App\Http\Requests\CustomerAddressRequest;
+use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
@@ -155,5 +160,60 @@ class CustomerAddressService
         }
 
         return true; // Validation passed
+    }
+
+    public function sendAddressNotificationToCustomer($lead, $address, $quoteTypeId)
+    {
+        LoggerService::info('Checking for sending courier notification : '.$lead->uuid);
+
+        // Use a different variable name for the result of the query
+        $existingAddress = CustomerAddress::where([
+            'quote_uuid' => $lead->uuid,
+            'customer_id' => $lead->customer_id,
+        ])->first();
+
+        if (empty($existingAddress?->type)) {
+            LoggerService::info('Sending address notification to customer for lead : '.$lead->uuid);
+            // only trigger bird flow if address is not already added
+            $this->triggerBirdFlow($lead, $address, BirdFlowStatusEnum::ADDRESS_ADDED, $quoteTypeId);
+        }
+    }
+
+    public function triggerBirdFlow($lead, $address, $actionType, $quoteTypeId)
+    {
+        if ($lead->embeddedTransactions()->exists()) {
+            LoggerService::info('Checking for courier transaction for lead : '.$lead->uuid);
+            $courierEmbeddedTransaction = $lead->embeddedTransactions
+                ->filter(function ($transaction) {
+                    return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
+                });
+        }
+
+        if (
+            ($selectedTransaction = $courierEmbeddedTransaction?->firstWhere('is_selected', 1)) &&
+            in_array($selectedTransaction->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
+        ) {
+            LoggerService::info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
+            $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
+            $address = $this->fetchFormattedAddress($address);
+            $customerAdditionalContact = CustomerAdditionalContact::select('value')
+                ->firstWhere([
+                    ['customer_id', $lead->customer_id],
+                    ['key', 'alternate_mobile_no'],
+                ]);
+            $payload = [
+                'quoteUID' => $lead->uuid,
+                'quoteTypeId' => (int) $quoteTypeId,
+                'actionType' => $actionType,
+                'refId' => $embeddedTransactionRefId,
+                'address' => $address,
+                'alternateNumber' => $customerAdditionalContact->value ?? '',
+            ];
+            LoggerService::info('Payload for Bird Courier Flow : '.json_encode($payload));
+
+            Ken::request('/trigger-bird-courier-flow', 'post', $payload);
+        } else {
+            LoggerService::info('Either No courier embedded transaction found or payment is not CAPTURED OR AUTHORISED for lead : '.$lead->uuid);
+        }
     }
 }

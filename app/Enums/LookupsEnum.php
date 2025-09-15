@@ -43,4 +43,20 @@ enum LookupsEnum: string
     case SEND_UPDATE_CODE = 'send-update-code';
     case BUSINESS_TYPE_OF_CUSTOMER = 'business-type-of-customer';
     case SEND_UPDATE_CANCEL_OPTIONS = 'send-update-cancel-options';
+    case LIFE_PLAN_SUB_TYPE = 'plan-sub-type';
+    case POSSESSION_TYPE = 'possession-type';
+    case ACCOMMODATION_TYPE = 'accommodation-type';
+    case OWNER_OCCUPANCY_TYPE = 'owner-occupancy-type';
+    case COVERAGE_TYPE = 'coverage-type';
+    case COVERAGE_POSSESSION_TYPE = 'coverage-possession-type';
+
+    case SAVINGS_PURPOSE = 'savings_purpose';
+    case INVESTMENT_TYPE = 'investment_type';
+    case SAVINGS_TENURE = 'tenure';
+    case RTA_TRANSACTION_TYPE = 'rta-transaction-type';
+    case PLATE_CODE = 'plate-code';
+    case RTA_PLATE_CATEGORY = 'rta-plate-category';
+    case VEHICLE_COLOR = 'vehicle-color';
+    case BANK_NAME = 'bank-name';
+    case ANNUAL_MILEAGE_ESTIMATE = 'annual-mileage-estimate';
 }

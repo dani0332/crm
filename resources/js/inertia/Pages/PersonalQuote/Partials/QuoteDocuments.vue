@@ -27,10 +27,9 @@ const props = defineProps({
     type: String,
     required: false,
   },
-  isSentOrBooked: {
+  isEndorsementBooked: {
     type: Boolean,
     required: false,
-    default: false,
   },
 });
 
@@ -120,6 +119,9 @@ const loader = reactive({
   sendUpdate: false,
   selectInvoice: false,
 });
+const successStatus = ref({});
+const errorMsg = ref({});
+const uploadingStatus = ref({});
 
 const modals = reactive({
   sendConfirm: false,
@@ -138,47 +140,66 @@ const docForm = useForm({
   send_update_id: props.extras.sendLogId || null,
 });
 
-const uploadFile = (doc, filesWithInfo, memberId) => {
-  let url = '/personal-quotes/' + docForm.quote_id + '/documents';
+const uploadFile = (doc, filesWithInfo) => {
+  successStatus.value[doc.id] = false;
+  errorMsg.value[doc.id] = '';
   const { files, rejectReason } = filesWithInfo;
   if (files.length == 0) {
     notification.error({
       title: 'File upload failed',
       position: 'top',
     });
-    docForm.setError({ error: useFileUploadErrorMessage(doc, rejectReason) });
+    errorMsg.value[doc.id] = useFileUploadErrorMessage(doc, rejectReason);
     return false;
   }
-  let docFiles = [];
+
+  const url = '/personal-quotes/' + docForm.quote_id + '/documents';
+  const formData = new FormData();
+  formData.append('quote_id', docForm.quote_id);
+  formData.append('quote_uuid', docForm.quote_uuid);
+  formData.append('document_type_code', doc.code);
+  formData.append('folder_path', doc.folder_path);
+  formData.append('is_send_update', isSendUpdatePage);
+  formData.append('send_update_id', props.extras.sendLogId || null);
+
   files.forEach(file => {
-    docFiles.push(file.file);
+    formData.append('files[]', file.file);
   });
-  isUploading.value = true;
-  docForm
-    .transform(data => ({
-      ...data,
-      quote_type_id: doc.quote_type_id,
-      document_type_code: doc.code,
-      folder_path: doc.folder_path,
-      files: docFiles,
-      member_detail_id: memberId || null,
-    }))
-    .post(url, {
-      preserveScroll: true,
-      preserveState: true,
-      onError: errors => {
-        docForm.setError(errors.error);
-        console.log(errors);
-        notification.error({
-          title: 'File upload failed',
-          position: 'top',
+
+  uploadingStatus.value[doc.id] = true;
+
+  axios
+    .post(url, formData)
+    .then(response => {
+      successStatus.value[doc.id] = true;
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      const errorMessage =
+        error.response?.data?.message || 'File upload failed';
+      errorMsg.value[doc.id] = errorMessage;
+
+      notification.error({
+        title: 'File upload failed',
+        position: 'top',
+      });
+      let errorMessages = error.response?.data?.errors || {};
+      if (errorMessages && typeof errorMessages === 'object') {
+        Object.keys(errorMessages).forEach(function (key) {
+          notification.error({
+            title: errorMessages[key][0] ?? errorMessages[key],
+            position: 'top',
+          });
         });
-      },
-      onFinish: () => {
-        isUploading.value = false;
-      },
+      }
+    })
+    .finally(() => {
+      uploadingStatus.value[doc.id] = false;
     });
 };
+
 const readOnlyMode = reactive({
   isDisable: true,
 });
@@ -412,7 +433,7 @@ const getS3TempUrl = async docURL => {
             v-if="can(permissionEnum.DOCUMENT_DELETE)"
           >
             <div>
-              <x-tooltip placement="bottom" v-if="props.isSentOrBooked">
+              <x-tooltip placement="bottom" v-if="props.isEndorsementBooked">
                 <x-button size="xs" color="error" outlined disabled>
                   Delete
                 </x-button>
@@ -499,6 +520,24 @@ const getS3TempUrl = async docURL => {
               <p class="text-xs">
                 Max file size: {{ documentType.max_size }} MB
               </p>
+
+              <x-alert
+                v-if="successStatus[documentType.id]"
+                type="success"
+                color="success"
+                light
+              >
+                <p class="text-sm">File uploaded successfully</p>
+              </x-alert>
+
+              <x-alert
+                v-if="errorMsg[documentType.id]"
+                type="error"
+                color="error"
+                light
+              >
+                <p class="text-sm">{{ errorMsg[documentType.id] }}</p>
+              </x-alert>
             </div>
             <div class="pb-4">
               <Dropzone
@@ -506,7 +545,7 @@ const getS3TempUrl = async docURL => {
                 :accept="documentType.accepted_files"
                 :max-files="documentType.max_files"
                 :max-size="documentType.max_size"
-                :loading="docForm.processing"
+                :loading="uploadingStatus[documentType.id]"
                 @change="uploadFile(documentType, $event)"
                 :isDisabled="
                   documentType.code ==

@@ -20,6 +20,7 @@ defineProps({
   authorizedDays: Number,
   assignmentTypes: Object,
   insurerAMLStatus: Array,
+  emirates: Array,
 });
 
 const page = usePage();
@@ -59,11 +60,13 @@ const assignForm = useForm({
   isLeadPool: null,
   isManualAllocationAllowed: 1,
 });
+
 // adding comment
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'EMIRATE OF VISA', value: 'emirate.text', is_active: true },
   {
     text: 'PAYMENT AUTHORISED DATE',
     value: 'payment.authorized_at',
@@ -146,6 +149,11 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch.name', is_active: true },
+  {
+    text: 'Private Client',
+    value: 'customer.pcp_tag_formatted',
+    is_active: true,
+  },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -193,6 +201,10 @@ const filters = reactive({
   last_modified_date: null,
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  private_client: 'all',
+  emirate_of_your_visa_id: [],
+  authorize_date: '',
+  captured_date: '',
 });
 
 const canExport = ref(false);
@@ -367,13 +379,65 @@ function onAssignLead(isValid) {
 }
 
 function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
+  // Define which fields should have integer values
+  const integerFields = [
+    'quote_status',
+    'insurer_aml_status',
+    'advisors',
+    'renewal_batches',
+    'payment_status',
+    'emirate_of_your_visa_id',
+    'page',
+  ];
+
+  // Group array parameters
+  const arrayParams = {};
+  const singleParams = {};
+
+  for (const [key, value] of Object.entries(params)) {
+    // Check for indexed array format like authorize_date[0], authorize_date[1]
+    const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+
+    if (arrayMatch) {
+      const [, fieldName, index] = arrayMatch;
+      if (!arrayParams[fieldName]) {
+        arrayParams[fieldName] = [];
+      }
+      arrayParams[fieldName][parseInt(index)] = value;
+    } else if (key.includes('[]')) {
+      // Handle simple array format like quote_status[]
+      const fieldName = key.substring(0, key.length - 2);
+      arrayParams[fieldName] = Array.isArray(value) ? value : [value];
     } else {
-      filters[key] = isNaN(parseInt(params[key]))
-        ? params[key]
-        : parseInt(params[key]);
+      // Single parameters
+      singleParams[key] = value;
+    }
+  }
+
+  // Process array parameters
+  for (const [fieldName, values] of Object.entries(arrayParams)) {
+    // Filter out undefined values and convert to correct type
+    const cleanValues = values.filter(v => v !== undefined);
+
+    if (integerFields.includes(fieldName)) {
+      filters[fieldName] = cleanValues
+        .map(v => parseInt(v))
+        .filter(v => !isNaN(v));
+    } else {
+      filters[fieldName] = cleanValues;
+    }
+  }
+
+  // Process single parameters
+  for (const [key, value] of Object.entries(singleParams)) {
+    if (integerFields.includes(key) && !isNaN(parseInt(value))) {
+      filters[key] = parseInt(value);
+    } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
+      // Boolean-like fields
+      filters[key] = parseInt(value);
+    } else {
+      // Keep as string for dates, text fields, enums, etc.
+      filters[key] = value;
     }
   }
 }
@@ -397,6 +461,35 @@ const permissionsEnum = page.props.permissionsEnum;
 const exportLoader = ref(false);
 const onDataExport = (exportType = 'download') => {
   if (filters.created_at_start && filters.created_at_end) {
+    // Check date range restriction
+    let diff, maxLimit, maxPeriod;
+
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
+
+    if (diff > maxLimit) {
+      notification.error({
+        message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
+        position: 'top',
+      });
+      return;
+    }
+
     filters.created_at_start = useDateFormat(
       filters.created_at_start,
       'YYYY-MM-DD',
@@ -465,15 +558,18 @@ const onDataExport = (exportType = 'download') => {
 
 const exportRmLeads = () => {
   let filtersCleaned = { ...cleanObj(filters) };
-  let maxdays = calculateDaysDifference(
+  let maxMonths = calculateMonthsDifference(
     filtersCleaned.transaction_approved_dates[0],
     filtersCleaned.transaction_approved_dates[1],
   );
 
-  if (maxdays > 31) {
+  // Allow 3 months for RM leads export (months-based validation)
+  const maxAllowedMonths = 3;
+  const maxPeriod = '3 months';
+
+  if (maxMonths > maxAllowedMonths) {
     notification.error({
-      message:
-        'Maximum of 31 days (Transaction Approved date) are allowed to be exported.',
+      message: `Maximum of ${maxPeriod} (Transaction Approved date) are allowed to be exported.`,
       position: 'top',
     });
     return;
@@ -955,6 +1051,22 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars
           multi-calendars-solo
         />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
         <x-select
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
@@ -1012,6 +1124,27 @@ const insurerAMLStatusOption = computed(() => {
           label="Insurer Commission Tax Invoice No"
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
+        />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
+          v-model="filters.emirate_of_your_visa_id"
+          label="Emirate of Visa"
+          placeholder="Search by Emirate of Visa"
+          :options="emirates"
+          class="w-full"
+          :single="false"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

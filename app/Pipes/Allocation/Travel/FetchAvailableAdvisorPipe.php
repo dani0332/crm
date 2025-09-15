@@ -4,7 +4,6 @@ namespace App\Pipes\Allocation\Travel;
 
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
-use App\Models\TravelQuote;
 use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -13,9 +12,6 @@ use Closure;
 
 class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 {
-    // Default team ID (no specific team assignment) for travel team
-    private const DEFAULT_TEAM_ID = false;
-
     /**
      * Handle the incoming request.
      *
@@ -26,14 +22,26 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
+        if ($this->allocationRequest->get('skipAdvisorEligibilityFetch', false)) {
+            LoggerService::info(self::class.' - Skipping advisor eligibility fetch');
+
+            return $next($request);
+        }
+
         $advisor = $this->fetchAvailableAdvisor();
 
         if (! $advisor) {
             LoggerService::info(self::class.' - No advisor found');
 
-            $this->allocationRequest->markAsFailed();
+            if ($this->allocationRequest->get('skipAdvisorEligibilityFetch', false)) {
+                LoggerService::info(self::class.' - Second call after reset - throwing exception');
+                $this->allocationRequest->markAsFailed();
+                $this->throw('Advisor not found', self::OK);
+            } else {
+                LoggerService::info(self::class.' - First call - continuing to ResetNationalityConfigPipe');
 
-            $this->throw('Advisor not found', self::OK);
+                return $next($request);
+            }
         }
 
         $this->allocationRequest->setAdvisor($advisor);
@@ -43,23 +51,32 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return $next($request);
     }
 
-    private function fetchAvailableAdvisor()
+    protected function fetchAvailableAdvisor()
     {
-        $teamId = $this->evaluateTeamId($this->lead);
+        // Use the team ID that was already evaluated in EvaluateTeamPipe
+        $teamId = $this->allocationRequest->getTeamId();
 
-        if ($this->lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
-            $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-        }
+        $advisors = $this->fetchEligibleAdvisors($teamId);
 
-        return $this->findAvailableAdvisor($teamId);
+        $rules = $this->allocationRequest->get('rules') ?? [];
+        $availableAdvisorIds = $advisors->pluck('user_id')->toArray() ?? [];
+        LoggerService::info(message: self::class." - quote id: {$this->lead->uuid} available advisor ids: ".json_encode($availableAdvisorIds));
+
+        $finalEligibleAdvisorIds = $this->determineFinalAdvisorIdsBasedOnRules($availableAdvisorIds, $rules, $teamId);
+        $advisorId = $this->getFinalAdvisorId($finalEligibleAdvisorIds);
+
+        $advisor = User::find($advisorId);
+
+        return $advisor;
     }
 
-    protected function getAdvisorByStatus($onlineStatus, $teamId)
+    protected function getAdvisorsByStatus($onlineStatus, $teamId)
     {
-        if ($this->allocationRequest->get('isCHSAdvisor')) {
-            LoggerService::info(self::class.' - getAdvisorByStatus: CHS Advisor is required');
 
-            return User::select('users.id as user_id')->chs()->first();
+        if ($this->allocationRequest->get('isCHSAdvisor')) {
+            LoggerService::info(self::class.' - getAdvisorsByStatus: CHS Advisors is required');
+
+            return User::select('users.id as user_id')->chs()->get();
         }
 
         if ($this->allocationRequest->get('isSICAdvisor')) {
@@ -79,79 +96,85 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
             })
             ->logRawSql()
-            ->first();
+            ->get();
     }
 
-    /**
-     * Evaluates and sets the appropriate team ID for the travel quote lead
-     * based on business rules and lead properties.
-     *
-     * @param  TravelQuote  $lead  The lead to evaluate
-     */
-    private function evaluateTeamId(TravelQuote $lead)
+    public function fetchEligibleAdvisors($teamId = null)
     {
-        // Extract lead properties with null safety
-        $isSIC = $this->checkLeadMethod($lead, 'isSIC', [$this->allocationRequest->getQuoteType()]);
-        $isAIG = $this->checkLeadMethod($lead, 'isAIG', [$this->allocationRequest->getQuoteType()]);
-        $isPaymentAuthorizedOrLinkRequested = $this->checkLeadMethod($lead, 'isPaymentAuthorizedOrLinkRequested');
-        $isLeadFromInstantAlfred = $this->checkLeadMethod($lead, 'isLeadFromInstantAlfred');
 
-        $sicUnassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+        $statusOrder = $this->getOnlineStatusesInOrder();
 
-        // Determine team assignment based on business rules
-        $isAIGWithInstantAlfred = $isAIG && $isLeadFromInstantAlfred;
-        $isSICOrAIGWithPayment = (($isSIC && ! $isAIG) || $isAIG) && $isPaymentAuthorizedOrLinkRequested;
-        $isNonSICNonAIGWithPayment = (! $isSIC && ! $isAIG) && $isPaymentAuthorizedOrLinkRequested;
+        if ($this->lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
+            $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+        }
 
-        $teamId = null;
+        foreach ($statusOrder as $status) {
+            LoggerService::info(message: self::class." - trying to get advisors with current status as {$status}");
+            $eligibleUsers = $this->getAdvisorsByStatus($status, $teamId);
 
-        // Apply team assignment rules
-        if ($isAIGWithInstantAlfred) {
-            // Rule 1: AIG leads from Instant Alfred go to default team
-            $teamId = self::DEFAULT_TEAM_ID;
-            $reason = 'AIG and Lead from Instant Alfred';
-        } elseif ($isSICOrAIGWithPayment) {
-            // Rule 2: SIC or AIG leads with payment authorized or link requested
-            $teamId = $sicUnassistedTeamId;
-            $reason = $isAIG ? 'AIG with payment authorized or link requested' :
-                              'SIC with payment authorized or link requested';
-        } elseif ($isNonSICNonAIGWithPayment) {
-            // Rule 3: Non-SIC, Non-AIG leads with payment authorized or link requested
-            $teamId = $sicUnassistedTeamId;
-            $reason = 'Non-SIC, Non-AIG lead with payment authorized or link requested';
+            if (count($eligibleUsers) > 0) {
+                return $eligibleUsers;
+            }
+        }
+
+        return collect([]);
+
+    }
+
+    protected function determineFinalAdvisorIdsBasedOnRules($availableUserIds, $rules, $teamId = null): mixed
+    {
+        if (! $teamId) {
+            $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+        }
+
+        if (count($rules) > 0) {
+            // If there are rules, retrieve user IDs from the rule records.
+            $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
+
+            LoggerService::info('Rule user IDs are: '.json_encode($ruleUserIds));
+            // Find the intersection of available user IDs and rule user IDs.
+            $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
+
+            LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
         } else {
-            // Rule 4: Default - all other leads have no specific team
-            $teamId = self::DEFAULT_TEAM_ID;
-            $reason = 'Default case - no specific team';
+            // If no rules are found, get user IDs from rule lead sources.
+            $ruleUserIds = $this->allocationRequest->get('ruleUserIds');
+
+            LoggerService::info('No rule found, so filtering rule users: '.json_encode($ruleUserIds).' and teamId is : '.$teamId);
+
+            // Find the difference between available user IDs and rule users.
+            $finalEligibleUserIds = array_diff(
+                $availableUserIds,
+                is_array($ruleUserIds) ? $ruleUserIds : []
+            );
+
+            LoggerService::info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
         }
 
-        // Log the final team assignment using debug with extra parameter
-        LoggerService::debug('Team assigned for Travel Allocation', extra: [
-            'reason' => $reason,
-            'teamId' => $teamId,
-            'isSIC' => $isSIC,
-            'isAIG' => $isAIG,
-            'isPaymentAuthorizedOrLinkRequested' => $isPaymentAuthorizedOrLinkRequested,
-            'isLeadFromInstantAlfred' => $isLeadFromInstantAlfred,
-        ]);
-
-        return $teamId;
+        return $finalEligibleUserIds;
     }
 
-    /**
-     * Helper method to safely check if a method exists and call it with parameters
-     *
-     * @param  TravelQuote  $lead  The lead object
-     * @param  string  $methodName  The method name to check and call
-     * @param  array  $params  Optional parameters to pass to the method
-     * @return bool The result of the method call or false if method doesn't exist
-     */
-    private function checkLeadMethod(TravelQuote $lead, string $methodName, array $params = []): bool
+    protected function getUserIdsFromRuleRecords($matchedRuleRecords): array
     {
-        if (! method_exists($lead, $methodName)) {
-            return false;
+        // Get the lead source users from the first matched rule record.
+        $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers ?? [];
+
+        // Check if the lead source users contain a comma (,) indicating multiple users.
+        if (str_contains($leadSourceUsers, ',')) {
+            // If there are multiple users, split the string by commas, convert each part to an integer, and store them in an array.
+            $userIds = array_map('intval', explode(',', $leadSourceUsers));
+        } else {
+            // If there's only one user, cast it to an integer and store it in a single-element array.
+            $userIds = [(int) $leadSourceUsers];
         }
 
-        return $lead->{$methodName}(...$params);
+        // Return the array of user IDs.
+        return $userIds;
     }
+    protected function getFinalAdvisorId($finalEligibleUserIds)
+    {
+        // Return the first user ID from the final eligible user IDs if any, otherwise return 0.
+        return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : 0;
+    }
+
 }

@@ -2,13 +2,16 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypes;
 use App\Enums\RuleTypeEnum;
+use App\Models\LeadSource;
 use App\Models\Rule;
 use App\Models\RuleDetail;
 use App\Models\RuleUser;
+use App\Models\User;
 use App\Services\Logger\LoggerService;
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use stdClass;
 
 class RuleService extends BaseService
@@ -198,5 +201,74 @@ class RuleService extends BaseService
     public function fillSortingProperties()
     {
         return ['id', 'name'];
+    }
+
+    public function getUsersByLeadSourceRules(string $leadSource, $quoteTypeId = null)
+    {
+        return LeadSource::query()
+            ->leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
+            ->join('rules', 'rules.id', 'rule_details.rule_id')
+            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+            ->join('users', 'users.id', 'rule_users.user_id')
+            ->where('rules.quote_type_id', (int) $quoteTypeId)
+            ->where('lead_sources.name', $leadSource)
+            ->where('rules.is_active', true)
+            ->where('lead_sources.is_applicable_for_rules', true)
+            ->groupBy('rule_details.lead_source_id')
+            ->select([
+                'lead_sources.name AS leadSourceName',
+                'lead_sources.id AS leadSourceId',
+                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers'),
+            ])
+            ->get();
+
+    }
+
+    public function getUserIdsFromRuleRecords($matchedRuleRecords): array
+    {
+        $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers;
+        if (str_contains($leadSourceUsers, ',')) {
+            $userIds = array_map('intval', explode(',', $leadSourceUsers));
+        } else {
+            $userIds = [(int) $leadSourceUsers];
+        }
+
+        return $userIds;
+    }
+
+    public function getEmailsByLeadSource($leadSource, $quoteTypeId)
+    {
+        $rules = app(RuleService::class)->getUsersByLeadSourceRules($leadSource, $quoteTypeId);
+        if (count($rules) > 0) {
+            $userIds = app(RuleService::class)->getUserIdsFromRuleRecords($rules);
+            $emails = User::whereIn('id', $userIds)->pluck('email')->toArray();
+
+            return $emails;
+        }
+
+        return [];
+    }
+    public function getFicRulesUsers()
+    {
+        return Rule::join('rule_users', 'rule_users.rule_id', 'rules.id')
+            ->where('rules.is_active', 1)
+            ->where('rules.rule_type', RuleTypeEnum::FIC)
+            ->distinct()
+            ->pluck('rule_users.user_id')
+            ->toArray();
+    }
+
+    public function getRuleUserIds(QuoteTypes $quoteType, bool $excludeVehicleUseRule = false): mixed
+    {
+        return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
+            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+            ->where('rules.quote_type_id', $quoteType->id())
+            ->where('rules.is_active', 1)
+            ->distinct()
+            ->when($quoteType === QuoteTypes::CAR && $excludeVehicleUseRule, function ($query) {
+                $query->where('rule_type', '!=', RuleTypeEnum::VEHICLE_USE);
+            })
+            ->pluck('rule_users.user_id')
+            ->toArray();
     }
 }

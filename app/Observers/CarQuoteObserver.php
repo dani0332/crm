@@ -2,20 +2,29 @@
 
 namespace App\Observers;
 
+use App\Enums\CarRegistrationType;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Events\LeadStatusUpdated;
+use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\SendFailedPaymentEmailJob;
 use App\Models\CarQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\CarQuoteService;
+use App\Services\EmailServices\CarEmailService;
+use App\Services\Logger\LoggerService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 
 class CarQuoteObserver
 {
@@ -28,6 +37,17 @@ class CarQuoteObserver
         }
     }
 
+    private function checkIfAnythingDirty(array $dirty, array $exclude = []): bool
+    {
+        foreach ($dirty as $attribute => $value) {
+            if (! in_array($attribute, $exclude)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Handle the "updated" event.
      *
@@ -37,6 +57,11 @@ class CarQuoteObserver
     {
         $dirty = $lead->getDirty();
         $changes = [];
+
+        if (Route::currentRouteName() == 'car.update' && $this->checkIfAnythingDirty($dirty, ['first_name', 'last_name', 'email', 'mobile_no', 'updated_at', 'is_quote_locked', 'quote_updated_at', 'advisor_id'])) {
+            LoggerService::info('CarQuoteObserver - Going to get quote plans again because of dirty fields with latest rating', ['uuid' => $lead->uuid, 'dirty' => $dirty]);
+            app(CarQuoteService::class)->getQuotePlans($lead->uuid, getLatestRating: true);
+        }
 
         foreach ($dirty as $attribute => $value) {
             $changes[$attribute] = [
@@ -51,6 +76,7 @@ class CarQuoteObserver
                 $oldAdvisorId = $changes['advisor_id']['old'];
 
                 LogAllocation::dispatch($lead, QuoteTypes::CAR);
+                SendFailedPaymentEmailJob::dispatch($lead->uuid, QuoteTypes::CAR);
 
                 event(new CarQuoteAdvisorUpdated($lead, $oldAdvisorId));
             } catch (Exception $e) {
@@ -62,6 +88,10 @@ class CarQuoteObserver
         }
 
         if (isset($dirty['quote_status_id'])) {
+            if ($lead->quote_status_id === QuoteStatusEnum::Quoted && $lead->registration_type === CarRegistrationType::COMPANY && $lead->source === LeadSourceEnum::RENEWAL_UPLOAD) {
+                app(CarEmailService::class)->sendFollowUpEmailForCQF($lead);
+
+            }
             if ($lead->quote_status_id === QuoteStatusEnum::TransactionApproved) {
                 CarQuote::withoutEvents(function () use ($lead) {
                     $lead->update([
@@ -87,6 +117,8 @@ class CarQuoteObserver
         }
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+
             try {
                 EmbeddedProductRepository::cancelEmbeddedProducts($lead->id, quoteTypeCode::Car);
             } catch (Exception $e) {
@@ -101,6 +133,7 @@ class CarQuoteObserver
             isset($dirty['quote_status_id']) &&
             in_array($lead->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Car, 'quoteUID' => $lead->uuid]);
             MAWelcomeJob::dispatch(
                 $lead->customer,
@@ -108,21 +141,26 @@ class CarQuoteObserver
                 'lead-status-update-myalfred-we'
             );
 
-            try {
-                EmbeddedProductRepository::capturePayment($lead->id, quoteTypeCode::Car);
-            } catch (Exception $e) {
-                Log::error('CarQuoteObserver - capture embedded products failed', [
-                    'error' => $e->getMessage(),
-                    'uuid' => $lead->uuid,
-                ]);
+            if ($lead->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
+                try {
+                    EmbeddedProductRepository::capturePayment($lead->id, quoteTypeCode::Car);
+                } catch (Exception $e) {
+                    Log::error('CarQuoteObserver - capture embedded products failed', [
+                        'error' => $e->getMessage(),
+                        'uuid' => $lead->uuid,
+                    ]);
+                }
             }
+            event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
         if (
             isset($dirty['quote_status_id']) &&
             $lead->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
+            event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
     }
 }

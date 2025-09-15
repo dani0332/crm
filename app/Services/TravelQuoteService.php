@@ -6,7 +6,6 @@ use App\Builders\TravelQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\DatabaseColumnsString;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -17,14 +16,17 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
+use App\Models\Customer;
 use App\Models\CustomerMembers;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Models\QuoteBatches;
 use App\Models\TravelDestination;
 use App\Models\TravelMemberDetail;
+use App\Models\TravelPlan;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
 use App\Models\TravelQuoteRequestDetail;
@@ -34,7 +36,6 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use App\Traits\RolePermissionConditions;
-use Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -100,6 +101,7 @@ class TravelQuoteService extends BaseService
             'tp.text AS plan_id_text',
             // 'tp.id as plan_new_id_text',
             'tpip.text AS travel_plan_provider_text',
+            'tpip.code AS plan_provider_code',
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
             DB::raw('DATE_FORMAT(tqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
@@ -142,12 +144,7 @@ class TravelQuoteService extends BaseService
             'tqr.kyc_decision',
             'tqr.is_documents_valid',
             // 'tqr.prefill_plan_id',
-            DB::raw('IF(EXISTS (
-                SELECT *
-                FROM quote_request_entity_mapping
-                WHERE quote_type_id = '.QuoteTypeId::Travel.' AND quote_request_id = tqr.id),
-                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-            as customer_type'),
+            DB::raw('COALESCE(insured.customer_type, "'.CustomerTypeEnum::Individual.'") as customer_type'),
             'insured.first_name as insured_first_name',
             'insured.last_name as insured_last_name',
             'insured_kyc.id as insured_kyc_id',
@@ -189,6 +186,10 @@ class TravelQuoteService extends BaseService
                     ELSE insurer_aml_status
                 END AS insurer_aml_status_display
             '),
+            'c.pcp_tag',
+            'tqr.pc_qualified',
+            DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+            DB::raw(TravelQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -204,7 +205,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
             ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'py.payment_status_id')
             ->leftJoin('customer as c', 'tqr.customer_id', 'c.id')
             ->leftJoin('renewal_batches as rb', 'tqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('embedded_transactions as et', 'et.code', 'tqr.code')
@@ -215,7 +216,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'tqr.id');
-                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = tqr.id)', [QuoteTypeId::Travel]);
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = tqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Travel]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
@@ -353,6 +354,11 @@ class TravelQuoteService extends BaseService
 
             SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
             LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
+
+            $customerId = app(CustomerService::class)->getCustomerIdByEmail($request->email);
+            if ($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj')))) {
+                app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $response->quoteUID);
+            }
         }
 
         return $response;
@@ -398,275 +404,9 @@ class TravelQuoteService extends BaseService
     {
         $query = $this->travelQuoteQueryBuilder->processGridData($requestParams);
         $this->whereBasedOnRole($query, 'travel_quote_request', null, user: $requestParams['user'] ?? null);
-        $this->adjustQueryByDateFilters($query, 'travel_quote_request', requestParams: $requestParams);
+        $this->adjustQueryByDateFilters($query, 'travel_quote_request', requestParams: $requestParams, useJoin: false);
 
         return $query;
-
-    }
-
-    public function getGridDataOld($model, $request)
-    {
-        $searchProperties = [];
-        $isRenewalUser = Auth::user()->isRenewalUser();
-        $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
-        $isRenewalManager = Auth::user()->isRenewalManager();
-        $isNewManager = Auth::user()->isNewBusinessManager();
-        $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
-        if (isset($request->coverage_code)) {
-            $this->query->where(function ($q) use ($request) {
-                $q->where('tqr.coverage_code', $request->coverage_code)
-                    ->orWhere(function ($qInner) use ($request) {
-                        if ($request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP) {
-                            $qInner->where('days_cover_for', '<', 93);
-                        }
-                        if ($request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP || $request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP) {
-                            $qInner->where('days_cover_for', '>', 92);
-                        }
-                    });
-            });
-        }
-        if (isset($request->direction_code)) {
-            if ($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_OUTBOUND) {
-                $this->query->where(function ($q) use ($request) {
-                    $q->where('tqr.direction_code', $request->direction_code)
-                        ->orWhere(function ($qInner) {
-                            $qInner->where('currently_located_in_id', TravelQuoteEnum::CURRENTLY_LOCATED_ID_UAE)
-                                ->where('region_cover_for_id', '!=', TravelQuoteEnum::REGION_COVER_ID_UAE);
-                        });
-                });
-            }
-            if ($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_INBOUND) {
-                $this->query->where(function ($q) use ($request) {
-                    $q->where('tqr.direction_code', $request->direction_code)
-                        ->orWhere('region_cover_for_id', TravelQuoteEnum::REGION_COVER_ID_UAE);
-                });
-            }
-        }
-        if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
-            $searchProperties = $model->renewalSearchProperties;
-        } elseif ($isNewManager || $isNewAdvisor) {
-            $searchProperties = $model->newBusinessSearchProperties;
-        } else {
-            $searchProperties = $model->searchProperties;
-        }
-        if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start)
-        && ! isset($request->payment_due_date) && ! isset($request->booking_date)
-    && ! isset($request->renewal_batches) && ! isset($request->previous_quote_policy_number) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number) && ! isset($request->policy_expiry_date) && ! isset($request->policy_expiry_date_end)) {
-
-            $this->query->whereBetween('tqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
-        }
-        if ($request->transaction_approved_dates) {
-            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-            $startDate = Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat);
-            $endDate = Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat);
-            $this->query->whereBetween('tqr.transaction_approved_at', [$startDate, $endDate]);
-        }
-        if (
-            empty($request->email) && empty($request->code) && empty($request->first_name) &&
-            empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
-        ) {
-            $this->query->where('tqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
-        }
-
-        if (isset($request->last_modified_date) && $request->last_modified_date != '') {
-            $dateArray = $request['last_modified_date'];
-
-            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
-            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
-            $this->query->whereBetween('tqr.updated_at', [$dateFrom, $dateTo]);
-        }
-
-        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
-            $dateArray = $request['advisor_assigned_date'];
-
-            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
-            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
-            $this->query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }
-
-        if (! empty($request->created_at) && ! empty($request->created_at_end)) {
-            $dateFrom = $this->parseDate($request['created_at'], true);
-            $dateTo = $this->parseDate($request['created_at_end'], true);
-            $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
-        }
-
-        if (
-            ! empty($request->created_at_start)
-            && ! empty($request->created_at_end)
-            && empty($request->code)
-            && empty($request->email)
-            && empty($request->mobile_no)
-            && empty($request->payment_due_date)
-            && empty($request->booking_date)
-            && empty($request->renewal_batches)
-            && empty($request->previous_quote_policy_number)
-            && ! isset($request->insurer_tax_invoice_number)
-            && ! isset($request->insurer_commission_tax_invoice_number)
-        ) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-            $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
-        }
-
-        if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-            $dateFrom = $this->parseDate($request['next_followup_date'], true);
-            $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween('tqrd.next_followup_date', [$dateFrom, $dateTo]);
-        }
-
-        if (isset($request->code) && $request->code != '') {
-            $this->query->where('tqr.code', $request->code);
-        }
-        if (isset($request->first_name) && $request->first_name != '') {
-            $this->query->where('tqr.first_name', $request->first_name);
-        }
-        if (isset($request->last_name) && $request->last_name != '') {
-            $this->query->where('tqr.last_name', $request->last_name);
-        }
-        if (isset($request->email) && $request->email != '') {
-            $this->query->where('tqr.email', $request->email);
-        }
-        if (isset($request->mobile_no) && $request->mobile_no != '') {
-            $this->query->where('tqr.mobile_no', $request->mobile_no);
-        }
-        if (isset($request->policy_number) && $request->policy_number != '') {
-            $this->query->where('tqr.policy_number', $request->policy_number);
-        }
-        if (! empty($request->api_issuance_status_id)) {
-            $apiIssuanceStatusIds = (array) $request->api_issuance_status_id;
-
-            $this->query->when(in_array('blank', $apiIssuanceStatusIds), function ($query) use ($apiIssuanceStatusIds) {
-                $query->where(function ($subQuery) use ($apiIssuanceStatusIds) {
-                    $subQuery->whereNull('tqr.api_issuance_status_id')
-                        ->orWhere('tqr.api_issuance_status_id', '');
-
-                    if (count($apiIssuanceStatusIds) > 1) {
-                        $subQuery->orWhereIn('tqr.api_issuance_status_id', $apiIssuanceStatusIds);
-                    }
-                });
-            }, function ($query) use ($apiIssuanceStatusIds) {
-                $query->whereIn('tqr.api_issuance_status_id', $apiIssuanceStatusIds);
-            });
-        }
-        if (isset($request->insurer_api_status_id) && $request->insurer_api_status_id != '') {
-            $this->query->whereIn('tqr.insurer_api_status_id', $request->insurer_api_status_id);
-        }
-        if (Auth::user()->isSpecificTeamAdvisor('Travel')) {
-            // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('tqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
-        }
-        if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where(function ($query) use ($request) {
-                $query->where('tqr.policy_number', $request->previous_quote_policy_number)
-                    ->orWhere('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);
-            });
-        }
-        if (isset($request->renewal_batches) && count($request->renewal_batches) > 0) {
-            $this->query->whereIn('tqr.renewal_batch_id', $request->renewal_batches);
-        }
-        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-            $this->query->where('tqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
-        }
-        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
-            $this->query->whereBetween('tqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-
-        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
-            $this->query->whereBetween('tqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-
-        $this->whereBasedOnRole($this->query, 'tqr');
-
-        if (isset($request->is_renewal) && $request->is_renewal != '') {
-            if ($request->is_renewal == quoteTypeCode::yesText) {
-                $this->query->whereNotNull('tqr.previous_quote_policy_number');
-            }
-            if ($request->is_renewal == quoteTypeCode::noText) {
-                $this->query->whereNull('tqr.previous_quote_policy_number');
-            }
-        }
-        if (isset($request->is_ecommerce) && $request->is_ecommerce != '') {
-            if ($request->is_ecommerce == quoteTypeCode::yesText) {
-                $this->query->where('tqr.is_ecommerce', 1);
-            }
-            if ($request->is_ecommerce == quoteTypeCode::noText) {
-                $this->query->where('tqr.is_ecommerce', 0);
-            }
-        }
-
-        if (isset($request->source) && $request->source != '') {
-            $this->query->where('tqr.source', $request->source);
-        }
-        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
-            $this->query->where('tqr.sic_advisor_requested', $request->sic_advisor_requested);
-        }
-
-        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
-            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
-        }
-
-        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
-            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
-        }
-
-        if ($request->has('amlStatus') && $request->amlStatus != '') {
-            $this->query->whereIn('tqr.aml_status', $request->amlStatus);
-        }
-
-        if ($request->has('insurance_provider_ids') && $request->insurance_provider_ids != '') {
-            $this->query->whereIn('tqr.insurance_provider_id', $request->insurance_provider_ids);
-        }
-
-        if ($request->has('plan_name') && $request->plan_name != '') {
-            $this->query->whereIn('tqr.plan_id', $request->plan_name);
-        }
-
-        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
-            $this->query->whereIn('tqr.insurer_aml_status', $request->insurer_aml_status);
-        }
-
-        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
-            $this->query->whereIn('tqr.insurer_aml_status', $request->insurer_aml_status);
-        }
-
-        foreach ($searchProperties as $item) {
-            if (! empty($request[$item]) && $item != 'created_at') {
-                if ($request[$item] == 'null') {
-                    $this->query->whereNull($item);
-                } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if (in_array('-1', $request[$item]) || in_array(-1, $request[$item])) {
-                        $this->query->whereNull('advisor_id');
-                    } else {
-                        $this->query->whereIn('advisor_id', $request[$item]);
-                    }
-                } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
-                    $this->query->whereIn('quote_status_id', $request[$item]);
-                } else {
-                    $skipped = ['is_renewal', 'is_ecommerce', 'previous_policy_expiry_date', 'next_followup_date'];
-                    if (in_array($item, $skipped)) {
-                        continue;
-                    }
-                    $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
-                }
-            }
-        }
-
-        if (isset($request->travel_start_date) && $request->travel_start_date != '') {
-            $this->query->whereDate('tqr.start_date', Carbon::parse($request->travel_start_date));
-        }
-
-        $this->query->filterBySegment();
-        $this->adjustQueryByDateFilters($this->query, 'tqr');
-
-        if (isset($request->sortBy) && $request->sortBy != '') {
-            return $this->query->orderBy($request->sortBy, $request->sortType);
-        } else {
-            return $this->query->orderBy('tqr.created_at', 'DESC');
-        }
 
     }
 
@@ -759,7 +499,6 @@ class TravelQuoteService extends BaseService
         $travelQuote->last_name = $request->last_name;
         $travelQuote->nationality_id = $request->nationality_id;
         $travelQuote->premium = $request->premium;
-        $travelQuote->dob = $request->dob;
         if (
             $travelQuote->days_cover_for != $request->days_cover_for ||
             $travelQuote->destination_id != $request->destination_id ||
@@ -804,6 +543,13 @@ class TravelQuoteService extends BaseService
 
         $travelQuote->details = $request->details;
         $travelQuote->save();
+
+        $customerId = app(CustomerService::class)->getCustomerIdByEmail($travelQuote->email);
+        if (($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj'))))) {
+            app(CustomerAddressService::class)->sendAddressNotificationToCustomer($travelQuote, $request->input('addressObj'), QuoteTypeId::Travel);
+            app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $travelQuote->uuid);
+            SyncCourierQuoteWithMacrm::dispatch($travelQuote, QuoteTypeId::Travel);
+        }
 
         if (! empty($request->destination_ids)) {
             $travelQuote->load('travelDestinations');
@@ -1240,12 +986,18 @@ class TravelQuoteService extends BaseService
     public function createDuplicateLead($leadModal, $quoteStatusId)
     {
         if (! $leadModal) {
+            LoggerService::warning('Cannot create duplicate lead: Lead model is null');
+
             return false; // Add validation to avoid failure if $leadModal is null
         }
+
         $newLeadCode = $leadModal->code.'-1';
+        LoggerService::info("Starting duplicate lead creation process for {$leadModal->code} -> {$newLeadCode}");
         $leadExists = TravelQuote::where('code', $newLeadCode)->exists();
         if ($leadExists) {
             // Lead with the code already exists
+            LoggerService::warning("Duplicate lead creation failed: Lead with code {$newLeadCode} already exists");
+
             return false;
         }
         $duplicateLead = $leadModal->replicate();
@@ -1255,12 +1007,18 @@ class TravelQuoteService extends BaseService
         $duplicateLead->source = TravelQuoteEnum::IMCRM_BOOKING;
         $duplicateLead->quote_status_id = $quoteStatusId;
         $duplicateLead->region_cover_for_id = $leadModal->region_cover_for_id;
+        $duplicateLead->insurer_quote_number = null;
         $duplicateLead->save();
 
         if ($duplicateLead) {
+            LoggerService::info("Successfully created duplicate lead with code: {$duplicateLead->code}");
             $this->updatePersonalQuote($duplicateLead->uuid, QuoteTypeId::Travel, ['quote_id' => $duplicateLead->id]);
             // update morph relation in payments table
-            $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
+            $paymentsCount = $leadModal->payments()->where('code', $newLeadCode)->count();
+            if ($paymentsCount > 0) {
+                LoggerService::info("Updating payment relations: {$paymentsCount} payment(s) found for {$newLeadCode}");
+                $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
+            }
 
             // update morph relation in quote_documents table,which are associated with split payments
             Payment::where('code', $newLeadCode)->with('paymentSplits')->get()->each(function ($payment) use ($duplicateLead) {
@@ -1281,12 +1039,21 @@ class TravelQuoteService extends BaseService
             // update plan & premium for parent & child lead
             $this->updatePlanAndPremium($leadModal, $duplicateLead);
 
-            $leadModal->TravelDestinations()->get()->each(function ($destination) use ($duplicateLead) {
-                $duplicateDestination = $destination->replicate();
-                $duplicateDestination->quote_id = $duplicateLead->id;
-                $duplicateDestination->uuid = $duplicateLead->uuid;
-                $duplicateDestination->save();
-            });
+            // Duplicate travel destinations
+            $destinationsCount = $leadModal->TravelDestinations()->count();
+            if ($destinationsCount > 0) {
+                LoggerService::info("Duplicating {$destinationsCount} travel destinations for lead {$duplicateLead->code}");
+                $leadModal->TravelDestinations()->get()->each(function ($destination) use ($duplicateLead) {
+                    $duplicateDestination = $destination->replicate();
+                    $duplicateDestination->quote_id = $duplicateLead->id;
+                    $duplicateDestination->uuid = $duplicateLead->uuid;
+                    $duplicateDestination->save();
+                });
+            }
+
+            LoggerService::info("Duplicate lead creation completed successfully: {$leadModal->code} -> {$duplicateLead->code}");
+        } else {
+            LoggerService::error("Failed to create duplicate lead for {$leadModal->code}");
         }
 
         return true;
@@ -1478,5 +1245,18 @@ class TravelQuoteService extends BaseService
             ->where('quote_type', 'App\Models\TravelQuote')
             ->whereDate('dob', '<=', now()->subYears(65))
             ->update(['quote_id' => $newQuoteId]);
+    }
+
+    public function getPerMemberPrice($planId)
+    {
+        $travelPlan = TravelPlan::with(['insuranceProviderQuoteType' => function ($query) {
+            $query->where('quote_type_id', QuoteTypeId::Travel);
+        }])->where('id', $planId)->first();
+
+        if ($travelPlan && $travelPlan->insuranceProviderQuoteType) {
+            return $travelPlan->insuranceProviderQuoteType->per_member_price;
+        }
+
+        return false;
     }
 }

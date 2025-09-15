@@ -4,7 +4,7 @@ namespace App\Services\PolicyIssuanceAutomation\Travel;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
@@ -40,7 +40,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     private mixed $baseUrl;
     private mixed $authParam;
 
-    public const INSURER_CODE = InsuranceProvidersEnum::ALNC;
     public const TYPE = quoteTypeCode::Travel;
     public const TYPE_ID = QuoteTypeId::Travel;
 
@@ -478,7 +477,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function getNextStep($completedStep = null): ?string
     {
-        $allSteps = PolicyIssuanceEnum::getPolicyIssuanceSteps(self::INSURER_CODE, self::TYPE);
+        $allSteps = PolicyIssuanceEnum::getPolicyIssuanceSteps(InsuranceProviderEnum::ALNC->value, self::TYPE);
 
         if (! $completedStep) {
             return $allSteps[0]; // Return the first step if completedStep is null
@@ -505,6 +504,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     public function getStepsLockingStatus($quote): array
     {
         $policyIssuance = $quote->policyIssuance;
+        $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;
         $response = [
             'policyIssuance' => $policyIssuance,
             'isEditPolicyDetailsDisabled' => true,
@@ -535,6 +535,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                 $response['message'] = 'Booking Details is editable';
 
                 return $response;
+            }
+            if ($isPolicyBookingFailed) {
+                $response['isEditBookingDetailsDisabled'] = false;
+                $response['message'] = 'Booking Step is editable';
             }
 
             return $response;
@@ -617,13 +621,22 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
         $advisorId = $quote?->advisor_id;
-        LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  check if advisor id already assigned :  '.$advisorId);
+        LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  check if advisor id already assigned ', extra: [
+            'advisorId' => $advisorId,
+        ]);
         if (! $advisorId) {
             $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
             if ($response && $response['advisorId']) {
                 $advisorId = $response['advisorId'];
+                LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
+                    'advisorId' => $advisorId,
+                ]);
             }
         }
+
+        LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor', extra: [
+            'advisorId' => $advisorId,
+        ]);
 
         if ($advisorId) {
             LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
@@ -632,6 +645,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                 SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
             }
 
+            LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Quote Document Customer Email Checks', extra: [
+                'advisorId' => $advisorId,
+                'quote status id' => QuoteStatusEnum::PolicyBooked,
+            ]);
             if ($quote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
                 // Here we need to dispatch document email
                 $data = new \stdClass;

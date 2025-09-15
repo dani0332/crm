@@ -345,6 +345,7 @@ watch(
           { value: 'Cycle', label: 'Cycle' },
           { value: 'Home', label: 'Home' },
           { value: 'CorpLine', label: 'Corpline' },
+          { value: 'Savings', label: 'Savings' },
         ]"
         class="w-full"
         @update:modelValue="onLobChange"

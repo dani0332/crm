@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Http\Requests\PaymentDocumentRequest;
 use App\Http\Requests\QuotesDocumentRequest;
@@ -14,6 +16,7 @@ use App\Models\DocumentType;
 use App\Models\MemberCategory;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
+use App\Services\AccuracyMatrixService;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
@@ -150,7 +153,8 @@ class QuoteDocumentController extends Controller
             $this->quoteDocumentService->uploadQuoteDocument($file['file'], $request->all(), $quote);
         }
 
-        if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink() && $request->document_type_code === DocumentTypeCode::HPD) {
+        $docTypes = $this->quoteDocumentService->bringProofDocumentForAllLobs();
+        if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink() && in_array($request->document_type_code, $docTypes)) {
             $this->quoteDocumentService->updateQuoteAndPaymentStatusToPaymentPending($quote);
         }
 
@@ -282,11 +286,18 @@ class QuoteDocumentController extends Controller
             'doc_id' => 'required|integer',
             'doc_uuid' => 'required|string',
         ]);
+
         $document = QuoteDocument::where('id', $request->doc_id)->where('doc_uuid', $request->doc_uuid)->first();
         if (! $document) {
             return redirect()->back()->with('message', 'Document not found');
         }
+
+        // Update Accuracy Matrix cache before deleting document
+        $this->updateAccuracyMatrixOnDeletion($document);
+
         $document->delete();
+
+        return redirect()->back()->with('message', 'Document deleted successfully');
     }
 
     /**
@@ -401,5 +412,68 @@ class QuoteDocumentController extends Controller
     public function getS3TempUrl(Request $request)
     {
         return $this->quoteDocumentService->getDocumentTempURL($request->docURL);
+    }
+
+    private function updateAccuracyMatrixOnDeletion(QuoteDocument $document): void
+    {
+
+        try {
+            $accuracyMatrixService = app(AccuracyMatrixService::class);
+
+            // Get the quote using the correct relationship and properties
+            $quote = $document->quoteDocumentable;
+            $documentTypeCode = $document->document_type_code;
+
+            if (! $documentTypeCode || ! $quote) {
+                return;
+            }
+
+            $quoteTypeEnum = $this->mapQuoteTypeFromModel($quote);
+            if (! $quoteTypeEnum) {
+                return;
+            }
+
+            // ONLY process Home and Group Medical quotes for Accuracy Matrix
+            $allowedQuoteTypes = [QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL];
+            if (! in_array($quoteTypeEnum, $allowedQuoteTypes)) {
+                return;
+            }
+
+            // Map ONLY the 3 mandatory document types for Accuracy Matrix
+            $ocrDocumentType = match ($documentTypeCode) {
+                'TI' => OCRDocumentTypeEnum::TAX_INVOICE,                    // Tax Invoice
+                'CTIRBB' => OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER, // Tax Invoice Raised by Buyer
+                'CPS', 'GH_PS' => OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE, // Policy Schedule (Home and Group Medical)
+                default => null, // Only these 3 documents matter for Accuracy Matrix
+            };
+
+            if (! $ocrDocumentType) {
+                return;
+            }
+
+            if (! $accuracyMatrixService->isEligibleQuote($quote, $quoteTypeEnum)) {
+                return;
+            }
+
+            $accuracyMatrixService->removeDocument(
+                $quote->id,
+                $quoteTypeEnum->value,
+                $ocrDocumentType
+            );
+
+        } catch (\Exception $e) {
+            // Silently handle errors to not block document deletion
+        }
+    }
+
+    private function mapQuoteTypeFromModel($quote): ?QuoteTypes
+    {
+        $className = class_basename($quote);
+
+        return match ($className) {
+            'PersonalQuote' => QuoteTypes::HOME,         // Home quotes are now PersonalQuote
+            'BusinessQuote' => QuoteTypes::GROUP_MEDICAL, // Group Medical quotes use BusinessQuote
+            default => null,
+        };
     }
 }

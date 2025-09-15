@@ -92,15 +92,18 @@ const isProfileUpdateAllow = computed(() => {
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
+const enabledCustomerType =
+  page.props.quote?.latest_insured?.customer_type ??
+  page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type: page.props.quote?.latest_insured?.customer_type,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.insured?.first_name || '',
-  insured_last_name: page.props.quote?.insured?.last_name || '',
+  insured_first_name: page.props.quote?.latest_insured?.first_name || '',
+  insured_last_name: page.props.quote?.latest_insured?.last_name || '',
   emirates_id_number: page.props.quote?.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer?.emirates_id_expiry_date || null,
@@ -264,6 +267,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
         >
           Stale for {{ countDays }}
         </p>
+        <x-button
+          v-if="quote.customer?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
       </template>
       <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
@@ -358,7 +369,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY NAME</dt>
@@ -529,6 +540,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -541,7 +559,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                quote.customer_type == page.props.customerTypeEnum.Individual
+                enabledCustomerType == page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
               }}
@@ -561,7 +579,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             <div class="text-sm">
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Individual
+                  enabledCustomerType === page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
@@ -654,50 +672,15 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     />
                   </dd>
                 </div>
-
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Entity
-                "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
-              >
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">FIRST NAME</dt>
-                  <dd>{{ quote.first_name }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">LAST NAME</dt>
-                  <dd>{{ quote.last_name }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">MOBILE NUMBER</dt>
-                  <dd>{{ quote.mobile_no }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMAIL</dt>
-                  <dd>{{ quote.email }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">COMPANY NAME</dt>
-                  <dd>{{ customerProfileForm.company_name }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">TRADE LICENSE NO</dt>
-                  <dd>
-                    <x-input
-                      v-model="customerProfileForm.trade_license_no"
-                      placeholder="TRADE LICENSE NO"
-                      type="text"
-                      class="w-full"
-                    />
-                  </dd>
-                </div>
-              </dl>
-              <dl
-                v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Entity
+                  enabledCustomerType === page.props.customerTypeEnum.Entity
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
@@ -1037,6 +1020,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       @onAddUpdate="onAddUpdate"
     />
 
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
+
     <AuditLogs
       :quote-type="quoteType"
       :id="$page.props.quote.id"
@@ -1047,7 +1037,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
     <AuditLogs
       :title="'KYC Audit Logs'"
       :type="'App\\Models\\InsuredKyc'"
-      :id="quote?.insured?.insured_kyc?.id"
+      :id="quote?.latest_insured?.insured_kyc?.id"
       :expanded="sectionExpanded"
     />
 
