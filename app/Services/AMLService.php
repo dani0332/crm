@@ -2185,7 +2185,7 @@ class AMLService
     {
         $insurerScreenType = [
             InsuranceProvidersEnum::AXA => AMLScreeningTypeEnum::INSURER_AXA,
-            InsuranceProvidersEnum::RSA => AMLScreeningTypeEnum::INSURER_RSA,
+            // InsuranceProvidersEnum::RSA => AMLScreeningTypeEnum::INSURER_RSA,
         ];
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType->text);
@@ -2194,7 +2194,7 @@ class AMLService
             return false;
         }
 
-        if ($insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
+        /* if ($insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
             if ($quote->source == LeadSourceEnum::RENEWAL_UPLOAD &&
                 auth()->user()->can(PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
             ) {
@@ -2204,7 +2204,7 @@ class AMLService
             if (isset($screeningResult->quoteStatus) && $screeningResult->quoteStatus == 20) {
                 return true;
             }
-        }
+        } */
 
         $kycLogs = KycLog::withTrashed()->where([
             'quote_request_id' => $quote->id,
