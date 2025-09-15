@@ -1,4 +1,4 @@
-<?php
+Meny <?php
 
 return [
     'social_driver' => 'google',
@@ -153,6 +153,7 @@ return [
     'MACRM_BASIC_AUTH_USERNAME' => env('MACRM_BASIC_AUTH_USERNAME'),
     'MACRM_BASIC_AUTH_PASSWORD' => env('MACRM_BASIC_AUTH_PASSWORD'),
     'BIRD_BASE_URL' => env('BIRD_BASE_URL', ''),
+
     /* Alliance API Cred */
     'ALLIANCE_API_BASE_URL' => env('ALLIANCE_API_BASE_URL', ''),
     'ALLIANCE_AGENCY_ID' => env('ALLIANCE_AGENCY_ID', ''),
@@ -169,6 +170,12 @@ return [
     'LIVA_CLIENT_ID' => env('LIVA_CLIENT_ID', ''),
     'LIVA_CLIENT_SECRET' => env('LIVA_CLIENT_SECRET', ''),
     'LIVA_SCOPE' => env('LIVA_SCOPE', ''),
+
+    // GIG Policy Issuance API Credentials
+    'GIG_API_BASE_URL' => env('GIG_API_BASE_URL'),
+    'GIG_API_AUTH_BASE_URL' => env('GIG_API_AUTH_BASE_URL'),
+    'GIG_API_AUTH_CLIENT_ID' => env('GIG_API_AUTH_CLIENT_ID'),
+    'GIG_API_AUTH_CLIENT_SECRET' => env('GIG_API_AUTH_CLIENT_SECRET'),
 
     'LIFE_EMAIL_DATA_SOURCE' => env('LIFE_EMAIL_DATA_SOURCE', 'Life-Insurance-UAT'),
 

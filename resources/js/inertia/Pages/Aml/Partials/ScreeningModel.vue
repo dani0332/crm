@@ -7,6 +7,19 @@ import { computed, ref, watch } from 'vue';
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   quoteTypeCodeEnum: Object,
+  // RTA Configuration props (for Car quotes)
+  rta_transaction_types: {
+    type: Object,
+    default: () => ({}),
+  },
+  rta_field_configurations: {
+    type: Object,
+    default: () => ({}),
+  },
+  rta_validation_summaries: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 const page = usePage();
 const { isRequired } = useRules();
@@ -177,6 +190,19 @@ const customerTypeOptions = computed(() => {
 });
 
 const showVehicleAndDrvicerDetails = computed(() => {
+  console.log(
+    'page.props.quoteType.id',
+    page.props.quoteType.id,
+    page.props.quoteTypeIdEnum.Car,
+    page.props.quoteType.id === page.props.quoteTypeIdEnum.Car,
+  );
+  console.log(
+    'page.props.insuranceProviderCodeEnum.AXA',
+    page.props.quoteRequest?.plan?.insurance_provider.code,
+    page.props.insuranceProviderCodeEnum.AXA,
+  );
+  console.log('page.props.isPrivateCar', page.props.isPrivateCar);
+
   return (
     page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
     [
@@ -187,6 +213,8 @@ const showVehicleAndDrvicerDetails = computed(() => {
     (page.props.isPrivateCar ?? false)
   );
 });
+
+console.log('showVehicleAndDrvicerDetails', showVehicleAndDrvicerDetails.value);
 
 const screeningFormDetails = useForm({
   customer_type: null,
@@ -227,6 +255,9 @@ const screeningFormDetails = useForm({
   industry_type_code: page.props.insuredDetails?.insured?.industry_type_code,
   emirate_of_registration_id:
     page.props.insuredDetails?.insured?.emirate_of_registration_id,
+  lead_source: quoteRequest.source,
+  insurance_provider_code:
+    page.props.quoteRequest?.plan?.insurance_provider.code,
 });
 const modalHeaderMessage = () => {
   if (
@@ -633,7 +664,8 @@ function screeningFormValidate() {
   if (
     (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
       page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
-    !chassisNumberDisabled.value
+    !chassisNumberDisabled.value &&
+    !showVehicleAndDrvicerDetails.value
   ) {
     if (!screeningFormDetails.chassis_number) {
       screeningFormDetails.setError('chassis_number', 'This field is required');
@@ -666,17 +698,6 @@ const submitScreeningForm = isValid => {
         if (response.props.flash.success?.length === 0) {
           notification.success({
             title: 'Quote is updated',
-            position: 'top',
-          });
-        }
-        if (
-          typeof response.props.flash.info !== 'undefined' &&
-          response.props.flash.info?.length > 0
-        ) {
-          notification.error({
-            title:
-              response.props.flash.info?.message ||
-              'GIG server connection issue. Please check API logs for details of the error',
             position: 'top',
           });
         }
@@ -734,11 +755,12 @@ const handleModalClose = () => {
   customerTypeConfirmationModel.value = false;
 };
 
-const updateInsurerPortalSyncData = (data) => {
+const updateInsurerPortalSyncData = data => {
   insurerPortalSyncData.value = data;
 };
-const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] = createReusableTemplate();
 
+const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
+  createReusableTemplate();
 </script>
 <template>
   <x-modal
@@ -754,6 +776,9 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] = crea
     <template v-if="showVehicleAndDrvicerDetails">
       <AdditionalVehicleTransactionDetails
         :insurerPortalSyncData="insurerPortalSyncData"
+        :rta_transaction_types="rta_transaction_types"
+        :rta_field_configurations="rta_field_configurations"
+        :rta_validation_summaries="rta_validation_summaries"
       />
       <x-divider class="mb-4 mt-4" />
       <AdditionalDriverDetails :insurerPortalSyncData="insurerPortalSyncData" />
@@ -1005,7 +1030,7 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] = crea
       <div
         v-if="
           (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
-          page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
+            page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
           !showVehicleAndDrvicerDetails
         "
       >
@@ -1083,12 +1108,11 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] = crea
       </x-button>
     </SubmitForScreeningBtnTemplate>
     <div class="flex justify-center my-5">
-      <x-tooltip
-        v-if="!can(permissionsEnum.AMLList)"
-        placement="bottom"
-      >
-        <SubmitForScreeningBtnReuseTemplate/>
-        <template #tooltip>You don't have permission to edit this section</template>
+      <x-tooltip v-if="!can(permissionsEnum.AMLList)" placement="bottom">
+        <SubmitForScreeningBtnReuseTemplate />
+        <template #tooltip
+          >You don't have permission to edit this section</template
+        >
       </x-tooltip>
       <template v-else>
         <SubmitForScreeningBtnReuseTemplate />

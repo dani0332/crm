@@ -63,6 +63,7 @@ use App\Repositories\CustomerMembersRepository;
 use App\Repositories\LookupRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -2213,7 +2214,7 @@ class AMLService
             return false;
         }
 
-        if ($quote->insurer_aml_status != AMLStatusCode::InsurerAMLScreeningCleared) {
+        if ($quote->source !== LeadSourceEnum::RENEWAL_UPLOAD && $quote->insurer_aml_status != AMLStatusCode::InsurerAMLScreeningCleared) {
             LoggerService::info(__FUNCTION__.' - Auto capture payment process failed - Insurer AML Screening is not cleared');
 
             return false;
@@ -2283,17 +2284,18 @@ class AMLService
             return match (ucfirst($quoteType)) {
                 QuoteTypes::CAR->value => match ($insurerCode->code) {
                     InsuranceProvidersEnum::RSA => app(LIVAInsuranceService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails),
+                    InsuranceProvidersEnum::AXA => app(GIGInsuranceService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails),
 
                     default => [
                         'success' => false,
-                        'message' => 'Insurer not supported for quote type: ' . $quoteType,
-                        'data' => null
+                        'message' => 'Insurer not supported for quote type: '.$quoteType,
+                        'data' => null,
                     ],
                 },
                 default => [
                     'success' => false,
-                    'message' => 'Quote type not supported: ' . $quoteType,
-                    'data' => null
+                    'message' => 'Quote type not supported: '.$quoteType,
+                    'data' => null,
                 ],
             };
         } catch (\Exception $e) {
@@ -2301,8 +2303,8 @@ class AMLService
 
             return [
                 'success' => false,
-                'message' => 'Exception occurred: ' . $e->getMessage(),
-                'data' => null
+                'message' => 'Exception occurred: '.$e->getMessage(),
+                'data' => null,
             ];
         }
     }

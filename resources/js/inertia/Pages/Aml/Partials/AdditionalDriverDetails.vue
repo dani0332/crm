@@ -1,11 +1,11 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed } from 'vue';
 const { isRequired } = useRules();
 
 const props = defineProps({
   insurerPortalSyncData: {
     type: Object,
-    default: null
+    default: null,
   },
 });
 
@@ -20,7 +20,7 @@ const isSyncFromInsurer = ref(false);
 const driverGenderOptions = computed(() => [
   { value: 'male', label: 'Male' },
   { value: 'female', label: 'Female' },
-])
+]);
 
 const vehicleDriverDetail = computed(() => {
   return page.props.quoteRequest?.vehicle_driver_detail;
@@ -37,26 +37,38 @@ const additionalDriverDetailsForm = useForm({
   driver_dob: vehicleDriverDetail.value?.driver_dob ?? '',
   driver_gender: vehicleDriverDetail.value?.driver_gender ?? '',
   driver_license_number: vehicleDriverDetail.value?.driver_license_number ?? '',
-  license_issue_place: vehicleDriverDetail.value?.driver_license_issue_place?.toString() ?? '',
-  license_issue_date: vehicleDriverDetail.value?.driver_license_issue_date ?? '',
-  license_expiry_date: vehicleDriverDetail.value?.driver_license_expiry_date ?? '',
-  uae_driving_experience: vehicleDriverDetail.value?.driver_uae_driving_experience?.toString() ?? '',
-  home_country_license_issuance: vehicleDriverDetail.value?.driver_home_country_license_issuance ?? '',
-  home_country_driving_experience: vehicleDriverDetail.value?.driver_home_country_driving_experience?.toString() ?? '',
+  license_issue_place:
+    vehicleDriverDetail.value?.driver_license_issue_place?.toString() ?? '',
+  license_issue_date:
+    vehicleDriverDetail.value?.driver_license_issue_date ?? '',
+  license_expiry_date:
+    vehicleDriverDetail.value?.driver_license_expiry_date ?? '',
+  uae_driving_experience:
+    vehicleDriverDetail.value?.driver_uae_driving_experience?.toString() ?? '',
+  home_country_license_issuance:
+    vehicleDriverDetail.value?.driver_home_country_license_issuance ?? '',
+  home_country_driving_experience:
+    vehicleDriverDetail.value?.driver_home_country_driving_experience?.toString() ??
+    '',
 });
 
 const hasNotEditPermission = computed(() => {
-  return !hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS);
+  return !hasPermission(
+    permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS,
+  );
 });
 
-const submitAdditionalDriverDetailsForm = async (isValid) => {
+const submitAdditionalDriverDetailsForm = async isValid => {
   if (isValid) {
     // Clear any previous errors
     additionalDriverDetailsForm.clearErrors();
 
     additionalDriverDetailsForm.processing = true;
     try {
-      const response = await axios.post('/kyc/update-additional-vehicle-driver-details', additionalDriverDetailsForm);
+      const response = await axios.post(
+        '/kyc/update-additional-vehicle-driver-details',
+        additionalDriverDetailsForm,
+      );
       if (response.data.success) {
         notification.success({
           title: response.data.message,
@@ -100,11 +112,17 @@ const submitAdditionalDriverDetailsForm = async (isValid) => {
 };
 
 const isGIG = computed(() => {
-  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.AXA;
+  return (
+    page.props.quoteRequest?.plan?.insurance_provider.code ===
+    page.props.insuranceProviderCodeEnum.AXA
+  );
 });
 
 const isLIVA = computed(() => {
-  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.RSA;
+  return (
+    page.props.quoteRequest?.plan?.insurance_provider.code ===
+    page.props.insuranceProviderCodeEnum.RSA
+  );
 });
 
 const isLivaRenewal = computed(() => {
@@ -113,7 +131,10 @@ const isLivaRenewal = computed(() => {
 });
 
 const isSUKOON = computed(() => {
-  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.OIC;
+  return (
+    page.props.quoteRequest?.plan?.insurance_provider.code ===
+    page.props.insuranceProviderCodeEnum.OIC
+  );
 });
 
 const licenseIssuePlaceOptions = computed(() => {
@@ -150,12 +171,18 @@ const drivingExperienceOptions = computed(() => {
 
 // Computed property to check if driver name fields should be disabled
 const isDriverNameFieldsDisabled = computed(() => {
-  return additionalDriverDetailsForm.is_insured_and_driver_same === 1 || additionalDriverDetailsForm.is_insured_and_driver_same === '1';
+  return (
+    additionalDriverDetailsForm.is_insured_and_driver_same === 1 ||
+    additionalDriverDetailsForm.is_insured_and_driver_same === '1'
+  );
 });
 
 // Computed property to check if driver name fields should be required
 const isDriverNameFieldsRequired = computed(() => {
-  return (additionalDriverDetailsForm.is_insured_and_driver_same === 0 || additionalDriverDetailsForm.is_insured_and_driver_same === '0');
+  return (
+    additionalDriverDetailsForm.is_insured_and_driver_same === 0 ||
+    additionalDriverDetailsForm.is_insured_and_driver_same === '0'
+  );
 });
 
 // Watch for changes in is_insured_and_driver_same to clear driver names when they become disabled
@@ -195,7 +222,8 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
       isSyncFromInsurer.value = true;
     }
   }
-}, { deep: true });
+}, { deep: true },
+);
 </script>
 
 <template>
@@ -214,7 +242,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
           :rules="[isRequired]"
           :options="[
             { value: '1', label: 'Yes' },
-            { value: '0', label: 'No' }
+            { value: '0', label: 'No' },
           ]"
           placeholder="Select Is Insured and Driver Same"
           :disabled="hasNotEditPermission"
@@ -258,8 +286,8 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
 
         <x-select
           v-model="additionalDriverDetailsForm.driver_gender"
-          :rules="(! isSUKOON) ? [isRequired] : []"
-          :required="! isSUKOON"
+          :rules="!isSUKOON ? [isRequired] : []"
+          :required="!isSUKOON"
           :options="driverGenderOptions"
           placeholder="Select Driver Gender"
           :disabled="hasNotEditPermission"
@@ -326,8 +354,8 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
         <x-select
           filterable
           v-model="additionalDriverDetailsForm.home_country_license_issuance"
-          :rules="(! isGIG) ? [isRequired] : []"
-          :required="! isGIG"
+          :rules="!isGIG ? [isRequired] : []"
+          :required="!isGIG"
           placeholder="Select License Home Country"
           :options="nationalitiesOptions"
           class="w-full"
@@ -350,7 +378,9 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
       </dl>
       <div
         class="flex justify-end my-5 gap-x-2"
-        v-if="hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)"
+        v-if="
+          hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
+        "
       >
         <x-button
           size="sm"
@@ -362,10 +392,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
           Save
         </x-button>
       </div>
-      <div
-        class="flex justify-end my-5 gap-x-2"
-        v-else
-      >
+      <div class="flex justify-end my-5 gap-x-2" v-else>
         <x-tooltip>
           <x-button
             size="sm"

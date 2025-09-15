@@ -102,6 +102,12 @@ class ApplicationStorageSeeder extends Seeder
 
         $this->seedOcrEnabled();
         $this->livaCarAutomationSeed();
+        $this->seedGIGCarPolicyIssuance();
+        $this->seedSukoonMedexProductSlug();
+        $this->seedLOBCutOffDates();
+        $this->seedTravelEnquiryEmail();
+        $this->seedOcrSendUpdateLogFlag();
+        $this->seedProductionApprovalEmails();
     }
 
     private function livaCarAutomationSeed()
@@ -125,11 +131,6 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-        $this->seedSukoonMedexProductSlug();
-        $this->seedLOBCutOffDates();
-        $this->seedTravelEnquiryEmail();
-        $this->seedOcrSendUpdateLogFlag();
-        $this->seedProductionApprovalEmails();
     }
 
     private function seedBirdWorkflowUrls()
@@ -558,6 +559,28 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedGIGCarPolicyIssuance()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_GIG_CAR_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_GIG_CAR_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         );
     }

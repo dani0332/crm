@@ -27,6 +27,7 @@ const insuredDetails = page.props.insuredDetails;
 const lookups = page.props.lookups;
 const isScreeningIndividual =
   page.props.screeningType == page.props.customerTypeEnum.IndividualShort;
+
 const dateFormat = date =>
   date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
 const incomeSource = computed(() => {
@@ -267,30 +268,36 @@ function insuredKycFormValidate() {
   let isValid = true;
   return isValid;
 }
-
 const syncInsurerPortalUpdates = () => {
   syncProcessLoading.value = true;
   axios
     .post('/get-quote-details-from-insurer', {
       quoteTypeId: page.props.quoteType.id,
-      quoteUID: page.props.quoteRequest.uuid
+      quoteUID: page.props.quoteRequest.uuid,
     })
     .then(response => {
-      if (response.data.success || response.status === 200) {
+      // Safely check response.data exists and has expected structure
+      const hasValidData = response.data && (response.data.success == true || response.status === 200);
+
+      if (hasValidData) {
         notification.success({
           title: 'Quote details synced successfully from insurer portal',
           position: 'top',
         });
 
-        if (response.data.data) {
+        // Safely check nested data properties
+        if (response.data?.data) {
           emit('update:insurerPortalSyncData', response.data.data);
         }
-        if (response.data.original.data) {
+        if (response.data?.original?.data) {
           emit('update:insurerPortalSyncData', response.data.original.data);
         }
       } else {
+        // Handle case where request succeeded but data indicates failure
         notification.error({
-          title: response.data.message || 'Failed to sync quote details from insurer portal',
+          title:
+            response.data?.message ||
+            'Failed to sync quote details from insurer portal',
           position: 'top',
         });
       }
@@ -531,8 +538,8 @@ watch(
   },
 );
 
-const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] = createReusableTemplate();
-
+const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] =
+  createReusableTemplate();
 </script>
 <template>
   <x-form @submit="submitInsuredKycForm" :auto-focus="false">
@@ -1153,21 +1160,30 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] = 
       </x-button>
       <SubmitInsuredKycFormBtnTemplate>
         <x-button
-            size="sm"
-            color="orange"
-            type="submit"
-            class="px-6"
-            :loading="kycFormDetails.processing"
-            :disabled="(!can(permissionsEnum.AMLList)) || (!kycFormDetails.insured_id)"
+          size="sm"
+          color="orange"
+          type="submit"
+          class="px-6"
+          :loading="kycFormDetails.processing"
+          :disabled="
+            !can(permissionsEnum.AMLList) || !kycFormDetails.insured_id
+          "
         >
           Save
         </x-button>
       </SubmitInsuredKycFormBtnTemplate>
 
-      <x-tooltip v-if="(!can(permissionsEnum.AMLList)) || (!kycFormDetails.insured_id)" placement="left">
+      <x-tooltip
+        v-if="!can(permissionsEnum.AMLList) || !kycFormDetails.insured_id"
+        placement="left"
+      >
         <SubmitInsuredKycFormBtnReuseTemplate />
         <template #tooltip>
-            {{ kycFormDetails.insured_id ? 'You don\'t have permission to edit this section' : 'Search the Insured\'s ID number' }}
+          {{
+            kycFormDetails.insured_id
+              ? "You don't have permission to edit this section"
+              : "Search the Insured's ID number"
+          }}
         </template>
       </x-tooltip>
       <template v-else>

@@ -27,7 +27,7 @@ class CarQuote extends BaseModel
     protected $casts = [
         'dob' => 'datetime',
     ];
-    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'api_issuance_status'];
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'api_issuance_status', 'insurer_api_status'];
     protected $guarded = [];
     public $filterables = [
         'code' => FilterTypes::EXACT,
@@ -93,14 +93,29 @@ class CarQuote extends BaseModel
         return $this->first_name.' '.$this->last_name;
     }
 
-    public function fullName()
-    {
-        return $this->first_name.' '.$this->last_name;
-    }
-
     public function getApiIssuanceStatusAttribute()
     {
         return $this->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($this->api_issuance_status_id) : null;
+    }
+
+    public function getInsurerApiStatusAttribute()
+    {
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this, QuoteTypes::CAR->value) : null;
+    }
+
+    public function isBookingFailed()
+    {
+        return $this->insurer_api_status_id === app(PolicyIssuanceService::class)->getFailedBookingInsurerAPIStatus($this, QuoteTypes::CAR->value);
+    }
+
+    public function isPolicyIssuanceFailed()
+    {
+        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getFailedPolicyIssuanceAPIStatuses($this, QuoteTypes::CAR->value));
+    }
+
+    public function fullName()
+    {
+        return $this->first_name.' '.$this->last_name;
     }
 
     public function uaeLicenseHeldFor()
@@ -548,22 +563,7 @@ class CarQuote extends BaseModel
     {
         return $this->morphOne(PolicyIssuance::class, 'model');
     }
-
-    public function getInsurerApiStatusAttribute()
-    {
-        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this, QuoteTypes::CAR->value) : null;
-    }
-
-    public function isBookingFailed()
-    {
-        return $this->insurer_api_status_id === app(PolicyIssuanceService::class)->getFailedBookingInsurerAPIStatus($this, QuoteTypes::CAR->value);
-    }
-
-    public function isPolicyIssuanceFailed()
-    {
-        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getFailedPolicyIssuanceAPIStatuses($this, QuoteTypes::CAR->value));
-    }
-
+    
     public function kycDocumentUser()
     {
         return $this->morphOne(QuoteDocument::class, 'quote_documentable')

@@ -17,7 +17,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     private const RTA_VEHICLE_RENEWAL = 'RTT04';
     private const POLICY_EFFECTIVE_DATE_MAX_DAYS = 30;
     private const POLICY_DURATION_MONTHS = 13;
-    private const GIG_PROVIDER_CODE = InsuranceProvidersEnum::AXA;
+    private const PREVIOUS_GIG_PROVIDER = 'Gulf Insurance Group (Gulf) B.S.C. (C)';
 
     public function authorize(): bool
     {
@@ -62,12 +62,13 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['is_insured_and_driver_same'] = 'required|integer';
             $rules['driver_first_name'] = 'nullable|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
             $rules['driver_last_name'] = 'nullable|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
-            $rules['driver_dob'] = 'required|date|before:today';
+            $rules['driver_dob'] = 'nullable|date|before:today';
             $rules['driver_gender'] = 'required|string|in:male,female';
             $rules['driver_license_number'] = 'required|string|max:255';
-            $rules['uae_driving_experience'] = 'required|numeric|min:0|max:50';
-            $rules['home_country_license_issuance'] = 'required';
-            $rules['home_country_driving_experience'] = 'required';
+            $rules['uae_driving_experience'] = 'nullable|numeric|min:0|max:50';
+            $rules['home_country_license_issuance'] = 'nullable|string|max:255';
+            $rules['home_country_driving_experience'] = 'nullable|numeric|min:0|max:50';
+            $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
         }
 
         if ($this->insurance_provider_code === InsuranceProvidersEnum::AXA) {
@@ -112,13 +113,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
 
     private function getVehicleRenewalRules(): array
     {
-        $isGigRenewal = $this->isGigRenewal();
-
-        if ($isGigRenewal['parent_quote_id'] === null) {
-            return [];
-        }
-
-        if ($isGigRenewal['status']) {
+        if ($this->isGIGRenewalUpload()) {
             return [
                 'policy_effective_date' => 'nullable',
                 'policy_expiry_date' => 'nullable',
@@ -154,28 +149,16 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         ];
     }
 
-    private function isGigRenewal()
+    private function isGIGRenewalUpload()
     {
-        $quoteDetails = CarQuote::where([
-            'source' => LeadSourceEnum::RENEWAL_UPLOAD,
-            'uuid' => $this->quote_uuid,
-        ])->first();
+        $quoteDetails = CarQuote::where(['uuid' => $this->quote_uuid, 'source' => LeadSourceEnum::RENEWAL_UPLOAD])->first();
 
-        if (! $quoteDetails) {
-            return ['status' => false, 'parent_quote_id' => null, 'isGigRenewal' => false];
+        if ($quoteDetails?->currently_insured_with &&
+            str_contains($quoteDetails?->currently_insured_with, self::PREVIOUS_GIG_PROVIDER)) {
+            return true;
         }
 
-        $parentQuote = CarQuote::where([
-            'code' => $quoteDetails->parent_duplicate_quote_id,
-        ])->first();
-
-        $parentQuoteInsuranceProviderCode = $parentQuote->plan->insurance_provider->code;
-
-        if ($parentQuoteInsuranceProviderCode === self::GIG_PROVIDER_CODE) {
-            return ['status' => true, 'parent_quote_id' => $quoteDetails->parent_duplicate_quote_id, 'isGigRenewal' => true];
-        }
-
-        return ['status' => false, 'parent_quote_id' => $quoteDetails->parent_duplicate_quote_id, 'isGigRenewal' => false];
+        return false;
     }
 
     public function messages(): array
@@ -310,15 +293,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
 
     private function validateVehicleRenewal($validator): void
     {
-        $isGigRenewal = $this->isGigRenewal();
-
-        if ($isGigRenewal['parent_quote_id'] === null) {
-            $validator->errors()->add('rta_transaction_type', 'Vehicle renewal requires parent quote id to proceed.');
-
-            return;
-        }
-
-        if ($isGigRenewal['status']) {
+        if ($this->isGIGRenewalUpload()) {
             $this->validateGigRenewal($validator);
         } else {
             $this->validateNonGigRenewal($validator);

@@ -11,6 +11,7 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
 class PolicyIssuanceObserver
 {
+    private $className = 'PolicyIssuanceObserver';
     /**
      * Handle the PolicyIssuance "updated" event.
      */
@@ -18,7 +19,7 @@ class PolicyIssuanceObserver
     {
         $policyIssuance->getDirty();
         LoggerService::startQuoteLogging($policyIssuance->model);
-        LoggerService::info('PolicyIssuanceObserver fn:'.__FUNCTION__.' - Start Policy Issuance ID : '.$policyIssuance->id, extra: [
+        LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Start Policy Issuance ID : '.$policyIssuance->id, extra: [
             'status' => $policyIssuance->status,
             'completed_step' => $policyIssuance->completed_step,
         ]);
@@ -30,14 +31,14 @@ class PolicyIssuanceObserver
             $policyIssuance->completed_step === LivaInsuranceService::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM &&
             str_contains($policyIssuance->message, 'PolicyIssuanceJob has been attempted too many times')
         ) {
-            LoggerService::info('PolicyIssuanceObserver fn:'.__FUNCTION__.' - Updating Policy Issuance ID : '.$policyIssuance->id.' - Status : '.PolicyIssuanceEnum::PENDING_STATUS);
+            LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updating Policy Issuance ID : '.$policyIssuance->id.' - Status : '.PolicyIssuanceEnum::PENDING_STATUS);
             try {
                 $policyIssuance->update([
                     'status' => PolicyIssuanceEnum::PENDING_STATUS,
                     'message' => 'null'
                 ]);
             } catch (\Exception $ex) {
-                LoggerService::info('PolicyIssuanceObserver fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
+                LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
                     'errorMessage' => $ex->getMessage(),
                 ]);
             }
@@ -49,6 +50,6 @@ class PolicyIssuanceObserver
             app(PolicyIssuanceService::class)->executePolicyIssuanceAutomationSteps();
         }
 
-        LoggerService::info('PolicyIssuanceObserver fn:'.__FUNCTION__.' - End Policy Issuance ID : '.$policyIssuance->id);
+        LoggerService::info($this->className.' fn:'.__FUNCTION__.' - End Policy Issuance ID : '.$policyIssuance->id);
     }
 }

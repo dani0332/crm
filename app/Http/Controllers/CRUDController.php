@@ -27,6 +27,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PuaEnum;
 use App\Enums\QuoteJourneyEnum;
 use App\Enums\QuoteSegmentEnum;
@@ -102,6 +103,7 @@ use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
 use App\Services\NotificationService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteJourneyService;
 use App\Services\Quotes\SavingsQuoteService;
@@ -122,6 +124,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CRUDController extends Controller
 {
@@ -711,7 +714,6 @@ class CRUDController extends Controller
             $displaySendPolicyButton = (bool) $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
             $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
             $tiers = $this->lookupService->getTierR();
-
             $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
 
             if (in_array($this->genericModel->modelType, [quoteTypeCode::Health, quoteTypeCode::Car])) {
@@ -824,6 +826,8 @@ class CRUDController extends Controller
                 $customerAddressData = $this->customerService->getCustomerAddressData($record);
                 $amlStatusName = AMLStatusCode::getName($record->aml_status);
                 $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
+                $apiIssuanceStatus = PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id);
+                $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record, QuoteTypes::CAR->value)[$record->insurer_api_status_id] ?? null;
 
                 return inertia('PersonalQuote/Car/Show', compact([
                     'record',
@@ -917,6 +921,8 @@ class CRUDController extends Controller
                     'paymentGatewayEnum',
                     'isFuncsEnabled',
                     'businessActivities',
+                    'apiIssuanceStatus',
+                    'insurerApiStatus',
                 ]));
             }
 
@@ -1276,6 +1282,9 @@ class CRUDController extends Controller
                 ]));
             }
         } catch (Exception $e) {
+            if ($e instanceof NotFoundHttpException) {
+                abort(404);
+            }
             LoggerService::error('Error Occurred in CRUDController@show', exception: $e);
 
             throw $e;

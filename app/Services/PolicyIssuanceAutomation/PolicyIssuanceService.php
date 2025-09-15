@@ -9,17 +9,19 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\AutomationFailedJob;
 use App\Jobs\PolicyIssuanceJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
-use App\Models\QuoteDocument;
 use App\Models\CarQuote;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
+use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -40,6 +42,8 @@ class PolicyIssuanceService
             },
             QuoteTypes::CAR->value => match ($insurerCode) {
                 InsuranceProvidersEnum::RSA => new LivaInsuranceService,
+                InsuranceProvidersEnum::AXA => new GIGInsuranceService,
+
                 default => null,
             },
             default => null,
@@ -88,7 +92,7 @@ class PolicyIssuanceService
 
         /* Get Unique Insurer per lob to get the statuses for which automation is enabled */
         $uniqueInsurerListByLob = PolicyIssuance::with(['insuranceProvider:id,code,text'])
-            ->whereIn('status', [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS])
+            ->whereIn('status', [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::BOOKING_PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS])
             ->select(['quote_type', 'insurance_provider_id'])
             ->distinct()->get();
 
@@ -115,6 +119,7 @@ class PolicyIssuanceService
             $insuranceProvider = $policyIssuanceProcess?->insuranceProvider;
             if ($this->init($quoteType, $insuranceProvider?->code)?->isPolicyIssuanceAutomationEnabled()) {
                 $statuses[] = PolicyIssuanceEnum::PENDING_STATUS;
+                $statuses[] = PolicyIssuanceEnum::BOOKING_PENDING_STATUS;
             }
             if ($this->init($quoteType, $insuranceProvider?->code)?->isPolicyIssuanceAutomationRetryEnabledForTimeout()) {
                 $statuses[] = PolicyIssuanceEnum::TIMEOUT_STATUS;
@@ -237,7 +242,7 @@ class PolicyIssuanceService
 
         $insurerApiStatus = $insurerPolicyAutomation->getInsurerAPIStatusByStep($policyIssuance);
 
-        if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA])) {
+        if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA])) {
             $this->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, $insurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
         } else {
             // TODO:: This should be updated with the new function in PolicyIssuanceService
@@ -247,7 +252,7 @@ class PolicyIssuanceService
         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Completed processing for Quote: '.$quote->code.' and Policy Issuance ID : '.$policyIssuance?->id);
     }
 
-    public function documentUploadPreChecks($quoteTypeId, $quote, $insuranceProviderCode, $requiredDocs)
+    public function documentUploadPreChecks($quoteTypeId, $quote, $requiredDocs)
     {
         $quoteDocuments = QuoteDocument::where('quote_documentable_type', get_class($quote))
             ->where('quote_documentable_id', $quote->id)
@@ -283,7 +288,7 @@ class PolicyIssuanceService
             'status' => $status,
         ]);
 
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Policy Issuance ID : '.$policyIssuance?->id.' Policy Issuance Log ID : '.$log->id);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' PID : '.$policyIssuance?->id.' Policy Issuance Log ID : '.$log->id);
     }
 
     public function updateAPIIssuanceAndInsurerStatus($quote, $quoteType, $newInsurerApiStatus = null, $newApiIssuanceStatus = null, $processInvolved = null)
@@ -432,7 +437,7 @@ class PolicyIssuanceService
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insurer = getInsuranceProvider($payment, $quoteType);
 
-        $insurerAutomation = $this->init($quoteType, $insurer->code);
+        $insurerAutomation = $this->init($quoteType, $insurer?->code);
 
         return $insurerAutomation::BOOK_POLICY_API_FAILED_STATUS_ID;
     }
@@ -442,7 +447,7 @@ class PolicyIssuanceService
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insurer = getInsuranceProvider($payment, $quoteType);
 
-        $insurerAutomation = $this->init($quoteType, $insurer->code);
+        $insurerAutomation = $this->init($quoteType, $insurer?->code);
 
         return $insurerAutomation->getFailedIssuanceAPIStatuses();
     }

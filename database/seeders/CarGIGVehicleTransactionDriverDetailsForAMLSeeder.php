@@ -69,17 +69,6 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
         Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
-            'code' => 'RTT07',
-            'text' => 'Update Registration Information',
-            'insurance_provider_id' => $this->insuranceProviderId,
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        Lookup::firstOrCreate([
-            'quote_type_id' => QuoteTypeId::Car,
-            'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => 'RTT10',
             'text' => 'Vehicle Renewal with Change Number',
             'insurance_provider_id' => $this->insuranceProviderId,

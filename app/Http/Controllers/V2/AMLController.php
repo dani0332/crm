@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLStatusCode;
+use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\DocumentTypeCode;
@@ -57,7 +58,6 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
-use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
@@ -66,6 +66,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\QuoteDocumentService;
+use App\Services\RtaTransactionTypeService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -304,6 +305,35 @@ class AMLController extends Controller
             $businessPayload['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
         }
 
+        // Add RTA configuration data for Car quotes
+        $rtaConfigurationData = [];
+        if ($quoteType->code == quoteTypeCode::Car) {
+            $rtaService = app(RtaTransactionTypeService::class);
+
+            // Get all RTA transaction types with their configurations
+            $rtaTransactionTypes = [
+                'RTT01' => 'New Vehicle Registration',
+                'RTT03' => 'Change Vehicle Ownership',
+                'RTT04' => 'Vehicle Renewal',
+            ];
+
+            $rtaConfigurationData = [
+                'rta_transaction_types' => $rtaTransactionTypes,
+                'rta_field_configurations' => [],
+                'rta_validation_summaries' => [],
+            ];
+
+            // Pre-generate configurations for all RTA types and both GIG/Non-GIG scenarios
+            foreach (array_keys($rtaTransactionTypes) as $rtaType) {
+                foreach ([false, true] as $isGigRenewal) {
+                    $configKey = $rtaType.($isGigRenewal ? '_GIG' : '');
+
+                    $rtaConfigurationData['rta_field_configurations'][$configKey] = $rtaService->getFrontendFieldConfig($rtaType, $isGigRenewal);
+                    $rtaConfigurationData['rta_validation_summaries'][$configKey] = $rtaService->getValidationSummary($rtaType, $isGigRenewal);
+                }
+            }
+        }
+
         return inertia('Aml/DetailPage', array_merge([
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
@@ -328,11 +358,12 @@ class AMLController extends Controller
             'defaultNationality' => GenericRequestEnum::DEFAULT_NATIONALITY,
             'screeningType' => $screeningType,
             'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
-            'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType, $quoteRequest),
             'isAnyEscalated' => $isAnyEscalated,
-            'isPrivateCar' => ! InsuranceProviderRepository::isCommercialVehicles($quoteRequest),
+            'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType, $quoteRequest),
+            'permissionsEnum' => PermissionsEnum::asArray(),
+            'isPrivateCar' => $quoteRequest?->registration_type === CarRegistrationType::PERSONAL,
             'LIVAEnums' => app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
-        ], $businessPayload ?? []));
+        ], $businessPayload ?? [], $rtaConfigurationData));
     }
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
@@ -433,9 +464,7 @@ class AMLController extends Controller
             });
 
             session()->put('amlResponseCheck', []);
-            $insurerAMLScreeningResponse = [];
             $isEntity = $AMLCheckRequest->customer_type == CustomerTypeEnum::Entity;
-
             if ($shouldApplicableForScreening) {
                 if ($isEntity) {
                     $getEntityDetailsForScreening = [
@@ -473,12 +502,8 @@ class AMLController extends Controller
             // Process members (UBO or regular members)
             if (empty($getMemberOrUBODetails->toArray()) && ! $shouldApplicableForScreening) {
                 LoggerService::info('AML Screening Bridger - No Member Found for Screening, AML Screening Cleared');
-                $response = app(AMLService::class)->handleResponse(true, 'AML Screening Completed', $isAutomation);
-                if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
-                    $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
-                }
 
-                return $response;
+                return app(AMLService::class)->handleResponse(true, 'AML Screening Completed', $isAutomation);
             }
 
             $bridgerInsightService = new BridgerInsightService;
@@ -488,12 +513,7 @@ class AMLController extends Controller
             LoggerService::info('AML Screening Bridger - AML Screening Job Dispatched for Members');
             $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
 
-            $response = app(AMLService::class)->handleResponse(true, 'Quote is updated', $isAutomation);
-            if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
-                $response = $response->with('info', ['message' => $insurerAMLScreeningResponse['message'], 'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched']]);
-            }
-
-            return $response;
+            return app(AMLService::class)->handleResponse(true, 'Quote is updated', $isAutomation);
         }
 
         return app(AMLService::class)->handleResponse(false, 'Something went wrong', $isAutomation);
@@ -521,6 +541,7 @@ class AMLController extends Controller
                         'status' => $getInsurerScreeningResponse['status'],
                         'message' => $getInsurerScreeningResponse['message'],
                         'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
+                        'isRenewalLead' => $getInsurerScreeningResponse['isRenewalLead'] ?? false,
                     ];
 
                     if (isset($getInsurerScreeningResponse['autoCaptureStatus'])) {

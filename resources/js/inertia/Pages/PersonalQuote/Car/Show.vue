@@ -104,6 +104,8 @@ defineProps({
   isFuncsEnabled: Array,
   insurerAMLStatus: String,
   businessActivities: Object,
+  apiIssuanceStatus: String,
+  insurerApiStatus: String,
 });
 
 const page = usePage();
@@ -486,11 +488,17 @@ const isRenewalUpload = computed(() => {
 });
 
 const isGIG = computed(() => {
-  return page.props.quote?.plan_provider_code === page.props.insuranceProviderCodeEnum.AXA;
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.AXA
+  );
 });
 
 const isLIVA = computed(() => {
-  return page.props.quote?.plan_provider_code === page.props.insuranceProviderCodeEnum.RSA;
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.RSA
+  );
 });
 
 const leadStatusOptions = computed(() => {
@@ -1884,6 +1892,18 @@ function handleOcrNotification(event) {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT REFERENCE</dt>
                 <dd>{{ record.payment_reference ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ insurerApiStatus ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ apiIssuanceStatus ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">RTA UPLOAD STATUS</dt>
+                <dd>{{ record.rta_upload_status ? 'Done' : 'Pending' }}</dd>
               </div>
             </dl>
             <div class="grid sm:grid-cols-1 mt-3">
@@ -4382,12 +4402,12 @@ function handleOcrNotification(event) {
     :expanded="sectionExpanded"
   />
 
-  <!-- <OcrLogs
+  <OcrLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="modelClass"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
-  /> -->
+  />
 
   <ClientInquiryLogs
     v-if="clientInquiryLogs?.length > 0"
