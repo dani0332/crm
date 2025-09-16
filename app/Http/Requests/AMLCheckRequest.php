@@ -7,6 +7,8 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
+use App\Services\Logger\LoggerService;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AMLCheckRequest extends FormRequest
@@ -26,6 +28,7 @@ class AMLCheckRequest extends FormRequest
      */
     public function rules(): array
     {
+        LoggerService::info('AML Check Request - Validation Rules');
         $rules = [];
         if ($this->customer_type == CustomerTypeEnum::Individual) {
             $rules = [
@@ -36,6 +39,7 @@ class AMLCheckRequest extends FormRequest
             ];
 
             if (in_array($this->quote_type, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value, QuoteTypes::HOME->value])) {
+                LoggerService::info('AML Check Request - Email Validation');
                 $rules['get_quote_email_gig'] = 'nullable|email:rfc,dns';
             }
         }
@@ -53,12 +57,8 @@ class AMLCheckRequest extends FormRequest
 
         $rules['customer_type'] = 'required|string';
 
-        if (
-            $this->quote_type == QuoteTypes::CAR->value &&
-            ! (
-                $this->lead_source == LeadSourceEnum::RENEWAL_UPLOAD &&
-                in_array($this->insurance_provider_code, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA])
-            )
+        if ($this->quote_type == QuoteTypes::CAR->value &&
+            ! (in_array($this->insurance_provider_code, [InsuranceProvidersEnum::AXA]) && $this->lead_source == LeadSourceEnum::RENEWAL_UPLOAD)
         ) {
             $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
         }
@@ -81,5 +81,18 @@ class AMLCheckRequest extends FormRequest
             'chassis_number' => 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm',
             'get_quote_email_gig' => 'Email in GIG portal must be a valid email address',
         ];
+    }
+
+    protected function failedValidation(Validator $validator): void
+    {
+        $errors = $validator->errors()->toArray();
+        LoggerService::warning('AML Validation Error Summary', extra: [
+            'total_errors' => count($errors),
+            'validation_errors' => $errors,
+            'customer_type' => $this->input('customer_type'),
+            'quote_type' => $this->input('quote_type'),
+        ]);
+
+        parent::failedValidation($validator);
     }
 }
