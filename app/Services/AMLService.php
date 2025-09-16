@@ -836,7 +836,7 @@ class AMLService
 
                     if(isset($getQuoteResponse['isPolicyExpired']) && $getQuoteResponse['isPolicyExpired']) {
                         LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Previous policy has expired - Ref-ID: '.$quoteDetails->code);
-                        $screeningResponse['message'] = 'Previous policy has expired';
+                        $screeningResponse['message'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED;
                         $screeningResponse['is_previous_policy_expired'] = $getQuoteResponse['isPolicyExpired'];
                     }
                 }
@@ -963,7 +963,7 @@ class AMLService
             if(isset($screeningResponse['isPolicyExpired']) && $screeningResponse['isPolicyExpired']) {
                 LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Previous policy has expired - Ref-ID: '.$quoteDetails->code);
                 $screeningResponse['status'] = AMLStatusCode::AMLPending;
-                $screeningResponse['message'] = 'Previous policy has expired';
+                $screeningResponse['message'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED;
                 $screeningResponse['is_previous_policy_expired'] = $screeningResponse['isPolicyExpired'];
             }
 
