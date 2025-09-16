@@ -87,11 +87,11 @@ class HealthEmailService extends BaseService
                 return collect($member)
                     ->merge([
                         'index' => $index + 1,
-                        'dob' => isset($member->dob) ? Carbon::parse($member->dob)->format('d/m/Y') : null,
-                        'ageValue' => isset($member->dob) ? Carbon::parse($member->dob)->age : null,
+                        'dob' => isset($member['dob']) ? Carbon::parse($member['dob'])->format('d/m/Y') : null,
+                        'ageValue' => isset($member['dob']) ? Carbon::parse($member['dob'])->age : null,
                     ])
-                    ->when(isset($member->gender), function ($collection) use ($member) {
-                        return $collection->put('gender', strtoupper($member->gender) === 'M' ? 'Male' : 'Female');
+                    ->when(isset($member['gender']), function ($collection) use ($member) {
+                        return $collection->put('gender', strtoupper($member['gender']) === 'M' ? 'Male' : 'Female');
                     });
             })
             ->toArray();
