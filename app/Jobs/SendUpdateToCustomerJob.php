@@ -56,7 +56,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
             $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
             $quoteModel = $this->getModelObject($quoteType);
             $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
-            $isAUHHealthLead = $quote->isAUHLead() && $quote->isLeadSourceRevivalOrInsuranceWallet();
+            $isAUHHealthLead = $quote->isAUHLead(false) && $quote->isLeadSourceRevivalOrInsuranceWallet();
 
             @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmailData($this->sendUpdate, $quote);
             if (! empty($templateId) || $isAUHHealthLead) {

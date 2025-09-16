@@ -68,7 +68,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
 
-        $isAUHHealthLead = strtolower($this->data->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead();
+        $isAUHHealthLead = strtolower($this->data->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead(false);
 
         info('job: SendBookPolicyDocumentsJob Code: '.$quote->code.' , Quote Type: '.$this->data->model_type.', Type Id: '.$quoteTypeId);
 
