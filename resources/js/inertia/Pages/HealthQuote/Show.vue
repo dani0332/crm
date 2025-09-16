@@ -71,6 +71,7 @@ const props = defineProps({
   isFuncsEnabled: Array,
   isAUHLead: Boolean,
   branchOptions: Object,
+  hasPecTag: Boolean,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
@@ -1879,6 +1880,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
           tag="div"
         >
           Private Client
+        </x-button>
+        <x-button v-if="hasPecTag" size="sm" color="#DC2626" tag="div">
+          PEC
         </x-button>
       </template>
 

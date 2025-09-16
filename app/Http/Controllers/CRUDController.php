@@ -1164,13 +1164,16 @@ class CRUDController extends Controller
 
                 $record->payment_status_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_text);
                 $amlStatusName = AMLStatusCode::getName($record->aml_status);
-                $isAUHLead = $this->healthQuoteService->isAUHLead($record->id);
+                $lead = $this->healthQuoteService->getLead($record->id);
+                $isAUHLead = $lead->isAUHLead(false);
+                $hasPecTag = $lead->has_pec_tag;
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
                     'emailStatuses' => $emailStatuses,
                     'quote' => $record,
                     'isAUHLead' => $isAUHLead,
+                    'hasPecTag' => $hasPecTag,
                     'amlStatusName' => $amlStatusName,
                     'sendUpdateOptions' => $sendUpdateOptions,
                     'sendUpdateLogs' => $sendUpdateLogs,
