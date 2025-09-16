@@ -78,57 +78,74 @@ class BorController extends Controller
     public function getBorLogSSE($borRefId)
     {
         try {
-            $response = new StreamedResponse(function() use ($borRefId) {
-                if (ob_get_level() == 0) ob_start();
-                
+            $response = new StreamedResponse(function () use ($borRefId) {
+                // Disable all output buffering for real-time streaming
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+
+                // Set up unbuffered output
+                if (function_exists('apache_setenv')) {
+                    apache_setenv('no-gzip', '1');
+                }
+                ini_set('output_buffering', 0);
+                ini_set('implicit_flush', 1);
+
                 $lastDataHash = null;
                 $maxIterations = 120; // Maximum 10 minutes (120 * 5 seconds)
                 $iteration = 0;
-                
+
                 LoggerService::info('SSE BOR stream started', ['bor_ref_id' => $borRefId]);
-                
+
+                // Send initial connection confirmation
+                echo "event: connected\n";
+                echo "data: " . json_encode(['message' => 'SSE connection established', 'bor_ref_id' => $borRefId]) . "\n\n";
+                flush();
+
                 while ($iteration < $maxIterations) {
+                    // Check if the client has disconnected early
+                    if (connection_aborted()) {
+                        LoggerService::info('SSE BOR client disconnected', ['bor_ref_id' => $borRefId, 'iteration' => $iteration]);
+                        break;
+                    }
+
                     $borLog = BorLog::where('bor_reference', $borRefId)->first();
-                    
+
                     if (!$borLog) {
                         echo "event: error\n";
                         echo "data: " . json_encode(['error' => 'BOR log not found']) . "\n\n";
+                        flush();
                         break;
                     }
-                    
+
                     // Create a hash of the current data to detect changes
                     $currentDataHash = md5(json_encode($borLog->toArray()));
-                    
+
                     // Only send data if it has changed
                     if ($lastDataHash !== $currentDataHash) {
                         echo "event: borUpdate\n";
                         echo "data: " . json_encode(['data' => $borLog]) . "\n\n";
-                        
+                        flush();
+
                         LoggerService::info('SSE BOR data sent', [
                             'bor_ref_id' => $borRefId,
                             'status' => $borLog->status,
                             'iteration' => $iteration
                         ]);
-                        
+
                         $lastDataHash = $currentDataHash;
                     } else {
                         // Send a heartbeat to keep connection alive without duplicating data
                         echo "event: heartbeat\n";
-                        echo "data: " . json_encode(['timestamp' => now()->toISOString()]) . "\n\n";
-                    }
-
-                    // Flush the output buffer
-                    if (ob_get_length()) {
-                        ob_flush();
+                        echo "data: " . json_encode(['timestamp' => now()->toISOString(), 'iteration' => $iteration]) . "\n\n";
                         flush();
+
+                        LoggerService::info('SSE BOR heartbeat sent', [
+                            'bor_ref_id' => $borRefId,
+                            'iteration' => $iteration
+                        ]);
                     }
 
-                    // Check if the client has disconnected
-                    if (connection_aborted()) {
-                        LoggerService::info('SSE BOR client disconnected', ['bor_ref_id' => $borRefId]);
-                        break;
-                    }
-                    
                     // Check if BOR process is completed
                     if ($borLog->status == BorStatusEnum::DOCUMENT_SIGNED || $borLog->status == BorStatusEnum::DOCUMENT_UPLOADED) {
                         LoggerService::info('SSE BOR process completed, ending stream', [
@@ -137,31 +154,27 @@ class BorController extends Controller
                         ]);
                         echo "event: completed\n";
                         echo "data: " . json_encode(['message' => 'BOR process completed', 'data' => $borLog]) . "\n\n";
-                        if (ob_get_length()) {
-                            ob_flush();
-                            flush();
-                        }
+                        flush();
                         break;
                     }
 
                     $iteration++;
                     sleep(3);
                 }
-                
+
                 if ($iteration >= $maxIterations) {
                     LoggerService::info('SSE BOR stream timeout', ['bor_ref_id' => $borRefId]);
                     echo "event: timeout\n";
                     echo "data: " . json_encode(['message' => 'Stream timeout reached']) . "\n\n";
+                    flush();
                 }
 
-                if (ob_get_level() > 0) {
-                    ob_end_flush();
-                }
-                
                 LoggerService::info('SSE BOR stream ended', ['bor_ref_id' => $borRefId]);
             }, 200, [
                 'Content-Type' => 'text/event-stream',
-                'Cache-Control' => 'no-cache',
+                'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0',
                 'Connection' => 'keep-alive',
                 'X-Accel-Buffering' => 'no', // Disable Nginx buffering
                 'Access-Control-Allow-Origin' => '*',
