@@ -6,6 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AMLCheckRequest extends FormRequest
@@ -26,10 +27,8 @@ class AMLCheckRequest extends FormRequest
     public function rules(): array
     {
         LoggerService::info('AML Check Request - Validation Rules');
-        LoggerService::info('AML Check Request - Request Data', ['extra' => json_encode(request()->all())]);
         $rules = [];
         if ($this->customer_type == CustomerTypeEnum::Individual) {
-            LoggerService::info('AML Check Request - Individual Customer Validation');
             $rules = [
                 'nationality_id' => 'required',
                 'dob' => 'required',
@@ -44,7 +43,6 @@ class AMLCheckRequest extends FormRequest
         }
 
         if ($this->customer_type == CustomerTypeEnum::Entity) {
-            LoggerService::info('AML Check Request - Entity Customer Validation');
             $rules = [
                 'trade_license_no' => 'required|max:200',
                 'company_name' => 'required|max:200',
@@ -58,7 +56,6 @@ class AMLCheckRequest extends FormRequest
         $rules['customer_type'] = 'required|string';
 
         if ($this->quote_type == QuoteTypes::CAR->value) {
-            LoggerService::info('AML Check Request - Chassis Number Required');
             $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
         }
 
@@ -67,10 +64,8 @@ class AMLCheckRequest extends FormRequest
 
     public function withValidator($validator): void
     {
-        LoggerService::info('AML Check Request - With Validator');
         $validator->after(function ($validator) {
             if (! auth()->user()->can(PermissionsEnum::AMLList)) {
-                LoggerService::error('AML Check Request - Permission Denied');
                 $validator->errors()->add('error', 'You don\'t have permission to edit this section.');
             }
         });
@@ -78,11 +73,22 @@ class AMLCheckRequest extends FormRequest
 
     public function messages(): array
     {
-        LoggerService::info('AML Check Request - Messages');
-
         return [
             'chassis_number' => 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm',
             'get_quote_email_gig' => 'Email in GIG portal must be a valid email address',
         ];
+    }
+
+    protected function failedValidation(Validator $validator): void
+    {
+        $errors = $validator->errors()->toArray();
+        LoggerService::warning('AML Validation Error Summary', extra: [
+            'total_errors' => count($errors),
+            'validation_errors' => $errors,
+            'customer_type' => $this->input('customer_type'),
+            'quote_type' => $this->input('quote_type'),
+        ]);
+
+        parent::failedValidation($validator);
     }
 }
