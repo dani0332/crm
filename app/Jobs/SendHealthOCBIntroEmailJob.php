@@ -51,6 +51,10 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
                 return;
             }
 
+            if(suppressIntroEmailByStatus($lead->status)) {
+                info("SendHealthOCBIntroEmailJob - Suppressing OCB Email because for UUID: {$this->quoteUuid}");
+                return;
+            }
             if ($lead->isApplicationPending()) {
                 info("SendHealthOCBIntroEmailJob - Skipping OCB Email becuase Application is Pending for UUID: {$this->quoteUuid}");
 

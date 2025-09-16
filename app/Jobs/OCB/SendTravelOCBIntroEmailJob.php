@@ -78,6 +78,10 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
             if (! $this->verifyPreChecks($lead)) {
                 return;
             }
+            if(suppressIntroEmailByStatus($lead->status)) {
+                info(self::class." - Suppressing OCB Email because for UUID: {$this->quoteUuid}");
+                return;
+            }
 
             $responseCode = $travelEmailService->sendTravelOCBIntroEmail($lead, $this->previousAdvisor, $this->triggerSICWorkflow, $this->handleZeroPlans, $this->forceSicWorkflow);
             if (in_array($responseCode, [200, 201])) {

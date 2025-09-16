@@ -253,6 +253,11 @@ class TravelEmailService extends BaseService
     {
         $plans = $this->getPlans($lead, $handleZeroPlans);
 
+        if(suppressIntroEmailByStatus($lead->status)) {
+            LoggerService::info(self::class." -Skipping OCB Email because for UUID: {$lead->uuid}");
+            return;
+        }
+
         $emailTemplateId = getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_EMAIL_TEMPLATE);
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId);
 
