@@ -2408,6 +2408,7 @@ class RenewalsUploadService
 
                             }
                         }
+                        }
                         break;
                     case QuoteTypeShortCode::HOM:
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS && strtoupper($lead->quote_type) == QuoteTypeShortCode::HOM) {

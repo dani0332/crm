@@ -84,7 +84,7 @@ class CarCQFRenewalService
                 PaymentStatusEnum::CAPTURED,
                 PaymentStatusEnum::PARTIAL_CAPTURED,
             ])
-            ->with(['plan', 'plan.insuranceProvider', 'carQuoteRequestDetail:id,car_quote_request_id,chassis_number'])
+            ->with(['plan', 'plan.insuranceProvider', 'carQuoteRequestDetail:id,car_quote_request_id,chassis_number','embeddedTransactions'])
             ->chunkById(100, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold) {
                 $quoteCount = $quotes->count();
                 LoggerService::info(self::class." - Total quotes in current chunk: {$quoteCount}");
@@ -373,9 +373,18 @@ class CarCQFRenewalService
         if ($newQuote) {
             $this->markQuoteAsCompleted($quote, $renewalsUploadLeads, true);
             $this->getCustomerEntity($newQuote, $quote);
-            app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Car);
-            $this->epCodes[] = EmbeddedProductEnum::MDX.'-'.$newQuote->code;
             $this->storeCarDetails($newQuote, $quote);
+
+           
+            app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Car);
+            if(!empty($quote->embeddedTransactions)) {
+                foreach($quote->embeddedTransactions as $embeddedTransaction) {
+                    if($embeddedTransaction->is_selected == 1 ) {
+                        $this->epCodes[] = EmbeddedProductEnum::MDX.'-'.$newQuote->code;
+                        LoggerService::info(self::class.' - Embedded Transaction found for quote', ['embeddedTransaction' => $embeddedTransaction]);
+                    }
+                }
+            }
 
             LoggerService::info(sprintf('%s - Car CQF Renewal Quote created successfully', self::class), [
                 'previous_quote_uuid' => $quote->uuid,
