@@ -320,7 +320,7 @@
 
 <body>
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/rm-p1-1.png') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/comparison-table-health.jpg') }}" class="full-page-image" />
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
