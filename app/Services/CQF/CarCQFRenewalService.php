@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Enums\UAELicenseHeldForEnum;
 
 class CarCQFRenewalService
 {
@@ -470,7 +471,7 @@ class CarCQFRenewalService
             'vehicle_use' => $quote->vehicle_use,
             'emirate_of_registration_id' => $quote->emirate_of_registration_id,
             'car_value' => $quote->car_value,
-            'uae_license_held_for_id' => $quote->uae_license_held_for_id,
+            'uae_license_held_for_id' => $this->getNextUAELicenseHeldForId($quote),
 
         ];
 
@@ -480,6 +481,16 @@ class CarCQFRenewalService
         }
 
         return $quoteData;
+    }
+
+    public function getNextUAELicenseHeldForId($quote)
+    {
+        return UAELicenseHeldForEnum::fromId($quote->uae_license_held_for_id)?->tryFrom(
+            min(
+                (int)$quote->uae_license_held_for_id + 1,
+                max(array_map(fn($case) => $case->value, UAELicenseHeldForEnum::cases()))
+            )
+        )?->value ?? null;
     }
 
     public function getCustomerEntity($newquote, $oldquote)
