@@ -4,23 +4,23 @@ namespace App\Models;
 
 use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
-use App\Enums\QuoteTypeId;
-use App\Enums\quoteTypeCode;
+use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Traits\FilterCriteria;
-use OwenIt\Auditing\Auditable;
-use App\Traits\QuoteModelTrait;
-use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Model;
+use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\DB;
+use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HealthQuote extends Model implements AuditableContract
@@ -503,7 +503,7 @@ class HealthQuote extends Model implements AuditableContract
     {
         return Attribute::make(
             get: function () {
-                return !empty($this->pec_marked_at);
+                return ! empty($this->pec_marked_at);
             }
         );
     }
