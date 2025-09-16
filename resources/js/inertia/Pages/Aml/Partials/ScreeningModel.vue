@@ -689,10 +689,20 @@ const submitScreeningForm = isValid => {
     screeningFormDetails.get(`${quoteRequest.id}/quoteUpdate`, {
       preserveScroll: true,
       onError: errors => {
-        notification.error({
-          title: errors.error || 'Quote not updated',
-          position: 'top',
-        });
+        console.log('errors', errors);
+        if (typeof errors === 'object') {
+          Object.keys(errors).forEach(function (key) {
+            notification.error({
+              title: errors[key],
+              position: 'top',
+            });
+          });
+        } else {
+          notification.error({
+            title: errors.error || 'Quote not updated',
+            position: 'top',
+          });
+        }
       },
       onSuccess: response => {
         if (response.props.flash.success?.length === 0) {
