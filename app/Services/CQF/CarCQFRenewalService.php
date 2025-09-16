@@ -483,14 +483,35 @@ class CarCQFRenewalService
         return $quoteData;
     }
 
+    /**
+     * Get the next UAELicenseHeldForEnum id, capped at FIVE_YEARS.
+     *
+     * @param  object  $quote
+     * @return int|null
+     */
     public function getNextUAELicenseHeldForId($quote)
     {
-        return UAELicenseHeldForEnum::fromId($quote->uae_license_held_for_id)?->tryFrom(
-            min(
-                (int)$quote->uae_license_held_for_id + 1,
-                max(array_map(fn($case) => $case->value, UAELicenseHeldForEnum::cases()))
-            )
-        )?->value ?? null;
+        $currentId = (int) $quote->uae_license_held_for_id;
+        $maxEnumValue =UAELicenseHeldForEnum::FIVE_YEARS->value;
+
+        // If current is null or not a valid enum, return null
+        $currentEnum = UAELicenseHeldForEnum::fromId($currentId);
+        if (!$currentEnum) {
+            return null;
+        }
+
+        // If already at max, return max
+        if ($currentId >= $maxEnumValue) {
+            return $maxEnumValue;
+        }
+
+        // Otherwise, increment and return, capped at max
+        $nextId = $currentId + 1;
+        if ($nextId > $maxEnumValue) {
+            $nextId = $maxEnumValue;
+        }
+
+        return UAELicenseHeldForEnum::fromId($nextId)?->value ?? null;
     }
 
     public function getCustomerEntity($newquote, $oldquote)

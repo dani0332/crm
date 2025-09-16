@@ -136,6 +136,7 @@ const tableHeader2 = [
   { text: 'Customer ID', value: 'customer_id' },
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
+  { text: 'PREVIOUS POLICY NUMBER', value: 'previous_quote_policy_number' },
   { text: 'PREVIOUS POLICY START DATE', value: 'previous_policy_start_date' },
   { text: 'PREVIOUS POLICY EXPIRY DATE', value: 'previous_policy_expiry_date' },
   { text: 'PREVIOUS GROSS PREMIUM', value: 'previous_quote_policy_premium' },
@@ -148,6 +149,7 @@ const businessHeaders = [
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'SUB TYPE', value: 'subtype' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
+  { text: 'PREVIOUS POLICY NUMBER', value: 'previous_quote_policy_number' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
   { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
@@ -226,7 +228,7 @@ const permissionsEnum = page.props.permissionsEnum;
           v-model="filters.previous_quote_policy_number"
           type="search"
           name="previous_quote_policy_number"
-          label="Policy Number"
+          label="Previous Policy Number"
           class="w-full"
           placeholder="Search by Policy Number"
         />
