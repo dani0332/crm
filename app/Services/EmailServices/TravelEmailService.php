@@ -251,12 +251,13 @@ class TravelEmailService extends BaseService
 
     public function sendTravelOCBIntroEmail(TravelQuote $lead, $previousAdvisorId, bool $triggerSICWorkFlow = false, bool $handleZeroPlans = false, bool $forceSicWorkflow = false)
     {
-        $plans = $this->getPlans($lead, $handleZeroPlans);
-
-        if(suppressIntroEmailByStatus($lead->status)) {
+        
+        if(suppressIntroEmailByStatus($lead->quote_status_id)) {
             LoggerService::info(self::class." -Skipping OCB Email because for UUID: {$lead->uuid}");
             return;
         }
+
+        $plans = $this->getPlans($lead, $handleZeroPlans);
 
         $emailTemplateId = getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_EMAIL_TEMPLATE);
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId);

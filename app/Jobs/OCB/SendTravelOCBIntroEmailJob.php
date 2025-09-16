@@ -78,7 +78,7 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
             if (! $this->verifyPreChecks($lead)) {
                 return;
             }
-            if(suppressIntroEmailByStatus($lead->status)) {
+            if(suppressIntroEmailByStatus($lead->quote_status_id)) {
                 info(self::class." - Suppressing OCB Email because for UUID: {$this->quoteUuid}");
                 return;
             }
