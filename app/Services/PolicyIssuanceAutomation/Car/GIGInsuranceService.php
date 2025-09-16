@@ -1299,7 +1299,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             } else {
                 $_returnResponse = ['success' => false, 'message' => $response['message'] ?? 'Failed to retrieve quote details from insurer portal'];
 
-                if(isset($response['isPolicyExpired']) && $response['isPolicyExpired']) {
+                if (isset($response['isPolicyExpired']) && $response['isPolicyExpired']) {
                     $_returnResponse['isPolicyExpired'] = $response['isPolicyExpired'];
                 }
 
