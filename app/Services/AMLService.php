@@ -864,7 +864,7 @@ class AMLService
                 'quoteTypeId' => (int) $quoteTypeId,
                 'emirateDetails' => [
                     'emirateId' => $insuredDetails?->id_type == 'emiratesId' ? str_replace('-', '', $insuredDetails?->id_number) : null,
-                    'expiryDate' => ($insuredPersonDetails?->customer?->emirates_id_expiry_date ?? $request['id_expiry_date']) ?? null,
+                    'expiryDate' => ($request['id_expiry_date'] ?? $insuredPersonDetails?->customer?->emirates_id_expiry_date) ?? null,
                 ],
                 'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
                 'chassisNumber' => $request['chassis_number'] ?? '',
@@ -933,7 +933,7 @@ class AMLService
                     'code' => $vehicleDriverDetail?->vehicle_plate_color ?? null,
                     'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_plate_color] ?? null,
                 ];
-                $insurerScreeningPayload['bankLoan'] = $vehicleDriverDetail->bank_loan !== null ? (bool) $vehicleDriverDetail->bank_loan : null;
+                $insurerScreeningPayload['bankLoan'] = $vehicleDriverDetail?->bank_loan !== null ? (bool) $vehicleDriverDetail?->bank_loan : null;
                 $insurerScreeningPayload['bankName'] = [
                     'code' => $vehicleDriverDetail?->bank_name ?? null,
                     'value' => $bankName?->text ?? null,
@@ -954,7 +954,7 @@ class AMLService
                 $insurerScreeningPayload['uaeDrivingExperience'] = $vehicleDriverDetail?->driver_uae_driving_experience ?? null;
                 $insurerScreeningPayload['homeCountryLicenseInsurance'] = $nationality?->text ?? null;
                 $insurerScreeningPayload['homeCountryDrivingExperience'] = $vehicleDriverDetail?->driver_home_country_driving_experience ?? null;
-                $insurerScreeningPayload['insuredAndDriverSame'] = $vehicleDriverDetail->is_insured_and_driver_same !== null ? (bool) $vehicleDriverDetail->is_insured_and_driver_same : null;
+                $insurerScreeningPayload['insuredAndDriverSame'] = $vehicleDriverDetail?->is_insured_and_driver_same !== null ? (bool) $vehicleDriverDetail?->is_insured_and_driver_same : null;
             }
 
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurer AML Screening API called - Ref-ID: '.$quoteDetails->code);
@@ -1006,20 +1006,18 @@ class AMLService
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningFailed];
 
                 LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob', extra: [
-                    'quoteTypeId' => QuoteTypeId::Car,
                     'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
                     'statusAPIFailed' => 'Quote Finalized But Premium Not Matched',
                     'processInvolved' => 'Quote Finalization',
-                    'workflowType' => WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
                 ]);
-                /* AutomationFailedJob::dispatch(
+                AutomationFailedJob::dispatch(
                     $quoteDetails,
                     QuoteTypeId::Car,
                     'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
                     'Quote Finalized But Premium Not Matched',
                     'Quote Finalization',
                     WorkflowTypeEnum::CAR_AUTOMATION_FAILED
-                )->onQueue('policy-issuance-automation'); */
+                )->onQueue('policy-issuance-automation');
             }
         }
 
@@ -2185,7 +2183,7 @@ class AMLService
     {
         $insurerScreenType = [
             InsuranceProvidersEnum::AXA => AMLScreeningTypeEnum::INSURER_AXA,
-            InsuranceProvidersEnum::RSA => AMLScreeningTypeEnum::INSURER_RSA,
+            // InsuranceProvidersEnum::RSA => AMLScreeningTypeEnum::INSURER_RSA,
         ];
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType->text);
@@ -2194,7 +2192,7 @@ class AMLService
             return false;
         }
 
-        if ($insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
+        /* if ($insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
             if ($quote->source == LeadSourceEnum::RENEWAL_UPLOAD &&
                 auth()->user()->can(PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
             ) {
@@ -2204,7 +2202,7 @@ class AMLService
             if (isset($screeningResult->quoteStatus) && $screeningResult->quoteStatus == 20) {
                 return true;
             }
-        }
+        } */
 
         $kycLogs = KycLog::withTrashed()->where([
             'quote_request_id' => $quote->id,
