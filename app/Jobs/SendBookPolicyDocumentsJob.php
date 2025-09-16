@@ -180,13 +180,13 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->policyWordingHandbook = $policyWordingDoc;
             $emailData->isHealthAUH = $isAUHHealthLead;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
-            if($isAUHHealthLead && $quote->isLeadSourceRevivalOrInsuranceWallet()){
-                LoggerService::info('job: SendBookPolicyDocumentsJob skipped, as lead is from AUH with Revival/Insurance Wallet source',[
+            if ($isAUHHealthLead && $quote->isLeadSourceRevivalOrInsuranceWallet()) {
+                LoggerService::info('job: SendBookPolicyDocumentsJob skipped, as lead is from AUH with Revival/Insurance Wallet source', [
                     'isAUHHealthLead' => $isAUHHealthLead,
                     'isLeadSourceRevivalOrInsuranceWallet' => $quote->isLeadSourceRevivalOrInsuranceWallet(),
                     'quoteCode' => $quote->code,
                 ]);
-                
+
                 return;
             } else {
                 $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');

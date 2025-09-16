@@ -1063,8 +1063,8 @@ class SendEmailCustomerService extends BaseService
             'tag' => $tag,
         ]);
 
-        if($isAUHHealthLead){
-            LoggerService::info('fn:sendUpdateToCustomerEmail - Skipped, as lead is from AUH with Revival/Insurance Wallet source',[
+        if ($isAUHHealthLead) {
+            LoggerService::info('fn:sendUpdateToCustomerEmail - Skipped, as lead is from AUH with Revival/Insurance Wallet source', [
                 'isAUHHealthLead' => $isAUHHealthLead,
                 'quoteCode' => $emailData->code,
             ]);
