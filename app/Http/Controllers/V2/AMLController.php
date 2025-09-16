@@ -908,6 +908,7 @@ class AMLController extends Controller
                     'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched'] ?? false,
                     'autoCaptureStatus' => $insurerAMLScreeningResponse['autoCaptureStatus'] ?? null,
                     'autoCaptureMessage' => $insurerAMLScreeningResponse['autoCaptureMessage'] ?? null,
+                    'isPolicyExpired' => $insurerAMLScreeningResponse['is_previous_policy_expired'] ?? false,
                 ];
             }
         }
