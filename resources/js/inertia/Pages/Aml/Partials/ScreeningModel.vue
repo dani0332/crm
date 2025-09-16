@@ -206,9 +206,9 @@ const showVehicleAndDrvicerDetails = computed(() => {
   return (
     page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
     [
-      page.props.insuranceProviderCodeEnum.RSA, // LIVA
+      // page.props.insuranceProviderCodeEnum.RSA, // LIVA
       page.props.insuranceProviderCodeEnum.AXA, // GIG
-      page.props.insuranceProviderCodeEnum.OIC, // SUKOON
+      // page.props.insuranceProviderCodeEnum.OIC, // SUKOON
     ].includes(page.props.quoteRequest?.plan?.insurance_provider.code) &&
     (page.props.isPrivateCar ?? false)
   );
@@ -689,10 +689,20 @@ const submitScreeningForm = isValid => {
     screeningFormDetails.get(`${quoteRequest.id}/quoteUpdate`, {
       preserveScroll: true,
       onError: errors => {
-        notification.error({
-          title: errors.error || 'Quote not updated',
-          position: 'top',
-        });
+        console.log('errors', errors);
+        if (typeof errors === 'object') {
+          Object.keys(errors).forEach(function (key) {
+            notification.error({
+              title: errors[key],
+              position: 'top',
+            });
+          });
+        } else {
+          notification.error({
+            title: errors.error || 'Quote not updated',
+            position: 'top',
+          });
+        }
       },
       onSuccess: response => {
         if (response.props.flash.success?.length === 0) {
