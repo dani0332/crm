@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QuoteTypes;
 use App\Http\Requests\OcrLogsRequest;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
@@ -77,6 +78,29 @@ class AuditableController extends Controller
         }
 
         return $query->orderBy('created_at', 'desc')->get();
+    }
+
+    public function loadPolicyIssuanceApiLogs(Request $request)
+    {
+        $quoteType = QuoteTypes::getName($request->quoteTypeId)->value ?? '';
+        $quote = $this->getQuoteObject($quoteType, $request->quoteId);
+
+        if (empty($quote) || empty($quoteType) || $quoteType !== QuoteTypes::CAR->value) {
+            return response()->json([
+                'success' => false,
+                'message' => empty($quote) ? 'Quote not found' : 'Quote type not supported',
+            ]);
+        }
+
+        $policyIssuanceLogs = $quote->policyIssuance?->policyIssuanceLogs()
+            ->with(['policyIssuance.insuranceProvider:id,code,text', 'policyIssuance.model:id,uuid'])->get()
+            ->sortByDesc('created_at')->values();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Policy issuance API logs retrieved successfully',
+            'data' => $policyIssuanceLogs,
+        ]);
     }
 
     public function loadApiLogs(Request $request)
