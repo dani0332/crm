@@ -38,7 +38,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Models\CarModelDetail;
 
 class CarCQFRenewalService
 {
@@ -84,7 +83,7 @@ class CarCQFRenewalService
                 PaymentStatusEnum::CAPTURED,
                 PaymentStatusEnum::PARTIAL_CAPTURED,
             ])
-            ->with(['plan', 'plan.insuranceProvider', 'carQuoteRequestDetail:id,car_quote_request_id,chassis_number','embeddedTransactions'])
+            ->with(['plan', 'plan.insuranceProvider', 'carQuoteRequestDetail:id,car_quote_request_id,chassis_number', 'embeddedTransactions'])
             ->chunkById(100, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold) {
                 $quoteCount = $quotes->count();
                 LoggerService::info(self::class." - Total quotes in current chunk: {$quoteCount}");
@@ -375,11 +374,10 @@ class CarCQFRenewalService
             $this->getCustomerEntity($newQuote, $quote);
             $this->storeCarDetails($newQuote, $quote);
 
-           
             app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Car);
-            if(!empty($quote->embeddedTransactions)) {
-                foreach($quote->embeddedTransactions as $embeddedTransaction) {
-                    if($embeddedTransaction->is_selected == 1 ) {
+            if (! empty($quote->embeddedTransactions)) {
+                foreach ($quote->embeddedTransactions as $embeddedTransaction) {
+                    if ($embeddedTransaction->is_selected == 1) {
                         $this->epCodes[] = EmbeddedProductEnum::MDX.'-'.$newQuote->code;
                         LoggerService::info(self::class.' - Embedded Transaction found for quote', ['embeddedTransaction' => $embeddedTransaction]);
                     }

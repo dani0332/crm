@@ -2277,137 +2277,137 @@ class RenewalsUploadService
                                     }
 
                                     if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProvidersEnum::TM && ! $leadData->car_hire) {
-                                    if ($leadData->driver_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
-                                    }
-                                    if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProviderEnum::TM->value && ! $leadData->car_hire) {
-                                        $leadValidationErrors->push('Rent a car is required with TPL & TM');
-                                    }
-                                    if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
-                                        $leadValidationErrors->push('Amount - Rent a Car is required with TPL & TM');
-                                    }
-
-                                    if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && $leadData->oman_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount- Oman Cover is required');
-                                    }
-                                    if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->road_side_assistance_amount == '') {
-                                        $leadValidationErrors->push('Amount- Road Side Assistance is required with Renewal Premium & Excess');
-                                    }
-                                    if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && ! $leadData->oman_cover) {
-                                        $leadValidationErrors->push('Oman cover is required');
-                                    }
-                                    if ((isset($leadData->premium) && $leadData->premium > 0) && ! $leadData->road_side_assistance) {
-                                        $leadValidationErrors->push('Road Side Assistance is required with Renewal Premium & Excess');
-                                    }
-                                    // if (! $leadData->year_of_first_registration) {
-                                    //     $leadValidationErrors->push('First Year of Registration is required with Renewal Premium & Excess');
-                                    // }
-
-                                    $carPlan->load([
-                                        'carAddons' => function ($q) {
-                                            $q->whereIn('code', [
-                                                CarPlanAddonsCode::DRIVER_COVER,
-                                                CarPlanAddonsCode::PASSENGER_COVER,
-                                                CarPlanAddonsCode::CAR_HIRE,
-                                                CarPlanAddonsCode::OMAN_COVER,
-                                                CarPlanAddonsCode::BREAKDOWN_COVER,
-                                            ])->with('carAddonOptions');
-                                        },
-                                    ]);
-
-                                    $planAddons = collect($carPlan->carAddons)->keyBy('code')->toArray();
-
-                                    $addons = [
-                                        'driver_cover' => CarPlanAddonsCode::DRIVER_COVER,
-                                        'passenger_cover' => CarPlanAddonsCode::PASSENGER_COVER,
-                                        'car_hire' => CarPlanAddonsCode::CAR_HIRE,
-                                        'oman_cover' => CarPlanAddonsCode::OMAN_COVER,
-                                        'road_side_assistance' => CarPlanAddonsCode::BREAKDOWN_COVER,
-                                    ];
-
-                                    foreach ($addons as $key => $addonCode) {
-                                        LoggerService::info('planType:'.$leadData->plan_type.' insurer:'.$leadData->insurer.' addonCode:'.$addonCode);
-
-                                        if (
-                                            $leadData->plan_type == CarPlanType::TPL &&
-                                            $leadData->insurer == InsuranceProviderEnum::TM->value &&
-                                            $addonCode == CarPlanAddonsCode::CAR_HIRE
-                                        ) {
-                                            continue;
+                                        if ($leadData->driver_cover_amount == '') {
+                                            $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
+                                        }
+                                        if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProviderEnum::TM->value && ! $leadData->car_hire) {
+                                            $leadValidationErrors->push('Rent a car is required with TPL & TM');
+                                        }
+                                        if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
+                                            $leadValidationErrors->push('Amount - Rent a Car is required with TPL & TM');
                                         }
 
-                                        if (isset($planAddons[$addonCode])) {
-                                            $addon = $planAddons[$addonCode];
+                                        if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && $leadData->oman_cover_amount == '') {
+                                            $leadValidationErrors->push('Amount- Oman Cover is required');
+                                        }
+                                        if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->road_side_assistance_amount == '') {
+                                            $leadValidationErrors->push('Amount- Road Side Assistance is required with Renewal Premium & Excess');
+                                        }
+                                        if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && ! $leadData->oman_cover) {
+                                            $leadValidationErrors->push('Oman cover is required');
+                                        }
+                                        if ((isset($leadData->premium) && $leadData->premium > 0) && ! $leadData->road_side_assistance) {
+                                            $leadValidationErrors->push('Road Side Assistance is required with Renewal Premium & Excess');
+                                        }
+                                        // if (! $leadData->year_of_first_registration) {
+                                        //     $leadValidationErrors->push('First Year of Registration is required with Renewal Premium & Excess');
+                                        // }
 
-                                            $found = false;
-                                            foreach ($addon['car_addon_options'] as $option) {
-                                                if (strtolower(trim($option['value'])) == strtolower(trim($leadData->{$key}))) {
-                                                    $found = true;
-                                                    break;
+                                        $carPlan->load([
+                                            'carAddons' => function ($q) {
+                                                $q->whereIn('code', [
+                                                    CarPlanAddonsCode::DRIVER_COVER,
+                                                    CarPlanAddonsCode::PASSENGER_COVER,
+                                                    CarPlanAddonsCode::CAR_HIRE,
+                                                    CarPlanAddonsCode::OMAN_COVER,
+                                                    CarPlanAddonsCode::BREAKDOWN_COVER,
+                                                ])->with('carAddonOptions');
+                                            },
+                                        ]);
+
+                                        $planAddons = collect($carPlan->carAddons)->keyBy('code')->toArray();
+
+                                        $addons = [
+                                            'driver_cover' => CarPlanAddonsCode::DRIVER_COVER,
+                                            'passenger_cover' => CarPlanAddonsCode::PASSENGER_COVER,
+                                            'car_hire' => CarPlanAddonsCode::CAR_HIRE,
+                                            'oman_cover' => CarPlanAddonsCode::OMAN_COVER,
+                                            'road_side_assistance' => CarPlanAddonsCode::BREAKDOWN_COVER,
+                                        ];
+
+                                        foreach ($addons as $key => $addonCode) {
+                                            LoggerService::info('planType:'.$leadData->plan_type.' insurer:'.$leadData->insurer.' addonCode:'.$addonCode);
+
+                                            if (
+                                                $leadData->plan_type == CarPlanType::TPL &&
+                                                $leadData->insurer == InsuranceProviderEnum::TM->value &&
+                                                $addonCode == CarPlanAddonsCode::CAR_HIRE
+                                            ) {
+                                                continue;
+                                            }
+
+                                            if (isset($planAddons[$addonCode])) {
+                                                $addon = $planAddons[$addonCode];
+
+                                                $found = false;
+                                                foreach ($addon['car_addon_options'] as $option) {
+                                                    if (strtolower(trim($option['value'])) == strtolower(trim($leadData->{$key}))) {
+                                                        $found = true;
+                                                        break;
+                                                    }
+                                                }
+
+                                                if (! $found) {
+                                                    $leadValidationErrors->push('Invalid car addon option provided for  - '.$addonCode);
                                                 }
                                             }
-
-                                            if (! $found) {
-                                                $leadValidationErrors->push('Invalid car addon option provided for  - '.$addonCode);
-                                            }
                                         }
                                     }
                                 }
-                            }
-                            if (! empty($leadData->registration_location) && ! Emirate::where('text', $leadData->registration_location)->first()) {
-                                $leadValidationErrors->push('Invalid Registration Location');
-                            }
-                            if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {
-                                $leadValidationErrors->push('Invalid Previous Advisor Email');
-                            }
+                                if (! empty($leadData->registration_location) && ! Emirate::where('text', $leadData->registration_location)->first()) {
+                                    $leadValidationErrors->push('Invalid Registration Location');
+                                }
+                                if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {
+                                    $leadValidationErrors->push('Invalid Previous Advisor Email');
+                                }
 
-                            // Validation batch for car removed as per the discussion with the team
-                            // click up: https://app.clickup.com/t/86eqmrdec
-                            // if ($leadData->batch) {
-                            //     $batchRef = $leadData->batch == null ? false : RenewalBatch::where([['name', $leadData->batch], ['quote_type_id', QuoteTypeId::Car]])->first();
-                            //     ! $batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
-                            // }
+                                // Validation batch for car removed as per the discussion with the team
+                                // click up: https://app.clickup.com/t/86eqmrdec
+                                // if ($leadData->batch) {
+                                //     $batchRef = $leadData->batch == null ? false : RenewalBatch::where([['name', $leadData->batch], ['quote_type_id', QuoteTypeId::Car]])->first();
+                                //     ! $batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
+                                // }
 
-                            if (isset($leadData->registration_type) && empty($leadData->registration_type)) {
-                                $leadValidationErrors->push('Registration Type is required');
-                            }
-                            if (isset($leadData->registration_type) && ! empty($leadData->registration_type) && ! CarRegistrationType::hasValue($leadData->registration_type)) {
-                                $leadValidationErrors->push('Invalid Registration Type');
-                            }
-                            if (! empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY) {
-                                if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::COMMERCIAL) {
+                                if (isset($leadData->registration_type) && empty($leadData->registration_type)) {
+                                    $leadValidationErrors->push('Registration Type is required');
+                                }
+                                if (isset($leadData->registration_type) && ! empty($leadData->registration_type) && ! CarRegistrationType::hasValue($leadData->registration_type)) {
+                                    $leadValidationErrors->push('Invalid Registration Type');
+                                }
+                                if (! empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY) {
+                                    if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::COMMERCIAL) {
 
-                                    if (empty($leadData->business_activity)) {
-                                        $leadValidationErrors->push('Business Activity is required');
+                                        if (empty($leadData->business_activity)) {
+                                            $leadValidationErrors->push('Business Activity is required');
+                                        }
+                                        if (! empty($leadData->business_activity) && ! BusinessActivity::where('name', $leadData->business_activity)->first()) {
+                                            $leadValidationErrors->push('Invalid Business Activity');
+                                        }
+
                                     }
-                                    if (! empty($leadData->business_activity) && ! BusinessActivity::where('name', $leadData->business_activity)->first()) {
-                                        $leadValidationErrors->push('Invalid Business Activity');
+                                    if (empty($leadData->vehicle_use)) {
+                                        $leadValidationErrors->push('Vehicle Use is required');
+                                    }
+                                    if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::PRIVATE) {
+                                        if (empty($leadData->driver_name)) {
+                                            $leadValidationErrors->push('Driver Name is required');
+                                        }
+                                        if (empty($leadData->nationality)) {
+                                            $leadValidationErrors->push('Driver Nationality is required');
+                                        }
+                                        if (empty($leadData->dob)) {
+                                            $leadValidationErrors->push('Driver Date of Birth is required');
+                                        }
+                                        if (empty($leadData->driving_experience)) {
+                                            $leadValidationErrors->push('Driver Experience is required');
+                                        }
+                                        if (! empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
+                                            $leadValidationErrors->push('Invalid Driver Experience');
+                                        }
                                     }
 
                                 }
-                                if (empty($leadData->vehicle_use)) {
-                                    $leadValidationErrors->push('Vehicle Use is required');
-                                }
-                                if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::PRIVATE) {
-                                    if (empty($leadData->driver_name)) {
-                                        $leadValidationErrors->push('Driver Name is required');
-                                    }
-                                    if (empty($leadData->nationality)) {
-                                        $leadValidationErrors->push('Driver Nationality is required');
-                                    }
-                                    if (empty($leadData->dob)) {
-                                        $leadValidationErrors->push('Driver Date of Birth is required');
-                                    }
-                                    if (empty($leadData->driving_experience)) {
-                                        $leadValidationErrors->push('Driver Experience is required');
-                                    }
-                                    if (! empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
-                                        $leadValidationErrors->push('Invalid Driver Experience');
-                                    }
-                                }
-
                             }
-                        }
                         }
                         break;
                     case QuoteTypeShortCode::HOM:
