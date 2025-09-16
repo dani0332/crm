@@ -503,8 +503,13 @@ class HealthQuote extends Model implements AuditableContract
     {
         return Attribute::make(
             get: function () {
-                return !is_null($this->pec_marked_at);
+                return !empty($this->pec_marked_at);
             }
         );
+    }
+
+    public function scopeHasPecTag($query)
+    {
+        $query->whereNotNull('pec_marked_at');
     }
 }

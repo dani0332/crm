@@ -2,10 +2,11 @@
 
 namespace App\Pipes\Allocation\Health;
 
+use Closure;
 use App\Enums\LeadSourceEnum;
+use App\Services\Logger\LoggerService;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
-use Closure;
 
 class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 {
@@ -15,6 +16,12 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
     public function handle(AllocationRequest $request, Closure $next)
     {
         $this->setRequest($request);
+
+        if($this->lead->has_pec_tag && !empty($this->lead->price_starting_from)) {
+            LoggerService::info("Lead has PEC tag and price starting from, Continuing allocation");
+
+            return $next($request);
+        }
 
         $lead = $this->findLead();
 
