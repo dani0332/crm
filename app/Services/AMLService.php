@@ -782,13 +782,6 @@ class AMLService
             'paymentable_id' => $quoteDetails->id,
         ])->first();
 
-        // $rtaTransactionType = null;
-        // if ($quoteTypeId == QuoteTypes::CAR->id()) {
-        //     $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
-        //     $rtaTransactionType = $carQuoteRequestDetails->rta_transaction_type ?? null;
-        // }
-
-        // $isRenewalUpload = $quoteTypeId == QuoteTypes::CAR->id() && $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA && ($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD || $rtaTransactionType == 'RTT04');
         $isRenewalUpload = $quoteTypeId == QuoteTypes::CAR->id() && $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA && $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD;
 
         if ($isRenewalUpload) {
@@ -840,6 +833,12 @@ class AMLService
                         'message' => 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')',
                         'screening_type' => $screeningType,
                     ];
+
+                    if (isset($getQuoteResponse['isPolicyExpired']) && $getQuoteResponse['isPolicyExpired']) {
+                        LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Previous policy has expired - Ref-ID: '.$quoteDetails->code);
+                        $screeningResponse['message'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED;
+                        $screeningResponse['is_previous_policy_expired'] = $getQuoteResponse['isPolicyExpired'];
+                    }
                 }
             } catch (\Exception $e) {
                 LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Exception while calling getQuote API for renewal upload - Ref-ID: '.$quoteDetails->code.' - Error: '.$e->getMessage());
@@ -857,7 +856,7 @@ class AMLService
 
         try {
             $insuredDetails = $insuredPersonDetails?->insured;
-            $insuredKycDetails = $insuredDetails?->insuredKyc;
+            // $insuredKycDetails = $insuredDetails?->insuredKyc;
 
             $insurerScreeningPayload = [
                 'quoteUID' => $quoteDetails->uuid,
@@ -960,6 +959,14 @@ class AMLService
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurer AML Screening API called - Ref-ID: '.$quoteDetails->code);
             $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', $insurerScreeningPayload);
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - GIG Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.json_encode($screeningResponse));
+
+            if (isset($screeningResponse['isPolicyExpired']) && $screeningResponse['isPolicyExpired']) {
+                LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Previous policy has expired - Ref-ID: '.$quoteDetails->code);
+                $screeningResponse['status'] = AMLStatusCode::AMLPending;
+                $screeningResponse['message'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED;
+                $screeningResponse['is_previous_policy_expired'] = $screeningResponse['isPolicyExpired'];
+            }
+
             $screeningResponse['screening_type'] = $screeningType;
             $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $modelObjectAgainstQuoteType, $customerType, $insuredPersonDetails, $screeningResponse);
         } catch (Exception $exception) {
@@ -999,6 +1006,11 @@ class AMLService
                 $kycLogDetails['match_found'] = 0;
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::UNKNOWN;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningPending];
+
+                if (isset($screeningResponse['is_previous_policy_expired']) && $screeningResponse['is_previous_policy_expired']) {
+                    $insurerAMLStatus['insurer_api_status_id'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED_STATUS_ID; // this code: 99 is the status id for previous policy expired
+                }
+
             } else {
                 LoggerService::info('fn:amlScreeningGIG - GIG AML Screening Failed - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
                 $kycLogDetails['match_found'] = 1;
