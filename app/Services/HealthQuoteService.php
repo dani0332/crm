@@ -249,11 +249,9 @@ class HealthQuoteService extends BaseService
         return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
     }
 
-    public function isAUHLead($id): bool
+    public function getLead($id): HealthQuote
     {
-        $quote = HealthQuote::findOrFail($id);
-
-        return $quote->isAUHLead(false);
+        return HealthQuote::findOrFail($id);
     }
 
     public function getEntityPlain($id)
@@ -322,6 +320,7 @@ class HealthQuoteService extends BaseService
             'hasHome' => $request->has_home == 'on' ? true : false,
             'currentlyInsuredWithId' => $request->currently_insured_with_id,
             'healthPlanTypeId' => $request->plan_type_id,
+            'pec' => $request->pec == 1,
         ];
         $dataArr['memberDetails'][] = [
             'firstName' => $request->first_name,
@@ -403,7 +402,6 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
-
         $healthQuote = HealthQuote::where('uuid', $id)->first();
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
         $healthQuote->first_name = $request->first_name;
@@ -452,6 +450,12 @@ class HealthQuoteService extends BaseService
         $healthQuote->dob = $request->dob;
         $healthQuote->policy_start_date = $request->policy_start_date;
         $healthQuote->health_plan_type_id = $request->plan_type_id;
+
+        $healthQuote->pec = $request->pec;
+        if ($request->pec == 1) {
+            $healthQuote->pec_marked_at = Carbon::now();
+        }
+
         $healthQuote->save();
 
         if (isset($request->return_to_view)) {
