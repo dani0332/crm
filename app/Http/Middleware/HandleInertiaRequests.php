@@ -12,6 +12,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
@@ -156,6 +157,7 @@ class HandleInertiaRequests extends Middleware
             'carVehicleUse' => CarVehicleUse::asArray(),
             'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
             'eligibleOcrProviders' => app(OCRService::class)->getEligibleProviders(),
+            'genericRequestEnum' => GenericRequestEnum::asArray(),
         ];
     }
 
