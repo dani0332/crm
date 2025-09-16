@@ -43,6 +43,7 @@ class MemberDetailRequest extends FormRequest
             $rules['modelType'] = '';
             $rules['first_name'] = 'sometimes|required';
             $rules['last_name'] = 'nullable';
+            $rules['pec'] = 'required';
         }
 
         return $rules;

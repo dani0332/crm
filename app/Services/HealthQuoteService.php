@@ -1301,6 +1301,7 @@ class HealthQuoteService extends BaseService
                 'salaryBandId' => $request->salary_band_id,
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
+                'pec' => $request->pec == 1,
             ];
 
             $dataArray = [
@@ -1336,6 +1337,7 @@ class HealthQuoteService extends BaseService
                 'salaryBandId' => $request->salary_band_id,
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
+                'pec' => $request->pec == 1,
             ];
 
             $dataArray = [

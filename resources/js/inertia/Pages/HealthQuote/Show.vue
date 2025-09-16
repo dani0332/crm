@@ -322,6 +322,17 @@ const salaryBandsOptions = computed(() => {
   }));
 });
 
+const memberHealthRegulationAuthority = computed(() => {
+  return memberForm.emirate_of_your_visa_id ===
+    props.branchOptions.find(b => b.branch === 'Abu Dhabi')?.id
+    ? 'DoH'
+    : 'DHA';
+});
+
+const memberPecErrorMessage = computed(() => {
+  return `Please confirm the member's health declaration to proceed, as required under ${memberHealthRegulationAuthority.value} regulations.`;
+});
+
 const onTeamAssign = () => {
   if (!assignSubteam.value) {
     notification.error({
@@ -485,6 +496,7 @@ const memberForm = useForm({
     page.props.quote.customer_type ?? page.props.customerTypeEnum.Individual,
   customer_member_id: null,
   quoteId: page.props.quote.uuid,
+  pec: null,
 });
 
 const rules = {
@@ -516,6 +528,7 @@ function onEditMember(data) {
   memberForm.last_name = data.last_name;
   memberForm.relation_code = data.relation_code;
   memberForm.update_lead_against_member = data.index === 1;
+  memberForm.pec = data.pec;
 
   // set initialEditCategoryId to member_category_id when any member is edited
   initialEditCategoryId.value = data.member_category_id;
@@ -536,20 +549,36 @@ const memberFieldReq = reactive({
   dob: false,
 });
 
+const memberPecValidationError = ref('');
+
 const membersDetailsUpdated = ref(false);
 
 const onMemberSubmit = isValid => {
+  // Reset previous error messages
+  memberFieldReq.nationality = false;
+  memberFieldReq.dob = false;
+  memberPecValidationError.value = '';
+
   if (memberForm.nationality_id == null) {
     memberFieldReq.nationality = true;
-  } else {
-    memberFieldReq.nationality = false;
   }
   if (memberForm.dob == null) {
     memberFieldReq.dob = true;
-  } else {
-    memberFieldReq.dob = false;
   }
-  if (!isValid) return;
+
+  // Validate PEC selection (must be 1 or 2, not null/undefined)
+  if (memberForm.pec == null || memberForm.pec == undefined) {
+    memberPecValidationError.value = memberPecErrorMessage.value;
+    return;
+  }
+
+  if (
+    !isValid ||
+    memberFieldReq.nationality ||
+    memberFieldReq.dob ||
+    memberPecValidationError.value
+  )
+    return;
   if (memberActionEdit.value) {
     memberForm.put(`/health-quote-update-member`, {
       preserveScroll: true,
@@ -2853,6 +2882,29 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 placeholder="Select Salary Band"
                 class="w-full"
               />
+            </div>
+
+            <!-- PEC Field -->
+            <div class="md:col-span-2" data-member-pec-field>
+              <div class="mb-3">
+                <ToolTip
+                  title="Does the member need to declare any chronic or pre-existing medical conditions, pregnancy, plans to conceive, or fertility treatment?"
+                  tooltip="Any ongoing or past health issues that may or may not require regular treatment or medical attention."
+                  class="w-full"
+                />
+              </div>
+              <div>
+                <x-form-group v-model="memberForm.pec">
+                  <x-radio :value="1" label="Yes" />
+                  <x-radio :value="2" label="No" />
+                </x-form-group>
+                <div
+                  v-if="memberPecValidationError"
+                  class="mt-2 text-sm text-red-600 border border-red-200 bg-red-50 rounded-md p-2"
+                >
+                  {{ memberPecValidationError }}
+                </div>
+              </div>
             </div>
 
             <template #secondary-action>
