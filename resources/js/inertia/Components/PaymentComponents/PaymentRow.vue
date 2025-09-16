@@ -188,11 +188,14 @@ const shouldProcessUpdate = () => {
     hasAnyCCSplitPayment(payment) &&
     !shouldSendUpdate
   ) {
-    if (insuredApiStatus === genericRequestEnum.PREVIOUS_POLICY_EXPIRED_STATUS_ID) {
-      isInsurerAmlCleared = true
+    if (
+      insuredApiStatus === genericRequestEnum.PREVIOUS_POLICY_EXPIRED_STATUS_ID
+    ) {
+      isInsurerAmlCleared = true;
     } else {
       isInsurerAmlCleared =
-      insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
+        insurerAMLStatus ===
+        page.props.amlStatusEnum.InsurerAMLScreeningCleared;
     }
     if (isTravelQuote) {
       isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
