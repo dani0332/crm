@@ -7,6 +7,7 @@ namespace App\Services\PolicyIssuanceAutomation\Car;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
@@ -1202,9 +1203,9 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         try {
             $response = Ken::request('/get-quote-from-insurer?quoteTypeId='.$quoteTypeId.'&quoteUID='.$quoteDetails->uuid, 'get');
-            $responseData = $response['data'];
 
             if (isset($response['data'])) {
+                $responseData = $response['data'];
                 $vehicleDriverDetailsData = [
                     'is_insured_and_driver_same' => ($responseData['policyHolder']['isPolicyHolderDriver'] ? '1' : '0') ?? null,
                     'driver_first_name' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
@@ -1296,10 +1297,13 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                     'data' => $getQuoteResponseMapping ?? null,
                 ];
             } else {
-                return [
-                    'success' => false,
-                    'message' => $response['message'] ?? 'Failed to retrieve quote details from insurer portal',
-                ];
+                $_returnResponse = ['success' => false, 'message' => $response['message'] ?? 'Failed to retrieve quote details from insurer portal'];
+
+                if(isset($response['isPolicyExpired']) && $response['isPolicyExpired']) {
+                    $_returnResponse['isPolicyExpired'] = $response['isPolicyExpired'];
+                }
+
+                return $_returnResponse;
             }
         } catch (\Exception $e) {
             LoggerService::info($this->getLogPrefix(__FUNCTION__).' - Error: '.$e->getMessage());
@@ -1371,6 +1375,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID => self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED,
             self::OCR_PROCESSING_API_FAILED_STATUS_ID => self::OCR_PROCESSING_API_FAILED,
             self::BOOK_POLICY_API_FAILED_STATUS_ID => self::BOOK_POLICY_API_FAILED,
+            GenericRequestEnum::PREVIOUS_POLICY_EXPIRED_STATUS_ID => GenericRequestEnum::PREVIOUS_POLICY_EXPIRED, // 99 is the status id for previous policy expired
         ];
     }
 
