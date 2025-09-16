@@ -240,7 +240,7 @@
                 <div class="footer-box" style="margin-top: 5px; line-height: 0.8; position: relative;">
                     <p class="footer-content-2">
                       
-                        <a href="https://maps.google.com/?q=Control+Tower+Motor+City+Dubai" target="_blank" style="color: #ffffff; ">  
+                        <a href="https://maps.app.goo.gl/g9VuCZEMcFdKYv1GA" target="_blank" style="color: #ffffff; ">  
                             <strong> Head Office:
                         </strong>
                         27th Floor, Control Tower, Motor City, PO Box 26423, Dubai, UAE
@@ -248,7 +248,7 @@
                     </p>
                     <p class="footer-content-2">
                       
-                            <a href="https://maps.google.com/?q=Control+Tower+Motor+City+Dubai" target="_blank" style="color: #ffffff; ">
+                            <a href="https://maps.app.goo.gl/XN2iALB1veK6t9MY9" target="_blank" style="color: #ffffff; ">
                                 <strong>Branch Office:
                             </strong>
                         Amal Mohammed Sharif Mohammed Saleh Hamza Building, Al Dana, East 1, Abu Dhabi, UAE
