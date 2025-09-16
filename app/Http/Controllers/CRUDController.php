@@ -299,7 +299,6 @@ class CRUDController extends Controller
                 }
             });
 
-            dd($gridData->toRawSql());
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $quote_status = $dropdownSource['quote_status_id'];
