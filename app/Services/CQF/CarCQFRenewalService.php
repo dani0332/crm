@@ -16,6 +16,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Enums\UAELicenseHeldForEnum;
 use App\Exports\RenewalFailedValidationExport;
 use App\Jobs\SendFailedCarRenewalsJob;
 use App\Models\CarQuote;
@@ -38,7 +39,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Enums\UAELicenseHeldForEnum;
 
 class CarCQFRenewalService
 {
@@ -492,11 +492,11 @@ class CarCQFRenewalService
     public function getNextUAELicenseHeldForId($quote)
     {
         $currentId = (int) $quote->uae_license_held_for_id;
-        $maxEnumValue =UAELicenseHeldForEnum::FIVE_YEARS->value;
+        $maxEnumValue = UAELicenseHeldForEnum::FIVE_YEARS->value;
 
         // If current is null or not a valid enum, return null
         $currentEnum = UAELicenseHeldForEnum::fromId($currentId);
-        if (!$currentEnum) {
+        if (! $currentEnum) {
             return null;
         }
 
