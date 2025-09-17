@@ -25,10 +25,13 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->rtaTransactionType();
-        $this->rtaPlateCategory();
-        $this->vehicleColor();
-        $this->bankName();
+        // $this->rtaTransactionType();
+        // $this->rtaPlateCategory();
+        // $this->vehicleColor();
+        // $this->bankName();
+
+        // Add extra vehicle colors requested by Business
+        $this->extraVehicleColors();
     }
 
     private function rtaTransactionType()
@@ -676,4 +679,26 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
             ]);
         }
     }
+
+    private function extraVehicleColors()
+    {
+        $colors = [
+            '7' => 'Grey',
+            '14' => 'Gold'
+        ];
+
+        foreach ($colors as $code => $text) {
+            Lookup::firstOrCreate([
+                'quote_type_id' => QuoteTypeId::Car,
+                'key' => LookupsEnum::VEHICLE_COLOR,
+                'code' => $code,
+                'text' => $text,
+                'insurance_provider_id' => $this->insuranceProviderId,
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+    
 }
