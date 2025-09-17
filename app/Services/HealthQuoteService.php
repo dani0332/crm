@@ -50,7 +50,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use PDF;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthQuoteService extends BaseService
 {
@@ -1047,14 +1046,18 @@ class HealthQuoteService extends BaseService
             $lead->quote_batch_id = $quoteBatch->id;
 
             $lead->save();
-            
-            Haystack::build()
-                ->addJob(new GetQuotePlansJob($lead))
-                ->then(function () use ($lead, $isReassignment, $previousAdvisorId) {
-                    if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                        IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment)->delay(now()->addSeconds(15));
-                    }
-                })->dispatch();
+
+            $currentJobChains[] = new GetQuotePlansJob($lead);
+            if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
+                $currentJobChains[] = new IntroEmailJob(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment);
+            }
+            $jobs[] = $currentJobChains;
+        }
+
+        if ($jobs != null && count($jobs) > 0) {
+            Bus::batch($jobs)
+                ->name('Health Leads Manual Assignment')
+                ->dispatch();
         }
 
         return [];

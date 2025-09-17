@@ -13,8 +13,7 @@ use App\Services\LeadAllocationService;
 use Carbon\Carbon;
 use Illuminate\Bus\Batch;
 use Illuminate\Console\Command;
-use Throwable;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
+use Illuminate\Support\Facades\Bus;
 
 class Dtt extends Command
 {
@@ -122,16 +121,17 @@ class Dtt extends Command
 
         info($logPrefix.' count - '.count($leads).' - '.json_encode($leads->pluck('uuid')->toArray()));
 
+        $delayCounter = 0;
         foreach ($leads as $carLead) {
             $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
             if (! $isTierR) {
-                $jobs[] = new CarRevivalLeadsCreationJob($carLead);
+                $jobs[] = (new CarRevivalLeadsCreationJob($carLead))->delay(now()->addSeconds(30 + $delayCounter));
+                $delayCounter += 30;
             }
         }
 
         if ($jobs != null && count($jobs)) {
-            Haystack::build()
-                ->addJobs($jobs)
+            Bus::batch($jobs)
                 ->then(function () use ($logPrefix) {
                     info($logPrefix.' all jobs completed successfully');
                 })
@@ -142,8 +142,7 @@ class Dtt extends Command
                     info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->onQueue('renewals')
-                ->withDelay(30)
+                ->name('Car DTT Batch Jobs')
                 ->dispatch();
         } else {
             info($logPrefix.'------No lead Found------');

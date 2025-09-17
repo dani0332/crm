@@ -42,7 +42,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class LeadAllocationService extends BaseService
 {
@@ -246,8 +245,9 @@ class LeadAllocationService extends BaseService
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
                 DB::commit();
 
-                Haystack::build()
-                    ->addJob(new GetQuotePlansJob($lead))
+                Bus::batch([
+                    new GetQuotePlansJob($lead),
+                ])
                     ->then(function () use ($lead) {
                         if (
                             in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])

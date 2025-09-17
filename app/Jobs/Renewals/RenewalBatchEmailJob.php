@@ -16,13 +16,11 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
-use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Throwable;
 
-class RenewalBatchEmailJob implements ShouldQueue, StackableJob
+class RenewalBatchEmailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $batchLeadId;
     protected $batchEmailId;

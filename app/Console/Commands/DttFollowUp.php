@@ -9,7 +9,8 @@ use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
+use Illuminate\Support\Facades\Bus;
+
 class DttFollowUp extends Command
 {
     /**
@@ -68,13 +69,14 @@ class DttFollowUp extends Command
         $logPrefix = 'carRevivalFollowUpEmailJob -';
 
         $jobs = [];
+        $delayCounter = 0;
         foreach ($unreplied as $item) {
-            $jobs[] = new CarRevivalFollowUpEmailJob($item);
+            $jobs[] = (new CarRevivalFollowUpEmailJob($item))->delay(now()->addSeconds(10 + $delayCounter));
+            $delayCounter += 10;
         }
 
         if ($jobs != null && count($jobs)) {
-            Haystack::build()
-                ->addJobs($jobs)
+            Bus::batch($jobs)
                 ->then(function () use ($logPrefix) {
                     LoggerService::info($logPrefix.' all jobs completed successfully');
                 })
@@ -85,7 +87,7 @@ class DttFollowUp extends Command
                     LoggerService::info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->withDelay(10)
+                ->name('Car Revival Follow Up Email Jobs')
                 ->dispatch();
         } else {
             LoggerService::info($logPrefix.'No lead Found');
