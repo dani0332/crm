@@ -3347,7 +3347,7 @@ class RenewalsUploadService
             if (! $entityMapping) {
 
                 $entity = Entity::create([
-                    'company_name' => !empty($data['customer_name']) ? $data['customer_name'] : ($quoteData->first_name.' '.$quoteData->last_name),
+                    'company_name' => ! empty($data['customer_name']) ? $data['customer_name'] : ($quoteData->first_name.' '.$quoteData->last_name),
                 ]);
                 $entityId = $entity->id;
                 $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entityId]);
