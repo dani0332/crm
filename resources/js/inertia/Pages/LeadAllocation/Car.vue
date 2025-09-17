@@ -66,7 +66,7 @@ const loaders = reactive({
   submit: false,
   table: false,
   search: false,
-  reset: false
+  reset: false,
 });
 
 const statusText = statusId => resolveUserStatusText(statusId);
