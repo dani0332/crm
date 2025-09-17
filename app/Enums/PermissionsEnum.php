@@ -217,6 +217,7 @@ final class PermissionsEnum extends Enum
     public const RenewalsBatches = 'renewals-batches';
     public const CarQuoteSearch = 'car-quotes-search';
     public const UtmLeadsSalesReport = 'utm-leads-sales-report';
+    public const UtmReportExport = 'utm-report-export';
     public const TeamThresholdView = 'team-allocation-threshold-view';
     public const CAR_REVIVAL_QUOTE_LIST = 'carrevival-quotes-list';
     public const CAR_REVIVAL_QUOTES_EDIT = 'carrevival-quotes-edit';
