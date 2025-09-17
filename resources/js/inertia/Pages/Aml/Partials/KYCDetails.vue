@@ -344,6 +344,11 @@ const submitInsuredKycForm = isValid => {
                 timeout: 30000,
               });
             }
+          } else if (response.data.insurer_screening.isPolicyExpired) {
+            notification.success({
+              title: 'Capture Payment Manually',
+              position: 'top',
+            });
           }
         }
         if (response.data.success) {

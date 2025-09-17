@@ -1752,7 +1752,11 @@ class CentralService extends BaseService
         LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
 
         if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
-            LoggerService::info('fn:autoCaptureAMLValidationCheck failed - Going to dispatch AutomationFailedJob');
+            LoggerService::info('fn:autoCaptureAMLValidationCheck failed - Going to dispatch AutomationFailedJob', extra: [
+                'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                'statusAPIFailed' => 'Quote Referred To Insurer UW',
+                'processInvolved' => 'Payment Capture',
+            ]);
             AutomationFailedJob::dispatch(
                 $quote,
                 QuoteTypeId::Car,
@@ -1792,7 +1796,11 @@ class CentralService extends BaseService
                 // ];
 
                 if ($capturePaymentResponse['premiumAmount'] > $payment->total_amount) {
-                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob');
+                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
+                        'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                        'statusAPIFailed' => 'Premium Not Matched With Insurer',
+                        'processInvolved' => 'Payment Capture',
+                    ]);
                     AutomationFailedJob::dispatch(
                         $quote,
                         QuoteTypeId::Car,
@@ -1802,7 +1810,11 @@ class CentralService extends BaseService
                         WorkflowTypeEnum::CAR_AUTOMATION_FAILED
                     )->onQueue('policy-issuance-automation');
                 } elseif ($capturePaymentResponse['premiumAmount'] != $payment->total_amount) {
-                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob');
+                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
+                        'actionRequired' => 'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
+                        'statusAPIFailed' => 'Quote Referred To Insurer UW',
+                        'processInvolved' => 'Payment Capture',
+                    ]);
                     AutomationFailedJob::dispatch(
                         $quote,
                         QuoteTypeId::Car,

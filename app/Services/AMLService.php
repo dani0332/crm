@@ -845,6 +845,12 @@ class AMLService
                         'message' => 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')',
                         'screening_type' => $screeningType,
                     ];
+
+                    if (isset($getQuoteResponse['isPolicyExpired']) && $getQuoteResponse['isPolicyExpired']) {
+                        LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Previous policy has expired - Ref-ID: '.$quoteDetails->code);
+                        $screeningResponse['message'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED;
+                        $screeningResponse['is_previous_policy_expired'] = $getQuoteResponse['isPolicyExpired'];
+                    }
                 }
             } catch (\Exception $e) {
                 LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Exception while calling getQuote API for renewal upload - Ref-ID: '.$quoteDetails->code.' - Error: '.$e->getMessage());
@@ -862,14 +868,14 @@ class AMLService
 
         try {
             $insuredDetails = $insuredPersonDetails?->insured;
-            $insuredKycDetails = $insuredDetails?->insuredKyc;
+            // $insuredKycDetails = $insuredDetails?->insuredKyc;
 
             $insurerScreeningPayload = [
                 'quoteUID' => $quoteDetails->uuid,
                 'quoteTypeId' => (int) $quoteTypeId,
                 'emirateDetails' => [
                     'emirateId' => $insuredDetails?->id_type == 'emiratesId' ? str_replace('-', '', $insuredDetails?->id_number) : null,
-                    'expiryDate' => ($insuredPersonDetails?->customer?->emirates_id_expiry_date ?? $request['id_expiry_date']) ?? null,
+                    'expiryDate' => ($request['id_expiry_date'] ?? $insuredPersonDetails?->customer?->emirates_id_expiry_date) ?? null,
                 ],
                 'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
                 'chassisNumber' => $request['chassis_number'] ?? '', // TODO: need to remove this.
@@ -945,7 +951,7 @@ class AMLService
                     'code' => $vehicleDriverDetail?->vehicle_plate_color ?? null,
                     'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_plate_color] ?? null,
                 ];
-                $insurerScreeningPayload['bankLoan'] = $vehicleDriverDetail->bank_loan !== null ? (bool) $vehicleDriverDetail->bank_loan : null;
+                $insurerScreeningPayload['bankLoan'] = $vehicleDriverDetail?->bank_loan !== null ? (bool) $vehicleDriverDetail?->bank_loan : null;
                 $insurerScreeningPayload['bankName'] = [
                     'code' => $vehicleDriverDetail?->bank_name ?? null,
                     'value' => $bankName?->text ?? null,
@@ -966,7 +972,7 @@ class AMLService
                 $insurerScreeningPayload['uaeDrivingExperience'] = $vehicleDriverDetail?->driver_uae_driving_experience ?? null;
                 $insurerScreeningPayload['homeCountryLicenseInsurance'] = $nationality?->text ?? null;
                 $insurerScreeningPayload['homeCountryDrivingExperience'] = $vehicleDriverDetail?->driver_home_country_driving_experience ?? null;
-                $insurerScreeningPayload['insuredAndDriverSame'] = $vehicleDriverDetail->is_insured_and_driver_same !== null ? (bool) $vehicleDriverDetail->is_insured_and_driver_same : null;
+                $insurerScreeningPayload['insuredAndDriverSame'] = $vehicleDriverDetail?->is_insured_and_driver_same !== null ? (bool) $vehicleDriverDetail?->is_insured_and_driver_same : null;
                 if ($isLIVA && $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD) {
                     $vehcileColor = Lookup::where([
                         'key' => LookupsEnum::VEHICLE_COLOR,
@@ -986,6 +992,14 @@ class AMLService
             ]);
             $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', $insurerScreeningPayload);
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - '.$providerName.' Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.json_encode($screeningResponse));
+
+            if (isset($screeningResponse['isPolicyExpired']) && $screeningResponse['isPolicyExpired']) {
+                LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Previous policy has expired - Ref-ID: '.$quoteDetails->code);
+                $screeningResponse['status'] = AMLStatusCode::AMLPending;
+                $screeningResponse['message'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED;
+                $screeningResponse['is_previous_policy_expired'] = $screeningResponse['isPolicyExpired'];
+            }
+
             $screeningResponse['screening_type'] = $screeningType;
             $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $modelObjectAgainstQuoteType, $customerType, $insuredPersonDetails, $screeningResponse);
         } catch (Exception $exception) {
@@ -1050,13 +1064,22 @@ class AMLService
                 $kycLogDetails['match_found'] = 0;
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::UNKNOWN;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningPending];
+
+                if (isset($screeningResponse['is_previous_policy_expired']) && $screeningResponse['is_previous_policy_expired']) {
+                    $insurerAMLStatus['insurer_api_status_id'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED_STATUS_ID; // this code: 99 is the status id for previous policy expired
+                }
+
             } else {
                 LoggerService::info('fn:amlScreeningGIG - '.$providerName.' AML Screening Failed - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
                 $kycLogDetails['match_found'] = 1;
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningFailed];
 
-                LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob');
+                LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob', extra: [
+                    'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
+                    'statusAPIFailed' => 'Quote Finalized But Premium Not Matched',
+                    'processInvolved' => 'Quote Finalization',
+                ]);
                 AutomationFailedJob::dispatch(
                     $quoteDetails,
                     QuoteTypeId::Car,
@@ -2230,7 +2253,7 @@ class AMLService
     {
         $insurerScreenType = [
             InsuranceProvidersEnum::AXA => AMLScreeningTypeEnum::INSURER_AXA,
-            InsuranceProvidersEnum::RSA => AMLScreeningTypeEnum::INSURER_RSA,
+            // InsuranceProvidersEnum::RSA => AMLScreeningTypeEnum::INSURER_RSA,
         ];
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType->text);

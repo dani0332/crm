@@ -767,7 +767,7 @@ class SplitPaymentService
                 if ($modelType == quoteTypeCode::Car && ! $sendUpdateId) {
                     $mainLeadPayment = $quoteModel->payments()->mainLeadPayment()->first();
                     $insuranceProvider = getInsuranceProvider($mainLeadPayment, $modelType, $quoteModel);
-                    if (in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA])) {
+                    if ($insuranceProvider->code == InsuranceProvidersEnum::AXA) {
                         $createdBy = $quoteModel->kycDocumentUser?->createdBy?->email;
                     }
                 }
