@@ -16,6 +16,13 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
+        // If this is a tier-evaluation-only request, skip pre-checks entirely.
+        if ($this->allocationRequest->isEvaluateTierOnlyRequest()) {
+            LoggerService::info(self::class.'::handle - EvaluateTierOnly request detected, skipping pre-checks');
+
+            return $next($request);
+        }
+
         $isVerified = $this->verifyPreChecks();
 
         if (! $isVerified) {
