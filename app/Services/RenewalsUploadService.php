@@ -14,6 +14,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProviderEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
@@ -114,7 +115,6 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Throwable;
-use App\Enums\InsuranceProvidersEnum;
 
 class RenewalsUploadService
 {
@@ -1222,8 +1222,7 @@ class RenewalsUploadService
             }
 
             $quote->update($quoteData);
-            
-        
+
             if (! $isPersonalQuote) {
                 $this->syncQuote($quote, $quoteData);
             }
