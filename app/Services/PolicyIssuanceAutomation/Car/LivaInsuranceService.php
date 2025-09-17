@@ -74,6 +74,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     const BOOK_POLICY_API_ACTION_MESSAGE = 'Book Policy via API';
     const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID = 4;
     const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED = 'Get and Upload Policy Documents to IMCRM API Failed';
+    private const RTA_UPLOAD_STATUS_DONE = '1';
+    private const RTA_UPLOAD_STATUS_PENDING = '0';
 
     public $currentInsurerApiStatus = null;
     public $headers = [];
@@ -553,6 +555,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'document_type_text' => $documentType->text,
             'doc_uuid' => generateUUID(),
         ]);
+
+        if ($newDocument?->exists && $documentCode == DocumentTypeCode::POLICY_CERTIFICATE) {
+            $quote->update(['rta_upload_status' => self::RTA_UPLOAD_STATUS_DONE]);
+        }
 
         /* if ($newDocument->exists) {
             WatermarkDocumentsJob::dispatch(
