@@ -29,6 +29,12 @@ class EmailService
 
         $lead = $this->getQuote($quoteUID);
 
+        
+        if(suppressIntroEmailByStatus($lead->quote_status_id)) {
+            LoggerService::info('sendOCAEmail - Suppressing OCB Email because for');
+            return;
+        }
+
         // map data for bird service
         $emailData = $this->mapOCAEmailData($lead, $data);
 
