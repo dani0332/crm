@@ -10,8 +10,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\Middleware\Skip;
+use Illuminate\Queue\SerializesModels;
 
 class CourtesyEmailJob implements ShouldQueue
 {
@@ -47,7 +47,7 @@ class CourtesyEmailJob implements ShouldQueue
     public function middleware()
     {
         $isAUHLead = false;
-        
+
         if (isset($this->quoteData['quoteTypeId']) && $this->quoteData['quoteTypeId'] === QuoteTypes::HEALTH->id()) {
             $isAUHLead = HealthQuote::where('uuid', $this->quoteData['quoteUID'])->first()?->isAUHLead() ?? false;
         }
