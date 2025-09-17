@@ -48,7 +48,7 @@ class CourtesyEmailJob implements ShouldQueue
     {
         $isAUHAndRevivalOrInsuranceWallet = false;
         
-        if (isset($this->quoteData['quoteTypeId']) && $this->quoteData['quoteTypeId'] === QuoteTypes::HEALTH->id()) {
+        if (isset($this->quoteData['quoteTypeId']) && $this->quoteData['quoteTypeId'] === QuoteTypes::HEALTH->id() && isset($this->quoteData['quoteUID'])) {
             $healthQuote = HealthQuote::where('uuid', $this->quoteData['quoteUID'])->first();
             $isAUHAndRevivalOrInsuranceWallet = $healthQuote?->isAUHLead() && $healthQuote?->isLeadSourceRevivalOrInsuranceWallet();
         }
