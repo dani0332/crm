@@ -206,7 +206,7 @@ const showVehicleAndDrvicerDetails = computed(() => {
   return (
     page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
     [
-      // page.props.insuranceProviderCodeEnum.RSA, // LIVA
+      page.props.insuranceProviderCodeEnum.RSA, // LIVA
       page.props.insuranceProviderCodeEnum.AXA, // GIG
       // page.props.insuranceProviderCodeEnum.OIC, // SUKOON
     ].includes(page.props.quoteRequest?.plan?.insurance_provider.code) &&
