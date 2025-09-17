@@ -393,6 +393,7 @@ final class PermissionsEnum extends Enum
     public const LIFE_LEAD_ALLOCATION_DASHBOARD = 'life-lead-allocation-dashboard';
     public const HOME_LEAD_ALLOCATION_DASHBOARD = 'home-lead-allocation-dashboard';
     public const GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD = 'group-medical-lead-allocation-dashboard';
+    public const TRAVEL_LEAD_ALLOCATION_DASHBOARD = 'travel-lead-allocation-dashboard';
     public const UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE = 'update-lead-status-to-fake-duplicate';
     public const SEARCH_INSURER_TAX_INVOICE_NUMBER = 'search-insurer-tax-invoice-number';
     public const SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER = 'search-insurer-commission-tax-invoice-number';
@@ -421,6 +422,7 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_LEADPOOL = 'corpline-leadpool';
     public const CYCLE_LEADPOOL = 'cycle-leadpool';
     public const GROUP_MEDICAL_LEADPOOL = 'group-medical-leadpool';
+    public const TRAVEL_LEADPOOL = 'travel-leadpool';
     public const POLICY_DETAILS_ADD_VAT = 'policy-details-add-vat';
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
