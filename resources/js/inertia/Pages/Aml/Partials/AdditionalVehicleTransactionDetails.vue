@@ -870,7 +870,10 @@ const submitAdditionalVehicleTransactionDetailsForm = async isValid => {
             },
           );
         }
-        emit('update:chassisNumber', additionalVehicleTransactionDetailsForm.chassis_number);
+        emit(
+          'update:chassisNumber',
+          additionalVehicleTransactionDetailsForm.chassis_number,
+        );
         router.reload({
           replace: true,
           preserveScroll: true,
