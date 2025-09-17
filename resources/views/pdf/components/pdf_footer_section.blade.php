@@ -178,7 +178,7 @@
 
     <table class="footer-table" >
         <tr>
-            <td class="footer-td" style="width:40%">
+            <td class="footer-td" style="width:38%">
                 <div class="footer-box" >
                     <p class="footer-content-1">
                         Licensed and regulated by the 
@@ -236,7 +236,7 @@
                     </p>
                 </div>
             </td>
-            <td class="footer-td" style="width:30%">
+            <td class="footer-td" style="width:32%">
                 <div class="footer-box" style="margin-top: 5px; line-height: 0.8; position: relative;">
                     <p class="footer-content-2">
                       
@@ -276,8 +276,8 @@
                 </div>
             </td>
 
-            <td class="footer-td" style="width: 30%;">
-            <div class="footer-box" style= "line-height: 0.10; position: relative;">
+            <td class="footer-td" style="width: 30%; vertical-align: top; text-align: right;">
+                <div class="footer-box" style="line-height: 1.2; position: relative; float: right; text-align: left; display: inline-block; min-width: 180px;">
                     <div class="advisor-section">
                         @if($quote->advisor)
                             <div class="advisor-photo-container">

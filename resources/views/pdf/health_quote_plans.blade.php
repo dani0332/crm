@@ -300,6 +300,7 @@
         .full-page-image {
             width: 100%;
             z-index: 999;
+            height: 88%;
         }
 
         .text-center {
@@ -320,7 +321,8 @@
 
 <body>
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/comparison-table-health.jpg') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/comparison-table-health.jpg') }}" class="full-page-image"  style="height: 100%;"/>
+    <div style="page-break-after: always;"></div>
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
