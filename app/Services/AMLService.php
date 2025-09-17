@@ -2253,8 +2253,9 @@ class AMLService
     {
         $insurerScreenType = [
             InsuranceProvidersEnum::AXA => AMLScreeningTypeEnum::INSURER_AXA,
-            // InsuranceProvidersEnum::RSA => AMLScreeningTypeEnum::INSURER_RSA,
+            InsuranceProvidersEnum::RSA => AMLScreeningTypeEnum::INSURER_RSA,
         ];
+
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType->text);
 
