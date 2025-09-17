@@ -16,7 +16,7 @@ class AutomationSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_AUTOMATION_WORKFLOW_URL],
             [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/1670bb39-565e-4825-96c1-cf9e516dec5f/invoke-sync',
+                'value' => 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/86c66fc8-6892-4545-8cb9-e5c8aa1627a3/invoke-sync',
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
