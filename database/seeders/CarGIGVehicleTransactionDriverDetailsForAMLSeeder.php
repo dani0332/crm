@@ -682,7 +682,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
 
     private function extraVehicleColors()
     {
-         $colors = [
+        $colors = [
             '3' => 'Yellow',
             '5' => 'Purple',
             '7' => 'Grey',
