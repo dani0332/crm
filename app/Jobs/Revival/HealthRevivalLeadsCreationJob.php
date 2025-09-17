@@ -216,7 +216,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                     $healthRevival->update(['email_sent' => true]);
 
-                    $quoteStatusId = ($healthQuote->isAUHLead() && $healthQuote->isLeadSourceRevivalOrInsuranceWallet())
+                    $quoteStatusId = ($healthQuote->isAUHLead(false) && $healthQuote->isLeadSourceRevivalOrInsuranceWallet())
                         ? QuoteStatusEnum::NewLead
                         : QuoteStatusEnum::Quoted;
 
