@@ -49,14 +49,14 @@ class SendHealthSICWAFollowupJob implements ShouldQueue
     public function middleware()
     {
         $healthQuote = HealthQuote::where('uuid', $this->quoteUuid)->first();
-        $isAUHLead = $healthQuote?->isAUHLead() && $healthQuote?->isLeadSourceRevivalOrInsuranceWallet();
+        $isAUHAndRevivalOrInsuranceWallet = $healthQuote?->isAUHLead() && $healthQuote?->isLeadSourceRevivalOrInsuranceWallet();
 
-        if ($isAUHLead) {
+        if ($isAUHAndRevivalOrInsuranceWallet) {
             LoggerService::info(self::class." - Skipping SIC WA Followup Email because lead is from AUH and Revival/Insurance Wallet for uuid: {$this->quoteUuid}");
         }
 
         return [
-            Skip::when(fn () => $isAUHLead),
+            Skip::when(fn () => $isAUHAndRevivalOrInsuranceWallet),
         ];
     }
 }

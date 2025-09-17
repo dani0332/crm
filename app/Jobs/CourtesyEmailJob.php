@@ -46,19 +46,19 @@ class CourtesyEmailJob implements ShouldQueue
 
     public function middleware()
     {
-        $isAUHLead = false;
-
+        $isAUHAndRevivalOrInsuranceWallet = false;
+        
         if (isset($this->quoteData['quoteTypeId']) && $this->quoteData['quoteTypeId'] === QuoteTypes::HEALTH->id()) {
             $healthQuote = HealthQuote::where('uuid', $this->quoteData['quoteUID'])->first();
-            $isAUHLead = $healthQuote?->isAUHLead() && $healthQuote?->isLeadSourceRevivalOrInsuranceWallet();
+            $isAUHAndRevivalOrInsuranceWallet = $healthQuote?->isAUHLead() && $healthQuote?->isLeadSourceRevivalOrInsuranceWallet();
         }
 
-        if ($isAUHLead) {
+        if ($isAUHAndRevivalOrInsuranceWallet) {
             LoggerService::info(self::class." - Skipping Courtesy Email because lead is from AUH and Revival/Insurance Wallet for UUID: {$this->quoteData['quoteUID']}");
         }
 
         return [
-            Skip::when(fn () => $isAUHLead),
+            Skip::when(fn () => $isAUHAndRevivalOrInsuranceWallet),
         ];
     }
 }
