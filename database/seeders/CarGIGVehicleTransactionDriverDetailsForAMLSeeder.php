@@ -701,5 +701,5 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
             ]);
         }
     }
-    
+
 }
