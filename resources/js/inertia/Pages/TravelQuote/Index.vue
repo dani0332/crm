@@ -88,6 +88,8 @@ const filters = reactive({
   assignment_type: '',
   private_client: 'all',
   age_group: 'all',
+  authorize_date: '',
+  captured_date: '',
 });
 
 const loader = reactive({
@@ -348,24 +350,67 @@ function onAssignLead(isValid) {
 }
 
 function setQueryFilters() {
+  // Define which fields should have integer values
+  const integerFields = [
+    'quote_status_id',
+    'insurer_aml_status',
+    'advisor_id',
+    'renewal_batches',
+    'payment_status_id',
+    'amlStatus',
+    'insurance_provider_ids',
+    'plan_name',
+    'page',
+  ];
+
+  // Group array parameters
+  const arrayParams = {};
+  const singleParams = {};
+
   for (const [key, value] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = value;
-    } else {
-      // Handle different data types appropriately
-      if (key.includes('_id') && !isNaN(parseInt(value))) {
-        // ID fields should be integers
-        filters[key] = parseInt(value);
-      } else if (key === 'page' && !isNaN(parseInt(value))) {
-        // Page should be integer
-        filters[key] = parseInt(value);
-      } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
-        // Boolean-like fields
-        filters[key] = parseInt(value);
-      } else {
-        // Keep as string for dates, text fields, etc.
-        filters[key] = value;
+    // Check for indexed array format like authorize_date[0], authorize_date[1]
+    const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+
+    if (arrayMatch) {
+      const [, fieldName, index] = arrayMatch;
+      if (!arrayParams[fieldName]) {
+        arrayParams[fieldName] = [];
       }
+      arrayParams[fieldName][parseInt(index)] = value;
+    } else if (key.includes('[]')) {
+      // Handle simple array format like quote_status_id[]
+      const fieldName = key.substring(0, key.length - 2);
+      arrayParams[fieldName] = Array.isArray(value) ? value : [value];
+    } else {
+      // Single parameters
+      singleParams[key] = value;
+    }
+  }
+
+  // Process array parameters
+  for (const [fieldName, values] of Object.entries(arrayParams)) {
+    // Filter out undefined values and convert to correct type
+    const cleanValues = values.filter(v => v !== undefined);
+
+    if (integerFields.includes(fieldName)) {
+      filters[fieldName] = cleanValues
+        .map(v => parseInt(v))
+        .filter(v => !isNaN(v));
+    } else {
+      filters[fieldName] = cleanValues;
+    }
+  }
+
+  // Process single parameters
+  for (const [key, value] of Object.entries(singleParams)) {
+    if (integerFields.includes(key) && !isNaN(parseInt(value))) {
+      filters[key] = parseInt(value);
+    } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
+      // Boolean-like fields
+      filters[key] = parseInt(value);
+    } else {
+      // Keep as string for dates, text fields, enums, etc.
+      filters[key] = value;
     }
   }
 }
@@ -923,6 +968,22 @@ const calculateAge = dateOfBirth => {
         <DatePicker
           v-model="filters.booking_date"
           label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
           class="w-full"
           range
           multi-calendars

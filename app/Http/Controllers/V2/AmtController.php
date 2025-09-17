@@ -123,7 +123,7 @@ class AmtController extends Controller
             // if user has advisor Role then fetch leads assigned to the user only
             $data->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
-        $this->whereBasedOnRole($data, 'bqr');
+        $this->whereBasedOnRole($data, 'bqr', quoteTypeCode::Business);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $advisors = DB::table('users as u')
@@ -255,6 +255,20 @@ class AmtController extends Controller
             $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
             $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
             $data->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+        }
+
+        // Apply authorize_date filter
+        if (! empty($request->authorize_date) && is_array($request->authorize_date) && count($request->authorize_date) >= 2) {
+            $startDate = Carbon::parse($request->authorize_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->authorize_date[1])->endOfDay();
+            $data->whereBetween('py.authorized_at', [$startDate, $endDate]);
+        }
+
+        // Apply captured_date filter
+        if (! empty($request->captured_date) && is_array($request->captured_date) && count($request->captured_date) >= 2) {
+            $startDate = Carbon::parse($request->captured_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->captured_date[1])->endOfDay();
+            $data->whereBetween('py.captured_at', [$startDate, $endDate]);
         }
 
         $this->adjustQueryByDateFilters($data, 'bqr');

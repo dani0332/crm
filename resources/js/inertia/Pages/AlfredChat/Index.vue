@@ -55,14 +55,6 @@ const reportButtonCon = computed(() => {
   if (filters.report == null) {
     data.disable = true;
     data.msg = 'Please select the report type';
-  } else if (filters.quoteId || filters.email || filters.mobile_no) {
-    data.disable = false;
-  } else if (
-    filters.chat_initiated_at == null ||
-    filters.chat_initiated_at == []
-  ) {
-    data.disable = true;
-    data.msg = 'Please select the Start Date and End Date ';
   }
 
   return data;
@@ -260,24 +252,46 @@ const exportReport = async (exportType = 'download') => {
     if (!filters.report) {
       notification.error({
         position: 'top',
-        title: 'Export Error',
+        title: 'Export Error!',
         text: 'Please select a report type before exporting.',
       });
       return;
     }
 
-    const days = calculateDaysDifference(
-      filters.chat_initiated_at[0],
-      filters.chat_initiated_at[1],
-    );
+    // Check chat_initiated_at date range
+    if (filters.chat_initiated_at && filters.chat_initiated_at.length === 2) {
+      const chatDays = calculateDaysDifference(
+        filters.chat_initiated_at[0],
+        filters.chat_initiated_at[1],
+      );
 
-    if (days > 30) {
-      notification.error({
-        position: 'top',
-        title: 'Export Error',
-        message: 'Maximum 30 days are allowed.',
-      });
-      return;
+      if (chatDays > 30) {
+        notification.error({
+          position: 'top',
+          title: 'Export Error!',
+          message:
+            'Maximum 30 days are allowed for Chat Initiated At date range.',
+        });
+        return;
+      }
+    }
+
+    // Check lead_created_at date range
+    if (filters.lead_created_at && filters.lead_created_at.length === 2) {
+      const leadDays = calculateDaysDifference(
+        filters.lead_created_at[0],
+        filters.lead_created_at[1],
+      );
+
+      if (leadDays > 30) {
+        notification.error({
+          position: 'top',
+          title: 'Export Error',
+          message:
+            'Maximum 30 days are allowed for Lead Created At date range.',
+        });
+        return;
+      }
     }
 
     const data = {
@@ -378,13 +392,10 @@ const exportReport = async (exportType = 'download') => {
         :rules="
           filters.quoteId || filters.email || filters.mobile_no
             ? []
-            : [isRequired, maxDateRangeArray(30)]
+            : [maxDateRangeArray(30)]
         "
         :onlySelect="true"
         tooltip="Date range of customer interaction with InstantAlfred (Maximum 30 days allowed)"
-        :required="
-          filters.quoteId || filters.email || filters.mobile_no ? false : true
-        "
       />
       <DatePicker
         v-model="filters.lead_created_at"

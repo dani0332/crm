@@ -12,7 +12,8 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
@@ -43,6 +44,7 @@ use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\LeadsCountService;
+use App\Services\OCR\OCRService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
@@ -101,7 +103,7 @@ class HandleInertiaRequests extends Middleware
             'location' => fn () => $request->url(),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
-            'insuranceProviderCodeEnum' => InsuranceProvidersEnum::asArray(),
+            'insuranceProviderCodeEnum' => InsuranceProviderEnum::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'documentTypeEnum' => DocumentTypeEnum::asArray(),
             'sendPolicyTypeEnum' => SendPolicyTypeEnum::asArray(),
@@ -154,6 +156,8 @@ class HandleInertiaRequests extends Middleware
             'carRegistrationType' => CarRegistrationType::asArray(),
             'carVehicleUse' => CarVehicleUse::asArray(),
             'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
+            'eligibleOcrProviders' => app(OCRService::class)->getEligibleProviders(),
+            'genericRequestEnum' => GenericRequestEnum::asArray(),
         ];
     }
 
@@ -559,7 +563,7 @@ class HandleInertiaRequests extends Middleware
                         route('customer.upload'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
-                    ->add('Leads by Email', route('leads-by-email'), fn ($s) => $s->attributes(['icon' => 'box']));
+                    ->add('Leads by Email', '/leads-by-email', fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
@@ -583,7 +587,10 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::AMLList)) {
+        if (auth()->user()->hasAnyPermission([
+            PermissionsEnum::AMLList,
+            PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS,
+        ])) {
             $nav = $nav->add('AML', '', function (Section $section) {
                 $section
                     ->add('All Quotes', route('aml.index'), fn ($s) => $s->attributes(['icon' => 'box']));
