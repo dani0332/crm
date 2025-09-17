@@ -14,7 +14,7 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) 'https://production-deploymentnotification.azurewebsites.net/api/production-notificationfunction?code=$(PRD_DEPLOYMENT_NOTIFICATION_KEY)' \
+        curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) '$(PRD_DEPLOYMENT_NOTIFICATION_KEY)' \
         --header 'Content-Type: application/json' \
         --data '{"message": {"text": "Building Project on $(Build.DefinitionName) is Initiated, Please wait..."}}'
 
@@ -28,7 +28,7 @@ steps:
       sed -i "s/development-alfredcrm/production-alfredcrm01/g" "$(System.DefaultWorkingDirectory)/docker/log_files.yml"
       doppler --token $(IMCRM_TOKEN) run -- docker build --build-arg IMCRM_TOKEN=$(IMCRM_TOKEN) -f Dockerfile -t $(acrName).azurecr.io/$(imageName) .
        if [ $? -ne 0 ]; then
-        curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) 'https://production-deploymentnotification.azurewebsites.net/api/production-notificationfunction?code=$(PRD_DEPLOYMENT_NOTIFICATION_KEY)' \
+        curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) '$(PRD_DEPLOYMENT_NOTIFICATION_KEY)' \
          --header 'Content-Type: application/json' \
          --data '{"message": {"text": "Building Project Failed on $(Build.DefinitionName), Logs in Postman with BuildID $(Build.BuildId)..."}}'
        # Add additional actions like notifications or logging here
@@ -44,7 +44,7 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) 'https://production-deploymentnotification.azurewebsites.net/api/production-notificationfunction?code=$(PRD_DEPLOYMENT_NOTIFICATION_KEY)' \
+        curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) '$(PRD_DEPLOYMENT_NOTIFICATION_KEY)' \
         --header 'Content-Type: application/json' \
         --data '{"message": {"text": "Building Project on $(Build.DefinitionName) is Completed, Deploying now..."}}'
 
