@@ -48,6 +48,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/trigger-travel-aig-workflow', [ApiController::class, 'triggerTravelAIGWorkflow'])->name('triggerTravelAIGWorkflow');
 
     Route::get('/home/renewal-ocb-attachment', [ApiController::class, 'homeRenewalOCBAttachment'])->name('homeRenewalOCBAttachment');
+    Route::post('/imcrm/document-notification', [ApiController::class, 'documentNotification'])->name('documentNotification');
 
 });
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);

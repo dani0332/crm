@@ -34,9 +34,12 @@ class RolePermissionSeeder extends Seeder
         $this->addBorDocumentUploadPermission();
         $this->addPlanDetailsEditPermission();
         $this->addOverrideCommissionPermission();
+        $this->addAssignClientSupportPermission();
+        $this->addSupportSpecialistRoles();
         $this->addLeadsByEmailPermission();
         $this->addEmbeddedProductPaymentCancelAdminPermission();
 
+        $this->addExportHomePuaUpdatesPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -306,6 +309,65 @@ class RolePermissionSeeder extends Seeder
         ]);
     }
 
+    private function addAssignClientSupportPermission(): void
+    {
+        // Create ASSIGN_CLIENT_SUPPORT permission
+        $clientSupportPermission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::ASSIGN_CLIENT_SUPPORT,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        // Create ASSIGN_LEAD_ADVISOR permission
+        $leadAdvisorPermission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::ASSIGN_LEAD_ADVISOR,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+
+        if ($adminRole) {
+            // Assign ASSIGN_CLIENT_SUPPORT permission to Admin role
+            if (! $adminRole->hasPermissionTo($clientSupportPermission)) {
+                $adminRole->givePermissionTo($clientSupportPermission);
+            }
+
+            // Assign ASSIGN_LEAD_ADVISOR permission to Admin role
+            if (! $adminRole->hasPermissionTo($leadAdvisorPermission)) {
+                $adminRole->givePermissionTo($leadAdvisorPermission);
+            }
+        }
+    }
+
+    private function addSupportSpecialistRoles(): void
+    {
+        $supportRoles = [
+            RolesEnum::CLIENTSUPPORT,
+            RolesEnum::CLIENTSUPPORTLEAD,
+        ];
+
+        foreach ($supportRoles as $roleName) {
+            Role::firstOrCreate([
+                'name' => $roleName,
+                'guard_name' => 'web',
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
     private function addLeadsByEmailPermission(): void
     {
         Permission::firstOrCreate([
@@ -338,6 +400,25 @@ class RolePermissionSeeder extends Seeder
     {
         $permission = Permission::firstOrCreate([
             'name' => PermissionsEnum::BOR_DOCUMENT_UPLOAD,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        // Assign to Admin and Engineering roles initially
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        foreach ($roles as $role) {
+            if (!$role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+            }
+        }
+    }
+
+    private function addExportHomePuaUpdatesPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::EXPORT_HOME_PUA_UPDATES,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

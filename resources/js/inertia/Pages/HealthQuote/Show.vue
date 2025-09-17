@@ -71,6 +71,7 @@ const props = defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   isAUHLead: Boolean,
+  branchOptions: Object,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 

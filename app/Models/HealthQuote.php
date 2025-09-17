@@ -502,4 +502,9 @@ class HealthQuote extends Model implements AuditableContract
     {
         return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI && ($shouldCheckSource ? $this->source === LeadSourceEnum::IMCRM : true);
     }
+
+    public function isLeadSourceRevivalOrInsuranceWallet()
+    {
+        return in_array($this->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::INSURANCE_WALLET]);
+    }
 }

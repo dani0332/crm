@@ -57,6 +57,8 @@ let availableFilters = {
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
   private_client: 'all',
+  authorize_date: '',
+  captured_date: '',
 };
 
 const canExport = ref(false);
@@ -778,6 +780,24 @@ const insurerAMLStatusOption = computed(() => {
         />
 
         <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+
+        <DatePicker
           v-model="filters.last_modified_date"
           name="created_at_start"
           label="Last Modified Date"
@@ -883,6 +903,7 @@ const insurerAMLStatusOption = computed(() => {
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
           :quoteType="quoteType"
+          :canAssignLeadAdvisor="isManualAllocationAllowed"
           @success="onLeadAssigned"
         />
       </div>

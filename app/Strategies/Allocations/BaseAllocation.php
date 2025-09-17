@@ -14,11 +14,11 @@ use App\Models\User;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use App\Services\NationalityAllocationService;
+use App\Services\RuleService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\LeadDuplicatable;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 abstract class BaseAllocation extends AllocationService implements Allocation
 {
@@ -30,6 +30,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     protected bool $hasNationalityConfig = false;
     protected array $advisorIDs = [];
     protected array $excludedAdvisorIds = [];
+    protected bool $skipRuleUsers = false;
 
     public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false, public bool $isReAssignment = false) {}
 
@@ -120,7 +121,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
     protected function getAdvisorBaseQuery(int $onlineStatus, array $roles)
     {
-        Log::info('BaseAllocation: Starting getAdvisorBaseQuery', [
+        LoggerService::info('BaseAllocation: Starting getAdvisorBaseQuery', extra: [
             'onlineStatus' => $onlineStatus,
             'roles' => $roles,
             'quoteTypeId' => $this->getQuoteTypeId(),
@@ -150,9 +151,11 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 },
             )
             ->activeUser()
+            ->when($this->skipRuleUsers, function ($q) {
+                $ruleUserIds = app(RuleService::class)->getRuleUserIds($this->quoteType);
+                $q->whereNotIn('users.id', $ruleUserIds);
+            })
             ->orderBy('la.last_allocated', 'asc');
-
-        LoggerService::sql('BaseAllocation: getAdvisorBaseQuery', $query);
 
         return $query;
     }

@@ -29,6 +29,7 @@ use App\Models\SendUpdateLog;
 use App\Models\TravelPlanPolicyWording;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\OCR\OCRService;
 use App\Traits\GenericQueriesAllLobs;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -181,7 +182,7 @@ class QuoteDocumentService extends BaseService
         try {
 
             if (data_get($data, 'is_base_64', 0) == 1) {
-                $originalName = 'Base 64 file';
+                $originalName = data_get($data, 'file_name', 'Base 64 file');
                 @[$extension, $fileMimeType, $file_data] = getBase64FileInfo($fileOrBase64);
 
                 // Generate a unique filename
@@ -278,6 +279,9 @@ class QuoteDocumentService extends BaseService
                 LoggerService::info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
             }
 
+            LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
+            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
+
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL) {
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id,
@@ -288,7 +292,7 @@ class QuoteDocumentService extends BaseService
 
             return $quoteDocument;
         } catch (\Exception $exception) {
-            LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
+            LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'], exception: $exception);
 
             return response()->json(['error' => 'Document upload failed, please try again'], 500);
         }
@@ -604,10 +608,7 @@ class QuoteDocumentService extends BaseService
             // Use QPDF as our primary watermarking approach
             return $this->qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType);
         } catch (\Exception $e) {
-            LoggerService::error('Error in watermarkPdf: '.$e->getMessage()." for UUID: $uuid", context: [
-                'line' => $e->getLine(),
-                'file' => $e->getFile(),
-            ]);
+            LoggerService::error('Error in watermarkPdf for UUID: '.$uuid, exception: $e);
 
             // Incase qpdfWatermark() fails/throw exception. Made sure that we delete the file that it created.
             $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
@@ -1079,6 +1080,18 @@ class QuoteDocumentService extends BaseService
                 'status' => BorStatusEnum::DOCUMENT_UPLOADED,
             ]);
         }
+    }
+    
+    private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType)
+    {
+        LoggerService::info('Dispatching OCR job from API');
+
+        app(OCRService::class)->dispatchJobIfEligible(
+            $documentType,
+            $quote,
+            $filePathAzure,
+            $fileMimeType
+        );
     }
 
 }
