@@ -49,11 +49,12 @@ class CourtesyEmailJob implements ShouldQueue
         $isAUHLead = false;
         
         if (isset($this->quoteData['quoteTypeId']) && $this->quoteData['quoteTypeId'] === QuoteTypes::HEALTH->id()) {
-            $isAUHLead = HealthQuote::where('uuid', $this->quoteData['quoteUID'])->first()?->isAUHLead() ?? false;
+            $healthQuote = HealthQuote::where('uuid', $this->quoteData['quoteUID'])->first();
+            $isAUHLead = $healthQuote?->isAUHLead() && $healthQuote?->isLeadSourceRevivalOrInsuranceWallet();
         }
 
         if ($isAUHLead) {
-            LoggerService::info(self::class." - Skipping Courtesy Email because lead is from AUH for UUID: {$this->quoteData['quoteUID']}");
+            LoggerService::info(self::class." - Skipping Courtesy Email because lead is from AUH and Revival/Insurance Wallet for UUID: {$this->quoteData['quoteUID']}");
         }
 
         return [
