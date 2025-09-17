@@ -114,6 +114,7 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Throwable;
+use App\Enums\InsuranceProvidersEnum;
 
 class RenewalsUploadService
 {
@@ -1160,7 +1161,8 @@ class RenewalsUploadService
                 $quoteData['vehicle_category'] = $vehicleType->category ?? null;
                 $quoteData['year_of_manufacture'] = $data['year'] ?? null;
                 $quoteData['previous_advisor_id'] = ! empty($previousAdvisor) ? $previousAdvisor->name : '';
-                $quoteData['has_ncd_supporting_documents'] = $data['nc_letter'];
+                // Store as boolean for tinyint(1) compatibility
+                $quoteData['has_ncd_supporting_documents'] = (int) (isset($data['nc_letter']) && strtolower(trim($data['nc_letter'])) === 'yes');
             }
 
             $quoteData = $this->getNonEmptyValues($quoteData);
@@ -1220,7 +1222,8 @@ class RenewalsUploadService
             }
 
             $quote->update($quoteData);
-
+            
+        
             if (! $isPersonalQuote) {
                 $this->syncQuote($quote, $quoteData);
             }
