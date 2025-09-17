@@ -419,7 +419,7 @@ class RolePermissionSeeder extends Seeder
 
         // Assign to Admin role by default
         $adminRole = Role::where('name', RolesEnum::Admin)->first();
-        if ($adminRole && !$adminRole->hasPermissionTo($permission)) {
+        if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
             $adminRole->givePermissionTo($permission);
         }
     }
