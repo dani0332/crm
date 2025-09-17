@@ -715,7 +715,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
             '97' => 'Red+White+Blue',
             '101' => 'Silver+Orange',
             '106' => 'White+Green',
-            '107' => 'White+Grreen+Silver',
+            '107' => 'White+Green+Silver',
             '109' => 'White+Red+Orange',
             '111' => 'Yellow+Orange',
             '118' => 'Light Blue',
