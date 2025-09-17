@@ -684,7 +684,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
     {
         $colors = [
             '7' => 'Grey',
-            '14' => 'Gold'
+            '14' => 'Gold',
         ];
 
         foreach ($colors as $code => $text) {
@@ -700,5 +700,5 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
             ]);
         }
     }
-    
+
 }
