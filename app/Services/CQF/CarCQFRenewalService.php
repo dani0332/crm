@@ -39,6 +39,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Enums\carTypeInsuranceCode;
+use App\Services\RenewalsAddonServices;
+use App\Enums\CarTypeOfInsuranceIdEnum;
 
 class CarCQFRenewalService
 {
@@ -312,7 +315,6 @@ class CarCQFRenewalService
 
         // Get insurance provider safely to avoid null pointer exception
         $insuranceProvider = app(InsuranceProviderService::class)->getProviderByCode($quote->currently_insured_with);
-
         return [
             'customer_name' => $quote->first_name.' '.$quote->last_name ?? null,
             'email' => $quote->email ?? null,
@@ -356,6 +358,7 @@ class CarCQFRenewalService
     {
         LoggerService::info(self::class.' - Storing car cqf renewal quote');
         $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
+    
 
         // Calculate the policy expiry date based on the start date + 120 days
         $policyStartDate = $policyExpiryDate->copy()->addDays(1);
@@ -423,11 +426,64 @@ class CarCQFRenewalService
             return $response->uuid;
         }
     }
+    /**
+     * Determine the car type insurance code from the quote, matching against enum values.
+     *
+     * @param  object  $quote
+     * @return string|null
+     */
+    public function getCarTypeInsuranceId($quote): ?string
+    {
+        // Collect possible fields to check for insurance type
+        $fields = [
+            $quote?->plan?->insurance_type ?? '',
+            $quote?->plan?->text ?? '',
+        ];
 
+        // Normalize fields for case-insensitive comparison
+        $fields = array_filter(array_map('strtolower', $fields));
+
+        // Early return if no fields to check
+        if (empty($fields)) {
+            return null;
+        }
+      
+        // Check for partial match against enum values
+        $typeInsuranceCodes = [
+            carTypeInsuranceCode::Comprehensive,
+            carTypeInsuranceCode::ThirdPartyOnly,
+        ];
+        foreach ($typeInsuranceCodes as $enumCase) {
+            $enumValue = strtolower($enumCase);
+            
+            foreach ($fields as $field) {
+                if (str_contains($field, $enumValue)) {
+                    return app(RenewalsAddonServices::class)->getCarTypeOfInsurance(ucfirst($enumCase))->id ?? null;
+                }
+            }
+        }
+
+        // Fallback: return the first non-empty original value
+        foreach ($fields as $idx => $field) {
+            $original = $quote?->plan?->insurance_type ?? $quote?->plan?->text;
+            if (!empty($original)) {
+                return app(RenewalsAddonServices::class)->getCarTypeOfInsurance($original)->id ?? null;
+            }
+        }
+
+        return null;
+    }
     public function mapCarCQFRenewalQuote($quote, $renewalsUploadLeads)
     {
 
         $quoteUuid = $this->generateUUID();
+        $car_type_insurance_id =$this->getCarTypeInsuranceId($quote) ?? null;
+        $current_insurance_status = match ((int) $car_type_insurance_id) {
+            CarTypeOfInsuranceIdEnum::Comprehensive   => 'ACTIVE_COMP',
+            CarTypeOfInsuranceIdEnum::ThirdPartyOnly  => 'ACTIVE_TPL',
+            default                                   => $quote->current_insurance_status ?? null,
+        };
+     
         $quoteData = [
             'customer_id' => $quote->customer_id,
             'first_name' => $quote->first_name,
@@ -458,7 +514,8 @@ class CarCQFRenewalService
             'currently_insured_with' => $quote?->plan?->insuranceProvider?->text ?? null,
             'vehicle_category' => $quote->vehicle_category,
             'year_of_first_registration' => $quote->year_of_first_registration,
-            'car_type_insurance_id' => $quote->car_type_insurance_id,
+            'car_type_insurance_id' => $car_type_insurance_id ?? null,  
+            'current_insurance_status' => $current_insurance_status,
             'vehicle_type_id' => $quote->vehicle_type_id,
             'cylinder' => $quote->cylinder,
             'car_model_detail_id' => $quote->car_model_detail_id,
@@ -466,7 +523,6 @@ class CarCQFRenewalService
             'is_modified' => $quote->is_modified,
             'is_bank_financed' => $quote->is_bank_financed,
             'is_gcc_standard' => $quote->is_gcc_standard,
-            'current_insurance_status' => $quote->current_insurance_status,
             'tier_id' => $quote->tier_id,
             'vehicle_use' => $quote->vehicle_use,
             'emirate_of_registration_id' => $quote->emirate_of_registration_id,
@@ -474,7 +530,7 @@ class CarCQFRenewalService
             'uae_license_held_for_id' => $this->getNextUAELicenseHeldForId($quote),
 
         ];
-
+        
         $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)->first();
         if ($lookup) {
             $quoteData['transaction_type_id'] = $lookup->id;
