@@ -27,6 +27,9 @@ const notification = useToast();
 const lookups = page.props.lookups;
 const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const quote = page.props?.quoteRequest ?? page.props?.record;
+const insuranceProviderCode = quote?.plan?.insurance_provider?.code ?? quote?.plan_provider_code;
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 
 // RTA Transaction Type Constants
 const RTA_CONSTANTS = {
@@ -174,11 +177,11 @@ const plateCodeOptions = computed(() => {
 });
 
 const carDetail = computed(() => {
-  return page.props.quoteRequest?.car_quote_request_detail;
+  return quote?.car_quote_request_detail ?? quote;
 });
 
 const vehicleDriverDetail = computed(() => {
-  return page.props.quoteRequest?.vehicle_driver_detail;
+  return quote?.vehicle_driver_detail;
 });
 
 const dateToYMD = date => {
@@ -196,9 +199,9 @@ const dateToYMD = date => {
 
 const additionalVehicleTransactionDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
-  quote_uuid: page.props.quoteRequest?.uuid,
+  quote_uuid: quote?.uuid,
   insurance_provider_code:
-    page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
+    quote?.plan?.insurance_provider.code ?? '',
   additional_vehicle_transaction_details: true,
   rta_transaction_type:
     vehicleDriverDetail.value?.rta_transaction_type?.toString() ?? '',
@@ -215,16 +218,16 @@ const additionalVehicleTransactionDetailsForm = useForm({
   first_registration_date:
     vehicleDriverDetail.value?.first_registration_date ?? '',
   policy_effective_date:
-    dateToYMD(page.props.quoteRequest?.policy_start_date) ?? '',
+    dateToYMD(quote?.policy_start_date) ?? '',
   policy_expiry_date:
-    dateToYMD(page.props.quoteRequest?.policy_expiry_date) ?? '',
-  certificate_start_date: page.props.quoteRequest?.certificate_start_date ?? '',
-  certificate_end_date: page.props.quoteRequest?.certificate_end_date ?? '',
+    dateToYMD(quote?.policy_expiry_date) ?? '',
+  certificate_start_date: quote?.certificate_start_date ?? '',
+  certificate_end_date: quote?.certificate_end_date ?? '',
   annual_mileage_estimate:
     vehicleDriverDetail.value?.annual_mileage_estimate?.toString() ?? '',
   previous_policy_provider:
-    page.props.quoteRequest?.currently_insured_with?.toString() ?? '',
-  lead_source: page.props.quoteRequest?.source?.toString() ?? '',
+    quote?.currently_insured_with?.toString() ?? '',
+  lead_source: quote?.source?.toString() ?? '',
 });
 
 // Initialize user modification flags based on existing saved values
@@ -287,24 +290,15 @@ watch(
 );
 
 const isGIG = computed(() => {
-  return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.AXA
-  );
+  return insuranceProviderCode === insuranceProviderCodeEnum.AXA;
 });
 
 const isLIVA = computed(() => {
-  return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.RSA
-  );
+  return insuranceProviderCode === insuranceProviderCodeEnum.RSA;
 });
 
 const isSUKOON = computed(() => {
-  return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.OIC
-  );
+  return insuranceProviderCode === insuranceProviderCodeEnum.OIC;
 });
 
 // RTA Transaction Type specific computed properties
@@ -321,7 +315,7 @@ const isGigRenewal = computed(() => {
 
 // Check if current quote source is NOT renewals_uploads
 const isNonRenewalsUploadSource = computed(() => {
-  return page.props.quoteRequest?.source !== RTA_CONSTANTS.RENEWALS_UPLOADS;
+  return quote?.source !== RTA_CONSTANTS.RENEWALS_UPLOADS;
 });
 
 // Check if this is Vehicle Renewal with non-renewals_uploads source

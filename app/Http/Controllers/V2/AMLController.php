@@ -253,16 +253,11 @@ class AMLController extends Controller
         })) : 0;
 
         $lookups = app(AMLService::class)->getAMLLookups();
-
-        if ($quoteType->code == quoteTypeCode::Car && ($quoteRequest?->plan?->insuranceProvider?->code == InsuranceProvidersEnum::AXA)) {
-            $additionalLookups = app(AMLService::class)->getAMLLookups($quoteRequest?->plan?->provider_id, [
-                LookupsEnum::RTA_TRANSACTION_TYPE,
-                LookupsEnum::RTA_PLATE_CATEGORY,
-                LookupsEnum::VEHICLE_COLOR,
-                LookupsEnum::BANK_NAME,
-            ]);
-
-            $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
+        $insuranceProvider = $quoteRequest?->plan?->insuranceProvider;
+        $isAddionalFieldsEnabled = app(AMLService::class)->isAdditionalVehicleAndDriverDetailsEnabled($quoteType?->code, $insuranceProvider?->code, $quoteRequest?->registration_type);
+        if ($isAddionalFieldsEnabled) {
+            $additionalLookups = app(AMLService::class)->getAdditionaVehicleDriverLookups($quoteType->code, $insuranceProvider?->id);
+            $lookups = array_merge($lookups->toArray(), $additionalLookups);
         }
 
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);
@@ -288,33 +283,7 @@ class AMLController extends Controller
         }
 
         // Add RTA configuration data for Car quotes
-        $rtaConfigurationData = [];
-        if ($quoteType->code == quoteTypeCode::Car) {
-            $rtaService = app(RtaTransactionTypeService::class);
-
-            // Get all RTA transaction types with their configurations
-            $rtaTransactionTypes = [
-                'RTT01' => 'New Vehicle Registration',
-                'RTT03' => 'Change Vehicle Ownership',
-                'RTT04' => 'Vehicle Renewal',
-            ];
-
-            $rtaConfigurationData = [
-                'rta_transaction_types' => $rtaTransactionTypes,
-                'rta_field_configurations' => [],
-                'rta_validation_summaries' => [],
-            ];
-
-            // Pre-generate configurations for all RTA types and both GIG/Non-GIG scenarios
-            foreach (array_keys($rtaTransactionTypes) as $rtaType) {
-                foreach ([false, true] as $isGigRenewal) {
-                    $configKey = $rtaType.($isGigRenewal ? '_GIG' : '');
-
-                    $rtaConfigurationData['rta_field_configurations'][$configKey] = $rtaService->getFrontendFieldConfig($rtaType, $isGigRenewal);
-                    $rtaConfigurationData['rta_validation_summaries'][$configKey] = $rtaService->getValidationSummary($rtaType, $isGigRenewal);
-                }
-            }
-        }
+        $rtaConfigurationData = app(AMLService::class)->getRTATransactionConfigurations($quoteType->code);
 
         return inertia('Aml/DetailPage', array_merge([
             'quoteType' => $quoteType,
@@ -343,7 +312,7 @@ class AMLController extends Controller
             'isAnyEscalated' => $isAnyEscalated,
             'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType, $quoteRequest),
             'permissionsEnum' => PermissionsEnum::asArray(),
-            'isPrivateCar' => $quoteRequest?->registration_type === CarRegistrationType::PERSONAL,
+            'isAddionalFieldsEnabled' => $isAddionalFieldsEnabled,
         ], $businessPayload ?? [], $rtaConfigurationData));
     }
 

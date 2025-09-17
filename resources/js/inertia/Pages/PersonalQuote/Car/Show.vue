@@ -10,6 +10,8 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
+import AdditionalVehicleTransactionDetails from '../../Aml/Partials/AdditionalVehicleTransactionDetails.vue';
+import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
 
 defineProps({
   quote: Object,
@@ -106,6 +108,8 @@ defineProps({
   businessActivities: Object,
   apiIssuanceStatus: String,
   insurerApiStatus: String,
+  isAddionalFieldsEnabled: Boolean,
+  rtaConfigurationData: Object,
 });
 
 const page = usePage();
@@ -654,6 +658,7 @@ const modals = reactive({
   createPlan: false,
   sendConfirm: false,
   showEmailEventsModal: false,
+  additionalVehicleDriverDetails: false,
 });
 
 const confirmData = reactive({
@@ -1964,6 +1969,16 @@ function handleOcrNotification(event) {
         </template>
         <template #body>
           <x-divider class="my-4 mb-3" />
+          <div class="flex gap-2 mb-4 justify-end">
+            <x-button
+              v-if="isAddionalFieldsEnabled"
+              size="sm"
+              color="orange"
+              @click.prevent="modals.additionalVehicleDriverDetails = true"
+            >
+              Additional Vehicle / Driver Details
+            </x-button>
+          </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
@@ -2300,6 +2315,30 @@ function handleOcrNotification(event) {
         </template>
       </Collapsible>
     </div>
+
+    <x-modal
+      v-model="modals.additionalVehicleDriverDetails"
+      size="lg"
+      title="Additional Vehicle / Driver Details"
+      show-close
+      backdrop
+    >
+      <AdditionalVehicleTransactionDetails
+        :insurerPortalSyncData="insurerPortalSyncData"
+        :rta_transaction_types="rtaConfigurationData.rta_transaction_types"
+        :rta_field_configurations="rtaConfigurationData.rta_field_configurations"
+        :rta_validation_summaries="rtaConfigurationData.rta_validation_summaries"
+      />
+      <x-divider class="mb-4 mt-4" />
+      <AdditionalDriverDetails :insurerPortalSyncData="insurerPortalSyncData" />
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button size="sm" ghost @click.prevent="modals.additionalVehicleDriverDetails = false">
+            Close
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
 
     <x-modal
       v-model="modals.duplicate"

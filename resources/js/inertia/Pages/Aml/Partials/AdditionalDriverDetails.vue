@@ -15,6 +15,7 @@ const lookups = page.props.lookups;
 const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const isSyncFromInsurer = ref(false);
+const quote = page.props?.quoteRequest ?? page.props?.record;
 
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [
@@ -44,14 +45,14 @@ const drivingExperienceOptions = computed(() => {
 });
 
 const vehicleDriverDetail = computed(() => {
-  return page.props.quoteRequest?.vehicle_driver_detail;
+  return quote?.vehicle_driver_detail;
 });
 
 const additionalDriverDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
-  quote_uuid: page.props.quoteRequest?.uuid,
+  quote_uuid: quote?.uuid,
   insurance_provider_code:
-    page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
+    quote?.plan?.insurance_provider.code ?? '',
   is_insured_and_driver_same:
     vehicleDriverDetail.value?.is_insured_and_driver_same?.toString() ?? '',
   driver_first_name: vehicleDriverDetail.value?.driver_first_name ?? '',
@@ -135,21 +136,21 @@ const submitAdditionalDriverDetailsForm = async isValid => {
 
 const isGIG = computed(() => {
   return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
+    quote?.plan?.insurance_provider.code ===
     page.props.insuranceProviderCodeEnum.AXA
   );
 });
 
 const isLIVA = computed(() => {
   return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
+    quote?.plan?.insurance_provider.code ===
     page.props.insuranceProviderCodeEnum.RSA
   );
 });
 
 const isSUKOON = computed(() => {
   return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
+    quote?.plan?.insurance_provider.code ===
     page.props.insuranceProviderCodeEnum.OIC
   );
 });
