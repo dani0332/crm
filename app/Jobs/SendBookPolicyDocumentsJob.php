@@ -182,7 +182,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
             LoggerService::info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid, extra: [
-                'response' => $response
+                'response' => $response,
             ]);
         }
 
