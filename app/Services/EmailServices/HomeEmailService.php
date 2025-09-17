@@ -519,6 +519,7 @@ class HomeEmailService extends BaseService
             'customerName' => trim("{$personalQuote->first_name} {$personalQuote->last_name}"),
             'refID' => $personalQuote->code,
             'customerMobile' => $personalQuote->mobile_no ?? '',
+            'isPolicyExpired' => $personalQuote->policy_expiry_date ? now()->parse($personalQuote->policy_expiry_date)->isPast() : false,
 
             // Advisor-related data
             'advisor' => $advisor ?? null,
