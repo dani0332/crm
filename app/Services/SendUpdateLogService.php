@@ -1324,14 +1324,11 @@ class SendUpdateLogService
         return (isset($carQuote->plan->carAddons)) ? $carQuote?->plan?->carAddons->toArray() : [];
     }
 
-    public function sendUpdateToCustomerEmailData($sendUpdateLog): array
+    public function sendUpdateToCustomerEmailData($sendUpdateLog, $quote): array
     {
         LoggerService::info('fn:sendUpdateToCustomerEmailData - SendUpdateLogService');
 
         $quoteTypeId = $sendUpdateLog->quote_type_id;
-        $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
-        $quoteModel = $this->getModelObject($quoteType);
-        $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
         $insuranceProviderText = $sendUpdateLog?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;

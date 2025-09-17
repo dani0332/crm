@@ -66,6 +66,7 @@ const loaders = reactive({
   submit: false,
   table: false,
   search: false,
+  reset: false
 });
 
 const statusText = statusId => resolveUserStatusText(statusId);
@@ -370,8 +371,8 @@ function onReset() {
     method: 'get',
     data: {},
     preserveScroll: true,
-    onBefore: () => (loaders.search = true),
-    onSuccess: () => (loaders.search = false),
+    onBefore: () => (loaders.reset = true),
+    onSuccess: () => (loaders.reset = false),
   });
 }
 
@@ -572,7 +573,7 @@ onMounted(() => {
           size="md"
           color="primary"
           type="submit"
-          :loading="loaders.search"
+          :loading="loaders.reset"
           @click.prevent="onReset()"
         >
           Reset
