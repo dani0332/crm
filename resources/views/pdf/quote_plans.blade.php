@@ -900,12 +900,9 @@
 
 
     {{-- PDF Page Footer Section --}}
-    @component('pdf.components.pdf_footer_section')
-        @slot('quote')
-            {{ $quote }}
-        @endslot
-     
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
     @endcomponent
+
 {{-- End of PDF Page Footer Section --}}
 
 
