@@ -8,6 +8,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
+use App\Http\Requests\UpdateLeadAllocationRequest;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Jobs\ReAssignHealthLeadsJob;
 use App\Jobs\ReAssignLeads;
@@ -17,12 +18,11 @@ use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\CRUDService;
 use App\Services\LeadAllocationService;
+use App\Services\Logger\LoggerService;
 use App\Traits\TeamHierarchyTrait;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Http\JsonResponse;
-use App\Http\Requests\UpdateLeadAllocationRequest;
-use App\Services\Logger\LoggerService;
 
 class LeadAllocationController extends Controller
 {
