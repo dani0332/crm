@@ -125,11 +125,6 @@ const isLIVA = computed(() => {
   );
 });
 
-const isLivaRenewal = computed(() => {
-  return page.props.quoteRequest?.source === page.props.leadSource.RENEWAL_UPLOAD
-    && page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.RSA;
-});
-
 const isSUKOON = computed(() => {
   return (
     page.props.quoteRequest?.plan?.insurance_provider.code ===
@@ -313,7 +308,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
           :required="isSUKOON"
           :options="licenseIssuePlaceOptions"
           placeholder="Select License Issue Place"
-          :disabled="hasNotEditPermission || isLivaRenewal"
+          :disabled="hasNotEditPermission"
           label="License Issue Place"
           :tooltip="`Emirate where the driver's license was issued`"
         />
@@ -323,7 +318,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
           :rules="isSUKOON ? [isRequired] : []"
           :required="isSUKOON"
           placeholder="License Issue Date"
-          :disabled="hasNotEditPermission || isLivaRenewal"
+          :disabled="hasNotEditPermission"
           label="License Issue Date"
           :tooltip="`Date of issuance of the current driver's license`"
         />
@@ -333,7 +328,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
           placeholder="License Expiry Date"
           :rules="(! isLIVA) ? [isRequired] : []"
           :required="! isLIVA"
-          :disabled="hasNotEditPermission || isLivaRenewal"
+          :disabled="hasNotEditPermission"
           label="License Expiry Date"
           :tooltip="`Expiry date of the current driver's license`"
         />

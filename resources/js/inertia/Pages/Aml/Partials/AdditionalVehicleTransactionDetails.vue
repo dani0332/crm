@@ -671,27 +671,22 @@ const applyAutoCalculations = (forceCalculation = false) => {
 const LIVAEnums = page.props.LIVAEnums;
 
 const livaValidations = (rtaTransactionType) => {
-  if (isLivaRenewal.value) {
-    livaConfig.value.certificate_start_date = false;
+  if (
+    [
+      LIVAEnums.REGISTRATION_OF_NEW_VEHICLE,
+      LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_VALID,
+      LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_TO_EXPIRE].
+      includes(rtaTransactionType)
+  ) {
+    livaConfig.value.policy_effective_date = false;
+    livaConfig.value.policy_expiry_date = true;
+    livaConfig.value.certificate_start_date = true;
     livaConfig.value.certificate_end_date = true;
   } else {
-    if (
-      [
-        LIVAEnums.REGISTRATION_OF_NEW_VEHICLE,
-        LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_VALID,
-        LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_TO_EXPIRE].
-        includes(rtaTransactionType)
-    ) {
-      livaConfig.value.policy_effective_date = false;
-      livaConfig.value.policy_expiry_date = true;
-      livaConfig.value.certificate_start_date = true;
-      livaConfig.value.certificate_end_date = true;
-    } else {
-      livaConfig.value.policy_effective_date = false;
-      livaConfig.value.policy_expiry_date = false;
-      livaConfig.value.certificate_start_date = false;
-      livaConfig.value.certificate_end_date = true;
-    }
+    livaConfig.value.policy_effective_date = false;
+    livaConfig.value.policy_expiry_date = false;
+    livaConfig.value.certificate_start_date = false;
+    livaConfig.value.certificate_end_date = true;
   }
 };
 
@@ -1142,7 +1137,7 @@ watch(
             placeholder="Select Plate Code"
             :options="plateCodeOptions"
             class="w-full"
-            :disabled="hasNotEditPermission || isLivaRenewal"
+            :disabled="hasNotEditPermission"
             label="Plate Code"
             :tooltip="`Official plate code and registration number`"
           />
@@ -1167,7 +1162,7 @@ watch(
             :required="registrationNoValidation"
             placeholder="Plate Number"
             type="text"
-            :disabled="isFieldDisabled('plate_number') || hasNotEditPermission || isLivaRenewal"
+            :disabled="isFieldDisabled('plate_number') || hasNotEditPermission"
             :readonly="fieldConfig.plate_number?.readonly"
             label="Plate Number"
             :tooltip="`Official plate code and registration number`"
@@ -1198,7 +1193,7 @@ watch(
             placeholder="Chassis Number"
             type="text"
             :error="additionalVehicleTransactionDetailsForm.errors.chassis_number"
-            :disabled="isFieldDisabled('chassis_number') || hasNotEditPermission || isLivaRenewal"
+            :disabled="isFieldDisabled('chassis_number') || hasNotEditPermission"
             :required="isFieldRequired('chassis_number')"
             label="Chassis Number"
             :tooltip="`Vehicle chassis number`"
@@ -1211,7 +1206,7 @@ watch(
             :required="isFieldRequired('engine_number')"
             placeholder="Engine Number"
             type="text"
-            :disabled="isFieldDisabled('engine_number') || hasNotEditPermission || isLivaRenewal"
+            :disabled="isFieldDisabled('engine_number') || hasNotEditPermission"
             label="Engine Number"
             :tooltip="`Vehicle engine number`"
           />
@@ -1224,7 +1219,7 @@ watch(
             :required="isFieldRequired('rta_plate_category')"
             :options="rtaPlateCategoryOptions"
             placeholder="Select RTA Plate Category"
-            :disabled="isFieldDisabled('rta_plate_category') || hasNotEditPermission || isLivaRenewal"
+            :disabled="isFieldDisabled('rta_plate_category') || hasNotEditPermission"
             label="RTA Plate Category"
             :tooltip="`Vehicle plate type as defined by the traffic department (e.g., private, commercial)`"
           />
@@ -1237,7 +1232,7 @@ watch(
             :rules="getFieldRules('vehicle_color')"
             :required="isFieldRequired('vehicle_color')"
             placeholder="Select Vehicle Color"
-            :disabled="isFieldDisabled('vehicle_color') || hasNotEditPermission || isLivaRenewal"
+            :disabled="isFieldDisabled('vehicle_color') || hasNotEditPermission"
             class="w-full"
             label="Vehicle Color"
             :tooltip="`Vehicle color as per the official documentation`"
@@ -1321,7 +1316,7 @@ watch(
             :rules="getFieldRules('first_registration_date')"
             :required="isFieldRequired('first_registration_date')"
             placeholder="First Registration Date"
-            :disabled="isFieldDisabled('first_registration_date') || hasNotEditPermission || isLivaRenewal"
+            :disabled="isFieldDisabled('first_registration_date') || hasNotEditPermission"
             label="First Registration Date"
             :tooltip="`Date the vehicle was first registered with the traffic department`"
           />
