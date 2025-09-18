@@ -2316,7 +2316,10 @@ class CRUDController extends Controller
         $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
         info('sendEmailOneClickBuy OCB email data built for quote uuid: '.$request->quote_uuid);
-
+        if(suppressIntroEmailByStatus($carQuote->quote_status_id) && $carQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
+            LoggerService::info(self::class." -Skipping OCB Email because for UUID: {$carQuote->uuid}");
+            return;
+        }
         $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
 
         if ($responseCode == 201) {
