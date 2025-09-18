@@ -211,11 +211,11 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 $emailData->tag = 'health-revival-initial-email';
                 $emailData->templateType = 'revivalHealthInitial';
 
-                if($healthQuote->isAUHLead(false) && $healthQuote->isLeadSourceRevivalOrInsuranceWallet()){
+                if ($healthQuote->isAUHLead(false) && $healthQuote->isLeadSourceRevivalOrInsuranceWallet()) {
                     // skip email for AUH and Revival/Insurance Wallet
                     LoggerService::info('HealthRevivalLeadsCreationJob - Skipping email for AUH and Revival/Insurance Wallet for uuid: '.$healthQuote->uuid);
                     $response = 201;
-                }else{
+                } else {
                     $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
                 }
                 if ($response == 201) {
