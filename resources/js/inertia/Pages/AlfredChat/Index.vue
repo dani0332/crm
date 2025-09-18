@@ -265,12 +265,12 @@ const exportReport = async (exportType = 'download') => {
         filters.chat_initiated_at[1],
       );
 
-      if (chatDays > 30) {
+      if (chatDays > 31) {
         notification.error({
           position: 'top',
           title: 'Export Error!',
           message:
-            'Maximum 30 days are allowed for Chat Initiated At date range.',
+            'Maximum 31 days are allowed for Chat Initiated At date range.',
         });
         return;
       }
@@ -283,12 +283,12 @@ const exportReport = async (exportType = 'download') => {
         filters.lead_created_at[1],
       );
 
-      if (leadDays > 30) {
+      if (leadDays > 31) {
         notification.error({
           position: 'top',
           title: 'Export Error',
           message:
-            'Maximum 30 days are allowed for Lead Created At date range.',
+            'Maximum 31 days are allowed for Lead Created At date range.',
         });
         return;
       }
@@ -392,10 +392,10 @@ const exportReport = async (exportType = 'download') => {
         :rules="
           filters.quoteId || filters.email || filters.mobile_no
             ? []
-            : [maxDateRangeArray(30)]
+            : [maxDateRangeArray(31)]
         "
         :onlySelect="true"
-        tooltip="Date range of customer interaction with InstantAlfred (Maximum 30 days allowed)"
+        tooltip="Date range of customer interaction with InstantAlfred (Maximum 31 days allowed)"
       />
       <DatePicker
         v-model="filters.lead_created_at"
@@ -407,8 +407,8 @@ const exportReport = async (exportType = 'download') => {
         time-picker-inline
         enableTimePicker
         withTime
-        :rules="[maxDateRangeArray(30)]"
-        tooltip="Lead creation date range (Maximum 30 days allowed)"
+        :rules="[maxDateRangeArray(31)]"
+        tooltip="Lead creation date range (Maximum 31 days allowed)"
       />
 
       <x-select
