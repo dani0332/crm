@@ -64,7 +64,7 @@ class BusinessQuoteObserver
        
             
 
-            if (suppressIntroEmailByStatus($businessQuote->quote_status_id) &&  $businessQuote->source != LeadSourceEnum::IMCRM && ! empty($businessTypeInsurance)) {
+            if (!suppressIntroEmailByStatus($businessQuote->quote_status_id) &&  $businessQuote->source != LeadSourceEnum::IMCRM && ! empty($businessTypeInsurance)) {
                 LoggerService::info(self::class." -  business_type_of_insurance ID: {$businessQuote->business_type_of_insurance_id} | Ref-ID: {$businessQuote->uuid} ");
                 LoggerService::info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$businessQuote->advisor_id} | Ref-ID: {$businessQuote->uuid}  ");
 
