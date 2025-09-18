@@ -840,7 +840,7 @@ class AMLService
                         'screening_type' => $screeningType,
                     ];
 
-                    if (isset($getQuoteResponse['isPolicyExpired']) && $getQuoteResponse['isPolicyExpired']) {
+                    if ($paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA && isset($getQuoteResponse['isPolicyExpired']) && $getQuoteResponse['isPolicyExpired']) {
                         LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Previous policy has expired - Ref-ID: '.$quoteDetails->code);
                         $screeningResponse['message'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED;
                         $screeningResponse['is_previous_policy_expired'] = $getQuoteResponse['isPolicyExpired'];
@@ -989,7 +989,7 @@ class AMLService
             $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', $insurerScreeningPayload);
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - '.$providerName.' Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.json_encode($screeningResponse));
 
-            if (isset($screeningResponse['isPolicyExpired']) && $screeningResponse['isPolicyExpired']) {
+            if ($paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA && isset($screeningResponse['isPolicyExpired']) && $screeningResponse['isPolicyExpired']) {
                 LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Previous policy has expired - Ref-ID: '.$quoteDetails->code);
                 $screeningResponse['status'] = AMLStatusCode::AMLPending;
                 $screeningResponse['message'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED;
@@ -1076,6 +1076,7 @@ class AMLService
                     'statusAPIFailed' => 'Quote Finalized But Premium Not Matched',
                     'processInvolved' => 'Quote Finalization',
                 ]);
+
                 AutomationFailedJob::dispatch(
                     $quoteDetails,
                     QuoteTypeId::Car,

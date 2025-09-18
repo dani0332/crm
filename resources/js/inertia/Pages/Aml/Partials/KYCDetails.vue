@@ -324,10 +324,20 @@ const submitInsuredKycForm = isValid => {
     axios
       .post('/update-insured-kyc', kycFormDetails)
       .then(response => {
-        if(response.data.insurer_screening) {
-          if(response.data.insurer_screening.status == 'AML_SCREENING_FAILED') {
+        if (response.data.insurer_screening) {
+          if (
+            response.data.insurer_screening.status == 'AML_SCREENING_FAILED'
+          ) {
+            let failureResponseMessage =
+              response.data.insurer_screening.message ||
+              `${insuranceProviderCode} server connection issue. Please check API logs for details of the error`;
+
+            if (response.data.insurer_screening.isEmailMismatched == true) {
+              failureResponseMessage =
+                `Email ID Mismatch Between ${insuranceProviderCode} Portal and IMCRM`;
+            }
             notification.error({
-              title: response.data.insurer_screening.message || `${insuranceProviderCode} server connection issue. Please check API logs for details of the error`,
+              title: failureResponseMessage,
               position: 'top',
             });
           } else if(response.data.insurer_screening.status == 'AML_SCREENING_CLEARED') {
