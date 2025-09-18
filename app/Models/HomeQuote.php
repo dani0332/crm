@@ -220,4 +220,9 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->allowedColumns;
     }
+
+    public function renewalBatchModel()
+    {
+        return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
+    }
 }
