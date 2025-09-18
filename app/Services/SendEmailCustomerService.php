@@ -1056,21 +1056,12 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendUpdateToCustomerEmail($emailTemplateId, $emailData, $tag, $quoteTypeId, $isAUHHealthLead = false)
+    public function sendUpdateToCustomerEmail($emailTemplateId, $emailData, $tag, $quoteTypeId)
     {
         LoggerService::info('fn:sendUpdateToCustomerEmail - SendEmailCustomerService, email sending started', extra: [
             'emailTemplateId' => $emailTemplateId,
             'tag' => $tag,
         ]);
-
-        if ($isAUHHealthLead) {
-            LoggerService::info('fn:sendUpdateToCustomerEmail - Skipped, as lead is from AUH with Revival/Insurance Wallet source', [
-                'isAUHHealthLead' => $isAUHHealthLead,
-                'quoteCode' => $emailData->code,
-            ]);
-
-            return 201;
-        }
 
         $messageId = null;
         $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;

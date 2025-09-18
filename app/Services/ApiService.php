@@ -315,8 +315,8 @@ class ApiService
             return apiResponse(null, Response::HTTP_BAD_REQUEST, self::LEAD_NOT_FOUND);
         }
 
-        if ($lead->isAUHLead(false)) {
-            return apiResponse(null, Response::HTTP_OK, 'AUH Leads are not allowed to send OCA Email!');
+        if ($lead->isAUHLead(false) && $lead->isLeadSourceRevivalOrInsuranceWallet()) {
+            return apiResponse(null, Response::HTTP_OK, 'AUH Revival/Insurance Wallet Leads are not allowed to send OCA Email!');
         }
 
         if (! $lead->isApplyNowEmailSent()) {
