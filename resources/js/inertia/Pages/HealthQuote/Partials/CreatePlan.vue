@@ -93,6 +93,7 @@ const onSubmit = isValid => {
       membersPrice: membersPrice,
     })
     .then(res => {
+      console.log('res', res);
       if (res.data == 200) {
         emit('success');
       } else {
