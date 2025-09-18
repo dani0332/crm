@@ -632,7 +632,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 $docName = $duplicateDocName;
             }
 
-            $certificateOfInsuranceAvailable = $docName === self::POLICY_DOC_CERTIFICATE_OF_INSURANCE && $quoteDocument?->id;
+            $certificateOfInsuranceAvailable = str_contains($docName, self::POLICY_DOC_CERTIFICATE_OF_INSURANCE) && $quoteDocument?->id;
         }
 
         $quote->update(['rta_upload_status' => $certificateOfInsuranceAvailable ? self::RTA_UPLOAD_STATUS_DONE : self::RTA_UPLOAD_STATUS_PENDING]);
