@@ -326,10 +326,13 @@ const submitInsuredKycForm = isValid => {
           if (
             response.data.insurer_screening.status == 'AML_SCREENING_FAILED'
           ) {
-            let failureResponseMessage = response.data.insurer_screening.message || 'GIG server connection issue. Please check API logs for details of the error';
+            let failureResponseMessage =
+              response.data.insurer_screening.message ||
+              'GIG server connection issue. Please check API logs for details of the error';
 
-            if(response.data.insurer_screening.isEmailMismatched == true) {
-              failureResponseMessage = 'Email ID Mismatch Between GIG Portal and IMCRM';
+            if (response.data.insurer_screening.isEmailMismatched == true) {
+              failureResponseMessage =
+                'Email ID Mismatch Between GIG Portal and IMCRM';
             }
             notification.error({
               title: failureResponseMessage,
