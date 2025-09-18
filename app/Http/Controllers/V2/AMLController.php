@@ -324,6 +324,12 @@ class AMLController extends Controller
             }
         }
 
+        if ($isLIVA) {
+            $gigInsurerDefaultEmail = GenericModelTypeEnum::LIVA_INSURER_SCREENIN_DEFAULT_EMAIL;
+        } else {
+            $gigInsurerDefaultEmail = GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL;
+        }
+
         return inertia('Aml/DetailPage', array_merge([
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
@@ -347,7 +353,7 @@ class AMLController extends Controller
             'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->aml_status] ?? null,
             'defaultNationality' => GenericRequestEnum::DEFAULT_NATIONALITY,
             'screeningType' => $screeningType,
-            'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
+            'gigInsurerDefaultEmail' => $gigInsurerDefaultEmail,
             'isAnyEscalated' => $isAnyEscalated,
             'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType, $quoteRequest),
             'permissionsEnum' => PermissionsEnum::asArray(),

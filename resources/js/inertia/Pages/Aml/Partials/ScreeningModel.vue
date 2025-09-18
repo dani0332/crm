@@ -239,7 +239,7 @@ const screeningFormDetails = useForm({
   get_quote_email_gig:
     (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
       ? quoteRequest?.car_quote_request_detail?.insurer_quote_email
-      : quoteRequest?.quote_detail?.insurer_quote_email) ??
+      : quoteRequest?.quote_detail?.insurer_quote_email) ||
     page.props.gigInsurerDefaultEmail,
   chassis_number:
     (page.props.quoteType.code === props.quoteTypeCodeEnum.Car

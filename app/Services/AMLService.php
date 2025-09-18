@@ -790,12 +790,6 @@ class AMLService
             $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA &&
             $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD;
 
-        if ($isLIVA) {
-            $emailLIVA = $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD
-                ? 'test@ae.livainsurance.com' // TODO just for testing envs
-                : 'hitesh.motwani@afia.ae';
-        }
-
         if ($isRenewalUpload) {
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload quote. Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Processing without Update Quote API call');
         }
@@ -881,7 +875,7 @@ class AMLService
                 'chassisNumber' => $request['chassis_number'] ?? '', // TODO: need to remove this.
                 'gender' => $this->formatGender($insuredDetails?->gender),
                 'dateOfBirth' => $insuredDetails?->dob,
-                'getQuoteEmail' => $isLIVA ? $emailLIVA : $request['get_quote_email_gig'],
+                'getQuoteEmail' => $request['get_quote_email_gig'],
                 'insuredFirstName' => $insuredDetails?->first_name,
                 'insuredLastName' => $insuredDetails?->last_name,
             ];
@@ -892,6 +886,7 @@ class AMLService
 
             if ($quoteTypeId == QuoteTypes::CAR->id()) {
                 $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
+                $insurerScreeningPayload['getQuoteEmail'] = $carQuoteRequestDetails->insurer_quote_email;
                 $vehicleDriverDetail = $quoteDetails->vehicleDriverDetail;
 
                 $nationality = Nationality::where('code', $vehicleDriverDetail?->driver_home_country_license_issuance)->first();
