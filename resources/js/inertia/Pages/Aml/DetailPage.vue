@@ -42,7 +42,7 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
-  isPrivateCar: Boolean,
+  isAddionalFieldsEnabled: Boolean,
 });
 const page = usePage();
 const hasRole = role => useHasRole(role);
@@ -719,6 +719,7 @@ const insuredId = props.insuredDetails?.insured?.id ?? null;
     :rta_transaction_types="rta_transaction_types"
     :rta_field_configurations="rta_field_configurations"
     :rta_validation_summaries="rta_validation_summaries"
+    :isAddionalFieldsEnabled="props.isAddionalFieldsEnabled"
   />
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
