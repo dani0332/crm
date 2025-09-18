@@ -832,16 +832,16 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         try {
             $httpResponse = Http::timeout(50)->withHeaders($this->headers)->post($url, $payload);
-            // TODO: statusCode: 404, message: Resource not found. if url wrong.
 
             if ($responseObject = $httpResponse->object()) {
                 if (
                     isset($responseObject->$keyAPI?->errors) ||
-                    (isset($responseObject->$keyAPI?->Status) && $responseObject->$keyAPI?->Status == false)
+                    (isset($responseObject->$keyAPI?->Status) && $responseObject->$keyAPI?->Status == false) ||
+                    (isset($responseObject?->statusCode) && $responseObject?->statusCode == 404)
                 ) {
                     $response['error'] = $responseObject->$keyAPI?->Status ?? $keyAPI.' API Failed';
                     $response['status'] = false;
-                    $response['message'] = json_encode($responseObject->$keyAPI?->errors);
+                    $response['message'] = json_encode($responseObject->$keyAPI?->errors) ?? $responseObject?->message;
                 } else {
                     $response['status'] = true;
                     $response['data'] = $responseObject;
