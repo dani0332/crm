@@ -886,7 +886,8 @@ class AMLService
 
             if ($quoteTypeId == QuoteTypes::CAR->id()) {
                 $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
-                $insurerScreeningPayload['getQuoteEmail'] = $carQuoteRequestDetails->insurer_quote_email;
+                // TODO: verify if email is needed from here
+                // $insurerScreeningPayload['getQuoteEmail'] = $carQuoteRequestDetails->insurer_quote_email;
                 $vehicleDriverDetail = $quoteDetails->vehicleDriverDetail;
 
                 $nationality = Nationality::where('code', $vehicleDriverDetail?->driver_home_country_license_issuance)->first();
