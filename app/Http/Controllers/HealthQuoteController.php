@@ -18,6 +18,7 @@ use App\Repositories\LostReasonRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 
 class HealthQuoteController extends Controller
@@ -31,6 +32,9 @@ class HealthQuoteController extends Controller
 
     public function healthPlanCreateQuote(Request $request)
     {
+        $logPrefix = 'HealthQuoteController - healthPlanCreateQuote - ';
+        LoggerService::startQuoteLogging($request->quoteUID);
+        LoggerService::info($logPrefix.'request - ', $request->all());
         $request->validate([
             'quoteUID' => 'required',
             'formData' => 'required|array',
@@ -70,7 +74,11 @@ class HealthQuoteController extends Controller
             'memberPremiumBreakdown' => $membersBreakDown,
         ];
 
+        LoggerService::info($logPrefix.'planData - ', $planData);
+
         $response = $this->healthQuoteService->renewalCreatePlan($planData);
+
+        LoggerService::info($logPrefix.'response - ', $response);
 
         return $response;
     }

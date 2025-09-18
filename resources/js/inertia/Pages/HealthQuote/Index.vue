@@ -148,7 +148,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch.name', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch_model.name', is_active: true },
   {
     text: 'Private Client',
     value: 'customer.pcp_tag_formatted',
