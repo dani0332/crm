@@ -6,6 +6,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\UserStatusEnum;
 use App\Exceptions\Allocation\AllocationException;
@@ -387,6 +388,8 @@ abstract class BaseAllocationPipe extends AllocationService
             return;
         }
 
+        $excludedAdvisorIds = $this->finalizeExcludedAdvisorIds($excludedAdvisorIds);
+
         $this->allocationRequest->excludedAdvisorIds($excludedAdvisorIds);
     }
 
@@ -406,5 +409,22 @@ abstract class BaseAllocationPipe extends AllocationService
 
         // Return the array of user IDs.
         return $userIds;
+    }
+
+    protected function finalizeExcludedAdvisorIds(array $excludedAdvisorIds): array
+    {
+        $superAdvisorIds = $this->getSuperAdvisorIds();
+
+        $excludedAdvisorIds = array_diff($excludedAdvisorIds, $superAdvisorIds);
+        $excludedAdvisorIds = array_values($excludedAdvisorIds);
+
+        return $excludedAdvisorIds;
+    }
+
+    protected function getSuperAdvisorIds(): array
+    {
+        return User::whereHas('permissions', function ($query) {
+            $query->where('name', PermissionsEnum::BYPASS_RULE_EXCLUSION);
+        })->pluck('id')->toArray();
     }
 }

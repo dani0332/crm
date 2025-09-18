@@ -65,6 +65,8 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         $statusOrder = $this->getOnlineStatusesInOrder();
 
         $excludedUserIds = $this->getExcludedUserIds($teamId);
+        $excludedUserIds = $this->finalizeExcludedAdvisorIds($excludedUserIds);
+
         $this->allocationRequest->set('excludedUserIds', $excludedUserIds);
 
         foreach ($statusOrder as $status) {
