@@ -1704,7 +1704,7 @@ if (! function_exists('suppressIntroEmailByStatus')) {
             QuoteStatusEnum::PolicyCancelledReissued,
         ];
       
-        return !in_array($quoteStatusId, $excludedQuoteStatuses);
+        return in_array($quoteStatusId, $excludedQuoteStatuses);
     }
 }
 
