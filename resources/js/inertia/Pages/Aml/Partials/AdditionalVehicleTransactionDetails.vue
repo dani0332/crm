@@ -22,6 +22,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['update:chassisNumber']);
+
 const page = usePage();
 const notification = useToast();
 const lookups = page.props.lookups;
@@ -368,9 +370,12 @@ const isVehicleRenewalNonUpload = computed(() => {
   );
 });
 
+const isRenewal = computed(() => {
+  return page.props.quoteRequest?.source === page.props.leadSource.RENEWAL_UPLOAD;
+});
+
 const isLivaRenewal = computed(() => {
-  return page.props.quoteRequest?.source === page.props.leadSource.RENEWAL_UPLOAD
-    && isLIVA.value;
+  return isRenewal.value && isLIVA.value;
 });
 
 // Field configuration computed properties
@@ -947,7 +952,10 @@ const submitAdditionalVehicleTransactionDetailsForm = async isValid => {
             },
           );
         }
-
+        emit(
+          'update:chassisNumber',
+          additionalVehicleTransactionDetailsForm.chassis_number,
+        );
         router.reload({
           replace: true,
           preserveScroll: true,
@@ -1057,10 +1065,6 @@ watch(
   },
 );
 
-const isRenewal = computed(() => {
-  return page.props.quoteRequest?.source === page.props.leadSource.RENEWAL_UPLOAD;
-});
-
 watch(
   () => additionalVehicleTransactionDetailsForm.certificate_start_date,
   (newVal) => {
@@ -1077,6 +1081,13 @@ watch(
     additionalVehicleTransactionDetailsForm.policy_expiry_date = formattedExpiryDate;
   }
 });
+
+watch(
+  () => additionalVehicleTransactionDetailsForm.chassis_number,
+  newChassisNumber => {
+    emit('update:chassisNumber', newChassisNumber);
+  },
+);
 </script>
 
 <template>

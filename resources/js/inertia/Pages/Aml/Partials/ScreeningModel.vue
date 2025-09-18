@@ -685,7 +685,6 @@ function screeningFormValidate() {
 }
 const submitScreeningForm = isValid => {
   if (screeningFormValidate()) {
-    // updateFormDetails();
     screeningFormDetails.get(`${quoteRequest.id}/quoteUpdate`, {
       preserveScroll: true,
       onError: errors => {
@@ -769,6 +768,10 @@ const updateInsurerPortalSyncData = data => {
   insurerPortalSyncData.value = data;
 };
 
+const updateChassisNumber = chassisNumber => {
+  screeningFormDetails.chassis_number = chassisNumber;
+};
+
 const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
   createReusableTemplate();
 </script>
@@ -789,6 +792,7 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
         :rta_transaction_types="rta_transaction_types"
         :rta_field_configurations="rta_field_configurations"
         :rta_validation_summaries="rta_validation_summaries"
+        @update:chassisNumber="updateChassisNumber"
       />
       <x-divider class="mb-4 mt-4" />
       <AdditionalDriverDetails :insurerPortalSyncData="insurerPortalSyncData" />
