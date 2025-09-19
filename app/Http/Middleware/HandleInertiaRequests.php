@@ -669,7 +669,7 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->hasAnyRole([RolesEnum::Engineering]),
                         'User Status Logs',
                         route('admin.user-status-logs.index'),
-                        fn ($s) => $s->attributes(['icon' => 'clock'])
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::RoleList),

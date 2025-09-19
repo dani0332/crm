@@ -23,8 +23,12 @@ class UserStatusLogController extends Controller
         $statusLogs = UserStatusAuditLog::with(['user:id,name,email'])
             ->when($request->filled('user_id'), fn ($query) => $query->where('user_id', $request->user_id))
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->status))
-            ->when($request->filled('date_from'), fn ($query) => $query->where('status_changed_at', '>=', Carbon::createFromFormat('Y-m-d', $request->date_from)->startOfDay()))
-            ->when($request->filled('date_to'), fn ($query) => $query->where('status_changed_at', '<=', Carbon::createFromFormat('Y-m-d', $request->date_to)->endOfDay()))
+            ->when($request->has('date_range') && is_array($request->date_range) && count($request->date_range) === 2, fn ($query) =>
+                $query->whereBetween('status_changed_at', [
+                    Carbon::parse($request->date_range[0])->startOfDay(),
+                    Carbon::parse($request->date_range[1])->endOfDay()
+                ])
+            )
             ->orderBy('status_changed_at', 'desc')
             ->simplePaginate(50)
             ->withQueryString();

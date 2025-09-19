@@ -14,8 +14,7 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 const filters = reactive({
   user_id: '',
   status: '',
-  date_from: '',
-  date_to: '',
+  date_range: [],
   page: 1,
 });
 
@@ -60,7 +59,10 @@ const onSubmit = isValid => {
 
     Object.keys(filters).forEach(
       key =>
-        (filters[key] === '' || filters[key].length === 0) &&
+        (filters[key] === '' ||
+          filters[key] === null ||
+          filters[key] === undefined ||
+          (Array.isArray(filters[key]) && filters[key].length === 0)) &&
         delete filters[key],
     );
 
@@ -114,7 +116,7 @@ onMounted(() => {
   </div>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
-    <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <x-select
         label="USER"
         :modelValue="filters.user_id"
@@ -135,19 +137,14 @@ onMounted(() => {
         clearable
         @update:modelValue="val => updateFilter('status', val)"
       />
-      <x-input
-        label="DATE FROM"
-        v-model="filters.date_from"
+      <DatePicker
+        v-model="filters.date_range"
+        label="DATE RANGE"
+        placeholder="Select date range"
+        range
+        size="sm"
+        model-type="yyyy-MM-dd"
         class="w-full"
-        type="date"
-        placeholder="Start date"
-      />
-      <x-input
-        label="DATE TO"
-        v-model="filters.date_to"
-        class="w-full"
-        type="date"
-        placeholder="End date"
       />
     </div>
     <div class="flex justify-end gap-3">
