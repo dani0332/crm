@@ -838,4 +838,58 @@ trait GenericQueriesAllLobs
                                             isset($record->emirate_of_your_visa_id) &&
                                             $record->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI;
     }
+
+    /**
+     * Format dates from various input types to display format (d/m/Y) with comprehensive error handling
+     *
+     * @param  mixed  $date  Date input (string, DateTime, Carbon, or null)
+     * @return string Formatted date in d/m/Y format or empty string on error
+     */
+    protected function formatDateToDisplay($date): string
+    {
+        if (! $date) {
+            return '';
+        }
+
+        if (is_string($date)) {
+            try {
+                if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $date)) {
+                    $dateObj = Carbon::createFromFormat('d-m-Y', $date);
+
+                    return $dateObj->format('d/m/Y');
+                }
+
+                $dateObj = Carbon::parse($date);
+
+                return $dateObj->format('d/m/Y');
+            } catch (\Exception $e) {
+                LoggerService::warning('Failed to format date', extra: [
+                    'date_input' => $date,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return '';
+            }
+        }
+
+        if ($date instanceof \DateTime || $date instanceof Carbon) {
+            try {
+                return $date->format('d/m/Y');
+            } catch (\Exception $e) {
+                LoggerService::warning('Failed to format date object', extra: [
+                    'date_class' => get_class($date),
+                    'error' => $e->getMessage(),
+                ]);
+
+                return '';
+            }
+        }
+
+        LoggerService::warning('Unexpected date type for formatting', extra: [
+            'date_type' => gettype($date),
+            'date_value' => $date,
+        ]);
+
+        return '';
+    }
 }

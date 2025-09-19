@@ -10,6 +10,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
+import CustomerVerificationDetails from './Partials/CustomerVerificationDetails.vue';
 import AdditionalVehicleTransactionDetails from '../../Aml/Partials/AdditionalVehicleTransactionDetails.vue';
 import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
 
@@ -32,6 +33,8 @@ defineProps({
   lostReasons: Array,
   tiers: Array,
   carPlanFeaturesCodeEnum: Object,
+  customerVerificationData: Object,
+  isCustomerVerificationEnabled: [Boolean, Number],
   carPlanExclusionsCodeEnum: Object,
   carPlanAddonsCodeEnum: Object,
   modelType: String,
@@ -659,6 +662,7 @@ const modals = reactive({
   sendConfirm: false,
   showEmailEventsModal: false,
   additionalVehicleDriverDetails: false,
+  customerVerification: false,
 });
 
 const confirmData = reactive({
@@ -1970,6 +1974,14 @@ function handleOcrNotification(event) {
         <template #body>
           <x-divider class="my-4 mb-3" />
           <div class="flex gap-2 mb-4 justify-end">
+            <x-button
+              v-if="isCustomerVerificationEnabled"
+              size="sm"
+              color="orange"
+              @click.prevent="modals.customerVerification = true"
+            >
+              Customer Verification Details
+            </x-button>
             <x-button
               v-if="isAddionalFieldsEnabled"
               size="sm"
@@ -4454,4 +4466,11 @@ function handleOcrNotification(event) {
   />
 
   <lead-raw-data :modelType="'Car'"></lead-raw-data>
+
+  <CustomerVerificationDetails 
+    v-if="isCustomerVerificationEnabled" 
+    :quote="quote" 
+    :modals="modals" 
+    :customerVerificationData="customerVerificationData" 
+  />
 </template>

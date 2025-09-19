@@ -107,6 +107,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTravelEnquiryEmail();
         $this->seedOcrSendUpdateLogFlag();
         $this->seedProductionApprovalEmails();
+        $this->seedCustomerVerificationEnabled();
     }
 
     private function seedBirdWorkflowUrls()
@@ -639,6 +640,19 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]
+        );
+    }
+
+    private function seedCustomerVerificationEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CUSTOMER_VERIFICATION_ENABLED],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
         );
     }
 }

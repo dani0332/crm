@@ -259,4 +259,7 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_SENDUPDATE_OCR = 'ENABLE_SENDUPDATE_OCR';
     public const PRODUCTION_APPROVAL_EMAIL = 'PRODUCTION_APPROVAL_EMAIL';
     public const APPROVAL_PRODUCTION_EMAIL = 'APPROVAL_PRODUCTION_EMAIL';
+    
+    // Customer Verification Feature Toggle
+    public const CUSTOMER_VERIFICATION_ENABLED = 'CUSTOMER_VERIFICATION_ENABLED';
 }
