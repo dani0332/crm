@@ -8,6 +8,7 @@ use App\Enums\BikePlanType;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -324,6 +325,7 @@ class BikeAllocationService extends AllocationService
             })
             ->whereIn('user_id', $tierUserIds)
             ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {
+                $excludedUserIds = $this->finalizeExcludedAdvisorIds($excludedUserIds);
                 $query->whereNotIn('user_id', $excludedUserIds);
             })
             ->where('quote_type_id', QuoteTypes::BIKE->id())
@@ -692,6 +694,8 @@ class BikeAllocationService extends AllocationService
             return;
         }
 
+        $excludedAdvisorIds = $this->finalizeExcludedAdvisorIds($excludedAdvisorIds);
+
         $this->excludedAdvisorIds = $excludedAdvisorIds;
     }
 
@@ -731,5 +735,21 @@ class BikeAllocationService extends AllocationService
         $this->resetProps();
 
         $this->resolveExcludedAdvisorIds();
+    }
+
+    protected function finalizeExcludedAdvisorIds(?array $excludedAdvisorIds): array
+    {
+        if (empty($excludedAdvisorIds)) {
+            return [];
+        }
+
+        $superAdvisorIds = User::whereHas('permissions', function ($query) {
+            $query->where('name', PermissionsEnum::BYPASS_RULE_EXCLUSION);
+        })->pluck('id')->toArray();
+
+        $excludedAdvisorIds = array_diff($excludedAdvisorIds, $superAdvisorIds);
+        $excludedAdvisorIds = array_values($excludedAdvisorIds);
+
+        return $excludedAdvisorIds;
     }
 }
