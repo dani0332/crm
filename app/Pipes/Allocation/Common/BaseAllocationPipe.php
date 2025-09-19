@@ -413,7 +413,7 @@ abstract class BaseAllocationPipe extends AllocationService
 
     protected function finalizeExcludedAdvisorIds(?array $excludedAdvisorIds): array
     {
-        if(empty($excludedAdvisorIds)) {
+        if (empty($excludedAdvisorIds)) {
             return [];
         }
 

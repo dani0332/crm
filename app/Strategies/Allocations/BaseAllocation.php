@@ -2,24 +2,24 @@
 
 namespace App\Strategies\Allocations;
 
-use App\Models\User;
-use App\Enums\QuoteTypes;
-use App\Models\QuoteBatches;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\UserStatusEnum;
-use App\Services\RuleService;
-use Illuminate\Http\Response;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Traits\LeadDuplicatable;
-use App\Enums\AssignmentTypeEnum;
-use Illuminate\Support\Facades\DB;
+use App\Enums\QuoteTypes;
+use App\Enums\UserStatusEnum;
+use App\Models\QuoteBatches;
+use App\Models\User;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
-use App\Enums\LeadAssignmentTriggerEnum;
-use App\Services\SendEmailCustomerService;
-use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Services\NationalityAllocationService;
+use App\Services\RuleService;
+use App\Services\SendEmailCustomerService;
+use App\Traits\LeadDuplicatable;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 abstract class BaseAllocation extends AllocationService implements Allocation
 {
@@ -100,7 +100,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     protected function getLeadBaseQuery()
     {
         return $this->quoteType->model()
-        ->with('quoteDetail')
+            ->with('quoteDetail')
             ->where('uuid', $this->uuid)
             ->when($this->quoteType->isPersonalQuote(), function ($q) {
                 $q->where('quote_type_id', $this->quoteType->id());
@@ -281,6 +281,8 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             return;
         }
 
+        $excludedAdvisorIds = $this->finalizeExcludedAdvisorIds($excludedAdvisorIds);
+
         $this->excludedAdvisorIds = $excludedAdvisorIds;
     }
 
@@ -310,7 +312,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
     protected function finalizeExcludedAdvisorIds(?array $excludedAdvisorIds): array
     {
-        if(empty($excludedAdvisorIds)) {
+        if (empty($excludedAdvisorIds)) {
             return [];
         }
 
