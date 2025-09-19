@@ -1974,13 +1974,26 @@ function handleOcrNotification(event) {
         <template #body>
           <x-divider class="my-4 mb-3" />
           <div class="flex gap-2 mb-4 justify-end">
+            <!-- Verification Required Button (Red) -->
             <x-button
               v-if="isCustomerVerificationEnabled"
               size="sm"
-              color="orange"
+              color="red"
+              class="font-bold shadow-lg border-red-300 animate-pulse"
               @click.prevent="modals.customerVerification = true"
             >
-              Customer Verification Details
+              Verification Required
+            </x-button>
+
+            <!-- Details Verified Button (Green) -->
+            <x-button
+              v-if="isCustomerVerificationEnabled"
+              size="sm"
+              color="green"
+              class="font-semibold shadow-md border-green-300"
+              @click.prevent="modals.customerVerification = true"
+            >
+              Details Verified
             </x-button>
             <x-button
               v-if="isAddionalFieldsEnabled"
