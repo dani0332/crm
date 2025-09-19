@@ -56,6 +56,7 @@ use App\Http\Controllers\TravelController;
 use App\Http\Controllers\TravelLeadAllocationController;
 use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserStatusLogController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\Admin\AllocationAuditController;
 use App\Http\Controllers\V2\Admin\PrivateClientConfigController;
@@ -496,6 +497,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
+        Route::get('user-status-logs', [UserStatusLogController::class, 'index'])->name('admin.user-status-logs.index');
         Route::resource('roles', RoleController::class);
         Route::resource('permissions', PermissionController::class);
         Route::resource('sic-health-config', SICConfigurableController::class)->names([
