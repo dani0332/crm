@@ -786,9 +786,8 @@ class AMLService
         $providerName = InsuranceProvidersEnum::getTextByCode($paymentDetails?->insuranceProvider?->code);
         $isLIVA = $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::RSA;
 
-        $isRenewalUpload = $quoteTypeId == QuoteTypes::CAR->id() &&
-            $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA &&
-            $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD;
+        $vehicleDriverDetail = $quoteDetails?->vehicleDriverDetail;
+        $isRenewalUpload = $quoteTypeId == QuoteTypes::CAR->id() && $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA && $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD;
 
         if ($isRenewalUpload) {
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload quote. Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Processing without Update Quote API call');
@@ -817,9 +816,13 @@ class AMLService
 
         $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$paymentDetails?->insuranceProvider?->code);
 
-        // Handle renewal upload cases - By pass UpdateQuote API and call GetQuote API to filled data and proceed with auto capture
-        if ($isRenewalUpload) {
-            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload - Bypassing Update Quote API call and calling GetQuote API to filled data and proceeding to auto capture - Ref-ID: '.$quoteDetails->code);
+        // Handle renewal upload cases and insured and driver are not the same cases - By pass UpdateQuote API and call GetQuote API to filled data and proceed with auto capture
+        if ($isRenewalUpload || ($paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA && $vehicleDriverDetail?->is_insured_and_driver_same == 0)) {
+            if ($isRenewalUpload) {
+                LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload - Bypassing Update Quote API call and calling GetQuote API to filled data and proceeding to auto capture - Ref-ID: '.$quoteDetails->code);
+            } else {
+                LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insured and Driver are not the same - Bypassing Update Quote API call and calling GetQuote API and proceeding to auto capture - Ref-ID: '.$quoteDetails->code);
+            }
 
             try {
                 $getQuoteResponse = $this->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails->uuid);
@@ -829,14 +832,14 @@ class AMLService
                     $insurerAMLStatusForRenewalUpload = $getQuoteResponse['data']['uwApprovalStatus'] == 'Y' ? AMLStatusCode::AMLScreeningCleared : AMLStatusCode::AMLScreeningFailed;
                     $screeningResponse = [
                         'status' => $insurerAMLStatusForRenewalUpload,
-                        'message' => 'Renewal upload - check insurer AML status after GetQuote API call',
+                        'message' => $isRenewalUpload ? 'Renewal upload - check insurer AML status after GetQuote API call' : 'Insured and Driver are not the same - check insurer AML status after GetQuote API call',
                         'screening_type' => $screeningType,
                     ];
                 } else {
                     LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Failed to retrieve quote details from insurer - Ref-ID: '.$quoteDetails->code.' - Error: '.($getQuoteResponse['message'] ?? 'Unknown error'));
                     $screeningResponse = [
                         'status' => AMLStatusCode::AMLPending,
-                        'message' => 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')',
+                        'message' => $isRenewalUpload ? 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')' : 'Insured and Driver are not the same - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')',
                         'screening_type' => $screeningType,
                     ];
 
@@ -850,7 +853,7 @@ class AMLService
                 LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Exception while calling getQuote API for renewal upload - Ref-ID: '.$quoteDetails->code.' - Error: '.$e->getMessage());
                 $screeningResponse = [
                     'status' => AMLStatusCode::AMLPending,
-                    'message' => 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API exception: '.$e->getMessage().')',
+                    'message' => $isRenewalUpload ? 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API exception: '.$e->getMessage().')' : 'Insured and Driver are not the same - Check Insurer AML status after GetQuote API call (GetQuote API exception: '.$e->getMessage().')',
                     'screening_type' => $screeningType,
                 ];
             }
@@ -2217,6 +2220,10 @@ class AMLService
             }
 
             $response = ['status' => $status, 'message' => $message];
+
+            if (isset($vehicleDriverDetails['is_insured_and_driver_same'])) {
+                $response['is_insured_driver_same'] = $vehicleDriverDetails['is_insured_and_driver_same'];
+            }
             LoggerService::info(__FUNCTION__.' - '.$message);
         } catch (\Exception $ex) {
             LoggerService::info(__FUNCTION__.' - Error saving additional vehicle and driver details', $ex->getMessage());
