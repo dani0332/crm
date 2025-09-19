@@ -1027,7 +1027,7 @@ class AMLService
                     'statusAPIFailed' => 'Quote Finalized But Premium Not Matched',
                     'processInvolved' => 'Quote Finalization',
                 ]);
-                
+
                 AutomationFailedJob::dispatch(
                     $quoteDetails,
                     QuoteTypeId::Car,
