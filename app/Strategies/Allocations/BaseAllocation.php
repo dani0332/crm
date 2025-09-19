@@ -2,23 +2,24 @@
 
 namespace App\Strategies\Allocations;
 
-use App\Enums\AssignmentTypeEnum;
-use App\Enums\BusinessTypeOfInsuranceIdEnum;
-use App\Enums\LeadAssignmentTriggerEnum;
-use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypes;
-use App\Enums\UserStatusEnum;
-use App\Models\QuoteBatches;
 use App\Models\User;
+use App\Enums\QuoteTypes;
+use App\Models\QuoteBatches;
+use App\Enums\LeadSourceEnum;
+use App\Enums\UserStatusEnum;
+use App\Services\RuleService;
+use Illuminate\Http\Response;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Traits\LeadDuplicatable;
+use App\Enums\AssignmentTypeEnum;
+use Illuminate\Support\Facades\DB;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
-use App\Services\NationalityAllocationService;
-use App\Services\RuleService;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Services\SendEmailCustomerService;
-use App\Traits\LeadDuplicatable;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Services\NationalityAllocationService;
 
 abstract class BaseAllocation extends AllocationService implements Allocation
 {
@@ -99,7 +100,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     protected function getLeadBaseQuery()
     {
         return $this->quoteType->model()
-            ->with('quoteDetail')
+        ->with('quoteDetail')
             ->where('uuid', $this->uuid)
             ->when($this->quoteType->isPersonalQuote(), function ($q) {
                 $q->where('quote_type_id', $this->quoteType->id());
@@ -153,6 +154,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             ->activeUser()
             ->when($this->skipRuleUsers, function ($q) {
                 $ruleUserIds = app(RuleService::class)->getRuleUserIds($this->quoteType);
+                $ruleUserIds = $this->finalizeExcludedAdvisorIds($ruleUserIds);
                 $q->whereNotIn('users.id', $ruleUserIds);
             })
             ->orderBy('la.last_allocated', 'asc');
@@ -306,4 +308,19 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         LoggerService::info(self::class.' - Non Advisor Email sent to customer');
     }
 
+    protected function finalizeExcludedAdvisorIds(?array $excludedAdvisorIds): array
+    {
+        if(empty($excludedAdvisorIds)) {
+            return [];
+        }
+
+        $superAdvisorIds = User::whereHas('permissions', function ($query) {
+            $query->where('name', PermissionsEnum::BYPASS_RULE_EXCLUSION);
+        })->pluck('id')->toArray();
+
+        $excludedAdvisorIds = array_diff($excludedAdvisorIds, $superAdvisorIds);
+        $excludedAdvisorIds = array_values($excludedAdvisorIds);
+
+        return $excludedAdvisorIds;
+    }
 }
