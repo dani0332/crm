@@ -2167,7 +2167,11 @@ class AMLService
                 $message = 'Additional Vehicle and Driver Details failed to save';
             }
 
-            $response = ['status' => $status, 'message' => $message, 'is_insured_driver_same' => $vehicleDriverDetails['is_insured_and_driver_same']];
+            $response = ['status' => $status, 'message' => $message];
+
+            if (isset($vehicleDriverDetails['is_insured_and_driver_same'])) {
+                $response['is_insured_driver_same'] = $vehicleDriverDetails['is_insured_and_driver_same'];
+            }
             LoggerService::info(__FUNCTION__.' - '.$message);
         } catch (\Exception $ex) {
             LoggerService::info(__FUNCTION__.' - Error saving additional vehicle and driver details', $ex->getMessage());

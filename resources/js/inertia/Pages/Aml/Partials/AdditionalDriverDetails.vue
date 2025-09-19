@@ -96,7 +96,7 @@ const submitAdditionalDriverDetailsForm = async isValid => {
           title: response.data.message,
           position: 'top',
         });
-        if (!response.data.is_insured_driver_same) {
+        if (response.data.hasOwnProperty('is_insured_driver_same') && response.data.is_insured_driver_same == '0') {
           notification.success({
             title: 'Please Update Additional Drivers on GIG Portal',
             position: 'top',
