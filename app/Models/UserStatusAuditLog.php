@@ -13,13 +13,9 @@ use Illuminate\Support\Facades\Config;
 class UserStatusAuditLog extends Model
 {
     protected $table = 'user_status_audit_log';
-
     protected $fillable = ['user_id', 'status', 'status_changed_at', 'created_by', 'updated_by'];
-
     public $timestamps = false;
-
     protected $appends = ['status_display'];
-
     protected $casts = [
         'status' => 'integer',
         'status_changed_at' => 'datetime',
@@ -34,7 +30,7 @@ class UserStatusAuditLog extends Model
     {
         return Attribute::make(
             get: function ($value) {
-            if (! $value) {
+                if (! $value) {
                     return null;
                 }
 
