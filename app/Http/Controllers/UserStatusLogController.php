@@ -20,18 +20,29 @@ class UserStatusLogController extends Controller
 
     public function index(Request $request)
     {
-        $statusLogs = UserStatusAuditLog::with(['user:id,name,email'])
-            ->when($request->filled('user_id'), fn ($query) => $query->where('user_id', $request->user_id))
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->status))
-            ->when($request->has('date_range') && is_array($request->date_range) && count($request->date_range) === 2, fn ($query) =>
-                $query->whereBetween('status_changed_at', [
-                    Carbon::parse($request->date_range[0])->startOfDay(),
-                    Carbon::parse($request->date_range[1])->endOfDay()
+        $isSearchRequest = $request->filled('user_id') && $request->has('date_range') && is_array($request->date_range) && count($request->date_range) === 2;
+
+        if ($isSearchRequest) {
+            $startDate = Carbon::parse($request->date_range[0]);
+            $endDate = Carbon::parse($request->date_range[1]);
+
+            if ($startDate->diffInDays($endDate) > 7) {
+                return back()->withErrors(['date_range' => 'Date range cannot exceed 7 days.']);
+            }
+
+            $statusLogs = UserStatusAuditLog::with(['user:id,name,email'])
+                ->where('user_id', $request->user_id)
+                ->when($request->filled('status'), fn ($query) => $query->where('status', $request->status))
+                ->whereBetween('status_changed_at', [
+                    $startDate->startOfDay(),
+                    $endDate->endOfDay()
                 ])
-            )
-            ->orderBy('status_changed_at', 'desc')
-            ->simplePaginate(50)
-            ->withQueryString();
+                ->orderBy('status_changed_at', 'desc')
+                ->simplePaginate(50)
+                ->withQueryString();
+        } else {
+            $statusLogs = UserStatusAuditLog::query()->where('id', -1)->simplePaginate(0);
+        }
 
         $availableStatuses = UserStatusEnum::withLabels();
 

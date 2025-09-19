@@ -6,10 +6,11 @@ const props = defineProps({
 });
 
 const page = usePage();
-const params = useUrlSearchParams('history');
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+
+const { isRequired, maxDateRangeArray } = useRules();
 
 const filters = reactive({
   user_id: '',
@@ -43,6 +44,12 @@ const userOptions = computed(() => {
   }));
 });
 
+const hasRequiredFilters = computed(() => {
+  return (
+    filters.user_id && filters.date_range && filters.date_range.length === 2
+  );
+});
+
 const onReset = () => {
   router.visit(route('admin.user-status-logs.index'), {
     method: 'get',
@@ -55,6 +62,14 @@ const onReset = () => {
 
 const onSubmit = isValid => {
   if (isValid) {
+    if (
+      !filters.user_id ||
+      !filters.date_range ||
+      filters.date_range.length !== 2
+    ) {
+      return;
+    }
+
     filters.page = 1;
 
     Object.keys(filters).forEach(
@@ -94,20 +109,6 @@ const getStatusTagColor = statusDisplay => {
 
 const updateFilter = (field, val) =>
   (filters[field] = !val || filters[field] === val ? null : val);
-
-function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
-    } else {
-      filters[key] = params[key];
-    }
-  }
-}
-
-onMounted(() => {
-  setQueryStringFilters();
-});
 </script>
 <template>
   <Head title="User Status Logs" />
@@ -126,6 +127,8 @@ onMounted(() => {
         placeholder="Select user"
         clearable
         @update:modelValue="val => updateFilter('user_id', val)"
+        :rules="[isRequired]"
+        required
       />
       <x-select
         label="STATUS"
@@ -140,11 +143,13 @@ onMounted(() => {
       <DatePicker
         v-model="filters.date_range"
         label="DATE RANGE"
-        placeholder="Select date range"
+        placeholder="Select date range (max 7 days)"
         range
         size="sm"
         model-type="yyyy-MM-dd"
         class="w-full"
+        :rules="[isRequired, maxDateRangeArray(7)]"
+        required
       />
     </div>
     <div class="flex justify-end gap-3">
@@ -154,28 +159,31 @@ onMounted(() => {
       </x-button>
     </div>
   </x-form>
-  <DataTable
-    table-class-name="mt-4"
-    :loading="loader.table"
-    :headers="tableHeader"
-    :items="props.statusLogs.data || []"
-    border-cell
-    hide-rows-per-page
-    hide-footer
-  >
-    <template #item-status="{ status_display }">
-      <x-tag size="sm" :color="getStatusTagColor(status_display)">
-        {{ status_display || 'Unknown' }}
-      </x-tag>
-    </template>
-  </DataTable>
-  <Pagination
-    :links="{
-      next: props.statusLogs.next_page_url,
-      prev: props.statusLogs.prev_page_url,
-      current: props.statusLogs.current_page,
-      from: props.statusLogs.from,
-      to: props.statusLogs.to,
-    }"
-  />
+
+  <div>
+    <DataTable
+      table-class-name="mt-4"
+      :loading="loader.table"
+      :headers="tableHeader"
+      :items="props.statusLogs.data || []"
+      border-cell
+      hide-rows-per-page
+      hide-footer
+    >
+      <template #item-status="{ status_display }">
+        <x-tag size="sm" :color="getStatusTagColor(status_display)">
+          {{ status_display || 'Unknown' }}
+        </x-tag>
+      </template>
+    </DataTable>
+    <Pagination
+      :links="{
+        next: props.statusLogs.next_page_url,
+        prev: props.statusLogs.prev_page_url,
+        current: props.statusLogs.current_page,
+        from: props.statusLogs.from,
+        to: props.statusLogs.to,
+      }"
+    />
+  </div>
 </template>
