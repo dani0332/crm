@@ -35,7 +35,7 @@ class UserStatusLogController extends Controller
                 ->when($request->filled('status'), fn ($query) => $query->where('status', $request->status))
                 ->whereBetween('status_changed_at', [
                     $startDate->startOfDay(),
-                    $endDate->endOfDay()
+                    $endDate->endOfDay(),
                 ])
                 ->orderBy('status_changed_at', 'desc')
                 ->simplePaginate(50)
