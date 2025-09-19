@@ -174,6 +174,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         } else {
             // If no rules are found, get user IDs from rule lead sources.
             $ruleUserIds = $this->allocationRequest->get('ruleUserIds');
+            $ruleUserIds = $this->finalizeExcludedAdvisorIds($ruleUserIds);
 
             LoggerService::info('No rule found, so filtering rule users: '.json_encode($ruleUserIds).' and teamId is : '.$teamId);
 

@@ -411,20 +411,19 @@ abstract class BaseAllocationPipe extends AllocationService
         return $userIds;
     }
 
-    protected function finalizeExcludedAdvisorIds(array $excludedAdvisorIds): array
+    protected function finalizeExcludedAdvisorIds(?array $excludedAdvisorIds): array
     {
-        $superAdvisorIds = $this->getSuperAdvisorIds();
+        if(empty($excludedAdvisorIds)) {
+            return [];
+        }
+
+        $superAdvisorIds = User::whereHas('permissions', function ($query) {
+            $query->where('name', PermissionsEnum::BYPASS_RULE_EXCLUSION);
+        })->pluck('id')->toArray();
 
         $excludedAdvisorIds = array_diff($excludedAdvisorIds, $superAdvisorIds);
         $excludedAdvisorIds = array_values($excludedAdvisorIds);
 
         return $excludedAdvisorIds;
-    }
-
-    protected function getSuperAdvisorIds(): array
-    {
-        return User::whereHas('permissions', function ($query) {
-            $query->where('name', PermissionsEnum::BYPASS_RULE_EXCLUSION);
-        })->pluck('id')->toArray();
     }
 }
