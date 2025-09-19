@@ -30,7 +30,7 @@ class PolicyBulkSendDocuments extends Command
         $codes = $this->getCodesFromStorage();
 
         if ($codes->isEmpty()) {
-            LoggerService::error('PolicyBulkSendDocuments: No codes found in storage configuration');
+            LoggerService::info('PolicyBulkSendDocuments: No codes found in storage configuration');
 
             return Command::FAILURE;
         }
@@ -48,14 +48,14 @@ class PolicyBulkSendDocuments extends Command
                 LoggerService::info("PolicyBulkSendDocuments: Dispatched job for code: {$code}");
             } else {
                 $notFound[] = $code;
-                LoggerService::error("PolicyBulkSendDocuments: Failed to process code: {$code}");
+                LoggerService::info("PolicyBulkSendDocuments: Failed to process code: {$code}");
             }
         }
 
         LoggerService::info("PolicyBulkSendDocuments: Successfully processed {$successCount} quotes");
 
         if (! empty($notFound)) {
-            LoggerService::warning('PolicyBulkSendDocuments: '.count($notFound).' codes not found: '.implode(', ', $notFound));
+            LoggerService::info('PolicyBulkSendDocuments: '.count($notFound).' codes not found: '.implode(', ', $notFound));
         }
 
         LoggerService::info('PolicyBulkSendDocuments: Command completed', [
@@ -87,21 +87,21 @@ class PolicyBulkSendDocuments extends Command
             ->first();
 
         if (! $quoteObject) {
-            LoggerService::error("PolicyBulkSendDocuments: Quote not found for code in personal quote table: {$code}");
+            LoggerService::info("PolicyBulkSendDocuments: Quote not found for code in personal quote table: {$code}");
 
             return false;
         }
 
         $quoteType = QuoteType::select('code')->find($quoteObject->quote_type_id);
         if (! $quoteType) {
-            LoggerService::error("PolicyBulkSendDocuments: Quote type not found for code: {$code}");
+            LoggerService::info("PolicyBulkSendDocuments: Quote type not found for code: {$code}");
 
             return false;
         }
 
         $quote = $this->getQuoteObjectBy($quoteType->code, $code, 'code');
         if (! $quote) {
-            LoggerService::error("PolicyBulkSendDocuments: Quote not found for code in quote table: {$code}");
+            LoggerService::info("PolicyBulkSendDocuments: Quote not found for code in quote table: {$code}");
 
             return false;
         }
