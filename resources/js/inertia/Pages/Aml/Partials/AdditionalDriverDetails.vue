@@ -96,6 +96,13 @@ const submitAdditionalDriverDetailsForm = async isValid => {
           title: response.data.message,
           position: 'top',
         });
+        if (!response.data.is_insured_driver_same) {
+          notification.success({
+            title: 'Please Update Additional Drivers on GIG Portal',
+            position: 'top',
+            timeout: 5000,
+          });
+        }
         router.reload({
           replace: true,
           preserveScroll: true,
