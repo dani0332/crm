@@ -149,7 +149,7 @@ const tableHeader = ref([
     sortable: true,
   },
   {
-    text: 'Renewal Batch Name',
+    text: 'Renewal Batch',
     value: 'renewal_batch_model.name',
     is_active: true,
   },
