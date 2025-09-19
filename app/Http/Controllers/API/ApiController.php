@@ -482,43 +482,6 @@ class ApiController extends Controller
     }
 
     /**
-     * Get all email statuses for a specific quote
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getEmailStatus(int $quoteTypeId, int $quoteId)
-    {
-        try {
-            LoggerService::info(self::class.': Getting email status', extra: [
-                'function' => __FUNCTION__,
-                'quote_type_id' => $quoteTypeId,
-                'quote_id' => $quoteId,
-            ]);
-
-            $emailStatuses = $this->emailStatusService->getEmailStatus($quoteTypeId, $quoteId);
-
-            return response()->json([
-                'success' => true,
-                'data' => $emailStatuses,
-                'message' => 'Email statuses retrieved successfully',
-            ], Response::HTTP_OK);
-
-        } catch (\Exception $e) {
-            LoggerService::error(self::class.': Failed to get email status', exception: $e, extra: [
-                'function' => __FUNCTION__,
-                'quote_type_id' => $quoteTypeId,
-                'quote_id' => $quoteId,
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve email statuses',
-                'error' => $e->getMessage(),
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
      * Export email status logs as Excel file for a specific quote
      *
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
