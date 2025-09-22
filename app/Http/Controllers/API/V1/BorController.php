@@ -197,7 +197,7 @@ class BorController extends Controller
                 ini_set('implicit_flush', 1);
                 ini_set('zlib.output_compression', 0);
                 ini_set('max_execution_time', 1200); // 20 minutes
-                ini_set('memory_limit', '512M');
+                ini_set('memory_limit', '256M');
                 
                 // Ignore user disconnect to continue processing
                 ignore_user_abort(true);
@@ -213,13 +213,6 @@ class BorController extends Controller
                 echo "data: " . json_encode(['message' => 'SSE connection established', 'bor_ref_id' => $borRefId]) . "\n\n";
                 flush();
                 
-                // Additional flushing for server environments (Azure/FastCGI)
-                if (isset($_SERVER['HTTP_HOST']) && str_contains($_SERVER['HTTP_HOST'], 'alfred.ae')) {
-                    if (function_exists('fastcgi_finish_request')) {
-                        fastcgi_finish_request();
-                    }
-                }
-
                 while ($iteration < $maxIterations) {
                     // Enhanced connection status check with detailed logging
                     $connectionStatus = connection_status();
@@ -282,13 +275,6 @@ class BorController extends Controller
                         echo "data: " . json_encode(['data' => $borLog]) . "\n\n";
                         flush();
                         
-                        // Additional flushing for server environments (Azure/FastCGI)
-                        if (isset($_SERVER['HTTP_HOST']) && str_contains($_SERVER['HTTP_HOST'], 'alfred.ae')) {
-                            if (function_exists('fastcgi_finish_request')) {
-                                fastcgi_finish_request();
-                            }
-                        }
-
                         LoggerService::info('SSE BOR data sent', [
                             'bor_ref_id' => $borRefId,
                             'status' => $borLog->status,
@@ -312,14 +298,6 @@ class BorController extends Controller
                         }
                         flush();
                         
-                        // Additional flushing for server environments (Azure/FastCGI)
-                        if (isset($_SERVER['HTTP_HOST']) && str_contains($_SERVER['HTTP_HOST'], 'alfred.ae')) {
-                            // Force output for production server
-                            if (function_exists('fastcgi_finish_request')) {
-                                fastcgi_finish_request();
-                            }
-                        }
-
                         LoggerService::info('SSE BOR heartbeat sent', [
                             'bor_ref_id' => $borRefId,
                             'iteration' => $iteration,
