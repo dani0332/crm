@@ -12,7 +12,7 @@ use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Services\AccuracyMatrixService;
 use App\Services\Logger\LoggerService;
-use App\Services\Life\LookupService;
+use App\Services\LookupService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
