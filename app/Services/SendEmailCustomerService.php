@@ -853,7 +853,7 @@ class SendEmailCustomerService extends BaseService
 
             if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
                 if (! empty($emailData->policyWordingHandbook)) {
-                    $policyHandbookUrl = str_starts_with($emailData->policyWordingHandbook['watermarked_doc_url'], 'https:') 
+                    $policyHandbookUrl = str_starts_with($emailData->policyWordingHandbook['watermarked_doc_url'], 'https:')
                                 ? $emailData->policyWordingHandbook['watermarked_doc_url']
                                 : config('constants.AZURE_IM_STORAGE_URL').$emailData->policyWordingHandbook['watermarked_doc_url'];
                     $attachments[] = [
