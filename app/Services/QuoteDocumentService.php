@@ -465,7 +465,10 @@ class QuoteDocumentService extends BaseService
 
             $policyWording = $policyWording->map(function ($policyWording) use ($quote) {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
-                if (strpos($policyWording->link, $baseUrl) !== 0) {
+                if (
+                    (strpos($policyWording->link, $baseUrl) !== 0) &&
+                    ! str_starts_with($policyWording->link, 'https:')
+                ) {
                     $policyWording->link = rtrim($baseUrl, '/').'/'.ltrim($policyWording->link, '/');
                 }
                 $link = preg_replace('/[\n\r\t]+/', '', $policyWording->link);
