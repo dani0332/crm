@@ -93,7 +93,6 @@ Route::prefix('v1')->group(function () {
 
         Route::get('details/{bor_ref_id}', [BorController::class, 'getBorLog'])->name('bor.get-bor-log');
         Route::get('details/sse/{bor_ref_id}', [BorController::class, 'getBorLogSSE'])->name('bor.get-bor-log-sse');
-        Route::get('test-sse', [BorController::class, 'testSSE'])->name('bor.test-sse');
         Route::get('completion-email-trigger/{bor_ref_id}', [BorController::class, 'borCompletionEmailTrigger'])->name('bor.completion-email-trigger');
         Route::post('generate-pdf', [BorController::class, 'generatePdf'])->name('bor.generate-pdf');
         Route::post('upload-document', [BorController::class, 'uploadDocument'])->name('bor.upload-document');
