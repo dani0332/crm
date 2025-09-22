@@ -451,12 +451,11 @@ class HealthQuoteService extends BaseService
         $healthQuote->policy_start_date = $request->policy_start_date;
         $healthQuote->health_plan_type_id = $request->plan_type_id;
 
-        $healthQuote->pec = $request->pec;
-        if ($request->pec == 1) {
-            $healthQuote->pec_marked_at = Carbon::now();
-        }
-
         $healthQuote->save();
+
+        CapiRequestService::sendCAPIRequest('/api/v1-evaluate-pec-marks', [
+            'quoteUID' => $healthQuote->uuid,
+        ], HealthQuote::class);
 
         if (isset($request->return_to_view)) {
             return redirect('quote/health/'.$id)->with('success', 'Health Quote has been updated');
