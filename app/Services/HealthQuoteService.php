@@ -320,7 +320,6 @@ class HealthQuoteService extends BaseService
             'hasHome' => $request->has_home == 'on' ? true : false,
             'currentlyInsuredWithId' => $request->currently_insured_with_id,
             'healthPlanTypeId' => $request->plan_type_id,
-            'pec' => $request->pec == 1,
         ];
         $dataArr['memberDetails'][] = [
             'firstName' => $request->first_name,
@@ -331,6 +330,7 @@ class HealthQuoteService extends BaseService
             'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
             'salaryBandId' => $request->salary_band_id,
             'memberCategoryId' => $request->member_category_id,
+            'isPecMarked' => $request->pec == 1,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -1301,7 +1301,7 @@ class HealthQuoteService extends BaseService
                 'salaryBandId' => $request->salary_band_id,
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
-                'pec' => $request->pec == 1,
+                'isPecMarked' => $request->pec == 1,
             ];
 
             $dataArray = [
@@ -1337,7 +1337,7 @@ class HealthQuoteService extends BaseService
                 'salaryBandId' => $request->salary_band_id,
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
-                'pec' => $request->pec == 1,
+                'isPecMarked' => $request->pec == 1,
             ];
 
             $dataArray = [
