@@ -921,8 +921,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quoteDetails->code.' started');
 
         try {
-            $email = $quoteDetails?->carQuoteRequestDetail?->insurer_quote_email ?? 'hitesh.motwani@alfred.ae';
-            $response = Ken::request("/get-quote-from-insurer?quoteTypeId=$quoteTypeId&quoteUID=$quoteDetails->uuid&quoteEmail=$email", 'get');
+            $response = Ken::request("/get-quote-from-insurer?quoteTypeId=$quoteTypeId&quoteUID=$quoteDetails->uuid", 'get');
             $responseData = $response['data'];
 
             // Extract driver name parts for first and last name
