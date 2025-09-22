@@ -88,8 +88,16 @@ class BorController extends Controller
                 if (function_exists('apache_setenv')) {
                     apache_setenv('no-gzip', '1');
                 }
+                
+                // Critical PHP settings for SSE
                 ini_set('output_buffering', 0);
                 ini_set('implicit_flush', 1);
+                ini_set('zlib.output_compression', 0);
+                ini_set('max_execution_time', 1200); // 20 minutes
+                ini_set('memory_limit', '512M');
+                
+                // Ignore user disconnect to continue processing
+                ignore_user_abort(true);
 
                 $lastDataHash = null;
                 $maxIterations = 120; // Maximum 10 minutes (120 * 5 seconds)
@@ -107,6 +115,17 @@ class BorController extends Controller
                     if (connection_aborted()) {
                         LoggerService::info('SSE BOR client disconnected', ['bor_ref_id' => $borRefId, 'iteration' => $iteration]);
                         break;
+                    }
+                    
+                    // Check connection status periodically
+                    if ($iteration % 10 == 0) {
+                        LoggerService::info('SSE BOR connection status check', [
+                            'bor_ref_id' => $borRefId, 
+                            'iteration' => $iteration,
+                            'connection_status' => connection_status(),
+                            'memory_usage' => memory_get_usage(true),
+                            'peak_memory' => memory_get_peak_usage(true)
+                        ]);
                     }
 
                     $borLog = BorLog::where('bor_reference', $borRefId)->first();
