@@ -52,7 +52,7 @@ class SendHealthSICWAFollowupJob implements ShouldQueue
         $isAUHAndRevivalOrInsuranceWallet = $healthQuote?->isAUHLead() || ($healthQuote?->isAUHLead(false) && $healthQuote?->isLeadSourceRevivalOrInsuranceWallet());
 
         if ($isAUHAndRevivalOrInsuranceWallet) {
-            LoggerService::info(self::class." - Skipping SIC WA Followup Email because lead is from AUH and Revival/Insurance Wallet for uuid: {$this->quoteUuid}");
+            LoggerService::info(self::class." - Skipping SIC WA Followup Email because lead is from AUH or AUH and Revival/Insurance Wallet for uuid: {$this->quoteUuid}");
         }
 
         return [

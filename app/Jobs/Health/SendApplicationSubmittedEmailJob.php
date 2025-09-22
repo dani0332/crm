@@ -38,7 +38,7 @@ class SendApplicationSubmittedEmailJob implements ShouldQueue
         $isAUHAndRevivalOrInsuranceWallet = $this->healthQuote?->isAUHLead() || ($this->healthQuote?->isAUHLead(false) && $this->healthQuote?->isLeadSourceRevivalOrInsuranceWallet());
 
         if ($isAUHAndRevivalOrInsuranceWallet) {
-            LoggerService::info(self::class." - Skipping Application Submitted Email because lead is from AUH and Revival/Insurance Wallet for uuid: {$this->healthQuote->uuid}");
+            LoggerService::info(self::class." - Skipping Application Submitted Email because lead is from AUH or AUH and Revival/Insurance Wallet for uuid: {$this->healthQuote->uuid}");
         }
 
         return [
