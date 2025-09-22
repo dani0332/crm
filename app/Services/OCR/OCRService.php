@@ -411,6 +411,7 @@ class OCRService
             LoggerService::info('Starting OCR API call - Quote UUID: '.$quote->uuid);
 
             $data = $this->getData($quoteType, $quote, $url, $docType);
+            LoggerService::info('OCR API call data: '.json_encode($data));
 
             if ($data) {
                 $result = $this->processOcrData(
@@ -468,11 +469,11 @@ class OCRService
 
         // early return if Customer OCR Journey is not supported on prod
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
-        if (in_array($docType, [OCRDocumentTypeEnum::ID_CARD, OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE, OCRDocumentTypeEnum::DRIVING_LICENSE])) {
+        /*if (in_array($docType, [OCRDocumentTypeEnum::ID_CARD, OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE, OCRDocumentTypeEnum::DRIVING_LICENSE])) {
             LoggerService::info(self::class.' - Customer OCR Journey is not supported for now');
 
             return;
-        }
+        }*/
 
         // Skip OCR only for SendUpdate logs that are NOT eligible (e.g., Car SendUpdate)
         if ($quote instanceof SendUpdateLog && ! $isSendUpdateEligibleForOCR) {
