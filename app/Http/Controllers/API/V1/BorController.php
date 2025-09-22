@@ -75,6 +75,73 @@ class BorController extends Controller
         }
     }
 
+    /**
+     * Simple SSE test endpoint for debugging connection issues
+     */
+    public function testSSE()
+    {
+        try {
+            $response = new StreamedResponse(function () {
+                // Disable all output buffering
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                
+                ini_set('output_buffering', 0);
+                ini_set('implicit_flush', 1);
+                ini_set('zlib.output_compression', 0);
+                ignore_user_abort(true);
+                
+                LoggerService::info('SSE Test stream started');
+                
+                echo "event: connected\n";
+                echo "data: " . json_encode(['message' => 'Test SSE connection established']) . "\n\n";
+                flush();
+                
+                for ($i = 0; $i < 30; $i++) {
+                    if (connection_aborted()) {
+                        LoggerService::warning('SSE Test client disconnected', ['iteration' => $i]);
+                        break;
+                    }
+                    
+                    echo "event: test\n";
+                    echo "data: " . json_encode([
+                        'iteration' => $i,
+                        'timestamp' => now()->toISOString(),
+                        'server_time' => time(),
+                        'connection_status' => connection_status()
+                    ]) . "\n\n";
+                    flush();
+                    
+                    LoggerService::info('SSE Test message sent', ['iteration' => $i]);
+                    sleep(2);
+                }
+                
+                echo "event: completed\n";
+                echo "data: " . json_encode(['message' => 'Test completed']) . "\n\n";
+                flush();
+                
+                LoggerService::info('SSE Test stream completed');
+            }, 200, [
+                'Content-Type' => 'text/event-stream',
+                'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0',
+                'Connection' => 'keep-alive',
+                'X-Accel-Buffering' => 'no',
+                'Access-Control-Allow-Origin' => '*',
+            ]);
+            
+            return $response;
+        } catch (Exception $th) {
+            LoggerService::error('SSE Test failed', [
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString(),
+            ]);
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
+    }
+
     public function getBorLogSSE($borRefId)
     {
         try {
@@ -111,20 +178,46 @@ class BorController extends Controller
                 flush();
 
                 while ($iteration < $maxIterations) {
-                    // Check if the client has disconnected early
-                    if (connection_aborted()) {
-                        LoggerService::info('SSE BOR client disconnected', ['bor_ref_id' => $borRefId, 'iteration' => $iteration]);
+                    // Enhanced connection status check with detailed logging
+                    $connectionStatus = connection_status();
+                    $connectionAborted = connection_aborted();
+                    
+                    if ($connectionAborted || $connectionStatus !== CONNECTION_NORMAL) {
+                        LoggerService::warning('SSE BOR client disconnected', [
+                            'bor_ref_id' => $borRefId, 
+                            'iteration' => $iteration,
+                            'connection_status' => $connectionStatus,
+                            'connection_aborted' => $connectionAborted,
+                            'connection_status_text' => $this->getConnectionStatusText($connectionStatus),
+                            'memory_usage' => memory_get_usage(true),
+                            'execution_time' => (microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']) . 's'
+                        ]);
+                        
+                        // Try to send a final disconnect event before breaking
+                        try {
+                            echo "event: disconnect\n";
+                            echo "data: " . json_encode([
+                                'message' => 'Client disconnected', 
+                                'iteration' => $iteration,
+                                'reason' => $this->getConnectionStatusText($connectionStatus)
+                            ]) . "\n\n";
+                            flush();
+                        } catch (Exception $e) {
+                            LoggerService::error('Failed to send disconnect event', ['error' => $e->getMessage()]);
+                        }
                         break;
                     }
                     
-                    // Check connection status periodically
-                    if ($iteration % 10 == 0) {
+                    // Check connection status periodically with more details
+                    if ($iteration % 5 == 0) {
                         LoggerService::info('SSE BOR connection status check', [
                             'bor_ref_id' => $borRefId, 
                             'iteration' => $iteration,
-                            'connection_status' => connection_status(),
+                            'connection_status' => $connectionStatus,
+                            'connection_status_text' => $this->getConnectionStatusText($connectionStatus),
                             'memory_usage' => memory_get_usage(true),
-                            'peak_memory' => memory_get_peak_usage(true)
+                            'peak_memory' => memory_get_peak_usage(true),
+                            'execution_time' => (microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']) . 's'
                         ]);
                     }
 
@@ -156,12 +249,23 @@ class BorController extends Controller
                     } else {
                         // Send a heartbeat to keep connection alive without duplicating data
                         echo "event: heartbeat\n";
-                        echo "data: " . json_encode(['timestamp' => now()->toISOString(), 'iteration' => $iteration]) . "\n\n";
+                        echo "data: " . json_encode([
+                            'timestamp' => now()->toISOString(), 
+                            'iteration' => $iteration,
+                            'server_time' => time(),
+                            'memory_usage' => round(memory_get_usage(true) / 1024 / 1024, 2) . 'MB'
+                        ]) . "\n\n";
+                        
+                        // Ensure data is sent immediately
+                        if (ob_get_level()) {
+                            ob_flush();
+                        }
                         flush();
 
                         LoggerService::info('SSE BOR heartbeat sent', [
                             'bor_ref_id' => $borRefId,
-                            'iteration' => $iteration
+                            'iteration' => $iteration,
+                            'connection_status' => $connectionStatus
                         ]);
                     }
 
@@ -178,7 +282,20 @@ class BorController extends Controller
                     }
 
                     $iteration++;
-                    sleep(3);
+                    
+                    // Use a shorter sleep with connection check
+                    for ($i = 0; $i < 3; $i++) {
+                        sleep(1);
+                        // Quick connection check during sleep
+                        if (connection_aborted()) {
+                            LoggerService::info('SSE BOR connection lost during sleep', [
+                                'bor_ref_id' => $borRefId,
+                                'iteration' => $iteration,
+                                'sleep_second' => $i + 1
+                            ]);
+                            break 2; // Break out of both loops
+                        }
+                    }
                 }
 
                 if ($iteration >= $maxIterations) {
@@ -372,5 +489,22 @@ class BorController extends Controller
             }
         }
         return response()->json(['message' => 'success', 'result' => $result]);
+    }
+
+    /**
+     * Get human-readable connection status text
+     */
+    private function getConnectionStatusText($status)
+    {
+        switch ($status) {
+            case CONNECTION_NORMAL:
+                return 'NORMAL';
+            case CONNECTION_ABORTED:
+                return 'ABORTED';
+            case CONNECTION_TIMEOUT:
+                return 'TIMEOUT';
+            default:
+                return 'UNKNOWN_' . $status;
+        }
     }
 }
