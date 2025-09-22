@@ -142,6 +142,42 @@ class BorController extends Controller
         }
     }
 
+    /**
+     * Minimal SSE test that mimics local working setup
+     */
+    public function minimalSSE()
+    {
+        $response = new StreamedResponse(function () {
+            LoggerService::info('Minimal SSE started', [
+                'php_sapi' => php_sapi_name(),
+                'output_buffering' => ini_get('output_buffering'),
+                'ob_level' => ob_get_level(),
+            ]);
+
+            echo "event: test\n";
+            echo "data: {\"message\":\"minimal test\"}\n\n";
+            flush();
+
+            LoggerService::info('Minimal SSE data sent');
+
+            for ($i = 0; $i < 5; $i++) {
+                sleep(2);
+                echo "event: heartbeat\n";
+                echo "data: {\"iteration\":" . $i . "}\n\n";
+                flush();
+                LoggerService::info('Minimal heartbeat sent', ['iteration' => $i]);
+            }
+
+            LoggerService::info('Minimal SSE completed');
+        });
+
+        $response->headers->set('Content-Type', 'text/event-stream');
+        $response->headers->set('Cache-Control', 'no-cache');
+        $response->headers->set('Connection', 'keep-alive');
+
+        return $response;
+    }
+
     public function getBorLogSSE($borRefId)
     {
         try {
