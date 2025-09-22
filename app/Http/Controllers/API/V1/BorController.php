@@ -212,6 +212,13 @@ class BorController extends Controller
                 echo "event: connected\n";
                 echo "data: " . json_encode(['message' => 'SSE connection established', 'bor_ref_id' => $borRefId]) . "\n\n";
                 flush();
+                
+                // Additional flushing for server environments (Azure/FastCGI)
+                if (isset($_SERVER['HTTP_HOST']) && str_contains($_SERVER['HTTP_HOST'], 'alfred.ae')) {
+                    if (function_exists('fastcgi_finish_request')) {
+                        fastcgi_finish_request();
+                    }
+                }
 
                 while ($iteration < $maxIterations) {
                     // Enhanced connection status check with detailed logging
@@ -274,6 +281,13 @@ class BorController extends Controller
                         echo "event: borUpdate\n";
                         echo "data: " . json_encode(['data' => $borLog]) . "\n\n";
                         flush();
+                        
+                        // Additional flushing for server environments (Azure/FastCGI)
+                        if (isset($_SERVER['HTTP_HOST']) && str_contains($_SERVER['HTTP_HOST'], 'alfred.ae')) {
+                            if (function_exists('fastcgi_finish_request')) {
+                                fastcgi_finish_request();
+                            }
+                        }
 
                         LoggerService::info('SSE BOR data sent', [
                             'bor_ref_id' => $borRefId,
@@ -297,6 +311,14 @@ class BorController extends Controller
                             ob_flush();
                         }
                         flush();
+                        
+                        // Additional flushing for server environments (Azure/FastCGI)
+                        if (isset($_SERVER['HTTP_HOST']) && str_contains($_SERVER['HTTP_HOST'], 'alfred.ae')) {
+                            // Force output for production server
+                            if (function_exists('fastcgi_finish_request')) {
+                                fastcgi_finish_request();
+                            }
+                        }
 
                         LoggerService::info('SSE BOR heartbeat sent', [
                             'bor_ref_id' => $borRefId,
