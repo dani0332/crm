@@ -196,14 +196,14 @@ class BorController extends Controller
                 ini_set('output_buffering', 0);
                 ini_set('implicit_flush', 1);
                 ini_set('zlib.output_compression', 0);
-                ini_set('max_execution_time', 1200); // 20 minutes
+                ini_set('max_execution_time', 1800); // 30 minutes for SSE
                 ini_set('memory_limit', '256M');
                 
                 // Ignore user disconnect to continue processing
                 ignore_user_abort(true);
 
                 $lastDataHash = null;
-                $maxIterations = 120; // Maximum 10 minutes (120 * 5 seconds)
+                $maxIterations = 600; // Maximum 30 minutes (600 * 3 seconds)
                 $iteration = 0;
 
                 LoggerService::info('SSE BOR stream started', ['bor_ref_id' => $borRefId]);
