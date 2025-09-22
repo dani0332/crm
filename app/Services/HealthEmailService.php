@@ -270,8 +270,8 @@ class HealthEmailService extends BaseService
 
     public function sendOCAHealthWorkFlow($lead)
     {
-        if ($lead->isAUHLead() && $lead->isLeadSourceRevivalOrInsuranceWallet()) {
-            LoggerService::info(self::class." - Skipping OCA Health Workflow because lead is from AUH and Revival/Insurance Wallet for uuid: {$lead->uuid}");
+        if ($lead->isAUHLead() || ($lead->isAUHLead(false) && $lead->isLeadSourceRevivalOrInsuranceWallet())) {
+            LoggerService::info(self::class." - Skipping OCA Health Workflow because lead is from AUH or AUH and Revival/Insurance Wallet for uuid: {$lead->uuid}");
 
             return;
         }
