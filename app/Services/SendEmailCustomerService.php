@@ -853,8 +853,11 @@ class SendEmailCustomerService extends BaseService
 
             if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
                 if (! empty($emailData->policyWordingHandbook)) {
+                    $policyHandbookUrl = str_starts_with($emailData->policyWordingHandbook['watermarked_doc_url'], 'https:') 
+                                ? $emailData->policyWordingHandbook['watermarked_doc_url']
+                                : config('constants.AZURE_IM_STORAGE_URL').$emailData->policyWordingHandbook['watermarked_doc_url'];
                     $attachments[] = [
-                        'url' => $this->encodeUrl(config('constants.AZURE_IM_STORAGE_URL').$emailData->policyWordingHandbook['watermarked_doc_url']),
+                        'url' => $this->encodeUrl($policyHandbookUrl),
                         'name' => 'InsuranceMarket.ae™ '.$emailData->policyWordingHandbook['document_type_text'].' for Policy Number '.$emailData->policy_number.'.'.pathinfo($emailData->policyWordingHandbook['watermarked_doc_url'], PATHINFO_EXTENSION),
                     ];
                 }
