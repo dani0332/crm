@@ -366,13 +366,13 @@
 
         }
 
-        .footer-box {
+        /* .footer-box {
             border-radius: 24px;
             border: 2px solid #CF9E3C;
             padding: 6px 10px;
             text-align: left;
 
-        }
+        } */
 
         .footer-link {
             color: #ffffff;

@@ -300,7 +300,7 @@
         .full-page-image {
             width: 100%;
             z-index: 999;
-            height: 88%;
+            height: 100%;
         }
 
         .text-center {
@@ -324,9 +324,9 @@
         width: 100%;
         background-color: #1d83bc;
         color: #ffffff;
-        padding: 5px 5px 5px 5px;
+        padding: 2px 2px 2px 2px;
         text-align: left;
-        height: 150px !important;
+        height: 165px !important;
     }
 
     .footer-content-1 {
@@ -374,7 +374,11 @@
 
 <body>
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/comparison-table-health.jpg') }}" class="full-page-image"  style="height: 100%;"/>
+    <img src="{{ public_path('images/quote_plans_pages/comparison-table-health.jpg') }}" class="full-page-image"  style="height:90%;"/>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+    @endcomponent
     <div style="page-break-after: always;"></div>
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
