@@ -21,7 +21,7 @@ class EmiratesIdExtractor
         $this->extractedData = [
             'eid_number' => null,
             'name' => null,
-            'date_of_birth' => null,
+            //'date_of_birth' => null,
             'nationality' => null,
             'sex' => null,
 
@@ -52,7 +52,7 @@ class EmiratesIdExtractor
             $this->extractedData = array_merge($this->extractedData, $this->getCleanData([
                 'eid_number' => $data['idNumber'] ?? null,
                 'name' => $data['name'] ?? null,
-                'date_of_birth' => $this->formatDate($data['dateOfBirth'] ?? null),
+                //'date_of_birth' => $this->formatDate($data['dateOfBirth'] ?? null),
                 'nationality' => $data['nationality'] ?? null,
                 'sex' => $this->formatGender($data['sex'] ?? null),
                 'issuing_date' => $this->formatDate($data['issuingDate'] ?? null),
