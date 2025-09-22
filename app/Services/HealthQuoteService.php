@@ -21,6 +21,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Ken;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
+use App\Jobs\ReEvaluatePecJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\Customer;
@@ -425,6 +426,7 @@ class HealthQuoteService extends BaseService
                 'salary_band_id' => $request->salary_band_id,
                 'gender' => $request->gender,
                 'dob' => $request->dob,
+                'is_pec_marked' => $request->pec == 1,
             ];
 
             $healthQuoteFirstMember = HealthMemberDetail::where('health_quote_request_id', $healthQuote->id)->first();
@@ -453,9 +455,7 @@ class HealthQuoteService extends BaseService
 
         $healthQuote->save();
 
-        CapiRequestService::sendCAPIRequest('/api/v1-evaluate-pec-marks', [
-            'quoteUID' => $healthQuote->uuid,
-        ], HealthQuote::class);
+        ReEvaluatePecJob::dispatch($healthQuote->uuid);
 
         if (isset($request->return_to_view)) {
             return redirect('quote/health/'.$id)->with('success', 'Health Quote has been updated');

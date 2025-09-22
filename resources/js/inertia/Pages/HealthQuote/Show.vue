@@ -528,7 +528,7 @@ function onEditMember(data) {
   memberForm.last_name = data.last_name;
   memberForm.relation_code = data.relation_code;
   memberForm.update_lead_against_member = data.index === 1;
-  memberForm.pec = data.pec;
+  memberForm.pec = data.is_pec_marked ? 1 : 2;
 
   // set initialEditCategoryId to member_category_id when any member is edited
   initialEditCategoryId.value = data.member_category_id;
@@ -2809,7 +2809,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </div>
               </div>
             </div>
-            <div class="grid md:grid-cols-2 gap-4 md:pb-16">
+            <div class="grid md:grid-cols-2 gap-4">
               <input type="hidden" :value="memberForm.id" />
               <x-input
                 maxLength="60"

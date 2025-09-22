@@ -291,8 +291,8 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
             $pecFlag = request('pec_flag');
-            $gridData->when(request()->has('pec_flag') && $pecFlag != 'all', function($q) use($pecFlag) {
-                if($pecFlag == 1) {
+            $gridData->when(request()->has('pec_flag') && $pecFlag != 'all', function ($q) use ($pecFlag) {
+                if ($pecFlag == 1) {
                     $q->hasPecTag();
                 } else {
                     $q->whereNull('pec_marked_at');
