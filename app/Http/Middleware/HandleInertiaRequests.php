@@ -12,6 +12,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
@@ -156,6 +157,7 @@ class HandleInertiaRequests extends Middleware
             'carVehicleUse' => CarVehicleUse::asArray(),
             'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
             'eligibleOcrProviders' => app(OCRService::class)->getEligibleProviders(),
+            'genericRequestEnum' => GenericRequestEnum::asArray(),
         ];
     }
 
@@ -270,7 +272,7 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::TRAVEL_SIC_ALLOCATION),
                         'Travel',
-                        route('travel-lead-allocation.index'),
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::TRAVEL]),
                         fn ($s) => $s->attributes(['icon' => 'travel'])
                     )
                     ->addIf(
@@ -561,7 +563,7 @@ class HandleInertiaRequests extends Middleware
                         route('customer.upload'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
-                    ->add('Leads by Email', route('leads-by-email'), fn ($s) => $s->attributes(['icon' => 'box']));
+                    ->add('Leads by Email', '/leads-by-email', fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
@@ -585,7 +587,10 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::AMLList)) {
+        if (auth()->user()->hasAnyPermission([
+            PermissionsEnum::AMLList,
+            PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS,
+        ])) {
             $nav = $nav->add('AML', '', function (Section $section) {
                 $section
                     ->add('All Quotes', route('aml.index'), fn ($s) => $s->attributes(['icon' => 'box']));

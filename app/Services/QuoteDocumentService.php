@@ -661,7 +661,10 @@ class QuoteDocumentService extends BaseService
             $size = $pdf->getTemplateSize($templateId);
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
 
-            // Add watermark based on orientation
+            // Layer the original page content first
+            $pdf->useTemplate($templateId);
+
+            // Add watermark as overlay (on top)
             if ($size['orientation'] === 'P') {
                 $pdf->Image(
                     $watermarkImagePath,
@@ -676,8 +679,6 @@ class QuoteDocumentService extends BaseService
                 );
             }
 
-            // Layer the original page content over the watermark
-            $pdf->useTemplate($templateId);
         }
 
         $pdf->Output($outputPath, 'F');

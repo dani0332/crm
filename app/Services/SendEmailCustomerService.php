@@ -1062,6 +1062,7 @@ class SendEmailCustomerService extends BaseService
             'emailTemplateId' => $emailTemplateId,
             'tag' => $tag,
         ]);
+
         $messageId = null;
         $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
 
