@@ -97,6 +97,8 @@ use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\BranchController;
+use App\Http\Controllers\BranchAssignmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -504,6 +506,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
+        Route::resource('branches', BranchController::class);
+        Route::resource('branch-assignments', BranchAssignmentController::class);
+        Route::get('branch-assignments/{user_id}/create', [BranchAssignmentController::class, 'create'])->name('branch-assignments.create');
+        Route::post('branch-assignments/{user_id}/store', [BranchAssignmentController::class, 'store'])->name('branch-assignments.store');
+        Route::get('branch-assignments/{user_id}/delete/{branch_id}', [BranchAssignmentController::class, 'disableAssignment'])->name('branch-assignments.delete');
+        Route::get('branch-assignments/{user_id}/make-primary/{branch_id}', [BranchAssignmentController::class, 'makePrimary'])->name('branch-assignments.make-primary');
 
         Route::get('/sync-migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
             $forceProcess = (bool) $force;
