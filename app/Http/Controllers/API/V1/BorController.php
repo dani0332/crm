@@ -371,6 +371,9 @@ class BorController extends Controller
                 'Expires' => '0',
                 'Connection' => 'keep-alive',
                 'X-Accel-Buffering' => 'no', // Disable Nginx buffering
+                'X-Proxy-Buffering' => 'no', // Disable proxy buffering
+                'X-Azure-FDID' => 'no-buffer', // Azure Front Door hint
+                'Transfer-Encoding' => 'chunked', // Force chunked encoding
                 'Access-Control-Allow-Origin' => '*',
                 'Access-Control-Allow-Credentials' => 'true',
             ]);
