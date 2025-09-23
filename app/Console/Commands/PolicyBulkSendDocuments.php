@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Jobs\SendBookPolicyDocumentsJob;
-use App\Models\CarQuote;
-use App\Models\HealthQuote;
+use App\Models\ApplicationStorage;
+use App\Models\PersonalQuote;
+use App\Models\QuoteType;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
@@ -17,83 +20,110 @@ class PolicyBulkSendDocuments extends Command
 {
     use GenericQueriesAllLobs;
 
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'policy:bulk-send-documents';
+    protected $description = 'Bulk send policy documents for multiple quote codes';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Read an array of codes, find PersonalQuote, and dispatch SendBookPolicyDocumentsJob for each.';
-
-    /**
-     * Execute the console command.
-     */
     public function handle(): int
     {
-        LoggerService::info('PolicyBulkSendDocuments Started');
+        LoggerService::info('PolicyBulkSendDocuments: Command started');
 
-        $codes = [
-            'HEA-3PJLNKL6',
-            'CAR-QK7EHTE5',
-            'CAR-UTJB3A2V',
-            'CAR-SUQGE9NJ',
-            'CAR-6XT6SVA9',
-            'CAR-XQBJCYZX',
-            'CAR-92HB2DPQ',
-            'CAR-QPZRVRTU',
-        ];
+        $codes = $this->getCodesFromStorage();
 
-        if (empty($codes)) {
-            $this->error('No codes provided in the $codes array.');
+        if ($codes->isEmpty()) {
+            LoggerService::info('PolicyBulkSendDocuments: No codes found in storage configuration');
 
-            return 1;
+            return Command::FAILURE;
         }
 
-        $count = 0;
+        LoggerService::info("PolicyBulkSendDocuments: Processing {$codes->count()} quote codes...");
+
+        $successCount = 0;
         $notFound = [];
 
         foreach ($codes as $code) {
-            if (! $code) {
-                LoggerService::info('PolicyBulkSendDocuments - Code is not found.');
+            LoggerService::info("PolicyBulkSendDocuments: Processing code: {$code}");
 
-                continue;
-            }
-
-            if ($code == 'HEA-3PJLNKL6') {
-                $quoteObject = HealthQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
-                $modelType = quoteTypeCode::Health;
+            if ($this->processCode($code)) {
+                $successCount++;
+                LoggerService::info("PolicyBulkSendDocuments: Dispatched job for code: {$code}");
             } else {
-                $quoteObject = CarQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
-                $modelType = quoteTypeCode::Car;
-            }
-
-            if (! $quoteObject) {
                 $notFound[] = $code;
-                LoggerService::info('PolicyBulkSendDocuments - Code is not found.');
-
-                continue;
+                LoggerService::info("PolicyBulkSendDocuments: Failed to process code: {$code}");
             }
-            $payload = (object) [
-                'model_type' => $modelType,
-                'quote_id' => $quoteObject->id,
-            ];
-
-            SendBookPolicyDocumentsJob::dispatch($payload, $quoteObject->code, true);
-            LoggerService::info("PolicyBulkSendDocuments - Dispatched for code: $code (Quote ID: {$quoteObject->code}) for count {$count}");
-            $count++;
         }
 
-        LoggerService::info("PolicyBulkSendDocuments - Total dispatched: $count");
-        if ($notFound) {
-            LoggerService::info('PolicyBulkSendDocuments - codes not found: '.implode(', ', $notFound));
+        LoggerService::info("PolicyBulkSendDocuments: Successfully processed {$successCount} quotes");
+
+        if (! empty($notFound)) {
+            LoggerService::info('PolicyBulkSendDocuments: '.count($notFound).' codes not found: '.implode(', ', $notFound));
         }
 
-        return 0;
+        LoggerService::info('PolicyBulkSendDocuments: Command completed', [
+            'success_count' => $successCount,
+            'not_found_count' => count($notFound),
+        ]);
+
+        return Command::SUCCESS;
+    }
+
+    private function getCodesFromStorage(): \Illuminate\Support\Collection
+    {
+        $storage = ApplicationStorage::where('key_name', ApplicationStorageEnums::BULK_POLICY_DOCUMENT_SEND_CODES)->first();
+
+        if (! $storage || empty($storage->value)) {
+            return collect();
+        }
+
+        return collect(explode(',', $storage->value))
+            ->map(fn ($code) => trim($code))
+            ->filter(fn ($code) => ! empty($code));
+    }
+
+    private function processCode(string $code): bool
+    {
+        $quoteObject = PersonalQuote::where('code', $code)
+            ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
+            ->latest()
+            ->first();
+
+        if (! $quoteObject) {
+            LoggerService::info("PolicyBulkSendDocuments: Quote not found for code in personal quote table: {$code}");
+
+            return false;
+        }
+
+        $quoteType = QuoteType::select('code')->find($quoteObject->quote_type_id);
+        if (! $quoteType) {
+            LoggerService::info("PolicyBulkSendDocuments: Quote type not found for code: {$code}");
+
+            return false;
+        }
+
+        $quote = $this->getQuoteObjectBy($quoteType->code, $code, 'code');
+        if (! $quote) {
+            LoggerService::info("PolicyBulkSendDocuments: Quote not found for code in quote table: {$code}");
+
+            return false;
+        }
+
+        $payload = (object) [
+            'model_type' => $quoteType->code,
+            'quote_id' => $quote->id,
+        ];
+
+        // Set the correct modelType for business quotes based on business_type_of_insurance_id to ensure the right template is used.
+        $modelType = $quoteType->code;
+        if ($modelType == quoteTypeCode::Business) {
+            if ($quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                $payload->modelType = quoteTypeCode::GroupMedical;
+            } else {
+                $payload->modelType = quoteTypeCode::CORPLINE;
+            }
+        }
+
+        SendBookPolicyDocumentsJob::dispatch($payload, $code, true);
+        LoggerService::info("PolicyBulkSendDocuments: Job dispatched for code: {$code}");
+
+        return true;
     }
 }

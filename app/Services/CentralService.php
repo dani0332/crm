@@ -1772,25 +1772,18 @@ class CentralService extends BaseService
 
         if ($premiumCheckEnabled) {
             $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $payment->total_amount, $quote->code);
-            $responsePremiumAmount = isset($capturePaymentResponse['premiumAmount']) ? $capturePaymentResponse['premiumAmount'] : null;
             $logExtra = [
                 'paymentCode' => $payment->code,
                 'quoteTypeId' => $quoteType->id,
                 'responseStatus' => isset($capturePaymentResponse['status']) ? $capturePaymentResponse['status'] : null,
                 'responseMessage' => isset($capturePaymentResponse['message']) ? $capturePaymentResponse['message'] : null,
-                'responsePremiumAmount' => $responsePremiumAmount,
-                'capturePaymentValidationPayload' => [
-                    'quoteUID' => $quote->uuid ?? null,
-                    'quoteTypeId' => $quoteType->id ?? null,
-                    'captureAmount' => $payment->total_amount ?? null,
-                    'quoteCode' => $quote->code ?? null,
-                ],
+                'responsePremiumAmount' => isset($capturePaymentResponse['premiumAmount']) ? $capturePaymentResponse['premiumAmount'] : null,
             ];
 
             if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
                 LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
 
-                if ($responsePremiumAmount > $payment->total_amount) {
+                if ($capturePaymentResponse['premiumAmount'] > $payment->total_amount) {
                     LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
                         'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                         'statusAPIFailed' => 'Premium Not Matched With Insurer',
@@ -1804,7 +1797,7 @@ class CentralService extends BaseService
                         'Payment Capture',
                         WorkflowTypeEnum::CAR_AUTOMATION_FAILED
                     )->onQueue('policy-issuance-automation');
-                } elseif ($responsePremiumAmount != $payment->total_amount) {
+                } elseif ($capturePaymentResponse['premiumAmount'] != $payment->total_amount) {
                     LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
                         'actionRequired' => 'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
                         'statusAPIFailed' => 'Quote Referred To Insurer UW',

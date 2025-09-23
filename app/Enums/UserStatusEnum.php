@@ -49,4 +49,16 @@ final class UserStatusEnum extends Enum
 
         return $statusText;
     }
+
+    public static function withLabels()
+    {
+        return collect([
+            ['value' => self::ONLINE, 'label' => 'Online'],
+            ['value' => self::OFFLINE, 'label' => 'Offline'],
+            ['value' => self::UNAVAILABLE, 'label' => 'Unavailable'],
+            ['value' => self::SICK, 'label' => 'Sick'],
+            ['value' => self::LEAVE, 'label' => 'On Leave'],
+            ['value' => self::MANUAL_OFFLINE, 'label' => 'Manual Offline'],
+        ]);
+    }
 }
