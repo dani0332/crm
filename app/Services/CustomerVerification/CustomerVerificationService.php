@@ -70,34 +70,6 @@ class CustomerVerificationService
             'quote_type' => $quoteType->value,
         ]);
     }
-    
-    private function determineVerificationStatus($record, array $customerVerifiedData, array $webFormData): ?CustomerVerificationStatus
-    {
-        $hasCustomerData = !empty(array_filter($customerVerifiedData));
-        
-        if (!$hasCustomerData) {
-            return null;
-        }
-        
-        if (isset($record->is_customer_data_valid) && $record->is_customer_data_valid === CustomerVerificationStatus::VERIFIED->value) {
-            return CustomerVerificationStatus::VERIFIED;
-        }
-        
-        $allFieldsMatch = true;
-        foreach ($webFormData as $field => $webValue) {
-            $customerValue = $customerVerifiedData[$field] ?? '';
-            
-            $normalizedWeb = trim(strtolower((string) $webValue));
-            $normalizedCustomer = trim(strtolower((string) $customerValue));
-            
-            if ($normalizedWeb !== $normalizedCustomer) {
-                $allFieldsMatch = false;
-                break;
-            }
-        }
-        
-        return $allFieldsMatch ? CustomerVerificationStatus::VERIFIED : CustomerVerificationStatus::REQUIRES_VERIFICATION;
-    }
 
     private function createVerificationSnapshot($record, array $changedFields, QuoteTypes $quoteType): void
     {
@@ -125,6 +97,34 @@ class CustomerVerificationService
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+    
+    private function determineVerificationStatus($record, array $customerVerifiedData, array $webFormData): ?CustomerVerificationStatus
+    {
+        $hasCustomerData = !empty(array_filter($customerVerifiedData));
+        
+        if (!$hasCustomerData) {
+            return null;
+        }
+        
+        if (isset($record->is_customer_data_valid) && $record->is_customer_data_valid === CustomerVerificationStatus::VERIFIED->value) {
+            return CustomerVerificationStatus::VERIFIED;
+        }
+        
+        $allFieldsMatch = true;
+        foreach ($webFormData as $field => $webValue) {
+            $customerValue = $customerVerifiedData[$field] ?? '';
+            
+            $normalizedWeb = trim(strtolower((string) $webValue));
+            $normalizedCustomer = trim(strtolower((string) $customerValue));
+            
+            if ($normalizedWeb !== $normalizedCustomer) {
+                $allFieldsMatch = false;
+                break;
+            }
+        }
+        
+        return $allFieldsMatch ? CustomerVerificationStatus::VERIFIED : CustomerVerificationStatus::REQUIRES_VERIFICATION;
     }
 
     private function getVerificationButtonData($record, array $webFormData, array $customerVerifiedData): array
