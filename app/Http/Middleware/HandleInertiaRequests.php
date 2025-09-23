@@ -272,7 +272,7 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::TRAVEL_SIC_ALLOCATION),
                         'Travel',
-                        route('travel-lead-allocation.index'),
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::TRAVEL]),
                         fn ($s) => $s->attributes(['icon' => 'travel'])
                     )
                     ->addIf(
