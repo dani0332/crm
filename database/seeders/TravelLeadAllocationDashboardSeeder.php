@@ -29,7 +29,7 @@ class TravelLeadAllocationDashboardSeeder extends Seeder
         // Add permission to selected roles
         $roles = DB::table('roles')->whereIn('name', [
             'ADMIN',
-            //'TRAVEL_ADVISOR',
+            // 'TRAVEL_ADVISOR',
             'TRAVEL_MANAGER',
             'LEAD_ALLOCATION',
             'RENEWALS_MANAGER',
