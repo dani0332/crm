@@ -165,7 +165,7 @@ class CarQuoteObserver
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
 
-        $this->handleCustomerVerificationUpdate($lead, $dirty);
+        //$this->handleCustomerVerificationUpdate($lead, $dirty);
     }
 
     private function handleCustomerVerificationUpdate(CarQuote $lead, array $dirty): void

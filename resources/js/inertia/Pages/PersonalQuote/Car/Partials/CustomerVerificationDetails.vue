@@ -18,8 +18,8 @@ const { modals, customerVerificationData } = defineProps({
         </div>
       </template>
 
-      <div class="px-6 pb-6 max-w-4xl mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+      <div class="px-2 pb-6 max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-7 mt-6">
           <div class="bg-blue-50 p-5 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow duration-200">
             <div class="mb-4 pb-3 border-b border-blue-200">
               <h3 class="text-lg font-semibold text-blue-800">WebForm Details</h3>
@@ -33,6 +33,15 @@ const { modals, customerVerificationData } = defineProps({
                 </label>
                 <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
                   {{ customerVerificationData.webForm?.nationality || '-' }}
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">
+                  DOB
+                </label>
+                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
+                  {{ customerVerificationData.webForm?.dob || '-' }}
                 </div>
               </div>
 
@@ -54,35 +63,10 @@ const { modals, customerVerificationData } = defineProps({
                 </div>
               </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">
-                  DOB
-                </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
-                  {{ customerVerificationData.webForm?.dob || '-' }}
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">
-                  Emirate of Registration
-                </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
-                  {{ customerVerificationData.webForm?.emirateOfRegistration || '-' }}
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">
-                  UAE License Held For
-                </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
-                  {{ customerVerificationData.webForm?.uaeLicenseHeldFor || '-' }}
-                </div>
-              </div>
             </div>
           </div>
 
+          <!--- Customer verified details -->
           <div class="bg-green-50 p-5 rounded-lg border border-green-200 shadow-sm hover:shadow-md transition-shadow duration-200">
             <div class="mb-4 pb-3 border-b border-green-200">
               <h3 class="text-lg font-semibold text-green-800">Customer Verified Details</h3>
@@ -96,6 +80,61 @@ const { modals, customerVerificationData } = defineProps({
                 </label>
                 <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
                   {{ customerVerificationData.customerVerified?.nationality || '-' }}
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">
+                  DOB
+                </label>
+                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
+                  {{ customerVerificationData.customerVerified?.dob || '-' }}
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">
+                  Car Make and Model
+                </label>
+                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
+                  {{ customerVerificationData.customerVerified?.carMakeAndModel || '-' }}
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">
+                  Car Model Year
+                </label>
+                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
+                  {{ customerVerificationData.customerVerified?.carModelYear || '-' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- OCR Data -->
+          <div class="bg-teal-50 p-5 rounded-lg border border-green-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div class="mb-4 pb-3 border-b border-green-200">
+              <h3 class="text-lg font-semibold text-green-800">OCR Details</h3>
+              <p class="text-sm text-green-600 mt-1">OCR data</p>
+            </div>
+            
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">
+                  Nationality
+                </label>
+                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
+                  {{ customerVerificationData.customerVerified?.nationality || '-' }}
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">
+                  DOB
+                </label>
+                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
+                  {{ customerVerificationData.customerVerified?.dob || '-' }}
                 </div>
               </div>
 
@@ -117,37 +156,10 @@ const { modals, customerVerificationData } = defineProps({
                 </div>
               </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">
-                  DOB
-                </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
-                  {{ customerVerificationData.customerVerified?.dob || '-' }}
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">
-                  Emirate of Registration
-                </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
-                  {{ customerVerificationData.customerVerified?.emirateOfRegistration || '-' }}
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">
-                  UAE License Held For
-                </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
-                  {{ customerVerificationData.customerVerified?.uaeLicenseHeldFor || '-' }}
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
-
       <template #actions>
         <div class="flex justify-end">
           <x-button size="sm" ghost @click.prevent="modals.customerVerification = false">

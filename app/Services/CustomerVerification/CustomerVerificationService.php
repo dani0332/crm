@@ -160,7 +160,7 @@ class CustomerVerificationService
                 'quote_type' => $quoteType->value,
             ]);
 
-            return ['webForm' => [], 'customerVerified' => [], 'buttonData' => ['shouldShow' => false]];
+            return ['webForm' => [], 'customerVerified' => [], 'ocrData' => [], 'buttonData' => ['shouldShow' => false]];
         }
 
         LoggerService::startQuoteLogging($record->code ?? null);
@@ -189,6 +189,7 @@ class CustomerVerificationService
         return [
             'webForm' => $webFormData,
             'customerVerified' => $customerVerifiedData,
+            'ocrData' => [],
             'buttonData' => $verificationButtonData,
         ];
     }

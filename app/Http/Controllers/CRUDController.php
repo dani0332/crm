@@ -745,7 +745,9 @@ class CRUDController extends Controller
 
                 $customerVerificationData = $isCustomerVerificationEnabled 
                     ? app(CustomerVerificationService::class)->getVerificationData($record, QuoteTypes::CAR)
-                    : ['webForm' => [], 'customerVerified' => []];
+                    : ['webForm' => [], 'customerVerified' => [], 'ocrData' => []];
+
+                dd($customerVerificationData);
 
                 $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Car);
                 $record->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_id_text);
