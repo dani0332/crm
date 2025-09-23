@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
             CarGIGVehicleTransactionDriverDetailsForAMLSeeder::class,
             CPARulesSeeder::class,
             AutomationSeeder::class,
+            TravelLeadAllocationDashboardSeeder::class,
             BranchSeeder::class,
         ]);
     }

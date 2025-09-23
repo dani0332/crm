@@ -292,7 +292,7 @@ class HealthQuote extends Model implements AuditableContract
             ->where('is_primary', false);
     }
 
-    public function renewalBatch()
+    public function renewalBatchModel()
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
@@ -496,5 +496,10 @@ class HealthQuote extends Model implements AuditableContract
     public function isAUHLead(bool $shouldCheckSource = true)
     {
         return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI && ($shouldCheckSource ? $this->source === LeadSourceEnum::IMCRM : true);
+    }
+
+    public function isLeadSourceRevivalOrInsuranceWallet()
+    {
+        return in_array($this->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::INSURANCE_WALLET]);
     }
 }

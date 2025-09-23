@@ -83,7 +83,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'healthQuoteRequestDetail.lostReason:id,text',
             'salaryBand:id,text',
             'memberCategory:id,text',
-            'renewalBatch:id,name',
+            'renewalBatchModel:id,name',
             'insured:id,first_name,last_name',
             'customer:id,emirates_id_expiry_date,receive_marketing_updates,pcp_tag',
             'quoteRequestEntityMapping:id,quote_request_id,entity_id,entity_type_code',
