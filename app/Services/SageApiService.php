@@ -3700,7 +3700,7 @@ class SageApiService
 
         return $quote->embeddedTransactions()
             ->whereHas('product.embeddedProduct', function ($query) {
-                $query->whereIn('short_code', [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX]);
+                $query->whereIn('short_code', [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX, EmbeddedProductEnum::ECB]);
             })
             ->whereHas('payment.insuranceProvider', function ($query) use ($allowedProvidersForSageEPXBooking) {
                 $query->whereIn('code', $allowedProvidersForSageEPXBooking);
