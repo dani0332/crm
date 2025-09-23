@@ -26,6 +26,18 @@ const vehicleDriverDetail = computed(() => {
   return page.props.quoteRequest?.vehicle_driver_detail;
 });
 
+const formatDate = date => {
+  if (!date) return '';
+  
+  const dateObj = new Date(date);
+  // Use local timezone to avoid date shifting
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
+};
+
 const additionalDriverDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: page.props.quoteRequest?.uuid,
@@ -34,7 +46,7 @@ const additionalDriverDetailsForm = useForm({
   is_insured_and_driver_same: vehicleDriverDetail.value?.is_insured_and_driver_same?.toString() ?? '',
   driver_first_name: vehicleDriverDetail.value?.driver_first_name ?? '',
   driver_last_name: vehicleDriverDetail.value?.driver_last_name ?? '',
-  driver_dob: vehicleDriverDetail.value?.driver_dob ?? '',
+  driver_dob: formatDate(vehicleDriverDetail.value?.driver_dob) ?? '',
   driver_gender: vehicleDriverDetail.value?.driver_gender ?? '',
   driver_license_number: vehicleDriverDetail.value?.driver_license_number ?? '',
   license_issue_place:
