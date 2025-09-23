@@ -222,10 +222,10 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
         driver_gender: 'driver_gender',
         driver_license_number: 'driver_license_number',
         driver_license_issue_place: 'license_issue_place',
-        driver_license_issue_date: 'license_issue_date',
-        driver_license_expiry_date: 'license_expiry_date',
+        // driver_license_issue_date: 'license_issue_date',
+        // driver_license_expiry_date: 'license_expiry_date',
         driver_uae_driving_experience: 'uae_driving_experience',
-        driver_home_country_license_issuance: 'home_country_license_issuance',
+        // driver_home_country_license_issuance: 'home_country_license_issuance',
         driver_home_country_driving_experience: 'home_country_driving_experience',
       },
     };
