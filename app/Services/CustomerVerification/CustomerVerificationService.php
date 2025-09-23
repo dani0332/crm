@@ -70,31 +70,6 @@ class CustomerVerificationService
             'quote_type' => $quoteType->value,
         ]);
     }
-
-    private function getVerificationButtonData($record, array $webFormData, array $customerVerifiedData): array
-    {
-        $status = $this->determineVerificationStatus($record, $customerVerifiedData, $webFormData);
-        
-        if ($status === null) {
-            return [
-                'status' => null,
-                'text' => '',
-                'color' => '',
-                'class' => '',
-                'shouldShow' => false,
-            ];
-        }
-        
-        $buttonConfig = $this->getButtonConfigForStatus($status);
-        
-        return [
-            'status' => $status->value,
-            'text' => $buttonConfig['text'],
-            'color' => $buttonConfig['color'],
-            'class' => $buttonConfig['class'],
-            'shouldShow' => true,
-        ];
-    }
     
     private function determineVerificationStatus($record, array $customerVerifiedData, array $webFormData): ?CustomerVerificationStatus
     {
@@ -150,6 +125,31 @@ class CustomerVerificationService
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    private function getVerificationButtonData($record, array $webFormData, array $customerVerifiedData): array
+    {
+        $status = $this->determineVerificationStatus($record, $customerVerifiedData, $webFormData);
+        
+        if ($status === null) {
+            return [
+                'status' => null,
+                'text' => '',
+                'color' => '',
+                'class' => '',
+                'shouldShow' => false,
+            ];
+        }
+        
+        $buttonConfig = $this->getButtonConfigForStatus($status);
+        
+        return [
+            'status' => $status->value,
+            'text' => $buttonConfig['text'],
+            'color' => $buttonConfig['color'],
+            'class' => $buttonConfig['class'],
+            'shouldShow' => true,
+        ];
     }
 
     public function getVerificationData($record, QuoteTypes $quoteType): array
