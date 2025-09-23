@@ -682,13 +682,13 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::DEPARTMENT_LIST),
+                        auth()->user()->can(PermissionsEnum::BRANCHES),
                         'Branches',
                         url('admin/branches'),
                         fn($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::DEPARTMENT_LIST),
+                        auth()->user()->can(PermissionsEnum::BRANCH_ASSIGNMENTS),
                         'Branch Assignment',
                         url('admin/branch-assignments'),
                         fn($s) => $s->attributes(['icon' => 'box'])

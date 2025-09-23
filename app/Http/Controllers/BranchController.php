@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Services\BranchService;
 use Illuminate\Http\Request;
+use App\Enums\PermissionsEnum;
 
 class BranchController extends Controller
 {
     private $branchService;
     public function __construct(BranchService $branchService)
     {
+        $this->middleware('permission:'.PermissionsEnum::BRANCHES);
+
         $this->branchService = $branchService;
     }
     public function index(Request $request)

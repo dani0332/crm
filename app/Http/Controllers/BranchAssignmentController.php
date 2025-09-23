@@ -6,6 +6,7 @@ use App\Services\BranchAssignmentService;
 use Illuminate\Http\Request;
 use App\Services\BranchService;
 use App\Services\UserService;
+use App\Enums\PermissionsEnum;
 
 class BranchAssignmentController extends Controller
 {
@@ -14,6 +15,8 @@ class BranchAssignmentController extends Controller
     private $branchAssignmentService;
     public function __construct(BranchAssignmentService $branchAssignmentService, BranchService $branchService, UserService $userService)
     {
+        $this->middleware('permission:'.PermissionsEnum::BRANCH_ASSIGNMENTS);
+
         $this->branchAssignmentService = $branchAssignmentService;
         $this->branchService = $branchService;
         $this->userService = $userService;

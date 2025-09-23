@@ -448,6 +448,8 @@ final class PermissionsEnum extends Enum
 
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
     public const EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS = 'edit-vehicle-transaction-driver-details';
+    public const BRANCHES = 'branches';
+    public const BRANCH_ASSIGNMENTS = 'branch-assignments';
 
     public static function getAdvisorConversionReportPermissions()
     {
