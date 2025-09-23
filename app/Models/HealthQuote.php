@@ -292,7 +292,7 @@ class HealthQuote extends Model implements AuditableContract
             ->where('is_primary', false);
     }
 
-    public function renewalBatch()
+    public function renewalBatchModel()
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
