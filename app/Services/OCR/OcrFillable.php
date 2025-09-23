@@ -5,6 +5,7 @@ namespace App\Services\OCR;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
+use App\Services\CustomerVerification\CustomerVerificationService;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\DrivingLicense\DrivingLicenseDataProcessor;
 use App\Services\OCR\EmiratesId\EmiratesIdDataProcessor;
@@ -21,6 +22,7 @@ trait OcrFillable
 
     private $providerCode = '';
     private $isSendUpdateEligibleForOCR = false;
+    private $documentTypeCode = null;
 
     private function isEnabled(Model $quote, array $providers): bool
     {
@@ -155,6 +157,9 @@ trait OcrFillable
                 LoggerService::info(self::class.' - Emirates ID data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
                 ]);
+
+                // Update customer verification details
+                app(CustomerVerificationService::class)->processOcrVerification($quote, $data, $this->documentTypeCode);
             } else {
                 LoggerService::warning(self::class.' - Emirates ID data processing failed - Quote UUID: '.$quote->uuid);
             }
@@ -277,7 +282,9 @@ trait OcrFillable
         LoggerService::startQuoteLogging($quote);
 
         try {
-
+            // Use enum value for logging (e.g., 'IDC', 'RC', 'DL')
+            $this->documentTypeCode = $documentType->value;
+            
             return match ($documentType) {
                 OCRDocumentTypeEnum::TAX_INVOICE => $this->fillTaxInvoice($quote, $data),
                 OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER => $this->fillTaxInvoiceRaisedByBuyer($quote, $data),

@@ -20,6 +20,7 @@ use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\InsuranceProvider;
+use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuoteDetail;
 use App\Models\SendUpdateLog;
@@ -891,5 +892,19 @@ trait GenericQueriesAllLobs
         ]);
 
         return '';
+    }
+
+    public function getNationalityId(?string $nationality): ?int
+    {
+        if (empty($nationality)) {
+            return null;
+        }
+
+        $nationalityRecord = Nationality::where('text', 'LIKE', '%'.$nationality.'%')
+            ->orWhere('code', $nationality)
+            ->orWhere('country_name', 'LIKE', '%'.$nationality.'%')
+            ->first();
+
+        return $nationalityRecord?->id;
     }
 }
