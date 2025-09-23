@@ -1787,7 +1787,6 @@ class CentralService extends BaseService
                 ],
             ];
 
-
             if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
                 LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
 
