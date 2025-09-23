@@ -262,6 +262,10 @@ class HealthQuoteService extends BaseService
 
     public function getBranchName($emirateOfYourVisaId, $advisorBranchName): string
     {
+        if(empty($emirateOfYourVisaId) && empty($advisorBranchName)) {
+            return '';
+        }
+
         if ($emirateOfYourVisaId == EmirateEnum::ABU_DHABI || $advisorBranchName == 'Abu Dhabi') {
             $branchName = 'Abu Dhabi';
         } else {

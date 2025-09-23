@@ -327,6 +327,11 @@ class CentralController extends Controller
             $quoteType = QuoteTypes::getNameShortCode($this->getQuoteCodeType($quote) ?? '');
             $quoteTypeId = $quoteType?->id();
 
+            $branchValidationResponse = $this->validateBranchAssignment($quote, $quoteType);
+            if ($branchValidationResponse) {
+                return $branchValidationResponse;
+            }
+
             if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
 
                 $captureableEmbeddedTransactions = EmbeddedTransaction::where([
@@ -972,5 +977,34 @@ class CentralController extends Controller
         $response = app(ManualCommissionUpdateService::class)->updateCommissionForLeads();
 
         return $response;
+    }
+
+    /**
+     * Validates branch assignment for a given quote
+     *
+     * @param mixed $quote The quote object to validate
+     * @param QuoteTypes $quoteType The type of quote
+     * @return \Illuminate\Http\JsonResponse|null Returns error response if validation fails, null otherwise
+     */
+    private function validateBranchAssignment($quote, $quoteType)
+    {
+        $hasBranch = $quoteType === QuoteTypes::HEALTH
+            ? ($quote->advisor?->primaryBranch()->exists() || $quote->emirate_of_your_visa_id !== null)
+            : $quote->advisor?->primaryBranch()->exists();
+
+        if (!$hasBranch) {
+            LoggerService::warning('Branch missing for quote: ' . $quote->code);
+            return response()->json([
+                'errors' => [
+                    'message' => [
+                        'Branch assignment missing. Please ensure ' .
+                        ($quoteType === QuoteTypes::HEALTH ? 'Emirate of visa or advisor branch' : 'advisor branch') .
+                        ' is configured OR contact admin.'
+                    ]
+                ]
+            ], 422);
+        }
+
+        return null;
     }
 }
