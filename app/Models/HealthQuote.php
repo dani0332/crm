@@ -512,4 +512,9 @@ class HealthQuote extends Model implements AuditableContract
     {
         $query->whereNotNull('pec_marked_at');
     }
+
+    public function isLeadSourceRevivalOrInsuranceWallet()
+    {
+        return in_array($this->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::INSURANCE_WALLET]);
+    }
 }

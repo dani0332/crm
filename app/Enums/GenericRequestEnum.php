@@ -57,4 +57,6 @@ final class GenericRequestEnum extends Enum
     const EBAO_UW_APPROVAL_STATUS_NO = 'N';
     const SUCCESS = 'success';
     const CALL_TYPE_QUOTE_INFO = 'quoteInfo';
+    const PREVIOUS_POLICY_EXPIRED_STATUS_ID = 99;
+    const PREVIOUS_POLICY_EXPIRED = 'Previous policy has expired';
 }
