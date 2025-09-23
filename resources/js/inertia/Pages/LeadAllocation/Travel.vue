@@ -5,7 +5,7 @@ import {
   toggleBlStatus,
   toggleBLResetCap,
   toggleHardStop,
-  statusSubmit
+  statusSubmit,
 } from '../../Services/LeadAllocation/Travel';
 
 const page = usePage();
@@ -17,7 +17,7 @@ const props = defineProps({
   quoteType: String,
   userBLStatuses: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   availableUsers: {
     type: Number,
@@ -29,11 +29,11 @@ const props = defineProps({
   },
   todayTotalUnAssignedLeadCount: {
     type: Number,
-    default: 0
+    default: 0,
   },
   totalAssignedLeadCount: {
     type: Number,
-    default: 0
+    default: 0,
   },
   data: {
     type: Array,
@@ -67,15 +67,20 @@ const leadData = ref([
 ]);
 const tableHeader = ref([
   { text: 'Name', value: 'userName', sortable: true },
-  { text: 'Team', value: 'team', sortable: true},
+  { text: 'Team', value: 'team', sortable: true },
   { text: 'Tot. Assigned', value: 'allocationCount', sortable: true },
   { text: 'M. Assigned', value: 'manualAllocationCount', sortable: true },
   { text: 'A. Assigned', value: 'autoAllocationCount', sortable: true },
   { text: 'Cap Limit', value: 'maxCapacity', sortable: true },
   { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
-  { text: 'Norm Allo.', value: 'normalAllocationEnabled', sortable: true, width: '100' },
+  {
+    text: 'Norm Allo.',
+    value: 'normalAllocationEnabled',
+    sortable: true,
+    width: '100',
+  },
   { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
-  { text: 'Hard Stop', 'value': 'isHardStop', sortable: true},
+  { text: 'Hard Stop', value: 'isHardStop', sortable: true },
   { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
 ]);
 
@@ -86,7 +91,7 @@ const canManage = computed(
 );
 
 const filters = reactive({
-  userBLStatus: null
+  userBLStatus: null,
 });
 
 const loaders = reactive({
@@ -111,9 +116,9 @@ const onReset = () => {
     data: {},
     preserveScroll: true,
     onBefore: () => (loaders.reset = true),
-    onSuccess: () => (loaders.reset = false)
+    onSuccess: () => (loaders.reset = false),
   });
-}
+};
 
 const onSubmit = isValid => {
   if (isValid) {
@@ -132,7 +137,7 @@ const onToggleStatus = (status, id, userId) => {
   statusModal.data = reactive({
     ...statusModal.data,
     id,
-    userId
+    userId,
   });
 
   if (status) {
@@ -142,7 +147,7 @@ const onToggleStatus = (status, id, userId) => {
     statusModal.data.reason = 3;
     statusModal.show = true;
   }
-}
+};
 
 const onStatusModalClose = event => {
   const item = leadData.value.find(item => item.id === statusModal.data.id);
@@ -192,7 +197,7 @@ const onToggleResetCap = async (active, userId, leadId) => {
 
 const onToggleBlStatus = async (active, userId, leadId) => {
   loaders.table = true;
-  
+
   try {
     await toggleBlStatus(active, userId, leadId);
   } catch (error) {
@@ -211,7 +216,7 @@ const onToggleBLResetCap = async (active, userId, laId) => {
 
   try {
     await toggleBLResetCap(active, userId, laId);
-  } catch(error) {
+  } catch (error) {
     notification.error({
       title: 'Error',
       description: 'Something went wrong!',
@@ -232,7 +237,7 @@ const onToggleHardStop = async (status, userId) => {
       title: 'Error',
       description: 'Something went wrong!',
       position: 'top',
-    })
+    });
   } finally {
     loaders.table = false;
   }
@@ -267,7 +272,7 @@ const onStatusSubmit = async () => {
     item.loading = false;
     statusModal.show = false;
   }
-}
+};
 
 watch(
   () => autoRefresh.value,
@@ -288,8 +293,8 @@ onMounted(() => {
 
   if (props.data && Array.isArray(props.data)) {
     leadData.value = props.data.map(item => ({
-        id: item.id,
-        userId: item.userId,
+      id: item.id,
+      userId: item.userId,
       cap: item.maxCapacity,
       capEdit: false,
       status: item.isAvailable,
@@ -358,12 +363,7 @@ onMounted(() => {
           <x-alert type="info" light>For Unlimited Capactiy Add ( -1 )</x-alert>
         </div>
         <div v-if="isCapChanged" class="col-span-2">
-          <x-button
-            color="emerald"
-            :loading="loaders.submit"
-            block
-      
-          >
+          <x-button color="emerald" :loading="loaders.submit" block>
             Save Cap Changes
           </x-button>
         </div>
@@ -374,12 +374,7 @@ onMounted(() => {
           <x-alert type="info" light>For Unlimited Capactiy Add ( -1 )</x-alert>
         </div>
         <div v-if="isBlCapChanged" class="col-span-2">
-          <x-button
-            color="emerald"
-            :loading="loaders.submit"
-            block
-          
-          >
+          <x-button color="emerald" :loading="loaders.submit" block>
             Save Buy Lead Cap Changes
           </x-button>
         </div>
@@ -391,7 +386,7 @@ onMounted(() => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
         <x-select
-        label="Buy Lead Status of Users"
+          label="Buy Lead Status of Users"
           required
           placeholder="Select Status"
           :options="userBLStatuses || []"
@@ -446,7 +441,6 @@ onMounted(() => {
           >
             {{ statusText(isAvailable) }}
           </x-tag>
-
 
           <ItemToggler
             v-if="
@@ -517,7 +511,6 @@ onMounted(() => {
           />
         </div>
       </template>
-
     </DataTable>
 
     <!-- Status Modal -->
@@ -555,7 +548,6 @@ onMounted(() => {
           </x-button>
         </div>
       </template>
-    
     </x-modal>
   </div>
 </template>

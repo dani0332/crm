@@ -75,22 +75,22 @@ const tableHeader = ref([
   { text: 'Name', value: 'userName', width: '240' },
   { text: 'Teams', value: 'teamNames', sortable: true },
   { text: 'Total Assigned Leads', value: 'allocationCount', sortable: true },
-  ...(page.props.quoteType === quoteTypeOptions.value.Travel)
+  ...(page.props.quoteType === quoteTypeOptions.value.Travel
     ? [{ text: 'M.Assigned', value: 'manualAllocationCount', sortable: true }]
-    : [],
-  ...(page.props.quoteType === quoteTypeOptions.value.Travel)
+    : []),
+  ...(page.props.quoteType === quoteTypeOptions.value.Travel
     ? [{ text: 'A.Assigned', value: 'autoAllocationCount', sortable: true }]
-    : [],
+    : []),
   { text: 'Last Allocations', value: 'lastAllocation', sortable: true },
   { text: 'Max Cap Limit', value: 'maxCapacity', sortable: true },
   { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
-  ...(page.props.quoteType === quoteTypeOptions.value.Travel)
-    ? [{ text: 'Norm Allo.', value: 'normalAllocationEnabled', sortable: true}]
-    :[],
+  ...(page.props.quoteType === quoteTypeOptions.value.Travel
+    ? [{ text: 'Norm Allo.', value: 'normalAllocationEnabled', sortable: true }]
+    : []),
   { text: 'Reset Cap', value: 'reset_cap', width: '100' },
-  ...(page.props.quoteType === quoteTypeOptions.value.Travel)
-    ? [{ text: 'Last Login', value: 'lastLogin', sortable: true}]
-    : []
+  ...(page.props.quoteType === quoteTypeOptions.value.Travel
+    ? [{ text: 'Last Login', value: 'lastLogin', sortable: true }]
+    : []),
 ]);
 
 const leadData = ref([
@@ -154,13 +154,18 @@ const onStatusSubmit = async () => {
   item.loading = true;
 
   try {
-    await statusSubmit(statusModal.data.userId, statusModal.data.id, statusModal.data.reason, page.props.quoteType);
+    await statusSubmit(
+      statusModal.data.userId,
+      statusModal.data.id,
+      statusModal.data.reason,
+      page.props.quoteType,
+    );
     await fetchData(); // to refresh the analytics (available/unavailable users)
   } catch (error) {
     notification.error({
       title: 'Error',
       description: 'Something went wrong!',
-      position: 'top'
+      position: 'top',
     });
   } finally {
     statusModal.loader = false;
@@ -184,7 +189,7 @@ const onToggleStatus = (status, id, userId) => {
 
 const onToggleResetCap = async (active, userId, leadAllocationId) => {
   loaders.table = true;
-  
+
   try {
     await toggleResetCap(active, userId, leadAllocationId);
   } catch (error) {
@@ -311,7 +316,9 @@ onMounted(() => {
     <Head :title="quoteType + ' Lead Allocation'" />
     <div class="flex justify-between items-center">
       <div>
-        <h2 class="text-lg font-semibold">{{ quoteType }} Lead Allocation Management</h2>
+        <h2 class="text-lg font-semibold">
+          {{ quoteType }} Lead Allocation Management
+        </h2>
       </div>
       <div
         class="flex gap-1"
@@ -458,7 +465,6 @@ onMounted(() => {
           />
         </div>
       </template>
-
     </DataTable>
 
     <x-modal
