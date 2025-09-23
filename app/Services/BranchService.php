@@ -9,9 +9,9 @@ class BranchService extends BaseService
     public function getGridData($request)
     {
         $branches = Branch::latest()
-        ->when(!empty($request['name']), function ($query) use ($request) {
-            $query->where('name', 'like', '%' . $request['name'] . '%');
-        });
+            ->when(! empty($request['name']), function ($query) use ($request) {
+                $query->where('name', 'like', '%'.$request['name'].'%');
+            });
 
         return $branches->paginate();
     }

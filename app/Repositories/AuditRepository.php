@@ -60,7 +60,7 @@ class AuditRepository extends BaseRepository
             foreach ($auditables['relations'] as $relation) {
                 $model = $relation['auditable_type'];
                 $auditRelation = $relation['relation'] ?? 'one';
-                if($auditRelation == 'many') {
+                if ($auditRelation == 'many') {
                     $childRecords = $model::where($relation['key'], request()->auditable_id)->get();
                 } else {
                     $childRecords = [$model::where($relation['key'], request()->auditable_id)->first()];
@@ -153,7 +153,7 @@ class AuditRepository extends BaseRepository
                 $data = [
                     'audit' => $audit,
                     'transformedOld' => $transformedOld,
-                    'transformedNew' => $transformedNew
+                    'transformedNew' => $transformedNew,
                 ];
                 $data = $quoteObject->transformAuditables($data);
                 $audit = $data['audit'];

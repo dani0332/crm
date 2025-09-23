@@ -453,11 +453,11 @@ class RolePermissionSeeder extends Seeder
 
         if ($roles) {
             foreach ($roles as $role) {
-                if (!$role->hasPermissionTo($branchesPermission)) {
+                if (! $role->hasPermissionTo($branchesPermission)) {
                     $role->givePermissionTo($branchesPermission);
                 }
 
-                if (!$role->hasPermissionTo($branchAssignmentsPermission)) {
+                if (! $role->hasPermissionTo($branchAssignmentsPermission)) {
                     $role->givePermissionTo($branchAssignmentsPermission);
                 }
             }

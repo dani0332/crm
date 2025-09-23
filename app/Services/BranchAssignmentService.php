@@ -15,10 +15,10 @@ class BranchAssignmentService extends BaseService
             //     $query->where('name', 'like', '%advisor%');
             // })
             ->with('userBranches', 'userBranches.branch')
-            ->when(!empty($request['advisors']), function ($query) use ($request) {
+            ->when(! empty($request['advisors']), function ($query) use ($request) {
                 $query->whereIn('id', $request['advisors']);
             })
-            ->when(!empty($request['primary_branch']), function ($query) use ($request) {
+            ->when(! empty($request['primary_branch']), function ($query) use ($request) {
                 $query->whereHas('userBranches', function ($query) use ($request) {
                     $query->where('branch_id', $request['primary_branch'])
                         ->where('is_primary', 1);
@@ -39,6 +39,7 @@ class BranchAssignmentService extends BaseService
             $item->primary_branch = $primaryBranch?->branch->name;
             $item->effective_from = $primaryBranch?->effective_from;
             $item->effective_to = $primaryBranch?->effective_to;
+
             return $item;
         });
 
@@ -96,9 +97,9 @@ class BranchAssignmentService extends BaseService
     public function disableAssignment($userId, $branchId)
     {
         $userBranch = UserBranch::where('user_id', $userId)
-        ->where('branch_id', $branchId)
-        ->where('status', 1)
-        ->first();
+            ->where('branch_id', $branchId)
+            ->where('status', 1)
+            ->first();
         $userBranch->status = 0;
         $userBranch->effective_to = now();
         $userBranch->save();
@@ -107,16 +108,16 @@ class BranchAssignmentService extends BaseService
     public function makePrimary($userId, $branchId)
     {
         $userBranch = UserBranch::where('user_id', $userId)
-        ->where('is_primary', 1)
-        ->where('status', 1)
-        ->first();
+            ->where('is_primary', 1)
+            ->where('status', 1)
+            ->first();
         $userBranch->is_primary = 0;
         $userBranch->save();
 
         $userBranch = UserBranch::where('user_id', $userId)
-        ->where('branch_id', $branchId)
-        ->where('status', 1)
-        ->first();
+            ->where('branch_id', $branchId)
+            ->where('status', 1)
+            ->first();
         $userBranch->is_primary = 1;
         $userBranch->save();
     }

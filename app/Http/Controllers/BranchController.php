@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Services\BranchService;
 use Illuminate\Http\Request;
-use App\Enums\PermissionsEnum;
 
 class BranchController extends Controller
 {
@@ -69,9 +69,9 @@ class BranchController extends Controller
         ]);
 
         $branch = $this->branchService->getBranch($id);
-        if($validated['status'] != $branch->status) {
+        if ($validated['status'] != $branch->status) {
             $activeUserBranches = $branch->userBranches->where('status', 1);
-            if($activeUserBranches->count() > 0) {
+            if ($activeUserBranches->count() > 0) {
                 return redirect()->back()->with('error', 'Branch cannot be updated because it has active users');
             }
         }

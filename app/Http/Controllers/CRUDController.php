@@ -293,6 +293,7 @@ class CRUDController extends Controller
             $gridData = $gridData->simplePaginate(10)->withQueryString();
             $gridData->map(function ($item) {
                 $item->branch_name = app(HealthQuoteService::class)->getBranchName($item->emirate->id, $item->advisor?->primaryBranch?->branch?->name);
+
                 return $item;
             });
 

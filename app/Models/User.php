@@ -484,7 +484,7 @@ class User extends Authenticatable implements AuditableContract
     public function primaryBranch()
     {
         return $this->hasOne(UserBranch::class, 'user_id', 'id')
-        ->where('is_primary', 1)
-        ->where('status', 1);
+            ->where('is_primary', 1)
+            ->where('status', 1);
     }
 }

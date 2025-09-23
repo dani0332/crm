@@ -982,8 +982,8 @@ class CentralController extends Controller
     /**
      * Validates branch assignment for a given quote
      *
-     * @param mixed $quote The quote object to validate
-     * @param QuoteTypes $quoteType The type of quote
+     * @param  mixed  $quote  The quote object to validate
+     * @param  QuoteTypes  $quoteType  The type of quote
      * @return \Illuminate\Http\JsonResponse|null Returns error response if validation fails, null otherwise
      */
     private function validateBranchAssignment($quote, $quoteType)
@@ -992,16 +992,17 @@ class CentralController extends Controller
             ? ($quote->advisor?->primaryBranch()->exists() || $quote->emirate_of_your_visa_id !== null)
             : $quote->advisor?->primaryBranch()->exists();
 
-        if (!$hasBranch) {
-            LoggerService::warning('Branch missing for quote: ' . $quote->code);
+        if (! $hasBranch) {
+            LoggerService::warning('Branch missing for quote: '.$quote->code);
+
             return response()->json([
                 'errors' => [
                     'message' => [
-                        'Branch assignment missing. Please ensure ' .
-                        ($quoteType === QuoteTypes::HEALTH ? 'Emirate of visa or advisor branch' : 'advisor branch') .
-                        ' is configured OR contact admin.'
-                    ]
-                ]
+                        'Branch assignment missing. Please ensure '.
+                        ($quoteType === QuoteTypes::HEALTH ? 'Emirate of visa or advisor branch' : 'advisor branch').
+                        ' is configured OR contact admin.',
+                    ],
+                ],
             ], 422);
         }
 

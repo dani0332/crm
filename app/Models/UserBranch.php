@@ -33,7 +33,7 @@ class UserBranch extends Model implements AuditableContract
                 [
                     'auditable_type' => UserBranch::class,
                     'key' => 'user_id',
-                    'relation' => 'many'
+                    'relation' => 'many',
                 ],
             ],
         ];
@@ -46,7 +46,7 @@ class UserBranch extends Model implements AuditableContract
         $transformedNew = &$data['transformedNew'];
 
         $auditableId = $audit->auditable_id;
-        if (!empty($auditableId)) {
+        if (! empty($auditableId)) {
             $transformedNew['id'] = $auditableId;
             if ($audit->event == 'updated') {
                 $transformedOld['id'] = $auditableId;
@@ -56,24 +56,24 @@ class UserBranch extends Model implements AuditableContract
         $userbranch = $this->where('id', $auditableId)->with('branch')->first();
         if ($audit->event == 'created') {
             $audit->event = 'Added Branch';
-            $transformedNew['notes'] = "New branch added " . $userbranch?->branch?->name;
+            $transformedNew['notes'] = 'New branch added '.$userbranch?->branch?->name;
         } else {
             if (isset($transformedNew['is_primary']) && $transformedNew['is_primary'] == 1) {
                 $audit->event = 'Made Primary Branch';
-                $transformedNew['notes'] = $userbranch?->branch?->name . " was made primary branch";
+                $transformedNew['notes'] = $userbranch?->branch?->name.' was made primary branch';
             } elseif (isset($transformedNew['is_primary']) && $transformedNew['is_primary'] == 0) {
                 $audit->event = 'Removed Primary Branch';
-                $transformedNew['notes'] = $userbranch?->branch?->name . " was removed as primary branch";
+                $transformedNew['notes'] = $userbranch?->branch?->name.' was removed as primary branch';
             } elseif (isset($transformedNew['status']) && $transformedNew['status'] == 0) {
                 $audit->event = 'Removed Branch';
-                $transformedNew['notes'] = $userbranch?->branch?->name . " branch was removed";
+                $transformedNew['notes'] = $userbranch?->branch?->name.' branch was removed';
             }
         }
 
         return [
             'audit' => $audit,
             'transformedOld' => $transformedOld,
-            'transformedNew' => $transformedNew
+            'transformedNew' => $transformedNew,
         ];
     }
 }

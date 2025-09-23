@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Services\BranchAssignmentService;
-use Illuminate\Http\Request;
 use App\Services\BranchService;
 use App\Services\UserService;
-use App\Enums\PermissionsEnum;
+use Illuminate\Http\Request;
 
 class BranchAssignmentController extends Controller
 {
@@ -34,6 +34,7 @@ class BranchAssignmentController extends Controller
     {
         $branches = $this->branchService->getBranches();
         $activeBranchCount = $this->branchAssignmentService->hasBranches($userId);
+
         return inertia('Admin/BranchAssignment/Form', compact(['branches', 'userId', 'activeBranchCount']));
     }
 
@@ -87,7 +88,7 @@ class BranchAssignmentController extends Controller
     {
         $branches = $this->branchAssignmentService->getBranches($userId);
 
-        if($branches->where('is_primary', 1)->first()->branch_id == $branchId) {
+        if ($branches->where('is_primary', 1)->first()->branch_id == $branchId) {
             return redirect()->route('branch-assignments.show', $userId)->with('error', 'Cannot remove the primary branch. Please assign another active branch and set it as Primary before removal.');
         }
 

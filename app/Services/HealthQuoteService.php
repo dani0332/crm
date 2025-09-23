@@ -6,6 +6,7 @@ use App\Builders\HealthQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadAssignmentTriggerEnum;
@@ -50,7 +51,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PDF;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
-use App\Enums\EmirateEnum;
 
 class HealthQuoteService extends BaseService
 {
@@ -247,7 +247,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('user_branches as ub', function ($join) {
                 $join->on('ub.user_id', '=', 'hqr.advisor_id')
-                ->where('ub.is_primary', '=', 1);
+                    ->where('ub.is_primary', '=', 1);
             })
             ->leftJoin('branches as b', 'b.id', '=', 'ub.branch_id');
     }
@@ -262,7 +262,7 @@ class HealthQuoteService extends BaseService
 
     public function getBranchName($emirateOfYourVisaId, $advisorBranchName): string
     {
-        if(empty($emirateOfYourVisaId) && empty($advisorBranchName)) {
+        if (empty($emirateOfYourVisaId) && empty($advisorBranchName)) {
             return '';
         }
 
