@@ -386,4 +386,13 @@ class UserService extends BaseService
             ];
         }
     }
+
+    public function getAdvisors()
+    {
+        return User::select('id', 'name')
+            ->whereHas('usersroles', function ($query) {
+                $query->where('name', 'like', '%advisor%');
+            })
+            ->get();
+    }
 }
