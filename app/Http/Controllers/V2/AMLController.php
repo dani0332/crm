@@ -1089,7 +1089,11 @@ class AMLController extends Controller
 
         $response = app(AMLService::class)->saveAdditionalVehicleAndDriverDetails($updateAdditionalVehicleDriverDetailsRequest, $quote);
 
-        return response()->json(['success' => $response['status'], 'message' => $response['message']]);
+        return response()->json([
+            'success' => $response['status'],
+            'message' => $response['message'],
+            'is_insured_driver_same' => $response['is_insured_driver_same'] ?? null,
+        ]);
     }
 
     public function getQuoteDetailsFromInsurer(Request $request)
