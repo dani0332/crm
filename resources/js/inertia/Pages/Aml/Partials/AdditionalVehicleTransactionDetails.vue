@@ -413,12 +413,13 @@ const isFieldRequired = fieldName => {
     case 'plate_number':
       return !isGIG.value;
     case 'chassis_number':
-      return !isLivaRenewal.value;
+      return isLIVA.value;
     case 'engine_number':
       return !isSUKOON.value && !isLivaRenewal.value;
-    case 'rta_plate_category':
     case 'plate_color':
       return isGIG.value;
+    case 'rta_plate_category':
+      return isGIG.value || isLIVA.value;
     case 'vehicle_color':
       return !isLivaRenewal.value;
     case 'bank_name':
@@ -426,13 +427,13 @@ const isFieldRequired = fieldName => {
     case 'first_registration_date':
       return !isSUKOON.value && !isLivaRenewal.value;
     case 'certificate_start_date':
-      return !isSUKOON.value;
+      return !isSUKOON.value || isLIVA.value;
     case 'policy_expiry_date':
     case 'certificate_end_date':
     case 'annual_mileage_estimate':
       return isLIVA.value;
     case 'policy_effective_date':
-      return isLIVA.value && !isRenewal.value;
+      return isLIVA.value;
     default:
       return false;
   }

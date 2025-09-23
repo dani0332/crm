@@ -294,7 +294,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
         <DatePicker
           v-model="additionalDriverDetailsForm.driver_dob"
           :rules="isSUKOON ? [isRequired] : []"
-          :required="isSUKOON"
+          :required="isSUKOON || isLIVA"
           placeholder="Driver DOB"
           :disabled="hasNotEditPermission"
           label="Driver DOB"
