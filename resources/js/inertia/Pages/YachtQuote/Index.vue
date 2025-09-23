@@ -102,7 +102,11 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
-  { text: 'BRANCH', value: 'advisor.primary_branch.branch.name', is_active: true },
+  {
+    text: 'BRANCH',
+    value: 'advisor.primary_branch.branch.name',
+    is_active: true,
+  },
   {
     text: 'CREATED DATE',
     value: 'created_at',

@@ -24,7 +24,6 @@ const historicalTableHeader = ref([
   { text: 'Effective To', value: 'effective_to' },
   { text: 'Status', value: 'status' },
 ]);
-
 </script>
 <template>
   <Head title="Advisor Branch Assignment Detail" />
@@ -37,9 +36,7 @@ const historicalTableHeader = ref([
         </x-button>
       </Link>
       <Link :href="route('branch-assignments.create', user.id)">
-        <x-button size="sm" color="#ff5e00" tag="div">
-          Add Branch
-        </x-button>
+        <x-button size="sm" color="#ff5e00" tag="div"> Add Branch </x-button>
       </Link>
     </div>
   </div>
@@ -49,12 +46,12 @@ const historicalTableHeader = ref([
       <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">ID</dt>
-          <dd>{{ user.id ?? "N/A" }}</dd>
+          <dd>{{ user.id ?? 'N/A' }}</dd>
         </div>
 
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Name</dt>
-          <dd>{{ user.name ?? "N/A" }}</dd>
+          <dd>{{ user.name ?? 'N/A' }}</dd>
         </div>
       </dl>
     </div>
@@ -95,13 +92,26 @@ const historicalTableHeader = ref([
           <template #item-actions="item">
             <div class="flex gap-2">
               <Link
-              v-if="!item.is_primary"
-              :href="route('branch-assignments.make-primary', { user_id: user.id, branch_id: item.branch.id })">
+                v-if="!item.is_primary"
+                :href="
+                  route('branch-assignments.make-primary', {
+                    user_id: user.id,
+                    branch_id: item.branch.id,
+                  })
+                "
+              >
                 <x-button size="sm" color="#1d83bc" tag="div">
                   Make Primary
                 </x-button>
               </Link>
-              <Link :href="route('branch-assignments.delete', { user_id: user.id, branch_id: item.branch.id })">
+              <Link
+                :href="
+                  route('branch-assignments.delete', {
+                    user_id: user.id,
+                    branch_id: item.branch.id,
+                  })
+                "
+              >
                 <x-button size="sm" color="#ff5e00" tag="div">
                   Remove Branch
                 </x-button>
@@ -145,7 +155,7 @@ const historicalTableHeader = ref([
           <template #item-effective_to="{ effective_to }">
             {{ dateFormat(effective_to) }}
           </template>
-           <template #item-status="{ status }">
+          <template #item-status="{ status }">
             {{ status ? 'Active' : 'Inactive' }}
           </template>
         </DataTable>

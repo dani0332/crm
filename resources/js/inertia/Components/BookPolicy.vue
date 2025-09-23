@@ -1495,11 +1495,13 @@ const isDocTypeLoading = docType => {
                 </dt>
                 <dd>{{ bpForm.total_commission }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2" >
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Branch</dt>
                 <dd>
                   {{
-                    quote.branch_name ?? quote.advisor?.primary_branch?.branch?.name ?? ''
+                    quote.branch_name ??
+                    quote.advisor?.primary_branch?.branch?.name ??
+                    ''
                   }}
                 </dd>
               </div>

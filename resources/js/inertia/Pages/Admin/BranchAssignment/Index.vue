@@ -85,7 +85,6 @@ const branchOptions = computed(() => {
     label: item.name,
   }));
 });
-
 </script>
 <template>
   <Head title="Advisor Branch Assignments" />
@@ -95,26 +94,27 @@ const branchOptions = computed(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-    <div class="gap-4">
-      <x-select label="Advisor"
-      class="w-full"
-      multiple
-      v-model="filters.advisors"
-      filterable
-      truncate
-      :options="advisorOptions"
-      placeholder="Select Advisor"
-      />
-    </div>
-    <div class="gap-4">
-      <x-select
-        label="Primary Branch"
-        class="w-full"
-        v-model="filters.primary_branch"
-        :options="[{ value: '', label: 'All Branches' }, ...branchOptions]"
-        placeholder="Select Branch"
-      />
-    </div>
+      <div class="gap-4">
+        <x-select
+          label="Advisor"
+          class="w-full"
+          multiple
+          v-model="filters.advisors"
+          filterable
+          truncate
+          :options="advisorOptions"
+          placeholder="Select Advisor"
+        />
+      </div>
+      <div class="gap-4">
+        <x-select
+          label="Primary Branch"
+          class="w-full"
+          v-model="filters.primary_branch"
+          :options="[{ value: '', label: 'All Branches' }, ...branchOptions]"
+          placeholder="Select Branch"
+        />
+      </div>
     </div>
     <div class="flex justify-end gap-3">
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
@@ -147,13 +147,11 @@ const branchOptions = computed(() => {
       {{ effective_to ? dateFormat(effective_to) : '' }}
     </template>
     <template #item-actions="{ id }">
-    <div class="flex gap-2">
-      <Link :href="route('branch-assignments.create', id)">
-        <x-button size="sm" color="#1d83bc" tag="div">
-          Add Branch
-        </x-button>
-      </Link>
-    </div>
+      <div class="flex gap-2">
+        <Link :href="route('branch-assignments.create', id)">
+          <x-button size="sm" color="#1d83bc" tag="div"> Add Branch </x-button>
+        </Link>
+      </div>
     </template>
   </DataTable>
   <Pagination

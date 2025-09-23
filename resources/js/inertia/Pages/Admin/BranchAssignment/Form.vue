@@ -45,14 +45,11 @@ function onSubmit(isValid) {
 const effectiveTo = computed(() => {
   return dateFormat(assignmentForm.effective_to);
 });
-
 </script>
 <template>
-  <Head title='Add Branch Assignment' />
+  <Head title="Add Branch Assignment" />
   <div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold">
-      Add Branch Assignment
-    </h2>
+    <h2 class="text-xl font-semibold">Add Branch Assignment</h2>
     <div>
       <Link :href="route('branch-assignments.index')" class="mr-2">
         <x-button size="sm" color="#1d83bc" tag="div">
@@ -69,7 +66,6 @@ const effectiveTo = computed(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-
       <x-select
         v-model="assignmentForm.branch_id"
         :options="branchOptions"
@@ -80,40 +76,47 @@ const effectiveTo = computed(() => {
         filterPlaceholder="Filter branch...."
         required
         :error="$page.props.errors.branch_id"
-        />
+      />
 
-        <div>
-          <x-label>Is Primary</x-label>
-          <x-checkbox
+      <div>
+        <x-label>Is Primary</x-label>
+        <x-checkbox
           label="Is Primary"
           color="primary"
           class="mt-3"
           v-model="assignmentForm.is_primary"
           :disabled="activeBranchCount == 0"
-          />
-        </div>
-
-        <DatePicker
-          label="EFFECTIVE FROM"
-          required
-          v-model="assignmentForm.effective_from"
-          name="created_at_start"
-          :rules="[isRequired]"
-          :hasError="assignmentForm.errors.effective_from || $page.props.errors.effective_from"
         />
+      </div>
 
-        <x-input
-          v-model="effectiveTo"
-          :rules="[isRequired]"
-          class="w-full"
-          label="Effective To"
-          disabled
-        />
+      <DatePicker
+        label="EFFECTIVE FROM"
+        required
+        v-model="assignmentForm.effective_from"
+        name="created_at_start"
+        :rules="[isRequired]"
+        :hasError="
+          assignmentForm.errors.effective_from ||
+          $page.props.errors.effective_from
+        "
+      />
 
+      <x-input
+        v-model="effectiveTo"
+        :rules="[isRequired]"
+        class="w-full"
+        label="Effective To"
+        disabled
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">
-      <x-button size="md" color="emerald" type="submit" :loading="assignmentForm.processing">
+      <x-button
+        size="md"
+        color="emerald"
+        type="submit"
+        :loading="assignmentForm.processing"
+      >
         Add
       </x-button>
     </div>

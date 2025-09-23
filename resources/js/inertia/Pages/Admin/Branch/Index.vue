@@ -72,9 +72,7 @@ onMounted(() => {
     <h2 class="text-xl font-semibold">Branches</h2>
     <div class="space-x-3">
       <Link :href="route('branches.create')">
-        <x-button size="sm" color="#ff5e00" tag="div">
-          Create Branch
-        </x-button>
+        <x-button size="sm" color="#ff5e00" tag="div"> Create Branch </x-button>
       </Link>
     </div>
   </div>

@@ -57,9 +57,7 @@ function onSubmit(isValid) {
     </h2>
     <div>
       <Link :href="route('branches.index')">
-        <x-button size="sm" color="#1d83bc" tag="div">
-          Branch List
-        </x-button>
+        <x-button size="sm" color="#1d83bc" tag="div"> Branch List </x-button>
       </Link>
     </div>
   </div>
