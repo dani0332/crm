@@ -104,7 +104,7 @@ class CustomerVerificationService
             return null;
         }
         
-        if (isset($record->verification_status) && $record->verification_status === CustomerVerificationStatus::VERIFIED->value) {
+        if (isset($record->is_customer_data_valid) && $record->is_customer_data_valid === CustomerVerificationStatus::VERIFIED->value) {
             return CustomerVerificationStatus::VERIFIED;
         }
         
