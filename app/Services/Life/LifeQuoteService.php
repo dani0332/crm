@@ -90,6 +90,7 @@ class LifeQuoteService extends BaseService
 
         $query = PersonalQuote::byQuoteTypeCode(QuoteTypes::LIFE->value)->with([
             'advisor',
+            'advisor.primaryBranch.branch:id,name',
             'quoteStatus',
             'nationality',
             'quoteDetail.lostReason:id,text',
@@ -308,6 +309,7 @@ class LifeQuoteService extends BaseService
             ->with([
                 'quoteCustomerPlan',
                 'advisor',
+                'advisor.primaryBranch.branch:id,name',
                 'quoteStatus',
                 'nationality',
                 'lifeQuote' => function ($q) {

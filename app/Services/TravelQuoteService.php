@@ -190,6 +190,7 @@ class TravelQuoteService extends BaseService
             'tqr.pc_qualified',
             DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
             DB::raw(TravelQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
+            'b.name as branch_name',
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -220,7 +221,12 @@ class TravelQuoteService extends BaseService
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
-            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'tqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'ub.branch_id');
     }
 
     public function getCustomerTravelInfo(int $quoteRequestId, string $quoteType)

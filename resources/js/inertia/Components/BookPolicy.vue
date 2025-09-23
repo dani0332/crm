@@ -1495,18 +1495,11 @@ const isDocTypeLoading = docType => {
                 </dt>
                 <dd>{{ bpForm.total_commission }}</dd>
               </div>
-              <div
-                v-if="
-                  props.quoteType === quoteTypeCodeEnum.Health.toLowerCase()
-                "
-                class="grid sm:grid-cols-2"
-              >
+              <div class="grid sm:grid-cols-2" >
                 <dt class="font-medium uppercase">Branch</dt>
                 <dd>
                   {{
-                    page.props.branchOptions?.find(
-                      item => item.id === props.quote.emirate_of_your_visa_id,
-                    )?.branch
+                    quote.branch_name ?? quote.advisor?.primary_branch?.branch?.name ?? ''
                   }}
                 </dd>
               </div>

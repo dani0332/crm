@@ -30,6 +30,7 @@ class PersonalQuotesExport implements CsvExportableInterface
     private const LAST_NAME = 'LAST NAME';
     private const LEAD_STATUS = 'LEAD STATUS';
     private const ADVISOR = 'ADVISOR';
+    private const BRANCH = 'BRANCH';
     private const CREATED_DATE = 'CREATED DATE';
     private const PREMIUM = 'PREMIUM';
     private const POLICY_NUMBER = 'POLICY NUMBER';
@@ -139,6 +140,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::DOB,
                 self::LEAD_STATUS,
                 self::ADVISOR,
+                self::BRANCH,
                 self::CREATED_DATE,
                 self::ADVISOR_ASSIGNED_DATE,
                 self::LAST_MODIFIED_DATE,
@@ -155,6 +157,29 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::PRIVATE_CLIENT,
             ],
             QuoteTypes::YACHT->value => [
+                self::REF_ID,
+                self::FIRST_NAME,
+                self::LAST_NAME,
+                self::LEAD_STATUS,
+                self::ADVISOR,
+                self::BRANCH,
+                self::CREATED_DATE,
+                self::ADVISOR_ASSIGNED_DATE,
+                self::LAST_MODIFIED_DATE,
+                self::PREMIUM,
+                self::POLICY_NUMBER,
+                self::SOURCE,
+                self::CURRENTLY_INSURED_WITH,
+                self::IS_ECOMMERCE,
+                self::RENEWAL_BATCH,
+                self::PREVIOUS_POLICY_EXPIRY_DATE,
+                self::PREVIOUS_POLICY_PREMIUM,
+                self::PREVIOUS_POLICY_NUMBER,
+                self::TRANSACTION_APPROVED_DATE,
+                self::BOOKING_DATE,
+                self::PRIVATE_CLIENT,
+            ],
+            QuoteTypes::JETSKI->value => [
                 self::REF_ID,
                 self::FIRST_NAME,
                 self::LAST_NAME,
@@ -182,6 +207,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::LAST_NAME,
                 self::LEAD_STATUS,
                 self::ADVISOR,
+                self::BRANCH,
                 self::CREATED_DATE,
                 self::ADVISOR_ASSIGNED_DATE,
                 self::LAST_MODIFIED_DATE,
@@ -215,6 +241,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::LAST_NAME,
                 self::LEAD_STATUS,
                 self::ADVISOR,
+                self::BRANCH,
                 self::CREATED_DATE,
                 self::ADVISOR_ASSIGNED_DATE,
                 self::LAST_MODIFIED_DATE,
@@ -236,6 +263,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::LAST_NAME,
                 self::LEAD_STATUS,
                 self::ADVISOR,
+                self::BRANCH,
                 self::CREATED_DATE,
                 self::ADVISOR_ASSIGNED_DATE,
                 self::LAST_MODIFIED_DATE,
@@ -256,6 +284,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::LAST_NAME,
                 self::LEAD_STATUS,
                 self::ADVISOR,
+                self::BRANCH,
                 self::CREATED_DATE,
                 self::ADVISOR_ASSIGNED_DATE,
                 self::LAST_MODIFIED_DATE,
@@ -275,6 +304,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::LAST_NAME,
                 self::LEAD_STATUS,
                 self::ADVISOR,
+                self::BRANCH,
                 self::CREATED_DATE,
                 self::LAST_MODIFIED_DATE,
                 self::TRANSAPP_CODE,
@@ -297,12 +327,7 @@ class PersonalQuotesExport implements CsvExportableInterface
             ],
         ];
 
-        $quoteType = ucfirst($quoteType);
-        if ($quoteType === QuoteTypes::JETSKI->value) {
-            $quoteType = QuoteTypes::YACHT->value;
-        }
-
-        return $headings[$quoteType] ?? [];
+        return $headings[ucfirst($quoteType)] ?? [];
     }
 
     public function map($quote): array
@@ -322,6 +347,7 @@ class PersonalQuotesExport implements CsvExportableInterface
             'last_name' => $quote->last_name,
             'lead_status' => optional($quote->quoteStatus)->text,
             'advisor' => optional($quote->advisor)->name,
+            'branch' => $quote->advisor?->primaryBranch?->branch?->name,
             'created_date' => date(config('constants.datetime_format'), strtotime($quote->created_at)),
             'advisor_assigned_date' => isset($quote->quoteDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->quoteDetail->advisor_assigned_date)) : '',
             'last_modified_date' => date(config('constants.datetime_format'), strtotime($quote->updated_at)),
@@ -345,6 +371,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 date(config('constants.datetime_format'), strtotime($quote->dob)),
                 $baseFields['lead_status'],
                 $baseFields['advisor'],
+                $baseFields['branch'],
                 $baseFields['created_date'],
                 $baseFields['advisor_assigned_date'],
                 $baseFields['last_modified_date'],
@@ -360,7 +387,30 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['booking_date'],
                 $baseFields['pc_customer'],
             ],
-            QuoteTypes::YACHT->value, QuoteTypes::JETSKI->value => [
+            QuoteTypes::YACHT->value => [
+                $baseFields['code'],
+                $baseFields['first_name'],
+                $baseFields['last_name'],
+                $baseFields['lead_status'],
+                $baseFields['advisor'],
+                $baseFields['branch'],
+                $baseFields['created_date'],
+                $baseFields['advisor_assigned_date'],
+                $baseFields['last_modified_date'],
+                $baseFields['premium'],
+                $baseFields['policy_number'],
+                $baseFields['source'],
+                optional($quote->currentlyInsuredWith)->text,
+                $baseFields['is_ecommerce'],
+                $quote->renewal_batch,
+                $baseFields['previous_policy_expiry_date'],
+                $baseFields['previous_policy_premium'],
+                $baseFields['previous_policy_number'],
+                $baseFields['transaction_approved_date'],
+                $baseFields['booking_date'],
+                $baseFields['pc_customer'],
+            ],
+            QuoteTypes::JETSKI->value => [
                 $baseFields['code'],
                 $baseFields['first_name'],
                 $baseFields['last_name'],
@@ -388,6 +438,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['last_name'],
                 $baseFields['lead_status'],
                 $baseFields['advisor'],
+                $baseFields['branch'],
                 $baseFields['created_date'],
                 $baseFields['advisor_assigned_date'],
                 $baseFields['last_modified_date'],
@@ -421,6 +472,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['last_name'],
                 $baseFields['lead_status'],
                 $baseFields['advisor'],
+                $baseFields['branch'],
                 $baseFields['created_date'],
                 $baseFields['advisor_assigned_date'],
                 $baseFields['last_modified_date'],
@@ -442,6 +494,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['last_name'],
                 $baseFields['lead_status'],
                 $baseFields['advisor'],
+                $baseFields['branch'],
                 $baseFields['created_date'],
                 $baseFields['advisor_assigned_date'],
                 $baseFields['last_modified_date'],
@@ -464,6 +517,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['last_name'],
                 $baseFields['lead_status'],
                 $baseFields['advisor'],
+                $baseFields['branch'],
                 $baseFields['created_date'],
                 $baseFields['advisor_assigned_date'],
                 $baseFields['last_modified_date'],
@@ -483,6 +537,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $quote->last_name,
                 optional($quote->quoteStatus)->text ?? '',
                 optional($quote->advisor)->name,
+                $baseFields['branch'],
                 date(config('constants.datetime_format'), strtotime($quote->created_at)),
                 date(config('constants.datetime_format'), strtotime($quote->updated_at)),
                 $quote->transapp_code,

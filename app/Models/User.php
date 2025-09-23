@@ -470,4 +470,16 @@ class User extends Authenticatable implements AuditableContract
     {
         return $this->hasOne(LeadAllocation::class, 'user_id', 'id')->where('quote_type_id', $quoteTypeId)->first();
     }
+
+    public function userBranches()
+    {
+        return $this->hasMany(UserBranch::class, 'user_id', 'id');
+    }
+
+    public function primaryBranch()
+    {
+        return $this->hasOne(UserBranch::class, 'user_id', 'id')
+        ->where('is_primary', 1)
+        ->where('status', 1);
+    }
 }

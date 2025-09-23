@@ -50,6 +50,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PDF;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
+use App\Enums\EmirateEnum;
 
 class HealthQuoteService extends BaseService
 {
@@ -208,6 +209,8 @@ class HealthQuoteService extends BaseService
             'hqr.pc_qualified',
             DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
             DB::raw(HealthQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
+            'b.id as branch_id',
+            'b.name as branch_name',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -241,12 +244,31 @@ class HealthQuoteService extends BaseService
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
-            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id');
+            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'hqr.advisor_id')
+                ->where('ub.is_primary', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'ub.branch_id');
     }
 
     public function getEntity($id)
     {
-        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
+        $quote = $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
+        $quote->branch_name = $this->getBranchName($quote->emirate_of_your_visa_id, $quote->branch_name);
+
+        return $quote;
+    }
+
+    public function getBranchName($emirateOfYourVisaId, $advisorBranchName): string
+    {
+        if ($emirateOfYourVisaId == EmirateEnum::ABU_DHABI || $advisorBranchName == 'Abu Dhabi') {
+            $branchName = 'Abu Dhabi';
+        } else {
+            $branchName = 'Dubai';
+        }
+
+        return $branchName;
     }
 
     public function isAUHLead($id): bool

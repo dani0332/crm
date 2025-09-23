@@ -291,6 +291,10 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
+            $gridData->map(function ($item) {
+                $item->branch_name = app(HealthQuoteService::class)->getBranchName($item->emirate->id, $item->advisor?->primaryBranch?->branch?->name);
+                return $item;
+            });
 
             $quote_status = $dropdownSource['quote_status_id'];
             $quote_status = collect($quote_status)->filter(function ($value) {

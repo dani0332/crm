@@ -36,11 +36,12 @@ class AuditRepository extends BaseRepository
         $auditables = $quoteObject->getAuditables();
         $code = isset(request()->code) ? request()->code : '';
         $auditableTypes = ['App\Models\Payment', 'App\Models\PaymentSplits'];
+        $showParentAuditLogs = $auditables['show_auditables'] ?? true;
 
         $query = DB::table('audits')
             ->select('audits.*', 'users.name')
             ->leftJoin('users', 'audits.user_id', 'users.id')
-            ->where(function ($q) use ($auditables) {
+            ->when($showParentAuditLogs, function ($q) use ($auditables) {
                 if (request()->has('auditable_id') && request()->auditable_id) {
                     $q->where('auditable_id', request()->auditable_id)->where('auditable_type', $auditables['auditable_type']);
                 }
@@ -58,16 +59,25 @@ class AuditRepository extends BaseRepository
         if (! empty($auditables['relations'])) {
             foreach ($auditables['relations'] as $relation) {
                 $model = $relation['auditable_type'];
-                if ($childRecord = $model::where($relation['key'], request()->auditable_id)->first()) {
-                    $query->orWhere(function ($q) use ($relation, $childRecord) {
-                        $q->where('auditable_type', $relation['auditable_type'])->where('auditable_id', $childRecord->id);
-                    });
+                $auditRelation = $relation['relation'] ?? 'one';
+                if($auditRelation == 'many') {
+                    $childRecords = $model::where($relation['key'], request()->auditable_id)->get();
+                } else {
+                    $childRecords = [$model::where($relation['key'], request()->auditable_id)->first()];
+                }
+
+                if ($childRecords) {
+                    foreach ($childRecords as $record) {
+                        $query->orWhere(function ($q) use ($relation, $record) {
+                            $q->where('auditable_type', $relation['auditable_type'])->where('auditable_id', $record->id);
+                        });
+                    }
                 }
             }
         }
         $results = $query->orderBy('created_at', 'desc')->get();
 
-        $results->transform(function ($audit) {
+        $results->transform(function ($audit) use ($quoteObject) {
             $newValues = json_decode($audit->new_values, true) ?? [];
             $oldValues = json_decode($audit->old_values, true) ?? [];
 
@@ -138,6 +148,18 @@ class AuditRepository extends BaseRepository
                 }
             }
             $transformedOld = $extractProfiles($transformedOld);
+
+            if (request()->quote_type == 'UserBranch') {
+                $data = [
+                    'audit' => $audit,
+                    'transformedOld' => $transformedOld,
+                    'transformedNew' => $transformedNew
+                ];
+                $data = $quoteObject->transformAuditables($data);
+                $audit = $data['audit'];
+                $transformedOld = $data['transformedOld'];
+                $transformedNew = $data['transformedNew'];
+            }
 
             $audit->new_values = json_encode($transformedNew);
             $audit->old_values = json_encode($transformedOld);

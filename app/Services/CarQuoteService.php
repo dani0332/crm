@@ -495,6 +495,7 @@ class CarQuoteService extends BaseService
                 'cqr.insurer_api_status_id',
                 'cqr.rta_upload_status',
                 'cqr.documents_verified',
+                'b.name as branch_name',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -542,6 +543,11 @@ class CarQuoteService extends BaseService
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'cqr.advisor_id')
+                     ->where('ub.is_primary', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'ub.branch_id')
             ->groupBy('cqr.id')
             ->where('cqr.uuid', $id)
             ->first();

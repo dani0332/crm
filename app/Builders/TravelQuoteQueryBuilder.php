@@ -73,6 +73,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',
+            'advisor.primaryBranch.branch:id,name',
             'travelQuoteRequestDetail',
             'travelQuoteRequestDetail.lostReason',
             'customer:id,emirates_id_expiry_date,receive_marketing_updates,pcp_tag',

@@ -86,6 +86,7 @@ const tableHeader = ref([
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
+  { text: 'BRANCH', value: 'advisor.primary_branch.branch.name', is_active: true },
   {
     text: 'Investment Frequency',
     value: 'savings_quote.investment_frequency.text',
