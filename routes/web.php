@@ -507,11 +507,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
         Route::resource('branches', BranchController::class);
-        Route::resource('branch-assignments', BranchAssignmentController::class);
-        Route::get('branch-assignments/{user_id}/create', [BranchAssignmentController::class, 'create'])->name('branch-assignments.create');
-        Route::post('branch-assignments/{user_id}/store', [BranchAssignmentController::class, 'store'])->name('branch-assignments.store');
-        Route::get('branch-assignments/{user_id}/delete/{branch_id}', [BranchAssignmentController::class, 'disableAssignment'])->name('branch-assignments.delete');
-        Route::get('branch-assignments/{user_id}/make-primary/{branch_id}', [BranchAssignmentController::class, 'makePrimary'])->name('branch-assignments.make-primary');
+        Route::prefix('branch-assignments')->name('branch-assignments.')->group(function () {
+            Route::get('/', [BranchAssignmentController::class, 'index'])->name('index');
+            Route::get('/{user_id}', [BranchAssignmentController::class, 'show'])->name('show');
+            Route::get('/{user_id}/create', [BranchAssignmentController::class, 'create'])->name('create');
+            Route::post('/{user_id}', [BranchAssignmentController::class, 'store'])->name('store');
+            Route::delete('/{user_id}/branches/{branch_id}', [BranchAssignmentController::class, 'disableAssignment'])->name('destroy');
+            Route::patch('/{user_id}/branches/{branch_id}/make-primary', [BranchAssignmentController::class, 'makePrimary'])->name('make-primary');
+        });
 
         Route::get('/sync-migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
             $forceProcess = (bool) $force;
