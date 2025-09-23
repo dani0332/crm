@@ -45,8 +45,7 @@ class UserBranch extends Model implements AuditableContract
         $transformedOld = &$data['transformedOld'];
         $transformedNew = &$data['transformedNew'];
 
-        $auditableId = $audit->auditable_id ?? null;
-
+        $auditableId = $audit->auditable_id;
         if (!empty($auditableId)) {
             $transformedNew['id'] = $auditableId;
             if ($audit->event == 'updated') {
@@ -54,15 +53,20 @@ class UserBranch extends Model implements AuditableContract
             }
         }
 
+        $userbranch = $this->where('id', $auditableId)->with('branch')->first();
         if ($audit->event == 'created') {
             $audit->event = 'Added Branch';
+            $transformedNew['notes'] = "New branch added " . $userbranch?->branch?->name;
         } else {
             if (isset($transformedNew['is_primary']) && $transformedNew['is_primary'] == 1) {
                 $audit->event = 'Made Primary Branch';
+                $transformedNew['notes'] = $userbranch?->branch?->name . " was made primary branch";
             } elseif (isset($transformedNew['is_primary']) && $transformedNew['is_primary'] == 0) {
                 $audit->event = 'Removed Primary Branch';
+                $transformedNew['notes'] = $userbranch?->branch?->name . " was removed as primary branch";
             } elseif (isset($transformedNew['status']) && $transformedNew['status'] == 0) {
                 $audit->event = 'Removed Branch';
+                $transformedNew['notes'] = $userbranch?->branch?->name . " branch was removed";
             }
         }
 
