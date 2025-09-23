@@ -70,6 +70,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'assignment_type',
             'gender',
             'emirate_of_your_visa_id',
+            'pec_marked_at',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
