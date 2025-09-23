@@ -353,7 +353,10 @@ class BorController extends Controller
                 'X-Azure-FDID' => 'no-buffer', // Azure Front Door hint
                 'Transfer-Encoding' => 'chunked', // Force chunked encoding
                 'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Accept, Cache-Control',
                 'Access-Control-Allow-Credentials' => 'true',
+                'Access-Control-Expose-Headers' => 'Content-Type, Cache-Control, Connection',
             ]);
             return $response;
         } catch (Exception $th) {
