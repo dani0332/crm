@@ -4,24 +4,13 @@ namespace App\Http\Controllers\V2;
 
 use App\Http\Requests\Bor\BorFormRequest;
 use App\Models\BorLog;
-use App\Models\DocumentType;
-use App\Models\PersonalQuote;
 use App\Services\Bor\BorEmailService;
 use App\Services\Bor\BorPdfService;
-use App\Services\QuoteDocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
-use Inertia\Inertia;
-use Inertia\Response;
 use App\Enums\BorStatusEnum;
-use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
@@ -35,17 +24,11 @@ class BorController extends Controller
     use GenericQueriesAllLobs;
     
     protected $borService;
-    protected $borEmailService;
-    protected $borPdfService;
 
     public function __construct(
         BorService $borService,
-        BorEmailService $borEmailService,
-        BorPdfService $borPdfService
     ) {
         $this->borService = $borService;
-        $this->borEmailService = $borEmailService;
-        $this->borPdfService = $borPdfService;
         // Apply BOR document upload permission to upload method
         $this->middleware('permission:' . PermissionsEnum::BOR_DOCUMENT_UPLOAD, ['only' => ['uploadDocument']]);
     }
@@ -236,9 +219,10 @@ class BorController extends Controller
     {
         try {
             $borLog = BorLog::findOrFail($borLogId);
+            $borPdfService = new BorPdfService();
             
             // Generate BOR PDF using the same service as API
-            $pdf = $this->borPdfService->generatePreviewBorPdf($borLog);
+            $pdf = $borPdfService->generatePreviewBorPdf($borLog);
             
             if (!$pdf) {
                 return response()->json([

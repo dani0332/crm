@@ -25,33 +25,13 @@ class BorController extends Controller
 {
     use GenericQueriesAllLobs;
 
-    /**
-     * @var BorPdfService
-     */
-    private $borPdfService;
-
     private $borService;
 
-    /**
-     * @var BorEmailService
-     */
-    private $borEmailService;
-
-    /**
-     * @var QuoteDocumentService
-     */
-    private $quoteDocumentService;
 
     public function __construct(
-        BorPdfService $borPdfService,
-        QuoteDocumentService $quoteDocumentService,
         BorService $borService,
-        BorEmailService $borEmailService
     ) {
-        $this->borPdfService = $borPdfService;
-        $this->quoteDocumentService = $quoteDocumentService;
         $this->borService = $borService;
-        $this->borEmailService = $borEmailService;
     }
 
 
@@ -100,7 +80,7 @@ class BorController extends Controller
                 ignore_user_abort(true);
 
                 $lastDataHash = null;
-                $maxIterations = 600; // Maximum 30 minutes (600 * 3 seconds)
+                $maxIterations = 200; // Maximum 10 minutes (200 * 3 seconds)
                 $iteration = 0;
 
                 LoggerService::info('SSE BOR stream started', ['bor_ref_id' => $borRefId]);
@@ -272,7 +252,8 @@ class BorController extends Controller
         try {
             $refId = $request->input('bor_ref_id');
             $borLog = BorLog::where('bor_reference', $refId)->first();
-            $pdf = $this->borPdfService->generatePreviewBorPdf($borLog);
+            $borPdfService = new BorPdfService();
+            $pdf = $borPdfService->generatePreviewBorPdf($borLog);
 
             return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf['pdf']->download()), 'name' => $pdf['name']]);
         } catch (\Throwable $th) {
@@ -306,7 +287,8 @@ class BorController extends Controller
 
             $document = null;
             if($request->hasFile('file')) {
-                $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->all(), $quote);
+                $quoteDocumentService = new QuoteDocumentService();
+                $document = $quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->all(), $quote);
             }
 
             $docIsPresent = isset($document) && !is_null($document);
@@ -385,14 +367,15 @@ class BorController extends Controller
             return response()->json(['error' => 'Quote not found'], 404);
         }
 
-        $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->all(), $quote);
+        $quoteDocumentService = new QuoteDocumentService();
+        $document = $quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->all(), $quote);
 
         return new QuoteDocumentResource($document);
     }
 
     public function deleteDocument(Request $request)
     {
-        $borLog = BorLog::with('personalQuote', 'personalQuote.documents')->where('bor_reference', $request->bor_ref_id)->first();
+        $borLog = BorLog::with('personalQuote.documents')->where('bor_reference', $request->bor_ref_id)->first();
         $quote = $borLog->personalQuote;
         $quoteName = QuoteTypes::getName($quote->quote_type_id);
         $isPersonalQuote = checkPersonalQuotes($quoteName->value);
@@ -406,7 +389,8 @@ class BorController extends Controller
             'doc_uuid' => $request->doc_uuid,
             'document_category' => $request->bor_ref_id,
         ];
-        return $this->quoteDocumentService->deleteBorDocument($quote, $data);
+        $quoteDocumentService = new QuoteDocumentService();
+        return $quoteDocumentService->deleteBorDocument($quote, $data);
     }
 
     public function borCompletionEmailTrigger($borRefId)
@@ -415,12 +399,13 @@ class BorController extends Controller
             'bor_ref_id' => $borRefId,
         ]);
         $borLog = BorLog::where('bor_reference', $borRefId)->first();
-        $result = $this->borEmailService->sendBorCompletionEmail($borLog);
+        $borEmailService = new BorEmailService();
+        $result = $borEmailService->sendBorCompletionEmail($borLog);
         if($borLog->insurance_contact_id != null) {
             LoggerService::info('Sending BOR Insurer Notification', [
                 'bor_ref_id' => $borRefId,
             ]);
-            $result_insurer = $this->borEmailService->sendBorInsurerNotification($borLog);
+            $result_insurer = $borEmailService->sendBorInsurerNotification($borLog);
             if($result_insurer) {
                 $borLog->update([
                     'email_sent' => 1,

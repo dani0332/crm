@@ -42,13 +42,6 @@ class BorLog extends Model
         parent::boot();
 
         static::creating(function ($borLog) {
-            // Generate document_id if not set (used for customer portal access)
-            // if (empty($borLog->document_id)) {
-            //     $borLog->document_id = Str::random(64);
-            // }
-            // if (empty($borLog->date_created)) {
-            //     $borLog->date_created = now();
-            // }
             // Set default status to SIGNATURE_REQUESTED
             if (empty($borLog->status)) {
                 $borLog->status = BorStatusEnum::SIGNATURE_REQUESTED;

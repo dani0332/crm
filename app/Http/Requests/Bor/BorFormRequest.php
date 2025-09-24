@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Bor;
 
+use App\Enums\CustomerTypeEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteTypes;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -46,7 +48,7 @@ class BorFormRequest extends FormRequest
         }
 
         // LOB-specific validation rules
-        $motorLobs = [QuoteTypes::CAR, QuoteTypes::BIKE];
+        $motorLobs = [strtolower(QuoteTypes::CAR->value), strtolower(QuoteTypes::BIKE->value)];
         $isMotorLob = in_array(strtolower($lob), $motorLobs);
 
         // Policy fields are only required for Individual insurers, not Entity insurers
@@ -129,17 +131,17 @@ class BorFormRequest extends FormRequest
             $lob = $this->input('lob', 'car');
             
             // Additional business rule validations
-            if ($customerType === 'Entity' && empty($this->input('company_name'))) {
+            if ($customerType === CustomerTypeEnum::Entity && empty($this->input('company_name'))) {
                 $validator->errors()->add('company_name', 'Company name is required for entity insurers.');
             }
             
-            if ($customerType === 'Individual' && empty($this->input('insurer_name'))) {
+            if ($customerType === CustomerTypeEnum::Individual && empty($this->input('insurer_name'))) {
                 $validator->errors()->add('insurer_name', 'Insurer name is required for individual insurers.');
             }
 
             // LOB-specific business rules - only for Individual insurers
-            if ($customerType === 'Individual') {
-                $motorLobs = ['car', 'bike'];
+            if ($customerType === CustomerTypeEnum::Individual) {
+                $motorLobs = [strtolower(QuoteTypes::CAR->value), strtolower(QuoteTypes::BIKE->value)];
                 if (in_array(strtolower($lob), $motorLobs)) {
                     if (empty($this->input('policy_number'))) {
                         $validator->errors()->add('policy_number', 'Policy number is required for motor insurance.');
@@ -166,8 +168,8 @@ class BorFormRequest extends FormRequest
         }
 
         // Check if provider code is OIC or name contains Sukoon
-        return strtolower($provider->code) === 'oic' || 
-               stripos($provider->text, 'sukoon') !== false;
+        return strtolower($provider->code) === strtolower(InsuranceProviderEnum::OIC->value) || 
+               stripos($provider->text, strtolower(InsuranceProviderEnum::getTextByCode(InsuranceProviderEnum::OIC))) !== false;
     }
 
     /**
