@@ -470,32 +470,26 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Response', extra: ['response' => $retrieveRequest]);
 
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $retrieveRequest, $this->baseUrl.$endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $retrieveRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
-
-            if (! $retrieveRequest['status']) {
-                $response['error'] = $retrieveRequest['error'];
-                $response['message'] = $retrieveRequest['message'];
-                $response['status'] = false;
-
-                continue;
+            if ($retrieveRequest['status']) {
+                $retrieveResponse = $retrieveRequest['data'];
+    
+                $documentContent = $retrieveResponse?->RetrieveResponse?->Policies[0]?->PolicyResponse?->Documents?->PolicyReportsPdf[0];
+    
+                $quoteDocument = $this->uploadAndAttachToQuoteDocuments($quote, $documentContent, $imcrm['IMKEY'], $imcrm['IMNAME'].'.pdf');
             }
 
-            $retrieveResponse = $retrieveRequest['data'];
-
-            $documentContent = $retrieveResponse?->RetrieveResponse?->Policies[0]?->PolicyResponse?->Documents?->PolicyReportsPdf[0];
-
-            $quoteDocument = $this->uploadAndAttachToQuoteDocuments($quote, $documentContent, $imcrm['IMKEY'], $imcrm['IMNAME'].'.pdf');
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $retrieveRequest, $this->baseUrl.$endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $retrieveRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' document retreive work end', extra: [
+                'time' => now()->format('d-m-Y H:i:s'),
+                'status' => $retrieveRequest['status'],
+            ]);
 
             $uploadedDocumentsToIMCRM->push([
                 'name' => $imcrm['IMNAME'],
                 'uploaded' => $quoteDocument?->id ? true : false,
-                'message' => $retrieveRequest['message'],
+                'message' => $retrieveRequest['message'] ?? 'Document Retrieve Failed',
             ]);
         }
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' document retreive work end', extra: [
-            'time' => now()->format('d-m-Y H:i:s'),
-        ]);
 
         $allDocumentsUploaded = $uploadedDocumentsToIMCRM->where('uploaded', false)->count() === 0;
         if (! $allDocumentsUploaded || empty($uploadedDocumentsToIMCRM)) {
