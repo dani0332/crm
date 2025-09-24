@@ -153,7 +153,8 @@ function onSubmit(isValid) {
     isEmptyField.value = true;
   }
 
-  if (quoteForm.pec == null || quoteForm.pec == undefined) {
+  // Only validate PEC field on create page, not on edit page
+  if (!isEdit.value && (quoteForm.pec == null || quoteForm.pec == undefined)) {
     pecValidationError.value = pecErrorMessage.value;
 
     // Scroll to PEC field if validation fails
@@ -449,7 +450,7 @@ function onSubmit(isValid) {
           />
         </div>
 
-        <div data-pec-field>
+        <div v-if="!isEdit" data-pec-field>
           <div class="mb-3">
             <ToolTip
               title="Does the member need to declare any chronic or pre-existing medical conditions, pregnancy, plans to conceive, or fertility treatment?"
