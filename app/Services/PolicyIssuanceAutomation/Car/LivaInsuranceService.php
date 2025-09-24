@@ -4,6 +4,7 @@ namespace App\Services\PolicyIssuanceAutomation\Car;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
+use App\Enums\EnvEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
@@ -79,10 +80,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     public $currentInsurerApiStatus = null;
     public $headers = [];
+    private $appEnv;
 
     public function __construct()
     {
         $this->baseUrl = config('constants.LIVA_API_BASE_URL');
+        $this->appEnv = config('constants.APP_ENV');
     }
 
     private function getAPISteps(): array
@@ -823,9 +826,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     {
         $response = ['status' => false, 'error' => null, 'message' => null, 'data' => null, 'completed_step' => null];
         $url = $this->baseUrl.$endPoint;
+        $timeOut = $this->appEnv == EnvEnum::PRODUCTION ? 20 : 120;
 
         try {
-            $httpResponse = Http::timeout(50)->withHeaders($this->headers)->post($url, $payload);
+            $httpResponse = Http::timeout($timeOut)->withHeaders($this->headers)->post($url, $payload);
 
             if ($responseObject = $httpResponse->object()) {
                 if (
