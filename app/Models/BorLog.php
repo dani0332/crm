@@ -177,21 +177,6 @@ class BorLog extends Model
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
-    /**
-     * Check if the BOR request is completed.
-     */
-    public function isCompleted(): bool
-    {
-        return $this->status === BorStatusEnum::COMPLETED;
-    }
-
-    /**
-     * Check if the BOR request is cancelled.
-     */
-    public function isCancelled(): bool
-    {
-        return $this->status === BorStatusEnum::CANCELLED;
-    }
 
     /**
      * Check if the BOR request has been signed.
@@ -207,54 +192,6 @@ class BorLog extends Model
     public function isUploaded(): bool
     {
         return $this->status === BorStatusEnum::DOCUMENT_UPLOADED;
-    }
-
-    /**
-     * Check if email has been sent to insurer.
-     */
-    public function isEmailSent(): bool
-    {
-        return $this->email_sent;
-    }
-
-    /**
-     * Check if the status is active (not cancelled or completed).
-     */
-    public function isActive(): bool
-    {
-        return BorStatusEnum::isActive($this->status);
-    }
-
-    /**
-     * Check if the status is final (cancelled or completed).
-     */
-    public function isFinal(): bool
-    {
-        return BorStatusEnum::isFinal($this->status);
-    }
-
-    /**
-     * Check if the BOR can be edited.
-     */
-    public function allowsEditing(): bool
-    {
-        return BorStatusEnum::allowsEditing($this->status);
-    }
-
-    /**
-     * Check if the BOR can be cancelled.
-     */
-    public function allowsCancellation(): bool
-    {
-        return BorStatusEnum::allowsCancellation($this->status);
-    }
-
-    /**
-     * Check if documents can be uploaded.
-     */
-    public function allowsUpload(): bool
-    {
-        return BorStatusEnum::allowsUpload($this->status);
     }
 
     /**
@@ -325,46 +262,12 @@ class BorLog extends Model
      */
     public function markAsCancelled(?string $reason = null, ?string $additional_notes = null): bool
     {
-        // if ($this->allowsCancellation()) {
-            $this->status = BorStatusEnum::CANCELLED;
-            if ($reason) {
-                $this->cancellation_reason = $reason;
-                $this->additional_notes = $additional_notes;
-            }
-            return $this->save();
-        // }
-        // return false;
-    }
-
-    /**
-     * Get the next possible statuses for this BOR.
-     */
-    public function getNextStatuses(): array
-    {
-        return BorStatusEnum::getNextStatuses($this->status);
-    }
-
-    /**
-     * Get status display information.
-     */
-    public function getStatusInfo(): array
-    {
-        return [
-            'value' => $this->status,
-            'label' => BorStatusEnum::labels()[$this->status] ?? $this->status,
-            'color' => BorStatusEnum::colors()[$this->status] ?? 'gray',
-            'icon' => BorStatusEnum::icons()[$this->status] ?? 'circle',
-        ];
-    }
-
-    /**
-     * Generate a new document ID (for customer portal access).
-     */
-    public function regenerateDocumentId(): string
-    {
-        $this->document_id = Str::random(64);
-        $this->save();
-        return $this->document_id;
+        $this->status = BorStatusEnum::CANCELLED;
+        if ($reason) {
+            $this->cancellation_reason = $reason;
+            $this->additional_notes = $additional_notes;
+        }
+        return $this->save();
     }
 
     /**
@@ -422,39 +325,5 @@ class BorLog extends Model
         
         // This should never be reached due to the exception thrown in the loop
         throw new \Exception("Unexpected error in BOR ID generation");
-    }
-
-    /**
-     * Validate if a BOR ID follows the correct format
-     * 
-     * @param string $borId The BOR ID to validate
-     * @return bool True if valid format, false otherwise
-     */
-    public static function isValidBorIdFormat(string $borId): bool
-    {
-        return preg_match('/^IM-BOR-\d{6}-\d+$/', $borId) === 1;
-    }
-
-    /**
-     * Extract date and count from a BOR ID
-     * 
-     * @param string $borId The BOR ID to parse
-     * @return array|null Array with 'date' and 'count' keys, or null if invalid format
-     */
-    public static function parseBorId(string $borId): ?array
-    {
-        if (!static::isValidBorIdFormat($borId)) {
-            return null;
-        }
-        
-        $parts = explode('-', $borId);
-        if (count($parts) !== 4) {
-            return null;
-        }
-        
-        return [
-            'date' => $parts[2], // ddmmyy format
-            'count' => (int) $parts[3]
-        ];
     }
 }
