@@ -188,6 +188,9 @@ trait OcrFillable
                 LoggerService::info(self::class.' - Mulkiya data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
                 ]);
+
+                  // Update customer verification details
+                  app(CustomerVerificationService::class)->processOcrVerification($quote, $data, $this->documentTypeCode);
             } else {
                 LoggerService::warning(self::class.' - Mulkiya data processing failed - Quote UUID: '.$quote->uuid);
             }

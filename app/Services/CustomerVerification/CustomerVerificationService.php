@@ -6,6 +6,7 @@ namespace App\Services\CustomerVerification;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerVerificationStatus;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
@@ -242,61 +243,36 @@ class CustomerVerificationService
         match ($quoteType) {
             QuoteTypes::CAR => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType),
             // Add other quote types here as needed
-            default => $this->handleUnsupportedEmiratesIdVerification($quoteType, $documentType),
+            default => $this->handleUnsupportedVerification($quoteType, $documentType, 'Emirates'),
+        };
+    }
+
+    public function processMulkiyaVerification($quote, QuoteTypes $quoteType, array $ocrData, string $documentType): void
+    {
+        match ($quoteType) {
+            QuoteTypes::CAR => $this->processCarMulkiyaVerification($quote, $ocrData, $documentType),
+            // Add other quote types here as needed
+            default => $this->handleUnsupportedVerification($quoteType, $documentType, 'Mulkiya'),
         };
     }
 
     private function processCarEmiratesIdVerification($quote, array $ocrData, string $documentType): void
     {
         $verificationData = [];
-        $hasValidData = false;
 
-        if (isset($ocrData['dateOfBirth']) && ! empty($ocrData['dateOfBirth'])) {
-            $verificationData['date_of_birth'] = $ocrData['dateOfBirth'];
-            $hasValidData = true;
+        $verificationData['date_of_birth'] = $ocrData['dateOfBirth'];
+
+        $nationalityId = $this->getNationalityId($ocrData['nationality']);
+        if ($nationalityId) {
+            $verificationData['nationality_id'] = $nationalityId;
+        } else {
+            $verificationData['nationality_id'] = null;
         }
 
-        if (isset($ocrData['nationality']) && ! empty($ocrData['nationality'])) {
-            $nationalityId = $this->getNationalityId($ocrData['nationality']);
-            if ($nationalityId) {
-                $verificationData['nationality_id'] = $nationalityId;
-                $hasValidData = true;
-            }
-        }
-
-        if (! $hasValidData) {
-            LoggerService::info('Emirates ID OCR: No DOB or nationality data found or values are null', extra: [
-                'document_type' => $documentType,
-                'quote_id' => $quote->id,
-                'quote_code' => $quote->code ?? null,
-                'quote_type' => QuoteTypes::CAR->value,
-                'has_dob' => isset($ocrData['dateOfBirth']),
-                'dob_value' => $ocrData['dateOfBirth'] ?? null,
-                'has_nationality' => isset($ocrData['nationality']),
-                'nationality_value' => $ocrData['nationality'] ?? null,
-            ]);
-
-            return;
-        }
+        $verificationData['name'] = $ocrData['name'];
 
         try {
-            CustomerVerificationDetail::updateOrCreate(
-                [
-                    'quotable_type' => QuoteTypes::CAR->modelClass(),
-                    'quotable_id' => $quote->id,
-                    'quote_type_id' => QuoteTypes::CAR->id(),
-                ],
-                $verificationData
-            );
-
-            LoggerService::info('Customer verification details updated from Emirates ID OCR', extra: [
-                'document_type' => $documentType,
-                'quote_id' => $quote->id,
-                'quote_code' => $quote->code ?? null,
-                'quote_type' => QuoteTypes::CAR->value,
-                'updated_fields' => array_keys($verificationData),
-            ]);
-
+            $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from Emirates ID OCR', extra: [
                 'document_type' => $documentType,
@@ -308,9 +284,62 @@ class CustomerVerificationService
         }
     }
 
-    private function handleUnsupportedEmiratesIdVerification(QuoteTypes $quoteType, string $documentType): void
+    private function processCarMulkiyaVerification($quote, array $ocrData, string $documentType): void
     {
-        LoggerService::info('Emirates ID verification not supported for quote type', extra: [
+        $verificationData = [];
+
+        $verificationData['carMakeAndModel'] = $ocrData['vehicalType'];
+        $verificationData['carModelYear'] = $ocrData['vehicalModel'];
+
+        try {
+            $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+        } catch (Exception $e) {
+            LoggerService::warning('Failed to update customer verification details from Emirates ID OCR', extra: [
+                'document_type' => $documentType,
+                'quote_id' => $quote->id,
+                'quote_code' => $quote->code ?? null,
+                'quote_type' => QuoteTypes::CAR->value,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+    }
+
+    private function saveCustomerVerificationDetails(array $verificationData, Model $quote, string $documentType): void
+    {
+        $data = CustomerVerificationDetail::where('quotable_type', QuoteTypes::CAR->modelClass())
+            ->where('quotable_id', $quote->id)
+            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->first();
+
+        LoggerService::info('Customer verification found:'.$data);
+        if ($data) {
+            $existingData = json_decode($data->customer_verified_data, true);
+            $existingData = array_merge($existingData, $verificationData);
+
+            $data->update(['customer_verified_data' => json_encode($existingData)]);
+        } else {
+            CustomerVerificationDetail::create([
+                'quotable_type' => QuoteTypes::CAR->modelClass(),
+                'quotable_id' => $quote->id,
+                'quote_type_id' => QuoteTypes::CAR->id(),
+                'customer_verified_data' => json_encode($verificationData),
+            ]);
+        }
+
+        LoggerService::info("Customer verification details updated from {$documentType} OCR", extra: [
+            'document_type' => $documentType,
+            'quote_id' => $quote->id,
+            'quote_code' => $quote->code ?? null,
+            'quote_type' => QuoteTypes::CAR->value,
+            'updated_fields' => array_keys($verificationData),
+        ]);
+
+    }
+
+    private function handleUnsupportedVerification(QuoteTypes $quoteType, string $documentType, string $documentTypeText): void
+    {
+        LoggerService::info("{$documentTypeText} verification not supported for quote type", extra: [
             'document_type' => $documentType,
             'quote_type' => $quoteType->value,
         ]);
@@ -345,7 +374,16 @@ class CustomerVerificationService
         };
 
         if ($quoteType) {
-            $this->processEmiratesIdVerification($quote, $quoteType, (array) $data, $this->documentTypeCode);
+            switch ($this->documentTypeCode) {
+                case OCRDocumentTypeEnum::ID_CARD->value:
+                    $this->processEmiratesIdVerification($quote, $quoteType, (array) $data, $this->documentTypeCode);
+                    break;
+                case OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE->value:
+                    $this->processMulkiyaVerification($quote, $quoteType, (array) $data, $this->documentTypeCode);
+                    break;
+                default:
+                    break;
+            }
         } else {
             LoggerService::info('Customer verification not supported for quote type', extra: [
                 'quote_uuid' => $quote->uuid,

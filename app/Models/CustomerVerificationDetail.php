@@ -14,13 +14,7 @@ class CustomerVerificationDetail extends Model
     protected $table = 'customer_verification_details';
 
     protected $fillable = [
-        'year_of_manufacture',
-        'date_of_birth',
-        'nationality_id',
-        'vehicle_make_id',
-        'vehicle_model_id',
-        'uae_license_held_for_id',
-        'emirate_of_registration_id',
+        'customer_verified_data',
         'quote_type_id',
         'quotable_type',
         'quotable_id',
