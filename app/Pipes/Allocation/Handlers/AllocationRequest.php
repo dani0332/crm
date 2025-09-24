@@ -62,6 +62,11 @@ class AllocationRequest
         return $this->isReassignmentJob;
     }
 
+    public function setAsReassignmentJob()
+    {
+        $this->isReassignmentJob = true;
+    }
+
     public function getAssignmentType()
     {
         return $this->assignmentType;
