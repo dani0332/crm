@@ -531,6 +531,7 @@ class AMLController extends Controller
                         'message' => $getInsurerScreeningResponse['message'],
                         'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
                         'isRenewalLead' => $getInsurerScreeningResponse['isRenewalLead'] ?? false,
+                        'is_previous_policy_expired' => $getInsurerScreeningResponse['is_previous_policy_expired'] ?? false,
                     ];
 
                     if (isset($getInsurerScreeningResponse['autoCaptureStatus'])) {
@@ -914,11 +915,12 @@ class AMLController extends Controller
                     'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched'] ?? false,
                     'autoCaptureStatus' => $insurerAMLScreeningResponse['autoCaptureStatus'] ?? null,
                     'autoCaptureMessage' => $insurerAMLScreeningResponse['autoCaptureMessage'] ?? null,
+                    'isPolicyExpired' => $insurerAMLScreeningResponse['is_previous_policy_expired'] ?? false,
                 ];
             }
         }
 
-        if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared) {
+        if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared || $insurerAMLScreeningResponse['is_previous_policy_expired']) {
             $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
             $response['success'] = $preparedFormData;
         }
@@ -1087,7 +1089,11 @@ class AMLController extends Controller
 
         $response = app(AMLService::class)->saveAdditionalVehicleAndDriverDetails($updateAdditionalVehicleDriverDetailsRequest, $quote);
 
-        return response()->json(['success' => $response['status'], 'message' => $response['message']]);
+        return response()->json([
+            'success' => $response['status'],
+            'message' => $response['message'],
+            'is_insured_driver_same' => $response['is_insured_driver_same'] ?? null,
+        ]);
     }
 
     public function getQuoteDetailsFromInsurer(Request $request)

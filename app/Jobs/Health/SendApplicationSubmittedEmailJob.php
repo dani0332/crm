@@ -35,15 +35,6 @@ class SendApplicationSubmittedEmailJob implements ShouldQueue
 
     public function middleware()
     {
-        // $isAUHLead = $this->healthQuote?->isAUHLead() ?? false;
-
-        // if ($isAUHLead) {
-        //     LoggerService::info(self::class." - Skipping Application Submitted Email because lead is from AUH for uuid: {$this->healthQuote->uuid}");
-        // }
-
-        // return [
-        //     Skip::when(fn () => $isAUHLead),
-        // ];
         return [];
     }
 }

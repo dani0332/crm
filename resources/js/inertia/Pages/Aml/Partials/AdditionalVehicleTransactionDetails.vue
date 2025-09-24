@@ -22,6 +22,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['update:chassisNumber']);
+
 const page = usePage();
 const notification = useToast();
 const lookups = page.props.lookups;
@@ -36,7 +38,7 @@ const RTA_CONSTANTS = {
   UPDATE_REGISTRATION: 'RTT07',
   VEHICLE_RENEWAL_WITH_CHANGE_NUMBER: 'RTT10',
   POLICY_DURATION_MONTHS: 13,
-  POLICY_EFFECTIVE_DATE_MAX_DAYS: 30,
+  POLICY_EFFECTIVE_DATE_MAX_DAYS: 75,
   PREVIOUS_GIG_PROVIDER: 'Gulf Insurance Group (Gulf) B.S.C. (C)',
   RENEWALS_UPLOADS: 'renewals_uploads',
 };
@@ -868,7 +870,10 @@ const submitAdditionalVehicleTransactionDetailsForm = async isValid => {
             },
           );
         }
-
+        emit(
+          'update:chassisNumber',
+          additionalVehicleTransactionDetailsForm.chassis_number,
+        );
         router.reload({
           replace: true,
           preserveScroll: true,
@@ -1052,6 +1057,13 @@ watch(
         registrationNoValidation.value = true;
       }
     }
+  },
+);
+
+watch(
+  () => additionalVehicleTransactionDetailsForm.chassis_number,
+  newChassisNumber => {
+    emit('update:chassisNumber', newChassisNumber);
   },
 );
 </script>

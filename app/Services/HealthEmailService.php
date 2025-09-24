@@ -264,13 +264,6 @@ class HealthEmailService extends BaseService
 
     public function sendOCAHealthWorkFlow($lead)
     {
-        // AUH leads should also receive OCA followups
-        // if ($lead->isAUHLead()) {
-        //     LoggerService::info(self::class." - Skipping OCA Health Workflow because lead is from AUH for uuid: {$lead->uuid}");
-        //
-        //     return;
-        // }
-
         LoggerService::info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
         if (! $lead->oca_flow_enabled) {
             $advisor = User::where('id', $lead->advisor_id)->first();
