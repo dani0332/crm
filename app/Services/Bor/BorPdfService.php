@@ -144,7 +144,7 @@ class BorPdfService
             // Customer Information
             'customer_type' => $borLog->customer_type,
             'customer_name' => $borLog->insurer_name ?? ($lead->first_name . ' ' . $lead->last_name) ?? null,
-            'company_name' => $borLog->insurer_name ?? $lead->company_name ?? null,
+            'company_name' => $borLog->company_name ?? $lead->company_name ?? null,
             'customer_email' => $lead->email,
             'customer_phone' => $lead->phone,
 
