@@ -4,12 +4,10 @@ namespace App\Jobs\Health;
 
 use App\Models\HealthQuote;
 use App\Services\HealthEmailService;
-use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\Skip;
 use Illuminate\Queue\SerializesModels;
 
 class SendApplicationSubmittedEmailJob implements ShouldQueue

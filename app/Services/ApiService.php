@@ -316,7 +316,7 @@ class ApiService
         if (! $lead) {
             return apiResponse(null, Response::HTTP_BAD_REQUEST, self::LEAD_NOT_FOUND);
         }
-        
+
         if (! $lead->isApplyNowEmailSent()) {
             app(HealthEmailService::class)->initiateApplyNowEmail($lead);
 
