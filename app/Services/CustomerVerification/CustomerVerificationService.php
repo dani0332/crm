@@ -6,7 +6,6 @@ namespace App\Services\CustomerVerification;
 
 use App\Enums\CustomerVerificationStatus;
 use App\Enums\QuoteTypes;
-use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -161,7 +160,7 @@ class CustomerVerificationService
                 'quote_type' => $quoteType->value,
             ]);
 
-            return ['webForm' => [], 'customerVerified' => [], 'ocrData' => [], 'buttonData' => ['shouldShow' => false]];
+            return ['webForm' => [], 'customerVerified' => [], 'buttonData' => ['shouldShow' => false]];
         }
 
         LoggerService::startQuoteLogging($record->code ?? null);
