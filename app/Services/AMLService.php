@@ -962,7 +962,7 @@ class AMLService
                 $insurerScreeningPayload['certificateEndDate'] = $quoteDetails->certificate_end_date ?? null;
                 $insurerScreeningPayload['annualMilageEstimation'] = $vehicleDriverDetail?->annual_mileage_estimate ?? null;
                 $insurerScreeningPayload['driverName'] = trim(($vehicleDriverDetail?->driver_first_name ?? '').' '.($vehicleDriverDetail?->driver_last_name ?? '')) ?: null;
-                $insurerScreeningPayload['driverDob'] = $vehicleDriverDetail?->driver_dob ?? null;
+                $insurerScreeningPayload['driverDob'] = Carbon::parse($vehicleDriverDetail?->driver_dob)->format('Y-m-d') ?? null;
                 $insurerScreeningPayload['driverGender'] = strtolower($this->formatGender($vehicleDriverDetail?->driver_gender)) ?? null;
                 $insurerScreeningPayload['driverLicenseNumber'] = $vehicleDriverDetail?->driver_license_number ?? null;
                 $insurerScreeningPayload['licenseIssuePlace'] = $issuancePlace?->text ?? null;
