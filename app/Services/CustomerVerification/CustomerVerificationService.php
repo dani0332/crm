@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\CustomerVerification;
 
-use App\Enums\QuoteTypes;
 use App\Enums\CustomerVerificationStatus;
+use App\Enums\QuoteTypes;
+use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -17,12 +18,12 @@ class CustomerVerificationService
 
     const VERIFICATION_FIELDS = [
         'year_of_manufacture',
-        'dob', 
+        'dob',
         'nationality_id',
         'car_make_id',
-        'car_model_id', 
+        'car_model_id',
         'uae_license_held_for_id',
-        'emirate_of_registration_id'
+        'emirate_of_registration_id',
     ];
 
     private function handleUnsupportedQuoteType(QuoteTypes $quoteType): array
@@ -62,9 +63,9 @@ class CustomerVerificationService
     public function evaluateFieldUpdate($record, array $changedFields, QuoteTypes $quoteType): void
     {
         LoggerService::startQuoteLogging($record->code ?? null);
-        
+
         $this->createVerificationSnapshot($record, $changedFields, $quoteType);
-        
+
         LoggerService::info('Customer verification evaluation completed', extra: [
             'changed_fields' => $changedFields,
             'quote_type' => $quoteType->value,
@@ -76,7 +77,7 @@ class CustomerVerificationService
         if ($quoteType !== QuoteTypes::CAR) {
             return;
         }
-        
+
         try {
             CustomerVerificationDetail::create([
                 'quotable_type' => $quoteType->modelClass(),
@@ -90,7 +91,7 @@ class CustomerVerificationService
                 'emirate_of_registration_id' => $record->emirate_of_registration_id,
                 'uae_license_held_for_id' => $record->uae_license_held_for_id,
             ]);
-            
+
             LoggerService::info('Verification snapshot created');
         } catch (Exception $e) {
             LoggerService::warning('Failed to create verification snapshot', extra: [
@@ -98,39 +99,39 @@ class CustomerVerificationService
             ]);
         }
     }
-    
+
     private function determineVerificationStatus($record, array $customerVerifiedData, array $webFormData): ?CustomerVerificationStatus
     {
-        $hasCustomerData = !empty(array_filter($customerVerifiedData));
-        
-        if (!$hasCustomerData) {
+        $hasCustomerData = ! empty(array_filter($customerVerifiedData));
+
+        if (! $hasCustomerData) {
             return null;
         }
-        
+
         if (isset($record->is_customer_data_valid) && $record->is_customer_data_valid === CustomerVerificationStatus::VERIFIED->value) {
             return CustomerVerificationStatus::VERIFIED;
         }
-        
+
         $allFieldsMatch = true;
         foreach ($webFormData as $field => $webValue) {
             $customerValue = $customerVerifiedData[$field] ?? '';
-            
+
             $normalizedWeb = trim(strtolower((string) $webValue));
             $normalizedCustomer = trim(strtolower((string) $customerValue));
-            
+
             if ($normalizedWeb !== $normalizedCustomer) {
                 $allFieldsMatch = false;
                 break;
             }
         }
-        
+
         return $allFieldsMatch ? CustomerVerificationStatus::VERIFIED : CustomerVerificationStatus::REQUIRES_VERIFICATION;
     }
 
     private function getVerificationButtonData($record, array $webFormData, array $customerVerifiedData): array
     {
         $status = $this->determineVerificationStatus($record, $customerVerifiedData, $webFormData);
-        
+
         if ($status === null) {
             return [
                 'status' => null,
@@ -140,9 +141,9 @@ class CustomerVerificationService
                 'shouldShow' => false,
             ];
         }
-        
+
         $buttonConfig = $this->getButtonConfigForStatus($status);
-        
+
         return [
             'status' => $status->value,
             'text' => $buttonConfig['text'],
@@ -183,13 +184,12 @@ class CustomerVerificationService
         ];
 
         $customerVerifiedData = $this->getCustomerVerifiedDetails($record->id, QuoteTypes::CAR);
-        
+
         $verificationButtonData = $this->getVerificationButtonData($record, $webFormData, $customerVerifiedData);
 
         return [
             'webForm' => $webFormData,
             'customerVerified' => $customerVerifiedData,
-            'ocrData' => [],
             'buttonData' => $verificationButtonData,
         ];
     }
