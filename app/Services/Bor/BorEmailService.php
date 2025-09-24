@@ -23,7 +23,7 @@ class BorEmailService
             $advisorData = $this->getAdvisorData($borLog);
             
             if (!$customerData || !$customerData['email']) {
-                LoggerService::error('BOR Request Email: Customer email not found', [
+                LoggerService::info('BOR Request Email: Customer email not found', [
                     'bor_log_id' => $borLog->id,
                     'lead_id' => $borLog->lead_id
                 ]);
@@ -31,7 +31,7 @@ class BorEmailService
             }
 
             if($advisorData == null) {
-                LoggerService::error('BOR Request Email: Advisor data not found', [
+                LoggerService::info('BOR Request Email: Advisor data not found', [
                     'bor_log_id' => $borLog->id,
                     'lead_id' => $borLog->lead_id
                 ]);
@@ -63,8 +63,8 @@ class BorEmailService
             $customerData = $this->getCustomerData($borLog);
             $advisorData = $this->getAdvisorData($borLog);
             
-            if (!$customerData || !$customerData['email']) {
-                LoggerService::error('BOR Completion Email: Customer email not found', [
+            if (!$customerData || !$customerData['email'] || $advisorData == null) {
+                LoggerService::info('BOR Completion Email failed: Customer or Advisor email not found', [
                     'bor_log_id' => $borLog->id,
                     'lead_id' => $borLog->lead_id
                 ]);
@@ -96,8 +96,8 @@ class BorEmailService
             $advisorData = $this->getAdvisorData($borLog);
 
 
-            if(!$insurerContact) {
-                LoggerService::info('BOR Insurer Notification: Insurer contact not found', [
+            if(!$insurerContact || $advisorData == null) {
+                LoggerService::info('BOR Insurer Notification failed: Insurer contact or Advisor data not found', [
                     'bor_log_id' => $borLog->id,
                     'lead_id' => $borLog->lead_id,
                 ]);
@@ -112,47 +112,6 @@ class BorEmailService
             LoggerService::error('BOR Insurer Notification Service failed', [
                 'bor_log_id' => $borLog->id,
                 'lead_id' => $borLog->lead_id,
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-            return false;
-        }
-    }
-
-    /**
-     * Send BOR status update email to customer
-     */
-    public function sendBorStatusUpdateEmail(BorLog $borLog, string $oldStatus, string $newStatus): bool
-    {
-        try {
-            // Skip email for certain status changes that don't require customer notification
-            if ($this->shouldSkipStatusUpdateEmail($oldStatus, $newStatus)) {
-                return true;
-            }
-
-            $customerData = $this->getCustomerData($borLog);
-            
-            if (!$customerData || !$customerData['email']) {
-                LoggerService::error('BOR Status Update Email: Customer email not found', [
-                    'bor_log_id' => $borLog->id,
-                    'lead_id' => $borLog->lead_id,
-                    'old_status' => $oldStatus,
-                    'new_status' => $newStatus
-                ]);
-                return false;
-            }
-
-            // $mail = new BorStatusUpdateMail($borLog, $customerData, $oldStatus, $newStatus);
-            // return $mail->sendViaBird();
-            return true;
-
-        } catch (\Exception $e) {
-            LoggerService::error('BOR Status Update Email Service failed', [
-                'bor_log_id' => $borLog->id,
-                'lead_id' => $borLog->lead_id,
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
@@ -212,43 +171,5 @@ class BorEmailService
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'advisorProfilePath' => (! empty($advisor->profile_photo_path) ? $advisor->profile_photo_path : ''),
         ];
-    }
-
-    /**
-     * Determine if status update email should be skipped
-     */
-    private function shouldSkipStatusUpdateEmail(string $oldStatus, string $newStatus): bool
-    {
-        // Skip emails for internal status changes that don't affect customer
-        $skipCombinations = [
-            ['pending', 'in_progress'], // Internal processing start
-        ];
-
-        foreach ($skipCombinations as $combination) {
-            if ($combination[0] === $oldStatus && $combination[1] === $newStatus) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Send all relevant emails when BOR is completed
-     */
-    public function sendBorCompletionNotifications(BorLog $borLog, string $insurerEmail = null): array
-    {
-        $results = [];
-
-        // Send completion email to customer
-        $results['customer_completion'] = $this->sendBorCompletionEmail($borLog);
-
-        LoggerService::info('BOR Completion Notifications sent', [
-            'bor_log_id' => $borLog->id,
-            'lead_id' => $borLog->lead_id,
-            'results' => $results
-        ]);
-
-        return $results;
     }
 } 
