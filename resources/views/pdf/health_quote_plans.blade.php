@@ -326,7 +326,7 @@
         color: #ffffff;
         padding: 2px 2px 2px 2px;
         text-align: left;
-        height: 165px !important;
+        height: 167px !important;
     }
 
     .footer-content-1 {
