@@ -194,6 +194,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR);
 
                 if ($isWaterMarkQualifyDoc && $quoteDocument) {
+                    LoggerService::info(self::class.' - Dispatching WatermarkDocumentsJob - Quote UUID: '.$data['quote_uuid']);
                     WatermarkDocumentsJob::dispatch(
                         $quoteDocument->id, $data['quote_uuid'], $documentType->id
                     )->afterCommit();

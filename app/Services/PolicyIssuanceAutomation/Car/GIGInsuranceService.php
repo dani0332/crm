@@ -7,10 +7,12 @@ namespace App\Services\PolicyIssuanceAutomation\Car;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -462,7 +464,9 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         $quote->update([
             'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+            'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
             'policy_number' => $policyIssuanceResponse['data']['data']->policyId,
+            'quote_status_date' => now(),
         ]);
 
         $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
@@ -631,7 +635,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 $docName = $duplicateDocName;
             }
 
-            $certificateOfInsuranceAvailable = $docName === self::POLICY_DOC_CERTIFICATE_OF_INSURANCE && $quoteDocument?->id;
+            $certificateOfInsuranceAvailable = str_contains($docName, self::POLICY_DOC_CERTIFICATE_OF_INSURANCE) && $quoteDocument?->id;
         }
 
         $quote->update(['rta_upload_status' => $certificateOfInsuranceAvailable ? self::RTA_UPLOAD_STATUS_DONE : self::RTA_UPLOAD_STATUS_PENDING]);
@@ -774,7 +778,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Triggering next automation step: Policy Booking');
                     // (new PolicyIssuanceService)->executePolicyIssuanceAutomationSteps();
                 })
-                ->catch(function (Batch $batch, Throwable $e) use ($quote) {
+                ->catch(function (Batch $batch, Throwable $e) use ($quote, $process) {
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR batch processing failed completely: '.$e->getMessage());
 
                     // Handle complete OCR failure - update status to failed
@@ -784,6 +788,9 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                         self::OCR_PROCESSING_API_FAILED_STATUS_ID,
                         self::POLICY_AUTOMATION_STATUS_NO_ID
                     );
+
+                    $process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'OCR batch processing failed: '.$e->getMessage()])]);
+                    $process = $process->refresh();
                 })
                 ->finally(function (Batch $batch) use ($quote) {
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR batch processing completed');
@@ -1202,9 +1209,9 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         try {
             $response = Ken::request('/get-quote-from-insurer?quoteTypeId='.$quoteTypeId.'&quoteUID='.$quoteDetails->uuid, 'get');
-            $responseData = $response['data'];
 
             if (isset($response['data'])) {
+                $responseData = $response['data'];
                 $vehicleDriverDetailsData = [
                     'is_insured_and_driver_same' => ($responseData['policyHolder']['isPolicyHolderDriver'] ? '1' : '0') ?? null,
                     'driver_first_name' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
@@ -1296,10 +1303,13 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                     'data' => $getQuoteResponseMapping ?? null,
                 ];
             } else {
-                return [
-                    'success' => false,
-                    'message' => $response['message'] ?? 'Failed to retrieve quote details from insurer portal',
-                ];
+                $_returnResponse = ['success' => false, 'message' => $response['message'] ?? 'Failed to retrieve quote details from insurer portal'];
+
+                if (isset($response['isPolicyExpired']) && $response['isPolicyExpired']) {
+                    $_returnResponse['isPolicyExpired'] = $response['isPolicyExpired'];
+                }
+
+                return $_returnResponse;
             }
         } catch (\Exception $e) {
             LoggerService::info($this->getLogPrefix(__FUNCTION__).' - Error: '.$e->getMessage());
@@ -1371,6 +1381,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID => self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED,
             self::OCR_PROCESSING_API_FAILED_STATUS_ID => self::OCR_PROCESSING_API_FAILED,
             self::BOOK_POLICY_API_FAILED_STATUS_ID => self::BOOK_POLICY_API_FAILED,
+            GenericRequestEnum::PREVIOUS_POLICY_EXPIRED_STATUS_ID => GenericRequestEnum::PREVIOUS_POLICY_EXPIRED, // 99 is the status id for previous policy expired
         ];
     }
 
