@@ -96,6 +96,7 @@ class CarQuoteExport implements CsvExportableInterface
             'SEGMENT',
             'LEAD ASSIGNMENT TRIGGER',
             'PRIVATE CLIENT',
+            'INSURER',
         ];
     }
 
@@ -157,6 +158,7 @@ class CarQuoteExport implements CsvExportableInterface
             $quote->getSegments($quote, QuoteTypeId::Car) ?? '',
             $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
             $quote->customer?->pcp_tag_formatted ?? '',
+            $quote->insuranceProvider?->text ?? '',
         ];
     }
 
