@@ -61,7 +61,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['driver_last_name'] = 'nullable|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
             $rules['driver_dob'] = 'nullable|date|before:today';
             $rules['driver_gender'] = 'required|string|in:male,female';
-            $rules['driver_license_number'] = 'required|string|max:255';
+            $rules['driver_license_number'] = 'required|max:255';
             $rules['uae_driving_experience'] = 'nullable|numeric|min:0|max:50';
             $rules['home_country_license_issuance'] = 'nullable|string|max:255';
             $rules['home_country_driving_experience'] = 'nullable|numeric|min:0|max:50';
