@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\V2\Admin;
 
-use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -205,7 +204,7 @@ class SystemHealthController extends Controller
             // Simple connection test - just try to get the connection
             /** @var MongoConnection $mongo */
             $mongo = DB::connection($connection);
-            
+
             if ($mongo instanceof MongoConnection) {
                 // Simple ping test
                 $mongo->ping();
