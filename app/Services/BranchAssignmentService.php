@@ -47,19 +47,6 @@ class BranchAssignmentService extends BaseService
         return $dataset;
     }
 
-    public function saveUserBranch($data, $userId)
-    {
-        return UserBranch::create([
-            'user_id' => $userId,
-            ...$data,
-        ]);
-    }
-
-    public function getUserBranches($userId)
-    {
-        return UserBranch::where('user_id', $userId)->where('status', 1)->get();
-    }
-
     public function disableAssignment($userId, $branchId)
     {
         $userBranch = UserBranch::where('user_id', $userId)

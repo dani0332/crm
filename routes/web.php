@@ -514,8 +514,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('/', [BranchAssignmentController::class, 'index'])->name('index');
             Route::get('/{user}', [BranchAssignmentController::class, 'show'])->name('show');
             Route::get('/{user}/create', [BranchAssignmentController::class, 'create'])->name('create');
-            Route::post('/{user_id}', [BranchAssignmentController::class, 'store'])->name('store');
-            Route::patch('/{user_id}/branches/{branch_id}', [BranchAssignmentController::class, 'disableAssignment'])->name('delete');
+            Route::post('/{user}', [BranchAssignmentController::class, 'store'])->name('store');
+            Route::patch('/{user}/branches/{branch_id}', [BranchAssignmentController::class, 'disableAssignment'])->name('delete');
             Route::patch('/{user_id}/branches/{branch_id}/make-primary', [BranchAssignmentController::class, 'makePrimary'])->name('make-primary');
         });
 

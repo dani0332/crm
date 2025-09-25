@@ -112,7 +112,7 @@ const historicalUserBranches = computed(() => {
               </Link>
               <Link
               method="patch"
-              :href="route('branch-assignments.delete', { user_id: user.id, branch_id: item.branch.id })">
+              :href="route('branch-assignments.delete', { user: user.id, branch_id: item.branch.id })">
                 <x-button size="sm" color="#ff5e00" tag="div">
                   Remove Branch
                 </x-button>

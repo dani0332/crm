@@ -43,7 +43,7 @@ class BranchAssignmentController extends Controller
         ]);
     }
 
-    public function store(Request $request, $userId)
+    public function store(Request $request, User $user)
     {
         $validated = $request->validate([
             'branch_id' => 'required|unique:branches,name',
@@ -52,7 +52,7 @@ class BranchAssignmentController extends Controller
             'is_primary' => 'nullable',
         ]);
 
-        $branches = $this->branchAssignmentService->getUserBranches($userId);
+        $branches = $user->userBranches->where('status', 1);
         if ($request->input('is_primary')) {
             $existingPrimary = $branches
                 ->where('is_primary', true)
@@ -73,9 +73,9 @@ class BranchAssignmentController extends Controller
             }
         }
 
-        $this->branchAssignmentService->saveUserBranch($validated, $userId);
+        $user->userBranches()->create($validated);
 
-        return redirect()->route('branch-assignments.show', $userId)->with('success', 'Branch added successfully');
+        return redirect()->route('branch-assignments.show', $user->id)->with('success', 'Branch added successfully');
     }
 
     public function show(User $user)
@@ -85,24 +85,24 @@ class BranchAssignmentController extends Controller
         return inertia('Admin/BranchAssignment/Show', compact('user'));
     }
 
-    public function disableAssignment($userId, $branchId)
+    public function disableAssignment(User $user, $branchId)
     {
-        $branches = $this->branchAssignmentService->getUserBranches($userId);
+        $branches = $user->userBranches->where('status', 1);
         if ($branches->count() == 0) {
-            return redirect()->route('branch-assignments.show', $userId)->with('error', 'No branch assigned to this user.');
+            return redirect()->route('branch-assignments.show', $user->id)->with('error', 'No branch assigned to this user.');
         }
 
         $primaryBranch = $branches->where('is_primary', 1)->first();
         if ($primaryBranch?->branch_id == $branchId) {
-            return redirect()->route('branch-assignments.show', $userId)->with('error', 'Cannot remove the primary branch. Please assign another active branch and set it as Primary before removal.');
+            return redirect()->route('branch-assignments.show', $user->id)->with('error', 'Cannot remove the primary branch. Please assign another active branch and set it as Primary before removal.');
         }
 
-        $userBranch = $this->branchAssignmentService->disableAssignment($userId, $branchId);
-        if (! $userBranch) {
-            return redirect()->route('branch-assignments.show', $userId)->with('error', 'Invalid Branch assignment.');
+        $userBranch = $this->branchAssignmentService->disableAssignment($user->id, $branchId);
+        if (!$userBranch) {
+            return redirect()->route('branch-assignments.show', $user->id)->with('error', 'Invalid Branch assignment.');
         }
 
-        return redirect()->route('branch-assignments.show', $userId)->with('success', 'Branch deleted successfully');
+        return redirect()->route('branch-assignments.show', $user->id)->with('success', 'Branch deleted successfully');
     }
 
     public function makePrimary($userId, $branchId)
