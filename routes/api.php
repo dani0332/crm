@@ -96,7 +96,7 @@ Route::prefix('v1')->group(function () {
     Route::get('quotes/{quoteType}/export-plans-pdf-link', [GenericLobController::class, 'exportPlansPdfLink'])->name('exportPlansPdfLink');
 
     // BOR SSE
-    Route::get('details/sse/{bor_ref_id}', [BorController::class, 'getBorLogSSE'])->name('bor.get-bor-log-sse');
+    Route::get('bor/details/sse/{bor_ref_id}', [BorController::class, 'getBorLogSSE'])->name('bor.get-bor-log-sse');
 
     Route::post('quotes/send-ocb-email', [GenericLobController::class, 'getQuoteForOCBEmail'])->name('getQuoteForOCBEmail');
 
