@@ -78,7 +78,7 @@ class BorController extends Controller
                 ini_set('output_buffering', 0);
                 ini_set('implicit_flush', 1);
                 ini_set('zlib.output_compression', 0);
-                ini_set('max_execution_time', 1800); // 30 minutes for SSE
+                ini_set('max_execution_time', 600); // 10 minutes for SSE
                 ini_set('memory_limit', '256M');
                 
                 // Ignore user disconnect to continue processing
