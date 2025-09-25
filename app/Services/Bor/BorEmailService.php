@@ -2,10 +2,9 @@
 
 namespace App\Services\Bor;
 
-use App\Mail\Bor\BorRequestMail;
 use App\Mail\Bor\BorCompletionMail;
 use App\Mail\Bor\BorInsurerNotificationMail;
-use App\Mail\Bor\BorStatusUpdateMail;
+use App\Mail\Bor\BorRequestMail;
 use App\Models\BorLog;
 use App\Models\PersonalQuote;
 use App\Models\User;
@@ -21,20 +20,22 @@ class BorEmailService
         try {
             $customerData = $this->getCustomerData($borLog);
             $advisorData = $this->getAdvisorData($borLog);
-            
-            if (!$customerData || !$customerData['email']) {
+
+            if (! $customerData || ! $customerData['email']) {
                 LoggerService::info('BOR Request Email: Customer email not found', [
                     'bor_log_id' => $borLog->id,
-                    'personal_quote_id' => $borLog->personal_quote_id
+                    'personal_quote_id' => $borLog->personal_quote_id,
                 ]);
+
                 return false;
             }
 
-            if($advisorData == null) {
+            if ($advisorData == null) {
                 LoggerService::info('BOR Request Email: Advisor data not found', [
                     'bor_log_id' => $borLog->id,
-                    'personal_quote_id' => $borLog->personal_quote_id
+                    'personal_quote_id' => $borLog->personal_quote_id,
                 ]);
+
                 return false;
             }
 
@@ -48,8 +49,9 @@ class BorEmailService
                 'personal_quote_id' => $borLog->personal_quote_id,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
             ]);
+
             return false;
         }
     }
@@ -62,16 +64,18 @@ class BorEmailService
         try {
             $customerData = $this->getCustomerData($borLog);
             $advisorData = $this->getAdvisorData($borLog);
-            
-            if (!$customerData || !$customerData['email'] || $advisorData == null) {
+
+            if (! $customerData || ! $customerData['email'] || $advisorData == null) {
                 LoggerService::info('BOR Completion Email failed: Customer or Advisor email not found', [
                     'bor_log_id' => $borLog->id,
-                    'personal_quote_id' => $borLog->personal_quote_id
+                    'personal_quote_id' => $borLog->personal_quote_id,
                 ]);
+
                 return false;
             }
 
             $mail = new BorCompletionMail($borLog, $customerData, $advisorData);
+
             return $mail->sendViaBird();
 
         } catch (\Exception $e) {
@@ -80,8 +84,9 @@ class BorEmailService
                 'personal_quote_id' => $borLog->personal_quote_id,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
             ]);
+
             return false;
         }
     }
@@ -95,8 +100,7 @@ class BorEmailService
             $insurerContact = $borLog->insuranceContact;
             $advisorData = $this->getAdvisorData($borLog);
 
-
-            if(!$insurerContact || $advisorData == null) {
+            if (! $insurerContact || $advisorData == null) {
                 LoggerService::info('BOR Insurer Notification failed: Insurer contact or Advisor data not found', [
                     'bor_log_id' => $borLog->id,
                     'personal_quote_id' => $borLog->personal_quote_id,
@@ -106,6 +110,7 @@ class BorEmailService
             }
 
             $mail = new BorInsurerNotificationMail($borLog, $insurerContact, $advisorData);
+
             return $mail->sendViaBird();
 
         } catch (\Exception $e) {
@@ -114,8 +119,9 @@ class BorEmailService
                 'personal_quote_id' => $borLog->personal_quote_id,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
             ]);
+
             return false;
         }
     }
@@ -127,12 +133,13 @@ class BorEmailService
     {
         try {
             $lead = PersonalQuote::find($borLog->personal_quote_id);
-            
-            if (!$lead) {
+
+            if (! $lead) {
                 LoggerService::error('BOR Email Service: Lead not found', [
                     'bor_log_id' => $borLog->id,
-                    'personal_quote_id' => $borLog->personal_quote_id
+                    'personal_quote_id' => $borLog->personal_quote_id,
                 ]);
+
                 return null;
             }
 
@@ -148,8 +155,9 @@ class BorEmailService
             LoggerService::error('BOR Email Service: Failed to get customer data', [
                 'bor_log_id' => $borLog->id,
                 'personal_quote_id' => $borLog->personal_quote_id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -158,9 +166,10 @@ class BorEmailService
     {
         $borLog->load('personalQuote.advisor');
         $advisor = User::find($borLog->personalQuote->advisor_id);
-        if(!$advisor) {
+        if (! $advisor) {
             return null;
         }
+
         return [
             'advisorEmail' => $advisor->email,
             'advisorId' => $advisor->id,
@@ -172,4 +181,4 @@ class BorEmailService
             'advisorProfilePath' => (! empty($advisor->profile_photo_path) ? $advisor->profile_photo_path : ''),
         ];
     }
-} 
+}

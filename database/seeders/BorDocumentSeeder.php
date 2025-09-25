@@ -4,8 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\DocumentTypeCode;
 use App\Models\DocumentType as ModelsDocumentType;
-use Dom\DocumentType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class BorDocumentSeeder extends Seeder
@@ -22,11 +20,11 @@ class BorDocumentSeeder extends Seeder
             $existingDocumentType = ModelsDocumentType::where('code', $documentType)->where('category', 'QUOTE')->first();
             if ($existingDocumentType) {
                 $existingDocumentType->update([
-                    'text' => "Broker on Record Letter",
-                    'description' => "Please upload the BOR letter with the signature and stamp on your official company letterhead.",
+                    'text' => 'Broker on Record Letter',
+                    'description' => 'Please upload the BOR letter with the signature and stamp on your official company letterhead.',
                     'is_active' => 1,
                 ]);
-            } 
+            }
         }
     }
 }

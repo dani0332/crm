@@ -6,13 +6,9 @@ use App\Enums\BorStatusEnum;
 use App\Enums\DocumentTypeCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Config;
 
 class BorLog extends Model
 {
@@ -31,7 +27,7 @@ class BorLog extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'email_sent' => 'boolean'
+        'email_sent' => 'boolean',
     ];
 
     /**
@@ -47,7 +43,7 @@ class BorLog extends Model
                 $borLog->status = BorStatusEnum::SIGNATURE_REQUESTED;
             }
             // Generate bor_reference as IM-BOR-ddmmyy-count
-            if (empty($borLog->bor_reference) && !empty($borLog->personal_quote_id)) {
+            if (empty($borLog->bor_reference) && ! empty($borLog->personal_quote_id)) {
                 $borLog->bor_reference = static::generateBorId($borLog->personal_quote_id);
             }
         });
@@ -79,6 +75,7 @@ class BorLog extends Model
         if (empty($table) || $table == null) {
             return null;
         }
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT_ONLY'));
     }
 
@@ -90,6 +87,7 @@ class BorLog extends Model
         if (empty($table) || $table == null) {
             return null;
         }
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
@@ -101,6 +99,7 @@ class BorLog extends Model
         if (empty($table) || $table == null) {
             return null;
         }
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
@@ -112,6 +111,7 @@ class BorLog extends Model
         if (empty($table) || $table == null) {
             return null;
         }
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
@@ -177,7 +177,6 @@ class BorLog extends Model
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
-
     /**
      * Check if the BOR request has been signed.
      */
@@ -226,8 +225,10 @@ class BorLog extends Model
         if ($this->isPending()) {
             $this->status = BorStatusEnum::DOCUMENT_SIGNED;
             $this->date_signed = now();
+
             return $this->save();
         }
+
         return false;
     }
 
@@ -239,8 +240,10 @@ class BorLog extends Model
         if ($this->isSigned()) {
             $this->status = BorStatusEnum::DOCUMENT_UPLOADED;
             $this->date_uploaded = now();
+
             return $this->save();
         }
+
         return false;
     }
 
@@ -252,8 +255,10 @@ class BorLog extends Model
         if ($this->isUploaded() || $this->isSigned()) {
             $this->status = BorStatusEnum::COMPLETED;
             $this->additional_notes = $additional_notes;
+
             return $this->save();
         }
+
         return false;
     }
 
@@ -267,15 +272,17 @@ class BorLog extends Model
             $this->cancellation_reason = $reason;
             $this->additional_notes = $additional_notes;
         }
+
         return $this->save();
     }
 
     /**
      * Generate a unique BOR ID in the format IM-BOR-ddmmyy-count
-     * 
-     * @param int $leadId The lead ID for which to generate the BOR ID
-     * @param \DateTime|null $date Optional date, defaults to current date
+     *
+     * @param  int  $leadId  The lead ID for which to generate the BOR ID
+     * @param  \DateTime|null  $date  Optional date, defaults to current date
      * @return string The generated unique BOR ID
+     *
      * @throws \Exception If unable to generate unique ID after retries
      */
     public static function generateBorId(int $leadId, ?\DateTime $date = null): string
@@ -283,7 +290,7 @@ class BorLog extends Model
         $date = $date ?? now();
         $dateStr = $date->format('dmyHis');
         $maxRetries = 10;
-        
+
         for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
             try {
                 // Use database transaction to ensure thread-safety
@@ -291,20 +298,20 @@ class BorLog extends Model
                     // Get the highest count for this lead and date
                     $todayStart = now()->startOfDay();
                     $todayEnd = now()->endOfDay();
-                    
+
                     $lastCount = static::where('personal_quote_id', $leadId)
                         ->lockForUpdate() // Prevent concurrent access
                         ->count();
-                    
+
                     $count = $lastCount + 1;
                     $borId = "IM-BOR-{$dateStr}-{$count}";
-                    
+
                     // Double-check uniqueness
                     $exists = static::where('bor_reference', $borId)->exists();
                     if ($exists) {
                         throw new \Exception("BOR ID collision detected: {$borId}");
                     }
-                    
+
                     return $borId;
                 });
             } catch (\Exception $e) {
@@ -313,17 +320,17 @@ class BorLog extends Model
                         'personal_quote_id' => $leadId,
                         'date' => $dateStr,
                         'attempts' => $maxRetries,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
                     ]);
                     throw new \Exception("Unable to generate unique BOR ID for lead {$leadId} after {$maxRetries} attempts");
                 }
-                
+
                 // Brief delay before retry to reduce collision chances
                 usleep(rand(100000, 500000)); // 0.1-0.5 seconds
             }
         }
-        
+
         // This should never be reached due to the exception thrown in the loop
-        throw new \Exception("Unexpected error in BOR ID generation");
+        throw new \Exception('Unexpected error in BOR ID generation');
     }
 }

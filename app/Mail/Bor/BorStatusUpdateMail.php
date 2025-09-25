@@ -2,9 +2,9 @@
 
 namespace App\Mail\Bor;
 
-use App\Models\BorLog;
-use App\Models\ApplicationStorage;
 use App\Enums\ApplicationStorageEnums;
+use App\Models\ApplicationStorage;
+use App\Models\BorLog;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
@@ -48,14 +48,15 @@ class BorStatusUpdateMail extends Mailable
         try {
             $birdData = $this->buildBirdEmailData();
             $workflowUrl = $this->getBirdWorkflowUrl();
-            
-            if (!$workflowUrl) {
+
+            if (! $workflowUrl) {
                 LoggerService::error('BOR Status Update Email: Bird workflow URL not configured', [
                     'bor_log_id' => $this->borLog->id,
                     'personal_quote_id' => $this->borLog->personal_quote_id,
                     'old_status' => $this->oldStatus,
-                    'new_status' => $this->newStatus
+                    'new_status' => $this->newStatus,
                 ]);
+
                 return false;
             }
 
@@ -68,7 +69,7 @@ class BorStatusUpdateMail extends Mailable
                 'customer_email' => $this->customerData['email'],
                 'old_status' => $this->oldStatus,
                 'new_status' => $this->newStatus,
-                'response_status' => $response->status_code
+                'response_status' => $response->status_code,
             ]);
 
             return $response->status_code >= 200 && $response->status_code < 300;
@@ -81,8 +82,9 @@ class BorStatusUpdateMail extends Mailable
                 'new_status' => $this->newStatus,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
             ]);
+
             return false;
         }
     }
@@ -120,7 +122,7 @@ class BorStatusUpdateMail extends Mailable
                 'status_change_date' => now()->format('F j, Y'),
                 'company_name' => config('app.name', 'InsuranceMarket.ae'),
                 'status_message' => $this->getStatusMessage(),
-            ]
+            ],
         ];
     }
 
@@ -132,11 +134,11 @@ class BorStatusUpdateMail extends Mailable
         if ($this->borLog->customer_type === 'Entity') {
             return $this->customerData['company_name'] ?? 'Valued Customer';
         }
-        
+
         $firstName = $this->customerData['first_name'] ?? '';
         $lastName = $this->customerData['last_name'] ?? '';
-        
-        return trim($firstName . ' ' . $lastName) ?: 'Valued Customer';
+
+        return trim($firstName.' '.$lastName) ?: 'Valued Customer';
     }
 
     /**
@@ -183,6 +185,7 @@ class BorStatusUpdateMail extends Mailable
     private function getBirdWorkflowUrl()
     {
         $workflowConfig = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL)->first();
+
         return $workflowConfig ? $workflowConfig->value : null;
     }
-} 
+}

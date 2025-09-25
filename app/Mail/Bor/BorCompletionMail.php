@@ -2,12 +2,12 @@
 
 namespace App\Mail\Bor;
 
-use App\Models\BorLog;
-use App\Models\ApplicationStorage;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
+use App\Models\ApplicationStorage;
+use App\Models\BorLog;
 use App\Services\BirdService;
 use App\Services\Bor\BorPdfService;
 use App\Services\Logger\LoggerService;
@@ -49,12 +49,13 @@ class BorCompletionMail extends Mailable
         try {
             $birdData = $this->buildBirdEmailData();
             $workflowUrl = $this->getBirdWorkflowUrl();
-            
-            if (!$workflowUrl) {
+
+            if (! $workflowUrl) {
                 LoggerService::error('BOR Completion Email: Bird workflow URL not configured', [
                     'bor_log_id' => $this->borLog->id,
-                    'personal_quote_id' => $this->borLog->personal_quote_id
+                    'personal_quote_id' => $this->borLog->personal_quote_id,
                 ]);
+
                 return false;
             }
 
@@ -65,7 +66,7 @@ class BorCompletionMail extends Mailable
                 'bor_log_id' => $this->borLog->id,
                 'personal_quote_id' => $this->borLog->personal_quote_id,
                 'customer_email' => $this->customerData['email'],
-                'response_status' => $response->status_code
+                'response_status' => $response->status_code,
             ]);
 
             return $response->status_code >= 200 && $response->status_code < 300;
@@ -76,8 +77,9 @@ class BorCompletionMail extends Mailable
                 'personal_quote_id' => $this->borLog->personal_quote_id,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
             ]);
+
             return false;
         }
     }
@@ -89,7 +91,8 @@ class BorCompletionMail extends Mailable
     {
         $this->borLog->load('personalQuote', 'insuranceProvider');
         $personalQuote = $this->borLog->personalQuote;
-        $quoteType = strtolower(QuoteTypes::getName($personalQuote->quote_type_id)->value) . '-insurance';
+        $quoteType = strtolower(QuoteTypes::getName($personalQuote->quote_type_id)->value).'-insurance';
+
         return [
             'uuid' => $personalQuote->uuid ?? '',
             'ref_id' => $personalQuote->code ?? '',
@@ -109,7 +112,7 @@ class BorCompletionMail extends Mailable
             'bor_data' => [
                 'policy_number' => $this->borLog->policy_number ?? ' ',
                 'insurer_name' => $this->borLog->insurer_name ?? ' ',
-                'customer_type' => $this->borLog->customer_type == "Entity" ? "company" : "individual",
+                'customer_type' => $this->borLog->customer_type == 'Entity' ? 'company' : 'individual',
                 'bor_ref_id' => $this->borLog->bor_reference ?? ' ',
                 'document_id' => $this->borLog->document_id ?? ' ',
                 'date_created' => $this->borLog->date_created ?? ' ',
@@ -127,10 +130,12 @@ class BorCompletionMail extends Mailable
         $provider = \App\Models\InsuranceProvider::find($this->borLog->insurance_provider_id);
         $name = $this->getCustomerName();
         if ($personalQuote->quote_type_id === QuoteTypeId::Car && $provider && (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
-            $subjectLine = 'BOR ' . $this->borLog->chassis_number . ' - ' . $name;
+            $subjectLine = 'BOR '.$this->borLog->chassis_number.' - '.$name;
+
             return $subjectLine;
         }
-        $subjectLine = $name . ' For signature - Broker Appointment Letter ' . $personalQuote->code;
+        $subjectLine = $name.' For signature - Broker Appointment Letter '.$personalQuote->code;
+
         return $subjectLine;
     }
 
@@ -141,11 +146,12 @@ class BorCompletionMail extends Mailable
     {
         $firstName = $this->customerData['first_name'] ?? '';
         $lastName = $this->customerData['last_name'] ?? '';
-        $name = trim($firstName . ' ' . $lastName);
+        $name = trim($firstName.' '.$lastName);
 
         if ($isFirstName) {
             return $firstName;
         }
+
         return $name ?? $this->borLog->insurer_name ?: 'Valued Customer';
     }
 
@@ -155,6 +161,7 @@ class BorCompletionMail extends Mailable
     private function getBirdWorkflowUrl()
     {
         $workflowConfig = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL)->first();
+
         return $workflowConfig ? $workflowConfig->value : null;
     }
-} 
+}

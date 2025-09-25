@@ -629,7 +629,7 @@ class DocumentTypesSeeder extends Seeder
                 'folder_path' => 'bor',
                 'accepted_files' => '.pdf,.png,.jpeg,.jpg',
                 'max_files' => 5,
-            ]
+            ],
         ];
 
         foreach ($quoteDocuments as $document) {

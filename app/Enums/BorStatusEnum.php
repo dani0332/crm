@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Enums;
 
@@ -13,11 +15,10 @@ final class BorStatusEnum extends Enum
 {
     const SIGNATURE_REQUESTED = 'Signature Requested';
     const SENT_TO_INSURER = 'Sent to Insurer';
-    const DOCUMENT_SIGNED = "Document Signed";
-    const DOCUMENT_UPLOADED = "Document Uploaded";
-    const COMPLETED = "Completed";
-    const CANCELLED = "Cancelled";
-
+    const DOCUMENT_SIGNED = 'Document Signed';
+    const DOCUMENT_UPLOADED = 'Document Uploaded';
+    const COMPLETED = 'Completed';
+    const CANCELLED = 'Cancelled';
 
     public static function allowsMarkingDone(string $status): bool
     {

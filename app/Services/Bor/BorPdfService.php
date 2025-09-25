@@ -7,8 +7,8 @@ use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class BorPdfService
@@ -25,8 +25,9 @@ class BorPdfService
                 throw new \Exception('Lead information not found for BOR log ID: '.$borLog->id);
             }
 
-            if($borLog->date_uploaded && $borLog->date_uploaded != null){
+            if ($borLog->date_uploaded && $borLog->date_uploaded != null) {
                 $document = $borLog->document;
+
                 return Storage::disk('azureIM')->temporaryUrl($document->doc_url, now()->addMinutes(2));
             }
             // Prepare data for PDF template
@@ -43,7 +44,7 @@ class BorPdfService
 
             // Save PDF to storage
             $pdfContent = $pdf->output();
-            $pdfPath = 'bor-documents/' . $filename;
+            $pdfPath = 'bor-documents/'.$filename;
             Storage::disk('azureIM')->put($pdfPath, $pdfContent);
 
             Log::info('BOR PDF generated successfully', [
@@ -113,7 +114,7 @@ class BorPdfService
                 $disk = Storage::disk('azureIM');
                 if (method_exists($disk, 'temporaryUrl')) {
                     $temporaryUrl = $disk->temporaryUrl($filename, now()->addMinutes(2));
-                    
+
                     // For PDF generation, we need to convert the image to base64 data URI
                     // since DomPDF cannot access external URLs directly
                     if ($temporaryUrl) {
@@ -143,7 +144,7 @@ class BorPdfService
 
             // Customer Information
             'customer_type' => $borLog->customer_type,
-            'customer_name' => $borLog->insurer_name ?? ($lead->first_name . ' ' . $lead->last_name) ?? null,
+            'customer_name' => $borLog->insurer_name ?? ($lead->first_name.' '.$lead->last_name) ?? null,
             'company_name' => $borLog->company_name ?? $lead->company_name ?? null,
             'customer_email' => $lead->email,
             'customer_phone' => $lead->phone,
@@ -167,7 +168,7 @@ class BorPdfService
             'date_signed_time' => Carbon::parse($borLog->date_signed)->format('H:i:s'),
             'document_id' => $borLog->document_id,
             'user_agent' => $borLog->user_agent,
-            
+
             // Additional Information
             'current_date' => now()->format('d F Y'),
             'current_time' => now()->format('h:i A'),

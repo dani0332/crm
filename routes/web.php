@@ -919,13 +919,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('requests/{id}/generate-link', [BorController::class, 'generateLink'])->name('bor.requests.generate-link');
         Route::resource('requests', BorController::class)->names('bor.requests')->only(['index', 'store', 'update']);
         Route::get('/get-representor', [BorController::class, 'getRepresentor'])->name('bor.get-representor');
-        
+
         // BOR Status and Action Management (CRM Interface)
         Route::post('logs/{id}/cancel', [BorController::class, 'cancelBor'])->name('bor.logs.cancel');
         Route::post('logs/{id}/done', [BorController::class, 'markDone'])->name('bor.logs.mark-done');
         Route::get('logs/{id}/download', [BorController::class, 'downloadDocument'])->name('bor.logs.download-document');
         Route::get('logs/{borLogId}/signed-pdf', [BorController::class, 'viewSignedPdf'])->name('bor.logs.view-signed-pdf');
-        
+
         // Document Management
         Route::post('logs/{id}/documents', [BorController::class, 'uploadDocument'])->name('bor.documents.upload');
     });
@@ -936,8 +936,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         // $borLog = BorLog::where('bor_reference', 'IM-BOR-200825175545-4')->first();
 
         $borLog = BorLog::where('bor_reference', 'IM-BOR-210825153043-1')->first();
-        $borPdfService = new BorPdfService();
+        $borPdfService = new BorPdfService;
         $pdfData = $borPdfService->preparePdfData($borLog, $borLog->personalQuote, true);
+
         return view('pdf.bor-document', $pdfData);
     });
 });

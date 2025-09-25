@@ -2,27 +2,26 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Http\Requests\Bor\BorFormRequest;
-use App\Models\BorLog;
-use App\Services\Bor\BorEmailService;
-use App\Services\Bor\BorPdfService;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use App\Enums\BorStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Bor\BorFormRequest;
+use App\Models\BorLog;
+use App\Services\Bor\BorPdfService;
 use App\Services\Bor\BorService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class BorController extends Controller
 {
     use GenericQueriesAllLobs;
-    
+
     protected $borService;
 
     public function __construct(
@@ -30,7 +29,7 @@ class BorController extends Controller
     ) {
         $this->borService = $borService;
         // Apply BOR document upload permission to upload method
-        $this->middleware('permission:' . PermissionsEnum::BOR_DOCUMENT_UPLOAD, ['only' => ['uploadDocument']]);
+        $this->middleware('permission:'.PermissionsEnum::BOR_DOCUMENT_UPLOAD, ['only' => ['uploadDocument']]);
     }
 
     /**
@@ -53,14 +52,14 @@ class BorController extends Controller
                 'trace' => $th->getTraceAsString(),
                 'request' => $request->all(),
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch BOR logs',
             ], 500);
         }
-        
-    }
 
+    }
 
     /**
      * Create a new BOR request
@@ -73,8 +72,8 @@ class BorController extends Controller
 
             // Return successful response
             return redirect()->back()->with([
-                'success' => 'BOR request created successfully' . ($borLog['emailSent'] ? ' and email sent to customer.' : ', but email failed to send.'),
-                'newBorLog' => $borLog['borLog']->fresh(['insuranceProvider'])
+                'success' => 'BOR request created successfully'.($borLog['emailSent'] ? ' and email sent to customer.' : ', but email failed to send.'),
+                'newBorLog' => $borLog['borLog']->fresh(['insuranceProvider']),
             ]);
 
         } catch (\Exception $e) {
@@ -87,7 +86,7 @@ class BorController extends Controller
             ]);
 
             return redirect()->back()->withErrors([
-                'general' => 'Failed to create BOR request. Please try again.'
+                'general' => 'Failed to create BOR request. Please try again.',
             ])->withInput();
         }
     }
@@ -103,7 +102,7 @@ class BorController extends Controller
 
             return redirect()->back()->with([
                 'success' => 'BOR request update successfully',
-                'updatedBorLog' => $borLog['borLog']->fresh(['insuranceProvider'])
+                'updatedBorLog' => $borLog['borLog']->fresh(['insuranceProvider']),
             ]);
 
         } catch (\Exception $e) {
@@ -115,7 +114,7 @@ class BorController extends Controller
             ]);
 
             return redirect()->back()->withErrors([
-                'general' => 'Failed to create BOR request. Please try again.'
+                'general' => 'Failed to create BOR request. Please try again.',
             ])->withInput();
         }
     }
@@ -141,6 +140,7 @@ class BorController extends Controller
         $quoteType = $request->quote_type;
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         $representor = $this->borService->getRepresentor($insuranceProviderId, $quoteTypeId);
+
         return response()->json([
             'success' => true,
             'providerRepresentor' => $representor,
@@ -150,7 +150,7 @@ class BorController extends Controller
     /**
      * This function is used to generate a link for the BOR request
      *
-     * @param BorLog $borLog
+     * @param  BorLog  $borLog
      * @return void
      */
     public function generateLink($borLogId)
@@ -158,10 +158,11 @@ class BorController extends Controller
         $borLog = BorLog::findOrFail($borLogId);
         $borLog->load('personalQuote');
         $quote = $borLog->personalQuote;
-        $quoteType = strtolower(QuoteTypes::getName($quote->quote_type_id)->value) .'-insurance';
+        $quoteType = strtolower(QuoteTypes::getName($quote->quote_type_id)->value).'-insurance';
         $quoteUuid = $quote->uuid;
         $ecomUrl = config('constants.AFIA_WEBSITE_DOMAIN') ?? '';
-        $requestLink = $ecomUrl .'/'. $quoteType .'/quote/'. $quoteUuid .'/bor/'. $borLog->bor_reference;
+        $requestLink = $ecomUrl.'/'.$quoteType.'/quote/'.$quoteUuid.'/bor/'.$borLog->bor_reference;
+
         return response()->json([
             'success' => true,
             'data' => $requestLink,
@@ -175,7 +176,7 @@ class BorController extends Controller
     {
         // Support both route parameter and request parameter for flexibility
         $borLogId = $id ?? $request->input('bor_log_id');
-        
+
         $validated = $request->validate([
             'file' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240', // 10MB max
             'document_type_code' => 'nullable|string', // Will be auto-determined if not provided
@@ -193,7 +194,7 @@ class BorController extends Controller
                 'success' => true,
                 'message' => 'BOR document uploaded successfully',
                 'borLog' => $result['borLog'],
-                'document' => $result['document']
+                'document' => $result['document'],
             ]);
 
         } catch (\Exception $e) {
@@ -207,7 +208,7 @@ class BorController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
@@ -219,12 +220,12 @@ class BorController extends Controller
     {
         try {
             $borLog = BorLog::findOrFail($borLogId);
-            $borPdfService = new BorPdfService();
-            
+            $borPdfService = new BorPdfService;
+
             // Generate BOR PDF using the same service as API
             $pdf = $borPdfService->generatePreviewBorPdf($borLog);
-            
-            if (!$pdf) {
+
+            if (! $pdf) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to generate BOR PDF',
@@ -234,7 +235,7 @@ class BorController extends Controller
             // Return base64 encoded PDF content for viewing only (same as API)
             return response()->json([
                 'success' => true,
-                'data' => 'data:application/pdf;base64,' . base64_encode($pdf['pdf']->output()),
+                'data' => 'data:application/pdf;base64,'.base64_encode($pdf['pdf']->output()),
                 'name' => $pdf['name'],
                 'message' => 'BOR PDF generated successfully for viewing',
             ]);
@@ -248,7 +249,7 @@ class BorController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to generate PDF for viewing: ' . $e->getMessage(),
+                'message' => 'Failed to generate PDF for viewing: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -268,11 +269,11 @@ class BorController extends Controller
 
             return redirect()->back()->with([
                 'success' => 'BOR request cancelled successfully.',
-                'updatedBorLog' => $result['borLog']
+                'updatedBorLog' => $result['borLog'],
             ]);
 
         } catch (\Exception $e) {
-            if($e->getCode() !== 200) {
+            if ($e->getCode() !== 200) {
                 LoggerService::error('BOR cancellation failed', [
                     'bor_id' => $id,
                     'error' => $e->getMessage(),
@@ -281,10 +282,9 @@ class BorController extends Controller
                     'request_data' => $request->except(['password']),
                 ]);
             }
-            
 
             return redirect()->back()->withErrors([
-                'general' => $e->getMessage()
+                'general' => $e->getMessage(),
             ])->withInput();
         }
     }
@@ -303,7 +303,7 @@ class BorController extends Controller
 
             return redirect()->back()->with([
                 'success' => 'BOR request marked as completed successfully.',
-                'updatedBorLog' => $result['borLog']
+                'updatedBorLog' => $result['borLog'],
             ]);
 
         } catch (\Exception $e) {
@@ -316,7 +316,7 @@ class BorController extends Controller
             ]);
 
             return redirect()->back()->withErrors([
-                'general' => $e->getMessage()
+                'general' => $e->getMessage(),
             ])->withInput();
         }
     }

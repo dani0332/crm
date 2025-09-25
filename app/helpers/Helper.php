@@ -1689,30 +1689,31 @@ if (! function_exists('userHasProduct')) {
     }
 }
 
-
 /**
  * Get the user's IP address with proper handling of proxies and load balancers
  *
- * @param Request $request
+ * @param  Request  $request
  * @return string
  */
 if (! function_exists('getUserIpAddress')) {
     function getUserIpAddress(Request $request): string
     {
         // Check for IP from shared internet
-        if (!empty($request->server('HTTP_CLIENT_IP'))) {
+        if (! empty($request->server('HTTP_CLIENT_IP'))) {
             return $request->server('HTTP_CLIENT_IP');
         }
         // Check for IP passed from proxy
-        elseif (!empty($request->server('HTTP_X_FORWARDED_FOR'))) {
+        elseif (! empty($request->server('HTTP_X_FORWARDED_FOR'))) {
             // Can contain multiple IPs, get the first one
             $forwardedIps = explode(',', $request->server('HTTP_X_FORWARDED_FOR'));
+
             return trim($forwardedIps[0]);
         }
         // Check for IP from remote address
-        elseif (!empty($request->server('REMOTE_ADDR'))) {
+        elseif (! empty($request->server('REMOTE_ADDR'))) {
             return $request->server('REMOTE_ADDR');
         }
+
         // Fallback to Laravel's built-in method
         return $request->ip();
     }

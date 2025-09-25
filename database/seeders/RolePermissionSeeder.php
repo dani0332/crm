@@ -410,7 +410,7 @@ class RolePermissionSeeder extends Seeder
         $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
 
         foreach ($roles as $role) {
-            if (!$role->hasPermissionTo($permission)) {
+            if (! $role->hasPermissionTo($permission)) {
                 $role->givePermissionTo($permission);
             }
         }
@@ -430,7 +430,7 @@ class RolePermissionSeeder extends Seeder
         $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
 
         foreach ($roles as $role) {
-            if (!$role->hasPermissionTo($permission)) {
+            if (! $role->hasPermissionTo($permission)) {
                 $role->givePermissionTo($permission);
             }
         }

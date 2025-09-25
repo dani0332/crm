@@ -33,7 +33,7 @@ class BorFormRequest extends FormRequest
         // Get LOB and customer type from the request
         $lob = $this->input('lob', 'car');
         $customerType = $this->input('customer_type');
-        
+
         // Customer type specific validation
         if ($customerType === 'Individual') {
             $rules['insurer_name'] = ['required', 'string', 'max:100'];
@@ -57,7 +57,7 @@ class BorFormRequest extends FormRequest
             if ($isMotorLob) {
                 $rules['policy_number'] = ['required', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
                 $rules['policy_expiry'] = ['required', 'date', 'after:today'];
-                
+
                 // Chassis number validation for Sukoon insurance (OIC code)
                 $insuranceProviderId = $this->input('insurance_provider_id');
                 if ($insuranceProviderId !== null && $this->isSukoonInsurance($insuranceProviderId)) {
@@ -129,12 +129,12 @@ class BorFormRequest extends FormRequest
         $validator->after(function ($validator) {
             $customerType = $this->input('customer_type');
             $lob = $this->input('lob', 'car');
-            
+
             // Additional business rule validations
             if ($customerType === CustomerTypeEnum::Entity && empty($this->input('company_name'))) {
                 $validator->errors()->add('company_name', 'Company name is required for entity insurers.');
             }
-            
+
             if ($customerType === CustomerTypeEnum::Individual && empty($this->input('insurer_name'))) {
                 $validator->errors()->add('insurer_name', 'Insurer name is required for individual insurers.');
             }
@@ -146,7 +146,7 @@ class BorFormRequest extends FormRequest
                     if (empty($this->input('policy_number'))) {
                         $validator->errors()->add('policy_number', 'Policy number is required for motor insurance.');
                     }
-                    
+
                     if (empty($this->input('policy_expiry'))) {
                         $validator->errors()->add('policy_expiry', 'Policy expiry date is required for motor insurance.');
                     }
@@ -162,13 +162,13 @@ class BorFormRequest extends FormRequest
     {
         // Check if the provider is Sukoon/OIC
         $provider = \App\Models\InsuranceProvider::find($insuranceProviderId);
-        
-        if (!$provider) {
+
+        if (! $provider) {
             return false;
         }
 
         // Check if provider code is OIC or name contains Sukoon
-        return strtolower($provider->code) === strtolower(InsuranceProviderEnum::OIC->value) || 
+        return strtolower($provider->code) === strtolower(InsuranceProviderEnum::OIC->value) ||
                stripos($provider->text, strtolower(InsuranceProviderEnum::getTextByCode(InsuranceProviderEnum::OIC))) !== false;
     }
 
@@ -180,20 +180,20 @@ class BorFormRequest extends FormRequest
         // Normalize LOB value
         if ($this->has('lob')) {
             $this->merge([
-                'lob' => strtolower($this->input('lob'))
+                'lob' => strtolower($this->input('lob')),
             ]);
         }
 
         // Ensure numeric fields are properly formatted
         if ($this->has('insurance_provider_id')) {
             $this->merge([
-                'insurance_provider_id' => (int) $this->input('insurance_provider_id')
+                'insurance_provider_id' => (int) $this->input('insurance_provider_id'),
             ]);
         }
 
         if ($this->has('personal_quote_id')) {
             $this->merge([
-                'personal_quote_id' => (int) $this->input('personal_quote_id')
+                'personal_quote_id' => (int) $this->input('personal_quote_id'),
             ]);
         }
     }

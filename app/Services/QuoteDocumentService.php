@@ -159,6 +159,7 @@ class QuoteDocumentService extends BaseService
 
             return response()->json(['message' => 'document deleted successfully']);
         }
+
         return response()->json(['message' => 'document not found'], 404);
     }
 
@@ -272,7 +273,7 @@ class QuoteDocumentService extends BaseService
             ]);
 
             // update the Bor log reference with uploaded document time and status
-            ( isset($data['document_category']) && !isset($data['bor_signature']) && $data['document_category'] !== null ) && $this->updateBorLogReference($data['document_category'], $quoteDocument);
+            (isset($data['document_category']) && ! isset($data['bor_signature']) && $data['document_category'] !== null) && $this->updateBorLogReference($data['document_category'], $quoteDocument);
 
             if (ucfirst(request('quoteType')) == QuoteTypes::TRAVEL->value && $documentType->code == DocumentTypeCode::TRVLPAS) {
                 SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
@@ -396,7 +397,7 @@ class QuoteDocumentService extends BaseService
             ->when($businessTypeOfInsurance, function ($query) use ($businessTypeOfInsurance) {
                 return $query->byBusinessTypeOfInsurance($businessTypeOfInsurance);
             })
-            ->when($havePermission == false, function ($query) use($borDocCodes) {
+            ->when($havePermission == false, function ($query) use ($borDocCodes) {
                 return $query->whereNotIn('code', $borDocCodes);
             })
             ->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer, $businessTypeOfInsurance) {
@@ -416,7 +417,7 @@ class QuoteDocumentService extends BaseService
             } elseif ($quoteType == quoteTypeCode::CORPLINE) {
                 $businessDocumetTypes = [DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR, DocumentTypeCode::PPR];
                 // If business type of insurance is available but not available in document types then add it to the business document types
-                if($documentTypes->whereIn('code', [DocumentTypeCode::BAL_BS, DocumentTypeCode::BUS_BAL])->count() == 0 && $havePermission) {
+                if ($documentTypes->whereIn('code', [DocumentTypeCode::BAL_BS, DocumentTypeCode::BUS_BAL])->count() == 0 && $havePermission) {
                     $businessDocumetTypes[] = DocumentTypeCode::BAL_BS;
                 }
             }
@@ -1069,13 +1070,13 @@ class QuoteDocumentService extends BaseService
     /**
      * Update the Bor log reference with uploaded document time and status
      *
-     * @param string $borReference
+     * @param  string  $borReference
      * @return void
      */
     private function updateBorLogReference($borReference, $quoteDocument)
     {
         $borLog = BorLog::where('bor_reference', $borReference)->first();
-        if($borLog) {
+        if ($borLog) {
             $borLog->update([
                 'date_uploaded' => now(),
                 'document_id' => $quoteDocument->doc_uuid,
@@ -1085,7 +1086,7 @@ class QuoteDocumentService extends BaseService
             ]);
         }
     }
-    
+
     private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType)
     {
         LoggerService::info('Dispatching OCR job from API');

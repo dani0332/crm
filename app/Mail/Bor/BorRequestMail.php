@@ -2,12 +2,12 @@
 
 namespace App\Mail\Bor;
 
-use App\Models\BorLog;
-use App\Models\ApplicationStorage;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
+use App\Models\ApplicationStorage;
+use App\Models\BorLog;
 use App\Services\BirdService;
 use App\Services\Bor\BorPdfService;
 use App\Services\Logger\LoggerService;
@@ -27,7 +27,7 @@ class BorRequestMail extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(BorLog $borLog, array $customerData, ?string $portalUrl = null, array $advisorData)
+    public function __construct(BorLog $borLog, array $customerData, ?string $portalUrl, array $advisorData)
     {
         $this->borLog = $borLog;
         $this->customerData = $customerData;
@@ -52,12 +52,13 @@ class BorRequestMail extends Mailable
         try {
             $birdData = $this->buildBirdEmailData();
             $workflowUrl = $this->getBirdWorkflowUrl();
-            
-            if (!$workflowUrl) {
+
+            if (! $workflowUrl) {
                 LoggerService::error('BOR Request Email: Bird workflow URL not configured', [
                     'bor_log_id' => $this->borLog->id,
-                    'personal_quote_id' => $this->borLog->personal_quote_id
+                    'personal_quote_id' => $this->borLog->personal_quote_id,
                 ]);
+
                 return false;
             }
 
@@ -70,7 +71,7 @@ class BorRequestMail extends Mailable
                 'personal_quote_id' => $this->borLog->personal_quote_id,
                 'customer_email' => $this->customerData['email'] ?? '',
                 'advisor_email' => $this->advisorData['email'] ?? '',
-                'response_status' => $response->status_code
+                'response_status' => $response->status_code,
             ]);
 
             return $response->status_code >= 200 && $response->status_code < 300;
@@ -81,8 +82,9 @@ class BorRequestMail extends Mailable
                 'personal_quote_id' => $this->borLog->personal_quote_id,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
             ]);
+
             return false;
         }
     }
@@ -94,17 +96,17 @@ class BorRequestMail extends Mailable
     {
         $this->borLog->load('personalQuote', 'insuranceProvider');
         $personalQuote = $this->borLog->personalQuote;
-        $quoteType = strtolower(QuoteTypes::getName($personalQuote->quote_type_id)->value) .'-insurance';
+        $quoteType = strtolower(QuoteTypes::getName($personalQuote->quote_type_id)->value).'-insurance';
         $quoteUuid = $personalQuote->uuid;
-        $quoteLink = $this->portalUrl .'/'. $quoteType .'/quote/'. $quoteUuid .'/bor/'.$this->borLog->bor_reference;
-        
+        $quoteLink = $this->portalUrl.'/'.$quoteType.'/quote/'.$quoteUuid.'/bor/'.$this->borLog->bor_reference;
+
         return [
             'uuid' => $personalQuote->uuid ?? '',
             'ref_id' => $personalQuote->code ?? '',
             'quote_type' => $quoteType ?? '',
             'workflow_type' => WorkflowTypeEnum::BOR_REQUEST ?? '',
             'quote_link' => $quoteLink ?? '',
-            'customer_name' => $this->getCustomerName(true) ??  '',
+            'customer_name' => $this->getCustomerName(true) ?? '',
             'subject_line' => $this->getSubjectLine($personalQuote, $quoteType) ?? '',
             'insurance' => [
                 'insurance_name' => $this->borLog->insuranceProvide?->text ?? '',
@@ -120,12 +122,12 @@ class BorRequestMail extends Mailable
             'bor_data' => [
                 'policy_number' => $this->borLog->policy_number ?? '',
                 'insurer_name' => $this->borLog->insurer_name ?? '',
-                'customer_type' => $this->borLog->customer_type == "Entity" ? "company" : "individual",
+                'customer_type' => $this->borLog->customer_type == 'Entity' ? 'company' : 'individual',
                 'bor_ref_id' => $this->borLog->bor_reference ?? '',
                 'document_id' => $this->borLog->document_id ?? '',
                 'date_created' => $this->borLog->date_created ?? '',
             ],
-            'attachPdf' => $this->borLog->customer_type == "Entity" ? app(BorPdfService::class)->generateTemporaryBorPdf($this->borLog) : null,
+            'attachPdf' => $this->borLog->customer_type == 'Entity' ? app(BorPdfService::class)->generateTemporaryBorPdf($this->borLog) : null,
             'advisor' => $this->advisorData,
         ];
     }
@@ -134,11 +136,13 @@ class BorRequestMail extends Mailable
     {
         $provider = \App\Models\InsuranceProvider::find($this->borLog->insurance_provider_id);
         $name = $this->getCustomerName();
-        if($personalQuote->quote_type_id === QuoteTypeId::Car && $provider && (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
-            $subjectLine = 'BOR '. $this->borLog->chassis_number . ' - ' . $name;
+        if ($personalQuote->quote_type_id === QuoteTypeId::Car && $provider && (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
+            $subjectLine = 'BOR '.$this->borLog->chassis_number.' - '.$name;
+
             return $subjectLine;
         }
-        $subjectLine = $name. ' For signature - Broker Appointment Letter '. $personalQuote->code;
+        $subjectLine = $name.' For signature - Broker Appointment Letter '.$personalQuote->code;
+
         return $subjectLine;
     }
 
@@ -149,9 +153,9 @@ class BorRequestMail extends Mailable
     {
         $firstName = $this->customerData['first_name'] ?? '';
         $lastName = $this->customerData['last_name'] ?? '';
-        $name = trim($firstName . ' ' . $lastName);
+        $name = trim($firstName.' '.$lastName);
 
-        if($isFirstName) {
+        if ($isFirstName) {
             return $firstName;
         }
 
@@ -164,6 +168,7 @@ class BorRequestMail extends Mailable
     private function getBirdWorkflowUrl()
     {
         $workflowConfig = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL)->first();
+
         return $workflowConfig ? $workflowConfig->value : null;
     }
-} 
+}

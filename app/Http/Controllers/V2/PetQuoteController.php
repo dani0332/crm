@@ -186,6 +186,7 @@ class PetQuoteController extends Controller
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
+
         // dd($insuranceProviders);
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,

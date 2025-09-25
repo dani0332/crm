@@ -2,12 +2,12 @@
 
 namespace App\Mail\Bor;
 
-use App\Models\BorLog;
-use App\Models\ApplicationStorage;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
+use App\Models\ApplicationStorage;
+use App\Models\BorLog;
 use App\Services\BirdService;
 use App\Services\Bor\BorPdfService;
 use App\Services\Logger\LoggerService;
@@ -49,13 +49,14 @@ class BorInsurerNotificationMail extends Mailable
         try {
             $birdData = $this->buildBirdEmailData();
             $workflowUrl = $this->getBirdWorkflowUrl();
-            
-            if (!$workflowUrl) {
+
+            if (! $workflowUrl) {
                 LoggerService::error('BOR Insurer Notification Email: Bird workflow URL not configured', [
                     'bor_log_id' => $this->borLog->id,
                     'personal_quote_id' => $this->borLog->personal_quote_id,
-                    'insurer_email' => $this->insurerContact->emails
+                    'insurer_email' => $this->insurerContact->emails,
                 ]);
+
                 return false;
             }
 
@@ -66,7 +67,7 @@ class BorInsurerNotificationMail extends Mailable
                 'bor_log_id' => $this->borLog->id,
                 'personal_quote_id' => $this->borLog->personal_quote_id,
                 'insurer_email' => $this->insurerContact->emails,
-                'response_status' => $response->status_code
+                'response_status' => $response->status_code,
             ]);
 
             return $response->status_code >= 200 && $response->status_code < 300;
@@ -78,8 +79,9 @@ class BorInsurerNotificationMail extends Mailable
                 'insurer_email' => $this->insurerContact->emails,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
             ]);
+
             return false;
         }
     }
@@ -92,7 +94,7 @@ class BorInsurerNotificationMail extends Mailable
         $this->borLog->load('personalQuote', 'insuranceProvider');
         $personalQuote = $this->borLog->personalQuote;
         $insurerEmails = explode(';', $this->insurerContact->emails);
-        $quoteType = strtolower(QuoteTypes::getName($personalQuote->quote_type_id)->value) . '-insurance';
+        $quoteType = strtolower(QuoteTypes::getName($personalQuote->quote_type_id)->value).'-insurance';
 
         // First email is the recipient, rest are CC emails
         $recipientEmail = $insurerEmails[0] ?? '';
@@ -113,7 +115,7 @@ class BorInsurerNotificationMail extends Mailable
                 'policy_number' => $this->borLog->policy_number ?? '',
                 'policy_expiry_date' => $this->borLog->policy_expiry ?? '',
                 'insurer_name' => $this->borLog->insurer_name ?? '',
-                'customer_type' => $this->borLog->customer_type == "Entity" ? "company" : "individual",
+                'customer_type' => $this->borLog->customer_type == 'Entity' ? 'company' : 'individual',
                 'bor_ref_id' => $this->borLog->bor_reference ?? '',
                 'document_id' => $this->borLog->document_id ?? '',
                 'date_created' => $this->borLog->date_created ?? '',
@@ -134,7 +136,7 @@ class BorInsurerNotificationMail extends Mailable
 
         $firstName = $this->customerData['first_name'] ?? '';
         $lastName = $this->customerData['last_name'] ?? '';
-        $name = trim($firstName . ' ' . $lastName);
+        $name = trim($firstName.' '.$lastName);
 
         return $this->borLog->insurer_name ?? $name ?: 'Valued Customer';
     }
@@ -143,10 +145,12 @@ class BorInsurerNotificationMail extends Mailable
         $provider = \App\Models\InsuranceProvider::find($this->borLog->insurance_provider_id);
         $name = $this->getCustomerName();
         if ($personalQuote->quote_type_id === QuoteTypeId::Car && $provider && (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
-            $subjectLine = 'Request for BOR ' . $this->borLog->chassis_number . ' - ' . $name . ' ' . $personalQuote->code;
+            $subjectLine = 'Request for BOR '.$this->borLog->chassis_number.' - '.$name.' '.$personalQuote->code;
+
             return $subjectLine;
         }
-        $subjectLine = 'Request for BOR ' . $name . ' ' . $personalQuote->code;
+        $subjectLine = 'Request for BOR '.$name.' '.$personalQuote->code;
+
         return $subjectLine;
     }
 
@@ -156,6 +160,7 @@ class BorInsurerNotificationMail extends Mailable
     private function getBirdWorkflowUrl()
     {
         $workflowConfig = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL)->first();
+
         return $workflowConfig ? $workflowConfig->value : null;
     }
-} 
+}

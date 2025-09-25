@@ -73,21 +73,21 @@ class QuoteStatusSeeder extends Seeder
             //         'created_by' => 'muhammad.waris@myalfred.com',
             //         'updated_by' => 'muhammad.waris@myalfred.com',
             //     ],
-                [   
-                    'code' => 'PendingBorRequest',
-                    'text' => 'Pending Bor Request',
-                    'text_ar' => 'Pending Bor Request',
-                    'is_active' => 1,
-                    'sort_order' => 22,
-                    'is_deleted' => 0,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                    'deleted_at' => null,
-                    'uuid' => 'ea826923-11bb-11ee-a8a6-2a23318a2520',
-                    'created_by' => 'muhammad.waris@myalfred.com',
-                    'updated_by' => 'muhammad.waris@myalfred.com',
-                ],
-            ];
+            [
+                'code' => 'PendingBorRequest',
+                'text' => 'Pending Bor Request',
+                'text_ar' => 'Pending Bor Request',
+                'is_active' => 1,
+                'sort_order' => 22,
+                'is_deleted' => 0,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+                'deleted_at' => null,
+                'uuid' => 'ea826923-11bb-11ee-a8a6-2a23318a2520',
+                'created_by' => 'muhammad.waris@myalfred.com',
+                'updated_by' => 'muhammad.waris@myalfred.com',
+            ],
+        ];
 
         foreach ($quoteStatusSeeder as $quoteStatus) {
             $conditions = [
@@ -125,7 +125,7 @@ class QuoteStatusSeeder extends Seeder
             //     'quote_status_id' => QuoteStatusEnum::PaymentInitiated,
             // ], $commonData);
 
-            // This have been run for prod/uat/test 
+            // This have been run for prod/uat/test
             // QuoteStatusMap::firstOrCreate([
             //     'quote_type_id' => $quoteType->id,
             //     'quote_status_id' => QuoteStatusEnum::PaymentLinkSentToCustomer,
