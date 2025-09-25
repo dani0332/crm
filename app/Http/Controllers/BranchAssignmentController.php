@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
+use App\Models\User;
 use App\Services\BranchAssignmentService;
 use App\Services\BranchService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
-use App\Models\User;
 
 class BranchAssignmentController extends Controller
 {
@@ -81,6 +81,7 @@ class BranchAssignmentController extends Controller
     public function show(User $user)
     {
         $user->load('userBranches', 'userBranches.branch');
+
         return inertia('Admin/BranchAssignment/Show', compact('user'));
     }
 
@@ -97,7 +98,7 @@ class BranchAssignmentController extends Controller
         }
 
         $userBranch = $this->branchAssignmentService->disableAssignment($userId, $branchId);
-        if (!$userBranch) {
+        if (! $userBranch) {
             return redirect()->route('branch-assignments.show', $userId)->with('error', 'Invalid Branch assignment.');
         }
 

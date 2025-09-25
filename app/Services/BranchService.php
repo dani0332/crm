@@ -26,6 +26,7 @@ class BranchService extends BaseService
     public function updateBranch($data, Branch $branch)
     {
         $branch->update($data);
+
         return $branch;
     }
 

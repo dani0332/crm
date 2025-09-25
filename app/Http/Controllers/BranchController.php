@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
+use App\Models\Branch;
 use App\Services\BranchService;
 use Illuminate\Http\Request;
-use App\Models\Branch;
 
 class BranchController extends Controller
 {
