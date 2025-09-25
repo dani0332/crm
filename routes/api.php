@@ -54,9 +54,6 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::prefix('bor')->group(function () {
 
         Route::get('details/{bor_ref_id}', [BorController::class, 'getBorLog'])->name('bor.get-bor-log');
-        Route::get('details/sse/{bor_ref_id}', [BorController::class, 'getBorLogSSE'])->name('bor.get-bor-log-sse');
-        Route::get('test-heartbeat', [BorController::class, 'testSSE'])->name('bor.test-heartbeat');
-        Route::get('minimal-sse', [BorController::class, 'minimalSSE'])->name('bor.minimal-sse');
         Route::get('completion-email-trigger/{bor_ref_id}', [BorController::class, 'borCompletionEmailTrigger'])->name('bor.completion-email-trigger');
         Route::post('generate-pdf', [BorController::class, 'generatePdf'])->name('bor.generate-pdf');
         Route::post('upload-document', [BorController::class, 'uploadDocument'])->name('bor.upload-document');
@@ -97,6 +94,9 @@ Route::prefix('v1')->group(function () {
     Route::get('quotes/{quoteType}/document-types', [QuoteDocumentController::class, 'getQuoteDocumentsToReceive']);
     Route::post('quotes/{quoteType}/export-plans-pdf', [GenericLobController::class, 'exportPlansPdf'])->name('exportPlansPdf');
     Route::get('quotes/{quoteType}/export-plans-pdf-link', [GenericLobController::class, 'exportPlansPdfLink'])->name('exportPlansPdfLink');
+
+    // BOR SSE
+    Route::get('details/sse/{bor_ref_id}', [BorController::class, 'getBorLogSSE'])->name('bor.get-bor-log-sse');
 
     Route::post('quotes/send-ocb-email', [GenericLobController::class, 'getQuoteForOCBEmail'])->name('getQuoteForOCBEmail');
 
