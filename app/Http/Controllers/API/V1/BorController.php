@@ -386,8 +386,8 @@ class BorController extends Controller
             LoggerService::info('Sending BOR Insurer Notification', [
                 'bor_ref_id' => $borRefId,
             ]);
-            $result_insurer = $borEmailService->sendBorInsurerNotification($borLog);
-            if($result_insurer) {
+            $isInsurerEmailSent = $borEmailService->sendBorInsurerNotification($borLog);
+            if($isInsurerEmailSent) {
                 $borLog->update([
                     'email_sent' => 1,
                 ]);

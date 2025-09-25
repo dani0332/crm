@@ -39,7 +39,7 @@ class BorController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            [$logs, $total] = $this->borService->getBorLogs($request->all());
+            [$logs, $total] = $this->borService->getBorLogs($request->only('lob', 'leadId'));
 
             return response()->json([
                 'success' => true,

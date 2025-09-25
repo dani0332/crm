@@ -50,6 +50,23 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::get('/home/renewal-ocb-attachment', [ApiController::class, 'homeRenewalOCBAttachment'])->name('homeRenewalOCBAttachment');
     Route::post('/imcrm/document-notification', [ApiController::class, 'documentNotification'])->name('documentNotification');
 
+    // BOR (Broker on Record) API Routes
+    Route::prefix('bor')->group(function () {
+
+        Route::get('details/{bor_ref_id}', [BorController::class, 'getBorLog'])->name('bor.get-bor-log');
+        Route::get('details/sse/{bor_ref_id}', [BorController::class, 'getBorLogSSE'])->name('bor.get-bor-log-sse');
+        Route::get('test-heartbeat', [BorController::class, 'testSSE'])->name('bor.test-heartbeat');
+        Route::get('minimal-sse', [BorController::class, 'minimalSSE'])->name('bor.minimal-sse');
+        Route::get('completion-email-trigger/{bor_ref_id}', [BorController::class, 'borCompletionEmailTrigger'])->name('bor.completion-email-trigger');
+        Route::post('generate-pdf', [BorController::class, 'generatePdf'])->name('bor.generate-pdf');
+        Route::post('upload-document', [BorController::class, 'uploadDocument'])->name('bor.upload-document');
+        Route::delete('delete-document', [BorController::class, 'deleteDocument'])->name('bor.delete-document');
+
+        Route::get('document-types', [BorController::class, 'getDocumentTypes'])->name('bor.get-document-types');
+        // Signature routes
+        Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
+    });
+
 });
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
@@ -87,23 +104,6 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
     Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
-
-    // BOR (Broker on Record) API Routes
-    Route::prefix('bor')->group(function () {
-
-        Route::get('details/{bor_ref_id}', [BorController::class, 'getBorLog'])->name('bor.get-bor-log');
-        Route::get('details/sse/{bor_ref_id}', [BorController::class, 'getBorLogSSE'])->name('bor.get-bor-log-sse');
-        Route::get('test-heartbeat', [BorController::class, 'testSSE'])->name('bor.test-heartbeat');
-        Route::get('minimal-sse', [BorController::class, 'minimalSSE'])->name('bor.minimal-sse');
-        Route::get('completion-email-trigger/{bor_ref_id}', [BorController::class, 'borCompletionEmailTrigger'])->name('bor.completion-email-trigger');
-        Route::post('generate-pdf', [BorController::class, 'generatePdf'])->name('bor.generate-pdf');
-        Route::post('upload-document', [BorController::class, 'uploadDocument'])->name('bor.upload-document');
-        Route::delete('delete-document', [BorController::class, 'deleteDocument'])->name('bor.delete-document');
-
-        Route::get('document-types', [BorController::class, 'getDocumentTypes'])->name('bor.get-document-types');
-        // Signature routes
-        Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
-    });
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
