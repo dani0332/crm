@@ -956,9 +956,9 @@ class AMLService
                     'value' => $bankName?->text ?? null,
                 ];
                 $insurerScreeningPayload['firstRegistrationDate'] = $vehicleDriverDetail?->first_registration_date ?? null;
-                $insurerScreeningPayload['policyEffectiveDate'] = $quoteDetails->policy_start_date ?? null;
+                $insurerScreeningPayload['policyEffectiveDate'] = Carbon::parse($quoteDetails->policy_start_date)->format('Y-m-d') ?? null;
                 $insurerScreeningPayload['policyExpiryDate'] = $quoteDetails->policy_expiry_date ?? null;
-                $insurerScreeningPayload['certificateStartDate'] = $quoteDetails->certificate_start_date ?? null;
+                $insurerScreeningPayload['certificateStartDate'] = Carbon::parse($quoteDetails->certificate_start_date)->format('Y-m-d') ?? null;
                 $insurerScreeningPayload['certificateEndDate'] = $quoteDetails->certificate_end_date ?? null;
                 $insurerScreeningPayload['annualMilageEstimation'] = $vehicleDriverDetail?->annual_mileage_estimate ?? null;
                 $insurerScreeningPayload['driverName'] = trim(($vehicleDriverDetail?->driver_first_name ?? '').' '.($vehicleDriverDetail?->driver_last_name ?? '')) ?: null;
