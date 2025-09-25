@@ -32,30 +32,27 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             'insurance_provider_code' => 'required|string',
         ];
 
-        $isLivaRenewal = $this->source === LeadSourceEnum::RENEWAL_UPLOAD && $this->insurance_provider_code === InsuranceProvidersEnum::RSA;
+        $isLiva = $this->insurance_provider_code === InsuranceProvidersEnum::RSA;
+        $isGIG = $this->insurance_provider_code === InsuranceProvidersEnum::AXA;
 
         if (isset($this->additional_vehicle_transaction_details) && $this->additional_vehicle_transaction_details == true) {
             $rules['rta_transaction_type'] = 'required';
             $rules['traffic_code_number'] = 'required';
             $rules['bank_loan'] = 'required';
 
-            if (! $isLivaRenewal) {
-                $rules['engine_number'] = 'required';
-                $rules['chassis_number'] = 'required';
-                $rules['vehicle_color'] = 'required';
-                $rules['first_registration_date'] = 'required|date';
-            }
+            $rules['engine_number'] = 'required';
+            $rules['chassis_number'] = 'required';
+            $rules['vehicle_color'] = 'required';
+            $rules['first_registration_date'] = 'required|date';
 
-            if ($this->insurance_provider_code === InsuranceProvidersEnum::RSA) {
-                if ($this->source !== LeadSourceEnum::RENEWAL_UPLOAD) {
+            if ($isLiva) {
                     $rules['policy_effective_date'] = 'required|after_or_equal:today';
-                }
             } else {
                 $rules['plate_color'] = 'required|string';
             }
         } else {
 
-            if (! $isLivaRenewal) {
+            if (! $isLiva) {
                 $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
             }
 
@@ -71,7 +68,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
         }
 
-        if ($this->insurance_provider_code === InsuranceProvidersEnum::AXA) {
+        if ($isGIG) {
             $rules = array_merge($rules, $this->getRtaSpecificRules());
         }
 
