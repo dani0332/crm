@@ -54,7 +54,7 @@ class BranchController extends Controller
     public function edit($id)
     {
         $branch = $this->branchService->getBranch($id);
-        abort_if(!$branch, 404);
+        abort_if(! $branch, 404);
 
         return inertia('Admin/Branch/Form', [
             'branch' => $branch,
@@ -71,7 +71,7 @@ class BranchController extends Controller
         ]);
 
         $branch = $this->branchService->getBranch($id);
-        abort_if(!$branch, 404);
+        abort_if(! $branch, 404);
 
         if ($validated['status'] != $branch->status) {
             $activeUserBranches = $branch->userBranches->where('status', 1);

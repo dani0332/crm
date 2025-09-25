@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Models\Branch;
 use App\Models\User;
 use App\Models\UserBranch;
-use Illuminate\Support\Facades\DB;
 use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\DB;
 
 class BranchAssignmentService extends BaseService
 {
@@ -132,7 +132,7 @@ class BranchAssignmentService extends BaseService
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            LoggerService::warning('Failed to make primary branch for user ' . $userId . ' and branch ' . $branchId . ' - Error: ' . $e->getMessage());
+            LoggerService::warning('Failed to make primary branch for user '.$userId.' and branch '.$branchId.' - Error: '.$e->getMessage());
         }
     }
 }
