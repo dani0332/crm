@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\PermissionsEnum;
 use App\Services\BranchService;
 use Illuminate\Http\Request;
+use App\Models\Branch;
 
 class BranchController extends Controller
 {
@@ -41,37 +42,28 @@ class BranchController extends Controller
         return redirect()->route('branches.index')->with('success', 'Branch created successfully');
     }
 
-    public function show($id)
+    public function show(Branch $branch)
     {
-        $branch = $this->branchService->getBranch($id);
-        abort_if(! $branch, 404);
-
         return inertia('Admin/Branch/Show', [
             'branch' => $branch,
         ]);
     }
 
-    public function edit($id)
+    public function edit(Branch $branch)
     {
-        $branch = $this->branchService->getBranch($id);
-        abort_if(! $branch, 404);
-
         return inertia('Admin/Branch/Form', [
             'branch' => $branch,
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Branch $branch)
     {
         $validated = $request->validate([
-            'name' => 'required|unique:branches,name,'.$id,
-            'code' => 'required|unique:branches,code,'.$id,
+            'name' => 'required|unique:branches,name,'.$branch->id,
+            'code' => 'required|unique:branches,code,'.$branch->id,
             'type' => 'required|string',
             'status' => 'required|boolean',
         ]);
-
-        $branch = $this->branchService->getBranch($id);
-        abort_if(! $branch, 404);
 
         if ($validated['status'] != $branch->status) {
             $activeUserBranches = $branch->userBranches->where('status', 1);
@@ -80,8 +72,8 @@ class BranchController extends Controller
             }
         }
 
-        $this->branchService->updateBranch($validated, $id);
+        $this->branchService->updateBranch($validated, $branch);
 
-        return redirect()->route('branches.show', $id)->with('success', 'Branch updated successfully');
+        return redirect()->route('branches.show', $branch->id)->with('success', 'Branch updated successfully');
     }
 }

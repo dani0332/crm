@@ -1,5 +1,4 @@
 <script setup>
-console.log('hello');
 const props = defineProps({
   branches: Object,
 });

@@ -23,20 +23,10 @@ class BranchService extends BaseService
         return $branch;
     }
 
-    public function updateBranch($data, $id)
+    public function updateBranch($data, Branch $branch)
     {
-        $branch = Branch::where('id', $id)->first();
-        if (empty($branch)) {
-            return false;
-        }
         $branch->update($data);
-
         return $branch;
-    }
-
-    public function getBranch($id)
-    {
-        return Branch::where('id', $id)->first();
     }
 
     public function getBranches()

@@ -54,6 +54,7 @@ class BranchAssignmentService extends BaseService
             ->with('userBranches', 'userBranches.branch')
             ->where('id', $id)
             ->first();
+        abort_if(!$dataset, 404);
 
         return [
             'user' => $dataset,
@@ -62,33 +63,17 @@ class BranchAssignmentService extends BaseService
         ];
     }
 
-    public function saveBranch($data, $userId)
+    public function saveUserBranch($data, $userId)
     {
-        UserBranch::create([
+        return UserBranch::create([
             'user_id' => $userId,
             ...$data,
         ]);
     }
 
-    public function updateBranch($data, $id)
-    {
-        $branch = Branch::where('id', $id)->first();
-        if (empty($branch)) {
-            return false;
-        }
-        $branch->update($data);
-
-        return $branch;
-    }
-
-    public function getBranches($userId)
+    public function getUserBranches($userId)
     {
         return UserBranch::where('user_id', $userId)->where('status', 1)->get();
-    }
-
-    public function getBranch($id)
-    {
-        return Branch::where('id', $id)->first();
     }
 
     public function hasBranches($userId)
@@ -107,7 +92,11 @@ class BranchAssignmentService extends BaseService
             $userBranch->status = 0;
             $userBranch->effective_to = now();
             $userBranch->save();
+
+            return $userBranch;
         }
+
+        return false;
     }
 
     public function makePrimary($userId, $branchId)

@@ -47,7 +47,7 @@ class BranchAssignmentController extends Controller
             'is_primary' => 'nullable',
         ]);
 
-        $branches = $this->branchAssignmentService->getBranches($userId);
+        $branches = $this->branchAssignmentService->getUserBranches($userId);
         if ($request->input('is_primary')) {
             $existingPrimary = $branches
                 ->where('is_primary', true)
@@ -68,7 +68,7 @@ class BranchAssignmentController extends Controller
             }
         }
 
-        $this->branchAssignmentService->saveBranch($validated, $userId);
+        $this->branchAssignmentService->saveUserBranch($validated, $userId);
 
         return redirect()->route('branch-assignments.show', $userId)->with('success', 'Branch added successfully');
     }
@@ -76,7 +76,6 @@ class BranchAssignmentController extends Controller
     public function show($id)
     {
         $dataset = $this->branchAssignmentService->getDetails($id);
-        abort_if(! $dataset['user'], 404);
 
         return inertia('Admin/BranchAssignment/Show', [
             'user' => $dataset['user'],
@@ -87,7 +86,7 @@ class BranchAssignmentController extends Controller
 
     public function disableAssignment($userId, $branchId)
     {
-        $branches = $this->branchAssignmentService->getBranches($userId);
+        $branches = $this->branchAssignmentService->getUserBranches($userId);
         if ($branches->count() == 0) {
             return redirect()->route('branch-assignments.show', $userId)->with('error', 'No branch assigned to this user.');
         }
@@ -97,7 +96,10 @@ class BranchAssignmentController extends Controller
             return redirect()->route('branch-assignments.show', $userId)->with('error', 'Cannot remove the primary branch. Please assign another active branch and set it as Primary before removal.');
         }
 
-        $this->branchAssignmentService->disableAssignment($userId, $branchId);
+        $userBranch = $this->branchAssignmentService->disableAssignment($userId, $branchId);
+        if (!$userBranch) {
+            return redirect()->route('branch-assignments.show', $userId)->with('error', 'Invalid Branch assignment.');
+        }
 
         return redirect()->route('branch-assignments.show', $userId)->with('success', 'Branch deleted successfully');
     }
