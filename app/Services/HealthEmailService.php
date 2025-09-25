@@ -239,7 +239,7 @@ class HealthEmailService extends BaseService
             }
             if ($lead->isAUHLead() && $lead->isLeadSourceRevivalOrInsuranceWallet()) {
                 LoggerService::info(self::class." - Skipping Apply Now Email because lead is from AUH and Revival/Insurance Wallet for uuid: {$lead->uuid}");
-    
+
                 return;
             }
 
