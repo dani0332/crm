@@ -107,7 +107,7 @@ class BorService
 
         // if length of representor is 1, then set the insurance_contact_id to the first value by default
         $representor = $this->getRepresentor($data['insurance_provider_id'], $personalQuote->quote_type_id);
-        if(count($representor) == 1) {
+        if(count($representor) == 1 && $data['insurance_contact_id'] == null) {
             $data['insurance_contact_id'] = $representor[0]['value'];
         }
         
