@@ -46,7 +46,7 @@ class BranchAssignmentController extends Controller
     public function store(Request $request, User $user)
     {
         $validated = $request->validate([
-            'branch_id' => 'required|unique:branches,name',
+            'branch_id' => 'required|integer',
             'effective_from' => 'required|date',
             'effective_to' => 'nullable',
             'is_primary' => 'nullable',

@@ -254,10 +254,7 @@ class HealthQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        $quote = $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
-        $quote->branch_name = $this->getBranchName($quote->emirate_of_your_visa_id, $quote->branch_name);
-
-        return $quote;
+        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
     }
 
     public function getBranchName($emirateOfYourVisaId, $advisorBranchName): string

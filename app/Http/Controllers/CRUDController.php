@@ -292,7 +292,7 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
             $gridData->map(function ($item) {
-                $item->branch_name = app(HealthQuoteService::class)->getBranchName($item->emirate->id, $item->advisor?->primaryBranch?->branch?->name);
+                $item->branch_name = app(HealthQuoteService::class)->getBranchName($item->emirate_of_your_visa_id, $item->advisor?->primaryBranch?->branch?->name);
 
                 return $item;
             });
@@ -1166,6 +1166,7 @@ class CRUDController extends Controller
                 $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HEALTH->name);
                 $teams = $this->crudService->getUserTeams(Auth::user()->id);
 
+                $record->branch_name = $this->healthQuoteService->getBranchName($record->emirate_of_your_visa_id, $record->branch_name);
                 $record->payment_status_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_text);
                 $amlStatusName = AMLStatusCode::getName($record->aml_status);
                 $isAUHLead = $this->healthQuoteService->isAUHLead($record->id);
