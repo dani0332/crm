@@ -187,7 +187,7 @@ class BorFormRequest extends FormRequest
         // Ensure numeric fields are properly formatted
         if ($this->has('insurance_provider_id')) {
             $this->merge([
-                'insurance_provider_id' => (int) $this->input('insurance_provider_id'),
+                'insurance_provider_id' => $this->input('insurance_provider_id'),
             ]);
         }
 
