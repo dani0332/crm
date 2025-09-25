@@ -63,7 +63,8 @@ class AuditRepository extends BaseRepository
                 if ($auditRelation == 'many') {
                     $childRecords = $model::where($relation['key'], request()->auditable_id)->get();
                 } else {
-                    $childRecords = [$model::where($relation['key'], request()->auditable_id)->first()];
+                    $record = $model::where($relation['key'], request()->auditable_id)->first();
+                    $childRecords = $record ? [$record] : [];
                 }
 
                 if ($childRecords) {

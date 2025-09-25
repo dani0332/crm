@@ -87,8 +87,12 @@ class BranchAssignmentController extends Controller
     public function disableAssignment($userId, $branchId)
     {
         $branches = $this->branchAssignmentService->getBranches($userId);
+        if ($branches->count() == 0) {
+            return redirect()->route('branch-assignments.show', $userId)->with('error', 'No branch assigned to this user.');
+        }
 
-        if ($branches->where('is_primary', 1)->first()->branch_id == $branchId) {
+        $primaryBranch = $branches->where('is_primary', 1)->first();
+        if ($primaryBranch?->branch_id == $branchId) {
             return redirect()->route('branch-assignments.show', $userId)->with('error', 'Cannot remove the primary branch. Please assign another active branch and set it as Primary before removal.');
         }
 

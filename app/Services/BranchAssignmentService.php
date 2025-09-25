@@ -100,9 +100,12 @@ class BranchAssignmentService extends BaseService
             ->where('branch_id', $branchId)
             ->where('status', 1)
             ->first();
-        $userBranch->status = 0;
-        $userBranch->effective_to = now();
-        $userBranch->save();
+
+        if ($userBranch) {
+            $userBranch->status = 0;
+            $userBranch->effective_to = now();
+            $userBranch->save();
+        }
     }
 
     public function makePrimary($userId, $branchId)
