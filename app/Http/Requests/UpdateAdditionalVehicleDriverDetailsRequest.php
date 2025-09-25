@@ -46,7 +46,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['first_registration_date'] = 'required|date';
 
             if ($isLiva) {
-                    $rules['policy_effective_date'] = 'required|after_or_equal:today';
+                $rules['policy_effective_date'] = 'required|after_or_equal:today';
             } else {
                 $rules['plate_color'] = 'required|string';
             }

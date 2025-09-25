@@ -475,9 +475,9 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
             if ($retrieveRequest['status']) {
                 $retrieveResponse = $retrieveRequest['data'];
-    
+
                 $documentContent = $retrieveResponse?->RetrieveResponse?->Policies[0]?->PolicyResponse?->Documents?->PolicyReportsPdf[0];
-    
+
                 $quoteDocument = $this->uploadAndAttachToQuoteDocuments($quote, $documentContent, $imcrm['IMKEY'], $imcrm['IMNAME'].'.pdf');
             }
 
@@ -835,8 +835,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 if (
                     isset($responseObject->$keyAPI?->errors) ||
                     (isset($responseObject->$keyAPI?->Status) && $responseObject->$keyAPI?->Status == false) ||
-                    (isset($responseObject?->statusCode) && $responseObject?->statusCode == 404)
-                    (isset($responseObject?->string) && str_contains($responseObject?->string, 'Exception'))
+                    (isset($responseObject?->statusCode) && $responseObject?->statusCode == 404)(isset($responseObject?->string) && str_contains($responseObject?->string, 'Exception'))
                 ) {
                     $response['error'] = $responseObject->$keyAPI?->Status ?? $keyAPI.' API Failed';
                     $response['status'] = false;
@@ -1183,7 +1182,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         $carbonDate = Carbon::parse($date);
 
-        return $endDate 
+        return $endDate
             ? $carbonDate->endOfDay()->format('Y-m-d H:i:s')
             : $carbonDate->startOfDay()->format('Y-m-d H:i:s');
     }
