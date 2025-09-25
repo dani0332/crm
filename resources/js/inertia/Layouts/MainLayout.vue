@@ -171,7 +171,11 @@ const isReceiveNotificationsEnabled = computed(() => {
 
     <XNotifications inject-key="toast">
       <article
-        :class="!minimizeSidebar && !noSidebarOffset ? 'lg:pl-[var(--sidebar-width)]' : ''"
+        :class="
+          !minimizeSidebar && !noSidebarOffset
+            ? 'lg:pl-[var(--sidebar-width)]'
+            : ''
+        "
         class="flex-col gap-y-6 w-screen flex-1 h-full transition-all"
       >
         <header
