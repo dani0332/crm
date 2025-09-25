@@ -34,7 +34,12 @@ class BorController extends Controller
         $this->borService = $borService;
     }
 
-
+    /**
+     * This function is only used to get uploaded documents for a BOR log for frontend display
+     *
+     * @param string $borRefId
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getBorLog($borRefId){
         try {
             $borLog = BorLog::where('bor_reference', $borRefId)->first();
@@ -318,42 +323,18 @@ class BorController extends Controller
 
     public function getDocumentTypes(Request $request)
     {
-        if($request->has('quote_type_id')) {
-            $quoteType = QuoteTypes::getName($request->input('quote_type_id'));
-            $borDocTypes = $this->borService->determineBorDocumentType($quoteType->value);
-            is_array($borDocTypes) ? $borDocTypes = $borDocTypes : $borDocTypes = [$borDocTypes];
-        } else {
-            $borDocTypes = [DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YACHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_PET, DocumentTypeCode::BAL_BS, DocumentTypeCode::GM_BOL, DocumentTypeCode::BUS_BAL];
+        try {
+            $data = $request->only('quote_type_id', 'business_type_of_insurance_id');
+            $documentTypes = $this->borService->fetchDocumentTypes($data);
+            return response()->json(['data' => $documentTypes]);
+        } catch (\Throwable $th) {
+            LoggerService::error('Failed to get document types', [
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString(),
+                'request' => $request->all(),
+            ]);
+            return response()->json(['message' => 'failed', 'error' => $th->getMessage()], 500);
         }
-
-        $documentQuery = DocumentType::whereIn('code', $borDocTypes)
-            ->when(($request->has('quote_type_id')), function ($query) use ($request) {
-                $query->where('quote_type_id', $request->input('quote_type_id'));
-            })
-            ->when(!$request->has('business_type_of_insurance_id'), function ($query) use ($request) {
-                $query->where('business_type_of_insurance_id', null);
-            })
-            ->where('is_active', 1);
-
-        // Check if business_type_of_insurance_id filter should be applied
-        if ($request->has('business_type_of_insurance_id')) {
-            $businessTypeId = $request->input('business_type_of_insurance_id');
-            
-            // Clone the query to test if records exist with the business_type_of_insurance_id
-            $testQuery = clone $documentQuery;
-            $recordsExist = $testQuery->where('business_type_of_insurance_id', $businessTypeId)->exists();
-            
-            if ($recordsExist) {
-                // Apply the filter if records exist
-                $documentQuery->where('business_type_of_insurance_id', $businessTypeId);
-            } else {
-                // Fall back to null business_type_of_insurance_id if no records found
-                $documentQuery->where('business_type_of_insurance_id', null);
-            }
-        }
-
-        $documentTypes = $documentQuery->get();
-        return response()->json(['data' => $documentTypes]);
     }
 
     public function uploadDocument(Request $request)
