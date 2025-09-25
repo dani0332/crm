@@ -92,7 +92,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->emirate?->text,
             $quote->quoteStatus?->text,
             $quote->advisor?->name,
-            app(HealthQuoteService::class)->getBranchName($quote->emirate->id, $quote->advisor?->primaryBranch?->branch?->name),
+            $this->healthQuoteService->getBranchName($quote->emirate?->id, $quote->advisor?->primaryBranch?->branch?->name),
             $quote->advisor?->email,
             $quote->wcAdvisor?->name,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
