@@ -42,7 +42,7 @@ class BorService
 
         // Get paginated BOR logs with relationships
         $logs = BorLog::where('lead_id', $personalQuote->id)
-            ->with(['insuranceProvider', 'personalQuote'])
+            ->with(['insuranceProvider', 'personalQuote', 'signedDocument', 'document'])
             ->orderBy('created_at', 'desc')
             ->simplePaginate(15)
             ->withQueryString();
@@ -67,64 +67,14 @@ class BorService
     public function enrichBorLogWithDocuments(BorLog $borLog): BorLog
     {
         try {
-            $personalQuote = $borLog->personalQuote;
-            $borRefId = $borLog->bor_reference;
-            if (!$personalQuote) {
-                // Add empty document collections if no personal quote found
-                $borLog->uploaded_documents = collect([]);
-                $borLog->signed_pdf = collect([]);
-                return $borLog;
-            }
+            $isDocumentUploaded = $borLog->document != null ? true : false;
+            $isSignedDocument = $borLog->signedDocument != null ? true : false;
+            $borLog->signed_pdf = $isSignedDocument ? collect([$borLog->signedDocument]) : null;
+            $borLog->has_signed_pdf = $isSignedDocument;
+            $borLog->uploaded_documents = $isDocumentUploaded ? collect([$borLog->document]) : null;
+            $borLog->has_uploaded_documents = $isDocumentUploaded;
 
-            // Get the quote object to access documents
-            $quoteName = QuoteTypes::getName($personalQuote->quote_type_id);
-            $isPersonalQuote = checkPersonalQuotes($quoteName->value);
-            $quoteObject = $isPersonalQuote ? $this->getQuoteObject($quoteName->value, $personalQuote->id) : $this->getQuoteObject($quoteName->value, $personalQuote->quote_id);
-
-            // Filter uploaded documents (BOR letters)
-            $quoteObject->load('documents');
-            $uploadedDocuments = $quoteObject->documents->filter(function ($doc) use ($borRefId) {
-                $code = $doc->document_type_code;
-                $allowedCodes = [
-                    DocumentTypeCode::BAL,
-                    DocumentTypeCode::BAL_BS,
-                    DocumentTypeCode::BAL_BIKE,
-                    DocumentTypeCode::BAL_TRVL,
-                    DocumentTypeCode::BAL_HOME,
-                    DocumentTypeCode::BAL_HLTH,
-                    DocumentTypeCode::BAL_PET,
-                    DocumentTypeCode::BAL_YACHT,
-                    DocumentTypeCode::BAL_CYCLE,
-                    DocumentTypeCode::BAL_LIFE,
-                ];
-                return in_array($code, $allowedCodes) && $doc->document_category == $borRefId;
-            })->map(function ($doc) use ($borRefId) {
-                return [
-                    'doc_name' => $doc->doc_name,
-                    'doc_url' => $doc->doc_url,
-                    'doc_uuid' => $doc->doc_uuid,
-                    'document_type_text' => $doc->document_type_text,
-                    'document_type_code' => $doc->document_type_code,
-                    'doc_mime_type' => $doc->doc_mime_type,
-                    'created_at' => $doc->created_at,
-                    'updated_at' => $doc->updated_at,
-                ];
-            });
-
-            // Filter signed PDF documents
-            $signedPdf = $quoteObject->documents->filter(function ($doc) use($borRefId) {
-                $code = $doc->document_type_code;
-                return $code == DocumentTypeCode::BOR_SIGN && $doc->document_category == $borRefId;
-            });
-
-            // Add document collections to the BOR log object
-            $borLog->uploaded_documents = $uploadedDocuments->values()->toArray();
-            $borLog->signed_pdf = $signedPdf->values()->toArray();
-            
-            // Add document metadata for easy access
-            $borLog->has_uploaded_documents = $uploadedDocuments->isNotEmpty();
-            $borLog->has_signed_pdf = $signedPdf->isNotEmpty();
-            $borLog->total_documents = $uploadedDocuments->count() + $signedPdf->count();
+            $borLog->total_documents = $isDocumentUploaded || $isSignedDocument ? 1 : 0;
         } catch (\Exception $e) {
             // Log error but don't fail the entire request
             \Illuminate\Support\Facades\Log::warning('Failed to load documents for BOR log', [
@@ -176,7 +126,7 @@ class BorService
         // $borLog->update(['email_sent' => $emailSent]);
         
         // Enrich the created BOR log with document data
-        $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
+        $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote', 'signedDocument', 'document']));
 
         // Update quote status to pending bor request if not already in a status that allows BOR request
         $statuses = [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::TransactionApproved];
@@ -202,7 +152,7 @@ class BorService
         $borLog->update($data);
 
         // Enrich the created BOR log with document data
-        $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
+        $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote', 'signedDocument', 'document']));
         
         return ['borLog' => $enrichedBorLog, 'emailSent' => false];
     }
@@ -257,7 +207,7 @@ class BorService
 
             DB::commit();
             // Enrich the updated BOR log with document data
-            $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
+            $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote', 'signedDocument', 'document']));
             
             return ['borLog' => $enrichedBorLog];
 
@@ -293,7 +243,7 @@ class BorService
 
             DB::commit();
             // Enrich the updated BOR log with document data
-            $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
+            $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote', 'signedDocument', 'document']));
             
             return ['borLog' => $enrichedBorLog];
         } catch (\Exception $e) {
@@ -385,7 +335,7 @@ class BorService
             DB::commit();
 
             // Enrich the updated BOR log with document data
-            $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
+            $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote', 'signedDocument', 'document']));
             
             return [
                 'borLog' => $enrichedBorLog,
