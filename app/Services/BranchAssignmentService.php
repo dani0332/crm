@@ -5,15 +5,17 @@ namespace App\Services;
 use App\Models\Branch;
 use App\Models\User;
 use App\Models\UserBranch;
+use Illuminate\Support\Facades\DB;
+use App\Services\Logger\LoggerService;
 
 class BranchAssignmentService extends BaseService
 {
     public function getGridData($request)
     {
         $dataset = User::select('id', 'name')
-            // ->whereHas('usersroles', function ($query) {
-            //     $query->where('name', 'like', '%advisor%');
-            // })
+            ->whereHas('usersroles', function ($query) {
+                $query->where('name', 'like', '%advisor%');
+            })
             ->with('userBranches', 'userBranches.branch')
             ->when(! empty($request['advisors']), function ($query) use ($request) {
                 $query->whereIn('id', $request['advisors']);
@@ -110,18 +112,27 @@ class BranchAssignmentService extends BaseService
 
     public function makePrimary($userId, $branchId)
     {
-        $userBranch = UserBranch::where('user_id', $userId)
-            ->where('is_primary', 1)
-            ->where('status', 1)
-            ->first();
-        $userBranch->is_primary = 0;
-        $userBranch->save();
+        DB::beginTransaction();
+        try {
+            $currentPrimary = UserBranch::where('user_id', $userId)
+                ->where('is_primary', 1)
+                ->where('status', 1)
+                ->first();
 
-        $userBranch = UserBranch::where('user_id', $userId)
-            ->where('branch_id', $branchId)
-            ->where('status', 1)
-            ->first();
-        $userBranch->is_primary = 1;
-        $userBranch->save();
+            $newPrimary = UserBranch::where('user_id', $userId)
+                ->where('branch_id', $branchId)
+                ->where('status', 1)
+                ->first();
+
+            $currentPrimary->is_primary = 0;
+            $currentPrimary->save();
+            $newPrimary->is_primary = 1;
+            $newPrimary->save();
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            LoggerService::warning('Failed to make primary branch for user ' . $userId . ' and branch ' . $branchId . ' - Error: ' . $e->getMessage());
+        }
     }
 }

@@ -76,6 +76,7 @@ class BranchAssignmentController extends Controller
     public function show($id)
     {
         $dataset = $this->branchAssignmentService->getDetails($id);
+        abort_if(!$dataset['user'], 404);
 
         return inertia('Admin/BranchAssignment/Show', [
             'user' => $dataset['user'],
