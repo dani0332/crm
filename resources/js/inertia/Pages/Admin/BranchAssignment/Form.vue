@@ -30,7 +30,7 @@ const branchOptions = computed(() => {
 function onSubmit(isValid) {
   if (isValid && !isError.value) {
     let method = 'post';
-    let url = route('branch-assignments.store', { user_id: props.userId });
+    let url = route('branch-assignments.store', { user: props.userId });
     assignmentForm.submit(method, url, {
       onError: errors => {
         Object.keys(errors).forEach(function (key) {

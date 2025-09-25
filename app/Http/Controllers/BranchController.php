@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
+use App\Http\Requests\StoreBranchRequest;
+use App\Http\Requests\UpdateBranchRequest;
 use App\Models\Branch;
 use App\Services\BranchService;
 use Illuminate\Http\Request;
@@ -28,16 +30,9 @@ class BranchController extends Controller
         return inertia('Admin/Branch/Form');
     }
 
-    public function store(Request $request)
+    public function store(StoreBranchRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|unique:branches,name',
-            'code' => 'required|unique:branches,code',
-            'type' => 'required|string',
-            'status' => 'required|boolean',
-        ]);
-
-        $this->branchService->saveBranch($validated);
+        $this->branchService->saveBranch($request->validated());
 
         return redirect()->route('branches.index')->with('success', 'Branch created successfully');
     }
@@ -56,23 +51,9 @@ class BranchController extends Controller
         ]);
     }
 
-    public function update(Request $request, Branch $branch)
+    public function update(UpdateBranchRequest $request, Branch $branch)
     {
-        $validated = $request->validate([
-            'name' => 'required|unique:branches,name,'.$branch->id,
-            'code' => 'required|unique:branches,code,'.$branch->id,
-            'type' => 'required|string',
-            'status' => 'required|boolean',
-        ]);
-
-        if ($validated['status'] != $branch->status) {
-            $activeUserBranches = $branch->userBranches->where('status', 1);
-            if ($activeUserBranches->count() > 0) {
-                return redirect()->back()->with('error', 'Branch cannot be updated because it has active users');
-            }
-        }
-
-        $this->branchService->updateBranch($validated, $branch);
+        $this->branchService->updateBranch($request->validated(), $branch);
 
         return redirect()->route('branches.show', $branch->id)->with('success', 'Branch updated successfully');
     }

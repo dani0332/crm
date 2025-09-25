@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
+use App\Http\Requests\StoreBranchAssignmentRequest;
 use App\Models\User;
 use App\Services\BranchAssignmentService;
 use App\Services\BranchService;
@@ -43,37 +44,9 @@ class BranchAssignmentController extends Controller
         ]);
     }
 
-    public function store(Request $request, User $user)
+    public function store(StoreBranchAssignmentRequest $request, User $user)
     {
-        $validated = $request->validate([
-            'branch_id' => 'required|integer',
-            'effective_from' => 'required|date',
-            'effective_to' => 'nullable',
-            'is_primary' => 'nullable',
-        ]);
-
-        $branches = $user->userBranches->where('status', 1);
-        if ($request->input('is_primary')) {
-            $existingPrimary = $branches
-                ->where('is_primary', true)
-                ->count();
-
-            if ($existingPrimary) {
-                return redirect()->back()->with('error', 'This user already has a primary branch.');
-            }
-        }
-
-        if ($validated['branch_id']) {
-            $existingAssignment = $branches
-                ->where('branch_id', $validated['branch_id'])
-                ->count();
-
-            if ($existingAssignment) {
-                return redirect()->back()->with('error', 'This branch is already assigned to the user.');
-            }
-        }
-
-        $user->userBranches()->create($validated);
+        $user->userBranches()->create($request->validated());
 
         return redirect()->route('branch-assignments.show', $user->id)->with('success', 'Branch added successfully');
     }
