@@ -34,7 +34,6 @@ const historicalUserBranches = computed(() => {
     ? props.user.user_branches.filter(branch => branch.status === 0)
     : [];
 });
-
 </script>
 <template>
   <Head title="Advisor Branch Assignment Detail" />
@@ -103,16 +102,28 @@ const historicalUserBranches = computed(() => {
           <template #item-actions="item">
             <div class="flex gap-2">
               <Link
-              v-if="!item.is_primary"
-              method="patch"
-              :href="route('branch-assignments.make-primary', { user_id: user.id, branch_id: item.branch.id })">
+                v-if="!item.is_primary"
+                method="patch"
+                :href="
+                  route('branch-assignments.make-primary', {
+                    user_id: user.id,
+                    branch_id: item.branch.id,
+                  })
+                "
+              >
                 <x-button size="sm" color="#1d83bc" tag="div">
                   Make Primary
                 </x-button>
               </Link>
               <Link
-              method="patch"
-              :href="route('branch-assignments.delete', { user: user.id, branch_id: item.branch.id })">
+                method="patch"
+                :href="
+                  route('branch-assignments.delete', {
+                    user: user.id,
+                    branch_id: item.branch.id,
+                  })
+                "
+              >
                 <x-button size="sm" color="#ff5e00" tag="div">
                   Remove Branch
                 </x-button>

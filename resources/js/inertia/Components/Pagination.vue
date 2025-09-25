@@ -7,7 +7,7 @@ const props = defineProps({
   api: {
     type: Boolean,
     default: false,
-  }
+  },
 });
 
 const loading = ref(false);
@@ -22,7 +22,7 @@ router.on('finish', event => {
 
 const emit = defineEmits(['navigate']);
 
-const handleNavigate = (url) => {
+const handleNavigate = url => {
   emit('navigate', url);
 };
 </script>
@@ -32,11 +32,11 @@ const handleNavigate = (url) => {
     <!-- Previous Button -->
     <template v-if="props.api">
       <!-- API-based pagination -->
-      <x-button 
+      <x-button
         v-if="props.links.current !== 1"
-        tag="button" 
-        size="sm" 
-        icon-left="prev" 
+        tag="button"
+        size="sm"
+        icon-left="prev"
         :loading="loading"
         @click="handleNavigate(props.links.prev)"
       >
@@ -75,8 +75,8 @@ const handleNavigate = (url) => {
       <x-button
         v-if="props.links.next !== null"
         tag="button"
-        size="sm" 
-        icon-right="next" 
+        size="sm"
+        icon-right="next"
         :loading="loading"
         @click="handleNavigate(props.links.next)"
       >
