@@ -30,10 +30,11 @@ class DatabaseSeeder extends Seeder
             // PaymentMethodsAddSeeder::class,
             PermissionSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
-            // CarGIGVehicleTransactionDriverDetailsForAMLSeeder::class,
+            CarGIGVehicleTransactionDriverDetailsForAMLSeeder::class,
             CPARulesSeeder::class,
             BorDocumentSeeder::class,
             AutomationSeeder::class,
+            TravelLeadAllocationDashboardSeeder::class,
         ]);
     }
 }

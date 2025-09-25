@@ -16,6 +16,16 @@ class ApplicationStorageSeeder extends Seeder
     public function run()
     {
         ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BULK_POLICY_DOCUMENT_SEND_CODES],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_UNIVERSAL_SEARCH],
             [
                 'value' => 0,

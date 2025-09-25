@@ -115,7 +115,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->customer_type,
             $quote->plan?->text,
             $quote->insuranceProvider?->text,
-            $quote->renewalBatch?->name,
+            $quote->renewalBatchModel?->name,
             $quote->previous_policy_expiry_date_formatted,
             $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
             $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',

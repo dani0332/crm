@@ -68,7 +68,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
 
-        $isAUHHealthLead = strtolower($this->data->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead(false);
+        $isAUHHealthLead = strtolower($this->data->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead();
 
         info('job: SendBookPolicyDocumentsJob Code: '.$quote->code.' , Quote Type: '.$this->data->model_type.', Type Id: '.$quoteTypeId);
 
@@ -180,18 +180,10 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->policyWordingHandbook = $policyWordingDoc;
             $emailData->isHealthAUH = $isAUHHealthLead;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
-            if ($isAUHHealthLead && $quote->isLeadSourceRevivalOrInsuranceWallet()) {
-                LoggerService::info('job: SendBookPolicyDocumentsJob skipped, as lead is from AUH with Revival/Insurance Wallet source', [
-                    'isAUHHealthLead' => $isAUHHealthLead,
-                    'isLeadSourceRevivalOrInsuranceWallet' => $quote->isLeadSourceRevivalOrInsuranceWallet(),
-                    'quoteCode' => $quote->code,
-                ]);
-
-                return;
-            } else {
-                $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
-                info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));
-            }
+            $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
+            LoggerService::info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid, extra: [
+                'response' => $response,
+            ]);
         }
 
         if ($this->forceEmailSend == false) {

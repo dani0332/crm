@@ -40,6 +40,7 @@ class RolePermissionSeeder extends Seeder
         $this->addEmbeddedProductPaymentCancelAdminPermission();
 
         $this->addExportHomePuaUpdatesPermission();
+        $this->addUtmReportExportPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -432,6 +433,23 @@ class RolePermissionSeeder extends Seeder
             if (!$role->hasPermissionTo($permission)) {
                 $role->givePermissionTo($permission);
             }
+        }
+    }
+
+    private function addUtmReportExportPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::UtmReportExport,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Assign to Admin role by default
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+        if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
+            $adminRole->givePermissionTo($permission);
         }
     }
 }
