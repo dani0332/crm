@@ -35,7 +35,7 @@ class BranchAssignmentController extends Controller
     public function create(User $user)
     {
         $branches = $this->branchService->getBranches();
-        $activeBranchCount = $user->userBranches->where('status', 1)->count();
+        $activeBranchCount = $user->userBranches()->where('status', 1)->count();
 
         return inertia('Admin/BranchAssignment/Form', [
             'userId' => $user->id,

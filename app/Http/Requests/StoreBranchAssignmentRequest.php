@@ -36,7 +36,7 @@ class StoreBranchAssignmentRequest extends FormRequest
     public function passedValidation(): void
     {
         $user = $this->route('user');
-        $activeBranches = $user->userBranches->where('status', 1);
+        $activeBranches = $user->userBranches()->where('status', 1)->get();
 
         // Check if trying to set as primary when there's already a primary branch
         if ($this->input('is_primary')) {
