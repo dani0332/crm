@@ -88,4 +88,19 @@ class DocumentTypeCode extends Enum
     const PC_SAV = 'PC_SAV';
     const AC_SAV = 'AC_SAV';
     const PAYMENT_RECEIPT = 'SPD';
+
+    // BAL
+    const BAL = 'BAL';
+    const BAL_BIKE = 'BAL_Bike';
+    const GM_BOL = 'GM_BOL';
+    const BAL_TRVL = 'BAL_TRVL';
+    const BAL_HOME = 'BAL_HOME';
+    const BAL_HLTH = 'BAL_HLTH';
+    const BAL_YACHT = 'BAL_YCHT';
+    const BAL_CYCLE = 'BAL_CYCLE';
+    const BAL_LIFE = 'BAL_Life';
+    const BAL_PET = 'BAL_PET';
+    const BOR_SIGN = 'BOR_SIGN';
+    const BAL_BS = 'BAL_BS';
+    const BUS_BAL = 'BUS_BAL';
 }

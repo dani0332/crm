@@ -10,6 +10,7 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 
@@ -2337,6 +2338,22 @@ function handleOcrNotification(event) {
       :expanded="sectionExpanded"
       quote-type="Home"
       :bookPolicyDetails="bookPolicyDetails"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :customerData="{
+        customerType: quote.customer_type,
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <BookPolicy
