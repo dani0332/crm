@@ -111,7 +111,7 @@ class GenericLobController extends Controller
             $service = app('App\\Services\\Life\\LifeQuoteService');
         }
 
-        return $service->exportPlansPdf($quoteType, $request->validated());
+    return $service->exportPlansPdf($quoteType, $request->validated());
     }
 
 }

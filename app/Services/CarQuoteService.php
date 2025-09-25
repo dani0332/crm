@@ -1581,7 +1581,7 @@ class CarQuoteService extends BaseService
         $quote = $this->getQuoteObjectBy($quoteType, $data['quote_uuid'], 'uuid');
 
         $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
-            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer', 'vehicleType']);
 
         $view = $quote->registration_type == CarRegistrationType::COMPANY ? 'pdf.car_comparision.company_car_pdf' : 'pdf.quote_plans';
