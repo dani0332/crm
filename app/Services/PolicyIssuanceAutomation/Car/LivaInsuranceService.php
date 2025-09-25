@@ -836,10 +836,11 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     isset($responseObject->$keyAPI?->errors) ||
                     (isset($responseObject->$keyAPI?->Status) && $responseObject->$keyAPI?->Status == false) ||
                     (isset($responseObject?->statusCode) && $responseObject?->statusCode == 404)
+                    (isset($responseObject?->string) && str_contains($responseObject?->string, 'Exception'))
                 ) {
                     $response['error'] = $responseObject->$keyAPI?->Status ?? $keyAPI.' API Failed';
                     $response['status'] = false;
-                    $response['message'] = json_encode($responseObject->$keyAPI?->errors) ?? $responseObject?->message;
+                    $response['message'] = json_encode($responseObject->$keyAPI?->errors) ?? $responseObject?->message ?? $responseObject;
                 } else {
                     $response['status'] = true;
                     $response['data'] = $responseObject;
