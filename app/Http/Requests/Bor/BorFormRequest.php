@@ -63,7 +63,7 @@ class BorFormRequest extends FormRequest
                 if ($insuranceProviderId !== null && $this->isSukoonInsurance($insuranceProviderId)) {
                     $rules['chassis_number'] = ['required', 'string', 'min:8', 'max:17', 'regex:/^(?!\s*$).+/'];
                 } else {
-                    $rules['insurance_provider_id'] = ['integer', 'exists:insurance_provider,id'];
+                    $rules['insurance_provider_id'] = ['nullable', 'exists:insurance_provider,id'];
                     $rules['chassis_number'] = ['nullable', 'string', 'min:8', 'max:17', 'regex:/^(?!\s*$).+/'];
                 }
             } else {
