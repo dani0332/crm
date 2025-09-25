@@ -6,7 +6,7 @@
     <title>Plans Comparison PDF</title>
 
     <style>
-        @page {
+     @page {
             margin: 0;
             padding: 0;
         }
@@ -68,7 +68,6 @@
 
         table.tbl-dec {
             border: none;
-            font-size: 3px;
         }
 
         table.tbl-dec tr td,
@@ -129,21 +128,12 @@
             border: 1px solid #bfbfbf;
         }
 
-        thead>tr>th:first-child {
-            max-width: 30%;
-        }
-
-        tr th:first-child,
-        tr td:first-child {
-            width: 400px;
-            min-width: 400px;
-            max-width: 400px;
-        }
-
         td>p,
+        td>div>p,
+        td>div>div>p,
         th>p {
             padding: 4px;
-            font-size: 12px !important;
+            font-size: 14px;
             text-align: center;
             font-weight: normal;
         }
@@ -153,11 +143,11 @@
         }
 
         .text-xs {
-            font-size: 10px;
+            font-size: 13px;
         }
 
         .text-sm {
-            font-size: 10px;
+            font-size: 14px;
         }
 
         .text-xl {
@@ -171,12 +161,8 @@
         .bg-light-blue {
             border: 1px solid #bfbfbf;
             background: #EFF6FF;
-            padding: 1px 8px;
+            padding: 8px;
             color: #252525;
-        }
-
-        .bg-light-blue p {
-            padding: 1px !important;
         }
 
         .text-black {
@@ -185,13 +171,14 @@
 
         .provider {
             border: 1px solid #bfbfbf;
-            /*font-size: 15px;*/
-            /*line-height: 28px;*/
+            font-size: 15px;
+            line-height: 28px;
             font-weight: 400;
             color: #4ea4a8;
             vertical-align: middle;
-            /*max-height: 50px;*/
-            /*height: 50px;*/
+            max-height: 50px;
+            height: 50px;
+            position: relative;
         }
 
         .spacer {
@@ -204,8 +191,6 @@
             vertical-align: bottom;
             border-left: none;
             border-top: none;
-            width: 400px;
-            min-width: 400px;
         }
 
         .quote-info {
@@ -213,7 +198,7 @@
             vertical-align: bottom;
             margin-top: -1px;
             background: #EFF6FF;
-            font-size: 10px;
+            font-size: 14px;
             text-align: left;
             padding: 8px;
             max-width: 100%;
@@ -235,12 +220,12 @@
         .btn-all-quotes {
             background-color: #1d83bc;
             color: #ffffff;
-            padding: 8px 12px;
-            margin-top: 30px;
+            padding: 8px 25px;
+            margin-top: 50px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 12px;
+            font-size: 15px;
             font-weight: bold;
             border-radius: 5px;
             margin-bottom: 0px;
@@ -249,13 +234,13 @@
         .btn-buy {
             background-color: #FE7333;
             color: #ffffff;
-            padding: 10px 12px;
+            padding: 12px 15px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 10px;
+            font-size: 14px;
             font-weight: bold;
-            border-radius: 4px;
+            border-radius: 5px;
         }
 
         .btn-buy:hover {
@@ -268,18 +253,42 @@
         }
 
         .heading-desc {
-            font-size: 10px;
+            font-size: 12px;
+        }
+
+        .image-wrapper {
+            min-width: 150px;
+            min-height: 150px;
+            width: 150px;
+            height: 150px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin: 20px auto;
         }
 
         .provider-logo {
-            width: 100px;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
+
 
         .no-border {
             border: none;
         }
 
-       
+    
+
+      
+
         .text-left {
             text-align: left;
         }
@@ -291,6 +300,7 @@
         .full-page-image {
             width: 100%;
             z-index: 999;
+            height: 100%;
         }
 
         .text-center {
@@ -305,44 +315,68 @@
             text-decoration: underline
         }
 
-        .hidden {
-            display: none;
-        }
+        .footer {
+        position: fixed;
+        bottom: 0;
+        /* top: 50px !important; */
+        left: 0;
+        right: 0;
+        width: 100%;
+        background-color: #1d83bc;
+        color: #ffffff;
+        padding: 2px 2px 2px 2px;
+        text-align: left;
+        height: 167px !important;
+    }
 
-        tr:has(td) {
-            display: none;
-        }
+   
+   
 
-        .header {
-            background: #1d83bc;
-            color: #ffffff;
-            font-size: 19px;
-            text-align: center;
-            padding: 8px 10px;
+        .full-page-image {
             width: 100%;
-            height: 60px;
-            max-height: 60px;
+            z-index: 999;
+            height: 100%;
         }
 
-        .header .logo {
-            float: left;
-            background-color: white;
-            border-radius: 5px;
-            padding: 5px 10px 5px 0px;
-            height: 50px;
-            max-height: 50px;
-        }
 
-        .header .logo img {
-            max-height: 50px;
-            height: 50px;
-        }
+        .footer-content-1 {
+        font-size: 8px !important;
+        line-height: 0.7 !important;
+        word-break: break-word;
+        white-space: normal !important;
+        width: 100%;
+        box-sizing: border-box;
+        align-items: left;
+        text-align: left;
+    }
 
-        .header h3 {
-            float: right;
-            text-align: right;
-            padding-right: 18px;
+    @media (max-width: 600px) {
+        .footer-content-1 {
+            font-size: 8px !important;
+            padding-left: 2px;
+            padding-right: 2px;
         }
+    }
+
+    .footer-content-2{
+        font-size: 8px !important;
+        align-items: center;
+        text-align: center;
+        line-height: 0.8 !important;
+        word-break: break-word;
+        white-space: normal !important;
+        width: 100%;
+        box-sizing: border-box;
+        align-items: left;
+        text-align: left;
+    }
+    @media (max-width: 600px) {
+        .footer-content-2 {
+            font-size: 9px !important;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
+    }
 
        
     </style>
@@ -350,7 +384,8 @@
 
 <body>
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/travel-p1-1.png') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/travel-p1-1.jpg') }}" class="full-page-image"  style="height: 90%;"/>
+
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
@@ -919,7 +954,11 @@ foreach ($quotePlan->addons as &$addon) {
     </main>
 
     {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/travel-p1-2.png') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/travel-p1-2.png') }}" class="full-page-image"  style="height: 90%;"/>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent
 </body>
 
 </html>

@@ -6,15 +6,30 @@
     <title>Plans Comparison PDF</title>
 
     <style>
+        @page {
+            margin: 0;
+            padding: 0;
+        }
+
         html {
             line-height: 1.5;
-            margin: 0px;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            margin: 0;
             line-height: 1;
             font-family: "DejaVu Sans", sans-serif;
+
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 200px;
+            width: 100%;
+            display: block;
         }
 
         div,
@@ -61,24 +76,28 @@
         }
 
         table {
-            min-width: 1150px;
-            width: 1150px;
+            min-width: 1220px;
+            width: 1220px;
             text-indent: 0;
             border-color: #bfbfbf;
-            max-width: 1150px;
+            max-width: 1220px;
             margin: 7px 12px auto;
             border-spacing: 0;
+        }
+
+        tbody {
+            margin-bottom: 130px;
         }
 
         .header {
             background: #1d83bc;
             color: #ffffff;
-            font-size: 19px;
+            font-size: 16px;
             text-align: center;
             padding: 8px 10px;
             width: 100%;
-            height: 60px;
-            max-height: 60px;
+            height: 57px;
+            max-height: 57px;
         }
 
         .header .logo {
@@ -105,10 +124,18 @@
             border: 1px solid #bfbfbf;
         }
 
-        td>p {
+        thead>tr>th {
+            border: 1px solid #bfbfbf;
+        }
+
+        td>p,
+        td>div>p,
+        td>div>div>p,
+        th>p {
             padding: 4px;
             font-size: 14px;
             text-align: center;
+            font-weight: normal;
         }
 
         .text-left {
@@ -123,6 +150,10 @@
             font-size: 14px;
         }
 
+        .text-xl {
+            font-size: 16px;
+        }
+
         .blue-box {
             background: #ddfdfc;
         }
@@ -132,11 +163,6 @@
             background: #EFF6FF;
             padding: 8px;
             color: #252525;
-        }
-
-        .section {
-            color: #333393;
-            text-align: left;
         }
 
         .text-black {
@@ -152,6 +178,7 @@
             vertical-align: middle;
             max-height: 50px;
             height: 50px;
+            position: relative;
         }
 
         .spacer {
@@ -162,6 +189,8 @@
             text-align: right;
             padding-right: 0;
             vertical-align: bottom;
+            border-left: none;
+            border-top: none;
         }
 
         .quote-info {
@@ -175,8 +204,6 @@
             max-width: 100%;
             font-weight: normal;
         }
-
-        div.quote-info {}
 
         .info h5 {
             background: #1d83bc;
@@ -194,7 +221,7 @@
             background-color: #1d83bc;
             color: #ffffff;
             padding: 8px 25px;
-            margin-top: 6px;
+            margin-top: 50px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
@@ -225,48 +252,42 @@
             background-color: #1d83bc;
         }
 
+        .heading-desc {
+            font-size: 12px;
+        }
+
+        .image-wrapper {
+            min-width: 150px;
+            min-height: 150px;
+            width: 150px;
+            height: 150px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+
         .provider-logo {
-            width: 100px;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
-        @page {
-            margin-bottom: 0px;
-            margin-top: 20px;
-        }
-
-        .container {
-            padding: 0px 50px;
-        }
 
         .no-border {
             border: none;
         }
 
-        footer {
-            position: fixed;
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
-            padding: 0px;
-            margin: 0px;
-            background-color: #1d83bc;
-            color: black;
-            text-align: center;
-        }
+    
 
-        table.tbl-footer {
-            padding: 7px 12px;
-            margin: 0;
-            width: 100%;
-            border: none;
-        }
-
-        table.tbl-footer tr td,
-        table.tbl-footer tr td a {
-            color: #ffffff;
-            border: none;
-            font-size: 16px;
-        }
+      
 
         .text-left {
             text-align: left;
@@ -278,28 +299,84 @@
 
         .full-page-image {
             width: 100%;
+            z-index: 999;
+            height: 100%;
         }
 
         .text-center {
             text-align: center;
         }
 
-        .badge-success {
-            color: #fff;
-            background-color: #1d83bc;
+        .text-white {
+            color: #ffffff
         }
 
-        .badge {
-            display: inline-block;
-            padding: 0.25em 0.4em;
-            font-size: 50%;
-            font-weight: 700;
-            line-height: 1;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: baseline;
-            border-radius: 0.25rem;
+        .text-underline {
+            text-decoration: underline
         }
+
+        .footer {
+        position: fixed;
+        bottom: 0;
+        /* top: 50px !important; */
+        left: 0;
+        right: 0;
+        width: 100%;
+        background-color: #1d83bc;
+        color: #ffffff;
+        padding: 2px 2px 2px 2px;
+        text-align: left;
+        height: 165px !important;
+    }
+
+   
+   
+
+        .full-page-image {
+            width: 100%;
+            z-index: 999;
+            height: 100%;
+        }
+
+
+        .footer-content-1 {
+        font-size: 8px !important;
+        line-height: 0.7 !important;
+        word-break: break-word;
+        white-space: normal !important;
+        width: 100%;
+        box-sizing: border-box;
+        align-items: left;
+        text-align: left;
+    }
+
+    @media (max-width: 600px) {
+        .footer-content-1 {
+            font-size: 8px !important;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
+    }
+
+    .footer-content-2{
+        font-size: 8px !important;
+        align-items: center;
+        text-align: center;
+        line-height: 0.8 !important;
+        word-break: break-word;
+        white-space: normal !important;
+        width: 100%;
+        box-sizing: border-box;
+        align-items: left;
+        text-align: left;
+    }
+    @media (max-width: 600px) {
+        .footer-content-2 {
+            font-size: 9px !important;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
+    }
     </style>
 </head>
 
@@ -476,7 +553,7 @@
 
     @endphp
 
-    <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_first_page.jpg') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_first_page.jpg') }}" class="full-page-image" style="height: 90%;"/>
 
   
     {{-- PDF Page Footer Section --}}
@@ -712,7 +789,11 @@
         </div>
     </div>
 
-    <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_last_page.jpg') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_last_page.jpg') }}" class="full-page-image"  style="height: 90%;"/>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent
 </body>
 
 </html>

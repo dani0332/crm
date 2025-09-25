@@ -7,19 +7,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        * {
-            font-family: 'Prompt', sans-serif !important;
+       @page {
+            margin: 0;
+            padding: 0;
         }
 
         html {
             line-height: 1.5;
-            margin: 0px;
-        }
-        body {
             margin: 0;
+            padding: 0;
+        }
+
+        body {
             line-height: 1;
             font-family: "DejaVu Sans", sans-serif;
+
         }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 200px;
+            width: 100%;
+            display: block;
+        }
+
         div,
         span,
         table,
@@ -44,129 +57,155 @@
         pre {
             margin: 0;
         }
+
         a {
             text-decoration: inherit;
         }
+
         b,
         strong {
             font-weight: bolder;
         }
+
         table.tbl-dec {
             border: none;
         }
-        table.tbl-dec tr td, table.tbl-dec tr td a {border: none;}
+
+        table.tbl-dec tr td,
+        table.tbl-dec tr td a {
+            border: none;
+        }
+
         table {
-            min-width: 1150px;
-            width: 1150px;
+            min-width: 1220px;
+            width: 1220px;
             text-indent: 0;
             border-color: #bfbfbf;
-            max-width: 1150px;
+            max-width: 1220px;
             margin: 7px 12px auto;
             border-spacing: 0;
         }
-        .header {
-            color: #ffffff;
-            font-size: 14px;
-            /*font-weight: 600;*/
-            text-align: center;
-            padding: 8px 0px;
-            width: 100%;
-            height: 150px;
-            max-height: 150px;
+
+        tbody {
+            margin-bottom: 130px;
         }
+
+        .header {
+            background: #1d83bc;
+            color: #ffffff;
+            font-size: 16px;
+            text-align: center;
+            padding: 8px 10px;
+            width: 100%;
+            height: 57px;
+            max-height: 57px;
+        }
+
         .header .logo {
+            float: left;
             background-color: white;
             border-radius: 5px;
             padding: 5px 10px 5px 0px;
-            height: 125px;
-            max-height: 125px;
+            height: 50px;
+            max-height: 50px;
         }
+
         .header .logo img {
-            max-height: 125px;
-            height: 125px;
+            max-height: 50px;
+            height: 50px;
         }
-        /* .header h3 {
+
+        .header h3 {
             float: right;
             text-align: right;
             padding-right: 18px;
-        } */
-        tbody > tr > td {
+        }
+
+        tbody>tr>td {
             border: 1px solid #bfbfbf;
         }
-        td > p,
-        th > p {
+
+        thead>tr>th {
+            border: 1px solid #bfbfbf;
+        }
+
+        td>p,
+        td>div>p,
+        td>div>div>p,
+        th>p {
             padding: 4px;
-            font-size: 12px;
+            font-size: 14px;
             text-align: center;
-            font-weight: 400;
-        }
-
-        .main-table thead th {
-            border: 1px solid #bfbfbf;
-        }
-
-        .main-table tbody td.label,
-        .main-table thead th.label {
-            background: #EFF6FF;
-            text-align: left;
-        }
-
-        .main-table tbody td.label p,
-        .main-table thead th.label p {
-            text-align: left;
+            font-weight: normal;
         }
 
         .text-left {
             text-align: left;
         }
+
         .text-xs {
             font-size: 13px;
         }
+
         .text-sm {
             font-size: 14px;
         }
+
+        .text-xl {
+            font-size: 16px;
+        }
+
         .blue-box {
             background: #ddfdfc;
         }
+
         .bg-light-blue {
             border: 1px solid #bfbfbf;
-            padding: 1px 8px;
-            color: #5B5F60;
+            background: #EFF6FF;
+            padding: 8px;
+            color: #252525;
         }
-        .bg-light-blue p {
-            /*padding: 1px !important;*/
+
+        .text-black {
+            color: #000000;
         }
-        .section {
-            color: #333393;
-            text-align: left;
-        }
-        .text-black{color: #000000;}
+
         .provider {
             border: 1px solid #bfbfbf;
-            font-size: 14px;
-            line-height: 1;
+            font-size: 15px;
+            line-height: 28px;
             font-weight: 400;
             color: #4ea4a8;
             vertical-align: middle;
-            max-height: 35px;
-            height: 35px;
+            max-height: 50px;
+            height: 50px;
+            position: relative;
         }
+
         .spacer {
             padding: 3px;
         }
-        .alfred { text-align: right;padding-right: 0;vertical-align: bottom;}
+
+        .alfred {
+            text-align: right;
+            padding-right: 0;
+            vertical-align: bottom;
+            border-left: none;
+            border-top: none;
+        }
+
         .quote-info {
+            text-align: right;
             vertical-align: bottom;
             margin-top: -1px;
+            background: #EFF6FF;
             font-size: 14px;
-            font-weight: 600;
             text-align: left;
-            padding: 0;
+            padding: 8px;
             max-width: 100%;
+            font-weight: normal;
         }
-        div.quote-info  {
 
-        }
         .info h5 {
             background: #1d83bc;
             color: #ffffff;
@@ -174,14 +213,16 @@
             font-weight: normal;
             margin: 0 0 10px 0;
         }
+
         .info p {
             font-size: 12px;
         }
+
         .btn-all-quotes {
             background-color: #1d83bc;
             color: #ffffff;
             padding: 8px 25px;
-            margin-top: 6px;
+            margin-top: 50px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
@@ -190,303 +231,153 @@
             border-radius: 5px;
             margin-bottom: 0px;
         }
+
         .btn-buy {
             background-color: #FE7333;
             color: #ffffff;
-        padding: 3px 35px;
+            padding: 12px 15px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
             font-size: 14px;
-            font-weight: normal;
+            font-weight: bold;
             border-radius: 5px;
         }
-        .btn-buy:hover{
+
+        .btn-buy:hover {
             background-color: #d7fbd0;
         }
+
         .text-heading {
             color: #ffffff;
             background-color: #1d83bc;
         }
-        .provider-logo {
-            width: 100px;
-        }
-        @page {
-            margin: 0;
-            padding: 0;
-            margin-bottom: 170px;
-        }
-        .container
-        {
-            padding: 0px 50px;
-        }
-        .no-border {border: none;}
-        /* footer {
-            position: fixed;
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
-            padding: 0px;
-            margin: 0px;
-            background-color: #1d83bc;
-            color: black;
-            text-align: center;
-        }
-        table.tbl-footer {
-            padding: 7px 12px;
-            margin: 0;
-            width: 100%;
-            border: none;
-        }
-        table.tbl-footer tr td, table.tbl-footer tr td a {
-            color: #ffffff;
-            border: none;
-            font-size: 16px;
-        } */
-        .text-left {text-align: left;}
-        .text-right {text-align: right;}
 
-        .cover-page {
+        .heading-desc {
+            font-size: 12px;
+        }
+
+        .image-wrapper {
+            min-width: 150px;
+            min-height: 150px;
+            width: 150px;
+            height: 150px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+
+        .provider-logo {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+
+        .no-border {
+            border: none;
+        }
+
+    
+
+      
+
+        .text-left {
+            text-align: left;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .full-page-image {
             width: 100%;
             z-index: 999;
             height: 100%;
         }
-        .full-page-image {
-            width: 100%;
-            z-index: 999;
-            height: 88%;
-        }
-        .text-center {text-align: center;}
-        /*.badge-success {
-            color: #fff;
-            background-color: #1d83bc;
-        }
-        .badge {
-            display: inline-block;
-            padding: 0.25em 0.4em;
-            font-size: 50%;
-            font-weight: 700;
-            line-height: 1;
+
+        .text-center {
             text-align: center;
-            white-space: nowrap;
-            vertical-align: baseline;
-            border-radius: 0.25rem;
-        }*/
-
-        /* Start Header styles from home_quote_plans.blade.php */
-        .raleway-font {
-            font-family: 'Raleway', sans-serif !important;
         }
 
-        /* Bottom Header Container */
-        .header-bottom {
-            width: 100%;
-            display: table;
-            border-top: 2px solid #D3D3D3;
-            border-bottom: 2px solid #D3D3D3;
-            font-size: 14px;
-            color: #5B5F60;
-            padding: 10px 10px;
+        .text-white {
+            color: #ffffff
         }
 
-        /* Left Side Text */
-        .header-text {
-            display: table-cell;
-            text-align: left;
-            /*width: 75%;*/
-            vertical-align: middle;
-        }
-
-        /* Right Side Quote Number */
-        .quote-number {
-            display: table-cell;
-            text-align: right;
-            white-space: nowrap;
-            width: 25%;
-            /*padding-right: 20px;*/
-            vertical-align: middle;
-        }
-
-        .quote-number strong {
-            font-weight: 600; /* Reduce boldness */
-        }
-
-        /* Highlighted Text */
-        .header-text-highlight {
-            font-weight: 600;
-        }
-
-        /* Separator Styling */
-        .separator {
-            color: #D3D3D3; /* Match border color */
-            font-weight: normal; /* Ensure it's not bold */
-            padding: 0 5px; /* Adjust spacing */
-        }
-
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
-            height: 150px;
-        }
-
-        main {
-            padding: 10px 20px;
+        .text-underline {
+            text-decoration: underline
         }
 
         .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+        position: fixed;
+        bottom: 0;
+        /* top: 50px !important; */
+        left: 0;
+        right: 0;
+        width: 100%;
+        background-color: #1d83bc;
+        color: #ffffff;
+        padding: 2px 2px 2px 2px;
+        text-align: left;
+        height: 165px !important;
+    }
+
+   
+   
+
+        .full-page-image {
             width: 100%;
-            background-color: #1d83bc;
-            color: #ffffff;
-            padding: 0;
-            text-align: center;
-            height: 160px;
+            z-index: 999;
+            height: 100%;
         }
 
-        .footer-table {
-            width: 100%;
-            /*table-layout: fixed;*/
-            border-collapse: collapse;
-            color: #ffffff;
-            margin: 0;
 
+        .footer-content-1 {
+        font-size: 8px !important;
+        line-height: 0.7 !important;
+        word-break: break-word;
+        white-space: normal !important;
+        width: 100%;
+        box-sizing: border-box;
+        align-items: left;
+        text-align: left;
+    }
+
+    @media (max-width: 600px) {
+        .footer-content-1 {
+            font-size: 8px !important;
+            padding-left: 2px;
+            padding-right: 2px;
         }
+    }
 
-        .footer-td {
-            padding: 0px 8px;
-            vertical-align: top;
-            border: none;
-            text-align: center;
-
-        }
-
-        /* .footer-box {
-            border-radius: 24px;
-            border: 2px solid #CF9E3C;
-            padding: 6px 10px;
-            text-align: left;
-
-        } */
-
-        .footer-link {
-            color: #ffffff;
-            text-decoration: none;
-        }
-
-        .footer-link:hover {
-            text-decoration: underline;
-        }
-
-        .material-icons {
-            font-size: 14px;
-            color: #ffffff;
-            margin-right: 5px;
-            vertical-align: middle;
-        }
-
-        .footer-header {
-            font-size: 16px;
-            /*font-weight: bold;*/
-            text-align: center;
-        }
-
-        .footer-content-1{
+    .footer-content-2{
+        font-size: 8px !important;
+        align-items: center;
+        text-align: center;
+        line-height: 0.8 !important;
+        word-break: break-word;
+        white-space: normal !important;
+        width: 100%;
+        box-sizing: border-box;
+        align-items: left;
+        text-align: left;
+    }
+    @media (max-width: 600px) {
+        .footer-content-2 {
             font-size: 9px !important;
+            padding-left: 2px;
+            padding-right: 2px;
         }
-
-        .footer-content-2{
-            font-size: 13px !important;
-        }
-
-        .advisor-section {
-            display: table;
-            width: 100%;
-            text-align: left;
-        }
-
-        .advisor-photo-container {
-            display: table-cell;
-            vertical-align: middle;
-            width: 70px;
-        }
-
-        .advisor-photo,.alfred-photo {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            display: block;
-            margin: auto;
-        }
-
-        .advisor-details {
-            display: table-cell;
-            vertical-align: middle;
-            line-height: 0.9;
-            padding-left: 10px;
-        }
-
-        .advisor-name {
-            font-weight: bold;
-            font-size: 12px;
-            margin: 0;
-        }
-
-        .advisor-role {
-            font-size: 10px;
-            margin: 0;
-        }
-
-        .advisor-contact {
-            font-size: 12px;
-            line-height: 1;
-        }
-
-        .advisor-contact .icon {
-            width: 10px;
-            height: 10px;
-            vertical-align: baseline;
-            display: inline-block;
-        }
-
-        .alfred-details{
-            display: table-cell;
-            vertical-align: middle;
-            padding-top: 0px;
-            padding-left: 8px;
-        }
-
-        .alfred-details p {
-            font-size: 10px;
-
-        }
-
-        .alfred-details p.title {
-            font-size: 13px;
-            margin-top: 0px;
-            line-height: 0.9;
-            padding: 2px 0px 10px 0px;
-        }
-
-
-        /* End Header styles from home_quote_plans.blade.php */
-
-        /* table td,
-        table th {
-            max-width: 160px;
-            width: 160px;
-            height: auto;
-            padding: 2px;
-            text-align: center;
-            vertical-align: middle;
-            word-wrap: break-word;
-            white-space: normal;
-        } */
+    }
 
     </style>
 </head>
@@ -611,11 +502,19 @@
 
 @endphp
 {{--First Page --}}
-<img src="{{public_path('images/quote_plans_pages/personal-car-cover.jpg')}}" class="cover-page" />
+<img src="{{public_path('images/quote_plans_pages/personal-car-cover.jpg')}}" class="full-page-image"  style="height:90%;"/>
+@component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent
 <div style="page-break-after: always;"></div>
 
 {{-- Second Page --}}
-<img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_page.jpg') }}" class="full-page-image" />
+<img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_page.jpg') }}" class="full-page-image"   style="height:90%;"/>
+@component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent
 <div style="page-break-after: always;"></div>
 
 {{-- PDF Page Header --}}
@@ -909,12 +808,18 @@
 {{-- Second Last Page --}}
 <div style="page-break-after: always;"></div>
 <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_last_page.jpg') }}"
-     class="full-page-image" />
+     class="full-page-image"  style="height:90%;" />
+     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent
 
 
 {{-- Last Page --}}
 <div style="page-break-after: always;"></div>
 <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_last_page.jpg') }}"
-     class="full-page-image" />
+     class="full-page-image"  style="height:90%;" />
+     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
+@endcomponent
 </body>
 </html>

@@ -7,575 +7,369 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-    * {
-        font-family: 'Prompt', sans-serif !important;
-    }
-
-    .raleway-font {
-        font-family: 'Raleway', sans-serif !important;
-    }
-
     @page {
-        margin: 0;
-        padding: 0;
-        margin-bottom: 170px;
-    }
+            margin: 0;
+            padding: 0;
+        }
 
-    html {
-        line-height: 1;
-        margin: 0;
-        padding: 0;
-    }
+        html {
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
 
-    body {
-        line-height: 1;
-        margin: 0;
-        padding: 0;
-        font-size: 12px;
-        font-weight: 400;
-        color: #333333;
-    }
+        body {
+            line-height: 1;
+            font-family: "DejaVu Sans", sans-serif;
 
-    div,
-    span,
-    table,
-    tbody,
-    tfoot,
-    thead,
-    tr,
-    th,
-    td,
-    blockquote,
-    dl,
-    dd,
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6,
-    hr,
-    figure,
-    p,
-    pre {
-        margin: 0;
-        font-size: 12px;
-        font-weight: 400;
-    }
+        }
 
-    a {
-        text-decoration: inherit;
-    }
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 200px;
+            width: 100%;
+            display: block;
+        }
 
-    b,
-    strong {
-        font-weight: 700;
-    }
+        div,
+        span,
+        table,
+        tbody,
+        tfoot,
+        thead,
+        tr,
+        th,
+        td,
+        blockquote,
+        dl,
+        dd,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        hr,
+        figure,
+        p,
+        pre {
+            margin: 0;
+        }
 
-    table.tbl-dec {
-        margin: auto;
-        padding: auto;
-        border: none;
-        font-size: 12px;
-    }
+        a {
+            text-decoration: inherit;
+        }
 
-    table.tbl-dec tr td,
-    table.tbl-dec tr td a {
-        border: none;
-    }
+        b,
+        strong {
+            font-weight: bolder;
+        }
 
-    table {
-        text-indent: 0;
-        border-color: #bfbfbf;
-        color: #333333;
-        border-spacing: 0;
-        border-radius: 10px;
-        border-collapse: collapse;
-        font-size: 12px;
-        table-layout: auto;
-    }
+        table.tbl-dec {
+            border: none;
+        }
 
-    .not-full {
-        width: auto;
-        margin: 0 auto;
-    }
+        table.tbl-dec tr td,
+        table.tbl-dec tr td a {
+            border: none;
+        }
 
-    .is-full {
-        width: 100%;
-        min-width: 100%;
-        max-width: 100%;
-    }
+        table {
+            min-width: 1220px;
+            width: 1220px;
+            text-indent: 0;
+            border-color: #bfbfbf;
+            max-width: 1220px;
+            margin: 7px 12px auto;
+            border-spacing: 0;
+        }
 
-    tbody {
-        margin-bottom: 170px;
-    }
+        tbody {
+            margin-bottom: 130px;
+        }
 
-    tbody>tr>td {
-        border: 1px solid #bfbfbf;
-    }
+        .header {
+            background: #1d83bc;
+            color: #ffffff;
+            font-size: 16px;
+            text-align: center;
+            padding: 8px 10px;
+            width: 100%;
+            height: 57px;
+            max-height: 57px;
+        }
 
-    thead>tr>th {
-        border: 1px solid #bfbfbf;
-    }
+        .header .logo {
+            float: left;
+            background-color: white;
+            border-radius: 5px;
+            padding: 5px 10px 5px 0px;
+            height: 50px;
+            max-height: 50px;
+        }
 
-    td>p,
-    th>p {
-        padding: 2px;
-        font-size: 12px !important;
-        text-align: center;
-        font-weight: 400;
-    }
+        .header .logo img {
+            max-height: 50px;
+            height: 50px;
+        }
 
-    .text-left {
-        text-align: left;
-    }
+        .header h3 {
+            float: right;
+            text-align: right;
+            padding-right: 18px;
+        }
 
-    .text-xs {
-        font-size: 10px;
-        font-weight: 400;
-    }
+        tbody>tr>td {
+            border: 1px solid #bfbfbf;
+        }
 
-    .text-sm {
-        font-size: 12px;
-        font-weight: 400;
-    }
+        thead>tr>th {
+            border: 1px solid #bfbfbf;
+        }
 
-    .text-xl {
-        font-size: 16px;
-        font-weight: 600;
-    }
+        td>p,
+        td>div>p,
+        td>div>div>p,
+        th>p {
+            padding: 4px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: normal;
+        }
 
-    .blue-box {
-        background: #ddfdfc;
-    }
+        .text-left {
+            text-align: left;
+        }
 
-    .bg-light-blue {
-        border: 1px solid #bfbfbf;
-        padding: 1px 8px;
-        color: #5B5F60;
-    }
+        .text-xs {
+            font-size: 13px;
+        }
 
-    .bg-light-blue p {
-        padding: 1px !important;
-    }
+        .text-sm {
+            font-size: 14px;
+        }
 
-    .text-black {
-        color: #000000;
-    }
+        .text-xl {
+            font-size: 16px;
+        }
 
-    .provider {
-        /*border: 1px solid #bfbfbf;*/
-        font-size: 14px;
-        line-height: 1;
-        font-weight: 400;
-        color: #4ea4a8;
-        vertical-align: middle;
-        max-height: 35px;
-        height: 35px;
-    }
+        .blue-box {
+            background: #ddfdfc;
+        }
 
-    .spacer {
-        padding: 3px;
-    }
+        .bg-light-blue {
+            border: 1px solid #bfbfbf;
+            background: #EFF6FF;
+            padding: 8px;
+            color: #252525;
+        }
 
-    .alfred {
-        text-align: right;
-        padding: 0;
-        width: 100px;
-        min-width: 100px;
-        height: 100px;
-    }
+        .text-black {
+            color: #000000;
+        }
 
-    .quote-info {
-        text-align: right;
-        vertical-align: bottom;
-        margin-top: -1px;
-        font-size: 14px;
-        font-weight: 400;
-        text-align: left;
-        padding: 0;
-        max-width: 100%;
-    }
+        .provider {
+            border: 1px solid #bfbfbf;
+            font-size: 15px;
+            line-height: 28px;
+            font-weight: 400;
+            color: #4ea4a8;
+            vertical-align: middle;
+            max-height: 50px;
+            height: 50px;
+            position: relative;
+        }
 
-    .info h5 {
-        background: #1d83bc;
-        color: #ffffff;
-        padding: 3px;
-        font-weight: 600;
-        margin: 0 0 10px 0;
-    }
+        .spacer {
+            padding: 3px;
+        }
 
-    .info p {
-        font-size: 14px;
-        font-weight: 400;
-    }
+        .alfred {
+            text-align: right;
+            padding-right: 0;
+            vertical-align: bottom;
+            border-left: none;
+            border-top: none;
+        }
 
-    .btn-all-quotes {
-        background-color: #1d83bc;
-        color: #ffffff;
-        padding-left: 70px;
-        padding-right: 70px;
-        padding-bottom: 7px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        font-weight: 600;
-        border-radius: 5px;
-        position: relative;
-    }
+        .quote-info {
+            text-align: right;
+            vertical-align: bottom;
+            margin-top: -1px;
+            background: #EFF6FF;
+            font-size: 14px;
+            text-align: left;
+            padding: 8px;
+            max-width: 100%;
+            font-weight: normal;
+        }
 
-    .btn-buy {
-        background-color: #FE7333;
-        color: #ffffff;
-        padding: 3px 35px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 14px;
-        border-radius: 5px;
-        line-height: 0.7;
-    }
+        .info h5 {
+            background: #1d83bc;
+            color: #ffffff;
+            padding: 3px;
+            font-weight: normal;
+            margin: 0 0 10px 0;
+        }
 
-    .btn-buy:hover {
-        background-color: #d7fbd0;
-    }
+        .info p {
+            font-size: 12px;
+        }
 
-    .provider-logo {
-        width: 45px;
-        height: auto;
-    }
+        .btn-all-quotes {
+            background-color: #1d83bc;
+            color: #ffffff;
+            padding: 8px 25px;
+            margin-top: 50px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 5px;
+            margin-bottom: 0px;
+        }
 
-    .no-border {
-        border: none;
-    }
+        .btn-buy {
+            background-color: #FE7333;
+            color: #ffffff;
+            padding: 12px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 5px;
+        }
 
-    th.provider-name {
-        padding: 0;
-        margin: 0;
-    }
+        .btn-buy:hover {
+            background-color: #d7fbd0;
+        }
 
-    .text-left {
-        text-align: left;
-    }
+        .text-heading {
+            color: #ffffff;
+            background-color: #1d83bc;
+        }
 
-    .text-right {
-        text-align: right;
-    }
+        .heading-desc {
+            font-size: 12px;
+        }
+
+        .image-wrapper {
+            min-width: 150px;
+            min-height: 150px;
+            width: 150px;
+            height: 150px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+
+        .provider-logo {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
 
 
-    .full-page-image {
-        width: 100%;
-        z-index: 999;
-        height: 88%;
-    }
+        .no-border {
+            border: none;
+        }
 
-    .text-center {
-        text-align: center;
-    }
+    
 
-    .text-white {
-        color: #ffffff;
-    }
+      
 
-    .text-underline {
-        text-decoration: underline;
-    }
+        .text-left {
+            text-align: left;
+        }
 
-    .hidden {
-        display: none;
-    }
+        .text-right {
+            text-align: right;
+        }
 
-    tr:has(td) {
-        display: none;
-    }
-    .text-blue {
-        color: #1d83bc;
-    }
+        .full-page-image {
+            width: 100%;
+            z-index: 999;
+            height: 100%;
+        }
 
-    table td,
-    table th {
-        max-width: 160px;
-        width: 160px;
-        height: auto;
-        padding: 2px;
-        text-align: center;
-        vertical-align: middle;
-        word-wrap: break-word;
-        white-space: normal;
-    }
+        .text-center {
+            text-align: center;
+        }
 
-    main {
-        padding: 10px 20px;
-    }
+        .text-white {
+            color: #ffffff
+        }
 
-    .head-caption {
-        padding: 10px;
-        right: 5px !important;
-        top: 150px !important;
-        font-size: 14px;
-        font-weight: 600;
-        text-align: right;
-    }
-
-    td,
-    th {
-        width: auto;
-    }
-    tr {
-        page-break-inside: avoid;
-        page-break-after: auto;
-    }
-
-    table.disclaimer-table {
-        margin: auto;
-        padding: auto;
-        table-layout: fixed;
-        page-break-inside: avoid;
-        page-break-before: auto;
-        width: 100%;
-        border-collapse: separate;
-        border: none !important;
-    }
-
-    table.disclaimer-table td {
-        page-break-inside: avoid;
-        page-break-before: auto;
-        padding: 10px;
-        text-align: left;
-        vertical-align: top;
-        font-size: 14px;
-        line-height: 1;
-        border: none;
-    }
-
-    .disclaimer-text {
-        page-break-inside: avoid;
-        page-break-before: auto;
-        margin: 0;
-        font-size: 14px;
-        line-height: 1;
-        text-align: left;
-    }
-
-    .content {}
-
-    .disclaimer-td {
-        padding: 10px;
-        text-align: left;
-        vertical-align: top;
-        font-size: 14px;
-        line-height: 1;
-        border: none;
-    }
-
-    .header {
-        color: #ffffff;
-        font-size: 14px;
-        font-weight: 600;
-        text-align: center;
-        padding: 8px 10px;
-        width: 100%;
-        height: 150px;
-        max-height: 150px;
-    }
-
-    .header .logo {
-        background-color: white;
-        border-radius: 5px;
-        padding: 5px 10px 5px 0px;
-        height: 125px;
-        max-height: 125px;
-    }
-
-    .header .logo img {
-        max-height: 125px;
-        height: 125px;
-    }
-
-    header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 150px;
-    }
-
-    /* Bottom Header Container */
-    .header-bottom {
-        width: 100%;
-        display: table;
-        border-top: 2px solid #D3D3D3;
-        border-bottom: 2px solid #D3D3D3;
-        font-size: 14px;
-        color: #5B5F60;
-        padding: 10px 0;
-    }
-
-    /* Left Side Text */
-    .header-text {
-        display: table-cell;
-        text-align: left;
-        width: 75%;
-        vertical-align: middle;
-    }
-
-    /* Right Side Quote Number */
-    .quote-number {
-        display: table-cell;
-        text-align: right;
-        white-space: nowrap;
-        width: 25%;
-        padding-right: 20px;
-        vertical-align: middle;
-    }
-
-    .quote-number strong {
-        font-weight: 600; /* Reduce boldness */
-    }
-
-    /* Highlighted Text */
-    .header-text-highlight {
-        font-weight: 600;
-    }
-
-    /* Separator Styling */
-    .separator {
-        color: #D3D3D3; /* Match border color */
-        font-weight: normal; /* Ensure it's not bold */
-        padding: 0 5px; /* Adjust spacing */
-    }
-
-    .footer {
+        .text-underline {
+            text-decoration: underline
+        }
+      
+     .footer {
         position: fixed;
         bottom: 0;
+        /* top: 50px !important; */
         left: 0;
         right: 0;
         width: 100%;
         background-color: #1d83bc;
         color: #ffffff;
-        padding: 10px 10px 15px 10px;
-        text-align: center;
-        height: 140px;
+        padding: 2px 2px 2px 2px;
+        text-align: left;
+        height: 167px !important;
     }
 
-    .footer-table {
+    .footer-content-1 {
+        font-size: 8px !important;
+        line-height: 0.7 !important;
+        word-break: break-word;
+        white-space: normal !important;
         width: 100%;
-        table-layout: fixed;
-        border-collapse: collapse;
-        color: #ffffff;
-    }
-
-    .footer-td {
-        padding: 10px;
-        vertical-align: top;
-        border: none;
-    }
-
-    .footer-box {
-        border-radius: 24px;
-        border: 2px solid #CF9E3C;
-        padding: 6px 10px;
+        box-sizing: border-box;
+        align-items: left;
         text-align: left;
     }
 
-    .footer-link {
-        color: #ffffff;
-        text-decoration: none;
-    }
-
-    .footer-link:hover {
-        text-decoration: underline;
-    }
-
-    .material-icons {
-        font-size: 14px;
-        color: #ffffff;
-        margin-right: 5px;
-        vertical-align: middle;
-    }
-
-    .footer-header {
-        font-size: 14px;
-        font-weight: bold;
-        text-align: center;
-    }
-
-    .footer-content-1{
-        font-size: 9px !important;
+    @media (max-width: 600px) {
+        .footer-content-1 {
+            font-size: 8px !important;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
     }
 
     .footer-content-2{
-        font-size: 13px !important;
-    }
-
-    .advisor-section {
-        display: table;
+        font-size: 8px !important;
+        align-items: center;
+        text-align: center;
+        line-height: 0.8 !important;
+        word-break: break-word;
+        white-space: normal !important;
         width: 100%;
+        box-sizing: border-box;
+        align-items: left;
+        text-align: left;
+    }
+    @media (max-width: 600px) {
+        .footer-content-2 {
+            font-size: 9px !important;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
     }
 
-    .advisor-photo-container {
-        display: table-cell;
-        vertical-align: middle;
-        width: 70px;
-    }
 
-    .advisor-photo, .alfred-photo {
-        width: 70px;
-        height: 70px;
-        border-radius: 50%;
-        display: block;
-        margin: auto;
-    }
-
-    .advisor-details {
-        display: table-cell;
-        vertical-align: middle;
-        line-height: 0.9;
-        padding-left: 10px;
-    }
-
-    .advisor-name {
-        font-weight: bold;
-        font-size: 12px;
-        margin: 0;
-    }
-
-    .advisor-role {
-        font-size: 10px;
-        margin: 0;
-    }
-
-    .advisor-contact {
-        font-size: 12px;
-        line-height: 1;
-    }
-
-    .advisor-contact .icon {
-        width: 10px;
-        height: 10px;
-        vertical-align: baseline;
-        display: inline-block;
-    }
-
-    .alfred-details{
-        display: table-cell;
-        vertical-align: middle;
-        padding-top: 0px;
-        padding-left: 8px;
-    }
-
-    .alfred-details p {
-        font-size: 10px;
-
-    }
-
-    .alfred-details p.title {
-        font-size: 13px;
-        margin-top: 0px;
-        line-height: 0.9;
-        padding: 2px 0px 10px 0px;
-    }
 
 </style>
 </head>
@@ -684,10 +478,18 @@
 @endphp
 
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_first_page.jpg') }}" class="full-page-image" style="height: 100%;"/>
+    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_first_page.jpg') }}" class="full-page-image" style="height: 90%;"/>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent   
     <div style="page-break-after: always;"></div>
     {{-- Second Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_page.jpg') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_page.jpg') }}" class="full-page-image" style="height: 90%;"/>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent
     <div style="page-break-after: always;"></div>
 
     {{-- PDF Page Header --}}
@@ -984,11 +786,19 @@
 
     {{-- Third Page --}}
     <div style="page-break-after: always;"></div>
-    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_last_page.jpg') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_last_page.jpg') }}" class="full-page-image" style="height: 90%;"/>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent
 
     {{-- Fourth Page --}}
     <div style="page-break-after: always;"></div>
-    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_last_page.jpg') }}"  class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_last_page.jpg') }}"  class="full-page-image" style="height: 90%;"/>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent
 </body>
 
 </html>
