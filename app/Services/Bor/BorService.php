@@ -38,8 +38,8 @@ class BorService
         $isPersonalQuote = checkPersonalQuotes(ucfirst($data['lob']));
         ! $isPersonalQuote && $quoteObject->load('personalQuote');
         $personalQuote = $isPersonalQuote ? $quoteObject : $quoteObject->personalQuote;
-        
-        if (!$personalQuote) {
+
+        if (! $personalQuote) {
             throw new \Exception('Personal quote not found for BOR logs');
         }
 
