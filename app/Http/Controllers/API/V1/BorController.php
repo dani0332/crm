@@ -275,7 +275,7 @@ class BorController extends Controller
     public function signDocument(Request $request)
     {
         try {
-            $borLog = BorLog::where('bor_reference', $request->input('bor_ref_id'))->first();
+            $borLog = BorLog::with('personalQuote')->where('bor_reference', $request->input('bor_ref_id'))->first();
             $quote = $borLog->personalQuote;
             $quoteType = QuoteTypes::getName($quote->quote_type_id)->value;
             $quote = checkPersonalQuotes($quoteType) ? $quote : $this->getQuoteObject($quoteType, $quote->quote_id);

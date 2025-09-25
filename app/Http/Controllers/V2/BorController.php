@@ -47,7 +47,7 @@ class BorController extends Controller
                 'bor_status_enum' => BorStatusEnum::asArray(),
             ]);
         } catch (Exception $th) {
-            LoggerService::error('Failed to fetch BOR logs', [
+            LoggerService::info('Failed to fetch BOR logs', [
                 'error' => $th->getMessage(),
                 'trace' => $th->getTraceAsString(),
                 'request' => $request->all(),

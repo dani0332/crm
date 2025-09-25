@@ -38,6 +38,10 @@ class BorService
         $isPersonalQuote = checkPersonalQuotes(ucfirst($data['lob']));
         ! $isPersonalQuote && $quoteObject->load('personalQuote');
         $personalQuote = $isPersonalQuote ? $quoteObject : $quoteObject->personalQuote;
+        
+        if (!$personalQuote) {
+            throw new \Exception('Personal quote not found for BOR logs');
+        }
 
         // Get paginated BOR logs with relationships
         $logs = BorLog::where('personal_quote_id', $personalQuote->id)
