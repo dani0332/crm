@@ -1173,4 +1173,17 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         return $additionalLookups;
     }
+
+    public function dateFormat($date, $endDate = false)
+    {
+        if (empty($date)) {
+            return null;
+        }
+
+        $carbonDate = Carbon::parse($date);
+
+        return $endDate 
+            ? $carbonDate->endOfDay()->format('Y-m-d H:i:s')
+            : $carbonDate->startOfDay()->format('Y-m-d H:i:s');
+    }
 }

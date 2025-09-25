@@ -956,13 +956,28 @@ class AMLService
                     'value' => $bankName?->text ?? null,
                 ];
                 $insurerScreeningPayload['firstRegistrationDate'] = $vehicleDriverDetail?->first_registration_date ?? null;
-                $insurerScreeningPayload['policyEffectiveDate'] = Carbon::parse($quoteDetails->policy_start_date)->format('Y-m-d') ?? null;
-                $insurerScreeningPayload['policyExpiryDate'] = $quoteDetails->policy_expiry_date ?? null;
-                $insurerScreeningPayload['certificateStartDate'] = Carbon::parse($quoteDetails->certificate_start_date)->format('Y-m-d') ?? null;
-                $insurerScreeningPayload['certificateEndDate'] = $quoteDetails->certificate_end_date ?? null;
+                $insurerScreeningPayload['policyEffectiveDate'] = $isLIVA
+                    ? app(LivaInsuranceService::class)->dateFormat($quoteDetails?->policy_start_date)
+                    : ($quoteDetails?->policy_start_date ?? null);
+
+                $insurerScreeningPayload['policyExpiryDate'] = $isLIVA
+                    ? app(LivaInsuranceService::class)->dateFormat($quoteDetails?->policy_expiry_date, true)
+                    : ($quoteDetails?->policy_expiry_date ?? null);
+
+                $insurerScreeningPayload['certificateStartDate'] = $isLIVA
+                    ? app(LivaInsuranceService::class)->dateFormat($quoteDetails?->certificate_start_date)
+                    : ($quoteDetails?->certificate_start_date ?? null);
+
+                $insurerScreeningPayload['certificateEndDate'] = $isLIVA
+                    ? app(LivaInsuranceService::class)->dateFormat($quoteDetails?->certificate_end_date, true)
+                    : ($quoteDetails?->certificate_end_date ?? null);
+
                 $insurerScreeningPayload['annualMilageEstimation'] = $vehicleDriverDetail?->annual_mileage_estimate ?? null;
                 $insurerScreeningPayload['driverName'] = trim(($vehicleDriverDetail?->driver_first_name ?? '').' '.($vehicleDriverDetail?->driver_last_name ?? '')) ?: null;
-                $insurerScreeningPayload['driverDob'] = Carbon::parse($vehicleDriverDetail?->driver_dob)->format('Y-m-d') ?? null;
+                $insurerScreeningPayload['driverDob'] = $isLIVA
+                    ? app(LivaInsuranceService::class)->dateFormat($vehicleDriverDetail?->driver_dob)
+                    : ($vehicleDriverDetail?->driver_dob ?? null);
+
                 $insurerScreeningPayload['driverGender'] = strtolower($this->formatGender($vehicleDriverDetail?->driver_gender)) ?? null;
                 $insurerScreeningPayload['driverLicenseNumber'] = $vehicleDriverDetail?->driver_license_number ?? null;
                 $insurerScreeningPayload['licenseIssuePlace'] = $issuancePlace?->text ?? null;
