@@ -3103,8 +3103,13 @@ class RenewalsUploadService
         $product = $data->product;
         $quoteType = QuoteTypes::getName($product);
         $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
-        $quotes = $repository::export();
-
+     
+        if ($quoteType->value == QuoteTypes::CAR->value) {
+            $quotes = $repository::RenewalExport();
+        } else {
+            $quotes = $repository::export();
+        }
+        
         return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal');
     }
 

@@ -138,4 +138,20 @@ class CarQuoteRepository extends BaseRepository
 
         return $quote;
     }
+
+    public function fetchRenewalExport()
+    {
+        // Fetch all filtered car quotes with related models, without pagination
+       return $this->filter(paginate: false)
+            ->with([
+                'advisor',
+                'nationality',
+                'carMake',
+                'carModel',
+                'insuranceProvider',
+                'carQuoteRequestDetail',
+                'car_type_insurance_id'
+            ])
+            ->orderBy('created_at', 'desc');
+    }
 }
