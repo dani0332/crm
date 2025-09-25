@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -27,7 +28,7 @@ class SystemHealthController extends Controller
         private readonly SupervisorRepository $supervisorRepository,
         private readonly MasterSupervisorRepository $masterSupervisorRepository,
     ) {
-        $this->middleware(['permission:'.PermissionsEnum::VIEW_PROCESS_TRACKER], ['only' => ['index', 'databases', 'redis', 'queues']]);
+        $this->middleware(['role:'.RolesEnum::Engineering], ['only' => ['index', 'databases', 'redis', 'queues']]);
     }
 
     public function index(Request $request): Response
