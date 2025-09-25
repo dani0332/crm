@@ -567,6 +567,21 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
 
         Route::get('/allocation-audit', [AllocationAuditController::class, 'index'])->name('admin.allocation-audit.index');
+
+        // System Health Dashboard - Engineering role only
+        Route::get('/system-health', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'index'])
+            ->middleware('role:ENGINEERING')
+            ->name('admin.system-health.index');
+        Route::get('/system-health/databases', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'databases'])
+            ->middleware('role:ENGINEERING')
+            ->name('admin.system-health.databases');
+        Route::get('/system-health/redis', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'redis'])
+            ->middleware('role:ENGINEERING')
+            ->name('admin.system-health.redis');
+        Route::get('/system-health/queues', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'queues'])
+            ->middleware('role:ENGINEERING')
+            ->name('admin.system-health.queues');
+            
     });
 
     Route::prefix('buy-leads')->group(function () {
