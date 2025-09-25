@@ -1,6 +1,7 @@
 <script setup>
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 
 const props = defineProps({
   quote: {
@@ -1277,6 +1278,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :expanded="sectionExpanded"
     />
 
+    
+
     <LastYearPolicyDetail
       v-if="
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
@@ -1464,6 +1467,22 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :insly-id="quoteDetails?.insly_id"
       :expanded="sectionExpanded"
       :bookPolicyDetails="bookPolicyDetails"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      lob="Business"
+      :customerData="{
+        customerType: quote.customer_type,
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.business_company_name,
+        currentlyInsuredWith: quote.insurance_provider_id
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <BookPolicy
