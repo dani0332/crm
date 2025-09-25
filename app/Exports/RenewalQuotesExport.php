@@ -5,6 +5,8 @@ namespace App\Exports;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Traits\ExcelExportable;
+use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeShortCode;
 
 class RenewalQuotesExport
 {
@@ -32,7 +34,7 @@ class RenewalQuotesExport
             'Previous Policy expiry date',
             'Previous Gross premium',
             'Previous advisor',
-            'Commission',
+            'Previous Commission',
             'PC Tagging',
             $this->exportType == 'BUSINESS' ? 'Business Type' : '',
         ];
@@ -40,7 +42,24 @@ class RenewalQuotesExport
 
     public function map($quote): array
     {
-        $payment = $quote->payments->first();
+        /**
+         * Optimize payment retrieval to minimize queries and memory usage.
+         * Assumes that the necessary relationships are eager loaded in the query builder:
+         * - For CAR: previousQuote.payments
+         * - For others: payments
+         * This avoids N+1 queries and unnecessary loading.
+         */
+        $payment = null;
+        if ($this->exportType === QuoteTypeShortCode::CAR) {
+            // Use loaded relationship if available, avoid triggering additional queries
+            if (isset($quote->previousQuote) && $quote->previousQuote && $quote->previousQuote->relationLoaded('payments')) {
+                $payment = $quote->previousQuote->payments->first();
+            }
+        } else {
+            if ($quote->relationLoaded('payments')) {
+                $payment = $quote->payments->first();
+            }
+        }
 
         return [
             $quote->code,

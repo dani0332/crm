@@ -3084,6 +3084,7 @@ class RenewalsUploadService
 
     public function getSearch($data)
     {
+        try{
         $quotes = [];
         $product = $data->product;
         if ($product == QuoteTypeId::Business) {
@@ -3092,6 +3093,10 @@ class RenewalsUploadService
             $quoteType = QuoteTypes::getName($product);
             $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
             $quotes = $repository::getData()->withQueryString();
+        }
+        }catch(\Exception $e){
+            LoggerService::error('UAC FN: getSearch Error: '.$e->getMessage());
+            return [];
         }
 
         return $quotes;
