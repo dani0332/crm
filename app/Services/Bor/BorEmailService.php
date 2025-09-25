@@ -25,7 +25,7 @@ class BorEmailService
             if (!$customerData || !$customerData['email']) {
                 LoggerService::info('BOR Request Email: Customer email not found', [
                     'bor_log_id' => $borLog->id,
-                    'lead_id' => $borLog->lead_id
+                    'personal_quote_id' => $borLog->personal_quote_id
                 ]);
                 return false;
             }
@@ -33,7 +33,7 @@ class BorEmailService
             if($advisorData == null) {
                 LoggerService::info('BOR Request Email: Advisor data not found', [
                     'bor_log_id' => $borLog->id,
-                    'lead_id' => $borLog->lead_id
+                    'personal_quote_id' => $borLog->personal_quote_id
                 ]);
                 return false;
             }
@@ -45,7 +45,7 @@ class BorEmailService
         } catch (\Exception $e) {
             LoggerService::error('BOR Request Email Service failed', [
                 'bor_log_id' => $borLog->id,
-                'lead_id' => $borLog->lead_id,
+                'personal_quote_id' => $borLog->personal_quote_id,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
@@ -66,7 +66,7 @@ class BorEmailService
             if (!$customerData || !$customerData['email'] || $advisorData == null) {
                 LoggerService::info('BOR Completion Email failed: Customer or Advisor email not found', [
                     'bor_log_id' => $borLog->id,
-                    'lead_id' => $borLog->lead_id
+                    'personal_quote_id' => $borLog->personal_quote_id
                 ]);
                 return false;
             }
@@ -77,7 +77,7 @@ class BorEmailService
         } catch (\Exception $e) {
             LoggerService::error('BOR Completion Email Service failed', [
                 'bor_log_id' => $borLog->id,
-                'lead_id' => $borLog->lead_id,
+                'personal_quote_id' => $borLog->personal_quote_id,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
@@ -99,7 +99,7 @@ class BorEmailService
             if(!$insurerContact || $advisorData == null) {
                 LoggerService::info('BOR Insurer Notification failed: Insurer contact or Advisor data not found', [
                     'bor_log_id' => $borLog->id,
-                    'lead_id' => $borLog->lead_id,
+                    'personal_quote_id' => $borLog->personal_quote_id,
                 ]);
 
                 return false;
@@ -111,7 +111,7 @@ class BorEmailService
         } catch (\Exception $e) {
             LoggerService::error('BOR Insurer Notification Service failed', [
                 'bor_log_id' => $borLog->id,
-                'lead_id' => $borLog->lead_id,
+                'personal_quote_id' => $borLog->personal_quote_id,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
@@ -126,12 +126,12 @@ class BorEmailService
     private function getCustomerData(BorLog $borLog): ?array
     {
         try {
-            $lead = PersonalQuote::find($borLog->lead_id);
+            $lead = PersonalQuote::find($borLog->personal_quote_id);
             
             if (!$lead) {
                 LoggerService::error('BOR Email Service: Lead not found', [
                     'bor_log_id' => $borLog->id,
-                    'lead_id' => $borLog->lead_id
+                    'personal_quote_id' => $borLog->personal_quote_id
                 ]);
                 return null;
             }
@@ -147,7 +147,7 @@ class BorEmailService
         } catch (\Exception $e) {
             LoggerService::error('BOR Email Service: Failed to get customer data', [
                 'bor_log_id' => $borLog->id,
-                'lead_id' => $borLog->lead_id,
+                'personal_quote_id' => $borLog->personal_quote_id,
                 'error' => $e->getMessage()
             ]);
             return null;

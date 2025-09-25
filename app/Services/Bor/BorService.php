@@ -41,14 +41,14 @@ class BorService
         $personalQuote = $isPersonalQuote ? $quoteObject : $quoteObject->personalQuote;
 
         // Get paginated BOR logs with relationships
-        $logs = BorLog::where('lead_id', $personalQuote->id)
+        $logs = BorLog::where('personal_quote_id', $personalQuote->id)
             ->with(['insuranceProvider', 'personalQuote', 'signedDocument', 'document'])
             ->orderBy('created_at', 'desc')
             ->simplePaginate(15)
             ->withQueryString();
         
         // Total count for backward compatibility
-        $total = BorLog::where('lead_id', $personalQuote->id)->count();
+        $total = BorLog::where('personal_quote_id', $personalQuote->id)->count();
 
         // Enhance each BOR log with document data
         $logs->getCollection()->transform(function ($borLog) {
@@ -101,12 +101,12 @@ class BorService
      */
     public function createBorLog(array $data)
     {
-        $quoteObject = $this->getQuoteObject($data['lob'], $data['lead_id']);
+        $quoteObject = $this->getQuoteObject($data['lob'], $data['personal_quote_id']);
         $isPersonalQuote = checkPersonalQuotes(ucfirst($data['lob']));
         !$isPersonalQuote && $quoteObject->load('personalQuote');
         $personalQuote = $isPersonalQuote ? $quoteObject : $quoteObject->personalQuote;
 
-        $data['lead_id'] = $personalQuote->id;
+        $data['personal_quote_id'] = $personalQuote->id;
         $data['status'] = BorStatusEnum::SIGNATURE_REQUESTED;
 
         $data['date_created'] = now();
@@ -140,12 +140,12 @@ class BorService
 
     public function updateBorLog(array $data, $id)
     {
-        $quoteObject = $this->getQuoteObject($data['lob'], $data['lead_id']);
+        $quoteObject = $this->getQuoteObject($data['lob'], $data['personal_quote_id']);
         $isPersonalQuote = checkPersonalQuotes(ucfirst($data['lob']));
         !$isPersonalQuote && $quoteObject->load('personalQuote');
         $personalQuote = $isPersonalQuote ? $quoteObject : $quoteObject->personalQuote;
 
-        $data['lead_id'] = $personalQuote->id;
+        $data['personal_quote_id'] = $personalQuote->id;
         unset($data['lob']);
 
         $borLog = BorLog::findOrFail($id);

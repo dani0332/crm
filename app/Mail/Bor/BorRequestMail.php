@@ -56,7 +56,7 @@ class BorRequestMail extends Mailable
             if (!$workflowUrl) {
                 LoggerService::error('BOR Request Email: Bird workflow URL not configured', [
                     'bor_log_id' => $this->borLog->id,
-                    'lead_id' => $this->borLog->lead_id
+                    'personal_quote_id' => $this->borLog->personal_quote_id
                 ]);
                 return false;
             }
@@ -67,7 +67,7 @@ class BorRequestMail extends Mailable
 
             LoggerService::info('BOR Request Email sent via Bird', [
                 'bor_log_id' => $this->borLog->id,
-                'lead_id' => $this->borLog->lead_id,
+                'personal_quote_id' => $this->borLog->personal_quote_id,
                 'customer_email' => $this->customerData['email'] ?? '',
                 'advisor_email' => $this->advisorData['email'] ?? '',
                 'response_status' => $response->status_code
@@ -78,7 +78,7 @@ class BorRequestMail extends Mailable
         } catch (\Exception $e) {
             LoggerService::error('BOR Request Email failed', [
                 'bor_log_id' => $this->borLog->id,
-                'lead_id' => $this->borLog->lead_id,
+                'personal_quote_id' => $this->borLog->personal_quote_id,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()

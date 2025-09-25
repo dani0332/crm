@@ -63,7 +63,7 @@ const signedDocuments = computed(() => {
 
 // Form data using Inertia's useForm with proper field mapping
 const form = useForm({
-  lead_id: props.leadId,
+  personal_quote_id: props.leadId,
   lob: props.lob,
   customer_type: props.customerData.customerType,
   insurer_name: props.customerData.firstName + ' ' + props.customerData.lastName,
@@ -259,7 +259,7 @@ watch(() => form.insurance_provider_id, async (newProviderId) => {
 const resetForm = () => {
   form.reset();
   form.clearErrors(); // Fix: Clear form errors on reset
-  form.lead_id = props.leadId;
+  form.personal_quote_id = props.leadId;
   form.lob = props.lob;
 
   selectedInsurer.value = null;
@@ -377,7 +377,7 @@ const submitForm = () => {
 
   // Prepare form data (exclude additional_notes and reason for main update)
   const submitData = {
-    lead_id: form.lead_id,
+    personal_quote_id: form.personal_quote_id,
     lob: form.lob,
     customer_type: form.customer_type,
     insurer_name: form.insurer_name,

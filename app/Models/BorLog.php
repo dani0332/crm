@@ -47,8 +47,8 @@ class BorLog extends Model
                 $borLog->status = BorStatusEnum::SIGNATURE_REQUESTED;
             }
             // Generate bor_reference as IM-BOR-ddmmyy-count
-            if (empty($borLog->bor_reference) && !empty($borLog->lead_id)) {
-                $borLog->bor_reference = static::generateBorId($borLog->lead_id);
+            if (empty($borLog->bor_reference) && !empty($borLog->personal_quote_id)) {
+                $borLog->bor_reference = static::generateBorId($borLog->personal_quote_id);
             }
         });
     }
@@ -120,7 +120,7 @@ class BorLog extends Model
      */
     public function personalQuote(): BelongsTo
     {
-        return $this->belongsTo(PersonalQuote::class, 'lead_id', 'id');
+        return $this->belongsTo(PersonalQuote::class, 'personal_quote_id', 'id');
     }
 
     /**
@@ -292,7 +292,7 @@ class BorLog extends Model
                     $todayStart = now()->startOfDay();
                     $todayEnd = now()->endOfDay();
                     
-                    $lastCount = static::where('lead_id', $leadId)
+                    $lastCount = static::where('personal_quote_id', $leadId)
                         ->lockForUpdate() // Prevent concurrent access
                         ->count();
                     
@@ -310,7 +310,7 @@ class BorLog extends Model
             } catch (\Exception $e) {
                 if ($attempt === $maxRetries) {
                     Log::error('Failed to generate unique BOR ID after maximum retries', [
-                        'lead_id' => $leadId,
+                        'personal_quote_id' => $leadId,
                         'date' => $dateStr,
                         'attempts' => $maxRetries,
                         'error' => $e->getMessage()

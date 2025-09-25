@@ -25,7 +25,7 @@ class BorFormRequest extends FormRequest
     {
         $rules = [
             'customer_type' => ['required', 'string', Rule::in(['Individual', 'Entity'])],
-            'lead_id' => ['required', 'integer'],
+            'personal_quote_id' => ['required', 'integer'],
             'lob' => ['required', 'string'],
             'insurance_provider_id' => 'nullable|integer',
         ];
@@ -90,7 +90,7 @@ class BorFormRequest extends FormRequest
         return [
             'customer_type.required' => 'Customer type is required.',
             'customer_type.in' => 'Customer type must be either Individual or Entity.',
-            'lead_id.required' => 'Lead ID is required.',
+            'personal_quote_id.required' => 'Lead ID is required.',
             'insurer_name.required' => 'Insurer name is required for individual insurers.',
             'company_name.required' => 'Company name is required for entity insurers.',
             'insurance_provider_id.exists' => 'The selected insurance provider does not exist.',
@@ -110,7 +110,7 @@ class BorFormRequest extends FormRequest
     {
         return [
             'customer_type' => 'customer type',
-            'lead_id' => 'lead',
+            'personal_quote_id' => 'lead',
             'insurer_name' => 'insurer name',
             'company_name' => 'company name',
 
@@ -191,9 +191,9 @@ class BorFormRequest extends FormRequest
             ]);
         }
 
-        if ($this->has('lead_id')) {
+        if ($this->has('personal_quote_id')) {
             $this->merge([
-                'lead_id' => (int) $this->input('lead_id')
+                'personal_quote_id' => (int) $this->input('personal_quote_id')
             ]);
         }
     }

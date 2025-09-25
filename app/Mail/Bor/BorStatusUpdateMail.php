@@ -52,7 +52,7 @@ class BorStatusUpdateMail extends Mailable
             if (!$workflowUrl) {
                 LoggerService::error('BOR Status Update Email: Bird workflow URL not configured', [
                     'bor_log_id' => $this->borLog->id,
-                    'lead_id' => $this->borLog->lead_id,
+                    'personal_quote_id' => $this->borLog->personal_quote_id,
                     'old_status' => $this->oldStatus,
                     'new_status' => $this->newStatus
                 ]);
@@ -64,7 +64,7 @@ class BorStatusUpdateMail extends Mailable
 
             LoggerService::info('BOR Status Update Email sent via Bird', [
                 'bor_log_id' => $this->borLog->id,
-                'lead_id' => $this->borLog->lead_id,
+                'personal_quote_id' => $this->borLog->personal_quote_id,
                 'customer_email' => $this->customerData['email'],
                 'old_status' => $this->oldStatus,
                 'new_status' => $this->newStatus,
@@ -76,7 +76,7 @@ class BorStatusUpdateMail extends Mailable
         } catch (\Exception $e) {
             LoggerService::error('BOR Status Update Email failed', [
                 'bor_log_id' => $this->borLog->id,
-                'lead_id' => $this->borLog->lead_id,
+                'personal_quote_id' => $this->borLog->personal_quote_id,
                 'old_status' => $this->oldStatus,
                 'new_status' => $this->newStatus,
                 'error' => $e->getMessage(),
@@ -93,7 +93,7 @@ class BorStatusUpdateMail extends Mailable
     private function buildBirdEmailData()
     {
         return [
-            'uuid' => $this->borLog->lead_id,
+            'uuid' => $this->borLog->personal_quote_id,
             'workflow_type' => 'bor_status_update',
             'customer' => [
                 'email' => $this->customerData['email'],
