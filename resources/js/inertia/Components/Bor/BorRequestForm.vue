@@ -66,7 +66,8 @@ const form = useForm({
   personal_quote_id: props.leadId,
   lob: props.lob,
   customer_type: props.customerData.customerType,
-  insurer_name: props.customerData.firstName + ' ' + props.customerData.lastName,
+  insurer_name:
+    props.customerData.firstName + ' ' + props.customerData.lastName,
   company_name: props.customerData.companyName,
   insurance_provider_id: props.customerData.currentlyInsuredWith,
   insurance_contact_id: props.borLog?.insurance_contact_id ?? null,
@@ -121,26 +122,31 @@ const isPetLob = computed(() => {
 
 const isSukoonInsurance = computed(() => {
   if (!selectedInsurer.value) return false;
-  return selectedInsurer.value.code?.toLowerCase() === 'oic' || 
-         selectedInsurer.value.text?.toLowerCase().includes('sukoon');
+  return (
+    selectedInsurer.value.code?.toLowerCase() === 'oic' ||
+    selectedInsurer.value.text?.toLowerCase().includes('sukoon')
+  );
 });
 
 // Function to fetch provider representors
-const fetchProviderRepresentor = async (insuranceProviderId) => {
+const fetchProviderRepresentor = async insuranceProviderId => {
   if (!insuranceProviderId) {
     insuranceProviderRepresentor.value = [];
     return;
   }
-  
+
   try {
-    const response = await axios.get(route('bor.get-representor', {
-      insurance_provider_id: insuranceProviderId,
-      quote_type: props.lob
-    }));
-    if(response.data.providerRepresentor.length == 1 && !isEditMode.value) {
+    const response = await axios.get(
+      route('bor.get-representor', {
+        insurance_provider_id: insuranceProviderId,
+        quote_type: props.lob,
+      }),
+    );
+    if (response.data.providerRepresentor.length == 1 && !isEditMode.value) {
       form.insurance_contact_id = response.data.providerRepresentor[0].value;
     }
-    insuranceProviderRepresentor.value = response.data.providerRepresentor ?? [];
+    insuranceProviderRepresentor.value =
+      response.data.providerRepresentor ?? [];
   } catch (error) {
     console.error('Error fetching provider representor:', error);
     insuranceProviderRepresentor.value = [];
@@ -159,20 +165,36 @@ const customerNameLabel = computed(() => {
 });
 
 const customerNamePlaceholder = computed(() => {
-  return form.customer_type === 'Entity' ? 'Enter company name' : 'Enter customer name';
+  return form.customer_type === 'Entity'
+    ? 'Enter company name'
+    : 'Enter customer name';
 });
 
 // Status badge configuration for display
-const getStatusBadge = (status) => {
+const getStatusBadge = status => {
   const statusConfig = {
-    'SIGNATURE_REQUESTED': { class: 'bg-yellow-100 text-yellow-800', text: 'Signature Requested' },
-    'SENT_TO_INSURER': { class: 'bg-blue-100 text-blue-800', text: 'Sent to Insurer' },
-    'DOCUMENT_SIGNED': { class: 'bg-indigo-100 text-indigo-800', text: 'Document Signed' },
-    'DOCUMENT_UPLOADED': { class: 'bg-purple-100 text-purple-800', text: 'Document Uploaded' },
-    'CANCELLED': { class: 'bg-gray-100 text-gray-800', text: 'Cancelled' },
-    'COMPLETED': { class: 'bg-green-100 text-green-800', text: 'Completed' },
-  }
-  return statusConfig[status] || { class: 'bg-gray-100 text-gray-800', text: status }
+    SIGNATURE_REQUESTED: {
+      class: 'bg-yellow-100 text-yellow-800',
+      text: 'Signature Requested',
+    },
+    SENT_TO_INSURER: {
+      class: 'bg-blue-100 text-blue-800',
+      text: 'Sent to Insurer',
+    },
+    DOCUMENT_SIGNED: {
+      class: 'bg-indigo-100 text-indigo-800',
+      text: 'Document Signed',
+    },
+    DOCUMENT_UPLOADED: {
+      class: 'bg-purple-100 text-purple-800',
+      text: 'Document Uploaded',
+    },
+    CANCELLED: { class: 'bg-gray-100 text-gray-800', text: 'Cancelled' },
+    COMPLETED: { class: 'bg-green-100 text-green-800', text: 'Completed' },
+  };
+  return (
+    statusConfig[status] || { class: 'bg-gray-100 text-gray-800', text: status }
+  );
 };
 
 // LOB-specific field requirements
@@ -187,7 +209,7 @@ const requiredFields = computed(() => {
   if (isMotorLob.value && form.customer_type == 'Individual') {
     fields.policy_number = true;
     fields.policy_expiry = true;
-    
+
     // Sukoon insurance requires chassis number for motor
     if (isSukoonInsurance.value) {
       fields.chassis_number = true;
@@ -214,46 +236,56 @@ const availableInsurers = computed(() => {
 });
 
 // Watch for visibility changes
-watch(() => props.visible, (newValue) => {
-  showModal.value = newValue;
-  if (newValue) {
-    resetForm();
-    if (isEditMode.value) {
-      prefillFormFromBorLog();
-      loadEmbeddedDocuments();
+watch(
+  () => props.visible,
+  newValue => {
+    showModal.value = newValue;
+    if (newValue) {
+      resetForm();
+      if (isEditMode.value) {
+        prefillFormFromBorLog();
+        loadEmbeddedDocuments();
+      }
     }
-  }
-});
+  },
+);
 
 // Watch for customer type changes to reset relevant fields
-watch(() => form.customer_type, (newValue) => {
-  // Clear policy fields when switching to Entity (since they won't be visible)
-  if (newValue === 'Entity') {
-    form.policy_number = '';
-    form.policy_expiry = '';
-    form.chassis_number = '';
-  }
-  
-  // Set default customer type based on LOB
-  if (isBusinessLob.value && newValue === '') {
-    form.customer_type = 'Entity';
-    form.insurer_name = '';
-  } else if ((isMotorLob.value || isHealthLob.value) && newValue === '') {
-    form.customer_type = 'Entity';
-    form.company_name = '';
-  }
-});
+watch(
+  () => form.customer_type,
+  newValue => {
+    // Clear policy fields when switching to Entity (since they won't be visible)
+    if (newValue === 'Entity') {
+      form.policy_number = '';
+      form.policy_expiry = '';
+      form.chassis_number = '';
+    }
+
+    // Set default customer type based on LOB
+    if (isBusinessLob.value && newValue === '') {
+      form.customer_type = 'Entity';
+      form.insurer_name = '';
+    } else if ((isMotorLob.value || isHealthLob.value) && newValue === '') {
+      form.customer_type = 'Entity';
+      form.company_name = '';
+    }
+  },
+);
 
 // Watch for insurer selection changes
-watch(() => form.insurance_provider_id, async (newProviderId) => {
-  selectedInsurer.value = props.insuranceProviders.find(p => p.id == newProviderId) || null;
-  
-  // Reset insurance_contact_id when provider changes
-  form.insurance_contact_id = props.borLog?.insurance_contact_id ?? null;
-  
-  // Fetch representors for the new provider
-  await fetchProviderRepresentor(newProviderId);
-});
+watch(
+  () => form.insurance_provider_id,
+  async newProviderId => {
+    selectedInsurer.value =
+      props.insuranceProviders.find(p => p.id == newProviderId) || null;
+
+    // Reset insurance_contact_id when provider changes
+    form.insurance_contact_id = props.borLog?.insurance_contact_id ?? null;
+
+    // Fetch representors for the new provider
+    await fetchProviderRepresentor(newProviderId);
+  },
+);
 
 // Methods
 const resetForm = () => {
@@ -266,7 +298,7 @@ const resetForm = () => {
   uploadedDocuments.value = [];
   signedPdf.value = null;
   insuranceProviderRepresentor.value = [];
-  
+
   // Set default customer type based on LOB
   if (isBusinessLob.value) {
     form.customer_type = 'Entity';
@@ -278,9 +310,9 @@ const resetForm = () => {
 // Prefill form with BorLog data for edit mode
 const prefillFormFromBorLog = async () => {
   if (!props.borLog) return;
-  
+
   const borLog = props.borLog;
-  
+
   // Prefill all the main fields
   form.customer_type = borLog.customer_type || '';
   form.insurer_name = borLog.insurer_name || '';
@@ -292,10 +324,13 @@ const prefillFormFromBorLog = async () => {
   form.additional_notes = borLog.additional_notes || '';
   form.reason = borLog.reason || '';
   form.insurance_contact_id = borLog.insurance_contact_id || null;
-  
+
   // Set the selected insurer
   if (borLog.insurance_provider_id) {
-    selectedInsurer.value = props.insuranceProviders.find(p => p.id == borLog.insurance_provider_id) || null;
+    selectedInsurer.value =
+      props.insuranceProviders.find(
+        p => p.id == borLog.insurance_provider_id,
+      ) || null;
     // Fetch representors for the selected provider
     await fetchProviderRepresentor(borLog.insurance_provider_id);
   }
@@ -304,7 +339,7 @@ const prefillFormFromBorLog = async () => {
 // Load embedded document data from BOR log
 const loadEmbeddedDocuments = () => {
   if (!props.borLog?.id) return;
-  
+
   // Use embedded document data from the BOR log object
   uploadedDocuments.value = props.borLog.uploaded_documents || [];
   signedPdf.value = props.borLog.signed_pdf?.[0] || null;
@@ -321,7 +356,7 @@ const closeModal = () => {
 const validateForm = () => {
   // Fix: Clear previous errors before validation
   form.clearErrors();
-  
+
   const errors = {};
   let isValid = true;
 
@@ -344,15 +379,17 @@ const validateForm = () => {
 
   // LOB-specific validation
   if (requiredFields.value.policy_number && !form.policy_number) {
-    errors.policy_number = 'Policy number is required for ' + props.lob + ' insurance';
+    errors.policy_number =
+      'Policy number is required for ' + props.lob + ' insurance';
     isValid = false;
   }
-  
+
   if (requiredFields.value.policy_expiry && !form.policy_expiry) {
-    errors.policy_expiry = 'Policy expiry is required for ' + props.lob + ' insurance';
+    errors.policy_expiry =
+      'Policy expiry is required for ' + props.lob + ' insurance';
     isValid = false;
   }
-  
+
   if (requiredFields.value.chassis_number && !form.chassis_number) {
     errors.chassis_number = 'Chassis number is required for Sukoon insurance';
     isValid = false;
@@ -390,12 +427,14 @@ const submitForm = () => {
   };
 
   // Determine route and method based on mode
-  const routeName = isEditMode.value ? 'bor.requests.update' : 'bor.requests.store';
+  const routeName = isEditMode.value
+    ? 'bor.requests.update'
+    : 'bor.requests.store';
   const routeParams = isEditMode.value ? [props.borLog.id] : [];
 
   // Submit using Inertia with improved error handling
   const method = isEditMode.value ? 'put' : 'post';
-  
+
   form[method](route(routeName, ...routeParams), {
     preserveScroll: true,
     data: submitData,
@@ -403,9 +442,9 @@ const submitForm = () => {
       isSubmitting.value = true;
       form.clearErrors();
     },
-    onSuccess: (page) => {
+    onSuccess: page => {
       isSubmitting.value = false;
-      
+
       // Emit success with the updated/new BOR log data
       if (page.props.updatedBorLog || page.props.newBorLog) {
         emit('success', page.props.updatedBorLog || page.props.newBorLog);
@@ -417,12 +456,12 @@ const submitForm = () => {
           created_at: props.borLog?.created_at || new Date().toISOString(),
         });
       }
-      
+
       closeModal();
     },
-    onError: (errors) => {
+    onError: errors => {
       isSubmitting.value = false;
-      
+
       // Show validation errors
       const firstError = Object.values(errors)[0];
       if (firstError) {
@@ -454,7 +493,9 @@ const downloadFile = download => {
       window.location.protocol +
       '//' +
       window.location.host +
-      '/bor/logs/' + props.borLog.id + '/download?path=' +
+      '/bor/logs/' +
+      props.borLog.id +
+      '/download?path=' +
       download.doc_url;
     save.target = '_blank';
     save.download = download.doc_name;
@@ -464,7 +505,9 @@ const downloadFile = download => {
       window.location.protocol +
       '//' +
       window.location.host +
-      '/bor/logs/' + props.borLog.id + '/download?path=' +
+      '/bor/logs/' +
+      props.borLog.id +
+      '/download?path=' +
       download.doc_url; // so that it opens new tab for IE11
   }
 
@@ -478,10 +521,12 @@ const downloadFile = download => {
 const viewSignedPdf = async () => {
   try {
     downloadLoader.value = true;
-    
-    const response = await axios.get(route('bor.logs.view-signed-pdf', {
-      borLogId: props.borLog.id
-    }));
+
+    const response = await axios.get(
+      route('bor.logs.view-signed-pdf', {
+        borLogId: props.borLog.id,
+      }),
+    );
     if (response.data.success) {
       // Open PDF in new window for viewing only
       const newWindow = window.open();
@@ -518,7 +563,8 @@ const viewSignedPdf = async () => {
 // Initialize form on mount
 onMounted(() => {
   resetForm();
-  props.customerData.currentlyInsuredWith != null && fetchProviderRepresentor(props.customerData.currentlyInsuredWith);
+  props.customerData.currentlyInsuredWith != null &&
+    fetchProviderRepresentor(props.customerData.currentlyInsuredWith);
   if (isEditMode.value && props.visible) {
     prefillFormFromBorLog();
     loadEmbeddedDocuments();
@@ -527,17 +573,15 @@ onMounted(() => {
 </script>
 
 <template>
-  <x-modal
-    v-model="showModal"
-    :title="modalTitle"
-    size="xl"
-    backdrop
-  >
+  <x-modal v-model="showModal" :title="modalTitle" size="xl" backdrop>
     <template #default>
       <x-form :auto-focus="false">
         <div class="space-y-6">
           <!-- Status Display (Edit Mode Only) -->
-          <div v-if="isEditMode" class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+          <div
+            v-if="isEditMode"
+            class="bg-blue-50 border border-blue-200 p-4 rounded-lg"
+          >
             <div class="flex items-center justify-between">
               <div>
                 <h4 class="text-lg font-semibold text-blue-900 mb-2">
@@ -545,7 +589,7 @@ onMounted(() => {
                 </h4>
                 <div class="flex items-center space-x-3">
                   <span class="text-sm text-blue-700">Current Status:</span>
-                  <span 
+                  <span
                     :class="getStatusBadge(borLog.status).class"
                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                   >
@@ -563,27 +607,60 @@ onMounted(() => {
           </div>
 
           <!-- Uploaded Documents (Edit Mode Only) -->
-          <div v-if="isEditMode && ( hasSignedDocument || uploadedDocuments.length > 0 )" class="bg-gray-50 p-4 rounded-lg">
-            <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-              <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <div
+            v-if="
+              isEditMode && (hasSignedDocument || uploadedDocuments.length > 0)
+            "
+            class="bg-gray-50 p-4 rounded-lg"
+          >
+            <h4
+              class="text-lg font-semibold text-gray-900 mb-3 flex items-center"
+            >
+              <svg
+                class="w-5 h-5 mr-2 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
               Documents
             </h4>
             <div class="space-y-2">
-              <div 
-                v-for="document in uploadedDocuments" 
+              <div
+                v-for="document in uploadedDocuments"
                 :key="document.id"
                 class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md"
               >
                 <div class="flex items-center space-x-3">
-                  <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <svg
+                    class="w-8 h-8 text-blue-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
                   </svg>
                   <div>
-                    <p class="text-sm font-medium text-gray-900">{{ document.doc_name }}</p>
-                    <p class="text-xs text-gray-500">{{ document.doc_mime_type }}</p>
-                    <p class="text-xs text-gray-400">Uploaded: {{ formatDate(document.updated_at) }}</p>
+                    <p class="text-sm font-medium text-gray-900">
+                      {{ document.doc_name }}
+                    </p>
+                    <p class="text-xs text-gray-500">
+                      {{ document.doc_mime_type }}
+                    </p>
+                    <p class="text-xs text-gray-400">
+                      Uploaded: {{ formatDate(document.updated_at) }}
+                    </p>
                   </div>
                 </div>
                 <x-button
@@ -597,33 +674,73 @@ onMounted(() => {
               </div>
               <!-- Signed PDF Documents -->
               <div v-if="hasSignedDocument" class="bg-gray-50 p-4 rounded-lg">
-                <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                  <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <h4
+                  class="text-lg font-semibold text-gray-900 mb-3 flex items-center"
+                >
+                  <svg
+                    class="w-5 h-5 mr-2 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                   Signed BOR Documents
-                  <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  <span
+                    class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                  >
+                    <svg
+                      class="w-3 h-3 mr-1"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clip-rule="evenodd"
+                      />
                     </svg>
                     Signed
                   </span>
                 </h4>
                 <div class="space-y-2">
-                  <div 
-                    v-for="document in signedDocuments" 
+                  <div
+                    v-for="document in signedDocuments"
                     :key="document.id"
                     class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md"
                   >
                     <div class="flex items-center space-x-3">
-                      <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      <svg
+                        class="w-8 h-8 text-red-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                        />
                       </svg>
                       <div>
-                        <p class="text-sm font-medium text-gray-900">{{ document.doc_name }}</p>
-                        <p class="text-xs text-gray-500">{{ document.doc_mime_type }}</p>
-                        <p class="text-xs text-gray-400">Uploaded: {{ formatDate(document.updated_at) }}</p>
-                        <p class="text-xs text-gray-400">Type: {{ document.document_type_text }}</p>
+                        <p class="text-sm font-medium text-gray-900">
+                          {{ document.doc_name }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                          {{ document.doc_mime_type }}
+                        </p>
+                        <p class="text-xs text-gray-400">
+                          Uploaded: {{ formatDate(document.updated_at) }}
+                        </p>
+                        <p class="text-xs text-gray-400">
+                          Type: {{ document.document_type_text }}
+                        </p>
                       </div>
                     </div>
                     <x-button
@@ -642,9 +759,21 @@ onMounted(() => {
 
           <!-- BOR Request Information -->
           <div class="bg-gray-50 p-6 rounded-lg">
-            <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <h4
+              class="text-lg font-semibold text-gray-900 mb-4 flex items-center"
+            >
+              <svg
+                class="w-5 h-5 mr-2 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
               BOR Request Information
             </h4>
@@ -695,10 +824,13 @@ onMounted(() => {
               />
 
               <x-select
-                v-if="form.insurance_provider_id != null && insuranceProviderRepresentor.length > 1"
+                v-if="
+                  form.insurance_provider_id != null &&
+                  insuranceProviderRepresentor.length > 1
+                "
                 label="DEPARTMENT"
                 v-model="form.insurance_contact_id"
-                :options="insuranceProviderRepresentor" 
+                :options="insuranceProviderRepresentor"
                 placeholder="Select department"
                 :error="form.errors.insurance_contact_id"
                 :disabled="isSubmitting"
@@ -743,54 +875,99 @@ onMounted(() => {
           </div>
 
           <!-- LOB-specific Information -->
-          <div v-if="isMotorLob" class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+          <div
+            v-if="isMotorLob"
+            class="bg-blue-50 border border-blue-200 p-4 rounded-lg"
+          >
             <div class="flex items-start">
-              <svg class="w-5 h-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              <svg
+                class="w-5 h-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clip-rule="evenodd"
+                />
               </svg>
               <div>
                 <h5 class="text-sm font-medium text-blue-900 mb-1">
-                  {{ lob.charAt(0).toUpperCase() + lob.slice(1) }} Insurance BOR Requirements
+                  {{ lob.charAt(0).toUpperCase() + lob.slice(1) }} Insurance BOR
+                  Requirements
                 </h5>
                 <p class="text-sm text-blue-700 mb-2">
-                  For Individual customers with motor insurance, policy number and expiry date are mandatory fields. Entity customers don't require policy details.
+                  For Individual customers with motor insurance, policy number
+                  and expiry date are mandatory fields. Entity customers don't
+                  require policy details.
                 </p>
-                <div v-if="isSukoonInsurance" class="bg-yellow-50 border border-yellow-200 p-3 rounded mt-2">
+                <div
+                  v-if="isSukoonInsurance"
+                  class="bg-yellow-50 border border-yellow-200 p-3 rounded mt-2"
+                >
                   <p class="text-sm text-yellow-800">
-                    <strong>Sukoon Insurance:</strong> Chassis number is additionally required for Individual customers with motor insurance policies.
+                    <strong>Sukoon Insurance:</strong> Chassis number is
+                    additionally required for Individual customers with motor
+                    insurance policies.
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div v-else-if="isHealthLob" class="bg-green-50 border border-green-200 p-4 rounded-lg">
+          <div
+            v-else-if="isHealthLob"
+            class="bg-green-50 border border-green-200 p-4 rounded-lg"
+          >
             <div class="flex items-start">
-              <svg class="w-5 h-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              <svg
+                class="w-5 h-5 text-green-500 mt-0.5 mr-3 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clip-rule="evenodd"
+                />
               </svg>
               <div>
                 <h5 class="text-sm font-medium text-green-900 mb-1">
                   Health Insurance BOR Process
                 </h5>
                 <p class="text-sm text-green-700">
-                  For Individual customers, health insurance BOR requests typically require policy number for verification. Entity customers don't require policy details.
+                  For Individual customers, health insurance BOR requests
+                  typically require policy number for verification. Entity
+                  customers don't require policy details.
                 </p>
               </div>
             </div>
           </div>
 
-          <div v-else class="bg-green-50 border border-green-200 p-4 rounded-lg">
+          <div
+            v-else
+            class="bg-green-50 border border-green-200 p-4 rounded-lg"
+          >
             <div class="flex items-start">
-              <svg class="w-5 h-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              <svg
+                class="w-5 h-5 text-green-500 mt-0.5 mr-3 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clip-rule="evenodd"
+                />
               </svg>
               <div>
                 <h5 class="text-sm font-medium text-green-900 mb-1">
-                  {{ lob.charAt(0).toUpperCase() + lob.slice(1) }} Insurance BOR Process
+                  {{ lob.charAt(0).toUpperCase() + lob.slice(1) }} Insurance BOR
+                  Process
                 </h5>
                 <p class="text-sm text-green-700">
-                  The BOR request will be processed and the customer will be notified via email with the digital signature link.
+                  The BOR request will be processed and the customer will be
+                  notified via email with the digital signature link.
                 </p>
               </div>
             </div>
@@ -809,7 +986,7 @@ onMounted(() => {
         >
           Cancel
         </x-button>
-        
+
         <x-button
           @click="submitForm"
           :loading="isSubmitting"
@@ -817,7 +994,15 @@ onMounted(() => {
           color="orange"
           type="submit"
         >
-          {{ isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update' : 'Save and Send') }}
+          {{
+            isSubmitting
+              ? isEditMode
+                ? 'Updating...'
+                : 'Creating...'
+              : isEditMode
+                ? 'Update'
+                : 'Save and Send'
+          }}
         </x-button>
       </div>
     </template>
@@ -845,4 +1030,4 @@ onMounted(() => {
 .border-orange-200 {
   border-color: #fed7aa;
 }
-</style> 
+</style>
