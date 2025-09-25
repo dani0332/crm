@@ -2,6 +2,7 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
 use App\Http\Controllers\AccuracyMatrixController;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
@@ -570,16 +571,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         // System Health Dashboard - Engineering role only
         Route::get('/system-health', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'index'])
-            ->middleware('role:ENGINEERING')
+            ->middleware(RolesEnum::Engineering)
             ->name('admin.system-health.index');
         Route::get('/system-health/databases', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'databases'])
-            ->middleware('role:ENGINEERING')
+            ->middleware(RolesEnum::Engineering)
             ->name('admin.system-health.databases');
         Route::get('/system-health/redis', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'redis'])
-            ->middleware('role:ENGINEERING')
+            ->middleware(RolesEnum::Engineering)
             ->name('admin.system-health.redis');
         Route::get('/system-health/queues', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'queues'])
-            ->middleware('role:ENGINEERING')
+            ->middleware(RolesEnum::Engineering)
             ->name('admin.system-health.queues');
             
     });
