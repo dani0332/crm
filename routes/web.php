@@ -582,7 +582,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/system-health/queues', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'queues'])
             ->middleware(RolesEnum::Engineering)
             ->name('admin.system-health.queues');
-            
+
     });
 
     Route::prefix('buy-leads')->group(function () {
