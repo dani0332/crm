@@ -98,7 +98,7 @@ class BranchAssignmentController extends Controller
         }
 
         $userBranch = $this->branchAssignmentService->disableAssignment($user->id, $branchId);
-        if (!$userBranch) {
+        if (! $userBranch) {
             return redirect()->route('branch-assignments.show', $user->id)->with('error', 'Invalid Branch assignment.');
         }
 
