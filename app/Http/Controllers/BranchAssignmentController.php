@@ -7,6 +7,7 @@ use App\Services\BranchAssignmentService;
 use App\Services\BranchService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
+use App\Models\User;
 
 class BranchAssignmentController extends Controller
 {
@@ -30,12 +31,16 @@ class BranchAssignmentController extends Controller
         return inertia('Admin/BranchAssignment/Index', compact(['branchAssignments', 'branches', 'advisorList']));
     }
 
-    public function create($userId)
+    public function create(User $user)
     {
         $branches = $this->branchService->getBranches();
-        $activeBranchCount = $this->branchAssignmentService->hasBranches($userId);
+        $activeBranchCount = $user->userBranches->where('status', 1)->count();
 
-        return inertia('Admin/BranchAssignment/Form', compact(['branches', 'userId', 'activeBranchCount']));
+        return inertia('Admin/BranchAssignment/Form', [
+            'userId' => $user->id,
+            'branches' => $branches,
+            'activeBranchCount' => $activeBranchCount,
+        ]);
     }
 
     public function store(Request $request, $userId)
@@ -73,15 +78,10 @@ class BranchAssignmentController extends Controller
         return redirect()->route('branch-assignments.show', $userId)->with('success', 'Branch added successfully');
     }
 
-    public function show($id)
+    public function show(User $user)
     {
-        $dataset = $this->branchAssignmentService->getDetails($id);
-
-        return inertia('Admin/BranchAssignment/Show', [
-            'user' => $dataset['user'],
-            'activeUserBranches' => $dataset['activeUserBranches'],
-            'historicalUserBranches' => $dataset['historicalUserBranches'],
-        ]);
+        $user->load('userBranches', 'userBranches.branch');
+        return inertia('Admin/BranchAssignment/Show', compact('user'));
     }
 
     public function disableAssignment($userId, $branchId)

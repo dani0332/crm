@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Branch;
 use App\Models\User;
 use App\Models\UserBranch;
 use App\Services\Logger\LoggerService;
@@ -48,21 +47,6 @@ class BranchAssignmentService extends BaseService
         return $dataset;
     }
 
-    public function getDetails($id)
-    {
-        $dataset = User::select('id', 'name')
-            ->with('userBranches', 'userBranches.branch')
-            ->where('id', $id)
-            ->first();
-        abort_if(!$dataset, 404);
-
-        return [
-            'user' => $dataset,
-            'activeUserBranches' => $dataset->userBranches->where('status', 1)->values(),
-            'historicalUserBranches' => $dataset->userBranches->where('status', 0)->values(),
-        ];
-    }
-
     public function saveUserBranch($data, $userId)
     {
         return UserBranch::create([
@@ -74,11 +58,6 @@ class BranchAssignmentService extends BaseService
     public function getUserBranches($userId)
     {
         return UserBranch::where('user_id', $userId)->where('status', 1)->get();
-    }
-
-    public function hasBranches($userId)
-    {
-        return UserBranch::where('user_id', $userId)->where('status', 1)->count();
     }
 
     public function disableAssignment($userId, $branchId)

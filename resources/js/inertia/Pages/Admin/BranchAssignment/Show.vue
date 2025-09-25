@@ -3,8 +3,6 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 
 const props = defineProps({
   user: Object,
-  activeUserBranches: Array,
-  historicalUserBranches: Array,
 });
 
 const activeTableHeader = ref([
@@ -24,6 +22,19 @@ const historicalTableHeader = ref([
   { text: 'Effective To', value: 'effective_to' },
   { text: 'Status', value: 'status' },
 ]);
+
+const activeUserBranches = computed(() => {
+  return props.user.user_branches
+    ? props.user.user_branches.filter(branch => branch.status === 1)
+    : [];
+});
+
+const historicalUserBranches = computed(() => {
+  return props.user.user_branches
+    ? props.user.user_branches.filter(branch => branch.status === 0)
+    : [];
+});
+
 </script>
 <template>
   <Head title="Advisor Branch Assignment Detail" />
