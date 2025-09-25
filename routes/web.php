@@ -68,6 +68,7 @@ use App\Http\Controllers\V2\AlfredChatController;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\BorController;
 use App\Http\Controllers\V2\BuyLeadConfigController;
 use App\Http\Controllers\V2\BuyLeadController;
 use App\Http\Controllers\V2\CarQuoteController;
@@ -93,7 +94,9 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Models\BorLog;
 use App\Services\AddBatchForNonMotors;
+use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -908,5 +911,34 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             'message' => "Handbook documents check for {$quoteType} has been queued for background processing",
             'status' => 'dispatched',
         ]);
+    });
+
+    // BOR (Broker on Record) Routes
+    Route::group(['prefix' => 'bor'], function () {
+        // BOR Request Management
+        Route::get('requests/{id}/generate-link', [BorController::class, 'generateLink'])->name('bor.requests.generate-link');
+        Route::resource('requests', BorController::class)->names('bor.requests')->only(['index', 'store', 'update']);
+        Route::get('/get-representor', [BorController::class, 'getRepresentor'])->name('bor.get-representor');
+
+        // BOR Status and Action Management (CRM Interface)
+        Route::post('logs/{id}/cancel', [BorController::class, 'cancelBor'])->name('bor.logs.cancel');
+        Route::post('logs/{id}/done', [BorController::class, 'markDone'])->name('bor.logs.mark-done');
+        Route::get('logs/{id}/download', [BorController::class, 'downloadDocument'])->name('bor.logs.download-document');
+        Route::get('logs/{borLogId}/signed-pdf', [BorController::class, 'viewSignedPdf'])->name('bor.logs.view-signed-pdf');
+
+        // Document Management
+        Route::post('logs/{id}/documents', [BorController::class, 'uploadDocument'])->name('bor.documents.upload');
+    });
+
+    // This route is only for testing purposes to preview the BOR PDF
+    Route::get('bor-pdf-preview', function () {
+        // entity bor log
+        // $borLog = BorLog::where('bor_reference', 'IM-BOR-200825175545-4')->first();
+
+        $borLog = BorLog::where('bor_reference', 'IM-BOR-210825153043-1')->first();
+        $borPdfService = new BorPdfService;
+        $pdfData = $borPdfService->preparePdfData($borLog, $borLog->personalQuote, true);
+
+        return view('pdf.bor-document', $pdfData);
     });
 });
