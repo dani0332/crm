@@ -114,7 +114,6 @@ class CustomerVerificationService
     private function determineVerificationStatus($record, array $customerVerifiedData, array $webFormData): ?CustomerVerificationStatus
     {
         $hasCustomerData = ! empty(array_filter($customerVerifiedData));
-
         if (! $hasCustomerData) {
             return null;
         }
@@ -220,20 +219,21 @@ class CustomerVerificationService
                 ->latest()
                 ->first();
 
-            if (! $verificationRecord) {
+            if (! $verificationRecord || ! $verificationRecord->customer_verified_data) {
                 LoggerService::info('No customer verification record found');
 
                 return $this->getEmptyVerificationData($quoteType);
             }
 
+            $customerVerifiedData = json_decode($verificationRecord->customer_verified_data, true);
+
             return [
-                'nationality' => $verificationRecord->nationality?->text ?? '',
-                'carMakeAndModel' => trim(($verificationRecord->carMake?->text ?? '').' '.($verificationRecord->carModel?->text ?? '')),
-                'carModelYear' => $verificationRecord->year_of_manufacture ?? '',
-                'dob' => $this->formatDateToDisplay($verificationRecord->date_of_birth),
-                'emirateOfRegistration' => $verificationRecord->emirate?->text ?? '',
-                'uaeLicenseHeldFor' => $verificationRecord->uaeLicenseHeldFor?->text ?? '',
+                'nationality' => $this->getNationalityId($verificationRecord['nationality_id'] ?? ''),
+                'carMakeAndModel' => trim($verificationRecord['carMakeAndModel'] ?? ''),
+                'carModelYear' => $verificationRecord['carModelYear'],
+                'dob' => $customerVerifiedData['date_of_birth'] ? $this->formatDateToDisplay($customerVerifiedData['date_of_birth']) : '',
             ];
+
         } catch (Exception $e) {
             LoggerService::warning('Error fetching customer verification details', extra: [
                 'error' => $e->getMessage(),
@@ -353,10 +353,10 @@ class CustomerVerificationService
 
         LoggerService::info('Capi service request data', extra: $requestData);
 
-        $response = $this->capiService->request('/api/customer/validate-data', 'PUT', $requestData);
+        $response = $this->capiService->request('/api/customer/documents-verify', 'PUT', $requestData);
 
         LoggerService::info('Capi service response', extra: [
-            'response' => $response->json(),
+            'response' => $response,
         ]);
     }
 
