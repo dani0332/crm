@@ -10,6 +10,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 
 defineProps({
   quote: Object,
@@ -104,6 +105,9 @@ defineProps({
   isFuncsEnabled: Array,
   insurerAMLStatus: String,
   businessActivities: Object,
+  borLogs: Array,
+  apiIssuanceStatus: String,
+  insurerApiStatus: String,
 });
 
 const page = usePage();
@@ -483,6 +487,20 @@ const paymentItems = computed(() => {
 
 const isRenewalUpload = computed(() => {
   return page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD;
+});
+
+const isGIG = computed(() => {
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.AXA
+  );
+});
+
+const isLIVA = computed(() => {
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.RSA
+  );
 });
 
 const leadStatusOptions = computed(() => {
@@ -1876,6 +1894,18 @@ function handleOcrNotification(event) {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT REFERENCE</dt>
                 <dd>{{ record.payment_reference ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ insurerApiStatus ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ apiIssuanceStatus ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">RTA UPLOAD STATUS</dt>
+                <dd>{{ record.rta_upload_status ? 'Done' : 'Pending' }}</dd>
               </div>
             </dl>
             <div class="grid sm:grid-cols-1 mt-3">
@@ -3952,6 +3982,23 @@ function handleOcrNotification(event) {
       :bookPolicyDetails="bookPolicyDetails"
     />
 
+    <BorLogsSection
+      :leadId="record.id"
+      :lob="quoteType"
+      :isCompanyCar="isCompanyCar"
+      :customerData="{
+        customerType: enabledCustomerType,
+        firstName: record.first_name,
+        lastName: record.last_name,
+        companyName: record.company_name,
+        currentlyInsuredWith: record.insurance_provider_id,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
+    />
+
     <BookPolicy
       v-if="
         canAny([
@@ -4362,6 +4409,14 @@ function handleOcrNotification(event) {
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="modelClass"
+    :id="$page.props.record.id"
+    :expanded="sectionExpanded"
+  />
+
+  <PolicyIssuanceApiLogs
+    v-if="isGIG || isLIVA"
+    :type="modelClass"
+    :quoteTypeId="$page.props.quoteTypeId"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
   />

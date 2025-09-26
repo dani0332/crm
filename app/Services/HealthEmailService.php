@@ -230,8 +230,8 @@ class HealthEmailService extends BaseService
 
     public function initiateApplyNowEmail(HealthQuote $lead)
     {
-        if ($lead->isAUHLead()) {
-            LoggerService::info(self::class." - Skipping Apply Now Email because lead is from AUH for uuid: {$lead->uuid}");
+        if ($lead->isAUHLead() || ($lead->isAUHLead(false) && $lead->isLeadSourceRevivalOrInsuranceWallet())) {
+            LoggerService::info(self::class." - Skipping Apply Now Email because lead is from AUH or AUH and Revival/Insurance Wallet for uuid: {$lead->uuid}");
 
             return;
         }
@@ -270,8 +270,8 @@ class HealthEmailService extends BaseService
 
     public function sendOCAHealthWorkFlow($lead)
     {
-        if ($lead->isAUHLead()) {
-            LoggerService::info(self::class." - Skipping OCA Health Workflow because lead is from AUH for uuid: {$lead->uuid}");
+        if ($lead->isAUHLead() || ($lead->isAUHLead(false) && $lead->isLeadSourceRevivalOrInsuranceWallet())) {
+            LoggerService::info(self::class." - Skipping OCA Health Workflow because lead is from AUH or AUH and Revival/Insurance Wallet for uuid: {$lead->uuid}");
 
             return;
         }

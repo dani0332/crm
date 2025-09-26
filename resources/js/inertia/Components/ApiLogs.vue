@@ -64,7 +64,7 @@ const filteredLogs = computed(() => {
   else return apiLogs.data;
 });
 
-const onLoadAuditLogData = async () => {
+const loadApiLogs = async () => {
   apiLogs.loading = true;
 
   let url = '/insurer-logs';
@@ -99,6 +99,10 @@ const onLoadAuditLogData = async () => {
     .finally(() => {
       apiLogs.loading = false;
     });
+};
+
+const onLoadAuditLogData = async () => {
+  await loadApiLogs();
 };
 </script>
 
@@ -140,6 +144,17 @@ const onLoadAuditLogData = async () => {
             >
               Reset
             </x-button>
+            <x-button
+              size="sm"
+              color="primary"
+              outlined
+              :loading="apiLogs.loading"
+              class="h-10"
+              title="Refresh"
+              @click.prevent="loadApiLogs"
+            >
+              <x-icon icon="refresh" class="mr-1" size="sm" />
+            </x-button>
           </div>
           <DataTable
             table-class-name="compact tablefixed"
@@ -149,6 +164,7 @@ const onLoadAuditLogData = async () => {
             hide-rows-per-page
             :rows-per-page="15"
             :hide-footer="apiLogs.data?.length < 15"
+            :loading="apiLogs.loading"
           >
             <template #item-status="{ status }">
               <x-tag

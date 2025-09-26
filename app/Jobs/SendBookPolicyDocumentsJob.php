@@ -181,7 +181,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->isHealthAUH = $isAUHHealthLead;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
-            info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));
+            LoggerService::info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid, extra: [
+                'response' => $response,
+            ]);
         }
 
         if ($this->forceEmailSend == false) {

@@ -83,6 +83,7 @@ const tableHeader = [
   { text: 'ECOMMERCE', value: 'is_ecommerce' },
   { text: 'TIER NAME', value: 'tier.name' },
   { text: 'VISIT COUNT', value: 'quote_view_count.visit_count' },
+  { text: 'INSURER', value: 'insurance_provider.text' },
   {
     text: 'FOLLOW UP DATE',
     value: 'car_quote_request_detail.next_followup_date_formatted',
@@ -332,7 +333,8 @@ watch(
     if (
       (filters.created_at_start && filters.created_at_end) ||
       filters.payment_due_date ||
-      filters.booking_date
+      filters.booking_date ||
+      filters.renewal_batch
     ) {
       canExport.value = true;
       // Export buttons will be visible when date filters are set
@@ -1286,8 +1288,8 @@ const onConfirmPUAExport = () => {
             >
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required
-                to export data.
+                Created dates, payment due date, booking date, or renewal batch
+                are required to export data.
               </span>
             </template>
           </x-tooltip>
@@ -1531,7 +1533,7 @@ const onConfirmPUAExport = () => {
           v-model="puaExportModal.payment_date"
           label="Payment Date"
           class="w-full"
-          :max-date="yesterday"
+          :max-date="new Date()"
         />
       </div>
 

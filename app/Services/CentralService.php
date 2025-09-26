@@ -13,6 +13,7 @@ use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentCaptureValidationEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -26,9 +27,12 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Facades\Marshall;
+use App\Http\Requests\SplitPaymentApproveRequest;
+use App\Jobs\AutomationFailedJob;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
@@ -40,6 +44,7 @@ use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
+use App\Models\InsurerRequestResponse;
 use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -49,13 +54,16 @@ use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteExportLog;
+use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
+use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
+use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
@@ -1468,6 +1476,65 @@ class CentralService extends BaseService
         return ['status' => true, 'message' => 'Void payment processed'];
     }
 
+    /**
+     * Send automation email to Bird
+     *
+     * @param  $emailData  | should be object
+     * @return int|null
+     */
+    public function sendAutomationEmail($lead, $emailData, $quoteTypeId, $emailType)
+    {
+        LoggerService::startQuoteLogging($lead);
+        $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
+
+        try {
+            LoggerService::info("Sending {$quoteType} followups email for {$emailType} uuid: ".$lead->uuid.' | Time: '.now());
+            $birdUrlKey = ApplicationStorageEnums::BIRD_AUTOMATION_WORKFLOW_URL;
+
+            $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
+            if ($birdUrl) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdUrl?->value, $emailData);
+                LoggerService::info("{$quoteType} response: ".json_encode($response)." | {$emailType} uuid: {$lead->uuid} |Time: ".now());
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, strtoupper($emailData->workflowType));
+                }
+            } else {
+                LoggerService::info("{$birdUrlKey} key not found for {$emailType} uuid: {$lead->uuid} |Time: ".now());
+            }
+
+            return $response?->status_code ?? null;
+        } catch (\Exception $ex) {
+            $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for {$emailType}: uuid: {$lead->uuid} | Time: ".now();
+            LoggerService::info($errorMessage);
+            LoggerService::info("{$birdUrlKey}-Error: {$ex->getMessage()} | uuid: {$lead->uuid} | Time: ".now());
+        }
+    }
+
+    public function createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, $workflowType)
+    {
+        try {
+            $flowType = constant("App\Enums\QuoteFlowType::{$workflowType}");
+
+            $runId = collect($response->headers['Run-Id'])->first();
+            if (! empty($runId)) {
+                QuoteFlowDetails::create([
+                    'quote_uuid' => $lead->uuid,
+                    'quote_type_id' => $quoteTypeId,
+                    'flow_type' => $flowType,
+                    'flow_id' => $runId,
+                ]);
+                LoggerService::info("{$emailType} run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            } else {
+                LoggerService::info("{$emailType} run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            }
+        } catch (\Exception $ex) {
+            $errorMessage = "{$emailType}-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            LoggerService::info($errorMessage);
+            LoggerService::info("{$emailType}-Error: {$ex->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+        }
+    }
+
     public function removeInsurerPaymentLink($request)
     {
         $quote = $this->getQuoteObject($request->quoteType, $request->quoteId);
@@ -1639,6 +1706,167 @@ class CentralService extends BaseService
         return $paymentGatewayIds;
     }
 
+    public function updateBookingDetails($validatedData, $bookPolicyRequest)
+    {
+        $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
+        $paymentInformation = [
+            'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
+            'transaction_payment_status' => $validatedData['transaction_payment_status'],
+            'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
+            'broker_invoice_number' => $validatedData['broker_invoice_number'],
+            'insurer_invoice_date' => $validatedData['invoice_date'],
+            'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
+            'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
+            'commmission_percentage' => $validatedData['commission_percentage'],
+            'commission_vat' => $validatedData['vat_on_commission'],
+            'commission' => $validatedData['total_commission'],
+            'invoice_description' => $validatedData['invoice_description'],
+
+            // for life only
+            'commission_based_on_currency' => $bookPolicyRequest?->commission_based_on_currency ?? null,
+            'exchange_rate' => $bookPolicyRequest?->exchange_rate ?? null,
+            'currency' => $bookPolicyRequest?->currency ?? null,
+        ];
+
+        $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->first();
+
+        if ($isDuplicateOrCIRLead && empty($payment)) {
+            $payment = Payment::where([
+                'paymentable_id' => $quote->id,
+                'paymentable_type' => $quote->getMorphClass(),
+            ])->mainLeadPayment()->first();
+        }
+
+        $payment->update($paymentInformation);
+        LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
+
+        $response = (new SplitPaymentService)->updateCommissionSchedule($payment);
+
+        if (! $response['status']) {
+            return ['status' => false, 'message' => $response['message']];
+        }
+
+        LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
+
+        return ['status' => true, 'message' => 'Book policy details update successfully'];
+    }
+
+    public function autoCapturePaymentProcess($quoteTypeId, $quote, $premiumCheckEnabled = true)
+    {
+        $quoteType = QuoteType::where('id', $quoteTypeId)->first();
+        $payment = $quote->payments()->mainLeadPayment()->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
+
+        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+
+        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
+            LoggerService::info('fn:autoCaptureAMLValidationCheck failed - Going to dispatch AutomationFailedJob', extra: [
+                'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                'statusAPIFailed' => 'Quote Referred To Insurer UW',
+                'processInvolved' => 'Payment Capture',
+            ]);
+            AutomationFailedJob::dispatch(
+                $quote,
+                QuoteTypeId::Car,
+                'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                'Quote Referred To Insurer UW',
+                'Payment Capture',
+                WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+            )->onQueue('policy-issuance-automation');
+
+            return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
+        }
+
+        if ($premiumCheckEnabled) {
+            $captureAmount = $payment->total_amount;
+            if ($quoteType->code == QuoteTypes::CAR->value && $insuranceProvider?->code == InsuranceProviderEnum::AXA->value && $payment->total_amount != $payment->premium_authorized) {
+                $captureAmount = $payment->premium_authorized;
+            }
+
+            $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $captureAmount, $quote->code);
+            $responsePremiumAmount = isset($capturePaymentResponse['premiumAmount']) ? $capturePaymentResponse['premiumAmount'] : null;
+
+            $logExtra = [
+                'paymentCode' => $payment->code,
+                'quoteTypeId' => $quoteType->id,
+                'responseStatus' => isset($capturePaymentResponse['status']) ? $capturePaymentResponse['status'] : null,
+                'responseMessage' => isset($capturePaymentResponse['message']) ? $capturePaymentResponse['message'] : null,
+                'responsePremiumAmount' => $responsePremiumAmount,
+            ];
+
+            if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
+                LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
+
+                if ($responsePremiumAmount > $captureAmount) {
+                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
+                        'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                        'statusAPIFailed' => 'Premium Not Matched With Insurer',
+                        'processInvolved' => 'Payment Capture',
+                    ]);
+                    AutomationFailedJob::dispatch(
+                        $quote,
+                        QuoteTypeId::Car,
+                        'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                        'Premium Not Matched With Insurer',
+                        'Payment Capture',
+                        WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+                    )->onQueue('policy-issuance-automation');
+                } elseif ($responsePremiumAmount != $captureAmount) {
+                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
+                        'actionRequired' => 'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
+                        'statusAPIFailed' => 'Quote Referred To Insurer UW',
+                        'processInvolved' => 'Payment Capture',
+                    ]);
+                    AutomationFailedJob::dispatch(
+                        $quote,
+                        QuoteTypeId::Car,
+                        'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
+                        'Quote Referred To Insurer UW',
+                        'Payment Capture',
+                        WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+                    )->onQueue('policy-issuance-automation');
+                }
+
+                $message = $capturePaymentResponse['message'] ?? 'Premium mismatch on Insurer portal';
+
+                return ['status' => false, 'message' => $message, 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to '.$message];
+            }
+
+            LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' success', extra: $logExtra);
+        }
+
+        $paymentSplits = $payment->paymentSplits;
+        $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
+
+        $splitPaymentApprovalRequest = new SplitPaymentApproveRequest([
+            'modelType' => $quoteType->code,
+            'quote_id' => $quote->id,
+            'plan_id' => $payment->plan_id,
+            'payment_code' => $payment->code,
+            'customer_id' => $quote->customer_id,
+            'collection_amount' => $collectionAmount,
+            'is_declined' => 0,
+            'is_capture' => 1,
+            'is_approved' => 0,
+            'declined_reason' => $payment->declined_reason,
+            'send_update_id' => null,
+            'collection_type' => $payment->collection_type,
+        ]);
+
+        $response = app(PaymentRepository::class)->handlePaymentApprove($splitPaymentApprovalRequest);
+        LoggerService::info(__FUNCTION__.' - Split payment approval process completed', extra: ['paymentCode' => $payment->code]);
+
+        if (is_string($response)) {
+            return ['message' => $response, 'autoCaptureStatus' => GenericRequestEnum::SUCCESS, 'autoCaptureMessage' => 'Auto capture payment process started'];
+        }
+
+        $response['autoCaptureStatus'] = GenericRequestEnum::SUCCESS;
+        $response['autoCaptureMessage'] = 'Auto capture payment process started';
+
+        return $response;
+    }
+
     public function checkInsurerReceiptNumber($quoteType, $receiptNumber)
     {
         $count = PaymentSplits::where('insurer_receipt_number', $receiptNumber)->count();
@@ -1651,5 +1879,62 @@ class CentralService extends BaseService
         LoggerService::info('fn:checkInsurerReceiptNumber - Receipt number does not exist: '.$receiptNumber);
 
         return ['status' => true, 'message' => 'Receipt number does not exist'];
+    }
+
+    public function syncLatestCarQuoteInfoToQuote($quote): array
+    {
+        $return = ['status' => true, 'message' => 'Latest Car Quote Info API response synced to the quote.'];
+
+        LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Sync latest Car Quote Info to Quote started');
+        $latestCarQuoteInfo = InsurerRequestResponse::where([
+            'quote_uuid' => $quote->uuid,
+            'call_type' => GenericRequestEnum::CALL_TYPE_QUOTE_INFO,
+            'status' => GenericRequestEnum::PASSED,
+        ])->latest()->first();
+
+        if (! $latestCarQuoteInfo) {
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Latest Car Quote Info API response not found');
+            $return = [
+                'status' => false,
+                'message' => 'Latest Car Quote Info API response not found for the given quote.',
+            ];
+        }
+
+        $responseData = json_decode($latestCarQuoteInfo->response, true);
+        $payment = $quote->payments()->mainLeadPayment()->first();
+
+        DB::beginTransaction();
+
+        try {
+            $payment->update([
+                'policy_expiry_date' => $responseData['policySchedule']['expirationDate'],
+                'commission_vat_applicable' => $responseData['selectedPlan']['premium']['commission']['amount'],
+            ]);
+
+            $quote->update([
+                'policy_issuance_date' => $responseData['policySchedule']['creationDate'],
+                'policy_start_date' => $responseData['policySchedule']['effectiveDate'],
+                'policy_expiry_date' => $responseData['policySchedule']['expirationDate'],
+                'price_vat_applicable' => $responseData['selectedPlan']['premium']['premium']['amount'],
+                'vat' => $responseData['selectedPlan']['premium']['vatOnPremium']['amount'],
+                'price_with_vat' => $responseData['selectedPlan']['premium']['grossPremium']['amount'],
+            ]);
+
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Sync latest Car Quote Info to Quote completed');
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Transaction failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            $return = [
+                'status' => false,
+                'message' => 'Latest Car Quote Info API response synced to the quote failed',
+            ];
+        }
+
+        return $return;
     }
 }
