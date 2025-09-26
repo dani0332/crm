@@ -8,6 +8,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerVerificationStatus;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
+use App\Events\CustomerVerificationUpdated;
 use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
 use App\Services\CapiService;
@@ -332,6 +333,20 @@ class CustomerVerificationService
         LoggerService::info('Capi service response', extra: [
             'response' => $response,
         ]);
+
+        if ($response && $response->successful()) {
+            LoggerService::info('Customer verification status updated successfully, broadcasting event', extra: [
+                'quote_uuid' => $quote->uuid,
+                'quote_type' => QuoteTypes::CAR->value,
+            ]);
+
+            event(new CustomerVerificationUpdated($quote->uuid, QuoteTypes::CAR->value));
+        } else {
+            LoggerService::warning('Customer verification status update failed, event not broadcasted', extra: [
+                'quote_uuid' => $quote->uuid,
+                'response_status' => $response ? $response->status() : 'no_response',
+            ]);
+        }
     }
 
     private function handleUnsupportedVerification(QuoteTypes $quoteType, string $documentType, string $documentTypeText): void
