@@ -74,6 +74,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'company_name as car_company_name',
             'lead_assignment_trigger',
             'customer_id',
+            'insurance_provider_id',
         ], [
             'payment:id,paymentable_id,paymentable_type,authorized_at',
             'batch:id,name',
@@ -93,6 +94,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'carTypeInsurance:id,text',
             'customer:id,pcp_tag',
             'quoteTags:quote_uuid,name',
+            'insuranceProvider:id,text',
         ]);
     }
 
