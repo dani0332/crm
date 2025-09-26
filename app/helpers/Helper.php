@@ -352,45 +352,45 @@ function getDataAgainstSearchTerm($modelType, $request)
                     ->get();
             } else {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])
                     ->where('advisor_id', Auth::user()->id)
                     ->get();
             }
         } else {
             if (Auth::user()->isRenewalAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])
                     ->whereNotNull('previous_quote_id')
                     ->where('advisor_id', Auth::user()->id)
                     ->get();
             } elseif (Auth::user()->isNewBusinessAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])
                     ->whereNull('previous_quote_id')
                     ->where('advisor_id', Auth::user()->id)
                     ->get();
             } else {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])
                     ->get();
             }
         }
     } else {
         if (Auth::user()->isRenewalAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])
                 ->whereNotNull('previous_quote_id')
                 ->where('advisor_id', Auth::user()->id)
                 ->get();
         } elseif (Auth::user()->isNewBusinessAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])
                 ->whereNull('previous_quote_id')
                 ->where('advisor_id', Auth::user()->id)
                 ->get();
         } else {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])->get();
+                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])->get();
         }
     }
 
@@ -1369,6 +1369,32 @@ if (! function_exists('roundNumber')) {
         }
 
         return round($number, $precision);
+    }
+}
+
+if (! function_exists('sanitizeFulltextSearchTerm')) {
+    function sanitizeFulltextSearchTerm($term)
+    {
+        // Remove common problematic characters that can break Boolean syntax
+        $term = preg_replace('/[\'"\\\<>()~@]/', ' ', $term);
+
+        // Replace multiple spaces with single space
+        $term = preg_replace('/\s+/', ' ', trim($term));
+
+        // Remove special characters except alphanumeric
+        $term = preg_replace('/[^a-zA-Z0-9\s]/', '', $term);
+
+        // If term is empty after sanitization, return original term
+        if (empty(trim($term))) {
+            return $term;
+        }
+
+        // Add wildcard for prefix matching if term doesn't end with one
+        if (!str_ends_with($term, '*')) {
+            $term .= '*';
+        }
+
+        return $term;
     }
 }
 
