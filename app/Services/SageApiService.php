@@ -356,7 +356,7 @@ class SageApiService
                 $epTransSageLogArray = $ePTransaction?->sageApiLogs?->whereIn('sage_request_type', [SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV, SageEnum::EP_SRT_CREATE_AP_PREM_INV])->keyBy('step')->toArray() ?? [];
                 LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Reversal Of EP Booking checks - Quote Code: '.$quote->code, extra : [
                     'isLobAllowedForEmbeddedProductBooking' => $isLobAllowedForEmbeddedProductBooking,
-                    'sukoonEPTransaction' => $ePTransaction?->code,
+                    'ePTransaction' => $ePTransaction?->code,
                     'isTapPaymentGateway' => $isTapPaymentGateway,
                     'epBookingLogCount' => count($epTransSageLogArray),
                     'suCustomerNumber' => $sageRequestPayload->customerId,
@@ -885,7 +885,7 @@ class SageApiService
         foreach ($ePTransactions as $ePTransaction) {
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - EP Booking checks - Quote Code: '.$quote->code, extra : [
                 'isLobAllowedForEmbeddedProductBooking' => $isLobAllowedForEmbeddedProductBooking,
-                'sukoonEPTransaction' => $ePTransaction?->code,
+                'epPTransaction' => $ePTransaction?->code,
                 'isTapPaymentGateway' => $isTapPaymentGateway,
             ]);
             if ($isLobAllowedForEmbeddedProductBooking && $ePTransaction && $isTapPaymentGateway) {
