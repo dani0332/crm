@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
             ApplicationStorageSeeder::class,
             RolePermissionSeeder::class,
             // HealthRevivalQuotesSeeder::class,
-            // QuoteStatusSeeder::class,
+            QuoteStatusSeeder::class,
             LookupSeeder::class,
             ClaimStatusesSeeder::class, // ClaimStatusesSeeder is dependent on LookupSeeder
             SavingsQuoteDataSeeder::class,
@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
             // ILAGMPermissionSeeder::class,
             // TravelRenewalTeamSeeder::class,
             // QuoteTypeTableSeeder::class,
-            // DocumentTypesSeeder::class,
+            DocumentTypesSeeder::class,
             // CommercialCarPlanSeeder::class,
             // RuleNameSeeder::class,
             // BusinessActivitiesSeeder::class,
@@ -34,7 +34,9 @@ class DatabaseSeeder extends Seeder
             // CarAdditionalDetailsForLivaSeeder::class,
             CarGIGVehicleTransactionDriverDetailsForAMLSeeder::class,
             CPARulesSeeder::class,
+            BorDocumentSeeder::class,
             AutomationSeeder::class,
+            TravelLeadAllocationDashboardSeeder::class,
         ]);
     }
 }

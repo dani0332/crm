@@ -15,7 +15,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     private const RTA_NEW_VEHICLE_REGISTRATION = 'RTT01';
     private const RTA_CHANGE_VEHICLE_OWNERSHIP = 'RTT03';
     private const RTA_VEHICLE_RENEWAL = 'RTT04';
-    private const POLICY_EFFECTIVE_DATE_MAX_DAYS = 30;
+    private const POLICY_EFFECTIVE_DATE_MAX_DAYS = 75;
     private const POLICY_DURATION_MONTHS = 13;
     private const PREVIOUS_GIG_PROVIDER = 'Gulf Insurance Group (Gulf) B.S.C. (C)';
 
