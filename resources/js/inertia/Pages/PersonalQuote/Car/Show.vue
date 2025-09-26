@@ -1,9 +1,10 @@
 <script setup>
 import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import CustomerVerificationNotification from '@/inertia/Components/CustomerVerificationNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
-import { usePage } from '@inertiajs/vue3';
+import { usePage, router } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
@@ -1305,10 +1306,12 @@ onMounted(() => {
   }
   window.addEventListener('ocr-notification', handleOcrNotification);
   window.addEventListener('lead-status-updated', handleLeadStatusUpdated);
+  window.addEventListener('customer-verification-updated', handleCustomerVerificationUpdated);
 });
 onUnmounted(() => {
   window.removeEventListener('ocr-notification', handleOcrNotification);
   window.removeEventListener('lead-status-updated', handleLeadStatusUpdated);
+  window.removeEventListener('customer-verification-updated', handleCustomerVerificationUpdated);
 });
 //activities
 const emailEventsTable = [
@@ -1759,11 +1762,55 @@ function handleOcrNotification(event) {
     });
   }
 }
+
+function handleCustomerVerificationUpdated(event) {
+  const { quoteUuid, verificationSuccess } = event.detail || {};
+  const currentRecord = usePage().props.record;
+
+  // Only process notifications for the current quote
+  if (!currentRecord || quoteUuid !== currentRecord.uuid) {
+    return;
+  }
+
+  // Show appropriate toast notification based on verification result
+  if (verificationSuccess) {
+    notification.success({
+      title: 'Document Details Verified',
+      text: 'Document data verified successfully!',
+      position: 'top',
+    });
+  } else {
+    notification.warning({
+      title: 'Verification Mismatch',
+      text: 'Document data could not be verified.',
+      position: 'top',
+    });
+  }
+
+  // Reload quote data to show updated verification status
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['quote'],
+    onSuccess: () => {
+      console.log('Customer verification data reloaded successfully');
+    },
+    onError: (error) => {
+      console.error('Failed to reload customer verification data:', error);
+      notification.error({
+        title: 'Update Failed',
+        text: 'Failed to refresh customer verification data',
+        position: 'top',
+      });
+    }
+  });
+}
 </script>
 
 <template>
   <OcrNotification />
   <LeadStatusUpdatedNotification />
+  <CustomerVerificationNotification />
   <div>
     <Head title="Car Detail" />
     <StickyHeader>
