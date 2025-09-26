@@ -76,6 +76,7 @@ class CustomerVerificationService
     private function determineVerificationStatus($record, array $customerVerifiedData, array $webFormData): ?CustomerVerificationStatus
     {
         $hasCustomerData = ! empty(array_filter($customerVerifiedData));
+
         if (! $hasCustomerData) {
             return null;
         }
@@ -102,8 +103,12 @@ class CustomerVerificationService
 
     private function getVerificationButtonData($record, array $webFormData, array $customerVerifiedData): array
     {
-        $status = $this->determineVerificationStatus($record, $customerVerifiedData, $webFormData);
-
+        $status = $record->is_customer_data_valid === 1
+            ? CustomerVerificationStatus::VERIFIED
+            : ($record->is_customer_data_valid === 0
+                ? CustomerVerificationStatus::REQUIRES_VERIFICATION
+                : null);
+        
         if ($status === null) {
             return [
                 'status' => null,
@@ -188,12 +193,19 @@ class CustomerVerificationService
             }
 
             $customerVerifiedData = json_decode($verificationRecord->customer_verified_data, true);
-
             return [
-                'nationality' => $this->getNationalityId($verificationRecord['nationality_id'] ?? ''),
-                'carMakeAndModel' => trim($verificationRecord['carMakeAndModel'] ?? ''),
-                'carModelYear' => $verificationRecord['carModelYear'],
-                'dob' => $customerVerifiedData['date_of_birth'] ? $this->formatDateToDisplay($customerVerifiedData['date_of_birth']) : '',
+                'nationality' =>  array_key_exists('nationality_id', $customerVerifiedData)
+                    ? $this->getNationalityById($customerVerifiedData['nationality_id'])
+                    : '',
+                'carMakeAndModel' => array_key_exists('carMakeAndModel', $customerVerifiedData)
+                    ? trim($customerVerifiedData['carMakeAndModel'] ?? '')
+                    : '',
+                'carModelYear' => array_key_exists('carModelYear', $customerVerifiedData)
+                    ? $customerVerifiedData['carModelYear']
+                    : '',
+                'dob' => array_key_exists('date_of_birth', $customerVerifiedData)
+                    ? $this->formatDateToDisplay($customerVerifiedData['date_of_birth'])
+                    : '',
             ];
 
         } catch (Exception $e) {
