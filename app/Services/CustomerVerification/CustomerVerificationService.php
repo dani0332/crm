@@ -23,15 +23,6 @@ class CustomerVerificationService
     private $isCustomerVerificationEnabled = null;
     private $documentTypeCode = null;
 
-    const VERIFICATION_FIELDS = [
-        'year_of_manufacture',
-        'dob',
-        'nationality_id',
-        'car_make_id',
-        'car_model_id',
-        'uae_license_held_for_id',
-        'emirate_of_registration_id',
-    ];
 
     public function __construct(
         private CapiService $capiService
@@ -81,45 +72,6 @@ class CustomerVerificationService
         return $status->getButtonConfig();
     }
 
-    public function evaluateFieldUpdate($record, array $changedFields, QuoteTypes $quoteType): void
-    {
-        LoggerService::startQuoteLogging($record->code ?? null);
-
-        $this->createVerificationSnapshot($record, $changedFields, $quoteType);
-
-        LoggerService::info('Customer verification evaluation completed', extra: [
-            'changed_fields' => $changedFields,
-            'quote_type' => $quoteType->value,
-        ]);
-    }
-
-    private function createVerificationSnapshot($record, array $changedFields, QuoteTypes $quoteType): void
-    {
-        if ($quoteType !== QuoteTypes::CAR) {
-            return;
-        }
-
-        try {
-            CustomerVerificationDetail::create([
-                'quotable_type' => $quoteType->modelClass(),
-                'quotable_id' => $record->id,
-                'quote_type_id' => $quoteType->id(),
-                'nationality_id' => $record->nationality_id,
-                'vehicle_make_id' => $record->car_make_id,
-                'vehicle_model_id' => $record->car_model_id,
-                'year_of_manufacture' => $record->year_of_manufacture,
-                'date_of_birth' => $record->dob,
-                'emirate_of_registration_id' => $record->emirate_of_registration_id,
-                'uae_license_held_for_id' => $record->uae_license_held_for_id,
-            ]);
-
-            LoggerService::info('Verification snapshot created');
-        } catch (Exception $e) {
-            LoggerService::warning('Failed to create verification snapshot', extra: [
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
 
     private function determineVerificationStatus($record, array $customerVerifiedData, array $webFormData): ?CustomerVerificationStatus
     {
