@@ -334,7 +334,7 @@ class CustomerVerificationService
             'response' => $response,
         ]);
 
-        $verificationSuccess = $response && $response->successful();
+        $verificationSuccess = $response && !isset($response->error) && isset($response->message);
         
         LoggerService::info('Customer verification status updated, broadcasting event', extra: [
             'quote_uuid' => $quote->uuid,
