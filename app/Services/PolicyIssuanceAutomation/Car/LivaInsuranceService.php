@@ -835,7 +835,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 if (
                     isset($responseObject->$keyAPI?->errors) ||
                     (isset($responseObject->$keyAPI?->Status) && $responseObject->$keyAPI?->Status == false) ||
-                    (isset($responseObject?->statusCode) && $responseObject?->statusCode == 404)(isset($responseObject?->string) && str_contains($responseObject?->string, 'Exception'))
+                    (isset($responseObject?->statusCode) && $responseObject?->statusCode == 404) ||
+                    (isset($responseObject?->string) && str_contains($responseObject?->string, 'Exception'))
                 ) {
                     $response['error'] = $responseObject->$keyAPI?->Status ?? $keyAPI.' API Failed';
                     $response['status'] = false;
@@ -849,6 +850,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         } catch (Exception $ex) {
             LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__, [
                 'endPoint' => $endPoint,
+                'lineNumber' => $ex->getLine(),
+                'trace' => $ex->getTraceAsString(),
             ], $ex);
 
             $response['error'] = $ex->getMessage();
