@@ -443,6 +443,10 @@ const memberDetailsTable = reactive({
       value: 'first_name',
     },
     {
+      text: 'Policy PEC Flag',
+      value: 'is_pec_marked',
+    },
+    {
       text: 'Gender',
       value: 'gender',
     },
@@ -2701,6 +2705,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
           >
             <template #item-first_name="{ first_name, last_name }">
               {{ first_name + ' ' + (last_name == null ? '' : last_name) }}
+            </template>
+
+            <template #item-is_pec_marked="{ is_pec_marked }">
+              <div class="text-center">
+                <x-tag size="sm" :color="is_pec_marked ? 'error' : 'success'">
+                  {{ is_pec_marked ? 'Yes' : 'No' }}
+                </x-tag>
+              </div>
             </template>
 
             <template #item-gender="{ gender }">
