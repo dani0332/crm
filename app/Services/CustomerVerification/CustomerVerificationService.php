@@ -340,7 +340,7 @@ class CustomerVerificationService
             'quote_uuid' => $quote->uuid,
             'quote_type' => QuoteTypes::CAR->value,
             'verification_success' => $verificationSuccess,
-            'response_status' => $response ? $response->status() : 'no_response',
+            'has_response' => $response !== null,
         ]);
 
         event(new CustomerVerificationUpdated($quote->uuid, $verificationSuccess, QuoteTypes::CAR->value));
