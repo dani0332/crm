@@ -10,6 +10,7 @@ use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
+use App\Services\CapiService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
@@ -31,6 +32,10 @@ class CustomerVerificationService
         'uae_license_held_for_id',
         'emirate_of_registration_id',
     ];
+
+    public function __construct(
+        private CapiService $capiService
+    ) {}
 
     private function handleUnsupportedQuoteType(QuoteTypes $quoteType): array
     {
@@ -335,6 +340,24 @@ class CustomerVerificationService
             'updated_fields' => array_keys($verificationData),
         ]);
 
+        // Update customer verification status
+        $this->updateCustomerVerificationStatus($quote);
+
+    }
+
+    private function updateCustomerVerificationStatus(Model $quote): void
+    {
+        $requestData = ['quoteUuid' => $quote->uuid,
+            'quoteTypeId' => QuoteTypes::getId(QuoteTypes::CAR),
+        ];
+
+        LoggerService::info('Capi service request data', extra: $requestData);
+
+        $response = $this->capiService->request('/api/customer/validate-data', 'PUT', $requestData);
+
+        LoggerService::info('Capi service response', extra: [
+            'response' => $response->json(),
+        ]);
     }
 
     private function handleUnsupportedVerification(QuoteTypes $quoteType, string $documentType, string $documentTypeText): void
