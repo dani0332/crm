@@ -39,24 +39,22 @@ const modalTitle = computed(() => {
 const borDocumentType = computed(() => {
   // Map LOB to document type code (same logic as in BorController)
   const lobToDocTypeMap = {
-    'car': 'BAL',
-    'health': 'BAL_HLTH',
-    'travel': 'BAL_TRVL',
-    'bike': 'BAL_Bike',
-    'business': 'BAL_BS',
-    'home': 'BAL_HOME',
-    'life': 'BAL_Life',
-    'pet': 'BAL_PET',
-    'yacht': 'BAL_YCHT',
-    'cycle': 'BAL_CYCLE',
+    car: 'BAL',
+    health: 'BAL_HLTH',
+    travel: 'BAL_TRVL',
+    bike: 'BAL_Bike',
+    business: 'BAL_BS',
+    home: 'BAL_HOME',
+    life: 'BAL_Life',
+    pet: 'BAL_PET',
+    yacht: 'BAL_YCHT',
+    cycle: 'BAL_CYCLE',
   };
-  
+
   // Get LOB from the BOR log's related quote or from the parent component
-  const lob = props.borLog.quote?.quote_type || 
-             props.borLog.lob || 
-             'car'; // fallback to car
+  const lob = props.borLog.quote?.quote_type || props.borLog.lob || 'car'; // fallback to car
   const docTypeCode = lobToDocTypeMap[lob.toLowerCase()] || 'BAL';
-  
+
   // Find the document type configuration
   // Since documentTypes is nested by categories, we need to search through all categories
   for (const category of Object.values(props.documentTypes)) {
@@ -65,7 +63,7 @@ const borDocumentType = computed(() => {
       return docType;
     }
   }
-  
+
   // Fallback document type if not found in props
   return {
     id: 'bor_default',
@@ -79,12 +77,15 @@ const borDocumentType = computed(() => {
 });
 
 // Watch for visibility changes
-watch(() => props.visible, (newVal) => {
-  showModal.value = newVal;
-  if (newVal) {
-    resetForm();
-  }
-});
+watch(
+  () => props.visible,
+  newVal => {
+    showModal.value = newVal;
+    if (newVal) {
+      resetForm();
+    }
+  },
+);
 
 // Methods
 const resetForm = () => {
@@ -103,21 +104,24 @@ const uploadFile = (documentType, filesWithInfo) => {
   const docTypeId = documentType.id;
   successStatus.value[docTypeId] = false;
   errorMsg.value[docTypeId] = '';
-  
+
   const { files, rejectReason } = filesWithInfo;
-  
+
   if (files.length === 0) {
     notification.error({
       title: 'File upload failed',
       position: 'top',
     });
-    errorMsg.value[docTypeId] = useFileUploadErrorMessage(documentType, rejectReason);
+    errorMsg.value[docTypeId] = useFileUploadErrorMessage(
+      documentType,
+      rejectReason,
+    );
     return false;
   }
 
   const url = route('bor.documents.upload', props.borLog.id);
   const formData = new FormData();
-  
+
   // Add the file to form data
   files.forEach(file => {
     formData.append('file', file.file); // Note: BOR upload expects 'file', not 'files[]'
@@ -137,24 +141,25 @@ const uploadFile = (documentType, filesWithInfo) => {
         title: 'Document uploaded successfully',
         position: 'top',
       });
-      
+
       // Emit success with updated borLog data
       emit('success', response.data.borLog || response.data);
-      
+
       // Auto-close modal after successful upload
       setTimeout(() => {
         closeModal();
       }, 1500);
     })
     .catch(error => {
-      const errorMessage = error.response?.data?.message || 'File upload failed';
+      const errorMessage =
+        error.response?.data?.message || 'File upload failed';
       errorMsg.value[docTypeId] = errorMessage;
-      
+
       notification.error({
         title: 'File upload failed',
         position: 'top',
       });
-      
+
       // Handle validation errors
       const errorMessages = error.response?.data?.errors;
       if (errorMessages) {
@@ -172,7 +177,7 @@ const uploadFile = (documentType, filesWithInfo) => {
 };
 
 // Format file size for display
-const formatFileSize = (bytes) => {
+const formatFileSize = bytes => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -188,10 +193,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <x-modal 
-    v-model="showModal"
-    size="xl"
-  >
+  <x-modal v-model="showModal" size="xl">
     <div class="p-6">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
@@ -207,8 +209,18 @@ onMounted(() => {
           @click="closeModal"
           class="text-gray-400 hover:text-gray-600 transition-colors"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
@@ -222,11 +234,15 @@ onMounted(() => {
           </div>
           <div>
             <span class="font-medium text-gray-700">Policy Number:</span>
-            <span class="ml-2 text-gray-900">{{ borLog.policy_number || 'N/A' }}</span>
+            <span class="ml-2 text-gray-900">{{
+              borLog.policy_number || 'N/A'
+            }}</span>
           </div>
           <div>
             <span class="font-medium text-gray-700">Insurer:</span>
-            <span class="ml-2 text-gray-900">{{ borLog.insurer_name || 'N/A' }}</span>
+            <span class="ml-2 text-gray-900">{{
+              borLog.insurer_name || 'N/A'
+            }}</span>
           </div>
           <div>
             <span class="font-medium text-gray-700">Status:</span>
@@ -242,9 +258,13 @@ onMounted(() => {
           <div class="flex flex-col gap-2">
             <h5 class="text-sm font-semibold">
               {{ borDocumentType.text }}
-              <span class="text-red-500">{{ borDocumentType.is_required ? '*' : '' }}</span>
+              <span class="text-red-500">{{
+                borDocumentType.is_required ? '*' : ''
+              }}</span>
             </h5>
-            <p class="text-xs text-gray-600">Max files: {{ borDocumentType.max_files }}</p>
+            <p class="text-xs text-gray-600">
+              Max files: {{ borDocumentType.max_files }}
+            </p>
             <p class="text-xs text-gray-600">
               Supported: {{ borDocumentType.accepted_files }}
             </p>
@@ -260,7 +280,9 @@ onMounted(() => {
               light
               class="mt-2"
             >
-              <p class="text-sm">File uploaded successfully! The modal will close automatically.</p>
+              <p class="text-sm">
+                File uploaded successfully! The modal will close automatically.
+              </p>
             </x-alert>
 
             <!-- Error Message -->
@@ -291,16 +313,30 @@ onMounted(() => {
             <!-- Show existing documents if any -->
             <template v-if="borLog.documents && borLog.documents.length > 0">
               <div class="mt-3">
-                <h6 class="text-xs font-medium text-gray-700 mb-2">Uploaded Documents:</h6>
+                <h6 class="text-xs font-medium text-gray-700 mb-2">
+                  Uploaded Documents:
+                </h6>
                 <div
                   v-for="document in borLog.documents"
                   :key="document.id"
                   class="block px-3 py-2 border rounded-md text-xs bg-green-50 border-green-200 text-green-800"
                 >
                   <div class="flex items-center justify-between">
-                    <span class="truncate">{{ document.original_name || document.doc_name }}</span>
-                    <svg class="w-4 h-4 text-green-600 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    <span class="truncate">{{
+                      document.original_name || document.doc_name
+                    }}</span>
+                    <svg
+                      class="w-4 h-4 text-green-600 ml-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -312,12 +348,19 @@ onMounted(() => {
 
       <!-- Upload Guidelines -->
       <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <h4 class="text-sm font-medium text-blue-900 mb-2">Upload Guidelines</h4>
+        <h4 class="text-sm font-medium text-blue-900 mb-2">
+          Upload Guidelines
+        </h4>
         <ul class="text-xs text-blue-800 space-y-1">
           <li>• Ensure the document is clear and legible</li>
           <li>• Include all relevant pages and information</li>
           <li>• File size must be under {{ borDocumentType.max_size }}MB</li>
-          <li>• Supported formats: {{ borDocumentType.accepted_files.replace(/\./g, '').toUpperCase() }}</li>
+          <li>
+            • Supported formats:
+            {{
+              borDocumentType.accepted_files.replace(/\./g, '').toUpperCase()
+            }}
+          </li>
           <li>• Document will be automatically processed after upload</li>
         </ul>
       </div>
@@ -331,12 +374,15 @@ onMounted(() => {
         >
           {{ successStatus[borDocumentType.id] ? 'Close' : 'Cancel' }}
         </x-button>
-        
+
         <!-- Note: Upload happens automatically when file is selected via Dropzone -->
-        <div v-if="!successStatus[borDocumentType.id]" class="text-sm text-gray-500">
+        <div
+          v-if="!successStatus[borDocumentType.id]"
+          class="text-sm text-gray-500"
+        >
           Select a file above to upload automatically
         </div>
       </div>
     </div>
   </x-modal>
-</template> 
+</template>

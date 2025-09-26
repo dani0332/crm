@@ -591,4 +591,5 @@ class CarQuote extends BaseModel
     {
         return $this->morphOne(VehicleDriverDetail::class, 'quoteable');
     }
+
 }

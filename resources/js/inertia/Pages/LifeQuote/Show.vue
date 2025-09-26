@@ -2779,7 +2779,7 @@ const getTotalAnnualPriceAED = () => {
         firstName: quote.first_name,
         lastName: quote.last_name,
         companyName: quote.company_name,
-        currentlyInsuredWith: quote.currently_insured_with
+        currentlyInsuredWith: quote.currently_insured_with,
       }"
       :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
       :insuranceProviders="insuranceProviders"

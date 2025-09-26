@@ -1132,7 +1132,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         firstName: quote.first_name,
         lastName: quote.last_name,
         companyName: quote.company_name,
-        currentlyInsuredWith: null
+        currentlyInsuredWith: null,
       }"
       :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
       :insuranceProviders="insuranceProviders"

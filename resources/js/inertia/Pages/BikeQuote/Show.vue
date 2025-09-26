@@ -1408,7 +1408,7 @@ function capitalizeString(str) {
         firstName: quote.first_name,
         lastName: quote.last_name,
         companyName: quote.company_name,
-        currentlyInsuredWith: quote.insurance_provider_id
+        currentlyInsuredWith: quote.insurance_provider_id,
       }"
       :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
       :insuranceProviders="insuranceProviders"

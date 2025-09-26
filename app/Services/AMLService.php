@@ -488,7 +488,10 @@ class AMLService
         })->where(function ($aml) {
             $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
             $aml->orWhereNull('screening_type');
-        })->whereNull('screenshot')->get()->last() ?? [];
+        })->where(function ($query) {
+            $query->whereNull('screenshot');
+            $query->orWhere('screenshot', '');
+        })->get()->last() ?? [];
     }
 
     public function handleResponse(bool $status, string $message, bool $isAutomation = false)
@@ -579,7 +582,10 @@ class AMLService
                 $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
                 $aml->orWhereNull('screening_type');
             })
-            ->whereNull('screenshot')
+            ->where(function ($query) {
+                $query->whereNull('screenshot');
+                $query->orWhere('screenshot', '');
+            })
             ->orderBy('id', 'desc')
             ->value('splitted_customer_code');
 
@@ -621,7 +627,10 @@ class AMLService
         })->where(function ($aml) {
             $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
             $aml->orWhereNull('screening_type');
-        })->whereNull('screenshot')->pluck('decision');
+        })->where(function ($query) {
+            $query->whereNull('screenshot');
+            $query->orWhere('screenshot', '');
+        })->pluck('decision');
 
         if ($fetchAMLRecords->count() == 0) {
             return true;
@@ -1149,7 +1158,10 @@ class AMLService
             ->where(function ($aml) {
                 $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $aml->orWhereNull('decision');
-            })->whereNull('screenshot')->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA])
+            })->where(function ($query) {
+                $query->whereNull('screenshot');
+                $query->orWhere('screenshot', '');
+            })->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA])
             ->orderBy('created_at', 'asc')->get();
     }
 

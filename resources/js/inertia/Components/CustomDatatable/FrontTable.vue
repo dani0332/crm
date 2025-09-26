@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, watch, toRef } from "vue";
-import { mockServerItems } from "../../Composables/ServerDatatable";
+import { ref, computed, watch, toRef } from 'vue';
+import { mockServerItems } from '../../Composables/ServerDatatable';
 
 const props = defineProps({
   propHead: {
@@ -13,11 +13,11 @@ const props = defineProps({
   },
   clickedRowEvent: {
     type: Function,
-    default: () => {}
+    default: () => {},
   },
   url: {
     type: String,
-    default: "",
+    default: '',
   },
   multiSort: {
     type: Boolean,
@@ -29,7 +29,7 @@ const props = defineProps({
   },
   module: {
     type: String,
-    default: "",
+    default: '',
   },
   selection: {
     type: Boolean,
@@ -41,21 +41,21 @@ const props = defineProps({
   },
   additionalQuery: {
     type: Object,
-    default: {}
+    default: {},
   },
   currentSelectedItem: {
     type: Object,
-    default: null
-  }
+    default: null,
+  },
 });
 
-const searchField = ref("player");
-const searchValue = ref("");
+const searchField = ref('player');
+const searchValue = ref('');
 const loading = ref(false);
 const sortBy = ref([]);
-const sortType = ["desc", "asc"];
+const sortType = ['desc', 'asc'];
 const headers = ref(props.propHead);
-const reactiveAdditionalQuery = toRef(props,'additionalQuery');
+const reactiveAdditionalQuery = toRef(props, 'additionalQuery');
 
 const items = ref([]);
 
@@ -65,30 +65,35 @@ const serverOptions = ref({
   rowsPerPage: props.rowItems[0],
 });
 
-
-const clickRow = (item) => {
+const clickRow = item => {
   props.clickedRowEvent(item);
 };
 
 const requestUrl = computed(() => {
   const { page, rowsPerPage, sortBy, sortType } = serverOptions.value;
   const searchText = searchValue.value;
-  const additionalQueryText = Object.keys(reactiveAdditionalQuery.value).length > 0 ? Object.keys(reactiveAdditionalQuery.value).map(function(key) {
-    return key + '=' + reactiveAdditionalQuery.value[key];
-  }).join('&') : "";
-  var queryString = additionalQueryText != "" ? route(props.url)+"?"+additionalQueryText +"&" : route(props.url)+"?";
+  const additionalQueryText =
+    Object.keys(reactiveAdditionalQuery.value).length > 0
+      ? Object.keys(reactiveAdditionalQuery.value)
+          .map(function (key) {
+            return key + '=' + reactiveAdditionalQuery.value[key];
+          })
+          .join('&')
+      : '';
+  var queryString =
+    additionalQueryText != ''
+      ? route(props.url) + '?' + additionalQueryText + '&'
+      : route(props.url) + '?';
   if (sortBy && sortType) {
-    return (
-      searchText != "" && searchText != null ?
-      queryString +
-      `search=${searchText}&page=${page}&limit=${rowsPerPage}&sortBy=${sortBy}&sortType=${sortType}`
-      :
-      queryString +
-      `page=${page}&limit=${rowsPerPage}&sortBy=${sortBy}&sortType=${sortType}`
-    );
+    return searchText != '' && searchText != null
+      ? queryString +
+          `search=${searchText}&page=${page}&limit=${rowsPerPage}&sortBy=${sortBy}&sortType=${sortType}`
+      : queryString +
+          `page=${page}&limit=${rowsPerPage}&sortBy=${sortBy}&sortType=${sortType}`;
   } else {
-      return searchText != "" && searchText != null ?
-      queryString + `search=${searchText}&page=${page}&limit=${rowsPerPage}` : queryString + `page=${page}&limit=${rowsPerPage}`;
+    return searchText != '' && searchText != null
+      ? queryString + `search=${searchText}&page=${page}&limit=${rowsPerPage}`
+      : queryString + `page=${page}&limit=${rowsPerPage}`;
   }
 });
 
@@ -101,11 +106,13 @@ const loadFromServer = async () => {
   loading.value = false;
 };
 const bodyRowClassNameFunction = (item, rowNumber) => {
-  if(props.currentSelectedItem != null && item.id == props.currentSelectedItem.id) {
+  if (
+    props.currentSelectedItem != null &&
+    item.id == props.currentSelectedItem.id
+  ) {
     return 'pass-row';
   }
   return 'fail-row';
-
 };
 
 // first load when created
@@ -113,10 +120,10 @@ loadFromServer();
 
 watch(
   [serverOptions, reactiveAdditionalQuery],
-  (value) => {
+  value => {
     loadFromServer();
   },
-  { deep: true }
+  { deep: true },
 );
 </script>
 
@@ -124,14 +131,18 @@ watch(
   <form>
     <div class="flex w-full justify-start gap-2 py-2">
       <div class="" v-if="search">
-        <x-input type="text" name="search" id="searchField" @change="()=>loadFromServer()" placeholder="Search" v-model="searchValue" />
+        <x-input
+          type="text"
+          name="search"
+          id="searchField"
+          @change="() => loadFromServer()"
+          placeholder="Search"
+          v-model="searchValue"
+        />
       </div>
-      <div v-if="selectOption">
-        
-      </div>
+      <div v-if="selectOption"></div>
     </div>
   </form>
- 
 
   <DataTable
     v-model:server-options="serverOptions"
@@ -146,8 +157,7 @@ watch(
     :multi-sort="multiSort"
   >
     <template #item-action="item">
-        <slot name="action" v-bind="item"></slot>
-    </template> 
+      <slot name="action" v-bind="item"></slot>
+    </template>
   </DataTable>
-  
 </template>

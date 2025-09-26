@@ -1278,8 +1278,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :expanded="sectionExpanded"
     />
 
-    
-
     <LastYearPolicyDetail
       v-if="
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
@@ -1477,7 +1475,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         firstName: quote.first_name,
         lastName: quote.last_name,
         companyName: quote.business_company_name,
-        currentlyInsuredWith: quote.insurance_provider_id
+        currentlyInsuredWith: quote.insurance_provider_id,
       }"
       :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
       :insuranceProviders="insuranceProviders"
