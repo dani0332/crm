@@ -224,6 +224,9 @@ final class ApplicationStorageEnums extends Enum
     public const AXIOM_BATCH_SIZE = 'AXIOM_BATCH_SIZE';
     public const AML_AUTOMATION_ENABLED = 'AML_AUTOMATION_ENABLED';
 
+    /* BOR (Broker on Record) Workflow Integration */
+    public const BIRD_BOR_WORKFLOW_URL = 'BIRD_BOR_WORKFLOW_URL';
+
     /* Advisor Emails for Allocation */
     public const YACHT_ADVISORS = 'YACHT_ADVISORS';
     public const PET_ADVISORS = 'PET_ADVISORS';
@@ -261,4 +264,5 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_SENDUPDATE_OCR = 'ENABLE_SENDUPDATE_OCR';
     public const PRODUCTION_APPROVAL_EMAIL = 'PRODUCTION_APPROVAL_EMAIL';
     public const APPROVAL_PRODUCTION_EMAIL = 'APPROVAL_PRODUCTION_EMAIL';
+    public const BULK_POLICY_DOCUMENT_SEND_CODES = 'BULK_POLICY_DOCUMENT_SEND_CODES';
 }
