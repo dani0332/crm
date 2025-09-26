@@ -71,7 +71,7 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
         if ($this->sageProcess->status === SageEnum::SAGE_PROCESS_PENDING_STATUS) {
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS, null, $this->logFor);
 
-            $response = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $this->sageRequest, $this->epTransaction]);
+            $response = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $this->sageRequest, $this->epTransaction], $this->sageRequest->epShortCode);
 
             if (! $response['status']) {
                 $message = $response['message'];

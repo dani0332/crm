@@ -366,7 +366,7 @@ class SageApiService
                     $quoteSageRequest->quoteTypeId = $quoteTypeId;
                     $quoteSageRequest->userId = $sageRequestPayload->userId;
                     LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Reversal Of EP Booking : Start Sage booking Process for : '.$quote->code.' , EP Transaction Code : '.$ePTransaction->code.' ##################################');
-                    $embeddedProductSageBookingResponse = (new SageApiEmbeddedProductService)->bookReversalOfEmbeddedProductOnSage([$quote, $preparedData['sendUpdateLog'], $quoteSageRequest, $ePTransaction]);
+                    $embeddedProductSageBookingResponse = (new SageApiEmbeddedProductService)->bookReversalOfEmbeddedProductOnSage([$quote, $preparedData['sendUpdateLog'], $quoteSageRequest, $ePTransaction], $ePTransaction?->product?->embeddedProduct?->short_code);
                     LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Reversal Of EP Booking : End Sage booking Process for : '.$quote->code.' , EP Transaction Code : '.$ePTransaction->code.' ##################################', extra : $embeddedProductSageBookingResponse);
                     if (! $embeddedProductSageBookingResponse['status']) {
                         return $embeddedProductSageBookingResponse;
@@ -890,7 +890,7 @@ class SageApiService
             ]);
             if ($isLobAllowedForEmbeddedProductBooking && $ePTransaction && $isTapPaymentGateway) {
                 LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## EP Booking : Start Sage booking Process for : '.$quote->code.' ##################################');
-                $embeddedProductSageBookingResponse = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $sageRequest, $ePTransaction]);
+                $embeddedProductSageBookingResponse = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $sageRequest, $ePTransaction], $ePTransaction?->product?->embeddedProduct?->short_code);
                 LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## EP Booking : End Sage booking Process for : '.$quote->code.' ##################################', extra : $embeddedProductSageBookingResponse);
                 if (! $embeddedProductSageBookingResponse['status']) {
                     return $embeddedProductSageBookingResponse;
