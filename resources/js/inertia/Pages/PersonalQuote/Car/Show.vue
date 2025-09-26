@@ -1772,31 +1772,28 @@ function handleCustomerVerificationUpdated(event) {
     return;
   }
 
-  // Show appropriate toast notification based on verification result
-  if (verificationSuccess) {
-    notification.success({
-      title: 'Document Details Verified',
-      text: 'Document data verified successfully!',
-      position: 'top',
-    });
-  } else {
-    notification.warning({
-      title: 'Verification Mismatch',
-      text: 'Document data could not be verified.',
-      position: 'top',
-    });
-  }
-
-  // Reload quote data to show updated verification status
+  // Reload quote data first, then show toast when UI is updated
   router.reload({
     preserveState: true,
     preserveScroll: true,
     only: ['quote'],
     onSuccess: () => {
-      console.log('Customer verification data reloaded successfully');
+      // Show appropriate toast notification based on verification result
+      if (verificationSuccess) {
+        notification.success({
+          title: 'Document Details Verified',
+          text: 'Document data verified successfully!',
+          position: 'top',
+        });
+      } else {
+        notification.warning({
+          title: 'Verification Mismatch',
+          text: 'Document data could not be verified.',
+          position: 'top',
+        });
+      }
     },
     onError: (error) => {
-      console.error('Failed to reload customer verification data:', error);
       notification.error({
         title: 'Update Failed',
         text: 'Failed to refresh customer verification data',
