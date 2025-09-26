@@ -33,11 +33,16 @@ class VehicleDriverDetail extends Model
         'driver_uae_driving_experience',
         'driver_home_country_license_issuance',
         'driver_home_country_driving_experience',
-
+        'nationality_id',
     ];
 
     public function quoteable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function nationality()
+    {
+        return $this->belongsTo(Nationality::class, 'nationality_id');
     }
 }

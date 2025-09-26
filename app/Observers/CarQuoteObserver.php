@@ -2,7 +2,6 @@
 
 namespace App\Observers;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -22,7 +21,6 @@ use App\Repositories\PaymentRepository;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
-use App\Services\CustomerVerification\CustomerVerificationService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -163,50 +161,6 @@ class CarQuoteObserver
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
-        }
-
-        $this->handleCustomerVerificationUpdate($lead, $dirty);
-    }
-
-    private function handleCustomerVerificationUpdate(CarQuote $lead, array $dirty): void
-    {
-        $isCustomerVerificationEnabled = getAppStorageValueByKey(ApplicationStorageEnums::CUSTOMER_VERIFICATION_ENABLED, useCache: true) == '1';
-        
-        if (!$isCustomerVerificationEnabled) {
-            return;
-        }
-
-        LoggerService::info('CarQuoteObserver - Handling customer verification update', extra: [
-            'quote_id' => $lead->id,
-            'uuid' => $lead->uuid,
-            'dirty' => $dirty,
-        ]);
-
-        $verificationFields = CustomerVerificationService::VERIFICATION_FIELDS;
-        
-        $changedVerificationFields = array_intersect(
-            array_keys($dirty),
-            $verificationFields
-        );
-        
-        if (!empty($changedVerificationFields)) {
-            try {
-                app(CustomerVerificationService::class)
-                    ->evaluateFieldUpdate($lead, $changedVerificationFields, QuoteTypes::CAR);
-                    
-                LoggerService::info('CarQuoteObserver - Customer verification fields updated', extra: [
-                    'quote_id' => $lead->id,
-                    'uuid' => $lead->uuid,
-                    'changed_verification_fields' => $changedVerificationFields,
-                    'verification_changes' => array_intersect_key($dirty, array_flip($verificationFields)),
-                ]);
-            } catch (Exception $e) {
-                Log::error('CarQuoteObserver - customer verification evaluation failed', [
-                    'error' => $e->getMessage(),
-                    'uuid' => $lead->uuid,
-                    'changed_fields' => $changedVerificationFields,
-                ]);
-            }
         }
     }
 }

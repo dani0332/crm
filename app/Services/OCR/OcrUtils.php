@@ -12,6 +12,7 @@ use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Services\AccuracyMatrixService;
 use App\Services\Logger\LoggerService;
+use App\Services\LookupService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -383,5 +384,18 @@ trait OcrUtils
         }
 
         return $quote->code;
+    }
+
+    public function getIssuancePlaceCode(?string $issuancePlace): ?string
+    {
+        if (empty($issuancePlace)) {
+            return null;
+        }
+
+        $issuancePlaces = app(LookupService::class)->getIssuancePlaces();
+
+        return $issuancePlaces->first(function ($place) use ($issuancePlace) {
+            return strtolower($place->text) === strtolower($issuancePlace);
+        })?->code ?? null;
     }
 }

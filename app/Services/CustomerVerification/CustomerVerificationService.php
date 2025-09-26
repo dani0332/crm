@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Services\CustomerVerification;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteTypes;
 use App\Enums\CustomerVerificationStatus;
+use App\Enums\OCRDocumentTypeEnum;
+use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
+use App\Services\CapiService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
@@ -21,15 +23,10 @@ class CustomerVerificationService
     private $isCustomerVerificationEnabled = null;
     private $documentTypeCode = null;
 
-    const VERIFICATION_FIELDS = [
-        'year_of_manufacture',
-        'dob', 
-        'nationality_id',
-        'car_make_id',
-        'car_model_id', 
-        'uae_license_held_for_id',
-        'emirate_of_registration_id'
-    ];
+
+    public function __construct(
+        private CapiService $capiService
+    ) {}
 
     private function handleUnsupportedQuoteType(QuoteTypes $quoteType): array
     {
@@ -38,6 +35,16 @@ class CustomerVerificationService
         ]);
 
         return ['webForm' => [], 'customerVerified' => [], 'buttonData' => ['shouldShow' => false]];
+    }
+
+    private function extractOcrValue(array $ocrData, string $key, $default = null)
+    {
+        return $ocrData[$key] ?? $default;
+    }
+
+    private function hasOcrKey(array $ocrData, string $key): bool
+    {
+        return array_key_exists($key, $ocrData);
     }
 
     private function getEmptyVerificationData(QuoteTypes $quoteType): array
@@ -65,78 +72,38 @@ class CustomerVerificationService
         return $status->getButtonConfig();
     }
 
-    public function evaluateFieldUpdate($record, array $changedFields, QuoteTypes $quoteType): void
-    {
-        LoggerService::startQuoteLogging($record->code ?? null);
-        
-        $this->createVerificationSnapshot($record, $changedFields, $quoteType);
-        
-        LoggerService::info('Customer verification evaluation completed', extra: [
-            'changed_fields' => $changedFields,
-            'quote_type' => $quoteType->value,
-        ]);
-    }
 
-    private function createVerificationSnapshot($record, array $changedFields, QuoteTypes $quoteType): void
-    {
-        if ($quoteType !== QuoteTypes::CAR) {
-            return;
-        }
-        
-        try {
-            CustomerVerificationDetail::create([
-                'quotable_type' => $quoteType->modelClass(),
-                'quotable_id' => $record->id,
-                'quote_type_id' => $quoteType->id(),
-                'nationality_id' => $record->nationality_id,
-                'vehicle_make_id' => $record->car_make_id,
-                'vehicle_model_id' => $record->car_model_id,
-                'year_of_manufacture' => $record->year_of_manufacture,
-                'date_of_birth' => $record->dob,
-                'emirate_of_registration_id' => $record->emirate_of_registration_id,
-                'uae_license_held_for_id' => $record->uae_license_held_for_id,
-            ]);
-            
-            LoggerService::info('Verification snapshot created');
-        } catch (Exception $e) {
-            LoggerService::warning('Failed to create verification snapshot', extra: [
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-    
     private function determineVerificationStatus($record, array $customerVerifiedData, array $webFormData): ?CustomerVerificationStatus
     {
-        $hasCustomerData = !empty(array_filter($customerVerifiedData));
-        
-        if (!$hasCustomerData) {
+        $hasCustomerData = ! empty(array_filter($customerVerifiedData));
+        if (! $hasCustomerData) {
             return null;
         }
-        
+
         if (isset($record->is_customer_data_valid) && $record->is_customer_data_valid === CustomerVerificationStatus::VERIFIED->value) {
             return CustomerVerificationStatus::VERIFIED;
         }
-        
+
         $allFieldsMatch = true;
         foreach ($webFormData as $field => $webValue) {
             $customerValue = $customerVerifiedData[$field] ?? '';
-            
+
             $normalizedWeb = trim(strtolower((string) $webValue));
             $normalizedCustomer = trim(strtolower((string) $customerValue));
-            
+
             if ($normalizedWeb !== $normalizedCustomer) {
                 $allFieldsMatch = false;
                 break;
             }
         }
-        
+
         return $allFieldsMatch ? CustomerVerificationStatus::VERIFIED : CustomerVerificationStatus::REQUIRES_VERIFICATION;
     }
 
     private function getVerificationButtonData($record, array $webFormData, array $customerVerifiedData): array
     {
         $status = $this->determineVerificationStatus($record, $customerVerifiedData, $webFormData);
-        
+
         if ($status === null) {
             return [
                 'status' => null,
@@ -146,9 +113,9 @@ class CustomerVerificationService
                 'shouldShow' => false,
             ];
         }
-        
+
         $buttonConfig = $this->getButtonConfigForStatus($status);
-        
+
         return [
             'status' => $status->value,
             'text' => $buttonConfig['text'],
@@ -189,7 +156,7 @@ class CustomerVerificationService
         ];
 
         $customerVerifiedData = $this->getCustomerVerifiedDetails($record->id, QuoteTypes::CAR);
-        
+
         $verificationButtonData = $this->getVerificationButtonData($record, $webFormData, $customerVerifiedData);
 
         return [
@@ -214,20 +181,21 @@ class CustomerVerificationService
                 ->latest()
                 ->first();
 
-            if (! $verificationRecord) {
+            if (! $verificationRecord || ! $verificationRecord->customer_verified_data) {
                 LoggerService::info('No customer verification record found');
 
                 return $this->getEmptyVerificationData($quoteType);
             }
 
+            $customerVerifiedData = json_decode($verificationRecord->customer_verified_data, true);
+
             return [
-                'nationality' => $verificationRecord->nationality?->text ?? '',
-                'carMakeAndModel' => trim(($verificationRecord->carMake?->text ?? '').' '.($verificationRecord->carModel?->text ?? '')),
-                'carModelYear' => $verificationRecord->year_of_manufacture ?? '',
-                'dob' => $this->formatDateToDisplay($verificationRecord->date_of_birth),
-                'emirateOfRegistration' => $verificationRecord->emirate?->text ?? '',
-                'uaeLicenseHeldFor' => $verificationRecord->uaeLicenseHeldFor?->text ?? '',
+                'nationality' => $this->getNationalityId($verificationRecord['nationality_id'] ?? ''),
+                'carMakeAndModel' => trim($verificationRecord['carMakeAndModel'] ?? ''),
+                'carModelYear' => $verificationRecord['carModelYear'],
+                'dob' => $customerVerifiedData['date_of_birth'] ? $this->formatDateToDisplay($customerVerifiedData['date_of_birth']) : '',
             ];
+
         } catch (Exception $e) {
             LoggerService::warning('Error fetching customer verification details', extra: [
                 'error' => $e->getMessage(),
@@ -242,60 +210,43 @@ class CustomerVerificationService
         match ($quoteType) {
             QuoteTypes::CAR => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType),
             // Add other quote types here as needed
-            default => $this->handleUnsupportedEmiratesIdVerification($quoteType, $documentType),
+            default => $this->handleUnsupportedVerification($quoteType, $documentType, 'Emirates'),
+        };
+    }
+
+    public function processMulkiyaVerification($quote, QuoteTypes $quoteType, array $ocrData, string $documentType): void
+    {
+        match ($quoteType) {
+            QuoteTypes::CAR => $this->processCarMulkiyaVerification($quote, $ocrData, $documentType),
+            // Add other quote types here as needed
+            default => $this->handleUnsupportedVerification($quoteType, $documentType, 'Mulkiya'),
         };
     }
 
     private function processCarEmiratesIdVerification($quote, array $ocrData, string $documentType): void
     {
         $verificationData = [];
-        $hasValidData = false;
 
-        if (isset($ocrData['dateOfBirth']) && !empty($ocrData['dateOfBirth'])) {
-            $verificationData['date_of_birth'] = $ocrData['dateOfBirth'];
-            $hasValidData = true;
+        if ($this->hasOcrKey($ocrData, 'dateOfBirth')) {
+            $verificationData['date_of_birth'] = $this->extractOcrValue($ocrData, 'dateOfBirth');
         }
 
-        if (isset($ocrData['nationality']) && !empty($ocrData['nationality'])) {
-            $nationalityId = $this->getNationalityId($ocrData['nationality']);
+        if ($this->hasOcrKey($ocrData, 'nationality')) {
+            $nationality = $this->extractOcrValue($ocrData, 'nationality');
+            $nationalityId = $this->getNationalityId($nationality);
             if ($nationalityId) {
                 $verificationData['nationality_id'] = $nationalityId;
-                $hasValidData = true;
+            } else {
+                $verificationData['nationality_id'] = null;
             }
         }
 
-        if (!$hasValidData) {
-            LoggerService::info('Emirates ID OCR: No DOB or nationality data found or values are null', extra: [
-                'document_type' => $documentType,
-                'quote_id' => $quote->id,
-                'quote_code' => $quote->code ?? null,
-                'quote_type' => QuoteTypes::CAR->value,
-                'has_dob' => isset($ocrData['dateOfBirth']),
-                'dob_value' => $ocrData['dateOfBirth'] ?? null,
-                'has_nationality' => isset($ocrData['nationality']),
-                'nationality_value' => $ocrData['nationality'] ?? null,
-            ]);
-            return;
+        if ($this->hasOcrKey($ocrData, 'name')) {
+            $verificationData['name'] = $this->extractOcrValue($ocrData, 'name');
         }
 
         try {
-            CustomerVerificationDetail::updateOrCreate(
-                [
-                    'quotable_type' => QuoteTypes::CAR->modelClass(),
-                    'quotable_id' => $quote->id,
-                    'quote_type_id' => QuoteTypes::CAR->id(),
-                ],
-                $verificationData
-            );
-
-            LoggerService::info('Customer verification details updated from Emirates ID OCR', extra: [
-                'document_type' => $documentType,
-                'quote_id' => $quote->id,
-                'quote_code' => $quote->code ?? null,
-                'quote_type' => QuoteTypes::CAR->value,
-                'updated_fields' => array_keys($verificationData),
-            ]);
-
+            $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from Emirates ID OCR', extra: [
                 'document_type' => $documentType,
@@ -307,9 +258,85 @@ class CustomerVerificationService
         }
     }
 
-    private function handleUnsupportedEmiratesIdVerification(QuoteTypes $quoteType, string $documentType): void
+    private function processCarMulkiyaVerification($quote, array $ocrData, string $documentType): void
     {
-        LoggerService::info('Emirates ID verification not supported for quote type', extra: [
+        $verificationData = [];
+
+        if ($this->hasOcrKey($ocrData, 'vehicalType')) {
+            $verificationData['carMakeAndModel'] = $this->extractOcrValue($ocrData, 'vehicalType');
+        }
+
+        if ($this->hasOcrKey($ocrData, 'vehicalModel')) {
+            $verificationData['carModelYear'] = $this->extractOcrValue($ocrData, 'vehicalModel');
+        }
+
+        try {
+            $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+        } catch (Exception $e) {
+            LoggerService::warning('Failed to update customer verification details from Emirates ID OCR', extra: [
+                'document_type' => $documentType,
+                'quote_id' => $quote->id,
+                'quote_code' => $quote->code ?? null,
+                'quote_type' => QuoteTypes::CAR->value,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+    }
+
+    private function saveCustomerVerificationDetails(array $verificationData, Model $quote, string $documentType): void
+    {
+        $data = CustomerVerificationDetail::where('quotable_type', QuoteTypes::CAR->modelClass())
+            ->where('quotable_id', $quote->id)
+            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->first();
+
+        LoggerService::info('Customer verification found:'.$data);
+        if ($data) {
+            $existingData = json_decode($data->customer_verified_data, true);
+            $existingData = array_merge($existingData, $verificationData);
+
+            $data->update(['customer_verified_data' => json_encode($existingData)]);
+        } else {
+            CustomerVerificationDetail::create([
+                'quotable_type' => QuoteTypes::CAR->modelClass(),
+                'quotable_id' => $quote->id,
+                'quote_type_id' => QuoteTypes::CAR->id(),
+                'customer_verified_data' => json_encode($verificationData),
+            ]);
+        }
+
+        LoggerService::info("Customer verification details updated from {$documentType} OCR", extra: [
+            'document_type' => $documentType,
+            'quote_id' => $quote->id,
+            'quote_code' => $quote->code ?? null,
+            'quote_type' => QuoteTypes::CAR->value,
+            'updated_fields' => array_keys($verificationData),
+        ]);
+
+        // Update customer verification status
+        $this->updateCustomerVerificationStatus($quote);
+
+    }
+
+    private function updateCustomerVerificationStatus(Model $quote): void
+    {
+        $requestData = ['quoteUuid' => $quote->uuid,
+            'quoteTypeId' => QuoteTypes::getId(QuoteTypes::CAR),
+        ];
+
+        LoggerService::info('Capi service request data', extra: $requestData);
+
+        $response = $this->capiService->request('/api/customer/documents-verify', 'PUT', $requestData);
+
+        LoggerService::info('Capi service response', extra: [
+            'response' => $response,
+        ]);
+    }
+
+    private function handleUnsupportedVerification(QuoteTypes $quoteType, string $documentType, string $documentTypeText): void
+    {
+        LoggerService::info("{$documentTypeText} verification not supported for quote type", extra: [
             'document_type' => $documentType,
             'quote_type' => $quoteType->value,
         ]);
@@ -327,12 +354,13 @@ class CustomerVerificationService
     public function processOcrVerification(Model $quote, object $data, string $documentType): void
     {
         $this->documentTypeCode = $documentType;
-        if (!$this->isCustomerVerificationEnabled()) {
+        if (! $this->isCustomerVerificationEnabled()) {
             LoggerService::info('Customer verification feature disabled - skipping verification processing', extra: [
                 'quote_uuid' => $quote->uuid,
                 'document_type' => $this->documentTypeCode,
                 'feature_flag' => 'CUSTOMER_VERIFICATION_ENABLED',
             ]);
+
             return;
         }
 
@@ -343,7 +371,16 @@ class CustomerVerificationService
         };
 
         if ($quoteType) {
-            $this->processEmiratesIdVerification($quote, $quoteType, (array) $data, $this->documentTypeCode);
+            switch ($this->documentTypeCode) {
+                case OCRDocumentTypeEnum::ID_CARD->value:
+                    $this->processEmiratesIdVerification($quote, $quoteType, (array) $data, $this->documentTypeCode);
+                    break;
+                case OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE->value:
+                    $this->processMulkiyaVerification($quote, $quoteType, (array) $data, $this->documentTypeCode);
+                    break;
+                default:
+                    break;
+            }
         } else {
             LoggerService::info('Customer verification not supported for quote type', extra: [
                 'quote_uuid' => $quote->uuid,
