@@ -292,7 +292,7 @@ class HealthQuote extends Model implements AuditableContract
             ->where('is_primary', false);
     }
 
-    public function renewalBatch()
+    public function renewalBatchModel()
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
@@ -491,6 +491,11 @@ class HealthQuote extends Model implements AuditableContract
     public function ftcEmailLogs()
     {
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
+    }
+
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Health);
     }
 
     public function isAUHLead(bool $shouldCheckSource = true)
