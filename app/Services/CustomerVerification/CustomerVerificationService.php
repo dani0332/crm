@@ -24,7 +24,6 @@ class CustomerVerificationService
     private $isCustomerVerificationEnabled = null;
     private $documentTypeCode = null;
 
-
     public function __construct(
         private CapiService $capiService
     ) {}
@@ -73,35 +72,6 @@ class CustomerVerificationService
         return $status->getButtonConfig();
     }
 
-
-    private function determineVerificationStatus($record, array $customerVerifiedData, array $webFormData): ?CustomerVerificationStatus
-    {
-        $hasCustomerData = ! empty(array_filter($customerVerifiedData));
-
-        if (! $hasCustomerData) {
-            return null;
-        }
-
-        if (isset($record->is_customer_data_valid) && $record->is_customer_data_valid === CustomerVerificationStatus::VERIFIED->value) {
-            return CustomerVerificationStatus::VERIFIED;
-        }
-
-        $allFieldsMatch = true;
-        foreach ($webFormData as $field => $webValue) {
-            $customerValue = $customerVerifiedData[$field] ?? '';
-
-            $normalizedWeb = trim(strtolower((string) $webValue));
-            $normalizedCustomer = trim(strtolower((string) $customerValue));
-
-            if ($normalizedWeb !== $normalizedCustomer) {
-                $allFieldsMatch = false;
-                break;
-            }
-        }
-
-        return $allFieldsMatch ? CustomerVerificationStatus::VERIFIED : CustomerVerificationStatus::REQUIRES_VERIFICATION;
-    }
-
     private function getVerificationButtonData($record, array $webFormData, array $customerVerifiedData): array
     {
         $status = $record->is_customer_data_valid === 1
@@ -109,7 +79,7 @@ class CustomerVerificationService
             : ($record->is_customer_data_valid === 0
                 ? CustomerVerificationStatus::REQUIRES_VERIFICATION
                 : null);
-        
+
         if ($status === null) {
             return [
                 'status' => null,
@@ -194,8 +164,9 @@ class CustomerVerificationService
             }
 
             $customerVerifiedData = json_decode($verificationRecord->customer_verified_data, true);
+
             return [
-                'nationality' =>  array_key_exists('nationality_id', $customerVerifiedData)
+                'nationality' => array_key_exists('nationality_id', $customerVerifiedData)
                     ? $this->getNationalityById($customerVerifiedData['nationality_id'])
                     : '',
                 'carMakeAndModel' => array_key_exists('carMakeAndModel', $customerVerifiedData)
@@ -346,8 +317,8 @@ class CustomerVerificationService
             'response' => $response,
         ]);
 
-        $verificationSuccess = $response && !isset($response->error) && isset($response->message);
-        
+        $verificationSuccess = $response && ! isset($response->error) && isset($response->message);
+
         LoggerService::info('Customer verification status updated, broadcasting event', extra: [
             'quote_uuid' => $quote->uuid,
             'quote_type' => QuoteTypes::CAR->value,
