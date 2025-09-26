@@ -1360,6 +1360,14 @@ if (! function_exists('getManagersByUser')) {
 if (! function_exists('roundNumber')) {
     function roundNumber($number, $precision = 2)
     {
+        if (is_string($number)) {
+            $number = is_numeric($number) ? (float) $number : 0;
+        }
+
+        if (!is_numeric($number)) {
+            return 0;
+        }
+
         return round($number, $precision);
     }
 }
