@@ -1,5 +1,6 @@
 <script setup>
 import LeadAssignment from '../Partials/LeadAssignment.vue';
+import CreateLeadModal from '../../../Components/CreateLeadModal.vue';
 
 defineProps({
   quotes: Object,
@@ -17,6 +18,10 @@ defineProps({
   authorizedDays: Number,
   assignmentTypes: Object,
   insurerAMLStatus: Object,
+  subSources: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const page = usePage();
@@ -33,10 +38,7 @@ const quoteSegments = page.props.quoteSegments;
 const cleanObj = obj => useCleanObj(obj);
 const exportLoader = ref(false);
 
-const createLead = reactive({
-  modal: false,
-  type: '',
-});
+const createLeadModal = ref(false);
 
 const serverOptions = ref({
   page: 1,
@@ -526,11 +528,9 @@ const fetchTeamUsers = () => {
     });
 };
 
-const onConfirmCreateLead = () => {
-  if (createLead.type === 'referral') {
-    router.get(route('car.create'));
-  }
-  createLead.modal = false;
+const onLeadConfirmed = (leadData) => {
+  // Handle the confirmed lead data if needed
+  console.log('Lead confirmed:', leadData);
 };
 
 function daysAgoFromAuthorizedDate(authorizedDate) {
@@ -797,7 +797,7 @@ const onConfirmPUAExport = () => {
         size="sm"
         color="#ff5e00"
         tag="div"
-        @click="createLead.modal = true"
+        @click="createLeadModal = true"
         v-if="readOnlyMode.isDisable === true"
       >
         Create Lead
@@ -1479,45 +1479,12 @@ const onConfirmPUAExport = () => {
       }"
     />
 
-    <x-modal
-      v-model="createLead.modal"
-      size="md"
-      title="Create Lead"
-      show-close
-      backdrop
-    >
-      <div class="w-full grid md:grid-cols-2 gap-5">
-        <p class="text-md font-bold text-gray-500">
-          Select reason to create manual lead <span class="error">*</span>
-        </p>
-      </div>
-      <div class="flex w-full flex-col gap-5 mt-4 mb-4">
-        <x-form-group v-model="createLead.type">
-          <x-radio value="referral" label="Referral" />
-          <x-radio value="early_renewal" label="Early Renewal" />
-          <x-radio value="payment_status" label="Payment Status" />
-        </x-form-group>
-      </div>
-      <template #actions>
-        <x-button
-          ghost
-          tabindex="-1"
-          size="md"
-          type="button"
-          @click.prevent="createLead.modal = false"
-        >
-          Cancel
-        </x-button>
-        <x-button
-          size="md"
-          color="emerald"
-          type="button"
-          @click.prevent="onConfirmCreateLead"
-        >
-          Confirm
-        </x-button>
-      </template>
-    </x-modal>
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="car.create"
+      :sub-sources="subSources"
+      @confirmed="onLeadConfirmed"
+    />
 
     <!-- PUA Export Modal -->
     <x-modal
