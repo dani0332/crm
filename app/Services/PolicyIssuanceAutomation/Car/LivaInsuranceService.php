@@ -949,7 +949,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'driver_license_number' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['LicenseNo'] ?? '',
                 'driver_license_issue_place' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
                 'driver_uae_driving_experience' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['LocalLicense'] ?? 0, // optional
-                // 'driver_home_country_license_issuance' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
+                'driver_home_country_license_issuance' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
                 'driver_home_country_driving_experience' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['OtherLicense'] ?? 0, // optional
             ];
 

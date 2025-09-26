@@ -1084,6 +1084,12 @@ watch(
     emit('update:chassisNumber', newChassisNumber);
   },
 );
+
+watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newValue) => {
+  if (newValue) {
+    additionalVehicleTransactionDetailsForm.policy_effective_date = formatDate(newValue);
+  }
+});
 </script>
 
 <template>

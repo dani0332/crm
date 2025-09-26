@@ -65,7 +65,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['uae_driving_experience'] = 'nullable|numeric|min:0|max:50';
             $rules['home_country_license_issuance'] = 'nullable|string|max:255';
             $rules['home_country_driving_experience'] = 'nullable|numeric|min:0|max:50';
-            $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
         }
 
         if ($isGIG) {

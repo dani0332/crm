@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 const { isRequired } = useRules();
 
 const props = defineProps({
@@ -225,7 +225,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
         // driver_license_issue_date: 'license_issue_date',
         // driver_license_expiry_date: 'license_expiry_date',
         driver_uae_driving_experience: 'uae_driving_experience',
-        // driver_home_country_license_issuance: 'home_country_license_issuance',
+        driver_home_country_license_issuance: 'home_country_license_issuance',
         driver_home_country_driving_experience: 'home_country_driving_experience',
       },
     };
@@ -241,6 +241,12 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
   }
 }, { deep: true },
 );
+
+watch(() => additionalDriverDetailsForm.driver_dob, (newValue) => {
+  if (newValue) {
+    additionalDriverDetailsForm.driver_dob = formatDate(newValue);
+  }
+});
 </script>
 
 <template>
