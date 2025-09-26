@@ -46,6 +46,16 @@ class CustomerVerificationService
         return ['webForm' => [], 'customerVerified' => [], 'buttonData' => ['shouldShow' => false]];
     }
 
+    private function extractOcrValue(array $ocrData, string $key, $default = null)
+    {
+        return $ocrData[$key] ?? $default;
+    }
+
+    private function hasOcrKey(array $ocrData, string $key): bool
+    {
+        return array_key_exists($key, $ocrData);
+    }
+
     private function getEmptyVerificationData(QuoteTypes $quoteType): array
     {
         return match ($quoteType) {
@@ -265,16 +275,23 @@ class CustomerVerificationService
     {
         $verificationData = [];
 
-        $verificationData['date_of_birth'] = $ocrData['dateOfBirth'];
-
-        $nationalityId = $this->getNationalityId($ocrData['nationality']);
-        if ($nationalityId) {
-            $verificationData['nationality_id'] = $nationalityId;
-        } else {
-            $verificationData['nationality_id'] = null;
+        if ($this->hasOcrKey($ocrData, 'dateOfBirth')) {
+            $verificationData['date_of_birth'] = $this->extractOcrValue($ocrData, 'dateOfBirth');
         }
 
-        $verificationData['name'] = $ocrData['name'];
+        if ($this->hasOcrKey($ocrData, 'nationality')) {
+            $nationality = $this->extractOcrValue($ocrData, 'nationality');
+            $nationalityId = $this->getNationalityId($nationality);
+            if ($nationalityId) {
+                $verificationData['nationality_id'] = $nationalityId;
+            } else {
+                $verificationData['nationality_id'] = null;
+            }
+        }
+
+        if ($this->hasOcrKey($ocrData, 'name')) {
+            $verificationData['name'] = $this->extractOcrValue($ocrData, 'name');
+        }
 
         try {
             $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
@@ -293,8 +310,13 @@ class CustomerVerificationService
     {
         $verificationData = [];
 
-        $verificationData['carMakeAndModel'] = $ocrData['vehicalType'];
-        $verificationData['carModelYear'] = $ocrData['vehicalModel'];
+        if ($this->hasOcrKey($ocrData, 'vehicalType')) {
+            $verificationData['carMakeAndModel'] = $this->extractOcrValue($ocrData, 'vehicalType');
+        }
+
+        if ($this->hasOcrKey($ocrData, 'vehicalModel')) {
+            $verificationData['carModelYear'] = $this->extractOcrValue($ocrData, 'vehicalModel');
+        }
 
         try {
             $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
