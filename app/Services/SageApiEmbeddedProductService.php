@@ -1212,7 +1212,7 @@ class SageApiEmbeddedProductService
             ],
             [
                 'OptionalField' => 'INSTAXINVAMT',
-                'Value' => $sageRequestEmbeddedProduct->totalPrice,
+                'Value' => (string) $sageRequestEmbeddedProduct->totalPrice,
             ],
             [
                 'OptionalField' => 'PAYMENTGTWAY',
