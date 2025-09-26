@@ -4,7 +4,9 @@ namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Services\CQF\CarCQFRenewalService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
+use App\Enums\Logger\LoggerFeatureEnum;
 
 class ProcessCarCQFRenewalLeads extends Command
 {
@@ -27,13 +29,15 @@ class ProcessCarCQFRenewalLeads extends Command
      */
     public function handle()
     {
+        LoggerService::startQuoteLogging(self::class, LoggerFeatureEnum::CAR_CQF_RENEWALS);
+
         $isCarCQFRenewals = getAppStorageValueByKey(ApplicationStorageEnums::CAR_CQF_RENEWALS_SWITCH);
         if ($isCarCQFRenewals) {
-            info('Starting process to retrieve car cqf renewal leads | Time: '.now());
+            LoggerService::info('Starting process to retrieve car cqf renewal leads ');
             app(CarCQFRenewalService::class)->processCarCQFRenewalLeads();
-            info('Completed process to retrieve car cqf renewal leads | Time: '.now());
+            LoggerService::info('Completed process to retrieve car cqf renewal leads ');
         } else {
-            info('Car CQF Renewals Switch is disabled | Time: '.now());
+            LoggerService::info('Car CQF Renewals Switch is disabled ');
         }
 
     }
