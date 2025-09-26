@@ -19,6 +19,7 @@ final class WorkflowTypeEnum extends Enum
     public const HEALTH_APPLICATION_SUBMITTED = 'health_application_submitted';
     public const TRAVEL_RENEWALS_OCB = 'travel_renewals_ocb';
     public const HOME_AUTOMATED_FOLLOWUPS = 'home_automated_followups';
+    public const HOME_RENEWAL_AUTOMATED_FOLLOWUPS = 'home_renewal_automated_followups';
     public const WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS = 'whatsapp_notification_to_customer_no_plans';
     public const TRAVEL_ALLIANCE_FAILED_ALLOCATION = 'travel_alliance_failed_allocation';
     public const HOME_RENEWAL_OCB = 'home_renewal_ocb';
