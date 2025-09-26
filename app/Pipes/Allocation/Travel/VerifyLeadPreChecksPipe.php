@@ -3,7 +3,7 @@
 namespace App\Pipes\Allocation\Travel;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\quoteTypeCode;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -45,7 +45,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             ->where(function ($query) {
                 $query->sicFlowDisabled()
                     ->orWhere(function ($subQuery) {
-                        $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                        $subQuery->sicFlowEnabled()->advisorRequestedOrPaymentAuthorizedOrDeclined();
                     });
             })
             ->first();
@@ -71,7 +71,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             $insurer = getInsuranceProvider($payment, $this->allocationRequest->getQuoteType()->value);
             $insurerCode = $insurer?->code;
 
-            $isALNC = $insurerCode == InsuranceProvidersEnum::ALNC;
+            $isALNC = $insurerCode == InsuranceProviderEnum::ALNC->value;
 
             $isALNC && LoggerService::info(self::class.":verifyFetchLeadPreChecks - it is Alliance so checking for automation status with insurer code: {$insurerCode} and payment code: {$payment?->code}");
 

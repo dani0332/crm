@@ -14,6 +14,7 @@ use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
+use App\Jobs\SendFailedPaymentEmailJob;
 use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
@@ -65,6 +66,8 @@ class TravelQuoteObserver
         if (isset($dirty['advisor_id'])) {
             try {
                 $travelQuote->markLeadAllocationPassed();
+
+                SendFailedPaymentEmailJob::dispatch($travelQuote->uuid, QuoteTypes::TRAVEL);
 
                 LogAllocation::dispatch($travelQuote, QuoteTypes::TRAVEL);
 

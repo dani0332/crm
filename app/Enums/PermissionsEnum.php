@@ -217,6 +217,7 @@ final class PermissionsEnum extends Enum
     public const RenewalsBatches = 'renewals-batches';
     public const CarQuoteSearch = 'car-quotes-search';
     public const UtmLeadsSalesReport = 'utm-leads-sales-report';
+    public const UtmReportExport = 'utm-report-export';
     public const TeamThresholdView = 'team-allocation-threshold-view';
     public const CAR_REVIVAL_QUOTE_LIST = 'carrevival-quotes-list';
     public const CAR_REVIVAL_QUOTES_EDIT = 'carrevival-quotes-edit';
@@ -385,6 +386,7 @@ final class PermissionsEnum extends Enum
     public const UPLOAD_HEALTH_COVERAGES = 'upload-health-coverages';
     public const EXPORT_RM_LEADS = 'export-rm-leads';
     public const EXPORT_CAR_PUA_UPDATES = 'export-car-pua-updates';
+    public const EXPORT_HOME_PUA_UPDATES = 'export-home-pua-updates';
     public const CORPLINE_LEAD_ALLOCATION_DASHBOARD = 'corpline-lead-allocation-dashboard';
     public const CYCLE_LEAD_ALLOCATION_DASHBOARD = 'cycle-lead-allocation-dashboard';
     public const YACHT_LEAD_ALLOCATION_DASHBOARD = 'yacht-lead-allocation-dashboard';
@@ -392,6 +394,7 @@ final class PermissionsEnum extends Enum
     public const LIFE_LEAD_ALLOCATION_DASHBOARD = 'life-lead-allocation-dashboard';
     public const HOME_LEAD_ALLOCATION_DASHBOARD = 'home-lead-allocation-dashboard';
     public const GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD = 'group-medical-lead-allocation-dashboard';
+    public const TRAVEL_LEAD_ALLOCATION_DASHBOARD = 'travel-lead-allocation-dashboard';
     public const UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE = 'update-lead-status-to-fake-duplicate';
     public const SEARCH_INSURER_TAX_INVOICE_NUMBER = 'search-insurer-tax-invoice-number';
     public const SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER = 'search-insurer-commission-tax-invoice-number';
@@ -420,6 +423,7 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_LEADPOOL = 'corpline-leadpool';
     public const CYCLE_LEADPOOL = 'cycle-leadpool';
     public const GROUP_MEDICAL_LEADPOOL = 'group-medical-leadpool';
+    public const TRAVEL_LEADPOOL = 'travel-leadpool';
     public const POLICY_DETAILS_ADD_VAT = 'policy-details-add-vat';
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
@@ -429,6 +433,7 @@ final class PermissionsEnum extends Enum
     public const PLAN_DETAILS_EDIT = 'plan-details-edit';
     public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
     public const LEADS_BY_EMAIL = 'leads-by-email';
+    public const BOR_DOCUMENT_UPLOAD = 'bor-document-upload';
     public const ASSIGN_CLIENT_SUPPORT = 'oe-ae-assign-client-support';
     public const ASSIGN_LEAD_ADVISOR = 'pe-oe-assign-leads-advisor';
 
@@ -446,6 +451,7 @@ final class PermissionsEnum extends Enum
     // End of Savings Permissions
 
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
+    public const EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS = 'edit-vehicle-transaction-driver-details';
 
     public static function getAdvisorConversionReportPermissions()
     {

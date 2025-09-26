@@ -394,7 +394,7 @@ class BusinessQuoteService extends BaseService
             $this->query->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
 
-        $this->whereBasedOnRole($this->query, 'bqr');
+        $this->whereBasedOnRole($this->query, 'bqr', quoteTypeCode::Business);
         if (isset($request->is_renewal) && $request->is_renewal != '') {
             if ($request->is_renewal == quoteTypeCode::yesText) {
                 $this->query->whereNotNull('bqr.previous_quote_policy_number');
@@ -437,7 +437,7 @@ class BusinessQuoteService extends BaseService
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if ($request[$item][0] == 'null') {
+                    if (count($request[$item]) === 1 && $request[$item][0] == '-1') {
                         $this->query->whereNull('advisor_id');
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);
@@ -454,6 +454,20 @@ class BusinessQuoteService extends BaseService
                     $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
                 }
             }
+        }
+
+        // Apply authorize_date filter
+        if (! empty($request->authorize_date) && is_array($request->authorize_date) && count($request->authorize_date) >= 2) {
+            $startDate = Carbon::parse($request->authorize_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->authorize_date[1])->endOfDay();
+            $this->query->whereBetween('py.authorized_at', [$startDate, $endDate]);
+        }
+
+        // Apply captured_date filter
+        if (! empty($request->captured_date) && is_array($request->captured_date) && count($request->captured_date) >= 2) {
+            $startDate = Carbon::parse($request->captured_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->captured_date[1])->endOfDay();
+            $this->query->whereBetween('py.captured_at', [$startDate, $endDate]);
         }
 
         $this->adjustQueryByDateFilters($this->query, 'bqr');

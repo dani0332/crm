@@ -339,6 +339,7 @@ export function getQuoteType(id, returnType = 'code') {
     10: { code: 'CYC', id: 'cycle', link: '/personal-quotes' },
     11: { code: 'JSK', id: 'jetski', link: '/personal-quotes' },
     18: { code: 'SAV', id: 'savings', link: '/personal-quotes' },
+    102: { code: 'BUS', id: 'amt', link: '/medical' },
   };
   return types[id] ? types[id][returnType] : '';
 }
@@ -363,7 +364,8 @@ export const calculateDaysDifference = (start_date, end_date) => {
     const end = new Date(end_date);
     const diffTime = Math.abs(end - start);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    // add 1 to the difference to include the end date n start date
+    return diffDays + 1;
   }
   return 0;
 };

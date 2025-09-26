@@ -140,7 +140,12 @@ class BuyLeadService
 
     public function getTrackingData(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate, bool $isExport = false)
     {
-        return BuyLeadRequestLog::select('buy_lead_request_logs.id', 'buy_lead_request_logs.quote_type_id', 'buy_lead_request_logs.uuid as ref_id', 'buy_lead_requests.created_at', 'departments.name as department')
+        return BuyLeadRequestLog::select(
+            'buy_lead_request_logs.id',
+            'buy_lead_request_logs.quote_type_id',
+            'buy_lead_request_logs.uuid as ref_id',
+            'buy_lead_requests.created_at',
+            'departments.name as department')
             ->selectRaw('CONCAT(ROUND(buy_lead_requests.cost_per_lead, 0), " AED") as cost')
             ->with('quoteType:id,code')
             ->join('buy_lead_requests', 'buy_lead_requests.id', '=', 'buy_lead_request_logs.buy_lead_request_id')

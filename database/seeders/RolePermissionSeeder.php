@@ -31,6 +31,7 @@ class RolePermissionSeeder extends Seeder
         $this->addRenewalsUploadPermission();
         // $this->addPolicyDetailsAddVatPermission();
         $this->addNationalityAllocationConfigPermission();
+        $this->addBorDocumentUploadPermission();
         $this->addPlanDetailsEditPermission();
         $this->addOverrideCommissionPermission();
         $this->addAssignClientSupportPermission();
@@ -38,6 +39,8 @@ class RolePermissionSeeder extends Seeder
         $this->addLeadsByEmailPermission();
         $this->addEmbeddedProductPaymentCancelAdminPermission();
 
+        $this->addExportHomePuaUpdatesPermission();
+        $this->addUtmReportExportPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -391,6 +394,62 @@ class RolePermissionSeeder extends Seeder
 
         if ($engineeringRole && ! $engineeringRole->hasPermissionTo($permission)) {
             $engineeringRole->givePermissionTo($permission);
+        }
+    }
+
+    private function addBorDocumentUploadPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::BOR_DOCUMENT_UPLOAD,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        // Assign to Admin and Engineering roles initially
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+            }
+        }
+    }
+
+    private function addExportHomePuaUpdatesPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::EXPORT_HOME_PUA_UPDATES,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Assign to Admin and Engineering roles initially
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+            }
+        }
+    }
+
+    private function addUtmReportExportPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::UtmReportExport,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Assign to Admin role by default
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+        if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
+            $adminRole->givePermissionTo($permission);
         }
     }
 }

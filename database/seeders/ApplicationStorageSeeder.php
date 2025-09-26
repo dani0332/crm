@@ -26,6 +26,16 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BULK_POLICY_DOCUMENT_SEND_CODES],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_UNIVERSAL_SEARCH],
             [
                 'value' => 0,
@@ -111,13 +121,36 @@ class ApplicationStorageSeeder extends Seeder
         $this->savingsLOB();
 
         $this->seedOcrEnabled();
+        $this->seedGIGCarPolicyIssuance();
         $this->seedSukoonMedexProductSlug();
         $this->seedLOBCutOffDates();
+        $this->seedBorWorkflowUrl();
         $this->seedTravelEnquiryEmail();
+        $this->seedOcrSendUpdateLogFlag();
+        $this->seedProductionApprovalEmails();
     }
 
     private function seedBirdWorkflowUrls()
     {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AUTOMATED_HOME_RENEWAL_FOLLOWUP_SWITCH],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_RENEWAL_AUTOMATED_FOLLOWUPS],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/cf06f7d2-1c3b-4051-80f5-d0ed503b996a/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION],
             [
@@ -546,6 +579,28 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedGIGCarPolicyIssuance()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_GIG_CAR_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_GIG_CAR_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+    }
+
     private function seedSukoonMedexProductSlug()
     {
         ApplicationStorage::firstOrCreate(
@@ -582,12 +637,58 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedBorWorkflowUrl()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/e6b4f8c2-74d7-4cc2-a1dd-d9e18d8b4655/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function seedTravelEnquiryEmail()
     {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL],
             [
                 'value' => 'travel-enquiries@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+    }
+
+    private function seedOcrSendUpdateLogFlag()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_SENDUPDATE_OCR],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+    }
+
+    private function seedProductionApprovalEmails()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PRODUCTION_APPROVAL_EMAIL],
+            [
+                'value' => 'production.approval@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::APPROVAL_PRODUCTION_EMAIL],
+            [
+                'value' => 'approval.production@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]

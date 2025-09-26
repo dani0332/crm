@@ -74,6 +74,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'company_name as car_company_name',
             'lead_assignment_trigger',
             'customer_id',
+            'insurance_provider_id',
         ], [
             'payment:id,paymentable_id,paymentable_type,authorized_at',
             'batch:id,name',
@@ -93,6 +94,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'carTypeInsurance:id,text',
             'customer:id,pcp_tag',
             'quoteTags:quote_uuid,name',
+            'insuranceProvider:id,text',
         ]);
     }
 
@@ -167,6 +169,42 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 $query->whereRelation('payments', 'insurer_commmission_invoice_number', $getFilterValue('insurer_commission_tax_invoice_number'));
             })
             ->filterByDateRange('booking_date', 'policy_booking_date', requestParams: $requestParams)
+            ->when($hasFilterValue('authorize_date'), function ($query) use ($getFilterValue) {
+                $authorizedAtRange = $getFilterValue('authorize_date');
+
+                // Handle authorize_date as an array of two dates [start_date, end_date]
+                if (is_array($authorizedAtRange) && count($authorizedAtRange) >= 2) {
+                    $startDate = $authorizedAtRange[0];
+                    $endDate = $authorizedAtRange[1];
+
+                    if ($startDate && $endDate) {
+                        $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('authorized_at', [
+                                $this->parseDate($startDate, true),
+                                $this->parseDate($endDate, false),
+                            ]);
+                        });
+                    }
+                }
+            })
+            ->when($hasFilterValue('captured_date'), function ($query) use ($getFilterValue) {
+                $capturedAtRange = $getFilterValue('captured_date');
+
+                // Handle captured_date as an array of two dates [start_date, end_date]
+                if (is_array($capturedAtRange) && count($capturedAtRange) >= 2) {
+                    $startDate = $capturedAtRange[0];
+                    $endDate = $capturedAtRange[1];
+
+                    if ($startDate && $endDate) {
+                        $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('captured_at', [
+                                $this->parseDate($startDate, true),
+                                $this->parseDate($endDate, false),
+                            ]);
+                        });
+                    }
+                }
+            })
             ->when($this->shouldApplyDatesFilter($requestParams) && ! $hasFilterValue('created_at_start'), function ($query) {
                 $query->filterByToday();
             })

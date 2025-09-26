@@ -28,4 +28,21 @@ final class PaymentStatusEnum extends Enum
     public const CREDIT_APPROVED = 16;
     public const PARTIALLY_PAID = 17;
     public const PAYMENT_LINK_REQUESTED = 18;
+
+    public static function getPaidStatuses()
+    {
+        return [
+            self::AUTHORISED,
+            self::PAID,
+            self::CAPTURED,
+        ];
+    }
+
+    public static function getDeclinedOrFailedStatuses()
+    {
+        return [
+            self::DECLINED,
+            self::FAILED,
+        ];
+    }
 }
