@@ -227,6 +227,8 @@ const onSubmit = () => {
     });
 };
 
+const leadSourceEnum = page.props.leadSource;
+
 // Geenerate Pdf
 const generatePdf = () => {
   extraAttr.generatePdfLoading = true;
@@ -236,6 +238,7 @@ const generatePdf = () => {
       quoteId: props.uuid,
       version: props.selectedPlan.version,
       saveQuote: true,
+      callSource: leadSourceEnum?.IMCRM?.toLowerCase(),
     })
     .then(response => {
       if (response?.data?.code) {
@@ -248,7 +251,8 @@ const generatePdf = () => {
       }
 
       notification.success({
-        title: 'Pdf generated successfully',
+        title:
+          'Pdf generated successfully, it will be uploaded in the Documents section shortly.',
         position: 'top',
       });
 

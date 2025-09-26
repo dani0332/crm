@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt Creation Process - Sage Integration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Global overflow and text wrapping fix */
+        * {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* Prevent horizontal scrolling */
+        html, body {
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .breadcrumb {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .breadcrumb a {
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            opacity: 1;
+        }
+
+        .breadcrumb span {
+            color: #fff;
+            margin: 0 10px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .content-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            word-wrap: break-word;
+        }
+
+        .content-section h2 {
+            color: #2c3e50;
+            font-size: 2em;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #e74c3c;
+            padding-bottom: 10px;
+        }
+
+        .content-section h3 {
+            color: #34495e;
+            font-size: 1.5em;
+            margin: 25px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            word-break: break-word;
+        }
+
+        .content-section p {
+            color: #555;
+            margin-bottom: 15px;
+            line-height: 1.7;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .receipt-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .receipt-type {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.3);
+            position: relative;
+            overflow: hidden;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .receipt-type::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #f39c12, #27ae60, #3498db);
+        }
+
+        .receipt-type .icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .receipt-type h4 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+
+        .receipt-type p {
+            font-size: 0.95em;
+            opacity: 0.9;
+            line-height: 1.5;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            margin: 0;
+        }
+
+        .process-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .process-step {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);
+            position: relative;
+            overflow: hidden;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .process-step::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #f39c12, #e74c3c, #3498db);
+        }
+
+        .process-step .step-number {
+            background: rgba(255, 255, 255, 0.2);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .process-step h4 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .process-step p {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            margin: 0;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: 'PHP';
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: #e74c3c;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #c0392b;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow: hidden;
+        }
+
+        .highlight h4 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .highlight p {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            margin: 0;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 25px;
+            border-left: 5px solid #e74c3c;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow: hidden;
+        }
+
+        .info-card h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .info-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .info-card li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #555;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .info-card li::before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+        }
+
+        th {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .api-endpoint {
+            background: #27ae60;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            display: inline-block;
+            margin: 5px 0;
+        }
+
+        .method-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .method-badge.post { background: #3498db; }
+        .method-badge.patch { background: #f39c12; }
+
+        .payment-flow {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 25px 0;
+        }
+
+        .payment-flow h4 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .flow-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .flow-step {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 120px;
+            position: relative;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            flex: 1;
+            margin: 5px;
+        }
+
+        .flow-step:not(:last-child):after {
+            content: "→";
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5em;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .content-section {
+                padding: 20px;
+            }
+
+            .receipt-types {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .process-flow {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .flow-steps {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .flow-step {
+                margin: 0;
+                min-width: auto;
+                width: 100%;
+            }
+
+            .flow-step:not(:last-child):after {
+                content: "↓";
+                right: 50%;
+                top: 100%;
+                transform: translateX(50%);
+                position: relative;
+                right: auto;
+                top: auto;
+                transform: none;
+                display: block;
+                margin: 5px 0;
+            }
+
+            .code-block {
+                padding: 15px;
+                font-size: 0.9em;
+            }
+
+            .table-container {
+                font-size: 0.9em;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/docs/index.html">📚 Documentation Home</a>
+            <span>></span>
+            <a href="/docs/booking-process/index.html">Booking Process</a>
+            <span>></span>
+            <span>Receipt Creation</span>
+        </div>
+
+        <div class="header">
+            <h1>🧾 Receipt Creation Process</h1>
+            <p>Comprehensive guide to payment receipt generation and invoice mapping in Sage 300</p>
+        </div>
+
+        <div class="content-section">
+            <h2>🎯 Overview</h2>
+            <p>
+                The receipt creation process specifically handles the generation and posting of payment receipts and prepayments
+                in Sage 300 ERP system for both Accounts Receivable (AR) and Accounts Payable (AP). This process manages the
+                complete lifecycle of receipts from creation through status transitions: Open → Ready to Post → Posted.
+            </p>
+
+            <div class="highlight">
+                <h4>💡 Core Receipt Operations</h4>
+                <p>
+                    AR Prepayment Receipts for customer advance payments, AP Payment Receipts for vendor payments,
+                    Commission Receipts for broker/agent payments, and systematic status management through Sage 300
+                    batch processing workflow with comprehensive error handling and recovery mechanisms.
+                </p>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>🔧 Function Types in This Documentation</h4>
+                    <ul>
+                        <li><strong style="color: #e74c3c;">Sage API Service Methods:</strong> Handle actual API calls to Sage 300</li>
+                        <li><strong style="color: #27ae60;">Payload Factory Methods:</strong> Generate API request structures</li>
+                        <li><strong>Location:</strong> SageApiService.php & SagePayloadFactory.php</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🗄️ Database Storage</h4>
+                    <ul>
+                        <li><strong>AR Receipt IDs:</strong> payment_splits.sage_reciept_id</li>
+                        <li><strong>AP Payment IDs:</strong> payment_splits.sage_ap_payment_receipt_id</li>
+                        <li><strong>Purpose:</strong> Track and reference Sage receipt batches</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>📋 AR & AP Receipt Types</h2>
+
+            <div class="receipt-types">
+                <div class="receipt-type">
+                    <span class="icon">💳</span>
+                    <h4>AR Prepayment Receipts</h4>
+                    <p>Customer advance payment receipts created in AR module. Goes through Open → Ready to Post → Posted status cycle.</p>
+                </div>
+
+                <div class="receipt-type">
+                    <span class="icon">🏦</span>
+                    <h4>AP Payment Receipts</h4>
+                    <p>Vendor payment receipts created in AP module for insurance provider payments. Follows same status workflow.</p>
+                </div>
+
+                <div class="receipt-type">
+                    <span class="icon">💼</span>
+                    <h4>Commission Receipts</h4>
+                    <p>Broker/agent commission payment receipts. Can be both AR (receiving commission) or AP (paying commission) depending on flow.</p>
+                </div>
+
+                <div class="receipt-type">
+                    <span class="icon">🔄</span>
+                    <h4>Receipt Status Lifecycle</h4>
+                    <p>All receipts follow: Create (Open) → Mark Ready to Post → Post to General Ledger (Posted) → Complete</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔄 Receipt Status Lifecycle Workflow</h2>
+
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="step-number">1</div>
+                    <h4>Create Receipt (Open)</h4>
+                    <p>Generate AR/AP receipt batch in Sage 300 with initial "Open" status</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">2</div>
+                    <h4>Ready to Post</h4>
+                    <p>Mark receipt batch as "Ready to Post" status for validation and preparation</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">3</div>
+                    <h4>Post to General Ledger</h4>
+                    <p>Post receipt batch to GL, changing status from "Ready to Post" to "Posted"</p>
+                </div>
+            </div>
+
+            <div class="payment-flow">
+                <h4>📊 Receipt Status Transitions</h4>
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <strong>OPEN</strong>
+                        <div>Initial Creation</div>
+                    </div>
+                    <div class="flow-step">
+                        <strong>READY TO POST</strong>
+                        <div>Validation Complete</div>
+                    </div>
+                    <div class="flow-step">
+                        <strong>POSTED</strong>
+                        <div>In General Ledger</div>
+                    </div>
+                    <div class="flow-step">
+                        <strong>COMPLETE</strong>
+                        <div>Process Finished</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🛠️ Core Receipt Creation Functions</h2>
+            <p><strong>📍 Function Type:</strong> These are <span style="color: #e74c3c; font-weight: bold;">Sage API Service Methods</span> that orchestrate multiple receipt creation calls.</p>
+
+            <h3>💳 createARPrepaymentPremiumReceipts() - API Service Method</h3>
+            <p>Main orchestrator function in <strong>SageApiService</strong> for creating AR prepayment receipts for multiple paid payment splits.</p>
+
+            <div class="code-block">
+                <pre>private function createARPrepaymentPremiumReceipts($sageRequestDataArray, $splitAmount = null)
+{
+    [$sageRequest, $quote, $payment, $paymentSplits] = $sageRequestDataArray;
+    $prepaymentResponses = [];
+
+    // Get all paid payment splits (PAID, PARTIALLY_PAID, CAPTURED)
+    $paidPaymentSplits = $payment->paymentSplits()
+        ->whereIn('payment_status_id', [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::CAPTURED])
+        ->get();
+
+    foreach ($paidPaymentSplits as $paymentSplit) {
+        // Skip credit approval payments
+        $isPaymentMethodCA = in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditApproval]);
+        if ($isPaymentMethodCA) {
+            LoggerService::info('Posting of prepayment skipped due to credit approval');
+            $prepaymentResponses[] = ['status' => true, 'message' => 'Skipped due to credit approval'];
+            continue;
+        }
+
+        // Create individual AR prepayment receipt
+        $createPrepaymentReceiptResponse = $this->createARPrepaymentPremiumReceipt($sageRequest, $quote, $payment, $paymentSplit);
+        $prepaymentResponses[] = $createPrepaymentReceiptResponse;
+    }
+
+    // Check for any failures
+    foreach ($prepaymentResponses as $item) {
+        if ($item['status'] === false) {
+            return ['status' => false, 'message' => $item['message']];
+        }
+    }
+
+    return ['status' => true, 'message' => 'AR Prepayment Receipts posted on sage.'];
+}</pre>
+            </div>
+
+            <h3>🏦 createAPPrepaymentPremiumReceipts() - API Service Method</h3>
+            <p>Main orchestrator function in <strong>SageApiService</strong> for creating AP prepayment receipts for vendor payments to insurance providers.</p>
+
+            <div class="code-block">
+                <pre>private function createAPPrepaymentPremiumReceipts($sageRequestDataArray, $splitAmount = null)
+{
+    [$sageRequest, $quote, $payment, $paymentSplits] = $sageRequestDataArray;
+    $prepaymentResponses = [];
+
+    // Get all paid payment splits
+    $paidPaymentSplits = $payment->paymentSplits()
+        ->whereIn('payment_status_id', [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::CAPTURED])
+        ->get();
+
+    foreach ($paidPaymentSplits as $paymentSplit) {
+        // Skip credit approval payments
+        if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditApproval) {
+            LoggerService::info('Posting of AP prepayment skipped due to credit approval');
+            $prepaymentResponses[] = ['status' => true, 'message' => 'Skipped due to credit approval'];
+            continue;
+        }
+
+        // Create individual AP prepayment receipt
+        $createPrepaymentReceiptResponse = $this->createAPPrepaymentPremiumReceipt($sageRequest, $quote, $payment, $paymentSplit);
+        $prepaymentResponses[] = $createPrepaymentReceiptResponse;
+    }
+
+    // Check for any failures
+    foreach ($prepaymentResponses as $item) {
+        if ($item['status'] === false) {
+            return ['status' => false, 'message' => $item['message']];
+        }
+    }
+
+    return ['status' => true, 'message' => 'AP Prepayment Receipts posted on sage.'];
+}</pre>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔧 Individual Receipt Creation Methods</h2>
+            <p><strong>📍 Function Type:</strong> These are <span style="color: #e74c3c; font-weight: bold;">Sage API Service Methods</span> that handle individual receipt creation with API calls.</p>
+
+            <h3>💳 createARPrepaymentPremiumReceipt() - API Service Method (4 Steps)</h3>
+            <p>Creates individual AR prepayment receipt in <strong>SageApiService</strong> through complete Open → Ready to Post → Posted lifecycle.</p>
+
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="step-number">1</div>
+                    <h4>Customer Verification</h4>
+                    <p>Get Sage customer number using getSageCustomerNumber()</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">2</div>
+                    <h4>Create Receipt (OPEN)</h4>
+                    <p>Create AR prepayment receipt batch with createPrepaymentReceiptPayload()</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">3</div>
+                    <h4>Ready to Post</h4>
+                    <p>Mark batch ready for posting with readyToPostReceiptArPayment()</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">4</div>
+                    <h4>Post to GL (POSTED)</h4>
+                    <p>Post receipt to general ledger with aRPostReceiptsPayment()</p>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <pre>public function createARPrepaymentPremiumReceipt($sageRequest, $quote, $payment, $paymentSplit, $splitAmount = null)
+{
+    // Step 1: Prepare data and get customer number
+    $sageRequest = SagePayloadFactory::globalSagePrepaymentReceiptPayloadData([$quote, $payment, $paymentSplit, $sageRequest, $splitAmount]);
+    $sageCustomerNumberResponse = $sageApiService->getSageCustomerNumber(...);
+    $sageRequest->sage_customer_number = $sageCustomerNumberResponse['sageCustomerNumber'];
+
+    // Step 2: Create AR Prepayment Receipt (OPEN Status)
+    $payLoadOptions = SagePayloadFactory::createPrepaymentReceiptPayload($sageRequest);
+    $createPremiumPrepaymentResponse = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+    $sageResponse = json_decode($createPremiumPrepaymentResponse, true);
+
+    if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
+        // Update payment split with receipt ID
+        $documentNumberForReceipt = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+        $paymentSplit->update(['sage_reciept_id' => $documentNumberForReceipt]);
+
+        // Step 3: Ready to Post (OPEN → READY TO POST)
+        $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
+        $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+
+        // Step 4: Post to General Ledger (READY TO POST → POSTED)
+        $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
+        $postedResponse = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
+
+        return ['status' => true, 'message' => 'Prepayment created'];
+    }
+
+    return ['status' => false, 'message' => 'Document number not generated from sage'];
+}</pre>
+            </div>
+
+            <h3>🏦 createAPPrepaymentPremiumReceipt() - API Service Method (3 Steps)</h3>
+            <p>Creates individual AP prepayment receipt in <strong>SageApiService</strong> for vendor payments through complete lifecycle.</p>
+
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="step-number">5</div>
+                    <h4>Create AP Payment (OPEN)</h4>
+                    <p>Create AP prepayment payment batch with createAPPrepaymentReceiptPayload()</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">6</div>
+                    <h4>Ready to Post</h4>
+                    <p>Mark batch ready for posting with readyToPostAPPaymentReceiptPayload()</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">7</div>
+                    <h4>Post to GL (POSTED)</h4>
+                    <p>Post payment to general ledger with postAPPaymentReceiptPayload()</p>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <pre>public function createAPPrepaymentPremiumReceipt($sageRequest, $quote, $payment, $paymentSplit, $splitAmount = null)
+{
+    // Step 5: Create AP Prepayment Payment (OPEN Status)
+    $sageRequest = SagePayloadFactory::globalSagePrepaymentReceiptPayloadData([$quote, $payment, $paymentSplit, $sageRequest, $splitAmount]);
+    $payLoadOptions = SagePayloadFactory::createAPPrepaymentReceiptPayload($sageRequest);
+    $createAPPremiumPaymentReceipt = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+    $sageResponse = json_decode($createAPPremiumPaymentReceipt, true);
+
+    if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
+        // Update payment split with AP receipt ID
+        $documentNumberForReceipt = $sageResponse['PaymentsAdjustments'][0]['DocumentNumber'];
+        $paymentSplit->update(['sage_ap_payment_receipt_id' => $documentNumberForReceipt]);
+
+        // Step 6: Ready to Post (OPEN → READY TO POST)
+        $readyToPostReceiptAp = SagePayloadFactory::readyToPostAPPaymentReceiptPayload($sageResponse['BatchNumber']);
+        $readyToPostResponse = $this->postToSage300($readyToPostReceiptAp['endPoint'], $readyToPostReceiptAp['payload'], 'PATCH');
+
+        // Step 7: Post to General Ledger (READY TO POST → POSTED)
+        $aPPostReceipts = SagePayloadFactory::postAPPaymentReceiptPayload($sageResponse['BatchNumber']);
+        $postedResponse = $this->postToSage300($aPPostReceipts['endPoint'], $aPPostReceipts['payload']);
+
+        return ['status' => true, 'message' => 'AP Prepayment created'];
+    }
+
+    return ['status' => false, 'message' => 'Document number not generated from sage'];
+}</pre>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🏭 Payload Factory Methods</h2>
+            <p><strong>📍 Function Type:</strong> These are <span style="color: #27ae60; font-weight: bold;">Payload Factory Methods</span> that generate Sage 300 API request structures.</p>
+
+            <h3>🔧 globalSagePrepaymentReceiptPayloadData() - Payload Factory Method</h3>
+            <p>Static method in <strong>SagePayloadFactory</strong> that prepares and normalizes all data required for receipt creation from quote, payment, and split information.</p>
+
+            <div class="code-block">
+                <pre>public static function globalSagePrepaymentReceiptPayloadData($sageRequestData)
+{
+    [$quote, $payment, $paymentSplit, $sageRequest, $splitAmount] = $sageRequestData;
+
+    // Set collection amount from payment split
+    $sageRequest->collection_amount = $paymentSplit->collection_amount;
+    if ($splitAmount != null) {
+        $sageRequest->collection_amount = $splitAmount;
+    }
+
+    // Get insurance provider details
+    $insuranceProvider = getInsuranceProvider($payment, $sageRequest->quoteType, $quote);
+    $sageRequest->sageVenderId = $insuranceProvider?->sage_vendor_id;
+    $sageRequest->insurerName = $insuranceProvider?->text;
+    $sageRequest->insurerCode = $insuranceProvider?->code;
+
+    // Set payment method details
+    $sageRequest->sage_payment_code = $paymentSplit->payment_method;
+    $sageRequest->checkNumber = $paymentSplit->check_detail;
+
+    // Set advisor and customer information
+    $sageRequest->advisor_id = $quote->advisor_id;
+    $sageRequest->customer_id = $quote->customer_id;
+
+    return $sageRequest;
+}</pre>
+            </div>
+
+            <h3>💳 createPrepaymentReceiptPayload() - Payload Factory Method</h3>
+            <p>Static method in <strong>SagePayloadFactory</strong> that creates the Sage 300 AR prepayment receipt payload structure.</p>
+
+            <div class="code-block">
+                <pre>public static function createPrepaymentReceiptPayload($sageRequest, $isCommissionReceipt = false)
+{
+    $optionalFields = self::createPrepaymentOptionalFields($sageRequest);
+    $customerNumber = $sageRequest->sage_customer_number;
+    $bankCode = SageEnum::BANK_CODE_INS;
+    $paymentCode = SageEnum::PAYMENT_CODE_IP;
+    $bankReceiptAmount = roundNumber(floatval($sageRequest->collection_amount));
+
+    $payLoad = [
+        'BatchRecordType' => 'CA',  // AR Receipt Batch
+        'BankCode' => $bankCode,
+        'ReceiptsAdjustments' => [
+            [
+                'BatchType' => 'CA',
+                'CustomerNumber' => $customerNumber,
+                'BankCode' => $bankCode,
+                'BankReceiptAmount' => $bankReceiptAmount,
+                'PaymentCode' => $paymentCode,
+                'ReceiptTransactionType' => 'Prepayment',  // Key: Prepayment type
+                'AppliedReceiptsAdjustments' => [
+                    [
+                        'BatchType' => 'CA',
+                        'CustomerNumber' => $customerNumber,
+                        'ReceiptTransactionType' => 'Prepayment',
+                    ],
+                ],
+                'ReceiptAdjustmentOptionalField' => $optionalFields,
+            ],
+        ],
+    ];
+
+    return [
+        'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
+        'payload' => $payLoad,
+        'sage_request_type' => SageEnum::SRT_CREATE_PP_REC,
+        'entry_type' => SageEnum::SCT_STRAIGHT,
+    ];
+}</pre>
+            </div>
+
+            <h3>🏦 createAPPrepaymentReceiptPayload() - Payload Factory Method</h3>
+            <p>Static method in <strong>SagePayloadFactory</strong> that creates the Sage 300 AP prepayment payment payload structure for vendor payments.</p>
+
+            <div class="code-block">
+                <pre>public static function createAPPrepaymentReceiptPayload($sageRequest)
+{
+    $optionalFields = self::createPrepaymentOptionalFields($sageRequest);
+    $vendorNumber = $sageRequest->sageVenderId;
+    $bankCode = SageEnum::BANK_CODE_INS;
+    $bankReceiptAmount = roundNumber(floatval($sageRequest->collection_amount), 2);
+    $entryDescription = 'CLIENT DIRECT PAYMENT TO '.$sageRequest->insurerCode;
+
+    $payLoad = [
+        'BatchSelector' => 'PY',  // AP Payment Batch
+        'Description' => $entryDescription,
+        'BankCode' => $bankCode,
+        'PaymentsAdjustments' => [
+            [
+                'BatchType' => 'PY',
+                'VendorNumber' => $vendorNumber,  // Insurance provider vendor number
+                'EntryDescription' => $entryDescription,
+                'PaymentTransactionType' => 'Prepayment',  // Key: Prepayment type
+                'BankCode' => $bankCode,
+                'TotalPrepayVendorCurrency' => $bankReceiptAmount,
+                'AppliedPayments' => [
+                    [
+                        'BatchType' => 'PY',
+                        'VendorNumber' => $vendorNumber,
+                        'TransactionType' => 'PrepaymentPosted',
+                    ],
+                ],
+                'PaymentAdjustmentOptionalField' => $optionalFields,
+            ],
+        ],
+    ];
+
+    return [
+        'endPoint' => 'AP/APPaymentAndAdjustmentBatches',
+        'payload' => $payLoad,
+        'sage_request_type' => SageEnum::SRT_CREATE_AP_PP_REC,
+        'entry_type' => SageEnum::SCT_STRAIGHT,
+    ];
+}</pre>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🗄️ Database Tables & Columns</h2>
+
+            <h3>📊 Primary Tables for Receipt Creation</h3>
+
+            <h4>1. payments Table</h4>
+            <p>Main payment information and status tracking.</p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Purpose</th>
+                            <th>Usage in Receipt Creation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>code</td>
+                            <td>VARCHAR(255) PRIMARY KEY</td>
+                            <td>Unique payment identifier</td>
+                            <td>Links payment to payment_splits records</td>
+                        </tr>
+                        <tr>
+                            <td>payment_status_id</td>
+                            <td>INT</td>
+                            <td>Current payment status</td>
+                            <td>Determines if receipt should be created (PAID/CAPTURED)</td>
+                        </tr>
+                        <tr>
+                            <td>frequency</td>
+                            <td>ENUM</td>
+                            <td>Payment frequency type</td>
+                            <td>Determines receipt creation method (UPFRONT/SPLIT_PAYMENTS)</td>
+                        </tr>
+                        <tr>
+                            <td>total_price</td>
+                            <td>DECIMAL(15,2)</td>
+                            <td>Total payment amount</td>
+                            <td>Must be > 0 for receipt creation</td>
+                        </tr>
+                        <tr>
+                            <td>captured_amount</td>
+                            <td>DECIMAL(15,2)</td>
+                            <td>Amount actually captured</td>
+                            <td>Used for receipt amount calculation</td>
+                        </tr>
+                        <tr>
+                            <td>payment_methods_code</td>
+                            <td>VARCHAR(50)</td>
+                            <td>Payment method used</td>
+                            <td>Determines receipt processing logic</td>
+                        </tr>
+                        <tr>
+                            <td>insurance_provider_id</td>
+                            <td>INT</td>
+                            <td>Insurance provider reference</td>
+                            <td>Used for commission receipt creation</td>
+                        </tr>
+                        <tr>
+                            <td>commission</td>
+                            <td>DECIMAL(15,2)</td>
+                            <td>Commission amount</td>
+                            <td>Used for separate commission receipts</td>
+                        </tr>
+                        <tr>
+                            <td>paymentable_id</td>
+                            <td>INT</td>
+                            <td>Polymorphic reference ID</td>
+                            <td>Links to quote/policy being paid</td>
+                        </tr>
+                        <tr>
+                            <td>paymentable_type</td>
+                            <td>VARCHAR(255)</td>
+                            <td>Polymorphic model class</td>
+                            <td>Identifies quote type (CarQuote, HealthQuote, etc.)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4>2. payment_splits Table</h4>
+            <p>Individual payment installments and their processing status.</p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Purpose</th>
+                            <th>Usage in Receipt Creation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>id</td>
+                            <td>INT PRIMARY KEY</td>
+                            <td>Unique split identifier</td>
+                            <td>Primary key for split tracking</td>
+                        </tr>
+                        <tr>
+                            <td>code</td>
+                            <td>VARCHAR(255)</td>
+                            <td>Links to parent payment</td>
+                            <td>Foreign key to payments.code</td>
+                        </tr>
+                        <tr>
+                            <td>sr_no</td>
+                            <td>INT</td>
+                            <td>Split sequence number</td>
+                            <td>Determines processing order (1st installment priority)</td>
+                        </tr>
+                        <tr>
+                            <td>payment_amount</td>
+                            <td>DECIMAL(15,2)</td>
+                            <td>Amount for this split</td>
+                            <td>Used in AppliedReceiptsAdjustments payload</td>
+                        </tr>
+                        <tr>
+                            <td>payment_status_id</td>
+                            <td>INT</td>
+                            <td>Split payment status</td>
+                            <td>Must be PAID/CAPTURED for receipt creation</td>
+                        </tr>
+                        <tr>
+                            <td>due_date</td>
+                            <td>DATE</td>
+                            <td>When payment is due</td>
+                            <td>Determines eligibility for processing</td>
+                        </tr>
+                        <tr>
+                            <td>sage_reciept_id</td>
+                            <td>VARCHAR(100) NULLABLE</td>
+                            <td>Sage receipt reference</td>
+                            <td>Stores Sage receipt ID after creation</td>
+                        </tr>
+                        <tr>
+                            <td>sage_ap_payment_receipt_id</td>
+                            <td>VARCHAR(100) NULLABLE</td>
+                            <td>AP receipt reference</td>
+                            <td>For vendor payment receipts</td>
+                        </tr>
+                        <tr>
+                            <td>captured_at</td>
+                            <td>TIMESTAMP</td>
+                            <td>When payment was captured</td>
+                            <td>Used for receipt date calculation</td>
+                        </tr>
+                        <tr>
+                            <td>collection_amount</td>
+                            <td>DECIMAL(15,2)</td>
+                            <td>Actually collected amount</td>
+                            <td>Used when different from payment_amount</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🗄️ Database Storage - Receipt ID Columns</h2>
+            <p>After successful receipt creation, the system stores Sage receipt IDs in specific database columns for tracking and reference.</p>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>💳 AR Receipt ID Storage</h4>
+                    <ul>
+                        <li><strong>Table:</strong> payment_splits</li>
+                        <li><strong>Column:</strong> sage_reciept_id</li>
+                        <li><strong>Type:</strong> VARCHAR(100) NULLABLE</li>
+                        <li><strong>Stores:</strong> AR receipt batch document number</li>
+                        <li><strong>Updated By:</strong> createARPrepaymentPremiumReceipt()</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🏦 AP Payment ID Storage</h4>
+                    <ul>
+                        <li><strong>Table:</strong> payment_splits</li>
+                        <li><strong>Column:</strong> sage_ap_payment_receipt_id</li>
+                        <li><strong>Type:</strong> VARCHAR(100) NULLABLE</li>
+                        <li><strong>Stores:</strong> AP payment batch document number</li>
+                        <li><strong>Updated By:</strong> createAPPrepaymentPremiumReceipt()</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <pre>// AR Receipt ID Storage Example
+if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
+    $documentNumberForReceipt = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+    $paymentSplit->update(['sage_reciept_id' => $documentNumberForReceipt]);
+}
+
+// AP Payment ID Storage Example
+if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
+    $documentNumberForReceipt = $sageResponse['PaymentsAdjustments'][0]['DocumentNumber'];
+    $paymentSplit->update(['sage_ap_payment_receipt_id' => $documentNumberForReceipt]);
+}</pre>
+            </div>
+
+            <div class="highlight">
+                <h4>🔍 Usage of Stored Receipt IDs</h4>
+                <p>
+                    These stored receipt IDs are used for payment status tracking, reconciliation processes,
+                    error recovery, and linking payment splits to their corresponding Sage 300 receipt batches
+                    for audit trails and financial reporting.
+                </p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔧 Receipt Processing Logic</h2>
+
+            <h3>📋 Payment Split Processing</h3>
+            <p>
+                Both AR and AP receipt creation functions process payment splits based on their payment status,
+                focusing only on splits that have been successfully paid or captured.
+            </p>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>✅ Processed Payment Splits</h4>
+                    <ul>
+                        <li><strong>PAID:</strong> Payment completed successfully</li>
+                        <li><strong>PARTIALLY_PAID:</strong> Partial payment received</li>
+                        <li><strong>CAPTURED:</strong> Payment captured by gateway</li>
+                        <li><strong>Valid Amount:</strong> collection_amount > 0</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>⏭️ Skipped Payment Splits</h4>
+                    <ul>
+                        <li><strong>Credit Approval:</strong> PaymentMethodsEnum::CreditApproval</li>
+                        <li><strong>Pending Status:</strong> Not yet paid or captured</li>
+                        <li><strong>Zero Amount:</strong> No collection amount</li>
+                        <li><strong>Failed Payments:</strong> Payment processing failed</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <pre>// Payment split filtering logic used in both AR and AP functions
+$paidPaymentSplits = $payment->paymentSplits()
+    ->whereIn('payment_status_id', [
+        PaymentStatusEnum::PAID,
+        PaymentStatusEnum::PARTIALLY_PAID,
+        PaymentStatusEnum::CAPTURED
+    ])
+    ->get();
+
+foreach ($paidPaymentSplits as $paymentSplit) {
+    // Skip credit approval payments
+    $isPaymentMethodCA = in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditApproval]);
+    if ($isPaymentMethodCA) {
+        LoggerService::info('Posting of prepayment skipped due to credit approval');
+        continue;
+    }
+
+    // Process individual receipt creation
+    $createPrepaymentReceiptResponse = $this->createARPrepaymentPremiumReceipt($sageRequest, $quote, $payment, $paymentSplit);
+}</pre>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>📊 AR & AP Receipt API Endpoints</h2>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th>Operation</th>
+                            <th>Method</th>
+                            <th>Endpoint</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td rowspan="3">AR</td>
+                            <td>Create Receipt</td>
+                            <td><span class="method-badge post">POST</span></td>
+                            <td><span class="api-endpoint">AR/ARReceiptAndAdjustmentBatches</span></td>
+                            <td>Create AR receipt batch (OPEN status)</td>
+                        </tr>
+                        <tr>
+                            <td>Ready to Post</td>
+                            <td><span class="method-badge patch">PATCH</span></td>
+                            <td><span class="api-endpoint">AR/ARReceiptAndAdjustmentBatches</span></td>
+                            <td>Mark batch ready for posting</td>
+                        </tr>
+                        <tr>
+                            <td>Post to GL</td>
+                            <td><span class="method-badge post">POST</span></td>
+                            <td><span class="api-endpoint">AR/ARPostReceiptsAndAdjustments</span></td>
+                            <td>Post receipt batch to general ledger</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="3">AP</td>
+                            <td>Create Payment</td>
+                            <td><span class="method-badge post">POST</span></td>
+                            <td><span class="api-endpoint">AP/APPaymentBatches</span></td>
+                            <td>Create AP payment batch (OPEN status)</td>
+                        </tr>
+                        <tr>
+                            <td>Ready to Post</td>
+                            <td><span class="method-badge patch">PATCH</span></td>
+                            <td><span class="api-endpoint">AP/APPaymentBatches</span></td>
+                            <td>Mark batch ready for posting</td>
+                        </tr>
+                        <tr>
+                            <td>Post to GL</td>
+                            <td><span class="method-badge post">POST</span></td>
+                            <td><span class="api-endpoint">AP/APPostPayments</span></td>
+                            <td>Post payment batch to general ledger</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="1">Status</td>
+                            <td>Check Status</td>
+                            <td><span class="method-badge">GET</span></td>
+                            <td><span class="api-endpoint">AR/AP...Batches('BatchNumber')</span></td>
+                            <td>Verify current batch status</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>📝 Receipt Status Lifecycle in Actual Functions</h2>
+
+            <h3>💳 createARPrepaymentPremiumReceipt() Status Flow</h3>
+            <p>The actual AR receipt creation function follows the Open → Ready to Post → Posted lifecycle using existing methods.</p>
+
+            <div class="code-block">
+                <pre>// Step 2: Create AR Prepayment Receipt (OPEN Status)
+$payLoadOptions = SagePayloadFactory::createPrepaymentReceiptPayload($sageRequest);
+$createPremiumPrepaymentResponse = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+$sageResponse = json_decode($createPremiumPrepaymentResponse, true);
+
+if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
+    // Update payment split with receipt ID
+    $documentNumberForReceipt = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+    $paymentSplit->update(['sage_reciept_id' => $documentNumberForReceipt]);
+
+    // Step 3: Ready to Post (OPEN → READY TO POST)
+    $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
+    $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+
+    // Step 4: Post to General Ledger (READY TO POST → POSTED)
+    $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
+    $postedResponse = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
+}</pre>
+            </div>
+
+            <h3>🏦 createAPPrepaymentPremiumReceipt() Status Flow</h3>
+            <p>The actual AP payment creation function follows similar lifecycle using existing AP methods.</p>
+
+            <div class="code-block">
+                <pre>// Step 5: Create AP Prepayment Payment (OPEN Status)
+$payLoadOptions = SagePayloadFactory::createAPPrepaymentReceiptPayload($sageRequest);
+$createAPPremiumPaymentReceipt = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+$sageResponse = json_decode($createAPPremiumPaymentReceipt, true);
+
+if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
+    // Update payment split with AP receipt ID
+    $documentNumberForReceipt = $sageResponse['PaymentsAdjustments'][0]['DocumentNumber'];
+    $paymentSplit->update(['sage_ap_payment_receipt_id' => $documentNumberForReceipt]);
+
+    // Step 6: Ready to Post (OPEN → READY TO POST)
+    $readyToPostReceiptAp = SagePayloadFactory::readyToPostAPPaymentReceiptPayload($sageResponse['BatchNumber']);
+    $readyToPostResponse = $this->postToSage300($readyToPostReceiptAp['endPoint'], $readyToPostReceiptAp['payload'], 'PATCH');
+
+    // Step 7: Post to General Ledger (READY TO POST → POSTED)
+    $aPPostReceipts = SagePayloadFactory::postAPPaymentReceiptPayload($sageResponse['BatchNumber']);
+    $postedResponse = $this->postToSage300($aPPostReceipts['endPoint'], $aPPostReceipts['payload']);
+}</pre>
+            </div>
+
+            <h3>📊 Actual Status Lifecycle Steps</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Function</th>
+                            <th>Step</th>
+                            <th>Status</th>
+                            <th>Payload Method Used</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td rowspan="3">AR Receipt</td>
+                            <td>2</td>
+                            <td>OPEN</td>
+                            <td>createPrepaymentReceiptPayload()</td>
+                            <td>Create AR receipt batch</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>READY TO POST</td>
+                            <td>readyToPostReceiptArPayment()</td>
+                            <td>Mark batch ready for posting</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>POSTED</td>
+                            <td>aRPostReceiptsPayment()</td>
+                            <td>Post batch to general ledger</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="3">AP Payment</td>
+                            <td>5</td>
+                            <td>OPEN</td>
+                            <td>createAPPrepaymentReceiptPayload()</td>
+                            <td>Create AP payment batch</td>
+                        </tr>
+                        <tr>
+                            <td>6</td>
+                            <td>READY TO POST</td>
+                            <td>readyToPostAPPaymentReceiptPayload()</td>
+                            <td>Mark batch ready for posting</td>
+                        </tr>
+                        <tr>
+                            <td>7</td>
+                            <td>POSTED</td>
+                            <td>postAPPaymentReceiptPayload()</td>
+                            <td>Post batch to general ledger</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>🔍 Error Recovery in Actual Functions</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>🚨 AR Receipt Error Handling</h4>
+                    <ul>
+                        <li><strong>Batch Status Check:</strong> GET AR/ARReceiptAndAdjustmentBatches</li>
+                        <li><strong>Already Posted Check:</strong> BatchStatus == 'POSTED'</li>
+                        <li><strong>Document Validation:</strong> Check DocumentNumber exists</li>
+                        <li><strong>Database Update:</strong> sage_reciept_id field</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🚨 AP Payment Error Handling</h4>
+                    <ul>
+                        <li><strong>Batch Status Check:</strong> GET AP/APPaymentAndAdjustmentBatches</li>
+                        <li><strong>Already Posted Check:</strong> BatchStatus == 'POSTED'</li>
+                        <li><strong>Document Validation:</strong> Check DocumentNumber exists</li>
+                        <li><strong>Database Update:</strong> sage_ap_payment_receipt_id field</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔧 Integration Points</h2>
+
+            <h3>📞 Called From</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>BookPolicyOnSageJob</h4>
+                    <ul>
+                        <li>Main policy booking orchestrator</li>
+                        <li>Triggers receipt creation after customer verification</li>
+                        <li>Coordinates with invoice creation process</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>PostPrepaymentToSageJob</h4>
+                    <ul>
+                        <li>Handles prepayment receipt posting</li>
+                        <li>Processes split payment installments</li>
+                        <li>Manages payment schedule updates</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>🏗️ Dependencies</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>Models</h4>
+                    <ul>
+                        <li>Payment</li>
+                        <li>PaymentSplits</li>
+                        <li>SageApiLog</li>
+                        <li>SendUpdateLog</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>Services</h4>
+                    <ul>
+                        <li>SagePayloadFactory</li>
+                        <li>LoggerService</li>
+                        <li>SageCustomApiService</li>
+                        <li>PaymentService</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Receipt Creation Documentation</strong> - Sage Integration</p>
+            <p>Part of the Afia Brokerage LLC Technical Documentation</p>
+        </div>
+    </div>
+</body>
+</html>

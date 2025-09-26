@@ -11,6 +11,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -255,7 +256,12 @@ class BusinessQuoteService extends BaseService
             'referenceUrl' => $appUrl,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
-            $dataArr['advisorId'] = Auth::user()->id;
+
+            if (Auth::user()->hasRole([RolesEnum::CLIENTSUPPORTLEAD, RolesEnum::CLIENTSUPPORT])) {
+                $dataArr['supportUserId'] = Auth::user()->id;
+            } else {
+                $dataArr['advisorId'] = Auth::user()->id;
+            }
         }
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
 
@@ -388,7 +394,7 @@ class BusinessQuoteService extends BaseService
             $this->query->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
 
-        $this->whereBasedOnRole($this->query, 'bqr');
+        $this->whereBasedOnRole($this->query, 'bqr', quoteTypeCode::Business);
         if (isset($request->is_renewal) && $request->is_renewal != '') {
             if ($request->is_renewal == quoteTypeCode::yesText) {
                 $this->query->whereNotNull('bqr.previous_quote_policy_number');
@@ -431,7 +437,7 @@ class BusinessQuoteService extends BaseService
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if ($request[$item][0] == 'null') {
+                    if (count($request[$item]) === 1 && $request[$item][0] == '-1') {
                         $this->query->whereNull('advisor_id');
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);
@@ -448,6 +454,20 @@ class BusinessQuoteService extends BaseService
                     $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
                 }
             }
+        }
+
+        // Apply authorize_date filter
+        if (! empty($request->authorize_date) && is_array($request->authorize_date) && count($request->authorize_date) >= 2) {
+            $startDate = Carbon::parse($request->authorize_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->authorize_date[1])->endOfDay();
+            $this->query->whereBetween('py.authorized_at', [$startDate, $endDate]);
+        }
+
+        // Apply captured_date filter
+        if (! empty($request->captured_date) && is_array($request->captured_date) && count($request->captured_date) >= 2) {
+            $startDate = Carbon::parse($request->captured_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->captured_date[1])->endOfDay();
+            $this->query->whereBetween('py.captured_at', [$startDate, $endDate]);
         }
 
         $this->adjustQueryByDateFilters($this->query, 'bqr');
@@ -739,5 +759,55 @@ class BusinessQuoteService extends BaseService
 
         // Return first two words for lengthy names (more than 3 words)
         return $words[0].' '.$words[1];
+    }
+
+    /**
+     * Assign support user to quotes for business LOB
+     */
+    public function assignSupportUser(array $leadIds, int $supportUserId, string $modelType): ?string
+    {
+        $updatedLeadIds = [];
+
+        foreach ($leadIds as $leadId) {
+            // Remove any type suffix if present (e.g., "123|business" -> "123")
+            $id = explode('|', $leadId)[0];
+
+            // Get the quote object using the trait method
+            $quote = $this->getQuoteObject('business', $id);
+            if ($quote) {
+                $quote->support_user_id = $supportUserId;
+                $quote->save();
+                $updatedLeadIds[] = $id;
+            }
+        }
+
+        // Send a single email for all assigned leads
+        if (! empty($updatedLeadIds) && $supportUserId) {
+            try {
+                $quoteType = \App\Enums\QuoteTypes::from(ucfirst($modelType));
+                \App\Jobs\SendSupportUserAssignmentEmailJob::dispatch(
+                    \Illuminate\Support\Facades\Auth::id(),
+                    $supportUserId,
+                    $updatedLeadIds,
+                    $quoteType
+                )->delay(now()->addSeconds(5));
+
+            } catch (\Exception $e) {
+                LoggerService::error('Failed to dispatch support user assignment email job. Message: '.$e->getMessage(), [
+                    'support_user_id' => $supportUserId,
+                    'lead_ids' => $updatedLeadIds,
+                    'model_type' => $modelType,
+                ]);
+            }
+        }
+
+        // Return success message if any leads were updated
+        if (! empty($updatedLeadIds)) {
+            $supportUserName = \App\Models\User::find($supportUserId)->name;
+
+            return $modelType.' Leads has been Assigned To '.$supportUserName;
+        }
+
+        return null;
     }
 }

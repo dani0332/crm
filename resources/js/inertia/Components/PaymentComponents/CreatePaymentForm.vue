@@ -1973,6 +1973,7 @@ const uploadDocument = (doc, files, count) => {
       .post(url, {
         preserveScroll: true,
         preserveState: true,
+        only: ['quoteDocuments', 'quote'],
         onError: errors => {
           documentForm.setError(errors.error);
           notification.error({

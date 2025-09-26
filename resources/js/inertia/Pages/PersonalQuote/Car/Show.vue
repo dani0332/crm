@@ -1,6 +1,7 @@
 <script setup>
 import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
@@ -9,6 +10,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 
 defineProps({
   quote: Object,
@@ -103,6 +105,9 @@ defineProps({
   isFuncsEnabled: Array,
   insurerAMLStatus: String,
   businessActivities: Object,
+  borLogs: Array,
+  apiIssuanceStatus: String,
+  insurerApiStatus: String,
 });
 
 const page = usePage();
@@ -482,6 +487,20 @@ const paymentItems = computed(() => {
 
 const isRenewalUpload = computed(() => {
   return page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD;
+});
+
+const isGIG = computed(() => {
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.AXA
+  );
+});
+
+const isLIVA = computed(() => {
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.RSA
+  );
 });
 
 const leadStatusOptions = computed(() => {
@@ -1623,6 +1642,22 @@ const bookPolicyReloadKey = ref(0);
 const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
 const ocrLoadingDocTypes = reactive(new Set());
 
+// Check if all required policy fields are filled (moved from OcrNotification to avoid duplicates)
+const checkRequiredPolicyFields = () => {
+  const quote = usePage().props?.quote;
+  if (!quote) return false;
+  const requiredFields = [
+    { field: 'policy_number', property: 'quote_policy_number' },
+    { field: 'policy_start_date', property: 'quote_policy_start_date' },
+    { field: 'policy_expiry_date', property: 'quote_policy_expiry_date' },
+    { field: 'price_vat_applicable', property: 'price_vat_applicable' },
+  ];
+  return requiredFields.every(item => {
+    const value = quote[item.field] || quote[item.property];
+    return value !== null && value !== undefined && String(value).trim() !== '';
+  });
+};
+
 // Helper function to check if a document type is currently being processed
 const isDocTypeLoading = docType => {
   const result = ocrLoadingDocTypes.has(docType);
@@ -1687,6 +1722,21 @@ function handleOcrNotification(event) {
         ocrLoadingDocTypes.clear();
         policyDetailReloadKey.value++;
         bookPolicyReloadKey.value++;
+
+        // Check policy fields completion after data reload (only for CERTIFICATE_OF_ISSUANCE)
+        if (
+          status === 'end' &&
+          !event.detail?.error &&
+          docType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value
+        ) {
+          const allFieldsFilled = checkRequiredPolicyFields();
+          if (!allFieldsFilled) {
+            notification.info({
+              title: 'Some required fields are still missing in Policy details',
+              position: 'top',
+            });
+          }
+        }
       },
       preserveState: true,
       preserveScroll: true,
@@ -1844,6 +1894,18 @@ function handleOcrNotification(event) {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT REFERENCE</dt>
                 <dd>{{ record.payment_reference ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ insurerApiStatus ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ apiIssuanceStatus ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">RTA UPLOAD STATUS</dt>
+                <dd>{{ record.rta_upload_status ? 'Done' : 'Pending' }}</dd>
               </div>
             </dl>
             <div class="grid sm:grid-cols-1 mt-3">
@@ -3920,6 +3982,23 @@ function handleOcrNotification(event) {
       :bookPolicyDetails="bookPolicyDetails"
     />
 
+    <BorLogsSection
+      :leadId="record.id"
+      :lob="quoteType"
+      :isCompanyCar="isCompanyCar"
+      :customerData="{
+        customerType: enabledCustomerType,
+        firstName: record.first_name,
+        lastName: record.last_name,
+        companyName: record.company_name,
+        currentlyInsuredWith: record.insurance_provider_id,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
+    />
+
     <BookPolicy
       v-if="
         canAny([
@@ -4328,6 +4407,21 @@ function handleOcrNotification(event) {
   />
 
   <ApiLogs
+    v-if="can(permissionEnum.API_LOG_VIEW)"
+    :type="modelClass"
+    :id="$page.props.record.id"
+    :expanded="sectionExpanded"
+  />
+
+  <PolicyIssuanceApiLogs
+    v-if="isGIG || isLIVA"
+    :type="modelClass"
+    :quoteTypeId="$page.props.quoteTypeId"
+    :id="$page.props.record.id"
+    :expanded="sectionExpanded"
+  />
+
+  <OcrLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="modelClass"
     :id="$page.props.record.id"

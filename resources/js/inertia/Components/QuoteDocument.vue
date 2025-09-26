@@ -38,6 +38,7 @@ const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -179,6 +180,16 @@ const confirmDeleteDoc = () => {
           title: 'File Deleted',
           position: 'top',
         });
+
+        // Emit custom event for accuracy matrix updates
+        window.dispatchEvent(
+          new CustomEvent('document-deleted', {
+            detail: {
+              docId: confirmDeleteData.doc_id,
+              docUuid: confirmDeleteData.doc_uuid,
+            },
+          }),
+        );
       },
     },
   );
@@ -194,6 +205,8 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+  window.addEventListener('document-notification', handleDocumentNotification);
 });
 
 const getS3TempUrl = async docURL => {
@@ -221,6 +234,22 @@ const getS3TempUrl = async docURL => {
     console.error('An error occurred:', error);
   }
 };
+const documentVerificationStatus = ref(page.props.quote.documents_verified);
+
+const handleDocumentNotification = event => {
+  const { quoteUID, status } = event.detail;
+
+  if (quoteUID === page.props.quote.uuid && status === 'success') {
+    documentVerificationStatus.value = true;
+  }
+};
+
+onUnmounted(() => {
+  window.removeEventListener(
+    'document-notification',
+    handleDocumentNotification,
+  );
+});
 </script>
 
 <template>
@@ -241,6 +270,15 @@ const getS3TempUrl = async docURL => {
           class="flex gap-2 mb-4 justify-end"
           v-if="readOnlyMode.isDisable === true"
         >
+          <!-- TODO: Uncomment this when Customer OCR Journey is supported on prod/stage -->
+          <!-- <x-tag
+            v-if="quoteType == quoteTypeCodeEnum.Car"
+            :color="documentVerificationStatus ? 'success' : 'amber'"
+          >
+            {{
+              documentVerificationStatus ? 'Verified' : 'Verification Pending'
+            }}
+          </x-tag> -->
           <DownloadDocuments
             v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
             :quote="page.props.quote"
@@ -311,7 +349,11 @@ const getS3TempUrl = async docURL => {
         <DataTable
           table-class-name="compact"
           :headers="quoteDocumentsTable.columns"
-          :items="quoteDocuments || []"
+          :items="
+            quoteDocuments.filter(
+              d => d.document_type_code != documentTypeCodeEnum.BOR_SIGN,
+            ) || []
+          "
           border-cell
           hide-rows-per-page
           :rows-per-page="15"

@@ -357,4 +357,9 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
     }
+
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Life);
+    }
 }

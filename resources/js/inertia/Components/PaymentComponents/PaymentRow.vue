@@ -12,6 +12,7 @@ const paymentGatewayEnum = page.props.paymentGatewayEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const paymentMethodsEnum = page.props.paymentMethodsEnum;
+const genericRequestEnum = page.props.genericRequestEnum;
 
 const {
   formatDate,
@@ -107,7 +108,7 @@ const getCaptureOption = computed(() => {
   // Return 'capture' if all conditions are met, otherwise return 'approve'
   if (
     (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
-    (isCaptureButtonEnabled && hasAnyCCSplitPayment(props.payments))
+    (isCaptureButtonEnabled && hasAnyCCSplitPayment(payment))
   ) {
     return 'capture';
   }
@@ -140,6 +141,7 @@ const getCaptureValidation = computed(() => {
 });
 
 const shouldProcessUpdate = () => {
+  const insuredApiStatus = props.quoteRequest?.insurer_api_status_id || null;
   const payment = props.payment;
   const totalPriceRounded = Math.round(payment.total_price * 100) / 100;
   const calculatedTotal =
@@ -183,11 +185,18 @@ const shouldProcessUpdate = () => {
     isInsurer &&
     isGIGProvider &&
     enabledQuoteTypesForInsurer.includes(props.quoteType) &&
-    hasAnyCCSplitPayment(props.payments) &&
+    hasAnyCCSplitPayment(payment) &&
     !shouldSendUpdate
   ) {
-    isInsurerAmlCleared =
-      insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
+    if (
+      insuredApiStatus === genericRequestEnum.PREVIOUS_POLICY_EXPIRED_STATUS_ID
+    ) {
+      isInsurerAmlCleared = true;
+    } else {
+      isInsurerAmlCleared =
+        insurerAMLStatus ===
+        page.props.amlStatusEnum.InsurerAMLScreeningCleared;
+    }
     if (isTravelQuote) {
       isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
     } else {
@@ -202,7 +211,7 @@ const shouldProcessUpdate = () => {
       isAmlCleared &&
       isKycVerified(props.quoteRequest, props.quoteType, props.payments) &&
       isTotalPriceMatching &&
-      hasAnyCCSplitPayment(props.payments) &&
+      hasAnyCCSplitPayment(payment) &&
       !shouldSendUpdate &&
       hasPayments &&
       isInsurer
@@ -450,12 +459,7 @@ const amlAndKycTooltip = computed(() => {
             Delete
           </x-button>
         </template>
-        <template
-          v-if="
-            can(permissionEnum.ApprovePayments) &&
-            (!isChildPaymentDeletable || index > 0)
-          "
-        >
+        <template v-if="can(permissionEnum.ApprovePayments)">
           <x-button
             v-if="getCaptureOption === 'capture' && getCaptureValidation"
             size="xs"

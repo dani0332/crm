@@ -120,6 +120,11 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->belongsTo(User::class, 'previous_advisor_id', 'id');
     }
 
+    public function supportUser()
+    {
+        return $this->belongsTo(User::class, 'support_user_id', 'id');
+    }
+
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
@@ -304,5 +309,10 @@ class BusinessQuote extends Model implements AuditableContract
     public function ftcEmailLogs(): MorphMany
     {
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
+    }
+
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Business);
     }
 }

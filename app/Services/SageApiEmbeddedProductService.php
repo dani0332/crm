@@ -186,13 +186,13 @@ class SageApiEmbeddedProductService
             $sageRequestEmbeddedProduct->epSageReceiptId = $arReceiptCreationResponse['documentNumber'];
 
             // Execute AP Prepayment Receipt Post Call
-            $apReceiptCreationResponse = $this->createAPPrepaymentReceipt([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
+            /*$apReceiptCreationResponse = $this->createAPPrepaymentReceipt([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $apReceiptCreationResponse['status']) {
                 $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
 
                 return $apReceiptCreationResponse;
             }
-            $sageRequestEmbeddedProduct->epSageAPReceiptId = $apReceiptCreationResponse['documentNumber'];
+            $sageRequestEmbeddedProduct->epSageAPReceiptId = $apReceiptCreationResponse['documentNumber'];*/
 
             // Create AR Commission and Premium Invoice
             $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
@@ -219,12 +219,12 @@ class SageApiEmbeddedProductService
             }
 
             // Apply Prepayments AP Invoice
-            $applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
+            /*$applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $applyPaymentAPInvoices['status']) {
                 $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
 
                 return $applyPaymentAPInvoices;
-            }
+            }*/
 
             $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_COMPLETED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
 
@@ -1229,7 +1229,10 @@ class SageApiEmbeddedProductService
         $entryType = SageEnum::SCT_STRAIGHT;
 
         // Payload creation logic for default scenario
-        $taxClass = 1;
+        $commissionTaxClass = 2; // if commission vat not applicable added
+        if ($sageRequestEmbeddedProduct->brokerCommissionVatAmount > 0) {
+            $commissionTaxClass = 1; // if commission vat applicable added
+        }
         $premiumDescription = 'P.'.$sageRequestEmbeddedProduct->invoiceDescription;
         $commissionDescription = 'C.'.$sageRequestEmbeddedProduct->invoiceDescription;
         $createdOn = $sageRequestEmbeddedProduct->createdOn;
@@ -1277,17 +1280,16 @@ class SageApiEmbeddedProductService
                     'DueDate' => $createdOnDate,
                     'AsOfDate' => $createdOnDate,
                     'TaxGroup' => 'VAT',
-                    'TaxClass1' => $taxClass,
+                    'TaxClass1' => $commissionTaxClass,
                     'DocumentTotalBeforeTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
-                    'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionTotalAmount),
+                    'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
                     // 'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $commissionDescription,
-                            'TaxClass1' => $taxClass,
-                            'TaxAmount1' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionVatAmount),
+                            'TaxClass1' => $commissionTaxClass,
                             'RevenueAccount' => '60010',
-                            'ExtendedAmountWithTIP' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionTotalAmount),
+                            'ExtendedAmountWithTIP' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
                             'ExtendedAmountWithoutTIP' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
                         ],
                     ],

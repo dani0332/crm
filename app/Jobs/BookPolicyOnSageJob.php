@@ -93,9 +93,13 @@ class BookPolicyOnSageJob implements ShouldQueue
                 // Set status to pending instead of failed when job has been attempted too many times
                 $sageProcessStatus = SageEnum::SAGE_PROCESS_PENDING_STATUS;
             }
-            LoggerService::info('Policy Book : BookPolicyOnSageJob failed: Quote Code'.$this->quote->code.' - Error Code : '.$code.' - Error : '.$message);
+            LoggerService::info('Policy Book : BookPolicyOnSageJob failed: Quote Code'.$this->quote->code.' - Error Code : '.$code.' - Error : '.$message, extra: [
+                'errorTraceMessage' => $exception->getTraceAsString(),
+            ]);
         } else {
-            LoggerService::warning('Policy Book : BookPolicyOnSageJob failed: Quote Code'.$this->quote->code.' - Error Code : '.$code.' - Error : '.$message);
+            LoggerService::warning('Policy Book : BookPolicyOnSageJob failed: Quote Code'.$this->quote->code.' - Error Code : '.$code.' - Error : '.$message, extra: [
+                'errorTraceMessage' => $exception->getTraceAsString(),
+            ]);
         }
 
         LoggerService::info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' updating sage process status to '.$sageProcessStatus);
