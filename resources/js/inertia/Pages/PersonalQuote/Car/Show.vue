@@ -1778,6 +1778,11 @@ function handleCustomerVerificationUpdated(event) {
     preserveScroll: true,
     only: ['quote'],
     onSuccess: () => {
+      console.log('Customer verification data reloaded successfully', {
+        quoteUuid,
+        verificationSuccess
+      });
+      
       // Show appropriate toast notification based on verification result
       if (verificationSuccess) {
         notification.success({
@@ -1794,6 +1799,12 @@ function handleCustomerVerificationUpdated(event) {
       }
     },
     onError: (error) => {
+      console.error('Failed to reload customer verification data:', {
+        quoteUuid,
+        verificationSuccess,
+        error
+      });
+      
       notification.error({
         title: 'Update Failed',
         text: 'Failed to refresh customer verification data',
