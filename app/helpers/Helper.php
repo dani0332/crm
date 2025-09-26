@@ -1364,7 +1364,7 @@ if (! function_exists('roundNumber')) {
             $number = is_numeric($number) ? (float) $number : 0;
         }
 
-        if (!is_numeric($number)) {
+        if (! is_numeric($number)) {
             return 0;
         }
 
@@ -1390,7 +1390,7 @@ if (! function_exists('sanitizeFulltextSearchTerm')) {
         }
 
         // Add wildcard for prefix matching if term doesn't end with one
-        if (!str_ends_with($term, '*')) {
+        if (! str_ends_with($term, '*')) {
             $term .= '*';
         }
 
