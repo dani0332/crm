@@ -39,7 +39,6 @@ class DrivingLicenseDataProcessor
 
             DB::beginTransaction();
 
-            LoggerService::info('driving license data:'. json_encode($processedData['vehicle_driver_detail_fields']));
             // Update VehicleDriverDetail fields
             $vehicleDriverDetailUpdated = false;
             if (! empty($processedData['vehicle_driver_detail_fields'])) {
