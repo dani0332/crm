@@ -599,7 +599,7 @@ class CarQuote extends BaseModel
             'previous_quote_id',
             'id'
         )->select(['id', 'code', 'uuid'])
-         ->with('payments');
+            ->with('payments');
     }
 
 }

@@ -3084,18 +3084,19 @@ class RenewalsUploadService
 
     public function getSearch($data)
     {
-        try{
-        $quotes = [];
-        $product = $data->product;
-        if ($product == QuoteTypeId::Business) {
-            $quotes = BusinessQuoteRepository::getDataOfBusiness()->withQueryString();
-        } else {
-            $quoteType = QuoteTypes::getName($product);
-            $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
-            $quotes = $repository::getData()->withQueryString();
-        }
-        }catch(\Exception $e){
+        try {
+            $quotes = [];
+            $product = $data->product;
+            if ($product == QuoteTypeId::Business) {
+                $quotes = BusinessQuoteRepository::getDataOfBusiness()->withQueryString();
+            } else {
+                $quoteType = QuoteTypes::getName($product);
+                $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
+                $quotes = $repository::getData()->withQueryString();
+            }
+        } catch (\Exception $e) {
             LoggerService::error('UAC FN: getSearch Error: '.$e->getMessage());
+
             return [];
         }
 
@@ -3108,13 +3109,13 @@ class RenewalsUploadService
         $product = $data->product;
         $quoteType = QuoteTypes::getName($product);
         $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
-     
+
         if ($quoteType->value == QuoteTypes::CAR->value) {
             $quotes = $repository::RenewalExport();
         } else {
             $quotes = $repository::export();
         }
-        
+
         return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal');
     }
 

@@ -4,9 +4,8 @@ namespace App\Exports;
 
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
-use App\Traits\ExcelExportable;
-use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
+use App\Traits\ExcelExportable;
 
 class RenewalQuotesExport
 {
