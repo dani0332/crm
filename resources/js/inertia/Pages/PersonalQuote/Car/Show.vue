@@ -1764,7 +1764,7 @@ function handleOcrNotification(event) {
 }
 
 function handleCustomerVerificationUpdated(event) {
-  const { quoteUuid } = event.detail || {};
+  const { quoteUuid, verificationSuccess } = event.detail || {};
   const currentRecord = usePage().props.record;
 
   // Only process notifications for the current quote
@@ -1772,14 +1772,22 @@ function handleCustomerVerificationUpdated(event) {
     return;
   }
 
-  // Show success toast notification
-  notification.success({
-    title: 'Customer Verification Updated',
-    text: 'Customer verification data has been refreshed!',
-    position: 'top',
-  });
+  // Show appropriate toast notification based on verification result
+  if (verificationSuccess) {
+    notification.success({
+      title: 'Document Details Verified',
+      text: 'Document data verified successfully!',
+      position: 'top',
+    });
+  } else {
+    notification.warning({
+      title: 'Verification Mismatch',
+      text: 'Document data could not be verified.',
+      position: 'top',
+    });
+  }
 
-  // Reload quote data
+  // Reload quote data to show updated verification status
   router.reload({
     preserveState: true,
     preserveScroll: true,

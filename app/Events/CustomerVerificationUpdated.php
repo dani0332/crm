@@ -16,11 +16,12 @@ class CustomerVerificationUpdated implements ShouldBroadcastNow
 
     public array $data;
 
-    public function __construct(string $quoteUuid, string $quoteType = null)
+    public function __construct(string $quoteUuid, bool $verificationSuccess, string $quoteType = null)
     {
         $this->data = [
             'quoteUuid' => $quoteUuid,
             'quoteType' => $quoteType ?? QuoteTypes::CAR->value,
+            'verificationSuccess' => $verificationSuccess,
             'timestamp' => now()->toISOString(),
             'message' => 'Customer verification status updated',
         ];
