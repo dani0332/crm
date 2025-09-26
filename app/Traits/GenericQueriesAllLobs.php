@@ -907,4 +907,11 @@ trait GenericQueriesAllLobs
 
         return $nationalityRecord?->id;
     }
+
+    public function getNationalityById($nationalityId): ?string
+    {
+        $nationalityRecord = Nationality::find($nationalityId);
+
+        return $nationalityRecord?->text;
+    }
 }

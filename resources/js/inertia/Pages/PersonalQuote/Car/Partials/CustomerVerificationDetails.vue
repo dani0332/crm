@@ -61,25 +61,7 @@ const { modals, customerVerificationData } = defineProps({
                 <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
                   {{ customerVerificationData.webForm?.dob || '-' }}
                 </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">
-                  Emirate of Registration
-                </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
-                  {{ customerVerificationData.webForm?.emirateOfRegistration || '-' }}
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">
-                  UAE License Held For
-                </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
-                  {{ customerVerificationData.webForm?.uaeLicenseHeldFor || '-' }}
-                </div>
-              </div>
+              </div>        
             </div>
           </div>
 
@@ -123,24 +105,6 @@ const { modals, customerVerificationData } = defineProps({
                 </label>
                 <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
                   {{ customerVerificationData.customerVerified?.dob || '-' }}
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">
-                  Emirate of Registration
-                </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
-                  {{ customerVerificationData.customerVerified?.emirateOfRegistration || '-' }}
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">
-                  UAE License Held For
-                </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
-                  {{ customerVerificationData.customerVerified?.uaeLicenseHeldFor || '-' }}
                 </div>
               </div>
             </div>

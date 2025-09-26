@@ -495,6 +495,7 @@ class CarQuoteService extends BaseService
                 'cqr.insurer_api_status_id',
                 'cqr.rta_upload_status',
                 'cqr.documents_verified',
+                'cqr.is_customer_data_valid',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
