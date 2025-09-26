@@ -18,9 +18,9 @@ class CarCQFEntityService
     public function getCustomerEntity(CarQuote $newQuote, CarQuote $oldQuote): void
     {
         $entityMapping = QuoteRequestEntityMapping::with('entity')
-        ->where('quote_type_id', QuoteTypeId::Car)
-        ->where('quote_request_id', $newQuote->id)
-        ->first();
+            ->where('quote_type_id', QuoteTypeId::Car)
+            ->where('quote_request_id', $newQuote->id)
+            ->first();
 
         if (isset($oldQuote->registration_type) && $oldQuote->registration_type == CarRegistrationType::COMPANY) {
 
@@ -52,6 +52,7 @@ class CarCQFEntityService
     {
         if ($oldQuote->carQuoteRequestDetail) {
             LoggerService::info(self::class.' - Car Quote Request Detail found for quote');
+
             return CarQuoteRequestDetail::create([
                 'car_quote_request_id' => $newQuote->id,
                 'chassis_number' => $oldQuote->carQuoteRequestDetail->chassis_number,
@@ -59,6 +60,7 @@ class CarCQFEntityService
         }
 
         LoggerService::info(self::class.' - Car Quote Request Detail not found for quote');
+
         return null;
     }
 }

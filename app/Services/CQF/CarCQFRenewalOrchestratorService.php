@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\CQF;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -21,7 +22,6 @@ use App\Services\RenewalsUploadService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Sleep;
-use App\Enums\LeadSourceEnum;
 
 class CarCQFRenewalOrchestratorService
 {
@@ -35,14 +35,14 @@ class CarCQFRenewalOrchestratorService
     {
         $renewalDaysThreshold = getAppStorageValueByKey(ApplicationStorageEnums::CAR_CQF_RENEWALS_DAYS_THRESHOLD);
         $startDate = Carbon::now()->addDays((int) $renewalDaysThreshold);
-        
+
         LoggerService::info(self::class." - Car CQF Renewal Leads processing started with Start Date: {$startDate}");
-        
+
         $isQuoteExists = CarQuote::whereDate('policy_expiry_date', $startDate)
             ->whereNotIn('quote_status_id', [
                 QuoteStatusEnum::PolicyCancelled,
                 QuoteStatusEnum::PolicyCancelledReissued,
-                QuoteStatusEnum::CancellationPending
+                QuoteStatusEnum::CancellationPending,
             ])
             ->whereIn('payment_status_id', [
                 PaymentStatusEnum::PAID,
@@ -54,16 +54,17 @@ class CarCQFRenewalOrchestratorService
 
         if (empty($isQuoteExists)) {
             LoggerService::info(self::class." - No quotes found for the given start date: {$startDate}");
+
             return;
         }
 
         $renewalsUploadLeads = $this->createRenewalsUploadLeads();
-        
+
         CarQuote::whereDate('policy_expiry_date', $startDate)
             ->whereNotIn('quote_status_id', [
                 QuoteStatusEnum::PolicyCancelled,
                 QuoteStatusEnum::PolicyCancelledReissued,
-                QuoteStatusEnum::CancellationPending
+                QuoteStatusEnum::CancellationPending,
             ])
             ->whereIn('payment_status_id', [
                 PaymentStatusEnum::PAID,
@@ -75,10 +76,10 @@ class CarCQFRenewalOrchestratorService
             ->chunkById(100, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold) {
                 $quoteCount = $quotes->count();
                 LoggerService::info(self::class." - Total quotes in current chunk: {$quoteCount}");
-                
+
                 if ($quoteCount > 0) {
                     LoggerService::info(self::class." - processing cqf car renewals quotes in chunk: {$quoteCount}");
-                    $this->createCarCQFRenewalLeads($quotes, $renewalsUploadLeads,(int) $renewalDaysThreshold);
+                    $this->createCarCQFRenewalLeads($quotes, $renewalsUploadLeads, (int) $renewalDaysThreshold);
                 } else {
                     LoggerService::info(self::class.' - No quotes in chunk');
                 }
@@ -117,9 +118,10 @@ class CarCQFRenewalOrchestratorService
             try {
                 $this->totalQuotesProcessed++;
                 $validationResult = $validationService->validateQuote($quote);
-                
-                if (!$validationResult['success']) {
+
+                if (! $validationResult['success']) {
                     $this->markQuoteAsCompleted($quote, $renewalsUploadLeads, false, $validationResult['errors']);
+
                     continue;
                 }
 
@@ -128,37 +130,39 @@ class CarCQFRenewalOrchestratorService
                     LoggerService::info(self::class.' - Duplicate quote detected. Skipping processing');
                     $validationErrors = ['policy_number' => "Duplicate quote detected for policy number: $quote->policy_number"];
                     $this->validationErrorsList[] = [
-                        'policy_number' => $quote->policy_number, 
-                        'message' => "Duplicate quote detected for policy number: $quote->policy_number"
+                        'policy_number' => $quote->policy_number,
+                        'message' => "Duplicate quote detected for policy number: $quote->policy_number",
                     ];
                     $this->markQuoteAsCompleted($quote, $renewalsUploadLeads, false, $validationErrors);
+
                     continue;
                 }
 
                 // Check if the quote is an Insly renewal and if the renewal criteria is met
                 if ($quote->source == LeadSourceEnum::INSLY) {
                     $isInslyRenewal = $validationService->checkInslyRenewal($quote);
-                    if (!$isInslyRenewal) {
+                    if (! $isInslyRenewal) {
                         LoggerService::info(self::class.' - Insly renewal criteria not met for policy number', [
-                            'policy_number' => $quote->policy_number
+                            'policy_number' => $quote->policy_number,
                         ]);
                         $validationErrors = ['policy_number' => "Insly renewal criteria not met for policy number: $quote->policy_number"];
                         $this->validationErrorsList[] = [
-                            'policy_number' => $quote->policy_number, 
-                            'message' => "Insly renewal criteria not met for policy number: $quote->policy_number"
+                            'policy_number' => $quote->policy_number,
+                            'message' => "Insly renewal criteria not met for policy number: $quote->policy_number",
                         ];
                         $this->markQuoteAsCompleted($quote, $renewalsUploadLeads, false, $validationErrors);
+
                         continue;
                     }
                 }
 
                 Sleep::for(3)->seconds();
                 LoggerService::info(self::class.' - Processing quote');
-                
+
                 $newQuote = $quoteStorageService->storeCarCQFRenewalQuote(
-                    $quote, 
-                    $renewalsUploadLeads, 
-                    $renewalDaysThreshold, 
+                    $quote,
+                    $renewalsUploadLeads,
+                    $renewalDaysThreshold,
                     $this->epCodes
                 );
 
@@ -187,11 +191,11 @@ class CarCQFRenewalOrchestratorService
             $renewalQuoteProcess->status = RenewalProcessStatuses::BAD_DATA;
             $renewalQuoteProcess->validation_errors = $validationErrors;
             $this->validationErrorsList[] = $validationErrors;
-            
+
             $quoteMappingService = app(CarCQFQuoteMappingService::class);
             $renewalQuoteProcess->data = $quoteMappingService->mapFailedQuoteData($quote);
             $renewalQuoteProcess->save();
-            
+
             $this->errorQuotes++;
             $this->failedPolicyNumbers[] = $quote->policy_number;
             LoggerService::info(self::class.' - Renewal Quote Process not created for quote');

@@ -7,9 +7,9 @@ namespace App\Services\CQF;
 use App\Enums\CarRegistrationType;
 use App\Enums\LeadSourceEnum;
 use App\Models\CarQuote;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\CRUDService;
 use App\Services\Logger\LoggerService;
-use App\Repositories\SendUpdateLogRepository;
 use Illuminate\Support\Facades\Validator;
 
 class CarCQFValidationService
@@ -36,10 +36,10 @@ class CarCQFValidationService
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             LoggerService::error(self::class.' - Quote validation failed', [
-                'errors' => $errors, 
-                'quote_uuid' => $quote->uuid ?? null
+                'errors' => $errors,
+                'quote_uuid' => $quote->uuid ?? null,
             ]);
 
             return [
@@ -68,7 +68,7 @@ class CarCQFValidationService
         // Check if the quote has at least one status of policy issued
         $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
 
-        if (!$hasPolicyIssuedStatus) {
+        if (! $hasPolicyIssuedStatus) {
             return false;
         }
 
@@ -79,25 +79,25 @@ class CarCQFValidationService
         $policyPeriodExtension = false;
         $isUpdateBooked = false;
 
-        if ($quote->source === LeadSourceEnum::INSLY && !empty($sendUpdateLogs)) {
+        if ($quote->source === LeadSourceEnum::INSLY && ! empty($sendUpdateLogs)) {
             foreach ($sendUpdateLogs as $log) {
                 if ($log->isEndorsementFinancial()) {
                     $endorsementFinancial = true;
                     LoggerService::info(self::class.' - Endorsement financial found', [
-                        'policy_number' => $quote->policy_number
+                        'policy_number' => $quote->policy_number,
                     ]);
                 }
 
                 if ($log->isPolicyPeriodExtension()) {
                     LoggerService::info(self::class.' - Policy period extension found', [
-                        'policy_number' => $quote->policy_number
+                        'policy_number' => $quote->policy_number,
                     ]);
                     $policyPeriodExtension = true;
                 }
 
                 if ($log->isUpdateBooked()) {
                     LoggerService::info(self::class.' - Update booked found', [
-                        'policy_number' => $quote->policy_number
+                        'policy_number' => $quote->policy_number,
                     ]);
                     $isUpdateBooked = true;
                 }

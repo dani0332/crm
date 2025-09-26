@@ -5,21 +5,17 @@ declare(strict_types=1);
 namespace App\Services\CQF;
 
 use App\Enums\CarRegistrationType;
+use App\Enums\carTypeInsuranceCode;
 use App\Enums\CarTypeOfInsuranceIdEnum;
-use App\Enums\CustomerTypeEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UAELicenseHeldForEnum;
 use App\Models\CarQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\LookupRepository;
-use App\Repositories\EmbeddedProductRepository;
-use App\Services\InsuranceProviderService;
 use App\Services\RenewalsAddonServices;
 use Illuminate\Support\Carbon;
-use App\Enums\carTypeInsuranceCode;
 
 class CarCQFQuoteMappingService
 {
@@ -81,7 +77,7 @@ class CarCQFQuoteMappingService
         $lookup = LookupRepository::where('key', \App\Enums\LookupsEnum::TRANSACTION_TYPES)
             ->where('code', \App\Enums\LookupsEnum::EXT_CUSTOMER_RENWAL)
             ->first();
-        
+
         if ($lookup) {
             $quoteData['transaction_type_id'] = $lookup->id;
         }
@@ -137,7 +133,7 @@ class CarCQFQuoteMappingService
             carTypeInsuranceCode::Comprehensive,
             carTypeInsuranceCode::ThirdPartyOnly,
         ];
-        
+
         foreach ($typeInsuranceCodes as $enumCase) {
             $enumValue = strtolower($enumCase);
 
@@ -151,7 +147,7 @@ class CarCQFQuoteMappingService
         // Fallback: return the first non-empty original value
         foreach ($fields as $idx => $field) {
             $original = $quote?->plan?->insurance_type ?? $quote?->plan?->text;
-            if (!empty($original)) {
+            if (! empty($original)) {
                 return app(RenewalsAddonServices::class)->getCarTypeOfInsurance($original)->id ?? null;
             }
         }
@@ -166,7 +162,7 @@ class CarCQFQuoteMappingService
 
         // If current is null or not a valid enum, return null
         $currentEnum = UAELicenseHeldForEnum::fromId($currentId);
-        if (!$currentEnum) {
+        if (! $currentEnum) {
             return null;
         }
 

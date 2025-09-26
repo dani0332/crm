@@ -8,7 +8,6 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
-use App\Models\EmbeddedTransaction;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\EmbeddedProductRepository;
 use App\Services\CapiRequestService;
@@ -18,13 +17,13 @@ use Illuminate\Support\Carbon;
 class CarCQFQuoteStorageService
 {
     public function storeCarCQFRenewalQuote(
-        CarQuote $quote, 
-        RenewalsUploadLeads $renewalsUploadLeads, 
+        CarQuote $quote,
+        RenewalsUploadLeads $renewalsUploadLeads,
         int $renewalDaysThreshold,
         array &$epCodes
     ): ?CarQuote {
         LoggerService::info(self::class.' - Storing car cqf renewal quote');
-        
+
         $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
 
         // Calculate the policy expiry date based on the start date + 120 days
@@ -40,7 +39,7 @@ class CarCQFQuoteStorageService
         $quoteMappingService = app(CarCQFQuoteMappingService::class);
         $quoteUuid = $this->generateUUID();
         $quoteData = $quoteMappingService->mapCarCQFRenewalQuote($quote, $renewalsUploadLeads, $quoteUuid);
-        
+
         $newQuote = CarQuote::create($quoteData);
 
         if ($newQuote) {
@@ -49,13 +48,13 @@ class CarCQFQuoteStorageService
             $entityService->storeCarDetails($newQuote, $quote);
 
             app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Car);
-            
-            if (!empty($quote->embeddedTransactions)) {
+
+            if (! empty($quote->embeddedTransactions)) {
                 foreach ($quote->embeddedTransactions as $embeddedTransaction) {
                     if ($embeddedTransaction->is_selected == 1) {
                         $epCodes[] = EmbeddedProductEnum::MDX.'-'.$newQuote->code;
                         LoggerService::info(self::class.' - Embedded Transaction found for quote', [
-                            'embeddedTransaction' => $embeddedTransaction
+                            'embeddedTransaction' => $embeddedTransaction,
                         ]);
                     }
                 }

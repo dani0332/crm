@@ -6,20 +6,22 @@ namespace App\Services\CQF;
 
 use App\Exports\RenewalFailedValidationExport;
 use App\Models\RenewalsUploadLeads;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Services\Logger\LoggerService;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CarCQFFileExportService
 {
     public function downloadValidationFailedFile(int $id)
     {
         $renewalUploadLead = RenewalsUploadLeads::where('id', $id)->first();
-        if (!$renewalUploadLead) {
+        if (! $renewalUploadLead) {
             LoggerService::error(self::class.' - Renewal upload lead not found');
+
             return null;
         }
+
         return Excel::download(
-            new RenewalFailedValidationExport($renewalUploadLead), 
+            new RenewalFailedValidationExport($renewalUploadLead),
             'failed_'.$renewalUploadLead->file_name
         );
     }

@@ -3,10 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\CQF\CarCQFRenewalService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
-use App\Enums\Logger\LoggerFeatureEnum;
 
 class ProcessCarCQFRenewalLeads extends Command
 {
