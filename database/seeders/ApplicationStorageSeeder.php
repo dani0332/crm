@@ -16,6 +16,16 @@ class ApplicationStorageSeeder extends Seeder
     public function run()
     {
         ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BULK_POLICY_DOCUMENT_SEND_CODES],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_UNIVERSAL_SEARCH],
             [
                 'value' => 0,
@@ -104,6 +114,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedGIGCarPolicyIssuance();
         $this->seedSukoonMedexProductSlug();
         $this->seedLOBCutOffDates();
+        $this->seedBorWorkflowUrl();
         $this->seedTravelEnquiryEmail();
         $this->seedOcrSendUpdateLogFlag();
         $this->seedProductionApprovalEmails();
@@ -620,6 +631,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::LIFE_CUT_OFF_DATE],
             [
                 'value' => '2025-07-25 12:00:00',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedBorWorkflowUrl()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/e6b4f8c2-74d7-4cc2-a1dd-d9e18d8b4655/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

@@ -138,11 +138,12 @@ onMounted(() => {
             <div class="text-sm">
               <div class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                 <div class="grid sm:grid-cols-2">
-                  <div class="font-medium">Renewal Batch Number</div>
+                  <div class="font-medium">Renewal Batch</div>
                   <div>
                     {{
-                      props?.quote?.renewal_batch_model?.name ??
-                      props?.quote?.renewal_batch ??
+                      props?.quote?.renewal_batch_model?.name ?? // this is use for Personal Quotes ( bike, yacht, cycle, life, health, home, travel and life etc)
+                      props?.quote?.renewal_batch_text ?? // this is use for health, home, travel and business
+                      props?.quote?.renewal_batch ?? // this is use for Car
                       'N/A'
                     }}
                   </div>
