@@ -40,4 +40,9 @@ class VehicleDriverDetail extends Model
     {
         return $this->morphTo();
     }
+
+    public function nationality()
+    {
+        return $this->belongsTo(Nationality::class, 'nationality_id');
+    }
 }
