@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Lookup;
 use Illuminate\Database\Seeder;
@@ -22,6 +23,7 @@ class LookupSeeder extends Seeder
         $this->createEndorsementNonFinancialSavings();
         $this->createCIRSavings();
         $this->createCISavings();
+        $this->createReferralSources();
     }
 
     private function sendUpdateCancelOptions(): void
@@ -297,5 +299,131 @@ class LookupSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    /**
+     * Create referral sources lookup data for all quote types
+     *
+     * @return void
+     */
+    private function createReferralSources(): void
+    {
+        // Define the referral sources structure
+        $referralSources = [
+            [
+                'text' => "Advisor's own referral",
+                'code' => 'advisors-own-referral',
+                'description' => "This lead is sourced from advisor's personal network (family or friend).",
+                'children' => []
+            ],
+            [
+                'text' => 'Existing IM Customers',
+                'code' => 'existing-im-customers',
+                'description' => 'This is a cross-sell lead',
+                'children' => [
+                    [
+                        'text' => 'IM Cross-sell',
+                        'code' => 'im-cross-sell',
+                        'description' => "This lead is a new business opportunity of IM's legacy customer."
+                    ],
+                    [
+                        'text' => 'PCP Cross-sell',
+                        'code' => 'pcp-cross-sell',
+                        'description' => 'This lead is a new business opportunity of a IM_PCP customer.'
+                    ]
+                ]
+            ],
+            [
+                'text' => 'Customer Referrals',
+                'code' => 'customer-referrals',
+                'description' => 'This is a referral from IM Customer.',
+                'children' => [
+                    [
+                        'text' => 'IM customer referral',
+                        'code' => 'im-customer-referral',
+                        'description' => "This lead is of a new customer referred by IM's legacy customer."
+                    ],
+                    [
+                        'text' => 'PCP customer referral',
+                        'code' => 'pcp-customer-referral',
+                        'description' => 'This lead is of a new customer referred by a PCP customer.'
+                    ]
+                ]
+            ],
+            [
+                'text' => 'IM Internal Referrals',
+                'code' => 'im-internal-referrals',
+                'description' => 'This is a referral from IM department or colleague.',
+                'children' => []
+            ],
+            [
+                'text' => 'Strategic Partners Referrals',
+                'code' => 'strategic-partners-referrals',
+                'description' => 'This is a new customer referred from IM partnered groups, clubs or campaigns.',
+                'children' => [
+                    [
+                        'text' => 'CEO club',
+                        'code' => 'ceo-club',
+                        'description' => 'This is a new customer referred from IM partnered groups, clubs or campaigns.'
+                    ],
+                    [
+                        'text' => "Young Presidents' Organization (YPO)",
+                        'code' => 'young-presidents-organization-ypo',
+                        'description' => 'This is a new customer referred from IM partnered groups, clubs or campaigns.'
+                    ],
+                    [
+                        'text' => 'Other clubs or campaigns',
+                        'code' => 'other-clubs-or-campaigns',
+                        'description' => 'This is a new customer referred from IM partnered groups, clubs or campaigns.'
+                    ]
+                ]
+            ]
+        ];
+
+        // Get all quote types using the QuoteTypes enum
+        $quoteTypes = QuoteTypes::cases();
+
+        foreach ($quoteTypes as $quoteType) {
+            $quoteTypeId = $quoteType->id();
+
+            // Skip if quote type ID is not available
+            if (!$quoteTypeId) {
+                continue;
+            }
+
+            foreach ($referralSources as $parentSource) {
+                // Create parent lookup
+                $parent = Lookup::firstOrCreate([
+                    'quote_type_id' => $quoteTypeId,
+                    'key' => LookupsEnum::SUB_SOURCE,
+                    'code' => $parentSource['code'],
+                    'text' => $parentSource['text'],
+                ], [
+                    'description' => $parentSource['description'],
+                    'parent_id' => null,
+                    'is_active' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                // Create children if they exist
+                if (!empty($parentSource['children'])) {
+                    foreach ($parentSource['children'] as $childSource) {
+                        Lookup::firstOrCreate([
+                            'quote_type_id' => $quoteTypeId,
+                            'key' => LookupsEnum::SUB_SOURCE_OPTION,
+                            'code' => $childSource['code'],
+                            'text' => $childSource['text'],
+                        ], [
+                            'description' => $childSource['description'],
+                            'parent_id' => $parent->id,
+                            'is_active' => 1,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+            }
+        }
     }
 }

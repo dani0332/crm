@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\CacheKeyEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Facades\Capi;
 use App\Models\ApplicationStorage;
@@ -240,5 +241,21 @@ class LookupService extends BaseService
         return CacheManager::remember(CacheKeyEnum::SAVINGS_QUOTE_LOOKUPS, function () {
             return Capi::request('/api/v1-get-all-savings-lookups', 'post');
         });
+    }
+
+    public function getSubSource($quoteTypeId)
+    {
+        $isPCP = auth()->user()->hasTeam(TeamNameEnum::PCP);
+        $lookups = Lookup::with(['childs' => function ($q) use ($isPCP) {
+            if (!$isPCP) {
+                $q->whereNotIn('code', ['pcp-cross-sell']);
+            }
+            return $q;
+        }])->where([
+            'quote_type_id' => $quoteTypeId,
+            'key' => LookupsEnum::SUB_SOURCE,
+            'is_active' => 1
+        ])->get();
+        return $lookups;
     }
 }

@@ -21,6 +21,7 @@ const createLead = reactive({
   subSource: '',
   subSourceOption: '',
   primaryRefId: '',
+  partnerName: '',
 });
 
 const isModalOpen = computed({
@@ -31,12 +32,13 @@ const isModalOpen = computed({
 const onConfirmCreateLead = () => {
   const leadData = {
     type: createLead.type,
-    subSource: createLead.subSource,
-    subSourceOption: createLead.subSourceOption,
+    subSourceId: createLead.subSource,
+    subSourceOptionsId: createLead.subSourceOption,
     primaryRefId: createLead.primaryRefId,
+    partnerName: createLead.partnerName,
   };
 
-  if (createLead.type === 'referral') {
+  if (createLead.type === 'referral' || createLead.type === 'ecom_lead_extension') {
     router.get(route(props.routeName), leadData);
   }
 
@@ -57,6 +59,7 @@ const resetForm = () => {
   createLead.subSource = '';
   createLead.subSourceOption = '';
   createLead.primaryRefId = '';
+  createLead.partnerName = '';
 };
 
 // Computed properties for dropdown options
@@ -78,8 +81,19 @@ const subSourceChildOptions = computed(() => {
   return selectedSource.childs.map(child => ({
     value: child.id,
     label: child.text,
-    tooltip: child.description || child.tooltip || `Information about ${child.text}`, // Add tooltip support
+    suffix: child.description || child.tooltip || `Information about ${child.text}`, // Add tooltip support
   }));
+});
+
+// Check if Partner name field should be shown
+const showPartnerNameField = computed(() => {
+  if (!createLead.subSourceOption) return false;
+  
+  const selectedSubSource = props.subSources?.find(source => source.id == createLead.subSource);
+  if (!selectedSubSource?.childs) return false;
+  
+  const selectedSubSourceOption = selectedSubSource.childs.find(child => child.id == createLead.subSourceOption);
+  return selectedSubSourceOption?.code === 'other-clubs-or-campaigns';
 });
 
 // Form validation
@@ -91,7 +105,20 @@ const isFormValid = computed(() => {
   }
 
   if (createLead.type === 'referral') {
-    return !!createLead.subSource && !!createLead.subSourceOption;
+    // subSource is always required for referral type
+    if (!createLead.subSource) return false;
+    
+    // subSourceOption is only required if there are child options available
+    if (subSourceChildOptions.value.length > 0 && !createLead.subSourceOption) {
+      return false;
+    }
+    
+    // partnerName is required when showPartnerNameField is true
+    if (showPartnerNameField.value && !createLead.partnerName.trim()) {
+      return false;
+    }
+    
+    return true;
   }
 
   return true; // For other types, just type selection is enough
@@ -109,11 +136,18 @@ watch(() => createLead.type, () => {
   createLead.subSource = '';
   createLead.subSourceOption = '';
   createLead.primaryRefId = '';
+  createLead.partnerName = '';
 });
 
 // Watch for subSource change to reset subSourceOption
 watch(() => createLead.subSource, () => {
   createLead.subSourceOption = '';
+  createLead.partnerName = '';
+});
+
+// Watch for subSourceOption change to reset partnerName
+watch(() => createLead.subSourceOption, () => {
+  createLead.partnerName = '';
 });
 </script>
 
@@ -152,7 +186,7 @@ watch(() => createLead.subSource, () => {
           required
         >
           <template #suffix="{ item }">
-            <x-tooltip v-if="item.suffix" placement="left">
+            <x-tooltip v-if="item.suffix" placement="right">
               <x-icon icon="info" color="error" />
               <template #tooltip>
                 {{ item.suffix }}
@@ -162,7 +196,7 @@ watch(() => createLead.subSource, () => {
         </x-select>
 
         <x-select
-          v-if="createLead.subSource"
+          v-if="createLead.subSource && subSourceChildOptions.length > 0"
           v-model="createLead.subSourceOption"
           label="Sub Source Option"
           name="subSourceOption"
@@ -170,10 +204,10 @@ watch(() => createLead.subSource, () => {
           placeholder="Please select sub source option"
           class="w-full"
           filterable
-          required
+          :required="subSourceChildOptions.length > 0"
         >
           <template #suffix="{ item }">
-            <x-tooltip v-if="item.suffix" placement="top">
+            <x-tooltip v-if="item.suffix" placement="right">
               <x-icon icon="info" color="error" />
               <template #tooltip>
                 {{ item.suffix }}
@@ -194,6 +228,19 @@ watch(() => createLead.subSource, () => {
           required
         />
       </div>
+
+      <!-- Conditional input for Partner Name when other-clubs-or-campaigns is selected -->
+      <div v-if="showPartnerNameField" class="flex flex-col gap-4">
+        <x-input
+          v-model="createLead.partnerName"
+          label="Partner Name"
+          name="partnerName"
+          placeholder="Enter Partner Name"
+          class="w-full"
+          required
+        />
+      </div>
+
     </div>
 
     <template #actions>
