@@ -9,6 +9,7 @@ use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\LifeController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -100,10 +101,16 @@ Route::prefix('v1')->group(function () {
 
     Route::post('quotes/send-ocb-email', [GenericLobController::class, 'getQuoteForOCBEmail'])->name('getQuoteForOCBEmail');
 
+    Route::get('quotes/{quoteTypeId}/{quoteId}/email-status/export', [ApiController::class, 'exportEmailStatusLogs'])->name('exportEmailStatusLogs');
+
     Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
     Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
+
+    // User management routes
+    Route::get('users/first-manager/{email}', [UserController::class, 'getFirstManager'])->name('getFirstManager');
+
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
