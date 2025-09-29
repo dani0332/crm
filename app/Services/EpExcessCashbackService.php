@@ -49,6 +49,10 @@ class EpExcessCashbackService extends EpBookingService
     private const TOKEN_CACHE_KEY = 'tpa_client_api_token';
     private const TOKEN_CACHE_DURATION = 3600; // 1 hour
 
+    private string $transactionCountry = 'UAE';
+    private string $transactionCurrency = 'AED';
+    private string $policyProduct = 'EXW';
+
     /**
      * Create a new class instance.
      */
@@ -155,9 +159,7 @@ class EpExcessCashbackService extends EpBookingService
                 'trace' => $e->getTraceAsString()
             ]);
         })
-        ->dispatch()
-        ->timeout(300)
-        ->onQueue('default');
+        ->dispatch();
 
         LoggerService::info('EpEcbService: Workflow chain dispatched successfully', extra: $logExtra);
     }
@@ -851,13 +853,12 @@ class EpExcessCashbackService extends EpBookingService
      */
     private function buildQuotePayload(): array
     {
-        // TODO::Need to make it dynamic
         return [
             'client_reference_number' => "",
-            'transaction_country' => "UAE",
-            'transaction_currency' => "AED",
+            'transaction_country' => $this->transactionCountry,
+            'transaction_currency' => $this->transactionCurrency,
             'product_info' => [
-                'policy_product' => "EXW"
+                'policy_product' => $this->policyProduct
             ],
             'customer_info' => [
                 'customer_type' => ""
@@ -865,8 +866,8 @@ class EpExcessCashbackService extends EpBookingService
             'vehicle_info' => [
                 'vehicle_type' => null,
                 'vehicle_spec' => null,
-                'vehicle_make' => "Toyota",
-                'vehicle_model' => "Camry",
+                'vehicle_make' => $this->quote?->carMake?->text ?? null,
+                'vehicle_model' => $this->quote?->carModel?->text ?? null,
                 'vehicle_variant' => null,
                 'vehicle_cc' => null,
                 'vehicle_no_cyl' => null,
@@ -878,10 +879,10 @@ class EpExcessCashbackService extends EpBookingService
                 'vehicle_is_electric' => null,
                 'vehicle_is_hybrid' => null,
                 'vehicle_hybrid_type' => null,
-                'vehicle_first_regn_date' => "2025-01-01",
+                'vehicle_first_regn_date' => $this->quote?->year_of_first_registration ?? null,
                 'vehicle_invoiced_date' => null,
                 'vehicle_delivery_date' => null,
-                'vehicle_model_year' => 2024,
+                'vehicle_model_year' => $this->quote?->year_of_manufacture ?? null,
                 'vehicle_current_km' => null,
                 'vehicle_purchase_price' => null,
                 'vehicle_current_value' => null,
@@ -896,24 +897,45 @@ class EpExcessCashbackService extends EpBookingService
      */
     private function buildPolicyPayload(): array
     {
-        // TODO::Need to make it dynamic
+        $latestInsuredData = $this->quote?->latestInsured;
+        $insuredKyc = $latestInsuredData?->insuredKyc;
+        
+        $emirateIdNumber = str_replace('-', '', $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '');
+
+        if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
+            $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
+                .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
+        }
+
+        $storageBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        $mulkiyaDocuments = $this->quote?->documents()->where('document_type_code', QuoteDocumentsEnum::CAR_MULKIY)
+            ->select('document_type_code as document_type', 'doc_name as document_name', 'doc_url')
+            ->get()
+            ->map(function ($document) use ($storageBaseUrl) {
+                if (!empty($document->doc_url)) {
+                    $document->document_url = $storageBaseUrl . $document->doc_url;
+                    unset($document->doc_url);
+                }
+                return $document;
+            });
+
         return [
             'client_reference_number' => null,
             'quote_reference_number' => $this->quoteReferenceNumber,
-            'transaction_country' => "UAE",
+            'transaction_country' => $this->transactionCountry,
             'sales_info' => [
-                'policy_sold_date' => Carbon::now()->format('Y-m-d'),
+                'policy_sold_date' => $this->quote?->policy_start_date,
                 'policy_sold_location' => null,
                 'policy_sold_salesman' => null
             ],
             'customer_info' => [
-                'customer_fname' => "John",
-                'customer_lname' => "Doe",
+                'customer_fname' => $this->quote?->first_name,
+                'customer_lname' => $this->quote?->last_name,
                 'customer_mobile_no' => null,
                 'customer_whatsapp_no' => null,
                 'customer_email_id' => null,
                 'customer_id_type' => "EID",
-                'customer_id_no' => "784-234234234-0",
+                'customer_id_no' => $emirateIdNumber,
                 'customer_id_expiry_date' => null,
                 'customer_address' => null,
                 'customer_address_city' => null,
@@ -927,7 +949,7 @@ class EpExcessCashbackService extends EpBookingService
                 'co_buyer_id_expiry_date' => null
             ],
             'vehicle_info' => [
-                'vehicle_chassis_no' => "VIN11000000000031",
+                'vehicle_chassis_no' => $this->quote?->carQuoteRequestDetail?->chassis_number,
                 'vehicle_engine_no' => null,
                 'vehicle_plate_no' => null,
                 'vehicle_purchase_price' => null,
@@ -940,26 +962,15 @@ class EpExcessCashbackService extends EpBookingService
                 'vehicle_pwi_km' => null
             ],
             'motor_insurance_info' => [
-                'mi_policy_number' => "PS243243",
-                'mi_policy_issuer' => 3,
-                'mi_start_date' => "2025-01-01",
-                'mi_end_date' => "2026-01-01",
-                'mi_coverage_area' => "UAE & OMAN",
-                'mi_sum_insured' => 100000,
+                'mi_policy_number' => "NA",
+                'mi_policy_issuer' => $this->quote?->insuranceProviderDetails?->ecb_mi_policy_issuer_id ?? 3,
+                'mi_start_date' => $this->quote?->policy_start_date,
+                'mi_end_date' => $this->quote?->policy_expiry_date,
+                'mi_coverage_area' => "NA", // "UAE & OMAN",
+                'mi_sum_insured' => $this->quote?->car_value,
                 'mi_policy_excess' => 100
             ],
-            'document_info' => [
-                [
-                    'document_type' => "VH_REGN",
-                    'document_name' => "regn card.pdf",
-                    'document_url' => "https://devwp.waypoint-systems.com:446/TPANew/Web/assets/images/logo.png"
-                ],
-                [
-                    'document_type' => "CUST_ID",
-                    'document_name' => "iddoc.png",
-                    'document_url' => "https://devwp.waypoint-systems.com:446/TPANew/Web/assets/images/logo.png"
-                ]
-            ]
+            'document_info' => $mulkiyaDocuments
         ];
     }
 
