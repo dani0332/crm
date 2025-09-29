@@ -12,7 +12,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Log;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
@@ -23,6 +24,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public $tries = 1;
 
     private const TIMEOUT_MESSAGE = 'cURL error 28';
+    private const LARAVEL_TIMEOUT_MESSAGE = 'has timed out';
 
     // 28 is the cURL error code for timeout
     private $className = 'policyIssuanceJob';
@@ -50,7 +52,6 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
 
         if ($this->isProcessable($this->process)) {
-
             $processingStatus = $this->process->status === PolicyIssuanceEnum::PENDING_STATUS ? PolicyIssuanceEnum::PROCESSING_STATUS : PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS;
             $this->process->update(['status' => $processingStatus]);
             info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
@@ -90,7 +91,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public function failed(Throwable $exception)
     {
         $message = $exception->getMessage();
-        if (str_contains($message, self::TIMEOUT_MESSAGE)) {
+        if (str_contains($message, self::TIMEOUT_MESSAGE) || str_contains($message, self::LARAVEL_TIMEOUT_MESSAGE)) {
             $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
         } else {
             $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
