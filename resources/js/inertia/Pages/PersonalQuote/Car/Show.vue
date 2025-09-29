@@ -1,15 +1,18 @@
 <script setup>
 import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import CustomerVerificationNotification from '@/inertia/Components/CustomerVerificationNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
-import { usePage } from '@inertiajs/vue3';
+import { usePage, router } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerVerificationDetails from './Partials/CustomerVerificationDetails.vue';
 import AdditionalVehicleTransactionDetails from '../../Aml/Partials/AdditionalVehicleTransactionDetails.vue';
 import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
 
@@ -32,6 +35,8 @@ defineProps({
   lostReasons: Array,
   tiers: Array,
   carPlanFeaturesCodeEnum: Object,
+  customerVerificationData: Object,
+  isCustomerVerificationEnabled: [Boolean, Number],
   carPlanExclusionsCodeEnum: Object,
   carPlanAddonsCodeEnum: Object,
   modelType: String,
@@ -106,6 +111,7 @@ defineProps({
   isFuncsEnabled: Array,
   insurerAMLStatus: String,
   businessActivities: Object,
+  borLogs: Array,
   apiIssuanceStatus: String,
   insurerApiStatus: String,
   isAddionalFieldsEnabled: Boolean,
@@ -659,6 +665,7 @@ const modals = reactive({
   sendConfirm: false,
   showEmailEventsModal: false,
   additionalVehicleDriverDetails: false,
+  customerVerification: false,
 });
 
 const confirmData = reactive({
@@ -1299,10 +1306,12 @@ onMounted(() => {
   }
   window.addEventListener('ocr-notification', handleOcrNotification);
   window.addEventListener('lead-status-updated', handleLeadStatusUpdated);
+  window.addEventListener('customer-verification-updated', handleCustomerVerificationUpdated);
 });
 onUnmounted(() => {
   window.removeEventListener('ocr-notification', handleOcrNotification);
   window.removeEventListener('lead-status-updated', handleLeadStatusUpdated);
+  window.removeEventListener('customer-verification-updated', handleCustomerVerificationUpdated);
 });
 //activities
 const emailEventsTable = [
@@ -1753,11 +1762,63 @@ function handleOcrNotification(event) {
     });
   }
 }
+
+function handleCustomerVerificationUpdated(event) {
+  const { quoteUuid, verificationSuccess } = event.detail || {};
+  const currentRecord = usePage().props.record;
+
+  // Only process notifications for the current quote
+  if (!currentRecord || quoteUuid !== currentRecord.uuid) {
+    return;
+  }
+
+  // Reload quote data first, then show toast when UI is updated
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['quote'],
+    onSuccess: () => {
+      console.log('Customer verification data reloaded successfully', {
+        quoteUuid,
+        verificationSuccess
+      });
+      
+      // Show appropriate toast notification based on verification result
+      if (verificationSuccess) {
+        notification.success({
+          title: 'Document Details Verified',
+          text: 'Document data verified successfully!',
+          position: 'top',
+        });
+      } else {
+        notification.warning({
+          title: 'Verification Mismatch',
+          text: 'Document data could not be verified.',
+          position: 'top',
+        });
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to reload customer verification data:', {
+        quoteUuid,
+        verificationSuccess,
+        error
+      });
+      
+      notification.error({
+        title: 'Update Failed',
+        text: 'Failed to refresh customer verification data',
+        position: 'top',
+      });
+    }
+  });
+}
 </script>
 
 <template>
   <OcrNotification />
   <LeadStatusUpdatedNotification />
+  <CustomerVerificationNotification />
   <div>
     <Head title="Car Detail" />
     <StickyHeader>
@@ -1970,6 +2031,16 @@ function handleOcrNotification(event) {
         <template #body>
           <x-divider class="my-4 mb-3" />
           <div class="flex gap-2 mb-4 justify-end">
+            <!-- Dynamic Customer Verification Button -->
+            <x-button
+              v-if="isCustomerVerificationEnabled && customerVerificationData?.buttonData?.shouldShow"
+              size="sm"
+              :color="customerVerificationData.buttonData.color"
+              :class="customerVerificationData.buttonData.class"
+              @click.prevent="modals.customerVerification = true"
+            >
+              {{ customerVerificationData.buttonData.text }}
+            </x-button>
             <x-button
               v-if="isAddionalFieldsEnabled"
               size="sm"
@@ -4019,6 +4090,23 @@ function handleOcrNotification(event) {
       :bookPolicyDetails="bookPolicyDetails"
     />
 
+    <BorLogsSection
+      :leadId="record.id"
+      :lob="quoteType"
+      :isCompanyCar="isCompanyCar"
+      :customerData="{
+        customerType: enabledCustomerType,
+        firstName: record.first_name,
+        lastName: record.last_name,
+        companyName: record.company_name,
+        currentlyInsuredWith: record.insurance_provider_id,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
+    />
+
     <BookPolicy
       v-if="
         canAny([
@@ -4454,4 +4542,11 @@ function handleOcrNotification(event) {
   />
 
   <lead-raw-data :modelType="'Car'"></lead-raw-data>
+
+  <CustomerVerificationDetails 
+    v-if="isCustomerVerificationEnabled" 
+    :quote="quote" 
+    :modals="modals" 
+    :customerVerificationData="customerVerificationData" 
+  />
 </template>

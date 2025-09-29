@@ -105,4 +105,14 @@ enum InsuranceProviderEnum: string
             default => null,
         };
     }
+
+    public static function getTextByCode($value)
+    {
+        return match ($value) {
+            self::RSA => 'Liva',
+            self::AXA => 'GIG',
+            self::OIC => 'Sukoon',
+            default => 'GIG',
+        };
+    }
 }

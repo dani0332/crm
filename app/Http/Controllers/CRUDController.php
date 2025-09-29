@@ -90,6 +90,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
+use App\Services\CustomerVerification\CustomerVerificationService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
 use App\Services\EmailServices\CarEmailService;
@@ -603,6 +604,8 @@ class CRUDController extends Controller
 
             $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
 
+            $isCustomerVerificationEnabled = getAppStorageValueByKey(ApplicationStorageEnums::CUSTOMER_VERIFICATION_ENABLED, useCache: true) == '1';
+
             $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
             if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
                 abort(403, 'Unauthorized action.');
@@ -740,6 +743,10 @@ class CRUDController extends Controller
                 $carMakeText = $record->car_make_id_text ?? '';
                 $carModelText = $record->car_model_id_text ?? '';
 
+                $customerVerificationData = $isCustomerVerificationEnabled
+                    ? app(CustomerVerificationService::class)->getVerificationData($record, QuoteTypes::CAR)
+                    : ['webForm' => [], 'customerVerified' => []];
+
                 $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Car);
                 $record->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_id_text);
 
@@ -868,6 +875,8 @@ class CRUDController extends Controller
                     'activities',
                     'advisors',
                     'isRenewalUser',
+                    'customerVerificationData',
+                    'isCustomerVerificationEnabled',
                     'isNewBusinessUser',
                     'emailStatuses',
                     'carPlanAddonsCodeEnum',

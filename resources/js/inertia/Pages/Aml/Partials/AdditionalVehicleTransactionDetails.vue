@@ -22,6 +22,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['update:chassisNumber']);
+
 const page = usePage();
 const notification = useToast();
 const lookups = page.props.lookups;
@@ -862,7 +864,10 @@ const submitAdditionalVehicleTransactionDetailsForm = async isValid => {
             },
           );
         }
-
+        emit(
+          'update:chassisNumber',
+          additionalVehicleTransactionDetailsForm.chassis_number,
+        );
         router.reload({
           replace: true,
           preserveScroll: true,
@@ -1046,6 +1051,13 @@ watch(
         registrationNoValidation.value = true;
       }
     }
+  },
+);
+
+watch(
+  () => additionalVehicleTransactionDetailsForm.chassis_number,
+  newChassisNumber => {
+    emit('update:chassisNumber', newChassisNumber);
   },
 );
 </script>

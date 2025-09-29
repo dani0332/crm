@@ -422,7 +422,7 @@ class AllocationService extends BaseService
         if ($isBusinessHours) {
             return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE];
         } else {
-            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE];
+            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE, UserStatusEnum::MANUAL_OFFLINE];
         }
     }
 }

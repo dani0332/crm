@@ -217,6 +217,7 @@ final class PermissionsEnum extends Enum
     public const RenewalsBatches = 'renewals-batches';
     public const CarQuoteSearch = 'car-quotes-search';
     public const UtmLeadsSalesReport = 'utm-leads-sales-report';
+    public const UtmReportExport = 'utm-report-export';
     public const TeamThresholdView = 'team-allocation-threshold-view';
     public const CAR_REVIVAL_QUOTE_LIST = 'carrevival-quotes-list';
     public const CAR_REVIVAL_QUOTES_EDIT = 'carrevival-quotes-edit';
@@ -432,6 +433,7 @@ final class PermissionsEnum extends Enum
     public const PLAN_DETAILS_EDIT = 'plan-details-edit';
     public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
     public const LEADS_BY_EMAIL = 'leads-by-email';
+    public const BOR_DOCUMENT_UPLOAD = 'bor-document-upload';
     public const ASSIGN_CLIENT_SUPPORT = 'oe-ae-assign-client-support';
     public const ASSIGN_LEAD_ADVISOR = 'pe-oe-assign-leads-advisor';
 
