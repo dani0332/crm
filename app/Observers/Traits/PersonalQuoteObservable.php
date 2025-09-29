@@ -24,6 +24,7 @@ use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\SendOCAEmailJob;
 
 trait PersonalQuoteObservable
 {
@@ -83,6 +84,11 @@ trait PersonalQuoteObservable
         if ($personalQuote->isLife()) {
             if ($personalQuote->isFIC(quoteType: QuoteTypes::LIFE)) {
                 SendFICEmailForLife::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+                LoggerService::info(self::class." - FIC email sent to customer for life quote {$personalQuote->uuid}");
+            }
+            else {
+                SendOCAEmailJob::dispatch($personalQuote->uuid, []);
+                LoggerService::info(self::class." - OCA email sent to customer for life quote {$personalQuote->uuid}");
             }
         }
 
