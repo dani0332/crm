@@ -1722,9 +1722,6 @@ if (! function_exists('getUserIpAddress')) {
 if (! function_exists('addMinutesToCurrentDateTime')) {
     /**
      * Add specified minutes to current datetime
-     *
-     * @param int $minutes
-     * @return \Carbon\Carbon
      */
     function addMinutesToCurrentDateTime(int $minutes): Carbon
     {
