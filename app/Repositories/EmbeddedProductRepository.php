@@ -21,6 +21,7 @@ use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
 use App\Facades\Marshall;
 use App\Jobs\EP\CancelEPJob;
+use App\Jobs\EpSendDocumentJob;
 use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\ProcessSyncAlfredProtect;
@@ -567,6 +568,8 @@ class EmbeddedProductRepository extends BaseRepository
         $short_code = $ep->short_code;
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($short_code);
         $isSukoonMedex = EmbeddedProductStrategy::checkSukoonMedex($short_code);
+        $isECB = $short_code == EmbeddedProductEnum::ECB;
+        $isMedxOrEcb = $isSukoonMedex || $isECB;
 
         [$attachments, $attachmentsUrls] = $this->fetchAttachments($ep, $isAlfredProtect, $isSalama);
 
@@ -582,8 +585,8 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
-        if (! $isSalama) {
-            $canSendDocuments = $canSendDocuments || ($isSukoonMedex && $this->canSendSukoonMedexDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction));
+        if ($isECB || ! $isSalama) {
+            $canSendDocuments = $canSendDocuments || ($isMedxOrEcb && $this->canSendSukoonMedexDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction));
         }
 
         if (! $canSendDocuments) {
@@ -603,6 +606,8 @@ class EmbeddedProductRepository extends BaseRepository
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
         } elseif ($isSukoonMedex) {
             return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep, $modelType, $isSalama);
+        } elseif ($isECB) {
+            return $this->sendECBEmail($transaction->first(), $quoteObject->id, $modelType);
         }
     }
 
@@ -737,6 +742,17 @@ class EmbeddedProductRepository extends BaseRepository
         } else {
             return ['success' => false, 'message' => 'Error sending Certificate'];
         }
+    }
+
+    private function sendECBEmail($transaction, $quoteId, $modelType)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $quote = $this->getQuoteObject($modelType, $quoteId);
+
+        $context = EpExcessCashbackService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quote->uuid);
+        dispatch(new EpSendDocumentJob($context));
+
+        return ['success' => true, 'message' => 'Certificate sent successfully'];
     }
 
     private function sendMedexEmail($short_code, $quoteObject, $transaction, $attachments, $advisorData, $ep, $modelType, $isSalama)
