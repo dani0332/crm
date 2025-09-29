@@ -1718,13 +1718,3 @@ if (! function_exists('getUserIpAddress')) {
         return $request->ip();
     }
 }
-
-if (! function_exists('addMinutesToCurrentDateTime')) {
-    /**
-     * Add specified minutes to current datetime
-     */
-    function addMinutesToCurrentDateTime(int $minutes): Carbon
-    {
-        return Carbon::now()->addMinutes($minutes);
-    }
-}

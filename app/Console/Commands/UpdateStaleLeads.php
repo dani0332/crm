@@ -94,7 +94,7 @@ class UpdateStaleLeads extends Command
                 ->where('quote_status_date', '>=', Carbon::parse('2023-05-23')->startOfDay())
                 ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
                     $businessQuote->where('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical))
-                        ->where('quote_status_date', '>=', Carbon::today()->startOfDay());
+                        ->where('quote_status_date', '>=', Carbon::parse('2024-10-01')->startOfDay());
                 })
                 ->when($eligibleQuoteType == PersonalQuote::class, function ($personalQuote) {
                     $personalQuote->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle]);
