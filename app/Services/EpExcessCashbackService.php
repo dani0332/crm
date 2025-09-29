@@ -1034,7 +1034,7 @@ class EpExcessCashbackService extends EpBookingService
             ],
             'motor_insurance_info' => [
                 'mi_policy_number' => "NA",
-                'mi_policy_issuer' => $this->quote?->insuranceProviderDetails?->ecb_mi_policy_issuer_id ?? 3,
+                'mi_policy_issuer' => $this->quote?->insuranceProviderDetails?->ecb_insurer_id ?? 3,
                 'mi_start_date' => $policyStartDate,
                 'mi_end_date' => $policyEndDate,
                 'mi_coverage_area' => "NA", // "UAE & OMAN",
