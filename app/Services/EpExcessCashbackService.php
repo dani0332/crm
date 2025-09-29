@@ -20,6 +20,8 @@ use App\Models\EmbeddedTransaction;
 use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
+use App\Services\SageApiService;
+use App\Services\SageApiEmbeddedProductService;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
@@ -979,10 +981,14 @@ class EpExcessCashbackService extends EpBookingService
             ->select('document_type_code as document_type', 'doc_name as document_name', 'doc_url')
             ->get()
             ->map(function ($document) use ($storageBaseUrl) {
+                // Add storage base URL prefix if doc_url is not empty
                 if (!empty($document->doc_url)) {
                     $document->document_url = $storageBaseUrl . $document->doc_url;
-                    unset($document->doc_url);
+                } else {
+                    $document->document_url = '';
                 }
+                // Remove the original doc_url field
+                unset($document->doc_url);
                 return $document;
             });
 
@@ -1060,7 +1066,7 @@ class EpExcessCashbackService extends EpBookingService
         return $uuid;
     }
 
-    public function formatDate(string $date): string
+    public function formatDate(string $date): ?string
     {
         return !empty($date) ? date('Y-m-d', strtotime($date)) : null;
     }
