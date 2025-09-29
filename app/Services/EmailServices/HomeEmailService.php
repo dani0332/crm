@@ -518,7 +518,7 @@ class HomeEmailService extends BaseService
             'customerFullName' => trim("{$personalQuote->first_name} {$personalQuote->last_name}"),
             'customerName' => trim("{$personalQuote->first_name} {$personalQuote->last_name}"),
             'customerMobile' => $personalQuote->mobile_no ?? '',
-            'isPolicyExpired' => $personalQuote->policy_expiry_date ? Carbon::parse($personalQuote->policy_expiry_date)->isPast() : false,
+            'isPolicyExpired' => $personalQuote->previous_policy_expiry_date ? Carbon::parse($personalQuote->previous_policy_expiry_date)->isPast() : false,
 
             // Advisor-related data
             'advisor' => $advisor ?? null,
