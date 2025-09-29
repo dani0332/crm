@@ -396,7 +396,7 @@ export const getQuoteTypeId = (quoteTypes, quoteType) => {
 export const logAndExportQuotes = async payload => {
   payload.ip_address = await getIp();
   let isSuccess = false;
-  
+
   return axios
     .post('/quotes/export-logs/create', payload)
     .then(async res => {
