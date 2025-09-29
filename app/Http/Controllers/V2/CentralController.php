@@ -90,6 +90,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use App\Http\Requests\PUAExportValidationRequest;
 use Illuminate\Support\Facades\DB;
 
 class CentralController extends Controller
@@ -712,7 +713,7 @@ class CentralController extends Controller
 
         return app(RMQuotesExport::class)->download('RM-Leads-List');
     }
-    public function exportPUAUpdates(Request $request, string $quoteType)
+    public function exportPUAUpdates(PUAExportValidationRequest $request, string $quoteType)
     {
         // Log all request data
         LoggerService::info('PUA Export Request - All Data', [
