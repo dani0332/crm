@@ -15,6 +15,7 @@ use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
@@ -37,6 +38,7 @@ use App\Models\PaymentSplits;
 use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Models\SageProcess;
+use App\Services\EpExcessCashbackService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SukoonMedexService;
@@ -314,7 +316,8 @@ class EmbeddedProductRepository extends BaseRepository
 
     private function canSendAndDownloadDocuments($productCategory, $quoteStatusId, $transaction)
     {
-        if (! $transaction->isEmpty() && in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+        // TODO:: move into if condition, transaction payment status check
+        if (! $transaction->isEmpty() && true) { // in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
             if (
                 $productCategory == EpCategoryEnum::STAND_ALONE ||
                 ($productCategory == EpCategoryEnum::BOLT_ON && in_array($quoteStatusId, $this->canSendDocumentEnums()))) {
@@ -398,7 +401,8 @@ class EmbeddedProductRepository extends BaseRepository
             ['quote_request_id', $leadId],
             ['is_selected', 1],
         ])
-            ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+            // TODO:: uncomment this code
+            // ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
             ->with(['product.embeddedProduct']);
 
         if (! empty($epId)) {
@@ -483,6 +487,17 @@ class EmbeddedProductRepository extends BaseRepository
                         }
                     }
                 }
+
+            }
+            // need to add a check for lead should have comprehensive-plan
+            // lead should have ECB-Insurer Provider Plan
+            elseif ($quoteTypeId == QuoteTypeId::Car && $item->product?->embeddedProduct?->short_code == EmbeddedProductEnum::ECB) {
+
+                $quoteType = QuoteTypes::getName($quoteTypeId)->value;
+                $quote = $this->getQuoteObject($quoteType, $leadId);
+
+                $context = EpExcessCashbackService::buildContext($item->id, $leadId, $quoteTypeId, $quote->uuid);
+                EpExcessCashbackService::epEcbWorkflow($context);
             }
         }
 
@@ -515,8 +530,10 @@ class EmbeddedProductRepository extends BaseRepository
 
             $shortCodes = EmbeddedProductEnum::getSukoonMedexCodes() ?? [];
             $transaction = $this->fetchTransaction($modelType, $quoteId, $ep, shortCodes: $shortCodes)
-                ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+                // TODO:: uncomment this
+                // ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
                 ->first();
+
             if (empty($transaction)) {
                 LoggerService::info("No transaction found, ref_id: {$quoteObject->code}");
 

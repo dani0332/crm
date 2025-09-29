@@ -227,6 +227,9 @@ final class ApplicationStorageEnums extends Enum
     /* BOR (Broker on Record) Workflow Integration */
     public const BIRD_BOR_WORKFLOW_URL = 'BIRD_BOR_WORKFLOW_URL';
 
+    /* Sent EP Policy Documents Email */
+    public const BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL = 'BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL';
+
     /* Advisor Emails for Allocation */
     public const YACHT_ADVISORS = 'YACHT_ADVISORS';
     public const PET_ADVISORS = 'PET_ADVISORS';

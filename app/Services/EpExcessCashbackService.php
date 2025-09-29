@@ -4,28 +4,33 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\InsuranceProviderEnum;
+use App\Enums\QuoteDocumentsEnum;
+use App\Enums\QuoteTypes;
+use App\Models\DocumentType;
+use App\Jobs\EpPurchaseFlowJob;
+use App\Jobs\EpWatermarkDocumentJob;
+use App\Jobs\EpSendDocumentJob;
 use App\Models\InsurerRequestResponse;
 use App\Models\EmbeddedTransaction;
+use App\Models\InsuranceProvider;
+use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Bus;
 use Carbon\Carbon;
+use Error;
 use Throwable;
 
-class EpExcessCashbackService
+class EpExcessCashbackService extends EpBookingService
 {
-    private string $quoteId;
-    private int $quoteTypeId;
-    private int $etId;
-
-    private EmbeddedTransaction $embeddedTransaction;
-    private string $quoteUUID;
+    public mixed $quote = null;
     private int $providerId;
-
-    private string $logPrefix = 'EpExcessCashback - Service:';
-    private array $logExtra = [];
+    private EmbeddedTransaction $embeddedTransaction;
 
     // API Configuration
     private string $baseUrl;
@@ -38,7 +43,7 @@ class EpExcessCashbackService
     private ?string $bearerToken = null;
     private ?string $quoteReferenceNumber = null;
     private ?string $policyNumber = null;
-    private array $policyDocuments = [];
+    public array $reqDocTypeCodes = [];
 
     // Cache Keys
     private const TOKEN_CACHE_KEY = 'tpa_client_api_token';
@@ -47,27 +52,32 @@ class EpExcessCashbackService
     /**
      * Create a new class instance.
      */
-    public function __construct(string $quoteId, int $quoteTypeId, int $etId)
+    public function __construct(
+        EpBookingContext $context
+    ) {
+        parent::__construct('EpEcb', $context);
+        $this->reqDocTypeCodes = $this->getRequiredDocTypeCodes();
+        
+        $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
+        $this->quote = $this->getQuoteObject($quoteType, $this->context->quoteId);
+    }
+
+    public function init(): void
     {
-        $this->quoteId = $quoteId;
-        $this->quoteTypeId = $quoteTypeId;
-        $this->etId = $etId;
-
         $this->logExtra = [
-            'quoteId' => $this->quoteId,
-            'quoteTypeId' => $this->quoteTypeId,
-            'etId' => $this->etId,
+            'etId' => $this->context->etId,
+            'quoteId' => $this->context->quoteId,
+            'quoteTypeId' => $this->context->quoteTypeId,
+            'quoteUUID' => $this->context->quoteUUID,
         ];
-
+        
         // Load API configuration
         $this->loadApiConfiguration();
-
+        
         // Load embedded transaction
-        $this->embeddedTransaction = EmbeddedTransaction::findOrFail($this->etId);
-        $this->quoteUUID = $this->embeddedTransaction->quoteRequest->uuid ?? '';
+        $this->embeddedTransaction = EmbeddedTransaction::findOrFail($this->context->etId);
 
-        // TODO::Need to make it dynamic
-        $this->providerId = 10;
+        $this->providerId = InsuranceProvider::where('code', InsuranceProviderEnum::NGI->value)->value('id');
 
         // Restore workflow state from previous execution
         $this->restoreWorkflowState();
@@ -119,21 +129,66 @@ class EpExcessCashbackService
     }
 
     /**
+     * Process all EP Excess Cashback workflow using job chain
+     */
+    public static function epEcbWorkflow(EpBookingContext $context): void
+    {
+        $logExtra = [            
+            'etId' => $context->etId,
+            'quoteId' => $context->quoteId,
+            'quoteTypeId' => $context->quoteTypeId,
+            'quoteUUID' => $context->quoteUUID
+        ];
+
+        LoggerService::info('EpEcbService: Starting EP ExcessCashback workflow', extra: $logExtra);
+
+        Bus::chain([
+            new EpPurchaseFlowJob($context),
+            new EpWatermarkDocumentJob($context),
+            new EpSendDocumentJob($context)
+        ])
+        // Chain will stop on first failure by default
+        ->catch(function (Throwable $e) use ($logExtra) {
+            LoggerService::error('EpEcbService: Workflow chain failed', extra: [
+                ...$logExtra,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        })
+        ->dispatch()
+        ->timeout(300)
+        ->onQueue('default');
+
+        LoggerService::info('EpEcbService: Workflow chain dispatched successfully', extra: $logExtra);
+    }
+
+    /**
      * Main entry point for processing the purchase flow
      * Throws exceptions on failure so the job retry mechanism can handle them
      */
-    public function processPurchaseFlow(): void
+    public function executeSteps(): void
     {
-        LoggerService::info($this->logPrefix . ' Starting purchase flow', extra: [
-            ...$this->logExtra,
-            'current_status' => $this->embeddedTransaction->status
-        ]);
+        try {
+            LoggerService::info($this->logPrefix . ' Starting purchase flow', extra: [
+                ...$this->logExtra,
+                'current_status' => $this->embeddedTransaction->status
+            ]);
 
-        // Execute workflow with conditional step execution
-        // Any exceptions will bubble up to the job for automatic retry handling
-        $this->executeWorkflowFromStep();
+            // Execute workflow with conditional step execution
+            // Any exceptions will bubble up to the job for automatic retry handling
+            $this->executeWorkflowFromStep();
 
-        LoggerService::info($this->logPrefix . ' Purchase flow completed successfully', extra: $this->logExtra);
+            LoggerService::info($this->logPrefix . ' Purchase flow completed successfully', extra: $this->logExtra);
+        } catch (Exception $e) {
+            LoggerService::error($this->logPrefix . ' Purchase flow failed', extra: [
+                ...$this->logExtra,
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'exceptionType' => get_class($e),
+            ]);
+            // throw $e;
+        }
     }
 
     /**
@@ -175,21 +230,38 @@ class EpExcessCashbackService
         } else {
             LoggerService::info($this->logPrefix . " Skipping step: CreatePolicyFromQuote - already have policy", extra: $this->logExtra);
         }
+    }
 
-        // Step 4: Get Policy Documents
+    /**
+     * Sync policy documents (called by EpExcessCashbackSyncDocumentJob)
+     */
+    public function syncPolicyDocuments(): void
+    {
+        LoggerService::info($this->logPrefix . ' Starting document sync process', extra: $this->logExtra);
+
+        $currentStatus = $this->embeddedTransaction->status ?? '';
+        
+        // Step 1: Get policy documents
         if (!$this->shouldSkipStep('get_documents', $currentStatus)) {
             LoggerService::info($this->logPrefix . " Executing step: GetPolicyDocuments", extra: $this->logExtra);
 
-            $this->executeGetDocuments();
+            // Get policy documents
+            $getPolicyDocumentsResponse = (array) $this->executeGetPolicyDocuments();
+
+            // Download, Upload & Save policy documents to DB
+            $this->executeSyncDocuments($getPolicyDocumentsResponse);
 
             LoggerService::info($this->logPrefix . " Step completed: GetPolicyDocuments", extra: $this->logExtra);
         } else {
             LoggerService::info($this->logPrefix . " Skipping step: GetPolicyDocuments - already completed", extra: $this->logExtra);
         }
 
-        // All steps completed successfully
-        $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_BOOKED);
-        LoggerService::info($this->logPrefix . ' Purchase flow completed successfully', extra: $this->logExtra);
+        // Step 2: Update commission if needed
+        if (!$this->shouldSkipStep('prepare_for_sage', $currentStatus)) {
+            $this->executeUpdateCommission($getPolicyDocumentsResponse ?? []);
+        }
+
+        LoggerService::info($this->logPrefix . ' Document sync completed successfully', extra: $this->logExtra);
     }
 
     /**
@@ -202,14 +274,20 @@ class EpExcessCashbackService
             'get_quote' => in_array($currentStatus, [
                 EmbeddedTransactionEnum::STATUS_QUOTED,
                 EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED,
-                EmbeddedTransactionEnum::STATUS_BOOKED
+                EmbeddedTransactionEnum::STATUS_BOOKED,
+                EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
             ]),
             'create_policy' => in_array($currentStatus, [
                 EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED,
-                EmbeddedTransactionEnum::STATUS_BOOKED
+                EmbeddedTransactionEnum::STATUS_BOOKED,
+                EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
             ]),
             'get_documents' => in_array($currentStatus, [
-                EmbeddedTransactionEnum::STATUS_BOOKED
+                EmbeddedTransactionEnum::STATUS_BOOKED,
+                EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+            ]),
+            'prepare_for_sage' => in_array($currentStatus, [
+                EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
             ]),
             default => false
         };
@@ -304,8 +382,7 @@ class EpExcessCashbackService
         $this->quoteReferenceNumber = $responseQuote->quote_reference_no;
 
         // Update transaction status and save quote_reference_number to quote_policy field
-        $this->embeddedTransaction->update([
-            'policy_status' => EmbeddedTransactionEnum::STATUS_QUOTED,
+        $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_QUOTED, [
             'quote_policy' => $this->quoteReferenceNumber
         ]);
 
@@ -365,8 +442,7 @@ class EpExcessCashbackService
         $this->policyNumber = $responseData->policy_no;
 
         // Update transaction status and save certificate_number to certificate_number field
-        $this->embeddedTransaction->update([
-            'policy_status' => EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED,
+        $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED, [
             'certificate_number' => $this->policyNumber
         ]);
 
@@ -377,14 +453,95 @@ class EpExcessCashbackService
     }
 
     /**
-     * Step 4: Get policy documents
+     * Step 4: Sync policy documents
+     *  Step 4.1: Get policy documents
      */
-    private function executeGetDocuments(): void
+    private function executeSyncDocuments(array $getPolicyDocumentsResponse): void
     {
-        if (!$this->bearerToken) {
-            throw new Exception('No bearer token available for GetDocuments');
+        $fetchedPolicyDocuments = collect($getPolicyDocumentsResponse ?? [])
+            ->only('policy_certificate_url', 'premium_inv_doc_url', 'commision_inv_doc_url')
+            ->toArray();
+
+        if (empty($fetchedPolicyDocuments)) {
+            return;
         }
 
+        $documentTypes = DocumentType::whereIn('code', $this->reqDocTypeCodes)
+            ->where('quote_type_id', $this->context->quoteTypeId)->get();
+
+        $docStatus = ['created' => [], 'skipped' => []];
+        foreach ($fetchedPolicyDocuments as $docKey => $docUrl) {
+
+            $docCode = match ($docKey) {
+                'policy_certificate_url' => QuoteDocumentsEnum::POLICY_SCHEDULE, // Policy Schedule (GETPOLICYSCHEDULE)
+                'premium_inv_doc_url' => QuoteDocumentsEnum::CAR_TAX_INVOICE, // Tax Invoice (GETPOLICYTAXINVOICE - DOCTYPE=1)
+                'commision_inv_doc_url' => QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, // Tax Invoice (GETPOLICYTAXINVOICE - DOCTYPE=2)
+                default => null
+            };
+
+            $documentType = $documentTypes->firstWhere('code', $docCode);
+            if (empty($docCode) || empty($documentType)) {
+                $docStatus['skipped'][] = "{$docKey}-{$docCode}";
+                continue;
+            }
+
+            $saveDocumentResponse = $this->executeSavePolicyDocument($docUrl, $documentType);
+
+            if (!$saveDocumentResponse['success']) {
+                $docStatus['skipped'][] = "{$docKey}-{$docCode}";
+                continue;
+            }
+
+            $docStatus['created'][] = "{$docKey}-{$docCode}";
+        }
+
+        $fetchedDocumentsCount = count($fetchedPolicyDocuments);
+        $savedDocumentsCount = count($docStatus['created'] ?? []);
+        LoggerService::info("{$this->logPrefix} Sync Policy documents: {$savedDocumentsCount} out of {$fetchedDocumentsCount}", extra: [
+            ...$this->logExtra,
+            'certificate_number' => $this->policyNumber,
+            'docs' => $docStatus
+        ]);
+
+        $savedDocumentDocTypes = $this->embeddedTransaction?->documents?->pluck('document_type_code')->toArray();
+        $missingDocumentDocTypes = array_diff($this->reqDocTypeCodes, $savedDocumentDocTypes);
+
+        if (empty($missingDocumentDocTypes)) {
+            // Update transaction status
+            $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_BOOKED);
+        }
+    }
+
+    private function executeUpdateCommission($policyDetailResponse): void
+    {
+        $policyPrice = floatval($policyDetailResponse['policy_premium_with_tax'] ?? 0);
+        $policyDetails = [
+            'tax_invoice_no' => $policyDetailResponse['premium_inv_no'] ?? '',
+            'tax_invoice_buyer_no' => $policyDetailResponse['commision_inv_no'] ?? '',
+            'policy_price' => $policyPrice,
+            'commission_with_vat' => $policyDetailResponse['policy_commision_with_tax'] ?? 0,
+            'commission_without_vat' => $policyDetailResponse['policy_commision_without_tax'] ?? 0,
+            'credit_note_buyer_no' => $policyDetailResponse['credit_note_buyer_no'] ?? '',
+            'credit_note_no' => $policyDetailResponse['credit_note_no'] ?? '',
+        ];
+
+        $isPolicyBooked = $this->embeddedTransaction?->policy_status == EmbeddedTransactionEnum::STATUS_BOOKED;
+        if ($isPolicyBooked && $policyPrice > 0) {
+            $policyDetails = ['policy_status' => EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE, ...$policyDetails];
+        }
+
+        // Update transaction status and commissions
+        $this->embeddedTransaction->update($policyDetails);
+
+        LoggerService::info($this->logPrefix . ' Transaction status updated', extra: [
+            ...$this->logExtra,
+            'policy_status' => $this->embeddedTransaction?->policy_status
+        ]);
+    }
+
+    // Step 4.1: Get policy documents
+    private function executeGetPolicyDocuments(): array
+    {
         if (!$this->policyNumber) {
             throw new Exception('No policy number available for GetDocuments');
         }
@@ -406,15 +563,64 @@ class EpExcessCashbackService
             throw new Exception("GetPolicyDocuments API call failed: ($responseErrorCode) - $responseStatusMessage");
         }
 
-        $this->policyDocuments = collect($response['data'])
-            ->only('policy_certificate_url', 'premium_inv_doc_url', 'commision_inv_doc_url')
-            ->toArray();
+        return (array) $response['data'] ?? [];
+    }
 
-        LoggerService::info($this->logPrefix . ' Policy documents retrieved successfully', extra: [
-            ...$this->logExtra,
-            'policy_number' => $this->policyNumber,
-            'documents_count' => is_array($this->policyDocuments) ? count($this->policyDocuments) : 0
-        ]);
+    /**
+     * Download document from API endpoint
+     */
+    private function makeDownloadApiCall(string $url, array $headers, string $operation): array
+    {
+        $startTime = microtime(true);
+        $statusCode = 0;
+        $response = [];
+
+        try {
+            $httpClient = Http::withHeaders($headers)->timeout($this->timeout);
+            $httpResponse = $httpClient->get($url);
+
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+            $statusCode = $httpResponse->status();
+            $content = $httpResponse->body();
+            $contentType = $httpResponse->header('Content-Type') ?? '';
+
+            if (!$httpResponse->successful() || str_contains($contentType, 'text/html')) {
+                $errorMessage = !$httpResponse->successful()
+                    ? "HTTP {$statusCode}: Failed to download document"
+                    : "Document not found or server returned HTML error page";
+
+                throw new Error($errorMessage);
+            }
+
+            if (empty($content)) {
+                throw new Error('Document content is empty');
+            }
+
+            $response = [
+                'success' => true,
+                'filename' => $this->extractFilename($url),
+                'content_length' => strlen($content),
+                'statusCode' => $statusCode,
+                'responseTime' => $responseTime,
+                'content_type' => $contentType,
+                'content' => $content,
+            ];
+        } catch (Throwable $e) {
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            $response = [
+                'success' => false,
+                'error' => "Download failed: " . $e->getMessage(),
+                'statusCode' => $statusCode,
+                'responseTime' => $responseTime
+            ];
+        } finally {
+            $responseLog = collect($response)->except('content')->toArray();
+
+            // Log the API call
+            $this->logApiRequest($operation, $url, [], $responseLog);
+            return $response;
+        }
     }
 
     /**
@@ -424,6 +630,8 @@ class EpExcessCashbackService
     {
         $url = $this->baseUrl . $endpoint;
         $startTime = microtime(true);
+        $response = [];
+        $httpResponse = null;
 
         try {
             $httpClient = Http::withHeaders($headers)
@@ -439,44 +647,42 @@ class EpExcessCashbackService
             };
 
             $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+            $isSuccess = $httpResponse->successful();
             $responseData = $httpResponse->object();
-            $statusCode = $httpResponse->status();
-            $isSuccess = $responseData->isSuccess ?? false;
 
-            // Log the API call with request and response
-            $this->logApiRequest($operation, $url, $data, $httpResponse);
-
-            if ($httpResponse->successful() && $isSuccess) {
-                return [
-                    'success' => $isSuccess,
-                    'errorCode' => $responseData->errorCode ?? '',
-                    'statusMessage' => $responseData->statusMessage ?? 'Success',
-                    'data' => $responseData,
-                    'status_code' => $statusCode,
-                    'response_time' => $responseTime
-                ];
-            } else {
-
-                return [
-                    'success' => $isSuccess,
-                    'errorCode' => $responseData->errorCode ?? '-',
-                    'statusMessage' => $responseData->statusMessage ?? 'Unknown error',
-                    'status_code' => $statusCode,
-                    'response_time' => $responseTime
-                ];
+            $contentType = $httpResponse->header('Content-Type');
+            if (str_contains($contentType, 'application/json')) {
+                $isSuccess = $isSuccess && ($responseData->isSuccess ?? false);
             }
+
+            $response = [
+                'success' => $isSuccess,
+                'statusCode' => $httpResponse->status(),
+                'responseTime' => $responseTime,
+                'errorCode' => $responseData->errorCode ?? ($isSuccess ? '' : '-'),
+                'statusMessage' => $responseData->statusMessage ?? ($isSuccess ? 'Success' : 'Unknown error'),
+                'data' => $responseData
+            ];
         } catch (Throwable $e) {
             $responseTime = round((microtime(true) - $startTime) * 1000, 2);
 
-            // Log the failed API call with the actual exception details
-            $this->logApiRequest($operation, $url, $data, null, $e);
-
-            return [
+            $response = [
                 'success' => false,
+                'statusCode' => $httpResponse?->status() ?? 0,
+                'responseTime' => $responseTime,
+                'exceptionType' => get_class($e),
                 'error' => $e->getMessage(),
-                'status_code' => 0,
-                'response_time' => $responseTime
             ];
+        } finally {
+            $responseLog = $response;
+            if (isset($responseLog['data']->access_token)) {
+                $responseLog['data'] = clone $responseLog['data'];
+                $responseLog['data']->access_token = substr($responseLog['data']->access_token, 0, 50) . '********';
+            }
+
+            // Log the API call
+            $this->logApiRequest($operation, $url, $data, $responseLog);
+            return $response;
         }
     }
 
@@ -485,79 +691,46 @@ class EpExcessCashbackService
      */
     private function logApiRequest(
         string $operation,
-        string $url,
-        $payload,
-        $httpResponse = null,
-        ?Throwable $exception = null
+        string $url = '',
+        array $payload = [],
+        array $responseLog = [],
+        bool $isSavedInDB = true
     ): void {
+
+        $status = !empty($responseLog['success']) ? 'passed' : 'failed';
+        $basicLogs = collect($responseLog)
+            ->only('success', 'statusCode', 'errorCode', 'statusMessage', 'responseTime', 'error', 'exceptionType');
+
+        $logData = [
+            ...$this->logExtra,
+            'operation' => $operation,
+            ...$basicLogs,
+            'url' => $url,
+            'payload' => json_encode($payload),
+            ...$responseLog,
+        ];
+
         try {
 
-            if (!empty($payload->access_token)) {
-                $payload->access_token = substr($payload->access_token, 0, 50) . "...";
+            if ($isSavedInDB) {
+                // Store API request and response in database
+                InsurerRequestResponse::create([
+                    'quote_uuid' => $this->context->quoteUUID,
+                    'provider_id' => $this->providerId, // You may want to set this based on your provider mapping
+                    'call_type' => "EpEcb",
+                    'request' => json_encode($payload),
+                    'response' => json_encode($responseLog['data'] ?? []),
+                    'status' => $status,
+                    'execution_method' => $operation
+                ]);
             }
-
-            // Handle different scenarios: successful response, HTTP error, or exception
-            if ($httpResponse) {
-                // Normal HTTP response (successful or error status)
-                $statusCode = $httpResponse->status();
-                $responseData = $httpResponse->object();
-                $isSuccessful = $httpResponse->successful() && ($responseData->isSuccess ?? false);
-            } elseif ($exception) {
-                // Exception occurred (network timeout, connection error, etc.)
-                $statusCode = 0;
-                $responseData = [
-                    'error' => $exception->getMessage(),
-                    // 'exception_type' => get_class($exception),
-                    // 'file' => $exception->getFile(),
-                    // 'line' => $exception->getLine()
-                ];
-                $isSuccessful = false;
-            } else {
-                // Fallback case
-                $statusCode = 0;
-                $responseData = ['error' => 'Unknown error occurred'];
-                $isSuccessful = false;
-            }
-
-            InsurerRequestResponse::create([
-                'quote_uuid' => $this->quoteUUID,
-                'provider_id' => $this->providerId, // You may want to set this based on your provider mapping
-                'call_type' => "EP-ECB",
-                'request' => json_encode($payload),
-                'response' => json_encode($responseData),
-                'status' => $isSuccessful ? 'passed' : 'failed',
-                'execution_method' => $operation
-            ]);
 
             // Also log using LoggerService for additional tracking
-            if ($exception) {
-                LoggerService::error($this->logPrefix . " API {$operation} failed with exception", extra: [
-                    ...$this->logExtra,
-                    'operation' => $operation,
-                    'url' => $url,
-                    'payload' => json_encode($payload),
-                    'status_code' => $statusCode,
-                    'error' => $exception->getMessage(),
-                    'exception_type' => get_class($exception)
-                ]);
-            } else {
-                LoggerService::info($this->logPrefix . " API {$operation} logged", extra: [
-                    ...$this->logExtra,
-                    'operation' => $operation,
-                    'url' => $url,
-                    'payload' => json_encode($payload),
-                    'response' => json_encode($httpResponse->object()),
-                    'status_code' => $statusCode,
-                    'status' => $isSuccessful ? 'passed' : 'failed'
-                ]);
-            }
+            LoggerService::info($this->logPrefix . " API {$operation} logged ($status)", extra: $logData);
         } catch (Throwable $e) {
-            LoggerService::error($this->logPrefix . ' Failed to log API request', extra: [
-                ...$this->logExtra,
-                'operation' => $operation,
-                'url' => $url,
-                'logging_error' => $e->getMessage(),
-                'original_exception' => $exception ? $exception->getMessage() : 'None'
+            LoggerService::error($this->logPrefix . " Failed to log API {$operation} request ($status)", extra: [
+                ...$logData,
+                'logging_error' => $e->getMessage()
             ]);
         }
     }
@@ -583,21 +756,93 @@ class EpExcessCashbackService
     /**
      * Update transaction status
      */
-    private function updateTransactionStatus(string $status): void
+    private function updateTransactionStatus(string $status, array $data = []): void
     {
         try {
-            $this->embeddedTransaction->update(['policy_status' => $status]);
+            $policyInfo = collect($data)->only('quote_policy', 'certificate_number')->toArray();
+            $this->embeddedTransaction->update(['policy_status' => $status, ...$policyInfo]);
 
             LoggerService::info($this->logPrefix . ' Transaction status updated', extra: [
                 ...$this->logExtra,
-                'new_status' => $status
+                'policy_status' => $this->embeddedTransaction?->policy_status
             ]);
         } catch (Throwable $e) {
             LoggerService::error($this->logPrefix . ' Failed to update transaction status', extra: [
                 ...$this->logExtra,
-                'status' => $status,
+                'policy_status' => $this->embeddedTransaction?->policy_status,
                 'error' => $e->getMessage()
             ]);
+        }
+    }
+
+    private function executeSavePolicyDocument(string $docUrl, DocumentType $documentType): array
+    {
+        $dir = 'documents/' . $documentType->folder_path;
+
+        // Step: Download & Upload policy document
+        $documentData = $this->executeDownloadAndUploadDocument($docUrl, $dir);
+        if (!$documentData['success']) {
+            return ['success' => false, 'error' => $documentData['error']];
+        }
+
+        $docUuid = $this->generateUniqueUuid();
+        $documentData = [
+            'original_name' => $documentData['file_name'] ?? null,
+            'doc_name' => $documentData['document_name'] ?? null,
+            'doc_url' => $documentData['document_url'] ?? null,
+            'doc_uuid' => $docUuid,
+            'document_type_code' => $documentType->code,
+            'document_type_text' => $documentType->text,
+            'doc_mime_type' => 'application/pdf',
+            'created_by_id' => null,
+            'watermarked_doc_name' => null,
+            'watermarked_doc_url' => null,
+        ];
+
+        $this->embeddedTransaction->documents()->create($documentData);
+
+        return ['success' => true, 'data' => $documentData];
+    }
+
+    /**
+     * Download policy documents
+     */
+    private function executeDownloadAndUploadDocument($docUrl, $dir) // string $docUrl, DocumentType $documentType
+    {
+        try {
+            $downloadDocResponse = $this->makeDownloadApiCall(
+                $docUrl,
+                ['Authorization' => 'Bearer ' . $this->bearerToken],
+                'DownloadPolicyDocument'
+            );
+
+            $fileName = "{$this->context->quoteUUID}_{$this->policyNumber}-{$downloadDocResponse['filename']}";
+            $fileContent = $downloadDocResponse['content'];
+
+            if (!$downloadDocResponse['success']) {
+                throw new Error($downloadDocResponse['error'] ?? "DownloadPolicyDocument API call Failed, doc_name: {$fileName}");
+            }
+
+            $response = $this->uploadDocument($fileName, $fileContent, $dir);
+
+            if (!$response['success']) {
+                throw new Error($response['error'] ?? "UploadDocument Process Failed, doc_name: {$fileName}");
+            }
+
+            return [
+                'success' => $response['success'],
+                'file_name' => $fileName,
+                'document_name' => $response['data']['doc_name'] ?? null,
+                'document_url' => $response['data']['doc_url'] ?? null
+            ];
+        } catch (Throwable $e) {
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'statusCode' => 0,
+                'exceptionType' => get_class($e),
+            ];
         }
     }
 
@@ -682,7 +927,7 @@ class EpExcessCashbackService
                 'co_buyer_id_expiry_date' => null
             ],
             'vehicle_info' => [
-                'vehicle_chassis_no' => "VIN11000000000002",
+                'vehicle_chassis_no' => "VIN11000000000031",
                 'vehicle_engine_no' => null,
                 'vehicle_plate_no' => null,
                 'vehicle_purchase_price' => null,
@@ -717,4 +962,20 @@ class EpExcessCashbackService
             ]
         ];
     }
+
+
+    /**
+     * Generates a unique UUID for the given document.
+     *
+     * @return string The generated UUID.
+     */
+    private function generateUniqueUuid()
+    {
+        do {
+            $uuid = uniqid();
+        } while (QuoteDocument::where('doc_uuid', $uuid)->exists());
+
+        return $uuid;
+    }
+
 }

@@ -48,7 +48,7 @@ return [
         'client_code' => env('TPA_CLIENT_CODE', 'ENOC'),
         'client_id' => env('TPA_CLIENT_ID'),
         'client_secret' => env('TPA_CLIENT_SECRET'),
-        'timeout' => env('TPA_CLIENT_API_TIMEOUT', 30),
+        'timeout' => env('TPA_CLIENT_API_TIMEOUT', 300),
     ],
 
     /*
