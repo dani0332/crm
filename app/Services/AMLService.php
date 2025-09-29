@@ -2281,7 +2281,8 @@ class AMLService
             $insuranceProviderId = InsuranceProvider::where('id', $insuranceProviderId)->first()->code;
         }
 
-        return $insuranceProviderId == InsuranceProvidersEnum::AXA;
+        // Remove LIVA before STAGE.
+        return in_array($insuranceProviderId, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA]);
     }
 
     public function getAdditionaVehicleDriverLookups($quoteTypeCode, $insuranceProviderId)
