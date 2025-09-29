@@ -56,6 +56,8 @@ class EpPurchaseFlowJob implements ShouldQueue
         // Sync policy documents
         $epEcbService->syncPolicyDocuments();
 
+        $epEcbService->handleJobSuccess();
+
         LoggerService::info("{$this->logPrefix} Completed", extra: $this->logExtra);
     }
 

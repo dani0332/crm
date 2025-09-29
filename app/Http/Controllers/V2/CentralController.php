@@ -347,16 +347,16 @@ class CentralController extends Controller
                         EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType->value));
 
                         $sukoonMedexCodes = EmbeddedProductEnum::getSukoonMedexCodes();
-                        $hasSukoonMedexProducts = $captureableEmbeddedTransactions
+                        $hasMedexOrEcbProduct = $captureableEmbeddedTransactions
                             ->filter(function ($transaction) use ($sukoonMedexCodes) {
                                 $epShortCode = $transaction?->product?->embeddedProduct?->short_code;
 
-                                return $epShortCode && in_array($epShortCode, $sukoonMedexCodes);
+                                return $epShortCode && (in_array($epShortCode, $sukoonMedexCodes) || $epShortCode == EmbeddedProductEnum::ECB);
                             })
                             ->isNotEmpty();
 
-                        // Return response only if EP has any Sukoon MEDEX Product, otherwise proceed to Sage booking
-                        if ($hasSukoonMedexProducts) {
+                        // Return response only if EP has any Sukoon MEDEX Or ECB Product, otherwise proceed to Sage booking
+                        if ($hasMedexOrEcbProduct) {
                             LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin',
                                 extra: $captureableEmbeddedTransactions->toArray()
                             );

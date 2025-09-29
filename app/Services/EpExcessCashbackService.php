@@ -8,7 +8,9 @@ use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteDocumentsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\SendPolicyTypeEnum;
 use App\Models\DocumentType;
 use App\Jobs\EpPurchaseFlowJob;
 use App\Jobs\EpWatermarkDocumentJob;
@@ -853,6 +855,9 @@ class EpExcessCashbackService extends EpBookingService
      */
     private function buildQuotePayload(): array
     {
+        $vehicleFirstRegnDate = $this->quote?->year_of_first_registration;
+        $vehicleFirstRegnDate = $this->formatDate(!empty($vehicleFirstRegnDate) ? $vehicleFirstRegnDate.'-01-01' : '');
+
         return [
             'client_reference_number' => "",
             'transaction_country' => $this->transactionCountry,
@@ -879,7 +884,7 @@ class EpExcessCashbackService extends EpBookingService
                 'vehicle_is_electric' => null,
                 'vehicle_is_hybrid' => null,
                 'vehicle_hybrid_type' => null,
-                'vehicle_first_regn_date' => $this->quote?->year_of_first_registration ?? null,
+                'vehicle_first_regn_date' => $vehicleFirstRegnDate,
                 'vehicle_invoiced_date' => null,
                 'vehicle_delivery_date' => null,
                 'vehicle_model_year' => $this->quote?->year_of_manufacture ?? null,
@@ -890,6 +895,68 @@ class EpExcessCashbackService extends EpBookingService
                 'vehicle_pwi_km' => null
             ]
         ];
+    }
+
+    public function handleJobSuccess()
+    {
+        $response = [];
+
+        $quoteStatusId = $this->quote?->quote_status_id;
+        $epPolicyStatus = $this->embeddedTransaction?->policy_status;
+
+        LoggerService::info("{$this->logPrefix} Begin handleJobSuccess: QuoteStatusId: {$quoteStatusId}, EpPolicyStatus: {$epPolicyStatus}");
+
+        if ($epPolicyStatus == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE) {
+            $response = match ($quoteStatusId) {
+                QuoteStatusEnum::PolicyIssued => $this->callSageBookingProcess(),
+                QuoteStatusEnum::PolicyBooked => $this->scheduleSageBookingForSukoonEp(),
+                default => ['status' => true, 'message' => 'Sage booking is not called'],
+            };
+        }
+
+        LoggerService::info("{$this->logPrefix} Finish handleJobSuccess: QuoteStatusId: {$quoteStatusId}, EpPolicyStatus: {$epPolicyStatus}", extra: ['response' => $response]);
+
+        return $response;
+    }
+
+    private function callSageBookingProcess()
+    {
+        $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
+
+        $sageApiService = (new SageApiService);
+        $sageApiService->updateAndLogQuoteStatus($this->quote, $this->context?->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
+
+        $request = new \stdClass;
+        $request->quote_id = $this->quote?->id;
+        $request->modelType = $quoteType;
+        $request->model_type = $quoteType;
+        $request->is_send_policy = false;
+        $request->send_policy_type = SendPolicyTypeEnum::SAGE;
+        $request->transaction_payment_status = null;
+
+        $createSageProcessResponse = $sageApiService->postBookPolicyToSage($request, $this->quote);
+
+        if (! $createSageProcessResponse['status']) {
+            $sageApiService->updateAndLogQuoteStatus($this->quote, $this->context?->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, null);
+        }
+
+        return $createSageProcessResponse;
+    }
+    
+    private function scheduleSageBookingForSukoonEp()
+    {
+        $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
+
+        $request = [
+            'epTransactionId' => $this->embeddedTransaction->id, // embedded_transaction_id
+            'insuranceProviderId' => $this->providerId, // embedded_product's provider_id
+            'modelType' => $quoteType, // main-lead quote_type
+            'quoteId' => $this->quote?->id, // main-lead quote_id
+        ];
+
+        $scheduledBookingResponse = (new SageApiEmbeddedProductService)->scheduleBookingOfEmbeddedProduct($request);
+
+        return $scheduledBookingResponse;
     }
 
     /**
@@ -919,12 +986,16 @@ class EpExcessCashbackService extends EpBookingService
                 return $document;
             });
 
+        $policyStartDate = $this->formatDate($this->quote?->policy_start_date ?? '');
+
+        $policyEndDate = $this->formatDate($this->quote->policy_expiry_date ?? '');
+
         return [
             'client_reference_number' => null,
             'quote_reference_number' => $this->quoteReferenceNumber,
             'transaction_country' => $this->transactionCountry,
             'sales_info' => [
-                'policy_sold_date' => $this->quote?->policy_start_date,
+                'policy_sold_date' => $policyStartDate,
                 'policy_sold_location' => null,
                 'policy_sold_salesman' => null
             ],
@@ -964,8 +1035,8 @@ class EpExcessCashbackService extends EpBookingService
             'motor_insurance_info' => [
                 'mi_policy_number' => "NA",
                 'mi_policy_issuer' => $this->quote?->insuranceProviderDetails?->ecb_mi_policy_issuer_id ?? 3,
-                'mi_start_date' => $this->quote?->policy_start_date,
-                'mi_end_date' => $this->quote?->policy_expiry_date,
+                'mi_start_date' => $policyStartDate,
+                'mi_end_date' => $policyEndDate,
                 'mi_coverage_area' => "NA", // "UAE & OMAN",
                 'mi_sum_insured' => $this->quote?->car_value,
                 'mi_policy_excess' => 100
@@ -989,4 +1060,8 @@ class EpExcessCashbackService extends EpBookingService
         return $uuid;
     }
 
+    public function formatDate(string $date): string
+    {
+        return !empty($date) ? date('Y-m-d', strtotime($date)) : null;
+    }
 }
