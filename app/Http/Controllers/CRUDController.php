@@ -922,6 +922,8 @@ class CRUDController extends Controller
                     'paymentGatewayEnum',
                     'isFuncsEnabled',
                     'businessActivities',
+                    'apiIssuanceStatus',
+                    'insurerApiStatus',
                     'previousQuote',
                 ]));
             }
