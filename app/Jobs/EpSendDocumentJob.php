@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\DTO\EpBookingContext;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
@@ -42,6 +43,9 @@ class EpSendDocumentJob implements ShouldQueue
 
     public function handle(): void
     {
+        // Start feature and quote logging
+        LoggerService::startQuoteLogging($this->context->quoteUUID, LoggerFeatureEnum::EP_PROCESS_SEND_DOCUMENT);
+
         $this->storageBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         LoggerService::info("{$this->logPrefix} Starting");

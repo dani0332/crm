@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\DTO\EpBookingContext;
-use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Models\EmbeddedTransaction;
 use App\Services\EpExcessCashbackService;
@@ -22,7 +22,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
     public $timeout = 300;
     public $backoff = 30;
 
-    private EmbeddedTransaction $embeddedTransaction;
+    private ?EmbeddedTransaction $embeddedTransaction = null;
     private array $watermarkableDocTypeCodes;
 
     private string $logPrefix = 'EpWatermarkDocument - Job:';
@@ -46,9 +46,16 @@ class EpWatermarkDocumentJob implements ShouldQueue
 
     public function handle(): void
     {
+        // Start feature and quote logging
+        LoggerService::startQuoteLogging($this->context->quoteUUID, LoggerFeatureEnum::EP_PROCESS_WATERMARK_DOCUMENT);
+
         LoggerService::info("{$this->logPrefix} Starting", extra: $this->logExtra);
 
         $this->embeddedTransaction = EmbeddedTransaction::find($this->context->etId);
+        
+        if (!$this->embeddedTransaction) {
+            throw new \Exception("EmbeddedTransaction not found with ID: {$this->context->etId}");
+        }
         $documents = $this->embeddedTransaction->documents()
             ->whereIn('document_type_code', $this->watermarkableDocTypeCodes)->get();
 

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -33,15 +34,15 @@ use Throwable;
 class EpExcessCashbackService extends EpBookingService
 {
     public mixed $quote = null;
-    private int $providerId;
-    private EmbeddedTransaction $embeddedTransaction;
+    private int $providerId = 0;
+    private ?EmbeddedTransaction $embeddedTransaction = null;
 
     // API Configuration
-    private string $baseUrl;
-    private string $clientCode;
-    private string $clientId;
-    private string $clientSecret;
-    private int $timeout;
+    private string $baseUrl = '';
+    private string $clientCode = '';
+    private string $clientId = '';
+    private string $clientSecret = '';
+    private int $timeout = 180;
 
     // Process State
     private ?string $bearerToken = null;
@@ -72,6 +73,9 @@ class EpExcessCashbackService extends EpBookingService
 
     public function init(): void
     {
+        // Start feature and quote logging
+        LoggerService::startQuoteLogging($this->context->quoteUUID, LoggerFeatureEnum::EP_PROCESS_PURCHASE_FLOW);
+
         $this->logExtra = [
             'etId' => $this->context->etId,
             'quoteId' => $this->context->quoteId,
@@ -84,8 +88,12 @@ class EpExcessCashbackService extends EpBookingService
 
         // Load embedded transaction
         $this->embeddedTransaction = EmbeddedTransaction::findOrFail($this->context->etId);
+        
+        if (!$this->embeddedTransaction) {
+            throw new Exception("EmbeddedTransaction not found with ID: {$this->context->etId}");
+        }
 
-        $this->providerId = InsuranceProvider::where('code', InsuranceProviderEnum::NGI->value)->value('id');
+        $this->providerId = InsuranceProvider::where('code', InsuranceProviderEnum::NGI->value)->value('id') ?? 0;
 
         // Restore workflow state from previous execution
         $this->restoreWorkflowState();
@@ -127,13 +135,13 @@ class EpExcessCashbackService extends EpBookingService
      */
     private function loadApiConfiguration(): void
     {
-        $config = config('services.tpa_client_api');
+        $config = config('services.tpa_client_api', []);
 
-        $this->baseUrl = $config['base_url'];
-        $this->clientCode = $config['client_code'];
-        $this->clientId = $config['client_id'];
-        $this->clientSecret = $config['client_secret'];
-        $this->timeout = $config['timeout'];
+        $this->baseUrl = $config['base_url'] ?? '';
+        $this->clientCode = $config['client_code'] ?? '';
+        $this->clientId = $config['client_id'] ?? '';
+        $this->clientSecret = $config['client_secret'] ?? '';
+        $this->timeout = $config['timeout'] ?? 180;
     }
 
     /**
