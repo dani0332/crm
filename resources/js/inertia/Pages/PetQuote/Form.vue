@@ -80,7 +80,7 @@ const isReferralType = computed(() => {
 });
 
 const isEcomLeadExtension = computed(() => {
-  return props.leadSourceParams?.type === 'ecom' ||
+  return props.leadSourceParams?.type === 'ecom_lead_extension' ||
     (quoteForm.sub_source_id === null && quoteForm.sub_source_options_id === null && quoteForm.primary_ref_id);
 });
 
