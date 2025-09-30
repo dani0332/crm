@@ -156,15 +156,15 @@ class EpExcessCashbackService extends EpBookingService
             new EpSendDocumentJob($context)
         ])
             // Chain will stop on first failure by default
-            ->catch(function (Throwable $e) use ($logExtra) {
+            ->catch(function (Throwable $e) use ($context, $logExtra) {
                 LoggerService::error('EpEcbService: Workflow chain failed', extra: [
                     ...$logExtra,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()
                 ]);
 
-                Mail::send(new EpFailureNotification($this->context->quoteId, $this->context->quoteTypeId, $this->context->etId));
-                LoggerService::info("{$this->logPrefix} - Send EP failure notification email successfully");
+                Mail::send(new EpFailureNotification($context->quoteId, $context->quoteTypeId, $context->etId));
+                LoggerService::info("EpEcbService - Send EP failure notification email successfully");
             })
             ->dispatch();
 
