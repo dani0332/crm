@@ -64,40 +64,25 @@ class GroupMedicalActivityScheduleSeeder extends Seeder
                 'roles' => [$gmAdvisorRole, $gmManagerRole],
                 'statuses_activities' => [
                     QuoteStatusEnum::FollowedUp => [
-                        // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                        // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-
-                        // for testing purpose
                         ['name' => '1st Call Follow-up', 'due_days' => 1],
-                        ['name' => '2nd Call Follow-up', 'due_days' => 1],
+                        ['name' => '2nd Call Follow-up', 'due_days' => 3],
                     ],
                     QuoteStatusEnum::InNegotiation => [
-                        // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                        // ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                        ['name' => '1st Call Follow-up', 'due_days' => 2],
+                        ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                        // for testing purpose
-                        ['name' => '1st Call Follow-up', 'due_days' => 1],
-                        ['name' => '2nd Call Follow-up', 'due_days' => 1],
                     ],
                     QuoteStatusEnum::ApplicationPending => [
-                        // ['name' => '1st Call Follow-up', 'due_days' => 3],
-                        // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                        // ['name' => '3rd Call Follow-up', 'due_days' => 3],
+                        ['name' => '1st Call Follow-up', 'due_days' => 3],
+                        ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                        ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                        // for testing purpose
-                        ['name' => '1st Call Follow-up', 'due_days' => 1],
-                        ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                        ['name' => '3rd Call Follow-up', 'due_days' => 1],
                     ],
                     QuoteStatusEnum::PaymentPending => [
-                        // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                        // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                        // ['name' => '3rd Call Follow-up', 'due_days' => 5],
-
-                        // for testing purpose
                         ['name' => '1st Call Follow-up', 'due_days' => 1],
-                        ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                        ['name' => '3rd Call Follow-up', 'due_days' => 1],
+                        ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                        ['name' => '3rd Call Follow-up', 'due_days' => 5],
+
                     ],
                 ],
             ],
@@ -108,38 +93,25 @@ class GroupMedicalActivityScheduleSeeder extends Seeder
                 'roles' => [$gmAdvisorRole, $gmManagerRole],
                 'statuses_activities' => [
                     QuoteStatusEnum::Allocated => [
-                        // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                        // ['name' => '2nd Call Follow-up', 'due_days' => 2],
+                        ['name' => '1st Call Follow-up', 'due_days' => 2],
+                        ['name' => '2nd Call Follow-up', 'due_days' => 2],
 
-                        // for testing purpose
-                        ['name' => '1st Call Follow-up', 'due_days' => 1],
-                        ['name' => '2nd Call Follow-up', 'due_days' => 1],
                     ],
                     QuoteStatusEnum::RenewalTermsReceived => [
-                        // ['name' => 'Email renewal terms', 'due_days' => 2],
+                        ['name' => 'Email renewal terms', 'due_days' => 2],
 
-                        // for testing purpose
-                        ['name' => 'Email renewal terms', 'due_days' => 1],
                     ],
                     QuoteStatusEnum::Quoted => [
-                        // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                        // ['name' => '2nd Call Follow-up', 'due_days' => 2],
-                        // ['name' => '3rd Call Follow-up', 'due_days' => 2],
+                        ['name' => '1st Call Follow-up', 'due_days' => 2],
+                        ['name' => '2nd Call Follow-up', 'due_days' => 2],
+                        ['name' => '3rd Call Follow-up', 'due_days' => 2],
 
-                        // for testing purpose
-                        ['name' => '1st Call Follow-up', 'due_days' => 1],
-                        ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                        ['name' => '3rd Call Follow-up', 'due_days' => 1],
                     ],
                     QuoteStatusEnum::InNegotiation => [
-                        // ['name' => '1st Call Follow-up', 'due_days' => 3],
-                        // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                        // ['name' => '3rd Call Follow-up', 'due_days' => 3],
+                        ['name' => '1st Call Follow-up', 'due_days' => 3],
+                        ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                        ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                        // for testing purpose
-                        ['name' => '1st Call Follow-up', 'due_days' => 1],
-                        ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                        ['name' => '3rd Call Follow-up', 'due_days' => 1],
                     ],
                     QuoteStatusEnum::PaymentPending => [
                         ['name' => '1st Call Follow-up', 'due_days' => 1],
