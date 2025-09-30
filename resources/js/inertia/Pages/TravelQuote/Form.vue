@@ -572,25 +572,48 @@ const floorLabel = computed(() => {
           label="SUB SOURCE"
           v-model="quoteForm.sub_source_id"
           :options="subSourceOptions"
-          :error="quoteForm.errors.sub_source_id"
-          :disabled="!canEditSubSourceFields"
           class="w-full"
-        />
+          placeholder="Select Sub Source"
+          filterable
+          filterPlaceholder="Filter Sub Source...."
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
 
         <x-select
           v-if="isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension"
           label="SUB SOURCE OPTION"
           v-model="quoteForm.sub_source_options_id"
           :options="subSourceOptionOptions"
-          :error="quoteForm.errors.sub_source_options_id"
-          :disabled="!canEditSubSourceFields"
-          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
-          :required="subSourceOptionOptions.length > 0"
           class="w-full"
           placeholder="Select Sub Source Option"
           filterable
           filterPlaceholder="Filter Sub Source Option...."
-        />
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
 
         <x-input
           v-if="isEcomLeadExtension"
