@@ -83,6 +83,10 @@ class EpExcessCashbackService extends EpBookingService
             'quoteUUID' => $this->context->quoteUUID,
         ];
 
+        if (!$this->quote) {
+            throw new Exception("Quote not found.");
+        }
+
         // Load API configuration
         $this->loadApiConfiguration();
 
@@ -872,6 +876,10 @@ class EpExcessCashbackService extends EpBookingService
      */
     private function buildQuotePayload(): array
     {
+        if (!$this->quote) {
+            throw new Exception("Quote not found for building quote payload");
+        }
+
         $vehicleFirstRegnDate = $this->quote?->year_of_first_registration;
         $vehicleFirstRegnDate = $this->formatDate(!empty($vehicleFirstRegnDate) ? $vehicleFirstRegnDate . '-01-01' : '');
 
@@ -992,7 +1000,12 @@ class EpExcessCashbackService extends EpBookingService
         }
 
         $storageBaseUrl = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
-        $mulkiyaDocuments = $this->quote?->documents()->where('document_type_code', QuoteDocumentsEnum::CAR_MULKIY)
+
+        if (!$this->quote) {
+            throw new Exception("Quote not found for building policy payload");
+        }
+
+        $mulkiyaDocuments = $this->quote->documents()->where('document_type_code', QuoteDocumentsEnum::CAR_MULKIY)
             ->select('document_type_code as document_type', 'doc_name as document_name', 'doc_url')
             ->get()
             ->map(function ($document) use ($storageBaseUrl) {

@@ -83,8 +83,8 @@ class EpFailureNotification extends Mailable
             return $this->subject($subject)
                 ->from('alfred@testnotify.alfred.ae')
                 ->replyTo(['test.emails@insurancemarket.ae'])
-                ->to(['rucha.keluskar@myalfred.com', 'arsalan.mughal@myalfred.com'])
-                ->cc(['diya.lekhwani@myalfred.com'])
+                ->to(['rucha.keluskar@myalfred.com'])
+                ->cc(['diya.lekhwani@myalfred.com', 'arsalan.mughal@myalfred.com', 'nidhi.kaushal@myalfred.com', 'tasawar.hussain@myalfred.com'])
                 ->view('email.ep-booking-job-failed', [
                     'refId' => $refId,
                     'imcrmLink' => $imcrmLink,

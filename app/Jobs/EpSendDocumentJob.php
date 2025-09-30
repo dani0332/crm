@@ -82,13 +82,26 @@ class EpSendDocumentJob implements ShouldQueue
      */
     private function sendEmail()
     {
+        if (!$this->quote) {
+            throw new \Exception("Quote not found for sending email");
+        }
+
         LoggerService::info("{$this->logPrefix} Email sending for uuid: {$this->quote->uuid}");
 
         $advisor = $this->quote?->advisor;
+        
+        // Build CC array, filtering out null values
+        $ccEmails = array_filter([
+            $advisor?->email,
+            "arsalanmughal23@yopmail.com", 
+            "nidhi.kaushal@myalfred.com", 
+            "tasawar.hussain@myalfred.com"
+        ]);
+
         $recipients = [
-            "to" => [$this->quote?->email],
-            "cc" => ["arsalanmughal23@yopmail.com"],
-            "bcc" => []
+            "to" => [ $this->quote?->email ],
+            "cc" => $ccEmails,
+            "bcc" => ["newleadpool@insurancemarket.ae"]
         ];
         $advisorData = [
             'advisorEmail' => $advisor?->email,
@@ -107,8 +120,8 @@ class EpSendDocumentJob implements ShouldQueue
         $emailData = [
             "Attachments" => $this->fetchAttachments(),
             "Tags" => WorkflowTypeEnum::SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL,
-            "customerName" => $this->quote?->first_name . ' ' . $this->quote?->last_name,
-            "refID" => $this->quote?->code,
+            "customerName" => trim(($this->quote?->first_name ?? '') . ' ' . ($this->quote?->last_name ?? '')),
+            "refID" => $this->quote?->code ?? '',
             ...$recipients,
             ...$advisorData,
             "attachingDocsEmail" => "yes",
@@ -130,7 +143,7 @@ class EpSendDocumentJob implements ShouldQueue
         $sendEpDocumentsEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL)->first();
         LoggerService::info('SendEpDocuments Email: ', extra: $birdEmailData);
 
-        $url = $sendEpDocumentsEvent->value ?? 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f25be3f7-9382-426d-aa90-9f9aaa1825dd/invoke-sync';
+        $url = $sendEpDocumentsEvent->value;
         app(BirdService::class)->triggerWebHookRequest($url, (object) $birdEmailData);
     }
 
@@ -138,7 +151,11 @@ class EpSendDocumentJob implements ShouldQueue
     public function fetchAttachments()
     {
         $transaction = EmbeddedTransaction::findOrFail($this->context->etId);
-        $embeddedProduct = $transaction->product->embeddedProduct;
+        $embeddedProduct = $transaction?->product?->embeddedProduct;
+        
+        if (empty($embeddedProduct)) {
+            throw new \Exception("Embedded product not found for transaction ID: {$this->context->etId}");
+        }
 
         $watermarkedDocuments = $transaction->documents()
             ->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get()

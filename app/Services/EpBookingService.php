@@ -70,6 +70,11 @@ class EpBookingService extends BaseService
 
                 $documentType = $documentTypes->firstWhere('code', $documentItem->document_type_code);
 
+                if (!$documentType) {
+                    LoggerService::warning("DocumentType not found for code: {$documentItem->document_type_code}");
+                    continue;
+                }
+
                 $savedWatermarkedDocument = $this->watermarkDocument($documentItem, $documentType);
                 if (! empty($savedWatermarkedDocument)) {
                     $watermarkedDocuments[] = $savedWatermarkedDocument;
