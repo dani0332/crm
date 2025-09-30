@@ -507,4 +507,20 @@ class HealthQuote extends Model implements AuditableContract
     {
         return in_array($this->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::INSURANCE_WALLET]);
     }
+
+    /**
+     * Sub-source relationship
+     */
+    public function subSource()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_id');
+    }
+
+    /**
+     * Sub-source option relationship
+     */
+    public function subSourceOption()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_options_id');
+    }
 }

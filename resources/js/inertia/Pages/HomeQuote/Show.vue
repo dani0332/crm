@@ -1327,6 +1327,27 @@ function handleOcrNotification(event) {
                 <dt class="font-medium">PAYMENT REFERENCE</dt>
                 <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
               </div>
+
+              <!-- Sub-source fields -->
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SUB SOURCE</dt>
+                <dd>{{ quote?.sub_source?.text || quote?.sub_source_id || 'N/A' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SUB SOURCE OPTION</dt>
+                <dd>{{ quote?.sub_source_option?.text || quote?.sub_source_options_id || 'N/A' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRIMARY REF ID</dt>
+                <dd>{{ quote?.primary_ref_id || 'N/A' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDITIONAL NOTES</dt>
+                <dd>{{ quote?.additional_notes || 'N/A' }}</dd>
+              </div>
             </dl>
           </div>
         </template>

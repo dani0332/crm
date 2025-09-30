@@ -2,6 +2,8 @@
 // Test comment for Cursor rule - testing pre-commit hook
 // Another test comment to trigger "Build Vue assets before commit" rule
 // Testing git hook implementation
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
+
 defineProps({
   quotes: Object,
   leadStatuses: Array,
@@ -10,6 +12,7 @@ defineProps({
   isManualAllocationAllowed: Boolean,
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  subSources: { type: Array, default: () => [] },
 });
 
 const page = usePage();
@@ -27,6 +30,11 @@ const loader = reactive({
 });
 
 const quotesSelected = ref([]);
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = () => {
+  createLeadModal.value = false;
+};
 
 let params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
@@ -640,16 +648,14 @@ const formatDate = dateString =>
           </x-button>
         </Link>
 
-        <Link :href="route('home-quotes-create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead
-          </x-button>
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          v-if="readOnlyMode.isDisable === true"
+          @click="createLeadModal = true"
+        >
+          Create Lead
+        </x-button>
       </template>
     </StickyHeader>
     <x-divider class="my-4" />
@@ -1120,5 +1126,12 @@ const formatDate = dateString =>
         </x-button>
       </template>
     </x-modal>
+
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="home-quotes-create"
+      :sub-sources="subSources"
+      @confirmed="onLeadConfirmed"
+    />
   </div>
 </template>

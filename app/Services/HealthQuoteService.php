@@ -208,6 +208,12 @@ class HealthQuoteService extends BaseService
             'hqr.pc_qualified',
             DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
             DB::raw(HealthQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
+            // Sub-source fields
+            'hqr.sub_source_id',
+            'hqr.sub_source_options_id',
+            'hqr.primary_ref_id',
+            'ss.text as sub_source_text',
+            'sso.text as sub_source_option_text',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -216,6 +222,8 @@ class HealthQuoteService extends BaseService
             ->leftJoin('health_cover_for as hcf', 'hcf.id', '=', 'hqr.cover_for_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'hqr.transaction_type_id')
+            ->leftJoin('lookups as ss', 'ss.id', '=', 'hqr.sub_source_id')
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'hqr.sub_source_options_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('health_lead_type as lt', 'lt.id', '=', 'hqr.lead_type_id')
@@ -322,7 +330,21 @@ class HealthQuoteService extends BaseService
             'hasHome' => $request->has_home == 'on' ? true : false,
             'currentlyInsuredWithId' => $request->currently_insured_with_id,
             'healthPlanTypeId' => $request->plan_type_id,
+            // Sub-source fields from CreateLeadModal
+            'subSourceId' => $request->sub_source_id ?? null,
+            'subSourceOptionsId' => $request->sub_source_options_id ?? null,
+            'primaryRefId' => $request->primary_ref_id ?? null,
+            'additionalNotes' => $request->additional_notes ?? null,
         ];
+
+        // Log lead source parameters for Health quotes
+        info('Health saveHealthQuote - Lead source parameters:', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->sub_source_id,
+            'subSourceOptionsId' => $request->sub_source_options_id,
+            'primaryRefId' => $request->primary_ref_id,
+            'additionalNotes' => $request->additional_notes,
+        ]);
         $dataArr['memberDetails'][] = [
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
@@ -452,6 +474,21 @@ class HealthQuoteService extends BaseService
         $healthQuote->dob = $request->dob;
         $healthQuote->policy_start_date = $request->policy_start_date;
         $healthQuote->health_plan_type_id = $request->plan_type_id;
+
+        // Update sub-source fields from CreateLeadModal
+        if ($request->has('sub_source_id')) {
+            $healthQuote->sub_source_id = $request->sub_source_id;
+        }
+        if ($request->has('sub_source_options_id')) {
+            $healthQuote->sub_source_options_id = $request->sub_source_options_id;
+        }
+        if ($request->has('primary_ref_id')) {
+            $healthQuote->primary_ref_id = $request->primary_ref_id;
+        }
+        if ($request->has('additional_notes')) {
+            $healthQuote->additional_notes = $request->additional_notes;
+        }
+
         $healthQuote->save();
 
         if (isset($request->return_to_view)) {

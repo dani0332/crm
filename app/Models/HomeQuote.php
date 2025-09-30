@@ -225,4 +225,14 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
+
+    public function subSource()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_id');
+    }
+
+    public function subSourceOption()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_options_id');
+    }
 }

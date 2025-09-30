@@ -163,6 +163,16 @@ class CarQuote extends BaseModel
         return $this->belongsTo(Customer::class);
     }
 
+    public function subSource()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_id');
+    }
+
+    public function subSourceOption()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_options_id');
+    }
+
     public function nationality()
     {
         return $this->belongsTo(Nationality::class, 'nationality_id')->select(['id', 'code', 'text']);

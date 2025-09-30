@@ -114,6 +114,19 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
+// Define record as computed property for template access
+const record = computed(() => page.props.record);
+
+// Log sub-source properties available in Vue
+console.log('Sub-source properties in Vue:', {
+  sub_source_id: page.props.record.sub_source_id,
+  sub_source_options_id: page.props.record.sub_source_options_id,
+  primary_ref_id: page.props.record.primary_ref_id,
+  sub_source_text: page.props.record.sub_source_text,
+  sub_source_option_text: page.props.record.sub_source_option_text,
+  record_keys: Object.keys(page.props.record),
+});
+
 const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
   id: page.props.record.plan_id,
@@ -2013,6 +2026,21 @@ function handleOcrNotification(event) {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LEAD SOURCE</dt>
                 <dd>{{ record.source }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SUB SOURCE</dt>
+                <dd>{{ record.sub_source_text || record.sub_source_id || 'N/A' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SUB SOURCE OPTION</dt>
+                <dd>{{ record.sub_source_option_text || record.sub_source_options_id || 'N/A' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRIMARY REF ID</dt>
+                <dd>{{ record.primary_ref_id || 'N/A' }}</dd>
               </div>
               <div v-if="isCompanyCar" class="grid sm:grid-cols-2">
                 <dt class="font-medium">Vehicle use</dt>

@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 defineProps({
   quotes: Object,
@@ -13,6 +14,7 @@ defineProps({
   travelPlans: Array,
   insurerAMLStatus: Object,
   assignmentTypes: Object,
+  subSources: { type: Array, default: () => [] },
 });
 
 let params = useUrlSearchParams('history');
@@ -36,6 +38,12 @@ const rules = {
 const quotesSelected = ref([]);
 const canExport = ref(false);
 const page = usePage();
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = () => {
+  createLeadModal.value = false;
+};
+
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
@@ -714,16 +722,14 @@ const calculateAge = dateOfBirth => {
             Cards View
           </x-button>
         </Link>
-        <Link :href="route('travel.create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead
-          </x-button>
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          v-if="readOnlyMode.isDisable === true"
+          @click="createLeadModal = true"
+        >
+          Create Lead
+        </x-button>
       </div>
     </div>
     <x-divider class="my-4" />
@@ -1400,6 +1406,13 @@ const calculateAge = dateOfBirth => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="travel.create"
+      :sub-sources="subSources"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

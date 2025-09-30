@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 defineProps({
   quotes: Object,
@@ -21,6 +22,7 @@ defineProps({
   assignmentTypes: Object,
   insurerAMLStatus: Array,
   emirates: Array,
+  subSources: { type: Array, default: () => [] },
 });
 
 const page = usePage();
@@ -40,6 +42,7 @@ const { isRequired } = useRules();
 
 const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
+const createLeadModal = ref(false);
 
 let params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
@@ -742,6 +745,11 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
+
+// Handle lead creation from modal
+const onLeadConfirmed = (leadData) => {
+  router.visit(route('health.create', leadData));
+};
 </script>
 
 <template>
@@ -780,16 +788,14 @@ const insurerAMLStatusOption = computed(() => {
           </x-button>
         </Link>
 
-        <Link :href="route('health.create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead
-          </x-button>
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          v-if="readOnlyMode.isDisable === true"
+          @click="createLeadModal = true"
+        >
+          Create Lead
+        </x-button>
       </template>
     </StickyHeader>
 
@@ -1350,6 +1356,14 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <!-- Create Lead Modal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="health.create"
+      :sub-sources="subSources"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

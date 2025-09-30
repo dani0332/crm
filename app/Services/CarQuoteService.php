@@ -126,6 +126,10 @@ class CarQuoteService extends BaseService
             'pointOfContactName' => $request->company_contact_name ?? null,
             'businessActivityId' => $request->business_activity_id ?? null,
             'driverName' => $driverName,
+            // Lead source fields from CreateLeadModal
+            'subSourceId' => $request->sub_source_id ?? null,
+            'subSourceOptionsId' => $request->sub_source_options_id ?? null,
+            'primaryRefId' => $request->primary_ref_id ?? null,
         ];
 
         if (! Auth::user()->hasRole('ADMIN')) {
@@ -254,6 +258,18 @@ class CarQuoteService extends BaseService
         if ($request->gender) {
             $carQuote->gender = $request->gender;
         }
+
+        // Update lead source fields from CreateLeadModal
+        if ($request->has('sub_source_id')) {
+            $carQuote->sub_source_id = $request->sub_source_id;
+        }
+        if ($request->has('sub_source_options_id')) {
+            $carQuote->sub_source_options_id = $request->sub_source_options_id;
+        }
+        if ($request->has('primary_ref_id')) {
+            $carQuote->primary_ref_id = $request->primary_ref_id;
+        }
+
         $carQuote->quote_updated_at = Carbon::now();
         $carQuote->is_quote_locked = true;
         if ($request->trim) {
@@ -495,6 +511,11 @@ class CarQuoteService extends BaseService
                 'cqr.insurer_api_status_id',
                 'cqr.rta_upload_status',
                 'cqr.documents_verified',
+                'cqr.sub_source_id',
+                'cqr.sub_source_options_id',
+                'cqr.primary_ref_id',
+                'ss.text as sub_source_text',
+                'sso.text as sub_source_option_text',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -508,6 +529,8 @@ class CarQuoteService extends BaseService
             ->leftJoin('uae_license_held_for as ulhfs', 'ulhfs.id', '=', 'cqr.back_home_license_held_for_id')
             ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
+            ->leftJoin('lookups as ss', 'ss.id', '=', 'cqr.sub_source_id')
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'cqr.sub_source_options_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'cqr.emirate_of_registration_id')
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
@@ -1650,7 +1673,36 @@ class CarQuoteService extends BaseService
             'currently_insured_with' => self::REQUIRED_STRING,
             'chassis_number' => 'nullable|'.self::STRING.'|min:8|max:17|regex:/^[a-zA-Z0-9]+$/',
             'registration_type' => self::REQUIRED,
+            // Sub-source validation rules
+            'sub_source_id' => 'nullable|integer|exists:lookups,id',
+            'sub_source_options_id' => 'nullable|integer|exists:lookups,id',
+            'primary_ref_id' => 'nullable|string|max:255',
         ];
+
+        // Sub-source conditional validation
+        $isReferralType = $request->input('type') === 'referral' ||
+                         ($request->has('source') && $request->source === 'IMCRM');
+        $isEcomLeadExtension = $request->input('type') === 'ecom_lead_extension' ||
+                              (!$request->sub_source_id && !$request->sub_source_options_id && $request->primary_ref_id);
+
+        if ($isReferralType && !$isEcomLeadExtension) {
+            // Sub source is required for referral types (except ECOM lead extension)
+            $validationArray['sub_source_id'] = 'required|integer|exists:lookups,id';
+
+            // If sub_source_id is provided, validate sub_source_options_id based on available options
+            if ($request->sub_source_id) {
+                // Check if the selected sub-source has child options
+                $subSource = \App\Models\Lookup::with('childs')->find($request->sub_source_id);
+                if ($subSource && $subSource->childs && $subSource->childs->count() > 0) {
+                    $validationArray['sub_source_options_id'] = 'required|integer|exists:lookups,id';
+                }
+            }
+        }
+
+        if ($isEcomLeadExtension) {
+            // Primary ref ID is required for ECOM lead extension
+            $validationArray['primary_ref_id'] = 'required|string|max:255';
+        }
 
         if ($request->registration_type == CarRegistrationType::COMPANY) {
             $validationArray = array_merge($validationArray, [

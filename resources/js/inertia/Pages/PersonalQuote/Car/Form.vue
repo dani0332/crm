@@ -1,4 +1,6 @@
 <script setup>
+import { watch } from 'vue';
+
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -9,6 +11,14 @@ const props = defineProps({
     default: {},
   },
   quoteStatusEnums: Array,
+  subSources: {
+    type: Array,
+    default: () => [],
+  },
+  leadSourceParams: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 
 const { isRequired, isEmail, maxValue } = useRules();
@@ -67,14 +77,27 @@ const quoteForm = useForm({
   uae_license_held_for_id: props.quote?.uae_license_held_for_id || null,
   nationality_id: props.quote?.nationality_id || null,
   back_home_license_held_for_id:
-    props.quote?.back_home_license_held_for_id || null,
+  props.quote?.back_home_license_held_for_id || null,
   gender: props.quote?.gender || null,
   currently_insured_with: props.quote?.currently_insured_with || null,
   is_ecommerce: props.quote?.is_ecommerce || null,
   car_make_id: props.quote?.car_make_id || null,
   vehicle_type_id: props.quote?.vehicle_type_id || null,
   trim: props.quote?.trim || null,
-  additional_notes: props.quote?.additional_notes || '',
+  additional_notes: (() => {
+    let notes = props.quote?.additional_notes || '';
+    const partnerName = props.leadSourceParams?.partnerName;
+
+    if (partnerName) {
+      if (notes) {
+        notes += `, ${partnerName}`;
+      } else {
+        notes = partnerName;
+      }
+    }
+
+    return notes;
+  })(),
   car_model_id: props.quote?.car_model_id || null,
   chassis_number: props.quote?.chassis_number || null,
   year_of_manufacture: props.quote?.year_of_manufacture || null,
@@ -85,6 +108,13 @@ const quoteForm = useForm({
   has_ncd_supporting_documents: props.quote?.has_ncd_supporting_documents,
   car_value_tier: props.quote?.car_value_tier || '',
   car_value: props.quote?.car_value || '',
+
+  // Lead source fields from CreateLeadModal
+  sub_source_id: parseInt(props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0) || null,
+  sub_source_options_id: parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption || 0) || null,
+  primary_ref_id: props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
+  partner_name: props.leadSourceParams?.partnerName || '',
+
   addressObj: {
     address_type: page.props.customerAddressData?.type || null,
     villa_apartment_office_no:
@@ -223,6 +253,8 @@ function onSubmit(isValid) {
   const url = isEdit.value
     ? route('car.update', props.quote.uuid)
     : route('car.store');
+
+  console.log("onSubmit");
 
   const options = {
     onError: errors => {
@@ -405,6 +437,117 @@ const gender = computed(() => {
     { value: 'F', label: 'Female' },
   ];
 });
+
+// Sub-source dropdown options
+const subSourceOptions = computed(() => {
+  console.log("quoteForm.sub_source_id", quoteForm.sub_source_id);
+  console.log("props.subSources", props.subSources);
+  console.log("props.subSources length:", props.subSources?.length);
+  console.log("props.subSources type:", typeof props.subSources);
+
+  if (!props.subSources || props.subSources.length === 0) {
+    console.warn("subSources is empty or undefined!");
+    return [];
+  }
+
+  const options = props.subSources.map(item => ({
+    value: item.id, // Keep as integer to match form data type
+    label: item.text,
+    suffix: item.description || item.tooltip || `Information about ${item.text}`, // Use suffix for tooltip data
+  }));
+
+  console.log("subSourceOptions:", options);
+  console.log("Current quoteForm.sub_source_id:", quoteForm.sub_source_id, "Type:", typeof quoteForm.sub_source_id);
+  console.log("Matching option:", options.find(opt => opt.value == quoteForm.sub_source_id));
+
+  return options;
+});
+
+// Sub-source option dropdown (childs of selected sub-source)
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+
+  const selectedSubSource = props.subSources.find(item => item.id == quoteForm.sub_source_id);
+  if (!selectedSubSource || !selectedSubSource.childs) return [];
+
+  return selectedSubSource.childs.map(child => ({
+    value: child.id, // Keep as integer to match form data type
+    label: child.text,
+    suffix: child.description || child.tooltip || `Information about ${child.text}`, // Add tooltip support
+  }));
+});
+
+// Check if this is a referral type lead
+const isReferralType = computed(() => {
+  return props.leadSourceParams?.type === 'referral' || props.quote?.source === 'IMCRM';
+});
+
+// Check if ECOM lead extension is selected
+const isEcomLeadExtension = computed(() => {
+  // From CreateLeadModal
+  if (props.leadSourceParams?.type === 'ecom_lead_extension') return true;
+
+  // From existing quote: sub_source_id and sub_source_options_id are null but primary_ref_id has value
+  if (!quoteForm.sub_source_id && !quoteForm.sub_source_options_id && quoteForm.primary_ref_id) {
+    return true;
+  }
+
+  return false;
+});
+
+
+// Role-based permissions for sub-source fields
+const canEditSubSourceFields = computed(() => {
+  return hasAnyRole([rolesEnum.CarManager, rolesEnum.Admin, rolesEnum.LeadPool]);
+});
+
+// Show partner name field when "other-clubs-or-campaigns" is selected
+const showPartnerNameField = computed(() => {
+  if (!quoteForm.sub_source_options_id) return false;
+  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
+  if (!selectedSubSource?.childs) return false;
+  const selectedSubSourceOption = selectedSubSource.childs.find(child => child.id == quoteForm.sub_source_options_id);
+  return selectedSubSourceOption?.code === 'other-clubs-or-campaigns';
+});
+
+// Watch for sub-source changes to reset sub-source option
+watch(() => quoteForm.sub_source_id, (newValue) => {
+  quoteForm.sub_source_options_id = '';
+  quoteForm.partner_name = '';
+  if (!newValue) {
+    quoteForm.primary_ref_id = '';
+  }
+});
+
+// Watch for sub-source option changes to reset partner name
+watch(() => quoteForm.sub_source_options_id, (newValue) => {
+  quoteForm.partner_name = '';
+  if (!newValue) {
+    quoteForm.primary_ref_id = '';
+  }
+});
+
+// Watch for partner name changes to update additional_notes
+watch(() => quoteForm.partner_name, (newValue, oldValue) => {
+  if (!showPartnerNameField.value) return;
+
+  // Remove old partner name from additional_notes if it exists
+  if (oldValue) {
+    const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
+    quoteForm.additional_notes = quoteForm.additional_notes.replace(oldPattern, '').trim();
+    // Clean up any double commas or leading/trailing commas
+    quoteForm.additional_notes = quoteForm.additional_notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
+  }
+
+  // Add new partner name to additional_notes
+  if (newValue) {
+    if (quoteForm.additional_notes) {
+      quoteForm.additional_notes = `${quoteForm.additional_notes}, ${newValue}`;
+    } else {
+      quoteForm.additional_notes = newValue;
+    }
+  }
+});
 </script>
 
 <template>
@@ -435,6 +578,81 @@ const gender = computed(() => {
 						:disabled="isDisbaled"
 						/>
 				</x-field> -->
+
+        <!-- Lead Source Fields - Only show when type is referral -->
+        <x-select
+          v-if="isReferralType && !isEcomLeadExtension"
+          label="SUB SOURCE"
+          v-model="quoteForm.sub_source_id"
+          :options="subSourceOptions"
+          class="w-full"
+          placeholder="Select Sub Source"
+          filterable
+          filterPlaceholder="Filter Sub Source...."
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-select
+          v-if="isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension"
+          label="SUB SOURCE OPTION"
+          v-model="quoteForm.sub_source_options_id"
+          :options="subSourceOptionOptions"
+          class="w-full"
+          placeholder="Select Sub Source Option"
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-input
+          v-if="isEcomLeadExtension"
+          label="PRIMARY REF ID"
+          required
+          v-model="quoteForm.primary_ref_id"
+          class="w-full"
+          type="text"
+          placeholder="Enter Primary Ref ID"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.primary_ref_id"
+          :disabled="!canEditSubSourceFields"
+        />
+
+        <x-input
+          v-if="showPartnerNameField"
+          label="PARTNER NAME"
+          required
+          v-model="quoteForm.partner_name"
+          class="w-full"
+          type="text"
+          placeholder="Enter Partner Name"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.partner_name"
+          :disabled="!canEditSubSourceFields"
+        />
 
         <x-select
           label="REGISTRATION TYPE"

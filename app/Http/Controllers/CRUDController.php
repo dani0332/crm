@@ -282,6 +282,8 @@ class CRUDController extends Controller
         }
         $model = $this->genericModel;
 
+        $subSources = $this->lookupService->getSubSource($quoteTypeId);
+
         // inertia rendering for health quote
         // PD Revert
         // $count = $gridData->count();
@@ -323,6 +325,7 @@ class CRUDController extends Controller
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
                 'insurerAMLStatus' => $insurerAMLStatus,
                 'emirates' => $emirates,
+                'subSources' => $subSources,
             ]);
         }
 
@@ -391,6 +394,7 @@ class CRUDController extends Controller
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
                 'insurerAMLStatus' => $insurerAMLStatus,
+                'subSources' => $subSources
             ]);
         }
 
@@ -410,6 +414,23 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
+        // Log parameters from CreateLeadModal
+        LoggerService::info('CRUDController create method - Request parameters from CreateLeadModal:', [
+            'all_params' => $request->all(),
+            'query_params' => $request->query(),
+            'input_params' => $request->input(),
+            'method' => $request->method(),
+            'url' => $request->fullUrl(),
+            'user_id' => auth()->id(),
+            'timestamp' => now()->toDateTimeString(),
+            'modal_specific_params' => [
+                'type' => $request->input('type'),
+                'subSource' => $request->input('subSource'),
+                'subSourceOption' => $request->input('subSourceOption'),
+                'primaryRefId' => $request->input('primaryRefId'),
+            ],
+        ]);
+
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
@@ -433,12 +454,37 @@ class CRUDController extends Controller
         }
         $model = $this->genericModel;
 
+        $quoteTypeId = QuoteTypes::getIdFromValue($model->modelType);
+        \Log::info('CRUDController create - Model:', ['model' => $model, 'modelType' => $model->modelType]);
+        \Log::info('CRUDController create - Quote Type ID:', ['quoteTypeId' => $quoteTypeId]);
+
+        $subSources = $this->lookupService->getSubSource($quoteTypeId);
+
+        \Log::info('CRUDController create - SubSources result:', ['subSources' => $subSources->toArray()]);
+
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
+            // Log parameters from CreateLeadModal
+            info('Health CRUDController create - Parameters from CreateLeadModal:', [
+                'type' => $request->input('type'),
+                'subSourceId' => $request->input('subSourceId'),
+                'subSourceOptionsId' => $request->input('subSourceOptionsId'),
+                'primaryRefId' => $request->input('primaryRefId'),
+                'partnerName' => $request->input('partnerName'),
+            ]);
+
             return inertia('HealthQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'branchOptions' => EmirateEnum::getBranchMapping(),
+                'subSources' => $subSources,
+                'leadSourceParams' => [
+                    'type' => $request->input('type'),
+                    'subSource' => $request->input('subSourceId'),
+                    'subSourceOption' => $request->input('subSourceOptionsId'),
+                    'primaryRefId' => $request->input('primaryRefId'),
+                    'partnerName' => $request->input('partnerName'),
+                ],
             ]);
         }
 
@@ -451,6 +497,14 @@ class CRUDController extends Controller
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'quoteStatusEnums' => QuoteStatusEnum::asArray(),
+                'subSources' => $subSources,
+                'leadSourceParams' => [
+                    'type' => $request->input('type'),
+                    'subSource' => $request->input('subSourceId'),
+                    'subSourceOption' => $request->input('subSourceOptionsId'),
+                    'primaryRefId' => $request->input('primaryRefId'),
+                    'partnerName' => $request->input('partnerName'),
+                ],
             ]);
         }
 
@@ -1322,6 +1376,8 @@ class CRUDController extends Controller
             }
         }
 
+        $subSources = $this->lookupService->getSubSource(QuoteTypes::getIdFromValue($model->modelType));
+
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
             return inertia('HealthQuote/Form', [
                 'quote' => $record,
@@ -1330,6 +1386,7 @@ class CRUDController extends Controller
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
                 'branchOptions' => EmirateEnum::getBranchMapping(),
+                'subSources' => $subSources,
             ]);
         }
 
@@ -1366,6 +1423,7 @@ class CRUDController extends Controller
                 'customerAddressData' => $customerAddressData,
                 'courierQuoteStatus' => $courierQuoteStatus,
                 'quoteStatusEnums' => QuoteStatusEnum::asArray(),
+                'subSources' => $subSources,
             ]);
         }
 

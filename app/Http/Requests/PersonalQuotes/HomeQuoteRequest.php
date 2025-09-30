@@ -52,6 +52,12 @@ class HomeQuoteRequest extends FormRequest
             'gender' => 'nullable|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
             'company_name' => 'nullable|string|max:200',
             'company_address' => 'nullable|string',
+            // Sub-source validation rules
+            'sub_source_id' => 'nullable|integer|exists:lookups,id',
+            'sub_source_options_id' => 'nullable|integer|exists:lookups,id',
+            'primary_ref_id' => 'nullable|string|max:255',
+            'partner_name' => 'nullable|string|max:255',
+            'additional_notes' => 'nullable|string|max:1000',
         ];
     }
 

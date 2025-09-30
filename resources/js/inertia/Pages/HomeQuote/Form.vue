@@ -7,8 +7,14 @@ const props = defineProps({
   model: String,
   nationalities: Object,
   lookUpData: Object,
+  subSources: { type: Array, default: () => [] },
+  leadSourceParams: { type: Object, default: () => ({}) },
 });
 const page = usePage();
+const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
+const can = permission => useCan(permission);
+const rolesEnum = page.props.rolesEnum;
 const hasContentOrBuilding = ref(true);
 const typeOfOwnerOccupancyField = ref(false);
 const showBuildingField = ref(false);
@@ -24,6 +30,49 @@ const buildingAED = computed(
 const personalBelongingsAED = computed(
   () => props.quote?.home_quote?.personal_belongings_value_id || null,
 );
+
+// Sub-source computed properties
+const subSourceOptions = computed(() => {
+  return props.subSources?.map(source => ({
+    value: source.id,
+    label: source.text,
+  })) || [];
+});
+
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
+  return selectedSubSource?.childs?.map(child => ({
+    value: child.id,
+    label: child.text,
+  })) || [];
+});
+
+const isReferralType = computed(() => {
+  return props.leadSourceParams?.type === 'referral' || props.quote?.source === 'IMCRM';
+});
+
+const isEcomLeadExtension = computed(() => {
+  if (props.leadSourceParams?.type === 'ecom_lead_extension') return true;
+  if (!quoteForm.sub_source_id && !quoteForm.sub_source_options_id && quoteForm.primary_ref_id) {
+    return true;
+  }
+  return false;
+});
+
+// Role-based permissions for sub-source fields
+const canEditSubSourceFields = computed(() => {
+  return hasAnyRole([rolesEnum.HomeManager, rolesEnum.Admin, rolesEnum.LeadPool]);
+});
+
+// Show partner name field when "other-clubs-or-campaigns" is selected
+const showPartnerNameField = computed(() => {
+  if (!quoteForm.sub_source_options_id) return false;
+  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
+  if (!selectedSubSource?.childs) return false;
+  const selectedSubSourceOption = selectedSubSource.childs.find(child => child.id == quoteForm.sub_source_options_id);
+  return selectedSubSourceOption?.code === 'other-clubs-or-campaigns';
+});
 
 const quoteForm = useForm({
   modelType: '"Home"',
@@ -62,6 +111,19 @@ const quoteForm = useForm({
   gender: props.quote?.gender || null,
   company_name: props.quote?.company_name || null,
   company_address: props.quote?.company_address || null,
+  // Sub-source fields from CreateLeadModal
+  sub_source_id: parseInt(props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0) || null,
+  sub_source_options_id: parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption || 0) || null,
+  primary_ref_id: props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
+  partner_name: props.leadSourceParams?.partnerName || '',
+  notes: (() => {
+    let notes = props.quote?.notes || '';
+    const partnerName = props.leadSourceParams?.partnerName;
+    if (partnerName) {
+      notes = notes ? `${notes}, ${partnerName}` : partnerName;
+    }
+    return notes;
+  })(),
 });
 
 const isEdit = computed(() => {
@@ -437,6 +499,43 @@ watch(
   { immediate: true },
 );
 
+// Watchers for sub-source fields
+watch(() => quoteForm.sub_source_id, (newValue) => {
+  if (newValue) {
+    quoteForm.sub_source_options_id = null;
+    quoteForm.partner_name = '';
+  }
+});
+
+watch(() => quoteForm.sub_source_options_id, (newValue) => {
+  if (newValue) {
+    quoteForm.partner_name = '';
+    quoteForm.primary_ref_id = '';
+  }
+});
+
+// Watcher for partner_name to update notes
+watch(() => quoteForm.partner_name, (newValue, oldValue) => {
+  if (!showPartnerNameField.value) return;
+
+  // Remove old partner name from notes if it exists
+  if (oldValue) {
+    const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
+    quoteForm.notes = quoteForm.notes.replace(oldPattern, '').trim();
+    // Clean up any double commas or leading/trailing commas
+    quoteForm.notes = quoteForm.notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
+  }
+
+  // Add new partner name to notes
+  if (newValue) {
+    if (quoteForm.notes) {
+      quoteForm.notes = `${quoteForm.notes}, ${newValue}`;
+    } else {
+      quoteForm.notes = newValue;
+    }
+  }
+});
+
 const locationAreaOptions = computed(() => {
   return page.props?.lookUpData?.subAreas?.length
     ? page.props.lookUpData.subAreas.map(item => ({
@@ -759,6 +858,19 @@ const onLoadAvailablePlansData = async () => {
           required
         />
       </div>
+
+      <!-- Additional Notes field -->
+      <div class="grid sm:grid-cols-1 gap-4">
+        <x-textarea
+          label="ADDITIONAL NOTES"
+          v-model="quoteForm.notes"
+          :error="quoteForm.errors.notes"
+          class="w-full"
+          placeholder="Enter any additional notes..."
+          rows="3"
+        />
+      </div>
+
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">
         <x-button

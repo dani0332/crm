@@ -8,10 +8,17 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  subSources: { type: Array, default: () => [] },
+  leadSourceParams: { type: Object, default: () => ({}) },
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
 const isEmptyField = ref(false);
+const page = usePage();
+const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
+const can = permission => useCan(permission);
+const rolesEnum = page.props.rolesEnum;
 
 const isEdit = computed(() => {
   return route().current().includes('edit');
@@ -44,6 +51,48 @@ const branchName = computed(() => {
   return branchMapping ? branchMapping.branch : '';
 });
 
+// Sub-source computed properties
+const subSourceOptions = computed(() => {
+  return props.subSources?.map(source => ({
+    value: source.id,
+    label: source.text,
+  })) || [];
+});
+
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
+  return selectedSubSource?.childs?.map(child => ({
+    value: child.id,
+    label: child.text,
+  })) || [];
+});
+
+const isReferralType = computed(() => {
+  return props.leadSourceParams?.type === 'referral' || props.quote?.source === 'IMCRM';
+});
+
+const isEcomLeadExtension = computed(() => {
+  if (props.leadSourceParams?.type === 'ecom_lead_extension') return true;
+  if (!quoteForm.sub_source_id && !quoteForm.sub_source_options_id && quoteForm.primary_ref_id) {
+    return true;
+  }
+  return false;
+});
+
+const showPartnerNameField = computed(() => {
+  if (!quoteForm.sub_source_options_id) return false;
+  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
+  if (!selectedSubSource?.childs) return false;
+  const selectedSubSourceOption = selectedSubSource.childs.find(child => child.id == quoteForm.sub_source_options_id);
+  return selectedSubSourceOption?.code === 'other-clubs-or-campaigns';
+});
+
+// Role-based permissions for sub-source fields
+const canEditSubSourceFields = computed(() => {
+  return hasAnyRole([rolesEnum.HealthManager, rolesEnum.Admin, rolesEnum.LeadPool]);
+});
+
 const quoteForm = useForm({
   modelType: '"Health"',
   model: props.model,
@@ -73,6 +122,19 @@ const quoteForm = useForm({
   has_worldwide_cover: props.quote?.has_worldwide_cover || null,
   has_home: props.quote?.has_home || null,
   plan_type_id: props.quote?.health_plan_type_id || null,
+  // Sub-source fields from CreateLeadModal
+  sub_source_id: parseInt(props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0) || null,
+  sub_source_options_id: parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption || 0) || null,
+  primary_ref_id: props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
+  partner_name: props.leadSourceParams?.partnerName || '',
+  additional_notes: (() => {
+    let notes = props.quote?.additional_notes || '';
+    const partnerName = props.leadSourceParams?.partnerName;
+    if (partnerName) {
+      notes = notes ? `${notes}, ${partnerName}` : partnerName;
+    }
+    return notes;
+  })(),
 });
 
 const memberCategorySalaryMapping = {
@@ -126,6 +188,45 @@ watch(
   },
   { immediate: true },
 );
+
+// Watch for sub_source_id changes to reset dependent fields
+watch(() => quoteForm.sub_source_id, (newValue) => {
+  quoteForm.sub_source_options_id = '';
+  quoteForm.partner_name = '';
+  if (!newValue) {
+    quoteForm.primary_ref_id = '';
+  }
+});
+
+// Watch for sub_source_options_id changes to reset primary_ref_id if needed
+watch(() => quoteForm.sub_source_options_id, (newValue) => {
+  quoteForm.partner_name = '';
+  if (!newValue) {
+    quoteForm.primary_ref_id = '';
+  }
+});
+
+// Watch for partner name changes to update additional_notes
+watch(() => quoteForm.partner_name, (newValue, oldValue) => {
+  if (!showPartnerNameField.value) return;
+
+  // Remove old partner name from additional_notes if it exists
+  if (oldValue) {
+    const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
+    quoteForm.additional_notes = quoteForm.additional_notes.replace(oldPattern, '').trim();
+    // Clean up any double commas or leading/trailing commas
+    quoteForm.additional_notes = quoteForm.additional_notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
+  }
+
+  // Add new partner name to additional_notes
+  if (newValue) {
+    if (quoteForm.additional_notes) {
+      quoteForm.additional_notes = `${quoteForm.additional_notes}, ${newValue}`;
+    } else {
+      quoteForm.additional_notes = newValue;
+    }
+  }
+});
 
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {
@@ -181,7 +282,56 @@ function onSubmit(isValid) {
           </ul>
         </x-alert>
 
-        <x-input
+         <!-- Sub-source fields (conditional display based on referral type) -->
+         <x-select
+           v-if="isReferralType && !isEcomLeadExtension"
+           label="SUB SOURCE"
+           v-model="quoteForm.sub_source_id"
+           :options="subSourceOptions"
+           :error="quoteForm.errors.sub_source_id"
+           :disabled="!canEditSubSourceFields"
+           class="w-full"
+         />
+
+         <x-select
+           v-if="isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension"
+           label="SUB SOURCE OPTION"
+           v-model="quoteForm.sub_source_options_id"
+           :options="subSourceOptionOptions"
+           :error="quoteForm.errors.sub_source_options_id"
+           :disabled="!canEditSubSourceFields"
+           :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+           :required="subSourceOptionOptions.length > 0"
+           class="w-full"
+           placeholder="Select Sub Source Option"
+           filterable
+           filterPlaceholder="Filter Sub Source Option...."
+         />
+
+         <x-input
+           v-if="isEcomLeadExtension"
+           label="PRIMARY REF ID"
+           v-model="quoteForm.primary_ref_id"
+           :error="quoteForm.errors.primary_ref_id"
+           :disabled="!canEditSubSourceFields"
+           :rules="isEcomLeadExtension ? [isRequired] : []"
+           :required="isEcomLeadExtension"
+           class="w-full"
+         />
+
+         <x-input
+           v-if="showPartnerNameField"
+           label="PARTNER NAME"
+           v-model="quoteForm.partner_name"
+           :error="quoteForm.errors.partner_name"
+           :disabled="!canEditSubSourceFields"
+           :rules="[isRequired]"
+           required
+           class="w-full"
+           placeholder="Enter Partner Name"
+         />
+
+         <x-input
           v-model="quoteForm.first_name"
           :rules="[isRequired]"
           class="w-full"
@@ -415,8 +565,19 @@ function onSubmit(isValid) {
             label="HOME COUNTRY COVER"
             color="primary"
           />
-        </div>
-      </div>
+         </div>
+
+
+
+        <x-textarea
+          v-model="quoteForm.additional_notes"
+          label="ADDITIONAL NOTES"
+          :error="quoteForm.errors.additional_notes"
+          :disabled="!canEditSubSourceFields"
+          class="w-full sm:col-span-2"
+          rows="3"
+        />
+       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">
         <x-button
