@@ -210,7 +210,7 @@ const gender = computed(() => {
           filterPlaceholder="Filter Sub Source...."
           :disabled="!canEditSubSourceFields"
           :rules="[isRequired]"
-          :required="subSourceOptionOptions.length > 0"
+          :required="subSourceOptions.length > 0"
           :error="quoteForm.errors.sub_source_id"
         >
           <template #suffix="{ item }">
