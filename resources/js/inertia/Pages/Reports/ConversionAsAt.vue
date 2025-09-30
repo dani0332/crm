@@ -229,6 +229,14 @@ const filters = reactive({
   createdAtDate: props.createdAtDate || '',
   page: 1,
   includeUnassignedLeads: props.includeUnassignedLeads || 'no',
+  pec_flag: 'all',
+});
+
+onMounted(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('pec_flag')) {
+    filters.pec_flag = urlParams.get('pec_flag');
+  }
 });
 
 function onSubmit(isValid) {
@@ -386,7 +394,6 @@ const onDataExport = async (exportType = 'download') => {
 };
 
 const cleanFilters = filters => {
-  console.log('filters', filters);
   Object.keys(filters).forEach(
     key =>
       (filters[key] === '' ||
@@ -400,7 +407,10 @@ const cleanFilters = filters => {
 const quoteTypes = page.props.quoteTypes;
 
 function onLobChange(updateDisplayFilter = true) {
-  if (updateDisplayFilter) filters.displayBy = '';
+  if (updateDisplayFilter) {
+    filters.displayBy = '';
+    filters.pec_flag = 'all';
+  }
   canExportReport.value = false;
 
   const quote = quoteTypes[filters.lob];
@@ -533,6 +543,21 @@ onMounted(() => {
           class="w-full"
           filterable
           filterPlaceholder="Filter Display by...."
+        />
+
+        <x-select
+          v-if="filters.lob == props.quoteTypeIdEnum.Health"
+          v-model="filters.pec_flag"
+          placeholder="Select PEC Flag"
+          label="Policy PEC Flag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: '1', label: 'Yes' },
+            { value: '0', label: 'No' },
+          ]"
+          class="w-full"
+          filterable
+          filterPlaceholder="Filter PEC Flag...."
         />
         <x-select
           v-if="filters.lob == props.quoteTypeIdEnum.Car"
