@@ -5,7 +5,6 @@ namespace App\Services\EmailServices;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
@@ -23,7 +22,6 @@ use App\Services\HomeQuoteService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class HomeEmailService extends BaseService
@@ -121,10 +119,6 @@ class HomeEmailService extends BaseService
 
                 RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                 RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
-
-                // update lead status to quoted
-                $lead->quote_status_id = QuoteStatusEnum::Quoted;
-                $lead->save();
 
             } else {
                 LoggerService::error('Home Renewals OCB Email failed', extra: [
@@ -518,7 +512,7 @@ class HomeEmailService extends BaseService
             'customerFullName' => trim("{$personalQuote->first_name} {$personalQuote->last_name}"),
             'customerName' => trim("{$personalQuote->first_name} {$personalQuote->last_name}"),
             'customerMobile' => $personalQuote->mobile_no ?? '',
-            'isPolicyExpired' => $personalQuote->policy_expiry_date ? Carbon::parse($personalQuote->policy_expiry_date)->isPast() : false,
+            'isPolicyExpired' => $personalQuote->previous_policy_expiry_date ? Carbon::parse($personalQuote->previous_policy_expiry_date)->isPast() : false,
 
             // Advisor-related data
             'advisor' => $advisor ?? null,
