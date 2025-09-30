@@ -451,6 +451,7 @@ class BorService
                 'quote_uuid' => $quote->uuid,
                 'document_category' => $data['bor_ref_id'],
                 'bor_signature' => true,
+                'document_type_code' => $data['document_type_code'] ?? null,
             ];
 
             // Handle previous document deletion if new file is uploaded

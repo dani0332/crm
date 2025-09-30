@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Bor;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class BorSignRequest extends FormRequest
 {
@@ -25,6 +27,7 @@ class BorSignRequest extends FormRequest
             'bor_ref_id' => 'required|string|exists:bor_logs,bor_reference',
             'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
             'is_base_64' => 'nullable|boolean',
+            'document_type_code' => 'nullable|string|exists:document_types,code,is_active,1',
             'download_clicked' => 'nullable|boolean',
             'insurer_name' => 'nullable|string|max:255',
             'policy_number' => 'nullable|string|max:255',
@@ -41,6 +44,7 @@ class BorSignRequest extends FormRequest
         return [
             'bor_ref_id.required' => 'BOR reference ID is required.',
             'bor_ref_id.exists' => 'The specified BOR reference does not exist.',
+            'document_type_code.exists' => 'The specified document type code does not exist.',
             'file.mimes' => 'The file must be a PDF, JPG, JPEG, or PNG.',
             'file.max' => 'The file size must not exceed 10MB.',
             'insurer_name.max' => 'Insurer name must not exceed 255 characters.',
@@ -65,5 +69,18 @@ class BorSignRequest extends FormRequest
                 'download_clicked' => filter_var($this->input('download_clicked'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false,
             ]);
         }
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        throw new HttpResponseException(
+            response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422)
+        );
     }
 }
