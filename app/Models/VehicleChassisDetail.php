@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class VehicleChassisDetail extends Model
 {
-    protected $table = 'vehicle_depreciation';
+    protected $table = 'vehicle_chassis_detail';
     protected $fillable = [
         'uuid',
         'quote_type_id',

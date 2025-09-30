@@ -12,6 +12,7 @@ use App\Enums\QuoteTypes;
 use App\Events\CustomerVerificationUpdated;
 use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
+use App\Models\VehicleChassisDetail;
 use App\Services\CapiService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -249,6 +250,11 @@ class CustomerVerificationService
 
         if ($this->hasOcrKey($ocrData, 'vehicalType')) {
             $verificationData['carMakeAndModel'] = $this->extractOcrValue($ocrData, 'vehicalType');
+            $verificationData['chassisNumber'] = $this->extractOcrValue($ocrData, 'chassisNumber');
+
+            if ($verificationData['chassisNumber'] && $verificationData['carMakeAndModel']) {
+                $this->saveVehicleChassisDetails($quote, $verificationData );
+            }
         }
 
         if ($this->hasOcrKey($ocrData, 'vehicalModel')) {
@@ -302,6 +308,16 @@ class CustomerVerificationService
         // Update customer verification status
         $this->updateCustomerVerificationStatus($quote);
 
+    }
+
+    private function saveVehicleChassisDetails(Model $quote, array $data): void
+    {
+        LoggerService::info('Saving vehicle chassis details', $data);
+        VehicleChassisDetail::updateOrCreate( 
+            ['chassis_number' => $data['chassisNumber']],
+            ['uuid' => $quote->uuid, 'quote_type_id' => QuoteTypes::CAR->id(),
+            'chassis_number' => $data['chassisNumber'], 'vehicle_make_model' => $data['carMakeAndModel']],
+        );
     }
 
     private function updateCustomerVerificationStatus(Model $quote): void
