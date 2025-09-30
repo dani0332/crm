@@ -19,6 +19,10 @@ const quoteStatusEnum = inject('quoteStatusEnum');
 const quoteTypeId = inject('quoteTypeId');
 const lostReasons = inject('lostReasons');
 const quoteType = inject('quoteType');
+const business_type_of_insurance_id = inject(
+  'business_type_of_insurance_id',
+  null,
+);
 
 const { isRequired } = useRules();
 
@@ -51,11 +55,19 @@ const updateList = async data => {
       data,
     });
     emit('UpdateLeadsCount', data);
+    // Handle message display - string or array
+    let messageTitle;
+    if (typeof response.data.message === 'string') {
+      messageTitle = response.data.message;
+    } else if (Array.isArray(response.data.message)) {
+      // Join array messages with line breaks or separator
+      messageTitle = response.data.message.join('<br>');
+    } else {
+      messageTitle = 'Operation completed successfully';
+    }
+
     notification.success({
-      title:
-        typeof response.data.message != 'string'
-          ? response.data.message[0]
-          : response.data.message,
+      title: messageTitle,
       position: 'top',
     });
     router.reload();
@@ -163,7 +175,8 @@ const handleConfirmation = result => {
   resolveConfirm(result);
 };
 
-const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
+const getUrl = (url, quoteTypeId) =>
+  useGetShowPageRoute(url, quoteTypeId, business_type_of_insurance_id);
 const formatDate = date => {
   if (!date) return '';
   let parsedDate;

@@ -5,6 +5,7 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 
 defineProps({
   quote: Object,
@@ -381,6 +382,22 @@ const record = computed(() => page.props.quote);
       :quote="quote"
       :expanded="sectionExpanded"
       quoteType="Jetski"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :customerData="{
+        customerType: quote.customer_type,
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <SendUpdates
