@@ -2317,7 +2317,7 @@ const fullAddress = computed(() => {
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">GENDER</dt>
-                  <dd>{{ quote.gender }}</dd>
+                  <dd>{{ genderText(quote.gender) }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
