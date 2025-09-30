@@ -23,6 +23,8 @@ use App\Enums\TeamNameEnum;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
+use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\Entity;
@@ -31,6 +33,7 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\UserTeams;
+use App\Models\VehicleChassisDetail;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -137,9 +140,23 @@ class CarQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->selfAssign(QuoteTypes::CAR, $response->quoteUID);
+
+            $this->saveVehicleChassisDetails($response->quoteUID, $request->chassis_number, $request->car_make_id, $request->car_model_id);
         }
 
         return $response;
+    }
+
+    private function saveVehicleChassisDetails($uuid, $chassisNumber, $carMakeId, $carModelId): void
+    {
+        LoggerService::info('Saving vehicle chassis details', [ 'uuid' => $uuid, 'chassisNumber' => $chassisNumber, 'carMakeId' => $carMakeId, 'carModelId' => $carModelId]);
+
+        $carMake = CarMake::find($carMakeId);
+        $carModel = CarModel::find($carModelId);
+
+        VehicleChassisDetail::create(
+            ['uuid' => $uuid, 'quote_type_id' => QuoteTypes::CAR->id(), 'chassis_number' => $chassisNumber,
+             'vehicle_make_model' => "{$carMake->text} {$carModel->text}"]);
     }
 
     public function updateCarQuote(Request $request, $id)
@@ -296,6 +313,9 @@ class CarQuoteService extends BaseService
             if ($carQuoteDetails->isDirty()) {
                 $carQuoteDetails->chassis_number = $request->chassis_number;
                 $carQuoteDetails->save();
+
+                // Update vehicle chassis details
+                $this->saveVehicleChassisDetails($carQuote->uuid, $request->chassis_number, $request->car_make_id, $request->car_model_id);
             }
 
             if (isset($request->gender)) {
