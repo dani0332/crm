@@ -24,6 +24,7 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
+  source: props.quote?.source || '',
   pet_type_id: props.quote?.pet_quote?.pet_type_id || '',
   breed_of_pet1: props.quote?.pet_quote?.breed_of_pet1 || '',
   pet_age_id: props.quote?.pet_quote?.pet_age_id || '',
@@ -71,6 +72,7 @@ const subSourceOptionOptions = computed(() => {
   return selectedSubSource?.childs?.map(option => ({
     value: option.id,
     label: option.text,
+    code: option.code,
     suffix: option.description || option.tooltip || `Information about ${option.text}`, // Use suffix for tooltip data
   })) || [];
 });

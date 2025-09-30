@@ -1,4 +1,6 @@
 <script setup>
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
+
 defineProps({
   quotes: Object,
   leadStatuses: Array,
@@ -11,6 +13,7 @@ defineProps({
   insurerAMLStatus: Array,
   planSubTypes: Array,
   quoteSegments: Object,
+  subSources: Array,
 });
 
 const page = usePage();
@@ -606,6 +609,13 @@ const insurerAMLStatusOption = computed(() =>
     label: item.text || item.label,
   })),
 );
+
+// CreateLeadModal setup
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = () => {
+  createLeadModal.value = false;
+};
 </script>
 
 <template>
@@ -636,16 +646,14 @@ const insurerAMLStatusOption = computed(() =>
             Cards View
           </x-button>
         </Link>
-        <Link :href="route('life-quotes-create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead
-          </x-button>
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          @click="createLeadModal = true"
+          v-if="readOnlyMode.isDisable === true"
+        >
+          Create Lead
+        </x-button>
       </div>
     </div>
     <x-divider class="my-4" />
@@ -1151,6 +1159,14 @@ const insurerAMLStatusOption = computed(() =>
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <!-- CreateLeadModal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      :sub-sources="subSources"
+      route-name="life-quotes-create"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

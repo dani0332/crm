@@ -44,6 +44,14 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchCreate($data)
     {
+        // Log sub-source parameters
+        LoggerService::info('LifeQuoteRepository fetchCreate called with sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'primary_ref_id' => $data['primary_ref_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         $quoteData = [
             'firstName' => $data['first_name'],
             'lastName' => $data['last_name'],
@@ -71,6 +79,11 @@ class LifeQuoteRepository extends BaseRepository
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'createdById' => auth()->user()->id,
+            // Sub-source fields
+            'subSourceId' => $data['sub_source_id'] ?? null,
+            'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
+            'primaryRefId' => $data['primary_ref_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
         ];
 
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
@@ -90,12 +103,36 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchUpdate($uuid, $data)
     {
+        // Log sub-source parameters for update
+        LoggerService::info('LifeQuoteRepository fetchUpdate called with sub-source parameters', [
+            'uuid' => $uuid,
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'primary_ref_id' => $data['primary_ref_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::LIFE->id())->where('uuid', $uuid)->firstOrFail();
 
             // check the columns to be updated in personal quotes.
             $quoteData = Arr::only($data, $this->allowedColumns());
             $quoteData['updated_by_id'] = auth()->user()->id;
+            
+            // Add sub-source fields explicitly
+            if (isset($data['sub_source_id'])) {
+                $quoteData['sub_source_id'] = $data['sub_source_id'];
+            }
+            if (isset($data['sub_source_options_id'])) {
+                $quoteData['sub_source_options_id'] = $data['sub_source_options_id'];
+            }
+            if (isset($data['primary_ref_id'])) {
+                $quoteData['primary_ref_id'] = $data['primary_ref_id'];
+            }
+            if (isset($data['notes'])) {
+                $quoteData['notes'] = $data['notes'];
+            }
+            
             $quote->update($quoteData);
 
             // check the columns to be updated in life quote request.

@@ -2,6 +2,8 @@
 import { calculateBMI, calculateAge } from '../../Composables/utilities';
 
 const notification = useNotifications('toast');
+const page = usePage();
+const { isRequired, isEmail, isMobileNo } = useRules();
 
 const props = defineProps({
   quote: { type: Object, default: null },
@@ -11,6 +13,8 @@ const props = defineProps({
   maritalStatus: Object,
   typeOfInsurance: Object,
   numberOfYears: Object,
+  subSources: Array,
+  leadSourceParams: Object,
 });
 
 const quoteForm = useForm({
@@ -37,12 +41,109 @@ const quoteForm = useForm({
   weight: props.quote?.life_quote?.weight || '',
   bmi: props.quote?.life_quote?.bmi || '',
   age: props.quote?.life_quote?.age || '',
+  source: props.quote?.source || '',
+  // Sub-source fields
+  sub_source_id: parseInt(props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0) || null,
+  sub_source_options_id:  parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption|| 0) || null,
+  primary_ref_id: props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
+  partner_name: props.leadSourceParams?.partnerName || '',
+  notes: (() => {
+    let notes = props.quote?.notes || props.quote?.life_quote?.notes || '';
+    const partnerName = props.leadSourceParams?.partnerName;
+    if (partnerName) {
+      if (notes) {
+        notes = `${notes}, ${partnerName}`;
+      } else {
+        notes = partnerName;
+      }
+    }
+    return notes;
+  })(),
 });
 
 const editMode = computed(() => {
   return props.quote ? true : false;
 });
-const { isRequired, isEmail, isMobileNo } = useRules();
+
+// Sub-source computed properties
+const subSourceOptions = computed(() => {
+  return (props.subSources || []).map(item => ({
+    value: item.id,
+    label: item.text,
+    suffix: item.description || item.tooltip || `Information about ${item.text}`, // Use suffix for tooltip data
+  }));
+});
+
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
+  return selectedSubSource?.childs?.map(option => ({
+    value: option.id,
+    label: option.text,
+    code: option.code, // Include the code property for showPartnerNameField
+    suffix: option.description || option.tooltip || `Information about ${option.text}`, // Use suffix for tooltip data
+  })) || [];
+});
+
+const isReferralType = computed(() => {
+  return props.leadSourceParams?.type === 'referral' || quoteForm.source === 'IMCRM';
+});
+
+const isEcomLeadExtension = computed(() => {
+  return props.leadSourceParams?.type === 'ecom_lead_extension' ||
+    (quoteForm.sub_source_id === null && quoteForm.sub_source_options_id === null && quoteForm.primary_ref_id);
+});
+
+
+const canEditSubSourceFields = computed(() => {
+  return useHasAnyRole([rolesEnum.LifeManager, rolesEnum.Admin, rolesEnum.LeadPool]);
+});
+
+const showPartnerNameField = computed(() => {
+  const selectedOption = subSourceOptionOptions.value.find(
+    option => option.value === quoteForm.sub_source_options_id
+  );
+  console.log("selectedOption",selectedOption);
+  console.log("quoteForm.sub_source_options_id",quoteForm.sub_source_options_id);
+  return selectedOption?.code === 'other-clubs-or-campaigns';
+});
+
+const rolesEnum = page.props.rolesEnum;
+
+// Watchers for field resets and partner name handling
+watch(() => quoteForm.sub_source_id, (newValue) => {
+  if (newValue !== quoteForm.sub_source_id) {
+    quoteForm.sub_source_options_id = null;
+  }
+});
+
+watch(() => quoteForm.sub_source_options_id, (newValue) => {
+  if (!showPartnerNameField.value) {
+    quoteForm.partner_name = '';
+  }
+});
+
+// Watcher for partner_name to update notes
+watch(() => quoteForm.partner_name, (newValue, oldValue) => {
+  if (!showPartnerNameField.value) return;
+
+  // Remove old partner name from notes if it exists
+  if (oldValue) {
+    const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
+    quoteForm.notes = quoteForm.notes.replace(oldPattern, '').trim();
+    // Clean up any double commas or leading/trailing commas
+    quoteForm.notes = quoteForm.notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
+  }
+
+  // Add new partner name to notes
+  if (newValue) {
+    if (quoteForm.notes) {
+      quoteForm.notes = `${quoteForm.notes}, ${newValue}`;
+    } else {
+      quoteForm.notes = newValue;
+    }
+  }
+});
 
 const validateHeight = value => {
   if (!value) return true;
@@ -131,7 +232,7 @@ watch(
       </h2>
       <div>
         <Link :href="route('life-quotes-list')">
-          <x-button size="sm" color="#ff5e00"> Life Quotes List </x-button>
+          <x-button size="sm" color="#ff5e00"> Life Quotes List x</x-button>
         </Link>
       </div>
     </div>
@@ -142,6 +243,81 @@ watch(
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Lead Source Fields - Only show when type is referral  isReferralType && !isEcomLeadExtension -->
+
+        <x-select
+          v-if="isReferralType && !isEcomLeadExtension"
+          label="SUB SOURCE"
+          v-model="quoteForm.sub_source_id"
+          :options="subSourceOptions"
+          class="w-full"
+          placeholder="Select Sub Source"
+          filterable
+          filterPlaceholder="Filter Sub Source...."
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-select
+          v-if="isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension"
+          label="SUB SOURCE OPTION"
+          v-model="quoteForm.sub_source_options_id"
+          :options="subSourceOptionOptions"
+          class="w-full"
+          placeholder="Select Sub Source Option"
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-input
+          v-if="isEcomLeadExtension"
+          label="PRIMARY REF ID"
+          required
+          v-model="quoteForm.primary_ref_id"
+          class="w-full"
+          type="text"
+          placeholder="Enter Primary Ref ID"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.primary_ref_id"
+          :disabled="!canEditSubSourceFields"
+        />
+
+        <x-input
+          v-if="showPartnerNameField"
+          label="PARTNER NAME"
+          required
+          v-model="quoteForm.partner_name"
+          class="w-full"
+          type="text"
+          placeholder="Enter Partner Name"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.partner_name"
+          :disabled="!canEditSubSourceFields"
+        />
         <x-field label="Purpose of Insurance" required>
           <x-select
             v-model="quoteForm.purpose_of_insurance_id"
@@ -380,6 +556,15 @@ watch(
             :error="quoteForm.errors.others_info"
           />
         </x-field>
+
+        <x-textarea
+          label="NOTES"
+          v-model="quoteForm.notes"
+          type="textarea"
+          rows="5"
+          class="w-full"
+          :error="quoteForm.errors.notes"
+        />
       </div>
 
       <x-divider class="my-4" />

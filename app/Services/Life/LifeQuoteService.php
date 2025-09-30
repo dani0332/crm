@@ -291,7 +291,18 @@ class LifeQuoteService extends BaseService
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'createdById' => auth()->user()->id,
+
+            // Lead source fields from CreateLeadModal
+            'subSourceId'           => $data['sub_source_id'] ?? null,
+            'subSourceOptionsId'     => $data['sub_source_options_id'] ?? null,
+            'primaryRefId'          => $data['primary_ref_id'] ?? null,
         ];
+
+        LoggerService::info("saveLifeQuote: ",[
+            'subSourceId'           => $data['sub_source_id'] ?? null,
+            'subSourceOptionsId'     => $data['sub_source_options_id'] ?? null,
+            'primaryRefId'          => $data['primary_ref_id'] ?? null,
+        ]);
 
         return CapiRequestService::sendCAPIRequest('/api/v2-save-life-quote', $lifeQuote);
     }
@@ -351,6 +362,8 @@ class LifeQuoteService extends BaseService
                 'latestInsured' => function ($q) {
                     $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
                 },
+                'subSource',
+                'subSourceOption',
             ])
             ->select([
                 'personal_quotes.*',
@@ -550,6 +563,7 @@ class LifeQuoteService extends BaseService
 
             $quoteData = Arr::only($data, app(PersonalQuote::class)->allowedColumns());
             $quoteData['updated_by_id'] = auth()->user()->id;
+            LoggerService::info("updateLifeQuote: ",$quoteData);
             $quote->update($quoteData);
 
             if ($quote->lifeQuote) {
