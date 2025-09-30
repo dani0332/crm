@@ -158,9 +158,9 @@ class ConversionAsAtReportService extends BaseService
                 $query->where("{$alias}.quote_type_id", $request->lob);
             }
 
-            // Apply PEC flag filter for Health LOB
             if ($request->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Health) && isset($request->pec_flag) && $request->pec_flag !== 'all') {
                 $query->join('health_quote_request as hqr', 'hqr.uuid', "{$alias}.uuid");
+
                 if ($request->pec_flag == '1') {
                     $query->whereNotNull('hqr.pec_marked_at');
                 } else {
@@ -269,7 +269,6 @@ class ConversionAsAtReportService extends BaseService
             }
         }
 
-        // Apply PEC flag filter for Health LOB (join already exists in applyBaseQueryToGroupBy)
         if (isset($filters->lob) && $filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Health) && isset($filters->pec_flag) && $filters->pec_flag !== 'all') {
             if ($filters->pec_flag == '1') {
                 $query->whereNotNull('hqr.pec_marked_at');

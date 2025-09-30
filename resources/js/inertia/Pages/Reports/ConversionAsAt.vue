@@ -1,5 +1,10 @@
 <script setup>
 import { usePagination, useRowsPerPage } from 'use-vue3-easy-data-table';
+import {
+  PEC_FLAG_OPTIONS,
+  INCLUDE_UNASSIGNED_LEADS_OPTIONS,
+  SIC_PUA_OPTIONS,
+} from '@/constants/reportOptions';
 
 const props = defineProps({
   reportData: Array,
@@ -101,10 +106,7 @@ const displayBy = ref([
   { label: 'External Lead Source (UTM)', value: 'external_lead_source' },
 ]);
 
-const includeUnassignedLeads = ref([
-  { label: 'Yes', value: 'yes' },
-  { label: 'No', value: 'no' },
-]);
+const includeUnassignedLeads = ref(INCLUDE_UNASSIGNED_LEADS_OPTIONS);
 
 const displayByActive = ref(false);
 
@@ -550,11 +552,7 @@ onMounted(() => {
           v-model="filters.pec_flag"
           placeholder="Select PEC Flag"
           label="Policy PEC Flag"
-          :options="[
-            { value: 'all', label: 'All' },
-            { value: '1', label: 'Yes' },
-            { value: '0', label: 'No' },
-          ]"
+          :options="PEC_FLAG_OPTIONS"
           class="w-full"
           filterable
           filterPlaceholder="Filter PEC Flag...."
@@ -564,11 +562,7 @@ onMounted(() => {
           v-model="filters.tag"
           placeholder="SIC/PUA"
           label="SIC/PUA"
-          :options="[
-            { value: '', label: 'All' },
-            { value: 'sic', label: 'SIC' },
-            { value: 'non-sic', label: 'PUA' },
-          ]"
+          :options="SIC_PUA_OPTIONS"
           class="w-full"
           filterable
           filterPlaceholder="Filter SIC/PUA...."
