@@ -441,8 +441,8 @@ trait OcrUtils
 
         $banks = app(LookupService::class)->getBankNames($quoteTypeId, $providerId);
 
-        return $banks->first(function ($bank) use ($bankName) {
-            return strtolower($bank->text) === strtolower($bankName);
+        return $banks->first(function ($bank) {
+            return strtolower($bank->code) === strtolower($bank);
         })?->code ?? null;
     }
 
