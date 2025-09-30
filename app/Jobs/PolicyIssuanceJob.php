@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\EnvEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Carbon\Carbon;
@@ -20,7 +21,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 90;
+    public $timeout;
     public $tries = 1;
 
     private const TIMEOUT_MESSAGE = 'cURL error 28';
@@ -37,6 +38,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
      */
     public function __construct($process)
     {
+        $this->timeout = config('constants.APP_ENV') == EnvEnum::PRODUCTION ? 90 : 120;
         $this->process = $process;
         $this->uniqueKey = 'policy-issuance-automation-id-'.$this->process->id;
     }

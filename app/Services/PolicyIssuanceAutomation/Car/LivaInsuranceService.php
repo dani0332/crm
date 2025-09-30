@@ -489,14 +489,20 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
             $uploadedDocumentsToIMCRM->push([
                 'name' => $imcrm['IMNAME'],
-                'uploaded' => $quoteDocument?->id ? true : false,
+                'uploaded' => $quoteDocument?->id ?? false,
+                'status' => $retrieveRequest['status'],
                 'message' => $retrieveRequest['message'] ?? 'Document Retrieve Failed',
             ]);
         }
 
-        $allDocumentsUploaded = $uploadedDocumentsToIMCRM->where('uploaded', false)->count() === 0;
+        $allDocumentsUploaded = $uploadedDocumentsToIMCRM->where('status', false)->count() === 0;
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - allDocumentsUploaded', extra: [
+            'allDocumentsUploaded' => $allDocumentsUploaded,
+        ]);
+
         if (! $allDocumentsUploaded || empty($uploadedDocumentsToIMCRM)) {
-            $docsUploadToIMCRMFailed = $uploadedDocumentsToIMCRM->where('uploaded', false)->pluck('name')->toArray();
+            $docsUploadToIMCRMFailed = $uploadedDocumentsToIMCRM->where('status', false)->pluck('name')->toArray();
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - failed to fetch all documents from insurer : ', $docsUploadToIMCRMFailed);
 
             $error = 'Policy Issuance is pending as '.implode(',', $docsUploadToIMCRMFailed).' documents are not uploaded';
@@ -833,14 +839,14 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
             if ($responseObject = $httpResponse->object()) {
                 if (
-                    isset($responseObject->$keyAPI?->errors) ||
-                    (isset($responseObject->$keyAPI?->Status) && $responseObject->$keyAPI?->Status == false) ||
+                    isset($responseObject?->$keyAPI?->errors) ||
+                    (isset($responseObject?->$keyAPI?->Status) && $responseObject?->$keyAPI?->Status == false) ||
                     (isset($responseObject?->statusCode) && $responseObject?->statusCode == 404) ||
                     (isset($responseObject?->string) && str_contains($responseObject?->string, 'Exception'))
                 ) {
-                    $response['error'] = $responseObject->$keyAPI?->Status ?? $keyAPI.' API Failed';
+                    $response['error'] = $responseObject?->$keyAPI?->Status ?? $keyAPI.' API Failed';
                     $response['status'] = false;
-                    $response['message'] = json_encode($responseObject->$keyAPI?->errors) ?? $responseObject?->message ?? $responseObject;
+                    $response['message'] = json_encode($responseObject?->$keyAPI?->errors) ?? $responseObject?->message ?? $responseObject;
                 } else {
                     $response['status'] = true;
                     $response['data'] = $responseObject;
