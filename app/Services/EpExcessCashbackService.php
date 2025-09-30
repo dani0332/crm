@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Services;
 
 use App\DTO\EpBookingContext;
@@ -15,6 +13,7 @@ use App\Models\DocumentType;
 use App\Jobs\EpPurchaseFlowJob;
 use App\Jobs\EpWatermarkDocumentJob;
 use App\Jobs\EpSendDocumentJob;
+use App\Mail\EpFailureNotification;
 use App\Models\InsurerRequestResponse;
 use App\Models\EmbeddedTransaction;
 use App\Models\InsuranceProvider;
@@ -28,6 +27,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Bus;
 use Carbon\Carbon;
 use Error;
+use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class EpExcessCashbackService extends EpBookingService
@@ -65,7 +65,7 @@ class EpExcessCashbackService extends EpBookingService
     ) {
         parent::__construct('EpEcb', $context);
         $this->reqDocTypeCodes = $this->getRequiredDocTypeCodes();
-        
+
         $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
         $this->quote = $this->getQuoteObject($quoteType, $this->context->quoteId);
     }
@@ -78,10 +78,10 @@ class EpExcessCashbackService extends EpBookingService
             'quoteTypeId' => $this->context->quoteTypeId,
             'quoteUUID' => $this->context->quoteUUID,
         ];
-        
+
         // Load API configuration
         $this->loadApiConfiguration();
-        
+
         // Load embedded transaction
         $this->embeddedTransaction = EmbeddedTransaction::findOrFail($this->context->etId);
 
@@ -141,7 +141,7 @@ class EpExcessCashbackService extends EpBookingService
      */
     public static function epEcbWorkflow(EpBookingContext $context): void
     {
-        $logExtra = [            
+        $logExtra = [
             'etId' => $context->etId,
             'quoteId' => $context->quoteId,
             'quoteTypeId' => $context->quoteTypeId,
@@ -155,15 +155,18 @@ class EpExcessCashbackService extends EpBookingService
             new EpWatermarkDocumentJob($context),
             new EpSendDocumentJob($context)
         ])
-        // Chain will stop on first failure by default
-        ->catch(function (Throwable $e) use ($logExtra) {
-            LoggerService::error('EpEcbService: Workflow chain failed', extra: [
-                ...$logExtra,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-        })
-        ->dispatch();
+            // Chain will stop on first failure by default
+            ->catch(function (Throwable $e) use ($logExtra) {
+                LoggerService::error('EpEcbService: Workflow chain failed', extra: [
+                    ...$logExtra,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+
+                Mail::send(new EpFailureNotification($this->context->quoteId, $this->context->quoteTypeId, $this->context->etId));
+                LoggerService::info("{$this->logPrefix} - Send EP failure notification email successfully");
+            })
+            ->dispatch();
 
         LoggerService::info('EpEcbService: Workflow chain dispatched successfully', extra: $logExtra);
     }
@@ -246,7 +249,7 @@ class EpExcessCashbackService extends EpBookingService
         LoggerService::info($this->logPrefix . ' Starting document sync process', extra: $this->logExtra);
 
         $currentStatus = $this->embeddedTransaction->status ?? '';
-        
+
         // Step 1: Get policy documents
         if (!$this->shouldSkipStep('get_documents', $currentStatus)) {
             LoggerService::info($this->logPrefix . " Executing step: GetPolicyDocuments", extra: $this->logExtra);
@@ -858,7 +861,7 @@ class EpExcessCashbackService extends EpBookingService
     private function buildQuotePayload(): array
     {
         $vehicleFirstRegnDate = $this->quote?->year_of_first_registration;
-        $vehicleFirstRegnDate = $this->formatDate(!empty($vehicleFirstRegnDate) ? $vehicleFirstRegnDate.'-01-01' : '');
+        $vehicleFirstRegnDate = $this->formatDate(!empty($vehicleFirstRegnDate) ? $vehicleFirstRegnDate . '-01-01' : '');
 
         return [
             'client_reference_number' => "",
@@ -944,7 +947,7 @@ class EpExcessCashbackService extends EpBookingService
 
         return $createSageProcessResponse;
     }
-    
+
     private function scheduleSageBookingForSukoonEp()
     {
         $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
@@ -968,15 +971,15 @@ class EpExcessCashbackService extends EpBookingService
     {
         $latestInsuredData = $this->quote?->latestInsured;
         $insuredKyc = $latestInsuredData?->insuredKyc;
-        
+
         $emirateIdNumber = str_replace('-', '', $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '');
 
         if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
-            $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
-                .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
+            $emirateIdNumber = substr($emirateIdNumber, 0, 3) . '-' . substr($emirateIdNumber, 3, 4)
+                . '-' . substr($emirateIdNumber, 7, 7) . '-' . substr($emirateIdNumber, 14, 1);
         }
 
-        $storageBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        $storageBaseUrl = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
         $mulkiyaDocuments = $this->quote?->documents()->where('document_type_code', QuoteDocumentsEnum::CAR_MULKIY)
             ->select('document_type_code as document_type', 'doc_name as document_name', 'doc_url')
             ->get()

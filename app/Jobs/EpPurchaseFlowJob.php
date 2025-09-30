@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Jobs;
 
 use App\DTO\EpBookingContext;
@@ -44,7 +42,7 @@ class EpPurchaseFlowJob implements ShouldQueue
     {
         LoggerService::info("{$this->logPrefix} Starting", extra: $this->logExtra);
 
-        $epEcbService = app(EpExcessCashbackService::class, ['context' => $this->context]);
+        $epEcbService = new EpExcessCashbackService($this->context);
         $epEcbService->init();
 
         // Execute purchase flow steps (Token, Quote, Policy creation)
@@ -70,7 +68,6 @@ class EpPurchaseFlowJob implements ShouldQueue
             ...$this->logExtra,
             'error' => $exception->getMessage()
         ]);
-
     }
 
     /**
@@ -84,7 +81,8 @@ class EpPurchaseFlowJob implements ShouldQueue
             str_contains($exception->getMessage(), 'timeout') ||
             str_contains($exception->getMessage(), 'connection') ||
             str_contains($exception->getMessage(), 'download') ||
-            str_contains($exception->getMessage(), 'server error')) {
+            str_contains($exception->getMessage(), 'server error')
+        ) {
             return true;
         }
 
