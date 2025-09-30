@@ -141,7 +141,6 @@ const handleCopyLink = async log => {
   const borGenerateLink = route('bor.requests.generate-link', log.id);
   const response = await axios.get(borGenerateLink);
   const borLink = response.data.data;
-  console.log(borLink);
   try {
     if (response.data.success) {
       const el = document.createElement('textarea');
