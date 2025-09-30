@@ -410,21 +410,42 @@ trait OcrUtils
 
     public function getVehicleColorCode(?string $vehicleColor, int $quoteTypeId, ?int $providerId): ?string
     {
+        LoggerService::info('OCR Utils - getVehicleColorCode called', extra: [
+            'vehicleColor' => $vehicleColor,
+            'quoteTypeId' => $quoteTypeId,
+            'providerId' => $providerId
+        ]);
+
         if (empty($vehicleColor)) {
+            LoggerService::info('OCR Utils - Vehicle color is empty, returning null');
             return null;
         }
 
         if (! $providerId) {
-            LoggerService::warning('OCR Utils - No valid provider id for vehicle color code');
+            LoggerService::warning('OCR Utils - No valid provider id for vehicle color code', extra: [
+                'vehicleColor' => $vehicleColor,
+                'quoteTypeId' => $quoteTypeId,
+                'providerId' => $providerId
+            ]);
 
             return null;
         }
 
         $vehicleColors = app(LookupService::class)->getVehicleColors($quoteTypeId, $providerId);
 
-        return $vehicleColors->first(function ($color) use ($vehicleColor) {
+        $matchedColor = $vehicleColors->first(function ($color) use ($vehicleColor) {
             return strtolower($color->text) === strtolower($vehicleColor);
-        })?->code ?? null;
+        });
+
+        LoggerService::info('OCR Utils - Vehicle color lookup result', extra: [
+            'vehicleColor' => $vehicleColor,
+            'providerId' => $providerId,
+            'availableColors' => $vehicleColors->pluck('text')->toArray(),
+            'matchedColor' => $matchedColor?->code,
+            'matchedColorText' => $matchedColor?->text
+        ]);
+
+        return $matchedColor?->code ?? null;
     }
 
     public function getBankCode(?string $bankName, int $quoteTypeId, ?int $providerId): ?string
