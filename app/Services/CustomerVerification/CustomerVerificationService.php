@@ -6,6 +6,7 @@ namespace App\Services\CustomerVerification;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerVerificationStatus;
+use App\Enums\LeadSourceEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Events\CustomerVerificationUpdated;
@@ -307,6 +308,7 @@ class CustomerVerificationService
     {
         $requestData = ['quoteUuid' => $quote->uuid,
             'quoteTypeId' => QuoteTypes::getId(QuoteTypes::CAR),
+            'callSource' => LeadSourceEnum::IMCRM,
         ];
 
         LoggerService::info('Capi service request data', extra: $requestData);

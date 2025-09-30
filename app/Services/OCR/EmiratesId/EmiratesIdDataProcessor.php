@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\EmiratesId;
 
+use App\Enums\KycSourceOfIncomeEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exceptions\OCR\OcrProcessingException;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
+use App\Models\Lookup;
 use App\Models\Nationality;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
@@ -197,6 +200,22 @@ class EmiratesIdDataProcessor
                 $kycData['residential_address'] = $this->extractedData['issuing_place'].', UAE';
             }
 
+            // Map employment fields from Emirates ID OCR data
+            if (! empty($this->extractedData['sponsor'])) {
+                $kycData['employer_company_name'] = $this->extractedData['sponsor'];
+                $kycData['source_of_income'] = KycSourceOfIncomeEnum::EMPLOYED->value;
+                LoggerService::info('Emirates ID OCR: Auto-populated employer company name', [
+                    'employer_company_name' => $this->extractedData['sponsor']
+                ]);
+            }
+
+            if (! empty($this->extractedData['occupation'])) {
+                $mappedJobTitle = $this->mapOccupationToJobTitle($this->extractedData['occupation']);
+                if ($mappedJobTitle) {
+                    $kycData['job_title'] = $mappedJobTitle;
+                }
+            }
+
             // Sync insured table data to insured_kyc table
             $kycData['id_type'] = $insured->id_type;
             $kycData['id_number'] = $insured->id_number;
@@ -376,6 +395,9 @@ class EmiratesIdDataProcessor
                     'id_number' => $insuredKyc->id_number,
                     'first_name' => $insuredKyc->first_name,
                     'last_name' => $insuredKyc->last_name,
+                    'employer_company_name' => $insuredKyc->employer_company_name,
+                    'job_title' => $insuredKyc->job_title,
+                    'source_of_income' => $insuredKyc->source_of_income,
                 ] : null,
             ];
 
@@ -387,5 +409,30 @@ class EmiratesIdDataProcessor
                 'message' => 'Failed to retrieve processing summary',
             ];
         }
+    }
+
+    private function mapOccupationToJobTitle(string $occupation): ?string
+    {
+        $occupation = trim($occupation);
+
+        $professionalTitle = Lookup::where('key', LookupsEnum::PROFESSIONAL_TITLE)
+            ->where('code', $occupation)
+            ->first();
+
+        if ($professionalTitle) {
+            LoggerService::info('Emirates ID OCR: Professional title matched', [
+                'original_occupation' => $occupation,
+                'matched_title' => $professionalTitle->text,
+                'lookup_code' => $professionalTitle->code
+            ]);
+            
+            return $professionalTitle->code;
+        }
+
+        LoggerService::info('Emirates ID OCR: No professional title match found', [
+            'original_occupation' => $occupation
+        ]);
+
+        return null;
     }
 }
