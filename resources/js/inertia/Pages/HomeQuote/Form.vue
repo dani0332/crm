@@ -36,6 +36,7 @@ const subSourceOptions = computed(() => {
   return props.subSources?.map(source => ({
     value: source.id,
     label: source.text,
+    suffix: item.description || item.tooltip || `Information about ${item.text}`, // Use suffix for tooltip data
   })) || [];
 });
 
@@ -45,6 +46,7 @@ const subSourceOptionOptions = computed(() => {
   return selectedSubSource?.childs?.map(child => ({
     value: child.id,
     label: child.text,
+    suffix: child.description || child.tooltip || `Information about ${child.text}`, // Use suffix for tooltip data
   })) || [];
 });
 
@@ -650,6 +652,81 @@ const onLoadAvailablePlansData = async () => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Lead Source Fields - Only show when type is referral -->
+        <x-select
+          v-if="isReferralType && !isEcomLeadExtension"
+          label="SUB SOURCE"
+          v-model="quoteForm.sub_source_id"
+          :options="subSourceOptions"
+          class="w-full"
+          placeholder="Select Sub Source"
+          filterable
+          filterPlaceholder="Filter Sub Source...."
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-select
+          v-if="isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension"
+          label="SUB SOURCE OPTION"
+          v-model="quoteForm.sub_source_options_id"
+          :options="subSourceOptionOptions"
+          class="w-full"
+          placeholder="Select Sub Source Option"
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-input
+          v-if="isEcomLeadExtension"
+          label="PRIMARY REF ID"
+          required
+          v-model="quoteForm.primary_ref_id"
+          class="w-full"
+          type="text"
+          placeholder="Enter Primary Ref ID"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.primary_ref_id"
+          :disabled="!canEditSubSourceFields"
+        />
+
+        <x-input
+          v-if="showPartnerNameField"
+          label="PARTNER NAME"
+          required
+          v-model="quoteForm.partner_name"
+          class="w-full"
+          type="text"
+          placeholder="Enter Partner Name"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.partner_name"
+          :disabled="!canEditSubSourceFields"
+        />
+
         <x-input
           v-model="quoteForm.first_name"
           type="text"
