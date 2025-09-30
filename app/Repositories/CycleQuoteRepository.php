@@ -34,6 +34,14 @@ class CycleQuoteRepository extends BaseRepository
      */
     public function fetchCreate($data)
     {
+        // Log sub-source parameters for Cycle quotes
+        LoggerService::info('Cycle fetchCreate called with sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'primary_ref_id' => $data['primary_ref_id'] ?? null,
+            'additional_notes' => $data['additional_notes'] ?? null,
+        ]);
+
         $quoteData = [
             'quoteTypeId' => intval(QuoteTypes::CYCLE->id()),
             'mobileNo' => $data['mobile_no'],
@@ -56,6 +64,11 @@ class CycleQuoteRepository extends BaseRepository
             'dob' => $data['dob'],
             'gender' => $data['gender'],
             'nationalityId' => $data['nationality_id'],
+            // Sub-source fields
+            'subSourceId' => $data['sub_source_id'] ?? null,
+            'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
+            'primaryRefId' => $data['primary_ref_id'] ?? null,
+            'additionalNotes' => $data['additional_notes'] ?? null,
         ];
 
         LoggerService::info('cycleQuote:'.json_encode($quoteData));
@@ -206,10 +219,21 @@ class CycleQuoteRepository extends BaseRepository
      */
     public function fetchUpdate($uuid, $data)
     {
+        // Log sub-source parameters for Cycle quote updates
+        LoggerService::info('Cycle fetchUpdate called with sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'primary_ref_id' => $data['primary_ref_id'] ?? null,
+            'additional_notes' => $data['additional_notes'] ?? null,
+        ]);
+
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::CYCLE->id())->where('uuid', $uuid)->firstOrFail();
 
-            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'asset_value', 'gender', 'dob', 'nationality_id']);
+            $quoteData = Arr::only($data, [
+                'first_name', 'last_name', 'email', 'mobile_no', 'asset_value', 'gender', 'dob', 'nationality_id',
+                'sub_source_id', 'sub_source_options_id', 'primary_ref_id', 'notes',
+            ]);
             $quoteData['updated_by_id'] = Auth::user()->id;
 
             $quote->update($quoteData);

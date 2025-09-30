@@ -49,6 +49,12 @@ class BikeQuoteRequest extends FormRequest
             'asset_value' => 'nullable|numeric',
             'gender' => 'nullable|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE,
             'chassis_number' => 'nullable|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/',
+            // Sub-source validation rules
+            'sub_source_id' => 'nullable|exists:lookups,id',
+            'sub_source_options_id' => 'nullable|exists:lookups,id',
+            'primary_ref_id' => 'nullable|string|max:255',
+            'partner_name' => 'nullable|string|max:255',
+            'additional_notes' => 'nullable|string',
         ];
     }
 

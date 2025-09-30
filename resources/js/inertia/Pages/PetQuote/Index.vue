@@ -1,5 +1,6 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 const props = defineProps({
   quotes: Object,
@@ -16,6 +17,7 @@ const props = defineProps({
   },
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  subSources: { type: Array, default: () => [] },
 });
 
 const page = usePage();
@@ -27,6 +29,12 @@ const loader = reactive({
   table: false,
   export: false,
 });
+
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = (leadData) => {
+  console.log('Lead confirmed:', leadData);
+};
 
 let availableFilters = {
   code: '',
@@ -505,7 +513,7 @@ const insurerAMLStatusOption = computed(() => {
             v-if="can(permissionsEnum.PetQuotesCreate)"
             size="sm"
             color="#ff5e00"
-            :href="route('pet-quotes-create')"
+            @click="createLeadModal = true"
           >
             Create Lead
           </x-button>
@@ -1039,6 +1047,13 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="pet-quotes-create"
+      :sub-sources="subSources"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

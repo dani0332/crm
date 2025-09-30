@@ -1,5 +1,6 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment.vue';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 defineProps({
   quotes: Object,
@@ -16,6 +17,7 @@ defineProps({
   },
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  subSources: { type: Array, default: () => [] },
 });
 
 const page = usePage();
@@ -24,6 +26,12 @@ const loader = reactive({
   table: false,
   export: false,
 });
+
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = () => {
+  createLeadModal.value = false;
+};
 
 let availableFilters = {
   code: '',
@@ -502,7 +510,7 @@ const insurerAMLStatusOption = computed(() => {
             v-if="canAny([permissionsEnum.CycleQuotesCreate])"
             size="sm"
             color="#ff5e00"
-            :href="route('cycle-quotes-create')"
+            @click="createLeadModal = true"
           >
             Create Lead
           </x-button>
@@ -980,6 +988,13 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="cycle-quotes-create"
+      :sub-sources="subSources"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

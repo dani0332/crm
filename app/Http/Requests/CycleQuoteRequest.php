@@ -39,6 +39,12 @@ class CycleQuoteRequest extends FormRequest
             'dob' => 'nullable|before:today',
             'gender' => 'nullable|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
             'nationality_id' => 'nullable|exists:nationality,id',
+            // Sub-source validation rules
+            'sub_source_id' => 'nullable|exists:lookups,id',
+            'sub_source_options_id' => 'nullable|exists:lookups,id',
+            'primary_ref_id' => 'nullable|string|max:255',
+            'partner_name' => 'nullable|string|max:255',
+            'additional_notes' => 'nullable|string',
         ];
     }
 }

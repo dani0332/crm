@@ -1,5 +1,6 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 defineProps({
   quotes: Object,
@@ -12,6 +13,7 @@ defineProps({
   },
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  subSources: { type: Array, default: () => [] },
 });
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
@@ -20,6 +22,12 @@ const loader = reactive({
   table: false,
   export: false,
 });
+
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = () => {
+  createLeadModal.value = false;
+};
 
 const serverOptions = ref({
   page: 1,
@@ -413,7 +421,7 @@ const insurerAMLStatusOption = computed(() => {
           v-if="can(permissionsEnum.BikeQuotesCreate)"
           size="sm"
           color="#ff5e00"
-          :href="route('bike-quotes-create')"
+          @click="createLeadModal = true"
         >
           <!-- href="/personal-quotes/bike/create" -->
           Create Lead
@@ -833,6 +841,13 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="bike-quotes-create"
+      :sub-sources="subSources"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>
