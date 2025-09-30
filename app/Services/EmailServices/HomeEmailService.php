@@ -121,10 +121,7 @@ class HomeEmailService extends BaseService
 
                 RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                 RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
-
-                // update lead status to quoted
-                $lead->save();
-
+                
             } else {
                 LoggerService::error('Home Renewals OCB Email failed', extra: [
                     'email' => $lead->email,
