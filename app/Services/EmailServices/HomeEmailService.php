@@ -123,7 +123,6 @@ class HomeEmailService extends BaseService
                 RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
 
                 // update lead status to quoted
-                $lead->quote_status_id = QuoteStatusEnum::Quoted;
                 $lead->save();
 
             } else {
