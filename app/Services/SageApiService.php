@@ -349,7 +349,7 @@ class SageApiService
             $quote = $this->getQuoteObjectBy($request->quoteType, $preparedData['sendUpdateLog']->quote_uuid, 'uuid');
             $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
             $isTapPaymentGateway = $preparedData['payment']->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
-            $ePTransactions = $this->getEPTransactions($quote, $quoteTypeId);
+            $ePTransactions = $this->getEPTransactions($quote, $quoteTypeId) ?? [];
 
             foreach ($ePTransactions as $ePTransaction) {
 
@@ -881,7 +881,7 @@ class SageApiService
 
         $isTapPaymentGateway = $payment->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
         $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
-        $ePTransactions = $this->getEPTransactions($quote, $quoteTypeId);
+        $ePTransactions = $this->getEPTransactions($quote, $quoteTypeId) ?? [];
         foreach ($ePTransactions as $ePTransaction) {
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - EP Booking checks - Quote Code: '.$quote->code, extra : [
                 'isLobAllowedForEmbeddedProductBooking' => $isLobAllowedForEmbeddedProductBooking,
@@ -3718,7 +3718,7 @@ class SageApiService
     public function isEmbeddedTransactionStatusReadyForSage($quote, $quoteTypeId)
     {
         $ePTransactions = $this->getEPTransactions($quote, $quoteTypeId);
-        if ($ePTransactions) { 
+        if ($ePTransactions) {
             $totalEmbeddedTransactionCount = $ePTransactions->count();
             $totalReadyForSageEmbeddedTransactionCount = $ePTransactions->where('policy_status', EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE)->count();
 
