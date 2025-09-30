@@ -183,7 +183,7 @@ class BorService
             'Health' => DocumentTypeCode::BAL_HLTH,
             'Life' => DocumentTypeCode::BAL_LIFE,
             'Cycle' => DocumentTypeCode::BAL_CYCLE,
-            'Yacht' => DocumentTypeCode::BAL_YACHT,
+            'Yacht' => DocumentTypeCode::BAL_YCHT,
             'Business' => [DocumentTypeCode::BUS_BAL, DocumentTypeCode::BAL_BS],
             'Group Medical' => DocumentTypeCode::GM_BOL,
         ];
@@ -386,7 +386,7 @@ class BorService
             $borDocTypes = $this->determineBorDocumentType($quoteType->value);
             is_array($borDocTypes) ? $borDocTypes = $borDocTypes : $borDocTypes = [$borDocTypes];
         } else {
-            $borDocTypes = [DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YACHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_PET, DocumentTypeCode::BAL_BS, DocumentTypeCode::GM_BOL, DocumentTypeCode::BUS_BAL];
+            $borDocTypes = [DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YCHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_PET, DocumentTypeCode::BAL_BS, DocumentTypeCode::GM_BOL, DocumentTypeCode::BUS_BAL];
         }
 
         $documentQuery = DocumentType::whereIn('code', $borDocTypes)
