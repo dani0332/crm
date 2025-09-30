@@ -84,8 +84,8 @@ trait OcrUtils
         }
 
         return match (strtoupper(trim($gender))) {
-            'M', 'MALE' => 'Male',
-            'F', 'FEMALE' => 'Female',
+            'M', 'MALE' => 'male',
+            'F', 'FEMALE' => 'female',
             default => $gender
         };
     }
@@ -384,6 +384,66 @@ trait OcrUtils
         }
 
         return $quote->code;
+    }
+
+    public function extractPlateCodeNumber(?string $plateNumber): ?array
+    {
+        if (empty($plateNumber)) {
+            return null;
+        }
+
+        $cleaned = trim($plateNumber);
+        if (strpos($cleaned, '/') !== false) {
+            $parts = explode('/', $cleaned, 2);
+
+            return [
+                'place_code' => trim($parts[0]),
+                'plate_number' => trim($parts[1]),
+            ];
+        }
+
+        return [
+            'place_code' => null,
+            'plate_number' => null,
+        ];
+    }
+
+    public function getVehicleColorCode(?string $vehicleColor, int $quoteTypeId, ?int $providerId): ?string
+    {
+        if (empty($vehicleColor)) {
+            return null;
+        }
+
+        if (! $providerId) {
+            LoggerService::warning('OCR Utils - No valid provider id for vehicle color code');
+
+            return null;
+        }
+
+        $vehicleColors = app(LookupService::class)->getVehicleColors($quoteTypeId, $providerId);
+
+        return $vehicleColors->first(function ($color) use ($vehicleColor) {
+            return strtolower($color->text) === strtolower($vehicleColor);
+        })?->code ?? null;
+    }
+
+    public function getBankCode(?string $bankName, int $quoteTypeId, ?int $providerId): ?string
+    {
+        if (empty($bankName)) {
+            return null;
+        }
+
+        if (! $providerId) {
+            LoggerService::warning('OCR Utils - No valid provider id for bank code');
+
+            return null;
+        }
+
+        $banks = app(LookupService::class)->getBankNames($quoteTypeId, $providerId);
+
+        return $banks->first(function ($bank) use ($bankName) {
+            return strtolower($bank->text) === strtolower($bankName);
+        })?->code ?? null;
     }
 
     public function getIssuancePlaceCode(?string $issuancePlace): ?string

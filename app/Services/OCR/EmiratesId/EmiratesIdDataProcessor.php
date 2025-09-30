@@ -9,6 +9,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exceptions\OCR\OcrProcessingException;
+use App\Models\CarQuote;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
@@ -50,17 +51,44 @@ class EmiratesIdDataProcessor
 
             $insuredUpdated = $this->updateInsuredTable($insured);
             $kycUpdated = $this->updateInsuredKycTable($insured);
+            $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
 
             DB::commit();
 
             LoggerService::info('Emirates ID data processing completed successfully');
 
-            return $insuredUpdated || $kycUpdated;
+            return $insuredUpdated || $kycUpdated || $vehicleDriverDetailUpdated;
 
         } catch (Exception $e) {
             DB::rollBack();
 
             LoggerService::error('Emirates ID data processing failed', exception: $e);
+
+            return false;
+        }
+    }
+
+    private function updateVehicleDriverDetail($quote): bool
+    {
+        try {
+
+            $fieldsToUpdate = $this->getCleanData([
+                'driver_gender' => $this->extractedData['sex'],
+            ]);
+
+            if (! empty($fieldsToUpdate)) {
+                $quote->vehicleDriverDetail()->updateOrCreate(
+                    ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
+                    $fieldsToUpdate
+                );
+
+                LoggerService::info('VehicleDriverDetail updated successfully');
+            }
+
+            return true;
+
+        } catch (Exception $e) {
+            LoggerService::error('VehicleDriverDetail update failed', exception: $e);
 
             return false;
         }
@@ -100,7 +128,7 @@ class EmiratesIdDataProcessor
             'customer_type' => 'Individual',
             'first_name' => $this->extractFirstName($this->extractedData['name'] ?? ''),
             'last_name' => $this->extractLastName($this->extractedData['name'] ?? ''),
-            //'dob' => $this->extractedData['date_of_birth'],
+            // 'dob' => $this->extractedData['date_of_birth'],
             'nationality_id' => $this->getNationalityId($this->extractedData['nationality'] ?? null),
             'gender' => $this->formatGender($this->extractedData['sex']),
             'id_type' => 'emiratesId',
@@ -118,7 +146,7 @@ class EmiratesIdDataProcessor
     {
         try {
             $updateData = [];
-           
+
             if (! empty($this->extractedData['name'])) {
                 $updateData['first_name'] = $this->extractFirstName($this->extractedData['name']);
                 $updateData['last_name'] = $this->extractLastName($this->extractedData['name']);
@@ -376,8 +404,8 @@ class EmiratesIdDataProcessor
                 'has_kyc_data' => ! is_null($insuredKyc),
                 'insured_data' => [
                     'name' => trim(($insured->first_name ?? '').' '.($insured->last_name ?? '')),
-                    //'dob' => $insured->dob,
-                    //'nationality_id' => $insured->nationality_id,
+                    // 'dob' => $insured->dob,
+                    // 'nationality_id' => $insured->nationality_id,
                     'gender' => $insured->gender,
                     'id_number' => $insured->id_number,
                     'id_type' => $insured->id_type,

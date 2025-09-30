@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\OCR\Mulkiya;
 
 use App\Models\CarQuote;
-use App\Models\CarQuoteRequestDetail;
 use App\Models\Nationality;
 use App\Models\RegistrationCertificate;
 use App\Services\Logger\LoggerService;
@@ -23,7 +22,7 @@ class MulkiyaDataProcessor
         private CarQuote $quote,
         private object $data,
     ) {
-        $this->mulkiyaExtractor = new MulkiyaExtractor($this->data);
+        $this->mulkiyaExtractor = new MulkiyaExtractor($this->data, $quote?->plan?->provider_id);
     }
 
     public function processMulkiyaData(): bool
@@ -33,7 +32,7 @@ class MulkiyaDataProcessor
 
             LoggerService::info('Mulkiya data processor started');
 
-            if (empty($processedData['car_quote_detail_fields']) && empty($processedData['car_quote_fields']) && empty($processedData['registration_certificate_fields'])) {
+            if (empty($processedData['vehicle_driver_detail_fields']) && empty($processedData['car_quote_detail_fields']) && empty($processedData['car_quote_fields']) && empty($processedData['registration_certificate_fields'])) {
                 LoggerService::warning('Mulkiya data processor - No valid data to process');
 
                 return false;
@@ -41,11 +40,18 @@ class MulkiyaDataProcessor
 
             DB::beginTransaction();
 
-            // Update CarQuoteRequestDetail fields
+            // Update VehicleDriverDetail fields
+            $vehicleDriverDetailUpdated = false;
+            if (! empty($processedData['vehicle_driver_detail_fields'])) {
+                LoggerService::info('Processing vehicle driver detail fields');
+                $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote, $processedData['vehicle_driver_detail_fields']);
+            }
+
+            // Update CarQuoteDetail fields
             $carQuoteDetailUpdated = false;
             if (! empty($processedData['car_quote_detail_fields'])) {
                 LoggerService::info('Processing car quote detail fields');
-                $carQuoteDetailUpdated = $this->updateCarQuoteRequestDetail($this->quote, $processedData['car_quote_detail_fields']);
+                $carQuoteDetailUpdated = $this->updateCarQuoteDetail($this->quote, $processedData['car_quote_detail_fields']);
             }
 
             // Update CarQuote fields
@@ -66,7 +72,7 @@ class MulkiyaDataProcessor
 
             LoggerService::info('Mulkiya data processing completed successfully');
 
-            return $carQuoteDetailUpdated || $carQuoteUpdated || $registrationCertificateUpdated;
+            return $vehicleDriverDetailUpdated || $carQuoteDetailUpdated || $carQuoteUpdated || $registrationCertificateUpdated;
 
         } catch (Exception $e) {
             DB::rollback();
@@ -77,7 +83,45 @@ class MulkiyaDataProcessor
         }
     }
 
-    private function updateCarQuoteRequestDetail(CarQuote $quote, array $fieldsToUpdate): bool
+    private function updateVehicleDriverDetail(CarQuote $quote, array $fieldsToUpdate): bool
+    {
+        try {
+            $vehicleDriverDetail = $quote->vehicleDriverDetail()->firstOrCreate(
+                ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
+                $fieldsToUpdate
+            );
+
+            if (! $vehicleDriverDetail) {
+                LoggerService::warning('VehicleDriverDetail not found for quote');
+
+                return false;
+            }
+
+            // If record already existed, update with OCR data
+            if (! $vehicleDriverDetail->wasRecentlyCreated) {
+                $dataToUpdate = $this->getFieldsToUpdate($fieldsToUpdate);
+
+                if (! empty($dataToUpdate)) {
+                    $vehicleDriverDetail->update($dataToUpdate);
+
+                    LoggerService::info('VehicleDriverDetail updated successfully');
+                } else {
+                    LoggerService::info('VehicleDriverDetail - No OCR data to update');
+                }
+            } else {
+                LoggerService::info('VehicleDriverDetail created successfully');
+            }
+
+            return true;
+
+        } catch (Exception $e) {
+            LoggerService::error('VehicleDriverDetail update failed', exception: $e);
+
+            return false;
+        }
+    }
+
+    private function updateCarQuoteDetail(CarQuote $quote, array $fieldsToUpdate): bool
     {
         try {
             $carQuoteDetail = $quote->carQuoteRequestDetail;
@@ -196,23 +240,27 @@ class MulkiyaDataProcessor
     public function getProcessingSummary(): array
     {
         $carQuoteDetail = $this->quote->carQuoteRequestDetail;
+        $vehicleDriverDetail = $this->quote->vehicleDriverDetail;
         $registrationCertificate = $this->quote->registrationCertificate;
 
         return [
             'status' => 'success',
             'quote_uuid' => $this->quote->uuid,
-            'has_car_quote_detail' => $carQuoteDetail !== null,
+            'has_vehicle_driver_detail' => $vehicleDriverDetail !== null,
             'has_registration_certificate' => $registrationCertificate !== null,
             'car_quote_data' => [
                 'policy_expiry_date' => $this->quote->policy_expiry_date,
             ],
             'car_quote_detail_data' => $carQuoteDetail ? [
-                'plate_number' => $carQuoteDetail->plate_number,
-                'first_registration_date' => $carQuoteDetail->first_registration_date,
-                'vehicle_color' => $carQuoteDetail->vehicle_color,
-                'engine_number' => $carQuoteDetail->engine_number,
                 'chassis_number' => $carQuoteDetail->chassis_number,
-                'rta_plate_category' => $carQuoteDetail->rta_plate_category,
+            ] : null,
+            'vehicle_driver_detail_data' => $vehicleDriverDetail ? [
+                'vehicle_plate_number' => $vehicleDriverDetail->vehicle_plate_number,
+                'vehicle_plate_code' => $vehicleDriverDetail->vehicle_plate_code,
+                'first_registration_date' => $vehicleDriverDetail->first_registration_date,
+                'vehicle_color' => $vehicleDriverDetail->vehicle_color,
+                'vehicle_engine_number' => $vehicleDriverDetail->vehicle_engine_number,
+                'rta_plate_category' => $vehicleDriverDetail->rta_plate_category,
             ] : null,
             'registration_certificate_data' => $registrationCertificate ? [
                 'place_of_issue' => $registrationCertificate->place_of_issue,
