@@ -163,8 +163,12 @@ class EpExcessCashbackService extends EpBookingService
                     'trace' => $e->getTraceAsString()
                 ]);
 
-                Mail::send(new EpFailureNotification($context->quoteId, $context->quoteTypeId, $context->etId));
-                LoggerService::info("EpEcbService - Send EP failure notification email successfully");
+                try {
+                    Mail::send(new EpFailureNotification($context->quoteId, $context->quoteTypeId, $context->etId));
+                    LoggerService::info("EpEcbService: Embedded Product failure email sent successfully");
+                } catch (Throwable $e) {
+                    LoggerService::error("EpEcbService: Failed to send Embedded Product failure email: " . $e->getMessage());
+                }
             })
             ->dispatch();
 
@@ -196,7 +200,7 @@ class EpExcessCashbackService extends EpBookingService
                 'file' => $e->getFile(),
                 'exceptionType' => get_class($e),
             ]);
-            // throw $e;
+            throw $e;
         }
     }
 
