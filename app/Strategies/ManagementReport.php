@@ -197,6 +197,24 @@ class ManagementReport
             }, fn ($q) => $q->whereIn('pcp_tag', $pcpTag));
         });
 
+        if (in_array(quoteTypeCode::Health, $lobs) && isset($request['pec_flag']) && $request['pec_flag'] !== 'all') {
+            if ($request['pec_flag'] == '1') {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('health_quote_request')
+                        ->whereColumn('health_quote_request.uuid', 'personal_quotes.uuid')
+                        ->whereNotNull('health_quote_request.pec_marked_at');
+                });
+            } else {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('health_quote_request')
+                        ->whereColumn('health_quote_request.uuid', 'personal_quotes.uuid')
+                        ->whereNull('health_quote_request.pec_marked_at');
+                });
+            }
+        }
+
         $query->whereIn('personal_quotes.quote_type_id', $lobsIds);
     }
 
