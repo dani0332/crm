@@ -6,7 +6,7 @@ import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   quoteDetails: Object,
   allowedDuplicateLOB: Array,
@@ -41,12 +41,16 @@ defineProps({
   amlStatusName: String,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  activities: Array,
+  advisors: Array,
 });
 
 const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
 const leadSource = page.props.leadSource;
+
+let countDays = ref(useDaysSinceStale(props.quote?.stale_at));
 
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -83,8 +87,6 @@ const modals = reactive({
   docConfirm: false,
   plan: false,
   createPlan: false,
-  activity: false,
-  activityConfirm: false,
   addContact: false,
   contactDeleteConfirm: false,
   contactPrimaryConfirm: false,
@@ -162,11 +164,14 @@ const onLeadStatus = () => {
     {
       preserveScroll: true,
       onError: errors => {
-        console.log(errors);
         notification.error({
           title: errors.value,
           position: 'top',
         });
+      },
+      onSuccess: response => {
+        countDays.value = useDaysSinceStale(response.props.quote?.stale_at);
+        router.reload({ only: ['quote'] });
       },
     },
   );
@@ -501,7 +506,16 @@ function handleOcrNotification(event) {
     <OcrNotification />
     <Head title="Group Medical Lead Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+      <div class="flex items-center gap-2">
+        <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }}
+        </p>
+      </div>
+      <div></div>
       <div
         class="flex gap-2 mb-3 justify-end"
         v-if="readOnlyMode.isDisable === true"
@@ -1316,6 +1330,16 @@ function handleOcrNotification(event) {
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+    />
+
+    <Activities
+      :quote="quote"
+      :quoteType="page.props.quoteType"
+      :modelType="page.props.modelType"
+      :advisors="advisors"
+      :activities="activities"
+      :expanded="sectionExpanded"
+      :readOnlyMode="readOnlyMode"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
