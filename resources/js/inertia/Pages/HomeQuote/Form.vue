@@ -36,7 +36,7 @@ const subSourceOptions = computed(() => {
   return props.subSources?.map(source => ({
     value: source.id,
     label: source.text,
-    suffix: item.description || item.tooltip || `Information about ${item.text}`, // Use suffix for tooltip data
+    suffix: source.description || source.tooltip || `Information about ${source.text}`, // Use suffix for tooltip data
   })) || [];
 });
 
