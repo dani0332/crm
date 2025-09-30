@@ -248,7 +248,7 @@ class LookupService extends BaseService
         $isPCP = auth()->user()->hasTeam(TeamNameEnum::PCP);
         $lookups = Lookup::with(['childs' => function ($q) use ($isPCP) {
             if (!$isPCP) {
-                $q->whereNotIn('code', ['pcp-cross-sell']);
+                $q->whereNotIn('code', ['pcp-cross-sell','pcp-customer-referral']);
             }
             return $q;
         }])->where([
