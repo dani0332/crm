@@ -469,7 +469,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             ]);
 
             $retrieveRequest = $this->httpCall($endPoint, $payload, 'RetrieveResponse');
-            $payload['RetrieveRequest']['Documents']['DocsDetails'][$keyLIVA] = false;
 
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Response', extra: ['response' => $retrieveRequest]);
 
@@ -482,6 +481,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             }
 
             app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $retrieveRequest, $this->baseUrl.$endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $retrieveRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+            $payload['RetrieveRequest']['Documents']['DocsDetails'][$keyLIVA] = false;
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' document retreive work end', extra: [
                 'time' => now()->format('d-m-Y H:i:s'),
                 'status' => $retrieveRequest['status'],
