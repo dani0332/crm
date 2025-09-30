@@ -5,7 +5,6 @@ namespace App\Services\EmailServices;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
@@ -23,7 +22,6 @@ use App\Services\HomeQuoteService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class HomeEmailService extends BaseService
@@ -121,7 +119,7 @@ class HomeEmailService extends BaseService
 
                 RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                 RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
-                
+
             } else {
                 LoggerService::error('Home Renewals OCB Email failed', extra: [
                     'email' => $lead->email,
