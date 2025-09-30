@@ -394,4 +394,9 @@ class TravelQuote extends Model implements AuditableContract
         return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
             ->where('quote_type_id', QuoteTypeId::Travel);
     }
+
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Travel);
+    }
 }
