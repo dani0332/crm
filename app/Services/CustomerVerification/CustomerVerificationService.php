@@ -213,21 +213,37 @@ class CustomerVerificationService
         $verificationData = [];
 
         if ($this->hasOcrKey($ocrData, 'dateOfBirth')) {
-            $verificationData['date_of_birth'] = $this->extractOcrValue($ocrData, 'dateOfBirth');
+            $dateOfBirth = $this->extractOcrValue($ocrData, 'dateOfBirth');
+            if (!empty($dateOfBirth)) {
+                $verificationData['date_of_birth'] = $dateOfBirth;
+            }
         }
 
         if ($this->hasOcrKey($ocrData, 'nationality')) {
             $nationality = $this->extractOcrValue($ocrData, 'nationality');
-            $nationalityId = $this->getNationalityId($nationality);
-            if ($nationalityId) {
-                $verificationData['nationality_id'] = $nationalityId;
-            } else {
-                $verificationData['nationality_id'] = null;
+            if (!empty($nationality)) {
+                $nationalityId = $this->getNationalityId($nationality);
+                if ($nationalityId) {
+                    $verificationData['nationality_id'] = $nationalityId;
+                }
             }
         }
 
         if ($this->hasOcrKey($ocrData, 'name')) {
-            $verificationData['name'] = $this->extractOcrValue($ocrData, 'name');
+            $name = $this->extractOcrValue($ocrData, 'name');
+            if (!empty($name)) {
+                $verificationData['name'] = $name;
+            }
+        }
+
+        if (empty($verificationData)) {
+            LoggerService::info('No valid customer verification data to update from Emirates ID OCR', extra: [
+                'document_type' => $documentType,
+                'quote_id' => $quote->id,
+                'quote_code' => $quote->code ?? null,
+                'quote_type' => QuoteTypes::CAR->value,
+            ]);
+            return;
         }
 
         try {
@@ -248,17 +264,33 @@ class CustomerVerificationService
         $verificationData = [];
 
         if ($this->hasOcrKey($ocrData, 'vehicalType')) {
-            $verificationData['carMakeAndModel'] = $this->extractOcrValue($ocrData, 'vehicalType');
+            $vehicleType = $this->extractOcrValue($ocrData, 'vehicalType');
+            if (!empty($vehicleType)) {
+                $verificationData['carMakeAndModel'] = $vehicleType;
+            }
         }
 
         if ($this->hasOcrKey($ocrData, 'vehicalModel')) {
-            $verificationData['carModelYear'] = $this->extractOcrValue($ocrData, 'vehicalModel');
+            $vehicleModel = $this->extractOcrValue($ocrData, 'vehicalModel');
+            if (!empty($vehicleModel)) {
+                $verificationData['carModelYear'] = $vehicleModel;
+            }
+        }
+
+        if (empty($verificationData)) {
+            LoggerService::info('No valid customer verification data to update from RC OCR', extra: [
+                'document_type' => $documentType,
+                'quote_id' => $quote->id,
+                'quote_code' => $quote->code ?? null,
+                'quote_type' => QuoteTypes::CAR->value,
+            ]);
+            return;
         }
 
         try {
             $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
         } catch (Exception $e) {
-            LoggerService::warning('Failed to update customer verification details from Emirates ID OCR', extra: [
+            LoggerService::warning('Failed to update customer verification details from RC OCR', extra: [
                 'document_type' => $documentType,
                 'quote_id' => $quote->id,
                 'quote_code' => $quote->code ?? null,
