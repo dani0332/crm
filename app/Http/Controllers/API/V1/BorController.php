@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Enums\BorStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Bor\BorSignRequest;
 use App\Http\Resources\QuoteDocumentResource;
 use App\Models\BorLog;
 use App\Services\Bor\BorEmailService;
@@ -99,44 +100,20 @@ class BorController extends Controller
         }
     }
 
-    public function signDocument(Request $request)
+    public function signDocument(BorSignRequest $request)
     {
         try {
-            $borLog = BorLog::with('personalQuote')->where('bor_reference', $request->input('bor_ref_id'))->first();
-            $quote = $borLog->personalQuote;
-            $quoteType = QuoteTypes::getName($quote->quote_type_id)->value;
-            $quote = checkPersonalQuotes($quoteType) ? $quote : $this->getQuoteObject($quoteType, $quote->quote_id);
-
-            $request->merge(['quote_uuid' => $quote->uuid]);
-            $request->merge(['document_category' => $request->input('bor_ref_id')]);
-            $request->merge(['bor_signature' => true]);
-            $previousDoc = $borLog->document;
-
-            if ($previousDoc && $previousDoc->doc_url && $request->hasFile('file')) {
-                Storage::disk('azureIM')->delete($previousDoc->doc_url);
-                $previousDoc->delete();
-            }
-
-            $document = null;
+            $file = null;
             if ($request->hasFile('file')) {
-                $quoteDocumentService = new QuoteDocumentService;
-                $document = $quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->all(), $quote);
+                $file = data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file');
             }
 
-            $docIsPresent = isset($document) && ! is_null($document);
+            $result = $this->borService->signDocument($request->validated(), $file);
 
-            $borLog->update([
-                'quote_document_id' => $docIsPresent ? $document->id : $borLog->quote_document_id,
-                'document_id' => $docIsPresent ? $document->doc_uuid : $borLog->document_id,
-                'user_agent' => getUserIpAddress($request),
-                'download_clicked' => $borLog->download_clicked == 1 ? 1 : $request->download_clicked ?? 0,
-                'insurer_name' => ! empty(trim($request->insurer_name ?? '')) ? $request->insurer_name : $borLog->insurer_name,
-                'policy_number' => ! empty(trim($request->policy_number ?? '')) ? $request->policy_number : $borLog->policy_number,
-                'status' => $docIsPresent ? BorStatusEnum::DOCUMENT_SIGNED : $borLog->status,
-                'date_signed' => $docIsPresent ? now() : $borLog->date_signed,
+            return response()->json([
+                'message' => $result['message'],
+                'data' => $result['data']
             ]);
-
-            return response()->json(['message' => 'success', 'data' => $document]);
         } catch (Exception $th) {
             LoggerService::error('Failed to sign document', [
                 'error' => $th->getMessage(),

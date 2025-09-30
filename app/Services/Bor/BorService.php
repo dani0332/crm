@@ -314,8 +314,8 @@ class BorService
             // Update BOR log status
             $borLog->update([
                 'status' => BorStatusEnum::DOCUMENT_UPLOADED,
-                'quote_document_id' => $uploadedDocument->id,
-                'document_id' => $uploadedDocument->doc_uuid,
+                'quote_document_id' => $uploadedDocument->id ?? null,
+                'document_id' => $uploadedDocument->doc_uuid ?? null,
                 'user_agent' => getUserIpAddress(request()),
                 'date_uploaded' => now(),
             ]);
@@ -419,6 +419,85 @@ class BorService
         return $documentTypes;
     }
 
+
+    /**
+     * Sign a BOR document
+     *
+     * @param array $data
+     * @param \Illuminate\Http\UploadedFile|string|null $file
+     * @return array
+     */
+    public function signDocument(array $data, $file = null): array
+    {
+        $borLog = BorLog::with('personalQuote')->where('bor_reference', $data['bor_ref_id'])->first();
+        
+        if (!$borLog) {
+            throw new \Exception('BOR log not found');
+        }
+
+        $quote = $borLog->personalQuote;
+        $quoteType = QuoteTypes::getName($quote->quote_type_id)->value;
+        $quote = checkPersonalQuotes($quoteType) ? $quote : $this->getQuoteObject($quoteType, $quote->quote_id);
+
+        if (!$quote) {
+            throw new \Exception('Quote not found');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Prepare document upload data
+            $uploadData = [
+                'quote_uuid' => $quote->uuid,
+                'document_category' => $data['bor_ref_id'],
+                'bor_signature' => true,
+            ];
+
+            // Handle previous document deletion if new file is uploaded
+            $previousDoc = $borLog->document;
+            if ($previousDoc && $previousDoc->doc_url && $file) {
+                \Illuminate\Support\Facades\Storage::disk('azureIM')->delete($previousDoc->doc_url);
+                $previousDoc->delete();
+            }
+
+            // Upload new document if provided
+            $document = null;
+            if ($file) {
+                $quoteDocumentService = app(QuoteDocumentService::class);
+                $fileToUpload = (isset($data['is_base_64']) && $data['is_base_64'] == 1) ? $file : $file;
+                $document = $quoteDocumentService->uploadQuoteDocument($fileToUpload, $uploadData, $quote);
+            }
+
+            $docIsPresent = isset($document) && !is_null($document);
+
+            // Update BOR log
+            $updateData = [
+                'quote_document_id' => ($docIsPresent && $document) ? ($document->id ?? null) : $borLog->quote_document_id,
+                'document_id' => ($docIsPresent && $document) ? ($document->doc_uuid ?? null) : $borLog->document_id,
+                'user_agent' => getUserIpAddress(request()),
+                'download_clicked' => $borLog->download_clicked == 1 ? 1 : ($data['download_clicked'] ?? 0),
+                'insurer_name' => !empty(trim($data['insurer_name'] ?? '')) ? $data['insurer_name'] : $borLog->insurer_name,
+                'policy_number' => !empty(trim($data['policy_number'] ?? '')) ? $data['policy_number'] : $borLog->policy_number,
+                'status' => $docIsPresent ? BorStatusEnum::DOCUMENT_SIGNED : $borLog->status,
+                'date_signed' => $docIsPresent ? now() : $borLog->date_signed,
+            ];
+
+            $borLog->update($updateData);
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => 'Document signed successfully',
+                'data' => $document,
+                'borLog' => $borLog->fresh(),
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
 
     /**
      * Handle SSE streaming for BOR log updates
