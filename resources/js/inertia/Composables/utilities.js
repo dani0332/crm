@@ -395,6 +395,8 @@ export const getQuoteTypeId = (quoteTypes, quoteType) => {
 // Function to log quote export and open the URL
 export const logAndExportQuotes = async payload => {
   payload.ip_address = await getIp();
+  let isSuccess = false;
+
   return axios
     .post('/quotes/export-logs/create', payload)
     .then(async res => {
@@ -404,6 +406,7 @@ export const logAndExportQuotes = async payload => {
         data: payload.data || null,
       })
         .then(resp => {
+          isSuccess = true;
           return resp.data;
         })
         .catch(err => {
@@ -416,8 +419,8 @@ export const logAndExportQuotes = async payload => {
       throw err;
     })
     .finally(() => {
-      // Cleanup operations if needed
-      if (payload.exportType !== 'email') {
+      // Only redirect if the export was successful and it's not an email export
+      if (isSuccess && payload.exportType !== 'email') {
         window.open(payload.url);
       }
     });

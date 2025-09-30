@@ -56,7 +56,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
 
     private function processData(): void
     {
-        $currentDate = new \DateTime;
+        $currentDate = new \DateTime($this->requestParams['captured_date']);
         $pastDate = $currentDate->modify(self::DATE_RANGE);
         $this->formatDate = $pastDate->format('j M Y');
 
