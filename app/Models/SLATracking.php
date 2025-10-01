@@ -26,7 +26,6 @@ class SLATracking extends Model
         'is_assigned_during_business_hours',
         'next_business_day_start',
     ];
-
     protected $casts = [
         'assigned_at' => 'datetime',
         'sla_due_at' => 'datetime',
@@ -54,7 +53,7 @@ class SLATracking extends Model
         $query->where('status', SLAStatusEnum::ACTIVE);
     }
 
-    public function scopeDueForReminder($query, int $reminderMinutes = 15)
+    public function scopeDueForReminder($query, int $reminderMinutes)
     {
         $threshold = now()->addMinutes($reminderMinutes);
 
@@ -63,7 +62,7 @@ class SLATracking extends Model
             ->where('sla_due_at', '<=', $threshold);
     }
 
-    public function scopeBreached($query)
+    public function scopeDueForBreach($query)
     {
         return $query->active()
             ->where('sla_due_at', '<', now())
@@ -101,7 +100,7 @@ class SLATracking extends Model
     {
         $this->update([
             'status' => SLAStatusEnum::REASSIGNED,
-            'reason' => $reason ?? 'Lead reassigned to another advisor'
+            'reason' => $reason ?? 'Lead reassigned to another advisor',
         ]);
     }
 

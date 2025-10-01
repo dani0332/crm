@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use Exception;
-use Throwable;
-use App\Models\SLATracking;
-use App\Services\SLAService;
-use Illuminate\Bus\Queueable;
 use App\Enums\ApplicationStorageEnums;
+use App\Models\SLATracking;
 use App\Services\Logger\LoggerService;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Services\SLAService;
+use Exception;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class SLAMonitoringJob implements ShouldQueue
 {
