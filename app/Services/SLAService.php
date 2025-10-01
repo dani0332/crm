@@ -24,48 +24,21 @@ class SLAService extends BaseService
             ->first();
     }
 
-    public function startSLATracking(Model $lead): ?SLATracking
+    private function markReAssigned(SLATracking $existingActiveSLA, Model $lead): void
     {
-        if (! $this->shouldTrackSLA($lead)) {
-            return null;
-        }
+        $reason = "Lead {$lead->uuid} reassigned from advisor {$existingActiveSLA->advisor?->email} to advisor {$lead->advisor?->email}";
+        $existingActiveSLA->markReassigned($reason);
 
-        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
-
-        $callbackHours = (float) getAppStorageValueByKey(ApplicationStorageEnums::SLA_CALLBACK_HOURS) ?: 2;
-        $assignmentTime = now();
-        $isBusinessHours = $this->allocationService->isBusinessHours();
-
-        $existingActiveSLA = $this->getActiveSLA($lead);
-
-        if ($existingActiveSLA && $existingActiveSLA->advisor_id === $lead->advisor_id) {
-            LoggerService::info('SLAService - Active SLA already exists for this advisor', [
-                'advisor_id' => $lead->advisor_id,
-                'sla_id' => $existingActiveSLA->id,
-            ]);
-
-            return $existingActiveSLA;
-        }
-
-        if ($existingActiveSLA && $existingActiveSLA->advisor_id !== $lead->advisor_id) {
-            $reason = "Lead {$lead->uuid} reassigned from advisor {$existingActiveSLA->advisor?->email} to advisor {$lead->advisor?->email}";
-            $existingActiveSLA->markReassigned($reason);
-
-            LoggerService::info('SLAService - Previous SLA marked as reassigned', [
-                'old_sla_id' => $existingActiveSLA->id,
-                'old_advisor_id' => $existingActiveSLA->advisor_id,
-                'new_advisor_id' => $lead->advisor_id,
-                'reason' => $reason,
-            ]);
-        }
-
-        LoggerService::info('SLAService - Starting SLA tracking', [
-            'advisor_id' => $lead->advisor_id,
-            'assignment_time' => $assignmentTime->toDateTimeString(),
-            'is_business_hours' => $isBusinessHours,
-            'callback_hours' => $callbackHours,
+        LoggerService::info('SLAService - Previous SLA marked as reassigned', [
+            'old_sla_id' => $existingActiveSLA->id,
+            'old_advisor_id' => $existingActiveSLA->advisor_id,
+            'new_advisor_id' => $lead->advisor_id,
+            'reason' => $reason,
         ]);
+    }
 
+    private function createSLA(Model $lead, Carbon $assignmentTime, float $callbackHours, bool $isBusinessHours): SLATracking
+    {
         $data = [
             'trackable_type' => $lead->getMorphClass(),
             'trackable_id' => $lead->id,
@@ -85,6 +58,51 @@ class SLAService extends BaseService
             'is_business_hours' => $isBusinessHours,
             'callback_hours' => $callbackHours,
         ]);
+
+        return $slaRecord;
+    }
+
+    public function startSLATracking(Model $lead): ?SLATracking
+    {
+        $existingActiveSLA = $this->getActiveSLA($lead);
+
+        if (! $this->shouldTrackSLA($lead)) {
+            if ($existingActiveSLA) {
+                $existingActiveSLA->markCanceled();
+            }
+
+            return null;
+        }
+
+        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
+
+        $callbackHours = (float) getAppStorageValueByKey(ApplicationStorageEnums::SLA_CALLBACK_HOURS) ?: 2;
+        $assignmentTime = now();
+        $isBusinessHours = $this->allocationService->isBusinessHours();
+
+        if ($existingActiveSLA) {
+            if ($existingActiveSLA->advisor_id === $lead->advisor_id) {
+                LoggerService::info('SLAService - Active SLA already exists for this advisor', [
+                    'advisor_id' => $lead->advisor_id,
+                    'sla_id' => $existingActiveSLA->id,
+                ]);
+
+                return $existingActiveSLA;
+            }
+
+            if ($existingActiveSLA->advisor_id !== $lead->advisor_id) {
+                $this->markReAssigned($existingActiveSLA, $lead);
+            }
+        }
+
+        LoggerService::info('SLAService - Starting SLA tracking', [
+            'advisor_id' => $lead->advisor_id,
+            'assignment_time' => $assignmentTime->toDateTimeString(),
+            'is_business_hours' => $isBusinessHours,
+            'callback_hours' => $callbackHours,
+        ]);
+
+        $slaRecord = $this->createSLA($lead, $assignmentTime, $callbackHours, $isBusinessHours);
 
         // Dispatch immediate callback notification
         $this->dispatchCallbackNotification($slaRecord);
