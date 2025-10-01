@@ -460,6 +460,9 @@ class EpExcessCashbackService extends EpBookingService
             ...$this->logExtra,
             'certificate_number' => $this->policyNumber
         ]);
+
+        $this->embeddedTransaction->documents()->whereIn('document_type_code', $this->reqDocTypeCodes)->delete();
+        $this->embeddedTransaction->load('documents');
     }
 
     /**
