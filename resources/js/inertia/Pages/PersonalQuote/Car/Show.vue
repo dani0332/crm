@@ -105,6 +105,7 @@ defineProps({
   isFuncsEnabled: Array,
   insurerAMLStatus: String,
   businessActivities: Object,
+  previousQuote: Object,
   borLogs: Array,
   apiIssuanceStatus: String,
   insurerApiStatus: String,
@@ -2769,6 +2770,7 @@ function handleOcrNotification(event) {
       :canAddBatchNumber="hasRole(rolesEnum.CarManager)"
       :expanded="sectionExpanded"
       :quote="record"
+      :previousQuote="previousQuote"
       modelType="Car"
       :insly-id="record?.insly_id"
       v-if="
