@@ -826,7 +826,7 @@ class EpExcessCashbackService extends EpBookingService
                 'DownloadPolicyDocument'
             );
 
-            $fileName = "{$this->context->quoteUUID}_{$this->policyNumber}-{$downloadDocResponse['filename']}";
+            $fileName = "{$this->quote->uuid}_{$this->policyNumber}-{$downloadDocResponse['filename']}";
             $fileContent = $downloadDocResponse['content'];
 
             if (!$downloadDocResponse['success']) {
