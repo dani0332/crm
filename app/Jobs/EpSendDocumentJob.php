@@ -94,15 +94,16 @@ class EpSendDocumentJob implements ShouldQueue
 
         $recipients = $this->getRecipients($this->quote->email ?? '', $advisor->email ?? '');
         $advisorData = $this->getAdvisorData($advisor);
+        $attachments = $this->fetchAttachments();
 
         $emailData = [
-            "Attachments" => $this->fetchAttachments(),
+            "Attachments" => $attachments,
             "Tags" => WorkflowTypeEnum::SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL,
             "customerName" => trim(($this->quote?->first_name ?? '') . ' ' . ($this->quote?->last_name ?? '')),
             "refID" => $this->quote?->code ?? '',
             ...$recipients,
             ...$advisorData,
-            "attachingDocsEmail" => "yes",
+            "attachingDocsEmail" => count($attachments) > 0 ? "yes" : "no",
             "DisplayName" => "InsuranceMarket.ae",
             "supportUserEmail" => "arsalansupport23@yopmail.com",
             ...$policyContext,
@@ -132,7 +133,7 @@ class EpSendDocumentJob implements ShouldQueue
         if(!empty($customerEmail)) {
             $toEmails[] = $customerEmail;
         }
-        
+
         $ccEmails = $recipientEmails['cc'];
         if(!empty($advisorEmail)) {
             $ccEmails[] = $advisorEmail;
@@ -166,7 +167,7 @@ class EpSendDocumentJob implements ShouldQueue
     {
         $transaction = EmbeddedTransaction::findOrFail($this->context->etId);
         $embeddedProduct = $transaction?->product?->embeddedProduct;
-        
+
         if (empty($embeddedProduct)) {
             throw new \Exception("Embedded product not found for transaction ID: {$this->context->etId}");
         }
@@ -180,7 +181,7 @@ class EpSendDocumentJob implements ShouldQueue
 
         // make sure email required watermarked documents is not missing
         if (! empty($missingReqWatermarkedDocTypes)) {
-            return ['success' => false, 'message' => 'Required watermarked document is not found'];
+            throw new \Exception('Required watermarked document is not found');
         }
 
         $attachments = $this->fetchPolicyWordings($embeddedProduct);

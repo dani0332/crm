@@ -225,7 +225,7 @@ class EpBookingService extends BaseService
             $isSuccess = Storage::disk('azureIM')->put($docUrl, $fileContent);
 
             if (! $isSuccess) {
-                throw new Error("UploadDocument Process Failed, doc_name: {$docName}, doc_url: {$docUrl}");
+                throw new Error("Process Failed, doc_name: {$docName}, doc_url: {$docUrl}");
             }
 
             return [
@@ -236,13 +236,10 @@ class EpBookingService extends BaseService
             ];
         } catch (Throwable $e) {
 
-            // Log the Process call (UploadDocument)
-            // $this->logApiRequest('UploadDocument', responseLog: ['error' => $e->getMessage()], isSavedInDB: false);
-
             return [
                 'success' => false,
                 'statusCode' => 402,
-                'error' => $e->getMessage(),
+                'error' => "UploadDocument: ".$e->getMessage(),
             ];
         }
     }

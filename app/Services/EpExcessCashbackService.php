@@ -513,6 +513,7 @@ class EpExcessCashbackService extends EpBookingService
             'docs' => $docStatus
         ]);
 
+        $this->embeddedTransaction->load('documents');
         $savedDocumentDocTypes = $this->embeddedTransaction?->documents?->pluck('document_type_code')->toArray();
         $missingDocumentDocTypes = array_diff($this->reqDocTypeCodes, $savedDocumentDocTypes);
 
@@ -792,6 +793,7 @@ class EpExcessCashbackService extends EpBookingService
         // Step: Download & Upload policy document
         $documentData = $this->executeDownloadAndUploadDocument($docUrl, $dir);
         if (!$documentData['success']) {
+            $this->logApiRequest('DownloadAndSavePolicyDocument', responseLog: ['error' => $documentData['error']], isSavedInDB: false);
             return ['success' => false, 'error' => $documentData['error']];
         }
 
@@ -809,7 +811,12 @@ class EpExcessCashbackService extends EpBookingService
             'watermarked_doc_url' => null,
         ];
 
-        $this->embeddedTransaction->documents()->create($documentData);
+        $filterDocument = [
+            'document_type_code' => $documentType->code,
+            'quote_documentable_id' => $this->embeddedTransaction->id,
+            'quote_documentable_type' => get_class($this->embeddedTransaction),
+        ];
+        $this->embeddedTransaction->documents()->updateOrCreate($filterDocument, $documentData);
 
         return ['success' => true, 'data' => $documentData];
     }
@@ -836,7 +843,7 @@ class EpExcessCashbackService extends EpBookingService
             $response = $this->uploadDocument($fileName, $fileContent, $dir);
 
             if (!$response['success']) {
-                throw new Error($response['error'] ?? "UploadDocument Process Failed, doc_name: {$fileName}");
+                throw new Error($response['error'] ?? "UploadDocument: Process Failed, doc_name: {$fileName}");
             }
 
             return [
