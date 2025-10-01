@@ -36,6 +36,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'sic_advisor_requested',
             'premium',
             'source',
+            'sub_source_id',
             'paid_at',
             'payment_gateway',
             'uae_license_held_for_id',
@@ -95,6 +96,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'customer:id,pcp_tag',
             'quoteTags:quote_uuid,name',
             'insuranceProvider:id,text',
+            'subSource:id,text',
         ]);
     }
 
@@ -153,6 +155,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('assignment_type', ignoreAll: true, requestParams: $requestParams)
             ->filterByTeams($getFilterValue('teams'))
             ->filterByAdvisors($getFilterValue('advisor_id'))
+            ->filterIn('sub_source_id', requestParams: $requestParams)
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at', requestParams: $requestParams)
             ->filterBySegment($getFilterValue('segment_filter'), QuoteTypeId::Car)
             ->filterBy('sic_advisor_requested', ignoreAll: true, requestParams: $requestParams)
