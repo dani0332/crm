@@ -895,7 +895,6 @@ class SageApiService
                 if (! $embeddedProductSageBookingResponse['status']) {
                     return $embeddedProductSageBookingResponse;
                 }
-
             }
         }
 
