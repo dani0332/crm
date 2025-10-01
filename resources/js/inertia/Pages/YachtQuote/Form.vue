@@ -32,7 +32,7 @@ const quoteForm = useForm({
   sub_source_options_id: parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption || 0) || null,
   primary_ref_id: props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
   partner_name: props.leadSourceParams?.partnerName || '',
-  additional_notes: (() => {
+  notes: (() => {
     let notes = props.quote?.notes || '';
     const partnerName = props.leadSourceParams?.partnerName;
     if (partnerName) {
@@ -108,27 +108,29 @@ watch(() => quoteForm.sub_source_options_id, (newValue) => {
   }
 });
 
-// Watcher for partner_name to update additional_notes
+// Watcher for partner_name to update notes
 watch(() => quoteForm.partner_name, (newValue, oldValue) => {
   if (!showPartnerNameField.value) return;
 
-  // Remove old partner name from additional_notes if it exists
+  // Remove old partner name from notes if it exists
   if (oldValue) {
     const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
-    quoteForm.additional_notes = quoteForm.additional_notes.replace(oldPattern, '').trim();
+    quoteForm.notes = quoteForm.notes.replace(oldPattern, '').trim();
     // Clean up any double commas or leading/trailing commas
-    quoteForm.additional_notes = quoteForm.additional_notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
+    quoteForm.notes = quoteForm.notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
   }
 
-  // Add new partner name to additional_notes
+  // Add new partner name to notes
   if (newValue) {
-    if (quoteForm.additional_notes) {
-      quoteForm.additional_notes = `${quoteForm.additional_notes}, ${newValue}`;
+    if (quoteForm.notes) {
+      quoteForm.notes = `${quoteForm.notes}, ${newValue}`;
     } else {
-      quoteForm.additional_notes = newValue;
+      quoteForm.notes = newValue;
     }
   }
 });
+
+// removed additional_notes sync; only notes is used
 function onSubmit(isValid) {
   if (isValid) {
     quoteForm.clearErrors();
@@ -384,9 +386,9 @@ const gender = computed(() => {
       </div>
 
       <x-textarea
-        v-model="quoteForm.additional_notes"
+        v-model="quoteForm.notes"
         class="w-full"
-        :error="quoteForm.errors.additional_notes"
+        :error="quoteForm.errors.notes"
         label="ADDITIONAL NOTES"
         placeholder="Enter additional notes"
       />

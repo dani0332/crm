@@ -381,7 +381,10 @@ class LookupSeeder extends Seeder
         ];
 
         // Get all quote types using the QuoteTypes enum
-        $quoteTypes = QuoteTypes::cases();
+        $quoteTypes = collect(QuoteTypes::cases())
+            ->filter(function ($quoteType) {
+                return !in_array($quoteType, [QuoteTypes::GROUP_MEDICAL, QuoteTypes::CORPLINE]);
+            });
 
         foreach ($quoteTypes as $quoteType) {
             $quoteTypeId = $quoteType->id();

@@ -38,7 +38,7 @@ class JetskiQuoteRepository extends BaseRepository
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
             'primary_ref_id' => $data['primary_ref_id'] ?? null,
-            'additional_notes' => $data['additional_notes'] ?? null,
+            'notes' => $data['notes'] ?? null,
         ]);
 
         $quoteData = [
@@ -59,7 +59,7 @@ class JetskiQuoteRepository extends BaseRepository
             'subSourceId' => $data['sub_source_id'],
             'subSourceOptionsId' => $data['sub_source_options_id'],
             'primaryRefId' => $data['primary_ref_id'],
-            'notes' => $data['additional_notes'],
+            'notes' => $data['notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
@@ -83,7 +83,7 @@ class JetskiQuoteRepository extends BaseRepository
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
             'primary_ref_id' => $data['primary_ref_id'] ?? null,
-            'additional_notes' => $data['additional_notes'] ?? null,
+            'notes' => $data['notes'] ?? null,
         ]);
 
         return DB::transaction(function () use ($uuid, $data) {

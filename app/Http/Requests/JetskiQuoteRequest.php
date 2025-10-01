@@ -41,7 +41,7 @@ class JetskiQuoteRequest extends FormRequest
             'sub_source_options_id' => 'nullable|exists:lookups,id',
             'primary_ref_id' => 'nullable|string|max:255',
             'partner_name' => 'nullable|string|max:255',
-            'additional_notes' => 'nullable|string',
+            'notes' => 'nullable|string',
         ];
     }
 }
