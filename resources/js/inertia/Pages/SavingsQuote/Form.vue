@@ -1,5 +1,6 @@
 <script setup>
 const notification = useNotifications('toast');
+const page = usePage();
 const dateFormat = date =>
   date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
 
@@ -7,6 +8,8 @@ const props = defineProps({
   quote: { type: Object, default: null },
   genders: { type: Object, required: true },
   lookUpData: { type: Object, required: true },
+  subSources: { type: Array, default: () => [] },
+  leadSourceParams: { type: Object, default: () => ({}) },
 });
 
 // Format API data for dropdowns and selects
@@ -54,11 +57,63 @@ const investmentFrequencies = computed(() => {
   }));
 });
 
+// Sub-source related computed properties
+const subSourceOptions = computed(() => {
+  return props.subSources?.map(source => ({
+    value: source.id,
+    label: source.text,
+    suffix: source.description || source.tooltip || `Information about ${source.text}`,
+  })) || [];
+});
+
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+
+  const selectedSource = props.subSources.find(source => source.id == quoteForm.sub_source_id);
+  if (!selectedSource || !selectedSource.childs) return [];
+
+  return selectedSource.childs.map(child => ({
+    value: child.id,
+    label: child.text,
+    code: child.code,
+    suffix: child.description || child.tooltip || `Information about ${child.text}`,
+  }));
+});
+
+// Check if Partner name field should be shown
+const showPartnerNameField = computed(() => {
+  if (!quoteForm.sub_source_options_id) return false;
+
+  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
+  if (!selectedSubSource?.childs) return false;
+
+  const selectedSubSourceOption = selectedSubSource.childs.find(child => child.id == quoteForm.sub_source_options_id);
+  return selectedSubSourceOption?.code === 'other-clubs-or-campaigns';
+});
+
+// Check if it's referral type
+const isReferralType = computed(() => {
+  return props.leadSourceParams?.type === 'referral' || quoteForm.source === 'IMCRM';
+});
+
+// Check if it's ecom lead extension
+const isEcomLeadExtension = computed(() => {
+  return props.leadSourceParams?.type === 'ecom_lead_extension' ||
+    (quoteForm.sub_source_id === null && quoteForm.sub_source_options_id === null && quoteForm.primary_ref_id);
+});
+
+// Role-based control like Life LOB
+const rolesEnum = page.props.rolesEnum;
+const canEditSubSourceFields = computed(() => {
+  return useHasAnyRole([rolesEnum.SavingsManager, rolesEnum.Admin, rolesEnum.LeadPool]);
+});
+
 const quoteForm = useForm({
   first_name: props.quote?.first_name || '',
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
+  source: props.quote?.source || '',
   dob: props.quote?.dob ? dateFormat(props.quote?.dob) : '',
   nationality_id: props.quote?.nationality_id || '',
   gender: props.quote?.gender || '',
@@ -69,7 +124,24 @@ const quoteForm = useForm({
   investment_amount: props.quote?.savings_quote?.investment_amount || '',
   investment_frequency:
     props.quote?.savings_quote?.investment_criteria_id || '',
-  additional_notes: props.quote?.savings_quote?.additional_notes || '',
+  notes: (() => {
+    let notes = props.quote?.notes || props.quote?.savings_quote?.additional_notes || '';
+    const partnerName = props.leadSourceParams?.partnerName;
+    if (partnerName) {
+      if (notes) {
+        notes = `${notes}, ${partnerName}`;
+      } else {
+        notes = partnerName;
+      }
+    }
+    return notes;
+  })(),
+  
+  // Sub-source fields
+  sub_source_id: parseInt(props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0) || null,
+  sub_source_options_id: parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption || 0) || null,
+  primary_ref_id: props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
+  partner_name: props.leadSourceParams?.partnerName || '',
 });
 
 const { isRequired, isEmail, isMobileNo, isValidName } = useRules();
@@ -95,6 +167,40 @@ function onSubmit(isValid) {
     });
   }
 }
+
+// Watchers for field resets and partner name handling
+watch(() => quoteForm.sub_source_id, (newValue) => {
+  if (newValue !== quoteForm.sub_source_id) {
+    quoteForm.sub_source_options_id = null;
+  }
+});
+
+watch(() => quoteForm.sub_source_options_id, () => {
+  if (!showPartnerNameField.value) {
+    quoteForm.partner_name = '';
+  }
+});
+
+// Watcher for partner_name to update notes
+watch(() => quoteForm.partner_name, (newValue, oldValue) => {
+  if (!showPartnerNameField.value) return;
+
+  if (oldValue) {
+    const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')})`, 'g');
+    quoteForm.notes = (quoteForm.notes || '').replace(oldPattern, '').trim();
+    quoteForm.notes = quoteForm.notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
+  }
+
+  if (newValue) {
+    if (quoteForm.notes) {
+      quoteForm.notes = `${quoteForm.notes}, ${newValue}`;
+    } else {
+      quoteForm.notes = newValue;
+    }
+  }
+});
+
+// No URL parsing here; values come via leadSourceParams for consistency with Life
 </script>
 
 <template>
@@ -117,6 +223,81 @@ function onSubmit(isValid) {
       </x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Lead Source Fields - Only show when type is referral -->
+        <x-select
+          v-if="isReferralType && !isEcomLeadExtension"
+          label="SUB SOURCE"
+          v-model="quoteForm.sub_source_id"
+          :options="subSourceOptions"
+          class="w-full"
+          placeholder="Select Sub Source"
+          filterable
+          filterPlaceholder="Filter Sub Source...."
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          :required="subSourceOptions.length > 0"
+          :error="quoteForm.errors.sub_source_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-select
+          v-if="isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension"
+          label="SUB SOURCE OPTION"
+          v-model="quoteForm.sub_source_options_id"
+          :options="subSourceOptionOptions"
+          class="w-full"
+          placeholder="Select Sub Source Option"
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-input
+          v-if="isEcomLeadExtension"
+          label="PRIMARY REF ID"
+          required
+          v-model="quoteForm.primary_ref_id"
+          class="w-full"
+          type="text"
+          placeholder="Enter Primary Ref ID"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.primary_ref_id"
+          :disabled="!canEditSubSourceFields"
+        />
+
+        <x-input
+          v-if="showPartnerNameField"
+          label="PARTNER NAME"
+          required
+          v-model="quoteForm.partner_name"
+          class="w-full"
+          type="text"
+          placeholder="Enter Partner Name"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.partner_name"
+          :disabled="!canEditSubSourceFields"
+        />
+
         <!-- Personal Details -->
         <x-input
           v-model="quoteForm.first_name"
@@ -278,11 +459,11 @@ function onSubmit(isValid) {
 
         <x-field label="Additional Notes" required>
           <x-input
-            v-model="quoteForm.additional_notes"
+            v-model="quoteForm.notes"
             type="text"
             :rules="[isRequired]"
             class="w-full"
-            :error="quoteForm.errors.additional_notes"
+            :error="quoteForm.errors.notes"
           />
         </x-field>
       </div>

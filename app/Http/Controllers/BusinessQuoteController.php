@@ -107,7 +107,9 @@ class BusinessQuoteController extends Controller
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
-        return inertia('CorpLineQuote/Index', compact('quotes', 'renewalBatches', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays', 'insurerAMLStatus'));
+        $subSources = app(LookupService::class)->getSubSource(self::TYPE_ID);
+
+        return inertia('CorpLineQuote/Index', compact('quotes', 'renewalBatches', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays', 'insurerAMLStatus', 'subSources'));
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -134,6 +136,7 @@ class BusinessQuoteController extends Controller
         $renewalAdvisors = $this->businessQuoteService->getRenewalAdvisors();
         $this->businessQuoteService->fillData();
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $subSources = app(LookupService::class)->getSubSource(self::TYPE_ID);
 
         $model = $this->genericModel;
 
@@ -142,6 +145,14 @@ class BusinessQuoteController extends Controller
             'dropdownSource' => $dropdownSource,
             'renewalAdvisors' => $renewalAdvisors ?? [],
             'isRenewalUser' => $isRenewalUser,
+            'subSources' => $subSources,
+            'leadSourceParams' => [
+                'type' => $request->input('type'),
+                'subSource' => $request->input('subSourceId'),
+                'subSourceOption' => $request->input('subSourceOptionsId'),
+                'primaryRefId' => $request->input('primaryRefId'),
+                'partnerName' => $request->input('partnerName'),
+            ],
         ]);
     }
 
@@ -355,11 +366,14 @@ class BusinessQuoteController extends Controller
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $subSources = app(LookupService::class)->getSubSource(self::TYPE_ID);
 
         return inertia('CorpLineQuote/Form', [
             'quote' => $record,
             'modelType' => $this->genericModel->modelType,
             'dropdownSource' => $dropdownSource,
+            'subSources' => $subSources,
+            'leadSourceParams' => [],
             'leadStatuses' => $dropdownSource['quote_status_id'],
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),

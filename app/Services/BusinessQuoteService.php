@@ -122,6 +122,10 @@ class BusinessQuoteService extends BaseService
                 'py.payment_status_id',
                 'bqr.insly_migrated',
                 'bqr.aml_status',
+                'bqr.sub_source_id',
+                'bqr.sub_source_options_id',
+                'bqr.primary_ref_id',
+                'bqr.additional_notes',
                 DB::raw('
                     CASE
                         WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
@@ -240,6 +244,12 @@ class BusinessQuoteService extends BaseService
     {
         $sourceName = Config::get('constants.SOURCE_NAME');
         $appUrl = Config::get('constants.APP_URL');
+        // Log sub-source parameters
+        LoggerService::info('BusinessQuoteService create - Sub-source parameters', [
+            'sub_source_id' => $request->sub_source_id ?? null,
+            'sub_source_options_id' => $request->sub_source_options_id ?? null,
+            'primary_ref_id' => $request->primary_ref_id ?? null,
+        ]);
         $dataArr = [
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
@@ -254,6 +264,10 @@ class BusinessQuoteService extends BaseService
             'businessTypeOfInsuranceId' => $request->business_type_of_insurance_id,
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
+            // Sub-source fields (CAPI will ignore if unsupported)
+            'subSourceId' => $request->sub_source_id ?? null,
+            'subSourceOptionsId' => $request->sub_source_options_id ?? null,
+            'primaryRefId' => $request->primary_ref_id ?? null,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
 
@@ -514,6 +528,13 @@ class BusinessQuoteService extends BaseService
     {
         $businessQuote = BusinessQuote::where('uuid', $id)->first();
         if ($businessQuote) {
+            // Log sub-source parameters for updates
+            LoggerService::info('BusinessQuoteService update - Sub-source parameters', [
+                'uuid' => $id,
+                'sub_source_id' => $request->sub_source_id ?? null,
+                'sub_source_options_id' => $request->sub_source_options_id ?? null,
+                'primary_ref_id' => $request->primary_ref_id ?? null,
+            ]);
             $businessQuote->first_name = $request->first_name;
             $businessQuote->last_name = $request->last_name;
             $businessQuote->company_name = $request->company_name;
@@ -523,6 +544,19 @@ class BusinessQuoteService extends BaseService
             $businessQuote->premium = $request->premium;
             $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;
             $businessQuote->number_of_employees = $request->number_of_employees;
+            // Persist sub-source fields locally on Business LOB
+            if ($request->has('sub_source_id')) {
+                $businessQuote->sub_source_id = $request->sub_source_id;
+            }
+            if ($request->has('sub_source_options_id')) {
+                $businessQuote->sub_source_options_id = $request->sub_source_options_id;
+            }
+            if ($request->has('primary_ref_id')) {
+                $businessQuote->primary_ref_id = $request->primary_ref_id;
+            }
+            if ($request->has('additional_notes')) {
+                $businessQuote->additional_notes = $request->additional_notes;
+            }
             if (isset($request->group_medical_type_id)) {
                 $businessQuote->group_medical_type_id = $request->group_medical_type_id;
             }

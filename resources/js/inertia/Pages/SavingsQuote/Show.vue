@@ -879,6 +879,25 @@ const getIncludedBenefitsTooltip = fieldText =>
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
+
+              <!-- Sub-source fields -->
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SUB SOURCE</dt>
+                <dd>{{ quote?.sub_source?.text || 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SUB SOURCE OPTION</dt>
+                <dd>{{ quote?.sub_source_option?.text || 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRIMARY REF ID</dt>
+                <dd>{{ quote?.primary_ref_id || 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PARTNER NAME</dt>
+                <dd>{{ quote?.partner_name || 'N/A' }}</dd>
+              </div>
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
@@ -950,7 +969,7 @@ const getIncludedBenefitsTooltip = fieldText =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADDITIONAL INFORMATION</dt>
-                <dd>{{ quote?.savings_quote?.additional_notes }}</dd>
+                <dd>{{ quote?.notes || 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INVESTMENT FREQUENCY</dt>

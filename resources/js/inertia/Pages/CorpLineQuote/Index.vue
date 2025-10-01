@@ -1,10 +1,12 @@
 <script setup>
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 defineProps({
   quotes: Object,
   dropdownSource: Object,
   session: Object,
   isManualAllocationAllowed: Boolean,
   renewalBatches: Array,
+  subSources: Array,
   totalCount: {
     type: Number,
     default: 0,
@@ -12,6 +14,7 @@ defineProps({
   authorizedDays: Number,
   insurerAMLStatus: Array,
 });
+
 
 const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -504,6 +507,11 @@ onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
+const createLeadModal = ref(false);
+const onLeadConfirmed = leadData => {
+  createLeadModal.value = false;
+};
+
 const resetDateFilters = filterName => {
   const filterMappings = {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
@@ -605,16 +613,14 @@ const insurerAMLStatusOption = computed(() => {
             Cards View</x-button
           >
         </Link>
-        <Link :href="route('business.create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead</x-button
-          >
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          tag="div"
+          v-if="readOnlyMode.isDisable === true"
+          @click="createLeadModal = true"
+        >
+          Create Lead</x-button>
       </template>
     </StickyHeader>
 
@@ -1137,6 +1143,14 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <!-- CreateLeadModal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      :sub-sources="subSources || []"
+      route-name="business.create"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

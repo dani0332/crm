@@ -935,6 +935,18 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">SUB SOURCE</dt>
+              <dd>{{ quote?.sub_source?.text || 'N/A' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">SUB SOURCE OPTION</dt>
+              <dd>{{ quote?.sub_source_option?.text || 'N/A' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PRIMARY REF ID</dt>
+              <dd>{{ quote?.primary_ref_id || 'N/A' }}</dd>
+            </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">POLICY NUMBER</dt>
