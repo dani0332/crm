@@ -30,6 +30,7 @@ use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use App\Enums\RolesEnum;
 
 class CarEmailService extends BaseService
 {
@@ -780,7 +781,7 @@ class CarEmailService extends BaseService
     public function buildFailedCarRenewalsEmailData($failedQuotes, $renewalsUploadLeadsId)
     {
         // Retrieve all CarRenewalManager emails in a single query
-        $renewalsManagersEmails = User::role(\App\Enums\RolesEnum::CarRenewalManager)
+        $renewalsManagersEmails = User::role(RolesEnum::RenewalsManager)
             ->pluck('email')
             ->filter()
             ->values()
