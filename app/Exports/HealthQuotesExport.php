@@ -57,8 +57,7 @@ class HealthQuotesExport implements CsvExportableInterface
             'STARTING FROM',
             'PREMIUM',
             'POLICY NUMBER',
-            'SOURCE',
-            'SUB SOURCE',
+            'SOURCE',            
             'LEAD TYPE',
             'SALARY BAND',
             'MEMBER CATEGORY',
@@ -80,6 +79,7 @@ class HealthQuotesExport implements CsvExportableInterface
             'PAYMENT STATUS',
             'ADVISOR CAR TEAM(s)',
             'PRIVATE CLIENT',
+            'SUB SOURCE',
         ];
     }
 
@@ -103,8 +103,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->price_starting_from,
             $quote->premium,
             $quote->policy_number,
-            $quote->source,
-            $quote->subSource?->text,
+            $quote->source,            
             $quote->healthLeadType?->text,
             $quote->salaryBand?->text,
             $quote->memberCategory?->text,
@@ -126,6 +125,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->payment_status?->payment_status_text ?? 'N/A',
             $quote->car_teams ?? 'N/A',
             $quote->customer->pcp_tag_formatted ?? '',
+            $quote->subSource?->text,
         ];
     }
 
