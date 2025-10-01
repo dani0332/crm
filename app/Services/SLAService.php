@@ -18,10 +18,7 @@ class SLAService extends BaseService
 
     private function getActiveSLA(Model $lead): ?SLATracking
     {
-        return SLATracking::where('trackable_type', $lead->getMorphClass())
-            ->where('trackable_id', $lead->id)
-            ->where('status', SLAStatusEnum::ACTIVE)
-            ->first();
+        return SLATracking::byLead($lead)->active()->first();
     }
 
     private function markReAssigned(SLATracking $existingActiveSLA, Model $lead): void
@@ -110,21 +107,13 @@ class SLAService extends BaseService
         return $slaRecord;
     }
 
-    /**
-     * Complete SLA tracking when lead reaches final status (mark as MET)
-     * Only applies to PEC-marked health leads
-     */
-    public function completeSLA($lead): void
+    public function meetSLA(Model $lead): void
     {
-        // Only complete SLA for eligible leads
         if (! $this->shouldTrackSLA($lead)) {
             return;
         }
 
-        $slaRecord = SLATracking::where('trackable_type', get_class($lead))
-            ->where('trackable_id', $lead->id)
-            ->where('status', SLAStatusEnum::ACTIVE)
-            ->first();
+        $slaRecord = $this->getActiveSLA($lead);
 
         if ($slaRecord) {
             $slaRecord->markMet();
@@ -132,6 +121,7 @@ class SLAService extends BaseService
             LoggerService::info('SLAService - SLA marked as met', [
                 'lead_uuid' => $lead->uuid,
                 'sla_id' => $slaRecord->id,
+                'quote_status_id' => $lead->quote_status_id,
                 'completion_time' => now()->toDateTimeString(),
             ]);
         }

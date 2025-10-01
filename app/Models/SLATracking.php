@@ -122,4 +122,9 @@ class SLATracking extends Model
     {
         return $this->trackable?->uuid;
     }
+
+    public function scopeByLead($query, Model $lead)
+    {
+        $query->where('trackable_type', $lead->getMorphClass())->where('trackable_id', $lead->id);
+    }
 }
