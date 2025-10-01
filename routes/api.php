@@ -107,6 +107,7 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
     Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
+    Route::get('/renewals/validation-failed-download/{id}', [ApiController::class, 'downloadValidationFailedFile'])->name('downloadValidationFailedFile');
 
     // User management routes
     Route::get('users/first-manager/{email}', [UserController::class, 'getFirstManager'])->name('getFirstManager');

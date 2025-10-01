@@ -656,8 +656,11 @@ class SearchService extends BaseService
      */
     private function optimizeSearchTerm(string $term): string
     {
-        // Remove common problematic characters
-        $term = preg_replace('/[\'"\\\]/', ' ', $term);
+        // Remove common problematic characters that can break Boolean syntax
+        $term = preg_replace('/[\'"\\\<>()~@]/', ' ', $term);
+
+        // Replace multiple spaces with single space
+        $term = preg_replace('/\s+/', ' ', trim($term));
 
         // Split into words
         $words = preg_split('/[\s,.\-_\/]+/', $term, -1, PREG_SPLIT_NO_EMPTY);
@@ -670,29 +673,33 @@ class SearchService extends BaseService
                 continue;
             }
 
-            // Check word type
+            // Sanitize word to prevent Boolean syntax issues
+            $word = preg_replace('/[^a-zA-Z0-9]/', '', $word);
+
+            // Skip if word becomes empty after sanitization
+            if (empty($word)) {
+                continue;
+            }
+
+            // Check word type and add appropriate Boolean operators
             if (preg_match('/^[a-zA-Z]+$/', $word)) {
-                // Pure alphabetic - treat as a single word
+                // Pure alphabetic - treat as required word
                 $optimized[] = '+'.$word;
             } elseif (preg_match('/^[a-zA-Z0-9]+$/', $word)) {
                 // Alphanumeric - use word prefix matching
                 $optimized[] = '+'.$word.'*';
-
-                // If word has both letters and numbers, also add an exact match
-                if (preg_match('/[a-zA-Z]/', $word) && preg_match('/[0-9]/', $word)) {
-                    $optimized[] = '+"'.$word.'"';
-                }
             } else {
-                // For special character containing words, add exact and partial matches
-                $optimized[] = '"'.$word.'"';
-                $optimized[] = $word.'*';
-
-                return implode(' +', $optimized);
+                // Fallback for any remaining cases
+                $optimized[] = '+'.$word;
             }
         }
 
-        return implode(' ', $optimized);
+        // If no valid words found, return a safe default
+        if (empty($optimized)) {
+            return $term; // Return original term without Boolean operators
+        }
 
+        return implode(' ', $optimized);
     }
 
 }

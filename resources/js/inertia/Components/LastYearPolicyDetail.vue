@@ -14,6 +14,10 @@ const props = defineProps({
     default: true,
   },
   inslyId: String,
+  previousQuote: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 
 const can = permission => useCan(permission);
@@ -109,7 +113,9 @@ onMounted(() => {
           </Link>
           <Link
             v-else-if="
-              quote.source == leadSource.RENEWAL_UPLOAD &&
+              inslyId &&
+              (quote.source == leadSource.RENEWAL_UPLOAD ||
+                quote.source == leadSource.INSLY) &&
               quote.previous_quote_policy_number != null &&
               can(permissionsEnum.VIEW_LEGACY_DETAILS)
             "
@@ -170,6 +176,17 @@ onMounted(() => {
                   <div class="font-medium">Previous Advisor</div>
                   <div>
                     {{ props?.quote?.previous_advisor_id_text }}
+                  </div>
+                </div>
+                <div class="grid sm:grid-cols-2" v-if="previousQuote?.code">
+                  <div class="font-medium">Previous Ref-ID</div>
+                  <div>
+                    <Link
+                      :href="`/quotes/car/${previousQuote?.uuid}`"
+                      class="text-primary-600 hover:underline font-semibold"
+                    >
+                      {{ previousQuote?.code }}
+                    </Link>
                   </div>
                 </div>
                 <div class="grid sm:grid-cols-2">
