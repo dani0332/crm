@@ -156,8 +156,7 @@ class EpExcessCashbackService extends EpBookingService
             ->catch(function (Throwable $e) use ($context, $logExtra) {
                 LoggerService::error('EpEcbService: Workflow chain failed', extra: [
                     ...$logExtra,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'error' => $e->getMessage()
                 ]);
 
                 try {

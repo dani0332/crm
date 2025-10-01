@@ -26,9 +26,7 @@ class EpSendDocumentJob implements ShouldQueue
 {
     use Queueable, GenericQueriesAllLobs;
 
-    public $tries = 3;
     public $timeout = 180;
-    public $backoff = 45;
     
     private string $logPrefix = 'EpSendDocument - Job:';
     private array $logExtra = [];

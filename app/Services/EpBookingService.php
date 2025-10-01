@@ -1,10 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Services;
 
 use App\DTO\EpBookingContext;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
@@ -20,7 +19,8 @@ class EpBookingService extends BaseService
 {
     use GenericQueriesAllLobs;
 
-    protected string $logPrefix = 'EpBooking - Service:';
+    protected string $className = 'EpBookingService:';
+    protected string $logPrefix = '';
     protected array $logExtra = [];
 
     public mixed $quote = null;
@@ -52,27 +52,33 @@ class EpBookingService extends BaseService
 
     public function processWatermarkDocuments(Collection $documents, array $watermarkableDocTypeCodes): array
     {
+        LoggerService::startQuoteLogging($this->context->quoteCode, LoggerFeatureEnum::EP_PROCESS_WATERMARK_DOCUMENT);
+
         $watermarkedDocuments = [];
         $documentTypes = DocumentType::whereIn('code', $watermarkableDocTypeCodes)
             ->where('quote_type_id', $this->context->quoteTypeId)->get();
+
+        LoggerService::info("{$this->className} DocumentTypes: ".count($documentTypes).", DocumentItems: ".count($documents));
 
         if ((count($documents) > 0)) {
             foreach ($documents as $documentItem) {
 
                 // skip iteration when document_type_code is not from initial document types
                 if (! in_array($documentItem->document_type_code, $watermarkableDocTypeCodes)) {
+                    LoggerService::warning("{$this->className} DocumentItem doc_type_code is not watermarkable, doc_type_code: {$documentItem->document_type_code}");
                     continue;
                 }
 
                 // skip iteration when document is already watermarked
                 if ($documentItem->is_watermarked) {
+                    LoggerService::warning("{$this->className} DocumentItem is already watermarked, doc_type_code: {$documentItem->document_type_code}");
                     continue;
                 }
 
                 $documentType = $documentTypes->firstWhere('code', $documentItem->document_type_code);
 
                 if (!$documentType) {
-                    LoggerService::warning("DocumentType not found for code: {$documentItem->document_type_code}");
+                    LoggerService::warning("{$this->className} DocumentType not found for doc_type_code: {$documentItem->document_type_code}");
                     continue;
                 }
 
@@ -82,6 +88,8 @@ class EpBookingService extends BaseService
                 }
             }
         }
+
+        LoggerService::info("{$this->className} WatermarkedDocuments: ".count($watermarkedDocuments));
 
         return $watermarkedDocuments;
     }
@@ -95,15 +103,13 @@ class EpBookingService extends BaseService
         ];
 
         if (! $quoteDocument) {
-            LoggerService::warning('Document not found', extra: $extraLog);
-
+            LoggerService::warning("{$this->className} Document not found", extra: $extraLog);
             return false;
         }
 
         // Ensure the quoteDocument and documentType exist
         if (! $documentType) {
-            LoggerService::warning('DocumentType not found', extra: $extraLog);
-
+            LoggerService::warning("{$this->className} DocumentType not found", extra: $extraLog);
             return false;
         }
 
@@ -111,15 +117,13 @@ class EpBookingService extends BaseService
 
         // Check if the file is already being processed
         if ($this->isFileBeingProcessed($lockKey)) {
-            LoggerService::info("File is already being processed. Retrying later. Document ID: {$quoteDocument->id}, UUID: {$this->quote->uuid}");
-
+            LoggerService::info("{$this->className} File is already being processed. Retrying later. Document ID: {$quoteDocument->id}, UUID: {$this->quote->uuid}");
             return false;
         }
 
         // Check if the source file exists
         if (empty($quoteDocument->doc_url) || ! $this->fileExists($quoteDocument->doc_url)) {
-            LoggerService::error("Source file does not exist: {$quoteDocument->doc_url}");
-
+            LoggerService::error("{$this->className} Source file does not exist: {$quoteDocument->doc_url}");
             return false;
         }
 
@@ -134,7 +138,7 @@ class EpBookingService extends BaseService
             if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf' || $extension == 'pdf') {
                 $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->quote->uuid, $documentType);
             } else {
-                LoggerService::error("Unsupported file type: fileMimeType: {$fileMimeType}, extension: {$extension}");
+                LoggerService::error("{$this->className} Unsupported file type: fileMimeType: {$fileMimeType}, extension: {$extension}");
 
                 return false;
             }
@@ -150,8 +154,7 @@ class EpBookingService extends BaseService
 
             return $quoteDocument;
         } catch (\Exception $e) {
-            LoggerService::error("Error processing watermark for document ID: {$quoteDocument->id}, UUID: {$this->quote->uuid}. Error: ".$e->getMessage());
-
+            LoggerService::error("{$this->className} Error processing watermark for document ID: {$quoteDocument->id}, UUID: {$this->quote->uuid}. Error: ".$e->getMessage());
             return false;
         }
     }
@@ -205,7 +208,7 @@ class EpBookingService extends BaseService
 
             return false;
         } catch (\Exception $e) {
-            LoggerService::error("Error checking file existence: {$path}. Error: ".$e->getMessage());
+            LoggerService::error("{$this->className} Error checking file existence: {$path}. Error: ".$e->getMessage());
 
             return false;
         }

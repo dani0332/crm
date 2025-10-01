@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Jobs;
 
 use App\DTO\EpBookingContext;
@@ -19,12 +17,10 @@ class EpWatermarkDocumentJob implements ShouldQueue
 {
     use Queueable;
 
-    public $tries = 2;
-    public $timeout = 300;
-    public $backoff = 30;
+    public $timeout = 180;
 
     private ?EmbeddedTransaction $embeddedTransaction = null;
-    private array $watermarkableDocTypeCodes;
+    private array $watermarkableDocTypeCodes = [];
 
     private string $logPrefix = 'EpWatermarkDocument - Job:';
     private array $logExtra = [];
