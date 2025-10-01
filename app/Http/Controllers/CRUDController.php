@@ -1444,7 +1444,7 @@ class CRUDController extends Controller
                 // Add/update chassis number details
                 $carMake = CarMake::find($request->car_make_id);
                 $carModel = CarModel::find($request->car_model_id);
-                $carMakeAndModel = ($carMake ? $carMake->text : ''). ' '. ($carModel ? $carModel->text : '');
+                $carMakeAndModel = trim(($carMake ? $carMake->text : ''). ' '. ($carModel ? $carModel->text : ''));
 
                 $data = [
                     'chassis_number' => $request->chassis_number,
