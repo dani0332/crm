@@ -20,9 +20,9 @@ class SendFailedCarRenewalsJob implements ShouldQueue
      * Create a new job instance.
      */
     public $tries = 3;
+
     public $timeout = 60;
     public $backoff = 60;
-
     public $failedPolicyNumbers;
     public $renewalsUploadLeadsId;
 

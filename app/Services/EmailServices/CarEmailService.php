@@ -10,6 +10,7 @@ use App\Enums\QuoteFlowType;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\CompanyCarFollowupJob;
@@ -30,7 +31,6 @@ use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
-use App\Enums\RolesEnum;
 
 class CarEmailService extends BaseService
 {
