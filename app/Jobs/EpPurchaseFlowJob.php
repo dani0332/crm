@@ -45,7 +45,7 @@ class EpPurchaseFlowJob implements ShouldQueue
 
         LoggerService::info("{$this->logPrefix} Starting", extra: $this->logExtra);
 
-        $epEcbService = app(new EpExcessCashbackService($this->context));
+        $epEcbService = new EpExcessCashbackService($this->context);
         $epEcbService->init();
 
         // Execute purchase flow steps (Token, Quote, Policy creation)

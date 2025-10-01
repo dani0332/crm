@@ -55,7 +55,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
         $documents = $this->embeddedTransaction->documents()
             ->whereIn('document_type_code', $this->watermarkableDocTypeCodes)->get();
 
-        $epEcbService = app(new EpExcessCashbackService($this->context));
+        $epEcbService = new EpExcessCashbackService($this->context);
         $epEcbService->processWatermarkDocuments($documents, $this->watermarkableDocTypeCodes);
 
         LoggerService::info("{$this->logPrefix} Completed", extra: $this->logExtra);
