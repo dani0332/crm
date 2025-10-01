@@ -842,12 +842,13 @@ const insurerAMLStatusOption = computed(() => {
       hide-rows-per-page
       hide-footer
     >
-      <template #item-code="{ code, uuid }">
+      <template #item-code="{ code, uuid, stale_at }">
         <Link
           :href="route('amt.show', uuid)"
-          class="text-primary-500 hover:underline"
+          class="text-primary-500 hover:underline flex items-center space-x-1"
         >
-          {{ code }}
+          <span>{{ code }}</span>
+          <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
       </template>
       <template #item-authorized_at="item">

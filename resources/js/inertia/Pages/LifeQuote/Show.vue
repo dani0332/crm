@@ -16,6 +16,7 @@ import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CreatePlanVariant from './Partials/CreateVariant.vue';
 import EditPlan from './Partials/EditPlan.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 
 const page = usePage();
@@ -963,6 +964,8 @@ const confirmSendEmail = () => {
   loader.value.link = true;
 };
 
+const leadSourceEnum = page.props.leadSource;
+
 const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
   selectPlanLoader.value[planUuid] = true;
   axios
@@ -971,6 +974,7 @@ const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
       quoteId: quoteId,
       version: version,
       isUW: isUW,
+      callSource: leadSourceEnum?.IMCRM?.toLowerCase(),
     })
     .then(response => {
       selectPlanLoader.value[planUuid] = false;
@@ -2765,6 +2769,22 @@ const getTotalAnnualPriceAED = () => {
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"
       :bookPolicyDetails="bookPolicyDetails"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :customerData="{
+        customerType: quote.customer_type,
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <BookPolicy

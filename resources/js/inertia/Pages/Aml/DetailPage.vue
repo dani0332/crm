@@ -28,6 +28,21 @@ const props = defineProps({
   defaultNationality: String,
   screeningType: String,
   gigInsurerDefaultEmail: String,
+  permissionsEnum: Object,
+  // RTA Configuration (only available for Car quotes)
+  rta_transaction_types: {
+    type: Object,
+    default: () => ({}),
+  },
+  rta_field_configurations: {
+    type: Object,
+    default: () => ({}),
+  },
+  rta_validation_summaries: {
+    type: Object,
+    default: () => ({}),
+  },
+  isPrivateCar: Boolean,
 });
 const page = usePage();
 const hasRole = role => useHasRole(role);
@@ -701,6 +716,9 @@ const insuredId = props.insuredDetails?.insured?.id ?? null;
   <ScreeningModel
     v-model="screeningModel"
     :quoteTypeCodeEnum="quoteTypeCodeEnum"
+    :rta_transaction_types="rta_transaction_types"
+    :rta_field_configurations="rta_field_configurations"
+    :rta_validation_summaries="rta_validation_summaries"
   />
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
