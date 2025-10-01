@@ -22,18 +22,16 @@ class EpPurchaseFlowJob implements ShouldQueue
     private string $logPrefix = 'EpPurchaseFlow - Job:';
     private array $logExtra = [];
 
+    public mixed $quote = null;
+
+
     /**
      * Create a new job instance.
      */
     public function __construct(
         public EpBookingContext $context
     ) {
-        $this->logExtra = [
-            'etId' => $this->context->etId,
-            'quoteId' => $this->context->quoteId,
-            'quoteTypeId' => $this->context->quoteTypeId,
-            'quoteUUID' => $this->context->quoteUUID,
-        ];
+        $this->logExtra = $this->context->logExtra;
     }
 
     /**
@@ -42,7 +40,7 @@ class EpPurchaseFlowJob implements ShouldQueue
     public function handle(): void
     {
         // Start feature and quote logging
-        LoggerService::startQuoteLogging($this->context->quoteUUID, LoggerFeatureEnum::EP_PROCESS_PURCHASE_FLOW);
+        LoggerService::startQuoteLogging($this->context->quoteCode, LoggerFeatureEnum::EP_PROCESS_PURCHASE_FLOW);
 
         LoggerService::info("{$this->logPrefix} Starting", extra: $this->logExtra);
 

@@ -235,6 +235,10 @@ class EmbeddedProductRepository extends BaseRepository
             $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
 
             $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($item->short_code);
+            $isECB = $item->short_code = EmbeddedProductEnum::ECB;
+            $isSukoonMedex = EmbeddedProductStrategy::checkSukoonMedex($item->short_code);
+            $isMedxOrEcb = $isSukoonMedex || $isECB;
+
             if ($isAlfredProtect) {
                 $isDocPresent = count($transaction) > 0 ? $transaction[0]->documents()->count() > 0 : false;
                 $item->download_document_button = $isDocPresent && $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
@@ -243,7 +247,7 @@ class EmbeddedProductRepository extends BaseRepository
                     $documentCount = ($isDocPresent == true) ? $transaction[0]->documents()->count() : 0;
                     $item->sync_document_button = $documentCount < 5;
                 }
-            } elseif (EmbeddedProductStrategy::checkSukoonMedex($item->short_code) && count($transaction) > 0) {
+            } elseif ($isMedxOrEcb && count($transaction) > 0) {
 
                 $isSukoonEpReadyForSage = $transaction[0]->policy_status == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
                 $canSendDocuments = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction)
@@ -318,8 +322,7 @@ class EmbeddedProductRepository extends BaseRepository
 
     private function canSendAndDownloadDocuments($productCategory, $quoteStatusId, $transaction)
     {
-        // TODO:: move into if condition, transaction payment status check
-        if (! $transaction->isEmpty() && true) { // in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+        if (! $transaction->isEmpty() && in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
             if (
                 $productCategory == EpCategoryEnum::STAND_ALONE ||
                 ($productCategory == EpCategoryEnum::BOLT_ON && in_array($quoteStatusId, $this->canSendDocumentEnums()))) {
@@ -403,8 +406,7 @@ class EmbeddedProductRepository extends BaseRepository
             ['quote_request_id', $leadId],
             ['is_selected', 1],
         ])
-            // TODO:: uncomment this code
-            // ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+            ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
             ->with(['product.embeddedProduct']);
 
         if (! empty($epId)) {
@@ -495,10 +497,8 @@ class EmbeddedProductRepository extends BaseRepository
             // lead should have ECB-Insurer Provider Plan
             elseif ($quoteTypeId == QuoteTypeId::Car && $item->product?->embeddedProduct?->short_code == EmbeddedProductEnum::ECB) {
 
-                $quoteType = QuoteTypes::getName($quoteTypeId)->value;
-                $quote = $this->getQuoteObject($quoteType, $leadId);
-
-                $context = EpExcessCashbackService::buildContext($item->id, $leadId, $quoteTypeId, $quote->uuid);
+                $quote = $this->getQuoteObject($modelType, $leadId);
+                $context = EpExcessCashbackService::buildContext($item->id, $leadId, $quoteTypeId, $quote->code);
                 EpExcessCashbackService::epEcbWorkflow($context);
             }
         }
@@ -532,8 +532,7 @@ class EmbeddedProductRepository extends BaseRepository
 
             $shortCodes = EmbeddedProductEnum::getSukoonMedexCodes() ?? [];
             $transaction = $this->fetchTransaction($modelType, $quoteId, $ep, shortCodes: $shortCodes)
-                // TODO:: uncomment this
-                // ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+                ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
                 ->first();
 
             if (empty($transaction)) {
@@ -546,6 +545,25 @@ class EmbeddedProductRepository extends BaseRepository
                 $sukoonMedexService = app(SukoonMedexService::class);
                 $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
                 $sukoonMedexService->processPurchaseFlow();
+            } catch (Exception $e) {
+                return ['success' => false, 'message' => $e->getMessage()];
+            }
+
+        } elseif ($shortCode == EmbeddedProductEnum::ECB) {
+
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+            $transaction = $this->fetchTransaction($modelType, $quoteId, $ep, shortCodes: [EmbeddedProductEnum::ECB])
+                ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+                ->first();
+
+            if (empty($transaction)) {
+                LoggerService::info("No transaction found, ref_id: {$quoteObject->code}");
+                return ['success' => false, 'message' => 'No transaction found'];
+            }
+
+            try {
+                $context = EpExcessCashbackService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quoteObject->code);
+                EpExcessCashbackService::epEcbWorkflow($context);
             } catch (Exception $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }
@@ -750,7 +768,7 @@ class EmbeddedProductRepository extends BaseRepository
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $quote = $this->getQuoteObject($modelType, $quoteId);
 
-        $context = EpExcessCashbackService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quote->uuid);
+        $context = EpExcessCashbackService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quote->code);
         dispatch(new EpSendDocumentJob($context));
 
         return ['success' => true, 'message' => 'Certificate sent successfully'];

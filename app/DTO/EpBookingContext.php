@@ -9,22 +9,22 @@ class EpBookingContext implements Arrayable
     public int $etId;
     public string $quoteId;
     public int $quoteTypeId;
-    public string $quoteUUID;
+    public string $quoteCode;
 
     public array $logExtra;
 
-    public function __construct(int $etId, string $quoteId, int $quoteTypeId, string $quoteUUID)
+    public function __construct(int $etId, string $quoteId, int $quoteTypeId, string $quoteCode)
     {
         $this->etId = $etId;
         $this->quoteId = $quoteId;
         $this->quoteTypeId = $quoteTypeId;
-        $this->quoteUUID = $quoteUUID;
+        $this->quoteCode = $quoteCode;
 
         $this->logExtra = [
             'etId' => $etId,
             'quoteId' => $quoteId,
             'quoteTypeId' => $quoteTypeId,
-            'quoteUUID' => $quoteUUID,
+            'quoteCode' => $quoteCode
         ];
     }
 

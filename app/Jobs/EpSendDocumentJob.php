@@ -13,6 +13,7 @@ use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
+use App\Models\User;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -36,15 +37,19 @@ class EpSendDocumentJob implements ShouldQueue
 
     public function __construct(
         public EpBookingContext $context
-    ) {
-        $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
-        $this->quote = $this->getQuoteObject($quoteType, $this->context->quoteId);
-    }
+    ) {}
 
     public function handle(): void
-    {
+    {       
+        $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
+        $this->quote = $this->getQuoteObject($quoteType, $this->context->quoteId); 
+
+        if (!$this->quote) {
+            throw new \Exception("Quote not found for sending email");
+        }
+
         // Start feature and quote logging
-        LoggerService::startQuoteLogging($this->context->quoteUUID, LoggerFeatureEnum::EP_PROCESS_SEND_DOCUMENT);
+        LoggerService::startQuoteLogging($this->quote?->code, LoggerFeatureEnum::EP_PROCESS_SEND_DOCUMENT);
 
         $this->storageBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
@@ -82,40 +87,13 @@ class EpSendDocumentJob implements ShouldQueue
      */
     private function sendEmail()
     {
-        if (!$this->quote) {
-            throw new \Exception("Quote not found for sending email");
-        }
-
         LoggerService::info("{$this->logPrefix} Email sending for uuid: {$this->quote->uuid}");
 
         $advisor = $this->quote?->advisor;
-        
-        // Build CC array, filtering out null values
-        $ccEmails = array_filter([
-            $advisor?->email,
-            "arsalanmughal23@yopmail.com", 
-            "nidhi.kaushal@myalfred.com", 
-            "tasawar.hussain@myalfred.com"
-        ]);
+        $policyContext = config('embedded-products.ecb.policy_context');
 
-        $recipients = [
-            "to" => [ $this->quote?->email ],
-            "cc" => $ccEmails,
-            "bcc" => ["newleadpool@insurancemarket.ae"]
-        ];
-        $advisorData = [
-            'advisorEmail' => $advisor?->email,
-            'advisorLandLine' => $advisor?->landline_no,
-            'advisorMobileNoWithoutSpaces' => removeSpaces($advisor?->mobile_no ?? ''),
-            'advisorMobilePhone' => $advisor?->mobile_no,
-            'advisorName' => $advisor?->name,
-            'advisorProfilePhotoPath' => $advisor?->profile_photo_path,
-        ];
-        $policyContext = [
-            "policyClaimLimit" => "One claim per policy term.",
-            "policyCoverage" => "If you have an accident, you pay part of the repair bill (this is called 'excess'), usually between AED 350 to AED 1,400. This benefit gives you back up to AED 1,200.",
-            "policyDuration" => "Your coverage lasts for 13 months or until the expiry of your motor insurance policy, whichever comes first.",
-        ];
+        $recipients = $this->getRecipients($this->quote->email ?? '', $advisor->email ?? '');
+        $advisorData = $this->getAdvisorData($advisor);
 
         $emailData = [
             "Attachments" => $this->fetchAttachments(),
@@ -131,6 +109,42 @@ class EpSendDocumentJob implements ShouldQueue
         ];
 
         $this->triggerBirdWorkflow($emailData);
+    }
+
+    private function getAdvisorData(User $advisor): array
+    {
+        return [
+            'advisorEmail' => $advisor?->email,
+            'advisorLandLine' => $advisor?->landline_no,
+            'advisorMobileNoWithoutSpaces' => removeSpaces($advisor?->mobile_no ?? ''),
+            'advisorMobilePhone' => $advisor?->mobile_no,
+            'advisorName' => $advisor?->name,
+            'advisorProfilePhotoPath' => $advisor?->profile_photo_path,
+        ];
+    }
+
+    private function getRecipients(string $customerEmail, string $advisorEmail): array
+    {
+        $configEnv = app()->environment('production') ? 'prod' : 'non_prod';
+        $recipientEmails = config("embedded-products.ecb.{$configEnv}.recipient_emails");
+
+        $toEmails = $recipientEmails['to'];
+        if(!empty($customerEmail)) {
+            $toEmails[] = $customerEmail;
+        }
+        
+        $ccEmails = $recipientEmails['cc'];
+        if(!empty($advisorEmail)) {
+            $ccEmails[] = $advisorEmail;
+        }
+
+        $recipients = [
+            "to" => $toEmails,
+            "cc" => $ccEmails,
+            "bcc" => $recipientEmails['bcc']
+        ];
+
+        return $recipients;
     }
 
     /**

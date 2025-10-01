@@ -31,12 +31,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
     public function __construct(
         public EpBookingContext $context
     ) {
-        $this->logExtra = [
-            'etId' => $this->context->etId,
-            'quoteId' => $this->context->quoteId,
-            'quoteTypeId' => $this->context->quoteTypeId,
-            'quoteUUID' => $this->context->quoteUUID,
-        ];
+        $this->logExtra = $this->context->logExtra;
 
         $this->watermarkableDocTypeCodes = [
             QuoteDocumentsEnum::POLICY_SCHEDULE,
@@ -47,7 +42,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
     public function handle(): void
     {
         // Start feature and quote logging
-        LoggerService::startQuoteLogging($this->context->quoteUUID, LoggerFeatureEnum::EP_PROCESS_WATERMARK_DOCUMENT);
+        LoggerService::startQuoteLogging($this->context->quoteCode, LoggerFeatureEnum::EP_PROCESS_WATERMARK_DOCUMENT);
 
         LoggerService::info("{$this->logPrefix} Starting", extra: $this->logExtra);
 

@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\DTO\EpBookingContext;
 use App\Enums\QuoteDocumentsEnum;
+use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
@@ -22,6 +23,8 @@ class EpBookingService extends BaseService
     protected string $logPrefix = 'EpBooking - Service:';
     protected array $logExtra = [];
 
+    public mixed $quote = null;
+
     /**
      * Create a new class instance.
      */
@@ -30,23 +33,21 @@ class EpBookingService extends BaseService
         public EpBookingContext $context
     ) {
         $this->logPrefix = "{$epServiceName}Service:";
+        
+        $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
+        $this->quote = $this->getQuoteObject($quoteType, $this->context->quoteId);
     }
     
-    public static function buildContext(int $etId, string $quoteId, int $quoteTypeId, string $quoteUUID)
+    public static function buildContext(int $etId, string $quoteId, int $quoteTypeId, string $quoteCode)
     {
         $epBookingContext = new EpBookingContext(
             etId: $etId,
             quoteId: $quoteId,
             quoteTypeId: $quoteTypeId,
-            quoteUUID: $quoteUUID
+            quoteCode: $quoteCode
         );
 
         return $epBookingContext;
-    }
-
-    public function sendDocuments(): void
-    {
-        return;
     }
 
     public function processWatermarkDocuments(Collection $documents, array $watermarkableDocTypeCodes): array
@@ -88,9 +89,9 @@ class EpBookingService extends BaseService
     public function watermarkDocument(QuoteDocument $quoteDocument, DocumentType $documentType): QuoteDocument|false
     {
         $extraLog = [
+            ...$this->context->logExtra,
             'document_id' => $quoteDocument?->id,
-            'document_type_code' => $quoteDocument?->document_type_code,
-            'quoteUID' => $this->context->quoteUUID,
+            'document_type_code' => $quoteDocument?->document_type_code
         ];
 
         if (! $quoteDocument) {
@@ -106,11 +107,11 @@ class EpBookingService extends BaseService
             return false;
         }
 
-        $lockKey = "watermark_{$quoteDocument->id}_{$this->context->quoteUUID}_{$documentType->id}";
+        $lockKey = "watermark_{$quoteDocument->id}_{$this->quote->uuid}_{$documentType->id}";
 
         // Check if the file is already being processed
         if ($this->isFileBeingProcessed($lockKey)) {
-            LoggerService::info("File is already being processed. Retrying later. Document ID: {$quoteDocument->id}, UUID: {$this->context->quoteUUID}");
+            LoggerService::info("File is already being processed. Retrying later. Document ID: {$quoteDocument->id}, UUID: {$this->quote->uuid}");
 
             return false;
         }
@@ -131,7 +132,7 @@ class EpBookingService extends BaseService
             $extension = strtolower(pathinfo($quoteDocument->doc_name, PATHINFO_EXTENSION));
 
             if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf' || $extension == 'pdf') {
-                $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->context->quoteUUID, $documentType);
+                $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->quote->uuid, $documentType);
             } else {
                 LoggerService::error("Unsupported file type: fileMimeType: {$fileMimeType}, extension: {$extension}");
 
@@ -144,12 +145,12 @@ class EpBookingService extends BaseService
                     'watermarked_doc_name' => $watermarkData['watermarked_doc_name'],
                     'watermarked_doc_url' => $watermarkData['watermarked_doc_url'],
                 ]);
-                LoggerService::info('watermark job completed for '.$this->context->quoteUUID);
+                LoggerService::info('watermark job completed for '.$this->quote->uuid);
             }
 
             return $quoteDocument;
         } catch (\Exception $e) {
-            LoggerService::error("Error processing watermark for document ID: {$quoteDocument->id}, UUID: {$this->context->quoteUUID}. Error: ".$e->getMessage());
+            LoggerService::error("Error processing watermark for document ID: {$quoteDocument->id}, UUID: {$this->quote->uuid}. Error: ".$e->getMessage());
 
             return false;
         }

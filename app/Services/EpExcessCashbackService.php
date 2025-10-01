@@ -26,14 +26,12 @@ use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Bus;
-use Carbon\Carbon;
 use Error;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class EpExcessCashbackService extends EpBookingService
 {
-    public mixed $quote = null;
     private int $providerId = 0;
     private ?EmbeddedTransaction $embeddedTransaction = null;
 
@@ -66,22 +64,14 @@ class EpExcessCashbackService extends EpBookingService
     ) {
         parent::__construct('EpEcb', $context);
         $this->reqDocTypeCodes = $this->getRequiredDocTypeCodes();
-
-        $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
-        $this->quote = $this->getQuoteObject($quoteType, $this->context->quoteId);
     }
 
     public function init(): void
     {
         // Start feature and quote logging
-        LoggerService::startQuoteLogging($this->context->quoteUUID, LoggerFeatureEnum::EP_PROCESS_PURCHASE_FLOW);
+        LoggerService::startQuoteLogging($this->context->quoteCode, LoggerFeatureEnum::EP_PROCESS_PURCHASE_FLOW);
 
-        $this->logExtra = [
-            'etId' => $this->context->etId,
-            'quoteId' => $this->context->quoteId,
-            'quoteTypeId' => $this->context->quoteTypeId,
-            'quoteUUID' => $this->context->quoteUUID,
-        ];
+        $this->logExtra = $this->context->logExtra;
 
         if (!$this->quote) {
             throw new Exception("Quote not found.");
@@ -153,12 +143,7 @@ class EpExcessCashbackService extends EpBookingService
      */
     public static function epEcbWorkflow(EpBookingContext $context): void
     {
-        $logExtra = [
-            'etId' => $context->etId,
-            'quoteId' => $context->quoteId,
-            'quoteTypeId' => $context->quoteTypeId,
-            'quoteUUID' => $context->quoteUUID
-        ];
+        $logExtra = $context->logExtra;
 
         LoggerService::info('EpEcbService: Starting EP ExcessCashback workflow', extra: $logExtra);
 
@@ -740,9 +725,9 @@ class EpExcessCashbackService extends EpBookingService
             if ($isSavedInDB) {
                 // Store API request and response in database
                 InsurerRequestResponse::create([
-                    'quote_uuid' => $this->context->quoteUUID,
+                    'quote_uuid' => $this->quote?->uuid,
                     'provider_id' => $this->providerId, // You may want to set this based on your provider mapping
-                    'call_type' => "EpEcb",
+                    'call_type' => "EmbeddedProduct-ECB",
                     'request' => json_encode($payload),
                     'response' => json_encode($responseLog['data'] ?? []),
                     'status' => $status,
@@ -1021,7 +1006,6 @@ class EpExcessCashbackService extends EpBookingService
             });
 
         $policyStartDate = $this->formatDate($this->quote?->policy_start_date ?? '');
-
         $policyEndDate = $this->formatDate($this->quote->policy_expiry_date ?? '');
 
         return [
@@ -1068,12 +1052,12 @@ class EpExcessCashbackService extends EpBookingService
             ],
             'motor_insurance_info' => [
                 'mi_policy_number' => "NA",
-                'mi_policy_issuer' => $this->quote?->insuranceProviderDetails?->ecb_insurer_id ?? 3,
+                'mi_policy_issuer' => $this->quote?->insuranceProviderDetails?->ecb_insurer_id,
                 'mi_start_date' => $policyStartDate,
                 'mi_end_date' => $policyEndDate,
                 'mi_coverage_area' => "NA", // "UAE & OMAN",
                 'mi_sum_insured' => $this->quote?->car_value,
-                'mi_policy_excess' => 100
+                'mi_policy_excess' => $this->quote?->carQuotePlanDetail?->excess
             ],
             'document_info' => $mulkiyaDocuments
         ];
