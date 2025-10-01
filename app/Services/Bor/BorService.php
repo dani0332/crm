@@ -501,6 +501,51 @@ class BorService
     }
 
     /**
+     * Delete a BOR document
+     *
+     * @param array $data
+     * @return array
+     */
+    public function deleteDocument(array $data): array
+    {
+        $borLog = BorLog::with('personalQuote.documents')->where('bor_reference', $data['bor_ref_id'])->first();
+
+        if (!$borLog) {
+            throw new \Exception('BOR log not found');
+        }
+
+        $quote = $borLog->personalQuote;
+        if (!$quote) {
+            throw new \Exception('Personal quote not found');
+        }
+
+        $quoteName = QuoteTypes::getName($quote->quote_type_id);
+        $isPersonalQuote = checkPersonalQuotes($quoteName->value);
+        $quote = $isPersonalQuote ? $this->getQuoteObject($quoteName->value, $quote->id) : $this->getQuoteObject($quoteName->value, $quote->quote_id);
+
+        if (!$quote) {
+            throw new \Exception('Quote not found');
+        }
+
+        $deleteData = [
+            'doc_name' => $data['doc_name'],
+            'doc_uuid' => $data['doc_uuid'],
+            'document_category' => $data['bor_ref_id'],
+        ];
+
+        $quoteDocumentService = new QuoteDocumentService;
+        $result = $quoteDocumentService->deleteBorDocument($quote, $deleteData);
+
+        return [
+            'success' => true,
+            'message' => 'Document deleted successfully',
+            'data' => $result,
+        ];
+    }
+
+    /****************************************** SSE ******************************************/
+
+    /**
      * Handle SSE streaming for BOR log updates
      *
      * @param string $borRefId
@@ -700,7 +745,7 @@ class BorService
     /**
      * Get human-readable connection status text
      */
-    public function getConnectionStatusText($status)
+    private function getConnectionStatusText($status)
     {
         switch ($status) {
             case CONNECTION_NORMAL:
@@ -713,4 +758,6 @@ class BorService
                 return 'UNKNOWN_' . $status;
         }
     }
+    
+    /****************************************** SSE ******************************************/
 }

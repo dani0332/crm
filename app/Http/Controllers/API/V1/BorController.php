@@ -5,7 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Enums\BorStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Bor\BorSignRequest;
+use App\Http\Requests\Bor\BorRequest;
 use App\Http\Resources\QuoteDocumentResource;
 use App\Models\BorLog;
 use App\Services\Bor\BorEmailService;
@@ -100,7 +100,7 @@ class BorController extends Controller
         }
     }
 
-    public function signDocument(BorSignRequest $request)
+    public function signDocument(BorRequest $request)
     {
         try {
             $file = null;
@@ -160,25 +160,24 @@ class BorController extends Controller
         return new QuoteDocumentResource($document);
     }
 
-    public function deleteDocument(Request $request)
+    public function deleteDocument(BorRequest $request)
     {
-        $borLog = BorLog::with('personalQuote.documents')->where('bor_reference', $request->bor_ref_id)->first();
-        $quote = $borLog->personalQuote;
-        $quoteName = QuoteTypes::getName($quote->quote_type_id);
-        $isPersonalQuote = checkPersonalQuotes($quoteName->value);
-        $quote = $isPersonalQuote ? $this->getQuoteObject($quoteName->value, $quote->id) : $this->getQuoteObject($quoteName->value, $quote->quote_id);
-        if (! $quote) {
-            return response()->json(['message' => 'Quote not found'], 200);
+        try {
+            $result = $this->borService->deleteDocument($request->validated());
+
+            return response()->json([
+                'message' => $result['message'],
+                'data' => $result['data']
+            ]);
+        } catch (Exception $th) {
+            LoggerService::error('Bor Failed to delete document', [
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString(),
+                'request' => $request->all(),
+            ]);
+
+            return response()->json(['message' => 'failed', 'error' => $th->getMessage()], 500);
         }
-
-        $data = [
-            'doc_name' => $request->doc_name,
-            'doc_uuid' => $request->doc_uuid,
-            'document_category' => $request->bor_ref_id,
-        ];
-        $quoteDocumentService = new QuoteDocumentService;
-
-        return $quoteDocumentService->deleteBorDocument($quote, $data);
     }
 
     public function borCompletionEmailTrigger($borRefId)
