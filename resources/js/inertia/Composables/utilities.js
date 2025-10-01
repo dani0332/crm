@@ -9,14 +9,18 @@ export const useRoundIt = (num, decimalPlaces = 2) => {
  * @param {Date|string} date - Date object or date string to format
  * @returns {string} - Date in YYYY-MM-DD format, empty string if invalid
  */
-export const useFormatDateToYMD = (date) => {
+export const useFormatDateToYMD = date => {
   if (!date) return '';
   const d = new Date(date);
   if (isNaN(d.getTime())) return '';
-  
-  return d.getFullYear() + '-' + 
-         String(d.getMonth() + 1).padStart(2, '0') + '-' + 
-         String(d.getDate()).padStart(2, '0');
+
+  return (
+    d.getFullYear() +
+    '-' +
+    String(d.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(d.getDate()).padStart(2, '0')
+  );
 };
 
 export const useCleanObj = reactive => {
