@@ -6,6 +6,7 @@ use App\Enums\DefaultAdvisorEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\HealthQuote;
+use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'first_name',
             'last_name',
             'source',
+            'sub_source_id',
             'health_team_type',
             'premium',
             'policy_number',
@@ -96,6 +98,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'memberCategory:id,text',
             'insuranceProvider:id,text',
             'plan:id,text',
+            'subSource:id,text',
         ]);
     }
 
@@ -131,6 +134,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('is_ecommerce', isBool: true, requestParams: $requestParams)
             ->filterIn('emirate_of_your_visa_id', requestParams: $requestParams)
             ->filterIn('insurer_aml_status', requestParams: $requestParams)
+            ->filterIn('sub_source_id', requestParams: $requestParams)
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at', requestParams: $requestParams)
             ->filterBySegment()
             ->filterByPaymentDueDates('payment_due_date')
@@ -262,7 +266,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
     {
         $query = $this->buildGrid();
         $this->applyFilters($query, $requestParams);
-
+        LoggerService::sql("healtth processGridData",$query);
         return $query;
     }
 }

@@ -161,6 +161,7 @@ const tableHeader = ref([
     value: 'customer.pcp_tag_formatted',
     is_active: true,
   },
+  { text: 'Sub Source', value: 'sub_source.text', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -212,6 +213,7 @@ const filters = reactive({
   emirate_of_your_visa_id: [],
   authorize_date: '',
   captured_date: '',
+  sub_source_id: [],
 });
 
 const canExport = ref(false);
@@ -394,6 +396,7 @@ function setQueryStringFilters() {
     'renewal_batches',
     'payment_status',
     'emirate_of_your_visa_id',
+    'sub_source_id',
     'page',
   ];
 
@@ -997,6 +1000,33 @@ const onLeadConfirmed = (leadData) => {
           ]"
           class="w-full"
         />
+
+        <x-select
+          v-model="filters.sub_source_id"
+          label="Sub Source"
+          name="sub_source_id"
+          :options="(subSources || []).map(source => ({ value: source.id, label: source.text, suffix: source.description || source.tooltip || '' }))"
+          placeholder="Select sub source"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.sub_source_id = (subSources || []).map(item => item.id)"
+              @clear="filters.sub_source_id = []"
+            />
+          </template>
+        </x-select>
 
         <x-select
           v-if="
