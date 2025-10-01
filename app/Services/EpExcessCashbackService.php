@@ -47,6 +47,7 @@ class EpExcessCashbackService extends EpBookingService
     private ?string $quoteReferenceNumber = null;
     private ?string $policyNumber = null;
     public array $reqDocTypeCodes = [];
+    public array $watermarkableDocTypeCodes = [];
 
     // Cache Keys
     private const TOKEN_CACHE_KEY = 'tpa_client_api_token';
@@ -64,6 +65,7 @@ class EpExcessCashbackService extends EpBookingService
     ) {
         parent::__construct('EpEcb', $context);
         $this->reqDocTypeCodes = $this->getRequiredDocTypeCodes();
+        $this->watermarkableDocTypeCodes = $this->getWatermarkableDocTypeCodes();
     }
 
     public function init(): void
@@ -538,8 +540,16 @@ class EpExcessCashbackService extends EpBookingService
             'credit_note_no' => $policyDetailResponse['credit_note_no'] ?? '',
         ];
 
+        $savedDocuments = $this->embeddedTransaction?->documents()
+            ->whereIn('document_type_code', $this->watermarkableDocTypeCodes)
+            ->where('is_watermarked', true)
+            ->get();
+
+        $watermarkedDocumentDocTypeCodes = $savedDocuments?->pluck('document_type_code')->toArray();
+        $missingWatermarableDocTypeCodes = array_diff($this->watermarkableDocTypeCodes, $watermarkedDocumentDocTypeCodes);
+
         $isPolicyBooked = $this->embeddedTransaction?->policy_status == EmbeddedTransactionEnum::STATUS_BOOKED;
-        if ($isPolicyBooked && $policyPrice > 0) {
+        if (empty($missingWatermarableDocTypeCodes) && $isPolicyBooked && $policyPrice > 0) {
             $policyDetails = ['policy_status' => EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE, ...$policyDetails];
         }
 

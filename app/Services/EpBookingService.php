@@ -159,6 +159,14 @@ class EpBookingService extends BaseService
         }
     }
 
+    protected function getWatermarkableDocTypeCodes(): array
+    {
+        return [
+            QuoteDocumentsEnum::POLICY_SCHEDULE,
+            QuoteDocumentsEnum::CAR_TAX_INVOICE
+        ];
+    }
+
     protected function getRequiredDocTypeCodes(): array
     {
         return [
