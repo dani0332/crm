@@ -74,6 +74,7 @@ use App\Http\Controllers\V2\BuyLeadController;
 use App\Http\Controllers\V2\CarQuoteController;
 use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\V2\CentralController;
+use App\Http\Controllers\V2\CustomerAcceptanceLogController;
 use App\Http\Controllers\V2\CustomerController as V2CustomerController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
@@ -941,6 +942,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('logs/{id}/documents', [BorController::class, 'uploadDocument'])->name('bor.documents.upload');
     });
 
+    // Customer Acceptance Logs Routes
+    Route::group(['prefix' => 'consent-logs'], function () {
+        Route::resource('request', CustomerAcceptanceLogController::class)->only('index')->names('consent-logs.request');
+    });
     // This route is only for testing purposes to preview the BOR PDF
     Route::get('bor-pdf-preview', function () {
         // entity bor log

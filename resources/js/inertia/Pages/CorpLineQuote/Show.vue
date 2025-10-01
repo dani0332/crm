@@ -2,6 +2,7 @@
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const props = defineProps({
   quote: {
@@ -1481,6 +1482,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :insuranceProviders="insuranceProviders"
       :expanded="sectionExpanded"
       :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      lob="Business"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy
