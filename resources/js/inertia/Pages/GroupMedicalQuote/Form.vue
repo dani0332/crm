@@ -1,9 +1,12 @@
 <script setup>
+const page = usePage();
 const props = defineProps({
   businessInsuranceType: Object,
   quote: Object,
   gmTypes: Object,
   selectedGmType: Object,
+  subSources: { type: Array, default: () => [] },
+  leadSourceParams: { type: Object, default: () => ({}) },
 });
 
 const notification = useToast();
@@ -35,16 +38,92 @@ const quoteForm = useForm({
   last_name: props.quote.last_name,
   email: props.quote.email,
   mobile_no: props.quote.mobile_no,
+  source: props.quote.source,
   premium: props.quote.premium,
   company_name: props.quote.company_name,
   number_of_employees: props.quote.number_of_employees,
   business_type_of_insurance_id: props.quote.business_type_of_insurance_id,
   group_medical_type_id: props.selectedGmType ?? '',
   brief_details: props.quote.brief_details,
+  // Additional notes and sub-source fields
+  additional_notes: (() => {
+    let text = props.quote?.additional_notes || '';
+    const partnerName = props.leadSourceParams?.partnerName;
+    if (partnerName) {
+      if (text) text = `${text}, ${partnerName}`; else text = partnerName;
+    }
+    return text;
+  })(),
+  sub_source_id: parseInt(props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0) || null,
+  sub_source_options_id: parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption || 0) || null,
+  primary_ref_id: props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
+  partner_name: props.leadSourceParams?.partnerName || '',
 });
 
 const { isRequired, emptyOrDecimal, isNumber, isEmail, isMobileNo } =
   useRules();
+
+// Sub-source options and flags like Life
+const subSourceOptions = computed(() => {
+  return (props.subSources || []).map(item => ({
+    value: item.id,
+    label: item.text,
+    suffix: item.description || item.tooltip || `Information about ${item.text}`,
+  }));
+});
+
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
+  return selectedSubSource?.childs?.map(option => ({
+    value: option.id,
+    label: option.text,
+    code: option.code,
+    suffix: option.description || option.tooltip || `Information about ${option.text}`,
+  })) || [];
+});
+
+const isReferralType = computed(() => {
+  return props.leadSourceParams?.type === 'referral' || quoteForm.source === 'IMCRM';
+});
+
+const isEcomLeadExtension = computed(() => {
+  return props.leadSourceParams?.type === 'ecom_lead_extension' ||
+    (quoteForm.sub_source_id === null && quoteForm.sub_source_options_id === null && quoteForm.primary_ref_id);
+});
+
+const rolesEnum = page.props.rolesEnum;
+const canEditSubSourceFields = computed(() => {
+  return useHasAnyRole([rolesEnum.GMManager, rolesEnum.Admin, rolesEnum.LeadPool]);
+});
+
+const showPartnerNameField = computed(() => {
+  const selectedOption = subSourceOptionOptions.value.find(
+    option => option.value === quoteForm.sub_source_options_id
+  );
+  return selectedOption?.code === 'other-clubs-or-campaigns';
+});
+
+watch(() => quoteForm.sub_source_id, (newValue) => {
+  if (newValue !== quoteForm.sub_source_id) {
+    quoteForm.sub_source_options_id = null;
+  }
+});
+watch(() => quoteForm.sub_source_options_id, () => {
+  if (!showPartnerNameField.value) quoteForm.partner_name = '';
+});
+watch(() => quoteForm.partner_name, (newValue, oldValue) => {
+  if (!showPartnerNameField.value) return;
+  if (oldValue) {
+    const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')})`, 'g');
+    quoteForm.additional_notes = (quoteForm.additional_notes || '').replace(oldPattern, '').trim();
+    quoteForm.additional_notes = quoteForm.additional_notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
+  }
+  if (newValue) {
+    if (quoteForm.additional_notes) quoteForm.additional_notes = `${quoteForm.additional_notes}, ${newValue}`;
+    else quoteForm.additional_notes = newValue;
+  }
+});
 
 const isEmptyField = ref(false);
 
@@ -86,6 +165,74 @@ function onSubmit(isValid) {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Sub Source Fields -->
+        <x-select
+          v-if="isReferralType && !isEcomLeadExtension"
+          label="SUB SOURCE"
+          v-model="quoteForm.sub_source_id"
+          :options="subSourceOptions"
+          class="w-full"
+          placeholder="Select Sub Source"
+          filterable
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          :required="subSourceOptions.length > 0"
+          :error="quoteForm.errors.sub_source_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>{{ item.suffix }}</template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-select
+          v-if="isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension"
+          label="SUB SOURCE OPTION"
+          v-model="quoteForm.sub_source_options_id"
+          :options="subSourceOptionOptions"
+          class="w-full"
+          placeholder="Select Sub Source Option"
+          filterable
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>{{ item.suffix }}</template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-input
+          v-if="isEcomLeadExtension"
+          label="PRIMARY REF ID"
+          required
+          v-model="quoteForm.primary_ref_id"
+          class="w-full"
+          type="text"
+          placeholder="Enter Primary Ref ID"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.primary_ref_id"
+          :disabled="!canEditSubSourceFields"
+        />
+
+        <x-input
+          v-if="showPartnerNameField"
+          label="PARTNER NAME"
+          required
+          v-model="quoteForm.partner_name"
+          class="w-full"
+          type="text"
+          placeholder="Enter Partner Name"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.partner_name"
+          :disabled="!canEditSubSourceFields"
+        />
         <x-input
           v-model="quoteForm.first_name"
           type="text"

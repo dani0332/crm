@@ -90,6 +90,13 @@ class BusinessQuoteService extends BaseService
                 'c.emirates_id_number',
                 'c.emirates_id_expiry_date',
                 'c.receive_marketing_updates',
+                // Sub-source and notes fields
+                'bqr.sub_source_id',
+                'bqr.sub_source_options_id',
+                'bqr.primary_ref_id',
+                'bqr.additional_notes',
+                'ss.text as sub_source_text',
+                'sso.text as sub_source_option_text',
                 'i.first_name as insured_first_name',
                 'i.last_name as insured_last_name',
                 'qrem.entity_id',
@@ -158,7 +165,10 @@ class BusinessQuoteService extends BaseService
             })
             ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
             ->leftJoin('insured_kyc', 'i.id', '=', 'insured_kyc.insured_id')
-            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
+            // Sub-source lookup joins
+            ->leftJoin('lookups as ss', 'ss.id', '=', 'bqr.sub_source_id')
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'bqr.sub_source_options_id');
     }
 
     public function getEntity($id)
@@ -268,6 +278,7 @@ class BusinessQuoteService extends BaseService
             'subSourceId' => $request->sub_source_id ?? null,
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
             'primaryRefId' => $request->primary_ref_id ?? null,
+            'additionalNotes' => $request->additional_notes ?? null,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
 

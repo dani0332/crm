@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use App\Models\Lookup;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -132,6 +133,16 @@ class BusinessQuote extends Model implements AuditableContract
     public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
+    }
+
+    public function subSource()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_id');
+    }
+
+    public function subSourceOption()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_options_id');
     }
 
     public function quoteRequestEntityMapping()

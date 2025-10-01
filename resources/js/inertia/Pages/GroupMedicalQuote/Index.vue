@@ -1,5 +1,6 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 defineProps({
   model: String,
@@ -13,6 +14,7 @@ defineProps({
   canAssignLeadAdvisor: Boolean,
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  subSources: Array,
 });
 
 const canExport = ref(false);
@@ -49,6 +51,10 @@ const loader = reactive({
 
 const manualAssignmentSuccess = () => {
   quotesSelected.value = [];
+};
+const createLeadModal = ref(false);
+const onLeadConfirmed = leadData => {
+  createLeadModal.value = false;
 };
 const filters = reactive({
   code: '',
@@ -512,16 +518,15 @@ const insurerAMLStatusOption = computed(() => {
           </x-button>
         </Link>
 
-        <Link :href="route('amt.create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead
-          </x-button>
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          tag="div"
+          v-if="readOnlyMode.isDisable === true"
+          @click="createLeadModal = true"
+        >
+          Create Lead
+        </x-button>
       </div>
     </div>
     <x-divider class="my-4" />
@@ -814,6 +819,14 @@ const insurerAMLStatusOption = computed(() => {
         </div>
       </div>
     </x-form>
+
+    <!-- Create Lead Modal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      :sub-sources="subSources || []"
+      route-name="amt.create"
+      @confirmed="onLeadConfirmed"
+    />
 
     <Transition name="fade">
       <div v-if="quotesSelected.length > 0" class="mb-4">

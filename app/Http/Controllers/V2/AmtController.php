@@ -300,7 +300,9 @@ class AmtController extends Controller
 
         $quotes = $data->simplePaginate(15)->withQueryString();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus'));
+        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Business);
+
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources'));
     }
 
     /**
@@ -308,13 +310,23 @@ class AmtController extends Controller
      *
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
-    public function create()
+    public function create(Request $request)
     {
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
+
+        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Business);
 
         return inertia('GroupMedicalQuote/Form', [
             'businessInsuranceType' => $businessInsuranceType,
             'quote' => new BusinessQuote,
+            'subSources' => $subSources,
+            'leadSourceParams' => [
+                'type' => $request->input('type'),
+                'subSource' => $request->input('subSourceId'),
+                'subSourceOption' => $request->input('subSourceOptionsId'),
+                'primaryRefId' => $request->input('primaryRefId'),
+                'partnerName' => $request->input('partnerName'),
+            ],
         ]);
     }
 
@@ -357,7 +369,7 @@ class AmtController extends Controller
         $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
-        ]);
+        ])->load(['subSource:id,text', 'subSourceOption:id,text']);
         abort_if(! $record, 404);
 
         /* Start - Temporarily adding for correcting historic data */
@@ -515,11 +527,15 @@ class AmtController extends Controller
             $selectedGmType = $GMType->id;
         }
 
+        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Business);
+
         return inertia('GroupMedicalQuote/Form', [
             'businessInsuranceType' => $businessInsuranceType,
             'quote' => $record,
             'gmTypes' => $gmTypes,
             'selectedGmType' => $selectedGmType,
+            'subSources' => $subSources,
+            'leadSourceParams' => [],
         ]);
     }
 
