@@ -112,7 +112,7 @@ class CarCQFQuoteMappingService
         ];
     }
 
-    public function getCarTypeInsuranceId(CarQuote $quote): ?string
+    public function getCarTypeInsuranceId(CarQuote $quote)
     {
         // Collect possible fields to check for insurance type
         $fields = [
@@ -155,7 +155,7 @@ class CarCQFQuoteMappingService
         return null;
     }
 
-    public function getNextUAELicenseHeldForId(CarQuote $quote): ?int
+    public function getNextUAELicenseHeldForId(CarQuote $quote)
     {
         $currentId = (int) $quote->uae_license_held_for_id;
         $maxEnumValue = UAELicenseHeldForEnum::FIVE_YEARS->value;
