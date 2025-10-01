@@ -766,6 +766,40 @@ class CarEmailService extends BaseService
         }
     }
 
+    public function sendFailedCarRenewals($failedQuotes, $renewalsUploadLeadsId)
+    {
+
+        $workflow = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+        if ($workflow) {
+            $response = app(BirdService::class)->triggerWebHookRequest($workflow->value, $this->buildFailedCarRenewalsEmailData($failedQuotes, $renewalsUploadLeadsId));
+            LoggerService::info(self::class.' - sendFailedCarRenewals - Event triggered ');
+        }
+
+    }
+
+    public function buildFailedCarRenewalsEmailData($failedQuotes, $renewalsUploadLeadsId)
+    {
+        // Retrieve all CarRenewalManager emails in a single query
+        $renewalsManagersEmails = User::role(\App\Enums\RolesEnum::CarRenewalManager)
+            ->pluck('email')
+            ->filter()
+            ->values()
+            ->all();
+
+        // Get all failed renewal processes for the given policy numbers
+        $failedPolicyNumbers = collect($failedQuotes)->unique()->values()->all();
+
+        return (object) [
+            'failedQuotes' => implode(', ', $failedPolicyNumbers),
+            'quoteUID' => '', // Not used, reserved for future
+            'renewalsManagersEmails' => $renewalsManagersEmails,
+            'renewalManagerEmail' => $renewalsManagersEmails[0] ?? '',
+            'workflowType' => WorkflowTypeEnum::CAR_CQF_RENEWALS_ERRORS,
+            'dateOfAttempt' => now()->format('Y-m-d'),
+            'failedLeadsCount' => count($failedPolicyNumbers) ?? 0,
+            'fileDownloadUrl' => route('downloadValidationFailedFile', ['id' => $renewalsUploadLeadsId]),
+        ];
+    }
     public function sendFollowUpEmailForCQF($lead)
     {
         try {

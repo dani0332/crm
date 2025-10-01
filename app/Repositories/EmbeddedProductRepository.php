@@ -19,6 +19,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
+use App\Facades\Ken;
 use App\Facades\Marshall;
 use App\Jobs\EP\CancelEPJob;
 use App\Jobs\EpSendDocumentJob;
@@ -1335,5 +1336,16 @@ class EmbeddedProductRepository extends BaseRepository
                 }
             });
         }
+    }
+
+    public function saveEmbeddedTransaction($quote, $quoteTypeId)
+    {
+        $response = Ken::request('/save-embedded-transaction', 'post',
+            ['quoteUID' => $quote->uuid, 'quoteTypeId' => $quoteTypeId]);
+        if (isset($response->status) && $response->status == 200) {
+            return $response->data;
+        }
+
+        return null;
     }
 }
