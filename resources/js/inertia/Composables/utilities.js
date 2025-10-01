@@ -16,9 +16,13 @@ export const useFormatDateToYMD = date => {
   if (isNaN(d.getTime())) return '';
 
   // Use UTC methods to avoid timezone issues when parsing ISO strings
-  return d.getUTCFullYear() + '-' +
-         String(d.getUTCMonth() + 1).padStart(2, '0') + '-' +
-         String(d.getUTCDate()).padStart(2, '0');
+  return (
+    d.getUTCFullYear() +
+    '-' +
+    String(d.getUTCMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(d.getUTCDate()).padStart(2, '0')
+  );
 };
 
 export const useCleanObj = reactive => {
