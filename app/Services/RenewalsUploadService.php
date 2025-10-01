@@ -1194,7 +1194,6 @@ class RenewalsUploadService
                     $quoteData['vehicle_type_id'] = VehicleType::where('text', GenericRequestEnum::BIKE)->first()->id ?? null;
                 }
 
-
                 if ($quoteType->code == quoteTypeCode::Car && ! empty($data['year_of_first_registration'])) {
                     $quoteData['year_of_first_registration'] = $data['year_of_first_registration'];
                 } elseif ($quoteType->code == quoteTypeCode::Car && ! empty($data['year'])) {
