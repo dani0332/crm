@@ -52,6 +52,7 @@ use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
@@ -1437,6 +1438,16 @@ class CRUDController extends Controller
                     ['car_quote_request_id' => $carQuoteRequest->id],
                     ['chassis_number' => $request->chassis_number]
                 );
+
+                // Add/update chassis number details
+                $carMake = CarMake::find($request->car_make_id);
+                $carModel = CarModel::find($request->car_model_id);
+                $data = [
+                    'chassisNumber' => $request->chassis_number,
+                    'carMakeAndModel' => "{$carMake->text} {$carModel->text}",
+                ];
+             
+                $this->carQuoteService->saveVehicleChassisDetails($carQuoteRequest->uuid, $data);
             }
         }
 

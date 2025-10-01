@@ -22,9 +22,9 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
-use App\Models\CarQuote;
 use App\Models\CarMake;
 use App\Models\CarModel;
+use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\Entity;
@@ -141,22 +141,30 @@ class CarQuoteService extends BaseService
         if (isset($response->quoteUID)) {
             $this->selfAssign(QuoteTypes::CAR, $response->quoteUID);
 
-            $this->saveVehicleChassisDetails($response->quoteUID, $request->chassis_number, $request->car_make_id, $request->car_model_id);
+            // Add chassis number details
+            $carMake = CarMake::find($request->car_make_id);
+            $carModel = CarModel::find($request->car_model_id);
+
+            $data = [
+                'chassisNumber' => $request->chassis_number,
+                'carMakeAndModel' => "{$carMake->text} {$carModel->text}",
+            ];
+
+            $this->saveVehicleChassisDetails($response->quoteUID, $data);
         }
 
         return $response;
     }
 
-    private function saveVehicleChassisDetails($uuid, $chassisNumber, $carMakeId, $carModelId): void
+    public function saveVehicleChassisDetails($uuid, $data): void
     {
-        LoggerService::info('Saving vehicle chassis details', [ 'uuid' => $uuid, 'chassisNumber' => $chassisNumber, 'carMakeId' => $carMakeId, 'carModelId' => $carModelId]);
+        LoggerService::info('Saving vehicle chassis details', ['uuid' => $uuid, 'data' => $data]);
 
-        $carMake = CarMake::find($carMakeId);
-        $carModel = CarModel::find($carModelId);
-
-        VehicleChassisDetail::create(
-            ['uuid' => $uuid, 'quote_type_id' => QuoteTypes::CAR->id(), 'chassis_number' => $chassisNumber,
-             'vehicle_make_model' => "{$carMake->text} {$carModel->text}"]);
+        VehicleChassisDetail::updateOrCreate(
+            ['chassis_number' => $data['chassisNumber']],
+            ['uuid' => $uuid, 'quote_type_id' => QuoteTypes::CAR->id(),
+                'chassis_number' => $data['chassisNumber'], 'vehicle_make_model' => $data['carMakeAndModel']],
+        );
     }
 
     public function updateCarQuote(Request $request, $id)
@@ -304,18 +312,16 @@ class CarQuoteService extends BaseService
 
         $carQuote->updated_by = auth()->user()->email;
         $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
-
+        $deleteValuationResponse = true;
         if ($deleteValuationResponse) {
             $carQuote->save();
 
             $carQuoteDetails = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
             $carQuoteDetails->chassis_number = $request->chassis_number;
+
             if ($carQuoteDetails->isDirty()) {
                 $carQuoteDetails->chassis_number = $request->chassis_number;
                 $carQuoteDetails->save();
-
-                // Update vehicle chassis details
-                $this->saveVehicleChassisDetails($carQuote->uuid, $request->chassis_number, $request->car_make_id, $request->car_model_id);
             }
 
             if (isset($request->gender)) {

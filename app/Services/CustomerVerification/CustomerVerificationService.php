@@ -12,8 +12,8 @@ use App\Enums\QuoteTypes;
 use App\Events\CustomerVerificationUpdated;
 use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
-use App\Models\VehicleChassisDetail;
 use App\Services\CapiService;
+use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
@@ -27,7 +27,8 @@ class CustomerVerificationService
     private $documentTypeCode = null;
 
     public function __construct(
-        private CapiService $capiService
+        private CapiService $capiService,
+        private CarQuoteService $carQuoteService
     ) {}
 
     private function handleUnsupportedQuoteType(QuoteTypes $quoteType): array
@@ -253,7 +254,7 @@ class CustomerVerificationService
             $verificationData['chassisNumber'] = $this->extractOcrValue($ocrData, 'chassisNumber');
 
             if ($verificationData['chassisNumber'] && $verificationData['carMakeAndModel']) {
-                $this->saveVehicleChassisDetails($quote, $verificationData );
+                $this->saveVehicleChassisDetails($quote, $verificationData);
             }
         }
 
@@ -313,11 +314,7 @@ class CustomerVerificationService
     private function saveVehicleChassisDetails(Model $quote, array $data): void
     {
         LoggerService::info('Saving vehicle chassis details', $data);
-        VehicleChassisDetail::updateOrCreate( 
-            ['chassis_number' => $data['chassisNumber']],
-            ['uuid' => $quote->uuid, 'quote_type_id' => QuoteTypes::CAR->id(),
-            'chassis_number' => $data['chassisNumber'], 'vehicle_make_model' => $data['carMakeAndModel']],
-        );
+        $this->carQuoteService->saveVehicleChassisDetails($quote->uuid, $data);
     }
 
     private function updateCustomerVerificationStatus(Model $quote): void
