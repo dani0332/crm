@@ -16,6 +16,14 @@ class SLAService extends BaseService
 {
     public function __construct(protected AllocationService $allocationService) {}
 
+    private function getActiveSLA(Model $lead): ?SLATracking
+    {
+        return SLATracking::where('trackable_type', $lead->getMorphClass())
+            ->where('trackable_id', $lead->id)
+            ->where('status', SLAStatusEnum::ACTIVE)
+            ->first();
+    }
+
     public function startSLATracking(Model $lead): ?SLATracking
     {
         if (! $this->shouldTrackSLA($lead)) {
@@ -27,6 +35,29 @@ class SLAService extends BaseService
         $callbackHours = (float) getAppStorageValueByKey(ApplicationStorageEnums::SLA_CALLBACK_HOURS) ?: 2;
         $assignmentTime = now();
         $isBusinessHours = $this->allocationService->isBusinessHours();
+
+        $existingActiveSLA = $this->getActiveSLA($lead);
+
+        if ($existingActiveSLA && $existingActiveSLA->advisor_id === $lead->advisor_id) {
+            LoggerService::info('SLAService - Active SLA already exists for this advisor', [
+                'advisor_id' => $lead->advisor_id,
+                'sla_id' => $existingActiveSLA->id,
+            ]);
+
+            return $existingActiveSLA;
+        }
+
+        if ($existingActiveSLA && $existingActiveSLA->advisor_id !== $lead->advisor_id) {
+            $reason = "Lead {$lead->uuid} reassigned from advisor {$existingActiveSLA->advisor?->email} to advisor {$lead->advisor?->email}";
+            $existingActiveSLA->markReassigned($reason);
+
+            LoggerService::info('SLAService - Previous SLA marked as reassigned', [
+                'old_sla_id' => $existingActiveSLA->id,
+                'old_advisor_id' => $existingActiveSLA->advisor_id,
+                'new_advisor_id' => $lead->advisor_id,
+                'reason' => $reason,
+            ]);
+        }
 
         LoggerService::info('SLAService - Starting SLA tracking', [
             'advisor_id' => $lead->advisor_id,
@@ -84,36 +115,6 @@ class SLAService extends BaseService
                 'lead_uuid' => $lead->uuid,
                 'sla_id' => $slaRecord->id,
                 'completion_time' => now()->toDateTimeString(),
-            ]);
-        }
-    }
-
-    /**
-     * Cancel active SLA tracking when lead is reassigned
-     * Only applies to PEC-marked health leads
-     */
-    public function cancelActiveSLA($lead): void
-    {
-        // Only cancel SLA for eligible leads
-        if (! $this->shouldTrackSLA($lead)) {
-            return;
-        }
-
-        $activeSLAs = SLATracking::where('trackable_type', get_class($lead))
-            ->where('trackable_id', $lead->id)
-            ->where('status', SLAStatusEnum::ACTIVE)
-            ->get();
-
-        foreach ($activeSLAs as $slaRecord) {
-            $reason = "Lead {$lead->uuid} reassigned from advisor {$slaRecord->advisor_id} to new advisor";
-            $slaRecord->markReassigned($reason);
-
-            LoggerService::info('SLAService - SLA marked as reassigned', [
-                'lead_uuid' => $lead->uuid,
-                'sla_id' => $slaRecord->id,
-                'old_advisor_id' => $slaRecord->advisor_id,
-                'reason' => $reason,
-                'reassigned_time' => now()->toDateTimeString(),
             ]);
         }
     }
@@ -264,22 +265,6 @@ class SLAService extends BaseService
     private function dispatchCallbackNotification(SLATracking $slaRecord): void
     {
         // TODO: Send Bird Email here
-    }
-
-    /**
-     * Get URL for lead based on type
-     * Only handles health quotes since that's all we track
-     */
-    private function getLeadUrl(SLATracking $slaRecord): string
-    {
-        $baseUrl = url('/');
-        $leadType = $slaRecord->getLeadType();
-        $leadUuid = $slaRecord->getLeadUuid();
-
-        return match ($leadType) {
-            'health' => "{$baseUrl}/quotes/health/{$leadUuid}",
-            default => $baseUrl,
-        };
     }
 
     /**
