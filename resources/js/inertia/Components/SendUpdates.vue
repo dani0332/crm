@@ -23,6 +23,7 @@ const page = usePage();
 const { isRequired } = useRules();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const sendUpdateEnum = page.props.sendUpdateLogStatusEnum;
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
@@ -294,6 +295,49 @@ const findOption = (item, key) => {
 };
 
 const expandNotes = ref(false);
+
+const disableOption = (slug) => {
+  if (slug === sendUpdateEnum.MPC) {
+    return !(
+      props.reportable.quote_status_id == page.props.quoteStatusEnum.PolicyBooked
+    );
+  }
+
+  if (slug === sendUpdateEnum.CI) {
+    return !(
+      props.reportable.quote_status_id == page.props.quoteStatusEnum.PolicyBooked
+    );
+  }
+
+  if (slug === sendUpdateEnum.CIR) {
+    return (
+      props.reportable.quote_status_id == page.props.quoteStatusEnum.PolicyIssued ||
+      !props.reportable?.policy_booking_date
+    );
+  }
+
+  return false;
+};
+
+const disableTooltip = 'Please complete the policy booking before proceeding with cancellation';
+// only for MPC option.
+const disableOptionTooltip = (isDisabled) => {
+  if (isDisabled) {
+    return disableTooltip;
+  }
+};
+
+const disableCategoryTooltip = (category) => {
+  if (
+    (category.slug === sendUpdateEnum.CI && disableOption(category.slug)) ||
+    (category.slug === sendUpdateEnum.CIR && disableOption(category.slug))
+  ) {
+    return disableTooltip;
+  }
+
+  return category.description;
+};
+
 </script>
 
 <template>
@@ -495,11 +539,12 @@ const expandNotes = ref(false);
               class="py-8 px-6 rounded-xl w-[200px] min-h-[150px] whitespace-break-spaces underline decoration-dotted"
               @click="setOption('step3', category)"
               :loading="optionLoader"
+              :disabled="disableOption(category.slug)"
             >
               {{ category.title }}
             </x-button>
             <template #tooltip>
-              <div>{{ category.description }}</div>
+              <div>{{ disableCategoryTooltip(category) }}</div>
             </template>
           </x-tooltip>
         </template>
@@ -520,7 +565,7 @@ const expandNotes = ref(false);
               sendUpdateOptions.map(item => ({
                 label: item.title,
                 value: item.id,
-                tooltip: item.description,
+                disabled: disableOption(item.slug),
               }))
             "
             :rules="[isRequired]"
@@ -531,15 +576,12 @@ const expandNotes = ref(false);
             "
             class="w-full"
             filterable
-            filterPlaceholder="Filter Reason...."
-          />
-          <!-- <x-select
-              class="w-full"
-              v-model="form.option"
-              :options="form.childCategory.childs.map(item => ({ label: item.title, value: item.id, tooltip: item.tooltip }))"
-              :placeholder="['EF', 'EN'].includes(form.childCategory.slug) ? 'Select Subtype' : 'Select Reason'"
-              :rules="[isRequired]"
-            /> -->
+            filterPlaceholder="Send Update Options...."
+          >
+            <template #prefix="{ item }">
+              <x-toggle-tip v-if="item.disabled" :content="disableOptionTooltip(item.disabled)" />
+            </template>
+          </x-select>
           <div class="flex justify-end mt-2">
             <x-button
               size="sm"
