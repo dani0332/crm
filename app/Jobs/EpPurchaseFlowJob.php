@@ -8,6 +8,7 @@ use App\Services\EpExcessCashbackService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Sleep;
 use Throwable;
 
@@ -90,5 +91,19 @@ class EpPurchaseFlowJob implements ShouldQueue
 
         // Don't retry for business logic errors
         return false;
+    }
+
+    /**
+     * Get the middleware the job should pass through.
+     */
+    public function middleware(): array
+    {
+        $lockKey = "ep-purchase-flow-{$this->context->etId}-{$this->context->quoteCode}";
+
+        return [
+            (new WithoutOverlapping($lockKey))
+                ->dontRelease()
+                ->expireAfter(300)
+        ];
     }
 }

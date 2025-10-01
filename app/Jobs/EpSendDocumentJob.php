@@ -19,6 +19,7 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Throwable;
 
 class EpSendDocumentJob implements ShouldQueue
@@ -74,6 +75,20 @@ class EpSendDocumentJob implements ShouldQueue
                str_contains($exception->getMessage(), 'notification') ||
                str_contains($exception->getMessage(), 'smtp') ||
                str_contains($exception->getMessage(), 'connection');
+    }
+
+    /**
+     * Get the middleware the job should pass through.
+     */
+    public function middleware(): array
+    {
+        $lockKey = "ep-send-document-{$this->context->etId}-{$this->context->quoteCode}";
+
+        return [
+            (new WithoutOverlapping($lockKey))
+                ->dontRelease()
+                ->expireAfter(180)
+        ];
     }
 
     

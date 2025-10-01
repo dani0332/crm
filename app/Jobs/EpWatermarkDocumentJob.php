@@ -12,6 +12,7 @@ use App\Services\EpExcessCashbackService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Throwable;
 
 class EpWatermarkDocumentJob implements ShouldQueue
@@ -74,5 +75,19 @@ class EpWatermarkDocumentJob implements ShouldQueue
         return str_contains($exception->getMessage(), 'file') ||
                str_contains($exception->getMessage(), 'permission') ||
                str_contains($exception->getMessage(), 'temporary');
+    }
+
+    /**
+     * Get the middleware the job should pass through.
+     */
+    public function middleware(): array
+    {
+        $lockKey = "ep-watermark-document-{$this->context->etId}-{$this->context->quoteCode}";
+        
+        return [
+            (new WithoutOverlapping($lockKey))
+                ->dontRelease()
+                ->expireAfter(300)
+        ];
     }
 }
