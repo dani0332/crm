@@ -266,7 +266,7 @@ const modalHeaderMessage = () => {
   ) {
     headerMessage.value =
       'Please confirm the Name, Nationality, and Date of Birth of the insured person(s) as per the Emirates ID';
-    } else if (
+  } else if (
     page.props.quoteType.code == page.props.quoteTypeCodeEnum.Business &&
     screeningFormDetails.customer_type == customerTypeEnum.Individual
   ) {
