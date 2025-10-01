@@ -13,6 +13,7 @@ use App\Events\CustomerVerificationUpdated;
 use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
 use App\Services\CapiService;
+use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
@@ -26,7 +27,8 @@ class CustomerVerificationService
     private $documentTypeCode = null;
 
     public function __construct(
-        private CapiService $capiService
+        private CapiService $capiService,
+        private CarQuoteService $carQuoteService
     ) {}
 
     private function handleUnsupportedQuoteType(QuoteTypes $quoteType): array
@@ -214,14 +216,14 @@ class CustomerVerificationService
 
         if ($this->hasOcrKey($ocrData, 'dateOfBirth')) {
             $dateOfBirth = $this->extractOcrValue($ocrData, 'dateOfBirth');
-            if (!empty($dateOfBirth)) {
+            if (! empty($dateOfBirth)) {
                 $verificationData['date_of_birth'] = $dateOfBirth;
             }
         }
 
         if ($this->hasOcrKey($ocrData, 'nationality')) {
             $nationality = $this->extractOcrValue($ocrData, 'nationality');
-            if (!empty($nationality)) {
+            if (! empty($nationality)) {
                 $nationalityId = $this->getNationalityId($nationality);
                 if ($nationalityId) {
                     $verificationData['nationality_id'] = $nationalityId;
@@ -231,7 +233,7 @@ class CustomerVerificationService
 
         if ($this->hasOcrKey($ocrData, 'name')) {
             $name = $this->extractOcrValue($ocrData, 'name');
-            if (!empty($name)) {
+            if (! empty($name)) {
                 $verificationData['name'] = $name;
             }
         }
@@ -243,6 +245,7 @@ class CustomerVerificationService
                 'quote_code' => $quote->code ?? null,
                 'quote_type' => QuoteTypes::CAR->value,
             ]);
+
             return;
         }
 
@@ -264,15 +267,17 @@ class CustomerVerificationService
         $verificationData = [];
 
         if ($this->hasOcrKey($ocrData, 'vehicalType')) {
-            $vehicleType = $this->extractOcrValue($ocrData, 'vehicalType');
-            if (!empty($vehicleType)) {
-                $verificationData['carMakeAndModel'] = $vehicleType;
+            $verificationData['carMakeAndModel'] = $this->extractOcrValue($ocrData, 'vehicalType');
+            $verificationData['chassisNumber'] = $this->extractOcrValue($ocrData, 'chassisNumber');
+
+            if ($verificationData['chassisNumber'] && $verificationData['carMakeAndModel']) {
+                $this->saveVehicleChassisDetails($quote, ['chassis_number' => $verificationData['chassisNumber'], 'vehicle_make_model' => $verificationData['carMakeAndModel']]);
             }
         }
 
         if ($this->hasOcrKey($ocrData, 'vehicalModel')) {
             $vehicleModel = $this->extractOcrValue($ocrData, 'vehicalModel');
-            if (!empty($vehicleModel)) {
+            if (! empty($vehicleModel)) {
                 $verificationData['carModelYear'] = $vehicleModel;
             }
         }
@@ -284,6 +289,7 @@ class CustomerVerificationService
                 'quote_code' => $quote->code ?? null,
                 'quote_type' => QuoteTypes::CAR->value,
             ]);
+
             return;
         }
 
@@ -334,6 +340,12 @@ class CustomerVerificationService
         // Update customer verification status
         $this->updateCustomerVerificationStatus($quote);
 
+    }
+
+    private function saveVehicleChassisDetails(Model $quote, array $data): void
+    {
+        LoggerService::info('Saving vehicle chassis details', $data);
+        $this->carQuoteService->saveVehicleChassisDetails($quote->uuid, $data);
     }
 
     private function updateCustomerVerificationStatus(Model $quote): void

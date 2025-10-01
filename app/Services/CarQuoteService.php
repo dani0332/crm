@@ -22,6 +22,8 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
+use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
@@ -31,6 +33,7 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\UserTeams;
+use App\Models\VehicleChassisDetail;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -137,9 +140,34 @@ class CarQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->selfAssign(QuoteTypes::CAR, $response->quoteUID);
+
+            // Add chassis number details
+            $carMake = CarMake::find($request->car_make_id);
+            $carModel = CarModel::find($request->car_model_id);
+            $carMakeAndModel = trim(($carMake ? $carMake->text : '') . ' ' . ($carModel ? $carModel->text : ''));
+
+            $data = [
+                'chassis_number' => $request->chassis_number,
+                'vehicle_make_model' => $carMakeAndModel,
+                'cylinder' => $request->cylinder,
+                'seating_capacity' => $request->seat_capacity,
+                'vehicle_trim' => $request->trim
+            ];
+
+            $this->saveVehicleChassisDetails($response->quoteUID, $data);
         }
 
         return $response;
+    }
+
+    public function saveVehicleChassisDetails($uuid, $data): void
+    {
+        LoggerService::info('Saving vehicle chassis details', ['uuid' => $uuid, 'data' => $data]);
+
+        VehicleChassisDetail::updateOrCreate(
+            ['chassis_number' => $data['chassis_number']],
+            array_merge($data, ['uuid' => $uuid, 'quote_type_id' => QuoteTypes::CAR->id()]),
+        );
     }
 
     public function updateCarQuote(Request $request, $id)
@@ -293,6 +321,7 @@ class CarQuoteService extends BaseService
 
             $carQuoteDetails = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
             $carQuoteDetails->chassis_number = $request->chassis_number;
+
             if ($carQuoteDetails->isDirty()) {
                 $carQuoteDetails->chassis_number = $request->chassis_number;
                 $carQuoteDetails->save();
