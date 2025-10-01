@@ -227,6 +227,24 @@ const record = computed(() => page.props.quote);
 
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <!-- Sub-source fields -->
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SUB SOURCE</dt>
+                <dd>{{ quote?.sub_source?.text || 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SUB SOURCE OPTION</dt>
+                <dd>{{ quote?.sub_source_option?.text || 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRIMARY REF ID</dt>
+                <dd>{{ quote?.primary_ref_id || 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDITIONAL NOTES</dt>
+                <dd>{{ quote?.additional_notes || 'N/A' }}</dd>
+              </div>
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">JetSki Make</dt>
                 <dd>{{ quote?.jetski_quote?.jetski_make }}</dd>

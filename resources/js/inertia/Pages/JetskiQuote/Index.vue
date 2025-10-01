@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
 defineProps({
@@ -13,6 +14,7 @@ defineProps({
   },
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  subSources: Array,
 });
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
@@ -369,6 +371,13 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
+
+// CreateLeadModal setup
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = () => {
+  createLeadModal.value = false;
+};
 </script>
 
 <template>
@@ -381,7 +390,7 @@ const insurerAMLStatusOption = computed(() => {
           v-if="can(permissionsEnum.JetskiQuotesCreate)"
           size="sm"
           color="#ff5e00"
-          :href="route('jetski-quotes-create')"
+          @click="createLeadModal = true"
         >
           Create Lead
         </x-button>
@@ -792,6 +801,14 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <!-- CreateLeadModal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      :sub-sources="subSources"
+      route-name="jetski-quotes-create"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

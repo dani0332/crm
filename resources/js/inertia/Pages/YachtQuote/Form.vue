@@ -1,9 +1,12 @@
 <script setup>
 const notification = useNotifications('toast');
+const page = usePage();
 
 const props = defineProps({
   quote: { type: Object, default: null },
   nationalities: Object,
+  subSources: Array,
+  leadSourceParams: Object,
 });
 
 const quoteForm = useForm({
@@ -11,6 +14,7 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
+  source: props.quote?.source || '',
   company_name: props.quote?.company_name || null,
   company_address: props.quote?.company_address || null,
   boat_details: props.quote?.yacht_quote?.boat_details || '',
@@ -23,11 +27,107 @@ const quoteForm = useForm({
   dob: props.quote?.unformatted_dob || null,
   nationality_id: props.quote?.nationality_id || null,
   gender: props.quote?.customer?.gender || null,
+  // Sub-source fields
+  sub_source_id: parseInt(props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0) || null,
+  sub_source_options_id: parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption || 0) || null,
+  primary_ref_id: props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
+  partner_name: props.leadSourceParams?.partnerName || '',
+  additional_notes: (() => {
+    let notes = props.quote?.notes || '';
+    const partnerName = props.leadSourceParams?.partnerName;
+    if (partnerName) {
+      if (notes) {
+        notes = `${notes}, ${partnerName}`;
+      } else {
+        notes = partnerName;
+      }
+    }
+    return notes;
+  })(),
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
 const editMode = computed(() => {
   return props.quote && props.quote.uuid ? true : false;
+});
+
+// Sub-source computed properties
+const subSourceOptions = computed(() => {
+  return (props.subSources || []).map(item => ({
+    value: item.id,
+    label: item.text,
+    suffix: item.description || item.tooltip || `Information about ${item.text}`, // Use suffix for tooltip data
+  }));
+});
+
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
+  return selectedSubSource?.childs?.map(option => ({
+    value: option.id,
+    label: option.text,
+    code: option.code, // Include the code property for showPartnerNameField
+    suffix: option.description || option.tooltip || `Information about ${option.text}`, // Use suffix for tooltip data
+  })) || [];
+});
+
+const isReferralType = computed(() => {
+  return props.leadSourceParams?.type === 'referral' || quoteForm.source === 'IMCRM';
+});
+
+const isEcomLeadExtension = computed(() => {
+  return props.leadSourceParams?.type === 'ecom_lead_extension' ||
+    (quoteForm.sub_source_id === null && quoteForm.sub_source_options_id === null && quoteForm.primary_ref_id);
+});
+
+const canEditSubSourceFields = computed(() => {
+  return useHasAnyRole([rolesEnum.YachtManager, rolesEnum.Admin, rolesEnum.LeadPool]);
+});
+
+const showPartnerNameField = computed(() => {
+  const selectedOption = subSourceOptionOptions.value.find(
+    option => option.value === quoteForm.sub_source_options_id
+  );
+  console.log("selectedOption",selectedOption);
+  console.log("quoteForm.sub_source_options_id",quoteForm.sub_source_options_id);
+  return selectedOption?.code === 'other-clubs-or-campaigns';
+});
+
+const rolesEnum = page.props.rolesEnum;
+
+// Watchers for field resets and partner name handling
+watch(() => quoteForm.sub_source_id, (newValue) => {
+  if (newValue !== quoteForm.sub_source_id) {
+    quoteForm.sub_source_options_id = null;
+  }
+});
+
+watch(() => quoteForm.sub_source_options_id, (newValue) => {
+  if (!showPartnerNameField.value) {
+    quoteForm.partner_name = '';
+  }
+});
+
+// Watcher for partner_name to update additional_notes
+watch(() => quoteForm.partner_name, (newValue, oldValue) => {
+  if (!showPartnerNameField.value) return;
+
+  // Remove old partner name from additional_notes if it exists
+  if (oldValue) {
+    const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
+    quoteForm.additional_notes = quoteForm.additional_notes.replace(oldPattern, '').trim();
+    // Clean up any double commas or leading/trailing commas
+    quoteForm.additional_notes = quoteForm.additional_notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
+  }
+
+  // Add new partner name to additional_notes
+  if (newValue) {
+    if (quoteForm.additional_notes) {
+      quoteForm.additional_notes = `${quoteForm.additional_notes}, ${newValue}`;
+    } else {
+      quoteForm.additional_notes = newValue;
+    }
+  }
 });
 function onSubmit(isValid) {
   if (isValid) {
@@ -73,6 +173,81 @@ const gender = computed(() => {
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Lead Source Fields - Only show when type is referral -->
+        <x-select
+          v-if="isReferralType && !isEcomLeadExtension"
+          label="SUB SOURCE"
+          v-model="quoteForm.sub_source_id"
+          :options="subSourceOptions"
+          class="w-full"
+          placeholder="Select Sub Source"
+          filterable
+          filterPlaceholder="Filter Sub Source...."
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          :required="subSourceOptions.length > 0"
+          :error="quoteForm.errors.sub_source_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-select
+          v-if="isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension"
+          label="SUB SOURCE OPTION"
+          v-model="quoteForm.sub_source_options_id"
+          :options="subSourceOptionOptions"
+          class="w-full"
+          placeholder="Select Sub Source Option"
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-input
+          v-if="isEcomLeadExtension"
+          label="PRIMARY REF ID"
+          required
+          v-model="quoteForm.primary_ref_id"
+          class="w-full"
+          type="text"
+          placeholder="Enter Primary Ref ID"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.primary_ref_id"
+          :disabled="!canEditSubSourceFields"
+        />
+
+        <x-input
+          v-if="showPartnerNameField"
+          label="PARTNER NAME"
+          required
+          v-model="quoteForm.partner_name"
+          class="w-full"
+          type="text"
+          placeholder="Enter Partner Name"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.partner_name"
+          :disabled="!canEditSubSourceFields"
+        />
+
         <x-input
           v-model="quoteForm.first_name"
           type="text"
@@ -207,6 +382,14 @@ const gender = computed(() => {
           required
         />
       </div>
+
+      <x-textarea
+        v-model="quoteForm.additional_notes"
+        class="w-full"
+        :error="quoteForm.errors.additional_notes"
+        label="ADDITIONAL NOTES"
+        placeholder="Enter additional notes"
+      />
 
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">

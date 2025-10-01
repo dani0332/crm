@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -32,6 +33,14 @@ class JetskiQuoteRepository extends BaseRepository
      */
     public function fetchCreate($data)
     {
+        // Log sub-source parameters
+        LoggerService::info('JetskiQuoteRepository fetchCreate - Sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'primary_ref_id' => $data['primary_ref_id'] ?? null,
+            'additional_notes' => $data['additional_notes'] ?? null,
+        ]);
+
         $quoteData = [
             'quoteTypeId' => intval(QuoteTypes::JETSKI->id()),
             'firstName' => $data['first_name'],
@@ -47,6 +56,10 @@ class JetskiQuoteRepository extends BaseRepository
             'jetskiMaterialId' => strval($data['jetski_material_id']),
             'jetskiUseId' => $data['jetski_use_id'],
             'claimHistory' => $data['claim_history'],
+            'subSourceId' => $data['sub_source_id'],
+            'subSourceOptionsId' => $data['sub_source_options_id'],
+            'primaryRefId' => $data['primary_ref_id'],
+            'notes' => $data['additional_notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
@@ -65,11 +78,19 @@ class JetskiQuoteRepository extends BaseRepository
      */
     public function fetchUpdate($uuid, $data)
     {
+        // Log sub-source parameters for updates
+        LoggerService::info('JetskiQuoteRepository fetchUpdate - Sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'primary_ref_id' => $data['primary_ref_id'] ?? null,
+            'additional_notes' => $data['additional_notes'] ?? null,
+        ]);
+
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::JETSKI->id())->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no',
+                'first_name', 'last_name', 'email', 'mobile_no', 'sub_source_id', 'sub_source_options_id', 'primary_ref_id', 'notes',
             ]);
 
             $quoteData['updated_by_id'] = Auth::user()->id;

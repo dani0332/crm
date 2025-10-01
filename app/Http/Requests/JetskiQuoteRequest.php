@@ -37,6 +37,11 @@ class JetskiQuoteRequest extends FormRequest
             'jetski_material_id' => 'required|exists:lookups,id',
             'jetski_use_id' => 'required|exists:lookups,id',
             'claim_history' => 'required|max:50',
+            'sub_source_id' => 'nullable|exists:lookups,id',
+            'sub_source_options_id' => 'nullable|exists:lookups,id',
+            'primary_ref_id' => 'nullable|string|max:255',
+            'partner_name' => 'nullable|string|max:255',
+            'additional_notes' => 'nullable|string',
         ];
     }
 }
