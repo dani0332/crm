@@ -4,21 +4,17 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use App\Models\SLATracking;
-use App\Enums\SLAStatusEnum;
-use App\Mail\SLABreachEscalation;
-use Illuminate\Support\Facades\Mail;
 use App\Enums\ApplicationStorageEnums;
-use App\Services\Logger\LoggerService;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Events\SLACallbackNotification;
-use App\Events\SLAReminderNotification;
+use App\Enums\SLAStatusEnum;
+use App\Models\SLATracking;
+use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class SLAService extends BaseService
 {
-    public function __construct(protected AllocationService $allocationService) { }
+    public function __construct(protected AllocationService $allocationService) {}
 
     public function startSLATracking(Model $lead): ?SLATracking
     {
@@ -28,13 +24,18 @@ class SLAService extends BaseService
 
         LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
 
-        LoggerService::info('SLAService - Starting SLA tracking');
-
         $callbackHours = (float) getAppStorageValueByKey(ApplicationStorageEnums::SLA_CALLBACK_HOURS) ?: 2;
         $assignmentTime = now();
         $isBusinessHours = $this->allocationService->isBusinessHours();
 
-        $slaRecord = SLATracking::create([
+        LoggerService::info('SLAService - Starting SLA tracking', [
+            'advisor_id' => $lead->advisor_id,
+            'assignment_time' => $assignmentTime->toDateTimeString(),
+            'is_business_hours' => $isBusinessHours,
+            'callback_hours' => $callbackHours,
+        ]);
+
+        $data = [
             'trackable_type' => $lead->getMorphClass(),
             'trackable_id' => $lead->id,
             'advisor_id' => $lead->advisor_id,
@@ -43,7 +44,9 @@ class SLAService extends BaseService
             'is_assigned_during_business_hours' => $isBusinessHours,
             'next_business_day_start' => $isBusinessHours ? null : $this->getNextBusinessDayStart(),
             'status' => SLAStatusEnum::ACTIVE,
-        ]);
+        ];
+
+        $slaRecord = SLATracking::create($data);
 
         LoggerService::info('SLAService - SLA tracking record created', [
             'sla_id' => $slaRecord->id,
@@ -122,13 +125,7 @@ class SLAService extends BaseService
     {
         $timeRemaining = (int) now()->diffInMinutes($slaRecord->sla_due_at);
 
-        event(new SLAReminderNotification(
-            $slaRecord->getLeadUuid(),
-            $slaRecord->advisor_id,
-            $slaRecord->sla_due_at,
-            $this->getLeadUrl($slaRecord),
-            $timeRemaining
-        ));
+        // TODO: Send Bird Email here
 
         $slaRecord->touch('reminder_sent_at');
 
@@ -152,7 +149,7 @@ class SLAService extends BaseService
             $slaRecord->markBreached();
 
             // Send escalation email
-            Mail::to($teamLead->email)->send(new SLABreachEscalation($slaRecord));
+            // TODO: Send Bird Email here
 
             LoggerService::info('SLAService - Breach escalated to team lead', [
                 'lead_uuid' => $slaRecord->getLeadUuid(),
@@ -167,103 +164,98 @@ class SLAService extends BaseService
         }
     }
 
-    /**
-     * Calculate SLA due time considering business hours
-     */
     private function calculateSLADueTime(Carbon $assignmentTime, float $slaHours, bool $isBusinessHours): Carbon
     {
-        if ($isBusinessHours) {
-            return $this->addBusinessHours($assignmentTime, $slaHours);
-        } else {
-            // If assigned outside business hours, SLA starts from next business day
-            $nextBusinessStart = $this->getNextBusinessDayStart();
+        $businessEnd = $this->getBusinessEndTime();
 
-            return $this->addBusinessHours($nextBusinessStart, $slaHours);
+        // If assigned outside business hours or on weekends, start from next business day
+        if (! $isBusinessHours || $assignmentTime->isWeekend()) {
+            $nextBusinessDay = $this->getNextBusinessDayStart($assignmentTime);
+
+            return $this->addBusinessHoursFromStart($nextBusinessDay, $slaHours);
         }
+
+        // Assignment is during business hours
+        $currentTime = $assignmentTime->copy();
+        $endOfCurrentBusinessDay = $currentTime->copy()->setTimeFromTimeString($businessEnd);
+
+        // Calculate remaining business hours in current day
+        $remainingHoursToday = $currentTime->diffInHours($endOfCurrentBusinessDay, false);
+
+        // If SLA can be completed within current business day
+        if ($slaHours <= $remainingHoursToday) {
+            return $currentTime->addHours($slaHours);
+        }
+
+        // SLA spills over to next business day(s)
+        $remainingSlaHours = $slaHours - $remainingHoursToday;
+
+        // Move to next business day
+        $nextBusinessDay = $this->getNextBusinessDayStart($currentTime);
+
+        return $this->addBusinessHoursFromStart($nextBusinessDay, $remainingSlaHours);
     }
 
-    /**
-     * Add business hours to a datetime, respecting working hours
-     */
-    private function addBusinessHours(Carbon $startTime, float $hours): Carbon
+    private function addBusinessHoursFromStart(Carbon $startTime, float $hours): Carbon
     {
         $businessStart = $this->getBusinessStartTime();
         $businessEnd = $this->getBusinessEndTime();
 
-        $businessStartCarbon = Carbon::createFromFormat('H:i', $businessStart);
-        $businessEndCarbon = Carbon::createFromFormat('H:i', $businessEnd);
-        $dailyBusinessHours = $businessEndCarbon->diffInHours($businessStartCarbon);
+        // Parse time strings to get hours and minutes
+        [$startHour, $startMinute] = explode(':', $businessStart);
+        [$endHour, $endMinute] = explode(':', $businessEnd);
 
-        $fullDays = floor($hours / $dailyBusinessHours);
-        $remainingHours = $hours - ($fullDays * $dailyBusinessHours);
+        // Calculate daily business hours using decimal hours
+        $startDecimalHours = (int) $startHour + ((int) $startMinute / 60);
+        $endDecimalHours = (int) $endHour + ((int) $endMinute / 60);
 
-        $dueTime = $startTime->copy();
+        $dailyBusinessHours = $endDecimalHours - $startDecimalHours;
 
-        // Add full business days
-        for ($i = 0; $i < $fullDays; $i++) {
-            $dueTime = $this->getNextBusinessDay($dueTime);
+        // Validate business hours
+        if ($dailyBusinessHours <= 0) {
+            throw new \InvalidArgumentException("Invalid business hours: start time ({$businessStart}) must be before end time ({$businessEnd})");
         }
 
-        // Add remaining hours within business day
-        $dueTime = $dueTime->addHours($remainingHours);
+        $currentTime = $startTime->copy();
+        $remainingHours = $hours;
 
-        // Ensure we don't exceed business hours for the day
-        $endOfBusinessDay = $dueTime->copy()->setTimeFromTimeString($businessEnd);
-        if ($dueTime->greaterThan($endOfBusinessDay)) {
-            $overflow = $dueTime->diffInHours($endOfBusinessDay);
-            $dueTime = $this->getNextBusinessDay($endOfBusinessDay);
-            $dueTime = $dueTime->setTimeFromTimeString($businessStart)->addHours($overflow);
+        while ($remainingHours > 0) {
+            // If remaining hours fit in current business day
+            if ($remainingHours <= $dailyBusinessHours) {
+                return $currentTime->addHours($remainingHours);
+            }
+
+            // Use full business day and move to next business day
+            $remainingHours -= $dailyBusinessHours;
+            $currentTime = $this->getNextBusinessDayStart($currentTime);
         }
 
-        return $dueTime;
+        return $currentTime;
     }
 
-    /**
-     * Get next business day start time
-     */
-    private function getNextBusinessDayStart(): Carbon
+    private function getNextBusinessDayStart(?Carbon $fromDate = null): Carbon
     {
-        $tomorrow = now()->addDay();
-
-        // Skip weekends
-        while ($tomorrow->isWeekend()) {
-            $tomorrow = $tomorrow->addDay();
-        }
-
-        $businessStart = $this->getBusinessStartTime();
-
-        return $tomorrow->setTimeFromTimeString($businessStart);
-    }
-
-    /**
-     * Get next business day from given date
-     */
-    private function getNextBusinessDay(Carbon $date): Carbon
-    {
-        $nextDay = $date->copy()->addDay();
+        $startDate = $fromDate ? $fromDate->copy() : now();
+        $nextDay = $startDate->addDay();
 
         // Skip weekends
         while ($nextDay->isWeekend()) {
             $nextDay = $nextDay->addDay();
         }
 
-        return $nextDay;
+        $businessStart = $this->getBusinessStartTime();
+
+        return $nextDay->setTimeFromTimeString($businessStart);
     }
 
-    /**
-     * Get business start time from configuration
-     */
     private function getBusinessStartTime(): string
     {
-        return $this->allocationService->getAppStorageValueByKey('REASSIGNMENT_START_TIME') ?? '09:00';
+        return getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME, useCache: true);
     }
 
-    /**
-     * Get business end time from configuration
-     */
     private function getBusinessEndTime(): string
     {
-        return $this->allocationService->getAppStorageValueByKey('REASSIGNMENT_END_TIME') ?? '18:00';
+        return getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME, useCache: true);
     }
 
     /**
@@ -271,12 +263,7 @@ class SLAService extends BaseService
      */
     private function dispatchCallbackNotification(SLATracking $slaRecord): void
     {
-        event(new SLACallbackNotification(
-            $slaRecord->getLeadUuid(),
-            $slaRecord->advisor_id,
-            $slaRecord->sla_due_at,
-            $this->getLeadUrl($slaRecord)
-        ));
+        // TODO: Send Bird Email here
     }
 
     /**
