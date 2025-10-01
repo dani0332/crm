@@ -242,7 +242,7 @@ const record = computed(() => page.props.quote);
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADDITIONAL NOTES</dt>
-                <dd>{{ quote?.additional_notes || 'N/A' }}</dd>
+                <dd>{{ quote?.notes || 'N/A' }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
