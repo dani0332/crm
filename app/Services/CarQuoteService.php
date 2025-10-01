@@ -144,10 +144,14 @@ class CarQuoteService extends BaseService
             // Add chassis number details
             $carMake = CarMake::find($request->car_make_id);
             $carModel = CarModel::find($request->car_model_id);
+            $carMakeAndModel = ($carMake ? $carMake->text : '') . ' ' . ($carModel ? $carModel->text : '');
 
             $data = [
-                'chassisNumber' => $request->chassis_number,
-                'carMakeAndModel' => "{$carMake->text} {$carModel->text}",
+                'chassis_number' => $request->chassis_number,
+                'vehicle_make_model' => $carMakeAndModel,
+                'cylinder' => $request->cylinder,
+                'seating_capacity' => $request->seat_capacity,
+                'vehicle_trim' => $request->trim
             ];
 
             $this->saveVehicleChassisDetails($response->quoteUID, $data);
@@ -161,9 +165,8 @@ class CarQuoteService extends BaseService
         LoggerService::info('Saving vehicle chassis details', ['uuid' => $uuid, 'data' => $data]);
 
         VehicleChassisDetail::updateOrCreate(
-            ['chassis_number' => $data['chassisNumber']],
-            ['uuid' => $uuid, 'quote_type_id' => QuoteTypes::CAR->id(),
-                'chassis_number' => $data['chassisNumber'], 'vehicle_make_model' => $data['carMakeAndModel']],
+            ['chassis_number' => $data['chassis_number']],
+            array_merge($data, ['uuid' => $uuid, 'quote_type_id' => QuoteTypes::CAR->id()]),
         );
     }
 
@@ -312,7 +315,7 @@ class CarQuoteService extends BaseService
 
         $carQuote->updated_by = auth()->user()->email;
         $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
-        $deleteValuationResponse = true;
+
         if ($deleteValuationResponse) {
             $carQuote->save();
 

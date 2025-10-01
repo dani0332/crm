@@ -216,14 +216,14 @@ class CustomerVerificationService
 
         if ($this->hasOcrKey($ocrData, 'dateOfBirth')) {
             $dateOfBirth = $this->extractOcrValue($ocrData, 'dateOfBirth');
-            if (!empty($dateOfBirth)) {
+            if (! empty($dateOfBirth)) {
                 $verificationData['date_of_birth'] = $dateOfBirth;
             }
         }
 
         if ($this->hasOcrKey($ocrData, 'nationality')) {
             $nationality = $this->extractOcrValue($ocrData, 'nationality');
-            if (!empty($nationality)) {
+            if (! empty($nationality)) {
                 $nationalityId = $this->getNationalityId($nationality);
                 if ($nationalityId) {
                     $verificationData['nationality_id'] = $nationalityId;
@@ -233,7 +233,7 @@ class CustomerVerificationService
 
         if ($this->hasOcrKey($ocrData, 'name')) {
             $name = $this->extractOcrValue($ocrData, 'name');
-            if (!empty($name)) {
+            if (! empty($name)) {
                 $verificationData['name'] = $name;
             }
         }
@@ -245,6 +245,7 @@ class CustomerVerificationService
                 'quote_code' => $quote->code ?? null,
                 'quote_type' => QuoteTypes::CAR->value,
             ]);
+
             return;
         }
 
@@ -270,13 +271,13 @@ class CustomerVerificationService
             $verificationData['chassisNumber'] = $this->extractOcrValue($ocrData, 'chassisNumber');
 
             if ($verificationData['chassisNumber'] && $verificationData['carMakeAndModel']) {
-                $this->saveVehicleChassisDetails($quote, $verificationData);
+                $this->saveVehicleChassisDetails($quote, ['chassis_number' => $verificationData['chassisNumber'], 'vehicle_make_model' => $verificationData['carMakeAndModel']]);
             }
         }
 
         if ($this->hasOcrKey($ocrData, 'vehicalModel')) {
             $vehicleModel = $this->extractOcrValue($ocrData, 'vehicalModel');
-            if (!empty($vehicleModel)) {
+            if (! empty($vehicleModel)) {
                 $verificationData['carModelYear'] = $vehicleModel;
             }
         }
@@ -288,6 +289,7 @@ class CustomerVerificationService
                 'quote_code' => $quote->code ?? null,
                 'quote_type' => QuoteTypes::CAR->value,
             ]);
+
             return;
         }
 
