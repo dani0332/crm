@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SLATracking extends Model
 {
+    protected $table = 'sla_trackings';
     protected $fillable = [
         'trackable_type',
         'trackable_id',
