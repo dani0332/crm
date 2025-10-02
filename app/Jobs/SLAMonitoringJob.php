@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Jobs\SLA\SendSLABreachedNotificationJob;
 use App\Jobs\SLA\SendSLAReminderNotificationJob;
 use App\Models\SLATracking;
 use App\Services\Logger\LoggerService;
@@ -36,7 +37,7 @@ class SLAMonitoringJob implements ShouldQueue
         $escalationCount = 0;
 
         $reminderCount = $this->sendReminderNotifications();
-        $escalationCount = $this->escalateBreach($slaService);
+        $escalationCount = $this->escalateBreach();
 
         LoggerService::info('SLAMonitoringJob - Monitoring cycle completed', [
             'reminders_sent' => $reminderCount,
@@ -64,15 +65,15 @@ class SLAMonitoringJob implements ShouldQueue
         return $reminderCount;
     }
 
-    private function escalateBreach(SLAService $slaService): int
+    private function escalateBreach(): int
     {
         $escalationCount = 0;
 
         SLATracking::dueForBreach()
-            ->chunk(self::DEFAULT_CHUNK_SIZE, function ($slaRecords) use ($slaService, &$escalationCount) {
+            ->chunk(self::DEFAULT_CHUNK_SIZE, function ($slaRecords) use (&$escalationCount) {
                 foreach ($slaRecords as $slaRecord) {
                     try {
-                        $slaService->escalateBreach($slaRecord);
+                        SendSLABreachedNotificationJob::dispatch($slaRecord);
                         $escalationCount++;
                     } catch (Exception $e) {
                         LoggerService::error('SLAMonitoringJob - Failed to escalate breach', exception: $e);
