@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SendUpdateLogStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -76,5 +77,19 @@ class SendUpdateLog extends Model implements AuditableContract
         return [
             'auditable_type' => self::class,
         ];
+    }
+    public function isUpdateBooked(): bool
+    {
+        return $this->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
+    }
+
+    public function isEndorsementFinancial()
+    {
+        return $this->category->code == SendUpdateLogStatusEnum::EF;
+    }
+
+    public function isPolicyPeriodExtension()
+    {
+        return $this->option->code == SendUpdateLogStatusEnum::PPE;
     }
 }
