@@ -51,7 +51,7 @@ class EpPurchaseFlowJob implements ShouldQueue
         $epEcbService->executeSteps(); // STATUS_PAYMENT_SUCCEED
 
         // Sync policy documents
-        $epEcbService->syncPolicyDocuments(); // STATUS_BOOKED, STATUS_READY_FOR_SAGE
+        $epEcbService->syncPolicyDocuments(); // STATUS_BOOKED
 
         LoggerService::info("{$this->logPrefix} Completed", extra: $this->logExtra);
     }

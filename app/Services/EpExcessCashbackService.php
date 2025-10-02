@@ -256,17 +256,15 @@ class EpExcessCashbackService extends EpBookingService
             // Get policy documents
             $getPolicyDocumentsResponse = (array) $this->executeGetPolicyDocuments();
 
+            // Update commission if needed
+            $this->executeUpdateCommission($getPolicyDocumentsResponse ?? []);
+
             // Download, Upload & Save policy documents to DB
             $this->executeSyncDocuments($getPolicyDocumentsResponse);
 
             LoggerService::info($this->logPrefix . " Step completed: GetPolicyDocuments", extra: $extraLogs);
         } else {
             LoggerService::info($this->logPrefix . " Skipping step: GetPolicyDocuments - already completed", extra: $extraLogs);
-        }
-
-        // Step 2: Update commission if needed
-        if (!$this->shouldSkipStep('prepare_for_sage', $currentStatus)) {
-            $this->executeUpdateCommission($getPolicyDocumentsResponse ?? []);
         }
 
         LoggerService::info($this->logPrefix . ' Document sync completed successfully', extra: $this->logExtra);
@@ -545,7 +543,7 @@ class EpExcessCashbackService extends EpBookingService
             ];
         }
 
-        // Update transaction status and commissions
+        // Update transaction commissions and policy_details
         $this->embeddedTransaction->update($policyDetails);
 
         LoggerService::info($this->logPrefix . ' Transaction status updated', extra: [
