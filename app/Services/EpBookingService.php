@@ -215,7 +215,7 @@ class EpBookingService extends BaseService
         if ($epPolicyStatus == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE) {
             $response = match ($quoteStatusId) {
                 QuoteStatusEnum::PolicyIssued => $this->callSageBookingProcess(),
-                QuoteStatusEnum::PolicyBooked => $this->scheduleSageBookingForSukoonEp(),
+                QuoteStatusEnum::PolicyBooked => $this->scheduleSageBookingForEp(),
                 default => ['status' => true, 'message' => 'Sage booking is not called'],
             };
         }
@@ -249,7 +249,7 @@ class EpBookingService extends BaseService
         return $createSageProcessResponse;
     }
 
-    private function scheduleSageBookingForSukoonEp()
+    private function scheduleSageBookingForEp()
     {
         $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
 
