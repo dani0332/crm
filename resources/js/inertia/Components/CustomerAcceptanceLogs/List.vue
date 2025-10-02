@@ -44,8 +44,10 @@ const downloadLoader = ref(false);
 // DataTable configuration
 const tableHeaders = ref([
   { text: '#', value: 'id', sortable: false },
+  { text: 'Document Name', value: 'document_link', sortable: true },
   { text: 'Date Created', value: 'created_at', sortable: true },
   { text: 'Document Hash', value: 'document_hash', sortable: true },
+  { text: 'IP Address', value: 'ip_address', sortable: true },
   { text: 'User agent', value: 'user_agent', sortable: true },
   { text: 'Actions', value: 'actions', sortable: false },
 ]);
@@ -176,6 +178,9 @@ const handleRefresh = () => {
         border-cell
         alternating
       >
+        <template #item-document_link="{ document_link }"> 
+          {{ document_link.split('.')[0] }}
+        </template>
         <!-- Actions Column -->
         <template #item-actions="{ actions }">
           <div class="flex items-center space-x-1 space-y-1 flex-wrap">
