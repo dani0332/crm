@@ -53,6 +53,7 @@ let availableFilters = {
   private_client: 'all',
   authorize_date: '',
   captured_date: '',
+  sub_source_id: [],
 };
 
 const filters = reactive(availableFilters);
@@ -213,6 +214,7 @@ const tableHeader = [
     value: 'customer.pcp_tag_formatted',
     is_active: true,
   },
+  { text: 'Sub Source', value: 'sub_source.text' },
 ];
 
 const exportLoader = ref(false);
@@ -369,6 +371,15 @@ const insurerAMLStatusOption = computed(() => {
   return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
     value: key,
     label: value,
+  }));
+});
+
+const subSourceOptions = computed(() => {
+  const sources = page.props.subSources || [];
+  return sources.map(source => ({
+    value: source.id,
+    label: source.text,
+    suffix: source.description || source.tooltip || '',
   }));
 });
 
@@ -553,6 +564,32 @@ const onLeadConfirmed = () => {
                 )
               "
               @clear="filters.insurer_aml_status = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
+          v-model="filters.sub_source_id"
+          label="Sub Source"
+          name="sub_source_id"
+          :options="subSourceOptions"
+          placeholder="Select sub source"
+          filterable
+          multiple
+          truncate
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.sub_source_id = subSourceOptions.map(item => item.value)"
+              @clear="filters.sub_source_id = []"
             />
           </template>
         </x-select>
@@ -790,6 +827,9 @@ const onLeadConfirmed = () => {
         <p>
           {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
+      </template>
+      <template #item-sub_source.text="{ sub_source }">
+        {{ sub_source?.text }}
       </template>
     </DataTable>
 

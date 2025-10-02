@@ -210,6 +210,7 @@ class YachtQuoteRepository extends BaseRepository
                 $q->where('customer_insured.quote_type_id', QuoteTypes::YACHT->id());
             },
             'customer',
+            'subSource',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -240,6 +241,12 @@ class YachtQuoteRepository extends BaseRepository
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
+
+        // Apply sub_source_id filter (multi-select)
+        $query->when($this->hasFilterValue('sub_source_id', $requestParams), function ($q) use ($requestParams) {
+            $values = (array) $this->getFilterValue('sub_source_id', $requestParams);
+            $q->whereIn('personal_quotes.sub_source_id', $values);
+        });
 
         // Apply authorize_date filter
         $query->when(! empty($this->getFilterValue('authorize_date', $requestParams)), function ($q) use ($requestParams) {

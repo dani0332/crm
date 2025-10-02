@@ -178,6 +178,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::TRANSACTION_APPROVED_DATE,
                 self::BOOKING_DATE,
                 self::PRIVATE_CLIENT,
+                self::SUB_SOURCE,
             ],
             QuoteTypes::PET->value => [
                 self::REF_ID,
@@ -390,6 +391,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['transaction_approved_date'],
                 $baseFields['booking_date'],
                 $baseFields['pc_customer'],
+                optional($quote->subSource)->text,
             ],
             QuoteTypes::PET->value => [
                 $baseFields['code'],
