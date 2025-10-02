@@ -20,7 +20,6 @@ use Illuminate\Validation\ValidationException;
 
 class GenericLobController extends Controller
 {
-
     /**
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      *
@@ -119,7 +118,6 @@ class GenericLobController extends Controller
         return $service->exportPlansPdf($quoteType, $request->validated());
     }
 
-    
     public function sendMyAlfredWelcomeEmail(MaWelcomEmailRequest $request)
     {
         LoggerService::info('MyAlfred Welcome Email - Request received', [
@@ -128,9 +126,9 @@ class GenericLobController extends Controller
             'source' => $request->source,
             'tag' => $request->tag,
         ]);
-        
+
         $customer = Customer::where('email', $request->email)->first();
-            
+
         LoggerService::info('MyAlfred Welcome Email - Dispatching job', [
             'customer_email' => $customer->email,
         ]);
