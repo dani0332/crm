@@ -17,7 +17,9 @@ class EpWatermarkDocumentJob implements ShouldQueue
 {
     use Queueable;
 
+    public $tries = 2;
     public $timeout = 180;
+    public $backoff = 10;
 
     private ?EmbeddedTransaction $embeddedTransaction = null;
     private array $watermarkableDocTypeCodes = [];
@@ -71,7 +73,8 @@ class EpWatermarkDocumentJob implements ShouldQueue
     public function shouldRetry(Throwable $exception): bool
     {
         // Retry for file processing issues only
-        return str_contains($exception->getMessage(), 'file') ||
+        return str_contains($exception->getMessage(), 'timeout') ||
+            str_contains($exception->getMessage(), 'file') ||
             str_contains($exception->getMessage(), 'permission') ||
             str_contains($exception->getMessage(), 'temporary');
     }
@@ -86,7 +89,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
         return [
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
-                ->expireAfter(300)
+                ->expireAfter(180)
         ];
     }
 }

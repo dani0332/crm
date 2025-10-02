@@ -122,13 +122,13 @@ class EpBookingService extends BaseService
             'document_type_code' => $quoteDocument?->document_type_code
         ];
 
-        if (! $quoteDocument) {
+        if (empty($quoteDocument)) {
             LoggerService::warning("{$this->className} Document not found", extra: $extraLog);
             return false;
         }
 
         // Ensure the quoteDocument and documentType exist
-        if (! $documentType) {
+        if (empty($documentType)) {
             LoggerService::warning("{$this->className} DocumentType not found", extra: $extraLog);
             return false;
         }
@@ -137,7 +137,7 @@ class EpBookingService extends BaseService
 
         // Check if the file is already being processed
         if ($this->isFileBeingProcessed($lockKey)) {
-            LoggerService::info("{$this->className} File is already being processed. Retrying later. Document ID: {$quoteDocument->id}, UUID: {$this->quote->uuid}");
+            LoggerService::info("{$this->className} File is already being processed. Retrying later. Document ID: {$quoteDocument->id}, UUID: {$this->quote->uuid}", extra: ['lock_key' => $lockKey]);
             return false;
         }
 
@@ -289,7 +289,7 @@ class EpBookingService extends BaseService
     {
         // Use cache to track processing status
         $cacheKey = "processing_{$lockKey}";
-        $lockAcquired = cache()->add($cacheKey, true, now()->addMinutes(5));
+        $lockAcquired = cache()->add($cacheKey, true, now()->addMinutes(3));
 
         return ! $lockAcquired;
     }
