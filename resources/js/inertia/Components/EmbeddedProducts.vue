@@ -38,7 +38,7 @@ const props = defineProps({
   isPlanDetailEnabled: {
     type: Boolean,
     default: false,
-  }
+  },
 });
 
 const propsDataReactive = ref(props.data);
