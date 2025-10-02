@@ -9,12 +9,16 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SLAStatusEnum;
 use App\Models\SLATracking;
+use App\Models\User;
 use App\Services\Logger\LoggerService;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class SLAService extends BaseService
 {
+    use TeamHierarchyTrait;
+
     public function __construct(protected AllocationService $allocationService) {}
 
     private function getActiveSLA(Model $lead): ?SLATracking
@@ -134,31 +138,6 @@ class SLAService extends BaseService
                 'sla_id' => $slaRecord->id,
                 'quote_status_id' => $lead->quote_status_id,
                 'completion_time' => now()->toDateTimeString(),
-            ]);
-        }
-    }
-
-    public function escalateBreach(SLATracking $slaRecord): void
-    {
-        $advisor = $slaRecord->advisor;
-        $teamLead = $this->getTeamLead($advisor);
-
-        if ($teamLead) {
-            // Mark as breached
-            $slaRecord->markBreached();
-
-            // Send escalation email
-            // TODO: Send Bird Email here
-
-            LoggerService::info('SLAService - Breach escalated to team lead', [
-                'lead_uuid' => $slaRecord->getLeadUuid(),
-                'advisor_id' => $slaRecord->advisor_id,
-                'team_lead_email' => $teamLead->email,
-                'breach_duration' => now()->diffForHumans($slaRecord->sla_due_at),
-            ]);
-        } else {
-            LoggerService::warning('SLAService - No team lead found for escalation', [
-                'advisor_id' => $slaRecord->advisor_id,
             ]);
         }
     }
@@ -289,16 +268,23 @@ class SLAService extends BaseService
 
         $payload = $this->buildPayload($slaRecord, 'new_pec_la');
 
-        return $this->triggerBirdWorkflow($payload);
+        $isSent = $this->triggerBirdWorkflow($payload);
+
+        LoggerService::info('SLAService - Callback notification', [
+            'advisor_email' => $slaRecord->advisor?->email,
+            'is_sent' => $isSent,
+        ]);
+
+        return $isSent;
     }
 
     public function sendReminderNotification(SLATracking $slaRecord): bool
     {
         LoggerService::startQuoteLogging($slaRecord->getLead(), LoggerFeatureEnum::SLA_TRACKING);
 
-        if ($slaRecord->reminder_sent_at) {
+        if ($slaRecord->isReminderSent()) {
             LoggerService::info('SLAService - Reminder notification already sent', [
-                'advisor_id' => $slaRecord->advisor_id,
+                'advisor_email' => $slaRecord->advisor?->email,
             ]);
 
             return false;
@@ -313,26 +299,76 @@ class SLAService extends BaseService
         }
 
         LoggerService::info('SLAService - Reminder notification', [
-            'lead_uuid' => $slaRecord->getLeadUuid(),
-            'advisor_id' => $slaRecord->advisor_id,
+            'advisor_email' => $slaRecord->advisor?->email,
             'is_sent' => $isSent,
         ]);
 
         return $isSent;
     }
 
-    /**
-     * Get team lead for advisor
-     */
-    private function getTeamLead($advisor)
+    public function sendBreachNotification(SLATracking $slaRecord): bool
     {
-        // Implementation based on organizational structure
-        // This could be based on roles, departments, or a specific manager relationship
+        LoggerService::startQuoteLogging($slaRecord->getLead(), LoggerFeatureEnum::SLA_TRACKING);
 
-        // For now, return a default escalation email or the first admin user
-        return \App\Models\User::where('role', 'team_lead')
-            ->orWhere('role', 'admin')
-            ->first();
+        if ($slaRecord->isBreachEscalated()) {
+            LoggerService::info('SLAService - Breach notification already sent', [
+                'advisor_email' => $slaRecord->advisor?->email,
+            ]);
+
+            return false;
+        }
+
+        $advisor = $slaRecord->advisor;
+        $managersEmails = $this->getManagersEmails($advisor);
+
+        if (! empty($managersEmails)) {
+            $payload = $this->buildPayload($slaRecord, 'sla_breach_notification');
+
+            $managersNames = $this->getManagersNames($advisor);
+
+            $payload['managerName'] = $managersNames[0] ?? '';
+            $payload['managerNames'] = $managersNames;
+            $payload['managerEmail'] = $managersEmails[0] ?? '';
+            $payload['managerEmails'] = $managersEmails;
+            $payload['breachDateTime'] = now()->toDateTimeString();
+
+            $isSent = $this->triggerBirdWorkflow($payload);
+
+            if ($isSent) {
+                $slaRecord->markBreached();
+            }
+
+            LoggerService::info('SLAService - Breach escalated to team lead', [
+                'advisor_email' => $advisor->email,
+                'managers_emails' => $managersEmails,
+                'breach_duration' => now()->diffForHumans($slaRecord->sla_due_at),
+                'is_sent' => $isSent,
+            ]);
+
+            return $isSent;
+        } else {
+            $slaRecord->markBreached();
+
+            LoggerService::warning('SLAService - No Managers found for escalation', [
+                'advisor_email' => $slaRecord->advisor?->email,
+            ]);
+
+            return true;
+        }
+    }
+
+    private function getManagersEmails(User $advisor)
+    {
+        $managers = $this->getUserManagers($advisor->id);
+
+        return $managers->pluck('email')->toArray();
+    }
+
+    private function getManagersNames(User $advisor)
+    {
+        $managers = $this->getUserManagers($advisor->id);
+
+        return $managers->pluck('name')->toArray();
     }
 
     private function shouldTrackSLA($lead): bool

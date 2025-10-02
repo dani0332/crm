@@ -123,4 +123,14 @@ class SLATracking extends Model
     {
         $query->where('trackable_type', $lead->getMorphClass())->where('trackable_id', $lead->id);
     }
+
+    public function isReminderSent(): bool
+    {
+        return ! empty($this->reminder_sent_at);
+    }
+
+    public function isBreachEscalated(): bool
+    {
+        return ! empty($this->breach_escalated_at);
+    }
 }
