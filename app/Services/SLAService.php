@@ -45,7 +45,6 @@ class SLAService extends BaseService
             'sla_due_at' => $this->calculateSLADueTime($assignmentTime, $callbackHours, $isBusinessHours),
             'status' => SLAStatusEnum::ACTIVE,
         ];
-        dd($data);
 
         $slaRecord = SLATracking::create($data);
 
@@ -55,6 +54,8 @@ class SLAService extends BaseService
             'is_business_hours' => $isBusinessHours,
             'callback_hours' => $callbackHours,
         ]);
+
+        $this->sendCallbackNotification($slaRecord);
 
         return $slaRecord;
     }
@@ -114,12 +115,7 @@ class SLAService extends BaseService
             'callback_hours' => $callbackHours,
         ]);
 
-        $slaRecord = $this->createSLA($lead, $assignmentTime, $callbackHours, $isBusinessHours);
-
-        // Dispatch immediate callback notification
-        $this->dispatchCallbackNotification($slaRecord);
-
-        return $slaRecord;
+        return $this->createSLA($lead, $assignmentTime, $callbackHours, $isBusinessHours);
     }
 
     public function meetSLA(Model $lead): void
@@ -140,21 +136,6 @@ class SLAService extends BaseService
                 'completion_time' => now()->toDateTimeString(),
             ]);
         }
-    }
-
-    public function sendReminderNotification(SLATracking $slaRecord): void
-    {
-        $timeRemaining = (int) now()->diffInMinutes($slaRecord->sla_due_at);
-
-        // TODO: Send Bird Email here
-
-        $slaRecord->touch('reminder_sent_at');
-
-        LoggerService::info('SLAService - Reminder notification sent', [
-            'lead_uuid' => $slaRecord->getLeadUuid(),
-            'advisor_id' => $slaRecord->advisor_id,
-            'time_remaining_minutes' => $timeRemaining,
-        ]);
     }
 
     public function escalateBreach(SLATracking $slaRecord): void
@@ -261,33 +242,83 @@ class SLAService extends BaseService
         return $nextBusinessDay->setTimeFromTimeString($businessStart);
     }
 
-    /**
-     * Dispatch callback notification to advisor
-     */
-    private function dispatchCallbackNotification(SLATracking $slaRecord): void
+    public function sendReminderNotification(SLATracking $slaRecord): bool
+    {
+        LoggerService::startQuoteLogging($slaRecord->getLead(), LoggerFeatureEnum::SLA_TRACKING);
+
+        if ($slaRecord->reminder_sent_at) {
+            LoggerService::info('SLAService - Reminder notification already sent', [
+                'advisor_id' => $slaRecord->advisor_id,
+            ]);
+
+            return false;
+        }
+
+        $payload = $this->buildPayload($slaRecord, 'sla_email_notification');
+
+        $isSent = $this->triggerBirdWorkflow($payload);
+
+        if ($isSent) {
+            $slaRecord->touch('reminder_sent_at');
+        }
+
+        LoggerService::info('SLAService - Reminder notification', [
+            'lead_uuid' => $slaRecord->getLeadUuid(),
+            'advisor_id' => $slaRecord->advisor_id,
+            'is_sent' => $isSent,
+        ]);
+
+        return $isSent;
+    }
+
+    public function sendCallbackNotification(SLATracking $slaRecord): bool
+    {
+        LoggerService::startQuoteLogging($slaRecord->getLead(), LoggerFeatureEnum::SLA_TRACKING);
+
+        $payload = $this->buildPayload($slaRecord, 'new_pec_la');
+
+        return $this->triggerBirdWorkflow($payload);
+    }
+
+    private function triggerBirdWorkflow(array $payload): bool
+    {
+        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW, useCache: true);
+        if (! empty($customerNotificationWorkflow)) {
+            $response = app(BirdService::class)->triggerWebHookRequest($customerNotificationWorkflow, (object) $payload);
+
+            if ($response->status_code >= 200 && $response->status_code < 300) {
+                LoggerService::info(self::class.' - triggerBirdWorkflow - Webhook Request Sent');
+
+                return true;
+            } else {
+                LoggerService::info(self::class.'- triggerBirdWorkflow - Webhook Request Failed');
+
+                return false;
+            }
+        } else {
+            LoggerService::info(self::class.'- dispatchCallbackNotification - Webhook URL not found in storage');
+
+            return false;
+        }
+    }
+
+    private function buildPayload(SLATracking $slaRecord, $workflowType): array
     {
         $lead = $slaRecord->getLead();
 
-        $payload = [
-            'workflowType' => 'new_pec_la',
+        return [
+            'workflowType' => $workflowType,
             'advisorName' => $slaRecord->advisor?->name,
             'advisorEmail' => $slaRecord->advisor?->email,
             'assignedDateTime' => $slaRecord->assigned_at->toDateTimeString(),
-            'currentStatus' => $slaRecord->getLead()->quoteStatus?->text,
-            'customerName' => $slaRecord->getLead()->first_name.' '.$slaRecord->getLead()->last_name,
-            'customerEmail' => '',
-            'customerPhone' => '',
-            'refID' => '',
-            'SLADueDateTime' => '',
+            'currentStatus' => $lead?->quoteStatus?->text,
+            'customerName' => "{$lead->first_name} {$lead->last_name}",
+            'customerEmail' => $lead->email,
+            'customerPhone' => $lead->mobile_no,
+            'uuid' => $lead->uuid,
+            'refID' => $lead->code,
+            'SLADueDateTime' => $slaRecord->sla_due_at->toDateTimeString(),
         ];
-
-        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW, useCache: true);
-        if (! empty($customerNotificationWorkflow)) {
-            app(BirdService::class)->triggerWebHookRequest($customerNotificationWorkflow, (object) $payload);
-            LoggerService::info(self::class.' - sendIntroAndReassignEmail - Webhook request sent to: '.$customerNotificationWorkflow.' with Ref-ID: '.$lead->uuid.' | Time:'.now());
-        } else {
-            LoggerService::info(self::class.'- sendIntroAndReassignEmail - Webhook URL not found in storage');
-        }
     }
 
     /**
