@@ -62,6 +62,8 @@ class HealthQuoteObserver
 
                 HealthQuoteAdvisorUpdated::dispatch($healthQuote, $healthQuote->getOriginal('advisor_id'));
                 $healthQuote->markLeadAllocationPassed();
+
+                app(SLAService::class)->startSLATracking($healthQuote);
             } catch (Exception $e) {
                 Log::error('HealthQuoteObserver - handle health update advisor failed', [
                     'error' => $e->getMessage(),

@@ -118,7 +118,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTravelEnquiryEmail();
         $this->seedOcrSendUpdateLogFlag();
         $this->seedProductionApprovalEmails();
-        $this->seedSlaConfiguration();
+        $this->seedSla();
     }
 
     private function seedBirdWorkflowUrls()
@@ -686,7 +686,7 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
-    private function seedSlaConfiguration()
+    private function seedSla()
     {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::SLA_CALLBACK_HOURS],

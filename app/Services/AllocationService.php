@@ -361,11 +361,21 @@ class AllocationService extends BaseService
         ];
     }
 
+    public function getBusinessStartTime(): string
+    {
+        return getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME, useCache: true);
+    }
+
+    public function getBusinessEndTime(): string
+    {
+        return getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME, useCache: true);
+    }
+
     public function isBusinessHours(): bool
     {
         try {
-            $startTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
-            $endTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
+            $startTime = Carbon::createFromFormat('H:i', $this->getBusinessStartTime());
+            $endTime = Carbon::createFromFormat('H:i', $this->getBusinessEndTime());
 
             $currentTime = now();
             $isWeekend = $currentTime->isWeekend();

@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\SLAStatusEnum;
-use App\Models\SLATracking;
-use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use App\Models\SLATracking;
+use App\Enums\SLAStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\ApplicationStorageEnums;
+use App\Services\Logger\LoggerService;
+use App\Enums\Logger\LoggerFeatureEnum;
 use Illuminate\Database\Eloquent\Model;
 
 class SLAService extends BaseService
@@ -71,6 +72,10 @@ class SLAService extends BaseService
             return null;
         }
 
+        if($lead->quote_status_id == QuoteStatusEnum::Qualified) {
+
+        }
+
         LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
 
         $callbackHours = (float) getAppStorageValueByKey(ApplicationStorageEnums::SLA_CALLBACK_HOURS) ?: 2;
@@ -127,9 +132,7 @@ class SLAService extends BaseService
         }
     }
 
-    /**
-     * Send reminder notification before SLA breach
-     */
+
     public function sendReminderNotification(SLATracking $slaRecord): void
     {
         $timeRemaining = (int) now()->diffInMinutes($slaRecord->sla_due_at);
@@ -145,9 +148,6 @@ class SLAService extends BaseService
         ]);
     }
 
-    /**
-     * Escalate SLA breach to team lead
-     */
     public function escalateBreach(SLATracking $slaRecord): void
     {
         $advisor = $slaRecord->advisor;
@@ -175,7 +175,7 @@ class SLAService extends BaseService
 
     private function calculateSLADueTime(Carbon $assignmentTime, float $slaHours, bool $isBusinessHours): Carbon
     {
-        $businessEnd = $this->getBusinessEndTime();
+        $businessEnd = $this->allocationService->getBusinessEndTime();
 
         // If assigned outside business hours or on weekends, start from next business day
         if (! $isBusinessHours || $assignmentTime->isWeekend()) {
@@ -207,8 +207,8 @@ class SLAService extends BaseService
 
     private function addBusinessHoursFromStart(Carbon $startTime, float $hours): Carbon
     {
-        $businessStart = $this->getBusinessStartTime();
-        $businessEnd = $this->getBusinessEndTime();
+        $businessStart = $this->allocationService->getBusinessStartTime();
+        $businessEnd = $this->allocationService->getBusinessEndTime();
 
         // Parse time strings to get hours and minutes
         [$startHour, $startMinute] = explode(':', $businessStart);
@@ -252,19 +252,9 @@ class SLAService extends BaseService
             $nextDay = $nextDay->addDay();
         }
 
-        $businessStart = $this->getBusinessStartTime();
+        $businessStart = $this->allocationService->getBusinessStartTime();
 
         return $nextDay->setTimeFromTimeString($businessStart);
-    }
-
-    private function getBusinessStartTime(): string
-    {
-        return getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME, useCache: true);
-    }
-
-    private function getBusinessEndTime(): string
-    {
-        return getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME, useCache: true);
     }
 
     /**
@@ -272,7 +262,28 @@ class SLAService extends BaseService
      */
     private function dispatchCallbackNotification(SLATracking $slaRecord): void
     {
-        // TODO: Send Bird Email here
+        $lead = $slaRecord->getLead();
+
+        $payload = [
+            "workflowType" => "new_pec_la",
+            "advisorName" => $slaRecord->advisor?->name,
+            "advisorEmail" => $slaRecord->advisor?->email,
+            "assignedDateTime" => $slaRecord->assigned_at->toDateTimeString(),
+            "currentStatus" => $slaRecord->getLead()->quoteStatus?->text,
+            "customerName" => $slaRecord->getLead()->first_name . ' ' . $slaRecord->getLead()->last_name,
+            "customerEmail": "",
+            "customerPhone": "",
+            "refID": "",
+            "SLADueDateTime": ""
+        ];
+
+        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW, useCache: true);
+        if (! empty($customerNotificationWorkflow)) {
+            app(BirdService::class)->triggerWebHookRequest($customerNotificationWorkflow, (object) $payload);
+            LoggerService::info(self::class.' - sendIntroAndReassignEmail - Webhook request sent to: '.$customerNotificationWorkflow.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
+        } else {
+            LoggerService::info(self::class.'- sendIntroAndReassignEmail - Webhook URL not found in storage');
+        }
     }
 
     /**
