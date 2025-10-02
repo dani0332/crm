@@ -23,7 +23,7 @@ class SLAService extends BaseService
 
     private function getActiveSLA(Model $lead): ?SLATracking
     {
-        return SLATracking::byLead($lead)->active()->first();
+        return SLATracking::byLead($lead)->active()->latest('id')->first();
     }
 
     private function hasAnyFinalSLA(Model $lead): bool
@@ -94,32 +94,30 @@ class SLAService extends BaseService
             return null;
         }
 
-        // $existingActiveSLA = $this->getActiveSLA($lead);
+        $existingActiveSLA = $this->getActiveSLA($lead);
 
-        // if (! $this->shouldTrackSLA($lead)) {
-        //     if ($existingActiveSLA) {
-        //         $existingActiveSLA->markCanceled();
-        //     }
+        if (! $this->shouldTrackSLA($lead)) {
+            if ($existingActiveSLA) {
+                $existingActiveSLA->markMet('SLA tracking marked as met because lead is no longer PEC-marked which means customer has already been contacted');
+            }
 
-        //     return null;
-        // }
+            return null;
+        }
 
-        // LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
+        if ($existingActiveSLA) {
+            if ($existingActiveSLA->advisor_id === $lead->advisor_id) {
+                LoggerService::info('SLAService - Active SLA already exists for this advisor', [
+                    'advisor_id' => $lead->advisor_id,
+                    'sla_id' => $existingActiveSLA->id,
+                ]);
 
-        // if ($existingActiveSLA) {
-        //     if ($existingActiveSLA->advisor_id === $lead->advisor_id) {
-        //         LoggerService::info('SLAService - Active SLA already exists for this advisor', [
-        //             'advisor_id' => $lead->advisor_id,
-        //             'sla_id' => $existingActiveSLA->id,
-        //         ]);
+                return $existingActiveSLA;
+            }
 
-        //         return $existingActiveSLA;
-        //     }
-
-        //     if ($existingActiveSLA->advisor_id !== $lead->advisor_id) {
-        //         $this->markReAssigned($existingActiveSLA, $lead);
-        //     }
-        // }
+            if ($existingActiveSLA->advisor_id !== $lead->advisor_id) {
+                $this->markReAssigned($existingActiveSLA, $lead);
+            }
+        }
 
         $callbackHours = (float) getAppStorageValueByKey(ApplicationStorageEnums::SLA_CALLBACK_HOURS) ?: 2;
         $assignmentTime = $this->getAssignmentTime($quoteType, $lead);
@@ -137,10 +135,6 @@ class SLAService extends BaseService
 
     public function meetSLA(Model $lead): void
     {
-        if (! $this->shouldTrackSLA($lead)) {
-            return;
-        }
-
         $slaRecord = $this->getActiveSLA($lead);
 
         if ($slaRecord) {

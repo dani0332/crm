@@ -66,11 +66,11 @@ class SLATracking extends Model
             ->whereNull('breach_escalated_at');
     }
 
-    public function markMet(): void
+    public function markMet(?string $reason = null): void
     {
         $this->update([
             'status' => SLAStatusEnum::MET,
-            'reason' => 'SLA met - callback made within required timeframe',
+            'reason' => $reason ?? 'SLA met - callback made within required timeframe',
             'met_at' => now(),
         ]);
     }
