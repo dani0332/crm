@@ -86,6 +86,7 @@ const filters = reactive({
   advisors: [],
   authorize_date: '',
   captured_date: '',
+  sub_source_id: [],
 });
 
 watch(
@@ -140,6 +141,16 @@ const insuranceTypeOptions = computed(() => {
       label: advisor.text,
     }),
   );
+});
+
+// Sub Source options with tooltip suffix
+const subSourceOptions = computed(() => {
+  const list = (page.props.subSources || []).map(source => ({
+    value: source.id,
+    label: source.text,
+    suffix: source.description || source.tooltip || `Information about ${source.text}`,
+  }));
+  return list;
 });
 
 const tableHeader = ref([
@@ -202,6 +213,7 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
+  { text: 'Sub Source', value: 'sub_source_text', is_active: true },
 ]);
 
 const setIntialState = () => {
@@ -229,6 +241,7 @@ const setIntialState = () => {
     policy_expiry_date_end: '',
     last_modified_date: null,
     advisor_assigned_date: '',
+    sub_source_id: [],
   });
   filtersCount.value = 0;
 };
@@ -799,6 +812,33 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
 
+        <x-select
+          v-model="filters.sub_source_id"
+          label="Sub Source"
+          name="sub_source_id"
+          :options="subSourceOptions"
+          placeholder="Select sub source"
+          class="w-full"
+          filterable
+          multiple
+          truncate
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.sub_source_id = subSourceOptions.map(item => item.value)"
+              @clear="filters.sub_source_id = []"
+            />
+          </template>
+        </x-select>
+
         <DatePicker
           v-model="filters.policy_expiry_date"
           name="policy_expiry_date"
@@ -1132,6 +1172,9 @@ const insurerAMLStatusOption = computed(() => {
             ? formatDate(previous_policy_expiry_date)
             : ''
         }}
+      </template>
+      <template #item-sub_source_text="{ sub_source_text }">
+        {{ sub_source_text }}
       </template>
     </DataTable>
 

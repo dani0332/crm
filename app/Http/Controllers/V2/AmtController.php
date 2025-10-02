@@ -52,9 +52,9 @@ use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use App\Traits\TeamHierarchyTrait;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 
@@ -78,6 +78,7 @@ class AmtController extends Controller
             ->leftJoin('quote_status as qs', 'bqr.quote_status_id', '=', 'qs.id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'py.payment_status_id')
+            ->leftJoin('lookups as lss', 'lss.id', '=', 'bqr.sub_source_id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
             ->select(
                 'bqr.id',
@@ -109,6 +110,8 @@ class AmtController extends Controller
                 'bqr.parent_duplicate_quote_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 'ps.text AS payment_status_id_text',
+                'bqr.sub_source_id',
+                DB::raw('lss.text as sub_source_text'),
                 DB::raw('
                     CASE
                         WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
@@ -248,6 +251,11 @@ class AmtController extends Controller
 
         if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
             $data->whereIn('bqr.insurer_aml_status', $request->insurer_aml_status);
+        }
+
+        // Sub Source filter (multi-select)
+        if (! empty($request->sub_source_id) && is_array($request->sub_source_id)) {
+            $data->whereIn('bqr.sub_source_id', $request->sub_source_id);
         }
 
         if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {

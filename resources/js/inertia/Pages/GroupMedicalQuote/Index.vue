@@ -81,6 +81,7 @@ const filters = reactive({
   advisor_assigned_date: [],
   authorize_date: '',
   captured_date: '',
+  sub_source_id: [],
 });
 
 const leadStatusOptions = computed(() => {
@@ -101,6 +102,15 @@ const supportUserOptions = computed(() => {
   return page.props.supportUsers.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
+  }));
+});
+
+const subSourceOptions = computed(() => {
+  const sources = page.props.subSources || [];
+  return sources.map(source => ({
+    value: source.id,
+    label: source.text,
+    suffix: source.description || source.tooltip || '',
   }));
 });
 
@@ -153,6 +163,7 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Sub Source', value: 'sub_source_text' },
 ];
 
 function resetFilters() {
@@ -699,6 +710,35 @@ const insurerAMLStatusOption = computed(() => {
                 )
               "
               @clear="filters.support_user_id = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
+          v-model="filters.sub_source_id"
+          name="sub_source_id"
+          placeholder="Select Sub Source"
+          :options="subSourceOptions"
+          class="w-full"
+          filterable
+          label="Sub Source"
+          multiple
+          truncate
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.sub_source_id = subSourceOptions.map(item => item.value)
+              "
+              @clear="filters.sub_source_id = []"
             />
           </template>
         </x-select>

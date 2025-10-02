@@ -435,6 +435,11 @@ class BusinessQuoteService extends BaseService
             $this->query->whereIn('py.payment_status_id', $request->payment_status);
         }
 
+        // sub_source_id filter (multi-select)
+        if (! empty($request->sub_source_id) && is_array($request->sub_source_id)) {
+            $this->query->whereIn('bqr.sub_source_id', $request->sub_source_id);
+        }
+
         // is_cold filter
         if (isset($request->is_cold) && $request->is_cold != '') {
             $this->query->where('bqr.is_cold', 1);
