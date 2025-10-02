@@ -242,6 +242,56 @@ class SLAService extends BaseService
         return $nextBusinessDay->setTimeFromTimeString($businessStart);
     }
 
+    private function buildPayload(SLATracking $slaRecord, $workflowType): array
+    {
+        $lead = $slaRecord->getLead();
+
+        return [
+            'workflowType' => $workflowType,
+            'advisorName' => $slaRecord->advisor?->name,
+            'advisorEmail' => $slaRecord->advisor?->email,
+            'assignedDateTime' => $slaRecord->assigned_at->toDateTimeString(),
+            'currentStatus' => $lead?->quoteStatus?->text,
+            'customerName' => "{$lead->first_name} {$lead->last_name}",
+            'customerEmail' => $lead->email,
+            'customerPhone' => $lead->mobile_no,
+            'uuid' => $lead->uuid,
+            'refID' => $lead->code,
+            'SLADueDateTime' => $slaRecord->sla_due_at->toDateTimeString(),
+        ];
+    }
+
+    private function triggerBirdWorkflow(array $payload): bool
+    {
+        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW, useCache: true);
+        if (! empty($customerNotificationWorkflow)) {
+            $response = app(BirdService::class)->triggerWebHookRequest($customerNotificationWorkflow, (object) $payload);
+
+            if ($response->status_code >= 200 && $response->status_code < 300) {
+                LoggerService::info(self::class.' - triggerBirdWorkflow - Webhook Request Sent');
+
+                return true;
+            } else {
+                LoggerService::info(self::class.'- triggerBirdWorkflow - Webhook Request Failed');
+
+                return false;
+            }
+        } else {
+            LoggerService::info(self::class.'- dispatchCallbackNotification - Webhook URL not found in storage');
+
+            return false;
+        }
+    }
+
+    public function sendCallbackNotification(SLATracking $slaRecord): bool
+    {
+        LoggerService::startQuoteLogging($slaRecord->getLead(), LoggerFeatureEnum::SLA_TRACKING);
+
+        $payload = $this->buildPayload($slaRecord, 'new_pec_la');
+
+        return $this->triggerBirdWorkflow($payload);
+    }
+
     public function sendReminderNotification(SLATracking $slaRecord): bool
     {
         LoggerService::startQuoteLogging($slaRecord->getLead(), LoggerFeatureEnum::SLA_TRACKING);
@@ -269,56 +319,6 @@ class SLAService extends BaseService
         ]);
 
         return $isSent;
-    }
-
-    public function sendCallbackNotification(SLATracking $slaRecord): bool
-    {
-        LoggerService::startQuoteLogging($slaRecord->getLead(), LoggerFeatureEnum::SLA_TRACKING);
-
-        $payload = $this->buildPayload($slaRecord, 'new_pec_la');
-
-        return $this->triggerBirdWorkflow($payload);
-    }
-
-    private function triggerBirdWorkflow(array $payload): bool
-    {
-        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW, useCache: true);
-        if (! empty($customerNotificationWorkflow)) {
-            $response = app(BirdService::class)->triggerWebHookRequest($customerNotificationWorkflow, (object) $payload);
-
-            if ($response->status_code >= 200 && $response->status_code < 300) {
-                LoggerService::info(self::class.' - triggerBirdWorkflow - Webhook Request Sent');
-
-                return true;
-            } else {
-                LoggerService::info(self::class.'- triggerBirdWorkflow - Webhook Request Failed');
-
-                return false;
-            }
-        } else {
-            LoggerService::info(self::class.'- dispatchCallbackNotification - Webhook URL not found in storage');
-
-            return false;
-        }
-    }
-
-    private function buildPayload(SLATracking $slaRecord, $workflowType): array
-    {
-        $lead = $slaRecord->getLead();
-
-        return [
-            'workflowType' => $workflowType,
-            'advisorName' => $slaRecord->advisor?->name,
-            'advisorEmail' => $slaRecord->advisor?->email,
-            'assignedDateTime' => $slaRecord->assigned_at->toDateTimeString(),
-            'currentStatus' => $lead?->quoteStatus?->text,
-            'customerName' => "{$lead->first_name} {$lead->last_name}",
-            'customerEmail' => $lead->email,
-            'customerPhone' => $lead->mobile_no,
-            'uuid' => $lead->uuid,
-            'refID' => $lead->code,
-            'SLADueDateTime' => $slaRecord->sla_due_at->toDateTimeString(),
-        ];
     }
 
     /**
