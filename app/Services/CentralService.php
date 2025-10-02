@@ -1779,7 +1779,11 @@ class CentralService extends BaseService
 
         if ($premiumCheckEnabled) {
             $captureAmount = $payment->total_amount;
-            if ($quoteType->code == QuoteTypes::CAR->value && $insuranceProvider?->code == InsuranceProviderEnum::AXA->value && $payment->total_amount != $payment->premium_authorized) {
+            if (
+                $quoteType->code == QuoteTypes::CAR->value &&
+                in_array($insuranceProvider?->code, [InsuranceProviderEnum::AXA->value, InsuranceProviderEnum::RSA->value]) &&
+                $payment->total_amount != $payment->premium_authorized
+            ) {
                 $captureAmount = $payment->premium_authorized;
             }
 
