@@ -35,6 +35,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isPlanDetailEnabled: {
+    type: Boolean,
+    default: false,
+  }
 });
 
 const propsDataReactive = ref(props.data);
@@ -322,6 +326,13 @@ const ppDoc = str => {
 const { copy, copied } = useClipboard();
 
 const onCopyText = () => {
+  if (props.isPlanDetailEnabled) {
+    notification.error({
+      title: 'EP not supported for Bike created under the Car module',
+      position: 'top',
+    });
+    return;
+  }
   let providerCode = props.quote.plan_provider_code;
   if (
     props.modelType.toLowerCase() ==

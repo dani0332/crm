@@ -3957,6 +3957,7 @@ function handleOcrNotification(event) {
       :expanded="sectionExpanded"
       :isEpLoading="lazyEmbeddedProductsLoading"
       :key="lazyEmbeddedProductsLoading"
+      :isPlanDetailEnabled="isPlanDetailEnabled"
     />
 
     <PolicyDetail
