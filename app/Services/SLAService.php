@@ -232,6 +232,9 @@ class SLAService extends BaseService
     {
         $lead = $slaRecord->getLead();
 
+        $remainingHours = (int) ceil(now()->diffInHours($slaRecord->sla_due_at));
+        $remainingMinutes = (int) ceil(now()->diffInMinutes($slaRecord->sla_due_at));
+
         return [
             'workflowType' => $workflowType,
             'advisorName' => $slaRecord->advisor?->name,
@@ -244,6 +247,8 @@ class SLAService extends BaseService
             'uuid' => $lead->uuid,
             'refID' => $lead->code,
             'SLADueDateTime' => $slaRecord->sla_due_at->toDateTimeString(),
+            'remainingHours' => $remainingHours,
+            'remainingMinutes' => $remainingMinutes,
         ];
     }
 
