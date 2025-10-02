@@ -44,7 +44,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
         LoggerService::info("{$this->logPrefix} Starting", extra: $this->logExtra);
 
         $this->embeddedTransaction = EmbeddedTransaction::find($this->context->etId);
-        
+
         if (!$this->embeddedTransaction) {
             throw new \Exception("EmbeddedTransaction not found with ID: {$this->context->etId}");
         }
@@ -53,6 +53,9 @@ class EpWatermarkDocumentJob implements ShouldQueue
 
         $epEcbService = new EpExcessCashbackService($this->context);
         $epEcbService->processWatermarkDocuments($documents, $this->watermarkableDocTypeCodes);
+
+        $epEcbService->finalizeTransactionStatus();
+        $epEcbService->handleJobSuccess();
 
         LoggerService::info("{$this->logPrefix} Completed", extra: $this->logExtra);
     }
@@ -69,8 +72,8 @@ class EpWatermarkDocumentJob implements ShouldQueue
     {
         // Retry for file processing issues only
         return str_contains($exception->getMessage(), 'file') ||
-               str_contains($exception->getMessage(), 'permission') ||
-               str_contains($exception->getMessage(), 'temporary');
+            str_contains($exception->getMessage(), 'permission') ||
+            str_contains($exception->getMessage(), 'temporary');
     }
 
     /**
@@ -79,7 +82,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
     public function middleware(): array
     {
         $lockKey = "ep-watermark-document-{$this->context->etId}-{$this->context->quoteCode}";
-        
+
         return [
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
