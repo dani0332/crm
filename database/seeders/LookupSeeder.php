@@ -380,51 +380,34 @@ class LookupSeeder extends Seeder
             ]
         ];
 
-        // Get all quote types using the QuoteTypes enum
-        $quoteTypes = collect(QuoteTypes::cases())
-            ->filter(function ($quoteType) {
-                return !in_array($quoteType, [QuoteTypes::GROUP_MEDICAL, QuoteTypes::CORPLINE]);
-            });
+        foreach ($referralSources as $parentSource) {
+            // Create parent lookup
+            $parent = Lookup::firstOrCreate([
+                'key' => LookupsEnum::SUB_SOURCE,
+                'code' => $parentSource['code'],
+                'text' => $parentSource['text'],
+            ], [
+                'description' => $parentSource['description'],
+                'parent_id' => null,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-        foreach ($quoteTypes as $quoteType) {
-            $quoteTypeId = $quoteType->id();
-
-            // Skip if quote type ID is not available
-            if (!$quoteTypeId) {
-                continue;
-            }
-
-            foreach ($referralSources as $parentSource) {
-                // Create parent lookup
-                $parent = Lookup::firstOrCreate([
-                    'quote_type_id' => $quoteTypeId,
-                    'key' => LookupsEnum::SUB_SOURCE,
-                    'code' => $parentSource['code'],
-                    'text' => $parentSource['text'],
-                ], [
-                    'description' => $parentSource['description'],
-                    'parent_id' => null,
-                    'is_active' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                // Create children if they exist
-                if (!empty($parentSource['children'])) {
-                    foreach ($parentSource['children'] as $childSource) {
-                        Lookup::firstOrCreate([
-                            'quote_type_id' => $quoteTypeId,
-                            'key' => LookupsEnum::SUB_SOURCE_OPTION,
-                            'code' => $childSource['code'],
-                            'text' => $childSource['text'],
-                        ], [
-                            'description' => $childSource['description'],
-                            'parent_id' => $parent->id,
-                            'is_active' => 1,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    }
+            // Create children if they exist
+            if (!empty($parentSource['children'])) {
+                foreach ($parentSource['children'] as $childSource) {
+                    Lookup::firstOrCreate([
+                        'key' => LookupsEnum::SUB_SOURCE_OPTION,
+                        'code' => $childSource['code'],
+                        'text' => $childSource['text'],
+                    ], [
+                        'description' => $childSource['description'],
+                        'parent_id' => $parent->id,
+                        'is_active' => 1,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
                 }
             }
         }
