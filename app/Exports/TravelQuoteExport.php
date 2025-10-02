@@ -79,6 +79,7 @@ class TravelQuoteExport implements CsvExportableInterface
             'SEGMENT',
             'LEAD ASSIGNMENT TRIGGER',
             'PRIVATE CLIENT',
+            'SUB SOURCE',
         ];
     }
 
@@ -129,6 +130,7 @@ class TravelQuoteExport implements CsvExportableInterface
             $quote->getSegments($quote, QuoteTypeId::Travel) ?? '',
             $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
             $quote->customer?->pcp_tag_formatted ?? '',
+            $quote->subSource?->text ?? '',
         ];
     }
 

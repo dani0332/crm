@@ -28,6 +28,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'coverage_code',
             'policy_number',
             'source',
+            'sub_source_id',
             'quote_status_id',
             'advisor_id',
             'previous_advisor_id',
@@ -87,6 +88,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'plan:id,text',
             'currentlyLocatedIn:id,text',
             'renewalBatch:id,name',
+            'subSource:id,text',
             'quoteTags:quote_uuid,name',
             'parent:id,code',
             'child:id,code,parent_id',
@@ -129,6 +131,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('is_ecommerce', isBool: true, requestParams: $requestParams)
             ->filterIn('insurer_aml_status', requestParams: $requestParams)
             ->filterIn('amlStatus', 'aml_status', requestParams: $requestParams)
+            ->filterIn('sub_source_id', requestParams: $requestParams)
             ->filterIn('plan_name', 'plan_id', requestParams: $requestParams)
             ->filterBy('source', requestParams: $requestParams)
             ->filterByAdvisors($this->getFilterValue('advisor_id', $requestParams))
