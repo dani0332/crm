@@ -33,6 +33,7 @@ use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -837,7 +838,15 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         try {
             $httpResponse = Http::timeout($timeOut)->withHeaders($this->headers)->post($url, $payload);
 
-            if ($responseObject = $httpResponse->object()) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Response API: ' . $keyAPI, extra: [
+                'response' => json_encode($httpResponse),
+                'response_body' => $httpResponse->body(),
+                'response_object' => $httpResponse->object(),
+                'response_status' => $httpResponse->status(),
+            ]);
+
+            $responseObject = $httpResponse->object();
+            if (in_array($httpResponse->status(), [JsonResponse::HTTP_OK, JsonResponse::HTTP_CREATED])) {
                 if (
                     isset($responseObject?->$keyAPI?->errors) ||
                     (isset($responseObject?->$keyAPI?->Status) && $responseObject?->$keyAPI?->Status == false) ||
@@ -852,6 +861,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     $response['data'] = $responseObject;
                     $response['message'] = 'API call successfully executed.';
                 }
+            } else {
+                $response['error'] = $responseObject?->$keyAPI?->Status ?? $keyAPI.' API Failed';
+                $response['status'] = false;
+                $response['message'] = json_encode($responseObject?->$keyAPI?->errors) ?? $responseObject?->message ?? $responseObject;
             }
         } catch (Exception $ex) {
             LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__, [
@@ -1047,7 +1060,9 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         ];
 
         try {
-            $response = Http::timeout(20)
+            $timeOut = $this->appEnv == EnvEnum::PRODUCTION ? 20 : 120;
+
+            $response = Http::timeout($timeOut)
                 ->withHeaders($headers)
                 ->asForm() // This ensures proper form encoding
                 ->post(config('constants.LIVA_API_BASE_URL').'/auth-token', $payload);
