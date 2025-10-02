@@ -97,6 +97,7 @@ class CycleQuoteRepository extends BaseRepository
             'payments',
             'quoteDetail',
             'renewalBatchModel',
+            'subSource',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypes::CYCLE->id());
             },

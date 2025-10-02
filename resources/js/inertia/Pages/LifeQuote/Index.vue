@@ -96,6 +96,7 @@ const filters = reactive({
   private_client: 'all',
   authorize_date: '',
   captured_date: '',
+  sub_source_id: [],
 });
 
 const filterButtonStatuses = [
@@ -195,6 +196,7 @@ const tableHeader = ref([
     value: 'customer.pcp_tag_formatted',
     is_active: true,
   },
+  { text: 'Sub Source', value: 'sub_source_text', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -298,6 +300,7 @@ function setQueryFilters() {
     'renewal_batch_id',
     'payment_status_id',
     'page',
+    'sub_source_id',
   ];
 
   // Group array parameters
@@ -780,6 +783,39 @@ const onLeadConfirmed = () => {
           </template>
         </x-select>
 
+        <x-select
+          v-model="filters.sub_source_id"
+          name="sub_source_id"
+          placeholder="Select Sub Source"
+          :options="
+            (page.props.subSources || []).map(item => ({
+              value: item.id,
+              label: item.text,
+              suffix: item.description || item.tooltip || ''
+            }))
+          "
+          class="w-full"
+          filterable
+          label="Sub Source"
+          multiple
+          truncate
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.sub_source_id = (page.props.subSources || []).map(item => item.id)"
+              @clear="filters.sub_source_id = []"
+            />
+          </template>
+        </x-select>
+
         <DatePicker
           v-model="filters.policy_expiry_date"
           name="policy_expiry_date"
@@ -1116,6 +1152,9 @@ const onLeadConfirmed = () => {
       </template>
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}
+      </template>
+      <template #item-sub_source_text="item">
+        {{ item?.sub_source?.text || '' }}
       </template>
       <template #item-quote_status="{ quote_status }">
         {{ quote_status?.code }}

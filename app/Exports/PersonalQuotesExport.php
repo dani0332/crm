@@ -231,6 +231,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::TRANSACTION_APPROVED_DATE,
                 self::BOOKING_DATE,
                 self::PRIVATE_CLIENT,
+                self::SUB_SOURCE,
             ],
             QuoteTypes::HOME->value => [
                 self::REF_ID,
@@ -297,6 +298,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::SUM_ASSURED,
                 self::SUM_ASSURED_CURRENCY,
                 self::POLICY_SUM_ASSURED,
+                self::SUB_SOURCE,
             ],
         ];
 
@@ -439,6 +441,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['transaction_approved_date'],
                 $baseFields['booking_date'],
                 $baseFields['pc_customer'],
+                optional($quote->subSource)->text,
             ],
             QuoteTypes::HOME->value => [
                 $baseFields['code'],
@@ -505,6 +508,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $quote->lifeQuote?->sum_insured_value ?? '',
                 $quote->lifeQuote?->policySumAssuredCurrency->text ?? '',
                 $quote->lifeQuote?->policy_sum_assured ?? '',
+                optional($quote->subSource)->text,
             ],
             default => [],
         };

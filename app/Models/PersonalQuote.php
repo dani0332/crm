@@ -50,6 +50,7 @@ class PersonalQuote extends Model implements AuditableContract
         'is_cold' => FilterTypes::EXACT,
         'stale_at' => FilterTypes::NULL_CHECK,
         'previous_policy_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'sub_source_id' => FilterTypes::IN,
     ];
     protected $appends = ['age', 'gender_label', 'pc_qualified_formatted'];
 

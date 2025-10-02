@@ -96,6 +96,7 @@ class LifeQuoteService extends BaseService
             'renewalBatchModel',
             'paymentStatus',
             'payments',
+            'subSource:id,text',
             'lifeQuote' => function ($q) {
                 $q->with([
                     'insuranceTenure',
@@ -183,6 +184,11 @@ class LifeQuoteService extends BaseService
                         });
                     }
                 }
+            })
+            ->when(! empty(request()->sub_source_id), function ($query) {
+                $values = request()->sub_source_id;
+                $values = is_array($values) ? $values : [$values];
+                $query->whereIn('personal_quotes.sub_source_id', $values);
             })
             ->filter(! $isExportRequest, $isTotalLeadCountRequest)
             ->withFakeLeadCriteria($isTotalLeadCountRequest);
