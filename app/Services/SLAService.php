@@ -338,7 +338,7 @@ class SLAService extends BaseService
                 $slaRecord->markBreached();
             }
 
-            LoggerService::info('SLAService - Breach escalated to team lead', [
+            LoggerService::info('SLAService - Breach escalated to managers', [
                 'advisor_email' => $advisor->email,
                 'managers_emails' => $managersEmails,
                 'breach_duration' => now()->diffForHumans($slaRecord->sla_due_at),
