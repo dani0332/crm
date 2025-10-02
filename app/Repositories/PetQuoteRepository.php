@@ -143,6 +143,7 @@ class PetQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'renewalBatchModel',
+            'subSource',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypes::PET->id());
             },
@@ -187,6 +188,12 @@ class PetQuoteRepository extends BaseRepository
         $this->adjustQueryByInsurerInvoiceFilters($query);
 
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
+
+        // Apply sub_source_id filter (multi-select)
+        $query->when($this->hasFilterValue('sub_source_id', $requestParams), function ($q) use ($requestParams) {
+            $values = (array) $this->getFilterValue('sub_source_id', $requestParams);
+            $q->whereIn('sub_source_id', $values);
+        });
 
         // Apply authorize_date filter
         $query->when(! empty($this->getFilterValue('authorize_date', $requestParams)), function ($q) use ($requestParams) {

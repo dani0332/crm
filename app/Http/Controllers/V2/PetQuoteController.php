@@ -271,7 +271,7 @@ class PetQuoteController extends Controller
         $data = PetQuoteRepository::getFormOptions();
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
 
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Bike);
+        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Pet);
 
         return inertia('PetQuote/Form', array_merge($data, [
             'quote' => $quote,

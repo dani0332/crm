@@ -41,6 +41,7 @@ let availableFilters = {
   previous_quote_policy_number: '',
   quote_status_id: '',
   renewal_batch_id: [],
+  sub_source_id: [],
   page: 1,
   previous_quote_policy_number_text: '',
   payment_due_date: '',
@@ -133,6 +134,7 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch_model', is_active: true },
+  { text: 'Sub Source', value: 'sub_source.text', is_active: true },
 ]);
 
 const quotesSelected = ref([]);
@@ -239,6 +241,15 @@ const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
+  }));
+});
+
+const subSourceOptions = computed(() => {
+  const sources = page.props.subSources || [];
+  return sources.map(source => ({
+    value: source.id,
+    label: source.text,
+    suffix: source.description || source.tooltip || '',
   }));
 });
 
@@ -572,6 +583,32 @@ const validateDateRange = () => {
           multi-calendars
           multi-calendars-solo
         />
+        <x-select
+          v-model="filters.sub_source_id"
+          label="Sub Source"
+          name="sub_source_id"
+          :options="subSourceOptions"
+          placeholder="Select sub source"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.sub_source_id = subSourceOptions.map(item => item.value)"
+              @clear="filters.sub_source_id = []"
+            />
+          </template>
+        </x-select>
         <DatePicker
           v-model="filters.last_modified_date"
           name="created_at_start"

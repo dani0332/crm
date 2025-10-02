@@ -507,11 +507,6 @@ class HomeQuoteRepository extends BaseRepository
                     'owner_occupancy_type_id' => 'owner_occupancy_type_id',
                     'sub_area_id' => 'sub_area_id',
                     'type_of_coverage_you_need' => 'coverage_type_id',
-                    /*// Sub-source fields from CreateLeadModal
-                    'sub_source_id' => 'sub_source_id',
-                    'sub_source_options_id' => 'sub_source_options_id',
-                    'primary_ref_id' => 'primary_ref_id',
-                    'additional_notes' => 'additional_notes',*/
                 ];
 
                 // Map the data to database columns
