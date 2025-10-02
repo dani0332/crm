@@ -26,7 +26,7 @@ class MembersDetailController extends Controller
      */
     public function store(MemberDetailRequest $request)
     {
-        $quoteMemberDetails = $request->validated();
+        $quoteMemberDetails = $request->safe()->except(['entity_id']);
         $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
         if ($quoteObject) {
             $quoteModel = $this->getModelObject(strtolower($request->quote_type));
@@ -107,7 +107,7 @@ class MembersDetailController extends Controller
      */
     public function update(MemberDetailRequest $request, $id)
     {
-        $quoteMemberDetails = $request->validated();
+        $quoteMemberDetails = $request->safe()->except(['entity_id']);
         $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
 
         if ($quoteObject) {
@@ -152,7 +152,7 @@ class MembersDetailController extends Controller
 
     public function uboUpdate(MemberDetailRequest $request)
     {
-        $quoteMemberDetails = $request->validated();
+        $quoteMemberDetails = $request->safe()->except(['entity_id']);
         $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id ?? $request->quote_id);
 
         if ($quoteObject) {

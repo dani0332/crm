@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use Illuminate\Foundation\Http\FormRequest;
@@ -45,6 +46,10 @@ class MemberDetailRequest extends FormRequest
             $rules['last_name'] = 'nullable';
         }
 
+        if (request()->customer_type == CustomerTypeEnum::Entity) {
+            $rules['entity_id'] = 'required';
+        }
+
         return $rules;
     }
 
@@ -55,5 +60,12 @@ class MemberDetailRequest extends FormRequest
                 $validator->errors()->add('error', 'You don\'t have permission to edit this section.');
             }
         });
+    }
+
+    public function messages()
+    {
+        return [
+            'entity_id.required' => 'Insured Details is not associated with this lead',
+        ];
     }
 }
