@@ -82,7 +82,7 @@ class BikeQuoteController extends Controller
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Bike);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('BikeQuote/Index', [
             'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
@@ -111,7 +111,7 @@ class BikeQuoteController extends Controller
 
         $data = BikeQuoteRepository::getFormOptions();
         $quoteStatusEnums = QuoteStatusEnum::asArray();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Bike);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $data['subSources'] = $subSources;
         $data['leadSourceParams'] = [
@@ -150,7 +150,7 @@ class BikeQuoteController extends Controller
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
         $bikeQuoteRequestDetail = $quote->bikeQuote ?? null;
         $quoteStatusEnums = QuoteStatusEnum::asArray();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Bike);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia(
             'BikeQuote/Form',
