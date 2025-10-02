@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use App\Enums\QuoteTypes;
-use App\Models\QuoteType;
-use App\Models\SLATracking;
-use App\Enums\SLAStatusEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\ApplicationStorageEnums;
-use App\Services\Logger\LoggerService;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteTypes;
+use App\Enums\SLAStatusEnum;
+use App\Models\SLATracking;
+use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class SLAService extends BaseService
@@ -63,13 +61,17 @@ class SLAService extends BaseService
 
     private function getAssignmentTime(QuoteTypes $quoteType, Model $lead): Carbon
     {
-        return Carbon::parse('2025-10-02 23:00:00');
-
-        // TODO: Here Test all possible cases for assignment time
-
         $assignmentTime = Carbon::parse($quoteType->detailModel()->where($lead->getForeignKey(), $lead->id)->value('advisor_assigned_date') ?? now());
 
         return now() > $assignmentTime ? now() : $assignmentTime;
+    }
+
+    private function isAssignmentTimeWithinBusinessHours(Carbon $assignmentTime): bool
+    {
+        $businessStart = Carbon::createFromFormat('H:i', $this->allocationService->getBusinessStartTime());
+        $businessEnd = Carbon::createFromFormat('H:i', $this->allocationService->getBusinessEndTime());
+
+        return $assignmentTime->isBetween($businessStart, $businessEnd);
     }
 
     public function initiateSLATracking(QuoteTypes $quoteType, Model $lead): ?SLATracking
@@ -103,7 +105,7 @@ class SLAService extends BaseService
 
         $callbackHours = (float) getAppStorageValueByKey(ApplicationStorageEnums::SLA_CALLBACK_HOURS) ?: 2;
         $assignmentTime = $this->getAssignmentTime($quoteType, $lead);
-        $isBusinessHours = $this->allocationService->isBusinessHours();
+        $isBusinessHours = $this->isAssignmentTimeWithinBusinessHours($assignmentTime);
 
         LoggerService::info('SLAService - Starting SLA tracking', [
             'advisor_id' => $lead->advisor_id,
@@ -139,7 +141,6 @@ class SLAService extends BaseService
             ]);
         }
     }
-
 
     public function sendReminderNotification(SLATracking $slaRecord): void
     {
@@ -208,7 +209,6 @@ class SLAService extends BaseService
         // SLA spills over to next business day(s)
         $remainingSlaMinutes = $slaMinutes - $remainingMinutesToday;
 
-        // Move to next business day
         $nextBusinessDay = $this->getNextBusinessDayStart($currentTime);
 
         return $this->addBusinessMinutesFromStart($nextBusinessDay, $remainingSlaMinutes);
@@ -219,17 +219,14 @@ class SLAService extends BaseService
         $businessStart = $this->allocationService->getBusinessStartTime();
         $businessEnd = $this->allocationService->getBusinessEndTime();
 
-        // Parse time strings to get hours and minutes
         [$startHour, $startMinute] = explode(':', $businessStart);
         [$endHour, $endMinute] = explode(':', $businessEnd);
 
-        // Calculate daily business minutes
         $startTotalMinutes = ((int) $startHour * 60) + (int) $startMinute;
         $endTotalMinutes = ((int) $endHour * 60) + (int) $endMinute;
 
         $dailyBusinessMinutes = $endTotalMinutes - $startTotalMinutes;
 
-        // Validate business hours
         if ($dailyBusinessMinutes <= 0) {
             throw new \InvalidArgumentException("Invalid business hours: start time ({$businessStart}) must be before end time ({$businessEnd})");
         }
@@ -272,16 +269,16 @@ class SLAService extends BaseService
         $lead = $slaRecord->getLead();
 
         $payload = [
-            "workflowType" => "new_pec_la",
-            "advisorName" => $slaRecord->advisor?->name,
-            "advisorEmail" => $slaRecord->advisor?->email,
-            "assignedDateTime" => $slaRecord->assigned_at->toDateTimeString(),
-            "currentStatus" => $slaRecord->getLead()->quoteStatus?->text,
-            "customerName" => $slaRecord->getLead()->first_name . ' ' . $slaRecord->getLead()->last_name,
-            "customerEmail" => "",
-            "customerPhone" => "",
-            "refID" => "",
-            "SLADueDateTime" => ""
+            'workflowType' => 'new_pec_la',
+            'advisorName' => $slaRecord->advisor?->name,
+            'advisorEmail' => $slaRecord->advisor?->email,
+            'assignedDateTime' => $slaRecord->assigned_at->toDateTimeString(),
+            'currentStatus' => $slaRecord->getLead()->quoteStatus?->text,
+            'customerName' => $slaRecord->getLead()->first_name.' '.$slaRecord->getLead()->last_name,
+            'customerEmail' => '',
+            'customerPhone' => '',
+            'refID' => '',
+            'SLADueDateTime' => '',
         ];
 
         $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW, useCache: true);
