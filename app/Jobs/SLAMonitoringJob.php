@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Jobs\SLA\SendSLAReminderNotificationJob;
 use App\Models\SLATracking;
 use App\Services\Logger\LoggerService;
 use App\Services\SLAService;
@@ -34,7 +35,7 @@ class SLAMonitoringJob implements ShouldQueue
         $reminderCount = 0;
         $escalationCount = 0;
 
-        $reminderCount = $this->sendReminderNotifications($slaService);
+        $reminderCount = $this->sendReminderNotifications();
         $escalationCount = $this->escalateBreach($slaService);
 
         LoggerService::info('SLAMonitoringJob - Monitoring cycle completed', [
@@ -43,16 +44,16 @@ class SLAMonitoringJob implements ShouldQueue
         ]);
     }
 
-    private function sendReminderNotifications(SLAService $slaService): int
+    private function sendReminderNotifications(): int
     {
         $reminderMinutes = (int) getAppStorageValueByKey(ApplicationStorageEnums::SLA_REMINDER_MINUTES) ?: 15;
         $reminderCount = 0;
 
         SLATracking::dueForReminder($reminderMinutes)
-            ->chunk(self::DEFAULT_CHUNK_SIZE, function ($slaRecords) use ($slaService, &$reminderCount) {
+            ->chunk(self::DEFAULT_CHUNK_SIZE, function ($slaRecords) use (&$reminderCount) {
                 foreach ($slaRecords as $slaRecord) {
                     try {
-                        $slaService->sendReminderNotification($slaRecord);
+                        SendSLAReminderNotificationJob::dispatch($slaRecord);
                         $reminderCount++;
                     } catch (Exception $e) {
                         LoggerService::error('SLAMonitoringJob - Failed to send reminder', exception: $e);
