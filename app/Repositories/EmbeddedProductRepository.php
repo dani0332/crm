@@ -429,12 +429,15 @@ class EmbeddedProductRepository extends BaseRepository
         foreach ($epTransaction as $item) {
 
             $isDocPresent = $item->documents->count() > 0;
-            if (EmbeddedProductStrategy::checkAlfredProtect($item->product->embeddedProduct->short_code) && ! $isDocPresent) {
+            $epShortCode = $item->product->embeddedProduct->short_code ?? '';
+            $sukoonMedexCodes = EmbeddedProductEnum::getSukoonMedexCodes();
+
+            if (EmbeddedProductStrategy::checkAlfredProtect($epShortCode) && ! $isDocPresent) {
                 $quoteObject = $this->getQuoteObject($modelType, $leadId);
                 ProcessSyncAlfredProtect::dispatch($quoteObject);
                 $response = ['success' => true];
 
-            } elseif ($item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
+            } elseif ($epShortCode == EmbeddedProductEnum::COURIER
             && in_array(ucwords($modelType), [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])) {
 
                 $quoteObject = $this->getQuoteObject($modelType, $leadId);
@@ -442,12 +445,12 @@ class EmbeddedProductRepository extends BaseRepository
                 $response = ['success' => true];
 
             } elseif (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])
-                && EmbeddedProductStrategy::checkSukoonMedex($item->product->embeddedProduct->short_code ?? '')) {
+                && in_array($epShortCode, [...$sukoonMedexCodes, EmbeddedProductEnum::ECB])) {
 
                 $product_id = $item->product_id ?? null;
                 $embedded_product_id = EmbeddedProductOption::find($product_id)?->embedded_product_id;
 
-                if ($item->paid_at && Carbon::parse($item->paid_at)->lt(Carbon::parse(self::SALAMA_DATE))) {
+                if (in_array($epShortCode, $sukoonMedexCodes) && $item->paid_at && Carbon::parse($item->paid_at)->lt(Carbon::parse(self::SALAMA_DATE))) {
 
                     // EP Send documents
                     $response = $this->fetchSendDocument([
@@ -463,8 +466,16 @@ class EmbeddedProductRepository extends BaseRepository
                     $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
 
                     if ($callPurchaseFlow) {
-                        // Sukoon Medex Purchase Flow
-                        SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item, isSendEmail: true);
+                        if (in_array($epShortCode, $sukoonMedexCodes)) {
+                            // Sukoon Medex Purchase Flow
+                            SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item, isSendEmail: true);
+                        } 
+                        elseif ($quoteTypeId == QuoteTypeId::Car && $epShortCode == EmbeddedProductEnum::ECB) {
+                            // ECB Purchase Flow
+                            $quote = $this->getQuoteObject($modelType, $leadId);
+                            $context = EpExcessCashbackService::buildContext($item->id, $leadId, $quoteTypeId, $quote->code);
+                            EpExcessCashbackService::epEcbWorkflow($context);
+                        }
                         $response = ['success' => true];
 
                     } else {
@@ -492,14 +503,6 @@ class EmbeddedProductRepository extends BaseRepository
                     }
                 }
 
-            }
-            // need to add a check for lead should have comprehensive-plan
-            // lead should have ECB-Insurer Provider Plan
-            elseif ($quoteTypeId == QuoteTypeId::Car && $item->product?->embeddedProduct?->short_code == EmbeddedProductEnum::ECB) {
-
-                $quote = $this->getQuoteObject($modelType, $leadId);
-                $context = EpExcessCashbackService::buildContext($item->id, $leadId, $quoteTypeId, $quote->code);
-                EpExcessCashbackService::epEcbWorkflow($context);
             }
         }
 
