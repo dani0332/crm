@@ -79,8 +79,8 @@ class BirdService extends BaseService
     public function createQuoteWorkFlowDetails($lead, $response, $flowType = null, $quoteTypeId = null)
     {
         try {
-            if (!empty($response->headers['Run-Id'])) {
-            $runId = collect($response->headers['Run-Id'])->first();
+            if (! empty($response->headers['Run-Id'])) {
+                $runId = collect($response->headers['Run-Id'])->first();
                 QuoteFlowDetails::create([
                     'quote_uuid' => $lead->uuid,
                     'quote_type_id' => $quoteTypeId,
