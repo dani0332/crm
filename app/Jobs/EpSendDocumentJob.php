@@ -114,6 +114,7 @@ class EpSendDocumentJob implements ShouldQueue
             "Tags" => WorkflowTypeEnum::SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL,
             "customerName" => trim(($this->quote?->first_name ?? '') . ' ' . ($this->quote?->last_name ?? '')),
             "refID" => $this->quote?->code ?? '',
+            "uuid" => $this->quote?->uuid ?? '',
             ...$recipients,
             ...$advisorData,
             "attachingDocsEmail" => count($attachments) > 0 ? "yes" : "no",
