@@ -40,7 +40,7 @@ use App\Models\PaymentSplits;
 use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Models\SageProcess;
-use App\Services\EpExcessCashbackService;
+use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SukoonMedexService;
@@ -473,8 +473,8 @@ class EmbeddedProductRepository extends BaseRepository
                         elseif ($quoteTypeId == QuoteTypeId::Car && $epShortCode == EmbeddedProductEnum::ECB) {
                             // ECB Purchase Flow
                             $quote = $this->getQuoteObject($modelType, $leadId);
-                            $context = EpExcessCashbackService::buildContext($item->id, $leadId, $quoteTypeId, $quote->code);
-                            EpExcessCashbackService::epEcbWorkflow($context);
+                            $context = EpEcbService::buildContext($item->id, $leadId, $quoteTypeId, $quote->code);
+                            EpEcbService::epEcbWorkflow($context);
                         }
                         $response = ['success' => true];
 
@@ -565,8 +565,8 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             try {
-                $context = EpExcessCashbackService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quoteObject->code);
-                EpExcessCashbackService::epEcbWorkflow($context);
+                $context = EpEcbService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quoteObject->code);
+                EpEcbService::epEcbWorkflow($context);
             } catch (Exception $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }
@@ -771,7 +771,7 @@ class EmbeddedProductRepository extends BaseRepository
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $quote = $this->getQuoteObject($modelType, $quoteId);
 
-        $context = EpExcessCashbackService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quote->code);
+        $context = EpEcbService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quote->code);
         dispatch(new EpSendDocumentJob($context));
 
         return ['success' => true, 'message' => 'Certificate sent successfully'];

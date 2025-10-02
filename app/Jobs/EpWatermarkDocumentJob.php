@@ -6,7 +6,7 @@ use App\DTO\EpBookingContext;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Models\EmbeddedTransaction;
-use App\Services\EpExcessCashbackService;
+use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -54,7 +54,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
         $documents = $this->embeddedTransaction->documents()
             ->whereIn('document_type_code', $this->watermarkableDocTypeCodes)->get();
 
-        $epEcbService = new EpExcessCashbackService($this->context);
+        $epEcbService = new EpEcbService($this->context);
         $epEcbService->processWatermarkDocuments($documents, $this->watermarkableDocTypeCodes);
 
         $epEcbService->finalizeTransactionStatus();

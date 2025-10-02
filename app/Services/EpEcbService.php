@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Sleep;
 use Throwable;
 
-class EpExcessCashbackService extends EpBookingService
+class EpEcbService extends EpBookingService
 {
     // API Configuration
     private string $baseUrl = '';

@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\DTO\EpBookingContext;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Services\EpExcessCashbackService;
+use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -44,7 +44,7 @@ class EpPurchaseFlowJob implements ShouldQueue
 
         LoggerService::info("{$this->logPrefix} Starting", extra: $this->logExtra);
 
-        $epEcbService = new EpExcessCashbackService($this->context);
+        $epEcbService = new EpEcbService($this->context);
         $epEcbService->init();
 
         // Execute purchase flow steps (Token, Quote, Policy creation)
