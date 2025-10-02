@@ -14,11 +14,8 @@ enum SLAStatusEnum: string
     case CANCELED = 'canceled';
     case REASSIGNED = 'reassigned';
 
-    public function isFinal(): bool
+    public static function getFinalStatuses(): array
     {
-        return match ($this) {
-            self::ACTIVE => false,
-            self::MET, self::BREACHED, self::CANCELED, self::REASSIGNED => true,
-        };
+        return [self::MET, self::BREACHED, self::CANCELED];
     }
 }

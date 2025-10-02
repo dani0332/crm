@@ -26,6 +26,11 @@ class SLAService extends BaseService
         return SLATracking::byLead($lead)->active()->first();
     }
 
+    private function hasAnyFinalSLA(Model $lead): bool
+    {
+        return SLATracking::byLead($lead)->whereIn('status', SLAStatusEnum::getFinalStatuses())->exists();
+    }
+
     private function markReAssigned(SLATracking $existingActiveSLA, Model $lead): void
     {
         $reason = "Lead {$lead->uuid} reassigned from advisor {$existingActiveSLA->advisor?->email} to advisor {$lead->advisor?->email}";
@@ -81,6 +86,14 @@ class SLAService extends BaseService
 
     public function initiateSLATracking(QuoteTypes $quoteType, Model $lead): ?SLATracking
     {
+        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
+
+        if ($this->hasAnyFinalSLA($lead)) {
+            LoggerService::info('SLAService - SLA already reached a final status, so skipping further SLA tracking');
+
+            return null;
+        }
+
         // $existingActiveSLA = $this->getActiveSLA($lead);
 
         // if (! $this->shouldTrackSLA($lead)) {
