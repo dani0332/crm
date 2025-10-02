@@ -9,13 +9,11 @@ use App\Jobs\SLA\SendSLABreachedNotificationJob;
 use App\Jobs\SLA\SendSLAReminderNotificationJob;
 use App\Models\SLATracking;
 use App\Services\Logger\LoggerService;
-use App\Services\SLAService;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
 
@@ -29,7 +27,7 @@ class SLAMonitoringJob implements ShouldQueue
 
     private const DEFAULT_CHUNK_SIZE = 100;
 
-    public function handle(SLAService $slaService): void
+    public function handle(): void
     {
         LoggerService::info('SLAMonitoringJob - Starting SLA monitoring cycle');
 
@@ -82,11 +80,6 @@ class SLAMonitoringJob implements ShouldQueue
             });
 
         return $escalationCount;
-    }
-
-    public function middleware(): array
-    {
-        return [(new WithoutOverlapping('sla-monitoring'))->dontRelease()];
     }
 
     public function failed(Throwable $exception): void
