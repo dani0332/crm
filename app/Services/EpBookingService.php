@@ -56,7 +56,7 @@ class EpBookingService extends BaseService
 
         $watermarkedDocuments = [];
         $documentTypes = DocumentType::whereIn('code', $watermarkableDocTypeCodes)
-            ->where('quote_type_id', $this->context->quoteTypeId)->get();
+            ->where(['quote_type_id' => $this->context->quoteTypeId, 'is_active' => 1])->get();
 
         LoggerService::info("{$this->className} DocumentTypes: ".count($documentTypes).", DocumentItems: ".count($documents));
 

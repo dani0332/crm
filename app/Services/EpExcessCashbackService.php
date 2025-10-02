@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Bus;
 use Error;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Sleep;
 use Throwable;
 
 class EpExcessCashbackService extends EpBookingService
@@ -464,6 +465,9 @@ class EpExcessCashbackService extends EpBookingService
 
         $this->embeddedTransaction->documents()->whereIn('document_type_code', $this->reqDocTypeCodes)->delete();
         $this->embeddedTransaction->load('documents');
+
+        // Wait 2 minute before processing documents
+        Sleep::for(2)->minutes();
     }
 
     /**
@@ -540,12 +544,12 @@ class EpExcessCashbackService extends EpBookingService
             'credit_note_no' => $policyDetailResponse['credit_note_no'] ?? '',
         ];
 
-        $savedDocuments = $this->embeddedTransaction?->documents()
-            ->whereIn('document_type_code', $this->watermarkableDocTypeCodes)
+        $watermarkedDocumentDocTypeCodes = $this->embeddedTransaction?->documents()
+            ->whereIn('document_type_code', $this->watermarkableDocTypeCodes)->get()
             ->where('is_watermarked', true)
-            ->get();
+            ->pluck('document_type_code')
+            ->toArray();
 
-        $watermarkedDocumentDocTypeCodes = $savedDocuments?->pluck('document_type_code')->toArray();
         $missingWatermarableDocTypeCodes = array_diff($this->watermarkableDocTypeCodes, $watermarkedDocumentDocTypeCodes);
 
         $isPolicyBooked = $this->embeddedTransaction?->policy_status == EmbeddedTransactionEnum::STATUS_BOOKED;

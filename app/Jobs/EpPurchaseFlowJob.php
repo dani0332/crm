@@ -9,7 +9,6 @@ use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Sleep;
 use Throwable;
 
 class EpPurchaseFlowJob implements ShouldQueue
@@ -49,13 +48,10 @@ class EpPurchaseFlowJob implements ShouldQueue
         $epEcbService->init();
 
         // Execute purchase flow steps (Token, Quote, Policy creation)
-        $epEcbService->executeSteps();
-
-        // Wait 2 minute before processing documents
-        Sleep::for(2)->minutes();
+        $epEcbService->executeSteps(); // STATUS_PAYMENT_SUCCEED
 
         // Sync policy documents
-        $epEcbService->syncPolicyDocuments();
+        $epEcbService->syncPolicyDocuments(); // STATUS_BOOKED, STATUS_READY_FOR_SAGE
 
         $epEcbService->handleJobSuccess();
 
