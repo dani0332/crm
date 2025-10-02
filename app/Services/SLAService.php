@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use Carbon\Carbon;
+use App\Enums\QuoteTypes;
+use App\Models\QuoteType;
 use App\Models\SLATracking;
 use App\Enums\SLAStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -43,10 +45,9 @@ class SLAService extends BaseService
             'advisor_id' => $lead->advisor_id,
             'assigned_at' => $assignmentTime,
             'sla_due_at' => $this->calculateSLADueTime($assignmentTime, $callbackHours, $isBusinessHours),
-            'is_assigned_during_business_hours' => $isBusinessHours,
-            'next_business_day_start' => $isBusinessHours ? null : $this->getNextBusinessDayStart(),
             'status' => SLAStatusEnum::ACTIVE,
         ];
+        dd($data);
 
         $slaRecord = SLATracking::create($data);
 
@@ -60,42 +61,49 @@ class SLAService extends BaseService
         return $slaRecord;
     }
 
-    public function startSLATracking(Model $lead): ?SLATracking
+    private function getAssignmentTime(QuoteTypes $quoteType, Model $lead): Carbon
     {
-        $existingActiveSLA = $this->getActiveSLA($lead);
+        return Carbon::parse('2025-10-02 23:00:00');
 
-        if (! $this->shouldTrackSLA($lead)) {
-            if ($existingActiveSLA) {
-                $existingActiveSLA->markCanceled();
-            }
+        // TODO: Here Test all possible cases for assignment time
 
-            return null;
-        }
+        $assignmentTime = Carbon::parse($quoteType->detailModel()->where($lead->getForeignKey(), $lead->id)->value('advisor_assigned_date') ?? now());
 
-        if($lead->quote_status_id == QuoteStatusEnum::Qualified) {
+        return now() > $assignmentTime ? now() : $assignmentTime;
+    }
 
-        }
+    public function initiateSLATracking(QuoteTypes $quoteType, Model $lead): ?SLATracking
+    {
+        // $existingActiveSLA = $this->getActiveSLA($lead);
 
-        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
+        // if (! $this->shouldTrackSLA($lead)) {
+        //     if ($existingActiveSLA) {
+        //         $existingActiveSLA->markCanceled();
+        //     }
+
+        //     return null;
+        // }
+
+        // LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
+
+        // if ($existingActiveSLA) {
+        //     if ($existingActiveSLA->advisor_id === $lead->advisor_id) {
+        //         LoggerService::info('SLAService - Active SLA already exists for this advisor', [
+        //             'advisor_id' => $lead->advisor_id,
+        //             'sla_id' => $existingActiveSLA->id,
+        //         ]);
+
+        //         return $existingActiveSLA;
+        //     }
+
+        //     if ($existingActiveSLA->advisor_id !== $lead->advisor_id) {
+        //         $this->markReAssigned($existingActiveSLA, $lead);
+        //     }
+        // }
 
         $callbackHours = (float) getAppStorageValueByKey(ApplicationStorageEnums::SLA_CALLBACK_HOURS) ?: 2;
-        $assignmentTime = now();
+        $assignmentTime = $this->getAssignmentTime($quoteType, $lead);
         $isBusinessHours = $this->allocationService->isBusinessHours();
-
-        if ($existingActiveSLA) {
-            if ($existingActiveSLA->advisor_id === $lead->advisor_id) {
-                LoggerService::info('SLAService - Active SLA already exists for this advisor', [
-                    'advisor_id' => $lead->advisor_id,
-                    'sla_id' => $existingActiveSLA->id,
-                ]);
-
-                return $existingActiveSLA;
-            }
-
-            if ($existingActiveSLA->advisor_id !== $lead->advisor_id) {
-                $this->markReAssigned($existingActiveSLA, $lead);
-            }
-        }
 
         LoggerService::info('SLAService - Starting SLA tracking', [
             'advisor_id' => $lead->advisor_id,
@@ -175,37 +183,38 @@ class SLAService extends BaseService
 
     private function calculateSLADueTime(Carbon $assignmentTime, float $slaHours, bool $isBusinessHours): Carbon
     {
+        $slaMinutes = $slaHours * 60;
+
         $businessEnd = $this->allocationService->getBusinessEndTime();
 
         // If assigned outside business hours or on weekends, start from next business day
         if (! $isBusinessHours || $assignmentTime->isWeekend()) {
             $nextBusinessDay = $this->getNextBusinessDayStart($assignmentTime);
 
-            return $this->addBusinessHoursFromStart($nextBusinessDay, $slaHours);
+            return $this->addBusinessMinutesFromStart($nextBusinessDay, $slaMinutes);
         }
 
         // Assignment is during business hours
         $currentTime = $assignmentTime->copy();
         $endOfCurrentBusinessDay = $currentTime->copy()->setTimeFromTimeString($businessEnd);
 
-        // Calculate remaining business hours in current day
-        $remainingHoursToday = $currentTime->diffInHours($endOfCurrentBusinessDay, false);
+        $remainingMinutesToday = $currentTime->diffInMinutes($endOfCurrentBusinessDay, false);
 
         // If SLA can be completed within current business day
-        if ($slaHours <= $remainingHoursToday) {
-            return $currentTime->addHours($slaHours);
+        if ($slaMinutes <= $remainingMinutesToday) {
+            return $currentTime->addMinutes($slaMinutes);
         }
 
         // SLA spills over to next business day(s)
-        $remainingSlaHours = $slaHours - $remainingHoursToday;
+        $remainingSlaMinutes = $slaMinutes - $remainingMinutesToday;
 
         // Move to next business day
         $nextBusinessDay = $this->getNextBusinessDayStart($currentTime);
 
-        return $this->addBusinessHoursFromStart($nextBusinessDay, $remainingSlaHours);
+        return $this->addBusinessMinutesFromStart($nextBusinessDay, $remainingSlaMinutes);
     }
 
-    private function addBusinessHoursFromStart(Carbon $startTime, float $hours): Carbon
+    private function addBusinessMinutesFromStart(Carbon $startTime, float $minutes): Carbon
     {
         $businessStart = $this->allocationService->getBusinessStartTime();
         $businessEnd = $this->allocationService->getBusinessEndTime();
@@ -214,28 +223,28 @@ class SLAService extends BaseService
         [$startHour, $startMinute] = explode(':', $businessStart);
         [$endHour, $endMinute] = explode(':', $businessEnd);
 
-        // Calculate daily business hours using decimal hours
-        $startDecimalHours = (int) $startHour + ((int) $startMinute / 60);
-        $endDecimalHours = (int) $endHour + ((int) $endMinute / 60);
+        // Calculate daily business minutes
+        $startTotalMinutes = ((int) $startHour * 60) + (int) $startMinute;
+        $endTotalMinutes = ((int) $endHour * 60) + (int) $endMinute;
 
-        $dailyBusinessHours = $endDecimalHours - $startDecimalHours;
+        $dailyBusinessMinutes = $endTotalMinutes - $startTotalMinutes;
 
         // Validate business hours
-        if ($dailyBusinessHours <= 0) {
+        if ($dailyBusinessMinutes <= 0) {
             throw new \InvalidArgumentException("Invalid business hours: start time ({$businessStart}) must be before end time ({$businessEnd})");
         }
 
         $currentTime = $startTime->copy();
-        $remainingHours = $hours;
+        $remainingMinutes = $minutes;
 
-        while ($remainingHours > 0) {
-            // If remaining hours fit in current business day
-            if ($remainingHours <= $dailyBusinessHours) {
-                return $currentTime->addHours($remainingHours);
+        while ($remainingMinutes > 0) {
+            // If remaining minutes fit in current business day
+            if ($remainingMinutes <= $dailyBusinessMinutes) {
+                return $currentTime->addMinutes($remainingMinutes);
             }
 
             // Use full business day and move to next business day
-            $remainingHours -= $dailyBusinessHours;
+            $remainingMinutes -= $dailyBusinessMinutes;
             $currentTime = $this->getNextBusinessDayStart($currentTime);
         }
 
@@ -244,17 +253,15 @@ class SLAService extends BaseService
 
     private function getNextBusinessDayStart(?Carbon $fromDate = null): Carbon
     {
-        $startDate = $fromDate ? $fromDate->copy() : now();
-        $nextDay = $startDate->addDay();
+        $nextBusinessDay = $fromDate ? $fromDate->copy() : now();
 
-        // Skip weekends
-        while ($nextDay->isWeekend()) {
-            $nextDay = $nextDay->addDay();
-        }
+        do {
+            $nextBusinessDay = $nextBusinessDay->addDay();
+        } while ($nextBusinessDay->isWeekend());
 
         $businessStart = $this->allocationService->getBusinessStartTime();
 
-        return $nextDay->setTimeFromTimeString($businessStart);
+        return $nextBusinessDay->setTimeFromTimeString($businessStart);
     }
 
     /**
@@ -271,16 +278,16 @@ class SLAService extends BaseService
             "assignedDateTime" => $slaRecord->assigned_at->toDateTimeString(),
             "currentStatus" => $slaRecord->getLead()->quoteStatus?->text,
             "customerName" => $slaRecord->getLead()->first_name . ' ' . $slaRecord->getLead()->last_name,
-            "customerEmail": "",
-            "customerPhone": "",
-            "refID": "",
-            "SLADueDateTime": ""
+            "customerEmail" => "",
+            "customerPhone" => "",
+            "refID" => "",
+            "SLADueDateTime" => ""
         ];
 
         $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW, useCache: true);
         if (! empty($customerNotificationWorkflow)) {
             app(BirdService::class)->triggerWebHookRequest($customerNotificationWorkflow, (object) $payload);
-            LoggerService::info(self::class.' - sendIntroAndReassignEmail - Webhook request sent to: '.$customerNotificationWorkflow.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
+            LoggerService::info(self::class.' - sendIntroAndReassignEmail - Webhook request sent to: '.$customerNotificationWorkflow.' with Ref-ID: '.$lead->uuid.' | Time:'.now());
         } else {
             LoggerService::info(self::class.'- sendIntroAndReassignEmail - Webhook URL not found in storage');
         }
