@@ -4,24 +4,16 @@ namespace App\Services;
 
 use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
-use App\Enums\InsuranceProviderEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteDocumentsEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypes;
-use App\Enums\SendPolicyTypeEnum;
 use App\Models\DocumentType;
 use App\Jobs\EpPurchaseFlowJob;
 use App\Jobs\EpWatermarkDocumentJob;
 use App\Jobs\EpSendDocumentJob;
 use App\Mail\EpFailureNotification;
 use App\Models\InsurerRequestResponse;
-use App\Models\EmbeddedTransaction;
-use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
-use App\Services\SageApiService;
-use App\Services\SageApiEmbeddedProductService;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
@@ -247,11 +239,10 @@ class EpExcessCashbackService extends EpBookingService
             ->toArray();
 
         $missingReqDocTypeCodes = array_diff($this->reqDocTypeCodes, $savedReqDocumentDocTypeCodes);
-        $extraLogs = [...$this->logExtra, 'missing_req_doc_type_codes' => $missingReqDocTypeCodes];
 
         // Step 1: Get policy documents
         if (!$this->shouldSkipStep('get_documents', $currentStatus) && !empty($missingReqDocTypeCodes)) {
-            LoggerService::info($this->logPrefix . " Executing step: GetPolicyDocuments", extra: $extraLogs);
+            LoggerService::info($this->logPrefix . " Executing step: GetPolicyDocuments", extra: $this->logExtra);
 
             // Get policy documents
             $getPolicyDocumentsResponse = (array) $this->executeGetPolicyDocuments();
@@ -262,8 +253,10 @@ class EpExcessCashbackService extends EpBookingService
             // Download, Upload & Save policy documents to DB
             $this->executeSyncDocuments($getPolicyDocumentsResponse);
 
-            LoggerService::info($this->logPrefix . " Step completed: GetPolicyDocuments", extra: $extraLogs);
+            LoggerService::info($this->logPrefix . " Step completed: GetPolicyDocuments", extra: $this->logExtra);
+
         } else {
+            $extraLogs = [...$this->logExtra, 'missing_req_doc_type_codes' => $missingReqDocTypeCodes];
             LoggerService::info($this->logPrefix . " Skipping step: GetPolicyDocuments - already completed", extra: $extraLogs);
         }
 
@@ -527,29 +520,27 @@ class EpExcessCashbackService extends EpBookingService
 
     private function executeUpdateCommission($policyDetailResponse): void
     {
-        $policyDetails = [];
-        $policyPrice = floatval($this->embeddedTransaction?->policy_price ?? 0);
+        $policyPrice = floatval($policyDetailResponse['policy_premium_with_tax'] ?? 0);
 
-        if (!empty($policyDetailResponse)) {
-            $policyPrice = floatval($policyDetailResponse['policy_premium_with_tax'] ?? 0);
-            $policyDetails = [
-                'tax_invoice_no' => $policyDetailResponse['premium_inv_no'] ?? '',
-                'tax_invoice_buyer_no' => $policyDetailResponse['commision_inv_no'] ?? '',
-                'policy_price' => $policyPrice,
-                'commission_with_vat' => $policyDetailResponse['policy_commision_with_tax'] ?? 0,
-                'commission_without_vat' => $policyDetailResponse['policy_commision_without_tax'] ?? 0,
-                'credit_note_buyer_no' => $policyDetailResponse['credit_note_buyer_no'] ?? '',
-                'credit_note_no' => $policyDetailResponse['credit_note_no'] ?? '',
-            ];
+        if (empty($policyDetailResponse) || !($policyPrice > 0)) {
+            LoggerService::info("{$this->logPrefix} Transaction commissions & policy_details are not updated, due to empty policy response", extra: $this->logExtra);
+            return;
         }
+
+        $policyDetails = [
+            'tax_invoice_no' => $policyDetailResponse['premium_inv_no'] ?? '',
+            'tax_invoice_buyer_no' => $policyDetailResponse['commision_inv_no'] ?? '',
+            'policy_price' => $policyPrice,
+            'commission_with_vat' => $policyDetailResponse['policy_commision_with_tax'] ?? 0,
+            'commission_without_vat' => $policyDetailResponse['policy_commision_without_tax'] ?? 0,
+            'credit_note_buyer_no' => $policyDetailResponse['credit_note_buyer_no'] ?? '',
+            'credit_note_no' => $policyDetailResponse['credit_note_no'] ?? '',
+        ];
 
         // Update transaction commissions and policy_details
         $this->embeddedTransaction->update($policyDetails);
 
-        LoggerService::info($this->logPrefix . ' Transaction status updated', extra: [
-            ...$this->logExtra,
-            'policy_status' => $this->embeddedTransaction?->policy_status
-        ]);
+        LoggerService::info($this->logPrefix . ' Transaction commissions & policy_details updated', extra: $this->logExtra);
     }
 
     // Step 4.1: Get policy documents

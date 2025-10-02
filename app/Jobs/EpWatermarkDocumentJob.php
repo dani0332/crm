@@ -50,6 +50,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
         if (!$this->embeddedTransaction) {
             throw new \Exception("EmbeddedTransaction not found with ID: {$this->context->etId}");
         }
+
         $documents = $this->embeddedTransaction->documents()
             ->whereIn('document_type_code', $this->watermarkableDocTypeCodes)->get();
 
