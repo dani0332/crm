@@ -24,8 +24,6 @@ class SLATracking extends Model
         'status',
         'reason',
         'breach_escalated_at',
-        'is_assigned_during_business_hours',
-        'next_business_day_start',
     ];
     protected $casts = [
         'assigned_at' => 'datetime',
@@ -34,8 +32,6 @@ class SLATracking extends Model
         'met_at' => 'datetime',
         'breached_at' => 'datetime',
         'breach_escalated_at' => 'datetime',
-        'next_business_day_start' => 'datetime',
-        'is_assigned_during_business_hours' => 'boolean',
         'status' => SLAStatusEnum::class,
     ];
 
