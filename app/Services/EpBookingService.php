@@ -72,8 +72,6 @@ class EpBookingService extends BaseService
 
     public function processWatermarkDocuments(Collection $documents, array $watermarkableDocTypeCodes): array
     {
-        LoggerService::startQuoteLogging($this->context->quoteCode, LoggerFeatureEnum::EP_PROCESS_WATERMARK_DOCUMENT);
-
         $watermarkedDocuments = [];
         $documentTypes = DocumentType::whereIn('code', $watermarkableDocTypeCodes)
             ->where(['quote_type_id' => $this->context->quoteTypeId, 'is_active' => 1])->get();

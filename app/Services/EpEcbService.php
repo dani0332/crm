@@ -56,9 +56,6 @@ class EpEcbService extends EpBookingService
 
     public function init(): void
     {
-        // Start feature and quote logging
-        LoggerService::startQuoteLogging($this->context->quoteCode, LoggerFeatureEnum::EP_PROCESS_PURCHASE_FLOW);
-
         $this->logExtra = $this->context->logExtra;
 
         if (!$this->quote) {
