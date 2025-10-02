@@ -103,8 +103,8 @@ class EpSendDocumentJob implements ShouldQueue
         LoggerService::info("{$this->logPrefix} Email sending for uuid: {$this->quote->uuid}");
 
         $advisor = $this->quote?->advisor;
-        $policyContext = config('embedded-products.ecb.policy_context');
-
+        
+        $policyContext = $this->getPolicyContext();
         $recipients = $this->getRecipients($this->quote->email ?? '', $advisor->email ?? '');
         $advisorData = $this->getAdvisorData($advisor);
         $attachments = $this->fetchAttachments();
@@ -134,6 +134,17 @@ class EpSendDocumentJob implements ShouldQueue
             'advisorMobilePhone' => $advisor?->mobile_no,
             'advisorName' => $advisor?->name,
             'advisorProfilePhotoPath' => $advisor?->profile_photo_path,
+        ];
+    }
+
+    private function getPolicyContext(): array
+    {
+        $policyContext = config('embedded-products.ecb.policy_context');
+
+        return [
+            'policyClaimLimit' => $policyContext['policy_claim_limit'] ?? '',
+            'policyCoverage' => $policyContext['policy_coverage'] ?? '',
+            'policyDuration' => $policyContext['policy_duration'] ?? '',
         ];
     }
 
