@@ -143,7 +143,6 @@ class Kernel extends ConsoleKernel
         $schedule->command('horizon:snapshot')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
         $schedule->command('remove-pcp-tag')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
-        // SLA Monitoring Job - runs every minute to check for reminders and breaches
         $schedule->job(new SLAMonitoringJob)->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
     }
 
