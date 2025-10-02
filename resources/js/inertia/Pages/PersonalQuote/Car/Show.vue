@@ -407,7 +407,9 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       availablePlansTable.data = res.data;
-      loadEmbeddedProducts();
+      if (!isPlanDetailEnabled.value) {
+        loadEmbeddedProducts();
+      }
     })
     .catch(err => {
       console.log(err);
