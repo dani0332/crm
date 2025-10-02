@@ -72,6 +72,7 @@ class InstallmentReportService extends ManagementReport
                 'q.text as lead_status',
                 'p.insurer_commmission_invoice_number',
                 'l.text as transaction_type',
+                'ls.text as sub_source',
                 'ps.sr_no as split_sr_no',
                 DB::raw('CASE WHEN ps.sr_no=1 THEN p.commmission_percentage ELSE 0 END as commmission_percentage'),
                 'personal_quotes.source',
@@ -96,6 +97,7 @@ class InstallmentReportService extends ManagementReport
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id')
+            ->leftJoin('lookups as ls', 'personal_quotes.sub_source_id', '=', 'ls.id')
             ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
             ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
             ->leftJoin('car_quote_request as cqr', function ($join) {

@@ -36,10 +36,12 @@ class ActivePoliciesReportService extends ManagementReport
                 DB::raw('FORMAT(SUM(price_vat_not_applicable), 2) as price_without_vat'),
                 'ip.text as insurer',
                 'quote_type.code as line_of_business',
+                'ss.text as sub_source',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
+            ->leftJoin('lookups as ss', 'personal_quotes.sub_source_id', '=', 'ss.id')
             ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
             ->groupBy('ip.text', 'personal_quotes.quote_type_id');
 

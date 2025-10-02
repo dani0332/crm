@@ -127,6 +127,11 @@ const tableHeader = reactive([
     value: 'notes',
     tooltip: 'Any notes added within lead level will reflect here.',
   },
+  {
+    text: 'Sub Source',
+    value: 'sub_source',
+    tooltip: 'The sub source (lookup) of the lead',
+  },
 ]);
 
 const calculateTotalSum = useCalculateTotalSum;

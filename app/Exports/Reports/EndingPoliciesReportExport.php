@@ -72,6 +72,7 @@ class EndingPoliciesReportExport implements CsvExportableInterface
             'Advisor',
             'Lead Source',
             'Notes',
+            'Sub Source',
         ];
     }
 
@@ -99,6 +100,7 @@ class EndingPoliciesReportExport implements CsvExportableInterface
             $quote->advisor ?? 'N/A',
             $quote->source ?? 'N/A',
             $quote->notes ?? 'N/A',
+            $quote->sub_source ?? 'N/A',
         ]);
 
         foreach ($this->columnTotals as $index => $field) {

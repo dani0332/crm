@@ -242,6 +242,11 @@ const tableHeader = reactive([
     text: 'Private Client',
     value: 'pcp_tag_formatted',
   },
+	{
+		text: 'Sub Source',
+		value: 'sub_source',
+		tooltip: 'Sub source of the lead',
+	},
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
@@ -422,6 +427,9 @@ const isIntegerColumn = key => {
     <template #item-sage_reciept_id="{ sage_reciept_id }">
       {{ sage_reciept_id ?? 'N/A' }}
     </template>
+	<template #item-sub_source="{ sub_source }">
+		{{ sub_source ?? 'N/A' }}
+	</template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">
         <td class="direction-left">Total</td>

@@ -53,6 +53,7 @@ const filters = reactive({
   teams: [],
   subTeams: [],
   leadSources: [],
+  subSources: [],
   includeCancelledPolicies: 'Yes',
   groupBy: route().params.groupBy ?? 'advisor',
   utmGroupBy: [],
@@ -146,6 +147,15 @@ const teams = computed(() => {
   return Object.keys(props.filterOptions?.teams).map(key => ({
     value: key,
     label: props.filterOptions?.teams[key],
+  }));
+});
+
+const subSourceOptions = computed(() => {
+  const sources = props.filterOptions?.subSources || [];
+  return sources.map(source => ({
+    value: source.id,
+    label: source.text,
+    suffix: source.description || source.tooltip || '',
   }));
 });
 
@@ -585,6 +595,7 @@ watch(
           </template>
         </x-select>
       </div>
+
       <div>
         <x-tooltip position="top">
           <label
@@ -655,6 +666,47 @@ watch(
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
+            Sub Source
+          </label>
+          <template #tooltip>
+            Select one or more sub sources
+          </template>
+        </x-tooltip>
+        <x-select
+          v-model="filters.subSources"
+          placeholder="Search by Sub Source"
+          :options="subSourceOptions"
+          deselect-all
+          filterable
+          filterPlaceholder="Filter Sub Source...."
+          class="w-full"
+          multiple
+          truncate
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.subSources = subSourceOptions.map(item => item.value)"
+              @clear="filters.subSources = []"
+            />
+          </template>
+        </x-select>
+      </div>
+
+    </div>
+    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div>
+        <x-tooltip position="top">
+          <label
+            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+          >
             Include Cancelled Policies
           </label>
           <template #tooltip>
@@ -671,8 +723,6 @@ watch(
           class="w-full"
         />
       </div>
-    </div>
-    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <div v-if="disabledGroupBy">
         <x-tooltip position="top">
           <label

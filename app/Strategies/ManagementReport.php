@@ -87,6 +87,22 @@ class ManagementReport
             ->map(fn ($users) => $users->name)
             ->toArray();
 
+        $subSources = Lookup::where('key', LookupsEnum::SUB_SOURCE)
+            ->with('childs')
+            ->where('is_active', 1)
+            ->orderBy('text')
+            ->get(['id', 'text', 'code', 'description','parent_id'])
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'text' => $item->text,
+                    'code' => $item->code,
+                    'description' => $item->description,
+                ];
+            })
+            ->values()
+            ->toArray();
+
         return [
             'maxDays' => $maxDays,
             'leadSources' => $leadSources,
@@ -95,6 +111,7 @@ class ManagementReport
             'transactionTypes' => $transactionTypes,
             'departments' => $departments,
             'lobs' => $lobs,
+            'subSources' => $subSources,
         ];
     }
     public function applyFilters($query, $request, $endorsementsQuery = false, $isSSR = false)
@@ -144,6 +161,12 @@ class ManagementReport
     {
         if (! empty($request['leadSources'])) {
             $query->whereIn('personal_quotes.source', $request['leadSources']);
+        }
+
+        // Sub Source filter: allow filtering by codes sent from UI
+        if (! empty($request['subSources'])) {
+            $codes = is_array($request['subSources']) ? $request['subSources'] : [$request['subSources']];
+            $query->whereIn('personal_quotes.sub_source_id', $codes);
         }
 
         $departments = $request['department_id'] ?? [];

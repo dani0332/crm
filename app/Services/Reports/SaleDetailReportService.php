@@ -78,6 +78,7 @@ class SaleDetailReportService extends ManagementReport
                 'pi.name as policy_issuer',
                 'btoi.text as sub_type_line_of_business',
                 'p.insurer_commmission_invoice_number',
+                'ss.text as sub_source',
                 'l.text as transaction_type',
                 'p.commmission_percentage',
                 'personal_quotes.policy_booking_date',
@@ -101,6 +102,7 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('customer as cm', 'cm.id', '=', 'personal_quotes.customer_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id')
+            ->leftJoin('lookups as ss', 'personal_quotes.sub_source_id', '=', 'ss.id')
             ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
             ->leftJoin('car_quote_request as cqr', function ($join) {
                 $join->on('personal_quotes.quote_id', '=', 'cqr.id')

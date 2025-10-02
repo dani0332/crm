@@ -227,6 +227,11 @@ const tableHeader = reactive([
     text: 'Private Client',
     value: 'pcp_tag_formatted',
   },
+  {
+    text: 'Sub Source',
+    value: 'sub_source',
+    tooltip: 'The sub source (lookup) of the lead',
+  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
