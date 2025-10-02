@@ -251,6 +251,7 @@ class BikeQuoteRepository extends BaseRepository
                 $q->where('customer_insured.quote_type_id', QuoteTypes::BIKE->id());
             },
             'customer',
+            'subSource',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -296,6 +297,12 @@ class BikeQuoteRepository extends BaseRepository
                     $paymentQuery->whereBetween('captured_at', [$startDate, $endDate]);
                 });
             }
+        });
+
+        // Apply sub_source_id filter (multi-select)
+        $query->when($this->hasFilterValue('sub_source_id', $requestParams), function ($q) use ($requestParams) {
+            $values = (array) $this->getFilterValue('sub_source_id', $requestParams);
+            $q->whereIn('sub_source_id', $values);
         });
 
         $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');

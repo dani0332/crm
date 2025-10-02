@@ -58,6 +58,7 @@ class PersonalQuotesExport implements CsvExportableInterface
     private const SUM_ASSURED = 'SUM ASSURED';
     private const SUM_ASSURED_CURRENCY = 'SUM ASSURED CURRENCY';
     private const POLICY_SUM_ASSURED = 'POLICY SUM ASSURED';
+    private const SUB_SOURCE = 'SUB SOURCE';
 
     private string $quoteType = '';
     private array $quoteTypes = [];
@@ -153,6 +154,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::TRANSACTION_APPROVED_DATE,
                 self::BOOKING_DATE,
                 self::PRIVATE_CLIENT,
+                self::SUB_SOURCE,
             ],
             QuoteTypes::YACHT->value => [
                 self::REF_ID,
@@ -249,6 +251,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::PREVIOUS_POLICY_PREMIUM,
                 self::PREVIOUS_POLICY_NUMBER,
                 self::PRIVATE_CLIENT,
+                self::SUB_SOURCE,
             ],
             QuoteTypes::SAVINGS->value => [
                 self::REF_ID,
@@ -359,6 +362,7 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['transaction_approved_date'],
                 $baseFields['booking_date'],
                 $baseFields['pc_customer'],
+                optional($quote->subSource)->text,
             ],
             QuoteTypes::YACHT->value, QuoteTypes::JETSKI->value => [
                 $baseFields['code'],
@@ -454,9 +458,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['previous_policy_expiry_date'],
                 $baseFields['previous_policy_premium'],
                 $baseFields['previous_policy_number'],
-                $baseFields['transaction_approved_date'],
-                $baseFields['booking_date'],
                 $baseFields['pc_customer'],
+                optional($quote->subSource)->text,
             ],
             QuoteTypes::SAVINGS->value => [
                 $baseFields['code'],

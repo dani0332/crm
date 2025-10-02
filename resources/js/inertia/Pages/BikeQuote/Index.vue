@@ -60,6 +60,7 @@ let availableFilters = {
   private_client: 'all',
   authorize_date: '',
   captured_date: '',
+  sub_source_id: [],
 };
 const canExport = ref(false);
 const permissionAssignLeads = ref(false);
@@ -191,6 +192,7 @@ const tableHeader = [
   },
   { text: 'Renewal Batch', value: 'renewal_batch_model' },
   { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
+  { text: 'SUB SOURCE', value: 'sub_source' },
 ];
 
 const can = permission => useCan(permission);
@@ -629,6 +631,34 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
         <x-select
+          v-model="filters.sub_source_id"
+          label="Sub Source"
+          name="sub_source_id"
+          :options="(page.props.subSources || []).map(source => ({ value: source.id, label: source.text, suffix: source.description || source.tooltip || '' }))"
+          placeholder="Select sub source"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.sub_source_id = (page.props.subSources || []).map(item => item.id)
+              "
+              @clear="filters.sub_source_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.previous_quote_policy_number"
           placeholder="Search by Renewal"
           :options="[
@@ -829,6 +859,11 @@ const insurerAMLStatusOption = computed(() => {
       <template #item-renewal_batch_model="item">
         <p>
           {{ item?.renewal_batch_model?.name ?? '' }}
+        </p>
+      </template>
+      <template #item-sub_source="item">
+        <p>
+          {{ item?.sub_source?.text ?? '' }}
         </p>
       </template>
     </DataTable>
