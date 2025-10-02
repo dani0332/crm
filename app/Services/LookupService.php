@@ -243,7 +243,7 @@ class LookupService extends BaseService
         });
     }
 
-    public function getSubSource($quoteTypeId)
+    public function getSubSource()
     {
         $isPCP = auth()->user()->hasTeam(TeamNameEnum::PCP);
         $lookups = Lookup::with(['childs' => function ($q) use ($isPCP) {
@@ -252,7 +252,6 @@ class LookupService extends BaseService
             }
             return $q;
         }])->where([
-            'quote_type_id' => $quoteTypeId,
             'key' => LookupsEnum::SUB_SOURCE,
             'is_active' => 1
         ])->get();
