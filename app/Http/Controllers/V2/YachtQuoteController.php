@@ -75,7 +75,7 @@ class YachtQuoteController extends Controller
         $count = 0;
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Yacht);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('YachtQuote/Index', [
             'quotes' => $personalQuotes,
@@ -104,7 +104,7 @@ class YachtQuoteController extends Controller
         ]);
 
         $data = YachtQuoteRepository::getFormOptions();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Yacht);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $data['subSources'] = $subSources;
         $data['leadSourceParams'] = [
@@ -143,7 +143,7 @@ class YachtQuoteController extends Controller
     {
         $data = YachtQuoteRepository::getFormOptions();
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Yacht);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('YachtQuote/Form', array_merge($data, [
             'quote' => $quote,

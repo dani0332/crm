@@ -32,7 +32,7 @@ class SavingsQuoteController extends Controller
         $quoteStatuses = $this->savingsQuoteService->getQuoteStatuses([QuoteStatusEnum::Lost]);
         $renewalBatches = $this->savingsQuoteService->getRenewalBatches();
         $authorizedDays = $this->savingsQuoteService->getPaymentAuthorizedDays();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Savings);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $query = $this->savingsQuoteService->getData();
 
@@ -57,7 +57,7 @@ class SavingsQuoteController extends Controller
     public function create(Request $request)
     {
         $data = $this->savingsQuoteService->getFormOptions();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Savings);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $data['subSources'] = $subSources;
         $data['leadSourceParams'] = [
@@ -86,7 +86,7 @@ class SavingsQuoteController extends Controller
     {
         $data = $this->savingsQuoteService->getFormOptions();
         $quote = $this->savingsQuoteService->getOne($uuid);
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Savings);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $data['subSources'] = $subSources;
         $data['leadSourceParams'] = [];

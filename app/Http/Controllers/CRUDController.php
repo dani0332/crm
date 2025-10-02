@@ -282,7 +282,7 @@ class CRUDController extends Controller
         }
         $model = $this->genericModel;
 
-        $subSources = $this->lookupService->getSubSource($quoteTypeId);
+        $subSources = $this->lookupService->getSubSource();
 
         // inertia rendering for health quote
         // PD Revert
@@ -458,7 +458,7 @@ class CRUDController extends Controller
         \Log::info('CRUDController create - Model:', ['model' => $model, 'modelType' => $model->modelType]);
         \Log::info('CRUDController create - Quote Type ID:', ['quoteTypeId' => $quoteTypeId]);
 
-        $subSources = $this->lookupService->getSubSource($quoteTypeId);
+        $subSources = $this->lookupService->getSubSource();
 
         \Log::info('CRUDController create - SubSources result:', ['subSources' => $subSources->toArray()]);
 
@@ -1376,7 +1376,7 @@ class CRUDController extends Controller
             }
         }
 
-        $subSources = $this->lookupService->getSubSource(QuoteTypes::getIdFromValue($model->modelType));
+        $subSources = $this->lookupService->getSubSource();
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
             return inertia('HealthQuote/Form', [

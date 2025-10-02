@@ -73,7 +73,7 @@ class CycleQuoteController extends Controller
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Cycle);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('CycleQuote/Index', [
             'quotes' => $personalQuotes,
@@ -102,7 +102,7 @@ class CycleQuoteController extends Controller
         ]);
 
         $data = CycleQuoteRepository::getFormOptions();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Cycle);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $data['subSources'] = $subSources;
         $data['leadSourceParams'] = [
@@ -142,7 +142,7 @@ class CycleQuoteController extends Controller
 
         $quote = CycleQuoteRepository::getBy('uuid', $uuid);
 
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Cycle);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia(
             'CycleQuote/Form',

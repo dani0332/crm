@@ -47,7 +47,7 @@ class JetskiQuoteController extends Controller
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::JETSKI->value);
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Jetski);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('JetskiQuote/Index', [
             'quotes' => $quotes->simplePaginate(10)->withQueryString(),
@@ -75,7 +75,7 @@ class JetskiQuoteController extends Controller
         ]);
 
         $data = JetskiQuoteRepository::getFormOptions();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Jetski);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $data['subSources'] = $subSources;
         $data['leadSourceParams'] = [
@@ -112,7 +112,7 @@ class JetskiQuoteController extends Controller
     {
         $data = JetskiQuoteRepository::getFormOptions();
         $quote = JetskiQuoteRepository::getBy('uuid', $uuid);
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Jetski);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia(
             'JetskiQuote/Form',

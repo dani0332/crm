@@ -74,7 +74,7 @@ class PetQuoteController extends Controller
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Pet);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('PetQuote/Index', [
             'quotes' => $personalQuotes,
@@ -105,7 +105,7 @@ class PetQuoteController extends Controller
         ]);
 
         $data = PetQuoteRepository::getFormOptions();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Pet);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $data['subSources'] = $subSources;
         $data['leadSourceParams'] = [
@@ -271,7 +271,7 @@ class PetQuoteController extends Controller
         $data = PetQuoteRepository::getFormOptions();
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
 
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Pet);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('PetQuote/Form', array_merge($data, [
             'quote' => $quote,

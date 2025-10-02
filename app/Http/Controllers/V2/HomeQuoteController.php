@@ -37,7 +37,7 @@ class HomeQuoteController extends Controller
         $user = auth()->user();
         $isManualAllocationAllowed = $user->isAdmin() || $user->isManagerOrDeputy();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Home);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('HomeQuote/Index', [
             'quotes' => $homeQuotes,
@@ -62,7 +62,7 @@ class HomeQuoteController extends Controller
         ]);
 
         $data = HomeQuoteRepository::getFormOptions();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Home);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $data['subSources'] = $subSources;
         $data['leadSourceParams'] = [
@@ -105,7 +105,7 @@ class HomeQuoteController extends Controller
     {
         $data = HomeQuoteRepository::getFormOptions();
         $quote = HomeQuoteRepository::getBy('uuid', $uuid);
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Home);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia(
             'HomeQuote/Form',

@@ -110,7 +110,7 @@ class TravelController extends Controller
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
-        $subSources = $this->lookupService->getSubSource(self::TYPE_ID);
+        $subSources = $this->lookupService->getSubSource();
 
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
@@ -403,7 +403,7 @@ class TravelController extends Controller
         }
 
         $model = $this->genericModel;
-        $subSources = $this->lookupService->getSubSource(self::TYPE_ID);
+        $subSources = $this->lookupService->getSubSource();
 
         // Log parameters from CreateLeadModal
         LoggerService::info('Travel create method called with parameters', [
@@ -504,7 +504,7 @@ class TravelController extends Controller
             ? $courierQuoteResponse['data']['status']
             : 'Pending';
 
-        $subSources = $this->lookupService->getSubSource(self::TYPE_ID);
+        $subSources = $this->lookupService->getSubSource();
 
         return inertia('TravelQuote/Form', [
             'quote' => $record,

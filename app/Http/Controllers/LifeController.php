@@ -39,7 +39,7 @@ class LifeController extends Controller
     public function index()
     {
         $data = $this->lifeQuoteService->getLifeQuoteData();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Life);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $data['subSources'] = $subSources;
 
@@ -63,7 +63,7 @@ class LifeController extends Controller
         ]);
 
         $data = $this->lifeQuoteService->getFormOptions();
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Life);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $data['subSources'] = $subSources;
         $data['leadSourceParams'] = [
@@ -115,7 +115,7 @@ class LifeController extends Controller
     public function edit($uuid)
     {
         $data = $this->lifeQuoteService->getEditData($uuid);
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Life);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $data['subSources'] = $subSources;
         $data['leadSourceParams'] = [];

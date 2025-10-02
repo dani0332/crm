@@ -107,7 +107,7 @@ class BusinessQuoteController extends Controller
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
-        $subSources = app(LookupService::class)->getSubSource(self::TYPE_ID);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('CorpLineQuote/Index', compact('quotes', 'renewalBatches', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays', 'insurerAMLStatus', 'subSources'));
     }
@@ -136,7 +136,7 @@ class BusinessQuoteController extends Controller
         $renewalAdvisors = $this->businessQuoteService->getRenewalAdvisors();
         $this->businessQuoteService->fillData();
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
-        $subSources = app(LookupService::class)->getSubSource(self::TYPE_ID);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $model = $this->genericModel;
 
@@ -366,7 +366,7 @@ class BusinessQuoteController extends Controller
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
-        $subSources = app(LookupService::class)->getSubSource(self::TYPE_ID);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('CorpLineQuote/Form', [
             'quote' => $record,

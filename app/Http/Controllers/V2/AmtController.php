@@ -308,7 +308,7 @@ class AmtController extends Controller
 
         $quotes = $data->simplePaginate(15)->withQueryString();
 
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Business);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources'));
     }
@@ -322,7 +322,7 @@ class AmtController extends Controller
     {
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
 
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Business);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('GroupMedicalQuote/Form', [
             'businessInsuranceType' => $businessInsuranceType,
@@ -535,7 +535,7 @@ class AmtController extends Controller
             $selectedGmType = $GMType->id;
         }
 
-        $subSources = app(LookupService::class)->getSubSource(QuoteTypeId::Business);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('GroupMedicalQuote/Form', [
             'businessInsuranceType' => $businessInsuranceType,
