@@ -4,6 +4,27 @@ export const useRoundIt = (num, decimalPlaces = 2) => {
   return Math.round(n) / p;
 };
 
+/**
+ * Format a Date object to YYYY-MM-DD string format
+ * Uses UTC methods to avoid timezone-related date shifts
+ * @param {Date|string} date - Date object or date string to format
+ * @returns {string} - Date in YYYY-MM-DD format, empty string if invalid
+ */
+export const useFormatDateToYMD = date => {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+
+  // Use UTC methods to avoid timezone issues when parsing ISO strings
+  return (
+    d.getUTCFullYear() +
+    '-' +
+    String(d.getUTCMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(d.getUTCDate()).padStart(2, '0')
+  );
+};
+
 export const useCleanObj = reactive => {
   Object.keys(reactive).forEach(key => {
     if (
