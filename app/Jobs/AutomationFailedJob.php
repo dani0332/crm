@@ -45,6 +45,8 @@ class AutomationFailedJob implements ShouldQueue
 
     public function __construct($quote, $quoteTypeId, $actionRequired, $statusAPIFailed, $processInvolved, $workflowType, $sendTo = null)
     {
+        LoggerService::startQuoteLogging($quote);
+        LoggerService::info('job:AutomationFailedJob - Initializing job');
         $this->quote = $quote;
         $this->quoteTypeId = $quoteTypeId;
         $this->actionRequired = $actionRequired;
@@ -60,7 +62,6 @@ class AutomationFailedJob implements ShouldQueue
      */
     public function handle()
     {
-        LoggerService::startQuoteLogging($this->quote);
         LoggerService::info('job:AutomationFailedJob - Job started');
 
         $payment = $this->quote->payments()->mainLeadPayment()->first();

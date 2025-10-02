@@ -398,6 +398,7 @@ class PolicyIssuanceService
                 WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
                 UserNameEnum::PA_USER
             )->onQueue('policy-issuance-automation');
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - AutomationFailedJob Dispatched');
         }
 
         if ($advisorId) {
