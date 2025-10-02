@@ -53,7 +53,5 @@ class HandleBookPolicyJobFailed
             }
         }
 
-
-        return;
     }
 }
