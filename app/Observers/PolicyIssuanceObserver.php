@@ -28,7 +28,6 @@ class PolicyIssuanceObserver
             $policyIssuance->isDirty('status') &&
             $policyIssuance->insuranceProvider->code === InsuranceProvidersEnum::RSA &&
             $policyIssuance->status === PolicyIssuanceEnum::FAILED_STATUS &&
-            $policyIssuance->completed_step === LivaInsuranceService::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM &&
             str_contains($policyIssuance->message, 'PolicyIssuanceJob has been attempted too many times')
         ) {
             LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updating Policy Issuance ID : '.$policyIssuance->id.' - Status : '.PolicyIssuanceEnum::PENDING_STATUS);
