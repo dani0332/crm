@@ -995,7 +995,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     $quoteDetails->vehicleDriverDetail()->updateOrCreate([], $vehicleDriverDetailsData); // TODO: need to discuss update or create.
                 }
 
-                $getQuoteResponseMapping = array_merge($getQuoteResponseMapping, $vehicleDriverDetailsData, $quoteDetailsData);
+                $getQuoteResponseMapping = array_merge($getQuoteResponseMapping, $vehicleDriverDetailsData, $quoteDetailsData, ['QuoteStatus' => $responseData['QuoteStatus']]);
 
                 return [
                     'success' => true,
