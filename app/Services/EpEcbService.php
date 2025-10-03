@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Models\DocumentType;
 use App\Jobs\EpPurchaseFlowJob;
@@ -186,39 +185,33 @@ class EpEcbService extends EpBookingService
     private function executeWorkflowFromStep(): void
     {
         $currentStatus = $this->embeddedTransaction->status ?? '';
+        $executedSteps = [];
 
         // Step 1: Get Token (Always required first)
         if (!$this->shouldSkipStep('get_token', $currentStatus)) {
-            LoggerService::info($this->logPrefix . " Executing step: GetToken", extra: $this->logExtra);
-
             $this->executeGetToken();
-
-            LoggerService::info($this->logPrefix . " Step completed: GetToken", extra: $this->logExtra);
-        } else {
-            LoggerService::info($this->logPrefix . " Skipping step: GetToken", extra: $this->logExtra);
+            $executedSteps[] = 'GetToken';
         }
 
         // Step 2: Get Quote
         if (!$this->shouldSkipStep('get_quote', $currentStatus)) {
-            LoggerService::info($this->logPrefix . " Executing step: GetQuote", extra: $this->logExtra);
-
             $this->executeGetQuote();
-
-            LoggerService::info($this->logPrefix . " Step completed: GetQuote", extra: $this->logExtra);
-        } else {
-            LoggerService::info($this->logPrefix . " Skipping step: GetQuote - already have quote", extra: $this->logExtra);
+            $executedSteps[] = 'GetQuote';
         }
 
         // Step 3: Create Policy From Quote
         if (!$this->shouldSkipStep('create_policy', $currentStatus)) {
-            LoggerService::info($this->logPrefix . " Executing step: CreatePolicyFromQuote", extra: $this->logExtra);
-
             $this->executeCreatePolicy();
-
-            LoggerService::info($this->logPrefix . " Step completed: CreatePolicyFromQuote", extra: $this->logExtra);
-        } else {
-            LoggerService::info($this->logPrefix . " Skipping step: CreatePolicyFromQuote - already have policy", extra: $this->logExtra);
+            $executedSteps[] = 'CreatePolicy';
         }
+
+        // Log executed steps summary
+        LoggerService::info($this->logPrefix . " Executed steps: " . implode(', ', $executedSteps), extra: [
+            ...$this->logExtra,
+            'quote_policy' => $this->quoteReferenceNumber,
+            'certificate_number' => $this->policyNumber,
+            'policy_status' => $this->embeddedTransaction->policy_status ?? ''
+        ]);
     }
 
     /**
@@ -226,8 +219,6 @@ class EpEcbService extends EpBookingService
      */
     public function syncPolicyDocuments(): void
     {
-        LoggerService::info($this->logPrefix . ' Starting document sync process', extra: $this->logExtra);
-
         $currentStatus = $this->embeddedTransaction->status ?? '';
 
         $savedReqDocumentDocTypeCodes = $this->embeddedTransaction?->documents()
@@ -239,8 +230,6 @@ class EpEcbService extends EpBookingService
 
         // Step 1: Get policy documents
         if (!$this->shouldSkipStep('get_documents', $currentStatus) && !empty($missingReqDocTypeCodes)) {
-            LoggerService::info($this->logPrefix . " Executing step: GetPolicyDocuments", extra: $this->logExtra);
-
             // Get policy documents
             $getPolicyDocumentsResponse = (array) $this->executeGetPolicyDocuments();
 
@@ -256,8 +245,6 @@ class EpEcbService extends EpBookingService
             $extraLogs = [...$this->logExtra, 'missing_req_doc_type_codes' => $missingReqDocTypeCodes];
             LoggerService::info($this->logPrefix . " Skipping step: GetPolicyDocuments - already completed", extra: $extraLogs);
         }
-
-        LoggerService::info($this->logPrefix . ' Document sync completed successfully', extra: $this->logExtra);
     }
 
     /**
@@ -298,7 +285,6 @@ class EpEcbService extends EpBookingService
         $cachedToken = Cache::get(self::TOKEN_CACHE_KEY);
         if ($cachedToken && $this->validateToken($cachedToken)) {
             $this->bearerToken = $cachedToken;
-            LoggerService::info($this->logPrefix . ' Using cached token', extra: $this->logExtra);
             return;
         }
 
@@ -330,8 +316,6 @@ class EpEcbService extends EpBookingService
 
         // Cache the token
         Cache::put(self::TOKEN_CACHE_KEY, $this->bearerToken, self::TOKEN_CACHE_DURATION);
-
-        LoggerService::info($this->logPrefix . ' Token retrieved successfully', extra: $this->logExtra);
     }
 
     /**
@@ -345,10 +329,6 @@ class EpEcbService extends EpBookingService
 
         // Check if we already have a restored quote reference number
         if (!empty($this->quoteReferenceNumber)) {
-            LoggerService::info($this->logPrefix . ' Using restored quote_policy, skipping GetQuote API call', extra: [
-                ...$this->logExtra,
-                'restored_quote_policy' => $this->quoteReferenceNumber
-            ]);
             return;
         }
 
@@ -381,11 +361,6 @@ class EpEcbService extends EpBookingService
         $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_QUOTED, [
             'quote_policy' => $this->quoteReferenceNumber
         ]);
-
-        LoggerService::info($this->logPrefix . ' Quote retrieved successfully', extra: [
-            ...$this->logExtra,
-            'quote_policy' => $this->quoteReferenceNumber
-        ]);
     }
 
     /**
@@ -403,10 +378,6 @@ class EpEcbService extends EpBookingService
 
         // Check if we already have a restored policy number
         if (!empty($this->policyNumber)) {
-            LoggerService::info($this->logPrefix . ' Using restored certificate_number, skipping CreatePolicyFromQuote API call', extra: [
-                ...$this->logExtra,
-                'restored_certificate_number' => $this->policyNumber
-            ]);
             return;
         }
 
@@ -439,11 +410,6 @@ class EpEcbService extends EpBookingService
 
         // Update transaction status and save certificate_number to certificate_number field
         $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED, [
-            'certificate_number' => $this->policyNumber
-        ]);
-
-        LoggerService::info($this->logPrefix . ' Policy created successfully', extra: [
-            ...$this->logExtra,
             'certificate_number' => $this->policyNumber
         ]);
 
@@ -499,11 +465,12 @@ class EpEcbService extends EpBookingService
 
         $fetchedDocumentsCount = count($fetchedPolicyDocuments);
         $savedDocumentsCount = count($docStatus['created'] ?? []);
-        LoggerService::info("{$this->logPrefix} Sync Policy documents: {$savedDocumentsCount} out of {$fetchedDocumentsCount}", extra: [
-            ...$this->logExtra,
-            'certificate_number' => $this->policyNumber,
-            'docs' => $docStatus
-        ]);
+        if ($savedDocumentsCount > 0) {
+            LoggerService::info("{$this->logPrefix} Documents synced: {$savedDocumentsCount} out of {$fetchedDocumentsCount}", extra: [
+                ...$this->logExtra,
+                'docs' => $docStatus
+            ]);
+        }
 
         $this->embeddedTransaction->load('documents');
         $savedDocumentDocTypes = $this->embeddedTransaction?->documents?->pluck('document_type_code')->toArray();
@@ -520,7 +487,6 @@ class EpEcbService extends EpBookingService
         $policyPrice = floatval($policyDetailResponse['policy_premium_with_tax'] ?? 0);
 
         if (empty($policyDetailResponse) || !($policyPrice > 0)) {
-            LoggerService::info("{$this->logPrefix} Transaction commissions & policy_details are not updated, due to empty policy response", extra: $this->logExtra);
             return;
         }
 
@@ -536,8 +502,6 @@ class EpEcbService extends EpBookingService
 
         // Update transaction commissions and policy_details
         $this->embeddedTransaction->update($policyDetails);
-
-        LoggerService::info($this->logPrefix . ' Transaction commissions & policy_details updated', extra: $this->logExtra);
     }
 
     // Step 4.1: Get policy documents
@@ -706,9 +670,8 @@ class EpEcbService extends EpBookingService
             ...$this->logExtra,
             'operation' => $operation,
             ...$basicLogs,
-            'url' => $url,
-            'payload' => json_encode($payload),
-            ...$responseLog,
+            // 'payload' => json_encode($payload),
+            // ...$responseLog,
         ];
 
         try {
@@ -718,7 +681,7 @@ class EpEcbService extends EpBookingService
                 InsurerRequestResponse::create([
                     'quote_uuid' => $this->quote?->uuid,
                     'provider_id' => $this->context->insuranceProviderId, // You may want to set this based on your provider mapping
-                    'call_type' => "EmbeddedProduct-ECB",
+                    'call_type' => "EpEcb",
                     'request' => json_encode($payload),
                     'response' => json_encode($responseLog['data'] ?? []),
                     'status' => $status,
@@ -727,9 +690,9 @@ class EpEcbService extends EpBookingService
             }
 
             // Also log using LoggerService for additional tracking
-            LoggerService::info($this->logPrefix . " API {$operation} logged ($status)", extra: $logData);
+            LoggerService::info("{$this->logPrefix} API {$operation} logged ($status)", extra: $logData);
         } catch (Throwable $e) {
-            LoggerService::error($this->logPrefix . " Failed to log API {$operation} request ($status)", extra: [
+            LoggerService::error("{$this->logPrefix} Failed to log API {$operation} request ($status)", extra: [
                 ...$logData,
                 'logging_error' => $e->getMessage()
             ]);
