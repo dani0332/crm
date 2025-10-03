@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SLAStatusEnum;
 use App\Models\SLATracking;
@@ -20,6 +21,25 @@ class SLAService extends BaseService
     use TeamHierarchyTrait;
 
     public function __construct(protected AllocationService $allocationService) {}
+
+    public static function getMeetableQuoteStatuses(): array
+    {
+        return [
+            QuoteStatusEnum::FollowedUp,
+            QuoteStatusEnum::InNegotiation,
+            QuoteStatusEnum::PaymentLinkInprogress,
+            QuoteStatusEnum::PaymentLinkSentToCustomer,
+            QuoteStatusEnum::PaymentInitiated,
+            QuoteStatusEnum::MissingDocumentsRequested,
+            QuoteStatusEnum::PolicyDocumentsPending,
+            QuoteStatusEnum::SentForTransactionApproval,
+            QuoteStatusEnum::KYCCleared,
+            QuoteStatusEnum::AMLScreeningCleared,
+            QuoteStatusEnum::AMLScreeningFailed,
+            QuoteStatusEnum::Lost,
+            QuoteStatusEnum::Fake,
+        ];
+    }
 
     private function getActiveSLA(Model $lead): ?SLATracking
     {

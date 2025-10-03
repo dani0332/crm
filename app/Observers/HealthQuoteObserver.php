@@ -127,7 +127,7 @@ class HealthQuoteObserver
             event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
         }
 
-        if (isset($dirty['quote_status_id']) && in_array($healthQuote->quote_status_id, [QuoteStatusEnum::Quoted, QuoteStatusEnum::Lost, QuoteStatusEnum::TransactionApproved])) {
+        if (isset($dirty['quote_status_id']) && in_array($healthQuote->quote_status_id, SLAService::getMeetableQuoteStatuses())) {
             app(SLAService::class)->meetSLA($healthQuote);
         }
     }
