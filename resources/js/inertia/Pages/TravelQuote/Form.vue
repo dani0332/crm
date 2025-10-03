@@ -615,24 +615,16 @@ const floorLabel = computed(() => {
           </template>
         </x-select>
 
-        <div v-if="isEcomLeadExtension">
-          <x-tooltip placement="right">
-            <label
-              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
-            >
-              Primary Ref Id
-            </label>
-            <template #tooltip> ID of the original ECOM lead </template>
-          </x-tooltip>
-          <x-input
-            v-model="quoteForm.primary_ref_id"
-            :error="quoteForm.errors.primary_ref_id"
-            :disabled="!canEditSubSourceFields"
-            :rules="isEcomLeadExtension ? [isRequired] : []"
-            :required="isEcomLeadExtension"
-            class="w-full"
-          />
-        </div>
+        <x-input
+          v-if="isEcomLeadExtension"
+          label="PRIMARY REF ID"
+          v-model="quoteForm.primary_ref_id"
+          :error="quoteForm.errors.primary_ref_id"
+          :disabled="!canEditSubSourceFields"
+          :rules="isEcomLeadExtension ? [isRequired] : []"
+          :required="isEcomLeadExtension"
+          class="w-full"
+        />
 
         <x-input
           v-if="showPartnerNameField"

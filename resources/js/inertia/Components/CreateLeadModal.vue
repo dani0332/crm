@@ -88,10 +88,10 @@ const subSourceChildOptions = computed(() => {
 // Check if Partner name field should be shown
 const showPartnerNameField = computed(() => {
   if (!createLead.subSourceOption) return false;
-
+  
   const selectedSubSource = props.subSources?.find(source => source.id == createLead.subSource);
   if (!selectedSubSource?.childs) return false;
-
+  
   const selectedSubSourceOption = selectedSubSource.childs.find(child => child.id == createLead.subSourceOption);
   return selectedSubSourceOption?.code === 'other-clubs-or-campaigns';
 });
@@ -107,17 +107,17 @@ const isFormValid = computed(() => {
   if (createLead.type === 'referral') {
     // subSource is always required for referral type
     if (!createLead.subSource) return false;
-
+    
     // subSourceOption is only required if there are child options available
     if (subSourceChildOptions.value.length > 0 && !createLead.subSourceOption) {
       return false;
     }
-
+    
     // partnerName is required when showPartnerNameField is true
     if (showPartnerNameField.value && !createLead.partnerName.trim()) {
       return false;
     }
-
+    
     return true;
   }
 
@@ -219,23 +219,14 @@ watch(() => createLead.subSourceOption, () => {
 
       <!-- Conditional input for ECOM lead extension -->
       <div v-if="createLead.type === 'ecom_lead_extension'" class="flex flex-col gap-4">
-        <div>
-          <x-tooltip placement="right">
-            <label
-              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
-            >
-              Primary Ref Id
-            </label>
-            <template #tooltip> ID of the original ECOM lead </template>
-          </x-tooltip>
-          <x-input
-            v-model="createLead.primaryRefId"
-            name="primaryRefId"
-            placeholder="Enter Primary Ref Id"
-            class="w-full"
-            required
-          />
-        </div>
+        <x-input
+          v-model="createLead.primaryRefId"
+          label="Primary Ref Id"
+          name="primaryRefId"
+          placeholder="Enter Primary Ref Id"
+          class="w-full"
+          required
+        />
       </div>
 
       <!-- Conditional input for Partner Name when other-clubs-or-campaigns is selected -->

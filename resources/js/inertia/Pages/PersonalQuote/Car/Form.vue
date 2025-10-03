@@ -628,26 +628,18 @@ watch(() => quoteForm.partner_name, (newValue, oldValue) => {
           </template>
         </x-select>
 
-        <div v-if="isEcomLeadExtension">
-          <x-tooltip placement="right">
-            <label
-              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
-            >
-              Primary Ref Id
-            </label>
-            <template #tooltip> ID of the original ECOM lead </template>
-          </x-tooltip>
-          <x-input
-            v-model="quoteForm.primary_ref_id"
-            class="w-full"
-            type="text"
-            placeholder="Enter Primary Ref ID"
-            :rules="[isRequired]"
-            :error="quoteForm.errors.primary_ref_id"
-            :disabled="!canEditSubSourceFields"
-            required
-          />
-        </div>
+        <x-input
+          v-if="isEcomLeadExtension"
+          label="PRIMARY REF ID"
+          required
+          v-model="quoteForm.primary_ref_id"
+          class="w-full"
+          type="text"
+          placeholder="Enter Primary Ref ID"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.primary_ref_id"
+          :disabled="!canEditSubSourceFields"
+        />
 
         <x-input
           v-if="showPartnerNameField"
