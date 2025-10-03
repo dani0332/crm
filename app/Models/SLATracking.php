@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\QuoteTypes;
+use App\Enums\SLAActionTypeEnum;
 use App\Enums\SLAStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,6 +36,7 @@ class SLATracking extends Model
         'breached_at' => 'datetime',
         'breach_escalated_at' => 'datetime',
         'status' => SLAStatusEnum::class,
+        'meet_action_type' => SLAActionTypeEnum::class,
     ];
 
     public function trackable()
@@ -73,13 +75,14 @@ class SLATracking extends Model
             ->whereNull('breach_escalated_at');
     }
 
-    public function markMet(?string $reason = null): void
+    public function markMet(SLAActionTypeEnum $actionType, ?string $reason = null): void
     {
         $this->update([
             'status' => SLAStatusEnum::MET,
             'reason' => $reason ?? 'SLA met - callback made within required timeframe',
             'met_at' => now(),
             'quote_status_id' => $this->getLead()?->quote_status_id,
+            'meet_action_type' => $actionType,
         ]);
     }
 
