@@ -111,26 +111,26 @@ class SageApiEmbeddedProductService
         }
     }
 
-    public function getInsurerRequestResponse($quote, $epShortCode)
+    public function getInsurerRequestResponse($quote, $epShortCode, $insuranceProviderId = null)
     {
         return match($epShortCode) {
-            EmbeddedProductEnum::ECB => self::getInsurerRequestResponseForECB($quote),
-            default => self::getInsurerRequestResponseForSukoonMedXRedx($quote),
+            EmbeddedProductEnum::ECB => self::getInsurerRequestResponseForECB($quote, $insuranceProviderId),
+            default => self::getInsurerRequestResponseForSukoonMedXRedx($quote, $insuranceProviderId),
         };
     }
 
-    public function getInsurerRequestResponseForECB($quote)
+    public function getInsurerRequestResponseForECB($quote, $insuranceProviderId = null)
     {
         $insurerRequestResponse = InsurerRequestResponse::where([
-            'quote_uuid' => $quote->uuid, 'status' => 'passed', 'execution_method' => 'GetPolicyDocuments',  'call_type' => 'EpEcb',
+            'quote_uuid' => $quote->uuid, 'status' => 'passed', 'execution_method' => 'GetPolicyDocuments',  'call_type' => 'EpEcb', 'provider_id' => $insuranceProviderId,
         ])->latest()->first();
         return $insurerRequestResponse;
     }
 
-    public function getInsurerRequestResponseForSukoonMedXRedx($quote)
+    public function getInsurerRequestResponseForSukoonMedXRedx($quote, $insuranceProviderId = null)
     {
         return InsurerRequestResponse::where([
-            'quote_uuid' => $quote->uuid, 'status' => 'passed', 'execution_method' => 'viewQuotePolicy',  'call_type' => 'EmbeddedProduct',
+            'quote_uuid' => $quote->uuid, 'status' => 'passed', 'execution_method' => 'viewQuotePolicy',  'call_type' => 'EmbeddedProduct', 'provider_id' => $insuranceProviderId,
         ])->latest()->first();
     }
 
@@ -182,7 +182,8 @@ class SageApiEmbeddedProductService
         LoggerService::startQuoteLogging($embeddedProductTransaction, LoggerFeatureEnum::SAGE_EP_BOOKING);
         LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - Quote Code: '.$quote->code.' - Embedded Product Booking started for: '.$embeddedProductTransaction->code);
 
-        $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode);
+        $insuranceProviderId = $embeddedProductTransaction?->product?->embeddedProduct?->insurance_provider_id;
+        $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode, $insuranceProviderId);
 
         $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
         $quoteTypeId = $sageRequest->quoteTypeId;
