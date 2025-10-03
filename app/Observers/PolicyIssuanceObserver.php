@@ -27,15 +27,36 @@ class PolicyIssuanceObserver
         if (
             $policyIssuance->isDirty('status') &&
             $policyIssuance->insuranceProvider->code === InsuranceProvidersEnum::RSA &&
-            $policyIssuance->status === PolicyIssuanceEnum::FAILED_STATUS &&
-            str_contains($policyIssuance->message, 'PolicyIssuanceJob has been attempted too many times')
+            $policyIssuance->status === PolicyIssuanceEnum::FAILED_STATUS
         ) {
             LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updating Policy Issuance ID : '.$policyIssuance->id.' - Status : '.PolicyIssuanceEnum::PENDING_STATUS);
             try {
-                $policyIssuance->update([
-                    'status' => PolicyIssuanceEnum::PENDING_STATUS,
-                    'message' => 'null',
-                ]);
+                if (str_contains($policyIssuance->message, 'PolicyIssuanceJob has been attempted too many times')) {
+                    LoggerService::info('PolicyIssuanceJob was failed due to timeout', extra: [
+                        'reason' => $policyIssuance->message,
+                    ]);
+
+                    $policyIssuance->update([
+                        'status' => PolicyIssuanceEnum::PENDING_STATUS,
+                    ]);
+                } else {
+                    $failedLogs = $policyIssuance->policyIssuanceLogs->where('status', PolicyIssuanceEnum::FAILED_STATUS);
+                    if ($failedLogs) {
+                        $failedNullLogFound = $failedLogs->filter(function ($log) {
+                            return str_contains($log->response, '"status": false, "message": null, "completed_step": null');
+                        });
+
+                        if ($failedNullLogFound) {
+                            LoggerService::info('PolicyIssuanceJob was failed due to timeout', extra: [
+                                'error' => $failedNullLogFound->response,
+                            ]);
+
+                            $policyIssuance->update([
+                                'status' => PolicyIssuanceEnum::PENDING_STATUS,
+                            ]);
+                        }
+                    }
+                }
             } catch (\Exception $ex) {
                 LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
                     'errorMessage' => $ex->getMessage(),
