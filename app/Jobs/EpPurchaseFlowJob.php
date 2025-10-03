@@ -4,11 +4,11 @@ namespace App\Jobs;
 
 use App\DTO\EpBookingContext;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Services\EpExcessCashbackService;
+use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Sleep;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Throwable;
 
 class EpPurchaseFlowJob implements ShouldQueue
@@ -44,19 +44,14 @@ class EpPurchaseFlowJob implements ShouldQueue
 
         LoggerService::info("{$this->logPrefix} Starting", extra: $this->logExtra);
 
-        $epEcbService = app(new EpExcessCashbackService($this->context));
+        $epEcbService = new EpEcbService($this->context);
         $epEcbService->init();
 
         // Execute purchase flow steps (Token, Quote, Policy creation)
-        $epEcbService->executeSteps();
-
-        // Wait 2 minute before processing documents
-        Sleep::for(2)->minutes();
+        $epEcbService->executeSteps(); // STATUS_PAYMENT_SUCCEED
 
         // Sync policy documents
-        $epEcbService->syncPolicyDocuments();
-
-        $epEcbService->handleJobSuccess();
+        $epEcbService->syncPolicyDocuments(); // STATUS_BOOKED
 
         LoggerService::info("{$this->logPrefix} Completed", extra: $this->logExtra);
     }
@@ -90,5 +85,19 @@ class EpPurchaseFlowJob implements ShouldQueue
 
         // Don't retry for business logic errors
         return false;
+    }
+
+    /**
+     * Get the middleware the job should pass through.
+     */
+    public function middleware(): array
+    {
+        $lockKey = "ep-purchase-flow-{$this->context->etId}-{$this->context->quoteCode}";
+
+        return [
+            (new WithoutOverlapping($lockKey))
+                ->dontRelease()
+                ->expireAfter(300)
+        ];
     }
 }

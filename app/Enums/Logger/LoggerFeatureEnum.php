@@ -40,4 +40,5 @@ enum LoggerFeatureEnum: string
     case EP_PROCESS_PURCHASE_FLOW = 'ep-process-purchase-flow';
     case EP_PROCESS_WATERMARK_DOCUMENT = 'ep-process-watermark-document';
     case EP_PROCESS_SEND_DOCUMENT = 'ep-process-send-document';
+    case MA_WELCOME_JOB = 'ma-welcome-job';
 }

@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerAdditionalContactRequest;
 use App\Http\Requests\CustomerRequest;
 use App\Http\Requests\CustomerUploadRequest;
-use App\Jobs\MAWelcomeJob;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Repositories\CustomerRepository;
 use App\Repositories\NationalityRepository;
 use App\Services\BerlinService;
@@ -72,7 +72,7 @@ class CustomerController extends Controller
         $customer->update($customerRequest->validated());
 
         if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
-            MAWelcomeJob::dispatch(
+            ExtendCustomerSubscriptionViaSQS::dispatch(
                 $customer,
                 'CUSTOMER_UPDATE',
                 'customer-update-myalfred-we'

@@ -261,7 +261,7 @@ class EmbeddedProduct
     public function getDocumentList($ep, $transaction)
     {
         $isSalama = false;
-        if (! $transaction->isEmpty()) {
+        if (! $transaction->isEmpty() && in_array($ep->short_code, EmbeddedProductEnum::getSukoonMedexCodes())) {
             $paidAt = $transaction->first()->paid_at ?? null;
             $isSalama = $paidAt && Carbon::parse($paidAt)->lt(Carbon::parse(EmbeddedProductRepository::SALAMA_DATE));
         }

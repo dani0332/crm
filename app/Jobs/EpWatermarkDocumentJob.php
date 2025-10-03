@@ -1,17 +1,16 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Jobs;
 
 use App\DTO\EpBookingContext;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Models\EmbeddedTransaction;
-use App\Services\EpExcessCashbackService;
+use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Throwable;
 
 class EpWatermarkDocumentJob implements ShouldQueue
@@ -19,11 +18,11 @@ class EpWatermarkDocumentJob implements ShouldQueue
     use Queueable;
 
     public $tries = 2;
-    public $timeout = 300;
-    public $backoff = 30;
+    public $timeout = 180;
+    public $backoff = 10;
 
     private ?EmbeddedTransaction $embeddedTransaction = null;
-    private array $watermarkableDocTypeCodes;
+    private array $watermarkableDocTypeCodes = [];
 
     private string $logPrefix = 'EpWatermarkDocument - Job:';
     private array $logExtra = [];
@@ -47,15 +46,19 @@ class EpWatermarkDocumentJob implements ShouldQueue
         LoggerService::info("{$this->logPrefix} Starting", extra: $this->logExtra);
 
         $this->embeddedTransaction = EmbeddedTransaction::find($this->context->etId);
-        
+
         if (!$this->embeddedTransaction) {
             throw new \Exception("EmbeddedTransaction not found with ID: {$this->context->etId}");
         }
+
         $documents = $this->embeddedTransaction->documents()
             ->whereIn('document_type_code', $this->watermarkableDocTypeCodes)->get();
 
-        $epEcbService = app(new EpExcessCashbackService($this->context));
+        $epEcbService = new EpEcbService($this->context);
         $epEcbService->processWatermarkDocuments($documents, $this->watermarkableDocTypeCodes);
+
+        $epEcbService->finalizeTransactionStatus();
+        $epEcbService->handleJobSuccess();
 
         LoggerService::info("{$this->logPrefix} Completed", extra: $this->logExtra);
     }
@@ -71,8 +74,23 @@ class EpWatermarkDocumentJob implements ShouldQueue
     public function shouldRetry(Throwable $exception): bool
     {
         // Retry for file processing issues only
-        return str_contains($exception->getMessage(), 'file') ||
-               str_contains($exception->getMessage(), 'permission') ||
-               str_contains($exception->getMessage(), 'temporary');
+        return str_contains($exception->getMessage(), 'timeout') ||
+            str_contains($exception->getMessage(), 'file') ||
+            str_contains($exception->getMessage(), 'permission') ||
+            str_contains($exception->getMessage(), 'temporary');
+    }
+
+    /**
+     * Get the middleware the job should pass through.
+     */
+    public function middleware(): array
+    {
+        $lockKey = "ep-watermark-document-{$this->context->etId}-{$this->context->quoteCode}";
+
+        return [
+            (new WithoutOverlapping($lockKey))
+                ->dontRelease()
+                ->expireAfter(180)
+        ];
     }
 }

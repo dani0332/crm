@@ -4,37 +4,27 @@ namespace App\Services;
 
 use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
-use App\Enums\InsuranceProviderEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteDocumentsEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypes;
-use App\Enums\SendPolicyTypeEnum;
 use App\Models\DocumentType;
 use App\Jobs\EpPurchaseFlowJob;
 use App\Jobs\EpWatermarkDocumentJob;
 use App\Jobs\EpSendDocumentJob;
 use App\Mail\EpFailureNotification;
 use App\Models\InsurerRequestResponse;
-use App\Models\EmbeddedTransaction;
-use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
-use App\Services\SageApiService;
-use App\Services\SageApiEmbeddedProductService;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Bus;
 use Error;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Sleep;
 use Throwable;
 
-class EpExcessCashbackService extends EpBookingService
+class EpEcbService extends EpBookingService
 {
-    private int $providerId = 0;
-    private ?EmbeddedTransaction $embeddedTransaction = null;
-
     // API Configuration
     private string $baseUrl = '';
     private string $clientCode = '';
@@ -46,7 +36,6 @@ class EpExcessCashbackService extends EpBookingService
     private ?string $bearerToken = null;
     private ?string $quoteReferenceNumber = null;
     private ?string $policyNumber = null;
-    public array $reqDocTypeCodes = [];
 
     // Cache Keys
     private const TOKEN_CACHE_KEY = 'tpa_client_api_token';
@@ -63,31 +52,22 @@ class EpExcessCashbackService extends EpBookingService
         EpBookingContext $context
     ) {
         parent::__construct('EpEcb', $context);
-        $this->reqDocTypeCodes = $this->getRequiredDocTypeCodes();
     }
 
     public function init(): void
     {
-        // Start feature and quote logging
-        LoggerService::startQuoteLogging($this->context->quoteCode, LoggerFeatureEnum::EP_PROCESS_PURCHASE_FLOW);
-
         $this->logExtra = $this->context->logExtra;
 
         if (!$this->quote) {
             throw new Exception("Quote not found.");
         }
 
-        // Load API configuration
-        $this->loadApiConfiguration();
-
-        // Load embedded transaction
-        $this->embeddedTransaction = EmbeddedTransaction::findOrFail($this->context->etId);
-        
         if (!$this->embeddedTransaction) {
             throw new Exception("EmbeddedTransaction not found with ID: {$this->context->etId}");
         }
 
-        $this->providerId = InsuranceProvider::where('code', InsuranceProviderEnum::NGI->value)->value('id') ?? 0;
+        // Load API configuration
+        $this->loadApiConfiguration();
 
         // Restore workflow state from previous execution
         $this->restoreWorkflowState();
@@ -156,8 +136,7 @@ class EpExcessCashbackService extends EpBookingService
             ->catch(function (Throwable $e) use ($context, $logExtra) {
                 LoggerService::error('EpEcbService: Workflow chain failed', extra: [
                     ...$logExtra,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'error' => $e->getMessage()
                 ]);
 
                 try {
@@ -251,24 +230,31 @@ class EpExcessCashbackService extends EpBookingService
 
         $currentStatus = $this->embeddedTransaction->status ?? '';
 
+        $savedReqDocumentDocTypeCodes = $this->embeddedTransaction?->documents()
+            ->whereIn('document_type_code', $this->reqDocTypeCodes)->get()
+            ->pluck('document_type_code')
+            ->toArray();
+
+        $missingReqDocTypeCodes = array_diff($this->reqDocTypeCodes, $savedReqDocumentDocTypeCodes);
+
         // Step 1: Get policy documents
-        if (!$this->shouldSkipStep('get_documents', $currentStatus)) {
+        if (!$this->shouldSkipStep('get_documents', $currentStatus) && !empty($missingReqDocTypeCodes)) {
             LoggerService::info($this->logPrefix . " Executing step: GetPolicyDocuments", extra: $this->logExtra);
 
             // Get policy documents
             $getPolicyDocumentsResponse = (array) $this->executeGetPolicyDocuments();
 
+            // Update commission if needed
+            $this->executeUpdateCommission($getPolicyDocumentsResponse ?? []);
+
             // Download, Upload & Save policy documents to DB
             $this->executeSyncDocuments($getPolicyDocumentsResponse);
 
             LoggerService::info($this->logPrefix . " Step completed: GetPolicyDocuments", extra: $this->logExtra);
-        } else {
-            LoggerService::info($this->logPrefix . " Skipping step: GetPolicyDocuments - already completed", extra: $this->logExtra);
-        }
 
-        // Step 2: Update commission if needed
-        if (!$this->shouldSkipStep('prepare_for_sage', $currentStatus)) {
-            $this->executeUpdateCommission($getPolicyDocumentsResponse ?? []);
+        } else {
+            $extraLogs = [...$this->logExtra, 'missing_req_doc_type_codes' => $missingReqDocTypeCodes];
+            LoggerService::info($this->logPrefix . " Skipping step: GetPolicyDocuments - already completed", extra: $extraLogs);
         }
 
         LoggerService::info($this->logPrefix . ' Document sync completed successfully', extra: $this->logExtra);
@@ -460,6 +446,12 @@ class EpExcessCashbackService extends EpBookingService
             ...$this->logExtra,
             'certificate_number' => $this->policyNumber
         ]);
+
+        $this->embeddedTransaction->documents()->whereIn('document_type_code', $this->reqDocTypeCodes)->delete();
+        $this->embeddedTransaction->load('documents');
+
+        // Wait 2 minute before processing documents
+        Sleep::for(2)->minutes();
     }
 
     /**
@@ -513,6 +505,7 @@ class EpExcessCashbackService extends EpBookingService
             'docs' => $docStatus
         ]);
 
+        $this->embeddedTransaction->load('documents');
         $savedDocumentDocTypes = $this->embeddedTransaction?->documents?->pluck('document_type_code')->toArray();
         $missingDocumentDocTypes = array_diff($this->reqDocTypeCodes, $savedDocumentDocTypes);
 
@@ -525,6 +518,12 @@ class EpExcessCashbackService extends EpBookingService
     private function executeUpdateCommission($policyDetailResponse): void
     {
         $policyPrice = floatval($policyDetailResponse['policy_premium_with_tax'] ?? 0);
+
+        if (empty($policyDetailResponse) || !($policyPrice > 0)) {
+            LoggerService::info("{$this->logPrefix} Transaction commissions & policy_details are not updated, due to empty policy response", extra: $this->logExtra);
+            return;
+        }
+
         $policyDetails = [
             'tax_invoice_no' => $policyDetailResponse['premium_inv_no'] ?? '',
             'tax_invoice_buyer_no' => $policyDetailResponse['commision_inv_no'] ?? '',
@@ -535,18 +534,10 @@ class EpExcessCashbackService extends EpBookingService
             'credit_note_no' => $policyDetailResponse['credit_note_no'] ?? '',
         ];
 
-        $isPolicyBooked = $this->embeddedTransaction?->policy_status == EmbeddedTransactionEnum::STATUS_BOOKED;
-        if ($isPolicyBooked && $policyPrice > 0) {
-            $policyDetails = ['policy_status' => EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE, ...$policyDetails];
-        }
-
-        // Update transaction status and commissions
+        // Update transaction commissions and policy_details
         $this->embeddedTransaction->update($policyDetails);
 
-        LoggerService::info($this->logPrefix . ' Transaction status updated', extra: [
-            ...$this->logExtra,
-            'policy_status' => $this->embeddedTransaction?->policy_status
-        ]);
+        LoggerService::info($this->logPrefix . ' Transaction commissions & policy_details updated', extra: $this->logExtra);
     }
 
     // Step 4.1: Get policy documents
@@ -726,7 +717,7 @@ class EpExcessCashbackService extends EpBookingService
                 // Store API request and response in database
                 InsurerRequestResponse::create([
                     'quote_uuid' => $this->quote?->uuid,
-                    'provider_id' => $this->providerId, // You may want to set this based on your provider mapping
+                    'provider_id' => $this->context->insuranceProviderId, // You may want to set this based on your provider mapping
                     'call_type' => "EmbeddedProduct-ECB",
                     'request' => json_encode($payload),
                     'response' => json_encode($responseLog['data'] ?? []),
@@ -792,6 +783,7 @@ class EpExcessCashbackService extends EpBookingService
         // Step: Download & Upload policy document
         $documentData = $this->executeDownloadAndUploadDocument($docUrl, $dir);
         if (!$documentData['success']) {
+            $this->logApiRequest('DownloadAndSavePolicyDocument', responseLog: ['error' => $documentData['error']], isSavedInDB: false);
             return ['success' => false, 'error' => $documentData['error']];
         }
 
@@ -809,7 +801,12 @@ class EpExcessCashbackService extends EpBookingService
             'watermarked_doc_url' => null,
         ];
 
-        $this->embeddedTransaction->documents()->create($documentData);
+        $filterDocument = [
+            'document_type_code' => $documentType->code,
+            'quote_documentable_id' => $this->embeddedTransaction->id,
+            'quote_documentable_type' => get_class($this->embeddedTransaction),
+        ];
+        $this->embeddedTransaction->documents()->updateOrCreate($filterDocument, $documentData);
 
         return ['success' => true, 'data' => $documentData];
     }
@@ -836,7 +833,7 @@ class EpExcessCashbackService extends EpBookingService
             $response = $this->uploadDocument($fileName, $fileContent, $dir);
 
             if (!$response['success']) {
-                throw new Error($response['error'] ?? "UploadDocument Process Failed, doc_name: {$fileName}");
+                throw new Error($response['error'] ?? "UploadDocument: Process Failed, doc_name: {$fileName}");
             }
 
             return [
@@ -907,67 +904,7 @@ class EpExcessCashbackService extends EpBookingService
         ];
     }
 
-    public function handleJobSuccess()
-    {
-        $response = [];
 
-        $quoteStatusId = $this->quote?->quote_status_id;
-        $epPolicyStatus = $this->embeddedTransaction?->policy_status;
-
-        LoggerService::info("{$this->logPrefix} Begin handleJobSuccess: QuoteStatusId: {$quoteStatusId}, EpPolicyStatus: {$epPolicyStatus}");
-
-        if ($epPolicyStatus == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE) {
-            $response = match ($quoteStatusId) {
-                QuoteStatusEnum::PolicyIssued => $this->callSageBookingProcess(),
-                QuoteStatusEnum::PolicyBooked => $this->scheduleSageBookingForSukoonEp(),
-                default => ['status' => true, 'message' => 'Sage booking is not called'],
-            };
-        }
-
-        LoggerService::info("{$this->logPrefix} Finish handleJobSuccess: QuoteStatusId: {$quoteStatusId}, EpPolicyStatus: {$epPolicyStatus}", extra: ['response' => $response]);
-
-        return $response;
-    }
-
-    private function callSageBookingProcess()
-    {
-        $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
-
-        $sageApiService = (new SageApiService);
-        $sageApiService->updateAndLogQuoteStatus($this->quote, $this->context?->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
-
-        $request = new \stdClass;
-        $request->quote_id = $this->quote?->id;
-        $request->modelType = $quoteType;
-        $request->model_type = $quoteType;
-        $request->is_send_policy = false;
-        $request->send_policy_type = SendPolicyTypeEnum::SAGE;
-        $request->transaction_payment_status = null;
-
-        $createSageProcessResponse = $sageApiService->postBookPolicyToSage($request, $this->quote);
-
-        if (! $createSageProcessResponse['status']) {
-            $sageApiService->updateAndLogQuoteStatus($this->quote, $this->context?->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, null);
-        }
-
-        return $createSageProcessResponse;
-    }
-
-    private function scheduleSageBookingForSukoonEp()
-    {
-        $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
-
-        $request = [
-            'epTransactionId' => $this->embeddedTransaction->id, // embedded_transaction_id
-            'insuranceProviderId' => $this->providerId, // embedded_product's provider_id
-            'modelType' => $quoteType, // main-lead quote_type
-            'quoteId' => $this->quote?->id, // main-lead quote_id
-        ];
-
-        $scheduledBookingResponse = (new SageApiEmbeddedProductService)->scheduleBookingOfEmbeddedProduct($request);
-
-        return $scheduledBookingResponse;
-    }
 
     /**
      * Build policy creation payload

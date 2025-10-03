@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Jobs;
 
 use App\DTO\EpBookingContext;
@@ -19,15 +17,14 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Throwable;
 
 class EpSendDocumentJob implements ShouldQueue
 {
     use Queueable, GenericQueriesAllLobs;
 
-    public $tries = 3;
     public $timeout = 180;
-    public $backoff = 45;
     
     private string $logPrefix = 'EpSendDocument - Job:';
     private array $logExtra = [];
@@ -76,6 +73,20 @@ class EpSendDocumentJob implements ShouldQueue
                str_contains($exception->getMessage(), 'connection');
     }
 
+    /**
+     * Get the middleware the job should pass through.
+     */
+    public function middleware(): array
+    {
+        $lockKey = "ep-send-document-{$this->context->etId}-{$this->context->quoteCode}";
+
+        return [
+            (new WithoutOverlapping($lockKey))
+                ->dontRelease()
+                ->expireAfter(180)
+        ];
+    }
+
     
     /**
      * This function use to send email
@@ -90,19 +101,21 @@ class EpSendDocumentJob implements ShouldQueue
         LoggerService::info("{$this->logPrefix} Email sending for uuid: {$this->quote->uuid}");
 
         $advisor = $this->quote?->advisor;
-        $policyContext = config('embedded-products.ecb.policy_context');
-
+        
+        $policyContext = $this->getPolicyContext();
         $recipients = $this->getRecipients($this->quote->email ?? '', $advisor->email ?? '');
         $advisorData = $this->getAdvisorData($advisor);
+        $attachments = $this->fetchAttachments();
 
         $emailData = [
-            "Attachments" => $this->fetchAttachments(),
+            "Attachments" => $attachments,
             "Tags" => WorkflowTypeEnum::SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL,
             "customerName" => trim(($this->quote?->first_name ?? '') . ' ' . ($this->quote?->last_name ?? '')),
             "refID" => $this->quote?->code ?? '',
+            "uuid" => $this->quote?->uuid ?? '',
             ...$recipients,
             ...$advisorData,
-            "attachingDocsEmail" => "yes",
+            "attachingDocsEmail" => count($attachments) > 0 ? "yes" : "no",
             "DisplayName" => "InsuranceMarket.ae",
             "supportUserEmail" => "arsalansupport23@yopmail.com",
             ...$policyContext,
@@ -123,6 +136,17 @@ class EpSendDocumentJob implements ShouldQueue
         ];
     }
 
+    private function getPolicyContext(): array
+    {
+        $policyContext = config('embedded-products.ecb.policy_context');
+
+        return [
+            'policyClaimLimit' => $policyContext['policy_claim_limit'] ?? '',
+            'policyCoverage' => $policyContext['policy_coverage'] ?? '',
+            'policyDuration' => $policyContext['policy_duration'] ?? '',
+        ];
+    }
+
     private function getRecipients(string $customerEmail, string $advisorEmail): array
     {
         $configEnv = app()->environment('production') ? 'prod' : 'non_prod';
@@ -132,7 +156,7 @@ class EpSendDocumentJob implements ShouldQueue
         if(!empty($customerEmail)) {
             $toEmails[] = $customerEmail;
         }
-        
+
         $ccEmails = $recipientEmails['cc'];
         if(!empty($advisorEmail)) {
             $ccEmails[] = $advisorEmail;
@@ -166,7 +190,7 @@ class EpSendDocumentJob implements ShouldQueue
     {
         $transaction = EmbeddedTransaction::findOrFail($this->context->etId);
         $embeddedProduct = $transaction?->product?->embeddedProduct;
-        
+
         if (empty($embeddedProduct)) {
             throw new \Exception("Embedded product not found for transaction ID: {$this->context->etId}");
         }
@@ -180,7 +204,7 @@ class EpSendDocumentJob implements ShouldQueue
 
         // make sure email required watermarked documents is not missing
         if (! empty($missingReqWatermarkedDocTypes)) {
-            return ['success' => false, 'message' => 'Required watermarked document is not found'];
+            throw new \Exception('Required watermarked document is not found');
         }
 
         $attachments = $this->fetchPolicyWordings($embeddedProduct);
