@@ -4,7 +4,6 @@ namespace App\Jobs\SLA;
 
 use App\Models\SLATracking;
 use App\Services\SLAService;
-use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -33,8 +32,6 @@ class SendSLABreachedNotificationJob implements ShouldQueue
 
         if (! $isSent && $this->attempts() < $this->tries) {
             $this->release(now()->addMinutes(2));
-        } else {
-            $this->fail(new Exception('SLA Breach Notification not sent'));
         }
     }
 }

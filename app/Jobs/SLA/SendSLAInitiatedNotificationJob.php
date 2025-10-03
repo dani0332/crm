@@ -33,8 +33,6 @@ class SendSLAInitiatedNotificationJob implements ShouldQueue
 
         if (! $isSent && $this->attempts() < $this->tries) {
             $this->release(now()->addMinutes(2));
-        } else {
-            $this->fail(new Exception('SLA Initiated Notification not sent'));
         }
     }
 }
