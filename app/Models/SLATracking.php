@@ -79,6 +79,7 @@ class SLATracking extends Model
             'status' => SLAStatusEnum::MET,
             'reason' => $reason ?? 'SLA met - callback made within required timeframe',
             'met_at' => now(),
+            'quote_status_id' => $this->getLead()?->quote_status_id,
         ]);
     }
 
@@ -89,6 +90,7 @@ class SLATracking extends Model
             'reason' => $reason ?? 'SLA breached - callback not made within required timeframe',
             'breached_at' => now(),
             'breach_escalated_at' => now(),
+            'quote_status_id' => $this->getLead()?->quote_status_id,
         ]);
     }
 
@@ -96,6 +98,7 @@ class SLATracking extends Model
     {
         $this->update([
             'status' => SLAStatusEnum::CANCELED,
+            'quote_status_id' => $this->getLead()?->quote_status_id,
             'reason' => $reason ?? 'SLA tracking canceled as lead is no longer PEC-marked',
         ]);
     }
@@ -105,6 +108,7 @@ class SLATracking extends Model
         $this->update([
             'status' => SLAStatusEnum::REASSIGNED,
             'reason' => $reason ?? 'Lead reassigned to another advisor',
+            'quote_status_id' => $this->getLead()?->quote_status_id,
         ]);
     }
 
@@ -119,11 +123,6 @@ class SLATracking extends Model
             HealthQuote::class => QuoteTypes::HEALTH,
             default => 'unknown',
         };
-    }
-
-    public function getLeadUuid(): ?string
-    {
-        return $this->trackable?->uuid;
     }
 
     public function scopeByLead($query, Model $lead)
