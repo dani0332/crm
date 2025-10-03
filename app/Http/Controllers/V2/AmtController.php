@@ -29,6 +29,7 @@ use App\Models\GroupMedicalType;
 use App\Models\KycLog;
 use App\Models\Nationality;
 use App\Models\User;
+use App\Repositories\ActivityRepository;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -462,6 +463,16 @@ class AmtController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
+        $activities = ActivityRepository::where([
+            'quote_type_id' => QuoteTypes::BUSINESS->id(),
+            'quote_request_id' => $record->id,
+        ])
+            ->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
+
+        $advisors = User::role(RolesEnum::GMAdvisor)
+            ->select('users.id', DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::GMAdvisor."') AS name"))
+            ->get();
+
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
@@ -511,6 +522,8 @@ class AmtController extends Controller
             'paymentDocument' => $paymentDocuments,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'activities' => $activities,
+            'advisors' => $advisors,
         ]);
     }
 
@@ -585,6 +598,19 @@ class AmtController extends Controller
 
         return inertia('GroupMedicalQuote/Cards', [
             'quotes' => array_values($leadStatuses),
+            // 'quotes' => $quotes,
+            'quoteStatusEnum' => [],
+            'lostReasons' => [],
+            'leadStatuses' => $leadStatuses,
+            'advisors' => [],
+            'teams' => [],
+            'insuranceTypeOptions' => [],
+            'quoteTypeId' => QuoteTypes::BUSINESS->id(),
+            'quoteType' => QuoteTypes::BUSINESS->value,
+            'totalCount' => 0,
+            'areBothTeamsPresent' => false,
+            'is_renewal' => null,
+            'business_type_of_insurance_id' => \App\Enums\BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL,
         ]);
     }
 }

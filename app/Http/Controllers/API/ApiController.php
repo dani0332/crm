@@ -8,6 +8,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Exports\EmailStatusExport;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AIGWorkflowRequest;
@@ -39,6 +40,7 @@ use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
+use App\Services\CQF\CarCQFFileExportService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
@@ -52,7 +54,6 @@ use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
@@ -475,8 +476,39 @@ class ApiController extends Controller
         ]);
     }
 
+    public function downloadValidationFailedFile($id)
+    {
+        return app(CarCQFFileExportService::class)->downloadValidationFailedFile($id);
+    }
     public function documentNotification(DocumentNotificationRequest $request)
     {
         return $this->apiService->documentNotification($request);
+    }
+
+    /**
+     * Export email status logs as Excel file for a specific quote
+     *
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
+    public function exportEmailStatusLogs(int $quoteTypeId, int $quoteId)
+    {
+        try {
+            $export = new EmailStatusExport($quoteId, $quoteTypeId);
+            $fileName = "email-status-logs-quote-{$quoteId}-type-{$quoteTypeId}";
+
+            return $export->download($fileName);
+        } catch (\Exception $e) {
+            Log::error('Failed to export email status logs', [
+                'quote_id' => $quoteId,
+                'quote_type_id' => $quoteTypeId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export email status logs',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }

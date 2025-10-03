@@ -112,7 +112,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
     public function getColumns()
     {
         $columns = [
-            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
+            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'nullable|max:100'],
             'email' => [
                 'index' => 1,
                 'title' => 'Customer Email',
@@ -141,10 +141,10 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
                     $onFailure('Invalid value provided for '.$attribute);
                 }
             }], 'type' => 'date'],
-            'batch' => ['index' => 13, 'title' => 'Batch', 'rules' => 'required|max:50'],
-            'make' => ['index' => 14, 'title' => 'Car Make', 'rules' => ['max:50']],
-            'model' => ['index' => 15, 'title' => 'Car Model', 'rules' => ['max:50']],
-            'year' => ['index' => 16, 'title' => 'Model Year', 'rules' => ['max:4']],
+            'batch' => ['index' => 13, 'title' => 'Batch', 'rules' => 'nullable|max:50'],
+            'make' => ['index' => 14, 'title' => 'Car Make', 'rules' => ['nullable', 'max:50']],
+            'model' => ['index' => 15, 'title' => 'Car Model', 'rules' => ['nullable', 'max:50']],
+            'year' => ['index' => 16, 'title' => 'Model Year', 'rules' => ['nullable', 'max:4']],
             'dob' => ['index' => 17, 'title' => 'Date of Birth', 'rules' => ['max:10', function ($attribute, $value, $onFailure) {
                 if (! $this->validateDate($value)) {
                     $onFailure('Invalid value provided for '.$attribute);
@@ -152,13 +152,13 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             }], 'type' => 'date'],
             'driving_experience' => ['index' => 18, 'title' => 'Driving Experience', 'rules' => ['max:50']],
             'nationality' => ['index' => 19, 'title' => 'Nationality', 'rules' => ['max:50']],
-            'provider_name' => ['index' => 20, 'title' => 'Provider Name', 'rules' => 'max:100'],
+            'provider_name' => ['index' => 20, 'title' => 'Provider Name', 'rules' => 'nullable|max:100'],
             'plan_name' => ['index' => 21, 'title' => 'Plan Name', 'rules' => 'max:100'],
             'plan_type' => ['index' => 22, 'title' => 'Repair Type', 'rules' => 'max:100'],
-            'claim_history' => ['index' => 23, 'title' => 'Claim History', 'rules' => ['max:50']],
+            'claim_history' => ['index' => 23, 'title' => 'Claim History', 'rules' => 'max:50'],
             'nc_letter' => ['index' => 24, 'title' => 'NC Letter', 'rules' => 'max:3'],
             'insurer_quote_no' => ['index' => 25, 'title' => 'Insurer Quote No', 'rules' => 'max:50'],
-            'car_value' => ['index' => 26, 'title' => 'Car Value (From Insurer)', 'rules' => 'nullable|numeric'],
+            'car_value' => ['index' => 26, 'title' => 'Car Value (From Insurer)', 'rules' => 'nullable'],
             'premium' => ['index' => 27, 'title' => 'Renewal Premium', 'rules' => 'nullable|numeric'],
             'excess' => ['index' => 28, 'title' => 'Excess', 'rules' => 'nullable|numeric'],
             'ancillary_excess' => ['index' => 29, 'title' => 'Ancillary Excess', 'rules' => 'nullable|numeric'],
@@ -182,11 +182,13 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
         ];
 
         if ($this->renewalsUploadLead->skip_plans != SkipPlansEnum::NON_GCC) {
-            $columns['make']['rules'][] = 'required';
-            $columns['model']['rules'][] = 'required';
-            $columns['year']['rules'][] = 'required';
-
-            $columns['registration_location']['rules'][] = 'required';
+            $columns['make']['rules'][] = 'nullable';
+            $columns['model']['rules'][] = 'nullable';
+            $columns['year']['rules'][] = 'nullable';
+            $columns['registration_location']['rules'][] = 'nullable';
+            $columns['car_value']['rules'] = 'required|numeric';
+            $columns['claim_history']['rules'] = 'required|max:50';
+            $columns['nc_letter']['rules'] = 'required|max:3';
 
         }
 

@@ -51,8 +51,12 @@ class ReAssignCarLeadsJob implements ShouldQueue
     {
         LoggerService::info('-------- Reassignment car job started ---------');
 
-        if (! $this->shouldProceed() && ! now()->isWeekend()) {
-            LoggerService::info('Reassignment job is not proceeding as per business timings');
+        if (! $this->shouldProceed() || now()->isWeekend()) {
+            LoggerService::info('Reassignment job is not proceeding as per business timings or today is weekend', extra: [
+                'shouldProceed' => $this->shouldProceed(),
+                'isWeekend' => now()->isWeekend(),
+                'advisorId' => $this->advisorId,
+            ]);
 
             return false;
         }

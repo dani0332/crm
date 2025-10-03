@@ -339,6 +339,7 @@ export function getQuoteType(id, returnType = 'code') {
     10: { code: 'CYC', id: 'cycle', link: '/personal-quotes' },
     11: { code: 'JSK', id: 'jetski', link: '/personal-quotes' },
     18: { code: 'SAV', id: 'savings', link: '/personal-quotes' },
+    102: { code: 'BUS', id: 'amt', link: '/medical' },
   };
   return types[id] ? types[id][returnType] : '';
 }
@@ -363,6 +364,7 @@ export const calculateDaysDifference = (start_date, end_date) => {
     const end = new Date(end_date);
     const diffTime = Math.abs(end - start);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // add 1 to the difference to include the end date n start date
     return diffDays + 1;
   }
   return 0;
@@ -395,6 +397,8 @@ export const getQuoteTypeId = (quoteTypes, quoteType) => {
 // Function to log quote export and open the URL
 export const logAndExportQuotes = async payload => {
   payload.ip_address = await getIp();
+  let isSuccess = false;
+
   return axios
     .post('/quotes/export-logs/create', payload)
     .then(async res => {
@@ -404,6 +408,7 @@ export const logAndExportQuotes = async payload => {
         data: payload.data || null,
       })
         .then(resp => {
+          isSuccess = true;
           return resp.data;
         })
         .catch(err => {
@@ -416,8 +421,8 @@ export const logAndExportQuotes = async payload => {
       throw err;
     })
     .finally(() => {
-      // Cleanup operations if needed
-      if (payload.exportType !== 'email') {
+      // Only redirect if the export was successful and it's not an email export
+      if (isSuccess && payload.exportType !== 'email') {
         window.open(payload.url);
       }
     });
