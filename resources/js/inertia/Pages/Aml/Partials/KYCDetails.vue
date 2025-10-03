@@ -301,7 +301,6 @@ const syncInsurerPortalUpdates = () => {
           position: 'top',
         });
       }
-      syncProcessLoading.value = false;
     })
     .catch(error => {
       notification.error({
@@ -309,6 +308,8 @@ const syncInsurerPortalUpdates = () => {
         position: 'top',
       });
       console.error('Sync error:', error);
+    })
+    .finally(() => {
       syncProcessLoading.value = false;
     });
 };

@@ -997,16 +997,16 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
                 $getQuoteResponseMapping = array_merge($getQuoteResponseMapping, $vehicleDriverDetailsData, $quoteDetailsData);
 
-                return response()->json([
+                return [
                     'success' => true,
                     'message' => 'Quote details retrieved and updated successfully',
                     'data' => $getQuoteResponseMapping ?? null,
-                ]);
+                ];
             } else {
-                return response()->json([
+                return [
                     'success' => false,
                     'message' => $response['message'] ?? 'Failed to retrieve quote details from insurer portal',
-                ]);
+                ];
             }
         } catch (\Exception $e) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Failed', extra: [
@@ -1014,10 +1014,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'line' => $e->getLine(),
             ]);
 
-            return response()->json([
+            return [
                 'success' => false,
                 'message' => 'An error occurred while retrieving quote details from insurer portal',
-            ]);
+            ];
         }
     }
 
