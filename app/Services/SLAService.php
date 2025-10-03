@@ -106,10 +106,13 @@ class SLAService extends BaseService
 
     private function isAssignmentTimeWithinBusinessHours(Carbon $assignmentTime): bool
     {
-        $businessStart = Carbon::createFromFormat('H:i', $this->allocationService->getBusinessStartTime());
-        $businessEnd = Carbon::createFromFormat('H:i', $this->allocationService->getBusinessEndTime());
+        $businessStart = $this->allocationService->getBusinessStartTime();
+        $businessEnd = $this->allocationService->getBusinessEndTime();
 
-        return $assignmentTime->isBetween($businessStart, $businessEnd);
+        $businessStartTime = $assignmentTime->copy()->setTimeFromTimeString($businessStart);
+        $businessEndTime = $assignmentTime->copy()->setTimeFromTimeString($businessEnd);
+
+        return $assignmentTime->isBetween($businessStartTime, $businessEndTime);
     }
 
     public function initiateSLATracking(QuoteTypes $quoteType, Model $lead): ?SLATracking
