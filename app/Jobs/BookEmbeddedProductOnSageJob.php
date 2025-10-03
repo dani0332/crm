@@ -107,9 +107,13 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
         }
 
         if ($this->isFailedDueToAttemptsOrTimeout($message)) {
-            LoggerService::info('EP Booking : BookEmbeddedProductOnSageJob failed: '.$this->epTransaction->code.' - Code : '.$code.' - Error : '.$message);
+            LoggerService::info('EP Booking : BookEmbeddedProductOnSageJob failed: '.$this->epTransaction->code.' - Code : '.$code.' - Error : '.$message, extra: [
+                'errorTraceMessage' => $exception->getTraceAsString(),
+            ]);
         } else {
-            LoggerService::error('EP Booking : BookEmbeddedProductOnSageJob failed: '.$this->epTransaction->code.' - Code : '.$code.' - Error : '.$message);
+            LoggerService::error('EP Booking : BookEmbeddedProductOnSageJob failed: '.$this->epTransaction->code.' - Code : '.$code.' - Error : '.$message, extra: [
+                'errorTraceMessage' => $exception->getTraceAsString(),
+            ]);
         }
 
         LoggerService::info('EP Booking : BookEmbeddedProductOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->epTransaction->code.' updating status to failed');
