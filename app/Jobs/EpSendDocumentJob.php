@@ -98,7 +98,7 @@ class EpSendDocumentJob implements ShouldQueue
      */
     private function sendEmail()
     {
-        LoggerService::info("{$this->logPrefix} Email sending for uuid: {$this->quote->uuid}");
+        // LoggerService::info("{$this->logPrefix} Email sending for uuid: {$this->quote->uuid}");
 
         $advisor = $this->quote?->advisor;
         
@@ -179,7 +179,7 @@ class EpSendDocumentJob implements ShouldQueue
     private function triggerBirdWorkflow(array $birdEmailData)
     {
         $sendEpDocumentsEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL)->first();
-        LoggerService::info('SendEpDocuments Email: ', extra: $birdEmailData);
+        // LoggerService::info('SendEpDocuments Email: ', extra: $birdEmailData);
 
         $url = $sendEpDocumentsEvent->value;
         app(BirdService::class)->triggerWebHookRequest($url, (object) $birdEmailData);

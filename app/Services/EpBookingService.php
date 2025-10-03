@@ -254,8 +254,8 @@ class EpBookingService extends BaseService
         $request = [
             'epTransactionId' => $this->embeddedTransaction->id, // embedded_transaction_id
             'insuranceProviderId' => $this->context->insuranceProviderId, // embedded_product's provider_id
-            'modelType' => $quoteType, // main-lead quote_type
-            'quoteId' => $this->quote?->id, // main-lead quote_id
+            'modelType' => $quoteType, // lead quote_type (Car)
+            'quoteId' => $this->quote?->id, // lead quote_id
         ];
 
         $scheduledBookingResponse = (new SageApiEmbeddedProductService)->scheduleBookingOfEmbeddedProduct($request);
