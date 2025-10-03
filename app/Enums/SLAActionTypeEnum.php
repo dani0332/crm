@@ -13,6 +13,7 @@ enum SLAActionTypeEnum: string
     case CUSTOMER_PROFILE_EDIT = 'customer_profile_edit';
     case MEMBER_DETAILS_EDIT = 'member_details_edit';
     case ADDITIONAL_CONTACTS_EDIT = 'additional_contacts_edit';
+    case ADDITIONAL_CONTACTS_ADD = 'additional_contacts_add';
     case AVAILABLE_PLANS_EDIT = 'available_plans_edit';
     case DOCUMENTS_EDIT = 'documents_edit';
 
@@ -24,6 +25,7 @@ enum SLAActionTypeEnum: string
             self::CUSTOMER_PROFILE_EDIT => 'Customer Profile Edit',
             self::MEMBER_DETAILS_EDIT => 'Member Details Edit',
             self::ADDITIONAL_CONTACTS_EDIT => 'Additional Contacts Updated',
+            self::ADDITIONAL_CONTACTS_ADD => 'Additional Contacts Added',
             self::AVAILABLE_PLANS_EDIT => 'Available Plans Updated',
             self::DOCUMENTS_EDIT => 'Documents Updated',
         };
