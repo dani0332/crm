@@ -554,6 +554,12 @@ class CarQuote extends BaseModel
         return $this->morphOne(PolicyIssuance::class, 'model');
     }
 
+    public function carQuotePlanDetail()
+    {
+        return $this->hasOne(CarQuotePlanDetail::class, 'quote_uuid', 'uuid')
+            ->where('plan_id', $this->plan_id);
+    }
+
     /**
      * Get quote tags for this car quote
      */
