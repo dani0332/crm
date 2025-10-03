@@ -121,16 +121,20 @@ class SageApiEmbeddedProductService
 
     public function getInsurerRequestResponseForECB($quote, $insuranceProviderId = null)
     {
-        $insurerRequestResponse = InsurerRequestResponse::where([
-            'quote_uuid' => $quote->uuid, 'status' => 'passed', 'execution_method' => 'GetPolicyDocuments',  'call_type' => 'EpEcb', 'provider_id' => $insuranceProviderId,
+        $insurerRequestResponse = InsurerRequestResponse::when($insuranceProviderId, function ($query, $insuranceProviderId) {
+            return $query->where('provider_id', $insuranceProviderId);
+        })->where([
+            'quote_uuid' => $quote->uuid, 'status' => 'passed', 'execution_method' => 'GetPolicyDocuments',  'call_type' => 'EpEcb',
         ])->latest()->first();
         return $insurerRequestResponse;
     }
 
     public function getInsurerRequestResponseForSukoonMedXRedx($quote, $insuranceProviderId = null)
     {
-        return InsurerRequestResponse::where([
-            'quote_uuid' => $quote->uuid, 'status' => 'passed', 'execution_method' => 'viewQuotePolicy',  'call_type' => 'EmbeddedProduct', 'provider_id' => $insuranceProviderId,
+        return InsurerRequestResponse::when($insuranceProviderId, function ($query, $insuranceProviderId) {
+            return $query->where('provider_id', $insuranceProviderId);
+        })->where([
+            'quote_uuid' => $quote->uuid, 'status' => 'passed', 'execution_method' => 'viewQuotePolicy',  'call_type' => 'EmbeddedProduct',
         ])->latest()->first();
     }
 
