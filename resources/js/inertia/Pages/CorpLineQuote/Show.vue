@@ -944,8 +944,17 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               <dd>{{ quote?.sub_source_option_text || 'N/A' }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">PRIMARY REF ID</dt>
-              <dd>{{ quote?.primary_ref_id || 'N/A' }}</dd>
+              <div>
+                <x-tooltip placement="bottom">
+                  <label
+                    class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                  >
+                    PRIMARY REF ID
+                  </label>
+                  <template #tooltip> ID of the original ECOM lead </template>
+                </x-tooltip>
+              </div>
+              <div>{{ quote?.primary_ref_id || 'N/A' }}</div>
             </div>
 
               <div class="grid sm:grid-cols-2">
