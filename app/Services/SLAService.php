@@ -15,6 +15,7 @@ use App\Services\Logger\LoggerService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class SLAService extends BaseService
 {
@@ -155,13 +156,25 @@ class SLAService extends BaseService
 
     public function meetSLA(Model $lead): void
     {
+        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
+
         $slaRecord = $this->getActiveSLA($lead);
+
+        if (Auth::id() != $slaRecord->advisor_id) {
+            LoggerService::info('SLAService - SLA tried to be met by someone other than the one assigned to the lead', [
+                'sla_id' => $slaRecord->id,
+                'quote_status_id' => $lead->quote_status_id,
+                'advisor_id' => $slaRecord->advisor_id,
+                'logged_in_user_id' => Auth::id(),
+            ]);
+
+            return;
+        }
 
         if ($slaRecord) {
             $slaRecord->markMet();
 
             LoggerService::info('SLAService - SLA marked as met', [
-                'lead_uuid' => $lead->uuid,
                 'sla_id' => $slaRecord->id,
                 'quote_status_id' => $lead->quote_status_id,
                 'completion_time' => now()->toDateTimeString(),
