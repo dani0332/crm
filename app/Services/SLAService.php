@@ -10,6 +10,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SLAActionTypeEnum;
 use App\Enums\SLAStatusEnum;
+use App\Enums\TeamNameEnum;
 use App\Models\HealthQuote;
 use App\Models\SLATracking;
 use App\Models\User;
@@ -439,10 +440,6 @@ class SLAService extends BaseService
         if (! empty($managersEmails)) {
             $payload = $this->buildPayload($slaRecord, 'sla_breach_notification');
 
-            $managersNames = $this->getManagersNames($advisor);
-
-            $payload['managerName'] = $managersNames[0] ?? '';
-            $payload['managerNames'] = $managersNames;
             $payload['managerEmail'] = $managersEmails[0] ?? '';
             $payload['managerEmails'] = $managersEmails;
             $payload['breachDateTime'] = now()->toDateTimeString();
@@ -474,16 +471,60 @@ class SLAService extends BaseService
 
     private function getManagersEmails(User $advisor)
     {
-        $managers = $this->getUserManagers($advisor->id);
+        $advisorTeams = $advisor->teams->filter(function ($team) {
+            return $team->is_active && $team->type === 'Team';
+        })->pluck('name')->toArray();
 
-        return $managers->pluck('email')->toArray();
-    }
+        $hasPCPTeam = in_array(TeamNameEnum::PCP, $advisorTeams);
+        $hasRMTeam = in_array(TeamNameEnum::RM_SPEED, $advisorTeams);
+        $hasRenewalsTeam = in_array(TeamNameEnum::RENEWALS, $advisorTeams);
+        $hasOrganicTeam = in_array(TeamNameEnum::ORGANIC, $advisorTeams);
 
-    private function getManagersNames(User $advisor)
-    {
-        $managers = $this->getUserManagers($advisor->id);
+        $managerEmails = [];
 
-        return $managers->pluck('name')->toArray();
+        if (app()->environment('production')) {
+            if ($hasPCPTeam) {
+                $managerEmails = [
+                    ...$managerEmails,
+                    'moinuddin.lakdawala@insurancemarket.ae',
+                ];
+            }
+
+            if ($hasRMTeam) {
+                $managerEmails = [
+                    ...$managerEmails,
+                    'murryell.tuppil@insurancemarket.ae',
+                    'veeral.joshi@insurancemarket.ae',
+                    'agatha.alicdan@insurancemarket.ae',
+                ];
+            }
+
+            if ($hasRenewalsTeam) {
+                $managerEmails = [
+                    ...$managerEmails,
+                    'mufti.hamid@insurancemarket.ae',
+                    'veeral.joshi@insurancemarket.ae',
+                ];
+            }
+
+            if ($hasOrganicTeam) {
+                $managerEmails = [
+                    ...$managerEmails,
+                    'arsalan.khan@insurancemarket.ae',
+                    'veeral.joshi@insurancemarket.ae',
+                ];
+            }
+        } else {
+            $managerEmails = [
+                $advisor->email,
+                'usman.iqbal@myalfred.com',
+                'wasit.ali@myalfred.com',
+            ];
+        }
+
+        $managerEmails = array_unique($managerEmails);
+
+        return array_values($managerEmails);
     }
 
     private function shouldTrackSLA($lead): bool
