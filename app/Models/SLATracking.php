@@ -79,7 +79,7 @@ class SLATracking extends Model
     {
         $this->update([
             'status' => SLAStatusEnum::BREACHED,
-            'reason' => $reason ?? 'SLA breach - callback not made within required timeframe',
+            'reason' => $reason ?? 'SLA breached - callback not made within required timeframe',
             'breached_at' => now(),
             'breach_escalated_at' => now(),
         ]);
