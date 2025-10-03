@@ -838,7 +838,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         try {
             $httpResponse = Http::timeout($timeOut)->withHeaders($this->headers)->post($url, $payload);
 
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Response API: ' . $keyAPI, extra: [
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Response API: '.$keyAPI, extra: [
                 'response' => json_encode($httpResponse),
                 'response_body' => $httpResponse->body(),
                 'response_object' => $httpResponse->object(),
