@@ -10,6 +10,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SLAActionTypeEnum;
 use App\Enums\SLAStatusEnum;
+use App\Models\HealthQuote;
 use App\Models\SLATracking;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
@@ -24,7 +25,12 @@ class SLAService extends BaseService
 
     public function __construct(protected AllocationService $allocationService) {}
 
-    public static function getMeetableQuoteStatuses(): array
+    private function isLOBEnabled(Model $lead): bool
+    {
+        return $lead instanceof HealthQuote;
+    }
+
+    private static function getMeetableQuoteStatuses(): array
     {
         return [
             QuoteStatusEnum::FollowedUp,
@@ -108,6 +114,10 @@ class SLAService extends BaseService
 
     public function initiateSLATracking(QuoteTypes $quoteType, Model $lead): ?SLATracking
     {
+        if (! $this->isLOBEnabled($lead)) {
+            return null;
+        }
+
         LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
 
         if ($this->hasAnyFinalSLA($lead)) {
@@ -155,7 +165,7 @@ class SLAService extends BaseService
         return $this->createSLA($lead, $assignmentTime, $callbackHours, $isBusinessHours);
     }
 
-    public function meetSLA(Model $lead, SLAActionTypeEnum $actionType, ?string $reason = null): void
+    private function meetSLA(Model $lead, SLAActionTypeEnum $actionType, ?string $reason = null): void
     {
         $slaRecord = $this->getActiveSLA($lead);
 
@@ -189,6 +199,10 @@ class SLAService extends BaseService
 
     public function meetSLAOnStatusUpdate(Model $lead): void
     {
+        if (! $this->isLOBEnabled($lead)) {
+            return;
+        }
+
         LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
 
         if (in_array($lead->quote_status_id, self::getMeetableQuoteStatuses())) {
@@ -203,6 +217,10 @@ class SLAService extends BaseService
 
     public function meetSLAOnEdit(Model $lead, SLAActionTypeEnum $actionType): void
     {
+        if (! $this->isLOBEnabled($lead)) {
+            return;
+        }
+
         LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
 
         LoggerService::info('SLAService - Lead edited, marking SLA as met', [
