@@ -89,6 +89,8 @@ trait PrivateClient
 
         $version = $configs->first()->version;
 
+        LoggerService::info('PCP tag version '.$version.' found for '.$leadUuid);
+
         // Apply PCP tags
         return $this->applyPcpTagsToLeadAndCustomer($model, $version);
     }
@@ -122,6 +124,8 @@ trait PrivateClient
     {
         $conditions = $this->getQuoteTypeConditions($quoteTypeId);
 
+        LoggerService::info('conditions', ['conditions' => $conditions]);
+
         foreach ($conditions as $condition) {
             $query->where($condition['column'], $condition['operator'], $condition['value']);
         }
@@ -152,13 +156,21 @@ trait PrivateClient
     private function doesLeadMatchPcpCriteria($model, $configs, string $modelClass, int $quoteTypeId): bool
     {
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
+
+        LoggerService::info('tableColumns', ['tableColumns' => $tableColumns]);
+
+
         $whereClause = $this->buildConfigWhereClause($configs, $tableColumns, $model);
+
+        LoggerService::info('whereClause', ['whereClause' => $whereClause]);
 
         $query = (new $modelClass)->where('uuid', $model->uuid)
             ->where($whereClause);
 
         $this->applyQuoteTypeSpecificConditions($query, $quoteTypeId);
 
+        LoggerService::sql('doesLeadMatchPcpCriteria', $query);
+        
         return $query->exists();
     }
 
@@ -210,7 +222,12 @@ trait PrivateClient
     {
         try {
             return DB::transaction(function () use ($pcpTagVersion, $model) {
+                LoggerService::info('Applying PCP tag to lead and customer.', extra: [
+                    'leadUuid' => $model->uuid,
+                    'pcpTagVersion' => $pcpTagVersion,
+                ]);
                 $updateResults = $this->updateLeadAndPersonalQuote($model, $pcpTagVersion);
+                
                 $customerUpdateResult = $this->updateCustomer($model, $pcpTagVersion);
 
                 $this->logUpdateResults($updateResults, $customerUpdateResult);
