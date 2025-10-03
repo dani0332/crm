@@ -29,7 +29,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     // 28 is the cURL error code for timeout
     private $className = 'policyIssuanceJob';
-    private mixed $process;
+    protected mixed $process;
     public $uniqueFor = 60 * 15; // 15 minutes
     public $uniqueKey = null; // 15 minutes
 
