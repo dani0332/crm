@@ -4,7 +4,6 @@ namespace App\Jobs\SLA;
 
 use App\Models\SLATracking;
 use App\Services\SLAService;
-use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
