@@ -363,12 +363,12 @@ class AllocationService extends BaseService
 
     public function getBusinessStartTime(): string
     {
-        return getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME, useCache: true);
+        return getAppStorageValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_START_TIME, useCache: true);
     }
 
     public function getBusinessEndTime(): string
     {
-        return getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME, useCache: true);
+        return getAppStorageValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_END_TIME, useCache: true);
     }
 
     public function isBusinessHours(): bool
