@@ -27,7 +27,7 @@ class SLAService extends BaseService
 
     private function isLOBEnabled(Model $lead): bool
     {
-        return $lead instanceof HealthQuote;
+        return $lead && $lead instanceof HealthQuote;
     }
 
     private static function getMeetableQuoteStatuses(): array
