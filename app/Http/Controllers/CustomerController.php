@@ -10,13 +10,11 @@ use App\Models\CustomerAdditionalContact;
 use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\CustomerUploadService;
-use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\SLAService;
 use App\Services\TransAppService;
 use App\Traits\GenericQueriesAllLobs;
 use DataTables;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -203,6 +201,10 @@ class CustomerController extends Controller
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
         $this->customerService->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value);
 
+        if ($quoteObject) {
+            $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_PRIMARY_UPDATE);
+        }
+
         if (isset($request->isInertia) && $request->isInertia) {
             return redirect()->back();
         }
@@ -270,14 +272,8 @@ class CustomerController extends Controller
             'value' => trim($value),
         ]);
 
-        if (isset($request->quote_type) && isset($request->quote_id)) {
-            try {
-                if ($quoteObject) {
-                    $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_ADD);
-                }
-            } catch (Exception $e) {
-                LoggerService::error('CustomerController - addAdditionalContact - Failed to meet SLA', exception: $e);
-            }
+        if ($quoteObject) {
+            $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_ADD);
         }
 
         if (isset($request->isInertia) && $request->isInertia) {
