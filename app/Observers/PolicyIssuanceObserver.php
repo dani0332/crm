@@ -6,7 +6,6 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Models\PolicyIssuance;
 use App\Services\Logger\LoggerService;
-use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
 class PolicyIssuanceObserver
@@ -31,14 +30,13 @@ class PolicyIssuanceObserver
         ) {
             LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updating Policy Issuance ID : '.$policyIssuance->id.' - Status : '.PolicyIssuanceEnum::PENDING_STATUS);
             try {
+                $shouldRetry = false;
+
                 if (str_contains($policyIssuance->message, 'PolicyIssuanceJob has been attempted too many times')) {
-                    LoggerService::info('PolicyIssuanceJob was failed due to timeout', extra: [
+                    LoggerService::info($this->className.' fn:'.__FUNCTION__.' - PolicyIssuanceJob was failed due to timeout', extra: [
                         'reason' => $policyIssuance->message,
                     ]);
-
-                    $policyIssuance->update([
-                        'status' => PolicyIssuanceEnum::PENDING_STATUS,
-                    ]);
+                    $shouldRetry = true;
                 } else {
                     $failedLogs = $policyIssuance->policyIssuanceLogs->where('status', PolicyIssuanceEnum::FAILED_STATUS);
                     if ($failedLogs) {
@@ -46,16 +44,19 @@ class PolicyIssuanceObserver
                             return str_contains($log->response, '"status": false, "message": null, "completed_step": null');
                         });
 
-                        if ($failedNullLogFound) {
-                            LoggerService::info('PolicyIssuanceJob was failed due to timeout', extra: [
-                                'error' => $failedNullLogFound->response,
+                        if ($failedNullLogFound->isNotEmpty()) {
+                            LoggerService::info($this->className.' fn:'.__FUNCTION__.' - PolicyIssuanceJob was failed due to timeout', extra: [
+                                'error' => $failedNullLogFound->first()?->response,
                             ]);
-
-                            $policyIssuance->update([
-                                'status' => PolicyIssuanceEnum::PENDING_STATUS,
-                            ]);
+                            $shouldRetry = true;
                         }
                     }
+                }
+
+                if ($shouldRetry) {
+                    $policyIssuance->update([
+                        'status' => PolicyIssuanceEnum::PENDING_STATUS,
+                    ]);
                 }
             } catch (\Exception $ex) {
                 LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
