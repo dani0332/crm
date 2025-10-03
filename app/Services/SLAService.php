@@ -205,22 +205,6 @@ class SLAService extends BaseService
     {
         LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
 
-        $validActionTypes = [
-            SLAActionTypeEnum::CUSTOMER_PROFILE_EDIT,
-            SLAActionTypeEnum::MEMBER_DETAILS_EDIT,
-            SLAActionTypeEnum::ADDITIONAL_CONTACTS_EDIT,
-            SLAActionTypeEnum::AVAILABLE_PLANS_EDIT,
-            SLAActionTypeEnum::DOCUMENTS_EDIT,
-        ];
-
-        if (! in_array($actionType, $validActionTypes)) {
-            LoggerService::warning('SLAService - Invalid edit type provided', [
-                'edit_type' => $actionType,
-            ]);
-
-            return;
-        }
-
         LoggerService::info('SLAService - Lead edited, marking SLA as met', [
             'action_type_label' => $actionType->label(),
         ]);
