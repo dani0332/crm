@@ -18,6 +18,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SLAActionTypeEnum;
 use App\Facades\Ken;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
@@ -63,7 +64,7 @@ class HealthQuoteService extends BaseService
 
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder, protected SLAService $slaService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
@@ -454,6 +455,8 @@ class HealthQuoteService extends BaseService
         $healthQuote->health_plan_type_id = $request->plan_type_id;
 
         $healthQuote->save();
+
+        $this->slaService->meetSLAOnEdit($healthQuote, SLAActionTypeEnum::LEAD_EDIT);
 
         ReEvaluatePecJob::dispatch($healthQuote->uuid);
 
