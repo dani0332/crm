@@ -159,7 +159,6 @@ trait PrivateClient
 
         LoggerService::info('tableColumns', ['tableColumns' => $tableColumns]);
 
-
         $whereClause = $this->buildConfigWhereClause($configs, $tableColumns, $model);
 
         // Log the configs that will be used to build the where clause for debugging
@@ -171,7 +170,7 @@ trait PrivateClient
                     'value' => $config->value,
                     'currency_type_id' => $config->currency_type_id ?? null,
                 ];
-            })->toArray()
+            })->toArray(),
         ]);
 
         $query = (new $modelClass)->where('uuid', $model->uuid)
@@ -180,7 +179,7 @@ trait PrivateClient
         $this->applyQuoteTypeSpecificConditions($query, $quoteTypeId);
 
         LoggerService::sql('doesLeadMatchPcpCriteria', $query);
-        
+
         return $query->exists();
     }
 
@@ -237,7 +236,7 @@ trait PrivateClient
                     'pcpTagVersion' => $pcpTagVersion,
                 ]);
                 $updateResults = $this->updateLeadAndPersonalQuote($model, $pcpTagVersion);
-                
+
                 $customerUpdateResult = $this->updateCustomer($model, $pcpTagVersion);
 
                 $this->logUpdateResults($updateResults, $customerUpdateResult);
