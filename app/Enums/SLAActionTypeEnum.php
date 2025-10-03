@@ -18,7 +18,7 @@ enum SLAActionTypeEnum: string
     case ADDITIONAL_CONTACTS_EDIT = 'additional_contacts_edit';
     case ADDITIONAL_CONTACTS_ADD = 'additional_contacts_add';
     case ADDITIONAL_CONTACTS_PRIMARY_UPDATE = 'additional_contacts_primary_update';
-    case AVAILABLE_PLANS_EDIT = 'available_plans_edit';
+    case AVAILABLE_PLAN_SELECTED = 'available_plan_selected';
     case DOCUMENTS_UPLOAD = 'documents_uploaded';
 
     public function label()
@@ -33,7 +33,7 @@ enum SLAActionTypeEnum: string
             self::MEMBER_DETAILS_DELETE => 'Member Details Deleted',
             self::ADDITIONAL_CONTACTS_EDIT => 'Additional Contacts Updated',
             self::ADDITIONAL_CONTACTS_ADD => 'Additional Contacts Added',
-            self::AVAILABLE_PLANS_EDIT => 'Available Plans Updated',
+            self::AVAILABLE_PLAN_SELECTED => 'Available Plan Selected',
             self::ADDITIONAL_CONTACTS_PRIMARY_UPDATE => 'Additional Contacts Primary Updated',
             self::DOCUMENTS_UPLOAD => 'Documents Uploaded',
         };
