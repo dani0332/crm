@@ -162,7 +162,17 @@ trait PrivateClient
 
         $whereClause = $this->buildConfigWhereClause($configs, $tableColumns, $model);
 
-        LoggerService::info('whereClause', ['whereClause' => $whereClause]);
+        // Log the configs that will be used to build the where clause for debugging
+        LoggerService::info('PCP configs for where clause', [
+            'configs' => $configs->map(function ($config) {
+                return [
+                    'field_name' => $config->field_name,
+                    'operator' => $config->operator,
+                    'value' => $config->value,
+                    'currency_type_id' => $config->currency_type_id ?? null,
+                ];
+            })->toArray()
+        ]);
 
         $query = (new $modelClass)->where('uuid', $model->uuid)
             ->where($whereClause);
