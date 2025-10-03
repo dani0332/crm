@@ -24,6 +24,8 @@ class SLATracking extends Model
         'status',
         'reason',
         'breach_escalated_at',
+        'quote_status_id',
+        'meet_action_type',
     ];
     protected $casts = [
         'assigned_at' => 'datetime',
@@ -43,6 +45,11 @@ class SLATracking extends Model
     public function advisor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'advisor_id');
+    }
+
+    public function quoteStatus(): BelongsTo
+    {
+        return $this->belongsTo(QuoteStatus::class);
     }
 
     public function scopeActive($query)
