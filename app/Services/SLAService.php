@@ -8,6 +8,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\SLAActionTypeEnum;
 use App\Enums\SLAStatusEnum;
 use App\Models\SLATracking;
 use App\Models\User;
@@ -119,7 +120,7 @@ class SLAService extends BaseService
 
         if (! $this->shouldTrackSLA($lead)) {
             if ($existingActiveSLA) {
-                $existingActiveSLA->markMet('SLA tracking marked as met because lead is no longer PEC-marked which means customer has already been contacted');
+                $existingActiveSLA->markMet(SLAActionTypeEnum::PEC_TAG_REMOVED, 'SLA tracking marked as met because lead is no longer PEC-marked which means customer has already been contacted');
             }
 
             return null;
@@ -154,11 +155,15 @@ class SLAService extends BaseService
         return $this->createSLA($lead, $assignmentTime, $callbackHours, $isBusinessHours);
     }
 
-    public function meetSLA(Model $lead): void
+    public function meetSLA(Model $lead, SLAActionTypeEnum $actionType, ?string $reason = null): void
     {
-        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
-
         $slaRecord = $this->getActiveSLA($lead);
+
+        if (! $slaRecord) {
+            LoggerService::info('SLAService - No active SLA found for this lead');
+
+            return;
+        }
 
         if (Auth::id() != $slaRecord->advisor_id) {
             LoggerService::info('SLAService - SLA tried to be met by someone other than the one assigned to the lead', [
@@ -171,15 +176,56 @@ class SLAService extends BaseService
             return;
         }
 
-        if ($slaRecord) {
-            $slaRecord->markMet();
+        $defaultReason = 'SLA met by advisor action';
+        $slaRecord->markMet($actionType, $reason ?? $defaultReason);
 
-            LoggerService::info('SLAService - SLA marked as met', [
-                'sla_id' => $slaRecord->id,
-                'quote_status_id' => $lead->quote_status_id,
-                'completion_time' => now()->toDateTimeString(),
+        LoggerService::info('SLAService - SLA marked as met', [
+            'sla_id' => $slaRecord->id,
+            'quote_status_id' => $lead->quote_status_id,
+            'completion_time' => now()->toDateTimeString(),
+            'reason' => $reason ?? $defaultReason,
+        ]);
+    }
+
+    public function meetSLAOnStatusUpdate(Model $lead): void
+    {
+        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
+
+        if (in_array($lead->quote_status_id, self::getMeetableQuoteStatuses())) {
+            $quoteStatus = $lead->quoteStatus?->text;
+            LoggerService::info("SLAService - Status updated to {$quoteStatus}, marking SLA as met", [
+                'new_status_id' => $lead->quote_status_id,
             ]);
+
+            $this->meetSLA($lead, SLAActionTypeEnum::STATUS_UPDATED, "Lead status updated to: {$quoteStatus}");
         }
+    }
+
+    public function meetSLAOnEdit(Model $lead, SLAActionTypeEnum $actionType): void
+    {
+        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
+
+        $validActionTypes = [
+            SLAActionTypeEnum::CUSTOMER_PROFILE_EDIT,
+            SLAActionTypeEnum::MEMBER_DETAILS_EDIT,
+            SLAActionTypeEnum::ADDITIONAL_CONTACTS_EDIT,
+            SLAActionTypeEnum::AVAILABLE_PLANS_EDIT,
+            SLAActionTypeEnum::DOCUMENTS_EDIT,
+        ];
+
+        if (! in_array($actionType, $validActionTypes)) {
+            LoggerService::warning('SLAService - Invalid edit type provided', [
+                'edit_type' => $actionType,
+            ]);
+
+            return;
+        }
+
+        LoggerService::info('SLAService - Lead edited, marking SLA as met', [
+            'action_type_label' => $actionType->label(),
+        ]);
+
+        $this->meetSLA($lead, $actionType, "Lead edited with action type: {$actionType->label()}");
     }
 
     private function calculateSLADueTime(Carbon $assignmentTime, float $slaHours, bool $isBusinessHours): Carbon
