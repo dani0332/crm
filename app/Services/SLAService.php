@@ -153,13 +153,32 @@ class SLAService extends BaseService
     {
         $slaMinutes = $slaHours * 60;
 
+        $businessStart = $this->allocationService->getBusinessStartTime();
         $businessEnd = $this->allocationService->getBusinessEndTime();
 
-        // If assigned outside business hours or on weekends, start from next business day
-        if (! $isBusinessHours || $assignmentTime->isWeekend()) {
+        // If assigned on weekend, start from next business day
+        if ($assignmentTime->isWeekend()) {
             $nextBusinessDay = $this->getNextBusinessDayStart($assignmentTime);
 
             return $this->addBusinessMinutesFromStart($nextBusinessDay, $slaMinutes);
+        }
+
+        // If assigned outside business hours on a weekday
+        if (! $isBusinessHours) {
+            $businessStartTime = $assignmentTime->copy()->setTimeFromTimeString($businessStart);
+            $businessEndTime = $assignmentTime->copy()->setTimeFromTimeString($businessEnd);
+
+            // If before business hours, start from same day's business start
+            if ($assignmentTime->lessThan($businessStartTime)) {
+                return $this->addBusinessMinutesFromStart($businessStartTime, $slaMinutes);
+            }
+
+            // If after business hours, start from next business day
+            if ($assignmentTime->greaterThanOrEqualTo($businessEndTime)) {
+                $nextBusinessDay = $this->getNextBusinessDayStart($assignmentTime);
+
+                return $this->addBusinessMinutesFromStart($nextBusinessDay, $slaMinutes);
+            }
         }
 
         // Assignment is during business hours
