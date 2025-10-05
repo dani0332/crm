@@ -7,6 +7,7 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\EpCategoryEnum;
+use App\Enums\EpEcbExcludeVehicleEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
@@ -29,6 +30,7 @@ use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
 use App\Jobs\SukoonMedexPurchaseFlowJob;
 use App\Models\ApplicationStorage;
+use App\Models\CarMake;
 use App\Models\CustomerAddress;
 use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
@@ -1368,5 +1370,95 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return null;
+    }
+
+    /**
+     * Check if the quote has an EpEcb payment with authorised or captured status
+     * Only for CAR Quote With EP ECB
+     *
+     * @param int $quoteId
+     * @return bool
+     */
+    public function checkIsEpEcbPaymentAuthorisedOrCaptured($quoteId): bool
+    {
+        return EmbeddedTransaction::where(['quote_type_id' => QuoteTypeId::Car, 'quote_request_id' => $quoteId, 'is_selected' => true])
+            ->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED])
+            ->whereHas('product.embeddedProduct', fn ($q) => $q->where('short_code', EmbeddedProductEnum::ECB))
+            ->exists();
+    }
+
+    /**
+     * Check if the CarMakeId is matched with the excluded vehicles of EpEcb
+     * Only for CAR Quote With EP ECB
+     *
+     * @param int $makeId
+     * @return bool
+     */
+    public function checkIsCarMakeIdMatchedWithExcludedEcbVehicle($makeId): bool
+    {
+        $carMake = CarMake::select('id', 'code')->find($makeId);
+        if(empty($carMake?->code)) {
+            return false;
+        }
+        $epEcbExcludeVehicleCodes = EpEcbExcludeVehicleEnum::getMakeCodes();
+        return in_array($carMake->code, $epEcbExcludeVehicleCodes);
+    }
+
+    /**
+     * Process cancel payment
+     * Only for CAR Quote With EP ECB
+     *
+     * @param Quote $quote
+     * @param int $quoteTypeId
+     * @param string $reason
+     * @return array
+     */
+    public function processEpEcbCancelPayment($quote, $quoteTypeId, $reason)
+    {
+        $extraLog = ['quote_id' => $quote?->id, 'quote_type_id' => $quoteTypeId, 'reason' => $reason];
+
+        $modelType = QuoteTypes::getName($quoteTypeId);
+        if($quoteTypeId != QuoteTypeId::Car || empty($quote?->id) || empty($reason)) {
+            return ['success' => false, 'message' => 'Invalid quote, quote_type_id or reason'];
+        }
+
+        $epTransactionDetails = $this->getEpTransactionDetails($quoteTypeId, $quote->id, [EmbeddedProductEnum::ECB])->first();
+        $epId = $epTransactionDetails->product->embedded_product_id ?? null;
+        $payment = $epTransactionDetails->payments->first();
+
+        $extraLog = [...$extraLog, 'epId' => $epId, 'amount' => $payment?->premium_authorized];
+
+        if(empty($epId) || empty($payment?->premium_authorized)) {
+            return ['success' => false, 'message' => 'Not Found - embedded_product_id or payment_amount'];
+        }
+
+        $cancelPaymentData = [
+            'embedded_id' => $epId,
+            'quote_id' => $quote->id,
+            'modelType' => $modelType,
+            'reason' => $reason,
+            'amount' => $payment->premium_authorized,
+            'uuid' => $quote->uuid,
+        ];
+        $response = app(EmbeddedProductRepository::class)->fetchCancelPayment($cancelPaymentData);
+
+        if($response['code'] != 200) {
+            return ['success' => false, 'message' => $response['data'][0] ?? 'Failed to cancel payment for Embedded Product (ECB)'];
+        }
+
+        return ['success' => true, 'message' => $response['data'][0] ?? 'Payment cancelled successfully for Embedded Product (ECB)'];
+    }
+
+    public function getEpTransactionDetails($quoteTypeId, $quoteId, $shortCodes = [])
+    {
+        return EmbeddedTransaction::with('payments:id,paymentable_id,paymentable_type,premium_authorized', 'product:id,embedded_product_id','product.embeddedProduct:id,short_code,insurance_provider_id')
+            ->select('id', 'quote_type_id', 'quote_request_id', 'is_selected', 'payment_status_id', 'product_id')
+            ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteId, 'is_selected' => true])
+            ->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED])
+            ->when(! empty($shortCodes), 
+                fn ($query) => $query->whereHas('product.embeddedProduct', 
+                    fn ($q) => $q->whereIn('short_code', $shortCodes)
+                )
+            )->get();
     }
 }

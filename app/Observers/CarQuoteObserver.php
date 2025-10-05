@@ -162,5 +162,39 @@ class CarQuoteObserver
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
+        
+        if(isset($dirty['car_make_id']) || isset($dirty['registration_type']) || isset($dirty['is_modified'])) {
+            $reason = [];
+            $embeddedProductRepo = app(EmbeddedProductRepository::class);
+            if ($embeddedProductRepo->checkIsEpEcbPaymentAuthorisedOrCaptured($lead->id)) {
+                if(isset($dirty['car_make_id']) && $embeddedProductRepo->checkIsCarMakeIdMatchedWithExcludedEcbVehicle($lead->car_make_id)) {
+                    $reason[] = "due to change of CarMake, matched with excluded ECB vehicle";
+                }
+                if(isset($dirty['registration_type']) && $lead->registration_type == CarRegistrationType::COMPANY) {
+                    $reason[] = "due to change of RegistrationType to {$lead->registration_type}";
+                }
+                if(isset($dirty['is_modified']) && $lead->is_modified == true) {
+                    $reason[] = "due to change of IsModified to {$lead->is_modified}";
+                }
+
+                if(!empty($reason)) {
+                    $reason = implode(' & ', $reason);
+                    $extraLog = ['cancel_payment_reason' => $reason, 'quote_id' => $lead->id, 'quote_type_id' => QuoteTypeId::Car, 'uuid' => $lead->uuid];
+
+                    try {
+                        $response = $embeddedProductRepo->processEpEcbCancelPayment($lead, QuoteTypeId::Car, $reason);
+                        if(!$response['success']) {
+                            throw new \Exception($response['message'] ?? 'Failed to cancel payment for Embedded Product (ECB)');
+                        }
+
+                        LoggerService::info('CarQuoteObserver - fn:processEpEcbCancelPayment', extra: [...$extraLog, ...$response]);
+
+                    } catch (Exception $e) {
+                        $extraLog = [...$extraLog, 'error' => $e->getMessage()];
+                        LoggerService::error('CarQuoteObserver - fn:processEpEcbCancelPayment', $extraLog);
+                    }
+                }
+            }
+        }
     }
 }
