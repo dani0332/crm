@@ -458,7 +458,7 @@ class PolicyIssuanceService
             self::BOOK_POLICY_API_FAILED_STATUS_ID => self::BOOK_POLICY_API_FAILED,
         ];
 
-        return $status ? $statuses[$status] : $statuses;
+        return $status !== null ? ($statuses[$status] ?? null) : $statuses;
     }
 
     public function getFailedBookingInsurerAPIStatus($quote, $quoteType)
