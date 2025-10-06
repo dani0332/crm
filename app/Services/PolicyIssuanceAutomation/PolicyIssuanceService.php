@@ -29,6 +29,19 @@ class PolicyIssuanceService
     use GenericQueriesAllLobs;
 
     private string $className = 'policyIssuanceService';
+
+    const UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID = 2;
+    const POLICY_ISSUANCE_API_FAILED_STATUS_ID = 3;
+    const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID = 4;
+    const OCR_PROCESSING_API_FAILED_STATUS_ID = 5;
+    const BOOK_POLICY_API_FAILED_STATUS_ID = 6;
+
+    const UPLOAD_POLICY_DOCUMENTS_API_FAILED = 'Insurer Document Upload Failed';
+    const POLICY_ISSUANCE_API_FAILED = 'Policy Creation Failed';
+    const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED = 'Policy Document Retrieval Failed';
+    const OCR_PROCESSING_API_FAILED = 'OCR Processing API Failed';
+    const BOOK_POLICY_API_FAILED = 'Send and Book Policy Failed';
+
     public function __construct() {}
 
     public function init($quoteType, $insurerCode)
@@ -433,6 +446,19 @@ class PolicyIssuanceService
         }
 
         return $insurerApiStatuses ?? [];
+    }
+
+    public function getInsurerAPIStatusesByStep($status = null)
+    {
+        $statuses = [
+            self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => self::UPLOAD_POLICY_DOCUMENTS_API_FAILED,
+            self::POLICY_ISSUANCE_API_FAILED_STATUS_ID => self::POLICY_ISSUANCE_API_FAILED,
+            self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID => self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED,
+            self::OCR_PROCESSING_API_FAILED_STATUS_ID => self::OCR_PROCESSING_API_FAILED,
+            self::BOOK_POLICY_API_FAILED_STATUS_ID => self::BOOK_POLICY_API_FAILED,
+        ];
+
+        return $status ? $statuses[$status] : $statuses;
     }
 
     public function getFailedBookingInsurerAPIStatus($quote, $quoteType)

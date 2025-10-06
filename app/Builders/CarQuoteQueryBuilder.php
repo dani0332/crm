@@ -75,6 +75,8 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'lead_assignment_trigger',
             'customer_id',
             'insurance_provider_id',
+            'api_issuance_status_id',
+            'insurer_api_status_id',
         ], [
             'payment:id,paymentable_id,paymentable_type,authorized_at',
             'batch:id,name',
@@ -225,6 +227,23 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when($hasFilterValue('company_name'), function ($query) use ($getFilterValue) {
                 $query->where('company_name', $getFilterValue('company_name'));
+            })
+            ->when($hasFilterValue('api_issuance_status_id'), function ($query) use ($getFilterValue) {
+                $apiIssuanceStatusIds = (array) $getFilterValue('api_issuance_status_id');
+
+                $query->when(in_array('blank', $apiIssuanceStatusIds), function ($q) {
+                    $q->where(function ($subQuery) {
+                        $subQuery->whereNull('api_issuance_status_id')
+                            ->orWhere('api_issuance_status_id', '');
+                    });
+                }, function ($q) use ($apiIssuanceStatusIds) {
+                    $q->whereIn('api_issuance_status_id', $apiIssuanceStatusIds);
+                });
+            })
+            ->when($hasFilterValue('insurer_api_status_id'), function ($query) use ($getFilterValue) {
+                $insurerApiStatusIds = (array) $getFilterValue('insurer_api_status_id');
+
+                $query->whereIn('insurer_api_status_id', $insurerApiStatusIds);
             });
     }
 

@@ -6,8 +6,10 @@ use App\Contracts\CsvExportableInterface;
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
 use App\Services\CarQuoteService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -73,6 +75,8 @@ class CarQuoteExport implements CsvExportableInterface
             'TIER NAME',
             'VISIT COUNT',
             'FOLLOW UP DATE',
+            'API ISSUANCE STATUS',
+            'INSURER API STATUS',
             'LAST MODIFIED DATE',
             'UPDATED BY',
             'ADDITIONAL NOTES',
@@ -134,6 +138,8 @@ class CarQuoteExport implements CsvExportableInterface
             $quote->tier?->name,
             $quote->quoteViewCount?->visit_count,
             $quote->carQuoteRequestDetail?->next_followup_date_formatted ?? '',
+            $quote->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($quote->api_issuance_status_id) : 'N/A',
+            $quote->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatusesByStep($quote->insurer_api_status_id) : 'N/A',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->updated_by,
             $quote->additional_notes,

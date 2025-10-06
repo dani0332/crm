@@ -371,6 +371,8 @@ class CRUDController extends Controller
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
             $productTeam = $this->getProductByName(quoteTypeCode::Car);
             $teams = $this->getTeamsByProductId($productTeam->id);
+            $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
+            $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatusesByStep();
 
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
@@ -391,6 +393,8 @@ class CRUDController extends Controller
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
                 'insurerAMLStatus' => $insurerAMLStatus,
+                'issuanceStatuses' => $issuanceStatuses,
+                'insurerApiStatus' => $insurerApiStatus,
             ]);
         }
 
