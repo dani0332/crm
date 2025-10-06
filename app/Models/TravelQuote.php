@@ -392,7 +392,6 @@ class TravelQuote extends Model implements AuditableContract
             ->where('quote_type_id', QuoteTypeId::Travel)->withTrashed();
     }
 
-
     public function embeddedTransactions()
     {
         return $this->morphMany(EmbeddedTransaction::class, 'quote_request');

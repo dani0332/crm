@@ -445,7 +445,6 @@ class PersonalQuote extends Model implements AuditableContract
             ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet])->withTrashed();
     }
 
-
     public function homeQuote()
     {
         return $this->hasOne(HomeQuote::class, 'personal_quote_id', 'id');
