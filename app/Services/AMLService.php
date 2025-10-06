@@ -2293,10 +2293,14 @@ class AMLService
         }
     }
 
-    public function isAdditionalVehicleAndDriverDetailsEnabled($quoteTypeCode, $insuranceProviderId, $vehicleRegistrationType)
+    public function isAdditionalVehicleAndDriverDetailsEnabled($quoteTypeCode, $insuranceProviderId, $vehicleRegistrationType, $detailPage = false)
     {
         if (! ($quoteTypeCode == quoteTypeCode::Car && $vehicleRegistrationType == CarRegistrationType::PERSONAL)) {
             return false;
+        }
+
+        if ($detailPage) {
+            return true;
         }
 
         if (is_numeric($insuranceProviderId)) {
