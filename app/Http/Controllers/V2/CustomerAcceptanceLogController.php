@@ -8,7 +8,6 @@ use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class CustomerAcceptanceLogController extends Controller
 {
@@ -18,7 +17,7 @@ class CustomerAcceptanceLogController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $customerAcceptanceLogService = new CustomerAcceptanceLogService();
+            $customerAcceptanceLogService = new CustomerAcceptanceLogService;
             [$logs, $total, $customerAcceptanceLogsUrl] = $customerAcceptanceLogService->getCustomerAcceptanceLogs($request->only('lob', 'leadId'));
 
             return response()->json([

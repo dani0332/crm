@@ -2,10 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\QuoteTypes;
-use App\Models\BorLog;
 use App\Models\CustomerAcceptanceLog;
-use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 
 class CustomerAcceptanceLogService
@@ -37,7 +34,7 @@ class CustomerAcceptanceLogService
         // Total count for backward compatibility
         $total = CustomerAcceptanceLog::where('quote_uuid', $personalQuote->uuid)->count();
 
-        $customerAcceptanceLogsUrl = config('constants.DECLARATION_BASE_URL');  
+        $customerAcceptanceLogsUrl = config('constants.DECLARATION_BASE_URL');
 
         return [$logs, $total, $customerAcceptanceLogsUrl];
     }
