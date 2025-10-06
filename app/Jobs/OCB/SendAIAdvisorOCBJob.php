@@ -19,7 +19,7 @@ class SendAIAdvisorOCBJob implements ShouldQueue
     public $timeout = 120;
     public $backoff = 60;
 
-    public function __construct(private QuoteTypes $quoteType, private string $quoteUuid) {}
+    public function __construct(private QuoteTypes $quoteType, private string $quoteUuid, private bool $isReAssignment = false) {}
 
     /**
      * Execute the job.
@@ -37,7 +37,7 @@ class SendAIAdvisorOCBJob implements ShouldQueue
         }
 
         if ($this->quoteType === QuoteTypes::CAR) {
-            $carEmailService->sendCarAIAdvisorOCB($lead);
+            $carEmailService->sendCarAIAdvisorOCB($lead, $this->isReAssignment);
         }
     }
 }

@@ -295,4 +295,9 @@ trait QuoteAllocatable
     {
         return ! empty($this->advisor) && $this->advisor->isAi() && ! empty($this->ai_advisor_assigned_at);
     }
+
+    public function isAIAdvisorEverAssigned(): bool
+    {
+        return ! empty($this->ai_advisor_assigned_at);
+    }
 }
