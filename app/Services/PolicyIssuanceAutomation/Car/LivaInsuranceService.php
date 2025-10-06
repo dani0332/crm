@@ -1182,7 +1182,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             LookupsEnum::VEHICLE_COLOR,
             LookupsEnum::BANK_NAME,
             LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
-            LookupsEnum::PLATE_CODE,
             LookupsEnum::NATIONALITY_LIST,
             LookupsEnum::DRIVING_EXPERIENCE,
         ])->toArray();
