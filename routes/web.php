@@ -944,8 +944,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     // Customer Acceptance Logs Routes
     Route::group(['prefix' => 'consent-logs'], function () {
-        Route::resource('request', CustomerAcceptanceLogController::class)->only('index')->names('consent-logs.request');
+        Route::get('request', [CustomerAcceptanceLogController::class, 'index']);
     });
+
     // This route is only for testing purposes to preview the BOR PDF
     Route::get('bor-pdf-preview', function () {
         // entity bor log

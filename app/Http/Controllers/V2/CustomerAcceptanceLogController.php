@@ -19,12 +19,11 @@ class CustomerAcceptanceLogController extends Controller
     {
         try {
             $customerAcceptanceLogService = new CustomerAcceptanceLogService();
-            [$logs, $total, $customerAcceptanceLogsUrl] = $customerAcceptanceLogService->getCustomerAcceptanceLogs($request->only('lob', 'leadId'));
+            [$logs, $customerAcceptanceLogsUrl] = $customerAcceptanceLogService->getCustomerAcceptanceLogs($request->only('lob', 'leadId'));
 
             return response()->json([
                 'success' => true,
                 'data' => $logs,
-                'total' => $total,
                 'customerAcceptanceLogsUrl' => $customerAcceptanceLogsUrl,
             ]);
         } catch (Exception $th) {

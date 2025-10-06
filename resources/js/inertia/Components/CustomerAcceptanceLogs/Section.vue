@@ -33,7 +33,6 @@ const notification = useNotifications('toast'); // Fix: Use consistent notificat
 
 // Reactive data
 const customerAcceptanceLogs = ref([]);
-const total = ref(0);
 const customerAcceptanceLogsUrl = ref('');
 const isLoading = ref(false);
 const error = ref(null);
@@ -65,7 +64,7 @@ const fetchCustomerAcceptanceLogs = async (page = 1) => {
 
   try {
     // Use simple axios call with pagination, similar to Pet Quotes approach
-    const response = await axios.get(route('consent-logs.request.index'), {
+    const response = await axios.get('/consent-logs/request', {
       params: { page, leadId: props.leadId, lob: props.lob },
     });
 
@@ -73,7 +72,6 @@ const fetchCustomerAcceptanceLogs = async (page = 1) => {
       // Handle Laravel pagination response
       const paginatedData = response.data.data;
       customerAcceptanceLogs.value = paginatedData.data || [];
-      total.value = response.data.total;
       customerAcceptanceLogsUrl.value = response.data.customerAcceptanceLogsUrl;
       // Extract pagination info from Laravel pagination response
       pagination.value = {
@@ -151,7 +149,6 @@ onMounted(() => {
         <div class="flex justify-between items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
             Digital Consent
-            <x-tag size="sm">{{ total || 0 }}</x-tag>
           </h3>
         </div>
       </template>

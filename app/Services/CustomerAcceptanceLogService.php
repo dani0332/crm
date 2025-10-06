@@ -34,11 +34,8 @@ class CustomerAcceptanceLogService
             ->simplePaginate(15)
             ->withQueryString();
 
-        // Total count for backward compatibility
-        $total = CustomerAcceptanceLog::where('quote_uuid', $personalQuote->uuid)->count();
-
         $customerAcceptanceLogsUrl = config('constants.DECLARATION_BASE_URL');  
 
-        return [$logs, $total, $customerAcceptanceLogsUrl];
+        return [$logs, $customerAcceptanceLogsUrl];
     }
 }
