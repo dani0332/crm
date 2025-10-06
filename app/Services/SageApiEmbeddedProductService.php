@@ -1329,7 +1329,7 @@ class SageApiEmbeddedProductService
                     'TaxAmount1' => roundNumber($sageRequestEmbeddedProduct->taxAmount),
                     'DocumentTotalBeforeTax' => roundNumber($sageRequestEmbeddedProduct->policyPrice),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->totalPrice),
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
@@ -1358,7 +1358,7 @@ class SageApiEmbeddedProductService
                     'TaxClass1' => $commissionTaxClass,
                     'DocumentTotalBeforeTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $commissionDescription,
@@ -1569,7 +1569,7 @@ class SageApiEmbeddedProductService
                     'TaxAmount1' => roundNumber($sageRequestEmbeddedProduct->taxAmount),
                     'DocumentTotalBeforeTaxes' => roundNumber($sageRequestEmbeddedProduct->policyPrice),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->totalPrice),
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,

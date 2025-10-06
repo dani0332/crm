@@ -200,7 +200,7 @@ class CarEmailService extends BaseService
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->plans = $insurerPlans;
         $emailData->totalPlans = count($insurerPlans);
-        $emailData->isReAssignment = ! empty($previousAdvisor);
+        $emailData->isReAssignment = $carQuote->isReAssignment();
 
         if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
             $emailData->isRenewal = true;

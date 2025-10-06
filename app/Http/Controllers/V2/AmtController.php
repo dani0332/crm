@@ -377,7 +377,8 @@ class AmtController extends Controller
         $allowedDuplicateLOB = $crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
-
+        $membersDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
+        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
@@ -480,6 +481,8 @@ class AmtController extends Controller
             'companyTypes' => $companyType,
             'UBOsDetails' => $UBODetails,
             'UBORelations' => $UBORelations,
+            'membersDetails' => $membersDetails,
+            'memberRelations' => $memberRelations,
             'nationalities' => $nationalities,
             'emirates' => $emirates,
             'insuranceProviders' => $insuranceProviders,

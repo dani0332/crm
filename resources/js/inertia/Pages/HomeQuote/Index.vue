@@ -258,8 +258,8 @@ const onPUAExport = () => {
 const onConfirmPUAExport = () => {
   // Use the single date for both authorize and capture date filters
   const filtersForExport = {
-    authorize_date: puaExportModal.payment_date,
-    captured_date: puaExportModal.payment_date,
+    authorize_date: useFormatDateToYMD(puaExportModal.payment_date),
+    captured_date: useFormatDateToYMD(puaExportModal.payment_date),
   };
 
   const data = useObjToUrl(filtersForExport);
