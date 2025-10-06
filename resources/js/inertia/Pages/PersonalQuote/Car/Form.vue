@@ -456,10 +456,6 @@ const subSourceOptions = computed(() => {
     suffix: item.description || item.tooltip || `Information about ${item.text}`, // Use suffix for tooltip data
   }));
 
-  console.log("subSourceOptions:", options);
-  console.log("Current quoteForm.sub_source_id:", quoteForm.sub_source_id, "Type:", typeof quoteForm.sub_source_id);
-  console.log("Matching option:", options.find(opt => opt.value == quoteForm.sub_source_id));
-
   return options;
 });
 

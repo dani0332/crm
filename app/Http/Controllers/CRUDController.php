@@ -455,12 +455,8 @@ class CRUDController extends Controller
         $model = $this->genericModel;
 
         $quoteTypeId = QuoteTypes::getIdFromValue($model->modelType);
-        \Log::info('CRUDController create - Model:', ['model' => $model, 'modelType' => $model->modelType]);
-        \Log::info('CRUDController create - Quote Type ID:', ['quoteTypeId' => $quoteTypeId]);
 
         $subSources = $this->lookupService->getSubSource();
-
-        \Log::info('CRUDController create - SubSources result:', ['subSources' => $subSources->toArray()]);
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
             // Log parameters from CreateLeadModal
