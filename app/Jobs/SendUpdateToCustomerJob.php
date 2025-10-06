@@ -54,7 +54,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
             @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmailData($this->sendUpdate);
             if (! empty($emailData)) {
                 LoggerService::info('job:SendUpdateToCustomerJob - Job Email Data', extra: ['emailData' => json_encode($emailData)]);
-                $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId, $sendUpdateLog);
+                $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId/* , $sendUpdateLog */);
                 LoggerService::info('job: SendUpdateToCustomerJob - Job Response ', extra: ['emailData' => json_encode($response)]);
 
                 if (in_array($response, [200, 201])) {

@@ -99,11 +99,12 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedCorplineAdvisors();
         $this->seedLifeOCAEmail();
         $this->savingsLOB();
-
+        
         $this->seedOcrEnabled();
         $this->seedSukoonMedexProductSlug();
         $this->seedLOBCutOffDates();
         $this->seedTravelEnquiryEmail();
+        $this->seedSendPolicyEmail();
     }
 
     private function seedBirdWorkflowUrls()
@@ -298,7 +299,7 @@ class ApplicationStorageSeeder extends Seeder
     private function sendUpdateEmailBirdFlow(): void
     {
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_MOTOR_SEND_UPDATE],
+            ['key_name' => ApplicationStorageEnums::BIRD_MOTOR_INSLY_WORKFLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/036faf20-0788-4ac1-8b55-4dcfe93ebfa7/invoke-sync',
                 'created_at' => now(),
@@ -308,7 +309,7 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_TRAVEL_SEND_UPDATE],
+            ['key_name' => ApplicationStorageEnums::BIRD_TRAVEL_INSLY_WORKFLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/968e6273-9965-473b-a258-2a069c8fb7da/invoke-sync',
                 'created_at' => now(),
@@ -318,7 +319,7 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_HOME_SEND_UPDATE],
+            ['key_name' => ApplicationStorageEnums::BIRD_HOME_INSLY_WORKFLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/114f64e5-5a67-4110-bb66-7038f3f34c04/invoke-sync',
                 'created_at' => now(),
@@ -328,7 +329,7 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_LIFE_SEND_UPDATE],
+            ['key_name' => ApplicationStorageEnums::BIRD_LIFE_INSLY_WORKFLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/bb88d699-342a-47d5-b618-6997ab2fe7f1/invoke-sync',
                 'created_at' => now(),
@@ -338,7 +339,7 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_BUSINESS_SEND_UPDATE],
+            ['key_name' => ApplicationStorageEnums::BIRD_BUSINESS_INSLY_WORKFLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/90329323-4850-4c81-b2b0-ed4ebcc03fb6/invoke-sync',
                 'created_at' => now(),
@@ -348,7 +349,7 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_PET_SEND_UPDATE],
+            ['key_name' => ApplicationStorageEnums::BIRD_PET_INSLY_WORKFLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/b93647e0-13a8-4abc-b3fa-82aa9eca8536/invoke-sync',
                 'created_at' => now(),
@@ -358,7 +359,7 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_HEALTH_SEND_UPDATE],
+            ['key_name' => ApplicationStorageEnums::BIRD_HEALTH_INSLY_WORKFLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/4b90ce6b-117e-4581-9b04-a420a1a7f660/invoke-sync',
                 'created_at' => now(),
@@ -609,6 +610,144 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]
+        );
+    }
+
+    private function seedSendPolicyEmail()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 756,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIKE_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 757,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYCLE_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 758,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::YACHT_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 759,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 760,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::LIFE_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 761,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 762,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BUSINESS_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 763,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HEALTH_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 764,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::GROUP_MEDICAL_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 765,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PET_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 766,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CORPLINE_CAR_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 767,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CORPLINE_TRADE_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 768,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PROFESSIONAL_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 769,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::COMPANY_CAR_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 770,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         );
     }
 }

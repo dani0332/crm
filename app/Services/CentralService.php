@@ -1405,12 +1405,12 @@ class CentralService extends BaseService
                 $quoteType = 'COMMERCIAL_'.$quoteType;
             }
         }
-        if ($sendUpdateLog) {
+        /* if ($sendUpdateLog) {
             $workflowType = 'SU_'.$quoteType.'_UPDATE';
             $workflowType = constant("App\Enums\WorkflowTypeEnum::{$workflowType}");
 
             return $this->prepareUpdateToCustomerData($quote, $quoteTypeId, $sendUpdateLog, $workflowType);
-        }
+        } */
 
         $workflowType = $quoteType.'_NEW_POLICY';
         $workflowType = constant("App\Enums\WorkflowTypeEnum::{$workflowType}");
@@ -1434,7 +1434,7 @@ class CentralService extends BaseService
         return $emailData;
     }
 
-    public function prepareUpdateToCustomerData($quote, $quoteTypeId, $sendUpdateLog, $workflowType)
+    /* public function prepareUpdateToCustomerData($quote, $quoteTypeId, $sendUpdateLog, $workflowType)
     {
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             $quoteType = strtolower(QuoteTypes::getName($quoteTypeId)->value).'-su-notes';
@@ -1458,7 +1458,7 @@ class CentralService extends BaseService
         $this->emailDataExtend($emailData, $quote, $quoteTypeId, $sendUpdateLog, $workflowType);
 
         return [1, $emailData, 'send-update', $quoteTypeId, $workflowType];
-    }
+    } */
 
     private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $workflowType = null): void
     {
@@ -1522,9 +1522,9 @@ class CentralService extends BaseService
             $emailData->planType = $quote?->lifeQuote?->insuranceTenure?->text ?? 'Life Insurance';
             $emailData->policyTerm = $quote?->lifeQuote?->numberOfYears?->text;
             $emailData->planName = $quote?->insuranceProviderPlan?->text ?? 'NA';
-            if ($sendUpdateLog) {
+            /* if ($sendUpdateLog) {
                 $emailData->lifeDetails = 'NA';
-            }
+            } */
         }
 
         if ($quoteTypeId == QuoteTypeId::Home) {
@@ -1563,7 +1563,7 @@ class CentralService extends BaseService
                 $emailData->tpa = 'NA'; // need to confirm.
             }
 
-            if (! empty($sendUpdateLog)) {
+            /* if (! empty($sendUpdateLog)) {
                 $documents = $sendUpdateLog->documents->whereIn('document_type_code', [
                     DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                     DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
@@ -1585,7 +1585,7 @@ class CentralService extends BaseService
                 if (! empty($taxInvoice)) {
                     $emailData->taxInvoice = $storageUrl.$taxInvoice;
                 }
-            }
+            } */
         }
     }
 
@@ -1593,9 +1593,9 @@ class CentralService extends BaseService
     {
         $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
-            $birdUrlKey = 'BIRD_MOTOR_SEND_UPDATE';
+            $birdUrlKey = 'BIRD_MOTOR_INSLY_WORKFLOW';
         } else {
-            $birdUrlKey = "BIRD_{$quoteType}_SEND_UPDATE";
+            $birdUrlKey = "BIRD_{$quoteType}_INSLY_WORKFLOW";
         }
         try {
             info("Sending {$quoteType} followups email for {$emailType} uuid: ".$lead->uuid.' | Time: '.now());
