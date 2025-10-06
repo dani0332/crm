@@ -409,7 +409,7 @@ class EmbeddedProductRepository extends BaseRepository
             ['quote_request_id', $leadId],
             ['is_selected', 1],
         ])
-            ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+            ->where('payment_status_id', PaymentStatusEnum::CAPTURED)
             ->with(['product.embeddedProduct']);
 
         if (! empty($epId)) {
