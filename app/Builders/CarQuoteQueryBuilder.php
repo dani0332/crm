@@ -230,14 +230,25 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when($hasFilterValue('api_issuance_status_id'), function ($query) use ($getFilterValue) {
                 $apiIssuanceStatusIds = (array) $getFilterValue('api_issuance_status_id');
-
-                $query->when(in_array('blank', $apiIssuanceStatusIds), function ($q) {
-                    $q->where(function ($subQuery) {
-                        $subQuery->whereNull('api_issuance_status_id')
-                            ->orWhere('api_issuance_status_id', '');
-                    });
-                }, function ($q) use ($apiIssuanceStatusIds) {
-                    $q->whereIn('api_issuance_status_id', $apiIssuanceStatusIds);
+                
+                $hasBlank = in_array('blank', $apiIssuanceStatusIds);
+                $otherIds = array_diff($apiIssuanceStatusIds, ['blank']);
+                
+                $query->where(function ($q) use ($hasBlank, $otherIds) {
+                    if ($hasBlank) {
+                        $q->where(function ($subQuery) {
+                            $subQuery->whereNull('api_issuance_status_id')
+                                ->orWhere('api_issuance_status_id', '');
+                        });
+                    }
+                    
+                    if (!empty($otherIds)) {
+                        if ($hasBlank) {
+                            $q->orWhereIn('api_issuance_status_id', $otherIds);
+                        } else {
+                            $q->whereIn('api_issuance_status_id', $otherIds);
+                        }
+                    }
                 });
             })
             ->when($hasFilterValue('insurer_api_status_id'), function ($query) use ($getFilterValue) {
