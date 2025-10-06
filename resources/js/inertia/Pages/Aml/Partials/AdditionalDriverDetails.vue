@@ -15,6 +15,7 @@ const lookups = page.props.lookups;
 const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const isSyncFromInsurer = ref(false);
+const insurerName = page.props.insurerName;
 
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [
@@ -91,7 +92,7 @@ const submitAdditionalDriverDetailsForm = async isValid => {
           response.data.is_insured_driver_same == '0'
         ) {
           notification.success({
-            title: 'Please Update Additional Drivers on GIG Portal',
+            title: `Please Update Additional Drivers on ${insurerName} Portal`,
             position: 'top',
             timeout: 5000,
           });

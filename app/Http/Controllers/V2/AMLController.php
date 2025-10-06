@@ -359,6 +359,7 @@ class AMLController extends Controller
             'permissionsEnum' => PermissionsEnum::asArray(),
             'isPrivateCar' => $quoteRequest?->registration_type === CarRegistrationType::PERSONAL,
             'LIVAEnums' => app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
+            'insurerName' => InsuranceProvidersEnum::getTextByCode($quoteRequest?->plan?->insuranceProvider?->code),
         ], $businessPayload ?? [], $rtaConfigurationData));
     }
 

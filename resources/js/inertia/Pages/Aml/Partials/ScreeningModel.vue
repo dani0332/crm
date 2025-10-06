@@ -26,6 +26,7 @@ const { isRequired } = useRules();
 const notification = useToast();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const insurerName = page.props.insurerName;
 const generateOptions = (items, valueKey, labelKey) =>
   useGenerateOptions(items, valueKey, labelKey);
 const rules = {
@@ -935,11 +936,11 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike ||
             page.props.quoteType.id === page.props.quoteTypeIdEnum.Home
           "
-          label="Email in GIG Portal"
+          :label="`Email in ${insurerName} Portal`"
         >
           <x-input
             v-model="screeningFormDetails.get_quote_email_gig"
-            placeholder="Email in GIG Portal"
+            :placeholder="`Email in ${insurerName} Portal`"
             type="text"
             class="w-full"
           />
