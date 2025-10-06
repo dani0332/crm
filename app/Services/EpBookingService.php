@@ -9,6 +9,7 @@ use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
+use App\Jobs\EpSendDocumentJob;
 use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
@@ -203,6 +204,7 @@ class EpBookingService extends BaseService
         $isPolicyBooked = $this->embeddedTransaction?->policy_status == EmbeddedTransactionEnum::STATUS_BOOKED;
         if (empty($missingWatermarableDocTypeCodes) && $isPolicyBooked && $policyPrice > 0) {
             $this->embeddedTransaction->update(['policy_status' => EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE]);
+            dispatch(new EpSendDocumentJob($this->context));
         }
 
         LoggerService::info($this->logPrefix . ' Transaction status updated', extra: [

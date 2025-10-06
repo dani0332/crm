@@ -38,6 +38,7 @@ enum LoggerFeatureEnum: string
     case CAR_CQF_RENEWALS = 'car-cqf-renewals';
     case SUPPORT_USER_ASSIGNMENT = 'support-user-assignment';
     case EP_PROCESS_PURCHASE_FLOW = 'ep-process-purchase-flow';
+    case EP_PROCESS_SYNC_DOCUMENT = 'ep-process-sync-document';
     case EP_PROCESS_WATERMARK_DOCUMENT = 'ep-process-watermark-document';
     case EP_PROCESS_SEND_DOCUMENT = 'ep-process-send-document';
     case MA_WELCOME_JOB = 'ma-welcome-job';

@@ -23,6 +23,7 @@ use App\Enums\SageEnum;
 use App\Facades\Ken;
 use App\Facades\Marshall;
 use App\Jobs\EP\CancelEPJob;
+use App\Jobs\EpPurchaseFlowJob;
 use App\Jobs\EpSendDocumentJob;
 use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
@@ -476,7 +477,7 @@ class EmbeddedProductRepository extends BaseRepository
                             // ECB Purchase Flow
                             $quote = $this->getQuoteObject($modelType, $leadId);
                             $context = EpEcbService::buildContext($item->id, $leadId, $quoteTypeId, $quote->code);
-                            EpEcbService::epEcbWorkflow($context);
+                            dispatch(new EpPurchaseFlowJob($context));
                         }
                         $response = ['success' => true];
 
@@ -568,7 +569,7 @@ class EmbeddedProductRepository extends BaseRepository
 
             try {
                 $context = EpEcbService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quoteObject->code);
-                EpEcbService::epEcbWorkflow($context);
+                dispatch(new EpPurchaseFlowJob($context));
             } catch (Exception $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }

@@ -13,19 +13,16 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
-class EpPurchaseFlowJob implements ShouldQueue
+class SyncEpDocumentsJob implements ShouldQueue
 {
     use Queueable;
 
     public $tries = 3;
-    public $timeout = 300;
-    public $backoff = 180;
+    public $timeout = 180;
+    public $backoff = 120;
 
-    private string $logPrefix = 'EpPurchaseFlow - Job:';
+    private string $logPrefix = 'SyncEpDocuments - Job:';
     private array $logExtra = [];
-
-    public mixed $quote = null;
-
 
     /**
      * Create a new job instance.
@@ -42,15 +39,17 @@ class EpPurchaseFlowJob implements ShouldQueue
     public function handle(): void
     {
         // Start feature and quote logging
-        LoggerService::startQuoteLogging($this->context->quoteCode, LoggerFeatureEnum::EP_PROCESS_PURCHASE_FLOW);
+        LoggerService::startQuoteLogging($this->context->quoteCode, LoggerFeatureEnum::EP_PROCESS_SYNC_DOCUMENT);
 
-        LoggerService::info("{$this->logPrefix} Starting", extra: $this->logExtra);
+        LoggerService::info("{$this->logPrefix} Starting document sync", extra: $this->logExtra);
 
         $epEcbService = new EpEcbService($this->context);
         $epEcbService->init();
 
-        // Execute purchase flow steps (Token, Quote, Policy creation)
-        $epEcbService->executeSteps(); // STATUS_PAYMENT_SUCCEED
+        // Sync policy documents - STATUS_BOOKED
+        $epEcbService->syncPolicyDocuments();
+
+        LoggerService::info("{$this->logPrefix} Document sync completed", extra: $this->logExtra);
     }
 
     /**
@@ -62,7 +61,7 @@ class EpPurchaseFlowJob implements ShouldQueue
             ...$this->logExtra,
             'error' => $exception->getMessage()
         ]);
-
+        
         try {
             Mail::send(new EpFailureNotification($this->context->quoteId, $this->context->quoteTypeId, $this->context->etId));
             LoggerService::info("{$this->logPrefix} Embedded Product failure email sent successfully");
@@ -96,12 +95,12 @@ class EpPurchaseFlowJob implements ShouldQueue
      */
     public function middleware(): array
     {
-        $lockKey = "ep-purchase-flow-{$this->context->etId}-{$this->context->quoteCode}";
+        $lockKey = "ep-sync-documents-{$this->context->etId}-{$this->context->quoteCode}";
 
         return [
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
-                ->expireAfter(300)
+                ->expireAfter(180)
         ];
     }
 }

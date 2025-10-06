@@ -8,18 +8,14 @@ use App\Enums\QuoteDocumentsEnum;
 use App\Models\DocumentType;
 use App\Jobs\EpPurchaseFlowJob;
 use App\Jobs\EpWatermarkDocumentJob;
-use App\Jobs\EpSendDocumentJob;
-use App\Mail\EpFailureNotification;
+use App\Jobs\SyncEpDocumentsJob;
 use App\Models\InsurerRequestResponse;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Bus;
 use Error;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Sleep;
 use Throwable;
 
 class EpEcbService extends EpBookingService
@@ -118,39 +114,6 @@ class EpEcbService extends EpBookingService
     }
 
     /**
-     * Process all EP Excess Cashback workflow using job chain
-     */
-    public static function epEcbWorkflow(EpBookingContext $context): void
-    {
-        $logExtra = $context->logExtra;
-
-        LoggerService::info('EpEcbService: Starting EP ExcessCashback workflow', extra: $logExtra);
-
-        Bus::chain([
-            new EpPurchaseFlowJob($context),
-            new EpWatermarkDocumentJob($context),
-            new EpSendDocumentJob($context)
-        ])
-            // Chain will stop on first failure by default
-            ->catch(function (Throwable $e) use ($context, $logExtra) {
-                LoggerService::error('EpEcbService: Workflow chain failed', extra: [
-                    ...$logExtra,
-                    'error' => $e->getMessage()
-                ]);
-
-                try {
-                    Mail::send(new EpFailureNotification($context->quoteId, $context->quoteTypeId, $context->etId));
-                    LoggerService::info("EpEcbService: Embedded Product failure email sent successfully");
-                } catch (Throwable $e) {
-                    LoggerService::error("EpEcbService: Failed to send Embedded Product failure email: " . $e->getMessage());
-                }
-            })
-            ->dispatch();
-
-        LoggerService::info('EpEcbService: Workflow chain dispatched successfully', extra: $logExtra);
-    }
-
-    /**
      * Main entry point for processing the purchase flow
      * Throws exceptions on failure so the job retry mechanism can handle them
      */
@@ -165,6 +128,16 @@ class EpEcbService extends EpBookingService
             // Execute workflow with conditional step execution
             // Any exceptions will bubble up to the job for automatic retry handling
             $this->executeWorkflowFromStep();
+
+            // Step 3: Create Policy From Quote STATUS_PAYMENT_SUCCEED
+            $this->embeddedTransaction->refresh();
+            $isPaymentSucceed = $this->embeddedTransaction->status == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED;
+            $isMissingPolicyDetails = empty($this->quoteReferenceNumber) || empty($this->policyNumber);
+
+            if (!$this->shouldSkipStep('get_documents', $this->embeddedTransaction->status) && $isPaymentSucceed && !$isMissingPolicyDetails) {
+                // Dispatch job for sync ep documents
+                dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(2));
+            }
 
             LoggerService::info($this->logPrefix . ' Purchase flow completed successfully', extra: $this->logExtra);
         } catch (Exception $e) {
@@ -415,9 +388,6 @@ class EpEcbService extends EpBookingService
 
         $this->embeddedTransaction->documents()->whereIn('document_type_code', $this->reqDocTypeCodes)->delete();
         $this->embeddedTransaction->load('documents');
-
-        // Wait 2 minute before processing documents
-        Sleep::for(2)->minutes();
     }
 
     /**
@@ -479,6 +449,7 @@ class EpEcbService extends EpBookingService
         if (empty($missingDocumentDocTypes)) {
             // Update transaction status
             $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_BOOKED);
+            dispatch(new EpWatermarkDocumentJob($this->context));
         }
     }
 
