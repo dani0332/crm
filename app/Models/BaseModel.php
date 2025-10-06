@@ -24,8 +24,15 @@ class BaseModel extends Model implements AuditableContract
         parent::boot();
         static::creating(function ($model) {
             if (Auth::check()) {
-                $model->created_by = Auth::user()->email;
-                $model->updated_by = Auth::user()->email;
+                $schemaBuilder = $model->getConnection()->getSchemaBuilder();
+
+                if ($schemaBuilder->hasColumn($model->getTable(), 'created_by')) {
+                    $model->created_by = Auth::user()->email;
+                }
+
+                if ($schemaBuilder->hasColumn($model->getTable(), 'updated_by')) {
+                    $model->updated_by = Auth::user()->email;
+                }
             }
         });
         static::updating(function ($model) {
