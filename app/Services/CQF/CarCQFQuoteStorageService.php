@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Services\CQF;
 
-use App\Models\CarQuote;
-use App\Enums\QuoteTypes;
-use App\Enums\QuoteTypeId;
-use Illuminate\Support\Carbon;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Models\CarQuote;
 use App\Models\RenewalsUploadLeads;
+use App\Repositories\EmbeddedProductRepository;
 use App\Services\CapiRequestService;
 use App\Services\Logger\LoggerService;
-use App\Repositories\EmbeddedProductRepository;
-use App\Enums\PaymentStatusEnum;
+use Illuminate\Support\Carbon;
 
 class CarCQFQuoteStorageService
 {
@@ -52,7 +52,7 @@ class CarCQFQuoteStorageService
 
             if (! empty($quote->embeddedTransactions)) {
                 foreach ($quote->embeddedTransactions as $embeddedTransaction) {
-                    if ($embeddedTransaction->is_selected == 1 && $embeddedTransaction->payment_status_id == PaymentStatusEnum::CAPTURED &&  strpos($embeddedTransaction->code, EmbeddedProductEnum::MDX) !== false) {
+                    if ($embeddedTransaction->is_selected == 1 && $embeddedTransaction->payment_status_id == PaymentStatusEnum::CAPTURED && strpos($embeddedTransaction->code, EmbeddedProductEnum::MDX) !== false) {
                         $epCodes[] = EmbeddedProductEnum::MDX.'-'.$newQuote->code;
                         LoggerService::info(self::class.' - Embedded Transaction found for quote', [
                             'embeddedTransaction' => [
@@ -67,7 +67,7 @@ class CarCQFQuoteStorageService
                             ],
                         ]);
                     }
-                    
+
                 }
             }
 
