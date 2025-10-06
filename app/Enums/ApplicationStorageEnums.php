@@ -267,4 +267,7 @@ final class ApplicationStorageEnums extends Enum
     public const PRODUCTION_APPROVAL_EMAIL = 'PRODUCTION_APPROVAL_EMAIL';
     public const APPROVAL_PRODUCTION_EMAIL = 'APPROVAL_PRODUCTION_EMAIL';
     public const BULK_POLICY_DOCUMENT_SEND_CODES = 'BULK_POLICY_DOCUMENT_SEND_CODES';
+    
+    // MetLife Integration
+    public const ENABLE_METLIFE = 'ENABLE_METLIFE';
 }

@@ -118,6 +118,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTravelEnquiryEmail();
         $this->seedOcrSendUpdateLogFlag();
         $this->seedProductionApprovalEmails();
+        $this->seedEnableMetLife();
     }
 
     private function seedBirdWorkflowUrls()
@@ -702,6 +703,19 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]
+        );
+    }
+
+    private function seedEnableMetLife()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_METLIFE],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
         );
     }
 }
