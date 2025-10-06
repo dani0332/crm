@@ -196,7 +196,9 @@ class TravelQuoteService extends BaseService
             'tqr.primary_ref_id',
             'tqr.additional_notes',
             'ss.text as sub_source_text',
+            'ss.description as sub_source_description',
             'sso.text as sub_source_option_text',
+            'sso.description as sub_source_option_description',
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')

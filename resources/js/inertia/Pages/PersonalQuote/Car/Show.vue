@@ -2030,12 +2030,30 @@ function handleOcrNotification(event) {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">SUB SOURCE</dt>
+                <dt>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE
+                    </label>
+                    <template #tooltip>{{ record.sub_source_description || 'N/A' }}</template>
+                  </x-tooltip>
+                </dt>
                 <dd>{{ record.sub_source_text || record.sub_source_id || 'N/A' }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">SUB SOURCE OPTION</dt>
+                <dt>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{ record.sub_source_option_description || 'N/A' }}</template>
+                  </x-tooltip>
+                </dt>
                 <dd>{{ record.sub_source_option_text || record.sub_source_options_id || 'N/A' }}</dd>
               </div>
 

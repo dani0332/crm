@@ -213,7 +213,9 @@ class HealthQuoteService extends BaseService
             'hqr.sub_source_options_id',
             'hqr.primary_ref_id',
             'ss.text as sub_source_text',
+            'ss.description as sub_source_description',
             'sso.text as sub_source_option_text',
+            'sso.description as sub_source_option_description',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')

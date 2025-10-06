@@ -515,7 +515,9 @@ class CarQuoteService extends BaseService
                 'cqr.sub_source_options_id',
                 'cqr.primary_ref_id',
                 'ss.text as sub_source_text',
+                'ss.description as sub_source_description',
                 'sso.text as sub_source_option_text',
+                'sso.description as sub_source_option_description',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')

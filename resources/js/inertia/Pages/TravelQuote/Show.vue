@@ -1900,13 +1900,31 @@ const fullAddress = computed(() => {
 
               <!-- Sub-source fields -->
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">SUB SOURCE</dt>
-                <dd>{{ quote.sub_source_text || quote.sub_source_id || 'N/A' }}</dd>
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE
+                    </label>
+                    <template #tooltip>{{ quote?.sub_source_description || 'N/A' }}</template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote.sub_source_text || quote.sub_source_id || 'N/A' }}</div>
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">SUB SOURCE OPTION</dt>
-                <dd>{{ quote.sub_source_option_text || quote.sub_source_options_id || 'N/A' }}</dd>
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{ quote?.sub_source_option_description || 'N/A' }}</template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote.sub_source_option_text || quote.sub_source_options_id || 'N/A' }}</div>
               </div>
 
               <div class="grid sm:grid-cols-2">
