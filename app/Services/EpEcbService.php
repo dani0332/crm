@@ -95,7 +95,7 @@ class EpEcbService extends EpBookingService
             'has_bearer_token' => !empty($this->bearerToken),
             'has_quote_reference' => !empty($this->quoteReferenceNumber),
             'has_policy_number' => !empty($this->policyNumber),
-            'current_status' => $this->embeddedTransaction->status
+            'current_status' => $this->embeddedTransaction->policy_status
         ]);
     }
 
@@ -122,7 +122,7 @@ class EpEcbService extends EpBookingService
         try {
             LoggerService::info($this->logPrefix . ' Starting purchase flow', extra: [
                 ...$this->logExtra,
-                'current_status' => $this->embeddedTransaction->status
+                'current_status' => $this->embeddedTransaction->policy_status
             ]);
 
             // Execute workflow with conditional step execution
@@ -131,10 +131,10 @@ class EpEcbService extends EpBookingService
 
             // Step 3: Create Policy From Quote STATUS_PAYMENT_SUCCEED
             $this->embeddedTransaction->refresh();
-            $isPaymentSucceed = $this->embeddedTransaction->status == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED;
+            $isPaymentSucceed = $this->embeddedTransaction->policy_status == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED;
             $isMissingPolicyDetails = empty($this->quoteReferenceNumber) || empty($this->policyNumber);
 
-            if (!$this->shouldSkipStep('get_documents', $this->embeddedTransaction->status) && $isPaymentSucceed && !$isMissingPolicyDetails) {
+            if (!$this->shouldSkipStep('get_documents', $this->embeddedTransaction->policy_status) && $isPaymentSucceed && !$isMissingPolicyDetails) {
                 // Dispatch job for sync ep documents
                 dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(2));
             }
@@ -157,7 +157,7 @@ class EpEcbService extends EpBookingService
      */
     private function executeWorkflowFromStep(): void
     {
-        $currentStatus = $this->embeddedTransaction->status ?? '';
+        $currentStatus = $this->embeddedTransaction->policy_status ?? '';
         $executedSteps = [];
 
         // Step 1: Get Token (Always required first)
@@ -192,7 +192,7 @@ class EpEcbService extends EpBookingService
      */
     public function syncPolicyDocuments(): void
     {
-        $currentStatus = $this->embeddedTransaction->status ?? '';
+        $currentStatus = $this->embeddedTransaction->policy_status ?? '';
 
         $savedReqDocumentDocTypeCodes = $this->embeddedTransaction?->documents()
             ->whereIn('document_type_code', $this->reqDocTypeCodes)->get()
@@ -223,7 +223,7 @@ class EpEcbService extends EpBookingService
     /**
      * Determine if a step should be skipped based on current transaction status
      */
-    private function shouldSkipStep(string $step, string $currentStatus): bool
+    private function shouldSkipStep(string $step, string $currentStatus = ''): bool
     {
         return match ($step) {
             'get_token' => false, // Always need token first
