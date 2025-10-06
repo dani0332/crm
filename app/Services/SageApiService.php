@@ -34,6 +34,7 @@ use App\Models\QuoteTag;
 use App\Models\SageApiLog;
 use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SageApiLogRepository;
 use App\Services\Logger\LoggerService;
@@ -46,7 +47,6 @@ use Cache;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
-use App\Repositories\EmbeddedProductRepository;
 
 class SageApiService
 {
