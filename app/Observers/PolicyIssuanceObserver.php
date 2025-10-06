@@ -30,13 +30,13 @@ class PolicyIssuanceObserver
         ) {
             LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updating Policy Issuance ID : '.$policyIssuance->id.' - Status : '.PolicyIssuanceEnum::PENDING_STATUS);
             try {
-                $shouldRetry = false;
+                $isTimeout = false;
 
                 if (str_contains($policyIssuance->message, 'PolicyIssuanceJob has been attempted too many times')) {
                     LoggerService::info($this->className.' fn:'.__FUNCTION__.' - PolicyIssuanceJob was failed due to timeout', extra: [
                         'reason' => $policyIssuance->message,
                     ]);
-                    $shouldRetry = true;
+                    $isTimeout = true;
                 } else {
                     $failedLogs = $policyIssuance->policyIssuanceLogs->where('status', PolicyIssuanceEnum::FAILED_STATUS);
                     if ($failedLogs) {
@@ -48,14 +48,14 @@ class PolicyIssuanceObserver
                             LoggerService::info($this->className.' fn:'.__FUNCTION__.' - PolicyIssuanceJob was failed due to timeout', extra: [
                                 'error' => $failedNullLogFound->first()?->response,
                             ]);
-                            $shouldRetry = true;
+                            $isTimeout = true;
                         }
                     }
                 }
 
-                if ($shouldRetry) {
+                if ($isTimeout) {
                     $policyIssuance->update([
-                        'status' => PolicyIssuanceEnum::PENDING_STATUS,
+                        'status' => PolicyIssuanceEnum::TIMEOUT_STATUS,
                     ]);
                 }
             } catch (\Exception $ex) {
