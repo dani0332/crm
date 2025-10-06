@@ -118,16 +118,6 @@ const showfollowup = ref(false);
 // Define record as computed property for template access
 const record = computed(() => page.props.record);
 
-// Log sub-source properties available in Vue
-console.log('Sub-source properties in Vue:', {
-  sub_source_id: page.props.record.sub_source_id,
-  sub_source_options_id: page.props.record.sub_source_options_id,
-  primary_ref_id: page.props.record.primary_ref_id,
-  sub_source_text: page.props.record.sub_source_text,
-  sub_source_option_text: page.props.record.sub_source_option_text,
-  record_keys: Object.keys(page.props.record),
-});
-
 const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
   id: page.props.record.plan_id,

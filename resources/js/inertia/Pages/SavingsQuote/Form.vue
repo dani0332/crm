@@ -169,9 +169,10 @@ function onSubmit(isValid) {
 }
 
 // Watchers for field resets and partner name handling
-watch(() => quoteForm.sub_source_id, (newValue) => {
-  if (newValue !== quoteForm.sub_source_id) {
+watch(() => quoteForm.sub_source_id, (newValue, oldValue) => {
+  if (newValue !== oldValue) {
     quoteForm.sub_source_options_id = null;
+    quoteForm.partner_name = '';
   }
 });
 

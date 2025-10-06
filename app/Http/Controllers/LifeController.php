@@ -131,7 +131,6 @@ class LifeController extends Controller
      */
     public function update(LifeQuoteRequest $request, $uuid)
     {
-        LoggerService::info('update');
         $this->lifeQuoteService->updateLifeQuote($uuid, $request->validated());
 
         return redirect('personal-quotes/life/'.$uuid)->with('message', 'Quote updated successfully');

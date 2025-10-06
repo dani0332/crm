@@ -111,9 +111,10 @@ const showPartnerNameField = computed(() => {
 const rolesEnum = page.props.rolesEnum;
 
 // Watchers for field resets and partner name handling
-watch(() => quoteForm.sub_source_id, (newValue) => {
-  if (newValue !== quoteForm.sub_source_id) {
+watch(() => quoteForm.sub_source_id, (newValue, oldValue) => {
+  if (newValue !== oldValue) {
     quoteForm.sub_source_options_id = null;
+    quoteForm.partner_name = '';
   }
 });
 
@@ -232,7 +233,7 @@ watch(
       </h2>
       <div>
         <Link :href="route('life-quotes-list')">
-          <x-button size="sm" color="#ff5e00"> Life Quotes List x</x-button>
+          <x-button size="sm" color="#ff5e00"> Life Quotes List</x-button>
         </Link>
       </div>
     </div>

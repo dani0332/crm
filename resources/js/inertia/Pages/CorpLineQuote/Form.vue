@@ -96,9 +96,10 @@ const showPartnerNameField = computed(() => {
 });
 
 // Watchers to reset and maintain notes with partner name
-watch(() => quoteForm.sub_source_id, (newValue) => {
-  if (newValue !== quoteForm.sub_source_id) {
+watch(() => quoteForm.sub_source_id, (newValue, oldValue) => {
+  if (newValue !== oldValue) {
     quoteForm.sub_source_options_id = null;
+    quoteForm.partner_name = '';
   }
 });
 
