@@ -13,6 +13,7 @@ use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Models\QuoteDocument;
+use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Error;
@@ -221,12 +222,26 @@ class EpBookingService extends BaseService
 
         LoggerService::info("{$this->logPrefix} Begin handleJobSuccess: QuoteStatusId: {$quoteStatusId}, EpPolicyStatus: {$epPolicyStatus}");
 
-        if ($epPolicyStatus == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE) {
+        $epTransactionRepo = app(EmbeddedTransactionRepository::class);
+        $underProcessEpTransactions = $epTransactionRepo->getUnderProcessEpTransactions($this->context->quoteTypeId, $this->context->quoteId);
+        if ($underProcessEpTransactions->isEmpty()) {
+
             $response = match ($quoteStatusId) {
                 QuoteStatusEnum::PolicyIssued => $this->callSageBookingProcess(),
                 QuoteStatusEnum::PolicyBooked => $this->scheduleSageBookingForEp(),
                 default => ['status' => true, 'message' => 'Sage booking is not called'],
             };
+
+        } else {
+            $underProcessEpDetails = $underProcessEpTransactions->map(function ($item) { 
+                return [
+                    'et_id' => $item->id,
+                    'short_code' => $item->product->embeddedProduct->short_code ?? '', 
+                    'payment_status_id' => $item->payment_status_id ?? '', 
+                    'policy_status' => $item->policy_status ?? ''
+                ];
+            });
+            LoggerService::info("{$this->logPrefix} Under process EP transactions found: ", extra: ['underProcessEpDetails' => $underProcessEpDetails]);
         }
 
         LoggerService::info("{$this->logPrefix} Finish handleJobSuccess: QuoteStatusId: {$quoteStatusId}, EpPolicyStatus: {$epPolicyStatus}", extra: ['response' => $response]);
