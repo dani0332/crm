@@ -554,7 +554,7 @@ class EpEcbService extends EpBookingService
             $responseLog = collect($response)->except('content')->toArray();
 
             // Log the API call
-            $this->logApiRequest($operation, $url, [], $responseLog);
+            $this->logApiRequest($operation, [], $responseLog);
             return $response;
         }
     }
@@ -613,11 +613,11 @@ class EpEcbService extends EpBookingService
             $responseLog = $response;
             if (isset($responseLog['data']->access_token)) {
                 $responseLog['data'] = clone $responseLog['data'];
-                $responseLog['data']->access_token = substr($responseLog['data']->access_token, 0, 50) . '********';
+                unset($responseLog['data']->access_token);
             }
 
             // Log the API call
-            $this->logApiRequest($operation, $url, $data, $responseLog);
+            $this->logApiRequest($operation, $data, $responseLog);
             return $response;
         }
     }
@@ -627,7 +627,6 @@ class EpEcbService extends EpBookingService
      */
     private function logApiRequest(
         string $operation,
-        string $url = '',
         array $payload = [],
         array $responseLog = [],
         bool $isSavedInDB = true
@@ -640,9 +639,7 @@ class EpEcbService extends EpBookingService
         $logData = [
             ...$this->logExtra,
             'operation' => $operation,
-            ...$basicLogs,
-            // 'payload' => json_encode($payload),
-            // ...$responseLog,
+            ...$basicLogs
         ];
 
         try {
