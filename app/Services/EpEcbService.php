@@ -873,6 +873,7 @@ class EpEcbService extends EpBookingService
                 return $document;
             });
 
+        $policySoldDate = $this->formatDate(now());
         $policyStartDate = $this->formatDate($this->quote?->policy_start_date ?? '');
         $policyEndDate = $this->formatDate($this->quote->policy_expiry_date ?? '');
         $paymentChargeId = $this->embeddedTransaction?->paymentCharges?->first()?->transaction_id;
@@ -883,7 +884,7 @@ class EpEcbService extends EpBookingService
             'transaction_country' => $this->transactionCountry,
             'payment_reference_number' => $paymentChargeId,
             'sales_info' => [
-                'policy_sold_date' => $policyStartDate,
+                'policy_sold_date' => $policySoldDate,
                 'policy_sold_location' => null,
                 'policy_sold_salesman' => null
             ],
