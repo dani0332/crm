@@ -585,7 +585,7 @@ foreach ($quotePlan->addons as &$addon) {
             [
                 'code' => 'travelRepatriationOfMortalRemains',
                 'title' => 'Repatriation of mortal remains',
-                'type' => 'inclusion',
+                'type' => ['inclusion','emergencyMedicalCover'],
             ],
             [
                 'code' => 'travelRepatriationOtherInsuredPerson',
