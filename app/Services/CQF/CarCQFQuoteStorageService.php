@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Services\CQF;
 
-use App\Enums\EmbeddedProductEnum;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
+use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeId;
+use Illuminate\Support\Carbon;
+use App\Enums\EmbeddedProductEnum;
 use App\Models\RenewalsUploadLeads;
-use App\Repositories\EmbeddedProductRepository;
 use App\Services\CapiRequestService;
 use App\Services\Logger\LoggerService;
-use Illuminate\Support\Carbon;
+use App\Repositories\EmbeddedProductRepository;
+use App\Enums\PaymentStatusEnum;
 
 class CarCQFQuoteStorageService
 {
@@ -51,12 +52,22 @@ class CarCQFQuoteStorageService
 
             if (! empty($quote->embeddedTransactions)) {
                 foreach ($quote->embeddedTransactions as $embeddedTransaction) {
-                    if ($embeddedTransaction->is_selected == 1) {
+                    if ($embeddedTransaction->is_selected == 1 && $embeddedTransaction->payment_status_id == PaymentStatusEnum::CAPTURED &&  strpos($embeddedTransaction->code, EmbeddedProductEnum::MDX) !== false) {
                         $epCodes[] = EmbeddedProductEnum::MDX.'-'.$newQuote->code;
                         LoggerService::info(self::class.' - Embedded Transaction found for quote', [
-                            'embeddedTransaction' => $embeddedTransaction,
+                            'embeddedTransaction' => [
+                                'code' => $embeddedTransaction->code,
+                                'is_selected' => $embeddedTransaction->is_selected,
+                                'payment_status_id' => $embeddedTransaction->payment_status_id,
+                                'product_id' => $embeddedTransaction->product_id ?? null,
+                                'previous_quote_uuid' => $quote->uuid,
+                                'new_quote_uuid' => $newQuote->uuid,
+                                'previous_quote_id' => $quote->id,
+                                'new_quote_id' => $newQuote->id,
+                            ],
                         ]);
                     }
+                    
                 }
             }
 
