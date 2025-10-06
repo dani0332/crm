@@ -878,11 +878,13 @@ class EpEcbService extends EpBookingService
 
         $policyStartDate = $this->formatDate($this->quote?->policy_start_date ?? '');
         $policyEndDate = $this->formatDate($this->quote->policy_expiry_date ?? '');
+        $paymentChargeId = $this->embeddedTransaction?->paymentCharges?->first()?->transaction_id;
 
         return [
             'client_reference_number' => null,
             'quote_reference_number' => $this->quoteReferenceNumber,
             'transaction_country' => $this->transactionCountry,
+            'payment_reference_number' => $paymentChargeId,
             'sales_info' => [
                 'policy_sold_date' => $policyStartDate,
                 'policy_sold_location' => null,
@@ -928,7 +930,7 @@ class EpEcbService extends EpBookingService
                 'mi_end_date' => $policyEndDate,
                 'mi_coverage_area' => "NA", // "UAE & OMAN",
                 'mi_sum_insured' => $this->quote?->car_value,
-                'mi_policy_excess' => $this->quote?->carQuotePlanDetail?->excess
+                'mi_policy_excess' => $this->quote?->carQuotePlanDetail?->excess ?: 100
             ],
             'document_info' => $mulkiyaDocuments
         ];
