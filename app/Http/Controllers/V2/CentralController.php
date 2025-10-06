@@ -325,59 +325,6 @@ class CentralController extends Controller
                 ]], 403);
             }
 
-            $quoteType = QuoteTypes::getNameShortCode($this->getQuoteCodeType($quote) ?? '');
-            $quoteTypeId = $quoteType?->id();
-
-            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
-
-                $captureableEmbeddedTransactions = EmbeddedTransaction::where([
-                    ['quote_type_id', $quoteTypeId],
-                    ['quote_request_id', $quote->id],
-                    ['is_selected', 1],
-                    ['payment_status_id', PaymentStatusEnum::AUTHORISED],
-                ])
-                    ->whereHas('product.embeddedProduct', function ($query) {
-                        $query->where('product_category', EpCategoryEnum::BOLT_ON);
-                    })
-                    ->with(['product.embeddedProduct:id,short_code'])
-                    ->select('code', 'payment_status_id', 'policy_status', 'product_id')
-                    ->get();
-
-                if ($captureableEmbeddedTransactions->isNotEmpty()) {
-                    try {
-                        EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType->value));
-
-                        $sukoonMedexCodes = EmbeddedProductEnum::getSukoonMedexCodes();
-                        $hasSukoonMedexProducts = $captureableEmbeddedTransactions
-                            ->filter(function ($transaction) use ($sukoonMedexCodes) {
-                                $epShortCode = $transaction?->product?->embeddedProduct?->short_code;
-
-                                return $epShortCode && in_array($epShortCode, $sukoonMedexCodes);
-                            })
-                            ->isNotEmpty();
-
-                        // Return response only if EP has any Sukoon MEDEX Product, otherwise proceed to Sage booking
-                        if ($hasSukoonMedexProducts) {
-                            LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin',
-                                extra: $captureableEmbeddedTransactions->toArray()
-                            );
-
-                            return response()->json(['message' => 'The embedded product payment is being captured, once done, booking process will begin.'], 200);
-                        }
-
-                    } catch (Exception $e) {
-                        LoggerService::error('Embedded Product payment capture failed', [
-                            'error' => $e->getMessage(),
-                            'uuid' => $quote->uuid,
-                        ]);
-
-                        return response()->json(['errors' => [
-                            'message' => 'Embedded Product payment capture failed',
-                        ]], 403);
-                    }
-                }
-            }
-
             $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
 
             return response()->json(['message' => $response['message']], 200);
