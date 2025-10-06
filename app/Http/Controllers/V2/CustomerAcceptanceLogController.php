@@ -17,7 +17,7 @@ class CustomerAcceptanceLogController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $customerAcceptanceLogService = new CustomerAcceptanceLogService();
+            $customerAcceptanceLogService = new CustomerAcceptanceLogService;
             [$logs, $customerAcceptanceLogsUrl] = $customerAcceptanceLogService->getCustomerAcceptanceLogs($request->only('lob', 'leadId'));
 
             return response()->json([

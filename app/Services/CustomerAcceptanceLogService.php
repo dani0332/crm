@@ -31,7 +31,7 @@ class CustomerAcceptanceLogService
             ->simplePaginate(15)
             ->withQueryString();
 
-        $customerAcceptanceLogsUrl = config('constants.DECLARATION_BASE_URL');  
+        $customerAcceptanceLogsUrl = config('constants.DECLARATION_BASE_URL');
 
         return [$logs, $customerAcceptanceLogsUrl];
     }

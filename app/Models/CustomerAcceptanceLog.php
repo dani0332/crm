@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Trait\HasDateTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class CustomerAcceptanceLog extends Model
