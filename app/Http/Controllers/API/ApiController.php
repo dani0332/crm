@@ -40,6 +40,7 @@ use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
+use App\Services\CQF\CarCQFFileExportService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
@@ -53,7 +54,6 @@ use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
@@ -476,6 +476,10 @@ class ApiController extends Controller
         ]);
     }
 
+    public function downloadValidationFailedFile($id)
+    {
+        return app(CarCQFFileExportService::class)->downloadValidationFailedFile($id);
+    }
     public function documentNotification(DocumentNotificationRequest $request)
     {
         return $this->apiService->documentNotification($request);
