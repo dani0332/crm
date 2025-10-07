@@ -31,11 +31,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits([
-  'refresh',
-  'page-change',
-  'view-document',
-]);
+const emit = defineEmits(['refresh', 'page-change', 'view-document']);
 
 // Permission management
 const page = usePage();
@@ -64,30 +60,32 @@ const handleDownloadDocument = async doc => {
   try {
     debugger;
     downloadLoader.value = true;
-    
+
     const fullUrl = doc.document_link;
     const urlParts = fullUrl.split('/');
     const fileName = urlParts[urlParts.length - 1];
-    
+
     // Method 1: Try direct download with fetch (handles CORS and errors better)
     try {
-      const response = await fetch(props.customerAcceptanceLogsUrl+fullUrl, {
+      const response = await fetch(props.customerAcceptanceLogsUrl + fullUrl, {
         method: 'GET',
         mode: 'cors',
       });
-      
+
       if (!response.ok) {
         if (response.status === 403) {
-          notification.error('Access denied. The document is not publicly accessible.');
+          notification.error(
+            'Access denied. The document is not publicly accessible.',
+          );
           return;
         }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       // Convert response to blob and download
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      
+
       const link = document.createElement('a');
       link.href = url;
       link.download = fileName;
@@ -95,15 +93,14 @@ const handleDownloadDocument = async doc => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Clean up the object URL
       window.URL.revokeObjectURL(url);
-      
+
       notification.success('Document downloaded successfully');
-      
     } catch (fetchError) {
       console.warn('Fetch download failed, trying direct link:', fetchError);
-      
+
       // Method 2: Fallback to direct link (opens in new tab)
       const link = document.createElement('a');
       link.href = fullUrl;
@@ -114,10 +111,11 @@ const handleDownloadDocument = async doc => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      notification.info('Document opened in new tab. Please save it manually if needed.');
+
+      notification.info(
+        'Document opened in new tab. Please save it manually if needed.',
+      );
     }
-    
   } catch (error) {
     console.error('Download failed:', error);
     notification.error('Failed to download document. Please try again.');
@@ -131,7 +129,6 @@ const handleDownloadDocument = async doc => {
 const handleRefresh = () => {
   emit('refresh');
 };
-
 </script>
 
 <template>
@@ -178,7 +175,7 @@ const handleRefresh = () => {
         border-cell
         alternating
       >
-        <template #item-document_link="{ document_link }"> 
+        <template #item-document_link="{ document_link }">
           {{ document_link.split('.')[0] }}
         </template>
         <!-- Actions Column -->
@@ -195,7 +192,7 @@ const handleRefresh = () => {
               :loading="downloadLoader"
               title="Download Document"
             >
-                <span class="px-2"> Download Document </span>
+              <span class="px-2"> Download Document </span>
             </x-button>
           </div>
         </template>
@@ -244,6 +241,5 @@ const handleRefresh = () => {
         @navigate="url => emit('page-change', url)"
       />
     </div>
-
   </div>
 </template>
