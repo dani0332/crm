@@ -16,11 +16,11 @@ class MetLifeValidationService
         return (bool) getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_METLIFE);
     }
 
-    public function shouldValidatePayment(): bool
+    public function shouldValidatePayment(?string $providerCode): bool
     {
         $isMetLifeEnabled = $this->isIntegrationEnabled();
-        $providerCode = request()->providerCode;
-        
+        $providerCode = $providerCode;
+
         return $providerCode !== InsuranceProviderEnum::MTL->value || !$isMetLifeEnabled;
     }
 

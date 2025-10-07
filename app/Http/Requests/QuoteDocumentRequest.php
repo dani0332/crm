@@ -94,7 +94,7 @@ class QuoteDocumentRequest extends FormRequest
             $metLifeValidator = new MetLifeValidationService();
             
             // Skip payment validation for MetLife (MTL) only if MetLife integration is enabled
-            if ($metLifeValidator->shouldValidatePayment()) {
+            if ($metLifeValidator->shouldValidatePayment(request()->providerCode)) {
                 if ($quote_source == LeadSourceEnum::DUBAI_NOW) {
                     // validate if payment is authorized capture or partial capture
                     if (isset($quote->payment_status_id) && ! in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {

@@ -116,33 +116,25 @@ class MetLifeValidationServiceTest extends TestCase
         // Test the logic directly without complex mocking
         // This tests the core logic: $providerCode !== InsuranceProviderEnum::MTL->value || !$isMetLifeEnabled
         
-        // Test case 1: MetLife provider with integration enabled (should return false)
-        $this->app->instance('request', Request::create('/', 'POST', ['providerCode' => InsuranceProviderEnum::MTL->value]));
-        
         // Mock the integration as enabled
         $this->app->bind('getAppStorageValueByKey', function ($key) {
             return $key === ApplicationStorageEnums::ENABLE_METLIFE ? 1 : 0;
         });
         
-        $result = $this->service->shouldValidatePayment();
+        // Test case 1: MetLife provider with integration enabled (should return false)
+        $result = $this->service->shouldValidatePayment(InsuranceProviderEnum::MTL->value);
         $this->assertFalse($result, 'MetLife with integration enabled should skip payment validation');
         
         // Test case 2: Other provider (should return true)
-        $this->app->instance('request', Request::create('/', 'POST', ['providerCode' => 'AXA']));
-        
-        $result = $this->service->shouldValidatePayment();
+        $result = $this->service->shouldValidatePayment('AXA');
         $this->assertTrue($result, 'Other providers should always validate payment');
         
         // Test case 3: Null provider code (should return true)
-        $this->app->instance('request', Request::create('/', 'POST', ['providerCode' => null]));
-        
-        $result = $this->service->shouldValidatePayment();
+        $result = $this->service->shouldValidatePayment(null);
         $this->assertTrue($result, 'Null provider code should validate payment');
         
         // Test case 4: Empty provider code (should return true)
-        $this->app->instance('request', Request::create('/', 'POST', ['providerCode' => '']));
-        
-        $result = $this->service->shouldValidatePayment();
+        $result = $this->service->shouldValidatePayment('');
         $this->assertTrue($result, 'Empty provider code should validate payment');
     }
 }
