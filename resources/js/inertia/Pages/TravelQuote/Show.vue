@@ -379,7 +379,9 @@ const travelerFullName = computed({
   get() {
     const firstName = travelerForm.first_name || '';
     const lastName = travelerForm.last_name || '';
-    return firstName && lastName ? `${firstName} ${lastName}` : firstName || lastName;
+    return firstName && lastName
+      ? `${firstName} ${lastName}`
+      : firstName || lastName;
   },
   set(value) {
     if (!value || value.trim() === '') {
@@ -387,10 +389,10 @@ const travelerFullName = computed({
       travelerForm.last_name = '';
       return;
     }
-    
+
     const trimmedValue = value.trim();
     const spaceIndex = trimmedValue.indexOf(' ');
-    
+
     if (spaceIndex === -1) {
       // No space found, entire value is first name
       travelerForm.first_name = trimmedValue;
@@ -400,7 +402,7 @@ const travelerFullName = computed({
       travelerForm.first_name = trimmedValue.substring(0, spaceIndex);
       travelerForm.last_name = trimmedValue.substring(spaceIndex + 1).trim();
     }
-  }
+  },
 });
 
 const travelerFieldReq = reactive({
@@ -478,10 +480,10 @@ const addTravelMember = isValid => {
   if (!isValid) return;
 
   // Set name as concatenation of first_name and last_name
-  travelerForm.name = travelerForm.last_name 
+  travelerForm.name = travelerForm.last_name
     ? `${travelerForm.first_name} ${travelerForm.last_name}`.trim()
     : travelerForm.first_name;
-  
+
   travelerForm.post(route('travelers.store'), {
     preserveScroll: true,
     onBefore: () => {
@@ -552,12 +554,12 @@ const onEditTraveler = traveler => {
 
 const editTraveler = isValid => {
   if (!isValid) return;
-  
+
   // Set name as concatenation of first_name and last_name
-  travelerForm.name = travelerForm.last_name 
+  travelerForm.name = travelerForm.last_name
     ? `${travelerForm.first_name} ${travelerForm.last_name}`.trim()
     : travelerForm.first_name;
-  
+
   travelerForm.put(route('travelers.update', travelerForm.id), {
     preserveScroll: true,
     onBefore: () => {
