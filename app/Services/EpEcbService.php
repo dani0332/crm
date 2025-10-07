@@ -100,7 +100,8 @@ class EpEcbService extends EpBookingService
             'has_bearer_token' => !empty($this->bearerToken),
             'has_quote_reference' => !empty($this->quoteReferenceNumber),
             'has_policy_number' => !empty($this->policyNumber),
-            'current_status' => $this->embeddedTransaction->policy_status
+            'quote_status_id' => $this->quote->quote_status_id,
+            'policy_status' => $this->embeddedTransaction->policy_status
         ]);
     }
 
@@ -178,7 +179,7 @@ class EpEcbService extends EpBookingService
         }
 
         // Step 3: Create Policy From Quote
-        if (!$this->shouldSkipStep('create_policy', $currentStatus)) {
+        if (!$this->shouldSkipStep('create_policy_from_quote', $currentStatus)) {
             $this->executeCreatePolicyFromQuote();
             $executedSteps[] = self::STEP_CREATE_POLICY_FROM_QUOTE;
         }
@@ -238,7 +239,7 @@ class EpEcbService extends EpBookingService
                 EmbeddedTransactionEnum::STATUS_BOOKED,
                 EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
             ]),
-            'create_policy' => in_array($currentStatus, [
+            'create_policy_from_quote' => in_array($currentStatus, [
                 EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED,
                 EmbeddedTransactionEnum::STATUS_BOOKED,
                 EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
