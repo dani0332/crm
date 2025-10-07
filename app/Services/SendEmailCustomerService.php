@@ -1060,6 +1060,9 @@ class SendEmailCustomerService extends BaseService
             'tag' => $tag,
         ]);
         $messageId = null;
+        $response = null;
+        $isEmailSent = 0;
+        $responseCode = 0;
         $subject = $emailData->customerName.'\'s Savings with Alfred - '.$emailData->code;
 
         try {
@@ -1092,7 +1095,7 @@ class SendEmailCustomerService extends BaseService
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $documentURL,
-                        'name' => 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.' - '.$emailData->carQuoteId.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
+                        'name' => 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.' - '.$emailData->code.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
                     ];
                 }
             }
@@ -1209,7 +1212,7 @@ class SendEmailCustomerService extends BaseService
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $quoteCdbId = isset($emailData->carQuoteId) ? $emailData->carQuoteId : null;
+            $quoteCdbId = isset($emailData->code) ? $emailData->code : null;
             LoggerService::error('Send Update Email failed', extra: [
                 'Code/Message' => $responseCode,
                 'CustomerEmail' => $emailData->customerEmail,

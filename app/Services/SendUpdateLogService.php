@@ -1394,10 +1394,10 @@ class SendUpdateLogService
             // ],
             // 'googleMeet' => $quote->advisor->calendar_link ?? '',
             'documents' => $documents,
-            // 'quoteTypeId' => $quoteTypeId,
-            // 'code' => $sendUpdateLog->code,
+            'quoteTypeId' => $quoteTypeId,
+            'code' => $sendUpdateLog->code,
             // 'quote' => $sendUpdateLog->code,
-            // 'quoteId' => $sendUpdateLog->personal_quote_id, // for email status save
+            'quoteId' => $sendUpdateLog->personal_quote_id, // for email status save
             'refID' => $sendUpdateLog->code,
             'product' => $quoteType,
         ];
