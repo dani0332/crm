@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\MetLife;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\InsuranceProviderEnum;
 use App\Services\Logger\LoggerService;
 use Exception;
 
@@ -13,6 +14,14 @@ class MetLifeValidationService
     public function isIntegrationEnabled(): bool
     {
         return (bool) getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_METLIFE);
+    }
+
+    public function shouldValidatePayment(): bool
+    {
+        $isMetLifeEnabled = $this->isIntegrationEnabled();
+        $providerCode = request()->providerCode;
+        
+        return $providerCode !== InsuranceProviderEnum::MTL->value || !$isMetLifeEnabled;
     }
 
     public function isSessionValid(?string $sessionId, ?int $sessionCreatedAt, int $sessionTimeout): bool

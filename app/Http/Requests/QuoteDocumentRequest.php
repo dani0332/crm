@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Services\MetLife\MetLifeValidationService;
 use App\Models\DocumentType;
 use App\Models\InsuranceProvider;
 use App\Rules\ValidateBase64;
@@ -45,6 +46,7 @@ class QuoteDocumentRequest extends FormRequest
             'is_base_64' => 'nullable',
             'document_category' => 'nullable',
             'file_name' => 'nullable|string|max:100', // only for base 64 file name to be used as original name
+            'providerCode' => 'nullable|string|max:10',
         ];
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->first())) {
@@ -88,20 +90,26 @@ class QuoteDocumentRequest extends FormRequest
             }
 
             $quote_source = data_get($quote, 'source', '');
-            if ($quote_source == LeadSourceEnum::DUBAI_NOW) {
-                // validate if payment is authorized capture or partial capture
-                if (isset($quote->payment_status_id) && ! in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
-                    $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized, captured or partial captured.');
-                }
-            } else {
-                // validate if payment is authorized
-                if (request()->quoteType != strtolower(quoteTypeCode::Travel) && isset($quote->insurance_provider_id)) {
-                    if (! $this->isPlanBProviderSelected($quote)) {
-                        if (empty($quote->payment) ||
-                            ($quote->payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
-                             $quote->payment->payment_gateway_id != PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK)
-                        ) {
-                            $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
+            
+            $metLifeValidator = new MetLifeValidationService();
+            
+            // Skip payment validation for MetLife (MTL) only if MetLife integration is enabled
+            if ($metLifeValidator->shouldValidatePayment()) {
+                if ($quote_source == LeadSourceEnum::DUBAI_NOW) {
+                    // validate if payment is authorized capture or partial capture
+                    if (isset($quote->payment_status_id) && ! in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+                        $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized, captured or partial captured.');
+                    }
+                } else {
+                    // validate if payment is authorized
+                    if (request()->quoteType != strtolower(quoteTypeCode::Travel) && isset($quote->insurance_provider_id)) {
+                        if (! $this->isPlanBProviderSelected($quote)) {
+                            if (empty($quote->payment) ||
+                                ($quote->payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
+                                 $quote->payment->payment_gateway_id != PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK)
+                            ) {
+                                $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
+                            }
                         }
                     }
                 }
