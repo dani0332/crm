@@ -192,7 +192,7 @@ const tableHeader = [
   },
   { text: 'Renewal Batch', value: 'renewal_batch_model' },
   { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
-  { text: 'SUB SOURCE', value: 'sub_source' },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source' },
 ];
 
 const can = permission => useCan(permission);
@@ -632,7 +632,7 @@ const insurerAMLStatusOption = computed(() => {
         </x-select>
         <x-select
           v-model="filters.sub_source_id"
-          label="Sub Source"
+          label="IMCRM SUB-SOURCE"
           name="sub_source_id"
           :options="(page.props.subSources || []).map(source => ({ value: source.id, label: source.text, suffix: source.description || source.tooltip || '' }))"
           placeholder="Select sub source"

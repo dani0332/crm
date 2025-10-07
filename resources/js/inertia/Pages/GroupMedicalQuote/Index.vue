@@ -163,7 +163,7 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch' },
-  { text: 'Sub Source', value: 'sub_source_text' },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source_text' },
 ];
 
 function resetFilters() {
@@ -717,11 +717,11 @@ const insurerAMLStatusOption = computed(() => {
         <x-select
           v-model="filters.sub_source_id"
           name="sub_source_id"
-          placeholder="Select Sub Source"
+          placeholder="Select IMCRM SUB-SOURCE"
           :options="subSourceOptions"
           class="w-full"
           filterable
-          label="Sub Source"
+          label="IMCRM SUB-SOURCE"
           multiple
           truncate
         >

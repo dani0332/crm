@@ -100,7 +100,7 @@ const tableHeader = ref([
     value: 'customer.pcp_tag_formatted',
     is_active: true,
   },
-  { text: 'Sub Source', value: 'sub_source.text', is_active: true },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text', is_active: true },
 ]);
 
 const filters = reactive({
@@ -786,11 +786,11 @@ const formatDate = dateString =>
         <x-select
           v-model="filters.sub_source_id"
           name="sub_source_id"
-          placeholder="Search by Sub Source"
+          placeholder="Search by IMCRM SUB-SOURCE"
           :options="subSourceOptions"
           class="w-full"
           filterable
-          label="Sub Source"
+          label="IMCRM SUB-SOURCE"
           multiple
           truncate
         >

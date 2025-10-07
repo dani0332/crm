@@ -109,7 +109,7 @@ const tableHeader = [
   },
   { text: 'Renewal Batch', value: 'renewal_batch' },
   { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
-  { text: 'Sub Source', value: 'sub_source.text' },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text' },
 ];
 
 const ecommerceOptions = [
@@ -1067,10 +1067,10 @@ const onConfirmPUAExport = () => {
         />
         <x-select
           v-model="filters.sub_source_id"
-          label="Sub Source"
+          label="IMCRM SUB-SOURCE"
           name="sub_source_id"
           :options="subSourceOptions"
-          placeholder="Select sub source"
+          placeholder="Select IMCRM SUB-SOURCE"
           filterable
           multiple
           truncate

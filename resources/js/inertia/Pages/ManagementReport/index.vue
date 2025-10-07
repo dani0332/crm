@@ -666,19 +666,19 @@ watch(
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
-            Sub Source
+            IMCRM SUB-SOURCE
           </label>
           <template #tooltip>
-            Select one or more sub sources
+            Select one or more IMCRM SUB-SOURCE values
           </template>
         </x-tooltip>
         <x-select
           v-model="filters.subSources"
-          placeholder="Search by Sub Source"
+          placeholder="Search by IMCRM SUB-SOURCE"
           :options="subSourceOptions"
           deselect-all
           filterable
-          filterPlaceholder="Filter Sub Source...."
+          filterPlaceholder="Filter IMCRM SUB-SOURCE...."
           class="w-full"
           multiple
           truncate

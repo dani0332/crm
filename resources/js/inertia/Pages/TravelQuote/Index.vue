@@ -167,7 +167,7 @@ const tableHeader = [
   { text: 'Renewal Batch', value: 'renewal_batch.name' },
   { text: 'Age Group', value: 'age_group' },
   { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
-  { text: 'Sub Source', value: 'sub_source.text' },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text' },
 ];
 
 const paymentStatusOptions = computed(() => {
@@ -1062,11 +1062,11 @@ const calculateAge = dateOfBirth => {
         <x-select
           v-model="filters.sub_source_id"
           name="sub_source_id"
-          placeholder="Search by Sub Source"
+          placeholder="Search by IMCRM SUB-SOURCE"
           :options="subSourceOptions"
           class="w-full"
           filterable
-          label="Sub Source"
+          label="IMCRM SUB-SOURCE"
           multiple
           truncate
         >

@@ -161,7 +161,7 @@ const tableHeader = ref([
     value: 'customer.pcp_tag_formatted',
     is_active: true,
   },
-  { text: 'Sub Source', value: 'sub_source.text', is_active: true },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -1003,7 +1003,7 @@ const onLeadConfirmed = (leadData) => {
 
         <x-select
           v-model="filters.sub_source_id"
-          label="Sub Source"
+          label="IMCRM SUB-SOURCE"
           name="sub_source_id"
           :options="(subSources || []).map(source => ({ value: source.id, label: source.text, suffix: source.description || source.tooltip || '' }))"
           placeholder="Select sub source"

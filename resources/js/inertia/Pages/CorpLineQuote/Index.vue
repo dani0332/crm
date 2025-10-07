@@ -213,7 +213,7 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
-  { text: 'Sub Source', value: 'sub_source_text', is_active: true },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source_text', is_active: true },
 ]);
 
 const setIntialState = () => {
@@ -814,7 +814,7 @@ const insurerAMLStatusOption = computed(() => {
 
         <x-select
           v-model="filters.sub_source_id"
-          label="Sub Source"
+          label="IMCRM SUB-SOURCE"
           name="sub_source_id"
           :options="subSourceOptions"
           placeholder="Select sub source"

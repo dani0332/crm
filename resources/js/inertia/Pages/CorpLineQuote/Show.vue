@@ -941,7 +941,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   <label
                     class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                   >
-                    SUB SOURCE
+                    IMCRM SUB-SOURCE
                   </label>
                   <template #tooltip>{{ quote?.sub_source_description || 'N/A' }}</template>
                 </x-tooltip>
