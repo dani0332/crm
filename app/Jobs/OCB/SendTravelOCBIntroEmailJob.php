@@ -4,6 +4,7 @@ namespace App\Jobs\OCB;
 
 use App\Models\TravelQuote;
 use App\Services\EmailServices\TravelEmailService;
+use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -11,9 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Services\Logger\LoggerService;
 
 class SendTravelOCBIntroEmailJob implements ShouldQueue
 {
