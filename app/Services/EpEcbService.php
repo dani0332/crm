@@ -136,15 +136,6 @@ class EpEcbService extends EpBookingService
             // Any exceptions will bubble up to the job for automatic retry handling
             $this->executeWorkflowFromStep();
 
-            // Step 3: Create Policy From Quote STATUS_PAYMENT_SUCCEED
-            $this->embeddedTransaction->refresh();
-            $isPaymentSucceed = $this->embeddedTransaction->policy_status == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED;
-
-            if (!$this->shouldSkipStep('get_documents', $this->embeddedTransaction->policy_status) && $isPaymentSucceed && !empty($this->policyNumber)) {
-                // Dispatch job for sync ep documents
-                dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(2));
-            }
-
             LoggerService::info($this->logPrefix . ' Purchase flow completed successfully', extra: $this->logExtra);
         } catch (Exception $e) {
             LoggerService::error($this->logPrefix . ' Purchase flow failed', extra: [
@@ -174,7 +165,7 @@ class EpEcbService extends EpBookingService
 
         if($this->quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
 
-            // Step 2 & 3 in Single API Call: Create Policy Without Quote
+            // Step 2 & 3: Create Policy Without Quote STATUS_PAYMENT_SUCCEED
             if (!$this->shouldSkipStep('create_policy_without_quote', $currentStatus)) {
                 $this->executeCreatePolicyWithoutQuote();
                 $executedSteps[] = self::STEP_CREATE_POLICY_WITHOUT_QUOTE;
@@ -182,13 +173,13 @@ class EpEcbService extends EpBookingService
 
         } else {
 
-            // Step 2: Get Quote
+            // Step 2: Get Quote STATUS_QUOTED
             if (!$this->shouldSkipStep('get_quote', $currentStatus)) {
                 $this->executeGetQuote();
                 $executedSteps[] = self::STEP_GET_QUOTE;
             }
 
-            // Step 3: Create Policy From Quote
+            // Step 3: Create Policy From Quote STATUS_PAYMENT_SUCCEED
             if (!$this->shouldSkipStep('create_policy_from_quote', $currentStatus)) {
                 $this->executeCreatePolicyFromQuote();
                 $executedSteps[] = self::STEP_CREATE_POLICY_FROM_QUOTE;
@@ -202,6 +193,15 @@ class EpEcbService extends EpBookingService
             'certificate_number' => $this->policyNumber,
             'policy_status' => $this->embeddedTransaction->policy_status ?? ''
         ]);
+
+        $isPaymentSucceed = $this->embeddedTransaction->policy_status == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED;
+        if (!$this->shouldSkipStep('get_documents', $this->embeddedTransaction->policy_status) && $isPaymentSucceed) {
+            // Delete existing documents
+            $this->embeddedTransaction->documents()->whereIn('document_type_code', $this->reqDocTypeCodes)->delete();
+
+            // Dispatch job for sync ep documents
+            dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(2));
+        }
     }
 
     /**
@@ -209,14 +209,8 @@ class EpEcbService extends EpBookingService
      */
     public function syncPolicyDocuments(): void
     {
-        $currentStatus = $this->embeddedTransaction->policy_status ?? '';
-
-        $savedReqDocumentDocTypeCodes = $this->embeddedTransaction?->documents()
-            ->whereIn('document_type_code', $this->reqDocTypeCodes)->get()
-            ->pluck('document_type_code')
-            ->toArray();
-
-        $missingReqDocTypeCodes = array_diff($this->reqDocTypeCodes, $savedReqDocumentDocTypeCodes);
+        $currentStatus = $this->embeddedTransaction->policy_status ?? '';        
+        $missingReqDocTypeCodes = $this->getMissingDocumentDocTypes($this->reqDocTypeCodes);
 
         // Step 1: Get policy documents
         if (!$this->shouldSkipStep('get_documents', $currentStatus) && !empty($missingReqDocTypeCodes)) {
@@ -287,7 +281,8 @@ class EpEcbService extends EpBookingService
             'POST',
             '/api/Auth/GetToken',
             $payload,
-            operation: self::STEP_GET_TOKEN
+            false,
+            self::STEP_GET_TOKEN
         );
 
         if (!$response['success']) {
@@ -394,9 +389,6 @@ class EpEcbService extends EpBookingService
         $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED, [
             'certificate_number' => $this->policyNumber
         ]);
-
-        $this->embeddedTransaction->documents()->whereIn('document_type_code', $this->reqDocTypeCodes)->delete();
-        $this->embeddedTransaction->load('documents');
     }
 
     /**
@@ -441,9 +433,6 @@ class EpEcbService extends EpBookingService
         $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED, [
             'certificate_number' => $this->policyNumber
         ]);
-
-        $this->embeddedTransaction->documents()->whereIn('document_type_code', $this->reqDocTypeCodes)->delete();
-        $this->embeddedTransaction->load('documents');
     }
 
     /**
@@ -498,10 +487,7 @@ class EpEcbService extends EpBookingService
             ]);
         }
 
-        $this->embeddedTransaction->load('documents');
-        $savedDocumentDocTypes = $this->embeddedTransaction?->documents?->pluck('document_type_code')->toArray();
-        $missingDocumentDocTypes = array_diff($this->reqDocTypeCodes, $savedDocumentDocTypes);
-
+        $missingDocumentDocTypes = $this->getMissingDocumentDocTypes($this->reqDocTypeCodes);
         if (empty($missingDocumentDocTypes)) {
             // Update transaction status
             $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_BOOKED);

@@ -308,6 +308,18 @@ class EpBookingService extends BaseService
         ];
     }
 
+    protected function getMissingDocumentDocTypes(array $checkableDocTypeCodes, $isWatermarked = false): array
+    {
+        $this->embeddedTransaction->load('documents');
+        $savedDocumentDocTypes = $this->embeddedTransaction->documents()
+            ->whereIn('document_type_code', $checkableDocTypeCodes)->get()
+            ->when($isWatermarked, fn ($q) => $q->where('is_watermarked', true))
+            ->pluck('document_type_code')
+            ->toArray();
+
+        return array_diff($checkableDocTypeCodes, $savedDocumentDocTypes);
+    }
+
     /**
      * Check if the file is already being processed
      */
