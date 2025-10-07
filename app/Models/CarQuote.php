@@ -523,6 +523,12 @@ class CarQuote extends BaseModel
         return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
     }
 
+    public function customerInsured()
+    {
+        return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Car);
+    }
+
     public function insured()
     {
         return $this->hasOneThrough(
@@ -548,6 +554,12 @@ class CarQuote extends BaseModel
         )->where('customer_insured.quote_type_id', QuoteTypeId::Car)
             ->latest('customer_insured.updated_at');
     }
+
+    public function amlLogs()
+    {
+        return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Car)->withTrashed();
+    }    
 
     public function carQuotePlanDetail()
     {
