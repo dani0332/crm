@@ -16,12 +16,15 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'confirmed']);
 
-const createLead = reactive({
+const { isRequired } = useRules();
+const PARTNER_NAME_MAX_LENGTH = 50;
+
+const leadForm = useForm({
   type: '',
-  subSource: '',
-  subSourceOption: '',
-  primaryRefId: '',
-  partnerName: '',
+  sub_source_id: null,
+  sub_source_options_id: null,
+  primary_ref_id: '',
+  partner_name: '',
 });
 
 const isModalOpen = computed({
@@ -29,23 +32,23 @@ const isModalOpen = computed({
   set: (value) => emit('update:modelValue', value),
 });
 
-const onConfirmCreateLead = () => {
+const onConfirmCreateLead = (isValid) => {
+  if (!isValid) return;
+
   const leadData = {
-    type: createLead.type,
-    subSourceId: createLead.subSource,
-    subSourceOptionsId: createLead.subSourceOption,
-    primaryRefId: createLead.primaryRefId,
-    partnerName: createLead.partnerName,
+    type: leadForm.type,
+    subSourceId: leadForm.sub_source_id,
+    subSourceOptionsId: leadForm.sub_source_options_id,
+    primaryRefId: leadForm.primary_ref_id,
+    partnerName: leadForm.partner_name,
   };
 
-  if (createLead.type === 'referral' || createLead.type === 'ecom_lead_extension') {
+  if (leadForm.type === 'referral' || leadForm.type === 'ecom_lead_extension') {
     router.get(route(props.routeName), leadData);
   }
 
   emit('confirmed', leadData);
   isModalOpen.value = false;
-
-  // Reset form
   resetForm();
 };
 
@@ -55,11 +58,12 @@ const onCancel = () => {
 };
 
 const resetForm = () => {
-  createLead.type = '';
-  createLead.subSource = '';
-  createLead.subSourceOption = '';
-  createLead.primaryRefId = '';
-  createLead.partnerName = '';
+  leadForm.type = '';
+  leadForm.sub_source_id = null;
+  leadForm.sub_source_options_id = null;
+  leadForm.primary_ref_id = '';
+  leadForm.partner_name = '';
+  if (typeof leadForm.reset === 'function') leadForm.reset();
 };
 
 // Computed properties for dropdown options
@@ -73,56 +77,33 @@ const subSourceOptions = computed(() => {
 });
 
 const subSourceChildOptions = computed(() => {
-  if (!createLead.subSource) return [];
+  if (!leadForm.sub_source_id) return [];
 
-  const selectedSource = props.subSources.find(source => source.id == createLead.subSource);
+  const selectedSource = props.subSources.find(source => source.id == leadForm.sub_source_id);
   if (!selectedSource || !selectedSource.childs) return [];
 
   return selectedSource.childs.map(child => ({
     value: child.id,
     label: child.text,
+    code: child.code,
     suffix: child.description || child.tooltip || `Information about ${child.text}`, // Add tooltip support
   }));
 });
 
 // Check if Partner name field should be shown
 const showPartnerNameField = computed(() => {
-  if (!createLead.subSourceOption) return false;
-  
-  const selectedSubSource = props.subSources?.find(source => source.id == createLead.subSource);
-  if (!selectedSubSource?.childs) return false;
-  
-  const selectedSubSourceOption = selectedSubSource.childs.find(child => child.id == createLead.subSourceOption);
-  return selectedSubSourceOption?.code === 'other-clubs-or-campaigns';
+  if (!leadForm.sub_source_options_id) return false;
+  const selected = subSourceChildOptions.value.find(option => option.value == leadForm.sub_source_options_id);
+  return selected?.code === 'other-clubs-or-campaigns';
 });
 
-// Form validation
-const isFormValid = computed(() => {
-  if (!createLead.type) return false;
+const validatePartnerNameMax = value => {
+  if (!value) return true;
+  const trimmed = String(value).trim();
+  return trimmed.length <= PARTNER_NAME_MAX_LENGTH || `Must be <= ${PARTNER_NAME_MAX_LENGTH} characters`;
+};
 
-  if (createLead.type === 'ecom_lead_extension') {
-    return !!createLead.primaryRefId.trim();
-  }
-
-  if (createLead.type === 'referral') {
-    // subSource is always required for referral type
-    if (!createLead.subSource) return false;
-    
-    // subSourceOption is only required if there are child options available
-    if (subSourceChildOptions.value.length > 0 && !createLead.subSourceOption) {
-      return false;
-    }
-    
-    // partnerName is required when showPartnerNameField is true
-    if (showPartnerNameField.value && !createLead.partnerName.trim()) {
-      return false;
-    }
-    
-    return true;
-  }
-
-  return true; // For other types, just type selection is enough
-});
+// Overall validity handled by x-form via :rules and submit callback
 
 // Watch for modal close to reset form
 watch(isModalOpen, (newValue) => {
@@ -132,22 +113,24 @@ watch(isModalOpen, (newValue) => {
 });
 
 // Watch for type change to reset dependent fields
-watch(() => createLead.type, () => {
-  createLead.subSource = '';
-  createLead.subSourceOption = '';
-  createLead.primaryRefId = '';
-  createLead.partnerName = '';
+watch(() => leadForm.type, () => {
+  leadForm.sub_source_id = null;
+  leadForm.sub_source_options_id = null;
+  leadForm.primary_ref_id = '';
+  leadForm.partner_name = '';
 });
 
 // Watch for subSource change to reset subSourceOption
-watch(() => createLead.subSource, () => {
-  createLead.subSourceOption = '';
-  createLead.partnerName = '';
+watch(() => leadForm.sub_source_id, () => {
+  leadForm.sub_source_options_id = null;
+  leadForm.partner_name = '';
 });
 
 // Watch for subSourceOption change to reset partnerName
-watch(() => createLead.subSourceOption, () => {
-  createLead.partnerName = '';
+watch(() => leadForm.sub_source_options_id, () => {
+  if (!showPartnerNameField.value) {
+    leadForm.partner_name = '';
+  }
 });
 </script>
 
@@ -159,72 +142,76 @@ watch(() => createLead.subSourceOption, () => {
     show-close
     backdrop
   >
-    <div class="w-full grid md:grid-cols-2 gap-5">
-      <p class="text-md font-bold text-gray-500">
-        Select reason to create manual lead <span class="error">*</span>
-      </p>
-    </div>
-
-    <div class="flex w-full flex-col gap-5 mt-4 mb-4">
-      <x-form-group v-model="createLead.type">
-        <x-radio value="referral" label="Referral" />
-        <x-radio value="early_renewal" label="Early Renewal" />
-        <x-radio value="payment_status" label="Payment Status" />
-        <x-radio value="ecom_lead_extension" label="ECOM Lead Extension" />
-      </x-form-group>
-
-      <!-- Conditional dropdowns for referral option -->
-      <div v-if="createLead.type === 'referral'" class="flex flex-col gap-4">
-        <x-select
-          v-model="createLead.subSource"
-          label="Sub Source"
-          name="subSource"
-          :options="subSourceOptions"
-          placeholder="Please select sub source"
-          class="w-full"
-          filterable
-          required
-        >
-          <template #suffix="{ item }">
-            <x-tooltip v-if="item.suffix" placement="right">
-              <x-icon icon="info" color="error" />
-              <template #tooltip>
-                {{ item.suffix }}
-              </template>
-            </x-tooltip>
-          </template>
-        </x-select>
-
-        <x-select
-          v-if="createLead.subSource && subSourceChildOptions.length > 0"
-          v-model="createLead.subSourceOption"
-          label="Sub Source Option"
-          name="subSourceOption"
-          :options="subSourceChildOptions"
-          placeholder="Please select sub source option"
-          class="w-full"
-          filterable
-          :required="subSourceChildOptions.length > 0"
-        >
-          <template #suffix="{ item }">
-            <x-tooltip v-if="item.suffix" placement="right">
-              <x-icon icon="info" color="error" />
-              <template #tooltip>
-                {{ item.suffix }}
-              </template>
-            </x-tooltip>
-          </template>
-        </x-select>
+    <x-form id="createLeadForm" @submit="onConfirmCreateLead" :auto-focus="false">
+      <div class="w-full grid md:grid-cols-2 gap-5">
+        <p class="text-md font-bold text-gray-500">
+          Select reason to create manual lead <span class="error">*</span>
+        </p>
       </div>
 
+      <div class="flex w-full flex-col gap-5 mt-4 mb-4">
+        <x-form-group v-model="leadForm.type">
+          <x-radio value="referral" label="Referral" />
+          <x-radio value="early_renewal" label="Early Renewal" />
+          <x-radio value="payment_status" label="Payment Status" />
+          <x-radio value="ecom_lead_extension" label="ECOM Lead Extension" />
+        </x-form-group>
+
+        <!-- Conditional dropdowns for referral option -->
+        <div v-if="leadForm.type === 'referral'" class="flex flex-col gap-4">
+          <x-select
+            v-model="leadForm.sub_source_id"
+            label="Sub Source"
+            name="subSource"
+            :options="subSourceOptions"
+            placeholder="Please select sub source"
+            class="w-full"
+            filterable
+            :rules="[isRequired]"
+            :required="true"
+          >
+            <template #suffix="{ item }">
+              <x-tooltip v-if="item.suffix" placement="right">
+                <x-icon icon="info" color="error" />
+                <template #tooltip>
+                  {{ item.suffix }}
+                </template>
+              </x-tooltip>
+            </template>
+          </x-select>
+
+          <x-select
+            v-if="leadForm.sub_source_id && subSourceChildOptions.length > 0"
+            v-model="leadForm.sub_source_options_id"
+            label="Sub Source Option"
+            name="subSourceOption"
+            :options="subSourceChildOptions"
+            placeholder="Please select sub source option"
+            class="w-full"
+            filterable
+            :rules="subSourceChildOptions.length > 0 ? [isRequired] : []"
+            :required="subSourceChildOptions.length > 0"
+          >
+            <template #suffix="{ item }">
+              <x-tooltip v-if="item.suffix" placement="right">
+                <x-icon icon="info" color="error" />
+                <template #tooltip>
+                  {{ item.suffix }}
+                </template>
+              </x-tooltip>
+            </template>
+          </x-select>
+        </div>
+
       <!-- Conditional input for ECOM lead extension -->
-      <div v-if="createLead.type === 'ecom_lead_extension'" class="flex flex-col gap-4">
+        <div v-if="leadForm.type === 'ecom_lead_extension'" class="flex flex-col gap-4">
         <x-input
-          v-model="createLead.primaryRefId"
+            v-model="leadForm.primary_ref_id"
           label="Primary Ref Id"
           name="primaryRefId"
           placeholder="Enter Primary Ref Id"
           class="w-full"
+            :rules="[isRequired]"
           required
         />
       </div>
@@ -232,16 +219,21 @@ watch(() => createLead.subSourceOption, () => {
       <!-- Conditional input for Partner Name when other-clubs-or-campaigns is selected -->
       <div v-if="showPartnerNameField" class="flex flex-col gap-4">
         <x-input
-          v-model="createLead.partnerName"
+          v-model="leadForm.partner_name"
           label="Partner Name"
           name="partnerName"
           placeholder="Enter Partner Name"
           class="w-full"
-          required
-        />
+            :rules="showPartnerNameField ? [isRequired, validatePartnerNameMax] : []"
+            required
+            maxlength="50"
+            :error="leadForm.errors.partner_name"
+            :tooltip="'Name of campaign, event or club'"
+          />
+        </div>
       </div>
 
-    </div>
+    </x-form>
 
     <template #actions>
       <x-button
@@ -256,9 +248,8 @@ watch(() => createLead.subSourceOption, () => {
       <x-button
         size="md"
         color="emerald"
-        type="button"
-        :disabled="!isFormValid"
-        @click.prevent="onConfirmCreateLead"
+        type="submit"
+        form="createLeadForm"
       >
         Confirm
       </x-button>
