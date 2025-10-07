@@ -6,7 +6,6 @@ use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Models\DocumentType;
-use App\Jobs\EpPurchaseFlowJob;
 use App\Jobs\EpWatermarkDocumentJob;
 use App\Jobs\SyncEpDocumentsJob;
 use App\Models\InsurerRequestResponse;
@@ -842,36 +841,16 @@ class EpEcbService extends EpBookingService
      */
     private function buildPolicyFromQuotePayload(): array
     {
-        $latestInsuredData = $this->quote?->latestInsured;
-        $insuredKyc = $latestInsuredData?->insuredKyc;
-
-        $emirateIdNumber = str_replace('-', '', $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '');
-
-        if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
-            $emirateIdNumber = substr($emirateIdNumber, 0, 3) . '-' . substr($emirateIdNumber, 3, 4)
-                . '-' . substr($emirateIdNumber, 7, 7) . '-' . substr($emirateIdNumber, 14, 1);
-        }
-
-        $storageBaseUrl = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
-
         if (!$this->quote) {
             throw new Exception("Quote not found for building policy payload");
         }
 
-        $mulkiyaDocuments = $this->quote->documents()->where('document_type_code', QuoteDocumentsEnum::CAR_MULKIY)
-            ->select('document_type_code as document_type', 'doc_name as document_name', 'doc_url')
-            ->get()
-            ->map(function ($document) use ($storageBaseUrl) {
-                // Add storage base URL prefix if doc_url is not empty
-                if (!empty($document->doc_url)) {
-                    $document->document_url = $storageBaseUrl . $document->doc_url;
-                } else {
-                    $document->document_url = '';
-                }
-                // Remove the original doc_url field
-                unset($document->doc_url);
-                return $document;
-            });
+        if (!$this->embeddedTransaction) {
+            throw new Exception("EmbeddedTransaction not found for building policy payload");
+        }
+
+        $emirateIdNumber = $this->getEmirateIdNumber();
+        $mulkiyaDocuments = $this->getMulkiyaDocuments();
 
         $policySoldDate = $this->formatDate(now());
         $policyStartDate = $this->formatDate($this->quote?->policy_start_date ?? '');
@@ -934,6 +913,40 @@ class EpEcbService extends EpBookingService
         ];
     }
 
+    private function getEmirateIdNumber(): string
+    {
+        $latestInsuredData = $this->quote?->latestInsured;
+        $insuredKyc = $latestInsuredData?->insuredKyc;
+
+        $emirateIdNumber = str_replace('-', '', $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '');
+
+        if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
+            $emirateIdNumber = substr($emirateIdNumber, 0, 3) . '-' . substr($emirateIdNumber, 3, 4)
+                . '-' . substr($emirateIdNumber, 7, 7) . '-' . substr($emirateIdNumber, 14, 1);
+        }
+
+        return $emirateIdNumber;
+    }
+
+    private function getMulkiyaDocuments(): array
+    {
+        $storageBaseUrl = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        
+        return $this->quote->documents()->where('document_type_code', QuoteDocumentsEnum::CAR_MULKIY)
+            ->select('document_type_code as document_type', 'doc_name as document_name', 'doc_url')
+            ->get()
+            ->map(function ($document) use ($storageBaseUrl) {
+                // Add storage base URL prefix if doc_url is not empty
+                if (!empty($document->doc_url)) {
+                    $document->document_url = $storageBaseUrl . $document->doc_url;
+                } else {
+                    $document->document_url = '';
+                }
+                // Remove the original doc_url field
+                unset($document->doc_url);
+                return $document;
+            });
+    }
 
     /**
      * Generates a unique UUID for the given document.
