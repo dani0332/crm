@@ -792,8 +792,7 @@ class EpEcbService extends EpBookingService
             throw new Exception("Quote not found for building quote payload");
         }
 
-        $vehicleFirstRegnDate = $this->quote?->year_of_first_registration;
-        $vehicleFirstRegnDate = $this->formatDate(!empty($vehicleFirstRegnDate) ? $vehicleFirstRegnDate . '-01-01' : '');
+        $vehicleInfo = $this->getVehicleInfo('GetQuote');
 
         return [
             'client_reference_number' => "",
@@ -805,32 +804,7 @@ class EpEcbService extends EpBookingService
             'customer_info' => [
                 'customer_type' => ""
             ],
-            'vehicle_info' => [
-                'vehicle_type' => null,
-                'vehicle_spec' => null,
-                'vehicle_make' => $this->quote?->carMake?->text ?? null,
-                'vehicle_model' => $this->quote?->carModel?->text ?? null,
-                'vehicle_variant' => null,
-                'vehicle_cc' => null,
-                'vehicle_no_cyl' => null,
-                'vehicle_aspiration' => null,
-                'vehicle_drive_type' => null,
-                'vehicle_transmission' => null,
-                'vehicle_body_type' => null,
-                'vehicle_fuel_type' => null,
-                'vehicle_is_electric' => null,
-                'vehicle_is_hybrid' => null,
-                'vehicle_hybrid_type' => null,
-                'vehicle_first_regn_date' => $vehicleFirstRegnDate,
-                'vehicle_invoiced_date' => null,
-                'vehicle_delivery_date' => null,
-                'vehicle_model_year' => $this->quote?->year_of_manufacture ?? null,
-                'vehicle_current_km' => null,
-                'vehicle_purchase_price' => null,
-                'vehicle_current_value' => null,
-                'vehicle_pwi_date' => null,
-                'vehicle_pwi_km' => null
-            ]
+            'vehicle_info' => $vehicleInfo
         ];
     }
 
@@ -851,6 +825,7 @@ class EpEcbService extends EpBookingService
 
         $emirateIdNumber = $this->getEmirateIdNumber();
         $mulkiyaDocuments = $this->getMulkiyaDocuments();
+        $vehicleInfo = $this->getVehicleInfo('CreatePolicyFromQuote');
 
         $policySoldDate = $this->formatDate(now());
         $policyStartDate = $this->formatDate($this->quote?->policy_start_date ?? '');
@@ -887,19 +862,7 @@ class EpEcbService extends EpBookingService
                 'co_buyer_id_no' => null,
                 'co_buyer_id_expiry_date' => null
             ],
-            'vehicle_info' => [
-                'vehicle_chassis_no' => $this->quote?->carQuoteRequestDetail?->chassis_number,
-                'vehicle_engine_no' => null,
-                'vehicle_plate_no' => null,
-                'vehicle_purchase_price' => null,
-                'vehicle_current_value' => null,
-                'vehicle_mw_start_date' => null,
-                'vehicle_mw_end_date' => null,
-                'vehicle_mw_start_km' => null,
-                'vehicle_mw_end_km' => null,
-                'vehicle_pwi_date' => null,
-                'vehicle_pwi_km' => null
-            ],
+            'vehicle_info' => $vehicleInfo,
             'motor_insurance_info' => [
                 'mi_policy_number' => "NA",
                 'mi_policy_issuer' => $this->quote?->insuranceProviderDetails?->ecb_insurer_id,
@@ -931,8 +894,8 @@ class EpEcbService extends EpBookingService
     private function getMulkiyaDocuments(): array
     {
         $storageBaseUrl = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
-        
-        return $this->quote->documents()->where('document_type_code', QuoteDocumentsEnum::CAR_MULKIY)
+
+        $mulkiyaDocuments = $this->quote->documents()->where('document_type_code', QuoteDocumentsEnum::CAR_MULKIY)
             ->select('document_type_code as document_type', 'doc_name as document_name', 'doc_url')
             ->get()
             ->map(function ($document) use ($storageBaseUrl) {
@@ -946,6 +909,139 @@ class EpEcbService extends EpBookingService
                 unset($document->doc_url);
                 return $document;
             });
+
+        return $mulkiyaDocuments->toArray();
+    }
+
+    private function getVehicleInfo(string $step): array
+    {
+        $vehiclePayloadFields = $this->getVehiclePayloadFields($step);
+        $vehicleDetails = $this->getVehicleDetails();
+
+        return collect($vehicleDetails)->only($vehiclePayloadFields)->toArray();
+    }
+
+    private function getVehiclePayloadFields(string $step): array
+    {
+        $getQuoteFields = [
+            'vehicle_type',
+            'vehicle_spec',
+            'vehicle_make',
+            'vehicle_model',
+            'vehicle_variant',
+            'vehicle_cc',
+            'vehicle_no_cyl',
+            'vehicle_aspiration',
+            'vehicle_drive_type',
+            'vehicle_transmission',
+            'vehicle_body_type',
+            'vehicle_fuel_type',
+            'vehicle_is_electric',
+            'vehicle_is_hybrid',
+            'vehicle_hybrid_type',
+            'vehicle_first_regn_date',
+            'vehicle_invoiced_date',
+            'vehicle_delivery_date',
+            'vehicle_model_year',
+            'vehicle_current_km',
+            'vehicle_purchase_price',
+            'vehicle_current_value',
+            'vehicle_pwi_date',
+            'vehicle_pwi_km',
+        ];
+        $policyFromQuoteFields = [
+            'vehicle_chassis_no',
+            'vehicle_engine_no',
+            'vehicle_plate_no',
+            'vehicle_purchase_price',
+            'vehicle_current_value',
+            'vehicle_mw_start_date',
+            'vehicle_mw_end_date',
+            'vehicle_mw_start_km',
+            'vehicle_mw_end_km',
+            'vehicle_pwi_date',
+            'vehicle_pwi_km'
+        ];
+        $policyWithoutQuoteFields = [
+            'vehicle_type',
+            'vehicle_spec',
+            'vehicle_make',
+            'vehicle_model',
+            'vehicle_variant',
+            'vehicle_cc',
+            'vehicle_no_cyl',
+            'vehicle_aspiration',
+            'vehicle_drive_type',
+            'vehicle_transmission',
+            'vehicle_body_type',
+            'vehicle_fuel_type',
+            'vehicle_is_electric',
+            'vehicle_is_hybrid',
+            'vehicle_hybrid_type',
+            'vehicle_first_regn_date',
+            'vehicle_invoiced_date',
+            'vehicle_delivery_date',
+            'vehicle_model_year',
+            'vehicle_current_km',
+            'vehicle_chassis_no',
+            'vehicle_plate_no',
+            'vehicle_purchase_price',
+            'vehicle_current_value',
+        ];
+
+        return match ($step) {
+            'GetQuote' => $getQuoteFields,
+            'CreatePolicyFromQuote' => $policyFromQuoteFields,
+            'CreatePolicyWithoutQuote' => $policyWithoutQuoteFields,
+            default => []
+        };
+    }
+
+    private function getVehicleDetails(): array
+    {
+        $vehicleFirstRegnDate = $this->quote?->year_of_first_registration;
+        $vehicleFirstRegnDate = $this->formatDate(!empty($vehicleFirstRegnDate) ? $vehicleFirstRegnDate . '-01-01' : '');
+
+        return [
+            // Only for CreatePolicyFromQuote, CreatePolicyWithoutQuote
+            'vehicle_chassis_no' => $this->quote?->carQuoteRequestDetail?->chassis_number,
+
+            'vehicle_make' => $this->quote?->carMake?->text ?? null,
+            'vehicle_model' => $this->quote?->carModel?->text ?? null,
+            'vehicle_model_year' => $this->quote?->year_of_manufacture ?? null,
+            'vehicle_first_regn_date' => $vehicleFirstRegnDate,
+
+            'vehicle_aspiration' => null,
+            'vehicle_body_type' => null,
+            'vehicle_cc' => null,
+            'vehicle_current_km' => null,
+            'vehicle_current_value' => null,
+            'vehicle_delivery_date' => null,
+            'vehicle_drive_type' => null,
+            'vehicle_fuel_type' => null,
+            'vehicle_hybrid_type' => null,
+            'vehicle_invoiced_date' => null,
+            'vehicle_is_electric' => null,
+            'vehicle_is_hybrid' => null,
+            'vehicle_no_cyl' => null,
+            'vehicle_purchase_price' => null,
+            'vehicle_plate_no' => null,
+            'vehicle_spec' => null,
+            'vehicle_transmission' => null,
+            'vehicle_type' => null,
+            'vehicle_variant' => null,
+
+            // Only for GetQuote, CreatePolicyFromQuote
+            'vehicle_pwi_date' => null,
+            'vehicle_pwi_km' => null,
+
+            // Only for CreatePolicyFromQuote
+            'vehicle_engine_no' => null,
+            'vehicle_mw_end_date' => null,
+            'vehicle_mw_end_km' => null,
+            'vehicle_mw_start_date' => null,
+            'vehicle_mw_start_km' => null,
+        ];
     }
 
     /**
