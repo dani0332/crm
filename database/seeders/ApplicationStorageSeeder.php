@@ -39,7 +39,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedCorplineAdvisors();
         $this->seedLifeOCAEmail();
         $this->savingsLOB();
-        
+
         $this->seedOcrEnabled();
         $this->seedGIGCarPolicyIssuance();
         $this->seedSukoonMedexProductSlug();

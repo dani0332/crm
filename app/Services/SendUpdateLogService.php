@@ -1447,7 +1447,7 @@ class SendUpdateLogService
             }, $quote->members->toArray()));
             $emailData->tpa = $quote?->plan?->healthNetwork->text;
             $emailData->numberOfMembersCovered = (string) count($quote->members);
-            
+
             $emailData->isHealthAUH = $quote?->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI;
             $emailData->emirateOfYourVisaId = $quote?->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         } elseif ($quoteTypeId == QuoteTypeId::Pet) {
