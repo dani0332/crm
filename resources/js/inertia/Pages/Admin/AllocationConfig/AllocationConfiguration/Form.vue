@@ -41,9 +41,12 @@ const {
   auditLogsKey,
   form,
   quoteTypeOptions,
+  isViewMode,
   initializeOptions,
   onTemplateDataUpdate,
   onSubmit,
+  enableEditMode,
+  cancelEdit,
 } = formLogic;
 
 onMounted(() => {
@@ -168,6 +171,7 @@ onMounted(() => {
             :configuration="currentConfiguration"
             :advisor-options="advisorOptions"
             :nationality-options="nationalityOptions"
+            :view-mode="isViewMode"
             @data-update="onTemplateDataUpdate"
             ref="savingsTemplateRef"
           />
@@ -225,7 +229,46 @@ onMounted(() => {
         class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-4"
       >
         <div class="p-6 bg-white border-b border-gray-200">
-          <div class="flex justify-end gap-3 mb-4">
+          <!-- View Mode Buttons -->
+          <div
+            v-if="isViewMode && currentConfiguration"
+            class="flex justify-end gap-3 mb-4"
+          >
+            <x-tooltip>
+              <x-button
+                size="md"
+                color="#ff5e00"
+                type="button"
+                @click="enableEditMode"
+              >
+                Edit Configuration
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  Click to edit the {{ form.quote_type }} configuration.
+                </span>
+              </template>
+            </x-tooltip>
+          </div>
+
+          <div v-if="!isViewMode" class="flex justify-end gap-3 mb-4">
+            <x-tooltip v-if="currentConfiguration">
+              <x-button
+                size="md"
+                color="secondary"
+                type="button"
+                outlined
+                @click="cancelEdit"
+              >
+                Cancel
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  Cancel editing and return to view mode without saving changes.
+                </span>
+              </template>
+            </x-tooltip>
+
             <x-tooltip>
               <x-button
                 size="md"
