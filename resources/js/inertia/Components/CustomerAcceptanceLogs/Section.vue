@@ -83,7 +83,9 @@ const fetchCustomerAcceptanceLogs = async (page = 1) => {
         to: paginatedData.to,
       };
     } else {
-      throw new Error(response.data.message || 'Failed to fetch Customer Acceptance Logs');
+      throw new Error(
+        response.data.message || 'Failed to fetch Customer Acceptance Logs',
+      );
     }
   } catch (err) {
     console.error('Error fetching Customer Acceptance Logs:', err);
@@ -218,7 +220,10 @@ onMounted(() => {
         </div>
 
         <!-- Empty State -->
-        <div v-else-if="customerAcceptanceLogs.length === 0" class="text-center py-8">
+        <div
+          v-else-if="customerAcceptanceLogs.length === 0"
+          class="text-center py-8"
+        >
           <div class="max-w-sm mx-auto">
             <svg
               class="w-12 h-12 text-gray-400 mx-auto mb-4"
