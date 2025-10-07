@@ -563,6 +563,7 @@ class EpEcbService extends EpBookingService
         $startTime = microtime(true);
         $statusCode = 0;
         $response = [];
+        $fileName = '';
 
         try {
             $headers = $isAuth ? ['Authorization' => 'Bearer ' . $this->bearerToken] : [];
@@ -573,6 +574,7 @@ class EpEcbService extends EpBookingService
             $statusCode = $httpResponse->status();
             $content = $httpResponse->body();
             $contentType = $httpResponse->header('Content-Type') ?? '';
+            $fileName = $this->makeFileNameFromUrl($url);
 
             if (!$httpResponse->successful() || str_contains($contentType, 'text/html')) {
                 $errorMessage = !$httpResponse->successful()
@@ -588,7 +590,7 @@ class EpEcbService extends EpBookingService
 
             $response = [
                 'success' => true,
-                'filename' => $this->extractFilename($url),
+                'filename' => $fileName,
                 'content_length' => strlen($content),
                 'statusCode' => $statusCode,
                 'responseTime' => $responseTime,
@@ -600,6 +602,7 @@ class EpEcbService extends EpBookingService
 
             $response = [
                 'success' => false,
+                'filename' => $fileName,
                 'error' => "Download failed: " . $e->getMessage(),
                 'statusCode' => $statusCode,
                 'responseTime' => $responseTime
@@ -806,8 +809,9 @@ class EpEcbService extends EpBookingService
     {
         try {
             $downloadDocResponse = $this->makeDownloadApiCall($docUrl, true, 'DownloadPolicyDocument');
-
-            $fileName = "{$this->quote->uuid}_{$this->policyNumber}-{$downloadDocResponse['filename']}";
+            
+            $fileName = $downloadDocResponse['filename'] ?? 'document';
+            $fileName = "{$this->policyNumber}_{$fileName}.pdf";
             $fileContent = $downloadDocResponse['content'];
 
             if (!$downloadDocResponse['success']) {

@@ -332,12 +332,28 @@ class EpBookingService extends BaseService
         return ! $lockAcquired;
     }
 
+    protected function makeFileNameFromUrl(string $url): string
+    {
+        $extractedFileName = str_replace('get', '', strtolower($this->extractFilename($url)));
+        if($this->getDocTypeFromUrl($url) == '2') {
+            $extractedFileName .= '_raise_by_buyer';
+        }
+
+        return $extractedFileName;
+    }
+
     /**
      * Extract filename from HTTP response headers or URL
      */
-    protected function extractFilename(string $url): string
+    private function extractFilename(string $url): string
     {
         return basename(parse_url($url, PHP_URL_PATH)) ?? 'document';
+    }
+
+    private function getDocTypeFromUrl(string $url): ?string
+    {
+        parse_str(parse_url($url, PHP_URL_QUERY) ?: '', $params);
+        return $params['DOCTYPE'] ?? null;
     }
 
     /**
