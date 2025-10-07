@@ -12,9 +12,9 @@ use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Models\LifeQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\PersonalQuoteSyncTrait;
-use App\Services\Logger\LoggerService;
 
 class LifeQuoteObserver
 {
@@ -46,9 +46,8 @@ class LifeQuoteObserver
         }
         if (isset($dirty['advisor_id'])) {
             LogAllocation::dispatch($lifeQuote, QuoteTypes::LIFE);
-            
 
-            if (!suppressIntroEmailByStatus($lifeQuote->quote_status_id) && $lifeQuote->source != LeadSourceEnum::IMCRM) {
+            if (! suppressIntroEmailByStatus($lifeQuote->quote_status_id) && $lifeQuote->source != LeadSourceEnum::IMCRM) {
 
                 $oldAdvisorId = $lifeQuote->getOriginal('advisor_id');
                 LoggerService::info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$lifeQuote->advisor_id} ");

@@ -1728,7 +1728,7 @@ if (! function_exists('suppressIntroEmailByStatus')) {
     {
         $excludedQuoteStatuses = [
             QuoteStatusEnum::TransactionApproved,
-            QuoteStatusEnum::PolicyBooked,  
+            QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::PolicyIssued,
             QuoteStatusEnum::PolicySentToCustomer,
             QuoteStatusEnum::POLICY_BOOKING_QUEUED,
@@ -1737,12 +1737,10 @@ if (! function_exists('suppressIntroEmailByStatus')) {
             QuoteStatusEnum::PolicyCancelled,
             QuoteStatusEnum::PolicyCancelledReissued,
         ];
-      
+
         return in_array($quoteStatusId, $excludedQuoteStatuses);
     }
 }
-
-
 
 /**
  * Get the user's IP address with proper handling of proxies and load balancers

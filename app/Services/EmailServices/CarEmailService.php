@@ -43,8 +43,9 @@ class CarEmailService extends BaseService
 
     public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService, $triggerSICWorkFlow = false, $triggerOnlyWorkflow = false, bool $forceSicWorkflow = false)
     {
-        if(suppressIntroEmailByStatus($lead->quote_status_id)) {
+        if (suppressIntroEmailByStatus($lead->quote_status_id)) {
             LoggerService::info(self::class." -Skipping OCB Email because for UUID: {$lead->uuid}");
+
             return;
         }
 

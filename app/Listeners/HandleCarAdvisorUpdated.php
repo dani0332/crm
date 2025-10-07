@@ -89,10 +89,9 @@ class HandleCarAdvisorUpdated
             }
         }
         // Only dispatch the job if either intro email should not be suppressed OR the source is RENEWAL_UPLOAD
-        if (!suppressIntroEmailByStatus($lead->quote_status_id) || $lead->source === LeadSourceEnum::RENEWAL_UPLOAD) {
+        if (! suppressIntroEmailByStatus($lead->quote_status_id) || $lead->source === LeadSourceEnum::RENEWAL_UPLOAD) {
             SendCarOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
         }
-      
 
         info('SMS sending code reached');
     }

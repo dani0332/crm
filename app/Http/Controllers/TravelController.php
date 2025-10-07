@@ -620,7 +620,7 @@ class TravelController extends Controller
     public function sendEmailOneClickBuy(Request $request)
     {
         Log::info('sendEmailOneClickBuy OCB email sending started for quote uuid: '.$request->quote_uuid);
-        
+
         SendTravelOCBIntroEmailJob::dispatch($request->quote_uuid);
 
         return response()->json(['success' => 'OCB email sent to customer']);

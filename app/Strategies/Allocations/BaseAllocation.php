@@ -299,9 +299,9 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
             return;
         }
-        if(!suppressIntroEmailByStatus($this->lead->quote_status_id)) {  
-        app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
-            $this->lead,
+        if (! suppressIntroEmailByStatus($this->lead->quote_status_id)) {
+            app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
+                $this->lead,
                 $this->quoteType->value,
                 isNonAdvisorEmail: true,
             );

@@ -29,9 +29,9 @@ class EmailService
 
         $lead = $this->getQuote($quoteUID);
 
-        
-        if(suppressIntroEmailByStatus($lead->quote_status_id)) {
+        if (suppressIntroEmailByStatus($lead->quote_status_id)) {
             LoggerService::info('sendOCAEmail - Suppressing OCB Email because for');
+
             return;
         }
 

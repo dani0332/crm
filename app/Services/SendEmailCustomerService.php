@@ -644,6 +644,7 @@ class SendEmailCustomerService extends BaseService
         }
         if (suppressIntroEmailByStatus($healthQuote->quote_status_id)) {
             LoggerService::info('sendRMIntroEmail: Health quote is suppressed, skipping RM Intro Email');
+
             return;
         }
 
