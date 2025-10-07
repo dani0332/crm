@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\DB;
 
 class EmiratesIdDataProcessor
 {
+    use OcrUtils;
+
     private EmiratesIdExtractor $emiratesIdExtractor;
     private array $extractedData = [];
 
@@ -36,7 +38,7 @@ class EmiratesIdDataProcessor
 
             $this->extractedData = $this->emiratesIdExtractor->extractEmiratesIdData()->getExtractedData();
 
-            LoggerService::info('Emirates ID data processor started - Quote UUID: '.$this->quote->uuid);
+            LoggerService::info('Emirates ID data processor started');
 
             $insured = $this->getOrCreateInsuredRecord();
             if (! $insured) {
@@ -48,14 +50,14 @@ class EmiratesIdDataProcessor
 
             DB::commit();
 
-            LoggerService::info('Emirates ID data processing completed successfully - Quote UUID: '.$this->quote->uuid);
+            LoggerService::info('Emirates ID data processing completed successfully');
 
             return $insuredUpdated || $kycUpdated;
 
         } catch (Exception $e) {
             DB::rollBack();
 
-            LoggerService::error('Emirates ID data processing failed - Quote UUID: '.$this->quote->uuid, exception: $e);
+            LoggerService::error('Emirates ID data processing failed', exception: $e);
 
             return false;
         }
@@ -83,7 +85,7 @@ class EmiratesIdDataProcessor
             return $insured;
 
         } catch (Exception $e) {
-            LoggerService::error('Failed to get or create Insured record - Quote UUID: '.$this->quote->uuid, exception: $e);
+            LoggerService::error('Failed to get or create Insured record', exception: $e);
 
             return null;
         }
@@ -91,7 +93,7 @@ class EmiratesIdDataProcessor
 
     private function createInsuredRecord(): Insured
     {
-        $insuredData = OcrUtils::getCleanData([
+        $insuredData = $this->getCleanData([
             'customer_type' => 'Individual',
             'first_name' => $this->extractFirstName($this->extractedData['name'] ?? ''),
             'last_name' => $this->extractLastName($this->extractedData['name'] ?? ''),
@@ -140,22 +142,22 @@ class EmiratesIdDataProcessor
             }
 
             // Update all fields with OCR data
-            $dataToUpdate = OcrUtils::getFieldsToUpdate($updateData);
+            $dataToUpdate = $this->getFieldsToUpdate($updateData);
 
             if (! empty($dataToUpdate)) {
                 $insured->update($dataToUpdate);
 
-                LoggerService::info('Insured table updated successfully - Quote UUID: '.$this->quote->uuid);
+                LoggerService::info('Insured table updated successfully');
 
                 return true;
             }
 
-            LoggerService::info('Insured table - No OCR data to update - Quote UUID: '.$this->quote->uuid);
+            LoggerService::info('Insured table - No OCR data to update');
 
             return false;
 
         } catch (Exception $e) {
-            LoggerService::error('Failed to update Insured table - Quote UUID: '.$this->quote->uuid, exception: $e);
+            LoggerService::error('Failed to update Insured table', exception: $e);
 
             return false;
         }
@@ -205,22 +207,22 @@ class EmiratesIdDataProcessor
 
             if ($insuredKyc) {
                 // Update all fields with OCR data
-                $dataToUpdate = OcrUtils::getFieldsToUpdate($kycData);
+                $dataToUpdate = $this->getFieldsToUpdate($kycData);
 
                 if (! empty($dataToUpdate)) {
                     $insuredKyc->update($dataToUpdate);
 
-                    LoggerService::info('InsuredKyc table updated successfully - Quote UUID: '.$this->quote->uuid);
+                    LoggerService::info('InsuredKyc table updated successfully');
 
                     $result = true;
                 } else {
-                    LoggerService::info('InsuredKyc table - No OCR data to update - Quote UUID: '.$this->quote->uuid);
+                    LoggerService::info('InsuredKyc table - No OCR data to update');
                 }
             } else {
                 $kycData['insured_id'] = $insured->id;
                 InsuredKyc::create($kycData);
 
-                LoggerService::info('InsuredKyc table created successfully - Quote UUID: '.$this->quote->uuid);
+                LoggerService::info('InsuredKyc table created successfully');
 
                 $result = true;
             }
@@ -228,7 +230,7 @@ class EmiratesIdDataProcessor
             return $result;
 
         } catch (Exception $e) {
-            LoggerService::error('Failed to update InsuredKyc table - Quote UUID: '.$this->quote->uuid, exception: $e);
+            LoggerService::error('Failed to update InsuredKyc table', exception: $e);
 
             return false;
         }
@@ -295,7 +297,7 @@ class EmiratesIdDataProcessor
     private function createCustomerInsuredLink(Insured $insured): void
     {
         if (! $this->quote->customer_id || ! $insured->id) {
-            LoggerService::warning('CustomerInsured relationship creation skipped - missing required data - Quote UUID: '.$this->quote->uuid);
+            LoggerService::warning('CustomerInsured relationship creation skipped - missing required data');
 
             return;
         }
@@ -320,9 +322,9 @@ class EmiratesIdDataProcessor
                     'updated_at' => now(),
                 ]);
 
-                LoggerService::info('CustomerInsured relationship created - Quote UUID: '.$this->quote->uuid);
+                LoggerService::info('CustomerInsured relationship created');
             } else {
-                LoggerService::info('CustomerInsured relationship already exists - skipping creation - Quote UUID: '.$this->quote->uuid);
+                LoggerService::info('CustomerInsured relationship already exists - skipping creation');
             }
         } catch (Exception $e) {
             LoggerService::error('Failed to create CustomerInsured relationship - Quote UUID: '.$this->quote->uuid, exception: $e);

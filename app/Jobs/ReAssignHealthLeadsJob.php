@@ -8,6 +8,7 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\HealthQuote;
+use App\Pipes\Allocation\Common\ApplyRuleExclusionPipe;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
 use App\Pipes\Allocation\Common\ResetNationalityConfigPipe;
@@ -46,8 +47,12 @@ class ReAssignHealthLeadsJob implements ShouldQueue
     public function handle()
     {
         LoggerService::info('-------- Reassignment health job started ---------');
-        if (! $this->shouldProceed() && ! now()->isWeekend()) {
-            LoggerService::info('Reassignment job is not proceeding as per business timings');
+        if (! $this->shouldProceed() || now()->isWeekend()) {
+            LoggerService::info('Reassignment job is not proceeding as per business timings or today is weekend', extra: [
+                'shouldProceed' => $this->shouldProceed(),
+                'isWeekend' => now()->isWeekend(),
+                'advisorId' => $this->advisorId,
+            ]);
 
             return false;
         }
@@ -81,6 +86,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
                     VerifyAlreadyInProgressAllocationPipe::class,
                     ValidateNationalityConfigPipe::class,
                     AssignTeamPipe::class,
+                    ApplyRuleExclusionPipe::class,
                     FetchAvailableAdvisorPipe::class,
                     ResetNationalityConfigPipe::class,
                     FetchAvailableAdvisorPipe::class,

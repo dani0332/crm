@@ -39,8 +39,8 @@ let availableFilters = {
   product: '',
   expiry_date: '',
   page: 1,
-  policy_expiry_date_start: '',
-  policy_expiry_date_end: '',
+  previous_policy_expiry_date_start: '',
+  previous_policy_expiry_date_end: '',
   mobile_no: '',
 };
 
@@ -123,29 +123,37 @@ const source_type_list = [
 ];
 const tableHeader = [
   { text: 'Ref ID', value: 'code' },
+  { text: 'Customer ID', value: 'customer_id' },
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
   { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
+  { text: 'PC Tagging', value: 'pc_qualified' },
 ];
 const tableHeader2 = [
   { text: 'Ref ID', value: 'code' },
+  { text: 'Customer ID', value: 'customer_id' },
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
-  { text: 'POLICY START DATE', value: 'policy_start_date' },
-  { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
-  { text: 'GROSS PREMIUM', value: 'premium' },
+  { text: 'PREVIOUS POLICY NUMBER', value: 'previous_quote_policy_number' },
+  { text: 'PREVIOUS POLICY START DATE', value: 'previous_policy_start_date' },
+  { text: 'PREVIOUS POLICY EXPIRY DATE', value: 'previous_policy_expiry_date' },
+  { text: 'PREVIOUS GROSS PREMIUM', value: 'previous_quote_policy_premium' },
+  { text: 'PC Tagging', value: 'pc_qualified' },
 ];
 
 const businessHeaders = [
   { text: 'Ref ID', value: 'code' },
+  { text: 'Customer ID', value: 'customer_id' },
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'SUB TYPE', value: 'subtype' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
+  { text: 'PREVIOUS POLICY NUMBER', value: 'previous_quote_policy_number' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
   { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
+  { text: 'PC Tagging', value: 'pc_qualified' },
 ];
 
 const can = permission => useCan(permission);
@@ -165,14 +173,14 @@ const permissionsEnum = page.props.permissionsEnum;
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <DatePicker
-          v-model="filters.policy_expiry_date_start"
-          name="policy_expiry_date_start"
-          label="Policy Expiry Date Start"
+          v-model="filters.previous_policy_expiry_date_start"
+          name="previous_policy_expiry_date_start"
+          label="Previous Policy Expiry Date Start"
         />
         <DatePicker
-          v-model="filters.policy_expiry_date_end"
-          name="policy_expiry_date_end"
-          label="Renewal Expiry End Date"
+          v-model="filters.previous_policy_expiry_date_end"
+          name="previous_policy_expiry_date_end"
+          label="Previous Policy Expiry End"
         />
 
         <x-select
@@ -220,7 +228,7 @@ const permissionsEnum = page.props.permissionsEnum;
           v-model="filters.previous_quote_policy_number"
           type="search"
           name="previous_quote_policy_number"
-          label="Policy Number"
+          label="Previous Policy Number"
           class="w-full"
           placeholder="Search by Policy Number"
         />
@@ -295,6 +303,9 @@ const permissionsEnum = page.props.permissionsEnum;
             ? currently_insured_with.text
             : currently_insured_with
         }}
+      </template>
+      <template #item-pc_qualified="{ pc_qualified }">
+        {{ pc_qualified == 1 ? 'Yes' : 'No' }}
       </template>
     </DataTable>
 

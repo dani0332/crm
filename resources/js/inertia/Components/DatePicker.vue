@@ -51,7 +51,7 @@ const props = defineProps({
     default: '',
   },
   range: {
-    type: Boolean,
+    type: [Boolean, Object],
     default: false,
   },
   required: {
@@ -137,5 +137,9 @@ const iconPosition = computed(() => {
 
 .dp__cell_disabled {
   @apply opacity-20;
+}
+
+.dp--clear-btn {
+  top: 2.75rem !important;
 }
 </style>

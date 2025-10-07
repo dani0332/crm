@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
@@ -54,7 +54,7 @@ class TravelAllocationService extends AllocationService
             $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
             $insurerCode = $insurer?->code;
 
-            $isALNC = $insurerCode == InsuranceProvidersEnum::ALNC;
+            $isALNC = $insurerCode == InsuranceProviderEnum::ALNC->value;
 
             $isALNC && info(self::class.":verifyFetchLeadPreChecks - it is Alliance so checking for automation status with insurer code: {$insurerCode} and payment code: {$payment?->code}");
 

@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class DrivingLicenseDataProcessor
 {
+    use OcrUtils;
+
     private DrivingLicenseExtractor $drivingLicenseExtractor;
 
     public function __construct(
@@ -27,79 +29,78 @@ class DrivingLicenseDataProcessor
         try {
             $processedData = $this->drivingLicenseExtractor->extractDrivingLicenseData()->getProcessedData();
 
-            LoggerService::info('Driving License data processor started - Quote UUID: '.$this->quote->uuid);
+            LoggerService::info('Driving License data processor started');
 
-            if (empty($processedData['car_quote_detail_fields'])) {
-                LoggerService::warning('Driving License data processor - No valid data to process - Quote UUID: '.$this->quote->uuid);
+            if (empty($processedData['driving_license_detail_fields'])) {
+                LoggerService::warning('Driving License data processor - No valid data to process');
 
                 return false;
             }
 
             DB::beginTransaction();
 
-            // Update CarQuoteRequestDetail fields
-            $carQuoteDetailUpdated = false;
-            if (! empty($processedData['car_quote_detail_fields'])) {
-                $carQuoteDetailUpdated = $this->updateCarQuoteRequestDetail($this->quote, $processedData['car_quote_detail_fields']);
+            // Update DrivingLicenseDetail fields
+            $drivingLicenseDetailUpdated = false;
+            if (! empty($processedData['driving_license_detail_fields'])) {
+                $drivingLicenseDetailUpdated = $this->updateDrivingLicenseDetail($this->quote, $processedData['driving_license_detail_fields']);
             }
 
             DB::commit();
 
-            LoggerService::info('Driving License data processing completed successfully - Quote UUID: '.$this->quote->uuid);
+            LoggerService::info('Driving License data processing completed successfully');
 
-            return $carQuoteDetailUpdated;
+            return $drivingLicenseDetailUpdated;
 
         } catch (Exception $e) {
             DB::rollback();
 
-            LoggerService::error('Driving License data processor - Exception occurred - Quote UUID: '.$this->quote->uuid, exception: $e);
+            LoggerService::error('Driving License data processor - Exception occurred', exception: $e);
 
             return false;
         }
     }
 
-    private function updateCarQuoteRequestDetail(CarQuote $quote, array $fieldsToUpdate): bool
+    private function updateDrivingLicenseDetail(CarQuote $quote, array $fieldsToUpdate): bool
     {
         try {
-            $result = false;
-
             // Convert nationality string to nationality_id if nationality is provided
-            if (! empty($fieldsToUpdate['driver_nationality_string'])) {
-                $nationalityId = $this->getNationalityId($fieldsToUpdate['driver_nationality_string']);
+            if (! empty($fieldsToUpdate['nationality_string'])) {
+                $nationalityId = $this->getNationalityId($fieldsToUpdate['nationality_string']);
                 if ($nationalityId) {
-                    $fieldsToUpdate['driver_nationality_id'] = $nationalityId;
+                    $fieldsToUpdate['nationality_id'] = $nationalityId;
                     // Remove the nationality string since we only want to store the ID
-                    unset($fieldsToUpdate['driver_nationality_string']);
+                    unset($fieldsToUpdate['nationality_string']);
                 } else {
-                    LoggerService::warning('Driver nationality could not be matched - Quote UUID: '.$quote->uuid);
+                    LoggerService::warning('Driver nationality could not be matched');
                     // Remove the nationality field since we can't match it
-                    unset($fieldsToUpdate['driver_nationality_string']);
+                    unset($fieldsToUpdate['nationality_string']);
                 }
             }
 
-            $carQuoteDetail = $quote->carQuoteRequestDetail;
+            $drivingLicenseDetail = $quote->drivingLicenseDetail()->firstOrCreate(
+                ['licensable_type' => CarQuote::class, 'licensable_id' => $quote->id],
+                $fieldsToUpdate
+            );
 
-            if ($carQuoteDetail) {
-                // Update all fields with OCR data
-                $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate);
+            // If record already existed, update with OCR data
+            if (! $drivingLicenseDetail->wasRecentlyCreated) {
+                $dataToUpdate = $this->getFieldsToUpdate($fieldsToUpdate);
 
                 if (! empty($dataToUpdate)) {
-                    $carQuoteDetail->update($dataToUpdate);
+                    $drivingLicenseDetail->update($dataToUpdate);
 
-                    LoggerService::info('CarQuoteRequestDetail updated successfully with driving license data - Quote UUID: '.$this->quote->uuid);
-
-                    $result = true;
+                    LoggerService::info('DrivingLicenseDetail updated successfully');
                 } else {
-                    LoggerService::info('CarQuoteRequestDetail - No OCR driving license data to update - Quote UUID: '.$this->quote->uuid);
+                    LoggerService::info('DrivingLicenseDetail - No OCR data to update');
                 }
             } else {
-                LoggerService::warning('CarQuoteRequestDetail not found for quote - Quote UUID: '.$this->quote->uuid);
+                LoggerService::info('DrivingLicenseDetail created successfully');
             }
 
-            return $result;
+            return true;
 
         } catch (Exception $e) {
-            LoggerService::error('CarQuoteRequestDetail update failed for driving license - Quote UUID: '.$this->quote->uuid, exception: $e);
+            LoggerService::error('DrivingLicenseDetail update failed', exception: $e);
 
             return false;
         }
@@ -118,24 +119,24 @@ class DrivingLicenseDataProcessor
 
     public function getProcessingSummary(): array
     {
-        $carQuoteDetail = $this->quote->carQuoteRequestDetail;
+        $drivingLicenseDetail = $this->quote->drivingLicenseDetail;
 
         return [
             'status' => 'success',
             'quote_uuid' => $this->quote->uuid,
-            'has_car_quote_detail' => $carQuoteDetail !== null,
-            'car_quote_detail_data' => $carQuoteDetail ? [
-                'driver_license_number' => $carQuoteDetail->driver_license_number,
-                'driver_license_issue_date' => $carQuoteDetail->driver_license_issue_date,
-                'driver_license_expiry_date' => $carQuoteDetail->driver_license_expiry_date,
-                'driver_license_issue_place' => $carQuoteDetail->driver_license_issue_place,
-                'traffic_code_number' => $carQuoteDetail->traffic_code_number,
-                'driver_first_name' => $carQuoteDetail->driver_first_name,
-                'driver_last_name' => $carQuoteDetail->driver_last_name,
-                'driver_dob' => $carQuoteDetail->driver_dob,
-                'driver_gender' => $carQuoteDetail->driver_gender,
-                'driver_nationality_id' => $carQuoteDetail->driver_nationality_id,
-                'driver_nationality' => $carQuoteDetail->driverNationality?->text, // Get nationality name via relationship
+            'has_driving_license_detail' => $drivingLicenseDetail !== null,
+            'driving_license_detail_data' => $drivingLicenseDetail ? [
+                'license_number' => $drivingLicenseDetail->license_number,
+                'license_issue_date' => $drivingLicenseDetail->license_issue_date,
+                'license_expiry_date' => $drivingLicenseDetail->license_expiry_date,
+                'license_issue_place' => $drivingLicenseDetail->license_issue_place,
+                'traffic_code_number' => $drivingLicenseDetail->traffic_code_number,
+                'first_name' => $drivingLicenseDetail->first_name,
+                'last_name' => $drivingLicenseDetail->last_name,
+                'dob' => $drivingLicenseDetail->dob,
+                'gender' => $drivingLicenseDetail->gender,
+                'nationality_id' => $drivingLicenseDetail->nationality_id,
+                'nationality' => $drivingLicenseDetail->nationality?->text, // Get nationality name via relationship
             ] : null,
         ];
     }

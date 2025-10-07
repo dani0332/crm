@@ -19,7 +19,6 @@ use App\Services\SendEmailCustomerService;
 use App\Traits\LeadDuplicatable;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 abstract class BaseAllocation extends AllocationService implements Allocation
 {
@@ -122,7 +121,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
     protected function getAdvisorBaseQuery(int $onlineStatus, array $roles)
     {
-        Log::info('BaseAllocation: Starting getAdvisorBaseQuery', [
+        LoggerService::info('BaseAllocation: Starting getAdvisorBaseQuery', extra: [
             'onlineStatus' => $onlineStatus,
             'roles' => $roles,
             'quoteTypeId' => $this->getQuoteTypeId(),
@@ -172,6 +171,10 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
         if (! $this->isReAssignment) {
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
+        }
+
+        if (! $this->isBusinessHours()) {
+            $statusOrder[] = UserStatusEnum::MANUAL_OFFLINE;
         }
 
         $this->resolveNationalityConfig();

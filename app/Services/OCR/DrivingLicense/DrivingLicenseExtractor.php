@@ -8,6 +8,8 @@ use App\Services\OCR\OcrUtils;
 
 class DrivingLicenseExtractor
 {
+    use OcrUtils;
+
     private array $extractedData = [];
 
     public function __construct(
@@ -25,17 +27,17 @@ class DrivingLicenseExtractor
     private function initializeExtractedData(): void
     {
         $this->extractedData = [
-            // Car Quote Request Detail fields (driving license related)
-            'driver_license_number' => null,
-            'driver_license_issue_date' => null,
-            'driver_license_expiry_date' => null,
-            'driver_license_issue_place' => null,
+            // Driving License Detail fields
+            'license_number' => null,
+            'license_issue_date' => null,
+            'license_expiry_date' => null,
+            'license_issue_place' => null,
             'traffic_code_number' => null,
-            'driver_first_name' => null,
-            'driver_last_name' => null,
-            'driver_dob' => null,
-            'driver_gender' => null,
-            'driver_nationality_string' => null,
+            'first_name' => null,
+            'last_name' => null,
+            'dob' => null,
+            'gender' => null,
+            'nationality_string' => null,
 
             // Metadata
             'ocr_processed_at' => now()->toDateTimeString(),
@@ -53,7 +55,7 @@ class DrivingLicenseExtractor
                 continue;
             }
 
-            $data = OcrUtils::ensureArray($ocrData);
+            $data = $this->ensureArray($ocrData);
             $personalInfo = $this->getPersonalInfo($data);
             $this->updateExtractedData($data, $personalInfo);
         }
@@ -63,25 +65,25 @@ class DrivingLicenseExtractor
     {
         $personalInfo = $data['personalInformation'] ?? [];
 
-        return OcrUtils::ensureArray($personalInfo);
+        return $this->ensureArray($personalInfo);
     }
 
     private function updateExtractedData(array $data, array $personalInfo): void
     {
-        $this->extractedData = array_merge($this->extractedData, OcrUtils::getCleanData([
-            // Car Quote Request Detail fields
-            'driver_license_number' => $data['licenseNumber'] ?? null,
-            'driver_license_issue_date' => OcrUtils::formatDate($data['issueDate'] ?? null),
-            'driver_license_expiry_date' => OcrUtils::formatDate($data['expiryDate'] ?? null),
-            'driver_license_issue_place' => $data['placeOfIssue'] ?? null,
+        $this->extractedData = array_merge($this->extractedData, $this->getCleanData([
+            // Driving License Detail fields
+            'license_number' => $data['licenseNumber'] ?? null,
+            'license_issue_date' => $this->formatDate($data['issueDate'] ?? null),
+            'license_expiry_date' => $this->formatDate($data['expiryDate'] ?? null),
+            'license_issue_place' => $data['placeOfIssue'] ?? null,
             'traffic_code_number' => $data['trafficCodeNumber'] ?? null,
 
             // Personal information fields - split full name into first and last name
-            'driver_first_name' => OcrUtils::extractFirstName($personalInfo['fullName'] ?? null),
-            'driver_last_name' => OcrUtils::extractLastName($personalInfo['fullName'] ?? null),
-            'driver_dob' => OcrUtils::formatDate($personalInfo['dateOfBirth'] ?? null),
-            'driver_gender' => OcrUtils::formatGender($personalInfo['sex'] ?? null),
-            'driver_nationality_string' => $personalInfo['nationality'] ?? null,
+            'first_name' => $this->extractFirstName($personalInfo['fullName'] ?? null),
+            'last_name' => $this->extractLastName($personalInfo['fullName'] ?? null),
+            'dob' => $this->formatDate($personalInfo['dateOfBirth'] ?? null),
+            'gender' => $this->formatGender($personalInfo['sex'] ?? null),
+            'nationality_string' => $personalInfo['nationality'] ?? null,
 
             // Metadata
             'ocr_model' => $data['model'] ?? null,
@@ -89,26 +91,26 @@ class DrivingLicenseExtractor
         ]));
     }
 
-    public function getCarQuoteDetailFields(): array
+    public function getDrivingLicenseDetailFields(): array
     {
-        return OcrUtils::getCleanData([
-            'driver_license_number' => $this->extractedData['driver_license_number'] ?? null,
-            'driver_license_issue_date' => $this->extractedData['driver_license_issue_date'] ?? null,
-            'driver_license_expiry_date' => $this->extractedData['driver_license_expiry_date'] ?? null,
-            'driver_license_issue_place' => $this->extractedData['driver_license_issue_place'] ?? null,
+        return $this->getCleanData([
+            'license_number' => $this->extractedData['license_number'] ?? null,
+            'license_issue_date' => $this->extractedData['license_issue_date'] ?? null,
+            'license_expiry_date' => $this->extractedData['license_expiry_date'] ?? null,
+            'license_issue_place' => $this->extractedData['license_issue_place'] ?? null,
             'traffic_code_number' => $this->extractedData['traffic_code_number'] ?? null,
-            'driver_first_name' => $this->extractedData['driver_first_name'] ?? null,
-            'driver_last_name' => $this->extractedData['driver_last_name'] ?? null,
-            'driver_dob' => $this->extractedData['driver_dob'] ?? null,
-            'driver_gender' => $this->extractedData['driver_gender'] ?? null,
-            'driver_nationality_string' => $this->extractedData['driver_nationality_string'] ?? null,
+            'first_name' => $this->extractedData['first_name'] ?? null,
+            'last_name' => $this->extractedData['last_name'] ?? null,
+            'dob' => $this->extractedData['dob'] ?? null,
+            'gender' => $this->extractedData['gender'] ?? null,
+            'nationality_string' => $this->extractedData['nationality_string'] ?? null,
         ]);
     }
 
     public function getProcessedData(): array
     {
         return [
-            'car_quote_detail_fields' => $this->getCarQuoteDetailFields(),
+            'driving_license_detail_fields' => $this->getDrivingLicenseDetailFields(),
         ];
     }
 }

@@ -51,8 +51,14 @@ class SendUpdateToCustomerJob implements ShouldQueue
         if ($sendUpdateLog->is_email_sent) {
             LoggerService::info('job:SendUpdateToCustomerJob - Email process skipped - Email already sent');
         } else {
-            @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmailData($this->sendUpdate);
-            if (! empty($emailData)) {
+
+            $quoteTypeId = $sendUpdateLog->quote_type_id;
+            $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
+            $quoteModel = $this->getModelObject($quoteType);
+            $quote = $quoteModel::with('latestInsured')->where('uuid', $sendUpdateLog->quote_uuid)->first();
+
+            @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmailData($this->sendUpdate, $quote);
+            if (! empty($templateId)) {
                 LoggerService::info('job:SendUpdateToCustomerJob - Job Email Data', extra: ['emailData' => json_encode($emailData)]);
                 $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId/* , $sendUpdateLog */);
                 LoggerService::info('job: SendUpdateToCustomerJob - Job Response ', extra: ['emailData' => json_encode($response)]);

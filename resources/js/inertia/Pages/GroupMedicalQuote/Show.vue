@@ -2,8 +2,11 @@
 import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   quoteDetails: Object,
   allowedDuplicateLOB: Array,
@@ -17,6 +20,8 @@ defineProps({
   nationalities: Array,
   UBORelations: Array,
   UBOsDetails: Array,
+  membersDetails: Array,
+  memberRelations: Array,
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
@@ -38,12 +43,16 @@ defineProps({
   amlStatusName: String,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  activities: Array,
+  advisors: Array,
 });
 
 const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
 const leadSource = page.props.leadSource;
+
+let countDays = ref(useDaysSinceStale(props.quote?.stale_at));
 
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -72,6 +81,9 @@ const genderText = gender =>
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
+const dateFormatYMD = date =>
+  date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
+
 const modals = reactive({
   duplicate: false,
   member: false,
@@ -80,8 +92,6 @@ const modals = reactive({
   docConfirm: false,
   plan: false,
   createPlan: false,
-  activity: false,
-  activityConfirm: false,
   addContact: false,
   contactDeleteConfirm: false,
   contactPrimaryConfirm: false,
@@ -159,11 +169,14 @@ const onLeadStatus = () => {
     {
       preserveScroll: true,
       onError: errors => {
-        console.log(errors);
         notification.error({
           title: errors.value,
           position: 'top',
         });
+      },
+      onSuccess: response => {
+        countDays.value = useDaysSinceStale(response.props.quote?.stale_at);
+        router.reload({ only: ['quote'] });
       },
     },
   );
@@ -232,7 +245,10 @@ const customerProfileForm = useForm({
     page.props.quote.latest_insured?.last_name ??
     page.props.quote.customer_insured_last_name ??
     '',
-  emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
+  emirates_id_number:
+    (page.props.quote?.emirates_id_number ??
+      page.props.quote?.customer.emirates_id_number) ||
+    null,
   emirates_id_expiry_date:
     page.props.quote?.customer.emirates_id_expiry_date || null,
 
@@ -373,6 +389,10 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  window.addEventListener('ocr-notification', handleOcrNotification);
+});
+onUnmounted(() => {
+  window.removeEventListener('ocr-notification', handleOcrNotification);
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -405,13 +425,105 @@ const allowStatusUpdate = computed(() => {
     page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
   );
 });
+
+// OCR loader state for GM (align with Car/Home)
+const ocrLoadingDocType = ref(null);
+const ocrLoadingDocTypes = reactive(new Set());
+const isDocTypeLoading = docType => ocrLoadingDocTypes.has(docType);
+const hasOcrInProgress = computed(() => ocrLoadingDocTypes.size > 0);
+const ocrDocumentTypeEnum = usePage().props.ocrDocumentTypeEnum;
+// Check if all required policy fields are filled (moved from OcrNotification to avoid duplicates)
+const checkRequiredPolicyFields = () => {
+  const quote = usePage().props?.quote;
+  if (!quote) return false;
+  const requiredFields = [
+    { field: 'policy_number', property: 'quote_policy_number' },
+    { field: 'policy_start_date', property: 'quote_policy_start_date' },
+    { field: 'policy_expiry_date', property: 'quote_policy_expiry_date' },
+    { field: 'price_vat_applicable', property: 'price_vat_applicable' },
+  ];
+  return requiredFields.every(item => {
+    const value = quote[item.field] || quote[item.property];
+    return value !== null && value !== undefined && String(value).trim() !== '';
+  });
+};
+// Reload keys for forced component re-renders after OCR
+const policyDetailReloadKey = ref(0);
+const bookPolicyReloadKey = ref(0);
+function handleOcrNotification(event) {
+  const { docType, status, userId } = event.detail || {};
+  const currentUserId = usePage().props.auth.user.id;
+  // Only process notifications for the current user
+  if (userId !== currentUserId) {
+    return;
+  }
+  // For 'start' status, add document type to loading set
+  if (status === 'start') {
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+    ];
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.add(docType);
+      // Also set the old ref for backwards compatibility
+      ocrLoadingDocType.value = docType;
+    }
+  } else {
+    // For 'end' or 'fail' status, remove document type from loading set and reload data
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+    ];
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.delete(docType);
+    }
+    router.reload({
+      onSuccess: () => {
+        // Clear both the old ref and the reactive Set for immediate UI update
+        ocrLoadingDocType.value = null;
+        ocrLoadingDocTypes.clear();
+        policyDetailReloadKey.value++;
+        bookPolicyReloadKey.value++;
+        // Check policy fields completion after data reload (only for CERTIFICATE_OF_ISSUANCE)
+        if (
+          status === 'end' &&
+          !event.detail?.error &&
+          docType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value
+        ) {
+          const allFieldsFilled = checkRequiredPolicyFields();
+          if (!allFieldsFilled) {
+            notification.info({
+              title: 'Some required fields are still missing in Policy details',
+              position: 'top',
+            });
+          }
+        }
+      },
+      preserveState: true,
+      preserveScroll: true,
+      only: ['payments', 'bookPolicyDetails', 'quote', 'quoteDocuments'],
+    });
+  }
+}
 </script>
 
 <template>
   <div>
+    <OcrNotification />
     <Head title="Group Medical Lead Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+      <div class="flex items-center gap-2">
+        <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }}
+        </p>
+      </div>
+      <div></div>
       <div
         class="flex gap-2 mb-3 justify-end"
         v-if="readOnlyMode.isDisable === true"
@@ -621,6 +733,13 @@ const allowStatusUpdate = computed(() => {
               </div>
 
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">OE/AE</dt>
+                <dd>
+                  {{ quote?.support_user?.name }}
+                </dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>
                   {{ quote?.business_quote_request_detail?.lost_reason?.text }}
@@ -761,7 +880,12 @@ const allowStatusUpdate = computed(() => {
         <template #header>
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
-              Entity Profile
+              {{
+                enabledCustomerType == page.props.customerTypeEnum.Individual
+                  ? 'Customer '
+                  : 'Entity '
+              }}
+              Profile
             </h3>
           </div>
         </template>
@@ -776,7 +900,109 @@ const allowStatusUpdate = computed(() => {
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <dl
+                v-if="
+                  enabledCustomerType === page.props.customerTypeEnum.Individual
+                "
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+              >
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">FIRST NAME</dt>
+                  <dd>{{ quote.first_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">LAST NAME</dt>
+                  <dd>{{ quote.last_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INSURED FIRST NAME</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.insured_first_name"
+                      :rules="[isRequired]"
+                      placeholder="INSURED FIRST NAME"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INSURED LAST NAME</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.insured_last_name"
+                      :rules="[isRequired]"
+                      placeholder="INSURED LAST NAME"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">MOBILE NUMBER</dt>
+                  <dd>{{ quote.mobile_no }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMAIL</dt>
+                  <dd class="break-words">{{ quote.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ quote?.nationality?.text }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">DATE OF BIRTH</dt>
+                  <dd>{{ dateFormatYMD(quote.dob) }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ genderText(quote.gender).value }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>
+                    {{
+                      quote.customer.receive_marketing_updates ? 'Yes' : 'No'
+                    }}
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.emirates_id_number"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
+                  <dd>
+                    <DatePicker
+                      v-model="customerProfileForm.emirates_id_expiry_date"
+                      placeholder="EMIRATES ID EXPIRY DATE"
+                      :disabled="!isProfileUpdateAllow"
+                      :min-date="new Date()"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.customer?.pcp_tag_formatted }}</dd>
+                </div>
+                <RiskRatingScoreDetails
+                  :quote="quote"
+                  :modelType="'Business'"
+                />
+              </dl>
+              <dl
+                v-if="
+                  enabledCustomerType === page.props.customerTypeEnum.Entity
+                "
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+              >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
@@ -995,6 +1221,16 @@ const allowStatusUpdate = computed(() => {
       :expanded="sectionExpanded"
     />
 
+    <MemberDetails
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
+      :quote="quote"
+      :membersDetails="membersDetails"
+      :nationalities="nationalities"
+      :memberRelations="memberRelations"
+      quote_type="Business"
+      :expanded="sectionExpanded"
+    />
+
     <!-- Additional Contact -->
     <CustomerAdditionalContacts
       quoteType="Business"
@@ -1154,9 +1390,14 @@ const allowStatusUpdate = computed(() => {
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
+      :key="policyDetailReloadKey"
       :quote="quote"
       modelType="Business"
       :expanded="sectionExpanded"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <QuoteDocument
@@ -1168,6 +1409,26 @@ const allowStatusUpdate = computed(() => {
       :expanded="sectionExpanded"
       quoteType="Business"
       :bookPolicyDetails="bookPolicyDetails"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      lob="Business"
+      :customerData="{
+        customerType: quote.customer_type,
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.insurance_provider_id,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <BookPolicy
@@ -1178,6 +1439,7 @@ const allowStatusUpdate = computed(() => {
           permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
+      :key="bookPolicyReloadKey"
       :quote="quote"
       quoteType="Business"
       modelType="Group Medical"
@@ -1193,6 +1455,16 @@ const allowStatusUpdate = computed(() => {
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+    />
+
+    <Activities
+      :quote="quote"
+      :quoteType="page.props.quoteType"
+      :modelType="page.props.modelType"
+      :advisors="advisors"
+      :activities="activities"
+      :expanded="sectionExpanded"
+      :readOnlyMode="readOnlyMode"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -1234,6 +1506,13 @@ const allowStatusUpdate = computed(() => {
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+    />
+
+    <OcrLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
     />
 
     <AuditLogs

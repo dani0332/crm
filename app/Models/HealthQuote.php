@@ -292,7 +292,7 @@ class HealthQuote extends Model implements AuditableContract
             ->where('is_primary', false);
     }
 
-    public function renewalBatch()
+    public function renewalBatchModel()
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
@@ -347,7 +347,12 @@ class HealthQuote extends Model implements AuditableContract
         }
     }
 
-    // TODO:: Need to verify this function
+    public function customerInsured()
+    {
+        return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Health);
+    }
+
     public function insuredDetails()
     {
         return $this->hasOneThrough(
@@ -372,6 +377,12 @@ class HealthQuote extends Model implements AuditableContract
             'insured_id' // customer_insured.insured_id
         )->where('customer_insured.quote_type_id', QuoteTypeId::Health)
             ->latest('customer_insured.updated_at');
+    }
+
+    public function amlLogs()
+    {
+        return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Health)->withTrashed();
     }
 
     /******************************* Quote Status Logs Related Methods Below *******************************/
@@ -493,8 +504,18 @@ class HealthQuote extends Model implements AuditableContract
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
     }
 
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Health);
+    }
+
     public function isAUHLead(bool $shouldCheckSource = true)
     {
         return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI && ($shouldCheckSource ? $this->source === LeadSourceEnum::IMCRM : true);
+    }
+
+    public function isLeadSourceRevivalOrInsuranceWallet()
+    {
+        return in_array($this->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::INSURANCE_WALLET]);
     }
 }

@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCode;
 use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -23,7 +27,7 @@ class CarQuote extends BaseModel
     protected $casts = [
         'dob' => 'datetime',
     ];
-    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted'];
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'api_issuance_status', 'insurer_api_status'];
     protected $guarded = [];
     public $filterables = [
         'code' => FilterTypes::EXACT,
@@ -87,6 +91,26 @@ class CarQuote extends BaseModel
     public function getFullNameAttribute()
     {
         return $this->first_name.' '.$this->last_name;
+    }
+
+    public function getApiIssuanceStatusAttribute()
+    {
+        return $this->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($this->api_issuance_status_id) : null;
+    }
+
+    public function getInsurerApiStatusAttribute()
+    {
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this, QuoteTypes::CAR->value) : null;
+    }
+
+    public function isBookingFailed()
+    {
+        return $this->insurer_api_status_id === app(PolicyIssuanceService::class)->getFailedBookingInsurerAPIStatus($this, QuoteTypes::CAR->value);
+    }
+
+    public function isPolicyIssuanceFailed()
+    {
+        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getFailedPolicyIssuanceAPIStatuses($this, QuoteTypes::CAR->value));
     }
 
     public function fullName()
@@ -468,6 +492,11 @@ class CarQuote extends BaseModel
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Car);
+    }
+
     public function hasExemptedSource()
     {
         // Check if Dubai Now exclusion should be applied
@@ -492,6 +521,12 @@ class CarQuote extends BaseModel
     public function isProvider($code)
     {
         return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
+    }
+
+    public function customerInsured()
+    {
+        return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Car);
     }
 
     public function insured()
@@ -520,6 +555,17 @@ class CarQuote extends BaseModel
             ->latest('customer_insured.updated_at');
     }
 
+    public function amlLogs()
+    {
+        return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Car)->withTrashed();
+    }
+
+    public function policyIssuance()
+    {
+        return $this->morphOne(PolicyIssuance::class, 'model');
+    }
+
     /**
      * Get quote tags for this car quote
      */
@@ -529,8 +575,43 @@ class CarQuote extends BaseModel
             ->where('quote_type_id', QuoteTypeId::Car);
     }
 
+    public function kycDocumentUser()
+    {
+        return $this->morphOne(QuoteDocument::class, 'quote_documentable')
+            ->where('document_type_code', DocumentTypeCode::KYCDOC)
+            ->whereNotNull('created_by_id')
+            ->latest('updated_at');
+    }
+
     public function registrationCertificate()
     {
         return $this->morphOne(RegistrationCertificate::class, 'certificatable');
     }
+
+    public function drivingLicenseDetail()
+    {
+        return $this->morphOne(DrivingLicenseDetail::class, 'licensable');
+    }
+
+    public function vehicleDriverDetail()
+    {
+        return $this->morphOne(VehicleDriverDetail::class, 'quoteable');
+    }
+    /**
+     * Get the previous quote for this car quote.
+     * Returns null if no previous quote exists.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function previousQuote()
+    {
+        // The previous_quote_id is stored on this model, referencing the previous CarQuote's id
+        return $this->belongsTo(
+            CarQuote::class,
+            'previous_quote_id',
+            'id'
+        )->select(['id', 'code', 'uuid'])
+            ->with('payments');
+    }
+
 }

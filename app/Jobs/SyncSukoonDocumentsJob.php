@@ -35,7 +35,7 @@ class SyncSukoonDocumentsJob implements ShouldQueue
     {
         $sukoonMedexService = app(SukoonMedexService::class);
         $sukoonMedexService->initiatePurchaseFlow($this->quote, $this->quoteTypeId, $this->transaction);
-        $sukoonMedexService->syncSukoonDocuments();
+        $sukoonMedexService->syncAndProcessSukoonDocuments();
     }
 
     /**
