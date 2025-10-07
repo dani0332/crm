@@ -213,11 +213,11 @@ trait PersonalQuoteObservable
 
         if (! suppressIntroEmailByStatus($personalQuote->quote_status_id) && $isEligibleForEmail) {
             $quoteType = QuoteTypes::getName($personalQuote->quote_type_id);
-            info(self::class." - Quote Type: {$quoteType->value} quote:  {$personalQuote->uuid}");
+            LoggerService::info(self::class." - Quote Type: {$quoteType->value} quote:  {$personalQuote->uuid}");
             $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
-            info(self::class." Sending {$emailType} email to customer for {$quoteType->value} quote {$personalQuote->uuid}");
+            LoggerService::info(self::class." Sending {$emailType} email to customer for {$quoteType->value} quote {$personalQuote->uuid}");
             app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, $quoteType->value, $oldAdvisorId);
-            info(self::class." | {$emailType} email sent to customer for {$quoteType->value} quote {$personalQuote->uuid}");
+            LoggerService::info(self::class." | {$emailType} email sent to customer for {$quoteType->value} quote {$personalQuote->uuid}");
         }
     }
 

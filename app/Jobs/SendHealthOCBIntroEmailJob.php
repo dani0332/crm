@@ -46,30 +46,30 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
             $lead = HealthQuote::where('uuid', $this->quoteUuid)->first();
 
             if (! $lead) {
-                info("SendHealthOCBIntroEmailJob - Lead not found for UUID: {$this->quoteUuid}");
+                LoggerService::info("SendHealthOCBIntroEmailJob - Lead not found for UUID: {$this->quoteUuid}");
 
                 return;
             }
 
             if (suppressIntroEmailByStatus($lead->quote_status_id)) {
-                info("SendHealthOCBIntroEmailJob - Suppressing OCB Email because for UUID: {$this->quoteUuid}");
+                LoggerService::info("SendHealthOCBIntroEmailJob - Suppressing OCB Email because for UUID: {$this->quoteUuid}");
 
                 return;
             }
             if ($lead->isApplicationPending()) {
-                info("SendHealthOCBIntroEmailJob - Skipping OCB Email becuase Application is Pending for UUID: {$this->quoteUuid}");
+                LoggerService::info("SendHealthOCBIntroEmailJob - Skipping OCB Email becuase Application is Pending for UUID: {$this->quoteUuid}");
 
                 return;
             }
 
             if ($lead->source == LeadSourceEnum::REVIVAL) {
-                info("SendHealthOCBIntroEmailJob - Skipping OCB Email because REVIVAL - UUID: {$this->quoteUuid}");
+                LoggerService::info("SendHealthOCBIntroEmailJob - Skipping OCB Email because REVIVAL - UUID: {$this->quoteUuid}");
 
                 return;
             }
 
             if ($lead->sic_flow_enabled) {
-                info("SendHealthOCBIntroEmailJob - SIC workflow is already enabled for UUID: {$this->quoteUuid}");
+                LoggerService::info("SendHealthOCBIntroEmailJob - SIC workflow is already enabled for UUID: {$this->quoteUuid}");
 
                 return;
             }
@@ -83,7 +83,7 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
 
             info("SendHealthOCBIntroEmailJob - {$logMessage}: {$response->status_code} | Email: {$lead->email} | UUID: {$this->quoteUuid}");
         } catch (Exception $e) {
-            Log::error("SendHealthOCBIntroEmailJob - Exception: {$e->getMessage()} | Stack Trace: {$e->getTraceAsString()}");
+            LoggerService::error("SendHealthOCBIntroEmailJob - Exception: {$e->getMessage()} | Stack Trace: {$e->getTraceAsString()}");
         }
     }
 
