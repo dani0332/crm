@@ -47,7 +47,7 @@ class LifeQuoteObserver
         if (isset($dirty['advisor_id'])) {
             LogAllocation::dispatch($lifeQuote, QuoteTypes::LIFE);
 
-            if (!$lifeQuote->isSuppressIntroEmail() && $lifeQuote->source != LeadSourceEnum::IMCRM) {
+            if (! $lifeQuote->isSuppressIntroEmail() && $lifeQuote->source != LeadSourceEnum::IMCRM) {
 
                 $oldAdvisorId = $lifeQuote->getOriginal('advisor_id');
                 LoggerService::info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$lifeQuote->advisor_id} ");
