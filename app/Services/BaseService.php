@@ -501,7 +501,7 @@ class BaseService
 
             LogAllocation::dispatch($lead, $quoteType);
 
-            if (! suppressIntroEmailByStatus($lead->quote_status_id) && $sendAdvisorAssignedEmail) {
+            if (! $lead->isSuppressIntroEmail() && $sendAdvisorAssignedEmail) {
                 app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($lead, $quoteType->value);
             }
         }

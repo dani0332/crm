@@ -118,7 +118,7 @@ trait PersonalQuoteObservable
             SendHomeOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(Carbon::now()->addMinutes(1));
             LoggerService::info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid);
             LoggerService::info(self::class." - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
-            if (! suppressIntroEmailByStatus($personalQuote->quote_status_id) && $personalQuote->source != LeadSourceEnum::IMCRM && ! empty($oldAdvisorId)) {
+            if (! $personalQuote->isSuppressIntroEmail() && $personalQuote->source != LeadSourceEnum::IMCRM && ! empty($oldAdvisorId)) {
                 if ($oldAdvisorId != $personalQuote->advisor_id) {
                     LoggerService::info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
 
@@ -211,7 +211,7 @@ trait PersonalQuoteObservable
             $isEligibleForEmail = true;
         }
 
-        if (! suppressIntroEmailByStatus($personalQuote->quote_status_id) && $isEligibleForEmail) {
+        if (! $personalQuote->isSuppressIntroEmail() && $isEligibleForEmail) {
             $quoteType = QuoteTypes::getName($personalQuote->quote_type_id);
             LoggerService::info(self::class." - Quote Type: {$quoteType->value} quote:  {$personalQuote->uuid}");
             $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';

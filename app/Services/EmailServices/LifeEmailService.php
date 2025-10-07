@@ -26,7 +26,7 @@ class LifeEmailService extends BaseService
 
         LoggerService::info('| sendFICEmail - Initiating process');
 
-        if (suppressIntroEmailByStatus($personalQuote->quote_status_id)) {
+        if ($personalQuote->isSuppressIntroEmail()) {
             LoggerService::info('sendFICEmail - Suppressing OCB Email because for');
 
             return;

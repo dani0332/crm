@@ -1722,26 +1722,6 @@ if (! function_exists('userHasProduct')) {
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }
-
-if (! function_exists('suppressIntroEmailByStatus')) {
-    function suppressIntroEmailByStatus($quoteStatusId)
-    {
-        $excludedQuoteStatuses = [
-            QuoteStatusEnum::TransactionApproved,
-            QuoteStatusEnum::PolicyBooked,
-            QuoteStatusEnum::PolicyIssued,
-            QuoteStatusEnum::PolicySentToCustomer,
-            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
-            QuoteStatusEnum::POLICY_BOOKING_FAILED,
-            QuoteStatusEnum::CancellationPending,
-            QuoteStatusEnum::PolicyCancelled,
-            QuoteStatusEnum::PolicyCancelledReissued,
-        ];
-
-        return in_array($quoteStatusId, $excludedQuoteStatuses);
-    }
-}
-
 /**
  * Get the user's IP address with proper handling of proxies and load balancers
  *

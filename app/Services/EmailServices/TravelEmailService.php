@@ -252,7 +252,7 @@ class TravelEmailService extends BaseService
     public function sendTravelOCBIntroEmail(TravelQuote $lead, $previousAdvisorId, bool $triggerSICWorkFlow = false, bool $handleZeroPlans = false, bool $forceSicWorkflow = false)
     {
 
-        if (suppressIntroEmailByStatus($lead->quote_status_id)) {
+        if ($lead->isSuppressIntroEmail()) {
             LoggerService::info(self::class." -Skipping OCB Email because for UUID: {$lead->uuid}");
 
             return;

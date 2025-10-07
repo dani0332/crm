@@ -36,7 +36,7 @@ class HomeEmailService extends BaseService
 
         LoggerService::info('sendHomeOCBIntroEmail - Initiating process');
 
-        if (suppressIntroEmailByStatus($lead->quote_status_id)) {
+        if ($lead->isSuppressIntroEmail()) {
             LoggerService::info('sendHomeOCBIntroEmail - Suppressing OCB Email because for');
 
             return;
