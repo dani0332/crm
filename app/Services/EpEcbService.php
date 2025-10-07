@@ -129,7 +129,7 @@ class EpEcbService extends EpBookingService
         try {
             LoggerService::info($this->logPrefix . ' Starting purchase flow', extra: [
                 ...$this->logExtra,
-                'current_status' => $this->embeddedTransaction->policy_status
+                'policy_status' => $this->embeddedTransaction->policy_status
             ]);
 
             // Execute workflow with conditional step execution
@@ -201,6 +201,14 @@ class EpEcbService extends EpBookingService
 
             // Dispatch job for sync ep documents
             dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(2));
+        }
+
+        $isDocumentsRetrieved = $this->embeddedTransaction->policy_status == EmbeddedTransactionEnum::STATUS_BOOKED;
+        $missingReqDocTypeCodes = $this->getMissingDocumentDocTypes($this->reqDocTypeCodes);
+        if (!$this->shouldSkipStep('prepare_for_sage', $this->embeddedTransaction->policy_status) && $isDocumentsRetrieved && empty($missingReqDocTypeCodes)) {
+
+            // Dispatch job for watermark ep documents
+            dispatch(new EpWatermarkDocumentJob($this->context));
         }
     }
 
