@@ -219,7 +219,6 @@ class EpEcbService extends EpBookingService
             $this->executeSyncDocuments($getPolicyDocumentsResponse);
 
             LoggerService::info($this->logPrefix . " Step completed: GetPolicyDocuments", extra: $this->logExtra);
-
         } else {
             $extraLogs = [...$this->logExtra, 'missing_req_doc_type_codes' => $missingReqDocTypeCodes];
             LoggerService::info($this->logPrefix . " Skipping step: GetPolicyDocuments - already completed", extra: $extraLogs);
@@ -799,23 +798,19 @@ class EpEcbService extends EpBookingService
             throw new Exception("Quote not found for building quote payload");
         }
 
+        $productInfo = $this->getProductInfo(self::STEP_GET_QUOTE);
+        $customerInfo = $this->getCustomerInfo(self::STEP_GET_QUOTE);
         $vehicleInfo = $this->getVehicleInfo(self::STEP_GET_QUOTE);
 
         return [
             'client_reference_number' => "",
             'transaction_country' => $this->transactionCountry,
             'transaction_currency' => $this->transactionCurrency,
-            'product_info' => [
-                'policy_product' => $this->policyProduct
-            ],
-            'customer_info' => [
-                'customer_type' => ""
-            ],
+            'product_info' => $productInfo,
+            'customer_info' => $customerInfo,
             'vehicle_info' => $vehicleInfo
         ];
     }
-
-
 
     /**
      * Build policy creation payload
@@ -830,13 +825,12 @@ class EpEcbService extends EpBookingService
             throw new Exception("EmbeddedTransaction not found for building policy payload");
         }
 
-        $emirateIdNumber = $this->getEmirateIdNumber();
-        $mulkiyaDocuments = $this->getMulkiyaDocuments();
+        $salesInfo = $this->getSalesInfo(self::STEP_CREATE_POLICY_FROM_QUOTE);
+        $customerInfo = $this->getCustomerInfo(self::STEP_CREATE_POLICY_FROM_QUOTE);
         $vehicleInfo = $this->getVehicleInfo(self::STEP_CREATE_POLICY_FROM_QUOTE);
+        $motorInsuranceInfo = $this->getMotorInsuranceInfo();
+        $mulkiyaDocuments = $this->getMulkiyaDocuments();
 
-        $policySoldDate = $this->formatDate(now());
-        $policyStartDate = $this->formatDate($this->quote?->policy_start_date ?? '');
-        $policyEndDate = $this->formatDate($this->quote->policy_expiry_date ?? '');
         $paymentChargeId = $this->embeddedTransaction?->paymentCharges?->first()?->transaction_id;
 
         return [
@@ -844,41 +838,10 @@ class EpEcbService extends EpBookingService
             'quote_reference_number' => $this->quoteReferenceNumber,
             'transaction_country' => $this->transactionCountry,
             'payment_reference_number' => $paymentChargeId,
-            'sales_info' => [
-                'policy_sold_date' => $policySoldDate,
-                'policy_sold_location' => null,
-                'policy_sold_salesman' => null
-            ],
-            'customer_info' => [
-                'customer_fname' => $this->quote?->first_name,
-                'customer_lname' => $this->quote?->last_name,
-                'customer_mobile_no' => null,
-                'customer_whatsapp_no' => null,
-                'customer_email_id' => null,
-                'customer_id_type' => "EID",
-                'customer_id_no' => $emirateIdNumber,
-                'customer_id_expiry_date' => null,
-                'customer_address' => null,
-                'customer_address_city' => null,
-                'customer_address_country' => null,
-                'co_buyer_name' => null,
-                'co_buyer_mobile_no' => null,
-                'co_buyer_whatsapp_no' => null,
-                'co_buyer_email_id' => null,
-                'co_buyer_id_type' => null,
-                'co_buyer_id_no' => null,
-                'co_buyer_id_expiry_date' => null
-            ],
+            'sales_info' => $salesInfo,
+            'customer_info' => $customerInfo,
             'vehicle_info' => $vehicleInfo,
-            'motor_insurance_info' => [
-                'mi_policy_number' => "NA",
-                'mi_policy_issuer' => $this->quote?->insuranceProviderDetails?->ecb_insurer_id,
-                'mi_start_date' => $policyStartDate,
-                'mi_end_date' => $policyEndDate,
-                'mi_coverage_area' => "NA", // "UAE & OMAN",
-                'mi_sum_insured' => $this->quote?->car_value,
-                'mi_policy_excess' => $this->quote?->carQuotePlanDetail?->excess ?: 100
-            ],
+            'motor_insurance_info' => $motorInsuranceInfo,
             'document_info' => $mulkiyaDocuments
         ];
     }
@@ -918,6 +881,86 @@ class EpEcbService extends EpBookingService
             });
 
         return $mulkiyaDocuments->toArray();
+    }
+
+    private function getCustomerInfo(string $step): array
+    {
+        $emirateIdNumber = $this->getEmirateIdNumber();
+        $customerDetails = [
+            'customer_type' => null,
+            'customer_fname' => $this->quote?->first_name,
+            'customer_lname' => $this->quote?->last_name,
+            'customer_mobile_no' => null,
+            'customer_whatsapp_no' => null,
+            'customer_email_id' => null,
+            'customer_id_type' => "EID",
+            'customer_id_no' => $emirateIdNumber,
+            'customer_id_expiry_date' => null,
+            'customer_address' => null,
+            'customer_address_city' => null,
+            'customer_address_country' => null,
+            'co_buyer_name' => null,
+            'co_buyer_mobile_no' => null,
+            'co_buyer_whatsapp_no' => null,
+            'co_buyer_email_id' => null,
+            'co_buyer_id_type' => null,
+            'co_buyer_id_no' => null,
+            'co_buyer_id_expiry_date' => null
+        ];
+
+        return match ($step) {
+            self::STEP_GET_QUOTE => collect($customerDetails)->only('customer_type')->toArray(),
+            self::STEP_CREATE_POLICY_FROM_QUOTE => collect($customerDetails)->except('customer_type')->toArray(),
+            self::STEP_CREATE_POLICY_WITHOUT_QUOTE => $customerDetails,
+            default => []
+        };
+    }
+
+    private function getProductInfo(string $step): array
+    {
+        $productDetails = [
+            'policy_product' => $this->policyProduct,
+            'policy_coverage_type' => $this->policyProduct,
+            'policy_plan_type' => 'EXW-STANDARD'
+        ];
+
+        return match ($step) {
+            self::STEP_GET_QUOTE => collect($productDetails)->except('policy_product')->toArray(),
+            self::STEP_CREATE_POLICY_WITHOUT_QUOTE => $productDetails,
+            default => []
+        };
+    }
+
+    private function getSalesInfo(string $step): array
+    {
+        $salesDetails = [
+            'policy_sold_date' => $this->formatDate(now()),
+            'policy_sold_location' => null,
+            'policy_sold_salesman' => null,
+            'policy_currency' => $this->transactionCurrency
+        ];
+
+        return match ($step) {
+            self::STEP_CREATE_POLICY_FROM_QUOTE => collect($salesDetails)->except('policy_currency')->toArray(),
+            self::STEP_CREATE_POLICY_WITHOUT_QUOTE => $salesDetails,
+            default => []
+        };
+    }
+
+    private function getMotorInsuranceInfo(): array
+    {
+        $policyStartDate = $this->formatDate($this->quote?->policy_start_date ?? '');
+        $policyEndDate = $this->formatDate($this->quote->policy_expiry_date ?? '');
+
+        return [
+            'mi_policy_number' => "NA",
+            'mi_policy_issuer' => $this->quote?->insuranceProviderDetails?->ecb_insurer_id,
+            'mi_start_date' => $policyStartDate,
+            'mi_end_date' => $policyEndDate,
+            'mi_coverage_area' => "NA", // "UAE & OMAN",
+            'mi_sum_insured' => $this->quote?->car_value,
+            'mi_policy_excess' => $this->quote?->carQuotePlanDetail?->excess ?: 100
+        ];
     }
 
     private function getVehicleInfo(string $step): array
