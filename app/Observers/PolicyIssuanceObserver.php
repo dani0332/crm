@@ -41,7 +41,7 @@ class PolicyIssuanceObserver
                     $failedLogs = $policyIssuance->policyIssuanceLogs->where('status', PolicyIssuanceEnum::FAILED_STATUS);
                     if ($failedLogs) {
                         $failedNullLogFound = $failedLogs->filter(function ($log) {
-                            return str_contains($log->response, '"status": false, "message": null, "completed_step": null');
+                            return $this->hasNullStatusResponse($log->response);
                         });
 
                         if ($failedNullLogFound->isNotEmpty()) {
@@ -72,5 +72,27 @@ class PolicyIssuanceObserver
         }
 
         LoggerService::info($this->className.' fn:'.__FUNCTION__.' - End Policy Issuance ID : '.$policyIssuance->id);
+    }
+
+    /**
+     * Check if the response contains a null status indicating a timeout
+     *
+     * @param string $response The response JSON string to check
+     * @return bool True if the response indicates a null status, false otherwise
+     */
+    private function hasNullStatusResponse(string $response): bool
+    {
+        $nullStatusPatterns = [
+            '"status": false, "message": null, "completed_step": null',
+            '"status": false, "message": "null", "completed_step": null',
+        ];
+
+        foreach ($nullStatusPatterns as $pattern) {
+            if (str_contains($response, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
