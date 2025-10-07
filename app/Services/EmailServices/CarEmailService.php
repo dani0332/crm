@@ -821,7 +821,7 @@ class CarEmailService extends BaseService
             'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
             'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
             'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
-            'assignmentType' => $isReAssignment ? 'ReAssigned' : 'Assigned',
+            'workflowType' => $isReAssignment ? 'ReAssigned' : 'Assigned',
         ];
     }
 }
