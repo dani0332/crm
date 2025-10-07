@@ -104,7 +104,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedSukoonMedexProductSlug();
         $this->seedLOBCutOffDates();
         $this->seedTravelEnquiryEmail();
-        $this->seedSendPolicyEmail();
+        $this->seedSendUpdateEmailTemplate();
     }
 
     private function seedBirdWorkflowUrls()
@@ -613,7 +613,7 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
-    private function seedSendPolicyEmail()
+    private function seedSendUpdateEmailTemplate()
     {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CAR_SEND_POLICY_TEMPLATE],
