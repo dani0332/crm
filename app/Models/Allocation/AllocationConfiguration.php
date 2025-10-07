@@ -12,7 +12,7 @@ class AllocationConfiguration extends Model implements AuditableContract
 {
     use Auditable;
 
-    protected $appends = ['lumpsum_brackets', 'regular_brackets'];
+    protected $appends = ['lumpsum_brackets', 'regular_brackets', 'value_brackets', 'volume_brackets'];
     protected $fillable = [
         'quote_type_id',
         'quote_type',
@@ -36,6 +36,20 @@ class AllocationConfiguration extends Model implements AuditableContract
     {
         return new Attribute(
             get: fn () => $this->config['lumpsum_brackets'] ?? [],
+        );
+    }
+
+    public function valueBrackets(): Attribute
+    {
+        return new Attribute(
+            get: fn () => $this->config['value_brackets'] ?? [],
+        );
+    }
+
+    public function volumeBrackets(): Attribute
+    {
+        return new Attribute(
+            get: fn () => $this->config['volume_brackets'] ?? [],
         );
     }
 }
