@@ -1,0 +1,26 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Factories;
+
+use App\Contracts\AllocationValidationStrategyInterface;
+use App\Enums\QuoteTypes;
+use App\Strategies\Validation\HomeAllocationValidationStrategy;
+use App\Strategies\Validation\SavingsAllocationValidationStrategy;
+use InvalidArgumentException;
+
+class AllocationValidationStrategyFactory
+{
+    /**
+     * Create a validation strategy based on the quote type
+     */
+    public static function create(QuoteTypes $quoteType): AllocationValidationStrategyInterface
+    {
+        return match ($quoteType) {
+            QuoteTypes::SAVINGS => new SavingsAllocationValidationStrategy(),
+            QuoteTypes::HOME => new HomeAllocationValidationStrategy(),
+            default => throw new InvalidArgumentException("No validation strategy found for quote type: {$quoteType->value}"),
+        };
+    }
+}

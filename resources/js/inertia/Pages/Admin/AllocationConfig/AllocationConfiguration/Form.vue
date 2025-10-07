@@ -3,6 +3,7 @@ import { onMounted } from 'vue';
 import { Link } from '@inertiajs/vue3';
 
 import SavingsAllocationConfigTemplate from './Savings/SavingsAllocationConfigTemplate.vue';
+import HomeAllocationConfigTemplate from './Home/HomeAllocationConfigTemplate.vue';
 import ErrorDisplay from './components/ErrorDisplay.vue';
 import { useErrorHandling } from './composables/useErrorHandling.js';
 import { useAllocationForm } from './composables/useAllocationForm.js';
@@ -38,6 +39,7 @@ const {
   nationalityOptions,
   currentConfiguration,
   savingsTemplateRef,
+  homeTemplateRef,
   auditLogsKey,
   form,
   quoteTypeOptions,
@@ -174,6 +176,17 @@ onMounted(() => {
             :view-mode="isViewMode"
             @data-update="onTemplateDataUpdate"
             ref="savingsTemplateRef"
+          />
+        </div>
+
+        <div v-else-if="form.quote_type === quoteTypeCodeEnum.HOME">
+          <HomeAllocationConfigTemplate
+            :configuration="currentConfiguration"
+            :advisor-options="advisorOptions"
+            :nationality-options="nationalityOptions"
+            :view-mode="isViewMode"
+            @data-update="onTemplateDataUpdate"
+            ref="homeTemplateRef"
           />
         </div>
 
