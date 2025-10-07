@@ -23,6 +23,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  viewMode: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits([
@@ -216,7 +220,7 @@ onMounted(() => {
             {{ title }}
           </h3>
         </div>
-        <x-tooltip>
+        <x-tooltip v-if="!viewMode">
           <x-button size="md" color="#ff5e00" type="button" @click="addBracket">
             Create new price bracket
           </x-button>
@@ -267,6 +271,7 @@ onMounted(() => {
                 </h4>
               </div>
               <x-button
+                v-if="!viewMode"
                 size="sm"
                 color="error"
                 outlined
@@ -300,6 +305,7 @@ onMounted(() => {
                     v-model="bracket.min"
                     class="!mb-0 mt-1"
                     required
+                    :disabled="viewMode"
                     @input="handleMinInput($event, bracket)"
                     @blur="handleMinBlur($event, bracket)"
                     placeholder="1000"
@@ -320,6 +326,7 @@ onMounted(() => {
                     v-model="bracket.max"
                     class="!mb-0 mt-1"
                     required
+                    :disabled="viewMode"
                     @input="handleMaxInput($event, bracket)"
                     @blur="handleMaxBlur($event, bracket)"
                     placeholder="2000"
@@ -342,7 +349,7 @@ onMounted(() => {
                   <h5 class="text-sm font-medium text-gray-700">
                     Advisor Allocation Profiles
                   </h5>
-                  <x-tooltip>
+                  <x-tooltip v-if="!viewMode">
                     <x-button
                       size="sm"
                       color="#ff5e00"
@@ -407,6 +414,7 @@ onMounted(() => {
                         </h6>
                       </div>
                       <button
+                        v-if="!viewMode"
                         type="button"
                         @click="removeProfile(bracket, profileIndex)"
                         class="text-red-600 hover:text-red-800"
@@ -443,6 +451,7 @@ onMounted(() => {
                           placeholder="Select advisors..."
                           multiple
                           filterable
+                          :disabled="viewMode"
                           class="w-full min-h-[40px]"
                           label="Advisors"
                           required
@@ -450,7 +459,7 @@ onMounted(() => {
                         >
                           <template
                             #content-footer
-                            v-if="advisorOptions.length > 0"
+                            v-if="advisorOptions.length > 0 && !viewMode"
                           >
                             <ui-select-actions
                               @select-all="
@@ -470,6 +479,7 @@ onMounted(() => {
                           placeholder="Select nationalities..."
                           multiple
                           filterable
+                          :disabled="viewMode"
                           class="w-full min-h-[40px]"
                           label="Nationalities"
                           required
@@ -477,7 +487,7 @@ onMounted(() => {
                         >
                           <template
                             #content-footer
-                            v-if="nationalityOptions.length > 0"
+                            v-if="nationalityOptions.length > 0 && !viewMode"
                           >
                             <ui-select-actions
                               @select-all="

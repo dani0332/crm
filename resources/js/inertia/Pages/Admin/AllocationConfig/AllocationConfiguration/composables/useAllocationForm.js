@@ -11,6 +11,8 @@ export function useAllocationForm(props, errorHandling) {
   const currentConfiguration = ref(null);
   const savingsTemplateRef = ref(null);
   const auditLogsKey = ref(0);
+  const isViewMode = ref(false);
+  const originalConfiguration = ref(null);
 
   const {
     addError,
@@ -80,9 +82,18 @@ export function useAllocationForm(props, errorHandling) {
 
       if (response.data.success && response.data.data) {
         currentConfiguration.value = response.data.data;
+        originalConfiguration.value = JSON.parse(
+          JSON.stringify(response.data.data),
+        );
+        // If configuration exists, start in view mode
+        isViewMode.value = true;
+      } else {
+        // No configuration exists, start in edit mode
+        isViewMode.value = false;
       }
     } catch (error) {
       console.error('Error fetching configuration:', error);
+      isViewMode.value = false;
     }
   };
 
@@ -112,6 +123,31 @@ export function useAllocationForm(props, errorHandling) {
 
   const onTemplateDataUpdate = data => {
     templateData.value = data;
+  };
+
+  const enableEditMode = () => {
+    isViewMode.value = false;
+    clearAllErrors();
+    successMessage.value = '';
+  };
+
+  const cancelEdit = () => {
+    if (originalConfiguration.value) {
+      // Restore original configuration
+      currentConfiguration.value = JSON.parse(
+        JSON.stringify(originalConfiguration.value),
+      );
+      isViewMode.value = true;
+      clearAllErrors();
+      successMessage.value = '';
+
+      // Trigger re-initialization of template
+      if (savingsTemplateRef.value) {
+        nextTick(() => {
+          savingsTemplateRef.value.clearValidationErrors();
+        });
+      }
+    }
   };
 
   const scrollToSuccess = () => {
@@ -184,6 +220,9 @@ export function useAllocationForm(props, errorHandling) {
         if (response.data.success) {
           successMessage.value = response.data.message;
           currentConfiguration.value = response.data.data;
+          originalConfiguration.value = JSON.parse(
+            JSON.stringify(response.data.data),
+          );
           form.clearErrors();
           clearAllErrors();
 
@@ -192,6 +231,9 @@ export function useAllocationForm(props, errorHandling) {
           }
 
           auditLogsKey.value += 1;
+
+          // Switch to view mode after successful save/update
+          isViewMode.value = true;
 
           scrollToSuccess();
         } else {
@@ -259,6 +301,7 @@ export function useAllocationForm(props, errorHandling) {
     savingsTemplateRef,
     auditLogsKey,
     form,
+    isViewMode,
 
     // Computed
     quoteTypeOptions,
@@ -267,5 +310,7 @@ export function useAllocationForm(props, errorHandling) {
     initializeOptions,
     onTemplateDataUpdate,
     onSubmit,
+    enableEditMode,
+    cancelEdit,
   };
 }
