@@ -287,8 +287,7 @@ class EpEcbService extends EpBookingService
             'POST',
             '/api/Auth/GetToken',
             $payload,
-            ['client-code' => $this->clientCode],
-            self::STEP_GET_TOKEN
+            operation: self::STEP_GET_TOKEN
         );
 
         if (!$response['success']) {
@@ -328,10 +327,7 @@ class EpEcbService extends EpBookingService
             'POST',
             '/api/Quote/GetQuote',
             $payload,
-            [
-                'client-code' => $this->clientCode,
-                'Authorization' => 'Bearer ' . $this->bearerToken
-            ],
+            true,
             self::STEP_GET_QUOTE
         );
 
@@ -377,10 +373,7 @@ class EpEcbService extends EpBookingService
             'POST',
             '/api/Policy/CreatePolicyFromQuote',
             $payload,
-            [
-                'client-code' => $this->clientCode,
-                'Authorization' => 'Bearer ' . $this->bearerToken
-            ],
+            true,
             self::STEP_CREATE_POLICY_FROM_QUOTE
         );
 
@@ -427,10 +420,7 @@ class EpEcbService extends EpBookingService
             'POST',
             '/api/Policy/CreatePolicy',
             $payload,
-            [
-                'client-code' => $this->clientCode,
-                'Authorization' => 'Bearer ' . $this->bearerToken
-            ],
+            true,
             self::STEP_CREATE_POLICY_WITHOUT_QUOTE
         );
 
@@ -552,10 +542,7 @@ class EpEcbService extends EpBookingService
             'GET',
             '/api/Policy/GetPolicyDocuments',
             ['policyNumber' => $this->policyNumber],
-            [
-                'client-code' => $this->clientCode,
-                'Authorization' => 'Bearer ' . $this->bearerToken
-            ],
+            true,
             self::STEP_GET_POLICY_DOCUMENTS
         );
 
@@ -628,7 +615,7 @@ class EpEcbService extends EpBookingService
     /**
      * Make API call with comprehensive logging and error handling
      */
-    private function makeApiCall(string $method, string $endpoint, array $data, array $headers, string $operation): array
+    private function makeApiCall(string $method, string $endpoint, array $data, bool $isAuth = false, string $operation): array
     {
         $url = $this->baseUrl . $endpoint;
         $startTime = microtime(true);
@@ -636,6 +623,9 @@ class EpEcbService extends EpBookingService
         $httpResponse = null;
 
         try {
+            $headers = ['client-code' => $this->clientCode];
+            $isAuth && $headers['Authorization'] = 'Bearer ' . $this->bearerToken;
+
             $httpClient = Http::withHeaders($headers)
                 ->timeout($this->timeout);
 
