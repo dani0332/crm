@@ -25,76 +25,6 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         $this->seedBirdWorkflowUrls();
-        // ApplicationStorage::firstOrCreate(
-        //     ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
-        //     [
-        //         'value' => 0,
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //         'is_active' => 1,
-        //     ],
-        // );
-
-        // ApplicationStorage::firstOrCreate(
-        //     ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
-        //     [
-        //         'value' => '2024-12-01',
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //         'is_active' => 1,
-        //     ],
-        // );
-
-        // ApplicationStorage::firstOrCreate(
-        //     ['key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL],
-        //     [
-        //         'value' => 0,
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //         'is_active' => 1,
-        //     ],
-        // );
-        // ApplicationStorage::firstOrCreate(
-        //     ['key_name' => ApplicationStorageEnums::BIRD_ACCESS_KEY],
-        //     [
-        //         'value' => 'PFW43eLvGkOFh521QmolXW1fTLpT5C3Z3hiA',
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //         'is_active' => 1,
-        //     ],
-        // );
-        // ApplicationStorage::firstOrCreate(
-        //     ['key_name' => ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
-        //     [
-        //         'value' => 0,
-        //         'is_active' => 1,
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        // );
-        // ApplicationStorage::firstOrCreate(
-        //     ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
-        //     [
-        //         'value' => 0,
-        //         'is_active' => 1,
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        // );
-        // ApplicationStorage::firstOrCreate(
-        //     ['key_name' => ApplicationStorageEnums::LMS_INTRO_BIKE_EMAIL_BCC],
-        //     [
-        //         'value' => 'newleadpool@insurancemarket.ae',
-        //         'is_active' => 1,
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        // );
-        // $this->seedBenchmarking();
-        // $this->seedStopDeduplicateScript();
-        // $this->seedAmlAutomation();
-
-        // $this->seedYachtAndPetAdvisors();
         $this->seedCycleAdvisors();
         $this->seedCorplineAdvisors();
         $this->seedLifeOCAEmail();
@@ -615,7 +545,7 @@ class ApplicationStorageSeeder extends Seeder
 
     private function seedSendUpdateEmailTemplate()
     {
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::CAR_SEND_POLICY_TEMPLATE],
             [
                 'value' => 756,
@@ -624,7 +554,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::BIKE_SEND_POLICY_TEMPLATE],
             [
                 'value' => 757,
@@ -633,7 +563,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::CYCLE_SEND_POLICY_TEMPLATE],
             [
                 'value' => 758,
@@ -642,7 +572,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::YACHT_SEND_POLICY_TEMPLATE],
             [
                 'value' => 759,
@@ -651,7 +581,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::HOME_SEND_POLICY_TEMPLATE],
             [
                 'value' => 760,
@@ -660,7 +590,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::LIFE_SEND_POLICY_TEMPLATE],
             [
                 'value' => 761,
@@ -669,7 +599,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::TRAVEL_SEND_POLICY_TEMPLATE],
             [
                 'value' => 762,
@@ -678,7 +608,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::BUSINESS_SEND_POLICY_TEMPLATE],
             [
                 'value' => 763,
@@ -687,7 +617,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::HEALTH_SEND_POLICY_TEMPLATE],
             [
                 'value' => 764,
@@ -696,7 +626,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::GROUP_MEDICAL_SEND_POLICY_TEMPLATE],
             [
                 'value' => 765,
@@ -705,7 +635,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::PET_SEND_POLICY_TEMPLATE],
             [
                 'value' => 766,
@@ -714,7 +644,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::CORPLINE_CAR_SEND_POLICY_TEMPLATE],
             [
                 'value' => 767,
@@ -723,7 +653,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::CORPLINE_TRADE_SEND_POLICY_TEMPLATE],
             [
                 'value' => 768,
@@ -732,7 +662,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::PROFESSIONAL_SEND_POLICY_TEMPLATE],
             [
                 'value' => 769,
@@ -741,7 +671,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::COMPANY_CAR_SEND_POLICY_TEMPLATE],
             [
                 'value' => 770,
