@@ -228,9 +228,9 @@ const tableHeader = reactive([
     value: 'pcp_tag_formatted',
   },
   {
-    text: 'Sub Source',
+    text: 'IMCRM SUB-SOURCE',
     value: 'sub_source',
-    tooltip: 'The sub source (lookup) of the lead',
+    tooltip: 'The IMCRM SUB-SOURCE (lookup) of the lead',
   },
 ]);
 const isIntegerColumn = key => {

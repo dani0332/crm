@@ -128,9 +128,9 @@ const tableHeader = reactive([
     tooltip: 'Any notes added within lead level will reflect here.',
   },
   {
-    text: 'Sub Source',
+    text: 'IMCRM SUB-SOURCE',
     value: 'sub_source',
-    tooltip: 'The sub source (lookup) of the lead',
+    tooltip: 'The IMCRM SUB-SOURCE (lookup) of the lead',
   },
 ]);
 
