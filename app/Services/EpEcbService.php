@@ -558,13 +558,14 @@ class EpEcbService extends EpBookingService
     /**
      * Download document from API endpoint
      */
-    private function makeDownloadApiCall(string $url, array $headers, string $operation): array
+    private function makeDownloadApiCall(string $url, bool $isAuth = false, string $operation): array
     {
         $startTime = microtime(true);
         $statusCode = 0;
         $response = [];
 
         try {
+            $headers = $isAuth ? ['Authorization' => 'Bearer ' . $this->bearerToken] : [];
             $httpClient = Http::withHeaders($headers)->timeout($this->timeout);
             $httpResponse = $httpClient->get($url);
 
@@ -804,11 +805,7 @@ class EpEcbService extends EpBookingService
     private function executeDownloadAndUploadDocument($docUrl, $dir) // string $docUrl, DocumentType $documentType
     {
         try {
-            $downloadDocResponse = $this->makeDownloadApiCall(
-                $docUrl,
-                ['Authorization' => 'Bearer ' . $this->bearerToken],
-                'DownloadPolicyDocument'
-            );
+            $downloadDocResponse = $this->makeDownloadApiCall($docUrl, true, 'DownloadPolicyDocument');
 
             $fileName = "{$this->quote->uuid}_{$this->policyNumber}-{$downloadDocResponse['filename']}";
             $fileContent = $downloadDocResponse['content'];
