@@ -43,6 +43,7 @@ use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\PostPrepaymentToSageRequest;
+use App\Http\Requests\PUAExportValidationRequest;
 use App\Http\Requests\QuoteNotesRequest;
 use App\Http\Requests\RetryPrepaymentRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
@@ -712,7 +713,7 @@ class CentralController extends Controller
 
         return app(RMQuotesExport::class)->download('RM-Leads-List');
     }
-    public function exportPUAUpdates(Request $request, string $quoteType)
+    public function exportPUAUpdates(PUAExportValidationRequest $request, string $quoteType)
     {
         // Log all request data
         LoggerService::info('PUA Export Request - All Data', [

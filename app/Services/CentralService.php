@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
@@ -878,6 +879,7 @@ class CentralService extends BaseService
                 'eligible_for_automate' => true,
                 'quote_type_id' => QuoteTypeId::Business,
                 'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::CORPLINE_RENEWALS])->first()->id,
+                'group_medical_renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::RM_RENEWALS])->first()->id,
             ],
             TravelQuote::class => [
                 'eligible_for_automate' => false,
@@ -981,8 +983,14 @@ class CentralService extends BaseService
                 ->when(! empty($scheduledActivitiesIDs), function ($previousSchedule) use ($scheduledActivitiesIDs) {
                     $previousSchedule->whereNotIn('id', $scheduledActivitiesIDs);
                 })
-                ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteTypeDetail) {
-                    $renewalTeamID = $quoteTypeDetail['renewal_team'];
+                ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteTypeDetail, $quoteDetails) {
+                    $renewalTeamID = $quoteTypeDetail['renewal_team'] ?? null;
+
+                    // Check if this is a Group Medical business quote (business_type_of_insurance_id = 5)
+                    if (isset($quoteTypeDetail['group_medical_renewal_team']) &&
+                        $quoteDetails->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                        $renewalTeamID = $quoteTypeDetail['group_medical_renewal_team'];
+                    }
 
                     $query->where('team_id', $renewalTeamID ?? null);
                 })
@@ -1754,82 +1762,70 @@ class CentralService extends BaseService
 
         if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
             LoggerService::info('fn:autoCaptureAMLValidationCheck failed - Going to dispatch AutomationFailedJob', extra: [
-                'quoteTypeId' => QuoteTypeId::Car,
                 'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                 'statusAPIFailed' => 'Quote Referred To Insurer UW',
                 'processInvolved' => 'Payment Capture',
-                'workflowType' => WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
             ]);
-            /* AutomationFailedJob::dispatch(
+            AutomationFailedJob::dispatch(
                 $quote,
                 QuoteTypeId::Car,
                 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                 'Quote Referred To Insurer UW',
                 'Payment Capture',
                 WorkflowTypeEnum::CAR_AUTOMATION_FAILED
-            )->onQueue('policy-issuance-automation'); */
+            )->onQueue('policy-issuance-automation');
 
             return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
         }
 
         if ($premiumCheckEnabled) {
-            // Premium check call to check if the premium is valid
-            $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $payment->total_amount, $quote->code);
+            $captureAmount = $payment->total_amount;
+            if ($quoteType->code == QuoteTypes::CAR->value && $insuranceProvider?->code == InsuranceProviderEnum::AXA->value && $payment->total_amount != $payment->premium_authorized) {
+                $captureAmount = $payment->premium_authorized;
+            }
+
+            $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $captureAmount, $quote->code);
+            $responsePremiumAmount = isset($capturePaymentResponse['premiumAmount']) ? $capturePaymentResponse['premiumAmount'] : null;
+
             $logExtra = [
                 'paymentCode' => $payment->code,
                 'quoteTypeId' => $quoteType->id,
                 'responseStatus' => isset($capturePaymentResponse['status']) ? $capturePaymentResponse['status'] : null,
                 'responseMessage' => isset($capturePaymentResponse['message']) ? $capturePaymentResponse['message'] : null,
-                'responsePremiumAmount' => isset($capturePaymentResponse['premiumAmount']) ? $capturePaymentResponse['premiumAmount'] : null,
+                'responsePremiumAmount' => $responsePremiumAmount,
             ];
-
-            // responsePremiumAmount (GetQuote : (Premium >  Total Price) or (Premium <  Total Price)) in this case line 7 validation text
-            // responsePremiumAmount GetQuote: UW = N & Premium >  Total Price in this case line 8 validation text
 
             if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
                 LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
 
-                // TODO:: This should be dynamic as per insurance provider and need to check with API team about the response message
-                // $messages = [
-                //     'Capture amount exceeds the authorized amount' => 'Capture amount in IMCRM and either is greater than Authorized amount',
-                //     'Capture amount exceeds the authorized amount and differs from premium in GIG portal' => 'Capture amount in IMCRM and both are greater than Authorized amount',
-                //     'Premium mismatch with GIG portal' => 'Capture amount in IMCRM and both are less than or equal to Authorized amount',
-                //     'Premium in GIG portal exceeds the authorized amount and differs from capture amount' => 'Capture amount in IMCRM and getQuote premium is greater than Authorized amount, but the Capture amount is less than or equal to the Authorized amount',
-                //     'Capture amount exceeds authorized amount and differs from premium in GIG  portal' => 'Capture amount in IMCRM and getQuote premium is less than or equal to the Authorized amount, but the Capture amount is greater than Authorized amount',
-                // ];
-
-                if ($capturePaymentResponse['premiumAmount'] > $payment->total_amount) {
+                if ($responsePremiumAmount > $captureAmount) {
                     LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
-                        'quoteTypeId' => QuoteTypeId::Car,
                         'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                         'statusAPIFailed' => 'Premium Not Matched With Insurer',
                         'processInvolved' => 'Payment Capture',
-                        'workflowType' => WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
                     ]);
-                    /* AutomationFailedJob::dispatch(
+                    AutomationFailedJob::dispatch(
                         $quote,
                         QuoteTypeId::Car,
                         'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                         'Premium Not Matched With Insurer',
                         'Payment Capture',
                         WorkflowTypeEnum::CAR_AUTOMATION_FAILED
-                    )->onQueue('policy-issuance-automation'); */
-                } elseif ($capturePaymentResponse['premiumAmount'] != $payment->total_amount) {
+                    )->onQueue('policy-issuance-automation');
+                } elseif ($responsePremiumAmount != $captureAmount) {
                     LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
-                        'quoteTypeId' => QuoteTypeId::Car,
-                        'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
-                        'statusAPIFailed' => 'Premium Not Matched With Insurer',
+                        'actionRequired' => 'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
+                        'statusAPIFailed' => 'Quote Referred To Insurer UW',
                         'processInvolved' => 'Payment Capture',
-                        'workflowType' => WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
                     ]);
-                    /* AutomationFailedJob::dispatch(
+                    AutomationFailedJob::dispatch(
                         $quote,
                         QuoteTypeId::Car,
                         'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
                         'Quote Referred To Insurer UW',
                         'Payment Capture',
                         WorkflowTypeEnum::CAR_AUTOMATION_FAILED
-                    )->onQueue('policy-issuance-automation'); */
+                    )->onQueue('policy-issuance-automation');
                 }
 
                 $message = $capturePaymentResponse['message'] ?? 'Premium mismatch on Insurer portal';

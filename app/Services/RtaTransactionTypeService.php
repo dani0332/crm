@@ -225,7 +225,7 @@ class RtaTransactionTypeService
             case self::RTA_NEW_VEHICLE_REGISTRATION:
                 $summary = [
                     'transaction_name' => 'New Vehicle Registration',
-                    'policy_effective_date' => 'Selectable (max 30 days from today)',
+                    'policy_effective_date' => 'Selectable (max 75 days from today)',
                     'policy_expiry_date' => 'Auto-calculated (Policy Effective Date + 13 months)',
                     'certificate_start_date' => 'Auto-set to Policy Effective Date',
                     'certificate_end_date' => 'Auto-set to Policy Expiry Date',
@@ -250,7 +250,7 @@ class RtaTransactionTypeService
                 } else {
                     $summary = [
                         'transaction_name' => 'Vehicle Renewal (Non-GIG)',
-                        'policy_effective_date' => 'Selectable (max 30 days from today)',
+                        'policy_effective_date' => 'Selectable (max 75 days from today)',
                         'policy_expiry_date' => 'Auto-set to Certificate End Date',
                         'certificate_start_date' => 'Auto-set to Policy Effective Date',
                         'certificate_end_date' => 'Auto-calculated (Certificate Start + 13 months)',
@@ -264,7 +264,7 @@ class RtaTransactionTypeService
             case self::RTA_CHANGE_VEHICLE_OWNERSHIP:
                 $summary = [
                     'transaction_name' => 'Change Vehicle Ownership',
-                    'policy_effective_date' => 'Selectable (max 30 days from today)',
+                    'policy_effective_date' => 'Selectable (max 75 days from today)',
                     'policy_expiry_date' => 'Auto-calculated (Policy Effective Date + 13 months)',
                     'certificate_start_date' => 'Auto-set to Policy Effective Date',
                     'certificate_end_date' => 'Auto-set to Policy Expiry Date',

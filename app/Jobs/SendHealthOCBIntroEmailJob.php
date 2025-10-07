@@ -88,14 +88,15 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
 
     public function middleware()
     {
-        $isAUHLead = HealthQuote::where('uuid', $this->quoteUuid)->first()?->isAUHLead() ?? false;
+        $healthQuote = HealthQuote::where('uuid', $this->quoteUuid)->first();
+        $isAUHAndRevivalOrInsuranceWallet = $healthQuote?->isAUHLead() || ($healthQuote?->isAUHLead(false) && $healthQuote?->isLeadSourceRevivalOrInsuranceWallet());
 
-        if ($isAUHLead) {
-            LoggerService::info(self::class." - Skipping OCB Email because lead is from AUH for UUID: {$this->quoteUuid}");
+        if ($isAUHAndRevivalOrInsuranceWallet) {
+            LoggerService::info(self::class." - Skipping OCB Email because lead is from AUH or AUH and Revival/Insurance Wallet for UUID: {$this->quoteUuid}");
         }
 
         return [
-            Skip::when(fn () => $isAUHLead),
+            Skip::when(fn () => $isAUHAndRevivalOrInsuranceWallet),
         ];
     }
 }

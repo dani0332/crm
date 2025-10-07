@@ -206,18 +206,16 @@ const showVehicleAndDrvicerDetails = computed(() => {
   return (
     page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
     [
-      page.props.insuranceProviderCodeEnum.RSA, // LIVA
+      // page.props.insuranceProviderCodeEnum.RSA, // LIVA
       page.props.insuranceProviderCodeEnum.AXA, // GIG
-      page.props.insuranceProviderCodeEnum.OIC, // SUKOON
+      // page.props.insuranceProviderCodeEnum.OIC, // SUKOON
     ].includes(page.props.quoteRequest?.plan?.insurance_provider.code) &&
     (page.props.isPrivateCar ?? false)
   );
 });
 
-console.log('showVehicleAndDrvicerDetails', showVehicleAndDrvicerDetails.value);
-
 const screeningFormDetails = useForm({
-  customer_type: null,
+  customer_type: page.props.insuredDetails?.insured?.customer_type ?? null,
   customer_id: quoteRequest.customer_id,
   quote_type: page.props.quoteType.code,
   // Individual Type
@@ -265,6 +263,12 @@ const modalHeaderMessage = () => {
     [customerTypeEnum.Individual, null].includes(
       screeningFormDetails.customer_type,
     )
+  ) {
+    headerMessage.value =
+      'Please confirm the Name, Nationality, and Date of Birth of the insured person(s) as per the Emirates ID';
+  } else if (
+    page.props.quoteType.code == page.props.quoteTypeCodeEnum.Business &&
+    screeningFormDetails.customer_type == customerTypeEnum.Individual
   ) {
     headerMessage.value =
       'Please confirm the Name, Nationality, and Date of Birth of the insured person(s) as per the Emirates ID';
@@ -685,14 +689,23 @@ function screeningFormValidate() {
 }
 const submitScreeningForm = isValid => {
   if (screeningFormValidate()) {
-    // updateFormDetails();
     screeningFormDetails.get(`${quoteRequest.id}/quoteUpdate`, {
       preserveScroll: true,
       onError: errors => {
-        notification.error({
-          title: errors.error || 'Quote not updated',
-          position: 'top',
-        });
+        console.log('errors', errors);
+        if (typeof errors === 'object') {
+          Object.keys(errors).forEach(function (key) {
+            notification.error({
+              title: errors[key],
+              position: 'top',
+            });
+          });
+        } else {
+          notification.error({
+            title: errors.error || 'Quote not updated',
+            position: 'top',
+          });
+        }
       },
       onSuccess: response => {
         if (response.props.flash.success?.length === 0) {
@@ -759,6 +772,10 @@ const updateInsurerPortalSyncData = data => {
   insurerPortalSyncData.value = data;
 };
 
+const updateChassisNumber = chassisNumber => {
+  screeningFormDetails.chassis_number = chassisNumber;
+};
+
 const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
   createReusableTemplate();
 </script>
@@ -779,6 +796,7 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
         :rta_transaction_types="rta_transaction_types"
         :rta_field_configurations="rta_field_configurations"
         :rta_validation_summaries="rta_validation_summaries"
+        @update:chassisNumber="updateChassisNumber"
       />
       <x-divider class="mb-4 mt-4" />
       <AdditionalDriverDetails :insurerPortalSyncData="insurerPortalSyncData" />

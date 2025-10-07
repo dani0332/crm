@@ -47,6 +47,8 @@ class BusinessQuoteService extends BaseService
                 'bqr.last_name',
                 'bqr.email',
                 'bqr.mobile_no',
+                'n.TEXT AS nationality_id_text',
+                'bqr.dob',
                 'bqr.company_name AS business_company_name',
                 'bqr.company_address AS business_company_address',
                 'bqr.brief_details',
@@ -87,11 +89,12 @@ class BusinessQuoteService extends BaseService
                 'insured_kyc.id as insured_kyc_id',
                 'c.insured_first_name as customer_insured_first_name',
                 'c.insured_last_name as customer_insured_last_name',
-                'c.emirates_id_number',
+                // 'c.emirates_id_number',
                 'c.emirates_id_expiry_date',
                 'c.receive_marketing_updates',
                 'i.first_name as insured_first_name',
                 'i.last_name as insured_last_name',
+                DB::raw('IF(i.id_type = "emiratesId", i.id_number, "") as emirates_id_number'),
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
@@ -132,6 +135,7 @@ class BusinessQuoteService extends BaseService
                     END AS insurer_aml_status_display
                 ')
             )
+            ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'py.payment_status_id')
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
@@ -437,7 +441,7 @@ class BusinessQuoteService extends BaseService
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if ($request[$item][0] == 'null') {
+                    if (count($request[$item]) === 1 && $request[$item][0] == '-1') {
                         $this->query->whereNull('advisor_id');
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);

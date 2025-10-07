@@ -771,6 +771,7 @@ class HomeQuoteRepository extends BaseRepository
                 'insuranceProvider',
                 'insuranceProviderPlan',
                 'quoteDetail.lostReason',
+                'quoteDetail.previousAdvisor',
                 'quoteStatus',
                 'advisor',
                 'nationality',

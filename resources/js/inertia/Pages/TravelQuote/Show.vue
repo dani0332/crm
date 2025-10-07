@@ -4,6 +4,8 @@ import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const page = usePage();
 defineProps({
@@ -2316,7 +2318,7 @@ const fullAddress = computed(() => {
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">GENDER</dt>
-                  <dd>{{ quote.gender }}</dd>
+                  <dd>{{ genderText(quote.gender) }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -3592,6 +3594,28 @@ const fullAddress = computed(() => {
       @sendPolicyToClient="sendPolicyToClient"
       @verifyDocuments="getupdateDocumentValidate(true)"
       :bookPolicyDetails="bookPolicyDetails"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="modelType"
+      :customerData="{
+        customerType: quote.customer_type,
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.insurance_provider_id,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      :lob="modelType"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy
