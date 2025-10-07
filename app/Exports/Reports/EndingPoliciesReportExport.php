@@ -72,7 +72,7 @@ class EndingPoliciesReportExport implements CsvExportableInterface
             'Advisor',
             'Lead Source',
             'Notes',
-            'Sub Source',
+            'IMCRM SUB-SOURCE',
         ];
     }
 

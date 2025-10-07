@@ -92,7 +92,7 @@ class InstallmentReportExport implements CsvExportableInterface
             'Lead Source',
             'Sage Receipt ID',
             'Private Client',
-            'Sub Source',
+            'IMCRM SUB-SOURCE',
         ];
     }
 

@@ -94,7 +94,7 @@ class EndorsementReportExport implements CsvExportableInterface
             'SU Status',
             'Sage Receipt ID',
             'Private Client',
-            'Sub Source',
+            'IMCRM SUB-SOURCE',
         ];
     }
 

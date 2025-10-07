@@ -70,7 +70,7 @@ class TransactionReportExport implements CsvExportableInterface
             'Booking Date',
             'Sage Receipt ID',
             'Private Client',
-            'Sub Source',
+            'IMCRM SUB-SOURCE',
         ];
     }
 
