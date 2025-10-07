@@ -46,7 +46,10 @@ class AutomationFailedJob implements ShouldQueue
     public function __construct($quote, $quoteTypeId, $actionRequired, $statusAPIFailed, $processInvolved, $workflowType, $sendTo = null)
     {
         LoggerService::startQuoteLogging($quote);
-        LoggerService::info('job:AutomationFailedJob - Initializing job');
+        LoggerService::info('job:AutomationFailedJob - Initializing job', extra: [
+            'sendTo' => $sendTo,
+            'quoteCode' => $quote->code ?? 'unknown'
+        ]);
         $this->quote = $quote;
         $this->quoteTypeId = $quoteTypeId;
         $this->actionRequired = $actionRequired;
@@ -62,7 +65,11 @@ class AutomationFailedJob implements ShouldQueue
      */
     public function handle()
     {
-        LoggerService::info('job:AutomationFailedJob - Job started');
+        LoggerService::startQuoteLogging($this->quote);
+        LoggerService::info('job:AutomationFailedJob - Job started', extra: [
+            'userToSendEmail' => $this->userToSendEmail,
+            'quoteCode' => $this->quote->code ?? 'unknown'
+        ]);
 
         $payment = $this->quote->payments()->mainLeadPayment()->first();
         $quoteType = QuoteType::where('id', $this->quoteTypeId)->first();
@@ -133,6 +140,9 @@ class AutomationFailedJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->quote->id))->dontRelease()];
+        $quoteId = $this->quote->id ?? 0;
+        LoggerService::info('job:AutomationFailedJob - Middleware setup', extra: ['quoteId' => $quoteId]);
+        
+        return [(new WithoutOverlapping($quoteId))->dontRelease()];
     }
 }
