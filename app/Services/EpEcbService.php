@@ -199,8 +199,14 @@ class EpEcbService extends EpBookingService
             // Delete existing documents
             $this->embeddedTransaction->documents()->whereIn('document_type_code', $this->reqDocTypeCodes)->delete();
 
-            // Dispatch job for sync ep documents
-            dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(2));
+            $executedCreatePolicyStep = array_values(array_intersect([self::STEP_CREATE_POLICY_WITHOUT_QUOTE, self::STEP_CREATE_POLICY_FROM_QUOTE], $executedSteps));
+            if(empty($executedCreatePolicyStep)) {
+                dispatch(new SyncEpDocumentsJob($this->context));
+            } else {
+                // Dispatch job with 2 minutes delay, because documents are available after 2 minutes of policy creation
+                LoggerService::info($this->logPrefix . " Dispatch SyncEpDocumentsJob with 2 minutes delay", extra: $this->logExtra);
+                dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(2));
+            }
         }
 
         $isDocumentsRetrieved = $this->embeddedTransaction->policy_status == EmbeddedTransactionEnum::STATUS_BOOKED;
