@@ -39,6 +39,12 @@ class EpEcbService extends EpBookingService
     private string $transactionCurrency = 'AED';
     private string $policyProduct = 'EXW';
 
+    const STEP_GET_TOKEN = 'GetToken';
+    const STEP_GET_QUOTE = 'GetQuote';
+    const STEP_CREATE_POLICY_FROM_QUOTE = 'CreatePolicyFromQuote';
+    const STEP_CREATE_POLICY_WITHOUT_QUOTE = 'CreatePolicyWithoutQuote';
+    const STEP_GET_POLICY_DOCUMENTS = 'GetPolicyDocuments';
+
     /**
      * Create a new class instance.
      */
@@ -162,19 +168,19 @@ class EpEcbService extends EpBookingService
         // Step 1: Get Token (Always required first)
         if (!$this->shouldSkipStep('get_token', $currentStatus)) {
             $this->executeGetToken();
-            $executedSteps[] = 'GetToken';
+            $executedSteps[] = self::STEP_GET_TOKEN;
         }
 
         // Step 2: Get Quote
         if (!$this->shouldSkipStep('get_quote', $currentStatus)) {
             $this->executeGetQuote();
-            $executedSteps[] = 'GetQuote';
+            $executedSteps[] = self::STEP_GET_QUOTE;
         }
 
         // Step 3: Create Policy From Quote
         if (!$this->shouldSkipStep('create_policy', $currentStatus)) {
             $this->executeCreatePolicyFromQuote();
-            $executedSteps[] = 'CreatePolicyFromQuote';
+            $executedSteps[] = self::STEP_CREATE_POLICY_FROM_QUOTE;
         }
 
         // Log executed steps summary
@@ -271,7 +277,7 @@ class EpEcbService extends EpBookingService
             '/api/Auth/GetToken',
             $payload,
             ['client-code' => $this->clientCode],
-            'GetToken'
+            self::STEP_GET_TOKEN
         );
 
         if (!$response['success']) {
@@ -315,7 +321,7 @@ class EpEcbService extends EpBookingService
                 'client-code' => $this->clientCode,
                 'Authorization' => 'Bearer ' . $this->bearerToken
             ],
-            'GetQuote'
+            self::STEP_GET_QUOTE
         );
 
         if (!$response['success']) {
@@ -364,7 +370,7 @@ class EpEcbService extends EpBookingService
                 'client-code' => $this->clientCode,
                 'Authorization' => 'Bearer ' . $this->bearerToken
             ],
-            'CreatePolicyFromQuote'
+            self::STEP_CREATE_POLICY_FROM_QUOTE
         );
 
         if (!$response['success']) {
@@ -489,7 +495,7 @@ class EpEcbService extends EpBookingService
                 'client-code' => $this->clientCode,
                 'Authorization' => 'Bearer ' . $this->bearerToken
             ],
-            'GetPolicyDocuments'
+            self::STEP_GET_POLICY_DOCUMENTS
         );
 
         if (!$response['success']) {
@@ -792,7 +798,7 @@ class EpEcbService extends EpBookingService
             throw new Exception("Quote not found for building quote payload");
         }
 
-        $vehicleInfo = $this->getVehicleInfo('GetQuote');
+        $vehicleInfo = $this->getVehicleInfo(self::STEP_GET_QUOTE);
 
         return [
             'client_reference_number' => "",
@@ -825,7 +831,7 @@ class EpEcbService extends EpBookingService
 
         $emirateIdNumber = $this->getEmirateIdNumber();
         $mulkiyaDocuments = $this->getMulkiyaDocuments();
-        $vehicleInfo = $this->getVehicleInfo('CreatePolicyFromQuote');
+        $vehicleInfo = $this->getVehicleInfo(self::STEP_CREATE_POLICY_FROM_QUOTE);
 
         $policySoldDate = $this->formatDate(now());
         $policyStartDate = $this->formatDate($this->quote?->policy_start_date ?? '');
@@ -990,9 +996,9 @@ class EpEcbService extends EpBookingService
         ];
 
         return match ($step) {
-            'GetQuote' => $getQuoteFields,
-            'CreatePolicyFromQuote' => $policyFromQuoteFields,
-            'CreatePolicyWithoutQuote' => $policyWithoutQuoteFields,
+            self::STEP_GET_QUOTE => $getQuoteFields,
+            self::STEP_CREATE_POLICY_FROM_QUOTE => $policyFromQuoteFields,
+            self::STEP_CREATE_POLICY_WITHOUT_QUOTE => $policyWithoutQuoteFields,
             default => []
         };
     }
