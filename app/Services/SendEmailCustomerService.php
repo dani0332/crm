@@ -1060,7 +1060,7 @@ class SendEmailCustomerService extends BaseService
             'tag' => $tag,
         ]);
         $messageId = null;
-        $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
+        $subject = $emailData->customerName.'\'s Savings with Alfred - '.$emailData->code;
 
         try {
             /* if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht,
@@ -1215,6 +1215,7 @@ class SendEmailCustomerService extends BaseService
                 'CustomerEmail' => $emailData->customerEmail,
                 'QuoteCdbId' => $quoteCdbId,
                 'Class' => get_class(),
+                'line' => $ex->getLine(),
             ], exception: $ex);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
