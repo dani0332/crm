@@ -5,6 +5,7 @@ namespace App\Services;
 use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\QuoteDocumentsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\DocumentType;
 use App\Jobs\EpWatermarkDocumentJob;
 use App\Jobs\SyncEpDocumentsJob;
@@ -138,9 +139,8 @@ class EpEcbService extends EpBookingService
             // Step 3: Create Policy From Quote STATUS_PAYMENT_SUCCEED
             $this->embeddedTransaction->refresh();
             $isPaymentSucceed = $this->embeddedTransaction->policy_status == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED;
-            $isMissingPolicyDetails = empty($this->quoteReferenceNumber) || empty($this->policyNumber);
 
-            if (!$this->shouldSkipStep('get_documents', $this->embeddedTransaction->policy_status) && $isPaymentSucceed && !$isMissingPolicyDetails) {
+            if (!$this->shouldSkipStep('get_documents', $this->embeddedTransaction->policy_status) && $isPaymentSucceed && !empty($this->policyNumber)) {
                 // Dispatch job for sync ep documents
                 dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(2));
             }
@@ -172,16 +172,27 @@ class EpEcbService extends EpBookingService
             $executedSteps[] = self::STEP_GET_TOKEN;
         }
 
-        // Step 2: Get Quote
-        if (!$this->shouldSkipStep('get_quote', $currentStatus)) {
-            $this->executeGetQuote();
-            $executedSteps[] = self::STEP_GET_QUOTE;
-        }
+        if($this->quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
 
-        // Step 3: Create Policy From Quote
-        if (!$this->shouldSkipStep('create_policy_from_quote', $currentStatus)) {
-            $this->executeCreatePolicyFromQuote();
-            $executedSteps[] = self::STEP_CREATE_POLICY_FROM_QUOTE;
+            // Step 2 & 3 in Single API Call: Create Policy Without Quote
+            if (!$this->shouldSkipStep('create_policy_without_quote', $currentStatus)) {
+                $this->executeCreatePolicyWithoutQuote();
+                $executedSteps[] = self::STEP_CREATE_POLICY_WITHOUT_QUOTE;
+            }
+
+        } else {
+
+            // Step 2: Get Quote
+            if (!$this->shouldSkipStep('get_quote', $currentStatus)) {
+                $this->executeGetQuote();
+                $executedSteps[] = self::STEP_GET_QUOTE;
+            }
+
+            // Step 3: Create Policy From Quote
+            if (!$this->shouldSkipStep('create_policy_from_quote', $currentStatus)) {
+                $this->executeCreatePolicyFromQuote();
+                $executedSteps[] = self::STEP_CREATE_POLICY_FROM_QUOTE;
+            }
         }
 
         // Log executed steps summary
@@ -238,7 +249,7 @@ class EpEcbService extends EpBookingService
                 EmbeddedTransactionEnum::STATUS_BOOKED,
                 EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
             ]),
-            'create_policy_from_quote' => in_array($currentStatus, [
+            'create_policy_from_quote', 'create_policy_without_quote' => in_array($currentStatus, [
                 EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED,
                 EmbeddedTransactionEnum::STATUS_BOOKED,
                 EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
@@ -382,6 +393,56 @@ class EpEcbService extends EpBookingService
         $responseData = $response['data'];
         if (empty($responseData->policy_no ?? null)) {
             throw new Exception('Policy number not found in CreatePolicyFromQuote response');
+        }
+
+        $this->policyNumber = $responseData->policy_no;
+
+        // Update transaction status and save certificate_number to certificate_number field
+        $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED, [
+            'certificate_number' => $this->policyNumber
+        ]);
+
+        $this->embeddedTransaction->documents()->whereIn('document_type_code', $this->reqDocTypeCodes)->delete();
+        $this->embeddedTransaction->load('documents');
+    }
+
+    /**
+     * Step 3: Create policy from quote
+     */
+    private function executeCreatePolicyWithoutQuote(): void
+    {
+        if (!$this->bearerToken) {
+            throw new Exception('No bearer token available for CreatePolicyFromQuote');
+        }
+
+        // Check if we already have a restored policy number
+        if (!empty($this->policyNumber)) {
+            return;
+        }
+
+        // Build policy creation payload
+        $payload = $this->buildPolicyWithoutQuotePayload();
+
+        $response = $this->makeApiCall(
+            'POST',
+            '/api/Policy/CreatePolicy',
+            $payload,
+            [
+                'client-code' => $this->clientCode,
+                'Authorization' => 'Bearer ' . $this->bearerToken
+            ],
+            self::STEP_CREATE_POLICY_WITHOUT_QUOTE
+        );
+
+        if (!$response['success']) {
+            $responseErrorCode = $response['errorCode'] ?? '-';
+            $responseStatusMessage = $response['statusMessage'] ?? 'Unknown error';
+            throw new Exception("CreatePolicyWithoutQuote API call failed: ($responseErrorCode) - $responseStatusMessage");
+        }
+
+        $responseData = $response['data'];
+        if (empty($responseData->policy_no ?? null)) {
+            throw new Exception('Policy number not found in CreatePolicyWithoutQuote response');
         }
 
         $this->policyNumber = $responseData->policy_no;
@@ -846,6 +907,30 @@ class EpEcbService extends EpBookingService
         ];
     }
 
+    private function buildPolicyWithoutQuotePayload(): array
+    {
+        $salesInfo = $this->getSalesInfo(self::STEP_CREATE_POLICY_WITHOUT_QUOTE);
+        $productInfo = $this->getProductInfo(self::STEP_CREATE_POLICY_WITHOUT_QUOTE);
+        $customerInfo = $this->getCustomerInfo(self::STEP_CREATE_POLICY_WITHOUT_QUOTE);
+        $vehicleInfo = $this->getVehicleInfo(self::STEP_CREATE_POLICY_WITHOUT_QUOTE);
+        $motorInsuranceInfo = $this->getMotorInsuranceInfo();
+        $mulkiyaDocuments = $this->getMulkiyaDocuments();
+
+        $paymentChargeId = $this->embeddedTransaction?->paymentCharges?->first()?->transaction_id;
+
+        return [
+            'client_reference_number' => '',
+            'transaction_country' => $this->transactionCountry,
+            'payment_reference_number' => $paymentChargeId,
+            'sales_info' => $salesInfo,
+            'product_info' => $productInfo,
+            'vehicle_info' => $vehicleInfo,
+            'customer_info' => $customerInfo,
+            'motor_insurance_info' => $motorInsuranceInfo,
+            'document_info' => $mulkiyaDocuments
+        ];
+    }
+
     private function getEmirateIdNumber(): string
     {
         $latestInsuredData = $this->quote?->latestInsured;
@@ -925,7 +1010,7 @@ class EpEcbService extends EpBookingService
         ];
 
         return match ($step) {
-            self::STEP_GET_QUOTE => collect($productDetails)->except('policy_product')->toArray(),
+            self::STEP_GET_QUOTE => collect($productDetails)->only('policy_product')->toArray(),
             self::STEP_CREATE_POLICY_WITHOUT_QUOTE => $productDetails,
             default => []
         };
