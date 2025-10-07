@@ -11,6 +11,7 @@ export function useAllocationForm(props, errorHandling) {
   const currentConfiguration = ref(null);
   const savingsTemplateRef = ref(null);
   const homeTemplateRef = ref(null);
+  const lifeTemplateRef = ref(null);
   const auditLogsKey = ref(0);
   const isViewMode = ref(false);
   const originalConfiguration = ref(null);
@@ -105,6 +106,8 @@ export function useAllocationForm(props, errorHandling) {
     templateData.value = {};
     advisorOptions.value = [];
     currentConfiguration.value = null;
+    successMessage.value = ''; // Clear success message when LOB changes
+    clearAllErrors(); // Clear any existing errors
 
     isQuoteTypeLoading.value = true;
 
@@ -152,6 +155,12 @@ export function useAllocationForm(props, errorHandling) {
       if (homeTemplateRef.value) {
         nextTick(() => {
           homeTemplateRef.value.clearValidationErrors();
+        });
+      }
+
+      if (lifeTemplateRef.value) {
+        nextTick(() => {
+          lifeTemplateRef.value.clearValidationErrors();
         });
       }
     }
@@ -215,6 +224,22 @@ export function useAllocationForm(props, errorHandling) {
         }
       }
 
+      // Validate Life template
+      if (
+        form.quote_type === props.quoteTypeCodeEnum.LIFE &&
+        lifeTemplateRef.value
+      ) {
+        const templateValidation = lifeTemplateRef.value.validate();
+
+        if (!templateValidation.isValid) {
+          templateValidation.errors.forEach(error => {
+            addError(error, 'bracket');
+          });
+          isSubmitting.value = false;
+          return;
+        }
+      }
+
       isSubmitting.value = true;
 
       const submitData = {
@@ -257,6 +282,10 @@ export function useAllocationForm(props, errorHandling) {
 
           if (homeTemplateRef.value) {
             homeTemplateRef.value.clearValidationErrors();
+          }
+
+          if (lifeTemplateRef.value) {
+            lifeTemplateRef.value.clearValidationErrors();
           }
 
           auditLogsKey.value += 1;
@@ -329,6 +358,7 @@ export function useAllocationForm(props, errorHandling) {
     currentConfiguration,
     savingsTemplateRef,
     homeTemplateRef,
+    lifeTemplateRef,
     auditLogsKey,
     form,
     isViewMode,

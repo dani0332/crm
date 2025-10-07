@@ -7,6 +7,7 @@ namespace App\Factories;
 use App\Contracts\AllocationValidationStrategyInterface;
 use App\Enums\QuoteTypes;
 use App\Strategies\Validation\HomeAllocationValidationStrategy;
+use App\Strategies\Validation\LifeAllocationValidationStrategy;
 use App\Strategies\Validation\SavingsAllocationValidationStrategy;
 use InvalidArgumentException;
 
@@ -20,6 +21,7 @@ class AllocationValidationStrategyFactory
         return match ($quoteType) {
             QuoteTypes::SAVINGS => new SavingsAllocationValidationStrategy(),
             QuoteTypes::HOME => new HomeAllocationValidationStrategy(),
+            QuoteTypes::LIFE => new LifeAllocationValidationStrategy(),
             default => throw new InvalidArgumentException("No validation strategy found for quote type: {$quoteType->value}"),
         };
     }
