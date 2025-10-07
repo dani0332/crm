@@ -169,11 +169,11 @@ function onSubmit(isValid) {
         <!-- Sub Source Fields -->
         <x-select
           v-if="isReferralType && !isEcomLeadExtension"
-          label="SUB SOURCE"
+          label="IMCRM SUB-SOURCE"
           v-model="quoteForm.sub_source_id"
           :options="subSourceOptions"
           class="w-full"
-          placeholder="Select Sub Source"
+          placeholder="Select IMCRM SUB-SOURCE"
           filterable
           :disabled="!canEditSubSourceFields"
           :rules="[isRequired]"

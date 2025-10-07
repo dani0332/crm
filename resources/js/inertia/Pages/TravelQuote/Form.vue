@@ -569,13 +569,13 @@ const floorLabel = computed(() => {
         <!-- Sub-source fields (conditional display based on referral type) -->
         <x-select
           v-if="isReferralType && !isEcomLeadExtension"
-          label="SUB SOURCE"
+          label="IMCRM SUB-SOURCE"
           v-model="quoteForm.sub_source_id"
           :options="subSourceOptions"
           class="w-full"
-          placeholder="Select Sub Source"
+          placeholder="Select IMCRM SUB-SOURCE"
           filterable
-          filterPlaceholder="Filter Sub Source...."
+          filterPlaceholder="Filter IMCRM SUB-SOURCE...."
           :disabled="!canEditSubSourceFields"
           :rules="[isRequired]"
           :required="subSourceOptions.length > 0"
