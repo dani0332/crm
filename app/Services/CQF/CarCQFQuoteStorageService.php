@@ -52,7 +52,14 @@ class CarCQFQuoteStorageService
 
             if (! empty($quote->embeddedTransactions)) {
                 foreach ($quote->embeddedTransactions as $embeddedTransaction) {
-                    if ($embeddedTransaction->is_selected == 1 && $embeddedTransaction->payment_status_id == PaymentStatusEnum::CAPTURED && strpos($embeddedTransaction->code, EmbeddedProductEnum::MDX) !== false) {
+                    
+                    $isSelected = $embeddedTransaction->is_selected == 1;
+                    $isPaymentCaptured = $embeddedTransaction->payment_status_id === PaymentStatusEnum::CAPTURED;
+                    $isMdxProduct = str_contains($embeddedTransaction->code, EmbeddedProductEnum::MDX);
+                    
+                    $shouldCreateEP = $isSelected && $isPaymentCaptured && $isMdxProduct;
+                    
+                    if ($shouldCreateEP) {
                         $epCodes[] = EmbeddedProductEnum::MDX.'-'.$newQuote->code;
                         LoggerService::info(self::class.' - Embedded Transaction found for quote', [
                             'embeddedTransaction' => [
