@@ -2,6 +2,7 @@
 
 namespace App\Traits\QuoteTraits;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
@@ -232,5 +233,10 @@ trait QuoteAllocatable
         return QuoteTag::where('quote_uuid', $this->uuid)
             ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
             ->where('quote_tags.quote_type_id', $quoteType->id())->exists();
+    }
+
+    public function isReAssignment()
+    {
+        return in_array($this->assignment_type, [AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD]);
     }
 }

@@ -178,6 +178,7 @@ return [
     'HRM_API_USERNAME' => env('HRM_API_USERNAME', ''),
     'HRM_API_PASSWORD' => env('HRM_API_PASSWORD', ''),
     'HRM_API_TIMEOUT' => env('HRM_API_TIMEOUT', 30),
+    'DECLARATION_BASE_URL' => env('DECLARATION_BASE_URL', ''),
 
     /* MetLife API */
     'METLIFE_API_BASE_URL' => env('METLIFE_API_BASE_URL'),
