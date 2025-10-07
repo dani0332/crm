@@ -41,7 +41,7 @@ class GroupMedicalExport implements CsvExportableInterface
             'POLICY NUMBER',
             'LOST REASON',
             'SOURCE',
-            'SUB SOURCE',
+            'IMCRM SUB-SOURCE',
             'CREATED DATE',
             'ADVISOR ASSIGNED DATE',
             'LAST MODIFIED DATE',

@@ -161,10 +161,10 @@ watch(() => leadForm.sub_source_options_id, () => {
         <div v-if="leadForm.type === 'referral'" class="flex flex-col gap-4">
           <x-select
             v-model="leadForm.sub_source_id"
-            label="Sub Source"
+            label="IMCRM SUB-SOURCE"
             name="subSource"
             :options="subSourceOptions"
-            placeholder="Please select sub source"
+            placeholder="Please select IMCRM SUB-SOURCE"
             class="w-full"
             filterable
             :rules="[isRequired]"

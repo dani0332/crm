@@ -837,7 +837,7 @@ const onLeadConfirmed = () => {
           label="IMCRM SUB-SOURCE"
           name="sub_source_id"
           :options="subSourceOptions"
-          placeholder="Select sub source"
+          placeholder="Select IMCRM SUB-SOURCE"
           filterable
           multiple
           truncate

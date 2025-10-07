@@ -79,7 +79,7 @@ class TravelQuoteExport implements CsvExportableInterface
             'SEGMENT',
             'LEAD ASSIGNMENT TRIGGER',
             'PRIVATE CLIENT',
-            'SUB SOURCE',
+            'IMCRM SUB-SOURCE',
         ];
     }
 

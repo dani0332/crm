@@ -817,7 +817,7 @@ const insurerAMLStatusOption = computed(() => {
           label="IMCRM SUB-SOURCE"
           name="sub_source_id"
           :options="subSourceOptions"
-          placeholder="Select sub source"
+          placeholder="Select IMCRM SUB-SOURCE"
           class="w-full"
           filterable
           multiple

@@ -1006,7 +1006,7 @@ const onLeadConfirmed = (leadData) => {
           label="IMCRM SUB-SOURCE"
           name="sub_source_id"
           :options="(subSources || []).map(source => ({ value: source.id, label: source.text, suffix: source.description || source.tooltip || '' }))"
-          placeholder="Select sub source"
+          placeholder="Select IMCRM SUB-SOURCE"
           filterable
           multiple
           truncate

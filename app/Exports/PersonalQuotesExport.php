@@ -58,7 +58,7 @@ class PersonalQuotesExport implements CsvExportableInterface
     private const SUM_ASSURED = 'SUM ASSURED';
     private const SUM_ASSURED_CURRENCY = 'SUM ASSURED CURRENCY';
     private const POLICY_SUM_ASSURED = 'POLICY SUM ASSURED';
-    private const SUB_SOURCE = 'SUB SOURCE';
+    private const SUB_SOURCE = 'IMCRM SUB-SOURCE';
 
     private string $quoteType = '';
     private array $quoteTypes = [];
