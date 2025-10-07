@@ -861,6 +861,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     $response['data'] = $responseObject;
                     $response['message'] = 'API call successfully executed.';
                 }
+            } elseif (isset($responseObject?->statusCode) && $responseObject?->statusCode == 404) {
+                $response['error'] = '404 Not Found';
+                $response['status'] = false;
+                $response['message'] = '404 Not Found';
             } else {
                 $response['error'] = $responseObject?->$keyAPI?->Status ?? $keyAPI.' API Failed';
                 $response['status'] = false;
