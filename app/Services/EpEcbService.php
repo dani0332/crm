@@ -174,8 +174,8 @@ class EpEcbService extends EpBookingService
 
         // Step 3: Create Policy From Quote
         if (!$this->shouldSkipStep('create_policy', $currentStatus)) {
-            $this->executeCreatePolicy();
-            $executedSteps[] = 'CreatePolicy';
+            $this->executeCreatePolicyFromQuote();
+            $executedSteps[] = 'CreatePolicyFromQuote';
         }
 
         // Log executed steps summary
@@ -339,14 +339,14 @@ class EpEcbService extends EpBookingService
     /**
      * Step 3: Create policy from quote
      */
-    private function executeCreatePolicy(): void
+    private function executeCreatePolicyFromQuote(): void
     {
         if (!$this->bearerToken) {
-            throw new Exception('No bearer token available for CreatePolicy');
+            throw new Exception('No bearer token available for CreatePolicyFromQuote');
         }
 
         if (!$this->quoteReferenceNumber) {
-            throw new Exception('No quote reference number available for CreatePolicy');
+            throw new Exception('No quote reference number available for CreatePolicyFromQuote');
         }
 
         // Check if we already have a restored policy number
@@ -355,7 +355,7 @@ class EpEcbService extends EpBookingService
         }
 
         // Build policy creation payload
-        $payload = $this->buildPolicyPayload();
+        $payload = $this->buildPolicyFromQuotePayload();
 
         $response = $this->makeApiCall(
             'POST',
@@ -840,7 +840,7 @@ class EpEcbService extends EpBookingService
     /**
      * Build policy creation payload
      */
-    private function buildPolicyPayload(): array
+    private function buildPolicyFromQuotePayload(): array
     {
         $latestInsuredData = $this->quote?->latestInsured;
         $insuredKyc = $latestInsuredData?->insuredKyc;
