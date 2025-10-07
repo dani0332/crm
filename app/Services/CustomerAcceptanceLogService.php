@@ -2,10 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\QuoteTypes;
-use App\Models\BorLog;
 use App\Models\CustomerAcceptanceLog;
-use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 
 class CustomerAcceptanceLogService
@@ -34,7 +31,7 @@ class CustomerAcceptanceLogService
             ->simplePaginate(15)
             ->withQueryString();
 
-        $customerAcceptanceLogsUrl = config('constants.DECLARATION_BASE_URL');  
+        $customerAcceptanceLogsUrl = config('constants.DECLARATION_BASE_URL');
 
         return [$logs, $customerAcceptanceLogsUrl];
     }
