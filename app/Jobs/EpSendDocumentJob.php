@@ -117,7 +117,7 @@ class EpSendDocumentJob implements ShouldQueue
             ...$advisorData,
             "attachingDocsEmail" => count($attachments) > 0 ? "yes" : "no",
             "DisplayName" => "InsuranceMarket.ae",
-            "supportUserEmail" => "arsalansupport23@yopmail.com",
+            "supportUserEmail" => "arsalan.mughal@myalfred.com",
             ...$policyContext,
         ];
 

@@ -22,14 +22,14 @@ return [
         'prod' => [
             'recipient_emails' => [
                 'to' => [],
-                'cc' => ['arsalanmughal23@yopmail.com', 'nidhi.kaushal@myalfred.com', 'tasawar.hussain@myalfred.com'],
+                'cc' => ['nidhi.kaushal@myalfred.com', 'tasawar.hussain@myalfred.com'],
                 'bcc' => ['newleadpool@insurancemarket.ae'],
             ]
         ],
         'non_prod' => [
             'recipient_emails' => [
                 'to' => [],
-                'cc' => ['arsalanmughal23@yopmail.com', 'nidhi.kaushal@myalfred.com', 'tasawar.hussain@myalfred.com'],
+                'cc' => ['nidhi.kaushal@myalfred.com', 'tasawar.hussain@myalfred.com'],
                 'bcc' => ['newleadpool@insurancemarket.ae'],
             ]
         ],
