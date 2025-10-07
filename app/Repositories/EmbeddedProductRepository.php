@@ -238,8 +238,8 @@ class EmbeddedProductRepository extends BaseRepository
             $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
 
             $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($item->short_code);
-            $isECB = $item->short_code = EmbeddedProductEnum::ECB;
             $isSukoonMedex = EmbeddedProductStrategy::checkSukoonMedex($item->short_code);
+            $isECB = $item->short_code == EmbeddedProductEnum::ECB;
             $isMedxOrEcb = $isSukoonMedex || $isECB;
 
             if ($isAlfredProtect) {
