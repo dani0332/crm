@@ -10,6 +10,7 @@ export function useAllocationForm(props, errorHandling) {
   const nationalityOptions = ref([]);
   const currentConfiguration = ref(null);
   const savingsTemplateRef = ref(null);
+  const homeTemplateRef = ref(null);
   const auditLogsKey = ref(0);
   const isViewMode = ref(false);
   const originalConfiguration = ref(null);
@@ -141,10 +142,16 @@ export function useAllocationForm(props, errorHandling) {
       clearAllErrors();
       successMessage.value = '';
 
-      // Trigger re-initialization of template
+      // Trigger re-initialization of templates
       if (savingsTemplateRef.value) {
         nextTick(() => {
           savingsTemplateRef.value.clearValidationErrors();
+        });
+      }
+
+      if (homeTemplateRef.value) {
+        nextTick(() => {
+          homeTemplateRef.value.clearValidationErrors();
         });
       }
     }
@@ -166,20 +173,38 @@ export function useAllocationForm(props, errorHandling) {
     clearAllErrors();
 
     if (isValid) {
+      // Check if advisors are available
+      if (advisorOptions.value.length === 0) {
+        addError(
+          'No advisors available for this quote type. Please ensure advisors are configured.',
+          'advisor',
+        );
+        isSubmitting.value = false;
+        return;
+      }
+
+      // Validate Savings template
       if (
         form.quote_type === props.quoteTypeCodeEnum.SAVINGS &&
         savingsTemplateRef.value
       ) {
-        if (advisorOptions.value.length === 0) {
-          addError(
-            'No advisors available for this quote type. Please ensure advisors are configured.',
-            'advisor',
-          );
+        const templateValidation = savingsTemplateRef.value.validate();
+
+        if (!templateValidation.isValid) {
+          templateValidation.errors.forEach(error => {
+            addError(error, 'bracket');
+          });
           isSubmitting.value = false;
           return;
         }
+      }
 
-        const templateValidation = savingsTemplateRef.value.validate();
+      // Validate Home template
+      if (
+        form.quote_type === props.quoteTypeCodeEnum.HOME &&
+        homeTemplateRef.value
+      ) {
+        const templateValidation = homeTemplateRef.value.validate();
 
         if (!templateValidation.isValid) {
           templateValidation.errors.forEach(error => {
@@ -228,6 +253,10 @@ export function useAllocationForm(props, errorHandling) {
 
           if (savingsTemplateRef.value) {
             savingsTemplateRef.value.clearValidationErrors();
+          }
+
+          if (homeTemplateRef.value) {
+            homeTemplateRef.value.clearValidationErrors();
           }
 
           auditLogsKey.value += 1;
@@ -299,6 +328,7 @@ export function useAllocationForm(props, errorHandling) {
     nationalityOptions,
     currentConfiguration,
     savingsTemplateRef,
+    homeTemplateRef,
     auditLogsKey,
     form,
     isViewMode,
