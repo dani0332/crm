@@ -1114,7 +1114,7 @@ class SendEmailCustomerService extends BaseService
                 ],
                 'to' => [[
                     'email' => $emailData->customerEmail,
-                    'name' => $emailData->clientFullName,
+                    'name' => $emailData->customerName,
                 ]],
                 'templateId' => (int) $emailTemplateId,
                 'params' => $emailData,
