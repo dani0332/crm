@@ -435,38 +435,42 @@ class SLAService extends BaseService
         }
 
         $advisor = $slaRecord->advisor;
-        $managersEmails = $this->getManagersEmails($advisor);
 
-        if (! empty($managersEmails)) {
-            $payload = $this->buildPayload($slaRecord, 'sla_breach_notification');
+        $payload = $this->buildPayload($slaRecord, 'sla_breach_notification');
 
-            $payload['managerEmail'] = $managersEmails[0] ?? '';
-            $payload['managerEmails'] = $managersEmails;
-            $payload['breachDateTime'] = now()->toDateTimeString();
+        $payload['headEmail'] = $this->getHeadEmail();
+        $payload['ccEmails'] = $this->getCCEmails($advisor);
+        $payload['breachDateTime'] = now()->toDateTimeString();
 
-            $isSent = $this->triggerBirdWorkflow($payload);
+        $isSent = $this->triggerBirdWorkflow($payload);
 
-            if ($isSent) {
-                $slaRecord->markBreached();
-            }
-
-            LoggerService::info('SLAService - Breach escalated to managers', [
-                'advisor_email' => $advisor->email,
-                'managers_emails' => $managersEmails,
-                'breach_duration' => now()->diffForHumans($slaRecord->sla_due_at),
-                'is_sent' => $isSent,
-            ]);
-
-            return $isSent;
-        } else {
+        if ($isSent) {
             $slaRecord->markBreached();
-
-            LoggerService::warning('SLAService - No Managers found for escalation', [
-                'advisor_email' => $slaRecord->advisor?->email,
-            ]);
-
-            return true;
         }
+
+        LoggerService::info('SLAService - Breach escalated to managers', [
+            'advisor_email' => $advisor->email,
+            'cc_emails' => $payload['ccEmails'],
+            'breach_duration' => now()->diffForHumans($slaRecord->sla_due_at),
+            'is_sent' => $isSent,
+        ]);
+
+        return $isSent;
+    }
+
+    private function getHeadEmail(): string
+    {
+        return 'agatha.alicdan@insurancemarket.ae';
+    }
+
+    private function getCCEmails(User $advisor): array
+    {
+        $managerEmails = $this->getManagersEmails($advisor);
+
+        return [
+            $advisor->email,
+            ...$managerEmails,
+        ];
     }
 
     private function getManagersEmails(User $advisor)
@@ -482,43 +486,34 @@ class SLAService extends BaseService
 
         $managerEmails = [];
 
-        if (app()->environment('production')) {
-            if ($hasPCPTeam) {
-                $managerEmails = [
-                    ...$managerEmails,
-                    'moinuddin.lakdawala@insurancemarket.ae',
-                ];
-            }
-
-            if ($hasRMTeam) {
-                $managerEmails = [
-                    ...$managerEmails,
-                    'murryell.tuppil@insurancemarket.ae',
-                    'veeral.joshi@insurancemarket.ae',
-                    'agatha.alicdan@insurancemarket.ae',
-                ];
-            }
-
-            if ($hasRenewalsTeam) {
-                $managerEmails = [
-                    ...$managerEmails,
-                    'mufti.hamid@insurancemarket.ae',
-                    'veeral.joshi@insurancemarket.ae',
-                ];
-            }
-
-            if ($hasOrganicTeam) {
-                $managerEmails = [
-                    ...$managerEmails,
-                    'arsalan.khan@insurancemarket.ae',
-                    'veeral.joshi@insurancemarket.ae',
-                ];
-            }
-        } else {
+        if ($hasPCPTeam) {
             $managerEmails = [
-                $advisor->email,
-                'usman.iqbal@myalfred.com',
-                'wasit.ali@myalfred.com',
+                ...$managerEmails,
+                'moinuddin.lakdawala@insurancemarket.ae',
+            ];
+        }
+
+        if ($hasRMTeam) {
+            $managerEmails = [
+                ...$managerEmails,
+                'murryell.tuppil@insurancemarket.ae',
+                'veeral.joshi@insurancemarket.ae',
+            ];
+        }
+
+        if ($hasRenewalsTeam) {
+            $managerEmails = [
+                ...$managerEmails,
+                'mufti.hamid@insurancemarket.ae',
+                'veeral.joshi@insurancemarket.ae',
+            ];
+        }
+
+        if ($hasOrganicTeam) {
+            $managerEmails = [
+                ...$managerEmails,
+                'arsalan.khan@insurancemarket.ae',
+                'veeral.joshi@insurancemarket.ae',
             ];
         }
 
