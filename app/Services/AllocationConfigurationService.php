@@ -40,6 +40,12 @@ class AllocationConfigurationService
             ];
         }
 
+        if ($quoteType === QuoteTypes::PET || $quoteType === QuoteTypes::YACHT || $quoteType === QuoteTypes::CYCLE) {
+            return [
+                'bracket1' => $data['bracket1'] ?? ['profiles' => []],
+            ];
+        }
+
         return [];
     }
 
@@ -80,7 +86,14 @@ class AllocationConfigurationService
 
     public function getQuoteTypes()
     {
-        return QuoteType::withActive()->whereIn('short_code', [QuoteTypeShortCode::SAV, QuoteTypeShortCode::HOM, QuoteTypeShortCode::LIF])->get();
+        return QuoteType::withActive()->whereIn('short_code', [
+            QuoteTypeShortCode::SAV,
+            QuoteTypeShortCode::HOM,
+            QuoteTypeShortCode::LIF,
+            QuoteTypeShortCode::PET,
+            QuoteTypeShortCode::YAC,
+            QuoteTypeShortCode::CYC,
+        ])->get();
     }
 
     public function getEligibleAdvisorIds(QuoteTypes $quoteType, InvestmentFrequencyEnum $investmentFrequency, float $amount, int $nationalityId): array
