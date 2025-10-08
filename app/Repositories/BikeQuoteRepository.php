@@ -42,7 +42,7 @@ class BikeQuoteRepository extends BaseRepository
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
             'primary_ref_id' => $data['primary_ref_id'] ?? null,
-            'additional_notes' => $data['notes'] ?? null,
+            'notes' => $data['notes'] ?? null,
         ]);
 
         $quoteData = [
@@ -98,7 +98,7 @@ class BikeQuoteRepository extends BaseRepository
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
             'primary_ref_id' => $data['primary_ref_id'] ?? null,
-            'additional_notes' => $data['additional_notes'] ?? null,
+            'notes' => $data['notes'] ?? null,
         ]);
 
         return DB::transaction(function () use ($uuid, $data) {

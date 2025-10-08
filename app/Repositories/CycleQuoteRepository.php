@@ -39,7 +39,7 @@ class CycleQuoteRepository extends BaseRepository
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
             'primary_ref_id' => $data['primary_ref_id'] ?? null,
-            'additional_notes' => $data['additional_notes'] ?? null,
+            'notes' => $data['notes'] ?? null,
         ]);
 
         $quoteData = [
@@ -68,7 +68,7 @@ class CycleQuoteRepository extends BaseRepository
             'subSourceId' => $data['sub_source_id'] ?? null,
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
             'primaryRefId' => $data['primary_ref_id'] ?? null,
-            'additionalNotes' => $data['additional_notes'] ?? null,
+            'additionalNotes' => $data['notes'] ?? null,
         ];
 
         LoggerService::info('cycleQuote:'.json_encode($quoteData));
@@ -225,7 +225,7 @@ class CycleQuoteRepository extends BaseRepository
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
             'primary_ref_id' => $data['primary_ref_id'] ?? null,
-            'additional_notes' => $data['additional_notes'] ?? null,
+            'notes' => $data['notes'] ?? null,
         ]);
 
         return DB::transaction(function () use ($uuid, $data) {
