@@ -146,23 +146,28 @@ trait SLAable
 
         // If assigned outside business hours on a weekday
         if (! $isBusinessHours) {
-            $businessStartTime = $assignmentTime->copy()->setTimeFromTimeString($businessStart);
-            $businessEndTime = $assignmentTime->copy()->setTimeFromTimeString($businessEnd);
-
-            // If before business hours, start from same day's business start
-            if ($assignmentTime->lessThan($businessStartTime)) {
-                return $this->addBusinessMinutesFromStart($businessStartTime, $slaMinutes);
-            }
-
-            // If after business hours, start from next business day
-            if ($assignmentTime->greaterThanOrEqualTo($businessEndTime)) {
-                $nextBusinessDay = $this->getNextBusinessDayStart($assignmentTime);
-
-                return $this->addBusinessMinutesFromStart($nextBusinessDay, $slaMinutes);
-            }
+            return $this->getSLADueTimeOutsideBusinessHours($assignmentTime, $slaMinutes, $businessStart);
         }
 
-        // Assignment is during business hours
+        return $this->getSLADueTimeWithinBusinessHours($assignmentTime, $slaMinutes, $businessEnd);
+    }
+
+    private function getSLADueTimeOutsideBusinessHours(Carbon $assignmentTime, float $slaMinutes, $businessStart): Carbon
+    {
+        $businessStartTime = $assignmentTime->copy()->setTimeFromTimeString($businessStart);
+
+        // If before business hours, start from same day's business start
+        if ($assignmentTime->lessThan($businessStartTime)) {
+            return $this->addBusinessMinutesFromStart($businessStartTime, $slaMinutes);
+        }
+
+        $nextBusinessDay = $this->getNextBusinessDayStart($assignmentTime);
+
+        return $this->addBusinessMinutesFromStart($nextBusinessDay, $slaMinutes);
+    }
+
+    private function getSLADueTimeWithinBusinessHours(Carbon $assignmentTime, float $slaMinutes, $businessEnd): Carbon
+    {
         $currentTime = $assignmentTime->copy();
         $endOfCurrentBusinessDay = $currentTime->copy()->setTimeFromTimeString($businessEnd);
 
