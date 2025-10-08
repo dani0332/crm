@@ -63,12 +63,10 @@ class SLAService
 
     public function initiateSLATracking(QuoteTypes $quoteType, Model $lead): ?SLATracking
     {
-        if (! $this->isLOBEnabled($lead)) {
-            return null;
-        }
-
-        if ($this->hasAnyFinalSLA($lead)) {
-            LoggerService::info('SLAService - SLA already reached a final status, so skipping further SLA tracking');
+        if (! $this->isLOBEnabled($lead) || $this->hasAnyFinalSLA($lead)) {
+            if ($this->hasAnyFinalSLA($lead)) {
+                LoggerService::info('SLAService - SLA already reached a final status, so skipping further SLA tracking');
+            }
 
             return null;
         }
@@ -83,6 +81,11 @@ class SLAService
             return null;
         }
 
+        return $this->proceedWithSLATracking($quoteType, $lead, $existingActiveSLA);
+    }
+
+    private function proceedWithSLATracking(QuoteTypes $quoteType, Model $lead, ?SLATracking $existingActiveSLA = null): SLATracking
+    {
         if ($existingActiveSLA) {
             if ($existingActiveSLA->advisor_id === $lead->advisor_id) {
                 LoggerService::info('SLAService - Active SLA already exists for this advisor', [
