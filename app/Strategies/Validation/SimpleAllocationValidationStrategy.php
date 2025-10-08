@@ -23,76 +23,77 @@ class SimpleAllocationValidationStrategy implements AllocationValidationStrategy
     public function getRules(): array
     {
         return [
-            'bracket1' => ['required', 'array'],
-            'bracket1.profiles' => ['required', 'array', 'min:1'],
-            'bracket1.profiles.*.advisorIds' => ['required', 'array', 'min:1'],
-            'bracket1.profiles.*.advisorIds.*' => ['integer', Rule::exists(User::class, 'id')],
-            'bracket1.profiles.*.nationalityIds' => ['required', 'array', 'min:1'],
-            'bracket1.profiles.*.nationalityIds.*' => ['integer', Rule::exists(Nationality::class, 'id')],
+            'brackets' => ['required', 'array', 'min:1'],
+            'brackets.*.profiles' => ['required', 'array', 'min:1'],
+            'brackets.*.profiles.*.advisorIds' => ['required', 'array', 'min:1'],
+            'brackets.*.profiles.*.advisorIds.*' => ['integer', Rule::exists(User::class, 'id')],
+            'brackets.*.profiles.*.nationalityIds' => ['required', 'array', 'min:1'],
+            'brackets.*.profiles.*.nationalityIds.*' => ['integer', Rule::exists(Nationality::class, 'id')],
         ];
     }
 
     public function getMessages(): array
     {
         return [
-            'bracket1.required' => "{$this->lobName} bracket configuration is required.",
-            'bracket1.array' => "{$this->lobName} bracket must be a valid array.",
-            'bracket1.profiles.required' => "At least one profile is required for {$this->lobName} bracket.",
-            'bracket1.profiles.array' => 'Profiles must be a valid array.',
-            'bracket1.profiles.min' => "{$this->lobName} bracket must have at least one profile.",
-            'bracket1.profiles.*.advisorIds.required' => 'Please select at least one advisor for each profile.',
-            'bracket1.profiles.*.advisorIds.array' => 'Advisor selection must be a valid array.',
-            'bracket1.profiles.*.advisorIds.min' => 'Please select at least one advisor for each profile.',
-            'bracket1.profiles.*.advisorIds.*.integer' => 'Invalid advisor selected.',
-            'bracket1.profiles.*.advisorIds.*.exists' => 'One or more selected advisors do not exist.',
-            'bracket1.profiles.*.nationalityIds.required' => 'Please select at least one nationality for each profile.',
-            'bracket1.profiles.*.nationalityIds.array' => 'Nationality selection must be a valid array.',
-            'bracket1.profiles.*.nationalityIds.min' => 'Please select at least one nationality for each profile.',
-            'bracket1.profiles.*.nationalityIds.*.integer' => 'Invalid nationality selected.',
-            'bracket1.profiles.*.nationalityIds.*.exists' => 'One or more selected nationalities do not exist.',
+            'brackets.required' => "{$this->lobName} brackets configuration is required.",
+            'brackets.array' => "{$this->lobName} brackets must be a valid array.",
+            'brackets.min' => "At least one bracket is required for {$this->lobName}.",
+            'brackets.*.profiles.required' => "At least one profile is required for each {$this->lobName} bracket.",
+            'brackets.*.profiles.array' => 'Profiles must be a valid array.',
+            'brackets.*.profiles.min' => "Each {$this->lobName} bracket must have at least one profile.",
+            'brackets.*.profiles.*.advisorIds.required' => 'Please select at least one advisor for each profile.',
+            'brackets.*.profiles.*.advisorIds.array' => 'Advisor selection must be a valid array.',
+            'brackets.*.profiles.*.advisorIds.min' => 'Please select at least one advisor for each profile.',
+            'brackets.*.profiles.*.advisorIds.*.integer' => 'Invalid advisor selected.',
+            'brackets.*.profiles.*.advisorIds.*.exists' => 'One or more selected advisors do not exist.',
+            'brackets.*.profiles.*.nationalityIds.required' => 'Please select at least one nationality for each profile.',
+            'brackets.*.profiles.*.nationalityIds.array' => 'Nationality selection must be a valid array.',
+            'brackets.*.profiles.*.nationalityIds.min' => 'Please select at least one nationality for each profile.',
+            'brackets.*.profiles.*.nationalityIds.*.integer' => 'Invalid nationality selected.',
+            'brackets.*.profiles.*.nationalityIds.*.exists' => 'One or more selected nationalities do not exist.',
         ];
     }
 
     public function validate(Validator $validator, array $data): void
     {
-        // Validate bracket structure
-        if (isset($data['bracket1']) && ! empty($data['bracket1'])) {
-            if (! $this->validateBracketStructure($data['bracket1'])) {
-                $validator->errors()->add('bracket1', "{$this->lobName} bracket has invalid structure. Please check all required fields are filled correctly.");
+        // Check for at least one bracket
+        if (empty($data['brackets']) || ! is_array($data['brackets'])) {
+            $validator->errors()->add('configuration', "Please configure at least one bracket for {$this->lobName} to save the allocation configuration.");
+
+            return;
+        }
+
+        // Validate each bracket structure
+        foreach ($data['brackets'] as $bracketIndex => $bracket) {
+            if (! $this->validateBracketStructure($bracket)) {
+                $validator->errors()->add("brackets.{$bracketIndex}", "{$this->lobName} bracket ".($bracketIndex + 1).' has invalid structure. Please check all required fields are filled correctly.');
             }
-        }
 
-        // Check for at least one bracket configuration
-        if (empty($data['bracket1']) || empty($data['bracket1']['profiles'])) {
-            $validator->errors()->add('configuration', "Please configure at least one profile for {$this->lobName} bracket to save the allocation configuration.");
-        }
+            // Validate advisor-nationality combinations
+            if (isset($bracket['profiles']) && is_array($bracket['profiles'])) {
+                $this->validateProfileCombinations(
+                    $bracket['profiles'],
+                    $bracketIndex,
+                    $validator,
+                    'nationalityIds',
+                    'nationality'
+                );
 
-        // Validate advisor-nationality combinations
-        if (isset($data['bracket1']['profiles']) && is_array($data['bracket1']['profiles'])) {
-            $this->validateProfileCombinations(
-                $data['bracket1']['profiles'],
-                0,
-                $validator,
-                'nationalityIds',
-                'nationality'
-            );
-
-            $this->checkDuplicatesInBracket(
-                $data['bracket1']['profiles'],
-                0,
-                $validator,
-                'nationalityIds',
-                'nationality'
-            );
+                $this->checkDuplicatesInBracket(
+                    $bracket['profiles'],
+                    $bracketIndex,
+                    $validator,
+                    'nationalityIds',
+                    'nationality'
+                );
+            }
         }
     }
 
     public function getValidatedDefaults(): array
     {
         return [
-            'bracket1' => [
-                'profiles' => [],
-            ],
+            'brackets' => [],
         ];
     }
 
@@ -105,12 +106,20 @@ class SimpleAllocationValidationStrategy implements AllocationValidationStrategy
             return false;
         }
 
+        if (empty($bracket['profiles'])) {
+            return false;
+        }
+
         foreach ($bracket['profiles'] as $profile) {
             if (! isset($profile['advisorIds']) || ! isset($profile['nationalityIds'])) {
                 return false;
             }
 
             if (! is_array($profile['advisorIds']) || ! is_array($profile['nationalityIds'])) {
+                return false;
+            }
+
+            if (empty($profile['advisorIds']) || empty($profile['nationalityIds'])) {
                 return false;
             }
         }
