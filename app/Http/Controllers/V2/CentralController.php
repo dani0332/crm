@@ -17,6 +17,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\SendPolicyTypeEnum;
+use App\Enums\SLAActionTypeEnum;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
 use App\Exports\CarQuoteExportWithMakeModelTrims;
@@ -43,6 +44,7 @@ use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\PostPrepaymentToSageRequest;
+use App\Http\Requests\PUAExportValidationRequest;
 use App\Http\Requests\QuoteNotesRequest;
 use App\Http\Requests\RetryPrepaymentRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
@@ -84,6 +86,7 @@ use App\Services\PaymentService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SLA\SLAService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
@@ -251,6 +254,12 @@ class CentralController extends Controller
             }
         }
 
+        $quoteType = QuoteTypes::getName($customerProfileRequest->quote_type_id);
+        $quote = $this->getQuoteObject($quoteType->value, $customerProfileRequest->quote_request_id);
+        if ($quote) {
+            app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::CUSTOMER_PROFILE_EDIT);
+        }
+
         return redirect()->back();
     }
 
@@ -416,6 +425,11 @@ class CentralController extends Controller
         }
 
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
+
+        $quote = $this->getQuoteObject($quoteType, $uuid);
+        if ($quote) {
+            app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::AVAILABLE_PLAN_SELECTED);
+        }
 
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
 
@@ -712,7 +726,7 @@ class CentralController extends Controller
 
         return app(RMQuotesExport::class)->download('RM-Leads-List');
     }
-    public function exportPUAUpdates(Request $request, string $quoteType)
+    public function exportPUAUpdates(PUAExportValidationRequest $request, string $quoteType)
     {
         // Log all request data
         LoggerService::info('PUA Export Request - All Data', [

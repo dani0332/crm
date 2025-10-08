@@ -9,28 +9,37 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SLAActionTypeEnum;
 use App\Enums\TeamNameEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
 use App\Http\Requests\MemberDetailRequest;
+use App\Models\HealthQuote;
 use App\Repositories\HealthQuoteRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
+use App\Services\Logger\LoggerService;
+use App\Services\SLA\SLAService;
 use Illuminate\Http\Request;
 
 class HealthQuoteController extends Controller
 {
     protected $healthQuoteService;
+    protected $slaService;
 
-    public function __construct(HealthQuoteService $healthQuoteService)
+    public function __construct(HealthQuoteService $healthQuoteService, SLAService $slaService)
     {
         $this->healthQuoteService = $healthQuoteService;
+        $this->slaService = $slaService;
     }
 
     public function healthPlanCreateQuote(Request $request)
     {
+        $logPrefix = 'HealthQuoteController - healthPlanCreateQuote - ';
+        LoggerService::startQuoteLogging($request->quoteUID);
+        LoggerService::info($logPrefix.'request - ', $request->all());
         $request->validate([
             'quoteUID' => 'required',
             'formData' => 'required|array',
@@ -70,7 +79,11 @@ class HealthQuoteController extends Controller
             'memberPremiumBreakdown' => $membersBreakDown,
         ];
 
+        LoggerService::info($logPrefix.'planData - ', $planData);
+
         $response = $this->healthQuoteService->renewalCreatePlan($planData);
+
+        LoggerService::info($logPrefix.'response - ', $response);
 
         return $response;
     }
@@ -149,6 +162,14 @@ class HealthQuoteController extends Controller
         return $message;
     }
 
+    private function meetSLA(Request|MemberDetailRequest $request, SLAActionTypeEnum $actionType): void
+    {
+        $lead = HealthQuote::whereUuid($request->quoteId)->first();
+        if ($lead) {
+            $this->slaService->meetSLAOnEdit($lead, $actionType);
+        }
+    }
+
     public function healthQuoteAddMember(MemberDetailRequest $request)
     {
         $request->validated();
@@ -166,6 +187,8 @@ class HealthQuoteController extends Controller
             }
             $message = 'Request not processed. '.json_encode($responseMessage);
         }
+
+        $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_ADD);
 
         return redirect()->back();
     }
@@ -188,6 +211,8 @@ class HealthQuoteController extends Controller
             $message = 'Request not processed. '.json_encode($responseMessage);
         }
 
+        $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_EDIT);
+
         return redirect()->back();
     }
 
@@ -206,6 +231,8 @@ class HealthQuoteController extends Controller
             }
             $message = 'Request not processed. '.json_encode($responseMessage);
         }
+
+        $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_DELETE);
 
         return redirect()->back();
     }

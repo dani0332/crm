@@ -86,7 +86,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch_model.name', is_active: true },
   {
     text: 'Private Client',
     value: 'customer.pcp_tag_formatted',
@@ -258,8 +258,8 @@ const onPUAExport = () => {
 const onConfirmPUAExport = () => {
   // Use the single date for both authorize and capture date filters
   const filtersForExport = {
-    authorize_date: puaExportModal.payment_date,
-    captured_date: puaExportModal.payment_date,
+    authorize_date: useFormatDateToYMD(puaExportModal.payment_date),
+    captured_date: useFormatDateToYMD(puaExportModal.payment_date),
   };
 
   const data = useObjToUrl(filtersForExport);

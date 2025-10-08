@@ -11,13 +11,13 @@ use App\Models\QuoteType;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Throwable;
 
 class AutomationFailedJob implements ShouldQueue
 {
@@ -125,9 +125,9 @@ class AutomationFailedJob implements ShouldQueue
         LoggerService::info('job:AutomationFailedJob - Job completed - Quote Code: '.$this->quote->code);
     }
 
-    public function failed(Throwable $exception)
+    public function failed(Exception $ex)
     {
-        LoggerService::info('job:AutomationFailedJob - Insurer: '.($this->insurerName ?? null).' Error: '.$exception->getMessage());
+        LoggerService::error('job:AutomationFailedJob - Insurer: '.($this->insurerName ?? null).' Failed', exception: $ex);
     }
 
     public function middleware()

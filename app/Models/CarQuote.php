@@ -492,6 +492,11 @@ class CarQuote extends BaseModel
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Car);
+    }
+
     public function hasExemptedSource()
     {
         // Check if Dubai Now exclusion should be applied
@@ -518,6 +523,12 @@ class CarQuote extends BaseModel
         return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
     }
 
+    public function customerInsured()
+    {
+        return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Car);
+    }
+
     public function insured()
     {
         return $this->hasOneThrough(
@@ -542,6 +553,12 @@ class CarQuote extends BaseModel
             'insured_id' // customer_insured.insured_id
         )->where('customer_insured.quote_type_id', QuoteTypeId::Car)
             ->latest('customer_insured.updated_at');
+    }
+
+    public function amlLogs()
+    {
+        return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Car)->withTrashed();
     }
 
     public function policyIssuance()
@@ -580,4 +597,21 @@ class CarQuote extends BaseModel
     {
         return $this->morphOne(VehicleDriverDetail::class, 'quoteable');
     }
+    /**
+     * Get the previous quote for this car quote.
+     * Returns null if no previous quote exists.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function previousQuote()
+    {
+        // The previous_quote_id is stored on this model, referencing the previous CarQuote's id
+        return $this->belongsTo(
+            CarQuote::class,
+            'previous_quote_id',
+            'id'
+        )->select(['id', 'code', 'uuid'])
+            ->with('payments');
+    }
+
 }

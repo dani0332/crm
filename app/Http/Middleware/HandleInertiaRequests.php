@@ -12,6 +12,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
@@ -156,6 +157,7 @@ class HandleInertiaRequests extends Middleware
             'carVehicleUse' => CarVehicleUse::asArray(),
             'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
             'eligibleOcrProviders' => app(OCRService::class)->getEligibleProviders(),
+            'genericRequestEnum' => GenericRequestEnum::asArray(),
         ];
     }
 
@@ -270,7 +272,7 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::TRAVEL_SIC_ALLOCATION),
                         'Travel',
-                        route('travel-lead-allocation.index'),
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::TRAVEL]),
                         fn ($s) => $s->attributes(['icon' => 'travel'])
                     )
                     ->addIf(
@@ -568,7 +570,7 @@ class HandleInertiaRequests extends Middleware
                         route('customer.upload'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
-                    ->add('Leads by Email', route('leads-by-email'), fn ($s) => $s->attributes(['icon' => 'box']));
+                    ->add('Leads by Email', '/leads-by-email', fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
@@ -655,7 +657,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
             PermissionsEnum::QUOTE_SYNC_LOGS,
         ];
-        if (auth()->user()->hasAnyPermission($adminMenuPermissions)) {
+        if (auth()->user()->hasAnyPermission($adminMenuPermissions) || auth()->user()->hasAnyRole([RolesEnum::Engineering])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
                     ->addIf(
@@ -668,6 +670,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::UsersList),
                         'Users',
                         route('users.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering]),
+                        'User Status Logs',
+                        route('admin.user-status-logs.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
@@ -728,6 +736,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->hasAnyRole([RolesEnum::Engineering]) && getAppStorageValueByKey(ApplicationStorageEnums::BENCHMARKING_ENABLED, 0, useCache: true) == 1,
                         'Query Benchmarker',
                         route('admin.benchmarker.query.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering]),
+                        'System Health',
+                        route('admin.system-health.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

@@ -543,4 +543,67 @@ class UserController extends Controller
         // Redirect back with a success message
         return redirect()->back()->with('success', 'Advisors added successfully');
     }
+
+    /**
+     * Get the first manager of an advisor.
+     *
+     * @param  string  $email
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getFirstManager($email)
+    {
+        try {
+            // Validate that the advisor exists and is active
+            $advisor = User::where('email', $email)
+                ->where('is_active', 1)
+                ->first();
+
+            if (! $advisor) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Advisor not found or inactive',
+                    'data' => null,
+                ], 404);
+            }
+
+            // Get the first manager using the existing getUserManagers method from TeamHierarchyTrait
+            $managers = $this->getUserManagers($advisor->id);
+
+            if ($managers->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'No manager found for this advisor',
+                    'data' => null,
+                ], 200);
+            }
+
+            // Get the first manager
+            $firstManager = $managers->first();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'First manager retrieved successfully',
+                'data' => [
+                    'advisor' => [
+                        'id' => $advisor->id,
+                        'name' => $advisor->name,
+                        'email' => $advisor->email,
+                    ],
+                    'first_manager' => [
+                        'id' => $firstManager->id,
+                        'name' => $firstManager->name,
+                        'email' => $firstManager->email,
+                        'is_active' => $firstManager->is_active,
+                    ],
+                ],
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving the manager',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
