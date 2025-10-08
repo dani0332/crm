@@ -409,6 +409,12 @@ class PersonalQuote extends Model implements AuditableContract
         );
     }
 
+    public function customerInsured()
+    {
+        return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
+            ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet]);
+    }
+
     // Get all insured records for this quote (multiple AML screenings)
     public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
     {
@@ -433,6 +439,12 @@ class PersonalQuote extends Model implements AuditableContract
             'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
         )->latest('customer_insured.updated_at');
+    }
+
+    public function amlLogs()
+    {
+        return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
+            ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet])->withTrashed();
     }
 
     public function homeQuote()

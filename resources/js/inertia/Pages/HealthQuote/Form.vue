@@ -1,9 +1,11 @@
 <script setup>
+import { nextTick } from 'vue';
 const props = defineProps({
   dropdownSource: Object,
   model: String,
   genderOptions: Object,
   branchOptions: Object,
+  emirateEnum: Object,
   quote: {
     type: Object,
     default: {},
@@ -14,6 +16,7 @@ const props = defineProps({
 
 const { isRequired, isEmail, isMobileNo, maxCharacters } = useRules();
 const isEmptyField = ref(false);
+const pecValidationError = ref('');
 const page = usePage();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -124,6 +127,7 @@ const quoteForm = useForm({
   has_worldwide_cover: props.quote?.has_worldwide_cover || null,
   has_home: props.quote?.has_home || null,
   plan_type_id: props.quote?.health_plan_type_id || null,
+  pec: props.quote?.pec || null,
   // Sub-source fields from CreateLeadModal
   sub_source_id: parseInt(props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0) || null,
   sub_source_options_id: parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption || 0) || null,
@@ -161,6 +165,16 @@ const selectedSalaryBand = computed(() => {
   return route().current().includes('edit');
 });
 
+const healthRegulationAuthority = computed(() => {
+  return quoteForm.emirate_of_your_visa_id === props.emirateEnum.ABU_DHABI
+    ? 'DoH'
+    : 'DHA';
+});
+
+const pecErrorMessage = computed(() => {
+  return `Please confirm the customer's health declaration to proceed, as required under ${healthRegulationAuthority.value} regulations.`;
+});
+
 watch(
   () => quoteForm.member_category_id,
   (newValue, oldValue) => {
@@ -190,6 +204,10 @@ watch(
   },
   { immediate: true },
 );
+
+const pecRules = computed(() => {
+  return [isRequired];
+});
 
 // Watch for sub_source_id changes to reset dependent fields
 watch(() => quoteForm.sub_source_id, (newValue) => {
@@ -231,13 +249,28 @@ watch(() => quoteForm.partner_name, (newValue, oldValue) => {
 });
 
 function onSubmit(isValid) {
+  isEmptyField.value = false;
+  pecValidationError.value = '';
+
   if (quoteForm.nationality_id == null) {
     isEmptyField.value = true;
-  } else {
-    isEmptyField.value = false;
   }
 
-  if (!isValid) return;
+  // Only validate PEC field on create page, not on edit page
+  if (!isEdit.value && (quoteForm.pec == null || quoteForm.pec == undefined)) {
+    pecValidationError.value = pecErrorMessage.value;
+
+    // Scroll to PEC field if validation fails
+    nextTick(() => {
+      const pecElement = document.querySelector('[data-pec-field]');
+      if (pecElement) {
+        pecElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+    return;
+  }
+
+  if (!isValid || isEmptyField.value || pecValidationError.value) return;
 
   quoteForm.clearErrors();
 
@@ -593,6 +626,28 @@ function onSubmit(isValid) {
             color="primary"
           />
          </div>
+
+        <div v-if="!isEdit" data-pec-field>
+          <div class="mb-3">
+            <ToolTip
+              title="Does the member need to declare any chronic or pre-existing medical conditions, pregnancy, plans to conceive, or fertility treatment?"
+              tooltip="Any ongoing or past health issues that may or may not require regular treatment or medical attention."
+              class="w-full"
+            />
+          </div>
+          <div>
+            <x-form-group v-model="quoteForm.pec">
+              <x-radio :value="1" label="Yes" />
+              <x-radio :value="2" label="No" />
+            </x-form-group>
+            <div
+              v-if="pecValidationError"
+              class="mt-2 text-sm text-red-600 border border-red-200 bg-red-50 rounded-md p-2"
+            >
+              {{ pecValidationError }}
+            </div>
+          </div>
+        </div>
 
 
 

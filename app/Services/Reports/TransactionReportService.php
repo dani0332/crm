@@ -95,7 +95,8 @@ class TransactionReportService extends ManagementReport
                 'ps.sage_reciept_id',
                 DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
                 'ciw.text as currently_insured_with_text',
-                'cqr.currently_insured_with as currently_insured_with'
+                'cqr.currently_insured_with as currently_insured_with',
+                DB::raw('CASE WHEN hqr.id IS NULL THEN "N/A" WHEN hqr.pec_marked_at IS NOT NULL THEN "Yes" ELSE "No" END as pec_flag')
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -117,6 +118,10 @@ class TransactionReportService extends ManagementReport
             ->leftJoin('car_quote_request as cqr', function ($join) {
                 $join->on('personal_quotes.quote_id', '=', 'cqr.id')
                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
+            ->leftJoin('health_quote_request as hqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'hqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
             });
 
         $this->applyFilters($query, $request, isSSR: true);

@@ -92,6 +92,7 @@ class InstallmentReportExport implements CsvExportableInterface
             'Lead Source',
             'Sage Receipt ID',
             'Private Client',
+            'Policy PEC Flag',
             'IMCRM SUB-SOURCE',
         ];
     }
@@ -147,6 +148,7 @@ class InstallmentReportExport implements CsvExportableInterface
             $quote->source ?? 'N/A',
             $quote->sage_reciept_id ?? 'N/A',
             $quote->pcp_tag_formatted ?? 'N/A',
+            $quote->pec_flag ?? 'N/A',
             $quote->sub_source ?? 'N/A',
         ]);
 

@@ -128,6 +128,11 @@ const tableHeader = reactive([
     tooltip: 'Any notes added within lead level will reflect here.',
   },
   {
+    text: 'Policy PEC Flag',
+    value: 'pec_flag',
+    tooltip: 'Indicates if the policy has Pre-Existing Condition (PEC) flag',
+  },
+  {
     text: 'IMCRM SUB-SOURCE',
     value: 'sub_source',
     tooltip: 'The IMCRM SUB-SOURCE (lookup) of the lead',

@@ -5,6 +5,7 @@ import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue'
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const page = usePage();
 defineProps({
@@ -3657,6 +3658,12 @@ const fullAddress = computed(() => {
       :insuranceProviders="insuranceProviders"
       :expanded="sectionExpanded"
       :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      :lob="modelType"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy

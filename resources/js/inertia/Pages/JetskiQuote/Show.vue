@@ -6,6 +6,7 @@ import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 defineProps({
   quote: Object,
@@ -443,6 +444,12 @@ const record = computed(() => page.props.quote);
       :insuranceProviders="insuranceProviders"
       :expanded="sectionExpanded"
       :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <SendUpdates

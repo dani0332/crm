@@ -245,8 +245,10 @@ class BusinessQuoteController extends Controller
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Business);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
+        $membersDetail = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
 
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {
@@ -334,6 +336,8 @@ class BusinessQuoteController extends Controller
             'companyTypes' => $companyType,
             'UBOsDetails' => $UBODetails,
             'UBORelations' => $UBORelations,
+            'membersDetails' => $membersDetail,
+            'memberRelations' => $memberRelations,
             'nationalities' => $nationalities,
             'emirates' => Emirate::where('is_active', 1)->select('id', 'text')->get(),
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),

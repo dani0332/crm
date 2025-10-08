@@ -70,6 +70,7 @@ const tableHeader = ref([
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   { text: 'EMIRATE OF VISA', value: 'emirate.text', is_active: true },
+  { text: 'POLICY PEC FLAG', value: 'has_pec_tag', is_active: true },
   {
     text: 'PAYMENT AUTHORISED DATE',
     value: 'payment.authorized_at',
@@ -211,6 +212,7 @@ const filters = reactive({
   insurer_commission_tax_invoice_number: '',
   private_client: 'all',
   emirate_of_your_visa_id: [],
+  pec_flag: 'all',
   authorize_date: '',
   captured_date: '',
   sub_source_id: [],
@@ -1179,6 +1181,18 @@ const onLeadConfirmed = (leadData) => {
           :single="true"
         />
         <ComboBox
+          v-model="filters.pec_flag"
+          label="Policy PEC Flag"
+          placeholder="Search by PEC flag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
           v-model="filters.emirate_of_your_visa_id"
           label="Emirate of Visa"
           placeholder="Search by Emirate of Visa"
@@ -1330,6 +1344,13 @@ const onLeadConfirmed = (leadData) => {
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
             {{ is_ecommerce ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-has_pec_tag="{ has_pec_tag }">
+        <div class="text-center">
+          <x-tag size="sm" :color="has_pec_tag ? 'error' : 'success'">
+            {{ has_pec_tag ? 'Yes' : 'No' }}
           </x-tag>
         </div>
       </template>

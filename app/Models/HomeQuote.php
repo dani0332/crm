@@ -226,6 +226,18 @@ class HomeQuote extends Model implements AuditableContract
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 
+    public function customerInsured()
+    {
+        return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Home);
+    }
+
+    public function amlLogs()
+    {
+        return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Home)->withTrashed();
+    }
+
     public function subSource()
     {
         return $this->belongsTo(Lookup::class, 'sub_source_id');
