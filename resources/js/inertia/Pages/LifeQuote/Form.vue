@@ -3,7 +3,7 @@ import { calculateBMI, calculateAge } from '../../Composables/utilities';
 
 const notification = useNotifications('toast');
 const page = usePage();
-const { isRequired, isEmail, isMobileNo } = useRules();
+const { isRequired, isEmail, isMobileNo, maxCharacters } = useRules();
 
 const props = defineProps({
   quote: { type: Object, default: null },
@@ -310,12 +310,14 @@ watch(
         <x-input
           v-if="showPartnerNameField"
           label="PARTNER NAME"
-          required
+          :required="canEditSubSourceFields"
           v-model="quoteForm.partner_name"
           class="w-full"
           type="text"
           placeholder="Enter Partner Name"
-          :rules="[isRequired]"
+          maxLength="50"
+          :rules="canEditSubSourceFields ? [isRequired, maxCharacters(50)] : []"
+          :tooltip="'Name of campaign, event or club'"
           :error="quoteForm.errors.partner_name"
           :disabled="!canEditSubSourceFields"
         />

@@ -12,7 +12,7 @@ const props = defineProps({
   leadSourceParams: { type: Object, default: () => ({}) },
 });
 
-const { isRequired, isEmail, isMobileNo } = useRules();
+const { isRequired, isEmail, isMobileNo, maxCharacters } = useRules();
 const isEmptyField = ref(false);
 const page = usePage();
 const hasRole = role => useHasRole(role);
@@ -350,8 +350,10 @@ function onSubmit(isValid) {
            v-model="quoteForm.partner_name"
            :error="quoteForm.errors.partner_name"
            :disabled="!canEditSubSourceFields"
-           :rules="[isRequired]"
-           required
+           :required="canEditSubSourceFields"
+           maxlength="50"
+           :tooltip="'Name of campaign, event or club'"
+           :rules="canEditSubSourceFields ? [isRequired, maxCharacters(50)] : []"
            class="w-full"
            placeholder="Enter Partner Name"
          />

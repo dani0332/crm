@@ -21,7 +21,7 @@ const props = defineProps({
   },
 });
 
-const { isRequired, isEmail, maxValue } = useRules();
+const { isRequired, isEmail, maxValue, maxCharacters } = useRules();
 const isEmptyField = ref(false);
 const isCommercialCar = ref(false);
 const isError = ref(false);
@@ -640,12 +640,14 @@ watch(() => quoteForm.partner_name, (newValue, oldValue) => {
         <x-input
           v-if="showPartnerNameField"
           label="PARTNER NAME"
-          required
+          :required="canEditSubSourceFields"
           v-model="quoteForm.partner_name"
           class="w-full"
           type="text"
           placeholder="Enter Partner Name"
-          :rules="[isRequired]"
+          :tooltip="'Name of campaign, event or club'"
+          maxLength="50"
+          :rules="canEditSubSourceFields ? [isRequired, maxCharacters(50)] : []"
           :error="quoteForm.errors.partner_name"
           :disabled="!canEditSubSourceFields"
         />

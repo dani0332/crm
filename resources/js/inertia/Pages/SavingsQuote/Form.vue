@@ -144,7 +144,7 @@ const quoteForm = useForm({
   partner_name: props.leadSourceParams?.partnerName || '',
 });
 
-const { isRequired, isEmail, isMobileNo, isValidName } = useRules();
+const { isRequired, isEmail, isMobileNo, isValidName, maxCharacters } = useRules();
 
 const editMode = computed(() => {
   return props.quote && props.quote.uuid ? true : false;
@@ -289,12 +289,14 @@ watch(() => quoteForm.partner_name, (newValue, oldValue) => {
         <x-input
           v-if="showPartnerNameField"
           label="PARTNER NAME"
-          required
+          :required="canEditSubSourceFields"
           v-model="quoteForm.partner_name"
           class="w-full"
           type="text"
           placeholder="Enter Partner Name"
-          :rules="[isRequired]"
+          :tooltip="'Name of campaign, event or club'"
+          maxLength="50"
+          :rules="canEditSubSourceFields ? [isRequired, maxCharacters(50)] : []"
           :error="quoteForm.errors.partner_name"
           :disabled="!canEditSubSourceFields"
         />

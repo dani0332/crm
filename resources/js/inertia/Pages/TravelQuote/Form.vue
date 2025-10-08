@@ -171,6 +171,7 @@ const {
   policy_start_date,
   isEmail,
   isMobileNo,
+  maxCharacters,
 } = useRules();
 
 const subTeamOptions = [
@@ -632,8 +633,10 @@ const floorLabel = computed(() => {
           v-model="quoteForm.partner_name"
           :error="quoteForm.errors.partner_name"
           :disabled="!canEditSubSourceFields"
-          :rules="[isRequired]"
-          required
+          :required="canEditSubSourceFields"
+          maxlength="50"
+          :tooltip="'Name of campaign, event or club'"
+          :rules="canEditSubSourceFields ? [isRequired, maxCharacters(50)] : []"
           class="w-full"
           placeholder="Enter Partner Name"
         />

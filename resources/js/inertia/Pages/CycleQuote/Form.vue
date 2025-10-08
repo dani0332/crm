@@ -100,7 +100,7 @@ const quoteForm = useForm({
   })(),
 });
 
-const { isRequired, isEmail, isMobileNo } = useRules();
+const { isRequired, isEmail, isMobileNo, maxCharacters } = useRules();
 
 const editMode = computed(() => {
   return props.quote ? true : false;
@@ -264,12 +264,14 @@ const gender = computed(() => {
         <x-input
           v-if="showPartnerNameField"
           label="PARTNER NAME"
-          required
+          :required="canEditSubSourceFields"
           v-model="quoteForm.partner_name"
           class="w-full"
+          maxlength="50"
           type="text"
           placeholder="Enter Partner Name"
-          :rules="[isRequired]"
+          :tooltip="'Name of campaign, event or club'"
+          :rules="canEditSubSourceFields ? [isRequired, maxCharacters(50)] : []"
           :error="quoteForm.errors.partner_name"
           :disabled="!canEditSubSourceFields"
         />
