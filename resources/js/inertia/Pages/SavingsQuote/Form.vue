@@ -125,7 +125,7 @@ const quoteForm = useForm({
   investment_frequency:
     props.quote?.savings_quote?.investment_criteria_id || '',
   notes: (() => {
-    let notes = props.quote?.notes || props.quote?.savings_quote?.additional_notes || '';
+    let notes = props.quote?.notes || '';
     const partnerName = props.leadSourceParams?.partnerName;
     if (partnerName) {
       if (notes) {
@@ -136,7 +136,7 @@ const quoteForm = useForm({
     }
     return notes;
   })(),
-  
+
   // Sub-source fields
   sub_source_id: parseInt(props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0) || null,
   sub_source_options_id: parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption || 0) || null,
