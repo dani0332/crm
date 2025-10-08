@@ -870,6 +870,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ->name('admin.allocation-configuration.store');
     Route::put('allocation-configuration/{allocationConfiguration}', [\App\Http\Controllers\AllocationConfigurationController::class, 'update'])
         ->name('admin.allocation-configuration.update');
+    Route::get('/teams', [\App\Http\Controllers\AllocationConfigurationController::class, 'getTeams'])
+        ->name('admin.allocation-configuration.teams');
+    Route::get('/api/plan-types', [\App\Http\Controllers\AllocationConfigurationController::class, 'getPlanTypes'])
+        ->name('admin.allocation-configuration.plan-types');
 
     Route::get('/add-batch-number', function () {
         $addBtchNuimber = new AddBatchForNonMotors;

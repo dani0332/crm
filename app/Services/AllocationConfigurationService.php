@@ -53,6 +53,13 @@ class AllocationConfigurationService
             ];
         }
 
+        if ($quoteType === QuoteTypes::GROUP_MEDICAL) {
+            return [
+                'micro_brackets' => $data['micro_brackets'] ?? [],
+                'non_micro_brackets' => $data['non_micro_brackets'] ?? [],
+            ];
+        }
+
         return [];
     }
 
@@ -117,11 +124,11 @@ class AllocationConfigurationService
             $corplineType->code = QuoteTypes::CORPLINE->value;
             $quoteTypes->push($corplineType);
 
-            // TODO: Add Group Medical here later
-            // $groupMedicalType = clone $businessType;
-            // $groupMedicalType->text = 'Group Medical';
-            // $groupMedicalType->code = QuoteTypes::GROUP_MEDICAL->value;
-            // $quoteTypes->push($groupMedicalType);
+            // Add Group Medical as another subtype of Business
+            $groupMedicalType = clone $businessType;
+            $groupMedicalType->text = 'Group Medical';
+            $groupMedicalType->code = QuoteTypes::GROUP_MEDICAL->value;
+            $quoteTypes->push($groupMedicalType);
         }
 
         // Reset collection keys and return as array-like collection

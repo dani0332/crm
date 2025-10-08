@@ -9,12 +9,14 @@ export function useAllocationForm(props, errorHandling) {
   const advisorOptions = ref([]);
   const nationalityOptions = ref([]);
   const teamOptions = ref([]);
+  const planTypeOptions = ref([]);
   const currentConfiguration = ref(null);
   const savingsTemplateRef = ref(null);
   const homeTemplateRef = ref(null);
   const lifeTemplateRef = ref(null);
   const simpleTemplateRef = ref(null);
   const corplineTemplateRef = ref(null);
+  const groupMedicalTemplateRef = ref(null);
   const auditLogsKey = ref(0);
   const isViewMode = ref(false);
   const originalConfiguration = ref(null);
@@ -30,6 +32,7 @@ export function useAllocationForm(props, errorHandling) {
     return {
       quote_type: '',
       quote_type_id: '',
+      selectedQuoteTypeCode: '', // Used for dropdown binding
     };
   };
 
@@ -37,8 +40,9 @@ export function useAllocationForm(props, errorHandling) {
 
   const quoteTypeOptions = computed(() => {
     return props.quoteTypes.map(type => ({
-      value: type.id,
+      value: type.code, // Use code as unique identifier instead of id
       label: type.text,
+      id: type.id, // Keep id for backend
     }));
   });
 
@@ -49,8 +53,8 @@ export function useAllocationForm(props, errorHandling) {
     }));
   };
 
-  const getQuoteType = quoteTypeId => {
-    return props.quoteTypes.find(type => type.id === quoteTypeId);
+  const getQuoteType = quoteTypeCode => {
+    return props.quoteTypes.find(type => type.code === quoteTypeCode);
   };
 
   const fetchAdvisors = async quoteType => {
@@ -95,6 +99,26 @@ export function useAllocationForm(props, errorHandling) {
     }
   };
 
+  const fetchPlanTypes = async () => {
+    planTypeOptions.value = [];
+    try {
+      const response = await axios.get('/api/plan-types');
+
+      if (
+        response.data.success &&
+        response.data.data &&
+        response.data.data.length > 0
+      ) {
+        planTypeOptions.value = response.data.data.map(planType => ({
+          value: planType.id,
+          label: planType.name,
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching plan types:', error);
+    }
+  };
+
   const fetchConfiguration = async quoteType => {
     currentConfiguration.value = null;
     try {
@@ -125,10 +149,12 @@ export function useAllocationForm(props, errorHandling) {
   const handleQuoteTypeChange = async quoteType => {
     form.quote_type = quoteType.code;
     form.quote_type_id = quoteType.id;
+    form.selectedQuoteTypeCode = quoteType.code;
 
     templateData.value = {};
     advisorOptions.value = [];
     teamOptions.value = [];
+    planTypeOptions.value = [];
     currentConfiguration.value = null;
     successMessage.value = ''; // Clear success message when LOB changes
     clearAllErrors(); // Clear any existing errors
@@ -144,6 +170,11 @@ export function useAllocationForm(props, errorHandling) {
       // Fetch teams for Corpline
       if (quoteType.code === props.quoteTypeCodeEnum.CORPLINE) {
         fetchTasks.push(fetchTeams());
+      }
+
+      // Fetch plan types for Group Medical
+      if (quoteType.code === props.quoteTypeCodeEnum.GROUP_MEDICAL) {
+        fetchTasks.push(fetchPlanTypes());
       }
 
       await Promise.all(fetchTasks);
@@ -204,6 +235,12 @@ export function useAllocationForm(props, errorHandling) {
       if (corplineTemplateRef.value) {
         nextTick(() => {
           corplineTemplateRef.value.clearValidationErrors();
+        });
+      }
+
+      if (groupMedicalTemplateRef.value) {
+        nextTick(() => {
+          groupMedicalTemplateRef.value.clearValidationErrors();
         });
       }
     }
@@ -317,6 +354,22 @@ export function useAllocationForm(props, errorHandling) {
         }
       }
 
+      // Validate Group Medical template
+      if (
+        form.quote_type === props.quoteTypeCodeEnum.GROUP_MEDICAL &&
+        groupMedicalTemplateRef.value
+      ) {
+        const templateValidation = groupMedicalTemplateRef.value.validate();
+
+        if (!templateValidation.isValid) {
+          templateValidation.errors.forEach(error => {
+            addError(error, 'bracket');
+          });
+          isSubmitting.value = false;
+          return;
+        }
+      }
+
       isSubmitting.value = true;
 
       const submitData = {
@@ -373,6 +426,10 @@ export function useAllocationForm(props, errorHandling) {
             corplineTemplateRef.value.clearValidationErrors();
           }
 
+          if (groupMedicalTemplateRef.value) {
+            groupMedicalTemplateRef.value.clearValidationErrors();
+          }
+
           auditLogsKey.value += 1;
 
           // Switch to view mode after successful save/update
@@ -418,10 +475,10 @@ export function useAllocationForm(props, errorHandling) {
 
   // Watch for quote type changes
   watch(
-    () => form.quote_type_id,
-    (newQuoteTypeId, oldQuoteTypeId) => {
-      if (newQuoteTypeId && newQuoteTypeId !== oldQuoteTypeId) {
-        const newQuoteType = getQuoteType(newQuoteTypeId);
+    () => form.selectedQuoteTypeCode,
+    (newQuoteTypeCode, oldQuoteTypeCode) => {
+      if (newQuoteTypeCode && newQuoteTypeCode !== oldQuoteTypeCode) {
+        const newQuoteType = getQuoteType(newQuoteTypeCode);
 
         if (!newQuoteType) {
           return;
@@ -441,12 +498,14 @@ export function useAllocationForm(props, errorHandling) {
     advisorOptions,
     nationalityOptions,
     teamOptions,
+    planTypeOptions,
     currentConfiguration,
     savingsTemplateRef,
     homeTemplateRef,
     lifeTemplateRef,
     simpleTemplateRef,
     corplineTemplateRef,
+    groupMedicalTemplateRef,
     auditLogsKey,
     form,
     isViewMode,

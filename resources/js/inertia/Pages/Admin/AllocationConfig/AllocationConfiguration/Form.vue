@@ -7,6 +7,7 @@ import HomeAllocationConfigTemplate from './Home/HomeAllocationConfigTemplate.vu
 import LifeAllocationConfigTemplate from './Life/LifeAllocationConfigTemplate.vue';
 import SimpleAllocationConfigTemplate from './Simple/SimpleAllocationConfigTemplate.vue';
 import CorplineAllocationConfigTemplate from './Corpline/CorplineAllocationConfigTemplate.vue';
+import GroupMedicalAllocationConfigTemplate from './GroupMedical/GroupMedicalAllocationConfigTemplate.vue';
 import ErrorDisplay from './components/ErrorDisplay.vue';
 import { useErrorHandling } from './composables/useErrorHandling.js';
 import { useAllocationForm } from './composables/useAllocationForm.js';
@@ -41,12 +42,14 @@ const {
   advisorOptions,
   nationalityOptions,
   teamOptions,
+  planTypeOptions,
   currentConfiguration,
   savingsTemplateRef,
   homeTemplateRef,
   lifeTemplateRef,
   simpleTemplateRef,
   corplineTemplateRef,
+  groupMedicalTemplateRef,
   auditLogsKey,
   form,
   quoteTypeOptions,
@@ -77,7 +80,7 @@ onMounted(() => {
           <div class="max-w-md">
             <x-field label="Line of business" required>
               <x-select
-                v-model="form.quote_type_id"
+                v-model="form.selectedQuoteTypeCode"
                 :options="quoteTypeOptions"
                 placeholder="Select line of business"
                 filterable
@@ -87,14 +90,14 @@ onMounted(() => {
             </x-field>
 
             <div
-              v-if="!form.quote_type_id && !isQuoteTypeLoading"
+              v-if="!form.selectedQuoteTypeCode && !isQuoteTypeLoading"
               class="mt-2 text-sm text-gray-500"
             >
               Please select a line of business to begin configuration
             </div>
 
             <div
-              v-if="form.quote_type_id && !isQuoteTypeLoading"
+              v-if="form.selectedQuoteTypeCode && !isQuoteTypeLoading"
               class="mt-2 text-sm text-gray-600"
             >
               <div class="flex items-center space-x-2">
@@ -234,6 +237,17 @@ onMounted(() => {
             :view-mode="isViewMode"
             @data-update="onTemplateDataUpdate"
             ref="corplineTemplateRef"
+          />
+        </div>
+
+        <div v-else-if="form.quote_type === quoteTypeCodeEnum.GROUP_MEDICAL">
+          <GroupMedicalAllocationConfigTemplate
+            :configuration="currentConfiguration"
+            :advisor-options="advisorOptions"
+            :plan-type-options="planTypeOptions"
+            :view-mode="isViewMode"
+            @data-update="onTemplateDataUpdate"
+            ref="groupMedicalTemplateRef"
           />
         </div>
 
