@@ -39,6 +39,7 @@ class Kernel extends ConsoleKernel
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
         Commands\TravelRenewalLeads::class,
+        Commands\CaptureEPPaymentsCommand::class,
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
@@ -142,6 +143,21 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('horizon:snapshot')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
         $schedule->command('remove-pcp-tag')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
+
+        $schedule->command('ep:capture-payments')
+            ->hourly()
+            ->onOneServer()
+            ->withoutOverlapping(30)
+            ->onSuccess(function (Stringable $output) {
+                LoggerService::info('----------- CaptureEPPaymentsJob Completed -----------', extra: [
+                    'output' => $output,
+                ]);
+            })
+            ->onFailure(function (Stringable $output) {
+                LoggerService::info('----------- CaptureEPPaymentsJob Failed -----------', extra: [
+                    'output' => $output,
+                ]);
+            });
     }
 
     /**
