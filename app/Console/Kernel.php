@@ -149,10 +149,14 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(30)
             ->onSuccess(function (Stringable $output) {
-                LoggerService::info('----------- CaptureEPPaymentsJob Completed -----------' . $output);
+                LoggerService::info('----------- CaptureEPPaymentsJob Completed -----------', extra: [
+                    'output' => $output,
+                ]);
             })
             ->onFailure(function (Stringable $output) {
-                LoggerService::info('----------- CaptureEPPaymentsJob Failed -----------' . $output);
+                LoggerService::info('----------- CaptureEPPaymentsJob Failed -----------', extra: [
+                    'output' => $output,
+                ]);
             });
     }
 

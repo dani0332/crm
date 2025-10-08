@@ -41,11 +41,11 @@ class CaptureEPPaymentsCommand extends Command
      */
     public function handle()
     {
-        info('CaptureEPPaymentsCommand Started');
+        LoggerService::info('CaptureEPPaymentsCommand Started');
         $isAutoCaptureEPPaymentsEnabled = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_AUTO_CAPTURE_EP_PAYMENTS)->first();
 
         if (!$isAutoCaptureEPPaymentsEnabled || $isAutoCaptureEPPaymentsEnabled->value == 0) {
-            info('CaptureEPPaymentsCommand is disabled');
+            LoggerService::info('CaptureEPPaymentsCommand is disabled');
             return;
         }
 
@@ -55,7 +55,8 @@ class CaptureEPPaymentsCommand extends Command
             try {
                 $this->processEPPayments($quoteType);
             } catch (Exception $e) {
-                Log::error("CaptureEPPaymentsCommand - Failed to process {$quoteType} quotes", [
+                LoggerService::error("CaptureEPPaymentsCommand - Failed to process quotes", extra: [
+                    'quoteType' => $quoteType,
                     'error' => $e->getMessage(),
                 ]);
             }
@@ -83,10 +84,6 @@ class CaptureEPPaymentsCommand extends Command
                 },
             ],
         ];
-
-        if (!isset($modelMap[$quoteType])) {
-            throw new InvalidArgumentException("Invalid quote type: {$quoteType}");
-        }
 
         $config = $modelMap[$quoteType];
         $model = $config['model'];
@@ -126,7 +123,11 @@ class CaptureEPPaymentsCommand extends Command
         if ($leads->count()) {
             foreach ($leads as $lead) {
                 $epsCodes = $lead->embeddedTransactions->pluck('code')->toArray();
-                LoggerService::info('CaptureEPPaymentsCommand - capturing embedded products - ' . $lead->id . ' - ' . $lead->code . ' - ' . implode(', ', $epsCodes));
+                LoggerService::info('CaptureEPPaymentsCommand - capturing embedded product', extra: [
+                    'leadId' => $lead->id,
+                    'leadCode' => $lead->code,
+                    'epsCodes' => $epsCodes,
+                ]);
                 try {
                     $quoteTypeCode = $quoteType === 'personal'
                         ? QuoteTypes::getName($lead->quote_type_id)->value
@@ -134,7 +135,7 @@ class CaptureEPPaymentsCommand extends Command
 
                     EmbeddedProductRepository::capturePayment($lead->id, $quoteTypeCode);
                 } catch (Exception $e) {
-                    Log::error('CaptureEPPaymentsCommand - capture embedded products failed', [
+                    LoggerService::error('CaptureEPPaymentsCommand - capture embedded products failed', [
                         'error' => $e->getMessage(),
                         'uuid' => $lead->uuid,
                     ]);
