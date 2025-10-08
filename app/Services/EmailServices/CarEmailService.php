@@ -10,6 +10,7 @@ use App\Enums\QuoteFlowType;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\CompanyCarFollowupJob;
@@ -207,7 +208,7 @@ class CarEmailService extends BaseService
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->plans = $insurerPlans;
         $emailData->totalPlans = count($insurerPlans);
-        $emailData->isReAssignment = ! empty($previousAdvisor);
+        $emailData->isReAssignment = $carQuote->isReAssignment();
 
         if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
             $emailData->isRenewal = true;
@@ -788,7 +789,7 @@ class CarEmailService extends BaseService
     public function buildFailedCarRenewalsEmailData($failedQuotes, $renewalsUploadLeadsId)
     {
         // Retrieve all CarRenewalManager emails in a single query
-        $renewalsManagersEmails = User::role(\App\Enums\RolesEnum::CarRenewalManager)
+        $renewalsManagersEmails = User::role(RolesEnum::RenewalsManager)
             ->pluck('email')
             ->filter()
             ->values()

@@ -51,6 +51,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::get('/home/renewal-ocb-attachment', [ApiController::class, 'homeRenewalOCBAttachment'])->name('homeRenewalOCBAttachment');
     Route::get('/quotes/{quoteType}/get-plans-pdf-url', [GenericLobController::class, 'getPlansPdfUrl'])->name('getPlansPdfUrl');
     Route::post('/imcrm/document-notification', [ApiController::class, 'documentNotification'])->name('documentNotification');
+    Route::post('send-my-alfred-welcome-email', [GenericLobController::class, 'sendMyAlfredWelcomeEmail']);
 
     // BOR (Broker on Record) API Routes
     Route::prefix('bor')->group(function () {
@@ -67,6 +68,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     });
 
 });
+
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
@@ -114,6 +116,7 @@ Route::prefix('v1')->group(function () {
     Route::get('users/first-manager/{email}', [UserController::class, 'getFirstManager'])->name('getFirstManager');
 
 });
+
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
 Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);

@@ -6,12 +6,16 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ExportPlansPdfLinkRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Http\Requests\MaWelcomEmailRequest;
 use App\Http\Requests\OCBEmailRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\DeleteTempOCBPDFFileJob;
+use App\Jobs\MAWelcomeJob;
 use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
 use App\Services\EmailServices\CarEmailService;
+use App\Models\Customer;
+use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -129,4 +133,23 @@ class GenericLobController extends Controller
         return $service->exportPlansPdf($quoteType, $request->validated());
     }
 
+    public function sendMyAlfredWelcomeEmail(MaWelcomEmailRequest $request)
+    {
+        LoggerService::info('MyAlfred Welcome Email - Request received', [
+            'customer_email' => $request->email,
+            'code' => $request->code,
+            'source' => $request->source,
+            'tag' => $request->tag,
+        ]);
+
+        $customer = Customer::where('email', $request->email)->first();
+
+        LoggerService::info('MyAlfred Welcome Email - Dispatching job', [
+            'customer_email' => $customer->email,
+        ]);
+
+        MAWelcomeJob::dispatch($customer, $request->source, $request->tag);
+
+        return response()->json(['message' => 'Welcome email sent successfully']);
+    }
 }
