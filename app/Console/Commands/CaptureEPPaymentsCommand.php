@@ -6,7 +6,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
@@ -66,12 +65,12 @@ class CaptureEPPaymentsCommand extends Command
         $modelMap = [
             QuoteTypes::CAR->value => [
                 'model' => CarQuote::class,
-                'quoteTypeCode' => quoteTypeCode::Car,
+                'quoteTypeCode' => QuoteTypes::CAR->value,
                 'additionalConditions' => null,
             ],
             QuoteTypes::TRAVEL->value => [
                 'model' => TravelQuote::class,
-                'quoteTypeCode' => quoteTypeCode::Travel,
+                'quoteTypeCode' => QuoteTypes::TRAVEL->value,
                 'additionalConditions' => null,
             ],
             QuoteTypes::PERSONAL->value => [
