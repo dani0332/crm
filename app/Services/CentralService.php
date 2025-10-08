@@ -1533,7 +1533,7 @@ class CentralService extends BaseService
             'code' => $quote->code,
         ];
 
-        $this->emailDataExtend(emailData: $emailData, quote: $quote, quoteTypeId: $quoteTypeId, workflowType: $workflowType);
+        $this->emailDataExtend(emailData: $emailData, quote: $quote, quoteTypeId: $quoteTypeId, workflowType: $workflowType, existingEmailData: $existingEmailData);
 
         return $emailData;
     }
@@ -1564,10 +1564,10 @@ class CentralService extends BaseService
         return [1, $emailData, 'send-update', $quoteTypeId, $workflowType];
     } */
 
-    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $workflowType = null): void
+    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $workflowType = null, $existingEmailData = null): void
     {
         $emailData->advisorEmail = $quote->advisor->email ?? '';
-        $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
+        $emailData->customerName = $quote->first_name.' '.$quote->last_name;
         $emailData->advisorLandLine = $quote->advisor->landline_no ?? '';
         $emailData->advisorMobilePhone = $quote->advisor->mobile_no ?? '';
         $emailData->advisorName = $quote->advisor->name ?? '';
@@ -1590,9 +1590,11 @@ class CentralService extends BaseService
             $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? 'NA';
         }
 
+        $quote->load('latestInsured');
+        $emailData->insuredName = $quote?->latestInsured?->first_name ? strtoupper($quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name) : '';
+
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
             QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
-            $emailData->insuredName = strtoupper($quote->first_name.' '.$quote->last_name);
             $emailData->quoteUID = $quote->uuid;
             $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
@@ -1660,50 +1662,73 @@ class CentralService extends BaseService
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
 
+        if (
+            $quoteTypeId != QuoteTypeId::Business ||
+            ! in_array($quote?->business_type_of_insurance_id, [
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet),
+            ])
+        ) {
+            $handBookDocuments = $existingEmailData->handBookDocuments ?? [];
+            if (! empty($handBookDocuments)) {
+                // Get the latest document from the array
+                $latestDocument = collect($handBookDocuments)->last();
+                $url = $latestDocument['url'] ?? null;
+                
+                if ($url) {
+                    $emailData->handBookDocuments = str_contains($url, 'http') ? $url : $storageUrl.$url;
+                }
+            }
+        }
+
+        $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
+        if (! empty($quoteDocuments)) {
+            $quoteDocuments = collect($quoteDocuments);
+
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business])) {
+                $emailData->policyCertificate = $storageUrl.$quoteDocuments->filter(function ($document) {
+                    return $document['document_type_code'] == DocumentTypeCode::CPC;
+                })->first()['doc_url'] ?? '';
+            }
+
+            // Signed Medical Application form
+            if ($quoteTypeId == QuoteTypeId::Health) {
+                /* $emailData->policyCertificate = $storageUrl.$quoteDocuments->filter(function ($document) {
+                    return $document['document_type_code'] == DocumentTypeCode::CPC;
+                })->first()['doc_url'] ?? ''; */
+            }
+
+            // E-Card
+            if (
+                $quoteTypeId == QuoteTypeId::Health || 
+                ($quoteTypeId == QuoteTypeId::Business && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical))
+            ) {
+                /* $emailData->policyCertificate = $storageUrl.$quoteDocuments->filter(function ($document) {
+                    return $document['document_type_code'] == DocumentTypeCode::CPC;
+                })->first()['doc_url'] ?? ''; */
+            }
+
+            $emailData->policySchedule = $storageUrl.$quoteDocuments->filter(function ($document) {
+                return $document['document_type_code'] == DocumentTypeCode::CPS;
+            })->first()['doc_url'] ?? '';
+        }
+
         if ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->companyName = $quote->company_name;
             $emailData->details = $quote->brief_details;
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $emailData->tpa = 'NA'; // need to confirm.
             }
-
-            /* if (! empty($sendUpdateLog)) {
-                $documents = $sendUpdateLog->documents->whereIn('document_type_code', [
-                    DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                    DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
-                    DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
-                ])->toArray();
-
-                $policyCertificate = collect($documents)->firstWhere('document_type_code', DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE)['doc_url'] ?? '';
-                $policySchedule = collect($documents)->firstWhere('document_type_code', DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE)['doc_url'] ?? '';
-                $taxInvoice = collect($documents)->firstWhere('document_type_code', DocumentTypeCode::SEND_UPDATE_TAX_INVOICE)['doc_url'] ?? '';
-
-                if (! empty($policyCertificate)) {
-                    $emailData->policyCertificate = $storageUrl.$policyCertificate;
-                }
-
-                if (! empty($policySchedule)) {
-                    $emailData->policySchedule = $storageUrl.$policySchedule;
-                }
-
-                if (! empty($taxInvoice)) {
-                    $emailData->taxInvoice = $storageUrl.$taxInvoice;
-                }
-            } */
         }
     }
 
     public function sendInslyEmailToCustomer($lead, $emailData, $quoteTypeId, $emailType = '')
     {
         $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
-            $birdUrlKey = 'BIRD_MOTOR_INSLY_WORKFLOW';
-        } else {
-            $birdUrlKey = "BIRD_{$quoteType}_INSLY_WORKFLOW";
-        }
+
         try {
             info("Sending {$quoteType} followups email for {$emailType} uuid: ".$lead->uuid.' | Time: '.now());
-            $birdUrlKey = constant("App\Enums\ApplicationStorageEnums::{$birdUrlKey}");
+            $birdUrlKey = ApplicationStorageEnums::BIRD_INSLY_WORKFLOW;
 
             $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
             if ($birdUrl) {
@@ -1713,8 +1738,6 @@ class CentralService extends BaseService
                 if (! empty($response->headers['Run-Id'])) {
                     $this->createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, strtoupper($emailData->workflowType));
                 }
-            } else {
-                LoggerService::info("{$birdUrlKey} key not found for {$emailType} uuid: {$lead->uuid} |Time: ".now());
             }
 
             return $response?->status_code ?? null;
