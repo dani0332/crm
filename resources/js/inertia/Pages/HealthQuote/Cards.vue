@@ -80,6 +80,7 @@ const filters = reactive({
   policy_expiry_date_end: '',
   last_modified_date: null,
   private_client: 'all',
+  pec_flag: 'all',
 });
 
 provide('filters', filters);
@@ -495,6 +496,18 @@ const validateDateRange = () => {
             { value: 1, label: 'Yes' },
             { value: 'no', label: 'No' },
             { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
+          v-model="filters.pec_flag"
+          label="Policy PEC Flag"
+          placeholder="Search by PEC flag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
           ]"
           class="w-full"
           :single="true"
