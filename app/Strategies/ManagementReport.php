@@ -91,7 +91,7 @@ class ManagementReport
             ->with('childs')
             ->where('is_active', 1)
             ->orderBy('text')
-            ->get(['id', 'text', 'code', 'description','parent_id'])
+            ->get(['id', 'text', 'code', 'description', 'parent_id'])
             ->map(function ($item) {
                 return [
                     'id' => $item->id,

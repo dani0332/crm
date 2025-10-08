@@ -331,8 +331,6 @@ class HomeQuoteRepository extends BaseRepository
             LoggerService::error('Failed to dispatch SaveCustomerAddressJob', exception: $e);
         }
 
-
-
         return $response;
     }
 
@@ -844,7 +842,7 @@ class HomeQuoteRepository extends BaseRepository
                 },
                 'transactionType',
                 'subSource',
-                'subSourceOption'
+                'subSourceOption',
             ])
             ->select([
                 $this->getTable().'.*',

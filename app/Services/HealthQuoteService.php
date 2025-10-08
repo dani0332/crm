@@ -479,7 +479,6 @@ class HealthQuoteService extends BaseService
         $healthQuote->policy_start_date = $request->policy_start_date;
         $healthQuote->health_plan_type_id = $request->plan_type_id;
 
-
         // Update sub-source fields from CreateLeadModal
         if ($request->has('sub_source_id')) {
             $healthQuote->sub_source_id = $request->sub_source_id;

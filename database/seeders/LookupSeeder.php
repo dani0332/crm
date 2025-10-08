@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Lookup;
 use Illuminate\Database\Seeder;
@@ -303,8 +302,6 @@ class LookupSeeder extends Seeder
 
     /**
      * Create referral sources lookup data for all quote types
-     *
-     * @return void
      */
     private function createReferralSources(): void
     {
@@ -314,7 +311,7 @@ class LookupSeeder extends Seeder
                 'text' => "Advisor's own referral",
                 'code' => 'advisors-own-referral',
                 'description' => "This lead is sourced from advisor's personal network (family or friend).",
-                'children' => []
+                'children' => [],
             ],
             [
                 'text' => 'Existing IM Customers',
@@ -324,14 +321,14 @@ class LookupSeeder extends Seeder
                     [
                         'text' => 'IM Cross-sell',
                         'code' => 'im-cross-sell',
-                        'description' => "This lead is a new business opportunity of IM's legacy customer."
+                        'description' => "This lead is a new business opportunity of IM's legacy customer.",
                     ],
                     [
                         'text' => 'PCP Cross-sell',
                         'code' => 'pcp-cross-sell',
-                        'description' => 'This lead is a new business opportunity of a IM_PCP customer.'
-                    ]
-                ]
+                        'description' => 'This lead is a new business opportunity of a IM_PCP customer.',
+                    ],
+                ],
             ],
             [
                 'text' => 'Customer Referrals',
@@ -341,20 +338,20 @@ class LookupSeeder extends Seeder
                     [
                         'text' => 'IM customer referral',
                         'code' => 'im-customer-referral',
-                        'description' => "This lead is of a new customer referred by IM's legacy customer."
+                        'description' => "This lead is of a new customer referred by IM's legacy customer.",
                     ],
                     [
                         'text' => 'PCP customer referral',
                         'code' => 'pcp-customer-referral',
-                        'description' => 'This lead is of a new customer referred by a PCP customer.'
-                    ]
-                ]
+                        'description' => 'This lead is of a new customer referred by a PCP customer.',
+                    ],
+                ],
             ],
             [
                 'text' => 'IM Internal Referrals',
                 'code' => 'im-internal-referrals',
                 'description' => 'This is a referral from IM department or colleague.',
-                'children' => []
+                'children' => [],
             ],
             [
                 'text' => 'Strategic Partners Referrals',
@@ -364,20 +361,20 @@ class LookupSeeder extends Seeder
                     [
                         'text' => 'CEO club',
                         'code' => 'ceo-club',
-                        'description' => 'This is a new customer referred from IM partnered groups, clubs or campaigns.'
+                        'description' => 'This is a new customer referred from IM partnered groups, clubs or campaigns.',
                     ],
                     [
                         'text' => "Young Presidents' Organization (YPO)",
                         'code' => 'young-presidents-organization-ypo',
-                        'description' => 'This is a new customer referred from IM partnered groups, clubs or campaigns.'
+                        'description' => 'This is a new customer referred from IM partnered groups, clubs or campaigns.',
                     ],
                     [
                         'text' => 'Other clubs or campaigns',
                         'code' => 'other-clubs-or-campaigns',
-                        'description' => 'This is a new customer referred from IM partnered groups, clubs or campaigns.'
-                    ]
-                ]
-            ]
+                        'description' => 'This is a new customer referred from IM partnered groups, clubs or campaigns.',
+                    ],
+                ],
+            ],
         ];
 
         foreach ($referralSources as $parentSource) {
@@ -395,7 +392,7 @@ class LookupSeeder extends Seeder
             ]);
 
             // Create children if they exist
-            if (!empty($parentSource['children'])) {
+            if (! empty($parentSource['children'])) {
                 foreach ($parentSource['children'] as $childSource) {
                     Lookup::firstOrCreate([
                         'key' => LookupsEnum::SUB_SOURCE_OPTION,

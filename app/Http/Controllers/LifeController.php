@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\LifeCardLoadMoreRequest;
 use App\Http\Requests\LifeQuoteRequest;

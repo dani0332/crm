@@ -1685,9 +1685,9 @@ class CarQuoteService extends BaseService
         $isReferralType = $request->input('type') === 'referral' ||
                          ($request->has('source') && $request->source === 'IMCRM');
         $isEcomLeadExtension = $request->input('type') === 'ecom_lead_extension' ||
-                              (!$request->sub_source_id && !$request->sub_source_options_id && $request->primary_ref_id);
+                              (! $request->sub_source_id && ! $request->sub_source_options_id && $request->primary_ref_id);
 
-        if ($isReferralType && !$isEcomLeadExtension) {
+        if ($isReferralType && ! $isEcomLeadExtension) {
             // Sub source is required for referral types (except ECOM lead extension)
             $validationArray['sub_source_id'] = 'required|integer|exists:lookups,id';
 

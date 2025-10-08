@@ -299,17 +299,17 @@ class LifeQuoteService extends BaseService
             'createdById' => auth()->user()->id,
 
             // Lead source fields from CreateLeadModal
-            'subSourceId'           => $data['sub_source_id'] ?? null,
-            'subSourceOptionsId'     => $data['sub_source_options_id'] ?? null,
-            'primaryRefId'          => $data['primary_ref_id'] ?? null,
-            'additionalNotes'          => $data['notes'] ?? null,
+            'subSourceId' => $data['sub_source_id'] ?? null,
+            'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
+            'primaryRefId' => $data['primary_ref_id'] ?? null,
+            'additionalNotes' => $data['notes'] ?? null,
         ];
 
-        LoggerService::info("saveLifeQuote: ",[
-            'subSourceId'           => $data['sub_source_id'] ?? null,
-            'subSourceOptionsId'     => $data['sub_source_options_id'] ?? null,
-            'primaryRefId'          => $data['primary_ref_id'] ?? null,
-            'notes'          => $data['notes'] ?? null,
+        LoggerService::info('saveLifeQuote: ', [
+            'subSourceId' => $data['sub_source_id'] ?? null,
+            'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
+            'primaryRefId' => $data['primary_ref_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
         ]);
 
         return CapiRequestService::sendCAPIRequest('/api/v2-save-life-quote', $lifeQuote);
@@ -571,7 +571,7 @@ class LifeQuoteService extends BaseService
 
             $quoteData = Arr::only($data, app(PersonalQuote::class)->allowedColumns());
             $quoteData['updated_by_id'] = auth()->user()->id;
-            LoggerService::info("updateLifeQuote: ",$quoteData);
+            LoggerService::info('updateLifeQuote: ', $quoteData);
             $quote->update($quoteData);
 
             if ($quote->lifeQuote) {

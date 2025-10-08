@@ -6,7 +6,6 @@ use App\Enums\DefaultAdvisorEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\HealthQuote;
-use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -274,6 +273,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
     {
         $query = $this->buildGrid();
         $this->applyFilters($query, $requestParams);
+
         return $query;
     }
 }

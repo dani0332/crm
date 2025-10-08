@@ -403,7 +403,7 @@ class CRUDController extends Controller
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
                 'insurerAMLStatus' => $insurerAMLStatus,
-                'subSources' => $subSources
+                'subSources' => $subSources,
             ]);
         }
 
