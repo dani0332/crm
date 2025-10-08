@@ -475,7 +475,10 @@ const subSourceOptions = computed(() => {
   return sources.map(source => ({
     value: source.id,
     label: source.text,
-    suffix: source.description || source.tooltip || `Information about ${source.text}`,
+    suffix:
+      source.description ||
+      source.tooltip ||
+      `Information about ${source.text}`,
   }));
 });
 </script>

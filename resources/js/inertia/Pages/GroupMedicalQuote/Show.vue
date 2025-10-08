@@ -732,7 +732,7 @@ function handleOcrNotification(event) {
                 <dd>{{ quote.source }}</dd>
               </div>
 
-               <!-- Sub-source fields -->
+              <!-- Sub-source fields -->
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip placement="bottom">
@@ -741,7 +741,9 @@ function handleOcrNotification(event) {
                     >
                       IMCRM SUB-SOURCE
                     </label>
-                    <template #tooltip>{{ quote?.sub_source?.description || 'N/A' }}</template>
+                    <template #tooltip>{{
+                      quote?.sub_source?.description || 'N/A'
+                    }}</template>
                   </x-tooltip>
                 </div>
                 <div>{{ quote?.sub_source?.text || 'N/A' }}</div>
@@ -754,7 +756,9 @@ function handleOcrNotification(event) {
                     >
                       SUB SOURCE OPTION
                     </label>
-                    <template #tooltip>{{ quote?.sub_source_option?.description || 'N/A' }}</template>
+                    <template #tooltip>{{
+                      quote?.sub_source_option?.description || 'N/A'
+                    }}</template>
                   </x-tooltip>
                 </div>
                 <div>{{ quote?.sub_source_option?.text || 'N/A' }}</div>

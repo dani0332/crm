@@ -29,10 +29,10 @@ const leadForm = useForm({
 
 const isModalOpen = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value),
+  set: value => emit('update:modelValue', value),
 });
 
-const onConfirmCreateLead = (isValid) => {
+const onConfirmCreateLead = isValid => {
   if (!isValid) return;
 
   const leadData = {
@@ -71,7 +71,10 @@ const subSourceOptions = computed(() => {
   const options = props.subSources?.map(source => ({
     value: source.id,
     label: source.text,
-    suffix: source.description || source.tooltip || `Information about ${source.text}`, // Use suffix for tooltip data
+    suffix:
+      source.description ||
+      source.tooltip ||
+      `Information about ${source.text}`, // Use suffix for tooltip data
   }));
   return options;
 });
@@ -79,59 +82,76 @@ const subSourceOptions = computed(() => {
 const subSourceChildOptions = computed(() => {
   if (!leadForm.sub_source_id) return [];
 
-  const selectedSource = props.subSources.find(source => source.id == leadForm.sub_source_id);
+  const selectedSource = props.subSources.find(
+    source => source.id == leadForm.sub_source_id,
+  );
   if (!selectedSource || !selectedSource.childs) return [];
 
   return selectedSource.childs.map(child => ({
     value: child.id,
     label: child.text,
     code: child.code,
-    suffix: child.description || child.tooltip || `Information about ${child.text}`, // Add tooltip support
+    suffix:
+      child.description || child.tooltip || `Information about ${child.text}`, // Add tooltip support
   }));
 });
 
 // Check if Partner name field should be shown
 const showPartnerNameField = computed(() => {
   if (!leadForm.sub_source_options_id) return false;
-  const selected = subSourceChildOptions.value.find(option => option.value == leadForm.sub_source_options_id);
+  const selected = subSourceChildOptions.value.find(
+    option => option.value == leadForm.sub_source_options_id,
+  );
   return selected?.code === 'other-clubs-or-campaigns';
 });
 
 const validatePartnerNameMax = value => {
   if (!value) return true;
   const trimmed = String(value).trim();
-  return trimmed.length <= PARTNER_NAME_MAX_LENGTH || `Must be <= ${PARTNER_NAME_MAX_LENGTH} characters`;
+  return (
+    trimmed.length <= PARTNER_NAME_MAX_LENGTH ||
+    `Must be <= ${PARTNER_NAME_MAX_LENGTH} characters`
+  );
 };
 
 // Overall validity handled by x-form via :rules and submit callback
 
 // Watch for modal close to reset form
-watch(isModalOpen, (newValue) => {
+watch(isModalOpen, newValue => {
   if (!newValue) {
     resetForm();
   }
 });
 
 // Watch for type change to reset dependent fields
-watch(() => leadForm.type, () => {
-  leadForm.sub_source_id = null;
-  leadForm.sub_source_options_id = null;
-  leadForm.primary_ref_id = '';
-  leadForm.partner_name = '';
-});
+watch(
+  () => leadForm.type,
+  () => {
+    leadForm.sub_source_id = null;
+    leadForm.sub_source_options_id = null;
+    leadForm.primary_ref_id = '';
+    leadForm.partner_name = '';
+  },
+);
 
 // Watch for subSource change to reset subSourceOption
-watch(() => leadForm.sub_source_id, () => {
-  leadForm.sub_source_options_id = null;
-  leadForm.partner_name = '';
-});
+watch(
+  () => leadForm.sub_source_id,
+  () => {
+    leadForm.sub_source_options_id = null;
+    leadForm.partner_name = '';
+  },
+);
 
 // Watch for subSourceOption change to reset partnerName
-watch(() => leadForm.sub_source_options_id, () => {
-  if (!showPartnerNameField.value) {
-    leadForm.partner_name = '';
-  }
-});
+watch(
+  () => leadForm.sub_source_options_id,
+  () => {
+    if (!showPartnerNameField.value) {
+      leadForm.partner_name = '';
+    }
+  },
+);
 </script>
 
 <template>
@@ -142,7 +162,11 @@ watch(() => leadForm.sub_source_options_id, () => {
     show-close
     backdrop
   >
-    <x-form id="createLeadForm" @submit="onConfirmCreateLead" :auto-focus="false">
+    <x-form
+      id="createLeadForm"
+      @submit="onConfirmCreateLead"
+      :auto-focus="false"
+    >
       <div class="w-full grid md:grid-cols-2 gap-5">
         <p class="text-md font-bold text-gray-500">
           Select reason to create manual lead <span class="error">*</span>
@@ -203,28 +227,33 @@ watch(() => leadForm.sub_source_options_id, () => {
           </x-select>
         </div>
 
-      <!-- Conditional input for ECOM lead extension -->
-        <div v-if="leadForm.type === 'ecom_lead_extension'" class="flex flex-col gap-4">
-        <x-input
+        <!-- Conditional input for ECOM lead extension -->
+        <div
+          v-if="leadForm.type === 'ecom_lead_extension'"
+          class="flex flex-col gap-4"
+        >
+          <x-input
             v-model="leadForm.primary_ref_id"
-          label="Primary Ref Id"
-          name="primaryRefId"
-          placeholder="Enter Primary Ref Id"
-          class="w-full"
+            label="Primary Ref Id"
+            name="primaryRefId"
+            placeholder="Enter Primary Ref Id"
+            class="w-full"
             :rules="[isRequired]"
-          required
-        />
-      </div>
+            required
+          />
+        </div>
 
-      <!-- Conditional input for Partner Name when other-clubs-or-campaigns is selected -->
-      <div v-if="showPartnerNameField" class="flex flex-col gap-4">
-        <x-input
-          v-model="leadForm.partner_name"
-          label="Partner Name"
-          name="partnerName"
-          placeholder="Enter Partner Name"
-          class="w-full"
-            :rules="showPartnerNameField ? [isRequired, validatePartnerNameMax] : []"
+        <!-- Conditional input for Partner Name when other-clubs-or-campaigns is selected -->
+        <div v-if="showPartnerNameField" class="flex flex-col gap-4">
+          <x-input
+            v-model="leadForm.partner_name"
+            label="Partner Name"
+            name="partnerName"
+            placeholder="Enter Partner Name"
+            class="w-full"
+            :rules="
+              showPartnerNameField ? [isRequired, validatePartnerNameMax] : []
+            "
             required
             maxlength="50"
             :error="leadForm.errors.partner_name"
@@ -232,7 +261,6 @@ watch(() => leadForm.sub_source_options_id, () => {
           />
         </div>
       </div>
-
     </x-form>
 
     <template #actions>
@@ -245,12 +273,7 @@ watch(() => leadForm.sub_source_options_id, () => {
       >
         Cancel
       </x-button>
-      <x-button
-        size="md"
-        color="emerald"
-        type="submit"
-        form="createLeadForm"
-      >
+      <x-button size="md" color="emerald" type="submit" form="createLeadForm">
         Confirm
       </x-button>
     </template>

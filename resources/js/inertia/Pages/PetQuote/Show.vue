@@ -514,7 +514,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <!-- Sub-source fields -->
-              <div class="grid sm:grid-cols-2" >
+              <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip placement="bottom">
                     <label
@@ -522,7 +522,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     >
                       IMCRM SUB-SOURCE
                     </label>
-                    <template #tooltip>{{ quote?.sub_source?.description || 'N/A' }}</template>
+                    <template #tooltip>{{
+                      quote?.sub_source?.description || 'N/A'
+                    }}</template>
                   </x-tooltip>
                 </div>
                 <div>{{ quote?.sub_source?.text || 'N/A' }}</div>
@@ -535,7 +537,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     >
                       SUB SOURCE OPTION
                     </label>
-                    <template #tooltip>{{ quote?.sub_source_option?.description || 'N/A' }}</template>
+                    <template #tooltip>{{
+                      quote?.sub_source_option?.description || 'N/A'
+                    }}</template>
                   </x-tooltip>
                 </div>
                 <div>{{ quote?.sub_source_option?.text || 'N/A' }}</div>

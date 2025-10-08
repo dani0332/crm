@@ -213,11 +213,11 @@ const providers = computed(() => {
 });
 
 const subSourceOptions = computed(() => {
-  const sources = (page.props.subSources || []);
+  const sources = page.props.subSources || [];
   return sources.map(source => ({
     value: source.id,
     label: source.text,
-    suffix: source.description || source.tooltip || ''
+    suffix: source.description || source.tooltip || '',
   }));
 });
 
@@ -540,7 +540,7 @@ const fetchTeamUsers = () => {
     });
 };
 
-const onLeadConfirmed = (leadData) => {
+const onLeadConfirmed = leadData => {
   // Handle the confirmed lead data if needed
 };
 
@@ -1085,7 +1085,9 @@ const onConfirmPUAExport = () => {
           </template>
           <template #content-footer>
             <ui-select-actions
-              @select-all="filters.sub_source_id = subSourceOptions.map(item => item.value)"
+              @select-all="
+                filters.sub_source_id = subSourceOptions.map(item => item.value)
+              "
               @clear="filters.sub_source_id = []"
             />
           </template>

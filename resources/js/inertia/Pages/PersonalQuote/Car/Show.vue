@@ -2028,7 +2028,9 @@ function handleOcrNotification(event) {
                     >
                       IMCRM SUB-SOURCE
                     </label>
-                    <template #tooltip>{{ record.sub_source_description || 'N/A' }}</template>
+                    <template #tooltip>{{
+                      record.sub_source_description || 'N/A'
+                    }}</template>
                   </x-tooltip>
                 </dt>
                 <dd>{{ record.sub_source_text || 'N/A' }}</dd>
@@ -2042,7 +2044,9 @@ function handleOcrNotification(event) {
                     >
                       SUB SOURCE OPTION
                     </label>
-                    <template #tooltip>{{ record.sub_source_option_description || 'N/A' }}</template>
+                    <template #tooltip>{{
+                      record.sub_source_option_description || 'N/A'
+                    }}</template>
                   </x-tooltip>
                 </dt>
                 <dd>{{ record.sub_source_option_text || 'N/A' }}</dd>

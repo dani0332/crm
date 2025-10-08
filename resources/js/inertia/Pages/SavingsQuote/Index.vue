@@ -257,7 +257,7 @@ const onLeadAssigned = () => {
   quotesSelected.value = [];
 };
 
-const onLeadConfirmed = (leadData) => {
+const onLeadConfirmed = leadData => {
   createLeadModal.value = false;
 };
 
@@ -604,7 +604,9 @@ const validateDateRange = () => {
           </template>
           <template #content-footer>
             <ui-select-actions
-              @select-all="filters.sub_source_id = subSourceOptions.map(item => item.value)"
+              @select-all="
+                filters.sub_source_id = subSourceOptions.map(item => item.value)
+              "
               @clear="filters.sub_source_id = []"
             />
           </template>

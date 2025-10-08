@@ -77,7 +77,7 @@ const quoteForm = useForm({
   uae_license_held_for_id: props.quote?.uae_license_held_for_id || null,
   nationality_id: props.quote?.nationality_id || null,
   back_home_license_held_for_id:
-  props.quote?.back_home_license_held_for_id || null,
+    props.quote?.back_home_license_held_for_id || null,
   gender: props.quote?.gender || null,
   currently_insured_with: props.quote?.currently_insured_with || null,
   is_ecommerce: props.quote?.is_ecommerce || null,
@@ -110,9 +110,18 @@ const quoteForm = useForm({
   car_value: props.quote?.car_value || '',
 
   // Lead source fields from CreateLeadModal
-  sub_source_id: parseInt(props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0) || null,
-  sub_source_options_id: parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption || 0) || null,
-  primary_ref_id: props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
+  sub_source_id:
+    parseInt(
+      props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0,
+    ) || null,
+  sub_source_options_id:
+    parseInt(
+      props.quote?.sub_source_options_id ||
+        props.leadSourceParams?.subSourceOption ||
+        0,
+    ) || null,
+  primary_ref_id:
+    props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
   partner_name: props.leadSourceParams?.partnerName || '',
 
   addressObj: {
@@ -438,7 +447,6 @@ const gender = computed(() => {
 
 // Sub-source dropdown options
 const subSourceOptions = computed(() => {
-
   if (!props.subSources || props.subSources.length === 0) {
     return [];
   }
@@ -446,7 +454,8 @@ const subSourceOptions = computed(() => {
   const options = props.subSources.map(item => ({
     value: item.id, // Keep as integer to match form data type
     label: item.text,
-    suffix: item.description || item.tooltip || `Information about ${item.text}`, // Use suffix for tooltip data
+    suffix:
+      item.description || item.tooltip || `Information about ${item.text}`, // Use suffix for tooltip data
   }));
 
   return options;
@@ -456,19 +465,25 @@ const subSourceOptions = computed(() => {
 const subSourceOptionOptions = computed(() => {
   if (!quoteForm.sub_source_id) return [];
 
-  const selectedSubSource = props.subSources.find(item => item.id == quoteForm.sub_source_id);
+  const selectedSubSource = props.subSources.find(
+    item => item.id == quoteForm.sub_source_id,
+  );
   if (!selectedSubSource || !selectedSubSource.childs) return [];
 
   return selectedSubSource.childs.map(child => ({
     value: child.id, // Keep as integer to match form data type
     label: child.text,
-    suffix: child.description || child.tooltip || `Information about ${child.text}`, // Add tooltip support
+    suffix:
+      child.description || child.tooltip || `Information about ${child.text}`, // Add tooltip support
   }));
 });
 
 // Check if this is a referral type lead
 const isReferralType = computed(() => {
-  return props.leadSourceParams?.type === 'referral' || props.quote?.source === 'IMCRM';
+  return (
+    props.leadSourceParams?.type === 'referral' ||
+    props.quote?.source === 'IMCRM'
+  );
 });
 
 // Check if ECOM lead extension is selected
@@ -477,66 +492,93 @@ const isEcomLeadExtension = computed(() => {
   if (props.leadSourceParams?.type === 'ecom_lead_extension') return true;
 
   // From existing quote: sub_source_id and sub_source_options_id are null but primary_ref_id has value
-  if (!quoteForm.sub_source_id && !quoteForm.sub_source_options_id && quoteForm.primary_ref_id) {
+  if (
+    !quoteForm.sub_source_id &&
+    !quoteForm.sub_source_options_id &&
+    quoteForm.primary_ref_id
+  ) {
     return true;
   }
 
   return false;
 });
 
-
 // Role-based permissions for sub-source fields
 const canEditSubSourceFields = computed(() => {
-  return hasAnyRole([rolesEnum.CarManager, rolesEnum.Admin, rolesEnum.LeadPool]);
+  return hasAnyRole([
+    rolesEnum.CarManager,
+    rolesEnum.Admin,
+    rolesEnum.LeadPool,
+  ]);
 });
 
 // Show partner name field when "other-clubs-or-campaigns" is selected
 const showPartnerNameField = computed(() => {
   if (!quoteForm.sub_source_options_id) return false;
-  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
+  const selectedSubSource = props.subSources?.find(
+    source => source.id == quoteForm.sub_source_id,
+  );
   if (!selectedSubSource?.childs) return false;
-  const selectedSubSourceOption = selectedSubSource.childs.find(child => child.id == quoteForm.sub_source_options_id);
+  const selectedSubSourceOption = selectedSubSource.childs.find(
+    child => child.id == quoteForm.sub_source_options_id,
+  );
   return selectedSubSourceOption?.code === 'other-clubs-or-campaigns';
 });
 
 // Watch for sub-source changes to reset sub-source option
-watch(() => quoteForm.sub_source_id, (newValue) => {
-  quoteForm.sub_source_options_id = '';
-  quoteForm.partner_name = '';
-  if (!newValue) {
-    quoteForm.primary_ref_id = '';
-  }
-});
+watch(
+  () => quoteForm.sub_source_id,
+  newValue => {
+    quoteForm.sub_source_options_id = '';
+    quoteForm.partner_name = '';
+    if (!newValue) {
+      quoteForm.primary_ref_id = '';
+    }
+  },
+);
 
 // Watch for sub-source option changes to reset partner name
-watch(() => quoteForm.sub_source_options_id, (newValue) => {
-  quoteForm.partner_name = '';
-  if (!newValue) {
-    quoteForm.primary_ref_id = '';
-  }
-});
+watch(
+  () => quoteForm.sub_source_options_id,
+  newValue => {
+    quoteForm.partner_name = '';
+    if (!newValue) {
+      quoteForm.primary_ref_id = '';
+    }
+  },
+);
 
 // Watch for partner name changes to update additional_notes
-watch(() => quoteForm.partner_name, (newValue, oldValue) => {
-  if (!showPartnerNameField.value) return;
+watch(
+  () => quoteForm.partner_name,
+  (newValue, oldValue) => {
+    if (!showPartnerNameField.value) return;
 
-  // Remove old partner name from additional_notes if it exists
-  if (oldValue) {
-    const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
-    quoteForm.additional_notes = quoteForm.additional_notes.replace(oldPattern, '').trim();
-    // Clean up any double commas or leading/trailing commas
-    quoteForm.additional_notes = quoteForm.additional_notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
-  }
-
-  // Add new partner name to additional_notes
-  if (newValue) {
-    if (quoteForm.additional_notes) {
-      quoteForm.additional_notes = `${quoteForm.additional_notes}, ${newValue}`;
-    } else {
-      quoteForm.additional_notes = newValue;
+    // Remove old partner name from additional_notes if it exists
+    if (oldValue) {
+      const oldPattern = new RegExp(
+        `(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
+        'g',
+      );
+      quoteForm.additional_notes = quoteForm.additional_notes
+        .replace(oldPattern, '')
+        .trim();
+      // Clean up any double commas or leading/trailing commas
+      quoteForm.additional_notes = quoteForm.additional_notes
+        .replace(/,\s*,/g, ',')
+        .replace(/^,\s*|,\s*$/g, '');
     }
-  }
-});
+
+    // Add new partner name to additional_notes
+    if (newValue) {
+      if (quoteForm.additional_notes) {
+        quoteForm.additional_notes = `${quoteForm.additional_notes}, ${newValue}`;
+      } else {
+        quoteForm.additional_notes = newValue;
+      }
+    }
+  },
+);
 </script>
 
 <template>
@@ -594,7 +636,9 @@ watch(() => quoteForm.partner_name, (newValue, oldValue) => {
         </x-select>
 
         <x-select
-          v-if="isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension"
+          v-if="
+            isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension
+          "
           label="SUB SOURCE OPTION"
           v-model="quoteForm.sub_source_options_id"
           :options="subSourceOptionOptions"
