@@ -2,21 +2,21 @@
 
 namespace App\Console\Commands;
 
-use App\Models\CarQuote;
-use Illuminate\Console\Command;
-use App\Models\ApplicationStorage;
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Repositories\EmbeddedProductRepository;
-use App\Enums\quoteTypeCode;
-use Exception;
-use App\Services\Logger\LoggerService;
 use App\Enums\PaymentGatewayIdEnum;
-use App\Models\TravelQuote;
-use App\Models\PersonalQuote;
-use App\Enums\QuoteTypes;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Models\ApplicationStorage;
+use App\Models\CarQuote;
+use App\Models\PersonalQuote;
+use App\Models\TravelQuote;
+use App\Repositories\EmbeddedProductRepository;
+use App\Services\Logger\LoggerService;
+use Exception;
+use Illuminate\Console\Command;
 
 class CaptureEPPaymentsCommand extends Command
 {
@@ -42,8 +42,9 @@ class CaptureEPPaymentsCommand extends Command
         LoggerService::info('CaptureEPPaymentsCommand Started');
         $isAutoCaptureEPPaymentsEnabled = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_AUTO_CAPTURE_EP_PAYMENTS)->first();
 
-        if (!$isAutoCaptureEPPaymentsEnabled || $isAutoCaptureEPPaymentsEnabled->value == 0) {
+        if (! $isAutoCaptureEPPaymentsEnabled || $isAutoCaptureEPPaymentsEnabled->value == 0) {
             LoggerService::info('CaptureEPPaymentsCommand is disabled');
+
             return;
         }
 
@@ -53,7 +54,7 @@ class CaptureEPPaymentsCommand extends Command
             try {
                 $this->processEPPayments($quoteType);
             } catch (Exception $e) {
-                LoggerService::error("CaptureEPPaymentsCommand - Failed to process quotes", extra: [
+                LoggerService::error('CaptureEPPaymentsCommand - Failed to process quotes', extra: [
                     'quoteType' => $quoteType,
                     'error' => $e->getMessage(),
                 ]);
@@ -95,7 +96,7 @@ class CaptureEPPaymentsCommand extends Command
                 'embeddedTransactions.payments' => function ($query) {
                     $query->select('id', 'paymentable_id', 'paymentable_type', 'payment_gateway_id')
                         ->where('payment_gateway_id', PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP);
-                }
+                },
             ])
             ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
             ->whereHas('embeddedTransactions', function ($query) {
