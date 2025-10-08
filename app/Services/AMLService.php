@@ -1113,7 +1113,7 @@ class AMLService
                 ]);
 
                 AutomationFailedJob::dispatch(
-                    $quoteDetails,
+                    $quoteDetails->id,
                     QuoteTypeId::Car,
                     'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
                     'Quote Finalized But Premium Not Matched',

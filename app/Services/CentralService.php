@@ -1766,7 +1766,7 @@ class CentralService extends BaseService
                 'processInvolved' => 'Payment Capture',
             ]);
             AutomationFailedJob::dispatch(
-                $quote,
+                $quote->id,
                 QuoteTypeId::Car,
                 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                 'Quote Referred To Insurer UW',
@@ -1808,7 +1808,7 @@ class CentralService extends BaseService
                         'processInvolved' => 'Payment Capture',
                     ]);
                     AutomationFailedJob::dispatch(
-                        $quote,
+                        $quote->id,
                         QuoteTypeId::Car,
                         'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                         'Premium Not Matched With Insurer',
@@ -1822,7 +1822,7 @@ class CentralService extends BaseService
                         'processInvolved' => 'Payment Capture',
                     ]);
                     AutomationFailedJob::dispatch(
-                        $quote,
+                        $quote->id,
                         QuoteTypeId::Car,
                         'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
                         'Quote Referred To Insurer UW',

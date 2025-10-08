@@ -26,11 +26,7 @@ class AutomationFailedJob implements ShouldQueue
     public int $timeout = 100;
     public int $tries = 3;
 
-    /**
-     * Create a new job instance.
-     */
-    private $quote;
-
+    private $quoteId;
     private $quoteTypeId;
     private $actionRequired;
     private $recipientEmail;
@@ -41,16 +37,15 @@ class AutomationFailedJob implements ShouldQueue
     private $userToSendEmail;
     private $appEnv;
     private $insuranceProvider;
-    private $insurerName;
+    private $insurerName = '';
 
-    public function __construct($quote, $quoteTypeId, $actionRequired, $statusAPIFailed, $processInvolved, $workflowType, $sendTo = null)
+    public function __construct($quoteId, $quoteTypeId, $actionRequired, $statusAPIFailed, $processInvolved, $workflowType, $sendTo = null)
     {
-        LoggerService::startQuoteLogging($quote);
         LoggerService::info('job:AutomationFailedJob - Initializing job', extra: [
-            'sendTo' => $sendTo,
-            'quoteCode' => $quote->code ?? 'unknown'
+            'quoteId' => $quoteId,
+            'quoteTypeId' => $quoteTypeId,
         ]);
-        $this->quote = $quote;
+        $this->quoteId = $quoteId;
         $this->quoteTypeId = $quoteTypeId;
         $this->actionRequired = $actionRequired;
         $this->processInvolved = $processInvolved;
@@ -65,24 +60,27 @@ class AutomationFailedJob implements ShouldQueue
      */
     public function handle()
     {
-        LoggerService::startQuoteLogging($this->quote);
+        $quoteType = QuoteType::where('id', $this->quoteTypeId)->first();
+        $quote = $this->getQuoteObject($quoteType->code, $this->quoteId);
+
+        LoggerService::startQuoteLogging($quote);
         LoggerService::info('job:AutomationFailedJob - Job started', extra: [
             'userToSendEmail' => $this->userToSendEmail,
-            'quoteCode' => $this->quote->code ?? 'unknown'
+            'quoteCode' => $quote->code ?? 'unknown'
         ]);
 
-        $payment = $this->quote->payments()->mainLeadPayment()->first();
+        $payment = $quote->payments()->mainLeadPayment()->first();
         $quoteType = QuoteType::where('id', $this->quoteTypeId)->first();
         $this->insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
         $this->insurerName = InsuranceProvidersEnum::getTextByCode($this->insuranceProvider?->code);
 
         if ($this->userToSendEmail == UserNameEnum::PA_USER) {
-            $this->recipientEmail = $this->quote?->kycDocumentUser?->createdBy?->email;
-            $this->recipientName = $this->quote?->kycDocumentUser?->createdBy?->name;
+            $this->recipientEmail = $quote?->kycDocumentUser?->createdBy?->email;
+            $this->recipientName = $quote?->kycDocumentUser?->createdBy?->name;
         } else {
-            if ($this->quote?->advisor) {
-                $this->recipientEmail = $this->quote->advisor->email;
-                $this->recipientName = $this->quote->advisor->name;
+            if ($quote?->advisor) {
+                $this->recipientEmail = $quote->advisor->email;
+                $this->recipientName = $quote->advisor->name;
             } else {
                 LoggerService::info('job:AutomationFailedJob - No advisor assigned, stopping job - Insurer: '.$this->insurerName);
 
@@ -111,7 +109,7 @@ class AutomationFailedJob implements ShouldQueue
             'actionRequired' => $this->actionRequired,
             'recipientEmail' => $this->recipientEmail,
             'recipientName' => $this->recipientName,
-            'imcrmReferenceNumber' => $this->quote->code,
+            'imcrmReferenceNumber' => $quote->code,
             'insurerApiStatus' => $this->statusAPIFailed,
             'insurerName' => $this->insuranceProvider?->text ?? '',
             'processInvolved' => $this->processInvolved,
@@ -119,7 +117,7 @@ class AutomationFailedJob implements ShouldQueue
             'workflowType' => $this->workflowType,
         ];
 
-        $response = app(CentralService::class)->sendAutomationEmail($this->quote, $emailData, $this->quoteTypeId, WorkflowTypeEnum::CAR_AUTOMATION_FAILED);
+        $response = app(CentralService::class)->sendAutomationEmail($quote, $emailData, $this->quoteTypeId, WorkflowTypeEnum::CAR_AUTOMATION_FAILED);
         LoggerService::info('job:AutomationFailedJob - Job Response ', extra: ['emailData' => json_encode($response)]);
 
         if ($response == 200) {
@@ -130,19 +128,18 @@ class AutomationFailedJob implements ShouldQueue
             ]);
         }
 
-        LoggerService::info('job:AutomationFailedJob - Job completed - Quote Code: '.$this->quote->code);
+        LoggerService::info('job:AutomationFailedJob - Job completed - Quote Code: '.$quote->code);
     }
 
     public function failed(Exception $ex)
     {
-        LoggerService::error('job:AutomationFailedJob - Insurer: '.($this->insurerName ?? null).' Failed', exception: $ex);
+        LoggerService::error('job:AutomationFailedJob - Insurer: '.($this->insurerName).' Failed', exception: $ex);
     }
 
     public function middleware()
     {
-        $quoteId = $this->quote->id ?? 0;
-        LoggerService::info('job:AutomationFailedJob - Middleware setup', extra: ['quoteId' => $quoteId]);
-        
-        return [(new WithoutOverlapping($quoteId))->dontRelease()];
+        LoggerService::info('job:AutomationFailedJob - Middleware setup', extra: ['quoteId' => $this->quoteId]);
+
+        return [(new WithoutOverlapping($this->quoteId.'-automation'))->dontRelease()];
     }
 }

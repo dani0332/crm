@@ -390,7 +390,7 @@ class PolicyIssuanceService
                 'processInvolved' => $processInvolved,
             ]);
             AutomationFailedJob::dispatch(
-                $quote,
+                $quote->id,
                 QuoteTypeId::Car,
                 'Please coordinate with the IT Department to address and rectify the issue.',
                 $statusAPIFailed,
