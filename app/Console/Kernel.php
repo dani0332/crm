@@ -145,7 +145,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('remove-pcp-tag')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
         $schedule->command('ep:capture-payments')
-            ->hourly()
+            ->everyThirtyMinutes()
             ->onOneServer()
             ->withoutOverlapping(30)
             ->onSuccess(function (Stringable $output) {
