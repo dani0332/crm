@@ -1294,19 +1294,20 @@ class TravelQuoteService extends BaseService
                 return;
             }
 
-            $customerMember = $quoteObject->customerMembers()->first();
-            if (!$customerMember) {
-                LoggerService::info(__class__ . '::' . __function__ . ' - No customer member found for quote');
+            // Get the primary member using primary_member_id
+            if (!$quoteObject->primary_member_id) {
+                LoggerService::info(__class__ . '::' . __function__ . ' - No primary member set for this lead');
                 return;
             }
 
-            $quoteObject->first_name = $customerMember->first_name;
-            $quoteObject->last_name = $customerMember->last_name;
+            $customerMember = CustomerMembers::find($quoteObject->primary_member_id);
+            $quoteObject->first_name = $customerMember?->first_name;
+            $quoteObject->last_name = $customerMember?->last_name;
             $quoteObject->save();
 
             LoggerService::info(__class__ . '::' . __function__ . ' - Successfully updated customer profile details', [
-                'first_name' => $customerMember->first_name,
-                'last_name' => $customerMember->last_name,
+                'first_name' => $customerMember?->first_name,
+                'last_name' => $customerMember?->last_name,
             ]);
 
         } catch (\Exception $e) {
