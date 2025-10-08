@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\SLAActionTypeEnum;
-use App\Jobs\MAWelcomeJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
