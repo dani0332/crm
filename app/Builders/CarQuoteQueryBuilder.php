@@ -230,10 +230,10 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when($hasFilterValue('api_issuance_status_id'), function ($query) use ($getFilterValue) {
                 $apiIssuanceStatusIds = (array) $getFilterValue('api_issuance_status_id');
-                
+
                 $hasBlank = in_array('blank', $apiIssuanceStatusIds);
                 $otherIds = array_diff($apiIssuanceStatusIds, ['blank']);
-                
+
                 $query->where(function ($q) use ($hasBlank, $otherIds) {
                     if ($hasBlank) {
                         $q->where(function ($subQuery) {
@@ -241,8 +241,8 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
                                 ->orWhere('api_issuance_status_id', '');
                         });
                     }
-                    
-                    if (!empty($otherIds)) {
+
+                    if (! empty($otherIds)) {
                         if ($hasBlank) {
                             $q->orWhereIn('api_issuance_status_id', $otherIds);
                         } else {

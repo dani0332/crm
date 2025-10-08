@@ -8,7 +8,6 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;

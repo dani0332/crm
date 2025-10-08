@@ -61,7 +61,7 @@ final class PolicyIssuanceEnum extends Enum
     // Policy Issuance AutomationRTA statuses
     const PIA_RTA_UPLOAD_STATUS_PENDING = '0';
     const PIA_RTA_UPLOAD_STATUS_DONE = '1';
-    
+
     /* Insurer API Generic Status */ // These are in used for Travel Alliance Insurance
     const POLICY_ISSUANCE_API_STATUS_YES_ID = 1;
     const POLICY_ISSUANCE_API_STATUS_YES = 'Yes';

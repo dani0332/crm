@@ -7,7 +7,6 @@ namespace App\Services\PolicyIssuanceAutomation\Car;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
-use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
@@ -60,13 +59,11 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     public const POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY = InsuranceProvidersEnum::AXA.'_POLICY_ISSUANCE_API_ACCESS_TOKEN';
     public const TYPE = quoteTypeCode::Car;
     public const TYPE_ID = QuoteTypeId::Car;
-
     public const UPLOAD_DOCUMENTS = 'UploadDocuments';
     public const ISSUE_POLICY = 'IssuePolicy';
     public const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'GetAndUploadPolicyDocumentsToIMCRM';
     public const EXECUTE_OCR_PROCESSING = 'ExecuteOCRProcessing';
     public const BOOK_POLICY = 'BookPolicy';
-
     public const PAYMENT_MODE = 'CT068';
     public const PAYMENT_MODE_VALUE = 'Upfront Commission Partner Payment';
     public const CURRENCY_CODE = 'AED';
@@ -86,14 +83,13 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     private const CAR_REGISTRATION_CARD_DOC_TYPE_CODE = 'DT01';
     private const DRIVING_LICENSE_DOC_TYPE_CODE = 'DT02';
     private const NATIONAL_ID_DOC_TYPE_CODE = 'DT03';
-
     private const POLICY_DOC_TAX_INVOICE = 'Tax invoice';
     private const POLICY_DOC_TAX_INVOICE_BY_BUYER = 'Tax invoice by buyer';
     private const POLICY_DOC_RECEIPT = 'Receipt with reference';
     private const POLICY_DOC_POLICY_SCHEDULE = 'Motor Insurance Policy Schedule';
     private const POLICY_DOC_RENEWAL_POLICY_SCHEDULE = 'Motor Renewal Policy Schedule';
     private const POLICY_DOC_CERTIFICATE_OF_INSURANCE = 'Certificate of Insurance';
-    
+
     public function __construct()
     {
         $this->className = class_basename(__CLASS__);
