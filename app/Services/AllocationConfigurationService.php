@@ -103,17 +103,29 @@ class AllocationConfigurationService
             QuoteTypeShortCode::BUS, // For Corpline & Group Medical subtypes
         ])->get();
 
-        // Add Corpline as a subtype of Business
+        // Find and remove Business type from the collection
         $businessType = $quoteTypes->firstWhere('short_code', QuoteTypeShortCode::BUS);
         if ($businessType) {
-            // Create Corpline entry
+            // Remove Business Insurance from the list
+            $quoteTypes = $quoteTypes->reject(function ($type) {
+                return $type->short_code === QuoteTypeShortCode::BUS;
+            });
+
+            // Add Corpline as a standalone entry (using Business ID underneath)
             $corplineType = clone $businessType;
             $corplineType->text = 'CorpLine';
             $corplineType->code = QuoteTypes::CORPLINE->value;
             $quoteTypes->push($corplineType);
+
+            // TODO: Add Group Medical here later
+            // $groupMedicalType = clone $businessType;
+            // $groupMedicalType->text = 'Group Medical';
+            // $groupMedicalType->code = QuoteTypes::GROUP_MEDICAL->value;
+            // $quoteTypes->push($groupMedicalType);
         }
 
-        return $quoteTypes;
+        // Reset collection keys and return as array-like collection
+        return $quoteTypes->values();
     }
 
     public function getEligibleAdvisorIds(QuoteTypes $quoteType, InvestmentFrequencyEnum $investmentFrequency, float $amount, int $nationalityId): array
