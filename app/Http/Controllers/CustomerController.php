@@ -11,7 +11,7 @@ use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\CustomerUploadService;
 use App\Services\LookupService;
-use App\Services\SLAService;
+use App\Services\SLA\SLAService;
 use App\Services\TransAppService;
 use App\Traits\GenericQueriesAllLobs;
 use DataTables;

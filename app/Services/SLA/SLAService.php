@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\Services\SLA;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
@@ -14,13 +14,15 @@ use App\Enums\TeamNameEnum;
 use App\Models\HealthQuote;
 use App\Models\SLATracking;
 use App\Models\User;
+use App\Services\AllocationService;
+use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
-class SLAService extends BaseService
+class SLAService
 {
     use TeamHierarchyTrait;
 

@@ -86,7 +86,7 @@ use App\Services\PaymentService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
-use App\Services\SLAService;
+use App\Services\SLA\SLAService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;

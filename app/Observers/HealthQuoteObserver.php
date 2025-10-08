@@ -16,7 +16,7 @@ use App\Jobs\Health\SendApplicationSubmittedEmailJob;
 use App\Jobs\IntroEmailJob;
 use App\Models\HealthQuote;
 use App\Repositories\PaymentRepository;
-use App\Services\SLAService;
+use App\Services\SLA\SLAService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;

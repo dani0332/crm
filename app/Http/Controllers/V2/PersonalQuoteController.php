@@ -17,7 +17,7 @@ use App\Services\CentralService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
-use App\Services\SLAService;
+use App\Services\SLA\SLAService;
 use App\Traits\GenericQueriesAllLobs;
 
 class PersonalQuoteController extends Controller

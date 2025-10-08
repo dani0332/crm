@@ -21,7 +21,7 @@ use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
-use App\Services\SLAService;
+use App\Services\SLA\SLAService;
 use Illuminate\Http\Request;
 
 class HealthQuoteController extends Controller

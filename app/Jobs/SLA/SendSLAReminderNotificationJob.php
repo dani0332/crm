@@ -3,7 +3,7 @@
 namespace App\Jobs\SLA;
 
 use App\Models\SLATracking;
-use App\Services\SLAService;
+use App\Services\SLA\SLAService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
