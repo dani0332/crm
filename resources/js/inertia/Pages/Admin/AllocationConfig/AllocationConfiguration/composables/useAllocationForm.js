@@ -111,7 +111,7 @@ export function useAllocationForm(props, errorHandling) {
       ) {
         planTypeOptions.value = response.data.data.map(planType => ({
           value: planType.id,
-          label: planType.name,
+          label: planType.text,
         }));
       }
     } catch (error) {

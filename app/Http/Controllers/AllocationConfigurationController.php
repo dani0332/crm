@@ -96,9 +96,6 @@ class AllocationConfigurationController extends Controller
         }
     }
 
-    /**
-     * Get all teams for allocation configuration
-     */
     public function getTeams()
     {
         try {
@@ -121,14 +118,11 @@ class AllocationConfigurationController extends Controller
         }
     }
 
-    /**
-     * Get all plan types for Group Medical allocation configuration
-     */
     public function getPlanTypes()
     {
         try {
-            $planTypes = HealthPlanType::orderBy('name')
-                ->get(['id', 'name']);
+            $planTypes = HealthPlanType::orderBy('text')
+                ->get(['id', 'text']);
 
             return response()->json([
                 'success' => true,
