@@ -14,6 +14,7 @@ use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -26,7 +27,7 @@ class HealthQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
-    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted'];
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'has_pec_tag'];
     protected $table = 'health_quote_request';
     protected $fillable = [];
     public $filterables = [
@@ -512,6 +513,20 @@ class HealthQuote extends Model implements AuditableContract
     public function isAUHLead(bool $shouldCheckSource = true)
     {
         return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI && ($shouldCheckSource ? $this->source === LeadSourceEnum::IMCRM : true);
+    }
+
+    public function hasPecTag(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return ! empty($this->pec_marked_at);
+            }
+        );
+    }
+
+    public function scopeHasPecTag($query)
+    {
+        $query->whereNotNull('pec_marked_at');
     }
 
     public function isLeadSourceRevivalOrInsuranceWallet()
