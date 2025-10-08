@@ -38,20 +38,7 @@ const quoteForm = useForm({
   primary_ref_id: props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
   partner_name: props.leadSourceParams?.partnerName || '',
   notes: (() => {
-    let notes = props.quote?.additional_notes || '';
-    const partnerName = props.leadSourceParams?.partnerName;
-    if (partnerName) {
-      if (notes) {
-        notes = `${notes}, ${partnerName}`;
-      } else {
-        notes = partnerName;
-      }
-    }
-    return notes;
-  })(),
-  // keep additional_notes for backend validation; keep in sync
-  additional_notes: (() => {
-    let notes = props.quote?.additional_notes || '';
+    let notes = props.quote?.notes || '';
     const partnerName = props.leadSourceParams?.partnerName;
     if (partnerName) {
       if (notes) {
