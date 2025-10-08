@@ -100,9 +100,7 @@ class SLAService extends BaseService
 
     private function getAssignmentTime(QuoteTypes $quoteType, Model $lead): Carbon
     {
-        $assignmentTime = Carbon::parse($quoteType->detailModel()->where($lead->getForeignKey(), $lead->id)->value('advisor_assigned_date') ?? now());
-
-        return now() > $assignmentTime ? now() : $assignmentTime;
+        return Carbon::parse($quoteType->detailModel()->where($lead->getForeignKey(), $lead->id)->value('advisor_assigned_date') ?? now());
     }
 
     private function isAssignmentTimeWithinBusinessHours(Carbon $assignmentTime): bool
