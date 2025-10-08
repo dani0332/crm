@@ -1037,7 +1037,7 @@ class EpEcbService extends EpBookingService
             'mi_end_date' => $policyEndDate,
             'mi_coverage_area' => "NA", // "UAE & OMAN",
             'mi_sum_insured' => $this->quote?->car_value,
-            'mi_policy_excess' => $this->quote?->carQuotePlanDetail?->excess ?: 100
+            'mi_policy_excess' => $this->quote?->carQuotePlanDetail?->excess ?: 0
         ];
     }
 
