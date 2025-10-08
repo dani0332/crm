@@ -139,7 +139,7 @@ class CarQuoteExport implements CsvExportableInterface
             $quote->quoteViewCount?->visit_count,
             $quote->carQuoteRequestDetail?->next_followup_date_formatted ?? '',
             $quote->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($quote->api_issuance_status_id) : 'N/A',
-            $quote->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatusesByStep($quote->insurer_api_status_id) : 'N/A',
+            $quote->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($quote->insurer_api_status_id) : 'N/A',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->updated_by,
             $quote->additional_notes,

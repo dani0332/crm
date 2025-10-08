@@ -372,7 +372,7 @@ class CRUDController extends Controller
             $productTeam = $this->getProductByName(quoteTypeCode::Car);
             $teams = $this->getTeamsByProductId($productTeam->id);
             $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
-            $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatusesByStep();
+            $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses();
 
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
@@ -831,7 +831,7 @@ class CRUDController extends Controller
                 $amlStatusName = AMLStatusCode::getName($record->aml_status);
                 $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
                 $apiIssuanceStatus = PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id);
-                $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record, QuoteTypes::CAR->value)[$record->insurer_api_status_id] ?? null;
+                $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id);
                 $previousQuote = $this->carQuoteService->getPreviousQuote($record->previous_quote_id);
 
                 return inertia('PersonalQuote/Car/Show', compact([

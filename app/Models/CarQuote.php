@@ -100,17 +100,17 @@ class CarQuote extends BaseModel
 
     public function getInsurerApiStatusAttribute()
     {
-        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this, QuoteTypes::CAR->value) : null;
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses() : null;
     }
 
     public function isBookingFailed()
     {
-        return $this->insurer_api_status_id === app(PolicyIssuanceService::class)->getFailedBookingInsurerAPIStatus($this, QuoteTypes::CAR->value);
+        return $this->insurer_api_status_id === PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
     }
 
     public function isPolicyIssuanceFailed()
     {
-        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getFailedPolicyIssuanceAPIStatuses($this, QuoteTypes::CAR->value));
+        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
     }
 
     public function fullName()

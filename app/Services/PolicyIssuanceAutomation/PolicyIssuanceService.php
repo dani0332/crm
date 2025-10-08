@@ -30,18 +30,6 @@ class PolicyIssuanceService
 
     private string $className = 'policyIssuanceService';
 
-    const UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID = 2;
-    const POLICY_ISSUANCE_API_FAILED_STATUS_ID = 3;
-    const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID = 4;
-    const OCR_PROCESSING_API_FAILED_STATUS_ID = 5;
-    const BOOK_POLICY_API_FAILED_STATUS_ID = 6;
-
-    const UPLOAD_POLICY_DOCUMENTS_API_FAILED = 'Insurer Document Upload Failed';
-    const POLICY_ISSUANCE_API_FAILED = 'Policy Creation Failed';
-    const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED = 'Policy Document Retrieval Failed';
-    const OCR_PROCESSING_API_FAILED = 'OCR Processing API Failed';
-    const BOOK_POLICY_API_FAILED = 'Send and Book Policy Failed';
-
     public function __construct() {}
 
     public function init($quoteType, $insurerCode)
@@ -316,10 +304,6 @@ class PolicyIssuanceService
         $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed();
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Existing Insurer API Status : '.$isInsurerApiStatusAlreadyFailed);
 
-        $payment = $quote->payments()->mainLeadPayment()->first();
-        $insurer = getInsuranceProvider($payment, $quoteType);
-        $insurerAutomation = $this->init($quoteType, $insurer?->code);
-
         // /* If Quote API issuance status is not already set, than set insurer api and api issuance status */
         if (! $apiIssuanceStatus) {
             if ($isPolicyAutomationStatusCompleted && $isPolicyBooked && ! $insurerApiStatus) {
@@ -327,7 +311,7 @@ class PolicyIssuanceService
 
             } elseif ($isPolicyAutomationStatusCompleted && $isPolicyBookingFailed) {
                 if (! $insurerApiStatus) {
-                    $newInsurerApiStatus = $insurerAutomation::BOOK_POLICY_API_FAILED_STATUS_ID;
+                    $newInsurerApiStatus = PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
                 }
                 $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
             }
@@ -344,7 +328,7 @@ class PolicyIssuanceService
 
         $statusAPIFailed = null;
         if ($quoteType === QuoteTypes::CAR->value) {
-            $statusAPIFailed = $this->getInsurerAPIStatuses($quote, $quoteType)[$newInsurerApiStatus] ?? null;
+            $statusAPIFailed = $this->getInsurerAPIStatuses($newInsurerApiStatus);
         }
         $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
         $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus);
@@ -430,54 +414,21 @@ class PolicyIssuanceService
         }
     }
 
-    public function getInsurerAPIStatuses($quote, $quoteType)
-    {
-        $quoteObject = $this->getQuoteObjectBy($quoteType, $quote->id);
-        if (! $quoteObject) {
-            return null;
-        }
-
-        $payment = $quoteObject->payments()->mainLeadPayment()->first();
-        $insurer = getInsuranceProvider($payment, $quoteType);
-
-        $insurerAutomation = $this->init($quoteType, $insurer?->code);
-        if ($insurerAutomation) {
-            $insurerApiStatuses = $insurerAutomation->getInsurerAPIStatuses();
-        }
-
-        return $insurerApiStatuses ?? [];
-    }
-
-    public function getInsurerAPIStatusesByStep($status = null)
+    public function getInsurerAPIStatuses($status = null, $onlyKeys = false)
     {
         $statuses = [
-            self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => self::UPLOAD_POLICY_DOCUMENTS_API_FAILED,
-            self::POLICY_ISSUANCE_API_FAILED_STATUS_ID => self::POLICY_ISSUANCE_API_FAILED,
-            self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID => self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED,
-            self::OCR_PROCESSING_API_FAILED_STATUS_ID => self::OCR_PROCESSING_API_FAILED,
-            self::BOOK_POLICY_API_FAILED_STATUS_ID => self::BOOK_POLICY_API_FAILED,
+            PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED,
+            PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED,
+            PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED,
+            PolicyIssuanceEnum::PIA_OCR_PROCESSING_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_OCR_PROCESSING_API_FAILED,
+            PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED,
+            PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED_STATUS_ID => PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED,
         ];
 
+        if ($onlyKeys) {
+            return array_keys($statuses);
+        }
+
         return $status !== null ? ($statuses[$status] ?? null) : $statuses;
-    }
-
-    public function getFailedBookingInsurerAPIStatus($quote, $quoteType)
-    {
-        $payment = $quote->payments()->mainLeadPayment()->first();
-        $insurer = getInsuranceProvider($payment, $quoteType);
-
-        $insurerAutomation = $this->init($quoteType, $insurer?->code);
-
-        return $insurerAutomation::BOOK_POLICY_API_FAILED_STATUS_ID;
-    }
-
-    public function getFailedPolicyIssuanceAPIStatuses($quote, $quoteType)
-    {
-        $payment = $quote->payments()->mainLeadPayment()->first();
-        $insurer = getInsuranceProvider($payment, $quoteType);
-
-        $insurerAutomation = $this->init($quoteType, $insurer?->code);
-
-        return $insurerAutomation->getFailedIssuanceAPIStatuses();
     }
 }
