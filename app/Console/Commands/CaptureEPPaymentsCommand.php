@@ -49,33 +49,32 @@ class CaptureEPPaymentsCommand extends Command
         }
 
         // Process each quote type
-        $quoteTypes = ['car', 'travel', 'personal'];
+        $quoteTypes = [QuoteTypes::CAR->value, QuoteTypes::TRAVEL->value, QuoteTypes::PERSONAL->value];
         foreach ($quoteTypes as $quoteType) {
             try {
                 $this->processEPPayments($quoteType);
             } catch (Exception $e) {
                 LoggerService::error('CaptureEPPaymentsCommand - Failed to process quotes', extra: [
                     'quoteType' => $quoteType,
-                    'error' => $e->getMessage(),
-                ]);
+                ], exception: $e);
             }
         }
     }
 
-    private function processEPPayments(string $quoteType)
+    private function processEPPayments($quoteType)
     {
         $modelMap = [
-            'car' => [
+            QuoteTypes::CAR->value => [
                 'model' => CarQuote::class,
                 'quoteTypeCode' => quoteTypeCode::Car,
                 'additionalConditions' => null,
             ],
-            'travel' => [
+            QuoteTypes::TRAVEL->value => [
                 'model' => TravelQuote::class,
                 'quoteTypeCode' => quoteTypeCode::Travel,
                 'additionalConditions' => null,
             ],
-            'personal' => [
+            QuoteTypes::PERSONAL->value => [
                 'model' => PersonalQuote::class,
                 'quoteTypeCode' => null, // Will be determined by quote_type_id
                 'additionalConditions' => function ($query) {
@@ -84,7 +83,10 @@ class CaptureEPPaymentsCommand extends Command
             ],
         ];
 
+        // Retrieve the configuration for the current quote type from the model map
         $config = $modelMap[$quoteType];
+
+        // Get the Eloquent model class associated with the quote type
         $model = $config['model'];
 
         $query = $model::select('id', 'code', 'quote_status_id')
@@ -107,7 +109,7 @@ class CaptureEPPaymentsCommand extends Command
             });
 
         // Add quote_type_id for personal quotes
-        if ($quoteType === 'personal') {
+        if ($quoteType === QuoteTypes::PERSONAL->value) {
             $query->addSelect('quote_type_id');
         }
 
@@ -128,16 +130,15 @@ class CaptureEPPaymentsCommand extends Command
                     'epsCodes' => $epsCodes,
                 ]);
                 try {
-                    $quoteTypeCode = $quoteType === 'personal'
+                    $quoteTypeCode = $quoteType === QuoteTypes::PERSONAL->value
                         ? QuoteTypes::getName($lead->quote_type_id)->value
                         : $config['quoteTypeCode'];
 
                     EmbeddedProductRepository::capturePayment($lead->id, $quoteTypeCode);
                 } catch (Exception $e) {
-                    LoggerService::error('CaptureEPPaymentsCommand - capture embedded products failed', [
-                        'error' => $e->getMessage(),
-                        'uuid' => $lead->code,
-                    ]);
+                    LoggerService::error('CaptureEPPaymentsCommand - capture embedded products failed', extra: [
+                        'code' => $lead->code,
+                    ], exception: $e);
                 }
             }
         }
