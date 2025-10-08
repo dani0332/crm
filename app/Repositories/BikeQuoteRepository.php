@@ -83,8 +83,6 @@ class BikeQuoteRepository extends BaseRepository
             'additionalNotes' => $data['notes'] ?? null,
         ];
 
-
-
         return Capi::request('/api/v1-save-bike-quote', 'post', $quoteData);
     }
 

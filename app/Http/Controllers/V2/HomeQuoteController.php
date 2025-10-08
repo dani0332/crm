@@ -21,9 +21,9 @@ use App\Services\AMLService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\HomeQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\Reports\RenewalBatchReportService;
-use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 
 class HomeQuoteController extends Controller

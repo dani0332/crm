@@ -118,7 +118,7 @@ class LifeQuoteRepository extends BaseRepository
             // check the columns to be updated in personal quotes.
             $quoteData = Arr::only($data, $this->allowedColumns());
             $quoteData['updated_by_id'] = auth()->user()->id;
-            
+
             // Add sub-source fields explicitly
             if (isset($data['sub_source_id'])) {
                 $quoteData['sub_source_id'] = $data['sub_source_id'];
@@ -132,7 +132,7 @@ class LifeQuoteRepository extends BaseRepository
             if (isset($data['notes'])) {
                 $quoteData['notes'] = $data['notes'];
             }
-            
+
             $quote->update($quoteData);
 
             // check the columns to be updated in life quote request.

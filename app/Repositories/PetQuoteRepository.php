@@ -310,7 +310,7 @@ class PetQuoteRepository extends BaseRepository
                     $entityMapping->with('entity');
                 },
                 'quoteDetail',
-                'subSource', 'subSourceOption'
+                'subSource', 'subSourceOption',
             ])
             ->select([
                 $this->getTable().'.*',
