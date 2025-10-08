@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\CarQuote;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 use App\Models\ApplicationStorage;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
@@ -18,7 +17,6 @@ use App\Models\TravelQuote;
 use App\Models\PersonalQuote;
 use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeId;
-use InvalidArgumentException;
 
 class CaptureEPPaymentsCommand extends Command
 {
@@ -137,7 +135,7 @@ class CaptureEPPaymentsCommand extends Command
                 } catch (Exception $e) {
                     LoggerService::error('CaptureEPPaymentsCommand - capture embedded products failed', [
                         'error' => $e->getMessage(),
-                        'uuid' => $lead->uuid,
+                        'uuid' => $lead->code,
                     ]);
                 }
             }
