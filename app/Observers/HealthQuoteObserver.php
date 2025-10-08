@@ -16,6 +16,7 @@ use App\Jobs\IntroEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\HealthQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\SLAService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
@@ -61,6 +62,8 @@ class HealthQuoteObserver
 
                 HealthQuoteAdvisorUpdated::dispatch($healthQuote, $healthQuote->getOriginal('advisor_id'));
                 $healthQuote->markLeadAllocationPassed();
+
+                app(SLAService::class)->initiateSLATracking(QuoteTypes::HEALTH, $healthQuote);
             } catch (Exception $e) {
                 Log::error('HealthQuoteObserver - handle health update advisor failed', [
                     'error' => $e->getMessage(),
@@ -122,6 +125,10 @@ class HealthQuoteObserver
             $payment = $healthQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($healthQuote, $payment, QuoteTypes::HEALTH->value);
             event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
+        }
+
+        if (isset($dirty['quote_status_id'])) {
+            app(SLAService::class)->meetSLAOnStatusUpdate($healthQuote);
         }
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\SLAActionTypeEnum;
 use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
@@ -10,6 +11,7 @@ use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\CustomerUploadService;
 use App\Services\LookupService;
+use App\Services\SLAService;
 use App\Services\TransAppService;
 use App\Traits\GenericQueriesAllLobs;
 use DataTables;
@@ -26,19 +28,21 @@ class CustomerController extends Controller
     private $berlinService;
     private $customerService;
     private $lookupService;
-
+    private $slaService;
     public function __construct(
         CustomerUploadService $customerUploadFileService,
         TransAppService $transAppService,
         BerlinService $berlinService,
         CustomerService $customerService,
-        LookupService $lookupService
+        LookupService $lookupService,
+        SLAService $slaService
     ) {
         $this->customerUploadFileService = $customerUploadFileService;
         $this->transAppService = $transAppService;
         $this->berlinService = $berlinService;
         $this->customerService = $customerService;
         $this->lookupService = $lookupService;
+        $this->slaService = $slaService;
         $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
         $this->middleware('permission:customers-edit', ['only' => ['edit', 'update']]);
     }
@@ -197,6 +201,10 @@ class CustomerController extends Controller
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
         $this->customerService->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value);
 
+        if ($quoteObject) {
+            $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_PRIMARY_UPDATE);
+        }
+
         if (isset($request->isInertia) && $request->isInertia) {
             return redirect()->back();
         }
@@ -263,6 +271,10 @@ class CustomerController extends Controller
             'key' => $key,
             'value' => trim($value),
         ]);
+
+        if ($quoteObject) {
+            $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_ADD);
+        }
 
         if (isset($request->isInertia) && $request->isInertia) {
             return redirect()->back();
