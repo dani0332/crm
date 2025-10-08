@@ -542,7 +542,6 @@ const fetchTeamUsers = () => {
 
 const onLeadConfirmed = (leadData) => {
   // Handle the confirmed lead data if needed
-  console.log('Lead confirmed:', leadData);
 };
 
 function daysAgoFromAuthorizedDate(authorizedDate) {

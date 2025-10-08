@@ -163,7 +163,6 @@ function onSubmit(isValid) {
 
     quoteForm.submit(method, url, {
       onError: errors => {
-        console.log("submit with error ",quoteForm.setError(errors));
       },
     });
   }

@@ -103,8 +103,6 @@ const showPartnerNameField = computed(() => {
   const selectedOption = subSourceOptionOptions.value.find(
     option => option.value === quoteForm.sub_source_options_id
   );
-  console.log("selectedOption",selectedOption);
-  console.log("quoteForm.sub_source_options_id",quoteForm.sub_source_options_id);
   return selectedOption?.code === 'other-clubs-or-campaigns';
 });
 
