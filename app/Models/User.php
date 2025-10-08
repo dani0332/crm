@@ -417,6 +417,11 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsToMany(Department::class, 'user_departments', 'user_id', 'department_id');
     }
 
+    public function statusLogs()
+    {
+        return $this->hasMany(UserStatusAuditLog::class, 'user_id');
+    }
+
     public function isValueUser(QuoteTypes $quoteType): bool
     {
         if ($quoteType === QuoteTypes::HEALTH) {

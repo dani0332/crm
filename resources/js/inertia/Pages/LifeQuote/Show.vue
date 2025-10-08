@@ -16,6 +16,8 @@ import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CreatePlanVariant from './Partials/CreateVariant.vue';
 import EditPlan from './Partials/EditPlan.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 
 const page = usePage();
@@ -2768,6 +2770,28 @@ const getTotalAnnualPriceAED = () => {
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"
       :bookPolicyDetails="bookPolicyDetails"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :customerData="{
+        customerType: quote.customer_type,
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy

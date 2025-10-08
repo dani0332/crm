@@ -541,7 +541,7 @@ foreach ($quotePlan->addons as &$addon) {
         $features = [
             ['code' => 'heading', 'title' => 'TRAVEL INCONVENIENCE BENEFITS'],
 
-            ['code' => 'travelCancellationCurtailment', 'title' => 'Cancellation / Curtailment', 'type' => 'feature'],
+            ['code' => 'travelCancellationCurtailment', 'title' => 'Cancellation / Curtailment', 'type' => ['feature','travelInconvenienceCover']],
             [
                 'code' => 'travelCancellationTestPositive',
                 'title' => 'Cancellation due to testing positive for COVID prior to departure',
@@ -562,7 +562,7 @@ foreach ($quotePlan->addons as &$addon) {
                 'title' => 'Passport Assistance',
                 'type' => 'travelInconvenienceCover',
             ],
-            ['code' => 'travelPersonalAccident', 'title' => 'Personal Accident', 'type' => 'feature'],
+            ['code' => 'travelPersonalAccident', 'title' => 'Personal Accident', 'type' => ['feature','travelInconvenienceCover']],
             ['code' => 'travelPersonalBaggage', 'title' => 'Personal Baggage', 'type' => 'travelInconvenienceCover'],
             [
                 'code' => 'travelPersonalLiability',
@@ -588,7 +588,7 @@ foreach ($quotePlan->addons as &$addon) {
             [
                 'code' => 'travelRepatriationOfMortalRemains',
                 'title' => 'Repatriation of mortal remains',
-                'type' => 'inclusion',
+                'type' => ['inclusion','emergencyMedicalCover'],
             ],
             [
                 'code' => 'travelRepatriationOtherInsuredPerson',

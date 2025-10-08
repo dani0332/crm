@@ -616,7 +616,7 @@
                         foreach ($memberPremiumBreakdown->ratesPerCopay as $coPayKey => $coPayVal) {
                             if ($coPayVal->healthPlanCoPaymentId == $coPayId) {
                                 $discountPremiumValue =
-                                    $coPayVal->premium + ($coPayVal->basmah ?? 0) + ($coPayVal->icpFee ?? 0) + ($coPayVal->loadingPrice ?? 0);
+                                    $coPayVal->premium + ($coPayVal->basmah ?? 0) + ($coPayVal->icpFee ?? 0) + ($coPayVal->loadingPrice ?? 0) + ($coPayVal->adjustedPrice ?? 0);
                                 $vatValue += $coPayVal->vat;
                                 $totalValue += $discountPremiumValue;
                             }
@@ -631,7 +631,7 @@
                     ) {
                         foreach ($memberPremiumBreakdown->ratesPerCopay as $coPayKey => $coPayVal) {
                             $discountPremium[] =
-                                $coPayVal->premium + ($coPayVal->basmah ?? 0) + ($coPayVal->icpFee ?? 0) + ($coPayVal->loadingPrice ?? 0);
+                                $coPayVal->premium + ($coPayVal->basmah ?? 0) + ($coPayVal->icpFee ?? 0) + ($coPayVal->loadingPrice ?? 0) + ($coPayVal->adjustedPrice ?? 0);
                             $vat[] = $coPayVal->vat;
                         }
                         $discountPremiumValue = collect($discountPremium)->min();

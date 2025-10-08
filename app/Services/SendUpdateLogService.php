@@ -124,6 +124,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => CarQuote::class,
@@ -142,6 +144,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => HomeQuote::class,
@@ -160,6 +164,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => array_merge($parentSkipColumns, ['health_plan_type_id', 'price_starting_from', 'health_plan_co_payment_id']),
                     'parentClass' => HealthQuote::class,
@@ -178,6 +184,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => LifeQuote::class,
@@ -196,6 +204,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => BusinessQuote::class,
@@ -214,6 +224,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                         'travelDestinations' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
@@ -304,6 +316,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => PersonalQuote::class,
@@ -1324,14 +1338,11 @@ class SendUpdateLogService
         return (isset($carQuote->plan->carAddons)) ? $carQuote?->plan?->carAddons->toArray() : [];
     }
 
-    public function sendUpdateToCustomerEmailData($sendUpdateLog): array
+    public function sendUpdateToCustomerEmailData($sendUpdateLog, $quote): array
     {
         LoggerService::info('fn:sendUpdateToCustomerEmailData - SendUpdateLogService');
 
         $quoteTypeId = $sendUpdateLog->quote_type_id;
-        $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
-        $quoteModel = $this->getModelObject($quoteType);
-        $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
         $insuranceProviderText = $sendUpdateLog?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;

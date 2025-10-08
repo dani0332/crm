@@ -1229,7 +1229,10 @@ class SageApiEmbeddedProductService
         $entryType = SageEnum::SCT_STRAIGHT;
 
         // Payload creation logic for default scenario
-        $taxClass = 1;
+        $commissionTaxClass = 2; // if commission vat not applicable added
+        if ($sageRequestEmbeddedProduct->brokerCommissionVatAmount > 0) {
+            $commissionTaxClass = 1; // if commission vat applicable added
+        }
         $premiumDescription = 'P.'.$sageRequestEmbeddedProduct->invoiceDescription;
         $commissionDescription = 'C.'.$sageRequestEmbeddedProduct->invoiceDescription;
         $createdOn = $sageRequestEmbeddedProduct->createdOn;
@@ -1251,7 +1254,7 @@ class SageApiEmbeddedProductService
                     'TaxAmount1' => roundNumber($sageRequestEmbeddedProduct->taxAmount),
                     'DocumentTotalBeforeTax' => roundNumber($sageRequestEmbeddedProduct->policyPrice),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->totalPrice),
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
@@ -1277,17 +1280,16 @@ class SageApiEmbeddedProductService
                     'DueDate' => $createdOnDate,
                     'AsOfDate' => $createdOnDate,
                     'TaxGroup' => 'VAT',
-                    'TaxClass1' => $taxClass,
+                    'TaxClass1' => $commissionTaxClass,
                     'DocumentTotalBeforeTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
-                    'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionTotalAmount),
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                    'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $commissionDescription,
-                            'TaxClass1' => $taxClass,
-                            'TaxAmount1' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionVatAmount),
+                            'TaxClass1' => $commissionTaxClass,
                             'RevenueAccount' => '60010',
-                            'ExtendedAmountWithTIP' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionTotalAmount),
+                            'ExtendedAmountWithTIP' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
                             'ExtendedAmountWithoutTIP' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
                         ],
                     ],
@@ -1492,7 +1494,7 @@ class SageApiEmbeddedProductService
                     'TaxAmount1' => roundNumber($sageRequestEmbeddedProduct->taxAmount),
                     'DocumentTotalBeforeTaxes' => roundNumber($sageRequestEmbeddedProduct->policyPrice),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->totalPrice),
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,

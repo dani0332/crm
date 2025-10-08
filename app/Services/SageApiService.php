@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PaymentChargesEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayEnum;
@@ -994,14 +995,22 @@ class SageApiService
         $response = ['status' => false, 'message' => '', 'error' => '', 'documentNumber' => null, 'sageCustomerNumber' => null];
         $sageApiService = new SageApiService;
 
-        $sageRequest = SagePayloadFactory::globalSagePrepaymentReceiptPayloadData([$quote, $payment, $paymentSplit, $sageRequest, $splitAmount]);
-
-        $quoteTypeId = $sageRequest->quoteTypeId;
-        $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
         $isAlreadyPosted = false;
         $sageLogArray = $paymentSplit->sageApiLogs->keyBy('step')->toArray();
         $sendUpdateLog = $paymentSplit->payment?->sendUpdateLog;
+        $quoteTypeId = $sageRequest->quoteTypeId;
+        $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
         $quoteDetails = $sendUpdateLog ?? $quote;
+
+        if ($sendUpdateLog) {
+            $quoteDetails->fill([
+                'advisor_id' => $quote?->advisor_id ?? null,
+                'customer_id' => $quote?->customer_id,
+                'policy_booking_date' => $sendUpdateLog->booking_date,
+            ]);
+        }
+
+        $sageRequest = SagePayloadFactory::globalSagePrepaymentReceiptPayloadData([$quoteDetails, $payment, $paymentSplit, $sageRequest, $splitAmount]);
 
         $sageCustomerNumberResponse = $sageApiService->getSageCustomerNumber($quoteDetails, $sageRequest->customer_id, $customerData, $paymentSplit, $sageRequest->advisor_id);
         if ($sageCustomerNumberResponse['status'] === false) {
@@ -2725,8 +2734,13 @@ class SageApiService
 
             /* if the Policy Issuance exist for the Insurer and LOB than assign the Advisor */
             if ($insuranceProviderAutomation) {
-                LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy Book: Quote '.$quote?->code.' - assign advisor and update insurer and api issuance status of quote');
-                $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote);
+                LoggerService::info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor and update insurer and api issuance status of quote');
+                if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
+                    app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType);
+                } else {
+                    // TODO:: This should be updated with the new function in PolicyIssuanceService
+                    $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote);
+                }
             } else {
                 LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy Book: Quote '.$quote?->code.' - Insurer: '.$insuranceProvider?->code.' automation class not found');
             }

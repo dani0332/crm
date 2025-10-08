@@ -6,6 +6,9 @@ const props = defineProps({
 const page = usePage();
 const { isRequired } = useRules();
 const notification = useToast();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 const generateOptions = (items, valueKey, labelKey) =>
   useGenerateOptions(items, valueKey, labelKey);
 const dateFormat = date =>
@@ -156,7 +159,7 @@ const createOrUpdateMember = async (memberForm, isMemberEditEnabled) => {
     }
   } catch (err) {
     notification.error({
-      title: 'Something went wrong',
+      title: err.response.data.message || 'Something went wrong',
       position: 'top',
     });
   } finally {
@@ -190,6 +193,9 @@ function memberSubmit(isValid) {
 
   createOrUpdateMember(memberForm, isMemberEditEnabled.value);
 }
+
+const [AddMemberUBOPayerBtnTemplate, AddMemberUBOPayerBtnReuseTemplate] =
+  createReusableTemplate();
 </script>
 <template>
   <x-form @submit="memberSubmit" auto-focus="false">
@@ -326,24 +332,15 @@ function memberSubmit(isValid) {
         </x-field>
       </div>
     </div>
-    <x-divider v-if="isMemberFormEnabled" class="mb-3 mt-1" />
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        {{
-          isPayerDetails
-            ? 'Payer Details'
-            : props.customerType == page.props.customerTypeEnum.Individual
-              ? 'Member Details'
-              : 'UBO Details'
-        }}
-        <x-tag size="sm">{{ computedMembers.length || 0 }}</x-tag>
-      </h3>
+
+    <AddMemberUBOPayerBtnTemplate>
       <x-button
         v-if="isMemberFormEnabled"
         size="sm"
         color="primary"
         type="submit"
         :loading="isLoading"
+        :disabled="!can(permissionsEnum.AMLList)"
       >
         {{
           isPayerDetails
@@ -365,6 +362,7 @@ function memberSubmit(isValid) {
         color="orange"
         type="button"
         :loading="isLoading"
+        :disabled="!can(permissionsEnum.AMLList)"
       >
         {{
           isPayerDetails
@@ -374,6 +372,34 @@ function memberSubmit(isValid) {
               : 'Add UBO Details'
         }}
       </x-button>
+    </AddMemberUBOPayerBtnTemplate>
+    <x-divider v-if="isMemberFormEnabled" class="mb-3 mt-1" />
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-semibold text-primary-800 text-lg">
+        {{
+          isPayerDetails
+            ? 'Payer Details'
+            : props.customerType == page.props.customerTypeEnum.Individual
+              ? 'Member Details'
+              : 'UBO Details'
+        }}
+        <x-tag size="sm">{{ computedMembers.length || 0 }}</x-tag>
+      </h3>
+      <x-tooltip v-if="!can(permissionsEnum.AMLList)" placement="bottom">
+        <AddMemberUBOPayerBtnReuseTemplate />
+        <template #tooltip>
+          {{
+            isPayerDetails
+              ? "You don't have permission to add Third Party Payer"
+              : props.customerType == page.props.customerTypeEnum.Individual
+                ? "You don't have permission to add Member"
+                : "You don't have permission to add UBO Details"
+          }}
+        </template>
+      </x-tooltip>
+      <template v-else>
+        <AddMemberUBOPayerBtnReuseTemplate />
+      </template>
     </div>
   </x-form>
   <DataTable

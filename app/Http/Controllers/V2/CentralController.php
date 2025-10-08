@@ -43,6 +43,7 @@ use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\PostPrepaymentToSageRequest;
+use App\Http\Requests\PUAExportValidationRequest;
 use App\Http\Requests\QuoteNotesRequest;
 use App\Http\Requests\RetryPrepaymentRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
@@ -279,45 +280,11 @@ class CentralController extends Controller
         try {
             LoggerService::info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
 
-            $paymentInformation = [
-                'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
-                'transaction_payment_status' => $validatedData['transaction_payment_status'],
-                'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
-                'broker_invoice_number' => $validatedData['broker_invoice_number'],
-                'insurer_invoice_date' => $validatedData['invoice_date'],
-                'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
-                'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
-                'commmission_percentage' => $validatedData['commission_percentage'],
-                'commission_vat' => $validatedData['vat_on_commission'],
-                'commission' => $validatedData['total_commission'],
-                'invoice_description' => $validatedData['invoice_description'],
+            $updateBookingDetailsResponse = app(CentralService::class)->updateBookingDetails($validatedData, $bookPolicyRequest);
 
-                // for life only
-                'commission_based_on_currency' => $bookPolicyRequest?->commission_based_on_currency ?? null,
-                'exchange_rate' => $bookPolicyRequest?->exchange_rate ?? null,
-                'currency' => $bookPolicyRequest?->currency ?? null,
-            ];
-
-            $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
-
-            $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
-            $payment = Payment::where('code', $quote->code)->mainLeadPayment()->first();
-
-            if ($isDuplicateOrCIRLead && empty($payment)) {
-                $payment = Payment::where([
-                    'paymentable_id' => $quote->id,
-                    'paymentable_type' => $quote->getMorphClass(),
-                ])->mainLeadPayment()->first();
+            if (! $updateBookingDetailsResponse['status']) {
+                return back()->with('error', $updateBookingDetailsResponse['message']);
             }
-
-            $payment->update($paymentInformation);
-            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
-
-            $response = (new SplitPaymentService)->updateCommissionSchedule($payment);
-            if (! $response['status']) {
-                return back()->with('error', $response['message']);
-            }
-            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
 
             return redirect()->back()->with('success', 'Booking details has been updated.');
         } catch (\Exception $e) {
@@ -746,7 +713,7 @@ class CentralController extends Controller
 
         return app(RMQuotesExport::class)->download('RM-Leads-List');
     }
-    public function exportPUAUpdates(Request $request, string $quoteType)
+    public function exportPUAUpdates(PUAExportValidationRequest $request, string $quoteType)
     {
         // Log all request data
         LoggerService::info('PUA Export Request - All Data', [
