@@ -25,6 +25,7 @@ const filters = reactive({
   email: '',
   name: '',
   date_of_purchase: '',
+  chassis_number: '',
   sync_status: 'all',
   months: '',
 });
@@ -52,6 +53,12 @@ const tableHeader = [
   { text: 'Email ID', value: 'email' },
   { text: 'Contribution Amount', value: 'contribution_amount', sortable: true },
   { text: 'Policy Issue Status', value: 'status' },
+  { text: 'Certificate Number', value: 'certificate_number' },
+  { text: 'Model Year', value: 'model_year' },
+  { text: 'Make', value: 'make' },
+  { text: 'Model', value: 'model' },
+  { text: 'Chassis Number', value: 'chassis_number' },
+  { text: 'Excess Amount', value: 'excess_amount' }
 ];
 
 function resetFilters() {
@@ -261,6 +268,22 @@ watch(
           />
         </div>
         <div>
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Chassis Number
+            </label>
+          </x-tooltip>
+          <x-input
+            v-model="filters.chassis_number"
+            type="search"
+            name="chassis_number"
+            class="w-full"
+            placeholder="Chassis Number"
+          />
+        </div>
+        <div>
           <x-input
             v-model="filters.email"
             type="search"
@@ -353,6 +376,11 @@ watch(
         tableHeader.filter(header => {
           if (header.value === 'sync_status') {
             return embeddedProduct.detail.short_code === ep_enums.COURIER;
+          }
+
+          if (embeddedProduct.detail.short_code === ep_enums.ECB) {
+            let excludeHeaders = ['advisor_name', 'dob', 'age', 'passport_number', 'nationality', 'vehicle'];
+            return !excludeHeaders.includes(header.value);
           }
 
           return true;

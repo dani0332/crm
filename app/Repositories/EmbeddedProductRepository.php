@@ -49,6 +49,7 @@ use App\Services\SendEmailCustomerService;
 use App\Services\SukoonMedexService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\COU;
+use App\Strategies\EmbeddedProducts\ECB;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
 use App\Strategies\EmbeddedProducts\RDX;
@@ -992,6 +993,8 @@ class EmbeddedProductRepository extends BaseRepository
             $strategy = new RDX;
         } elseif ($shortCode == EmbeddedProductEnum::COURIER) {
             $strategy = new COU;
+        } elseif ($shortCode == EmbeddedProductEnum::ECB) {
+            $strategy = new ECB;
         } else {
             $strategy = new EmbeddedProductStrategy;
         }
