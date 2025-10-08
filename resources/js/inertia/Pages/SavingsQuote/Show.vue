@@ -7,6 +7,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const props = defineProps({
   quote: Object,
@@ -2040,6 +2041,12 @@ const getIncludedBenefitsTooltip = fieldText =>
       :expanded="sectionExpanded"
       quoteType="savings"
       :bookPolicyDetails="bookPolicyDetails"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      lob="savings"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy
