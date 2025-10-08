@@ -100,7 +100,7 @@ class CarQuote extends BaseModel
 
     public function getInsurerApiStatusAttribute()
     {
-        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses() : null;
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this->insurer_api_status_id) : null;
     }
 
     public function isBookingFailed()
