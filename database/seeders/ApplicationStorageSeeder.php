@@ -327,69 +327,9 @@ class ApplicationStorageSeeder extends Seeder
     private function sendUpdateEmailBirdFlow(): void
     {
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_MOTOR_INSLY_WORKFLOW],
-            [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/036faf20-0788-4ac1-8b55-4dcfe93ebfa7/invoke-sync',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_TRAVEL_INSLY_WORKFLOW],
-            [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/968e6273-9965-473b-a258-2a069c8fb7da/invoke-sync',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_HOME_INSLY_WORKFLOW],
-            [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/114f64e5-5a67-4110-bb66-7038f3f34c04/invoke-sync',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_LIFE_INSLY_WORKFLOW],
-            [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/bb88d699-342a-47d5-b618-6997ab2fe7f1/invoke-sync',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_BUSINESS_INSLY_WORKFLOW],
-            [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/90329323-4850-4c81-b2b0-ed4ebcc03fb6/invoke-sync',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_PET_INSLY_WORKFLOW],
+            ['key_name' => ApplicationStorageEnums::BIRD_INSLY_WORKFLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/b93647e0-13a8-4abc-b3fa-82aa9eca8536/invoke-sync',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_HEALTH_INSLY_WORKFLOW],
-            [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/4b90ce6b-117e-4581-9b04-a420a1a7f660/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
