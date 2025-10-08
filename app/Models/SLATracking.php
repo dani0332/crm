@@ -123,8 +123,7 @@ class SLATracking extends Model
     public function getQuoteType(): QuoteTypes
     {
         return match ($this->trackable_type) {
-            HealthQuote::class => QuoteTypes::HEALTH,
-            default => 'unknown',
+            HealthQuote::class => QuoteTypes::HEALTH
         };
     }
 
