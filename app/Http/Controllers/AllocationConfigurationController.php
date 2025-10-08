@@ -6,6 +6,8 @@ use App\Enums\PermissionsEnum;
 use App\Http\Requests\AllocationConfigurationRequest;
 use App\Http\Requests\FetchAllocationConfigurationRequest;
 use App\Models\Allocation\AllocationConfiguration;
+use App\Models\HealthPlanType;
+use App\Models\Team;
 use App\Services\AllocationConfigurationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,6 +34,7 @@ class AllocationConfigurationController extends Controller
                 'YACHT' => 'Yacht',
                 'CYCLE' => 'Cycle',
                 'CORPLINE' => 'CorpLine',
+                'GROUP_MEDICAL' => 'Group Medical',
             ],
         ]);
     }
@@ -88,6 +91,53 @@ class AllocationConfigurationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update allocation configuration.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all teams for allocation configuration
+     */
+    public function getTeams()
+    {
+        try {
+            $teams = Team::
+                // whereNotNull('type')
+                where('is_active', 1)
+                ->orderBy('name')
+                ->get(['id', 'name']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $teams,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch teams.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all plan types for Group Medical allocation configuration
+     */
+    public function getPlanTypes()
+    {
+        try {
+            $planTypes = HealthPlanType::orderBy('name')
+                ->get(['id', 'name']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $planTypes,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch plan types.',
                 'error' => $e->getMessage(),
             ], 500);
         }
