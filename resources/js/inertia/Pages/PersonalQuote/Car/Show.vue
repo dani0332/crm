@@ -2030,7 +2030,7 @@ function handleOcrNotification(event) {
                     <template #tooltip>{{ record.sub_source_description || 'N/A' }}</template>
                   </x-tooltip>
                 </dt>
-                <dd>{{ record.sub_source_text || record.sub_source_id || 'N/A' }}</dd>
+                <dd>{{ record.sub_source_text || 'N/A' }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -2044,7 +2044,7 @@ function handleOcrNotification(event) {
                     <template #tooltip>{{ record.sub_source_option_description || 'N/A' }}</template>
                   </x-tooltip>
                 </dt>
-                <dd>{{ record.sub_source_option_text || record.sub_source_options_id || 'N/A' }}</dd>
+                <dd>{{ record.sub_source_option_text || 'N/A' }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
