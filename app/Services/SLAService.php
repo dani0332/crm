@@ -122,8 +122,6 @@ class SLAService extends BaseService
             return null;
         }
 
-        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
-
         if ($this->hasAnyFinalSLA($lead)) {
             LoggerService::info('SLAService - SLA already reached a final status, so skipping further SLA tracking');
 

@@ -838,6 +838,7 @@ class CRUDController extends Controller
                 $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
                 $apiIssuanceStatus = PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id);
                 $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record, QuoteTypes::CAR->value)[$record->insurer_api_status_id] ?? null;
+                $previousQuote = $this->carQuoteService->getPreviousQuote($record->previous_quote_id);
 
                 return inertia('PersonalQuote/Car/Show', compact([
                     'record',
@@ -933,6 +934,7 @@ class CRUDController extends Controller
                     'businessActivities',
                     'apiIssuanceStatus',
                     'insurerApiStatus',
+                    'previousQuote',
                 ]));
             }
 

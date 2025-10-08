@@ -11,6 +11,7 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 defineProps({
   quote: Object,
@@ -105,6 +106,7 @@ defineProps({
   isFuncsEnabled: Array,
   insurerAMLStatus: String,
   businessActivities: Object,
+  previousQuote: Object,
   borLogs: Array,
   apiIssuanceStatus: String,
   insurerApiStatus: String,
@@ -2769,6 +2771,7 @@ function handleOcrNotification(event) {
       :canAddBatchNumber="hasRole(rolesEnum.CarManager)"
       :expanded="sectionExpanded"
       :quote="record"
+      :previousQuote="previousQuote"
       modelType="Car"
       :insly-id="record?.insly_id"
       v-if="
@@ -3997,6 +4000,12 @@ function handleOcrNotification(event) {
       :insuranceProviders="insuranceProviders"
       :expanded="sectionExpanded"
       :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="record.id"
+      :lob="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy

@@ -348,7 +348,12 @@ class HealthQuote extends Model implements AuditableContract
         }
     }
 
-    // TODO:: Need to verify this function
+    public function customerInsured()
+    {
+        return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Health);
+    }
+
     public function insuredDetails()
     {
         return $this->hasOneThrough(
@@ -373,6 +378,12 @@ class HealthQuote extends Model implements AuditableContract
             'insured_id' // customer_insured.insured_id
         )->where('customer_insured.quote_type_id', QuoteTypeId::Health)
             ->latest('customer_insured.updated_at');
+    }
+
+    public function amlLogs()
+    {
+        return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Health)->withTrashed();
     }
 
     /******************************* Quote Status Logs Related Methods Below *******************************/
