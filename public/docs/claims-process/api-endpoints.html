@@ -107,18 +107,20 @@
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
-            background: white;
-            border-radius: 10px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(52, 152, 219, 0.1);
         }
 
         .endpoint-table th {
-            background: #3498db;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
             color: white;
-            padding: 15px;
+            padding: 18px;
             text-align: left;
             font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         .endpoint-table td {
@@ -127,7 +129,9 @@
         }
 
         .endpoint-table tr:hover {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            transform: scale(1.01);
+            transition: all 0.3s ease;
         }
 
         .method {
@@ -200,10 +204,17 @@
         }
 
         .tech-item {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 15px;
+            padding: 25px;
             border-left: 4px solid #3498db;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .tech-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         .tech-item h4 {
@@ -307,7 +318,7 @@
                         <td>/claim</td>
                         <td>claims.store</td>
                         <td><span class="permission-badge">CLAIM_CREATE</span></td>
-                        <td>Store new claim via CAPI integration (creation only)</td>
+                        <td>Store new claim via CPAPI integration (creation only)</td>
                     </tr>
                     <tr>
                         <td><span class="method get">GET</span></td>
@@ -664,7 +675,7 @@
             </div>
 
             <div class="response-example">
-                <h5>CAPI Claim Creation Response Example</h5>
+                <h5>CPAPI Claim Creation Response Example</h5>
                 <div class="code-block">
 {
     "success": true,
@@ -751,11 +762,11 @@
                     <ul>
                         <li><strong>index():</strong> Claims listing with 18+ filterable fields</li>
                         <li><strong>create():</strong> Show claim creation form with dropdown data</li>
-                        <li><strong>store():</strong> CAPI integration for claim creation only</li>
+                        <li><strong>store():</strong> CPAPI integration for claim creation only</li>
                         <li><strong>show():</strong> Display claim with all relationships</li>
                         <li><strong>edit():</strong> Show claim editing form</li>
                         <li><strong>update():</strong> Update existing claim</li>
-                        <li><strong>searchPolicies():</strong> Internal policy search (not CAPI)</li>
+                        <li><strong>searchPolicies():</strong> Internal policy search (not CPAPI)</li>
                     </ul>
                 </div>
 
@@ -763,7 +774,7 @@
                     <h4>ClaimsService Implementation</h4>
                     <ul>
                         <li><strong>getClaimsData():</strong> Main listing with filtering and pagination</li>
-                        <li><strong>createClaim():</strong> CAPI integration with 15+ data fields</li>
+                        <li><strong>createClaim():</strong> CPAPI integration with 15+ data fields</li>
                         <li><strong>searchActivePolicies():</strong> Internal PersonalQuote queries</li>
                         <li><strong>updateClaimStatus():</strong> Status updates with Activity logging</li>
                         <li><strong>sendNotification():</strong> AI-optimized messaging</li>
@@ -800,10 +811,10 @@
             
             <div class="tech-grid">
                 <div class="tech-item">
-                    <h4>CAPI Integration</h4>
+                    <h4>CPAPI Integration</h4>
                     <ul>
                         <li><strong>Claim Creation Only:</strong> External system integration via /api/claims/save-claim</li>
-                        <li><strong>Data Mapping:</strong> 15+ fields mapped to CAPI format</li>
+                        <li><strong>Data Mapping:</strong> 15+ fields mapped to CPAPI format</li>
                         <li><strong>Error Handling:</strong> Try-catch blocks with LoggerService</li>
                         <li><strong>Response Handling:</strong> Success/failure checking with proper error propagation</li>
                     </ul>

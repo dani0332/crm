@@ -112,12 +112,18 @@
         }
 
         .layer {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 10px 0;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 15px 0;
             border-left: 4px solid #e74c3c;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .layer:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         .layer h4 {
@@ -133,10 +139,17 @@
         }
 
         .tech-item {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 15px;
+            padding: 25px;
             border-left: 4px solid #3498db;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .tech-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         .tech-item h4 {
@@ -287,7 +300,7 @@
                     <p>Core business logic, external integrations, and data processing</p>
                     <ul>
                         <li>ClaimsService with 30+ methods for business operations</li>
-                        <li>CAPI integration for claim creation only</li>
+                        <li>CPAPI integration for claim creation only</li>
                         <li>InstantWriter AI integration for message optimization</li>
                         <li>Azure S3 integration for document management</li>
                         <li>Complex filtering and pagination logic</li>
@@ -563,12 +576,12 @@
                     <ul>
                         <li><strong>getClaimsData():</strong> Main listing with 18+ filterable fields, pagination</li>
                         <li><strong>getClaimsDataForExport():</strong> Export data with same filtering logic</li>
-                        <li><strong>createClaim():</strong> CAPI integration for initial creation only (15+ data fields)</li>
+                        <li><strong>createClaim():</strong> CPAPI integration for initial creation only (15+ data fields)</li>
                         <li><strong>updateClaimStatus():</strong> Status updates with Activity logging</li>
                         <li><strong>sendNotification():</strong> AI-optimized messaging via InstantWriterAIFacade</li>
                         <li><strong>uploadClaimDocuments():</strong> Azure S3 document management</li>
                         <li><strong>getDropdownData():</strong> Form options (statuses, types, providers)</li>
-                        <li><strong>searchPolicies():</strong> Internal policy search logic (not CAPI)</li>
+                        <li><strong>searchPolicies():</strong> Internal policy search logic (not CPAPI)</li>
                     </ul>
                 </div>
 
@@ -578,7 +591,7 @@
                         <li><strong>CustomerPortalApiFacade:</strong> Claim creation only (/api/claims/save-claim)</li>
                         <li><strong>InstantWriterAIFacade:</strong> Message optimization for customer communications</li>
                         <li><strong>Azure S3:</strong> Document storage with temporary URLs, CDN integration</li>
-                        <li><strong>Policy Search:</strong> Handled internally within current system (not via CAPI)</li>
+                        <li><strong>Policy Search:</strong> Handled internally within current system (not via CPAPI)</li>
                         <li><strong>Error Handling:</strong> Try-catch blocks with LoggerService for all integrations</li>
                         <li><strong>Data Filtering:</strong> array_filter() to remove null values before API calls</li>
                         <li><strong>Response Handling:</strong> Success/failure checking with proper error propagation</li>

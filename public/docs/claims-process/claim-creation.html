@@ -107,11 +107,18 @@
         }
         
         .step-item {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 15px;
+            padding: 25px;
             border-left: 4px solid #3498db;
             position: relative;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .step-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
         
         .step-item .step-number {
@@ -142,14 +149,28 @@
         }
         
         .code-block {
-            background: #2c3e50;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
             color: #ecf0f1;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 15px 0;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
             overflow-x: auto;
-            font-family: 'Courier New', monospace;
+            font-family: 'Fira Code', 'Courier New', monospace;
             font-size: 0.9em;
+            border: 1px solid #34495e;
+            box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3);
+            position: relative;
+        }
+        
+        .code-block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3498db, #9b59b6, #e67e22);
+            border-radius: 12px 12px 0 0;
         }
         
         .validation-grid {
@@ -160,10 +181,17 @@
         }
         
         .validation-item {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 20px;
+            border-radius: 12px;
             border-left: 4px solid #e74c3c;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .validation-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
         
         .validation-item strong {
@@ -312,12 +340,12 @@
 
         <div class="header">
             <h1>🆕 Claim Creation Process</h1>
-            <p>Comprehensive guide to creating new insurance claims with internal policy search and CAPI integration</p>
+            <p>Comprehensive guide to creating new insurance claims with internal policy search and CPAPI integration</p>
         </div>
 
         <div class="content-section">
             <h2>📋 Overview</h2>
-            <p>The claim creation process is the entry point for all new insurance claims in the system. It involves internal policy search and verification, customer information validation, LOB-specific field collection, and CAPI integration for claim creation with automatic status assignment.</p>
+            <p>The claim creation process is the entry point for all new insurance claims in the system. It involves internal policy search and verification, customer information validation, LOB-specific field collection, and CPAPI integration for claim creation with automatic status assignment.</p>
             
             <div class="step-flow">
                 <div class="step-item">
@@ -349,8 +377,8 @@
                 
                 <div class="step-item">
                     <div class="step-number">5</div>
-                    <h4>CAPI Claim Creation</h4>
-                    <p>Create claim in external system via CAPI integration with full audit logging</p>
+                    <h4>CPAPI Claim Creation</h4>
+                    <p>Create claim in external system via CPAPI integration with full audit logging</p>
                 </div>
             </div>
         </div>
@@ -565,7 +593,7 @@ public function searchActivePolicies(
 public function createClaim(array $data): array
 {
     try {
-        // Prepare API data for CAPI integration (claim creation only)
+        // Prepare API data for CPAPI integration (claim creation only)
         $apiData = [
             'firstName' => $data['first_name'] ?? null,
             'lastName' => $data['last_name'] ?? null,
@@ -589,14 +617,14 @@ public function createClaim(array $data): array
             'requestReferenceNumber' => $data['request_reference_number'] ?? null,
         ];
         
-        // Remove null values and make CAPI request
+        // Remove null values and make CPAPI request
         $apiData = array_filter($apiData, fn($value) => !is_null($value));
         $response = CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $apiData);
         
         if ($response->data['success']) {
             return $response->data;
         } else {
-            throw new \Exception('CAPI claim creation failed: ' . ($response->data['message'] ?? 'Unknown error'));
+            throw new \Exception('CPAPI claim creation failed: ' . ($response->data['message'] ?? 'Unknown error'));
         }
     } catch (\Exception $e) {
         // Comprehensive error logging
@@ -612,7 +640,7 @@ public function createClaim(array $data): array
             
             <div class="validation-grid">
                 <div class="validation-item">
-                    <strong>CAPI Integration</strong>
+                    <strong>CPAPI Integration</strong>
                     Claim creation only via /api/claims/save-claim endpoint
                 </div>
                 <div class="validation-item">
@@ -625,7 +653,7 @@ public function createClaim(array $data): array
                 </div>
                 <div class="validation-item">
                     <strong>LOB Field Mapping</strong>
-                    All LOB-specific fields mapped to CAPI format
+                    All LOB-specific fields mapped to CPAPI format
                 </div>
                 <div class="validation-item">
                     <strong>Response Handling</strong>
@@ -657,7 +685,7 @@ public function creating(ClaimRequest $claimRequest): void
         $claimRequest->whatsapp_consent = false;
     }
     
-    // Note: Status assignment happens after CAPI creation response
+    // Note: Status assignment happens after CPAPI creation response
     // The observer monitors claim_number changes for status updates
 }
             </div>
@@ -667,7 +695,7 @@ public function creating(ClaimRequest $claimRequest): void
                     <h4>🚗 Motor Claims Status Flow</h4>
                     <ul>
                         <li><strong>Creation:</strong> Default values set (source='IMCRM', whatsapp_consent=false)</li>
-                        <li><strong>After CAPI:</strong> Claim created in external system</li>
+                        <li><strong>After CPAPI:</strong> Claim created in external system</li>
                         <li><strong>Status Update:</strong> Triggered when claim_number is assigned</li>
                         <li><strong>Auto-Detection:</strong> isCarOrBikeLOB() method identifies motor claims</li>
                     </ul>
@@ -677,7 +705,7 @@ public function creating(ClaimRequest $claimRequest): void
                     <h4>🏥 Health Claims Status Flow</h4>
                     <ul>
                         <li><strong>Creation:</strong> Default values set (source='IMCRM', whatsapp_consent=false)</li>
-                        <li><strong>After CAPI:</strong> Claim created in external system</li>
+                        <li><strong>After CPAPI:</strong> Claim created in external system</li>
                         <li><strong>Status Update:</strong> Triggered when claim_number is assigned</li>
                         <li><strong>Request Types:</strong> Reimbursement, pending-approvals, ask-a-question</li>
                     </ul>
@@ -687,7 +715,7 @@ public function creating(ClaimRequest $claimRequest): void
                     <h4>💼 Life Claims Status Flow</h4>
                     <ul>
                         <li><strong>Creation:</strong> Default values set (source='IMCRM', whatsapp_consent=false)</li>
-                        <li><strong>After CAPI:</strong> Claim created in external system</li>
+                        <li><strong>After CPAPI:</strong> Claim created in external system</li>
                         <li><strong>Status Update:</strong> Triggered when claim_number is assigned</li>
                         <li><strong>Simplified:</strong> Basic claim processing without complex sub-statuses</li>
                     </ul>
@@ -700,7 +728,7 @@ public function creating(ClaimRequest $claimRequest): void
             <h3>⚠️ Common Error Scenarios</h3>
             
             <div class="error-handling">
-                <h4>CAPI Integration Failures</h4>
+                <h4>CPAPI Integration Failures</h4>
                 <ul>
                     <li><strong>Network Timeout:</strong> Exception handling with LoggerService logging</li>
                     <li><strong>Authentication Failure:</strong> Error propagation with context data</li>

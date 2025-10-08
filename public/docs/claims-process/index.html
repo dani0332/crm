@@ -228,10 +228,17 @@
         }
 
         .tech-item {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 20px;
+            border-radius: 12px;
             border-left: 4px solid #3498db;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .tech-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
 
         .tech-item strong {
@@ -248,10 +255,17 @@
         }
 
         .lob-card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 15px;
+            padding: 25px;
             border-left: 4px solid #e74c3c;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .lob-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         .lob-card.motor {
@@ -391,7 +405,7 @@
                     </div>
                     <div class="tech-item">
                         <strong>External Integrations</strong>
-                        CAPI, InstantWriter AI, Azure Storage
+                        CPAPI, InstantWriter AI, Azure Storage
                     </div>
                     <div class="tech-item">
                         <strong>Database Tables</strong>
@@ -653,7 +667,7 @@
                     </div>
                     <div class="tech-item">
                         <strong>Create.vue</strong>
-                        Claim creation form with CAPI policy search integration
+                        Claim creation form with CPAPI integration
                     </div>
                     <div class="tech-item">
                         <strong>Edit.vue</strong>
@@ -748,11 +762,11 @@
                     Claim Creation Process
                 </h3>
                 <p>
-                    Comprehensive guide to creating new claims including CAPI policy search integration,
+                    Comprehensive guide to creating new claims including CPAPI integration,
                     LOB-specific validation, customer verification, and initial claim registration workflow.
                 </p>
                 <ul class="features">
-                    <li>CAPI policy search and validation</li>
+                    <li>CPAPI claim creation integration</li>
                     <li>LOB-specific field validation</li>
                     <li>Customer information verification</li>
                     <li>Initial claim registration</li>
@@ -816,7 +830,7 @@
                 </p>
                 <ul class="features">
                     <li>Complete CRUD operations</li>
-                    <li>Policy search and CAPI integration</li>
+                    <li>Policy search and CPAPI integration</li>
                     <li>Document management endpoints</li>
                     <li>Status management operations</li>
                     <li>History and audit logs</li>
@@ -832,11 +846,11 @@
                     API Integration
                 </h3>
                 <p>
-                    Technical guide to external API integrations including CAPI for policy search,
+                    Technical guide to external API integrations including CPAPI for claim creation,
                     InstantWriter AI for message optimization, and comprehensive error handling strategies.
                 </p>
                 <ul class="features">
-                    <li>CAPI policy search integration</li>
+                    <li>CPAPI claim creation integration</li>
                     <li>InstantWriter AI message optimization</li>
                     <li>API authentication and security</li>
                     <li>Error handling and retry logic</li>

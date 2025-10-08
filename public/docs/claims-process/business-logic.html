@@ -147,10 +147,17 @@
         }
 
         .tech-item {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 15px;
+            padding: 25px;
             border-left: 4px solid #3498db;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .tech-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         .tech-item h4 {
@@ -186,10 +193,17 @@
         }
 
         .lob-card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 15px;
+            padding: 25px;
             border-left: 4px solid #e74c3c;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .lob-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         .lob-card.motor {
@@ -321,7 +335,7 @@
                         <li>Internal policy search and validation</li>
                         <li>Customer information verification</li>
                         <li>LOB-specific field validation</li>
-                        <li>CAPI integration for claim creation only</li>
+                        <li>CPAPI integration for claim creation only</li>
                         <li>Initial status: "New Claim"</li>
                         <li>Auto-assignment of sub-status based on LOB</li>
                     </ul>
@@ -592,7 +606,7 @@
                 </div>
 
                 <div class="tech-item">
-                    <h4>CAPI Integration</h4>
+                    <h4>CPAPI Integration</h4>
                     <ul>
                         <li><strong>Claim Creation Only:</strong> External system integration for initial claim creation</li>
                         <li><strong>API Endpoint:</strong> /api/claims/save-claim</li>

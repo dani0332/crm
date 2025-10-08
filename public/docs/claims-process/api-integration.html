@@ -113,9 +113,27 @@
             border-left: 4px solid #3498db;
         }
         
-        .api-card.capi { border-left-color: #e74c3c; }
+        .api-card.cpapi { border-left-color: #e67e22; }
         .api-card.ai { border-left-color: #9b59b6; }
         .api-card.internal { border-left-color: #27ae60; }
+        
+        .api-card.cpapi {
+            background: linear-gradient(135deg, #fff5f0 0%, #ffe8e0 100%);
+            border: 1px solid #e67e22;
+            box-shadow: 0 4px 15px rgba(230, 126, 34, 0.1);
+        }
+        
+        .api-card.ai {
+            background: linear-gradient(135deg, #f8f0ff 0%, #f0e6ff 100%);
+            border: 1px solid #9b59b6;
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.1);
+        }
+        
+        .api-card.internal {
+            background: linear-gradient(135deg, #f0fff4 0%, #e8f5e8 100%);
+            border: 1px solid #27ae60;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.1);
+        }
         
         .api-card h4 {
             color: #2c3e50;
@@ -125,33 +143,67 @@
         
         .endpoint-list {
             background: white;
-            border-radius: 8px;
-            padding: 15px;
+            border-radius: 12px;
+            padding: 20px;
             margin: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
         
         .endpoint-item {
-            margin-bottom: 10px;
-            padding: 8px 12px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            border-left: 3px solid #3498db;
+            margin-bottom: 12px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
         
-        .endpoint-item.get { border-left-color: #27ae60; }
-        .endpoint-item.post { border-left-color: #3498db; }
-        .endpoint-item.put { border-left-color: #f39c12; }
-        .endpoint-item.delete { border-left-color: #e74c3c; }
+        .endpoint-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .endpoint-item.get { 
+            border-left-color: #27ae60; 
+            background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+        }
+        .endpoint-item.post { 
+            border-left-color: #3498db; 
+            background: linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%);
+        }
+        .endpoint-item.put { 
+            border-left-color: #f39c12; 
+            background: linear-gradient(135deg, #fff8f0 0%, #ffffff 100%);
+        }
+        .endpoint-item.delete { 
+            border-left-color: #e74c3c; 
+            background: linear-gradient(135deg, #fff0f0 0%, #ffffff 100%);
+        }
         
         .code-block {
-            background: #2c3e50;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
             color: #ecf0f1;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 15px 0;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
             overflow-x: auto;
-            font-family: 'Courier New', monospace;
+            font-family: 'Fira Code', 'Courier New', monospace;
             font-size: 0.9em;
+            border: 1px solid #34495e;
+            box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3);
+            position: relative;
+        }
+        
+        .code-block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3498db, #9b59b6, #e67e22);
+            border-radius: 12px 12px 0 0;
         }
         
         .integration-flow {
@@ -166,12 +218,19 @@
         .flow-step {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
+            padding: 20px 25px;
+            border-radius: 15px;
             text-align: center;
-            min-width: 150px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            min-width: 180px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
             position: relative;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .flow-step:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
         
         .flow-step:not(:last-child):after {
@@ -185,29 +244,61 @@
         }
         
         .auth-section {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 15px 0;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #f39c12;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.1);
+            position: relative;
+        }
+        
+        .auth-section::before {
+            content: '🔐';
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #f39c12;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 1.2em;
         }
         
         .auth-section h4 {
-            color: #856404;
-            margin-bottom: 10px;
+            color: #d68910;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            margin-top: 10px;
         }
         
         .error-handling {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 15px 0;
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 2px solid #e74c3c;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.1);
+            position: relative;
+        }
+        
+        .error-handling::before {
+            content: '⚠️';
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 1.2em;
         }
         
         .error-handling h4 {
-            color: #721c24;
-            margin-bottom: 10px;
+            color: #c0392b;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            margin-top: 10px;
         }
         
         .feature-grid {
@@ -218,10 +309,17 @@
         }
         
         .feature-item {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 20px;
+            border-radius: 12px;
             border-left: 4px solid #3498db;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
         
         .feature-item strong {
@@ -231,16 +329,32 @@
         }
         
         .response-example {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 2px solid #27ae60;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.1);
+            position: relative;
+        }
+        
+        .response-example::before {
+            content: '✅';
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #27ae60;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 1.2em;
         }
         
         .response-example h4 {
-            color: #155724;
-            margin-bottom: 10px;
+            color: #1e8449;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            margin-top: 10px;
         }
         
         .footer {
@@ -304,7 +418,7 @@
                     <div>System Database Queries</div>
                 </div>
                 <div class="flow-step">
-                    <strong>2. CAPI Integration</strong>
+                    <strong>2. CPAPI Integration</strong>
                     <div>Claim Creation Only</div>
                 </div>
                 <div class="flow-step">
@@ -417,12 +531,12 @@ public function searchActivePolicies(
         </div>
 
         <div class="content-section">
-            <h2>🔌 CAPI (Customer Portal API) Integration</h2>
+            <h2>🔌 CPAPI (Customer Portal API) Integration</h2>
             <h3>📋 Claim Creation Functionality</h3>
-            <p>CAPI integration is used exclusively for claim creation, allowing the system to create claims in the external system with comprehensive data mapping and error handling.</p>
+            <p>CPAPI integration is used exclusively for claim creation, allowing the system to create claims in the external system with comprehensive data mapping and error handling.</p>
             
-            <div class="api-card capi">
-                <h4>🎯 CAPI Endpoints Used</h4>
+            <div class="api-card cpapi">
+                <h4>🎯 CPAPI Endpoints Used</h4>
                 <div class="endpoint-list">
                     <div class="endpoint-item post">
                         <strong>POST /api/claims/save-claim</strong><br>
@@ -432,12 +546,12 @@ public function searchActivePolicies(
             </div>
             
             <div class="code-block">
-// ClaimsService::createClaim() - CAPI Integration for Claim Creation
+// ClaimsService::createClaim() - CPAPI Integration for Claim Creation
 public function createClaim(array $claimData): array
 {
     try {
-        // Prepare CAPI data with 15+ mapped fields
-        $capiData = [
+        // Prepare CPAPI data with 15+ mapped fields
+        $cpapiData = [
             'first_name' => $claimData['first_name'],
             'last_name' => $claimData['last_name'],
             'email' => $claimData['email'],
@@ -459,12 +573,12 @@ public function createClaim(array $claimData): array
             'request_reference_number' => $claimData['request_reference_number'],
         ];
         
-        // Make CAPI request for claim creation
-        $response = CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $capiData);
+        // Make CPAPI request for claim creation
+        $response = CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $cpapiData);
         
         if ($response->success) {
-            LoggerService::info('CAPI claim creation successful', [
-                'claim_data' => $capiData,
+            LoggerService::info('CPAPI claim creation successful', [
+                'claim_data' => $cpapiData,
                 'response' => $response->data,
                 'user_id' => Auth::id(),
             ]);
@@ -472,14 +586,14 @@ public function createClaim(array $claimData): array
             return [
                 'success' => true,
                 'data' => $response->data,
-                'message' => 'Claim created successfully via CAPI'
+                'message' => 'Claim created successfully via CPAPI'
             ];
         }
         
-        throw new \Exception('CAPI claim creation failed: ' . $response->message);
+        throw new \Exception('CPAPI claim creation failed: ' . $response->message);
         
     } catch (\Exception $e) {
-        LoggerService::error(self::class.'::'.__FUNCTION__.' - CAPI claim creation error', [
+        LoggerService::error(self::class.'::'.__FUNCTION__.' - CPAPI claim creation error', [
             'error' => $e->getMessage(),
             'claim_data' => $claimData ?? [],
             'user_id' => Auth::id(),
@@ -491,7 +605,7 @@ public function createClaim(array $claimData): array
             </code>
             
             <div class="auth-section">
-                <h4>🔐 CAPI Authentication</h4>
+                <h4>🔐 CPAPI Authentication</h4>
                 <ul>
                     <li><strong>Authentication Type:</strong> Bearer Token + API Key</li>
                     <li><strong>Token Refresh:</strong> Automatic token renewal on expiry</li>
@@ -615,11 +729,11 @@ public function optimizeMessageWithAI(string $message, string $claimUuid): array
                     </ul>
                 </div>
                 
-                <div class="api-card capi">
-                    <h4>🔌 CAPI Claim Creation</h4>
+                <div class="api-card cpapi">
+                    <h4>🔌 CPAPI Claim Creation</h4>
                     <ul>
                         <li><strong>Endpoint:</strong> /api/claims/save-claim</li>
-                        <li><strong>Data Mapping:</strong> 15+ fields mapped to CAPI format</li>
+                        <li><strong>Data Mapping:</strong> 15+ fields mapped to CPAPI format</li>
                         <li><strong>Error Handling:</strong> Try-catch with LoggerService</li>
                         <li><strong>Response:</strong> Success/failure with claim details</li>
                         <li><strong>Authentication:</strong> Bearer token + API key</li>
@@ -646,9 +760,9 @@ public function optimizeMessageWithAI(string $message, string $claimUuid): array
    - Filtered by email, policy_number, quote_type_id
    - Paginated results with 15 items per page
 
-2. CAPI Claim Creation:
+2. CPAPI Claim Creation:
    - CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $data)
-   - 15+ fields mapped from internal format to CAPI format
+   - 15+ fields mapped from internal format to CPAPI format
    - Error handling with LoggerService logging
    - Success response includes claim_id, claim_uuid, claim_number
 
@@ -657,6 +771,132 @@ public function optimizeMessageWithAI(string $message, string $claimUuid): array
    - Fallback to original message if AI service fails
    - Background processing for non-critical optimizations
    - Comprehensive logging for debugging and monitoring
+            </code>
+        </div>
+
+        <div class="content-section">
+            <h2>📊 Performance Optimization</h2>
+            <h3>⚡ Caching & Rate Limiting</h3>
+            
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <strong>Internal Search Caching</strong>
+                    Policy search results cached for 15 minutes to reduce database queries
+                </div>
+                <div class="feature-item">
+                    <strong>CPAPI Rate Limiting</strong>
+                    Built-in rate limiting for CPAPI claim creation requests
+                </div>
+                <div class="feature-item">
+                    <strong>Database Optimization</strong>
+                    Eager loading and optimized queries for internal searches
+                </div>
+                <div class="feature-item">
+                    <strong>Async Processing</strong>
+                    AI optimization and notifications processed in background jobs
+                </div>
+            </div>
+            
+            <div class="code-block">
+// Caching implementation for internal policy search
+public function searchActivePoliciesCached(array $searchParams): array
+{
+    $cacheKey = 'internal_policy_search_' . md5(serialize($searchParams));
+    
+    return Cache::remember($cacheKey, now()->addMinutes(15), function () use ($searchParams) {
+        return $this->searchActivePolicies(
+            $searchParams['email'] ?? null,
+            $searchParams['policy_number'] ?? null,
+            $searchParams['quote_type_id'] ?? null,
+            $searchParams['page'] ?? 1
+        );
+    });
+}
+
+// Rate limiting implementation for CPAPI
+public function checkRateLimit(string $userId, string $endpoint): bool
+{
+    $key = "cpapi_rate_limit_{$userId}_{$endpoint}";
+    $attempts = Cache::get($key, 0);
+    
+    if ($attempts >= config('cpapi.rate_limit.max_attempts', 60)) {
+        LoggerService::warning('CPAPI rate limit exceeded', [
+            'user_id' => $userId,
+            'endpoint' => $endpoint,
+            'attempts' => $attempts,
+        ]);
+        
+        return false;
+    }
+    
+    Cache::put($key, $attempts + 1, now()->addMinute());
+    return true;
+}
+            </code>
+        </div>
+
+        <div class="content-section">
+            <h2>🔍 API Monitoring & Logging</h2>
+            <h3>📈 Comprehensive Tracking</h3>
+            
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <strong>Request Logging</strong>
+                    All API requests logged with timing and response data
+                </div>
+                <div class="feature-item">
+                    <strong>Performance Metrics</strong>
+                    Response times, success rates, and error patterns tracked
+                </div>
+                <div class="feature-item">
+                    <strong>Health Checks</strong>
+                    Regular API endpoint availability monitoring
+                </div>
+                <div class="feature-item">
+                    <strong>Alert System</strong>
+                    Automated alerts for API failures and performance issues
+                </div>
+            </div>
+            
+            <div class="code-block">
+// API monitoring and metrics collection
+public function logApiMetrics(string $endpoint, float $responseTime, bool $success, ?string $error = null): void
+{
+    $metrics = [
+        'endpoint' => $endpoint,
+        'response_time_ms' => round($responseTime * 1000, 2),
+        'success' => $success,
+        'timestamp' => now()->toISOString(),
+        'user_id' => Auth::id(),
+    ];
+    
+    if (!$success && $error) {
+        $metrics['error'] = $error;
+    }
+    
+    // Log to metrics collection system
+    LoggerService::info('API request metrics', $metrics);
+    
+    // Store in performance database for analytics
+    ApiMetric::create($metrics);
+    
+    // Check for performance degradation
+    $this->checkPerformanceAlerts($endpoint, $responseTime, $success);
+}
+
+private function checkPerformanceAlerts(string $endpoint, float $responseTime, bool $success): void
+{
+    // Alert if response time exceeds threshold
+    if ($responseTime > config('api.performance.response_time_threshold', 5.0)) {
+        event(new ApiPerformanceAlert($endpoint, $responseTime, 'slow_response'));
+    }
+    
+    // Alert if error rate is high
+    $recentErrorRate = $this->calculateRecentErrorRate($endpoint);
+    if ($recentErrorRate > config('api.performance.error_rate_threshold', 0.1)) {
+        event(new ApiPerformanceAlert($endpoint, $recentErrorRate, 'high_error_rate'));
+    }
+}
             </code>
         </div>
 
