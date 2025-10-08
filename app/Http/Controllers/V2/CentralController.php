@@ -93,6 +93,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CentralController extends Controller
@@ -274,11 +275,76 @@ class CentralController extends Controller
             return redirect()->back()->with('error', 'Error Updating Policy Details.');
         }
 
-        $quote->update([
-            'renewal_batch' => $request->renewal_batch,
-        ]);
+        // Prepare update data with all editable fields
+        $updateData = [];
+        
+        // Handle renewal batch
+        if ($request->filled('renewal_batch')) {
+            $updateData['renewal_batch'] = $request->renewal_batch;
+        }
+        
+        // Handle previous policy expiry date
+        if ($request->filled('previous_policy_expiry_date')) {
+            $updateData['previous_policy_expiry_date'] = $request->previous_policy_expiry_date;
+            
+            // Auto-update renewal batch for non-motor LOBs based on expiry date
+            if ($this->isNonMotorQuoteType($request->model_type)) {
+                $renewalBatch = $this->findRenewalBatchByExpiryDate($request->previous_policy_expiry_date);
+                if ($renewalBatch) {
+                    $updateData['renewal_batch_id'] = $renewalBatch->id;
+                    $updateData['renewal_batch'] = $renewalBatch->name;
+                }
+            }
+        }
+        
+        // Handle previous policy start date
+        if ($request->filled('previous_policy_start_date')) {
+            $updateData['previous_policy_start_date'] = $request->previous_policy_start_date;
+        }
+        
+        // Handle previous policy number
+        if ($request->filled('previous_quote_policy_number')) {
+            $updateData['previous_quote_policy_number'] = $request->previous_quote_policy_number;
+        }
+        
+        // Handle previous policy premium
+        if ($request->filled('previous_quote_policy_premium')) {
+            $updateData['previous_quote_policy_premium'] = $request->previous_quote_policy_premium;
+        }
+        
+        // Handle previous advisor
+        if ($request->filled('previous_advisor_id')) {
+            $updateData['previous_advisor_id'] = $request->previous_advisor_id;
+        }
 
-        return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
+        // Update the quote with all provided fields
+        if (!empty($updateData)) {
+            $quote->update($updateData);
+        }
+
+        return redirect()->back()->with('success', 'Last Year Policy Details have been updated successfully.');
+    }
+
+    /**
+     * Check if the quote type is non-motor
+     */
+    private function isNonMotorQuoteType(string $quoteType): bool
+    {
+        $nonMotorTypes = ['health', 'travel', 'life', 'home', 'pet', 'bike', 'yacht', 'cycle', 'jetski', 'business', 'savings'];
+        return in_array(strtolower($quoteType), $nonMotorTypes);
+    }
+
+    /**
+     * Find renewal batch by expiry date for non-motor LOBs
+     */
+    private function findRenewalBatchByExpiryDate(string $expiryDate): ?\App\Models\RenewalBatch
+    {
+        $expiryDate = \Carbon\Carbon::parse($expiryDate);
+        
+        return \App\Models\RenewalBatch::whereNull('quote_type_id') // Non-motor batches
+            ->where('start_date', '<=', $expiryDate)
+            ->where('end_date', '>=', $expiryDate)
+            ->first();
     }
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
