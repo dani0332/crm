@@ -16,6 +16,7 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Console\Command;
+use Carbon\Carbon;
 
 class CaptureEPPaymentsCommand extends Command
 {
@@ -88,7 +89,11 @@ class CaptureEPPaymentsCommand extends Command
         // Get the Eloquent model class associated with the quote type
         $model = $config['model'];
 
-        $query = $model::select('id', 'code', 'quote_status_id')
+        $bookingDays = ApplicationStorage::where('key_name', ApplicationStorageEnums::AUTO_CAPTURE_EP_PAYMENTS_BOOKING_DAYS)->first();
+        $bookingDays = $bookingDays->value ?? 7;
+        $bookingDate = Carbon::now()->subDays((int) $bookingDays)->format('Y-m-d 00:00:00');
+
+        $query = $model::select('id', 'code', 'quote_status_id', 'policy_booking_date')
             ->with([
                 'embeddedTransactions' => function ($query) {
                     $query->select('id', 'code', 'quote_request_id', 'quote_request_type', 'payment_status_id')
@@ -99,6 +104,7 @@ class CaptureEPPaymentsCommand extends Command
                         ->where('payment_gateway_id', PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP);
                 },
             ])
+            ->where('policy_booking_date', '>=', $bookingDate)
             ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
             ->whereHas('embeddedTransactions', function ($query) {
                 $query->where('payment_status_id', PaymentStatusEnum::AUTHORISED);

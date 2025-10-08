@@ -717,5 +717,15 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ]
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AUTO_CAPTURE_EP_PAYMENTS_BOOKING_DAYS],
+            [
+                'value' => 7,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
     }
 }
