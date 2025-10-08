@@ -12,6 +12,7 @@ export function useAllocationForm(props, errorHandling) {
   const savingsTemplateRef = ref(null);
   const homeTemplateRef = ref(null);
   const lifeTemplateRef = ref(null);
+  const simpleTemplateRef = ref(null);
   const auditLogsKey = ref(0);
   const isViewMode = ref(false);
   const originalConfiguration = ref(null);
@@ -163,6 +164,12 @@ export function useAllocationForm(props, errorHandling) {
           lifeTemplateRef.value.clearValidationErrors();
         });
       }
+
+      if (simpleTemplateRef.value) {
+        nextTick(() => {
+          simpleTemplateRef.value.clearValidationErrors();
+        });
+      }
     }
   };
 
@@ -240,6 +247,24 @@ export function useAllocationForm(props, errorHandling) {
         }
       }
 
+      // Validate Simple template (Pet, Yacht, Cycle)
+      if (
+        (form.quote_type === props.quoteTypeCodeEnum.PET ||
+          form.quote_type === props.quoteTypeCodeEnum.YACHT ||
+          form.quote_type === props.quoteTypeCodeEnum.CYCLE) &&
+        simpleTemplateRef.value
+      ) {
+        const templateValidation = simpleTemplateRef.value.validate();
+
+        if (!templateValidation.isValid) {
+          templateValidation.errors.forEach(error => {
+            addError(error, 'bracket');
+          });
+          isSubmitting.value = false;
+          return;
+        }
+      }
+
       isSubmitting.value = true;
 
       const submitData = {
@@ -286,6 +311,10 @@ export function useAllocationForm(props, errorHandling) {
 
           if (lifeTemplateRef.value) {
             lifeTemplateRef.value.clearValidationErrors();
+          }
+
+          if (simpleTemplateRef.value) {
+            simpleTemplateRef.value.clearValidationErrors();
           }
 
           auditLogsKey.value += 1;
@@ -359,6 +388,7 @@ export function useAllocationForm(props, errorHandling) {
     savingsTemplateRef,
     homeTemplateRef,
     lifeTemplateRef,
+    simpleTemplateRef,
     auditLogsKey,
     form,
     isViewMode,

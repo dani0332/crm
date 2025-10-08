@@ -5,6 +5,7 @@ import { Link } from '@inertiajs/vue3';
 import SavingsAllocationConfigTemplate from './Savings/SavingsAllocationConfigTemplate.vue';
 import HomeAllocationConfigTemplate from './Home/HomeAllocationConfigTemplate.vue';
 import LifeAllocationConfigTemplate from './Life/LifeAllocationConfigTemplate.vue';
+import SimpleAllocationConfigTemplate from './Simple/SimpleAllocationConfigTemplate.vue';
 import ErrorDisplay from './components/ErrorDisplay.vue';
 import { useErrorHandling } from './composables/useErrorHandling.js';
 import { useAllocationForm } from './composables/useAllocationForm.js';
@@ -42,6 +43,7 @@ const {
   savingsTemplateRef,
   homeTemplateRef,
   lifeTemplateRef,
+  simpleTemplateRef,
   auditLogsKey,
   form,
   quoteTypeOptions,
@@ -200,6 +202,24 @@ onMounted(() => {
             :view-mode="isViewMode"
             @data-update="onTemplateDataUpdate"
             ref="lifeTemplateRef"
+          />
+        </div>
+
+        <div
+          v-else-if="
+            form.quote_type === quoteTypeCodeEnum.PET ||
+            form.quote_type === quoteTypeCodeEnum.YACHT ||
+            form.quote_type === quoteTypeCodeEnum.CYCLE
+          "
+        >
+          <SimpleAllocationConfigTemplate
+            :configuration="currentConfiguration"
+            :advisor-options="advisorOptions"
+            :nationality-options="nationalityOptions"
+            :view-mode="isViewMode"
+            :lob-name="form.quote_type"
+            @data-update="onTemplateDataUpdate"
+            ref="simpleTemplateRef"
           />
         </div>
 
