@@ -14,9 +14,9 @@ use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
-use Carbon\Carbon;
 
 class CaptureEPPaymentsCommand extends Command
 {
