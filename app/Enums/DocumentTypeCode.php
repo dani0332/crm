@@ -103,4 +103,9 @@ class DocumentTypeCode extends Enum
     const BOR_SIGN = 'BOR_SIGN';
     const BAL_BS = 'BAL_BS';
     const BUS_BAL = 'BUS_BAL';
+
+    const GH_PS = 'GH_PS'; // Group Health Policy Schedule
+    const GH_NL = 'GH_NL'; // Group Health Network List
+    const GH_EC = 'GH_EC'; // Group Health E-Card
+    const GH_PC = 'GH_PC'; // Group Health Policy Certificate
 }

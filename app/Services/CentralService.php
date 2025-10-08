@@ -1591,7 +1591,7 @@ class CentralService extends BaseService
         }
 
         $quote->load('latestInsured');
-        $emailData->insuredName = $quote?->latestInsured?->first_name ? strtoupper($quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name) : '';
+        $emailData->insuredName = $quote?->latestInsured?->first_name ? strtoupper($quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name) : '-';
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
             QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
@@ -1611,7 +1611,7 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Cycle) {
-            $emailData->cycleDetails = $quote->cycleQuote->cycle_make.' '.$quote->cycleQuote->cycle_model.' '.$quote->cycleQuote->yearOfManufacture->text;
+            $emailData->cycleDetails = $quote?->cycleQuote?->cycle_make.' '.$quote?->cycleQuote?->cycle_model.' '.$quote?->cycleQuote?->yearOfManufacture?->text;
         }
 
         if ($quoteTypeId == QuoteTypeId::Yacht) {
@@ -1664,10 +1664,13 @@ class CentralService extends BaseService
 
         if (
             $quoteTypeId != QuoteTypeId::Business ||
-            ! in_array($quote?->business_type_of_insurance_id, [
-                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
-                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet),
-            ])
+            (
+                $quoteTypeId == QuoteTypeId::Business &&
+                in_array($quote?->business_type_of_insurance_id, [
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet),
+                ])
+            )
         ) {
             $handBookDocuments = $existingEmailData->handBookDocuments ?? [];
             if (! empty($handBookDocuments)) {
@@ -1687,7 +1690,7 @@ class CentralService extends BaseService
 
             if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business])) {
                 $emailData->policyCertificate = $storageUrl.$quoteDocuments->filter(function ($document) {
-                    return $document['document_type_code'] == DocumentTypeCode::CPC;
+                    return in_array($document['document_type_code'], [DocumentTypeCode::CPC, DocumentTypeCode::GH_PC]);
                 })->first()['doc_url'] ?? '';
             }
 
@@ -1701,15 +1704,28 @@ class CentralService extends BaseService
             // E-Card
             if (
                 $quoteTypeId == QuoteTypeId::Health || 
-                ($quoteTypeId == QuoteTypeId::Business && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical))
+                (
+                    $quoteTypeId == QuoteTypeId::Business &&
+                    $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)
+                )
             ) {
-                /* $emailData->policyCertificate = $storageUrl.$quoteDocuments->filter(function ($document) {
-                    return $document['document_type_code'] == DocumentTypeCode::CPC;
-                })->first()['doc_url'] ?? ''; */
+                $emailData->eCard = $storageUrl.$quoteDocuments->filter(function ($document) {
+                    return $document['document_type_code'] == DocumentTypeCode::GH_EC;
+                })->first()['doc_url'] ?? '';
+            }
+
+            // Network List
+            if (
+                $quoteTypeId == QuoteTypeId::Business &&
+                $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)
+            ) {
+                $emailData->networkList = $storageUrl.$quoteDocuments->filter(function ($document) {
+                    return $document['document_type_code'] == DocumentTypeCode::GH_NL;
+                })->first()['doc_url'] ?? '';
             }
 
             $emailData->policySchedule = $storageUrl.$quoteDocuments->filter(function ($document) {
-                return $document['document_type_code'] == DocumentTypeCode::CPS;
+                return in_array($document['document_type_code'], [DocumentTypeCode::CPS, DocumentTypeCode::GH_PS]);
             })->first()['doc_url'] ?? '';
         }
 
