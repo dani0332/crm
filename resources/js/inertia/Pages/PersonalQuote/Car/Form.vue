@@ -254,8 +254,6 @@ function onSubmit(isValid) {
     ? route('car.update', props.quote.uuid)
     : route('car.store');
 
-  console.log("onSubmit");
-
   const options = {
     onError: errors => {
       isError.value = true;
@@ -442,7 +440,6 @@ const gender = computed(() => {
 const subSourceOptions = computed(() => {
 
   if (!props.subSources || props.subSources.length === 0) {
-    console.warn("subSources is empty or undefined!");
     return [];
   }
 
