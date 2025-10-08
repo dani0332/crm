@@ -27,21 +27,20 @@ const props = defineProps({
 
 const emit = defineEmits(['data-update']);
 
-const bracket = ref({
-  profiles: [],
-});
+const brackets = ref([]);
 const validationErrors = ref({});
+const highlightedBracketIndex = ref(null);
 const highlightedProfileKey = ref('');
+const collapsedBrackets = ref(new Set());
 const collapsedProfiles = ref(new Set());
+const isModuleCollapsed = ref(false);
 const isInitialized = ref(false);
 
 const initializeData = () => {
-  if (props.configuration && props.configuration.bracket1) {
-    bracket.value = JSON.parse(JSON.stringify(props.configuration.bracket1));
+  if (props.configuration && props.configuration.brackets) {
+    brackets.value = JSON.parse(JSON.stringify(props.configuration.brackets));
   } else {
-    bracket.value = {
-      profiles: [],
-    };
+    brackets.value = [];
   }
 
   emitData();
@@ -49,39 +48,48 @@ const initializeData = () => {
 
 const emitData = () => {
   const data = {
-    bracket1: bracket.value,
+    brackets: brackets.value,
   };
   emit('data-update', data);
 };
 
-const validateBracket = () => {
+const validateAllBrackets = () => {
   const errors = [];
 
-  if (!bracket.value.profiles || bracket.value.profiles.length === 0) {
+  if (brackets.value.length === 0) {
     errors.push(
-      `${props.lobName} Bracket: At least one advisor profile is required`,
+      `${props.lobName}: At least one bracket with profiles is required`,
     );
-  } else {
-    bracket.value.profiles.forEach((profile, profileIndex) => {
-      if (!profile.advisorIds || profile.advisorIds.length === 0) {
-        errors.push(
-          `${props.lobName} Bracket, Profile ${profileIndex + 1}: At least one advisor must be selected`,
-        );
-      }
-
-      if (!profile.nationalityIds || profile.nationalityIds.length === 0) {
-        errors.push(
-          `${props.lobName} Bracket, Profile ${profileIndex + 1}: At least one nationality must be selected`,
-        );
-      }
-    });
+    return errors;
   }
+
+  brackets.value.forEach((bracket, bracketIndex) => {
+    if (!bracket.profiles || bracket.profiles.length === 0) {
+      errors.push(
+        `${props.lobName} Bracket ${bracketIndex + 1}: At least one advisor profile is required`,
+      );
+    } else {
+      bracket.profiles.forEach((profile, profileIndex) => {
+        if (!profile.advisorIds || profile.advisorIds.length === 0) {
+          errors.push(
+            `${props.lobName} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one advisor must be selected`,
+          );
+        }
+
+        if (!profile.nationalityIds || profile.nationalityIds.length === 0) {
+          errors.push(
+            `${props.lobName} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one nationality must be selected`,
+          );
+        }
+      });
+    }
+  });
 
   return errors;
 };
 
 const validate = () => {
-  const errors = validateBracket();
+  const errors = validateAllBrackets();
   validationErrors.value = errors;
   return {
     isValid: errors.length === 0,
@@ -94,7 +102,7 @@ const clearValidationErrors = () => {
 };
 
 watch(
-  bracket,
+  brackets,
   () => {
     if (Object.keys(validationErrors.value).length > 0) {
       clearValidationErrors();
@@ -122,19 +130,18 @@ watch(
 );
 
 watch(
-  () => bracket.value.profiles?.length,
+  () => brackets.value.length,
   (newLength, oldLength) => {
     if (isInitialized.value && newLength > oldLength) {
-      const profileIndex = newLength - 1;
-      const profileKey = `profile-${profileIndex}`;
-      highlightedProfileKey.value = profileKey;
+      const newBracketIndex = newLength - 1;
+      highlightedBracketIndex.value = newBracketIndex;
 
       nextTick(() => {
-        const newProfileElement = document.querySelector(
-          `[data-profile-key="${profileKey}"]`,
+        const newBracketElement = document.querySelector(
+          `[data-bracket-index="bracket-${newBracketIndex}"]`,
         );
-        if (newProfileElement) {
-          newProfileElement.scrollIntoView({
+        if (newBracketElement) {
+          newBracketElement.scrollIntoView({
             behavior: 'smooth',
             block: 'center',
           });
@@ -142,32 +149,90 @@ watch(
       });
 
       setTimeout(() => {
-        highlightedProfileKey.value = '';
+        highlightedBracketIndex.value = null;
       }, 2000);
     }
   },
 );
+
+// Watch for profile additions within brackets
+watch(
+  () => brackets.value.map(bracket => bracket.profiles?.length || 0),
+  (newProfileCounts, oldProfileCounts) => {
+    if (!isInitialized.value) return;
+
+    newProfileCounts.forEach((newCount, bracketIndex) => {
+      const oldCount = oldProfileCounts?.[bracketIndex] || 0;
+      if (newCount > oldCount) {
+        const profileIndex = newCount - 1;
+        const profileKey = `${bracketIndex}-${profileIndex}`;
+        highlightedProfileKey.value = profileKey;
+
+        nextTick(() => {
+          const newProfileElement = document.querySelector(
+            `[data-profile-key="${profileKey}"]`,
+          );
+          if (newProfileElement) {
+            newProfileElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+          }
+        });
+
+        setTimeout(() => {
+          highlightedProfileKey.value = '';
+        }, 2000);
+      }
+    });
+  },
+  { deep: true },
+);
+
+const createEmptyBracket = () => ({
+  profiles: [],
+});
 
 const createEmptyProfile = () => ({
   advisorIds: [],
   nationalityIds: [],
 });
 
-const addProfile = () => {
-  bracket.value.profiles.push(createEmptyProfile());
+const addBracket = () => {
+  brackets.value.push(createEmptyBracket());
 };
 
-const removeProfile = profileIndex => {
-  bracket.value.profiles.splice(profileIndex, 1);
+const removeBracket = bracketIndex => {
+  brackets.value.splice(bracketIndex, 1);
 };
 
-const toggleProfile = profileIndex => {
-  const profileKey = `${profileIndex}`;
+const addProfile = bracket => {
+  bracket.profiles.push(createEmptyProfile());
+};
+
+const removeProfile = (bracket, profileIndex) => {
+  bracket.profiles.splice(profileIndex, 1);
+};
+
+const toggleBracket = bracketIndex => {
+  if (collapsedBrackets.value.has(bracketIndex)) {
+    collapsedBrackets.value.delete(bracketIndex);
+  } else {
+    collapsedBrackets.value.add(bracketIndex);
+  }
+};
+
+const toggleProfile = (bracketIndex, profileIndex) => {
+  const profileKey = `${bracketIndex}-${profileIndex}`;
   if (collapsedProfiles.value.has(profileKey)) {
     collapsedProfiles.value.delete(profileKey);
   } else {
     collapsedProfiles.value.add(profileKey);
   }
+};
+
+const toggleModule = () => {
+  isModuleCollapsed.value = !isModuleCollapsed.value;
 };
 
 defineExpose({
@@ -180,140 +245,253 @@ defineExpose({
   <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
     <div class="p-6 bg-white border-b border-gray-200">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-medium text-gray-900">
-          {{ lobName }} Allocation - Bracket 1
-        </h3>
+        <div class="flex items-center space-x-2">
+          <CollapseIcon
+            :is-expanded="!isModuleCollapsed"
+            @click="toggleModule"
+          />
+          <h3 class="text-lg font-medium text-gray-900">
+            {{ lobName }} Allocation Configuration
+          </h3>
+        </div>
         <x-tooltip v-if="!viewMode">
-          <x-button size="sm" color="#ff5e00" type="button" @click="addProfile">
-            Add Profile
+          <x-button size="md" color="#ff5e00" type="button" @click="addBracket">
+            Create new bracket
           </x-button>
           <template #tooltip>
             <span class="custom-tooltip-content">
-              Set who gets the lead for {{ lobName }} insurance.
+              Add a new bracket for {{ lobName }} allocation.
             </span>
           </template>
         </x-tooltip>
       </div>
 
-      <div
-        v-if="bracket.profiles.length === 0"
-        class="text-center py-8 text-gray-500"
-      >
-        No advisor profiles configured for {{ lobName }} bracket. Click "Add
-        Profile" to create one.
-      </div>
-
-      <div v-else class="space-y-4">
+      <div v-show="!isModuleCollapsed">
         <div
-          v-for="(profile, profileIndex) in bracket.profiles"
-          :key="`profile-${profileIndex}`"
-          :data-profile-key="`profile-${profileIndex}`"
-          class="bg-gray-50 p-4 rounded-md transition-all duration-500"
-          :class="{
-            'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
-              highlightedProfileKey === `profile-${profileIndex}`,
-            'shadow-lg': highlightedProfileKey === `profile-${profileIndex}`,
-          }"
+          v-if="brackets.length === 0"
+          class="text-center py-8 text-gray-500"
         >
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center space-x-2">
-              <CollapseIcon
-                :is-expanded="!collapsedProfiles.has(`${profileIndex}`)"
-                size="sm"
-                @click="toggleProfile(profileIndex)"
-              />
-              <h6 class="text-sm font-medium text-gray-600">
-                Profile {{ profileIndex + 1 }}
-                <span
-                  v-if="highlightedProfileKey === `profile-${profileIndex}`"
-                  class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
-                >
-                  New!
-                </span>
-              </h6>
-            </div>
-            <button
-              v-if="!viewMode"
-              type="button"
-              @click="removeProfile(profileIndex)"
-              class="text-red-600 hover:text-red-800"
-            >
-              <svg
-                class="h-4 w-4"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
+          No brackets configured. Click "Create new bracket" to get started.
+        </div>
 
+        <div v-else class="space-y-6">
           <div
-            v-show="!collapsedProfiles.has(`${profileIndex}`)"
-            class="grid grid-cols-1 md:grid-cols-2 gap-4"
+            v-for="(bracket, bracketIndex) in brackets"
+            :key="`bracket-${bracketIndex}`"
+            :data-bracket-index="`bracket-${bracketIndex}`"
+            class="border border-gray-200 rounded-lg p-4 transition-all duration-500"
+            :class="{
+              'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
+                highlightedBracketIndex === bracketIndex,
+              'shadow-lg': highlightedBracketIndex === bracketIndex,
+            }"
           >
-            <div>
-              <x-select
-                v-model="profile.advisorIds"
-                :options="advisorOptions"
-                placeholder="Select advisors..."
-                multiple
-                filterable
-                :disabled="viewMode"
-                class="w-full min-h-[40px]"
-                label="Advisors"
-                required
-                tooltip="Select one or more advisors or managers eligible to receive leads in this profile."
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-2">
+                <CollapseIcon
+                  :is-expanded="!collapsedBrackets.has(bracketIndex)"
+                  size="sm"
+                  @click="toggleBracket(bracketIndex)"
+                />
+                <h4 class="text-md font-medium text-gray-700">
+                  Bracket {{ bracketIndex + 1 }}
+                  <span
+                    v-if="highlightedBracketIndex === bracketIndex"
+                    class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
+                  >
+                    New!
+                  </span>
+                </h4>
+              </div>
+              <x-button
+                v-if="!viewMode"
+                size="sm"
+                color="error"
+                outlined
+                type="button"
+                @click="removeBracket(bracketIndex)"
               >
-                <template
-                  #content-footer
-                  v-if="advisorOptions.length > 0 && !viewMode"
+                <svg
+                  class="h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
                 >
-                  <ui-select-actions
-                    @select-all="
-                      profile.advisorIds = advisorOptions.map(
-                        item => item.value,
-                      )
-                    "
-                    @clear="profile.advisorIds = []"
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
                   />
-                </template>
-              </x-select>
+                </svg>
+              </x-button>
             </div>
-            <div>
-              <x-select
-                v-model="profile.nationalityIds"
-                :options="nationalityOptions"
-                placeholder="Select nationalities..."
-                multiple
-                filterable
-                :disabled="viewMode"
-                class="w-full min-h-[40px]"
-                label="Nationalities"
-                required
-                tooltip="Select the nationalities of customers this profile applies to."
-              >
-                <template
-                  #content-footer
-                  v-if="nationalityOptions.length > 0 && !viewMode"
+
+            <div
+              v-show="!collapsedBrackets.has(bracketIndex)"
+              class="space-y-4"
+            >
+              <!-- Advisor Allocation Profiles -->
+              <div class="border-t pt-4">
+                <div class="flex items-center justify-between mb-4">
+                  <h5 class="text-sm font-medium text-gray-700">
+                    Advisor Allocation Profiles
+                  </h5>
+                  <x-tooltip v-if="!viewMode">
+                    <x-button
+                      size="sm"
+                      color="#ff5e00"
+                      type="button"
+                      @click="addProfile(bracket)"
+                    >
+                      Add Profile
+                    </x-button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        Set who gets the lead for {{ lobName }} insurance.
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </div>
+
+                <div
+                  v-if="bracket.profiles.length === 0"
+                  class="text-center py-4 text-gray-400 text-sm"
                 >
-                  <ui-select-actions
-                    @select-all="
-                      profile.nationalityIds = nationalityOptions.map(
-                        item => item.value,
-                      )
-                    "
-                    @clear="profile.nationalityIds = []"
-                  />
-                </template>
-              </x-select>
+                  No advisor profiles configured for this bracket.
+                </div>
+
+                <div v-else class="space-y-4">
+                  <div
+                    v-for="(profile, profileIndex) in bracket.profiles"
+                    :key="`profile-${bracketIndex}-${profileIndex}`"
+                    :data-profile-key="`${bracketIndex}-${profileIndex}`"
+                    class="bg-gray-50 p-4 rounded-md transition-all duration-500"
+                    :class="{
+                      'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
+                        highlightedProfileKey ===
+                        `${bracketIndex}-${profileIndex}`,
+                      'shadow-lg':
+                        highlightedProfileKey ===
+                        `${bracketIndex}-${profileIndex}`,
+                    }"
+                  >
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="flex items-center space-x-2">
+                        <CollapseIcon
+                          :is-expanded="
+                            !collapsedProfiles.has(
+                              `${bracketIndex}-${profileIndex}`,
+                            )
+                          "
+                          size="sm"
+                          @click="toggleProfile(bracketIndex, profileIndex)"
+                        />
+                        <h6 class="text-sm font-medium text-gray-600">
+                          Profile {{ profileIndex + 1 }}
+                          <span
+                            v-if="
+                              highlightedProfileKey ===
+                              `${bracketIndex}-${profileIndex}`
+                            "
+                            class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
+                          >
+                            New!
+                          </span>
+                        </h6>
+                      </div>
+                      <button
+                        v-if="!viewMode"
+                        type="button"
+                        @click="removeProfile(bracket, profileIndex)"
+                        class="text-red-600 hover:text-red-800"
+                      >
+                        <svg
+                          class="h-4 w-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="1.5"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div
+                      v-show="
+                        !collapsedProfiles.has(
+                          `${bracketIndex}-${profileIndex}`,
+                        )
+                      "
+                      class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                    >
+                      <div>
+                        <x-select
+                          v-model="profile.advisorIds"
+                          :options="advisorOptions"
+                          placeholder="Select advisors..."
+                          multiple
+                          filterable
+                          :disabled="viewMode"
+                          class="w-full min-h-[40px]"
+                          label="Advisors"
+                          required
+                          tooltip="Select one or more advisors or managers eligible to receive leads in this profile."
+                        >
+                          <template
+                            #content-footer
+                            v-if="advisorOptions.length > 0 && !viewMode"
+                          >
+                            <ui-select-actions
+                              @select-all="
+                                profile.advisorIds = advisorOptions.map(
+                                  item => item.value,
+                                )
+                              "
+                              @clear="profile.advisorIds = []"
+                            />
+                          </template>
+                        </x-select>
+                      </div>
+                      <div>
+                        <x-select
+                          v-model="profile.nationalityIds"
+                          :options="nationalityOptions"
+                          placeholder="Select nationalities..."
+                          multiple
+                          filterable
+                          :disabled="viewMode"
+                          class="w-full min-h-[40px]"
+                          label="Nationalities"
+                          required
+                          tooltip="Select the nationalities of customers this profile applies to."
+                        >
+                          <template
+                            #content-footer
+                            v-if="nationalityOptions.length > 0 && !viewMode"
+                          >
+                            <ui-select-actions
+                              @select-all="
+                                profile.nationalityIds = nationalityOptions.map(
+                                  item => item.value,
+                                )
+                              "
+                              @clear="profile.nationalityIds = []"
+                            />
+                          </template>
+                        </x-select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -321,4 +499,3 @@ defineExpose({
     </div>
   </div>
 </template>
-

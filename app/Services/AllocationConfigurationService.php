@@ -42,7 +42,7 @@ class AllocationConfigurationService
 
         if ($quoteType === QuoteTypes::PET || $quoteType === QuoteTypes::YACHT || $quoteType === QuoteTypes::CYCLE) {
             return [
-                'bracket1' => $data['bracket1'] ?? ['profiles' => []],
+                'brackets' => $data['brackets'] ?? [],
             ];
         }
 
