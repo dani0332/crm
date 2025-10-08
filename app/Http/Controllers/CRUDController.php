@@ -414,23 +414,6 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
-        // Log parameters from CreateLeadModal
-        LoggerService::info('CRUDController create method - Request parameters from CreateLeadModal:', [
-            'all_params' => $request->all(),
-            'query_params' => $request->query(),
-            'input_params' => $request->input(),
-            'method' => $request->method(),
-            'url' => $request->fullUrl(),
-            'user_id' => auth()->id(),
-            'timestamp' => now()->toDateTimeString(),
-            'modal_specific_params' => [
-                'type' => $request->input('type'),
-                'subSource' => $request->input('subSource'),
-                'subSourceOption' => $request->input('subSourceOption'),
-                'primaryRefId' => $request->input('primaryRefId'),
-            ],
-        ]);
-
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
@@ -459,14 +442,6 @@ class CRUDController extends Controller
         $subSources = $this->lookupService->getSubSource();
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
-            // Log parameters from CreateLeadModal
-            info('Health CRUDController create - Parameters from CreateLeadModal:', [
-                'type' => $request->input('type'),
-                'subSourceId' => $request->input('subSourceId'),
-                'subSourceOptionsId' => $request->input('subSourceOptionsId'),
-                'primaryRefId' => $request->input('primaryRefId'),
-                'partnerName' => $request->input('partnerName'),
-            ]);
 
             return inertia('HealthQuote/Form', [
                 'dropdownSource' => $dropdownSource,
