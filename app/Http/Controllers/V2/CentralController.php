@@ -86,6 +86,7 @@ use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SplitPaymentService;
+use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -419,6 +420,7 @@ class CentralController extends Controller
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
+        app(TravelQuoteService::class)->updateCustomerProfileDetails($quoteType, $uuid);
 
         return response()->json(['plan' => $response]);
     }
