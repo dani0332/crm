@@ -1505,11 +1505,11 @@ const onConfirmPUAExport = () => {
       <template #item-api_issuance_status_id="{ api_issuance_status_id }">
         <div class="text-center">
           <x-tag 
-            v-if="api_issuance_status_id == 1 || api_issuance_status_id == 2"
+            v-if="api_issuance_status_id"
             size="sm" 
             :color="api_issuance_status_id == 1 ? 'success' : 'error'"
           >
-            {{ api_issuance_status_id == 1 ? 'Yes' : 'No' }}
+            {{ issuanceStatuses.find(s => s.value == api_issuance_status_id)?.label }}
           </x-tag>
           <span v-else>N/A</span>
         </div>
