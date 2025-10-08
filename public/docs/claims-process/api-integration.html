@@ -300,16 +300,16 @@
             
             <div class="integration-flow">
                 <div class="flow-step">
-                    <strong>1. CAPI Integration</strong>
-                    <div>Policy Search & Claim Creation</div>
+                    <strong>1. Internal Policy Search</strong>
+                    <div>System Database Queries</div>
                 </div>
                 <div class="flow-step">
-                    <strong>2. InstantWriter AI</strong>
+                    <strong>2. CAPI Integration</strong>
+                    <div>Claim Creation Only</div>
+                </div>
+                <div class="flow-step">
+                    <strong>3. InstantWriter AI</strong>
                     <div>Message Optimization</div>
-                </div>
-                <div class="flow-step">
-                    <strong>3. Internal APIs</strong>
-                    <div>System Coordination</div>
                 </div>
                 <div class="flow-step">
                     <strong>4. External Services</strong>
@@ -319,9 +319,107 @@
         </div>
 
         <div class="content-section">
+            <h2>🔍 Internal Policy Search Integration</h2>
+            <h3>📋 System Database Queries</h3>
+            <p>Policy search is handled internally within the current system using database queries on the PersonalQuote model, providing fast and reliable policy validation for claim creation.</p>
+            
+            <div class="api-card internal">
+                <h4>🎯 Internal Search Implementation</h4>
+                <div class="endpoint-list">
+                    <div class="endpoint-item post">
+                        <strong>POST /claim/search-policies</strong><br>
+                        Internal policy search via PersonalQuote model
+                    </div>
+                    <div class="endpoint-item get">
+                        <strong>Database Query</strong><br>
+                        PersonalQuote::where('status', 'PolicyBooked')
+                    </div>
+                    <div class="endpoint-item get">
+                        <strong>Eager Loading</strong><br>
+                        Optimized queries with relationship loading
+                    </div>
+                </div>
+            </div>
+            
+            <div class="code-block">
+// ClaimsService::searchActivePolicies() - Internal Database Integration
+public function searchActivePolicies(
+    ?string $email = null, 
+    ?string $policyNumber = null, 
+    ?int $quoteTypeId = null, 
+    int $page = 1
+): array {
+    try {
+        // Build internal database query
+        $query = PersonalQuote::with(['customer', 'quoteType'])
+            ->where('status', 'PolicyBooked')
+            ->select([
+                'id', 'uuid', 'ref_id', 'policy_number', 'customer_id', 
+                'quote_type_id', 'car_make', 'car_model', 'model_year', 
+                'plate_number', 'status', 'created_at'
+            ]);
+        
+        // Apply search filters
+        if ($email) {
+            $query->whereHas('customer', function($q) use ($email) {
+                $q->where('email', 'like', "%{$email}%");
+            });
+        }
+        
+        if ($policyNumber) {
+            $query->where('policy_number', 'like', "%{$policyNumber}%");
+        }
+        
+        if ($quoteTypeId) {
+            $query->where('quote_type_id', $quoteTypeId);
+        }
+        
+        // Execute paginated query
+        $policies = $query->simplePaginate($this->perPage, ['*'], 'page', $page);
+        
+        LoggerService::info('Internal policy search successful', [
+            'search_params' => compact('email', 'policyNumber', 'quoteTypeId', 'page'),
+            'result_count' => $policies->count(),
+            'user_id' => Auth::id(),
+        ]);
+        
+        return [
+            'policies' => $policies->items(),
+            'pagination' => [
+                'current_page' => $policies->currentPage(),
+                'per_page' => $policies->perPage(),
+                'total' => $policies->total(),
+                'has_more' => $policies->hasMorePages(),
+            ]
+        ];
+        
+    } catch (\Exception $e) {
+        LoggerService::error(self::class.'::'.__FUNCTION__.' - Internal search error', [
+            'error' => $e->getMessage(),
+            'search_params' => compact('email', 'policyNumber', 'quoteTypeId', 'page'),
+            'user_id' => Auth::id(),
+        ]);
+        
+        throw $e;
+    }
+}
+            </code>
+            
+            <div class="auth-section">
+                <h4>🔐 Internal System Security</h4>
+                <ul>
+                    <li><strong>Database Security:</strong> Eloquent ORM with parameterized queries</li>
+                    <li><strong>Access Control:</strong> Permission-based policy search access</li>
+                    <li><strong>Performance:</strong> Optimized queries with eager loading</li>
+                    <li><strong>Audit Logging:</strong> All search activities logged for compliance</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content-section">
             <h2>🔌 CAPI (Customer Portal API) Integration</h2>
-            <h3>📋 Policy Search Functionality</h3>
-            <p>CAPI integration provides policy search capabilities for claim creation, allowing claims managers to find and validate active policies before creating claims.</p>
+            <h3>📋 Claim Creation Functionality</h3>
+            <p>CAPI integration is used exclusively for claim creation, allowing the system to create claims in the external system with comprehensive data mapping and error handling.</p>
             
             <div class="api-card capi">
                 <h4>🎯 CAPI Endpoints Used</h4>
@@ -330,54 +428,60 @@
                         <strong>POST /api/claims/save-claim</strong><br>
                         Create new claim in external system
                     </div>
-                    <div class="endpoint-item get">
-                        <strong>GET /api/policies/search</strong><br>
-                        Search active policies by email/policy number
-                    </div>
-                    <div class="endpoint-item get">
-                        <strong>GET /api/customers/verify</strong><br>
-                        Verify customer information
-                    </div>
                 </div>
             </div>
             
             <div class="code-block">
-// ClaimsService::searchActivePolicies() - CAPI Integration
-public function searchActivePolicies(
-    ?string $email = null, 
-    ?string $policyNumber = null, 
-    ?int $quoteTypeId = null, 
-    int $page = 1
-): array {
+// ClaimsService::createClaim() - CAPI Integration for Claim Creation
+public function createClaim(array $claimData): array
+{
     try {
-        // Prepare search parameters
-        $searchParams = array_filter([
-            'email' => $email,
-            'policy_number' => $policyNumber,
-            'quote_type_id' => $quoteTypeId,
-            'page' => $page,
-            'per_page' => $this->perPage,
-        ]);
+        // Prepare CAPI data with 15+ mapped fields
+        $capiData = [
+            'first_name' => $claimData['first_name'],
+            'last_name' => $claimData['last_name'],
+            'email' => $claimData['email'],
+            'mobile_no' => $claimData['mobile_no'],
+            'quote_type_id' => $claimData['quote_type_id'],
+            'claim_type_id' => $claimData['claim_type_id'],
+            'incident_date' => $claimData['incident_date'],
+            'incident_story' => $claimData['incident_story'],
+            'policy_number' => $claimData['policy_number'],
+            'customer_id' => $claimData['customer_id'],
+            'insurance_provider_id' => $claimData['insurance_provider_id'],
+            'selected_quote_uuid' => $claimData['selected_quote_uuid'],
+            'car_make' => $claimData['car_make'] ?? null,
+            'car_model' => $claimData['car_model'] ?? null,
+            'model_year' => $claimData['model_year'] ?? null,
+            'plate_number' => $claimData['plate_number'] ?? null,
+            'claim_request_type_id' => $claimData['claim_request_type_id'],
+            'service_type_id' => $claimData['service_type_id'],
+            'request_reference_number' => $claimData['request_reference_number'],
+        ];
         
-        // Make CAPI request
-        $response = CustomerPortalApiFacade::request('/api/policies/search', 'get', $searchParams);
+        // Make CAPI request for claim creation
+        $response = CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $capiData);
         
         if ($response->success) {
-            LoggerService::info('CAPI policy search successful', [
-                'search_params' => $searchParams,
-                'result_count' => count($response->data),
+            LoggerService::info('CAPI claim creation successful', [
+                'claim_data' => $capiData,
+                'response' => $response->data,
                 'user_id' => Auth::id(),
             ]);
             
-            return $response->data;
+            return [
+                'success' => true,
+                'data' => $response->data,
+                'message' => 'Claim created successfully via CAPI'
+            ];
         }
         
-        throw new \Exception('CAPI policy search failed: ' . $response->message);
+        throw new \Exception('CAPI claim creation failed: ' . $response->message);
         
     } catch (\Exception $e) {
-        LoggerService::error(self::class.'::'.__FUNCTION__.' - CAPI search error', [
+        LoggerService::error(self::class.'::'.__FUNCTION__.' - CAPI claim creation error', [
             'error' => $e->getMessage(),
-            'search_params' => $searchParams ?? [],
+            'claim_data' => $claimData ?? [],
             'user_id' => Auth::id(),
         ]);
         
@@ -496,257 +600,63 @@ public function optimizeMessageWithAI(string $message, string $claimUuid): array
         </div>
 
         <div class="content-section">
-            <h2>⚙️ Internal API Coordination</h2>
-            <h3>🔄 System Integration Points</h3>
-            <p>The Claims Management System coordinates with various internal services to provide seamless functionality across the platform.</p>
+            <h2>⚙️ Current Implementation Details</h2>
+            <h3>🔧 System Architecture</h3>
             
             <div class="api-grid">
                 <div class="api-card internal">
-                    <h4>📧 Notification Service</h4>
+                    <h4>📊 Internal Policy Search</h4>
                     <ul>
-                        <li>Email notifications to customers</li>
-                        <li>SMS alerts for urgent updates</li>
-                        <li>WhatsApp messaging integration</li>
-                        <li>Push notifications for mobile app</li>
+                        <li><strong>Model:</strong> PersonalQuote with PolicyBooked status</li>
+                        <li><strong>Relationships:</strong> Customer, QuoteType eager loading</li>
+                        <li><strong>Fields:</strong> 12+ fields including car details</li>
+                        <li><strong>Performance:</strong> Optimized queries with pagination</li>
+                        <li><strong>Security:</strong> Permission-based access control</li>
                     </ul>
                 </div>
                 
-                <div class="api-card internal">
-                    <h4>📊 Analytics Service</h4>
+                <div class="api-card capi">
+                    <h4>🔌 CAPI Claim Creation</h4>
                     <ul>
-                        <li>Claim processing metrics</li>
-                        <li>Performance analytics</li>
-                        <li>User behavior tracking</li>
-                        <li>Business intelligence reports</li>
+                        <li><strong>Endpoint:</strong> /api/claims/save-claim</li>
+                        <li><strong>Data Mapping:</strong> 15+ fields mapped to CAPI format</li>
+                        <li><strong>Error Handling:</strong> Try-catch with LoggerService</li>
+                        <li><strong>Response:</strong> Success/failure with claim details</li>
+                        <li><strong>Authentication:</strong> Bearer token + API key</li>
                     </ul>
                 </div>
                 
-                <div class="api-card internal">
-                    <h4>🔍 Audit Service</h4>
+                <div class="api-card ai">
+                    <h4>🤖 AI Message Optimization</h4>
                     <ul>
-                        <li>Activity logging</li>
-                        <li>Change tracking</li>
-                        <li>Compliance reporting</li>
-                        <li>Security monitoring</li>
+                        <li><strong>Service:</strong> InstantWriter AI integration</li>
+                        <li><strong>Endpoint:</strong> /message-optimizer/optimize</li>
+                        <li><strong>Fallback:</strong> Original message if AI fails</li>
+                        <li><strong>Logging:</strong> Comprehensive error tracking</li>
+                        <li><strong>Performance:</strong> Background processing</li>
                     </ul>
                 </div>
             </div>
-        </div>
-
-        <div class="content-section">
-            <h2>🚨 Error Handling & Recovery</h2>
-            <h3>🛡️ Comprehensive Error Management</h3>
-            
-            <div class="error-handling">
-                <h4>⚠️ Error Categories & Responses</h4>
-                <div class="feature-grid">
-                    <div class="feature-item">
-                        <strong>Network Errors</strong>
-                        Connection timeouts, DNS failures, network unreachable
-                    </div>
-                    <div class="feature-item">
-                        <strong>Authentication Errors</strong>
-                        Invalid tokens, expired credentials, permission denied
-                    </div>
-                    <div class="feature-item">
-                        <strong>Rate Limiting</strong>
-                        API quota exceeded, throttling responses
-                    </div>
-                    <div class="feature-item">
-                        <strong>Service Unavailable</strong>
-                        External service downtime, maintenance mode
-                    </div>
-                </div>
-            </div>
             
             <div class="code-block">
-// Comprehensive error handling with retry logic
-public function makeApiRequestWithRetry(string $endpoint, string $method, array $data, int $maxRetries = 3): array
-{
-    $attempt = 0;
-    $lastException = null;
-    
-    while ($attempt < $maxRetries) {
-        try {
-            $response = $this->makeApiRequest($endpoint, $method, $data);
-            
-            // Log successful request after retries
-            if ($attempt > 0) {
-                LoggerService::info('API request succeeded after retry', [
-                    'endpoint' => $endpoint,
-                    'attempt' => $attempt + 1,
-                    'user_id' => Auth::id(),
-                ]);
-            }
-            
-            return $response;
-            
-        } catch (\Exception $e) {
-            $attempt++;
-            $lastException = $e;
-            
-            // Determine if error is retryable
-            if (!$this->isRetryableError($e)) {
-                break;
-            }
-            
-            // Exponential backoff
-            $delay = pow(2, $attempt - 1);
-            sleep($delay);
-            
-            LoggerService::warning('API request failed, retrying', [
-                'endpoint' => $endpoint,
-                'attempt' => $attempt,
-                'error' => $e->getMessage(),
-                'retry_delay' => $delay,
-            ]);
-        }
-    }
-    
-    // All retries exhausted
-    LoggerService::error('API request failed after all retries', [
-        'endpoint' => $endpoint,
-        'max_retries' => $maxRetries,
-        'final_error' => $lastException->getMessage(),
-        'user_id' => Auth::id(),
-    ]);
-    
-    throw $lastException;
-}
+// Current Implementation Flow
+1. Internal Policy Search:
+   - PersonalQuote::where('status', 'PolicyBooked')
+   - Eager loading: customer, quoteType
+   - Filtered by email, policy_number, quote_type_id
+   - Paginated results with 15 items per page
 
-private function isRetryableError(\Exception $e): bool
-{
-    // Network errors, timeouts, and 5xx server errors are retryable
-    return in_array($e->getCode(), [500, 502, 503, 504, 0]) || 
-           strpos($e->getMessage(), 'timeout') !== false ||
-           strpos($e->getMessage(), 'connection') !== false;
-}
-            </code>
-        </div>
+2. CAPI Claim Creation:
+   - CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $data)
+   - 15+ fields mapped from internal format to CAPI format
+   - Error handling with LoggerService logging
+   - Success response includes claim_id, claim_uuid, claim_number
 
-        <div class="content-section">
-            <h2>📊 Performance Optimization</h2>
-            <h3>⚡ Caching & Rate Limiting</h3>
-            
-            <div class="feature-grid">
-                <div class="feature-item">
-                    <strong>Response Caching</strong>
-                    Policy search results cached for 15 minutes to reduce API calls
-                </div>
-                <div class="feature-item">
-                    <strong>Request Throttling</strong>
-                    Built-in rate limiting to prevent API quota exhaustion
-                </div>
-                <div class="feature-item">
-                    <strong>Connection Pooling</strong>
-                    Reuse HTTP connections for better performance
-                </div>
-                <div class="feature-item">
-                    <strong>Async Processing</strong>
-                    Non-critical API calls processed in background jobs
-                </div>
-            </div>
-            
-            <div class="code-block">
-// Caching implementation for policy search
-public function searchActivePoliciesCached(array $searchParams): array
-{
-    $cacheKey = 'policy_search_' . md5(serialize($searchParams));
-    
-    return Cache::remember($cacheKey, now()->addMinutes(15), function () use ($searchParams) {
-        return $this->searchActivePolicies(
-            $searchParams['email'] ?? null,
-            $searchParams['policy_number'] ?? null,
-            $searchParams['quote_type_id'] ?? null,
-            $searchParams['page'] ?? 1
-        );
-    });
-}
-
-// Rate limiting implementation
-public function checkRateLimit(string $userId, string $endpoint): bool
-{
-    $key = "api_rate_limit_{$userId}_{$endpoint}";
-    $attempts = Cache::get($key, 0);
-    
-    if ($attempts >= config('api.rate_limit.max_attempts', 60)) {
-        LoggerService::warning('API rate limit exceeded', [
-            'user_id' => $userId,
-            'endpoint' => $endpoint,
-            'attempts' => $attempts,
-        ]);
-        
-        return false;
-    }
-    
-    Cache::put($key, $attempts + 1, now()->addMinute());
-    return true;
-}
-            </code>
-        </div>
-
-        <div class="content-section">
-            <h2>🔍 API Monitoring & Logging</h2>
-            <h3>📈 Comprehensive Tracking</h3>
-            
-            <div class="feature-grid">
-                <div class="feature-item">
-                    <strong>Request Logging</strong>
-                    All API requests logged with timing and response data
-                </div>
-                <div class="feature-item">
-                    <strong>Performance Metrics</strong>
-                    Response times, success rates, and error patterns tracked
-                </div>
-                <div class="feature-item">
-                    <strong>Health Checks</strong>
-                    Regular API endpoint availability monitoring
-                </div>
-                <div class="feature-item">
-                    <strong>Alert System</strong>
-                    Automated alerts for API failures and performance issues
-                </div>
-            </div>
-            
-            <div class="code-block">
-// API monitoring and metrics collection
-public function logApiMetrics(string $endpoint, float $responseTime, bool $success, ?string $error = null): void
-{
-    $metrics = [
-        'endpoint' => $endpoint,
-        'response_time_ms' => round($responseTime * 1000, 2),
-        'success' => $success,
-        'timestamp' => now()->toISOString(),
-        'user_id' => Auth::id(),
-    ];
-    
-    if (!$success && $error) {
-        $metrics['error'] = $error;
-    }
-    
-    // Log to metrics collection system
-    LoggerService::info('API request metrics', $metrics);
-    
-    // Store in performance database for analytics
-    ApiMetric::create($metrics);
-    
-    // Check for performance degradation
-    $this->checkPerformanceAlerts($endpoint, $responseTime, $success);
-}
-
-private function checkPerformanceAlerts(string $endpoint, float $responseTime, bool $success): void
-{
-    // Alert if response time exceeds threshold
-    if ($responseTime > config('api.performance.response_time_threshold', 5.0)) {
-        event(new ApiPerformanceAlert($endpoint, $responseTime, 'slow_response'));
-    }
-    
-    // Alert if error rate is high
-    $recentErrorRate = $this->calculateRecentErrorRate($endpoint);
-    if ($recentErrorRate > config('api.performance.error_rate_threshold', 0.1)) {
-        event(new ApiPerformanceAlert($endpoint, $recentErrorRate, 'high_error_rate'));
-    }
-}
+3. AI Message Optimization:
+   - InstantWriterAIFacade::request('/message-optimizer/optimize', 'post', $data)
+   - Fallback to original message if AI service fails
+   - Background processing for non-critical optimizations
+   - Comprehensive logging for debugging and monitoring
             </code>
         </div>
 

@@ -447,44 +447,81 @@
                     </ul>
                 </div>
 
-                <div class="lob-card" style="border-left-color: #e67e22;">
-                    <h4>🏠 Home & Property Claims</h4>
+                <div class="lob-card" style="border-left-color: #95a5a6;">
+                    <h4>🏠 Other LOBs (Home, Travel, Marine, Pet, Business, etc.)</h4>
                     <ul>
-                        <li><strong>Standard Processing:</strong> Basic claim workflow</li>
-                        <li><strong>Property Details:</strong> Location and damage assessment</li>
-                        <li><strong>Document Types:</strong> Property photos, damage reports</li>
-                        <li><strong>Status Flow:</strong> Standard Open → Closed workflow</li>
+                        <li><strong>Standard Processing:</strong> Basic claim workflow for all other lines of business</li>
+                        <li><strong>Common Logic:</strong> Standard Open → Closed workflow with minimal sub-statuses</li>
+                        <li><strong>Documentation:</strong> Standard claim documents and evidence</li>
+                        <li><strong>Status Flow:</strong> Simplified processing without LOB-specific business rules</li>
+                        <li><strong>Closure States:</strong> Standard claim paid, denied, or withdrawn</li>
+                        <li><strong>Includes:</strong> Home, Travel, Marine (Yacht/Jetski), Pet, Cycle, Business, CorpLine, Group Medical, Savings, and other specialty products</li>
                     </ul>
                 </div>
-
-                <div class="lob-card" style="border-left-color: #16a085;">
-                    <h4>✈️ Travel Claims</h4>
-                    <ul>
-                        <li><strong>Trip Details:</strong> Travel dates and destinations</li>
-                        <li><strong>Claim Types:</strong> Medical, cancellation, baggage, delay</li>
-                        <li><strong>Documentation:</strong> Receipts, medical reports, airline confirmations</li>
-                        <li><strong>Processing:</strong> Standard claim workflow</li>
-                    </ul>
+            </div>
                 </div>
 
-                <div class="lob-card" style="border-left-color: #8e44ad;">
-                    <h4>⛵ Marine (Yacht, Jetski) Claims</h4>
-                    <ul>
-                        <li><strong>Vessel Information:</strong> Registration, specifications</li>
-                        <li><strong>Incident Types:</strong> Collision, theft, weather damage</li>
-                        <li><strong>Survey Requirements:</strong> Marine surveyor reports</li>
-                        <li><strong>Processing:</strong> Specialized marine claim workflow</li>
-                    </ul>
+        <div class="overview-section">
+            <h2>🏗️ System Architecture & Structure</h2>
+            <p style="text-align: center; color: #7f8c8d; font-size: 1.1em; margin-bottom: 30px;">
+                Comprehensive layered architecture following Laravel best practices with Vue.js frontend integration.
+            </p>
+
+            <div class="tech-specs">
+                <h3>📊 Database Architecture</h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <strong>Primary Tables</strong>
+                        claim_requests, claim_request_details, claim_activities
+                    </div>
+                    <div class="tech-item">
+                        <strong>Lookup Tables</strong>
+                        lookups (statuses, types), claim_statuses, quote_types
+                    </div>
+                    <div class="tech-item">
+                        <strong>Audit System</strong>
+                        Comprehensive audit logging with OwenIt/Auditing package
+                    </div>
+                    <div class="tech-item">
+                        <strong>Soft Deletes</strong>
+                        Data integrity with soft delete functionality
+                    </div>
+                    <div class="tech-item">
+                        <strong>UUID Security</strong>
+                        Route model binding with UUID for enhanced security
+                    </div>
+                    <div class="tech-item">
+                        <strong>Relationships</strong>
+                        Complex Eloquent relationships with eager loading optimization
+                    </div>
                 </div>
 
-                <div class="lob-card" style="border-left-color: #d35400;">
-                    <h4>🐕 Pet & Specialty Claims</h4>
-                    <ul>
-                        <li><strong>Pet Claims:</strong> Veterinary expenses and treatments</li>
-                        <li><strong>Cycle Claims:</strong> Bicycle theft and damage</li>
-                        <li><strong>Specialty LOBs:</strong> Business, CorpLine, Savings products</li>
-                        <li><strong>Processing:</strong> Tailored workflows per product type</li>
-                    </ul>
+                <h3>🎯 Core Models & Relationships</h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <strong>ClaimRequest</strong>
+                        Main model with 25+ relationships and business logic methods
+                    </div>
+                    <div class="tech-item">
+                        <strong>ClaimRequestDetail</strong>
+                        LOB-specific details (car, health, life information)
+                    </div>
+                    <div class="tech-item">
+                        <strong>ClaimActivity</strong>
+                        Status change tracking with AI-optimized comments
+                    </div>
+                    <div class="tech-item">
+                        <strong>QuoteDocument</strong>
+                        Polymorphic document management with S3 integration
+                    </div>
+                    <div class="tech-item">
+                        <strong>User & Customer</strong>
+                        Manager assignments and customer relationship management
+                    </div>
+                    <div class="tech-item">
+                        <strong>Lookup System</strong>
+                        Centralized configuration for statuses, types, and options
+                    </div>
                 </div>
             </div>
         </div>
@@ -500,53 +537,211 @@
                 <div class="tech-grid">
                     <div class="tech-item">
                         <strong>Claim Number Entry</strong>
-                        Triggers sub-status update to "Claim Registered"
+                        <ul>
+                            <li><strong>Trigger:</strong> When claim_number changes from empty to filled</li>
+                            <li><strong>Action:</strong> Auto-updates sub-status to "Claim Registered"</li>
+                            <li><strong>Car/Bike:</strong> Updates to "Claim Registered Awaiting Inspection"</li>
+                            <li><strong>Health/Life:</strong> Updates to "Claim Registered"</li>
+                        </ul>
                     </div>
                     <div class="tech-item">
                         <strong>Sub-Status Changes</strong>
-                        Evaluates closure logic based on LOB-specific rules
+                        <ul>
+                            <li><strong>Trigger:</strong> When claim_sub_status_id field changes</li>
+                            <li><strong>Action:</strong> Evaluates closure logic based on LOB-specific rules</li>
+                            <li><strong>Result:</strong> Automatic claim closure if closure state reached</li>
+                            <li><strong>Logging:</strong> All status transitions logged with user context</li>
+                        </ul>
                     </div>
                     <div class="tech-item">
-                        <strong>Repair Amount</strong>
-                        Car/Bike: Auto-updates to "Repair approved & work in progress"
+                        <strong>Repair Amount (Car/Bike Only)</strong>
+                        <ul>
+                            <li><strong>Trigger:</strong> When approved_repair_amount changes from empty to filled</li>
+                            <li><strong>Action:</strong> Auto-updates to "Repair approved & work in progress"</li>
+                            <li><strong>Condition:</strong> Only triggers for Car and Bike LOBs</li>
+                            <li><strong>Business Logic:</strong> Indicates repair work has been approved</li>
+                        </ul>
                     </div>
                     <div class="tech-item">
-                        <strong>Total Loss Amount</strong>
-                        Car/Bike: Auto-updates to "Total Loss Offer Letter shared"
+                        <strong>Total Loss Amount (Car/Bike Only)</strong>
+                        <ul>
+                            <li><strong>Trigger:</strong> When approved_total_loss_amount changes from empty to filled</li>
+                            <li><strong>Action:</strong> Auto-updates to "Total Loss Offer Letter shared"</li>
+                            <li><strong>Condition:</strong> Only triggers for Car and Bike LOBs</li>
+                            <li><strong>Business Logic:</strong> Indicates vehicle is declared total loss</li>
+                        </ul>
                     </div>
                     <div class="tech-item">
-                        <strong>Cash Loss Amount</strong>
-                        Car/Bike: Auto-updates to "Cash loss approved"
+                        <strong>Cash Loss Amount (Car/Bike Only)</strong>
+                        <ul>
+                            <li><strong>Trigger:</strong> When approved_cash_loss_amount changes from empty to filled</li>
+                            <li><strong>Action:</strong> Auto-updates to "Cash loss approved"</li>
+                            <li><strong>Condition:</strong> Only triggers for Car and Bike LOBs</li>
+                            <li><strong>Business Logic:</strong> Indicates cash settlement has been approved</li>
+                        </ul>
                     </div>
                     <div class="tech-item">
                         <strong>Status Changes</strong>
-                        Prepared for Google review email dispatch integration
+                        <ul>
+                            <li><strong>Trigger:</strong> When claim_status_id field changes</li>
+                            <li><strong>Action:</strong> Prepared for Google review email dispatch</li>
+                            <li><strong>Status:</strong> Currently commented out, ready for activation</li>
+                            <li><strong>Integration:</strong> SendGoogleReviewEmailJob prepared</li>
+                        </ul>
                     </div>
                 </div>
 
                 <h3>🔒 Closure Logic by LOB</h3>
                 <div class="tech-grid">
                     <div class="tech-item">
-                        <strong>Motor/Car Closure</strong>
-                        Repair settled, Total loss settled, Cash loss settled, Denied, Withdrawn
+                        <strong>Motor/Car & Bike Closure States</strong>
+                        <ul>
+                            <li><strong>Repair Completed and Settled</strong> - Repair work finished and payment made</li>
+                            <li><strong>Total Loss Paid and Settled</strong> - Total loss settlement completed</li>
+                            <li><strong>Cash Loss Paid and Settled</strong> - Cash loss payment completed</li>
+                            <li><strong>Claim Denied</strong> - Claim rejected after review</li>
+                            <li><strong>Claim Withdrawn</strong> - Customer or system withdrawal</li>
+                        </ul>
                     </div>
                     <div class="tech-item">
-                        <strong>Health Closure</strong>
-                        Claim paid, Request approved, Answered & closed, Denied, Withdrawn
+                        <strong>Health & Group Medical Closure States</strong>
+                        <ul>
+                            <li><strong>Claim Paid</strong> - Reimbursement payment completed</li>
+                            <li><strong>Request Approved</strong> - Pending approval request approved</li>
+                            <li><strong>Answered and Closed</strong> - Ask a question request answered</li>
+                            <li><strong>Request Denied</strong> - Health request rejected</li>
+                            <li><strong>Request Withdrawn</strong> - Customer withdrawal</li>
+                        </ul>
                     </div>
                     <div class="tech-item">
-                        <strong>Life Closure</strong>
-                        Claim paid, Claim denied (simplified logic)
+                        <strong>Life Insurance Closure States</strong>
+                        <ul>
+                            <li><strong>Claim Paid</strong> - Life insurance benefit paid</li>
+                            <li><strong>Claim Denied</strong> - Life claim rejected</li>
+                            <li><strong>Simplified Logic</strong> - Minimal sub-status transitions</li>
+                        </ul>
                     </div>
                     <div class="tech-item">
-                        <strong>Automatic Updates</strong>
-                        Observer triggers status changes and logs all transitions
+                        <strong>Other LOBs Closure States</strong>
+                        <ul>
+                            <li><strong>Claim Paid</strong> - Standard settlement completed</li>
+                            <li><strong>Claim Denied</strong> - Standard claim rejection</li>
+                            <li><strong>Claim Withdrawn</strong> - Customer or system withdrawal</li>
+                            <li><strong>Standard Logic</strong> - No LOB-specific closure rules</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="overview-section">
+            <h2>🎨 Frontend Architecture</h2>
+            <p style="text-align: center; color: #7f8c8d; font-size: 1.1em; margin-bottom: 30px;">
+                Modern Vue.js 3 architecture with Composition API, Inertia.js integration, and component-based design.
+            </p>
+
+            <div class="tech-specs">
+                <h3>🧩 Component Structure</h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <strong>Show.vue</strong>
+                        Main claim details page with 12+ integrated components
+                    </div>
+                    <div class="tech-item">
+                        <strong>Index.vue</strong>
+                        Claims listing with advanced filtering and pagination
+                    </div>
+                    <div class="tech-item">
+                        <strong>Create.vue</strong>
+                        Claim creation form with CAPI policy search integration
+                    </div>
+                    <div class="tech-item">
+                        <strong>Edit.vue</strong>
+                        Claim editing with LOB-specific validation
+                    </div>
+                    <div class="tech-item">
+                        <strong>Form.vue</strong>
+                        Reusable form component for create/edit operations
+                    </div>
+                    <div class="tech-item">
+                        <strong>Components/</strong>
+                        12+ specialized components for specific functionality
+                    </div>
+                </div>
+
+                <h3>🔧 Component Features</h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <strong>ClaimDetails.vue</strong>
+                        Main claim information with LOB-specific fields
+                    </div>
+                    <div class="tech-item">
+                        <strong>ClaimStatus.vue</strong>
+                        Status management by team leads
+                    </div>
+                    <div class="tech-item">
+                        <strong>ClaimSubStatusAndCustomerUpdate.vue</strong>
+                        Sub-status updates with AI message optimization
+                    </div>
+                    <div class="tech-item">
+                        <strong>ClaimDocuments.vue</strong>
+                        Document upload, view, and management
+                    </div>
+                    <div class="tech-item">
+                        <strong>CustomerDetails.vue</strong>
+                        Customer information display and management
+                    </div>
+                    <div class="tech-item">
+                        <strong>History Components</strong>
+                        Lead history, sub-status logs, complaint logs
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="documentation-grid">
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">🏗️</span>
+                    Architecture & Structure
+                </h3>
+                <p>
+                    Comprehensive technical documentation of the claims system architecture including layered design,
+                    database schema, model relationships, and frontend component structure.
+                </p>
+                <ul class="features">
+                    <li>Layered architecture overview</li>
+                    <li>Database schema and relationships</li>
+                    <li>Core models and business logic</li>
+                    <li>Service layer architecture</li>
+                    <li>Frontend component structure</li>
+                    <li>Security and permissions system</li>
+                    <li>External integrations</li>
+                </ul>
+                <a href="/docs/claims-process/architecture-structure.html" class="doc-link">View Architecture →</a>
+            </div>
+
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">🔄</span>
+                    Business Logic & Workflows
+                </h3>
+                <p>
+                    Detailed documentation of business rules, automated workflows, LOB-specific logic,
+                    observer patterns, and status transition matrices.
+                </p>
+                <ul class="features">
+                    <li>Complete claim lifecycle workflows</li>
+                    <li>LOB-specific business rules</li>
+                    <li>Observer pattern automation</li>
+                    <li>Status transition matrices</li>
+                    <li>Validation rules and constraints</li>
+                    <li>AI integration and automation</li>
+                    <li>Closure logic by LOB</li>
+                </ul>
+                <a href="/docs/claims-process/business-logic.html" class="doc-link">View Business Logic →</a>
+            </div>
+
             <div class="doc-card">
                 <h3>
                     <span class="icon">🆕</span>
@@ -612,6 +807,27 @@
 
             <div class="doc-card">
                 <h3>
+                    <span class="icon">🔌</span>
+                    API Endpoints
+                </h3>
+                <p>
+                    Comprehensive documentation of all claims-related API endpoints, routes, permissions,
+                    request/response formats, and external integrations.
+                </p>
+                <ul class="features">
+                    <li>Complete CRUD operations</li>
+                    <li>Policy search and CAPI integration</li>
+                    <li>Document management endpoints</li>
+                    <li>Status management operations</li>
+                    <li>History and audit logs</li>
+                    <li>Permission system documentation</li>
+                    <li>Request/response formats</li>
+                </ul>
+                <a href="/docs/claims-process/api-endpoints.html" class="doc-link">View API Endpoints →</a>
+            </div>
+
+            <div class="doc-card">
+                <h3>
                     <span class="icon">🔧</span>
                     API Integration
                 </h3>
@@ -671,6 +887,27 @@
                     <li>Data privacy compliance</li>
                 </ul>
                 <a href="/docs/claims-process/security-permissions.html" class="doc-link">View Security & Permissions →</a>
+            </div>
+
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">👨‍💻</span>
+                    Development Guide
+                </h3>
+                <p>
+                    Comprehensive guide for developers working on the claims system including setup,
+                    architecture patterns, best practices, testing guidelines, and code examples.
+                </p>
+                <ul class="features">
+                    <li>Development environment setup</li>
+                    <li>Architecture patterns and conventions</li>
+                    <li>LOB-specific development guidelines</li>
+                    <li>Best practices and common pitfalls</li>
+                    <li>Testing strategies and examples</li>
+                    <li>Debugging and troubleshooting</li>
+                    <li>Code examples and templates</li>
+                </ul>
+                <a href="/docs/claims-process/development-guide.html" class="doc-link">View Development Guide →</a>
             </div>
         </div>
 

@@ -312,12 +312,12 @@
 
         <div class="header">
             <h1>🆕 Claim Creation Process</h1>
-            <p>Comprehensive guide to creating new insurance claims with CAPI integration</p>
+            <p>Comprehensive guide to creating new insurance claims with internal policy search and CAPI integration</p>
         </div>
 
         <div class="content-section">
             <h2>📋 Overview</h2>
-            <p>The claim creation process is the entry point for all new insurance claims in the system. It involves policy search and verification through CAPI integration, customer information validation, LOB-specific field collection, and initial claim registration with automatic status assignment.</p>
+            <p>The claim creation process is the entry point for all new insurance claims in the system. It involves internal policy search and verification, customer information validation, LOB-specific field collection, and CAPI integration for claim creation with automatic status assignment.</p>
             
             <div class="step-flow">
                 <div class="step-item">
@@ -329,8 +329,8 @@
                 
                 <div class="step-item">
                     <div class="step-number">2</div>
-                    <h4>Policy Search via CAPI</h4>
-                    <p>Search for active policies using customer email, policy number, and line of business</p>
+                    <h4>Internal Policy Search</h4>
+                    <p>Search for active policies using internal system queries with customer email, policy number, and line of business</p>
                     <div class="api-endpoint method-post">POST /claim/search-policies</div>
                 </div>
                 
@@ -357,17 +357,18 @@
 
         <div class="content-section">
             <h2>🔍 Policy Search Integration</h2>
-            <h3>🔌 CAPI Integration Details</h3>
-            <p>The policy search functionality integrates with the Customer Portal API (CAPI) to retrieve active policies for claim creation.</p>
+            <h3>🏠 Internal System Search</h3>
+            <p>The policy search functionality uses internal system queries to retrieve active policies for claim creation. This is handled within the current system without external API calls.</p>
             
             <div class="code-block">
-// ClaimsService::searchActivePolicies() method
+// ClaimsService::searchActivePolicies() method - Internal System Search
 public function searchActivePolicies(
     ?string $email = null, 
     ?string $policyNumber = null, 
     ?int $quoteTypeId = null, 
     int $page = 1
 ): array {
+    // Internal database query - no external API calls
     $policies = PersonalQuote::query()
         ->select([
             'personal_quotes.id',
@@ -379,7 +380,7 @@ public function searchActivePolicies(
         ->whereNotNull('personal_quotes.policy_number')
         ->whereIn('personal_quotes.quote_status_id', [QuoteStatusEnum::PolicyBooked])
         ->when($email || $policyNumber, function ($query) use ($email, $policyNumber) {
-            // Search logic implementation
+            // Internal search logic implementation
         })
         ->simplePaginate($this->perPage);
     
@@ -389,19 +390,19 @@ public function searchActivePolicies(
             
             <div class="validation-grid">
                 <div class="validation-item">
-                    <strong>Search Parameters</strong>
+                    <strong>Internal Search Parameters</strong>
                     Email, Policy Number, Quote Type ID, Page Number
                 </div>
                 <div class="validation-item">
                     <strong>Active Policy Filter</strong>
-                    Only policies with PolicyBooked status
+                    Only policies with PolicyBooked status from internal database
                 </div>
                 <div class="validation-item">
                     <strong>LOB-Specific Data</strong>
                     Car-specific fields (make, model, year, plate) when applicable
                 </div>
                 <div class="validation-item">
-                    <strong>Pagination</strong>
+                    <strong>Internal Pagination</strong>
                     15 results per page with simple pagination
                 </div>
             </div>
@@ -564,7 +565,7 @@ public function searchActivePolicies(
 public function createClaim(array $data): array
 {
     try {
-        // Prepare API data for CAPI integration
+        // Prepare API data for CAPI integration (claim creation only)
         $apiData = [
             'firstName' => $data['first_name'] ?? null,
             'lastName' => $data['last_name'] ?? null,
@@ -577,14 +578,26 @@ public function createClaim(array $data): array
             'insuranceProviderId' => $data['insurance_provider_id'] ?? null,
             'quoteTypeId' => $data['quote_type_id'] ?? null,
             'source' => $data['source'] ?? config('constants.SOURCE_NAME', 'IMCRM'),
-            // LOB-specific fields added based on quote type
+            'quoteUID' => $data['selected_quote_uuid'] ?? null,
+            'claimTypeId' => $data['claim_type_id'] ?? null,
+            'carMake' => $data['car_make'] ?? null,
+            'carModel' => $data['car_model'] ?? null,
+            'modelYear' => $data['model_year'] ?? null,
+            'plateNumber' => $data['plate_number'] ?? null,
+            'claimRequestTypeId' => $data['claim_request_type_id'] ?? null,
+            'serviceTypeId' => $data['service_type_id'] ?? null,
+            'requestReferenceNumber' => $data['request_reference_number'] ?? null,
         ];
         
         // Remove null values and make CAPI request
         $apiData = array_filter($apiData, fn($value) => !is_null($value));
         $response = CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $apiData);
         
-        return $response->data;
+        if ($response->data['success']) {
+            return $response->data;
+        } else {
+            throw new \Exception('CAPI claim creation failed: ' . ($response->data['message'] ?? 'Unknown error'));
+        }
     } catch (\Exception $e) {
         // Comprehensive error logging
         LoggerService::error(self::class.'::'.__FUNCTION__.' - Error creating claim request', [
@@ -599,20 +612,28 @@ public function createClaim(array $data): array
             
             <div class="validation-grid">
                 <div class="validation-item">
+                    <strong>CAPI Integration</strong>
+                    Claim creation only via /api/claims/save-claim endpoint
+                </div>
+                <div class="validation-item">
                     <strong>Data Filtering</strong>
-                    Null values removed before API call
+                    Null values removed before API call using array_filter()
                 </div>
                 <div class="validation-item">
                     <strong>Source Assignment</strong>
                     Default source set to 'IMCRM' if not provided
                 </div>
                 <div class="validation-item">
-                    <strong>LOB Field Addition</strong>
-                    Car and Health specific fields added conditionally
+                    <strong>LOB Field Mapping</strong>
+                    All LOB-specific fields mapped to CAPI format
+                </div>
+                <div class="validation-item">
+                    <strong>Response Handling</strong>
+                    Success/failure checking with proper error propagation
                 </div>
                 <div class="validation-item">
                     <strong>Error Logging</strong>
-                    Comprehensive logging with context data
+                    Comprehensive logging with LoggerService
                 </div>
             </div>
         </div>
@@ -623,43 +644,52 @@ public function createClaim(array $data): array
             <p>Upon claim creation, the ClaimRequestObserver automatically sets the initial sub-status based on LOB:</p>
             
             <div class="code-block">
-// ClaimRequestObserver::creating() method
+// ClaimRequestObserver::creating() method - Current Implementation
 public function creating(ClaimRequest $claimRequest): void
 {
-    $claimsService = new ClaimsService;
-    
-    // If claim number is provided during creation, set status to "Claim registered"
-    if (!empty($claimRequest->claim_number)) {
-        $claimsService->updateClaimSubStatusToClaimRegistered($claimRequest);
+    // Set default source if not provided
+    if (empty($claimRequest->source)) {
+        $claimRequest->source = 'IMCRM';
     }
+
+    // Set default whatsapp_consent if not provided
+    if (is_null($claimRequest->whatsapp_consent)) {
+        $claimRequest->whatsapp_consent = false;
+    }
+    
+    // Note: Status assignment happens after CAPI creation response
+    // The observer monitors claim_number changes for status updates
 }
             </div>
             
             <div class="lob-specific">
                 <div class="lob-card motor">
-                    <h4>🚗 Motor Claims Initial Status</h4>
+                    <h4>🚗 Motor Claims Status Flow</h4>
                     <ul>
-                        <li><strong>Default:</strong> "New claim"</li>
-                        <li><strong>With Claim Number:</strong> "Claim registered and awaiting inspection"</li>
-                        <li><strong>Auto-Assignment:</strong> Based on QuoteTypeId::Car detection</li>
+                        <li><strong>Creation:</strong> Default values set (source='IMCRM', whatsapp_consent=false)</li>
+                        <li><strong>After CAPI:</strong> Claim created in external system</li>
+                        <li><strong>Status Update:</strong> Triggered when claim_number is assigned</li>
+                        <li><strong>Auto-Detection:</strong> isCarOrBikeLOB() method identifies motor claims</li>
                     </ul>
                 </div>
                 
                 <div class="lob-card health">
-                    <h4>🏥 Health Claims Initial Status</h4>
+                    <h4>🏥 Health Claims Status Flow</h4>
                     <ul>
-                        <li><strong>Default:</strong> "New claim" or "New request" based on type</li>
-                        <li><strong>With Claim Number:</strong> "Claims registered"</li>
-                        <li><strong>Request-Specific:</strong> Different flows for reimbursement vs approvals</li>
+                        <li><strong>Creation:</strong> Default values set (source='IMCRM', whatsapp_consent=false)</li>
+                        <li><strong>After CAPI:</strong> Claim created in external system</li>
+                        <li><strong>Status Update:</strong> Triggered when claim_number is assigned</li>
+                        <li><strong>Request Types:</strong> Reimbursement, pending-approvals, ask-a-question</li>
                     </ul>
                 </div>
                 
                 <div class="lob-card life">
-                    <h4>💼 Life Claims Initial Status</h4>
+                    <h4>💼 Life Claims Status Flow</h4>
                     <ul>
-                        <li><strong>Default:</strong> "New claim"</li>
-                        <li><strong>With Claim Number:</strong> "Claims registered"</li>
-                        <li><strong>Simplified Flow:</strong> Direct path to processing</li>
+                        <li><strong>Creation:</strong> Default values set (source='IMCRM', whatsapp_consent=false)</li>
+                        <li><strong>After CAPI:</strong> Claim created in external system</li>
+                        <li><strong>Status Update:</strong> Triggered when claim_number is assigned</li>
+                        <li><strong>Simplified:</strong> Basic claim processing without complex sub-statuses</li>
                     </ul>
                 </div>
             </div>
@@ -672,31 +702,31 @@ public function creating(ClaimRequest $claimRequest): void
             <div class="error-handling">
                 <h4>CAPI Integration Failures</h4>
                 <ul>
-                    <li><strong>Network Timeout:</strong> Graceful handling with retry logic</li>
-                    <li><strong>Authentication Failure:</strong> Clear error messages and logging</li>
-                    <li><strong>Invalid Policy:</strong> User-friendly feedback with suggestions</li>
-                    <li><strong>API Rate Limiting:</strong> Appropriate delays and user notification</li>
+                    <li><strong>Network Timeout:</strong> Exception handling with LoggerService logging</li>
+                    <li><strong>Authentication Failure:</strong> Error propagation with context data</li>
+                    <li><strong>Invalid Response:</strong> Success/failure checking with proper error messages</li>
+                    <li><strong>Data Validation:</strong> Null value filtering before API calls</li>
                 </ul>
             </div>
             
             <div class="error-handling">
                 <h4>Validation Failures</h4>
                 <ul>
-                    <li><strong>LOB Mismatch:</strong> Clear field requirement explanations</li>
-                    <li><strong>Missing Required Fields:</strong> Specific field-level error messages</li>
-                    <li><strong>Format Validation:</strong> Regex pattern guidance for users</li>
-                    <li><strong>Business Rule Violations:</strong> Context-aware error descriptions</li>
+                    <li><strong>LOB-Specific Rules:</strong> Car fields interdependency validation</li>
+                    <li><strong>Required Fields:</strong> First name, last name, email, mobile validation</li>
+                    <li><strong>Format Validation:</strong> Regex patterns for names, phone, plate numbers</li>
+                    <li><strong>Health Rules:</strong> Service type required for pending approvals</li>
                 </ul>
             </div>
             
             <div class="code-block">
-// Error logging implementation in ClaimStoreRequest
+// Current error logging implementation in ClaimStoreRequest
 protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
 {
     $errors = $validator->errors();
     
     // Log validation failures for debugging
-    \App\Services\Logger\LoggerService::info('Claim store validation failed', extra: [
+    LoggerService::info('Claim store validation failed', extra: [
         'errors' => $errors->toArray(),
         'input' => $this->except(['password', 'password_confirmation']),
         'user_id' => Auth::id(),

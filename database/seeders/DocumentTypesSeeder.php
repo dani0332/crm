@@ -1699,7 +1699,26 @@ class DocumentTypesSeeder extends Seeder
                 'business_type_of_insurance_id' => null,
                 'business_type_of_customer' => null,
             ],
-            // Health claim documents
+            // Health claim documents -- Insurer Card Copy
+            [
+                'code' => 'CLM_HLT_ICC',
+                'text' => 'Insurer Card Copy',
+                'description' => 'Upload the copy of the insurer card.',
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypeId::Health,
+                'folder_path' => 'claims/health',
+                'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+                'max_files' => 5,
+                'max_size' => 25,
+                'is_required' => 1,
+                'send_to_customer' => 0,
+                'sort_order' => 1,
+                'receive_from_customer' => 1,
+                'category' => DocumentTypeCode::CLAIM,
+                'is_required_for_send_policy' => 0,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+            ],
             [
                 'code' => 'CLM_HLT_CF',
                 'text' => 'Claim form',
