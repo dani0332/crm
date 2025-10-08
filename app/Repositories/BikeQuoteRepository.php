@@ -42,7 +42,7 @@ class BikeQuoteRepository extends BaseRepository
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
             'primary_ref_id' => $data['primary_ref_id'] ?? null,
-            'additional_notes' => $data['additional_notes'] ?? null,
+            'additional_notes' => $data['notes'] ?? null,
         ]);
 
         $quoteData = [
@@ -80,10 +80,10 @@ class BikeQuoteRepository extends BaseRepository
             'subSourceId' => $data['sub_source_id'] ?? null,
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
             'primaryRefId' => $data['primary_ref_id'] ?? null,
-            'additionalNotes' => $data['additional_notes'] ?? null,
+            'additionalNotes' => $data['notes'] ?? null,
         ];
 
-        
+
 
         return Capi::request('/api/v1-save-bike-quote', 'post', $quoteData);
     }
