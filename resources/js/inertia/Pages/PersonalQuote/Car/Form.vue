@@ -440,10 +440,6 @@ const gender = computed(() => {
 
 // Sub-source dropdown options
 const subSourceOptions = computed(() => {
-  console.log("quoteForm.sub_source_id", quoteForm.sub_source_id);
-  console.log("props.subSources", props.subSources);
-  console.log("props.subSources length:", props.subSources?.length);
-  console.log("props.subSources type:", typeof props.subSources);
 
   if (!props.subSources || props.subSources.length === 0) {
     console.warn("subSources is empty or undefined!");
