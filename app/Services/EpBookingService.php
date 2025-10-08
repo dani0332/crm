@@ -345,7 +345,7 @@ class EpBookingService extends BaseService
     /**
      * Extract filename from HTTP response headers or URL
      */
-    private function extractFilename(string $url): string
+    protected function extractFilename(string $url): string
     {
         return basename(parse_url($url, PHP_URL_PATH)) ?? 'document';
     }

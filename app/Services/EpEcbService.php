@@ -717,8 +717,9 @@ class EpEcbService extends EpBookingService
                 ]);
             }
 
+            $logAction = $isSavedInDB ? 'API' : 'Process';
             // Also log using LoggerService for additional tracking
-            LoggerService::info("{$this->logPrefix} API {$operation} logged ($status)", extra: $logData);
+            LoggerService::info("{$this->logPrefix} {$logAction} {$operation} logged ($status)", extra: $logData);
         } catch (Throwable $e) {
             LoggerService::error("{$this->logPrefix} Failed to log API {$operation} request ($status)", extra: [
                 ...$logData,
@@ -774,7 +775,7 @@ class EpEcbService extends EpBookingService
         // Step: Download & Upload policy document
         $documentData = $this->executeDownloadAndUploadDocument($docUrl, $dir);
         if (!$documentData['success']) {
-            $this->logApiRequest('DownloadAndSavePolicyDocument', responseLog: ['error' => $documentData['error']], isSavedInDB: false);
+            $this->logApiRequest('DownloadAndUploadDocument', responseLog: ['error' => $documentData['error']], isSavedInDB: false);
             return ['success' => false, 'error' => $documentData['error']];
         }
 
@@ -810,23 +811,24 @@ class EpEcbService extends EpBookingService
         try {
             $downloadDocResponse = $this->makeDownloadApiCall($docUrl, true, 'DownloadPolicyDocument');
             
-            $fileName = $downloadDocResponse['filename'] ?? 'document';
-            $fileName = "{$this->policyNumber}_{$fileName}.pdf";
-            $fileContent = $downloadDocResponse['content'];
+            $fileName = $downloadDocResponse['filename'] ?? '';
+            $modifiedfileName = "{$this->policyNumber}_{$fileName}.pdf";
+            $fileIndentifier = empty($fileName) ? $this->extractFilename($docUrl) : $modifiedfileName;
 
-            if (!$downloadDocResponse['success']) {
-                throw new Error($downloadDocResponse['error'] ?? "DownloadPolicyDocument API call Failed, doc_name: {$fileName}");
+            if (!$downloadDocResponse['success'] || empty($downloadDocResponse['content'] ?? null)) {
+                throw new Error($downloadDocResponse['error'] ?? "DownloadPolicyDocument API call Failed, doc_identifier: {$fileIndentifier}");
             }
 
-            $response = $this->uploadDocument($fileName, $fileContent, $dir);
+            $fileContent = $downloadDocResponse['content'];
+            $response = $this->uploadDocument($modifiedfileName, $fileContent, $dir);
 
             if (!$response['success']) {
-                throw new Error($response['error'] ?? "UploadDocument: Process Failed, doc_name: {$fileName}");
+                throw new Error($response['error'] ?? "UploadDocument: Process Failed, doc_identifier: {$fileIndentifier}");
             }
 
             return [
                 'success' => $response['success'],
-                'file_name' => $fileName,
+                'file_name' => $modifiedfileName,
                 'document_name' => $response['data']['doc_name'] ?? null,
                 'document_url' => $response['data']['doc_url'] ?? null
             ];
