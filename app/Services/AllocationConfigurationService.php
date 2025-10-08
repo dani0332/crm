@@ -46,6 +46,13 @@ class AllocationConfigurationService
             ];
         }
 
+        if ($quoteType === QuoteTypes::CORPLINE) {
+            return [
+                'value_brackets' => $data['value_brackets'] ?? [],
+                'volume_brackets' => $data['volume_brackets'] ?? [],
+            ];
+        }
+
         return [];
     }
 
@@ -86,14 +93,27 @@ class AllocationConfigurationService
 
     public function getQuoteTypes()
     {
-        return QuoteType::withActive()->whereIn('short_code', [
+        $quoteTypes = QuoteType::withActive()->whereIn('short_code', [
             QuoteTypeShortCode::SAV,
             QuoteTypeShortCode::HOM,
             QuoteTypeShortCode::LIF,
             QuoteTypeShortCode::PET,
             QuoteTypeShortCode::YAC,
             QuoteTypeShortCode::CYC,
+            QuoteTypeShortCode::BUS, // For Corpline & Group Medical subtypes
         ])->get();
+
+        // Add Corpline as a subtype of Business
+        $businessType = $quoteTypes->firstWhere('short_code', QuoteTypeShortCode::BUS);
+        if ($businessType) {
+            // Create Corpline entry
+            $corplineType = clone $businessType;
+            $corplineType->text = 'CorpLine';
+            $corplineType->code = QuoteTypes::CORPLINE->value;
+            $quoteTypes->push($corplineType);
+        }
+
+        return $quoteTypes;
     }
 
     public function getEligibleAdvisorIds(QuoteTypes $quoteType, InvestmentFrequencyEnum $investmentFrequency, float $amount, int $nationalityId): array

@@ -6,6 +6,7 @@ namespace App\Factories;
 
 use App\Contracts\AllocationValidationStrategyInterface;
 use App\Enums\QuoteTypes;
+use App\Strategies\Validation\CorplineAllocationValidationStrategy;
 use App\Strategies\Validation\HomeAllocationValidationStrategy;
 use App\Strategies\Validation\LifeAllocationValidationStrategy;
 use App\Strategies\Validation\SavingsAllocationValidationStrategy;
@@ -26,6 +27,7 @@ class AllocationValidationStrategyFactory
             QuoteTypes::PET => new SimpleAllocationValidationStrategy('Pet'),
             QuoteTypes::YACHT => new SimpleAllocationValidationStrategy('Yacht'),
             QuoteTypes::CYCLE => new SimpleAllocationValidationStrategy('Cycle'),
+            QuoteTypes::CORPLINE => new CorplineAllocationValidationStrategy(),
             default => throw new InvalidArgumentException("No validation strategy found for quote type: {$quoteType->value}"),
         };
     }

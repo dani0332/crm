@@ -8,11 +8,13 @@ export function useAllocationForm(props, errorHandling) {
   const templateData = ref({});
   const advisorOptions = ref([]);
   const nationalityOptions = ref([]);
+  const teamOptions = ref([]);
   const currentConfiguration = ref(null);
   const savingsTemplateRef = ref(null);
   const homeTemplateRef = ref(null);
   const lifeTemplateRef = ref(null);
   const simpleTemplateRef = ref(null);
+  const corplineTemplateRef = ref(null);
   const auditLogsKey = ref(0);
   const isViewMode = ref(false);
   const originalConfiguration = ref(null);
@@ -73,6 +75,26 @@ export function useAllocationForm(props, errorHandling) {
     }
   };
 
+  const fetchTeams = async () => {
+    teamOptions.value = [];
+    try {
+      const response = await axios.get('/teams');
+
+      if (
+        response.data.success &&
+        response.data.data &&
+        response.data.data.length > 0
+      ) {
+        teamOptions.value = response.data.data.map(team => ({
+          value: team.id,
+          label: team.name,
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    }
+  };
+
   const fetchConfiguration = async quoteType => {
     currentConfiguration.value = null;
     try {
@@ -106,6 +128,7 @@ export function useAllocationForm(props, errorHandling) {
 
     templateData.value = {};
     advisorOptions.value = [];
+    teamOptions.value = [];
     currentConfiguration.value = null;
     successMessage.value = ''; // Clear success message when LOB changes
     clearAllErrors(); // Clear any existing errors
@@ -113,10 +136,17 @@ export function useAllocationForm(props, errorHandling) {
     isQuoteTypeLoading.value = true;
 
     try {
-      await Promise.all([
+      const fetchTasks = [
         fetchAdvisors(quoteType),
         fetchConfiguration(quoteType),
-      ]);
+      ];
+
+      // Fetch teams for Corpline
+      if (quoteType.code === props.quoteTypeCodeEnum.CORPLINE) {
+        fetchTasks.push(fetchTeams());
+      }
+
+      await Promise.all(fetchTasks);
 
       await new Promise(resolve => setTimeout(resolve, 300));
     } catch (error) {
@@ -168,6 +198,12 @@ export function useAllocationForm(props, errorHandling) {
       if (simpleTemplateRef.value) {
         nextTick(() => {
           simpleTemplateRef.value.clearValidationErrors();
+        });
+      }
+
+      if (corplineTemplateRef.value) {
+        nextTick(() => {
+          corplineTemplateRef.value.clearValidationErrors();
         });
       }
     }
@@ -265,6 +301,22 @@ export function useAllocationForm(props, errorHandling) {
         }
       }
 
+      // Validate Corpline template
+      if (
+        form.quote_type === props.quoteTypeCodeEnum.CORPLINE &&
+        corplineTemplateRef.value
+      ) {
+        const templateValidation = corplineTemplateRef.value.validate();
+
+        if (!templateValidation.isValid) {
+          templateValidation.errors.forEach(error => {
+            addError(error, 'bracket');
+          });
+          isSubmitting.value = false;
+          return;
+        }
+      }
+
       isSubmitting.value = true;
 
       const submitData = {
@@ -315,6 +367,10 @@ export function useAllocationForm(props, errorHandling) {
 
           if (simpleTemplateRef.value) {
             simpleTemplateRef.value.clearValidationErrors();
+          }
+
+          if (corplineTemplateRef.value) {
+            corplineTemplateRef.value.clearValidationErrors();
           }
 
           auditLogsKey.value += 1;
@@ -384,11 +440,13 @@ export function useAllocationForm(props, errorHandling) {
     templateData,
     advisorOptions,
     nationalityOptions,
+    teamOptions,
     currentConfiguration,
     savingsTemplateRef,
     homeTemplateRef,
     lifeTemplateRef,
     simpleTemplateRef,
+    corplineTemplateRef,
     auditLogsKey,
     form,
     isViewMode,

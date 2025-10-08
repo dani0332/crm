@@ -6,6 +6,7 @@ import SavingsAllocationConfigTemplate from './Savings/SavingsAllocationConfigTe
 import HomeAllocationConfigTemplate from './Home/HomeAllocationConfigTemplate.vue';
 import LifeAllocationConfigTemplate from './Life/LifeAllocationConfigTemplate.vue';
 import SimpleAllocationConfigTemplate from './Simple/SimpleAllocationConfigTemplate.vue';
+import CorplineAllocationConfigTemplate from './Corpline/CorplineAllocationConfigTemplate.vue';
 import ErrorDisplay from './components/ErrorDisplay.vue';
 import { useErrorHandling } from './composables/useErrorHandling.js';
 import { useAllocationForm } from './composables/useAllocationForm.js';
@@ -39,11 +40,13 @@ const {
   templateData,
   advisorOptions,
   nationalityOptions,
+  teamOptions,
   currentConfiguration,
   savingsTemplateRef,
   homeTemplateRef,
   lifeTemplateRef,
   simpleTemplateRef,
+  corplineTemplateRef,
   auditLogsKey,
   form,
   quoteTypeOptions,
@@ -220,6 +223,17 @@ onMounted(() => {
             :lob-name="form.quote_type"
             @data-update="onTemplateDataUpdate"
             ref="simpleTemplateRef"
+          />
+        </div>
+
+        <div v-else-if="form.quote_type === quoteTypeCodeEnum.CORPLINE">
+          <CorplineAllocationConfigTemplate
+            :configuration="currentConfiguration"
+            :advisor-options="advisorOptions"
+            :team-options="teamOptions"
+            :view-mode="isViewMode"
+            @data-update="onTemplateDataUpdate"
+            ref="corplineTemplateRef"
           />
         </div>
 

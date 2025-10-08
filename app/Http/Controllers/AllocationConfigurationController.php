@@ -31,6 +31,7 @@ class AllocationConfigurationController extends Controller
                 'PET' => 'Pet',
                 'YACHT' => 'Yacht',
                 'CYCLE' => 'Cycle',
+                'CORPLINE' => 'CorpLine',
             ],
         ]);
     }
