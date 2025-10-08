@@ -538,6 +538,7 @@ class EpEcbService extends EpBookingService
             throw new Exception('No policy number available for GetDocuments');
         }
 
+        $this->executeGetToken();
         $response = $this->makeApiCall(
             'GET',
             '/api/Policy/GetPolicyDocuments',
@@ -656,7 +657,7 @@ class EpEcbService extends EpBookingService
                 'statusCode' => $httpResponse->status(),
                 'responseTime' => $responseTime,
                 'errorCode' => $responseData->errorCode ?? ($isSuccess ? '' : '-'),
-                'statusMessage' => $responseData->statusMessage ?? ($isSuccess ? 'Success' : 'Unknown error'),
+                'statusMessage' => $responseData->statusMessage ?? ($isSuccess ? 'Success' : 'Unknown message'),
                 'data' => $responseData
             ];
         } catch (Throwable $e) {
@@ -809,6 +810,7 @@ class EpEcbService extends EpBookingService
     private function executeDownloadAndUploadDocument($docUrl, $dir) // string $docUrl, DocumentType $documentType
     {
         try {
+            $this->executeGetToken();
             $downloadDocResponse = $this->makeDownloadApiCall($docUrl, true, 'DownloadPolicyDocument');
             
             $fileName = $downloadDocResponse['filename'] ?? '';
