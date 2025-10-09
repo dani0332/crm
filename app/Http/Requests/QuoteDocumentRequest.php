@@ -46,7 +46,8 @@ class QuoteDocumentRequest extends FormRequest
             'is_base_64' => 'nullable',
             'document_category' => 'nullable',
             'file_name' => 'nullable|string|max:100', // only for base 64 file name to be used as original name
-            'providerCode' => 'nullable|string|max:10',
+            'provider_code' => 'nullable|string|max:10',
+            'policy_number' => 'nullable|string|max:100',
         ];
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->first())) {
@@ -94,7 +95,7 @@ class QuoteDocumentRequest extends FormRequest
             $metLifeValidator = new MetLifeValidationService();
             
             // Skip payment validation for MetLife (MTL) only if MetLife integration is enabled
-            if ($metLifeValidator->shouldValidatePayment(request()->providerCode)) {
+            if ($metLifeValidator->shouldValidatePayment(request()->provider_code)) {
                 if ($quote_source == LeadSourceEnum::DUBAI_NOW) {
                     // validate if payment is authorized capture or partial capture
                     if (isset($quote->payment_status_id) && ! in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {

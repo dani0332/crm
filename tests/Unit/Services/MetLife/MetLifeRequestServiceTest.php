@@ -18,7 +18,6 @@ class MetLifeRequestServiceTest extends TestCase
 
         $this->service = new MetLifeRequestService(
             'https://api.metlife.com',
-            '3',
             30
         );
     }
@@ -26,59 +25,57 @@ class MetLifeRequestServiceTest extends TestCase
     public function test_make_request_get_success()
     {
         Http::fake([
-            'https://api.metlife.com/api/v3/test' => Http::response([
-                'success' => true,
-                'data' => ['test' => 'value']
+            'https://api.metlife.com/test' => Http::response([
+                'test' => 'value'
             ], 200)
         ]);
 
         $result = $this->service->makeRequest('/test', 'GET');
 
-        $this->assertTrue($result['status']);
+        $this->assertTrue($result['success']);
         $this->assertEquals('Request successful', $result['message']);
-        $this->assertEquals(200, $result['status_code']);
+        $this->assertEquals(200, $result['data']['status_code']);
         $this->assertArrayHasKey('data', $result);
     }
 
     public function test_make_request_post_success()
     {
         Http::fake([
-            'https://api.metlife.com/api/v3/test' => Http::response([
-                'success' => true,
-                'data' => ['created' => true]
+            'https://api.metlife.com/test' => Http::response([
+                'created' => true
             ], 201)
         ]);
 
         $data = ['name' => 'test'];
         $result = $this->service->makeRequest('/test', 'POST', $data);
 
-        $this->assertTrue($result['status']);
+        $this->assertTrue($result['success']);
         $this->assertEquals('Request successful', $result['message']);
-        $this->assertEquals(201, $result['status_code']);
+        $this->assertEquals(201, $result['data']['status_code']);
     }
 
     public function test_make_request_failure()
     {
         Http::fake([
-            'https://api.metlife.com/api/v3/test' => Http::response([
+            'https://api.metlife.com/test' => Http::response([
                 'error' => 'Not found'
             ], 404)
         ]);
 
         $result = $this->service->makeRequest('/test', 'GET');
 
-        $this->assertFalse($result['status']);
-        $this->assertEquals('Request failed', $result['message']);
-        $this->assertEquals(404, $result['status_code']);
-        $this->assertArrayHasKey('error', $result);
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('Request failed', $result['message']);
+        $this->assertEquals(404, $result['data']['status_code']);
+        $this->assertArrayHasKey('data', $result);
     }
 
-    public function test_build_auth_headers()
+    public function test_build_headers_with_auth()
     {
         $sessionId = 'test_session_id';
         $csrfToken = 'test_csrf_token';
 
-        $headers = $this->service->buildAuthHeaders($sessionId, $csrfToken);
+        $headers = $this->service->buildHeaders($sessionId, $csrfToken);
 
         $this->assertEquals($sessionId, $headers['x-session-id']);
         $this->assertEquals($csrfToken, $headers['X-CSRFToken']);
@@ -86,26 +83,27 @@ class MetLifeRequestServiceTest extends TestCase
         $this->assertEquals('application/json', $headers['Accept']);
     }
 
-    public function test_build_standard_headers()
+    public function test_build_headers_without_auth()
     {
-        $headers = $this->service->buildStandardHeaders();
+        $headers = $this->service->buildHeaders();
 
         $this->assertEquals('application/json', $headers['Content-Type']);
         $this->assertEquals('application/json', $headers['Accept']);
         $this->assertCount(2, $headers);
+        $this->assertArrayNotHasKey('x-session-id', $headers);
+        $this->assertArrayNotHasKey('X-CSRFToken', $headers);
     }
 
-    public function test_check_connectivity()
+    public function test_exception_handling()
     {
-        Http::fake([
-            'https://api.metlife.com/api/v3/init/' => Http::response([
-                'success' => true
-            ], 200)
-        ]);
+        Http::fake(function () {
+            throw new \Exception('Network error');
+        });
 
-        $result = $this->service->checkConnectivity();
+        $result = $this->service->makeRequest('/test', 'GET');
 
-        $this->assertTrue($result['status']);
-        $this->assertEquals('Request successful', $result['message']);
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('MetLife operation failed', $result['message']);
+        $this->assertArrayHasKey('data', $result);
     }
 }

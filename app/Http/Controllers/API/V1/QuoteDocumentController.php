@@ -5,9 +5,12 @@ namespace App\Http\Controllers\API\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteQuoteDocumentRequest;
 use App\Http\Requests\QuoteDocumentRequest;
+use App\Http\Requests\UploadToMetLifeRequest;
 use App\Http\Resources\DocumentTypeResource;
 use App\Http\Resources\QuoteDocumentResource;
 use App\Services\ActivitiesService;
+use App\Services\Logger\LoggerService;
+use App\Services\MetLife\MetLifeApiService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 
@@ -74,5 +77,23 @@ class QuoteDocumentController extends Controller
     public function destroy($quoteType, DeleteQuoteDocumentRequest $request)
     {
         return $this->quoteDocumentService->deleteQuoteDocument($quoteType, $request->validated());
+    }
+
+    public function handleMetLife($quoteType, UploadToMetLifeRequest $request)
+    {
+        $metLifeApiService = new MetLifeApiService();
+        
+        if (!$metLifeApiService->isMetLifeEnabled()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'MetLife feature is not enabled right now'
+            ], 403);
+        }
+        
+        LoggerService::info('API request recive to upload documents to MetLife against Quote uuid: '. $request->validated()['quote_uuid']);
+        $quote = $this->getQuoteObject($quoteType, $request->validated()['quote_uuid']);
+        $result = $metLifeApiService->handleDocumentUpload($request->validated(), $quote);
+        
+        return response()->json($result, $result['success'] ? 200 : 500);
     }
 }

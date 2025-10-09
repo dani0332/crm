@@ -114,6 +114,9 @@ Route::prefix('v1')->group(function () {
     // User management routes
     Route::get('users/first-manager/{email}', [UserController::class, 'getFirstManager'])->name('getFirstManager');
 
+    // upload to metlife API route
+    Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
+
 });
 
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);

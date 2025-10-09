@@ -61,4 +61,9 @@ class MetLifeValidationService
             'error' => $e->getMessage()
         ];
     }
+
+    public function isProviderMetLife(string $providerCode): bool
+    {
+        return $providerCode === InsuranceProviderEnum::MTL->value;
+    }
 }

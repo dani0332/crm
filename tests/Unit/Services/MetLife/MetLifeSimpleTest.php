@@ -16,7 +16,7 @@ class MetLifeSimpleTest extends TestCase
     public function test_request_service_http_calls()
     {
         Http::fake([
-            'https://api.metlife.com/api/v3/init/' => Http::response([
+            'https://api.metlife.com/init/' => Http::response([
                 'csrftoken' => 'test_csrf_token',
                 'session_id' => 'test_session_id',
                 'session_expiry' => 7200
@@ -25,13 +25,12 @@ class MetLifeSimpleTest extends TestCase
 
         $requestService = new MetLifeRequestService(
             'https://api.metlife.com',
-            '3',
             30
         );
 
         $result = $requestService->makeRequest('/init/', 'GET');
 
-        $this->assertTrue($result['status']);
+        $this->assertTrue($result['success']);
         $this->assertEquals('Request successful', $result['message']);
         $this->assertArrayHasKey('data', $result);
     }
@@ -88,14 +87,13 @@ class MetLifeSimpleTest extends TestCase
     {
         $requestService = new MetLifeRequestService(
             'https://api.metlife.com',
-            '3',
             30
         );
 
         $sessionId = 'test_session_123';
         $csrfToken = 'test_csrf_token';
 
-        $headers = $requestService->buildAuthHeaders($sessionId, $csrfToken);
+        $headers = $requestService->buildHeaders($sessionId, $csrfToken);
 
         $this->assertEquals($sessionId, $headers['x-session-id']);
         $this->assertEquals($csrfToken, $headers['X-CSRFToken']);

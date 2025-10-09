@@ -29,10 +29,12 @@ class MetLifeCacheService
         Cache::put(self::SESSION_CREATED_AT_CACHE_KEY, $sessionCreatedAt, $timeout);
     }
 
-    public function cacheTokens(string $csrfToken, int $csrfTokenCreatedAt, int $timeout): void
+    public function cacheTokens(?string $csrfToken, int $csrfTokenCreatedAt, int $timeout): void
     {
-        Cache::put(self::CSRF_TOKEN_CACHE_KEY, $csrfToken, $timeout);
-        Cache::put(self::CSRF_TOKEN_CREATED_AT_CACHE_KEY, $csrfTokenCreatedAt, $timeout);
+        if ($csrfToken) {
+            Cache::put(self::CSRF_TOKEN_CACHE_KEY, $csrfToken, $timeout);
+            Cache::put(self::CSRF_TOKEN_CREATED_AT_CACHE_KEY, $csrfTokenCreatedAt, $timeout);
+        }
     }
 
     public function loadCachedSessionData(): array

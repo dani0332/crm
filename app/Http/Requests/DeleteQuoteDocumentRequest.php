@@ -33,7 +33,7 @@ class DeleteQuoteDocumentRequest extends FormRequest
             'quote_uuid' => 'required',
             'doc_name' => 'required',
             'doc_uuid' => 'required|exists:quote_documents,doc_uuid',
-            'providerCode' => 'nullable|string|max:10',
+            'provider_code' => 'nullable|string|max:10',
         ];
     }
 
@@ -51,7 +51,7 @@ class DeleteQuoteDocumentRequest extends FormRequest
             $metLifeValidator = new MetLifeValidationService();
             
             // Skip payment validation for MetLife (MTL) only if MetLife integration is enabled
-            if ($metLifeValidator->shouldValidatePayment(request()->providerCode)) {
+            if ($metLifeValidator->shouldValidatePayment(request()->provider_code)) {
                 // validate if payment is authorized
                 if (empty($quote->payment) ||
                     ($quote->payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
