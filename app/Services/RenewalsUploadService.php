@@ -1128,7 +1128,7 @@ class RenewalsUploadService
                 $isNameChanged = true;
             }
 
-            $isReAssignment = $quote->advisor_id != $advisorId;
+            $isReAssignment = $quote->advisor_id && $quote->advisor_id != $advisorId;
 
             $this->updateCustomer($quote, $customerData);
             $renewalBatchId = $quoteType->id !== QuoteTypeId::Car && isset($data['renewal_batch_id']) && $data['renewal_batch_id'] != null ? $data['renewal_batch_id'] ?? null : null;
@@ -1193,8 +1193,6 @@ class RenewalsUploadService
                 if ($renewalUploadLead->skip_plans == 2 && $data['make'] == GenericRequestEnum::MOTOR_BIKE) {
                     $quoteData['vehicle_type_id'] = VehicleType::where('text', GenericRequestEnum::BIKE)->first()->id ?? null;
                 }
-
-                $quoteData['vehicle_type_id'] = ! empty($data['vehicle_type_id'] ?? '') ? $data['vehicle_type_id'] : ($quoteData['vehicle_type_id'] ?? null);
 
                 if ($quoteType->code == quoteTypeCode::Car && ! empty($data['year_of_first_registration'])) {
                     $quoteData['year_of_first_registration'] = $data['year_of_first_registration'];

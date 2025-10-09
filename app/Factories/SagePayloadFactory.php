@@ -115,7 +115,7 @@ class SagePayloadFactory
                     'TaxAmount1' => 0.000,
                     'DocumentTotalBeforeTaxes' => roundNumber($request->premiumWithTax),
                     'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,
@@ -203,7 +203,7 @@ class SagePayloadFactory
                     'DocumentTotalBeforeTaxes' => roundNumber($request->premiumWithTax),
                     'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
                     'Terms' => self::getTermsCode(count($paymentSplits)),
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,
@@ -282,7 +282,7 @@ class SagePayloadFactory
                     'TaxClass1' => 5,
                     'DocumentTotalBeforeTax' => $request->discount,
                     'DocumentTotalIncludingTax' => $request->discount,
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $description,
@@ -370,7 +370,7 @@ class SagePayloadFactory
                     'TaxAmount1' => 0.000,
                     'DocumentTotalBeforeTax' => roundNumber($request->premiumWithTax),
                     'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
@@ -400,7 +400,7 @@ class SagePayloadFactory
                     'TaxAmount1' => roundNumber($request->vatOnCommission),
                     'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
                     'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // / commissionIncludingVat means commission_vat_applicable,
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $commissionDescription,
@@ -544,7 +544,7 @@ class SagePayloadFactory
                     'TaxAmount1' => roundNumber($request->vatOnCommission),
                     'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
                     'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'Terms' => self::getTermsCode(count($splitPayments)),
                     'InvoiceDetails' => [
                         [
@@ -1252,7 +1252,7 @@ class SagePayloadFactory
 
     public static function globalSagePrepaymentReceiptPayloadData($sageRequestData)
     {
-        [$quote,$payment, $paymentSplit , $sageRequest , $splitAmount] = $sageRequestData;
+        [$quote, $payment, $paymentSplit , $sageRequest , $splitAmount] = $sageRequestData;
         $personalQuote = PersonalQuote::find($quote?->personal_quote_id);
         $policyNumber = $quote?->policy_number ?? $personalQuote?->policy_number ?? '';
         $sageRequest->collection_amount = $paymentSplit->collection_amount;
@@ -1358,7 +1358,6 @@ class SagePayloadFactory
         $sageRequest->userId = auth()->id();
         $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
-        // TODO:: Need to check with Ali Array to Std
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
         $sageRequest->policyBookingDate = $quote?->policy_booking_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
         $sageRequest->policyExpiryDate = $quote?->policy_expiry_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote->policy_expiry_date)) : '';
