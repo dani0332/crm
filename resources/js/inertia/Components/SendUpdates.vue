@@ -300,14 +300,6 @@ const expandNotes = ref(false);
 
 const disableTooltip = ref('Please complete the policy booking before proceeding with cancellation');
 const disableOption = (slug) => {
-  /* if (
-    props.reportable.source != leadSourceEnum.INSLY &&
-    props.reportable.qutoe_status_id != quoteStatusEnum.PolicyBooked
-  ) {
-    return false;
-  } */
-
-
   if ([
       quoteStatusEnum.PolicyCancelledReissued,
       quoteStatusEnum.PolicyCancelled,
@@ -316,6 +308,13 @@ const disableOption = (slug) => {
     disableTooltip.value = 'No further updates are allowed because this policy has already been cancelled.';
     
     return [sendUpdateEnum.MPC, sendUpdateEnum.CI, sendUpdateEnum.CIR].includes(slug);
+  }
+
+  if (
+    props.reportable.source != leadSourceEnum.INSLY &&
+    props.reportable.qutoe_status_id != quoteStatusEnum.PolicyBooked
+  ) {
+    return [sendUpdateEnum.MPC, sendUpdateEnum.CI].includes(slug);
   }
 
   return false;
