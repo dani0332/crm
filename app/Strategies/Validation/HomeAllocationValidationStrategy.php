@@ -107,12 +107,52 @@ class HomeAllocationValidationStrategy implements AllocationValidationStrategyIn
             if (! $this->validateBracketStructure($data['value_brackets'])) {
                 $validator->errors()->add('value_brackets', 'Value brackets have invalid structure. Please check all required fields are filled correctly.');
             }
+
+            // Check for overlapping Contents values
+            if ($this->hasOverlappingRanges($data['value_brackets'], 'contents_min', 'contents_max')) {
+                $validator->errors()->add('value_brackets', 'Value brackets have overlapping Contents value ranges. Please ensure each bracket has a unique Contents range without overlaps.');
+            }
+
+            // Check for gaps in Contents values
+            if ($this->hasGapsInRanges($data['value_brackets'], 'contents_min', 'contents_max')) {
+                $validator->errors()->add('value_brackets', 'Value brackets have gaps in Contents value coverage. The maximum of one bracket should be followed by the next bracket starting at max + 1.');
+            }
+
+            // Check for overlapping Building values
+            if ($this->hasOverlappingRanges($data['value_brackets'], 'building_min', 'building_max')) {
+                $validator->errors()->add('value_brackets', 'Value brackets have overlapping Building value ranges. Please ensure each bracket has a unique Building range without overlaps.');
+            }
+
+            // Check for gaps in Building values
+            if ($this->hasGapsInRanges($data['value_brackets'], 'building_min', 'building_max')) {
+                $validator->errors()->add('value_brackets', 'Value brackets have gaps in Building value coverage. The maximum of one bracket should be followed by the next bracket starting at max + 1.');
+            }
         }
 
         // Validate volume brackets
         if (isset($data['volume_brackets']) && ! empty($data['volume_brackets'])) {
             if (! $this->validateBracketStructure($data['volume_brackets'])) {
                 $validator->errors()->add('volume_brackets', 'Volume brackets have invalid structure. Please check all required fields are filled correctly.');
+            }
+
+            // Check for overlapping Contents values
+            if ($this->hasOverlappingRanges($data['volume_brackets'], 'contents_min', 'contents_max')) {
+                $validator->errors()->add('volume_brackets', 'Volume brackets have overlapping Contents value ranges. Please ensure each bracket has a unique Contents range without overlaps.');
+            }
+
+            // Check for gaps in Contents values
+            if ($this->hasGapsInRanges($data['volume_brackets'], 'contents_min', 'contents_max')) {
+                $validator->errors()->add('volume_brackets', 'Volume brackets have gaps in Contents value coverage. The maximum of one bracket should be followed by the next bracket starting at max + 1.');
+            }
+
+            // Check for overlapping Building values
+            if ($this->hasOverlappingRanges($data['volume_brackets'], 'building_min', 'building_max')) {
+                $validator->errors()->add('volume_brackets', 'Volume brackets have overlapping Building value ranges. Please ensure each bracket has a unique Building range without overlaps.');
+            }
+
+            // Check for gaps in Building values
+            if ($this->hasGapsInRanges($data['volume_brackets'], 'building_min', 'building_max')) {
+                $validator->errors()->add('volume_brackets', 'Volume brackets have gaps in Building value coverage. The maximum of one bracket should be followed by the next bracket starting at max + 1.');
             }
         }
 
@@ -211,5 +251,58 @@ class HomeAllocationValidationStrategy implements AllocationValidationStrategyIn
         }
 
         return true;
+    }
+
+    /**
+     * Check if brackets have overlapping ranges for a specific field
+     */
+    private function hasOverlappingRanges(array $brackets, string $minField, string $maxField): bool
+    {
+        $count = count($brackets);
+
+        for ($i = 0; $i < $count; $i++) {
+            for ($j = $i + 1; $j < $count; $j++) {
+                $min1 = (float) $brackets[$i][$minField];
+                $max1 = (float) $brackets[$i][$maxField];
+                $min2 = (float) $brackets[$j][$minField];
+                $max2 = (float) $brackets[$j][$maxField];
+
+                // Check if ranges overlap
+                if ($min1 <= $max2 && $min2 <= $max1) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if brackets have gaps in coverage for a specific field
+     */
+    private function hasGapsInRanges(array $brackets, string $minField, string $maxField): bool
+    {
+        if (count($brackets) <= 1) {
+            return false;
+        }
+
+        // Sort brackets by min value
+        usort($brackets, function ($a, $b) use ($minField) {
+            return ((float) $a[$minField]) <=> ((float) $b[$minField]);
+        });
+
+        // Check for gaps between consecutive brackets
+        for ($i = 0; $i < count($brackets) - 1; $i++) {
+            $currentMax = (float) $brackets[$i][$maxField];
+            $nextMin = (float) $brackets[$i + 1][$minField];
+
+            // Allow a gap of 1 (inclusive ranges)
+            // If max is 10, next min should be 11 (not 12 or higher)
+            if ($nextMin > $currentMax + 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
