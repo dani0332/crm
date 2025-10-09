@@ -369,6 +369,8 @@ function onSubmit(isValid) {
          <x-input
            v-if="isEcomLeadExtension"
            label="PRIMARY REF ID"
+           placeholder="Enter Primary Ref ID"
+           :tooltip="'ID of the original ECOM lead'"
            v-model="quoteForm.primary_ref_id"
            :error="quoteForm.errors.primary_ref_id"
            :disabled="!canEditSubSourceFields"

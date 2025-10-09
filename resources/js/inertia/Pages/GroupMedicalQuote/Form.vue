@@ -116,7 +116,7 @@ watch(() => quoteForm.sub_source_options_id, () => {
 watch(() => quoteForm.partner_name, (newValue, oldValue) => {
   if (!showPartnerNameField.value) return;
   if (oldValue) {
-    const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')})`, 'g');
+    const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
     quoteForm.additional_notes = (quoteForm.additional_notes || '').replace(oldPattern, '').trim();
     quoteForm.additional_notes = quoteForm.additional_notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
   }
@@ -218,6 +218,7 @@ function onSubmit(isValid) {
           type="text"
           placeholder="Enter Primary Ref ID"
           :rules="[isRequired]"
+          :tooltip="'ID of the original ECOM lead'"
           :error="quoteForm.errors.primary_ref_id"
           :disabled="!canEditSubSourceFields"
         />

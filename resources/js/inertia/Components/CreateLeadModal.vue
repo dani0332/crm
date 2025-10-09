@@ -213,6 +213,7 @@ watch(() => leadForm.sub_source_options_id, () => {
           class="w-full"
             :rules="[isRequired]"
           required
+          :tooltip="'ID of the original ECOM lead'"
         />
       </div>
 

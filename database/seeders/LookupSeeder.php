@@ -361,17 +361,17 @@ class LookupSeeder extends Seeder
                     [
                         'text' => 'CEO club',
                         'code' => 'ceo-club',
-                        'description' => 'This is a new customer referred from IM partnered groups, clubs or campaigns.',
+                        'description' => null,
                     ],
                     [
                         'text' => "Young Presidents' Organization (YPO)",
                         'code' => 'young-presidents-organization-ypo',
-                        'description' => 'This is a new customer referred from IM partnered groups, clubs or campaigns.',
+                        'description' => null,
                     ],
                     [
                         'text' => 'Other clubs or campaigns',
                         'code' => 'other-clubs-or-campaigns',
-                        'description' => 'This is a new customer referred from IM partnered groups, clubs or campaigns.',
+                        'description' => null,
                     ],
                 ],
             ],

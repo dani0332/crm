@@ -256,6 +256,7 @@ const gender = computed(() => {
           type="text"
           placeholder="Enter Primary Ref ID"
           :rules="[isRequired]"
+          :tooltip="'ID of the original ECOM lead'"
           :error="quoteForm.errors.primary_ref_id"
           :disabled="!canEditSubSourceFields"
         />
