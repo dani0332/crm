@@ -586,7 +586,12 @@ class ClaimsService extends BaseService
      */
     public function getLineOfBusinessOptions(): array
     {
-        return QuoteType::select('id', 'text')->where('is_active', 1)->orderBy('text')->get()->toArray();
+        return QuoteType::select('id', 'text')
+            ->whereIn('id', [
+                QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet,QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Yacht,
+                QuoteTypeId::Health, QuoteTypeId::Life
+            ])
+            ->where('is_active', 1)->orderBy('text')->get()->toArray();
     }
 
     /**
