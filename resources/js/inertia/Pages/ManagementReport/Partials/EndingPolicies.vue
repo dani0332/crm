@@ -127,6 +127,11 @@ const tableHeader = reactive([
     value: 'notes',
     tooltip: 'Any notes added within lead level will reflect here.',
   },
+  {
+    text: 'Policy PEC Flag',
+    value: 'pec_flag',
+    tooltip: 'Indicates if the policy has Pre-Existing Condition (PEC) flag',
+  },
 ]);
 
 const calculateTotalSum = useCalculateTotalSum;

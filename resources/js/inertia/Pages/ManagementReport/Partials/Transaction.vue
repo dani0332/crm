@@ -237,6 +237,11 @@ const tableHeader = reactive([
     text: 'Private Client',
     value: 'pcp_tag_formatted',
   },
+  {
+    text: 'Policy PEC Flag',
+    value: 'pec_flag',
+    tooltip: 'Indicates if the policy has Pre-Existing Condition (PEC) flag',
+  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer

@@ -253,6 +253,7 @@ const getInsuranceType = (planId, insurance_provider_plan) => {
         insurance_provider_plan,
         age,
         plan_id,
+        has_pec_tag,
       } in leads"
       :key="id"
       :href="getUrl(uuid, quoteTypeId)"
@@ -269,9 +270,20 @@ const getInsuranceType = (planId, insurance_provider_plan) => {
     >
       <div class="flex flex-col">
         <stale-leads-badge :date="stale_at" :position="'bottom'" />
-        <span class="font-semibold text-sm">
-          {{ first_name }} {{ last_name }}
-        </span>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="font-semibold text-sm">
+            {{ first_name }} {{ last_name }}
+          </span>
+          <x-button
+            v-if="has_pec_tag && quoteType === 'Health'"
+            size="xs"
+            color="#DC2626"
+            tag="div"
+            class="text-[10px] px-1 py-0.5"
+          >
+            PEC
+          </x-button>
+        </div>
       </div>
       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
         <x-icon icon="sheildCheck" size="sm" class="text-primary-400" />
