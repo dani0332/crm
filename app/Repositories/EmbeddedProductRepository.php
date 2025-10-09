@@ -32,6 +32,7 @@ use App\Jobs\SendEPDocumentsJob;
 use App\Jobs\SukoonMedexPurchaseFlowJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\CustomerAddress;
 use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
@@ -1404,8 +1405,23 @@ class EmbeddedProductRepository extends BaseRepository
         if(empty($carMake?->code)) {
             return false;
         }
-        $epEcbExcludeVehicleCodes = EpEcbExcludeVehicleEnum::getMakeCodes();
-        return in_array($carMake->code, $epEcbExcludeVehicleCodes);
+        return in_array($carMake->code, EpEcbExcludeVehicleEnum::CAR_MAKE_CODES);
+    }
+
+    /**
+     * Check if the CarModelId is matched with the excluded vehicles of EpEcb
+     * Only for CAR Quote With EP ECB
+     *
+     * @param int $modelId
+     * @return bool
+     */
+    public function checkIsCarModelIdMatchedWithExcludedEcbVehicle($modelId): bool
+    {
+        $carModel = CarModel::select('id', 'code')->find($modelId);
+        if(empty($carModel?->code)) {
+            return false;
+        }
+        return in_array($carModel->code, EpEcbExcludeVehicleEnum::CAR_MODEL_CODES);
     }
 
     /**

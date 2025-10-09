@@ -170,6 +170,9 @@ class CarQuoteObserver
                 if(isset($dirty['car_make_id']) && $embeddedProductRepo->checkIsCarMakeIdMatchedWithExcludedEcbVehicle($lead->car_make_id)) {
                     $reason[] = "due to change of CarMake, matched with excluded ECB vehicle";
                 }
+                if(isset($dirty['car_model_id']) && $embeddedProductRepo->checkIsCarModelIdMatchedWithExcludedEcbVehicle($lead->car_model_id)) {
+                    $reason[] = "due to change of CarModel, matched with excluded ECB vehicle";
+                }
                 if(isset($dirty['registration_type']) && $lead->registration_type == CarRegistrationType::COMPANY) {
                     $reason[] = "due to change of RegistrationType to {$lead->registration_type}";
                 }
