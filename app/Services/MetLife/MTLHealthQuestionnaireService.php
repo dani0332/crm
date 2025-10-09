@@ -178,7 +178,7 @@ class MTLHealthQuestionnaireService
             }
         });
 
-        return app('dompdf.wrapper')->loadView('pdfs.health-questionnaire', compact('data'))
+        return app('dompdf.wrapper')->loadView('pdf.life.health-questionnaire.health-questionnaire', compact('data'))
             ->setOptions([
                 'isHtml5ParserEnabled' => true,
                 'dpi' => 150,
