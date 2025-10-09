@@ -1128,7 +1128,7 @@ class RenewalsUploadService
                 $isNameChanged = true;
             }
 
-            $isReAssignment = $quote->advisor_id != $advisorId;
+            $isReAssignment = $quote->advisor_id && $quote->advisor_id != $advisorId;
 
             $this->updateCustomer($quote, $customerData);
             $renewalBatchId = $quoteType->id !== QuoteTypeId::Car && isset($data['renewal_batch_id']) && $data['renewal_batch_id'] != null ? $data['renewal_batch_id'] ?? null : null;

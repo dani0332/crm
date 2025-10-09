@@ -37,7 +37,7 @@ class CarCQFValidationService
         }
 
         if (! empty($errors)) {
-            LoggerService::error(self::class.' - Quote validation failed', [
+            LoggerService::info(self::class.' - Quote validation failed', [
                 'errors' => $errors,
                 'quote_uuid' => $quote->uuid ?? null,
             ]);
