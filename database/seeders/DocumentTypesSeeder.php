@@ -1701,7 +1701,7 @@ class DocumentTypesSeeder extends Seeder
             ],
             // Health claim documents -- Insurer Card Copy
             [
-                'code' => 'CLM_HLT_ICC',
+                'code' => 'CLM_HLT_IC',
                 'text' => 'Insurer Card Copy',
                 'description' => 'Upload the copy of the insurer card.',
                 'is_active' => 1,
