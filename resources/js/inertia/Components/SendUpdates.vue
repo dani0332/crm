@@ -25,6 +25,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const sendUpdateEnum = page.props.sendUpdateLogStatusEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const leadSourceEnum = page.props.leadSource;
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
@@ -297,27 +298,24 @@ const findOption = (item, key) => {
 
 const expandNotes = ref(false);
 
-const disableTooltip = 'No further updates are allowed because this policy has already been cancelled.';
+const disableTooltip = ref('Please complete the policy booking before proceeding with cancellation');
 const disableOption = (slug) => {
-  if (slug === sendUpdateEnum.MPC) {
-    return [
-      quoteStatusEnum.PolicyCancelledReissued,
-      quoteStatusEnum.PolicyCancelled,
-    ].includes(props.reportable.quote_status_id);
-  }
+  /* if (
+    props.reportable.source != leadSourceEnum.INSLY &&
+    props.reportable.qutoe_status_id != quoteStatusEnum.PolicyBooked
+  ) {
+    return false;
+  } */
 
-  if (slug === sendUpdateEnum.CI) {
-    return [
-      quoteStatusEnum.PolicyCancelledReissued,
-      quoteStatusEnum.PolicyCancelled,
-    ].includes(props.reportable.quote_status_id);
-  }
 
-  if (slug === sendUpdateEnum.CIR) {
-    return [
+  if ([
       quoteStatusEnum.PolicyCancelledReissued,
       quoteStatusEnum.PolicyCancelled,
-    ].includes(props.reportable.quote_status_id);
+    ].includes(props.reportable.quote_status_id)
+  ) {
+    disableTooltip.value = 'No further updates are allowed because this policy has already been cancelled.';
+    
+    return [sendUpdateEnum.MPC, sendUpdateEnum.CI, sendUpdateEnum.CIR].includes(slug);
   }
 
   return false;
@@ -326,7 +324,7 @@ const disableOption = (slug) => {
 // only for MPC option.
 const disableOptionTooltip = (isDisabled) => {
   if (isDisabled) {
-    return disableTooltip;
+    return disableTooltip.value;
   }
 };
 
@@ -335,7 +333,7 @@ const disableCategoryTooltip = (category) => {
     (category.slug === sendUpdateEnum.CI && disableOption(category.slug)) ||
     (category.slug === sendUpdateEnum.CIR && disableOption(category.slug))
   ) {
-    return disableTooltip;
+    return disableTooltip.value;
   }
 
   return category.description;
