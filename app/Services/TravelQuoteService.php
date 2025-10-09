@@ -1304,7 +1304,7 @@ class TravelQuoteService extends BaseService
             }
 
             $customerMember = CustomerMembers::find($quoteObject->primary_member_id);
-            
+
             if (! $customerMember) {
                 LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - Primary member not found', [
                     'primary_member_id' => $quoteObject->primary_member_id,
