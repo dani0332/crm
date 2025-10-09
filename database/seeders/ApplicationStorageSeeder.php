@@ -746,7 +746,7 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::updateOrCreate(
-            ['key_name' => ApplicationStorageEnums::COMPANY_CAR_SEND_POLICY_TEMPLATE],
+            ['key_name' => ApplicationStorageEnums::COMMERCIAL_CAR_SEND_POLICY_TEMPLATE],
             [
                 'value' => 770,
                 'created_at' => now(),

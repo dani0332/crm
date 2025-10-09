@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarVehicleUse;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EmirateEnum;
 use App\Enums\LeadSourceEnum;
@@ -1373,8 +1374,8 @@ class SendUpdateLogService
         }
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
-            $quoteType = strtolower(QuoteTypes::getName($quoteTypeId)->value).'-su-notes';
-            $notes = Lookup::where('key', $quoteType)->whereIn('code', json_decode($sendUpdateLog->notes, true))->get() ?? [];
+            $lookupNoteKey = strtolower($quoteType).'-su-notes';
+            $notes = Lookup::where('key', $lookupNoteKey)->whereIn('code', json_decode($sendUpdateLog->notes, true))->get() ?? [];
             if (! empty($notes)) {
                 $notes = implode(', ', $notes->pluck('description')->toArray());
             }
@@ -1473,7 +1474,16 @@ class SendUpdateLogService
                 $templateId = getAppStorageValueByKey(ApplicationStorageEnums::BUSINESS_SEND_POLICY_TEMPLATE);
             }
         } else {
-            $templateCode = strtoupper(QuoteTypeId::getOptions()[$quoteTypeId]).'_SEND_POLICY_TEMPLATE';
+            $templateCode = strtoupper($quoteType).'_SEND_POLICY_TEMPLATE';
+            if (
+                $quoteTypeId == QuoteTypeId::Car &&
+                (
+                    app(LeadAllocationService::class)->isCommercialVehicles($quote) ||
+                    $quote->vehicle_use == CarVehicleUse::COMMERCIAL
+                )
+            ) {
+                $templateCode = 'COMMERCIAL_'.$templateCode;
+            }
             $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
             $templateId = getAppStorageValueByKey(constant($constantName));
         }
