@@ -1490,6 +1490,8 @@ class CentralService extends BaseService
             return 'TRADE';
         } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::several)) {
             return 'BUSINESS'; // in only several business type, we are sending business similar email template.
+        } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::proIndemnity)) {
+            return 'PROFESSIONAL'; // in only several business type, we are sending business similar email template.
         }
 
         return 'OTHER_BUSINESS';
@@ -1742,6 +1744,8 @@ class CentralService extends BaseService
             $emailData->details = $quote->brief_details;
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $emailData->tpa = 'NA'; // need to confirm.
+            } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::proIndemnity)) {
+                $emailData->insuranceType = 'NA'; // need to confirm.
             }
         }
     }
