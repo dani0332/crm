@@ -1139,7 +1139,7 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newV
           <x-input
             v-if="isGIG || isLIVA"
             v-model="additionalVehicleTransactionDetailsForm.plate_code"
-            :rules="isLIVA ? registrationNoValidation : getFieldRules('plate_code')"
+            :rules="isLIVA ? (registrationNoValidation ? [isRequired] : []) : getFieldRules('plate_code')"
             :required="isLIVA ? registrationNoValidation : isFieldRequired('plate_code')"
             placeholder="Plate Code"
             type="text"
