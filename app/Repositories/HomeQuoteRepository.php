@@ -268,7 +268,7 @@ class HomeQuoteRepository extends BaseRepository
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
             'primary_ref_id' => $data['primary_ref_id'] ?? null,
-            'additional_notes' => $data['additional_notes'] ?? null,
+            'notes' => $data['notes'] ?? null,
         ]);
 
         // only add keys in payload if they are set and not empty
@@ -298,7 +298,7 @@ class HomeQuoteRepository extends BaseRepository
             'subSourceId' => 'sub_source_id',
             'subSourceOptionsId' => 'sub_source_options_id',
             'primaryRefId' => 'primary_ref_id',
-            'additionalNotes' => 'additional_notes',
+            'additionalNotes' => 'notes',
         ];
 
         foreach ($optionalFields as $key => $field) {

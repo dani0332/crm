@@ -147,7 +147,6 @@ const quoteForm = useForm({
   year_of_manufacture: props.quote?.bike_quote?.year_of_manufacture || null,
   back_home_license_held_for_id:
     props.bikeQuoteDetail?.back_home_license_held_for_id || null,
-  notes: props.bikeQuoteDetail?.notes || '',
   has_ncd_supporting_documents: null,
   has_ncd_supporting_documents_dropdown: null,
   claim_history_id: props.bikeQuoteDetail?.claim_history_id || null,
