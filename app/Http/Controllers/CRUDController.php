@@ -840,8 +840,8 @@ class CRUDController extends Controller
                 $customerAddressData = $this->customerService->getCustomerAddressData($record);
                 $amlStatusName = AMLStatusCode::getName($record->aml_status);
                 $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
-                $apiIssuanceStatus = PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id);
-                $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id);
+                $apiIssuanceStatus = $record->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id) : null;
+                $insurerApiStatus = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
                 $previousQuote = $this->carQuoteService->getPreviousQuote($record->previous_quote_id);
 
                 return inertia('PersonalQuote/Car/Show', compact([
