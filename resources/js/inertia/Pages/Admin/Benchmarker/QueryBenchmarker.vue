@@ -97,6 +97,73 @@ const getTableHeaders = results => {
   if (!results || !results.length) return [];
   return Object.keys(results[0]);
 };
+
+// Export to CSV functionality
+const exportToCSV = () => {
+  if (!queryResults.value || queryResults.value.length === 0) {
+    notification.error({
+      title: 'No data to export',
+      position: 'top',
+    });
+    return;
+  }
+
+  try {
+    const headers = getTableHeaders(queryResults.value);
+
+    // Create CSV content
+    let csvContent = headers.join(',') + '\n';
+
+    // Add data rows
+    queryResults.value.forEach(row => {
+      const values = headers.map(header => {
+        const value = row[header];
+
+        // Handle different data types
+        if (value === null || value === undefined) {
+          return '';
+        }
+
+        // Escape quotes and wrap in quotes if contains comma, newline, or quote
+        const stringValue = String(value);
+        if (
+          stringValue.includes(',') ||
+          stringValue.includes('\n') ||
+          stringValue.includes('"')
+        ) {
+          return `"${stringValue.replace(/"/g, '""')}"`;
+        }
+
+        return stringValue;
+      });
+
+      csvContent += values.join(',') + '\n';
+    });
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `query_results_${new Date().getTime()}.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    notification.success({
+      title: 'CSV exported successfully',
+      position: 'top',
+    });
+  } catch (error) {
+    notification.error({
+      title: 'Failed to export CSV',
+      position: 'top',
+    });
+  }
+};
 </script>
 <template>
   <Head title="Query Benchmarker" />
@@ -212,6 +279,25 @@ const getTableHeaders = results => {
               </svg>
               <span>{{ rowCount }} rows</span>
             </span>
+            <button
+              @click="exportToCSV"
+              class="px-4 py-2 rounded-lg bg-white text-blue-600 text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-md"
+              type="button"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Export CSV</span>
+            </button>
           </div>
         </div>
       </div>
