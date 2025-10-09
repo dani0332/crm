@@ -1272,6 +1272,10 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
   } else {
     isCustomReasonEnabled.value = false;
   }
+
+  if (noPaymentUpdate && paymentMethodsForm.credit_approval == '' && paymentMethodsForm.frequency == paymentFrequencyEnum.CUSTOM) {
+    resetCreditApproval();
+  }
   //customize payment method based on collection type
   if (paymentMethodsForm.credit_approval !== '') {
     if (noPaymentUpdate) {
