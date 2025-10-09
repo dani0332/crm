@@ -124,7 +124,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
         $quote->load('advisor');
 
-        // $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
+        $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
         // if (! empty($templateId)) {
             // TODO:  Hard coded format and variable values should be form env file
             $roadsideAssistance = '';
@@ -173,7 +173,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 }
             }
 
-            // $emailData->emailTemplateId = $templateId;
+            // for Savings
+            $emailData->emailTemplateId = $templateId ?? null;
             $emailData->handBookDocuments = $handBookDocuments;
             $emailData->roadsideAssistance = $roadsideAssistance;
             $emailData->quoteTypeId = $quoteTypeId;
