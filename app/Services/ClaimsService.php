@@ -588,8 +588,8 @@ class ClaimsService extends BaseService
     {
         return QuoteType::select('id', 'text')
             ->whereIn('id', [
-                QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet,QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Yacht,
-                QuoteTypeId::Health, QuoteTypeId::Life
+                QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Yacht,
+                QuoteTypeId::Health, QuoteTypeId::Life,
             ])
             ->where('is_active', 1)->orderBy('text')->get()->toArray();
     }
