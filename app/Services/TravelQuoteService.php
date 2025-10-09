@@ -1304,13 +1304,22 @@ class TravelQuoteService extends BaseService
             }
 
             $customerMember = CustomerMembers::find($quoteObject->primary_member_id);
-            $quoteObject->first_name = $customerMember?->first_name;
-            $quoteObject->last_name = $customerMember?->last_name;
+            
+            if (! $customerMember) {
+                LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - Primary member not found', [
+                    'primary_member_id' => $quoteObject->primary_member_id,
+                ]);
+
+                return;
+            }
+
+            $quoteObject->first_name = $customerMember->first_name;
+            $quoteObject->last_name = $customerMember->last_name;
             $quoteObject->save();
 
             LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - Successfully updated customer profile details', [
-                'first_name' => $customerMember?->first_name,
-                'last_name' => $customerMember?->last_name,
+                'first_name' => $customerMember->first_name,
+                'last_name' => $customerMember->last_name,
             ]);
 
         } catch (\Exception $e) {
