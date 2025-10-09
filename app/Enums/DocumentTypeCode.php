@@ -111,5 +111,10 @@ class DocumentTypeCode extends Enum
 
     const ECARD_HLTH = 'ECARD_HLTH'; // Health E-Card
     const SMAF_HLTH = 'SMAF_HLTH'; // Health Signed medical application form
-    const POLC = 'POLC'; // Health Policy Certificate
+    const POLC = 'POLC'; // Health Policy Certificate    
+    
+    const PC_TRVL = 'PC_TRVL'; // Travel Policy Certificate
+    const PC_YTCH = 'PC_YTCH'; // Yacht Policy Certificate
+
+    const PS_LIFE = 'PS_LIFE'; // Life Policy Schedule
 }
