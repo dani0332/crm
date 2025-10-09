@@ -108,4 +108,8 @@ class DocumentTypeCode extends Enum
     const GH_NL = 'GH_NL'; // Group Health Network List
     const GH_EC = 'GH_EC'; // Group Health E-Card
     const GH_PC = 'GH_PC'; // Group Health Policy Certificate
+
+    const ECARD_HLTH = 'ECARD_HLTH'; // Health E-Card
+    const SMAF_HLTH = 'SMAF_HLTH'; // Health Signed medical application form
+    const POLC = 'POLC'; // Health Policy Certificate
 }
