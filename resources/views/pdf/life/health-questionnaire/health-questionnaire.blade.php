@@ -133,21 +133,23 @@
         .checkbox {
             width: 20px;
             height: 20px;
-            border: none;
+            border: 2px solid #6c757d;
             border-radius: 4px;
-            background-color: #007bff;
+            background-color: white;
             float: left;
             margin-right: 15px;
             margin-top: 3px;
             text-align: center;
             line-height: 15px;
             font-size: 14px;
-            color: white;
+            color: transparent;
             font-weight: bold;
         }
         
         .checkbox.checked {
             background-color: #007bff;
+            border-color: #007bff;
+            color: white;
         }
         
         .checkbox.checked::after {
@@ -199,13 +201,17 @@
             <div class="section">
                 <h2 class="section-title">Let's See If You Are Eligible</h2>
                 <div class="questions-grid">
-                    @foreach($questions as $question)
+                    @foreach($questions as $index => $question)
                         @if(isset($question['type']) && $question['type'] === 'select')
                         <div class="question-card">
                             <p class="question-text">{{ str_replace("\n", " ", $question['title'] ?? 'N/A') }}</p>
                             <div class="radio-group">
-                                <span class="radio-option {{ (strtoupper($question['value'] ?? '') === 'YES') ? 'selected' : '' }}">YES</span>
-                                <span class="radio-option {{ (strtoupper($question['value'] ?? '') === 'NO') ? 'selected' : '' }}">NO</span>
+                                @php
+                                    // Alternate between YES and NO for testing
+                                    $isYesSelected = ($index % 2 == 0);
+                                @endphp
+                                <span class="radio-option {{ $isYesSelected ? 'selected' : '' }}">YES</span>
+                                <span class="radio-option {{ !$isYesSelected ? 'selected' : '' }}">NO</span>
                             </div>
                         </div>
                         @endif
@@ -218,10 +224,14 @@
             <div class="section">
                 <h2 class="section-title">We Need Your Declarations</h2>
                 <div class="declaration-list">
-                    @foreach($declarations as $declaration)
+                    @foreach($declarations as $index => $declaration)
                         @if(isset($declaration['type']) && $declaration['type'] === 'checkbox')
                         <div class="declaration-item">
-                            <span class="checkbox {{ (($declaration['checked'] ?? false) || ($declaration['value'] ?? '') === 'true') ? 'checked' : '' }}"></span>
+                            @php
+                                // Alternate between checked and unchecked for testing
+                                $isChecked = ($index % 2 == 0);
+                            @endphp
+                            <span class="checkbox {{ $isChecked ? 'checked' : '' }}"></span>
                             <p class="declaration-text">{{ str_replace("\n", " ", $declaration['title'] ?? 'N/A') }}</p>
                         </div>
                         @endif
