@@ -1664,6 +1664,7 @@ class CentralService extends BaseService
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
 
+        $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
         if (
             $quoteTypeId != QuoteTypeId::Business ||
             (
@@ -1683,12 +1684,15 @@ class CentralService extends BaseService
                 if ($url) {
                     $emailData->handBookDocuments = str_contains($url, 'http') ? $url : $storageUrl.$url;
                 }
+            } else {
+                $emailData->handBookDocuments = ! empty($quoteDocuments) ? $storageUrl.collect($quoteDocuments)->filter(function ($document) {
+                    return in_array($document['document_type_code'], [DocumentTypeCode::PHB]);
+                })->first()['doc_url'] ?? '' : [];
             }
             // for testing purpose.
             // $emailData->handBookDocuments = 'https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/documents/bike/68e64dd9b42a3_DD8X4MH7_68e64dd717a07_test.pdf';
         }
 
-        $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
         if (! empty($quoteDocuments)) {
             $quoteDocuments = collect($quoteDocuments);
 

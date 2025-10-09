@@ -118,4 +118,6 @@ class DocumentTypeCode extends Enum
 
     const PS_LIFE = 'PS_LIFE'; // Life Policy Schedule
     const AC_LIFE = 'AC_LIFE'; // Life Application Copy
+
+    const PHB = 'PHB'; // Policy Handbook
 }
