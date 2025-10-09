@@ -198,12 +198,38 @@ class RetentionReportService extends BaseService
 
         // Apply department filter
         $this->applyDepartmentFilter($query, $request);
+
+        // Apply PEC flag filter
+        $this->applyPecFlagFilter($query, $request);
     }
 
     private function applyDepartmentFilter($query, $request)
     {
         if (isset($request['department'])) {
             $query->where('users.department_id', $request['department']);
+        }
+    }
+
+    private function applyPecFlagFilter($query, $request)
+    {
+        $quoteType = $this->getQuoteType($request);
+
+        if ($quoteType === quoteTypeCode::Health && isset($request['pec_flag']) && $request['pec_flag'] !== 'all') {
+            if ($request['pec_flag'] == '1') {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('health_quote_request')
+                        ->whereColumn('health_quote_request.uuid', 'personal_quotes.uuid')
+                        ->whereNotNull('health_quote_request.pec_marked_at');
+                });
+            } else {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('health_quote_request')
+                        ->whereColumn('health_quote_request.uuid', 'personal_quotes.uuid')
+                        ->whereNull('health_quote_request.pec_marked_at');
+                });
+            }
         }
     }
 
