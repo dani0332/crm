@@ -9,7 +9,7 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 
 /**
  * Export class for failed sage processes
- * 
+ *
  * This class handles the export of failed sage processes data to Excel format.
  */
 class SageProcessesExport extends BaseReportsExport implements WithTitle
@@ -21,8 +21,6 @@ class SageProcessesExport extends BaseReportsExport implements WithTitle
 
     /**
      * Define the headings for the Excel export
-     *
-     * @return array
      */
     public function headings(): array
     {
@@ -48,20 +46,19 @@ class SageProcessesExport extends BaseReportsExport implements WithTitle
     /**
      * Map the data for each row in the Excel export
      *
-     * @param mixed $row
-     * @return array
+     * @param  mixed  $row
      */
     public function map($row): array
     {
         // Parse sage response to extract error message if available
         $sageResponse = $this->notAvailable;
-        if (!empty($row->sage_response)) {
+        if (! empty($row->sage_response)) {
             $responseData = json_decode($row->sage_response, true);
             if (is_array($responseData)) {
                 // Try to extract error message from common response formats
-                $sageResponse = $responseData['error']['message']['value'] ?? 
-                               $responseData['message'] ?? 
-                               $responseData['error'] ?? 
+                $sageResponse = $responseData['error']['message']['value'] ??
+                               $responseData['message'] ??
+                               $responseData['error'] ??
                                substr($row->sage_response, 0, 200); // Limit to 200 chars
             } else {
                 $sageResponse = substr($row->sage_response, 0, 200);
@@ -94,12 +91,9 @@ class SageProcessesExport extends BaseReportsExport implements WithTitle
 
     /**
      * Define the title for the Excel sheet
-     *
-     * @return string
      */
     public function title(): string
     {
         return 'Failed Sage Processes';
     }
 }
-
