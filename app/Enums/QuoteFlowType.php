@@ -20,6 +20,7 @@ enum QuoteFlowType: int
     case HOME_RENEWAL_AUTOMATED_FOLLOWUPS = 15;
     case SIC_HEALTH_FOLLOWUPS_WA = 10;
     case CAR_AUTOMATION_FAILED = 36;
+    case CAR_MISSING_DOC_REMINDER = 37;
 
     public function label(): string
     {
@@ -39,6 +40,7 @@ enum QuoteFlowType: int
             QuoteFlowType::LIFE_ADVANCE_BIRTHDAY_WISH => 'life_advance_birthday_wish',
             QuoteFlowType::LIFE_BIRTHDAY_WISH => 'life_birthday_wish',
             QuoteFlowType::CAR_AUTOMATION_FAILED => 'car_automation_failed',
+            QuoteFlowType::CAR_MISSING_DOC_REMINDER => 'car_missing_doc_reminder',
         };
     }
 
@@ -61,6 +63,7 @@ enum QuoteFlowType: int
             14 => QuoteFlowType::LIFE_BIRTHDAY_WISH,
             15 => QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS,
             36 => QuoteFlowType::CAR_AUTOMATION_FAILED,
+            37 => QuoteFlowType::CAR_MISSING_DOC_REMINDER,
             default => null,  // Return null if the value doesn't match any case
         };
     }

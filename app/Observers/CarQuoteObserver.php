@@ -25,6 +25,8 @@ use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use App\Enums\PaymentStatusEnum;
+use App\Services\WAServices\CarWAService;
 
 class CarQuoteObserver
 {
@@ -162,5 +164,28 @@ class CarQuoteObserver
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
+        if(isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PaymentPending){
+        
+            if ($payment->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+                // Check for missing or incomplete required documents: Emirates ID, Mulkiya, and Driving Licence
+                $requiredDocuments = ['emirates_id', 'mulkiya', 'driving_licence'];
+                $leadDocuments = $lead->documents()
+                    ->whereIn('type', $requiredDocuments)
+                    ->get()
+                    ->keyBy('type');
+
+                $missingOrIncomplete = collect($requiredDocuments)->filter(function ($docType) use ($leadDocuments) {
+                    // Document is missing or not marked as complete/verified
+                    $doc = $leadDocuments->get($docType);
+                    return !$doc || !$doc->is_complete;
+                });
+
+                // Only send reminder if at least one required document is missing or incomplete
+                if ($missingOrIncomplete->isNotEmpty()) {
+                    app(CarWAService::class)->sendCarMissingDocReminder($lead);
+                }
+            }
+        }
+       
     }
 }
