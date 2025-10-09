@@ -161,7 +161,7 @@ class MetLifeApiService extends BaseService
         return true;
     }
 
-    protected function makeRequest(string $endpoint, string $method = 'GET', array $data = []): array
+    public function makeRequest(string $endpoint, string $method = 'GET', array $data = []): array
     {
         if (!$this->ensureValidSession()) {
             return $this->responseService->createResponse(false, 'Unable to establish valid session');
@@ -325,4 +325,50 @@ class MetLifeApiService extends BaseService
             return $this->responseService->handleExceptionResponse($e);
         }
     }
+
+
+    public function getApiVersion(): string
+    {
+        return $this->apiVersion;
+    }
+
+    public function syncHealthQuestionnaire(array $requestData): array
+    {
+        try {
+            LoggerService::info('MetLifeApiService: Starting health questionnaire sync', [
+                'quote_uuid' => $requestData['quote_uuid'],
+                'policy_number' => $requestData['policy_number']
+            ]);
+
+            $healthQuestionnaireService = app(MTLHealthQuestionnaireService::class);
+            $result = $healthQuestionnaireService->syncHealthQuestionnaire($requestData);
+
+            if (isset($result['error'])) {
+                LoggerService::warning('MetLifeApiService: Health questionnaire sync failed', [
+                    'quote_uuid' => $requestData['quote_uuid'],
+                    'error' => $result['error']
+                ]);
+                return $this->responseService->createResponse(false, 'Health questionnaire sync failed: ' . $result['error']);
+            }
+
+            LoggerService::info('MetLifeApiService: Health questionnaire sync completed successfully', [
+                'quote_uuid' => $requestData['quote_uuid'],
+                'document_id' => $result->id ?? 'N/A'
+            ]);
+
+            return $this->responseService->createResponse(true, 'Health questionnaire synced successfully', [
+                'document_id' => $result->id ?? null,
+                'quote_uuid' => $requestData['quote_uuid']
+            ]);
+
+        } catch (Exception $e) {
+            LoggerService::error('MetLifeApiService: Exception in health questionnaire sync', [
+                'quote_uuid' => $requestData['quote_uuid'] ?? 'N/A',
+                'error' => $e->getMessage()
+            ]);
+            return $this->responseService->handleExceptionResponse($e);
+        }
+    }
+
+
 }

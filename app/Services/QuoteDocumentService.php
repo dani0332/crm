@@ -170,7 +170,7 @@ class QuoteDocumentService extends BaseService
      * @param  $uuid
      * @return \Illuminate\Http\JsonResponse
      */
-    public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $isHomeSAL = false)
+    public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $isHomeSAL = false, $isHealthQuestionnaire = false)
     {
         LoggerService::info('fn:uploadQuoteDocument - QuoteDocumentService');
 
@@ -239,6 +239,20 @@ class QuoteDocumentService extends BaseService
                 if (! $uploaded) {
                     return false;
                 }
+            } elseif ($isHealthQuestionnaire) {
+                $originalName = $data['pdf_filename'].'.pdf';
+
+                // Generate a unique filename
+                $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+                $fileMimeType = 'application/pdf';
+
+                // Set the filename for Azure storage
+                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
+                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                if (! $uploaded) {
+                    return false;
+                }
             } else {
                 $originalName = sanitizeFileName($fileOrBase64->getClientOriginalName());
 
@@ -283,7 +297,7 @@ class QuoteDocumentService extends BaseService
             LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
             $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
 
-            if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL) {
+            if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL && ! $isHealthQuestionnaire) {
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id,
                     $data['quote_uuid'],

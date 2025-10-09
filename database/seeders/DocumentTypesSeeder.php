@@ -649,6 +649,18 @@ class DocumentTypesSeeder extends Seeder
                 'business_type_of_insurance_id' => null,
                 'business_type_of_customer' => null,
             ],
+            [
+                'code' => DocumentTypeCode::LIFE_HEALTH_QUESTIONNAIRE,
+                'text' => 'Life Health Questionnaire',
+                'is_active' => 1,
+                'quote_type_id' => 4,
+                'folder_path' => 'life_health_questionnaire',
+                'accepted_files' => '.pdf',
+                'max_files' => 5,
+                'max_size' => 5,
+                'is_required' => 0,
+                'category' => DocumentTypeCode::QUOTE,
+            ],
         ];
 
         foreach ($quoteDocuments as $document) {

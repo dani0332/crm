@@ -29,8 +29,10 @@ use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
+use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
+use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -49,6 +51,7 @@ use App\Services\NotificationService;
 use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusService;
+use App\Services\MetLife\MetLifeApiService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
@@ -509,6 +512,44 @@ class ApiController extends Controller
                 'message' => 'Failed to export email status logs',
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function lifeSyncHealthQuestionnaire(LifeSyncHealthQuestionnaireRequest $request)
+    {
+        $metLifeApiService = new MetLifeApiService();
+        
+        if (!$metLifeApiService->isMetLifeEnabled()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'MetLife feature is not enabled right now'
+            ], 403);
+        }
+
+        LoggerService::startQuoteLogging(QuoteTypes::getName(QuoteTypes::LIFE->id())->refId($request->validated()['quote_uuid']));
+        LoggerService::info(self::class.': Received request to sync Health Questionnaire data');
+
+        try {
+            LifeSyncHealthQuestionnaireJob::dispatch($request->validated());
+
+            LoggerService::info(self::class.': Health Questionnaire sync job dispatched');
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Health Questionnaire sync job has been queued.',
+                'quote_uuid' => $request->validated()['quote_uuid'],
+            ], 202);
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': Health Questionnaire sync failed', extra: [
+                'request' => $request->validated(),
+            ], exception: $e);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while syncing Health Questionnaire data.',
+                'error_details' => $e->getMessage(),
+                'quote_uuid' => $request->validated()['quote_uuid'],
+            ], 500);
         }
     }
 }

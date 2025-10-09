@@ -26,6 +26,7 @@ final class QuoteDocumentsEnum extends Enum
     public const LIFE_POLICY_HANDBOOK = 'PHB';
     public const LIFE_TAX_INVOICE = 'CTI';
     public const LIFE_TAX_INVOICE_RAISE_BY_BUYER = 'CTIRBB';
+    public const LIFE_HEALTH_QUESTIONNAIRE = 'LIFE_HEALTH_QUESTIONNAIRE';
 
     // Risk Score Document Type
     public const SCRDOC = 'SCRDOC';
