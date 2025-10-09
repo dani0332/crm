@@ -532,7 +532,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     >
                       IMCRM SUB-SOURCE
                     </label>
-                    <template #tooltip>{{ quote?.sub_source?.description || 'N/A' }}</template>
+                    <template #tooltip>{{
+                      quote?.sub_source?.description || 'N/A'
+                    }}</template>
                   </x-tooltip>
                 </div>
                 <div>{{ quote?.sub_source?.text || 'N/A' }}</div>
@@ -545,7 +547,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     >
                       SUB SOURCE OPTION
                     </label>
-                    <template #tooltip>{{ quote?.sub_source_option?.description || 'N/A' }}</template>
+                    <template #tooltip>{{
+                      quote?.sub_source_option?.description || 'N/A'
+                    }}</template>
                   </x-tooltip>
                 </div>
                 <div>{{ quote?.sub_source_option?.text || 'N/A' }}</div>

@@ -50,81 +50,125 @@ const quoteForm = useForm({
     let text = props.quote?.additional_notes || '';
     const partnerName = props.leadSourceParams?.partnerName;
     if (partnerName) {
-      if (text) text = `${text}, ${partnerName}`; else text = partnerName;
+      if (text) text = `${text}, ${partnerName}`;
+      else text = partnerName;
     }
     return text;
   })(),
-  sub_source_id: parseInt(props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0) || null,
-  sub_source_options_id: parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption || 0) || null,
-  primary_ref_id: props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
+  sub_source_id:
+    parseInt(
+      props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0,
+    ) || null,
+  sub_source_options_id:
+    parseInt(
+      props.quote?.sub_source_options_id ||
+        props.leadSourceParams?.subSourceOption ||
+        0,
+    ) || null,
+  primary_ref_id:
+    props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
   partner_name: props.leadSourceParams?.partnerName || '',
 });
 
-const { isRequired, emptyOrDecimal, isNumber, isEmail, isMobileNo, maxCharacters } =
-  useRules();
+const {
+  isRequired,
+  emptyOrDecimal,
+  isNumber,
+  isEmail,
+  isMobileNo,
+  maxCharacters,
+} = useRules();
 
 // Sub-source options and flags like Life
 const subSourceOptions = computed(() => {
   return (props.subSources || []).map(item => ({
     value: item.id,
     label: item.text,
-    suffix: item.description || item.tooltip || `Information about ${item.text}`,
+    suffix:
+      item.description || item.tooltip || `Information about ${item.text}`,
   }));
 });
 
 const subSourceOptionOptions = computed(() => {
   if (!quoteForm.sub_source_id) return [];
-  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
-  return selectedSubSource?.childs?.map(option => ({
-    value: option.id,
-    label: option.text,
-    code: option.code,
-    suffix: option.description || option.tooltip || `Information about ${option.text}`,
-  })) || [];
+  const selectedSubSource = props.subSources?.find(
+    source => source.id == quoteForm.sub_source_id,
+  );
+  return (
+    selectedSubSource?.childs?.map(option => ({
+      value: option.id,
+      label: option.text,
+      code: option.code,
+      suffix:
+        option.description ||
+        option.tooltip ||
+        `Information about ${option.text}`,
+    })) || []
+  );
 });
 
 const isReferralType = computed(() => {
-  return props.leadSourceParams?.type === 'referral' || quoteForm.source === 'IMCRM';
+  return (
+    props.leadSourceParams?.type === 'referral' || quoteForm.source === 'IMCRM'
+  );
 });
 
 const isEcomLeadExtension = computed(() => {
-  return props.leadSourceParams?.type === 'ecom_lead_extension' ||
-    (quoteForm.sub_source_id === null && quoteForm.sub_source_options_id === null && quoteForm.primary_ref_id);
+  return (
+    props.leadSourceParams?.type === 'ecom_lead_extension' ||
+    (quoteForm.sub_source_id === null &&
+      quoteForm.sub_source_options_id === null &&
+      quoteForm.primary_ref_id)
+  );
 });
 
 const rolesEnum = page.props.rolesEnum;
 const canEditSubSourceFields = computed(() => {
-  return useHasAnyRole([rolesEnum.GMManager, rolesEnum.Admin, rolesEnum.LeadPool]);
+  return useHasAnyRole([
+    rolesEnum.GMManager,
+    rolesEnum.Admin,
+    rolesEnum.LeadPool,
+  ]);
 });
 
 const showPartnerNameField = computed(() => {
   const selectedOption = subSourceOptionOptions.value.find(
-    option => option.value === quoteForm.sub_source_options_id
+    option => option.value === quoteForm.sub_source_options_id,
   );
   return selectedOption?.code === 'other-clubs-or-campaigns';
 });
 
-watch(() => quoteForm.sub_source_id, (newValue, oldValue) => {
-  if (newValue !== oldValue) {
-    quoteForm.sub_source_options_id = null;
-    quoteForm.partner_name = '';
-  }
-});
-watch(() => quoteForm.sub_source_options_id, () => {
-  if (!showPartnerNameField.value) quoteForm.partner_name = '';
-});
-watch(() => quoteForm.partner_name, (newValue, oldValue) => {
-  if (!showPartnerNameField.value) return;
-  if (oldValue) {
+watch(
+  () => quoteForm.sub_source_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      quoteForm.sub_source_options_id = null;
+      quoteForm.partner_name = '';
+    }
+  },
+);
+watch(
+  () => quoteForm.sub_source_options_id,
+  () => {
+    if (!showPartnerNameField.value) quoteForm.partner_name = '';
+  },
+);
+watch(
+  () => quoteForm.partner_name,
+  (newValue, oldValue) => {
+    if (!showPartnerNameField.value) return;
+    if (oldValue) {
     const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
     quoteForm.additional_notes = (quoteForm.additional_notes || '').replace(oldPattern, '').trim();
     quoteForm.additional_notes = quoteForm.additional_notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
-  }
-  if (newValue) {
-    if (quoteForm.additional_notes) quoteForm.additional_notes = `${quoteForm.additional_notes}, ${newValue}`;
-    else quoteForm.additional_notes = newValue;
-  }
-});
+    }
+    if (newValue) {
+      if (quoteForm.additional_notes)
+        quoteForm.additional_notes = `${quoteForm.additional_notes}, ${newValue}`;
+      else quoteForm.additional_notes = newValue;
+    }
+  },
+);
 
 const isEmptyField = ref(false);
 
@@ -189,7 +233,9 @@ function onSubmit(isValid) {
         </x-select>
 
         <x-select
-          v-if="isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension"
+          v-if="
+            isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension
+          "
           label="SUB SOURCE OPTION"
           v-model="quoteForm.sub_source_options_id"
           :options="subSourceOptionOptions"

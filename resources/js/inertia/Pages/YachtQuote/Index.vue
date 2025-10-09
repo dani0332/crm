@@ -321,7 +321,10 @@ const subSourceOptions = computed(() => {
   return (page.props.subSources || []).map(source => ({
     value: source.id,
     label: source.text,
-    suffix: source.description || source.tooltip || `Information about ${source.text}`,
+    suffix:
+      source.description ||
+      source.tooltip ||
+      `Information about ${source.text}`,
   }));
 });
 
@@ -853,7 +856,9 @@ const onLeadConfirmed = () => {
           </template>
           <template #content-footer>
             <ui-select-actions
-              @select-all="filters.sub_source_id = subSourceOptions.map(item => item.value)"
+              @select-all="
+                filters.sub_source_id = subSourceOptions.map(item => item.value)
+              "
               @clear="filters.sub_source_id = []"
             />
           </template>

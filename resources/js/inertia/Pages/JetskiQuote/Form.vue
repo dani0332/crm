@@ -33,9 +33,18 @@ const quoteForm = useForm({
   jetski_use_id: props.quote?.jetski_quote?.jetski_use_id,
   claim_history: props.quote?.jetski_quote?.claim_history,
   // Sub-source fields
-  sub_source_id: parseInt(props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0) || null,
-  sub_source_options_id: parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption || 0) || null,
-  primary_ref_id: props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
+  sub_source_id:
+    parseInt(
+      props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0,
+    ) || null,
+  sub_source_options_id:
+    parseInt(
+      props.quote?.sub_source_options_id ||
+        props.leadSourceParams?.subSourceOption ||
+        0,
+    ) || null,
+  primary_ref_id:
+    props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
   partner_name: props.leadSourceParams?.partnerName || '',
   notes: (() => {
     let notes = props.quote?.notes || '';
@@ -61,80 +70,114 @@ const subSourceOptions = computed(() => {
   return (props.subSources || []).map(item => ({
     value: item.id,
     label: item.text,
-    suffix: item.description || item.tooltip || `Information about ${item.text}`, // Use suffix for tooltip data
+    suffix:
+      item.description || item.tooltip || `Information about ${item.text}`, // Use suffix for tooltip data
   }));
 });
 
 const subSourceOptionOptions = computed(() => {
   if (!quoteForm.sub_source_id) return [];
-  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
-  return selectedSubSource?.childs?.map(option => ({
-    value: option.id,
-    label: option.text,
-    suffix: option.description || option.tooltip || `Information about ${option.text}`, // Use suffix for tooltip data
-  })) || [];
+  const selectedSubSource = props.subSources?.find(
+    source => source.id == quoteForm.sub_source_id,
+  );
+  return (
+    selectedSubSource?.childs?.map(option => ({
+      value: option.id,
+      label: option.text,
+      suffix:
+        option.description ||
+        option.tooltip ||
+        `Information about ${option.text}`, // Use suffix for tooltip data
+    })) || []
+  );
 });
 
 const isReferralType = computed(() => {
-  return props.leadSourceParams?.type === 'referral' || quoteForm.source === 'IMCRM';
+  return (
+    props.leadSourceParams?.type === 'referral' || quoteForm.source === 'IMCRM'
+  );
 });
 
 const isEcomLeadExtension = computed(() => {
-  return props.leadSourceParams?.type === 'ecom_lead_extension' ||
-    (quoteForm.sub_source_id === null && quoteForm.sub_source_options_id === null && quoteForm.primary_ref_id);
+  return (
+    props.leadSourceParams?.type === 'ecom_lead_extension' ||
+    (quoteForm.sub_source_id === null &&
+      quoteForm.sub_source_options_id === null &&
+      quoteForm.primary_ref_id)
+  );
 });
 
 const canEditSubSourceFields = computed(() => {
-  return useHasAnyRole([rolesEnum.JetskiManager, rolesEnum.Admin, rolesEnum.LeadPool]);
+  return useHasAnyRole([
+    rolesEnum.JetskiManager,
+    rolesEnum.Admin,
+    rolesEnum.LeadPool,
+  ]);
 });
 
 const showPartnerNameField = computed(() => {
   if (!quoteForm.sub_source_options_id) return false;
-  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
+  const selectedSubSource = props.subSources?.find(
+    source => source.id == quoteForm.sub_source_id,
+  );
   if (!selectedSubSource?.childs) return false;
-  const selectedSubSourceOption = selectedSubSource.childs.find(child => child.id == quoteForm.sub_source_options_id);
+  const selectedSubSourceOption = selectedSubSource.childs.find(
+    child => child.id == quoteForm.sub_source_options_id,
+  );
   return selectedSubSourceOption?.code === 'other-clubs-or-campaigns';
 });
-
-
 
 const rolesEnum = page.props.rolesEnum;
 
 // Watchers for field resets and partner name handling
-watch(() => quoteForm.sub_source_id, (newValue, oldValue) => {
-  if (newValue !== oldValue) {
-    quoteForm.sub_source_options_id = null;
-    quoteForm.partner_name = '';
-  }
-});
+watch(
+  () => quoteForm.sub_source_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      quoteForm.sub_source_options_id = null;
+      quoteForm.partner_name = '';
+    }
+  },
+);
 
-watch(() => quoteForm.sub_source_options_id, (newValue) => {
-  if (!showPartnerNameField.value) {
-    quoteForm.partner_name = '';
-  }
-});
+watch(
+  () => quoteForm.sub_source_options_id,
+  newValue => {
+    if (!showPartnerNameField.value) {
+      quoteForm.partner_name = '';
+    }
+  },
+);
 
 // Watcher for partner_name to update notes
-watch(() => quoteForm.partner_name, (newValue, oldValue) => {
-  if (!showPartnerNameField.value) return;
+watch(
+  () => quoteForm.partner_name,
+  (newValue, oldValue) => {
+    if (!showPartnerNameField.value) return;
 
-  // Remove old partner name from notes if it exists
-  if (oldValue) {
-    const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
-    quoteForm.notes = quoteForm.notes.replace(oldPattern, '').trim();
-    // Clean up any double commas or leading/trailing commas
-    quoteForm.notes = quoteForm.notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
-  }
-
-  // Add new partner name to notes
-  if (newValue) {
-    if (quoteForm.notes) {
-      quoteForm.notes = `${quoteForm.notes}, ${newValue}`;
-    } else {
-      quoteForm.notes = newValue;
+    // Remove old partner name from notes if it exists
+    if (oldValue) {
+      const oldPattern = new RegExp(
+        `(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
+        'g',
+      );
+      quoteForm.notes = quoteForm.notes.replace(oldPattern, '').trim();
+      // Clean up any double commas or leading/trailing commas
+      quoteForm.notes = quoteForm.notes
+        .replace(/,\s*,/g, ',')
+        .replace(/^,\s*|,\s*$/g, '');
     }
-  }
-});
+
+    // Add new partner name to notes
+    if (newValue) {
+      if (quoteForm.notes) {
+        quoteForm.notes = `${quoteForm.notes}, ${newValue}`;
+      } else {
+        quoteForm.notes = newValue;
+      }
+    }
+  },
+);
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {
     isEmptyField.value = true;
@@ -204,7 +247,9 @@ function onSubmit(isValid) {
         </x-select>
 
         <x-select
-          v-if="isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension"
+          v-if="
+            isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension
+          "
           label="SUB SOURCE OPTION"
           v-model="quoteForm.sub_source_options_id"
           :options="subSourceOptionOptions"

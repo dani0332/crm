@@ -941,45 +941,59 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
-            <div class="grid sm:grid-cols-2">
-              <div>
-                <x-tooltip placement="bottom">
-                  <label
-                    class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                  >
-                    IMCRM SUB-SOURCE
-                  </label>
-                  <template #tooltip>{{ quote?.sub_source_description || 'N/A' }}</template>
-                </x-tooltip>
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      IMCRM SUB-SOURCE
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  {{
+                    quote?.sub_source?.text || quote?.sub_source_text || 'N/A'
+                  }}
+                </div>
               </div>
-              <div>{{ quote?.sub_source?.text || quote?.sub_source_text || 'N/A' }}</div>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <div>
-                <x-tooltip placement="bottom">
-                  <label
-                    class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                  >
-                    SUB SOURCE OPTION
-                  </label>
-                  <template #tooltip>{{ quote?.sub_source_option_description || 'N/A' }}</template>
-                </x-tooltip>
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_option_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  {{
+                    quote?.sub_source_option?.text ||
+                    quote?.sub_source_option_text ||
+                    'N/A'
+                  }}
+                </div>
               </div>
-              <div>{{ quote?.sub_source_option?.text || quote?.sub_source_option_text || 'N/A' }}</div>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <div>
-                <x-tooltip placement="bottom">
-                  <label
-                    class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                  >
-                    PRIMARY REF ID
-                  </label>
-                  <template #tooltip> ID of the original ECOM lead </template>
-                </x-tooltip>
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      PRIMARY REF ID
+                    </label>
+                    <template #tooltip> ID of the original ECOM lead </template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote?.primary_ref_id || 'N/A' }}</div>
               </div>
-              <div>{{ quote?.primary_ref_id || 'N/A' }}</div>
-            </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">POLICY NUMBER</dt>

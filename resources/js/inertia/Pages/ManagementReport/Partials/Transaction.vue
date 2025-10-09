@@ -246,7 +246,7 @@ const tableHeader = reactive([
     text: 'IMCRM SUB-SOURCE',
     value: 'sub_source',
     tooltip: 'The IMCRM SUB-SOURCE (lookup) of the lead',
-  }
+  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer

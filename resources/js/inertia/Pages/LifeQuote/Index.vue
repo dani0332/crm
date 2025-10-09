@@ -791,7 +791,7 @@ const onLeadConfirmed = () => {
             (page.props.subSources || []).map(item => ({
               value: item.id,
               label: item.text,
-              suffix: item.description || item.tooltip || ''
+              suffix: item.description || item.tooltip || '',
             }))
           "
           class="w-full"
@@ -810,7 +810,11 @@ const onLeadConfirmed = () => {
           </template>
           <template #content-footer>
             <ui-select-actions
-              @select-all="filters.sub_source_id = (page.props.subSources || []).map(item => item.id)"
+              @select-all="
+                filters.sub_source_id = (page.props.subSources || []).map(
+                  item => item.id,
+                )
+              "
               @clear="filters.sub_source_id = []"
             />
           </template>

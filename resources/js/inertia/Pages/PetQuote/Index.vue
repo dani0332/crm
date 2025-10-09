@@ -32,7 +32,7 @@ const loader = reactive({
 
 const createLeadModal = ref(false);
 
-const onLeadConfirmed = (leadData) => {
+const onLeadConfirmed = leadData => {
   console.log('Lead confirmed:', leadData);
 };
 
@@ -824,31 +824,33 @@ const subSourceOptions = computed(() => {
           format="dd-MM-yyyy"
         />
 
-      <x-select
-        v-model="filters.sub_source_id"
-        label="IMCRM SUB-SOURCE"
-        name="sub_source_id"
-        :options="subSourceOptions"
-        placeholder="Select IMCRM SUB-SOURCE"
-        filterable
-        multiple
-        truncate
-      >
-        <template #suffix="{ item }">
-          <x-tooltip v-if="item.suffix" placement="right">
-            <x-icon icon="info" color="error" />
-            <template #tooltip>
-              {{ item.suffix }}
-            </template>
-          </x-tooltip>
-        </template>
-        <template #content-footer>
-          <ui-select-actions
-            @select-all="filters.sub_source_id = subSourceOptions.map(item => item.value)"
-            @clear="filters.sub_source_id = []"
-          />
-        </template>
-      </x-select>
+        <x-select
+          v-model="filters.sub_source_id"
+          label="IMCRM SUB-SOURCE"
+          name="sub_source_id"
+          :options="subSourceOptions"
+          placeholder="Select IMCRM SUB-SOURCE"
+          filterable
+          multiple
+          truncate
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.sub_source_id = subSourceOptions.map(item => item.value)
+              "
+              @clear="filters.sub_source_id = []"
+            />
+          </template>
+        </x-select>
 
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"

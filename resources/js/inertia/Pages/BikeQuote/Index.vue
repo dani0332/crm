@@ -634,7 +634,13 @@ const insurerAMLStatusOption = computed(() => {
           v-model="filters.sub_source_id"
           label="IMCRM SUB-SOURCE"
           name="sub_source_id"
-          :options="(page.props.subSources || []).map(source => ({ value: source.id, label: source.text, suffix: source.description || source.tooltip || '' }))"
+          :options="
+            (page.props.subSources || []).map(source => ({
+              value: source.id,
+              label: source.text,
+              suffix: source.description || source.tooltip || '',
+            }))
+          "
           placeholder="Select IMCRM SUB-SOURCE"
           filterable
           multiple
@@ -652,7 +658,9 @@ const insurerAMLStatusOption = computed(() => {
           <template #content-footer>
             <ui-select-actions
               @select-all="
-                filters.sub_source_id = (page.props.subSources || []).map(item => item.id)
+                filters.sub_source_id = (page.props.subSources || []).map(
+                  item => item.id,
+                )
               "
               @clear="filters.sub_source_id = []"
             />

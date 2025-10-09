@@ -1908,10 +1908,14 @@ const fullAddress = computed(() => {
                     >
                       IMCRM SUB-SOURCE
                     </label>
-                    <template #tooltip>{{ quote?.sub_source_description || 'N/A' }}</template>
+                    <template #tooltip>{{
+                      quote?.sub_source_description || 'N/A'
+                    }}</template>
                   </x-tooltip>
                 </div>
-                <div>{{ quote.sub_source_text || quote.sub_source_id || 'N/A' }}</div>
+                <div>
+                  {{ quote.sub_source_text || quote.sub_source_id || 'N/A' }}
+                </div>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -1922,10 +1926,18 @@ const fullAddress = computed(() => {
                     >
                       SUB SOURCE OPTION
                     </label>
-                    <template #tooltip>{{ quote?.sub_source_option_description || 'N/A' }}</template>
+                    <template #tooltip>{{
+                      quote?.sub_source_option_description || 'N/A'
+                    }}</template>
                   </x-tooltip>
                 </div>
-                <div>{{ quote.sub_source_option_text || quote.sub_source_options_id || 'N/A' }}</div>
+                <div>
+                  {{
+                    quote.sub_source_option_text ||
+                    quote.sub_source_options_id ||
+                    'N/A'
+                  }}
+                </div>
               </div>
 
               <div class="grid sm:grid-cols-2">

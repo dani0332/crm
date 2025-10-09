@@ -752,7 +752,7 @@ const insurerAMLStatusOption = computed(() => {
 });
 
 // Handle lead creation from modal
-const onLeadConfirmed = (leadData) => {
+const onLeadConfirmed = leadData => {
   router.visit(route('health.create', leadData));
 };
 </script>
@@ -1007,7 +1007,13 @@ const onLeadConfirmed = (leadData) => {
           v-model="filters.sub_source_id"
           label="IMCRM SUB-SOURCE"
           name="sub_source_id"
-          :options="(subSources || []).map(source => ({ value: source.id, label: source.text, suffix: source.description || source.tooltip || '' }))"
+          :options="
+            (subSources || []).map(source => ({
+              value: source.id,
+              label: source.text,
+              suffix: source.description || source.tooltip || '',
+            }))
+          "
           placeholder="Select IMCRM SUB-SOURCE"
           filterable
           multiple
@@ -1024,7 +1030,9 @@ const onLeadConfirmed = (leadData) => {
           </template>
           <template #content-footer>
             <ui-select-actions
-              @select-all="filters.sub_source_id = (subSources || []).map(item => item.id)"
+              @select-all="
+                filters.sub_source_id = (subSources || []).map(item => item.id)
+              "
               @clear="filters.sub_source_id = []"
             />
           </template>

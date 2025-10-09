@@ -698,13 +698,14 @@ watch(
           </template>
           <template #content-footer>
             <ui-select-actions
-              @select-all="filters.subSources = subSourceOptions.map(item => item.value)"
+              @select-all="
+                filters.subSources = subSourceOptions.map(item => item.value)
+              "
               @clear="filters.subSources = []"
             />
           </template>
         </x-select>
       </div>
-
     </div>
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <div>

@@ -247,11 +247,11 @@ const tableHeader = reactive([
     value: 'pec_flag',
     tooltip: 'Indicates if the policy has Pre-Existing Condition (PEC) flag',
   },
-	{
-		text: 'IMCRM SUB-SOURCE',
-		value: 'sub_source',
-		tooltip: 'The IMCRM SUB-SOURCE of the lead',
-	},
+  {
+    text: 'IMCRM SUB-SOURCE',
+    value: 'sub_source',
+    tooltip: 'The IMCRM SUB-SOURCE of the lead',
+  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
@@ -432,9 +432,9 @@ const isIntegerColumn = key => {
     <template #item-sage_reciept_id="{ sage_reciept_id }">
       {{ sage_reciept_id ?? 'N/A' }}
     </template>
-	<template #item-sub_source="{ sub_source }">
-		{{ sub_source ?? 'N/A' }}
-	</template>
+    <template #item-sub_source="{ sub_source }">
+      {{ sub_source ?? 'N/A' }}
+    </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">
         <td class="direction-left">Total</td>

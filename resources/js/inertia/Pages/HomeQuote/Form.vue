@@ -33,30 +33,47 @@ const personalBelongingsAED = computed(
 
 // Sub-source computed properties
 const subSourceOptions = computed(() => {
-  return props.subSources?.map(source => ({
-    value: source.id,
-    label: source.text,
-    suffix: source.description || source.tooltip || `Information about ${source.text}`, // Use suffix for tooltip data
-  })) || [];
+  return (
+    props.subSources?.map(source => ({
+      value: source.id,
+      label: source.text,
+      suffix:
+        source.description ||
+        source.tooltip ||
+        `Information about ${source.text}`, // Use suffix for tooltip data
+    })) || []
+  );
 });
 
 const subSourceOptionOptions = computed(() => {
   if (!quoteForm.sub_source_id) return [];
-  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
-  return selectedSubSource?.childs?.map(child => ({
-    value: child.id,
-    label: child.text,
-    suffix: child.description || child.tooltip || `Information about ${child.text}`, // Use suffix for tooltip data
-  })) || [];
+  const selectedSubSource = props.subSources?.find(
+    source => source.id == quoteForm.sub_source_id,
+  );
+  return (
+    selectedSubSource?.childs?.map(child => ({
+      value: child.id,
+      label: child.text,
+      suffix:
+        child.description || child.tooltip || `Information about ${child.text}`, // Use suffix for tooltip data
+    })) || []
+  );
 });
 
 const isReferralType = computed(() => {
-  return props.leadSourceParams?.type === 'referral' || props.quote?.source === 'IMCRM';
+  return (
+    props.leadSourceParams?.type === 'referral' ||
+    props.quote?.source === 'IMCRM'
+  );
 });
 
 const isEcomLeadExtension = computed(() => {
   if (props.leadSourceParams?.type === 'ecom_lead_extension') return true;
-  if (!quoteForm.sub_source_id && !quoteForm.sub_source_options_id && quoteForm.primary_ref_id) {
+  if (
+    !quoteForm.sub_source_id &&
+    !quoteForm.sub_source_options_id &&
+    quoteForm.primary_ref_id
+  ) {
     return true;
   }
   return false;
@@ -64,15 +81,23 @@ const isEcomLeadExtension = computed(() => {
 
 // Role-based permissions for sub-source fields
 const canEditSubSourceFields = computed(() => {
-  return hasAnyRole([rolesEnum.HomeManager, rolesEnum.Admin, rolesEnum.LeadPool]);
+  return hasAnyRole([
+    rolesEnum.HomeManager,
+    rolesEnum.Admin,
+    rolesEnum.LeadPool,
+  ]);
 });
 
 // Show partner name field when "other-clubs-or-campaigns" is selected
 const showPartnerNameField = computed(() => {
   if (!quoteForm.sub_source_options_id) return false;
-  const selectedSubSource = props.subSources?.find(source => source.id == quoteForm.sub_source_id);
+  const selectedSubSource = props.subSources?.find(
+    source => source.id == quoteForm.sub_source_id,
+  );
   if (!selectedSubSource?.childs) return false;
-  const selectedSubSourceOption = selectedSubSource.childs.find(child => child.id == quoteForm.sub_source_options_id);
+  const selectedSubSourceOption = selectedSubSource.childs.find(
+    child => child.id == quoteForm.sub_source_options_id,
+  );
   return selectedSubSourceOption?.code === 'other-clubs-or-campaigns';
 });
 
@@ -114,9 +139,18 @@ const quoteForm = useForm({
   company_name: props.quote?.company_name || null,
   company_address: props.quote?.company_address || null,
   // Sub-source fields from CreateLeadModal
-  sub_source_id: parseInt(props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0) || null,
-  sub_source_options_id: parseInt(props.quote?.sub_source_options_id || props.leadSourceParams?.subSourceOption || 0) || null,
-  primary_ref_id: props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
+  sub_source_id:
+    parseInt(
+      props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0,
+    ) || null,
+  sub_source_options_id:
+    parseInt(
+      props.quote?.sub_source_options_id ||
+        props.leadSourceParams?.subSourceOption ||
+        0,
+    ) || null,
+  primary_ref_id:
+    props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
   partner_name: props.leadSourceParams?.partnerName || '',
   notes: (() => {
     let notes = props.quote?.notes || '';
@@ -502,41 +536,55 @@ watch(
 );
 
 // Watchers for sub-source fields
-watch(() => quoteForm.sub_source_id, (newValue) => {
-  if (newValue) {
-    quoteForm.sub_source_options_id = null;
-    quoteForm.partner_name = '';
-  }
-});
+watch(
+  () => quoteForm.sub_source_id,
+  newValue => {
+    if (newValue) {
+      quoteForm.sub_source_options_id = null;
+      quoteForm.partner_name = '';
+    }
+  },
+);
 
-watch(() => quoteForm.sub_source_options_id, (newValue) => {
-  if (newValue) {
-    quoteForm.partner_name = '';
-    quoteForm.primary_ref_id = '';
-  }
-});
+watch(
+  () => quoteForm.sub_source_options_id,
+  newValue => {
+    if (newValue) {
+      quoteForm.partner_name = '';
+      quoteForm.primary_ref_id = '';
+    }
+  },
+);
 
 // Watcher for partner_name to update notes
-watch(() => quoteForm.partner_name, (newValue, oldValue) => {
-  if (!showPartnerNameField.value) return;
+watch(
+  () => quoteForm.partner_name,
+  (newValue, oldValue) => {
+    if (!showPartnerNameField.value) return;
 
-  // Remove old partner name from notes if it exists
-  if (oldValue) {
-    const oldPattern = new RegExp(`(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
-    quoteForm.notes = quoteForm.notes.replace(oldPattern, '').trim();
-    // Clean up any double commas or leading/trailing commas
-    quoteForm.notes = quoteForm.notes.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '');
-  }
-
-  // Add new partner name to notes
-  if (newValue) {
-    if (quoteForm.notes) {
-      quoteForm.notes = `${quoteForm.notes}, ${newValue}`;
-    } else {
-      quoteForm.notes = newValue;
+    // Remove old partner name from notes if it exists
+    if (oldValue) {
+      const oldPattern = new RegExp(
+        `(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
+        'g',
+      );
+      quoteForm.notes = quoteForm.notes.replace(oldPattern, '').trim();
+      // Clean up any double commas or leading/trailing commas
+      quoteForm.notes = quoteForm.notes
+        .replace(/,\s*,/g, ',')
+        .replace(/^,\s*|,\s*$/g, '');
     }
-  }
-});
+
+    // Add new partner name to notes
+    if (newValue) {
+      if (quoteForm.notes) {
+        quoteForm.notes = `${quoteForm.notes}, ${newValue}`;
+      } else {
+        quoteForm.notes = newValue;
+      }
+    }
+  },
+);
 
 const locationAreaOptions = computed(() => {
   return page.props?.lookUpData?.subAreas?.length
@@ -678,7 +726,9 @@ const onLoadAvailablePlansData = async () => {
         </x-select>
 
         <x-select
-          v-if="isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension"
+          v-if="
+            isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension
+          "
           label="SUB SOURCE OPTION"
           v-model="quoteForm.sub_source_options_id"
           :options="subSourceOptionOptions"
