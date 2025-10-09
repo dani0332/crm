@@ -1726,6 +1726,12 @@ class CentralService extends BaseService
                 })->first()['doc_url'] ?? '';
             }
 
+            if ($quoteTypeId == QuoteTypeId::Life) {
+                $emailData->applicationCopy = $storageUrl.$quoteDocuments->filter(function ($document) {
+                    return $document['document_type_code'] == DocumentTypeCode::AC_LIFE;
+                })->first()['doc_url'] ?? '';
+            }
+
             $emailData->policySchedule = $storageUrl.$quoteDocuments->filter(function ($document) {
                 return in_array($document['document_type_code'], [DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE]);
             })->first()['doc_url'] ?? '';
