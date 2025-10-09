@@ -157,18 +157,16 @@ const quoteForm = useForm({
 
   // Sub-source fields
   sub_source_id:
-    parseInt(
-      props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0,
-    ) || null,
+    parseInt(props.quote?.sub_source_id, 10) ||
+    parseInt(props.leadSourceParams?.subSource, 10) ||
+    null,
   sub_source_options_id:
-    parseInt(
-      props.quote?.sub_source_options_id ||
-        props.leadSourceParams?.subSourceOption ||
-        0,
-    ) || null,
+    parseInt(props.quote?.sub_source_options_id, 10) ||
+    parseInt(props.leadSourceParams?.subSourceOption, 10) ||
+    null,
   primary_ref_id:
-    props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
-  partner_name: props.leadSourceParams?.partnerName || '',
+    props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || null,
+  partner_name: props.leadSourceParams?.partnerName || null,
 });
 
 const { isRequired, isEmail, isMobileNo, isValidName, maxCharacters } =
@@ -202,7 +200,10 @@ watch(
   (newValue, oldValue) => {
     if (newValue !== oldValue) {
       quoteForm.sub_source_options_id = null;
-      quoteForm.partner_name = '';
+      quoteForm.partner_name = null;
+      if (!isEcomLeadExtension.value) {
+        quoteForm.primary_ref_id = null;
+      }
     }
   },
 );
@@ -211,7 +212,12 @@ watch(
   () => quoteForm.sub_source_options_id,
   () => {
     if (!showPartnerNameField.value) {
-      quoteForm.partner_name = '';
+      quoteForm.partner_name = null;
+    } else {
+      quoteForm.partner_name = props.leadSourceParams?.partnerName || null;
+    }
+    if (!isEcomLeadExtension.value) {
+      quoteForm.primary_ref_id = null;
     }
   },
 );

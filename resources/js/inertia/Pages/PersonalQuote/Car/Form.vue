@@ -111,18 +111,16 @@ const quoteForm = useForm({
 
   // Lead source fields from CreateLeadModal
   sub_source_id:
-    parseInt(
-      props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0,
-    ) || null,
+    parseInt(props.quote?.sub_source_id, 10) ||
+    parseInt(props.leadSourceParams?.subSource, 10) ||
+    null,
   sub_source_options_id:
-    parseInt(
-      props.quote?.sub_source_options_id ||
-        props.leadSourceParams?.subSourceOption ||
-        0,
-    ) || null,
+    parseInt(props.quote?.sub_source_options_id, 10) ||
+    parseInt(props.leadSourceParams?.subSourceOption, 10) ||
+    null,
   primary_ref_id:
-    props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
-  partner_name: props.leadSourceParams?.partnerName || '',
+    props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || null,
+  partner_name: props.leadSourceParams?.partnerName || null,
 
   addressObj: {
     address_type: page.props.customerAddressData?.type || null,
@@ -528,7 +526,10 @@ watch(
   () => quoteForm.sub_source_id,
   newValue => {
     quoteForm.sub_source_options_id = null;
-    quoteForm.partner_name = '';
+    quoteForm.partner_name = null;
+    if (!isEcomLeadExtension.value) {
+      quoteForm.primary_ref_id = null;
+    }
   },
 );
 
@@ -536,7 +537,16 @@ watch(
 watch(
   () => quoteForm.sub_source_options_id,
   newValue => {
-    quoteForm.partner_name = '';
+
+    if(!showPartnerNameField.value) {
+      quoteForm.partner_name = null;
+    }else{
+      quoteForm.partner_name = props.leadSourceParams?.partnerName || null;
+    }
+
+    if (!isEcomLeadExtension.value) {
+      quoteForm.primary_ref_id = null;
+    }
   },
 );
 
@@ -544,7 +554,11 @@ watch(
 watch(
   () => quoteForm.partner_name,
   (newValue, oldValue) => {
-    if (!showPartnerNameField.value) return;
+
+    // if (!showPartnerNameField.value) return;
+
+    console.log ("partner_name oldValue", oldValue);
+    console.log ("partner_name newValue", newValue);
 
     // Remove old partner name from additional_notes if it exists
     if (oldValue) {

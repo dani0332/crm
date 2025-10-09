@@ -161,8 +161,8 @@ const quoteForm = useForm({
         0,
     ) || null,
   primary_ref_id:
-    props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || '',
-  partner_name: props.leadSourceParams?.partnerName || '',
+    props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || null,
+  partner_name: props.leadSourceParams?.partnerName || null,
   additional_notes: (() => {
     let notes = props.quote?.additional_notes || '';
     const partnerName = props.leadSourceParams?.partnerName;
@@ -244,7 +244,7 @@ watch(
   () => quoteForm.sub_source_id,
   () => {
     quoteForm.sub_source_options_id = null;
-    quoteForm.partner_name = '';
+    quoteForm.partner_name = null;
   },
 );
 
@@ -252,7 +252,14 @@ watch(
 watch(
   () => quoteForm.sub_source_options_id,
   () => {
-    quoteForm.partner_name = '';
+    if (!showPartnerNameField.value) {
+      quoteForm.partner_name = null;
+    } else {
+      quoteForm.partner_name = props.leadSourceParams?.partnerName || null;
+    }
+    if (!isEcomLeadExtension.value) {
+      quoteForm.primary_ref_id = null;
+    }
   },
 );
 
