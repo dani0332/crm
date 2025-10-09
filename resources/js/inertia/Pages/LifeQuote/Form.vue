@@ -79,8 +79,7 @@ const subSourceOptions = computed(() => {
   return (props.subSources || []).map(item => ({
     value: item.id,
     label: item.text,
-    suffix:
-      item.description || item.tooltip || `Information about ${item.text}`, // Use suffix for tooltip data
+    suffix: item.description || null,
   }));
 });
 
@@ -94,10 +93,7 @@ const subSourceOptionOptions = computed(() => {
       value: option.id,
       label: option.text,
       code: option.code, // Include the code property for showPartnerNameField
-      suffix:
-        option.description ||
-        option.tooltip ||
-        `Information about ${option.text}`, // Use suffix for tooltip data
+      suffix: option.description || null,
     })) || []
   );
 });

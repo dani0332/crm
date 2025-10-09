@@ -70,8 +70,7 @@ const subSourceOptions = computed(() => {
   return (props.subSources || []).map(item => ({
     value: item.id,
     label: item.text,
-    suffix:
-      item.description || item.tooltip || `Information about ${item.text}`, // Use suffix for tooltip data
+    suffix: item.description || null,
   }));
 });
 
@@ -84,10 +83,7 @@ const subSourceOptionOptions = computed(() => {
     selectedSubSource?.childs?.map(option => ({
       value: option.id,
       label: option.text,
-      suffix:
-        option.description ||
-        option.tooltip ||
-        `Information about ${option.text}`, // Use suffix for tooltip data
+      suffix: option.description || null,
     })) || []
   );
 });

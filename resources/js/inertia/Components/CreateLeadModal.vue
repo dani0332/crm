@@ -92,7 +92,7 @@ const subSourceChildOptions = computed(() => {
     label: child.text,
     code: child.code,
     suffix:
-      child.description || child.tooltip || `Information about ${child.text}`, // Add tooltip support
+      child.description || null , // Add tooltip support
   }));
 });
 

@@ -454,8 +454,7 @@ const subSourceOptions = computed(() => {
   const options = props.subSources.map(item => ({
     value: item.id, // Keep as integer to match form data type
     label: item.text,
-    suffix:
-      item.description || item.tooltip || `Information about ${item.text}`, // Use suffix for tooltip data
+    suffix: item.description || null,
   }));
 
   return options;
@@ -473,8 +472,7 @@ const subSourceOptionOptions = computed(() => {
   return selectedSubSource.childs.map(child => ({
     value: child.id, // Keep as integer to match form data type
     label: child.text,
-    suffix:
-      child.description || child.tooltip || `Information about ${child.text}`, // Add tooltip support
+    suffix: child.description || null,
   }));
 });
 
