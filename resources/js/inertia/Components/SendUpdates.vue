@@ -24,6 +24,7 @@ const { isRequired } = useRules();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const sendUpdateEnum = page.props.sendUpdateLogStatusEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
@@ -296,30 +297,32 @@ const findOption = (item, key) => {
 
 const expandNotes = ref(false);
 
+const disableTooltip = 'No further updates are allowed because this policy has already been cancelled.';
 const disableOption = (slug) => {
   if (slug === sendUpdateEnum.MPC) {
-    return !(
-      props.reportable.quote_status_id == page.props.quoteStatusEnum.PolicyBooked
-    );
+    return [
+      quoteStatusEnum.PolicyCancelledReissued,
+      quoteStatusEnum.PolicyCancelled,
+    ].includes(props.reportable.quote_status_id);
   }
 
   if (slug === sendUpdateEnum.CI) {
-    return !(
-      props.reportable.quote_status_id == page.props.quoteStatusEnum.PolicyBooked
-    );
+    return [
+      quoteStatusEnum.PolicyCancelledReissued,
+      quoteStatusEnum.PolicyCancelled,
+    ].includes(props.reportable.quote_status_id);
   }
 
   if (slug === sendUpdateEnum.CIR) {
-    return (
-      props.reportable.quote_status_id == page.props.quoteStatusEnum.PolicyIssued ||
-      !props.reportable?.policy_booking_date
-    );
+    return [
+      quoteStatusEnum.PolicyCancelledReissued,
+      quoteStatusEnum.PolicyCancelled,
+    ].includes(props.reportable.quote_status_id);
   }
 
   return false;
 };
 
-const disableTooltip = 'Please complete the policy booking before proceeding with cancellation';
 // only for MPC option.
 const disableOptionTooltip = (isDisabled) => {
   if (isDisabled) {
