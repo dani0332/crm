@@ -37,5 +37,6 @@ enum LoggerFeatureEnum: string
     case SEND_FAILED_PAYMENT_EMAIL = 'send-failed-payment-email';
     case CAR_CQF_RENEWALS = 'car-cqf-renewals';
     case SUPPORT_USER_ASSIGNMENT = 'support-user-assignment';
+    case SLA_TRACKING = 'sla-tracking';
     case MA_WELCOME_JOB = 'ma-welcome-job';
 }

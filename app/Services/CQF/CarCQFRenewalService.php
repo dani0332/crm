@@ -6,7 +6,7 @@ class CarCQFRenewalService
 {
     public function processCarCQFRenewalLeads()
     {
-        app(CarCQFRenewalOrchestratorService::class)->processCarCQFRenewalLeads();
+        app(CarCQFRenewalExecutionService::class)->processCarCQFRenewalLeads();
     }
 
 }
