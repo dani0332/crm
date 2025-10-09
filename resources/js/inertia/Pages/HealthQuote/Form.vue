@@ -246,23 +246,17 @@ const pecRules = computed(() => {
 // Watch for sub_source_id changes to reset dependent fields
 watch(
   () => quoteForm.sub_source_id,
-  newValue => {
-    quoteForm.sub_source_options_id = '';
+  () => {
+    quoteForm.sub_source_options_id = null;
     quoteForm.partner_name = '';
-    if (!newValue) {
-      quoteForm.primary_ref_id = '';
-    }
   },
 );
 
 // Watch for sub_source_options_id changes to reset primary_ref_id if needed
 watch(
   () => quoteForm.sub_source_options_id,
-  newValue => {
+  () => {
     quoteForm.partner_name = '';
-    if (!newValue) {
-      quoteForm.primary_ref_id = '';
-    }
   },
 );
 

@@ -529,11 +529,8 @@ const showPartnerNameField = computed(() => {
 watch(
   () => quoteForm.sub_source_id,
   newValue => {
-    quoteForm.sub_source_options_id = '';
+    quoteForm.sub_source_options_id = null;
     quoteForm.partner_name = '';
-    if (!newValue) {
-      quoteForm.primary_ref_id = '';
-    }
   },
 );
 
@@ -542,9 +539,6 @@ watch(
   () => quoteForm.sub_source_options_id,
   newValue => {
     quoteForm.partner_name = '';
-    if (!newValue) {
-      quoteForm.primary_ref_id = '';
-    }
   },
 );
 

@@ -156,7 +156,6 @@ watch(
   newValue => {
     if (newValue) {
       quoteForm.partner_name = '';
-      quoteForm.primary_ref_id = '';
     }
   },
 );
