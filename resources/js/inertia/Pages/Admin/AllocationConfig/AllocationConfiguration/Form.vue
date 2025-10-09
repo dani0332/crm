@@ -315,7 +315,7 @@ onMounted(() => {
                 type="button"
                 @click="enableEditMode"
               >
-                Edit Configuration
+                Edit
               </x-button>
               <template #tooltip>
                 <span class="custom-tooltip-content">
