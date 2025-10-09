@@ -1682,6 +1682,8 @@ class CentralService extends BaseService
                     $emailData->handBookDocuments = str_contains($url, 'http') ? $url : $storageUrl.$url;
                 }
             }
+            // for testing purpose.
+            // $emailData->handBookDocuments = 'https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/documents/bike/68e64dd9b42a3_DD8X4MH7_68e64dd717a07_test.pdf';
         }
 
         $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
@@ -1690,15 +1692,15 @@ class CentralService extends BaseService
 
             if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business])) {
                 $emailData->policyCertificate = $storageUrl.$quoteDocuments->filter(function ($document) {
-                    return in_array($document['document_type_code'], [DocumentTypeCode::CPC, DocumentTypeCode::GH_PC]);
+                    return in_array($document['document_type_code'], [DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL, DocumentTypeCode::PC_YTCH]);
                 })->first()['doc_url'] ?? '';
             }
 
             // Signed Medical Application form
             if ($quoteTypeId == QuoteTypeId::Health) {
-                /* $emailData->policyCertificate = $storageUrl.$quoteDocuments->filter(function ($document) {
-                    return $document['document_type_code'] == DocumentTypeCode::CPC;
-                })->first()['doc_url'] ?? ''; */
+                $emailData->signedMedicalApplicationForm = $storageUrl.$quoteDocuments->filter(function ($document) {
+                    return $document['document_type_code'] == DocumentTypeCode::SMAF_HLTH;
+                })->first()['doc_url'] ?? '';
             }
 
             // E-Card
@@ -1710,7 +1712,7 @@ class CentralService extends BaseService
                 )
             ) {
                 $emailData->eCard = $storageUrl.$quoteDocuments->filter(function ($document) {
-                    return $document['document_type_code'] == DocumentTypeCode::GH_EC;
+                    return in_array($document['document_type_code'], [DocumentTypeCode::GH_EC, DocumentTypeCode::ECARD_HLTH]);
                 })->first()['doc_url'] ?? '';
             }
 
@@ -1725,7 +1727,7 @@ class CentralService extends BaseService
             }
 
             $emailData->policySchedule = $storageUrl.$quoteDocuments->filter(function ($document) {
-                return in_array($document['document_type_code'], [DocumentTypeCode::CPS, DocumentTypeCode::GH_PS]);
+                return in_array($document['document_type_code'], [DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE]);
             })->first()['doc_url'] ?? '';
         }
 
