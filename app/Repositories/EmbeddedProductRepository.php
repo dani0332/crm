@@ -1399,7 +1399,7 @@ class EmbeddedProductRepository extends BaseRepository
      * @param int $makeId
      * @return bool
      */
-    public function checkIsCarMakeIdMatchedWithExcludedEcbVehicle($makeId): bool
+    public function checkIsCarMakeExcludedEcbVehicle($makeId): bool
     {
         $carMake = CarMake::select('id', 'code')->find($makeId);
         if(empty($carMake?->code)) {
@@ -1415,7 +1415,7 @@ class EmbeddedProductRepository extends BaseRepository
      * @param int $modelId
      * @return bool
      */
-    public function checkIsCarModelIdMatchedWithExcludedEcbVehicle($modelId): bool
+    public function checkIsCarModelExcludedEcbVehicle($modelId): bool
     {
         $carModel = CarModel::select('id', 'code')->find($modelId);
         if(empty($carModel?->code)) {

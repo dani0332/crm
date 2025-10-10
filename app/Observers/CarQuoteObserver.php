@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -163,18 +164,21 @@ class CarQuoteObserver
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
         
-        if(isset($dirty['car_make_id']) || isset($dirty['car_model_id']) || isset($dirty['registration_type']) || isset($dirty['is_modified'])) {
+        if(isset($dirty['car_make_id']) || isset($dirty['car_model_id']) || isset($dirty['registration_type']) || isset($dirty['vehicle_use']) || isset($dirty['is_modified'])) {
             $reason = [];
             $embeddedProductRepo = app(EmbeddedProductRepository::class);
             if ($embeddedProductRepo->checkIsEpEcbPaymentAuthorisedOrCaptured($lead->id)) {
-                if(isset($dirty['car_make_id']) && $embeddedProductRepo->checkIsCarMakeIdMatchedWithExcludedEcbVehicle($lead->car_make_id)) {
-                    $reason[] = "due to change of CarMake, matched with excluded ECB vehicle";
+                if(isset($dirty['car_make_id'])) {
+                    if($embeddedProductRepo->checkIsCarMakeExcludedEcbVehicle($lead->car_make_id))
+                        $reason[] = "due to change of CarMake, matched with excluded ECB vehicle";
                 }
-                if(isset($dirty['car_model_id']) && $embeddedProductRepo->checkIsCarModelIdMatchedWithExcludedEcbVehicle($lead->car_model_id)) {
-                    $reason[] = "due to change of CarModel, matched with excluded ECB vehicle";
+                if(isset($dirty['car_model_id'])) {
+                    if($embeddedProductRepo->checkIsCarModelExcludedEcbVehicle($lead->car_model_id))
+                       $reason[] = "due to change of CarModel, matched with excluded ECB vehicle";
                 }
-                if(isset($dirty['registration_type']) && $lead->registration_type == CarRegistrationType::COMPANY) {
-                    $reason[] = "due to change of RegistrationType to {$lead->registration_type}";
+                if(isset($dirty['registration_type']) || isset($dirty['vehicle_use'])) {
+                    if($lead->vehicle_use == CarVehicleUse::COMMERCIAL)
+                        $reason[] = "due to change of RegistrationType or VehicleUse: {$lead->vehicle_use}";
                 }
                 if(isset($dirty['is_modified']) && $lead->is_modified == true) {
                     $reason[] = "due to change of IsModified to {$lead->is_modified}";
