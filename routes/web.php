@@ -7,6 +7,7 @@ use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
+use App\Http\Controllers\AllocationConfigurationController;
 use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
@@ -862,17 +863,17 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ->name('admin.nationality-allocation-config.audit-logs');
 
     // Allocation Configuration Routes
-    Route::get('allocation-configuration', [\App\Http\Controllers\AllocationConfigurationController::class, 'index'])
+    Route::get('allocation-configuration', [AllocationConfigurationController::class, 'index'])
         ->name('admin.allocation-configuration.index');
-    Route::post('allocation-configuration/fetch', [\App\Http\Controllers\AllocationConfigurationController::class, 'fetchConfiguration'])
+    Route::post('allocation-configuration/fetch', [AllocationConfigurationController::class, 'fetchConfiguration'])
         ->name('admin.allocation-configuration.fetch');
-    Route::post('allocation-configuration', [\App\Http\Controllers\AllocationConfigurationController::class, 'store'])
+    Route::post('allocation-configuration', [AllocationConfigurationController::class, 'store'])
         ->name('admin.allocation-configuration.store');
-    Route::put('allocation-configuration/{allocationConfiguration}', [\App\Http\Controllers\AllocationConfigurationController::class, 'update'])
+    Route::put('allocation-configuration/{allocationConfiguration}', [AllocationConfigurationController::class, 'update'])
         ->name('admin.allocation-configuration.update');
-    Route::get('/teams', [\App\Http\Controllers\AllocationConfigurationController::class, 'getTeams'])
+    Route::get('/teams', [AllocationConfigurationController::class, 'getTeams'])
         ->name('admin.allocation-configuration.teams');
-    Route::get('/api/plan-types', [\App\Http\Controllers\AllocationConfigurationController::class, 'getPlanTypes'])
+    Route::get('/api/plan-types', [AllocationConfigurationController::class, 'getPlanTypes'])
         ->name('admin.allocation-configuration.plan-types');
 
     Route::get('/add-batch-number', function () {
