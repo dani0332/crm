@@ -114,6 +114,7 @@ class DocumentTypeCode extends Enum
     const POLC = 'POLC'; // Health Policy Certificate    
     
     const PC_TRVL = 'PC_TRVL'; // Travel Policy Certificate
+    const CPS_TRVL = 'CPS_TRVL'; // Travel Policy Schedule
     const PC_YTCH = 'PC_YTCH'; // Yacht Policy Certificate
 
     const PS_LIFE = 'PS_LIFE'; // Life Policy Schedule

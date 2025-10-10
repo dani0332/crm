@@ -1739,7 +1739,7 @@ class CentralService extends BaseService
             }
 
             $emailData->policySchedule = $storageUrl.$quoteDocuments->filter(function ($document) {
-                return in_array($document['document_type_code'], [DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE]);
+                return in_array($document['document_type_code'], [DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL]);
             })->first()['doc_url'] ?? '';
         }
 
