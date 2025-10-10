@@ -1504,12 +1504,15 @@ const onConfirmPUAExport = () => {
       </template>
       <template #item-api_issuance_status_id="{ api_issuance_status_id }">
         <div class="text-center">
-          <x-tag 
+          <x-tag
             v-if="api_issuance_status_id"
-            size="sm" 
+            size="sm"
             :color="api_issuance_status_id == 1 ? 'success' : 'error'"
           >
-            {{ issuanceStatuses.find(s => s.value == api_issuance_status_id)?.label }}
+            {{
+              issuanceStatuses.find(s => s.value == api_issuance_status_id)
+                ?.label
+            }}
           </x-tag>
           <span v-else>N/A</span>
         </div>
@@ -1518,7 +1521,8 @@ const onConfirmPUAExport = () => {
         <div class="text-center">
           {{
             insurer_api_status_id
-              ? insurerApiStatus.find(s => s.value == insurer_api_status_id)?.label
+              ? insurerApiStatus.find(s => s.value == insurer_api_status_id)
+                  ?.label
               : 'N/A'
           }}
         </div>
