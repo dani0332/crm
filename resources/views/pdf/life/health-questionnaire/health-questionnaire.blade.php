@@ -394,7 +394,7 @@
                                     </tr>
                                 </table>
                             </div>
-                            <hr style="margin: 0;">
+                            <hr style="margin: 0; height: 1px; border: none; background-color: #e5e5e5;">
                             
                             <!-- Main Content Section -->
                             <div class="sm-px-4" style="padding: 14px 28px">
