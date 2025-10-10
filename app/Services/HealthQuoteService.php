@@ -483,9 +483,6 @@ class HealthQuoteService extends BaseService
         if ($request->has('sub_source_options_id')) {
             $healthQuote->sub_source_options_id = $request->sub_source_options_id;
         }
-        if ($request->has('primary_ref_id')) {
-            $healthQuote->primary_ref_id = $request->primary_ref_id;
-        }
         if ($request->has('additional_notes')) {
             $healthQuote->additional_notes = $request->additional_notes;
         }

@@ -753,7 +753,6 @@ const insurerAMLStatusOption = computed(() => {
 
 // Handle lead creation from modal
 const onLeadConfirmed = leadData => {
-  router.visit(route('health.create', leadData));
 };
 </script>
 
