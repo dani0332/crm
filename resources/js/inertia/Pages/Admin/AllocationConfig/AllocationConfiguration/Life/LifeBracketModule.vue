@@ -290,7 +290,7 @@ onMounted(() => {
               class="space-y-4"
             >
               <!-- Sum Insured Amount Section -->
-              <div class="border-b pb-4">
+              <div class="pb-4">
                 <h5 class="text-sm font-medium text-gray-700 mb-3">
                   Sum Insured Amount
                 </h5>
@@ -508,4 +508,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-

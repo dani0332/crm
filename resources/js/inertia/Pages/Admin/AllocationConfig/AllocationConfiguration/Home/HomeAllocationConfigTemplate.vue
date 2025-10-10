@@ -217,7 +217,7 @@ defineExpose({
 <template>
   <div class="space-y-6">
     <HomeBracketModule
-      title="Value Bracket"
+      title="Value"
       type="Value"
       :brackets="valueBrackets"
       :advisor-options="advisorOptions"
@@ -229,7 +229,7 @@ defineExpose({
     />
 
     <HomeBracketModule
-      title="Volume Bracket"
+      title="Volume"
       type="Volume"
       :brackets="volumeBrackets"
       :advisor-options="advisorOptions"
