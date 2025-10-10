@@ -401,6 +401,7 @@
 
                                 <!-- Health Questionnaire Content -->
                                 <div style="margin-top: 20px">
+                                    {{-- 
                                     <table style="width: 100%; vertical-align: middle" cellpadding="0" cellspacing="0"
                                         role="presentation">
                                         <tbody>
@@ -418,6 +419,7 @@
                                             </td>
                                         </tbody>
                                     </table>
+                                    --}}
 
                                     <!-- Questions Section -->
                                     @if(isset($data['health_questionnaire']['fields']))
