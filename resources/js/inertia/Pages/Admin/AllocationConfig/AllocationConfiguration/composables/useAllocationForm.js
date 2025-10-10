@@ -32,7 +32,7 @@ export function useAllocationForm(props, errorHandling) {
     return {
       quote_type: '',
       quote_type_id: '',
-      selectedQuoteTypeCode: '', // Used for dropdown binding
+      selectedQuoteTypeCode: '',
     };
   };
 
@@ -40,9 +40,9 @@ export function useAllocationForm(props, errorHandling) {
 
   const quoteTypeOptions = computed(() => {
     return props.quoteTypes.map(type => ({
-      value: type.code, // Use code as unique identifier instead of id
+      value: type.code,
       label: type.text,
-      id: type.id, // Keep id for backend
+      id: type.id,
     }));
   });
 
@@ -134,10 +134,8 @@ export function useAllocationForm(props, errorHandling) {
         originalConfiguration.value = JSON.parse(
           JSON.stringify(response.data.data),
         );
-        // If configuration exists, start in view mode
         isViewMode.value = true;
       } else {
-        // No configuration exists, start in edit mode
         isViewMode.value = false;
       }
     } catch (error) {
@@ -156,8 +154,8 @@ export function useAllocationForm(props, errorHandling) {
     teamOptions.value = [];
     planTypeOptions.value = [];
     currentConfiguration.value = null;
-    successMessage.value = ''; // Clear success message when LOB changes
-    clearAllErrors(); // Clear any existing errors
+    successMessage.value = '';
+    clearAllErrors();
 
     isQuoteTypeLoading.value = true;
 
@@ -167,12 +165,10 @@ export function useAllocationForm(props, errorHandling) {
         fetchConfiguration(quoteType),
       ];
 
-      // Fetch teams for Corpline
       if (quoteType.code === props.quoteTypeCodeEnum.CORPLINE) {
         fetchTasks.push(fetchTeams());
       }
 
-      // Fetch plan types for Group Medical
       if (quoteType.code === props.quoteTypeCodeEnum.GroupMedical) {
         fetchTasks.push(fetchPlanTypes());
       }
@@ -199,7 +195,6 @@ export function useAllocationForm(props, errorHandling) {
 
   const cancelEdit = () => {
     if (originalConfiguration.value) {
-      // Restore original configuration
       currentConfiguration.value = JSON.parse(
         JSON.stringify(originalConfiguration.value),
       );
@@ -207,7 +202,6 @@ export function useAllocationForm(props, errorHandling) {
       clearAllErrors();
       successMessage.value = '';
 
-      // Trigger re-initialization of templates
       if (savingsTemplateRef.value) {
         nextTick(() => {
           savingsTemplateRef.value.clearValidationErrors();
@@ -262,7 +256,6 @@ export function useAllocationForm(props, errorHandling) {
     clearAllErrors();
 
     if (isValid) {
-      // Check if advisors are available
       if (advisorOptions.value.length === 0) {
         addError(
           'No advisors available for this quote type. Please ensure advisors are configured.',
@@ -272,7 +265,6 @@ export function useAllocationForm(props, errorHandling) {
         return;
       }
 
-      // Validate Savings template
       if (
         form.quote_type === props.quoteTypeCodeEnum.SAVINGS &&
         savingsTemplateRef.value
@@ -304,7 +296,6 @@ export function useAllocationForm(props, errorHandling) {
         }
       }
 
-      // Validate Life template
       if (
         form.quote_type === props.quoteTypeCodeEnum.Life &&
         lifeTemplateRef.value
@@ -320,7 +311,6 @@ export function useAllocationForm(props, errorHandling) {
         }
       }
 
-      // Validate Simple template (Pet, Yacht, Cycle)
       if (
         (form.quote_type === props.quoteTypeCodeEnum.Pet ||
           form.quote_type === props.quoteTypeCodeEnum.Yacht ||
@@ -338,7 +328,6 @@ export function useAllocationForm(props, errorHandling) {
         }
       }
 
-      // Validate Corpline template
       if (
         form.quote_type === props.quoteTypeCodeEnum.CORPLINE &&
         corplineTemplateRef.value
@@ -354,7 +343,6 @@ export function useAllocationForm(props, errorHandling) {
         }
       }
 
-      // Validate Group Medical template
       if (
         form.quote_type === props.quoteTypeCodeEnum.GroupMedical &&
         groupMedicalTemplateRef.value
@@ -381,7 +369,6 @@ export function useAllocationForm(props, errorHandling) {
         let response;
 
         if (currentConfiguration.value) {
-          // Update existing configuration
           response = await axios.put(
             route(
               'admin.allocation-configuration.update',
@@ -390,7 +377,6 @@ export function useAllocationForm(props, errorHandling) {
             submitData,
           );
         } else {
-          // Create new configuration
           response = await axios.post(
             route('admin.allocation-configuration.store'),
             submitData,
