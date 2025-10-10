@@ -16,9 +16,6 @@ use InvalidArgumentException;
 
 class AllocationValidationStrategyFactory
 {
-    /**
-     * Create a validation strategy based on the quote type
-     */
     public static function create(QuoteTypes $quoteType): AllocationValidationStrategyInterface
     {
         return match ($quoteType) {
