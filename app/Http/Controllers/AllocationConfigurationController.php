@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\TeamTypeEnum;
 use App\Http\Requests\AllocationConfigurationRequest;
 use App\Http\Requests\FetchAllocationConfigurationRequest;
 use App\Models\Allocation\AllocationConfiguration;
@@ -89,11 +90,10 @@ class AllocationConfigurationController extends Controller
     public function getTeams()
     {
         try {
-            $teams = Team::
-                // whereNotNull('type')
-                where('is_active', 1)
-                    ->orderBy('name')
-                    ->get(['id', 'name']);
+            $teams = Team::where('type', TeamTypeEnum::TEAM)
+                ->where('is_active', 1)
+                ->orderBy('name')
+                ->get(['id', 'name']);
 
             return response()->json([
                 'success' => true,
