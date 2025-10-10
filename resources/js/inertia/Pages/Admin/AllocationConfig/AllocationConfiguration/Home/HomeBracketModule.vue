@@ -438,7 +438,7 @@ onMounted(() => {
               </div>
 
               <!-- Advisor Allocation Profiles -->
-              <div class="border-t">
+              <div class="border-t pt-4">
                 <div class="flex items-center justify-between mb-4">
                   <h5 class="text-sm font-medium text-gray-700">
                     Advisor Allocation Profiles
