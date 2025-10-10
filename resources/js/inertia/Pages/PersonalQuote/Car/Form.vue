@@ -84,20 +84,7 @@ const quoteForm = useForm({
   car_make_id: props.quote?.car_make_id || null,
   vehicle_type_id: props.quote?.vehicle_type_id || null,
   trim: props.quote?.trim || null,
-  additional_notes: (() => {
-    let notes = props.quote?.additional_notes || '';
-    const partnerName = props.leadSourceParams?.partnerName;
-
-    if (partnerName) {
-      if (notes) {
-        notes += `, ${partnerName}`;
-      } else {
-        notes = partnerName;
-      }
-    }
-
-    return notes;
-  })(),
+  additional_notes: props.quote?.additional_notes || '',
   car_model_id: props.quote?.car_model_id || null,
   chassis_number: props.quote?.chassis_number || null,
   year_of_manufacture: props.quote?.year_of_manufacture || null,
@@ -118,9 +105,6 @@ const quoteForm = useForm({
     parseInt(props.quote?.sub_source_options_id, 10) ||
     parseInt(props.leadSourceParams?.subSourceOption, 10) ||
     null,
-  primary_ref_id:
-    props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || null,
-  partner_name: props.leadSourceParams?.partnerName || null,
 
   addressObj: {
     address_type: page.props.customerAddressData?.type || null,
@@ -482,22 +466,7 @@ const isReferralType = computed(() => {
   );
 });
 
-// Check if ECOM lead extension is selected
-const isEcomLeadExtension = computed(() => {
-  // From CreateLeadModal
-  if (props.leadSourceParams?.type === 'ecom_lead_extension') return true;
 
-  // From existing quote: sub_source_id and sub_source_options_id are null but primary_ref_id has value
-  if (
-    !quoteForm.sub_source_id &&
-    !quoteForm.sub_source_options_id &&
-    quoteForm.primary_ref_id
-  ) {
-    return true;
-  }
-
-  return false;
-});
 
 // Role-based permissions for sub-source fields
 const canEditSubSourceFields = computed(() => {
@@ -508,83 +477,17 @@ const canEditSubSourceFields = computed(() => {
   ]);
 });
 
-// Show partner name field when "other-clubs-or-campaigns" is selected
-const showPartnerNameField = computed(() => {
-  if (!quoteForm.sub_source_options_id) return false;
-  const selectedSubSource = props.subSources?.find(
-    source => source.id == quoteForm.sub_source_id,
-  );
-  if (!selectedSubSource?.childs) return false;
-  const selectedSubSourceOption = selectedSubSource.childs.find(
-    child => child.id == quoteForm.sub_source_options_id,
-  );
-  return selectedSubSourceOption?.code === 'other-clubs-or-campaigns';
-});
+
 
 // Watch for sub-source changes to reset sub-source option
 watch(
   () => quoteForm.sub_source_id,
   newValue => {
     quoteForm.sub_source_options_id = null;
-    quoteForm.partner_name = null;
-    if (!isEcomLeadExtension.value) {
-      quoteForm.primary_ref_id = null;
-    }
   },
 );
 
-// Watch for sub-source option changes to reset partner name
-watch(
-  () => quoteForm.sub_source_options_id,
-  newValue => {
 
-    if(!showPartnerNameField.value) {
-      quoteForm.partner_name = null;
-    }else{
-      quoteForm.partner_name = props.leadSourceParams?.partnerName || null;
-    }
-
-    if (!isEcomLeadExtension.value) {
-      quoteForm.primary_ref_id = null;
-    }
-  },
-);
-
-// Watch for partner name changes to update additional_notes
-watch(
-  () => quoteForm.partner_name,
-  (newValue, oldValue) => {
-
-    // if (!showPartnerNameField.value) return;
-
-    console.log ("partner_name oldValue", oldValue);
-    console.log ("partner_name newValue", newValue);
-
-    // Remove old partner name from additional_notes if it exists
-    if (oldValue) {
-      const oldPattern = new RegExp(
-        `(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
-        'g',
-      );
-      quoteForm.additional_notes = quoteForm.additional_notes
-        .replace(oldPattern, '')
-        .trim();
-      // Clean up any double commas or leading/trailing commas
-      quoteForm.additional_notes = quoteForm.additional_notes
-        .replace(/,\s*,/g, ',')
-        .replace(/^,\s*|,\s*$/g, '');
-    }
-
-    // Add new partner name to additional_notes
-    if (newValue) {
-      if (quoteForm.additional_notes) {
-        quoteForm.additional_notes = `${quoteForm.additional_notes}, ${newValue}`;
-      } else {
-        quoteForm.additional_notes = newValue;
-      }
-    }
-  },
-);
 </script>
 
 <template>
@@ -618,7 +521,7 @@ watch(
 
         <!-- Lead Source Fields - Only show when type is referral -->
         <x-select
-          v-if="isReferralType && !isEcomLeadExtension"
+          v-if="isReferralType"
           label="IMCRM SUB-SOURCE"
           v-model="quoteForm.sub_source_id"
           :options="subSourceOptions"
@@ -642,9 +545,7 @@ watch(
         </x-select>
 
         <x-select
-          v-if="
-            isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension
-          "
+          v-if="isReferralType && quoteForm.sub_source_id"
           label="SUB SOURCE OPTION"
           v-model="quoteForm.sub_source_options_id"
           :options="subSourceOptionOptions"
@@ -667,34 +568,7 @@ watch(
           </template>
         </x-select>
 
-        <x-input
-          v-if="isEcomLeadExtension"
-          label="PRIMARY REF ID"
-          required
-          v-model="quoteForm.primary_ref_id"
-          class="w-full"
-          type="text"
-          placeholder="Enter Primary Ref ID"
-          :rules="[isRequired]"
-          :tooltip="'ID of the original ECOM lead'"
-          :error="quoteForm.errors.primary_ref_id"
-          :disabled="!canEditSubSourceFields"
-        />
-
-        <x-input
-          v-if="showPartnerNameField"
-          label="PARTNER NAME"
-          :required="canEditSubSourceFields"
-          v-model="quoteForm.partner_name"
-          class="w-full"
-          type="text"
-          placeholder="Enter Partner Name"
-          :tooltip="'Name of campaign, event or club'"
-          maxLength="50"
-          :rules="canEditSubSourceFields ? [isRequired, maxCharacters(50)] : []"
-          :error="quoteForm.errors.partner_name"
-          :disabled="!canEditSubSourceFields"
-        />
+        
 
         <x-select
           label="REGISTRATION TYPE"

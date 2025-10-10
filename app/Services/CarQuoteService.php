@@ -129,8 +129,13 @@ class CarQuoteService extends BaseService
             // Lead source fields from CreateLeadModal
             'subSourceId' => $request->sub_source_id ?? null,
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
-            'primaryRefId' => $request->primary_ref_id ?? null,
         ];
+
+        LoggerService::info("saveQuote ".print_r([
+                'subSourceId' => $request->sub_source_id ?? null,
+                'subSourceOptionsId' => $request->sub_source_options_id ?? null,
+                'additional_notes' => $request->additional_notes ?? null,
+            ], true));
 
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -266,9 +271,7 @@ class CarQuoteService extends BaseService
         if ($request->has('sub_source_options_id')) {
             $carQuote->sub_source_options_id = $request->sub_source_options_id;
         }
-        if ($request->has('primary_ref_id')) {
-            $carQuote->primary_ref_id = $request->primary_ref_id;
-        }
+        // Primary ref id no longer supported from CreateLeadModal
 
         $carQuote->quote_updated_at = Carbon::now();
         $carQuote->is_quote_locked = true;
@@ -513,7 +516,7 @@ class CarQuoteService extends BaseService
                 'cqr.documents_verified',
                 'cqr.sub_source_id',
                 'cqr.sub_source_options_id',
-                'cqr.primary_ref_id',
+                // 'cqr.primary_ref_id',
                 'ss.text as sub_source_text',
                 'ss.description as sub_source_description',
                 'sso.text as sub_source_option_text',
@@ -1678,16 +1681,13 @@ class CarQuoteService extends BaseService
             // Sub-source validation rules
             'sub_source_id' => 'nullable|integer|exists:lookups,id',
             'sub_source_options_id' => 'nullable|integer|exists:lookups,id',
-            'primary_ref_id' => 'nullable|string|max:255',
         ];
 
         // Sub-source conditional validation
         $isReferralType = $request->input('type') === 'referral' ||
                          ($request->has('source') && $request->source === 'IMCRM');
-        $isEcomLeadExtension = $request->input('type') === 'ecom_lead_extension' ||
-                              (! $request->sub_source_id && ! $request->sub_source_options_id && $request->primary_ref_id);
 
-        if ($isReferralType && ! $isEcomLeadExtension) {
+        if ($isReferralType) {
             // Sub source is required for referral types (except ECOM lead extension)
             $validationArray['sub_source_id'] = 'required|integer|exists:lookups,id';
 
@@ -1701,10 +1701,7 @@ class CarQuoteService extends BaseService
             }
         }
 
-        if ($isEcomLeadExtension) {
-            // Primary ref ID is required for ECOM lead extension
-            $validationArray['primary_ref_id'] = 'required|string|max:255';
-        }
+        
 
         if ($request->registration_type == CarRegistrationType::COMPANY) {
             $validationArray = array_merge($validationArray, [

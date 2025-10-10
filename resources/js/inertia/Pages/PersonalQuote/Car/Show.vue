@@ -2052,19 +2052,7 @@ function handleOcrNotification(event) {
                 <dd>{{ record.sub_source_option_text || 'N/A' }}</dd>
               </div>
 
-              <div class="grid sm:grid-cols-2">
-                <div>
-                  <x-tooltip placement="bottom">
-                    <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                    >
-                      PRIMARY REF ID
-                    </label>
-                    <template #tooltip> ID of the original ECOM lead </template>
-                  </x-tooltip>
-                </div>
-                <div>{{ record.primary_ref_id || 'N/A' }}</div>
-              </div>
+              
               <div v-if="isCompanyCar" class="grid sm:grid-cols-2">
                 <dt class="font-medium">Vehicle use</dt>
                 <dd>
