@@ -53,11 +53,11 @@ class PolicyIssuanceObserver
                     }
                 }
 
-                if ($isTimeout) {
+                /* if ($isTimeout) {
                     $policyIssuance->update([
                         'status' => PolicyIssuanceEnum::TIMEOUT_STATUS,
                     ]);
-                }
+                } */
             } catch (\Exception $ex) {
                 LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
                     'errorMessage' => $ex->getMessage(),
