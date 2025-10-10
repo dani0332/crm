@@ -35,6 +35,7 @@ use App\Models\Tier;
 use App\Models\UserTeams;
 use App\Models\VehicleChassisDetail;
 use App\Services\Logger\LoggerService;
+use App\Services\CapiService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -54,6 +55,7 @@ class CarQuoteService extends BaseService
     protected $sendEmailCustomerService;
     protected $applicationStorageService;
     protected $activityService;
+    protected $capiService;
 
     private const REQUIRED = 'required';
     private const STRING = 'string';
@@ -68,13 +70,15 @@ class CarQuoteService extends BaseService
         SendEmailCustomerService $sendEmailCustomerService,
         ApplicationStorageService $applicationStorageService,
         ActivitiesService $activityService,
-        protected CarQuoteQueryBuilder $carQuoteQueryBuilder
+        protected CarQuoteQueryBuilder $carQuoteQueryBuilder,
+        CapiService $capiService
     ) {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
         $this->applicationStorageService = $applicationStorageService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->activityService = $activityService;
+        $this->capiService = $capiService;
     }
 
     public function saveCarQuote(Request $request)
@@ -318,6 +322,23 @@ class CarQuoteService extends BaseService
 
         if ($deleteValuationResponse) {
             $carQuote->save();
+           
+            // Check if OCR is enabled
+            $isOCREnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_ENABLED, useCache: true) == '1';
+            if ($isOCREnabled) {
+                // Send request to Capi to verify documents
+                $requestData = [
+                    'quoteUuid' => $carQuote->uuid,
+                    'quoteTypeId' => QuoteTypes::getId(QuoteTypes::CAR),
+                    'callSource' => LeadSourceEnum::IMCRM,
+                ];
+
+                LoggerService::info('Capi service request data', extra: $requestData);
+                $response = $this->capiService->request('/api/customer/documents-verify', 'PUT', $requestData); 
+                LoggerService::info('Capi service response', extra: [
+                    'response' => $response,
+                ]);
+            }
 
             $carQuoteDetails = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
             $carQuoteDetails->chassis_number = $request->chassis_number;
