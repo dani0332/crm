@@ -64,6 +64,17 @@ const validateAllBrackets = () => {
   }
 
   brackets.value.forEach((bracket, bracketIndex) => {
+    // Validate min/max amounts
+    if (!bracket.min || !bracket.max) {
+      errors.push(
+        `${props.lobName} Bracket ${bracketIndex + 1}: Minimum and Maximum amounts are required`,
+      );
+    } else if (parseFloat(bracket.min) > parseFloat(bracket.max)) {
+      errors.push(
+        `${props.lobName} Bracket ${bracketIndex + 1}: Minimum amount cannot be greater than Maximum amount`,
+      );
+    }
+
     if (!bracket.profiles || bracket.profiles.length === 0) {
       errors.push(
         `${props.lobName} Bracket ${bracketIndex + 1}: At least one advisor profile is required`,
@@ -190,6 +201,8 @@ watch(
 );
 
 const createEmptyBracket = () => ({
+  min: 0,
+  max: 0,
   profiles: [],
 });
 
@@ -233,6 +246,26 @@ const toggleProfile = (bracketIndex, profileIndex) => {
 
 const toggleModule = () => {
   isModuleCollapsed.value = !isModuleCollapsed.value;
+};
+
+// Number formatting helpers
+const formatNumberInput = value => {
+  if (!value) return '';
+  const num = parseFloat(String(value).replace(/,/g, ''));
+  return isNaN(num) ? '' : num.toLocaleString('en-US');
+};
+
+const handleInput = (event, bracket, field) => {
+  const rawValue = event.target.value.replace(/,/g, '');
+  bracket[field] = rawValue;
+};
+
+const handleBlur = (event, bracket, field) => {
+  const rawValue = event.target.value.replace(/,/g, '');
+  const numValue = parseFloat(rawValue);
+  if (!isNaN(numValue)) {
+    bracket[field] = numValue;
+  }
 };
 
 defineExpose({
@@ -332,6 +365,52 @@ defineExpose({
               v-show="!collapsedBrackets.has(bracketIndex)"
               class="space-y-4"
             >
+              <!-- Amount Range -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <x-input
+                    :model-value="formatNumberInput(bracket.min)"
+                    class="!mb-0 mt-1"
+                    required
+                    :disabled="viewMode"
+                    @input="handleInput($event, bracket, 'min')"
+                    @blur="handleBlur($event, bracket, 'min')"
+                    placeholder="1000"
+                    label="Minimum Amount"
+                    tooltip="Set the minimum amount for this bracket."
+                  >
+                    <template #suffix>
+                      <div
+                        class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                      >
+                        <span>AED</span>
+                      </div>
+                    </template>
+                  </x-input>
+                </div>
+                <div>
+                  <x-input
+                    :model-value="formatNumberInput(bracket.max)"
+                    class="!mb-0 mt-1"
+                    required
+                    :disabled="viewMode"
+                    @input="handleInput($event, bracket, 'max')"
+                    @blur="handleBlur($event, bracket, 'max')"
+                    placeholder="10000"
+                    label="Maximum Amount"
+                    tooltip="Set the maximum amount for this bracket."
+                  >
+                    <template #suffix>
+                      <div
+                        class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                      >
+                        <span>AED</span>
+                      </div>
+                    </template>
+                  </x-input>
+                </div>
+              </div>
+
               <!-- Advisor Allocation Profiles -->
               <div class="border-t pt-4">
                 <div class="flex items-center justify-between mb-4">

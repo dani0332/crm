@@ -54,6 +54,17 @@ const emitData = () => {
 const validateBracket = (bracket, bracketIndex, type) => {
   const errors = [];
 
+  // Validate min/max amounts
+  if (!bracket.min || !bracket.max) {
+    errors.push(
+      `${type} Bracket ${bracketIndex + 1}: Minimum and Maximum amounts are required`,
+    );
+  } else if (parseFloat(bracket.min) > parseFloat(bracket.max)) {
+    errors.push(
+      `${type} Bracket ${bracketIndex + 1}: Minimum amount cannot be greater than Maximum amount`,
+    );
+  }
+
   if (!bracket.profiles || bracket.profiles.length === 0) {
     errors.push(
       `${type} Bracket ${bracketIndex + 1}: At least one advisor profile is required`,
@@ -141,6 +152,8 @@ watch(
 );
 
 const createEmptyBracket = () => ({
+  min: 0,
+  max: 0,
   profiles: [],
 });
 

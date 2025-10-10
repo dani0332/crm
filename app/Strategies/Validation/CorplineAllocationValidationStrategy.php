@@ -18,6 +18,8 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
     {
         return [
             'value_brackets' => ['required', 'array'],
+            'value_brackets.*.min' => ['required', 'numeric', 'min:1'],
+            'value_brackets.*.max' => ['required', 'numeric', 'gte:value_brackets.*.min'],
             'value_brackets.*.profiles' => ['required_with:value_brackets', 'array', 'min:1'],
             'value_brackets.*.profiles.*.advisorIds' => ['required', 'array', 'min:1'],
             'value_brackets.*.profiles.*.advisorIds.*' => ['integer', Rule::exists(User::class, 'id')],
@@ -25,6 +27,8 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
             'value_brackets.*.profiles.*.teamIds.*' => ['integer'],
 
             'volume_brackets' => ['required', 'array'],
+            'volume_brackets.*.min' => ['required', 'numeric', 'min:1'],
+            'volume_brackets.*.max' => ['required', 'numeric', 'gte:volume_brackets.*.min'],
             'volume_brackets.*.profiles' => ['required_with:volume_brackets', 'array', 'min:1'],
             'volume_brackets.*.profiles.*.advisorIds' => ['required', 'array', 'min:1'],
             'volume_brackets.*.profiles.*.advisorIds.*' => ['integer', Rule::exists(User::class, 'id')],
@@ -39,6 +43,12 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
             // Value bracket messages
             'value_brackets.required' => 'Value brackets configuration is required.',
             'value_brackets.array' => 'Value brackets must be a valid array.',
+            'value_brackets.*.min.required' => 'Minimum amount is required for all value brackets.',
+            'value_brackets.*.min.numeric' => 'Minimum amount must be a valid number.',
+            'value_brackets.*.min.min' => 'Minimum amount must be at least 1.',
+            'value_brackets.*.max.required' => 'Maximum amount is required for all value brackets.',
+            'value_brackets.*.max.numeric' => 'Maximum amount must be a valid number.',
+            'value_brackets.*.max.gte' => 'Maximum amount must be greater than or equal to minimum amount.',
             'value_brackets.*.profiles.required_with' => 'At least one profile is required for each value bracket.',
             'value_brackets.*.profiles.array' => 'Profiles must be a valid array.',
             'value_brackets.*.profiles.min' => 'Each value bracket must have at least one profile.',
@@ -55,6 +65,12 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
             // Volume bracket messages
             'volume_brackets.required' => 'Volume brackets configuration is required.',
             'volume_brackets.array' => 'Volume brackets must be a valid array.',
+            'volume_brackets.*.min.required' => 'Minimum amount is required for all volume brackets.',
+            'volume_brackets.*.min.numeric' => 'Minimum amount must be a valid number.',
+            'volume_brackets.*.min.min' => 'Minimum amount must be at least 1.',
+            'volume_brackets.*.max.required' => 'Maximum amount is required for all volume brackets.',
+            'volume_brackets.*.max.numeric' => 'Maximum amount must be a valid number.',
+            'volume_brackets.*.max.gte' => 'Maximum amount must be greater than or equal to minimum amount.',
             'volume_brackets.*.profiles.required_with' => 'At least one profile is required for each volume bracket.',
             'volume_brackets.*.profiles.array' => 'Profiles must be a valid array.',
             'volume_brackets.*.profiles.min' => 'Each volume bracket must have at least one profile.',
@@ -76,6 +92,16 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
         if (isset($data['value_brackets']) && ! empty($data['value_brackets'])) {
             if (! $this->validateCorplineBracketStructure($data['value_brackets'])) {
                 $validator->errors()->add('value_brackets', 'Value brackets have invalid structure. Please check all required fields are filled correctly.');
+            }
+
+            // Check for overlapping amounts in value brackets
+            if ($this->hasOverlappingBrackets($data['value_brackets'])) {
+                $validator->errors()->add('value_brackets', 'Value brackets have overlapping amount ranges. Please ensure each bracket has a unique range without overlaps.');
+            }
+
+            // Check for gaps in amount coverage in value brackets
+            if ($this->hasGapsInBrackets($data['value_brackets'])) {
+                $validator->errors()->add('value_brackets', 'Value brackets have gaps in amount coverage. The maximum of one bracket should be followed by the next bracket starting at max + 1.');
             }
 
             // Validate advisor-team combinations for value brackets
@@ -104,6 +130,16 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
         if (isset($data['volume_brackets']) && ! empty($data['volume_brackets'])) {
             if (! $this->validateCorplineBracketStructure($data['volume_brackets'])) {
                 $validator->errors()->add('volume_brackets', 'Volume brackets have invalid structure. Please check all required fields are filled correctly.');
+            }
+
+            // Check for overlapping amounts in volume brackets
+            if ($this->hasOverlappingBrackets($data['volume_brackets'])) {
+                $validator->errors()->add('volume_brackets', 'Volume brackets have overlapping amount ranges. Please ensure each bracket has a unique range without overlaps.');
+            }
+
+            // Check for gaps in amount coverage in volume brackets
+            if ($this->hasGapsInBrackets($data['volume_brackets'])) {
+                $validator->errors()->add('volume_brackets', 'Volume brackets have gaps in amount coverage. The maximum of one bracket should be followed by the next bracket starting at max + 1.');
             }
 
             // Validate advisor-team combinations for volume brackets
@@ -149,6 +185,11 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
     private function validateCorplineBracketStructure(array $brackets): bool
     {
         foreach ($brackets as $bracket) {
+            // Check for min and max amounts
+            if (! isset($bracket['min']) || ! isset($bracket['max'])) {
+                return false;
+            }
+
             if (! isset($bracket['profiles']) || ! is_array($bracket['profiles'])) {
                 return false;
             }
@@ -165,5 +206,57 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
         }
 
         return true;
+    }
+
+    /**
+     * Check for overlapping amount ranges
+     */
+    private function hasOverlappingBrackets(array $brackets): bool
+    {
+        $count = count($brackets);
+
+        for ($i = 0; $i < $count; $i++) {
+            for ($j = $i + 1; $j < $count; $j++) {
+                $min1 = (float) $brackets[$i]['min'];
+                $max1 = (float) $brackets[$i]['max'];
+                $min2 = (float) $brackets[$j]['min'];
+                $max2 = (float) $brackets[$j]['max'];
+
+                // Check if ranges overlap
+                if ($min1 <= $max2 && $min2 <= $max1) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check for gaps in amount coverage
+     */
+    private function hasGapsInBrackets(array $brackets): bool
+    {
+        if (count($brackets) <= 1) {
+            return false;
+        }
+
+        // Sort brackets by min amount
+        usort($brackets, function ($a, $b) {
+            return ((float) $a['min']) <=> ((float) $b['min']);
+        });
+
+        // Check for gaps between consecutive brackets
+        for ($i = 0; $i < count($brackets) - 1; $i++) {
+            $currentMax = (float) $brackets[$i]['max'];
+            $nextMin = (float) $brackets[$i + 1]['min'];
+
+            // Allow a gap of 1 (inclusive ranges)
+            if ($nextMin > $currentMax + 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
