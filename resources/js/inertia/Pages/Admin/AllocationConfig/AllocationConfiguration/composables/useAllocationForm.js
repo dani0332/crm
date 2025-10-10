@@ -165,7 +165,12 @@ export function useAllocationForm(props, errorHandling) {
         fetchConfiguration(quoteType),
       ];
 
-      if (quoteType.code === props.quoteTypeCodeEnum.CORPLINE) {
+      if (
+        quoteType.code === props.quoteTypeCodeEnum.CORPLINE ||
+        quoteType.code === props.quoteTypeCodeEnum.Pet ||
+        quoteType.code === props.quoteTypeCodeEnum.Yacht ||
+        quoteType.code === props.quoteTypeCodeEnum.Cycle
+      ) {
         fetchTasks.push(fetchTeams());
       }
 

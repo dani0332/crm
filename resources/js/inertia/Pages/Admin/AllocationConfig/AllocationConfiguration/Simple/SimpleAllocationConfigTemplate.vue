@@ -11,7 +11,7 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  nationalityOptions: {
+  teamOptions: {
     type: Array,
     default: () => [],
   },
@@ -76,9 +76,9 @@ const validateAllBrackets = () => {
           );
         }
 
-        if (!profile.nationalityIds || profile.nationalityIds.length === 0) {
+        if (!profile.teamIds || profile.teamIds.length === 0) {
           errors.push(
-            `${props.lobName} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one nationality must be selected`,
+            `${props.lobName} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one team must be selected`,
           );
         }
       });
@@ -195,7 +195,7 @@ const createEmptyBracket = () => ({
 
 const createEmptyProfile = () => ({
   advisorIds: [],
-  nationalityIds: [],
+  teamIds: [],
 });
 
 const addBracket = () => {
@@ -462,28 +462,28 @@ defineExpose({
                       </div>
                       <div>
                         <x-select
-                          v-model="profile.nationalityIds"
-                          :options="nationalityOptions"
-                          placeholder="Select nationalities..."
+                          v-model="profile.teamIds"
+                          :options="teamOptions"
+                          placeholder="Select teams..."
                           multiple
                           filterable
                           :disabled="viewMode"
                           class="w-full min-h-[40px]"
-                          label="Nationalities"
+                          label="Teams"
                           required
-                          tooltip="Select the nationalities of customers this profile applies to."
+                          tooltip="Select the teams this profile applies to."
                         >
                           <template
                             #content-footer
-                            v-if="nationalityOptions.length > 0 && !viewMode"
+                            v-if="teamOptions.length > 0 && !viewMode"
                           >
                             <ui-select-actions
                               @select-all="
-                                profile.nationalityIds = nationalityOptions.map(
+                                profile.teamIds = teamOptions.map(
                                   item => item.value,
                                 )
                               "
-                              @clear="profile.nationalityIds = []"
+                              @clear="profile.teamIds = []"
                             />
                           </template>
                         </x-select>

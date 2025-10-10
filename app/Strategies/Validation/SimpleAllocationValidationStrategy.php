@@ -6,7 +6,6 @@ namespace App\Strategies\Validation;
 
 use App\Contracts\AllocationValidationStrategyInterface;
 use App\Enums\QuoteTypes;
-use App\Models\Nationality;
 use App\Models\User;
 use App\Traits\ValidatesBracketStructure;
 use Illuminate\Validation\Rule;
@@ -31,8 +30,8 @@ class SimpleAllocationValidationStrategy implements AllocationValidationStrategy
             'brackets.*.profiles' => ['required', 'array', 'min:1'],
             'brackets.*.profiles.*.advisorIds' => ['required', 'array', 'min:1'],
             'brackets.*.profiles.*.advisorIds.*' => ['integer', Rule::exists(User::class, 'id')],
-            'brackets.*.profiles.*.nationalityIds' => ['required', 'array', 'min:1'],
-            'brackets.*.profiles.*.nationalityIds.*' => ['integer', Rule::exists(Nationality::class, 'id')],
+            'brackets.*.profiles.*.teamIds' => ['required', 'array', 'min:1'],
+            'brackets.*.profiles.*.teamIds.*' => ['integer'],
         ];
     }
 
@@ -50,11 +49,10 @@ class SimpleAllocationValidationStrategy implements AllocationValidationStrategy
             'brackets.*.profiles.*.advisorIds.min' => 'Please select at least one advisor for each profile.',
             'brackets.*.profiles.*.advisorIds.*.integer' => 'Invalid advisor selected.',
             'brackets.*.profiles.*.advisorIds.*.exists' => 'One or more selected advisors do not exist.',
-            'brackets.*.profiles.*.nationalityIds.required' => 'Please select at least one nationality for each profile.',
-            'brackets.*.profiles.*.nationalityIds.array' => 'Nationality selection must be a valid array.',
-            'brackets.*.profiles.*.nationalityIds.min' => 'Please select at least one nationality for each profile.',
-            'brackets.*.profiles.*.nationalityIds.*.integer' => 'Invalid nationality selected.',
-            'brackets.*.profiles.*.nationalityIds.*.exists' => 'One or more selected nationalities do not exist.',
+            'brackets.*.profiles.*.teamIds.required' => 'Please select at least one team for each profile.',
+            'brackets.*.profiles.*.teamIds.array' => 'Team selection must be a valid array.',
+            'brackets.*.profiles.*.teamIds.min' => 'Please select at least one team for each profile.',
+            'brackets.*.profiles.*.teamIds.*.integer' => 'Invalid team selected.',
         ];
     }
 
@@ -73,22 +71,22 @@ class SimpleAllocationValidationStrategy implements AllocationValidationStrategy
                 $validator->errors()->add("brackets.{$bracketIndex}", "{$this->lobName} bracket ".($bracketIndex + 1).' has invalid structure. Please check all required fields are filled correctly.');
             }
 
-            // Validate advisor-nationality combinations
+            // Validate advisor-team combinations
             if (isset($bracket['profiles']) && is_array($bracket['profiles'])) {
                 $this->validateProfileCombinations(
                     $bracket['profiles'],
                     $bracketIndex,
                     $validator,
-                    'nationalityIds',
-                    'nationality'
+                    'teamIds',
+                    'team'
                 );
 
                 $this->checkDuplicatesInBracket(
                     $bracket['profiles'],
                     $bracketIndex,
                     $validator,
-                    'nationalityIds',
-                    'nationality'
+                    'teamIds',
+                    'team'
                 );
             }
         }
@@ -115,15 +113,15 @@ class SimpleAllocationValidationStrategy implements AllocationValidationStrategy
         }
 
         foreach ($bracket['profiles'] as $profile) {
-            if (! isset($profile['advisorIds']) || ! isset($profile['nationalityIds'])) {
+            if (! isset($profile['advisorIds']) || ! isset($profile['teamIds'])) {
                 return false;
             }
 
-            if (! is_array($profile['advisorIds']) || ! is_array($profile['nationalityIds'])) {
+            if (! is_array($profile['advisorIds']) || ! is_array($profile['teamIds'])) {
                 return false;
             }
 
-            if (empty($profile['advisorIds']) || empty($profile['nationalityIds'])) {
+            if (empty($profile['advisorIds']) || empty($profile['teamIds'])) {
                 return false;
             }
         }

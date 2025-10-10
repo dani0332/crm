@@ -221,7 +221,7 @@ onMounted(() => {
           <SimpleAllocationConfigTemplate
             :configuration="currentConfiguration"
             :advisor-options="advisorOptions"
-            :nationality-options="nationalityOptions"
+            :team-options="teamOptions"
             :view-mode="isViewMode"
             :lob-name="form.quote_type"
             @data-update="onTemplateDataUpdate"
