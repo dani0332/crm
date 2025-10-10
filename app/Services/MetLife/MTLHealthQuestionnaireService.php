@@ -23,7 +23,7 @@ class MTLHealthQuestionnaireService
             'policy_number' => $requestData['policy_number']
         ]);
         
-        $quote = PersonalQuote::where('uuid', $requestData['quote_uuid'])->first();
+        $quote = PersonalQuote::with('customer')->where('uuid', $requestData['quote_uuid'])->first();
         if (!$quote) {
             LoggerService::warning('DEBUG: Quote not found', ['quote_uuid' => $requestData['quote_uuid']]);
             throw new Exception('Quote not found for UID: ' . $requestData['quote_uuid']);
@@ -37,7 +37,7 @@ class MTLHealthQuestionnaireService
             'fields_count' => count($healthQuestionnaire['fields'] ?? [])
         ]);
         
-        $data = $this->prepareHealthQuestionnaireData($healthQuestionnaire, $requestData['quote_uuid']);
+        $data = $this->prepareHealthQuestionnaireData($healthQuestionnaire, $requestData['quote_uuid'], $quote);
         LoggerService::info('DEBUG: Data prepared for PDF', ['pdf_filename' => $data['pdf_filename']]);
 
         $documentType = DocumentType::where('code', DocumentTypeCode::LIFE_HEALTH_QUESTIONNAIRE)->first();
@@ -161,13 +161,56 @@ class MTLHealthQuestionnaireService
                $field['form_type'] === 'form';
     }
 
-    private function prepareHealthQuestionnaireData(array $healthQuestionnaire, string $quoteUuid): array
+    private function prepareHealthQuestionnaireData(array $healthQuestionnaire, string $quoteUuid, PersonalQuote $quote): array
     {
+        $pdfFilename = $this->generatePdfFilename($quote);
+        
         return [
-            'pdf_filename' => 'Health Questionnaire',
+            'pdf_filename' => $pdfFilename,
             'health_questionnaire' => $healthQuestionnaire,
             'quote_uuid' => $quoteUuid
         ];
+    }
+
+    private function generatePdfFilename(PersonalQuote $quote): string
+    {
+        $insurerName = 'Metlife';
+        $refId = $quote->code;
+        
+        // Get customer name
+        $customerName = $this->getCustomerName($quote);
+        
+        // Build filename without .pdf extension (QuoteDocumentService will add it)
+        if ($customerName) {
+            return "{$insurerName} Health Questionnaire for {$customerName} {$refId}";
+        } else {
+            return "{$insurerName} Health Questionnaire {$refId}";
+        }
+    }
+
+    private function getCustomerName(PersonalQuote $quote): ?string
+    {
+        if (!$quote->customer) {
+            LoggerService::warning('DEBUG: Customer not found for quote', [
+                'quote_uuid' => $quote->uuid,
+                'quote_code' => $quote->code
+            ]);
+            return null;
+        }
+
+        $firstName = trim($quote->customer->first_name ?? '');
+        $lastName = trim($quote->customer->last_name ?? '');
+        
+        if (empty($firstName) && empty($lastName)) {
+            LoggerService::warning('DEBUG: Customer name is empty', [
+                'quote_uuid' => $quote->uuid,
+                'quote_code' => $quote->code,
+                'customer_id' => $quote->customer->id
+            ]);
+            return null;
+        }
+
+        return trim($firstName . ' ' . $lastName);
     }
 
     private function generateHealthQuestionnairePdf(array $data): string
