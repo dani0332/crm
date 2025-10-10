@@ -17,14 +17,11 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'confirmed']);
 
 const { isRequired } = useRules();
-const PARTNER_NAME_MAX_LENGTH = 50;
 
 const leadForm = useForm({
   type: '',
   sub_source_id: null,
   sub_source_options_id: null,
-  primary_ref_id: '',
-  partner_name: '',
 });
 
 const isModalOpen = computed({
@@ -39,11 +36,9 @@ const onConfirmCreateLead = isValid => {
     type: leadForm.type,
     subSourceId: leadForm.sub_source_id,
     subSourceOptionsId: leadForm.sub_source_options_id,
-    primaryRefId: leadForm.primary_ref_id,
-    partnerName: leadForm.partner_name,
   };
 
-  if (leadForm.type === 'referral' || leadForm.type === 'ecom_lead_extension') {
+  if (leadForm.type === 'referral') {
     router.get(route(props.routeName), leadData);
   }
 
@@ -61,8 +56,6 @@ const resetForm = () => {
   leadForm.type = '';
   leadForm.sub_source_id = null;
   leadForm.sub_source_options_id = null;
-  leadForm.primary_ref_id = '';
-  leadForm.partner_name = '';
   if (typeof leadForm.reset === 'function') leadForm.reset();
 };
 
@@ -72,9 +65,7 @@ const subSourceOptions = computed(() => {
     value: source.id,
     label: source.text,
     suffix:
-      source.description ||
-      source.tooltip ||
-      `Information about ${source.text}`, // Use suffix for tooltip data
+      source.description || null, // Use suffix for tooltip data
   }));
   return options;
 });
@@ -96,24 +87,6 @@ const subSourceChildOptions = computed(() => {
   }));
 });
 
-// Check if Partner name field should be shown
-const showPartnerNameField = computed(() => {
-  if (!leadForm.sub_source_options_id) return false;
-  const selected = subSourceChildOptions.value.find(
-    option => option.value == leadForm.sub_source_options_id,
-  );
-  return selected?.code === 'other-clubs-or-campaigns';
-});
-
-const validatePartnerNameMax = value => {
-  if (!value) return true;
-  const trimmed = String(value).trim();
-  return (
-    trimmed.length <= PARTNER_NAME_MAX_LENGTH ||
-    `Must be <= ${PARTNER_NAME_MAX_LENGTH} characters`
-  );
-};
-
 // Overall validity handled by x-form via :rules and submit callback
 
 // Watch for modal close to reset form
@@ -129,8 +102,6 @@ watch(
   () => {
     leadForm.sub_source_id = null;
     leadForm.sub_source_options_id = null;
-    leadForm.primary_ref_id = '';
-    leadForm.partner_name = '';
   },
 );
 
@@ -139,19 +110,9 @@ watch(
   () => leadForm.sub_source_id,
   () => {
     leadForm.sub_source_options_id = null;
-    leadForm.partner_name = '';
   },
 );
 
-// Watch for subSourceOption change to reset partnerName
-watch(
-  () => leadForm.sub_source_options_id,
-  () => {
-    if (!showPartnerNameField.value) {
-      leadForm.partner_name = '';
-    }
-  },
-);
 </script>
 
 <template>
@@ -178,7 +139,6 @@ watch(
           <x-radio value="referral" label="Referral" />
           <x-radio value="early_renewal" label="Early Renewal" />
           <x-radio value="payment_status" label="Payment Status" />
-          <x-radio value="ecom_lead_extension" label="ECOM Lead Extension" />
         </x-form-group>
 
         <!-- Conditional dropdowns for referral option -->
@@ -225,41 +185,6 @@ watch(
               </x-tooltip>
             </template>
           </x-select>
-        </div>
-
-        <!-- Conditional input for ECOM lead extension -->
-        <div
-          v-if="leadForm.type === 'ecom_lead_extension'"
-          class="flex flex-col gap-4"
-        >
-          <x-input
-            v-model="leadForm.primary_ref_id"
-            label="Primary Ref Id"
-            name="primaryRefId"
-            placeholder="Enter Primary Ref Id"
-            class="w-full"
-            :rules="[isRequired]"
-            required
-          :tooltip="'ID of the original ECOM lead'"
-          />
-        </div>
-
-        <!-- Conditional input for Partner Name when other-clubs-or-campaigns is selected -->
-        <div v-if="showPartnerNameField" class="flex flex-col gap-4">
-          <x-input
-            v-model="leadForm.partner_name"
-            label="Partner Name"
-            name="partnerName"
-            placeholder="Enter Partner Name"
-            class="w-full"
-            :rules="
-              showPartnerNameField ? [isRequired, validatePartnerNameMax] : []
-            "
-            required
-            maxlength="50"
-            :error="leadForm.errors.partner_name"
-            :tooltip="'Name of campaign, event or club'"
-          />
         </div>
       </div>
     </x-form>
