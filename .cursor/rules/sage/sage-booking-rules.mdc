@@ -1,0 +1,414 @@
+# Sage Integration Cursor Rules
+
+## Overview
+These rules define the patterns, conventions, and best practices for working with the Sage Integration system in this Laravel application. Follow these guidelines to maintain consistency and ensure proper implementation of Sage-related features.
+
+## Core Architecture Patterns
+
+### 1. Service Layer Implementation
+- **SageApiService**: Main orchestrator for Sage operations
+- **SageCustomApiService**: Custom API operations and authentication
+- **SageApiEmbeddedProductService**: Embedded product integration
+
+### 2. Model Relationships
+- Use polymorphic relationships for flexible logging (`SageApiLog`)
+- Implement proper foreign key constraints
+- Use eager loading for performance optimization
+- Apply proper casting for dates, decimals, and JSON fields
+
+### 3. Job Queue Patterns
+- Use `ShouldQueue` interface for all Sage operations
+- Implement `WithoutOverlapping` middleware for concurrency control
+- Set appropriate timeouts (80 seconds for Sage operations)
+- Use single retry attempt (`tries = 1`)
+
+## Sage Integration Patterns
+
+### 1. Policy Booking Flow
+**Reference:** `SageApiService::postBookPolicyToSage()`
+
+**Pattern Steps:**
+1. Pre-booking validation (check if already booked)
+2. Sage system check (isSageEnabled)
+3. Embedded product validation (isEmbeddedTransactionStatusReadyForSage)
+4. Payment processing (mainLeadPayment with paymentSplits)
+5. Customer verification (verifySageCustomer with 13 steps)
+6. Create Sage process (createSageProcess)
+7. Schedule processing (scheduleSageProcesses)
+
+### 2. Embedded Product Booking
+**Reference:** `SageApiEmbeddedProductService::bookEmbeddedProductOnSage()`
+
+**Pattern Steps:**
+1. Update status to queued (updateAndLogEPBookingStatus with BOOKING_QUEUED)
+2. Check if already booked (QuoteTag lookup for EMBEDDED_PRODUCT_BOOKED_ON_SAGE)
+3. Create AR Prepayment Receipt (createARPrepaymentReceipt)
+4. Create AR Commission and Premium Invoice (createARInvoicePremAndComm)
+5. Create AP Premium Invoice (createAPPremInvoice)
+6. Apply Prepayments to AR Invoice (applyPaymentARInvoices)
+7. Mark as completed (updateAndLogEPBookingStatus with BOOKING_COMPLETED)
+8. Create quote tag (QuoteTag::create)
+
+### 3. Endorsement Processing
+**Reference:** `SageApiService::bookEndorsementOnSage()`
+
+**Pattern Steps:**
+1. Get endorsement details (preparedDetailsForEndorsement)
+2. Check if endorsement action is disabled (isEndorsementBookingActionDisabled)
+3. Create AR Prepayment Premium Receipt (createARPrepaymentPremiumReceipt)
+4. Create AR Premium and Commission Invoice (createARInvoicePremAndComm)
+5. Create AP Premium Invoice (createAPPremInvoice)
+6. Apply Prepayments to AR Invoice (applyPaymentARInvoices)
+
+## Database Patterns
+
+### 1. Sage Process Management
+**Reference:** `SageProcess::create()` in various Sage services
+
+**Required Fields:**
+- `user_id` - User performing the action
+- `insurance_provider_id` - Associated insurance provider
+- `model_type` - Quote model class
+- `model_id` - Quote ID
+- `request` - JSON encoded payload data
+- `status` - SageEnum::SAGE_PROCESS_PENDING_STATUS
+
+### 2. API Logging
+**Reference:** `SageApiLog::create()` in SageApiService
+
+**Required Fields:**
+- `user_id` - User performing the action
+- `section_id` - Quote/Model ID
+- `section_type` - Model class
+- `model_id` - Associated model ID
+- `model_type` - Model class
+- `step` - Current processing step
+- `total_steps` - Total steps in process
+- `sage_request_type` - Request type from SageEnum
+- `sage_end_point` - API endpoint
+- `sage_payload` - JSON encoded request payload
+- `response` - JSON encoded API response
+- `status` - success/fail status
+- `entry_type` - Entry type from SageEnum
+
+### 3. Status Management
+**Reference:** `SageEnum` status constants
+
+**Status Values:**
+- `SAGE_PROCESS_PENDING_STATUS` - Process queued
+- `SAGE_PROCESS_PROCESSING_STATUS` - Process in progress
+- `SAGE_PROCESS_COMPLETED_STATUS` - Process completed successfully
+- `SAGE_PROCESS_FAILED_STATUS` - Process failed
+
+## Payload Factory Patterns
+
+### 1. Customer Creation
+**Reference:** `SagePayloadFactory::createCustomerPayload()`
+
+**Required Fields:**
+- `CustomerNumber` - Auto-generated customer number
+- `CustomerName` - Customer full name
+- `CustomerType` - Customer type (P/C prefix)
+- `Email` - Customer email
+- `Phone` - Customer mobile number
+- `Address` - Customer address
+
+**Return Structure:**
+- `endPoint` - 'AR/ARCustomers'
+- `payload` - Customer data array
+- `sage_request_type` - SageEnum::SRT_CREATE_CUSTOMER
+- `entry_type` - SageEnum::SCT_STRAIGHT
+
+### 2. Invoice Creation
+**Reference:** `SagePayloadFactory::createARInvoicePayload()`
+
+**Required Fields:**
+- `CustomerNumber` - Sage customer ID
+- `DocumentNumber` - Invoice document number
+- `InvoiceDescription` - Invoice description
+- `DocumentDate` - Invoice date
+- `CurrencyCode` - 'AED'
+- `TaxGroup` - 'VAT'
+- `TaxClass1` - 5
+- `DocumentTotalBeforeTax` - Amount before tax
+- `DocumentTotalIncludingTax` - Total amount with tax
+- `InvoiceDetails` - Invoice line items
+
+**Return Structure:**
+- `endPoint` - 'AR/ARInvoiceBatches'
+- `payload` - Invoice data array
+- `sage_request_type` - Request type from SageEnum
+- `entry_type` - Entry type from SageEnum
+
+## Job Queue Patterns
+
+### 1. Job Implementation
+**Reference:** `BookPolicyOnSageJob`, `SendUpdateSageJob`, `BookEmbeddedProductOnSageJob`
+
+**Required Properties:**
+- `$tries = 1` - Single retry attempt
+- `$timeout = 80` - 80 second timeout for Sage operations
+- Implements `ShouldQueue` interface
+- Uses `WithoutOverlapping` middleware
+
+**Constructor Parameters:**
+- `$sageRequest` - Sage request object
+- `$quote` - Quote object
+- `$request` - HTTP request object
+- `$sageProcess` - SageProcess model
+
+**Handle Method Pattern:**
+1. Start quote logging (LoggerService::startQuoteLogging)
+2. Process the booking (call appropriate Sage service method)
+3. Handle response (fail job if unsuccessful)
+
+### 2. Job Dispatching
+**Reference:** Job dispatch calls in SageApiService
+
+**Dispatch Pattern:**
+- Use `::dispatch()` method with required parameters
+- Assign to 'insly' queue with `->onQueue('insly')`
+- Pass all required constructor parameters
+
+## Error Handling Patterns
+
+### 1. Service Error Handling
+**Reference:** Error handling in SageApiService methods
+
+**Pattern Steps:**
+1. Wrap operations in try-catch blocks
+2. Check response status after API calls
+3. Log errors with LoggerService::error()
+4. Return standardized response format
+5. Include relevant context data in logs
+
+**Response Format:**
+- `['status' => true/false, 'message' => '...', 'data' => ...]`
+
+### 2. Job Error Handling
+**Reference:** Error handling in Sage job classes
+
+**Pattern Steps:**
+1. Wrap job processing in try-catch blocks
+2. Log job failures with LoggerService::error()
+3. Include job class name in error context
+4. Call $this->fail($e) for exceptions
+5. Include exception message in logs
+
+## Logging Patterns
+
+### 1. Feature Logging
+**Reference:** LoggerService usage in Sage services
+
+**Pattern Steps:**
+1. Start feature logging (LoggerService::startFeatureLogging)
+2. Use appropriate LoggerFeatureEnum values
+3. Log operation start/end with context
+4. Include relevant identifiers (quote_code, operation type)
+
+### 2. Quote Logging
+**Reference:** LoggerService::startQuoteLogging() usage
+
+**Pattern Steps:**
+1. Start quote logging with quote object and feature enum
+2. Log quote-specific information with context
+3. Include quote_id, quote_code, and status
+4. Use appropriate log levels (info, error, debug)
+
+## Validation Patterns
+
+### 1. Sage ID Validation
+**Reference:** `SageApiService::checkRequiredSageIds()`
+
+**Required Sage IDs:**
+- `customerId` - Sage customer ID
+- `insurerGlLiaiblityAccount` - Insurer GL liability account
+- `sageVenderId` - Sage vendor ID
+- `sageInsurerCustomerId` - Sage insurer customer ID
+
+**Validation Pattern:**
+1. Check each required field
+2. Collect missing fields in array
+3. Return error message with missing fields if any
+4. Return success status if all fields present
+
+### 2. Payment Validation
+**Reference:** `SageApiService::validatePaymentRequirements()`
+
+**Validation Checks:**
+- Payment record exists
+- Zero amount requires CreditApproval payment method
+- Payment status validation
+
+**Return Format:**
+- `['status' => true/false, 'message' => '...']`
+
+## Testing Patterns
+
+### 1. Service Testing
+**Reference:** Test classes for Sage services
+
+**Test Pattern:**
+1. Create test data using factories
+2. Instantiate service class
+3. Call service method
+4. Assert response status
+5. Assert database records created
+6. Use appropriate test assertions
+
+### 2. Job Testing
+**Reference:** Test classes for Sage jobs
+
+**Test Pattern:**
+1. Use Queue::fake() to mock queue
+2. Create test data
+3. Dispatch job
+4. Assert job was pushed to queue
+5. Use Queue::assertPushed() for verification
+
+## Security Patterns
+
+### 1. Input Validation
+**Reference:** Validation in Sage controllers and services
+
+**Validation Rules:**
+- `model_type` - required|string
+- `quote_id` - required|integer
+- `insurance_provider_id` - required|integer
+
+**Validation Pattern:**
+1. Use Validator::make() for validation
+2. Check validator->fails()
+3. Return error message if validation fails
+4. Return success status if validation passes
+
+### 2. Authentication
+**Reference:** Middleware in Sage controllers
+
+**Required Middleware:**
+- `auth` - User authentication
+- `permission:sage.manage` - Sage management permission
+
+## Performance Patterns
+
+### 1. Eager Loading
+**Reference:** Eloquent relationships in Sage services
+
+**Eager Loading Pattern:**
+- Use `with()` method for relationships
+- Include nested relationships (payments.paymentSplits)
+- Load related models (customer, sageApiLogs)
+- Avoid N+1 query problems
+
+### 2. Caching
+**Reference:** Cache usage in SageCustomApiService
+
+**Caching Pattern:**
+- Use Cache::remember() for data caching
+- Set appropriate TTL (time to live)
+- Use descriptive cache keys
+- Cache frequently accessed data
+
+## Documentation Patterns
+
+### 1. Method Documentation
+**Reference:** PHPDoc comments in Sage services
+
+**Documentation Pattern:**
+- Use PHPDoc format for methods
+- Include parameter descriptions with types
+- Include return type descriptions
+- Document method purpose and usage
+
+### 2. Class Documentation
+**Reference:** Class documentation in Sage services
+
+**Documentation Pattern:**
+- Use PHPDoc format for classes
+- Include class purpose and responsibilities
+- List main operations and features
+- Document integration points
+
+## Common Pitfalls to Avoid
+
+### 1. Don't Skip Validation
+- Always validate Sage IDs before processing
+- Check payment requirements
+- Verify embedded product status
+
+### 2. Don't Forget Error Handling
+- Always handle API failures
+- Implement proper retry logic
+- Log all errors for debugging
+
+### 3. Don't Skip Status Updates
+- Update quote status appropriately
+- Create quote tags for completion
+- Update Sage process status
+
+### 4. Don't Ignore Performance
+- Use eager loading for relationships
+- Implement proper caching
+- Optimize database queries
+
+### 5. Don't Skip Logging
+- Log all Sage operations
+- Use appropriate log levels
+- Include relevant context data
+
+## Best Practices
+
+### 1. Always Use Enums
+- Use `SageEnum` for constants
+- Use `QuoteStatusEnum` for statuses
+- Use `PaymentMethodsEnum` for payment types
+
+### 2. Follow Naming Conventions
+- Use descriptive method names
+- Follow Laravel naming conventions
+- Use consistent variable naming
+
+### 3. Implement Proper Testing
+- Write unit tests for services
+- Test job queue operations
+- Mock external API calls
+
+### 4. Maintain Documentation
+- Document all public methods
+- Keep README files updated
+- Document configuration changes
+
+### 5. Monitor Performance
+- Use appropriate timeouts
+- Monitor queue performance
+- Track API response times
+
+## Update Protocol
+
+**CRITICAL**: This rule must be updated after each significant Sage integration change to maintain accuracy and consistency across the codebase. When implementing new features or modifying existing ones:
+
+1. **Review Current Patterns**: Ensure new code follows established patterns
+2. **Update Rule Documentation**: Add new patterns or modify existing ones
+3. **Validate Security Implementations**: Ensure all security requirements are met
+4. **Test Pattern Consistency**: Verify patterns work across different modules
+5. **Update Documentation**: Keep inline docs and README files current
+6. **Verify Integration Points**: Ensure all service integrations are documented
+7. **Check Enum Usage**: Ensure constants are properly organized and used
+8. **Validate Logging**: Ensure all actions are properly logged for audit
+9. **Performance Review**: Check that new patterns don't impact performance
+10. **Documentation Update**: Keep README files updated with module changes
+
+## Conclusion
+
+These cursor rules provide a comprehensive guide for working with the Sage Integration system. Following these patterns will ensure consistency, maintainability, and reliability in Sage-related development work.
+
+Remember to:
+- Always validate input data
+- Handle errors gracefully
+- Log all operations
+- Update status appropriately
+- Test thoroughly
+- Document changes
+- Follow security best practices
+- Monitor performance
+- **Update this rule file when making changes**
