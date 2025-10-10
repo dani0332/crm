@@ -214,7 +214,6 @@ class HealthQuoteService extends BaseService
             // Sub-source fields
             'hqr.sub_source_id',
             'hqr.sub_source_options_id',
-            'hqr.primary_ref_id',
             'ss.text as sub_source_text',
             'ss.description as sub_source_description',
             'sso.text as sub_source_option_text',
@@ -336,7 +335,6 @@ class HealthQuoteService extends BaseService
             // Sub-source fields from CreateLeadModal
             'subSourceId' => $request->sub_source_id ?? null,
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
-            'primaryRefId' => $request->primary_ref_id ?? null,
             'additionalNotes' => $request->additional_notes ?? null,
         ];
 
@@ -345,7 +343,6 @@ class HealthQuoteService extends BaseService
             'type' => $request->input('type'),
             'subSourceId' => $request->sub_source_id,
             'subSourceOptionsId' => $request->sub_source_options_id,
-            'primaryRefId' => $request->primary_ref_id,
             'additionalNotes' => $request->additional_notes,
         ]);
         $dataArr['memberDetails'][] = [

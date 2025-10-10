@@ -2205,20 +2205,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <div>
-                  <x-tooltip placement="bottom">
-                    <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                    >
-                      PRIMARY REF ID
-                    </label>
-                    <template #tooltip> ID of the original ECOM lead </template>
-                  </x-tooltip>
-                </div>
-                <div>{{ quote.primary_ref_id || 'N/A' }}</div>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
               </div>
