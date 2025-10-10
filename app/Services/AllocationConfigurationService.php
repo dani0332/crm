@@ -91,31 +91,28 @@ class AllocationConfigurationService
             QuoteTypeShortCode::PET,
             QuoteTypeShortCode::YAC,
             QuoteTypeShortCode::CYC,
-            QuoteTypeShortCode::BUS, // For Corpline & Group Medical subtypes
+            QuoteTypeShortCode::BUS,
         ])->get();
 
-        // Find and remove Business type from the collection
         $businessType = $quoteTypes->firstWhere('short_code', QuoteTypeShortCode::BUS);
         if ($businessType) {
-            // Remove Business Insurance from the list
             $quoteTypes = $quoteTypes->reject(function ($type) {
                 return $type->short_code === QuoteTypeShortCode::BUS;
             });
 
-            // Add Corpline as a standalone entry (using Business ID underneath)
             $corplineType = clone $businessType;
             $corplineType->text = 'CorpLine';
             $corplineType->code = QuoteTypes::CORPLINE->value;
             $quoteTypes->push($corplineType);
 
-            // Add Group Medical as another subtype of Business
             $groupMedicalType = clone $businessType;
             $groupMedicalType->text = 'Group Medical';
             $groupMedicalType->code = QuoteTypes::GROUP_MEDICAL->value;
             $quoteTypes->push($groupMedicalType);
         }
 
-        // Reset collection keys and return as array-like collection
+        $quoteTypes = $quoteTypes->sortBy('text');
+
         return $quoteTypes->values();
     }
 
