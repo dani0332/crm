@@ -243,7 +243,7 @@ defineExpose({
   <div class="space-y-6">
     <LifeBracketModule
       title="Type 1"
-      type="Type 1"
+      type="Sum Insured"
       :brackets="type1Brackets"
       :advisor-options="advisorOptions"
       :nationality-options="nationalityOptions"
@@ -256,7 +256,7 @@ defineExpose({
 
     <LifeBracketModule
       title="Type 2"
-      type="Type 2"
+      type="Sum Insured"
       :brackets="type2Brackets"
       :advisor-options="advisorOptions"
       :nationality-options="nationalityOptions"
@@ -269,7 +269,7 @@ defineExpose({
 
     <LifeBracketModule
       title="Type 3"
-      type="Type 3"
+      type="Sum Insured"
       :brackets="type3Brackets"
       :advisor-options="advisorOptions"
       :nationality-options="nationalityOptions"
@@ -282,7 +282,7 @@ defineExpose({
 
     <LifeBracketModule
       title="Type 4"
-      type="Type 4"
+      type="Sum Insured"
       :brackets="type4Brackets"
       :advisor-options="advisorOptions"
       :nationality-options="nationalityOptions"
@@ -294,4 +294,3 @@ defineExpose({
     />
   </div>
 </template>
-
