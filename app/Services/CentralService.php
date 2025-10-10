@@ -1584,12 +1584,12 @@ class CentralService extends BaseService
 
         $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? '';
         $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? '';
-        $emailData->planName = 'NA';
+        $emailData->planName = '-';
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Home])) {
             $emailData->assistanceNumber = $quote?->plan?->insuranceProvider?->roadside_phone_number ?? $emailData->assistanceNumber ?? '';
             $emailData->insuranceCompany = $quote?->plan?->insuranceProvider?->text ?? $emailData->insuranceCompany ?? '';
-            $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? 'NA';
+            $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? '-';
         }
 
         $quote->load('latestInsured');
@@ -1629,9 +1629,9 @@ class CentralService extends BaseService
         if ($quoteTypeId == QuoteTypeId::Life) {
             $emailData->planType = $quote?->lifeQuote?->insuranceTenure?->text ?? 'Life Insurance';
             $emailData->policyTerm = $quote?->lifeQuote?->numberOfYears?->text;
-            $emailData->planName = $quote?->insuranceProviderPlan?->text ?? 'NA';
+            $emailData->planName = $quote?->insuranceProviderPlan?->text ?? '-';
             /* if ($sendUpdateLog) {
-                $emailData->lifeDetails = 'NA';
+                $emailData->lifeDetails = '-';
             } */
         }
 
@@ -1644,7 +1644,7 @@ class CentralService extends BaseService
             if ($customerAddress) {
                 $emailData->homeDetails = "$customerAddress->office_number, $customerAddress->floor_number, $customerAddress->building_name, $customerAddress->street, $customerAddress->area, $customerAddress->city, $customerAddress->landmark";
             } else {
-                $emailData->homeDetails = 'NA';
+                $emailData->homeDetails = '-';
             }
         }
 
@@ -1747,9 +1747,9 @@ class CentralService extends BaseService
             $emailData->companyName = $quote->company_name;
             $emailData->details = $quote->brief_details;
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
-                $emailData->tpa = 'NA'; // need to confirm.
+                $emailData->tpa = '-'; // need to confirm.
             } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::proIndemnity)) {
-                $emailData->insuranceType = 'NA'; // need to confirm.
+                $emailData->insuranceType = '-'; // need to confirm.
             }
         }
     }
