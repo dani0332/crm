@@ -31,22 +31,7 @@ class PolicyIssuanceObserver
         ) {
             LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updating Policy Issuance ID : '.$policyIssuance->id.' - Status : '.PolicyIssuanceEnum::PENDING_STATUS);
             try {
-                $isTimeout = false;
-
-                if (str_contains($policyIssuance->message, 'PolicyIssuanceJob has been attempted too many times')) {
-                    $isTimeout = true;
-                } else {
-                    $failedLogs = $policyIssuance->policyIssuanceLogs->where('status', PolicyIssuanceEnum::FAILED_STATUS);
-                    if ($failedLogs) {
-                        $failedNullLogFound = $failedLogs->filter(function ($log) {
-                            return app(LivaInsuranceService::class)->hasNullStatusResponse($log->response);
-                        });
-        
-                        if ($failedNullLogFound->isNotEmpty() && $failedLogs->count() < 3) {
-                            $isTimeout = true;
-                        }
-                    }
-                }
+                $isTimeout = app(LivaInsuranceService::class)->livaPortalTimeoutResponse($policyIssuance);
 
                 if ($isTimeout) {
                     $policyIssuance->update([

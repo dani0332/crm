@@ -1190,6 +1190,41 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             : $carbonDate->startOfDay()->format('Y-m-d H:i:s');
     }
 
+    public function livaPortalTimeoutResponse($policyIssuance): bool
+    {
+        if (str_contains($policyIssuance->message, 'PolicyIssuanceJob has been attempted too many times')) {
+            LoggerService::info($this->className.' fn:'.__FUNCTION__.' - PolicyIssuanceJob was failed due to timeout', extra: [
+                'reason' => $policyIssuance->message,
+            ]);
+
+            return true;
+        } else {
+            $policyIssuanceLogs = $policyIssuance->policyIssuanceLogs;
+            if (
+                $policyIssuanceLogs &&
+                $policyIssuanceLogs->last()->status === PolicyIssuanceEnum::FAILED_STATUS
+            ) {
+                $failedNullLogFound = $policyIssuanceLogs->filter(function ($log) {
+                    return $this->hasNullStatusResponse($log->response);
+                });
+
+                $failedLogsCount = $policyIssuanceLogs->where('status', PolicyIssuanceEnum::FAILED_STATUS)->count();
+
+                LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Failed logs count : '.$failedLogsCount);
+
+                if ($failedNullLogFound->isNotEmpty() && $failedLogsCount < 3) {
+                    LoggerService::info($this->className.' fn:'.__FUNCTION__.' - PolicyIssuanceJob was failed due to timeout', extra: [
+                        'error' => $failedNullLogFound->first()?->response,
+                    ]);
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public function hasNullStatusResponse(string $response): bool
     {
         $nullStatusPatterns = [
