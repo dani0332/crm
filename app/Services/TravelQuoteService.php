@@ -193,7 +193,6 @@ class TravelQuoteService extends BaseService
             // Sub-source fields
             'tqr.sub_source_id',
             'tqr.sub_source_options_id',
-            'tqr.primary_ref_id',
             'tqr.additional_notes',
             'ss.text as sub_source_text',
             'ss.description as sub_source_description',
@@ -299,7 +298,6 @@ class TravelQuoteService extends BaseService
             // Sub-source fields from CreateLeadModal
             'subSourceId' => $request->sub_source_id ?? null,
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
-            'primaryRefId' => $request->primary_ref_id ?? null,
             'additionalNotes' => $request->additional_notes ?? null,
         ];
 
@@ -310,7 +308,6 @@ class TravelQuoteService extends BaseService
             'type' => $request->input('type'),
             'subSourceId' => $request->sub_source_id,
             'subSourceOptionsId' => $request->sub_source_options_id,
-            'primaryRefId' => $request->primary_ref_id,
             'additionalNotes' => $request->additional_notes,
         ]);
         if ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0') {
@@ -574,9 +571,6 @@ class TravelQuoteService extends BaseService
         }
         if ($request->has('sub_source_options_id')) {
             $travelQuote->sub_source_options_id = $request->sub_source_options_id;
-        }
-        if ($request->has('primary_ref_id')) {
-            $travelQuote->primary_ref_id = $request->primary_ref_id;
         }
         if ($request->has('additional_notes')) {
             $travelQuote->additional_notes = $request->additional_notes;

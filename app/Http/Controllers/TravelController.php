@@ -405,13 +405,11 @@ class TravelController extends Controller
         $model = $this->genericModel;
         $subSources = $this->lookupService->getSubSource();
 
-        // Log parameters from CreateLeadModal
+        
         LoggerService::info('Travel create method called with parameters', [
             'type' => $request->input('type'),
             'subSourceId' => $request->input('subSourceId'),
             'subSourceOptionsId' => $request->input('subSourceOptionsId'),
-            'primaryRefId' => $request->input('primaryRefId'),
-            'partnerName' => $request->input('partnerName'),
         ]);
 
         return inertia('TravelQuote/Form', [
@@ -427,8 +425,6 @@ class TravelController extends Controller
                 'type' => $request->input('type'),
                 'subSource' => $request->input('subSourceId'),
                 'subSourceOption' => $request->input('subSourceOptionsId'),
-                'primaryRefId' => $request->input('primaryRefId'),
-                'partnerName' => $request->input('partnerName'),
             ],
         ]);
     }
