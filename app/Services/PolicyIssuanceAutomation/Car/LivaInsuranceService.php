@@ -1189,4 +1189,20 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             ? $carbonDate->endOfDay()->format('Y-m-d H:i:s')
             : $carbonDate->startOfDay()->format('Y-m-d H:i:s');
     }
+
+    public function hasNullStatusResponse(string $response): bool
+    {
+        $nullStatusPatterns = [
+            '"status": false, "message": null, "completed_step": null',
+            '"status": false, "message": "null", "completed_step": null',
+        ];
+
+        foreach ($nullStatusPatterns as $pattern) {
+            if (str_contains($response, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
