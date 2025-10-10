@@ -173,7 +173,7 @@ export function useAllocationForm(props, errorHandling) {
       }
 
       // Fetch plan types for Group Medical
-      if (quoteType.code === props.quoteTypeCodeEnum.GROUP_MEDICAL) {
+      if (quoteType.code === props.quoteTypeCodeEnum.GroupMedical) {
         fetchTasks.push(fetchPlanTypes());
       }
 
@@ -290,7 +290,7 @@ export function useAllocationForm(props, errorHandling) {
 
       // Validate Home template
       if (
-        form.quote_type === props.quoteTypeCodeEnum.HOME &&
+        form.quote_type === props.quoteTypeCodeEnum.Home &&
         homeTemplateRef.value
       ) {
         const templateValidation = homeTemplateRef.value.validate();
@@ -306,7 +306,7 @@ export function useAllocationForm(props, errorHandling) {
 
       // Validate Life template
       if (
-        form.quote_type === props.quoteTypeCodeEnum.LIFE &&
+        form.quote_type === props.quoteTypeCodeEnum.Life &&
         lifeTemplateRef.value
       ) {
         const templateValidation = lifeTemplateRef.value.validate();
@@ -322,9 +322,9 @@ export function useAllocationForm(props, errorHandling) {
 
       // Validate Simple template (Pet, Yacht, Cycle)
       if (
-        (form.quote_type === props.quoteTypeCodeEnum.PET ||
-          form.quote_type === props.quoteTypeCodeEnum.YACHT ||
-          form.quote_type === props.quoteTypeCodeEnum.CYCLE) &&
+        (form.quote_type === props.quoteTypeCodeEnum.Pet ||
+          form.quote_type === props.quoteTypeCodeEnum.Yacht ||
+          form.quote_type === props.quoteTypeCodeEnum.Cycle) &&
         simpleTemplateRef.value
       ) {
         const templateValidation = simpleTemplateRef.value.validate();
@@ -356,7 +356,7 @@ export function useAllocationForm(props, errorHandling) {
 
       // Validate Group Medical template
       if (
-        form.quote_type === props.quoteTypeCodeEnum.GROUP_MEDICAL &&
+        form.quote_type === props.quoteTypeCodeEnum.GroupMedical &&
         groupMedicalTemplateRef.value
       ) {
         const templateValidation = groupMedicalTemplateRef.value.validate();

@@ -26,16 +26,6 @@ class AllocationConfigurationController extends Controller
         return inertia('Admin/AllocationConfig/AllocationConfiguration/Form', [
             'quoteTypes' => $this->allocationConfigurationService->getQuoteTypes(),
             'nationalities' => $this->allocationConfigurationService->getNationalities(),
-            'quoteTypeCodeEnum' => [
-                'SAVINGS' => 'Savings',
-                'HOME' => 'Home',
-                'LIFE' => 'Life',
-                'PET' => 'Pet',
-                'YACHT' => 'Yacht',
-                'CYCLE' => 'Cycle',
-                'CORPLINE' => 'CorpLine',
-                'GROUP_MEDICAL' => 'Group Medical',
-            ],
         ]);
     }
 

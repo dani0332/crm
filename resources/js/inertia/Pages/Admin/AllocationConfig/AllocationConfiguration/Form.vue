@@ -189,7 +189,7 @@ onMounted(() => {
           />
         </div>
 
-        <div v-else-if="form.quote_type === quoteTypeCodeEnum.HOME">
+        <div v-else-if="form.quote_type === quoteTypeCodeEnum.Home">
           <HomeAllocationConfigTemplate
             :configuration="currentConfiguration"
             :advisor-options="advisorOptions"
@@ -200,7 +200,7 @@ onMounted(() => {
           />
         </div>
 
-        <div v-else-if="form.quote_type === quoteTypeCodeEnum.LIFE">
+        <div v-else-if="form.quote_type === quoteTypeCodeEnum.Life">
           <LifeAllocationConfigTemplate
             :configuration="currentConfiguration"
             :advisor-options="advisorOptions"
@@ -213,9 +213,9 @@ onMounted(() => {
 
         <div
           v-else-if="
-            form.quote_type === quoteTypeCodeEnum.PET ||
-            form.quote_type === quoteTypeCodeEnum.YACHT ||
-            form.quote_type === quoteTypeCodeEnum.CYCLE
+            form.quote_type === quoteTypeCodeEnum.Pet ||
+            form.quote_type === quoteTypeCodeEnum.Yacht ||
+            form.quote_type === quoteTypeCodeEnum.Cycle
           "
         >
           <SimpleAllocationConfigTemplate
@@ -240,7 +240,7 @@ onMounted(() => {
           />
         </div>
 
-        <div v-else-if="form.quote_type === quoteTypeCodeEnum.GROUP_MEDICAL">
+        <div v-else-if="form.quote_type === quoteTypeCodeEnum.GroupMedical">
           <GroupMedicalAllocationConfigTemplate
             :configuration="currentConfiguration"
             :advisor-options="advisorOptions"
