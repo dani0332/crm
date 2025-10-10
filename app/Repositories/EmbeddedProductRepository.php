@@ -474,8 +474,7 @@ class EmbeddedProductRepository extends BaseRepository
                         if (in_array($epShortCode, $sukoonMedexCodes)) {
                             // Sukoon Medex Purchase Flow
                             SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item, isSendEmail: true);
-                        } 
-                        elseif ($quoteTypeId == QuoteTypeId::Car && $epShortCode == EmbeddedProductEnum::ECB) {
+                        } elseif ($quoteTypeId == QuoteTypeId::Car && $epShortCode == EmbeddedProductEnum::ECB) {
                             // ECB Purchase Flow
                             $quote = $this->getQuoteObject($modelType, $leadId);
                             $context = EpEcbService::buildContext($item->id, $leadId, $quoteTypeId, $quote->code);
@@ -566,6 +565,7 @@ class EmbeddedProductRepository extends BaseRepository
 
             if (empty($transaction)) {
                 LoggerService::info("No transaction found, ref_id: {$quoteObject->code}");
+
                 return ['success' => false, 'message' => 'No transaction found'];
             }
 
@@ -1381,8 +1381,7 @@ class EmbeddedProductRepository extends BaseRepository
      * Check if the quote has an EpEcb payment with authorised or captured status
      * Only for CAR Quote With EP ECB
      *
-     * @param int $quoteId
-     * @return bool
+     * @param  int  $quoteId
      */
     public function checkIsEpEcbPaymentAuthorisedOrCaptured($quoteId): bool
     {
@@ -1396,15 +1395,15 @@ class EmbeddedProductRepository extends BaseRepository
      * Check if the CarMakeId is matched with the excluded vehicles of EpEcb
      * Only for CAR Quote With EP ECB
      *
-     * @param int $makeId
-     * @return bool
+     * @param  int  $makeId
      */
     public function checkIsCarMakeExcludedEcbVehicle($makeId): bool
     {
         $carMake = CarMake::select('id', 'code')->find($makeId);
-        if(empty($carMake?->code)) {
+        if (empty($carMake?->code)) {
             return false;
         }
+
         return in_array($carMake->code, EpEcbExcludeVehicleEnum::CAR_MAKE_CODES);
     }
 
@@ -1412,15 +1411,15 @@ class EmbeddedProductRepository extends BaseRepository
      * Check if the CarModelId is matched with the excluded vehicles of EpEcb
      * Only for CAR Quote With EP ECB
      *
-     * @param int $modelId
-     * @return bool
+     * @param  int  $modelId
      */
     public function checkIsCarModelExcludedEcbVehicle($modelId): bool
     {
         $carModel = CarModel::select('id', 'code')->find($modelId);
-        if(empty($carModel?->code)) {
+        if (empty($carModel?->code)) {
             return false;
         }
+
         return in_array($carModel->code, EpEcbExcludeVehicleEnum::CAR_MODEL_CODES);
     }
 
@@ -1428,9 +1427,9 @@ class EmbeddedProductRepository extends BaseRepository
      * Process cancel payment
      * Only for CAR Quote With EP ECB
      *
-     * @param Quote $quote
-     * @param int $quoteTypeId
-     * @param string $reason
+     * @param  Quote  $quote
+     * @param  int  $quoteTypeId
+     * @param  string  $reason
      * @return array
      */
     public function processEpEcbCancelPayment($quote, $quoteTypeId, $reason)
@@ -1438,7 +1437,7 @@ class EmbeddedProductRepository extends BaseRepository
         $extraLog = ['quote_id' => $quote?->id, 'quote_type_id' => $quoteTypeId, 'reason' => $reason];
 
         $modelType = QuoteTypes::getName($quoteTypeId);
-        if($quoteTypeId != QuoteTypeId::Car || empty($quote?->id) || empty($reason)) {
+        if ($quoteTypeId != QuoteTypeId::Car || empty($quote?->id) || empty($reason)) {
             return ['success' => false, 'message' => 'Invalid quote, quote_type_id or reason'];
         }
 
@@ -1448,7 +1447,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         $extraLog = [...$extraLog, 'epId' => $epId, 'amount' => $payment?->premium_authorized];
 
-        if(empty($epId) || empty($payment?->premium_authorized)) {
+        if (empty($epId) || empty($payment?->premium_authorized)) {
             return ['success' => false, 'message' => 'Not Found - embedded_product_id or payment_amount'];
         }
 
@@ -1462,7 +1461,7 @@ class EmbeddedProductRepository extends BaseRepository
         ];
         $response = app(EmbeddedProductRepository::class)->fetchCancelPayment($cancelPaymentData);
 
-        if($response['code'] != 200) {
+        if ($response['code'] != 200) {
             return ['success' => false, 'message' => $response['data'][0] ?? 'Failed to cancel payment for Embedded Product (ECB)'];
         }
 
@@ -1471,12 +1470,12 @@ class EmbeddedProductRepository extends BaseRepository
 
     public function getEpTransactionDetails($quoteTypeId, $quoteId, $shortCodes = [])
     {
-        return EmbeddedTransaction::with('payments:id,paymentable_id,paymentable_type,premium_authorized', 'product:id,embedded_product_id','product.embeddedProduct:id,short_code,insurance_provider_id')
+        return EmbeddedTransaction::with('payments:id,paymentable_id,paymentable_type,premium_authorized', 'product:id,embedded_product_id', 'product.embeddedProduct:id,short_code,insurance_provider_id')
             ->select('id', 'quote_type_id', 'quote_request_id', 'is_selected', 'payment_status_id', 'product_id')
             ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteId, 'is_selected' => true])
             ->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED])
-            ->when(! empty($shortCodes), 
-                fn ($query) => $query->whereHas('product.embeddedProduct', 
+            ->when(! empty($shortCodes),
+                fn ($query) => $query->whereHas('product.embeddedProduct',
                     fn ($q) => $q->whereIn('short_code', $shortCodes)
                 )
             )->get();

@@ -6,16 +6,16 @@ use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Models\DocumentType;
 use App\Jobs\EpWatermarkDocumentJob;
 use App\Jobs\SyncEpDocumentsJob;
+use App\Models\DocumentType;
 use App\Models\InsurerRequestResponse;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
-use Exception;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Cache;
 use Error;
+use Exception;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Throwable;
 
 class EpEcbService extends EpBookingService
@@ -59,11 +59,11 @@ class EpEcbService extends EpBookingService
     {
         $this->logExtra = $this->context->logExtra;
 
-        if (!$this->quote) {
-            throw new Exception("Quote not found.");
+        if (! $this->quote) {
+            throw new Exception('Quote not found.');
         }
 
-        if (!$this->embeddedTransaction) {
+        if (! $this->embeddedTransaction) {
             throw new Exception("EmbeddedTransaction not found with ID: {$this->context->etId}");
         }
 
@@ -81,12 +81,12 @@ class EpEcbService extends EpBookingService
     private function restoreWorkflowState(): void
     {
         // Restore quote_reference_number from quote_policy field
-        if (!empty($this->embeddedTransaction->quote_policy)) {
+        if (! empty($this->embeddedTransaction->quote_policy)) {
             $this->quoteReferenceNumber = $this->embeddedTransaction->quote_policy;
         }
 
         // Restore policy_number from certificate_number field
-        if (!empty($this->embeddedTransaction->certificate_number)) {
+        if (! empty($this->embeddedTransaction->certificate_number)) {
             $this->policyNumber = $this->embeddedTransaction->certificate_number;
         }
 
@@ -96,13 +96,13 @@ class EpEcbService extends EpBookingService
             $this->bearerToken = $cachedToken;
         }
 
-        LoggerService::info($this->logPrefix . ' Workflow state restoration completed', extra: [
+        LoggerService::info($this->logPrefix.' Workflow state restoration completed', extra: [
             ...$this->logExtra,
-            'has_bearer_token' => !empty($this->bearerToken),
-            'has_quote_reference' => !empty($this->quoteReferenceNumber),
-            'has_policy_number' => !empty($this->policyNumber),
+            'has_bearer_token' => ! empty($this->bearerToken),
+            'has_quote_reference' => ! empty($this->quoteReferenceNumber),
+            'has_policy_number' => ! empty($this->policyNumber),
             'quote_status_id' => $this->quote->quote_status_id,
-            'policy_status' => $this->embeddedTransaction->policy_status
+            'policy_status' => $this->embeddedTransaction->policy_status,
         ]);
     }
 
@@ -127,18 +127,18 @@ class EpEcbService extends EpBookingService
     public function executeSteps(): void
     {
         try {
-            LoggerService::info($this->logPrefix . ' Starting purchase flow', extra: [
+            LoggerService::info($this->logPrefix.' Starting purchase flow', extra: [
                 ...$this->logExtra,
-                'policy_status' => $this->embeddedTransaction->policy_status
+                'policy_status' => $this->embeddedTransaction->policy_status,
             ]);
 
             // Execute workflow with conditional step execution
             // Any exceptions will bubble up to the job for automatic retry handling
             $this->executeWorkflowFromStep();
 
-            LoggerService::info($this->logPrefix . ' Purchase flow completed successfully', extra: $this->logExtra);
+            LoggerService::info($this->logPrefix.' Purchase flow completed successfully', extra: $this->logExtra);
         } catch (Exception $e) {
-            LoggerService::error($this->logPrefix . ' Purchase flow failed', extra: [
+            LoggerService::error($this->logPrefix.' Purchase flow failed', extra: [
                 ...$this->logExtra,
                 'error' => $e->getMessage(),
                 'line' => $e->getLine(),
@@ -158,15 +158,15 @@ class EpEcbService extends EpBookingService
         $executedSteps = [];
 
         // Step 1: Get Token (Always required first)
-        if (!$this->shouldSkipStep('get_token', $currentStatus)) {
+        if (! $this->shouldSkipStep('get_token', $currentStatus)) {
             $this->executeGetToken();
             $executedSteps[] = self::STEP_GET_TOKEN;
         }
 
-        if($this->quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+        if ($this->quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
 
             // Step 2 & 3: Create Policy Without Quote STATUS_PAYMENT_SUCCEED
-            if (!$this->shouldSkipStep('create_policy_without_quote', $currentStatus)) {
+            if (! $this->shouldSkipStep('create_policy_without_quote', $currentStatus)) {
                 $this->executeCreatePolicyWithoutQuote();
                 $executedSteps[] = self::STEP_CREATE_POLICY_WITHOUT_QUOTE;
             }
@@ -174,44 +174,44 @@ class EpEcbService extends EpBookingService
         } else {
 
             // Step 2: Get Quote STATUS_QUOTED
-            if (!$this->shouldSkipStep('get_quote', $currentStatus)) {
+            if (! $this->shouldSkipStep('get_quote', $currentStatus)) {
                 $this->executeGetQuote();
                 $executedSteps[] = self::STEP_GET_QUOTE;
             }
 
             // Step 3: Create Policy From Quote STATUS_PAYMENT_SUCCEED
-            if (!$this->shouldSkipStep('create_policy_from_quote', $currentStatus)) {
+            if (! $this->shouldSkipStep('create_policy_from_quote', $currentStatus)) {
                 $this->executeCreatePolicyFromQuote();
                 $executedSteps[] = self::STEP_CREATE_POLICY_FROM_QUOTE;
             }
         }
 
         // Log executed steps summary
-        LoggerService::info($this->logPrefix . " Executed steps: " . implode(', ', $executedSteps), extra: [
+        LoggerService::info($this->logPrefix.' Executed steps: '.implode(', ', $executedSteps), extra: [
             ...$this->logExtra,
             'quote_policy' => $this->quoteReferenceNumber,
             'certificate_number' => $this->policyNumber,
-            'policy_status' => $this->embeddedTransaction->policy_status ?? ''
+            'policy_status' => $this->embeddedTransaction->policy_status ?? '',
         ]);
 
         $isPaymentSucceed = $this->embeddedTransaction->policy_status == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED;
-        if (!$this->shouldSkipStep('get_documents', $this->embeddedTransaction->policy_status) && $isPaymentSucceed) {
+        if (! $this->shouldSkipStep('get_documents', $this->embeddedTransaction->policy_status) && $isPaymentSucceed) {
             // Delete existing documents
             $this->embeddedTransaction->documents()->whereIn('document_type_code', $this->reqDocTypeCodes)->delete();
 
             $executedCreatePolicyStep = array_values(array_intersect([self::STEP_CREATE_POLICY_WITHOUT_QUOTE, self::STEP_CREATE_POLICY_FROM_QUOTE], $executedSteps));
-            if(empty($executedCreatePolicyStep)) {
+            if (empty($executedCreatePolicyStep)) {
                 dispatch(new SyncEpDocumentsJob($this->context));
             } else {
                 // Dispatch job with 2 minutes delay, because documents are available after 2 minutes of policy creation
-                LoggerService::info($this->logPrefix . " Dispatch SyncEpDocumentsJob with 2 minutes delay", extra: $this->logExtra);
+                LoggerService::info($this->logPrefix.' Dispatch SyncEpDocumentsJob with 2 minutes delay', extra: $this->logExtra);
                 dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(2));
             }
         }
 
         $isDocumentsRetrieved = $this->embeddedTransaction->policy_status == EmbeddedTransactionEnum::STATUS_BOOKED;
         $missingReqDocTypeCodes = $this->getMissingDocumentDocTypes($this->reqDocTypeCodes);
-        if (!$this->shouldSkipStep('prepare_for_sage', $this->embeddedTransaction->policy_status) && $isDocumentsRetrieved && empty($missingReqDocTypeCodes)) {
+        if (! $this->shouldSkipStep('prepare_for_sage', $this->embeddedTransaction->policy_status) && $isDocumentsRetrieved && empty($missingReqDocTypeCodes)) {
 
             // Dispatch job for watermark ep documents
             dispatch(new EpWatermarkDocumentJob($this->context));
@@ -223,11 +223,11 @@ class EpEcbService extends EpBookingService
      */
     public function syncPolicyDocuments(): void
     {
-        $currentStatus = $this->embeddedTransaction->policy_status ?? '';        
+        $currentStatus = $this->embeddedTransaction->policy_status ?? '';
         $missingReqDocTypeCodes = $this->getMissingDocumentDocTypes($this->reqDocTypeCodes);
 
         // Step 1: Get policy documents
-        if (!$this->shouldSkipStep('get_documents', $currentStatus) && !empty($missingReqDocTypeCodes)) {
+        if (! $this->shouldSkipStep('get_documents', $currentStatus) && ! empty($missingReqDocTypeCodes)) {
             // Get policy documents
             $getPolicyDocumentsResponse = (array) $this->executeGetPolicyDocuments();
 
@@ -237,10 +237,10 @@ class EpEcbService extends EpBookingService
             // Download, Upload & Save policy documents to DB
             $this->executeSyncDocuments($getPolicyDocumentsResponse);
 
-            LoggerService::info($this->logPrefix . " Step completed: GetPolicyDocuments", extra: $this->logExtra);
+            LoggerService::info($this->logPrefix.' Step completed: GetPolicyDocuments', extra: $this->logExtra);
         } else {
             $extraLogs = [...$this->logExtra, 'missing_req_doc_type_codes' => $missingReqDocTypeCodes];
-            LoggerService::info($this->logPrefix . " Skipping step: GetPolicyDocuments - already completed", extra: $extraLogs);
+            LoggerService::info($this->logPrefix.' Skipping step: GetPolicyDocuments - already completed', extra: $extraLogs);
         }
     }
 
@@ -255,19 +255,19 @@ class EpEcbService extends EpBookingService
                 EmbeddedTransactionEnum::STATUS_QUOTED,
                 EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED,
                 EmbeddedTransactionEnum::STATUS_BOOKED,
-                EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+                EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE,
             ]),
             'create_policy_from_quote', 'create_policy_without_quote' => in_array($currentStatus, [
                 EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED,
                 EmbeddedTransactionEnum::STATUS_BOOKED,
-                EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+                EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE,
             ]),
             'get_documents' => in_array($currentStatus, [
                 EmbeddedTransactionEnum::STATUS_BOOKED,
-                EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+                EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE,
             ]),
             'prepare_for_sage' => in_array($currentStatus, [
-                EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+                EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE,
             ]),
             default => false
         };
@@ -282,13 +282,14 @@ class EpEcbService extends EpBookingService
         $cachedToken = Cache::get(self::TOKEN_CACHE_KEY);
         if ($cachedToken && $this->validateToken($cachedToken)) {
             $this->bearerToken = $cachedToken;
+
             return;
         }
 
         $payload = [
             'client_code' => $this->clientCode,
             'client_id' => $this->clientId,
-            'client_secret' => $this->clientSecret
+            'client_secret' => $this->clientSecret,
         ];
 
         $response = $this->makeApiCall(
@@ -299,13 +300,13 @@ class EpEcbService extends EpBookingService
             self::STEP_GET_TOKEN
         );
 
-        if (!$response['success']) {
-            throw new Exception("GetToken API call failed: " . ($response['error'] ?? 'Unknown error'));
+        if (! $response['success']) {
+            throw new Exception('GetToken API call failed: '.($response['error'] ?? 'Unknown error'));
         }
 
         $responseData = $response['data'];
 
-        if (!isset($responseData->access_token)) {
+        if (! isset($responseData->access_token)) {
             throw new Exception('Token not found in GetToken response');
         }
 
@@ -320,12 +321,12 @@ class EpEcbService extends EpBookingService
      */
     private function executeGetQuote(): void
     {
-        if (!$this->bearerToken) {
+        if (! $this->bearerToken) {
             throw new Exception('No bearer token available for GetQuote');
         }
 
         // Check if we already have a restored quote reference number
-        if (!empty($this->quoteReferenceNumber)) {
+        if (! empty($this->quoteReferenceNumber)) {
             return;
         }
 
@@ -340,8 +341,8 @@ class EpEcbService extends EpBookingService
             self::STEP_GET_QUOTE
         );
 
-        if (!$response['success']) {
-            throw new Exception("GetQuote API call failed: " . ($response['error'] ?? 'Unknown error'));
+        if (! $response['success']) {
+            throw new Exception('GetQuote API call failed: '.($response['error'] ?? 'Unknown error'));
         }
 
         $responseQuote = $response['data']->quotes[0] ?? null;
@@ -353,7 +354,7 @@ class EpEcbService extends EpBookingService
 
         // Update transaction status and save quote_reference_number to quote_policy field
         $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_QUOTED, [
-            'quote_policy' => $this->quoteReferenceNumber
+            'quote_policy' => $this->quoteReferenceNumber,
         ]);
     }
 
@@ -362,16 +363,16 @@ class EpEcbService extends EpBookingService
      */
     private function executeCreatePolicyFromQuote(): void
     {
-        if (!$this->bearerToken) {
+        if (! $this->bearerToken) {
             throw new Exception('No bearer token available for CreatePolicyFromQuote');
         }
 
-        if (!$this->quoteReferenceNumber) {
+        if (! $this->quoteReferenceNumber) {
             throw new Exception('No quote reference number available for CreatePolicyFromQuote');
         }
 
         // Check if we already have a restored policy number
-        if (!empty($this->policyNumber)) {
+        if (! empty($this->policyNumber)) {
             return;
         }
 
@@ -386,7 +387,7 @@ class EpEcbService extends EpBookingService
             self::STEP_CREATE_POLICY_FROM_QUOTE
         );
 
-        if (!$response['success']) {
+        if (! $response['success']) {
             $responseErrorCode = $response['errorCode'] ?? '-';
             $responseStatusMessage = $response['statusMessage'] ?? 'Unknown error';
             throw new Exception("CreatePolicyFromQuote API call failed: ($responseErrorCode) - $responseStatusMessage");
@@ -401,7 +402,7 @@ class EpEcbService extends EpBookingService
 
         // Update transaction status and save certificate_number to certificate_number field
         $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED, [
-            'certificate_number' => $this->policyNumber
+            'certificate_number' => $this->policyNumber,
         ]);
     }
 
@@ -410,12 +411,12 @@ class EpEcbService extends EpBookingService
      */
     private function executeCreatePolicyWithoutQuote(): void
     {
-        if (!$this->bearerToken) {
+        if (! $this->bearerToken) {
             throw new Exception('No bearer token available for CreatePolicyFromQuote');
         }
 
         // Check if we already have a restored policy number
-        if (!empty($this->policyNumber)) {
+        if (! empty($this->policyNumber)) {
             return;
         }
 
@@ -430,7 +431,7 @@ class EpEcbService extends EpBookingService
             self::STEP_CREATE_POLICY_WITHOUT_QUOTE
         );
 
-        if (!$response['success']) {
+        if (! $response['success']) {
             $responseErrorCode = $response['errorCode'] ?? '-';
             $responseStatusMessage = $response['statusMessage'] ?? 'Unknown error';
             throw new Exception("CreatePolicyWithoutQuote API call failed: ($responseErrorCode) - $responseStatusMessage");
@@ -445,7 +446,7 @@ class EpEcbService extends EpBookingService
 
         // Update transaction status and save certificate_number to certificate_number field
         $this->updateTransactionStatus(EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED, [
-            'certificate_number' => $this->policyNumber
+            'certificate_number' => $this->policyNumber,
         ]);
     }
 
@@ -479,13 +480,15 @@ class EpEcbService extends EpBookingService
             $documentType = $documentTypes->firstWhere('code', $docCode);
             if (empty($docCode) || empty($documentType)) {
                 $docStatus['skipped'][] = "{$docKey}-{$docCode}";
+
                 continue;
             }
 
             $saveDocumentResponse = $this->executeSavePolicyDocument($docUrl, $documentType);
 
-            if (!$saveDocumentResponse['success']) {
+            if (! $saveDocumentResponse['success']) {
                 $docStatus['skipped'][] = "{$docKey}-{$docCode}";
+
                 continue;
             }
 
@@ -497,7 +500,7 @@ class EpEcbService extends EpBookingService
         if ($savedDocumentsCount > 0) {
             LoggerService::info("{$this->logPrefix} Documents synced: {$savedDocumentsCount} out of {$fetchedDocumentsCount}", extra: [
                 ...$this->logExtra,
-                'docs' => $docStatus
+                'docs' => $docStatus,
             ]);
         }
 
@@ -513,7 +516,7 @@ class EpEcbService extends EpBookingService
     {
         $policyPrice = floatval($policyDetailResponse['policy_premium_with_tax'] ?? 0);
 
-        if (empty($policyDetailResponse) || !($policyPrice > 0)) {
+        if (empty($policyDetailResponse) || ! ($policyPrice > 0)) {
             return;
         }
 
@@ -534,7 +537,7 @@ class EpEcbService extends EpBookingService
     // Step 4.1: Get policy documents
     private function executeGetPolicyDocuments(): array
     {
-        if (!$this->policyNumber) {
+        if (! $this->policyNumber) {
             throw new Exception('No policy number available for GetDocuments');
         }
 
@@ -547,7 +550,7 @@ class EpEcbService extends EpBookingService
             self::STEP_GET_POLICY_DOCUMENTS
         );
 
-        if (!$response['success']) {
+        if (! $response['success']) {
             $responseErrorCode = $response['errorCode'] ?? '-';
             $responseStatusMessage = $response['statusMessage'] ?? 'Unknown error';
             throw new Exception("GetPolicyDocuments API call failed: ($responseErrorCode) - $responseStatusMessage");
@@ -559,7 +562,7 @@ class EpEcbService extends EpBookingService
     /**
      * Download document from API endpoint
      */
-    private function makeDownloadApiCall(string $url, bool $isAuth = false, string $operation): array
+    private function makeDownloadApiCall(string $url, bool $isAuth, string $operation): array
     {
         $startTime = microtime(true);
         $statusCode = 0;
@@ -567,7 +570,7 @@ class EpEcbService extends EpBookingService
         $fileName = '';
 
         try {
-            $headers = $isAuth ? ['Authorization' => 'Bearer ' . $this->bearerToken] : [];
+            $headers = $isAuth ? ['Authorization' => 'Bearer '.$this->bearerToken] : [];
             $httpClient = Http::withHeaders($headers)->timeout($this->timeout);
             $httpResponse = $httpClient->get($url);
 
@@ -577,10 +580,10 @@ class EpEcbService extends EpBookingService
             $contentType = $httpResponse->header('Content-Type') ?? '';
             $fileName = $this->makeFileNameFromUrl($url);
 
-            if (!$httpResponse->successful() || str_contains($contentType, 'text/html')) {
-                $errorMessage = !$httpResponse->successful()
+            if (! $httpResponse->successful() || str_contains($contentType, 'text/html')) {
+                $errorMessage = ! $httpResponse->successful()
                     ? "HTTP {$statusCode}: Failed to download document"
-                    : "Document not found or server returned HTML error page";
+                    : 'Document not found or server returned HTML error page';
 
                 throw new Error($errorMessage);
             }
@@ -604,15 +607,16 @@ class EpEcbService extends EpBookingService
             $response = [
                 'success' => false,
                 'filename' => $fileName,
-                'error' => "Download failed: " . $e->getMessage(),
+                'error' => 'Download failed: '.$e->getMessage(),
                 'statusCode' => $statusCode,
-                'responseTime' => $responseTime
+                'responseTime' => $responseTime,
             ];
         } finally {
             $responseLog = collect($response)->except('content')->toArray();
 
             // Log the API call
             $this->logApiRequest($operation, [], $responseLog);
+
             return $response;
         }
     }
@@ -620,16 +624,16 @@ class EpEcbService extends EpBookingService
     /**
      * Make API call with comprehensive logging and error handling
      */
-    private function makeApiCall(string $method, string $endpoint, array $data, bool $isAuth = false, string $operation): array
+    private function makeApiCall(string $method, string $endpoint, array $data, bool $isAuth, string $operation): array
     {
-        $url = $this->baseUrl . $endpoint;
+        $url = $this->baseUrl.$endpoint;
         $startTime = microtime(true);
         $response = [];
         $httpResponse = null;
 
         try {
             $headers = ['client-code' => $this->clientCode];
-            $isAuth && $headers['Authorization'] = 'Bearer ' . $this->bearerToken;
+            $isAuth && $headers['Authorization'] = 'Bearer '.$this->bearerToken;
 
             $httpClient = Http::withHeaders($headers)
                 ->timeout($this->timeout);
@@ -658,7 +662,7 @@ class EpEcbService extends EpBookingService
                 'responseTime' => $responseTime,
                 'errorCode' => $responseData->errorCode ?? ($isSuccess ? '' : '-'),
                 'statusMessage' => $responseData->statusMessage ?? ($isSuccess ? 'Success' : 'Unknown message'),
-                'data' => $responseData
+                'data' => $responseData,
             ];
         } catch (Throwable $e) {
             $responseTime = round((microtime(true) - $startTime) * 1000, 2);
@@ -679,6 +683,7 @@ class EpEcbService extends EpBookingService
 
             // Log the API call
             $this->logApiRequest($operation, $data, $responseLog);
+
             return $response;
         }
     }
@@ -693,14 +698,14 @@ class EpEcbService extends EpBookingService
         bool $isSavedInDB = true
     ): void {
 
-        $status = !empty($responseLog['success']) ? 'passed' : 'failed';
+        $status = ! empty($responseLog['success']) ? 'passed' : 'failed';
         $basicLogs = collect($responseLog)
             ->only('success', 'statusCode', 'errorCode', 'statusMessage', 'responseTime', 'error', 'exceptionType');
 
         $logData = [
             ...$this->logExtra,
             'operation' => $operation,
-            ...$basicLogs
+            ...$basicLogs,
         ];
 
         try {
@@ -710,11 +715,11 @@ class EpEcbService extends EpBookingService
                 InsurerRequestResponse::create([
                     'quote_uuid' => $this->quote?->uuid,
                     'provider_id' => $this->context->insuranceProviderId, // You may want to set this based on your provider mapping
-                    'call_type' => "EpEcb",
+                    'call_type' => 'EpEcb',
                     'request' => json_encode($payload),
                     'response' => json_encode($responseLog['data'] ?? []),
                     'status' => $status,
-                    'execution_method' => $operation
+                    'execution_method' => $operation,
                 ]);
             }
 
@@ -724,7 +729,7 @@ class EpEcbService extends EpBookingService
         } catch (Throwable $e) {
             LoggerService::error("{$this->logPrefix} Failed to log API {$operation} request ($status)", extra: [
                 ...$logData,
-                'logging_error' => $e->getMessage()
+                'logging_error' => $e->getMessage(),
             ]);
         }
     }
@@ -736,7 +741,7 @@ class EpEcbService extends EpBookingService
     {
         // You can implement token validation logic here
         // For now, we'll assume cached tokens are valid
-        return !empty($token);
+        return ! empty($token);
     }
 
     /**
@@ -756,27 +761,28 @@ class EpEcbService extends EpBookingService
             $policyInfo = collect($data)->only('quote_policy', 'certificate_number')->toArray();
             $this->embeddedTransaction->update(['policy_status' => $status, ...$policyInfo]);
 
-            LoggerService::info($this->logPrefix . ' Transaction status updated', extra: [
-                ...$this->logExtra,
-                'policy_status' => $this->embeddedTransaction?->policy_status
-            ]);
-        } catch (Throwable $e) {
-            LoggerService::error($this->logPrefix . ' Failed to update transaction status', extra: [
+            LoggerService::info($this->logPrefix.' Transaction status updated', extra: [
                 ...$this->logExtra,
                 'policy_status' => $this->embeddedTransaction?->policy_status,
-                'error' => $e->getMessage()
+            ]);
+        } catch (Throwable $e) {
+            LoggerService::error($this->logPrefix.' Failed to update transaction status', extra: [
+                ...$this->logExtra,
+                'policy_status' => $this->embeddedTransaction?->policy_status,
+                'error' => $e->getMessage(),
             ]);
         }
     }
 
     private function executeSavePolicyDocument(string $docUrl, DocumentType $documentType): array
     {
-        $dir = 'documents/' . $documentType->folder_path;
+        $dir = 'documents/'.$documentType->folder_path;
 
         // Step: Download & Upload policy document
         $documentData = $this->executeDownloadAndUploadDocument($docUrl, $dir);
-        if (!$documentData['success']) {
+        if (! $documentData['success']) {
             $this->logApiRequest('DownloadAndUploadDocument', responseLog: ['error' => $documentData['error']], isSavedInDB: false);
+
             return ['success' => false, 'error' => $documentData['error']];
         }
 
@@ -812,19 +818,19 @@ class EpEcbService extends EpBookingService
         try {
             $this->executeGetToken();
             $downloadDocResponse = $this->makeDownloadApiCall($docUrl, true, 'DownloadPolicyDocument');
-            
+
             $fileName = $downloadDocResponse['filename'] ?? '';
             $modifiedfileName = "{$this->policyNumber}_{$fileName}.pdf";
             $fileIndentifier = empty($fileName) ? $this->extractFilename($docUrl) : $modifiedfileName;
 
-            if (!$downloadDocResponse['success'] || empty($downloadDocResponse['content'] ?? null)) {
+            if (! $downloadDocResponse['success'] || empty($downloadDocResponse['content'] ?? null)) {
                 throw new Error($downloadDocResponse['error'] ?? "DownloadPolicyDocument API call Failed, doc_identifier: {$fileIndentifier}");
             }
 
             $fileContent = $downloadDocResponse['content'];
             $response = $this->uploadDocument($modifiedfileName, $fileContent, $dir);
 
-            if (!$response['success']) {
+            if (! $response['success']) {
                 throw new Error($response['error'] ?? "UploadDocument: Process Failed, doc_identifier: {$fileIndentifier}");
             }
 
@@ -832,7 +838,7 @@ class EpEcbService extends EpBookingService
                 'success' => $response['success'],
                 'file_name' => $modifiedfileName,
                 'document_name' => $response['data']['doc_name'] ?? null,
-                'document_url' => $response['data']['doc_url'] ?? null
+                'document_url' => $response['data']['doc_url'] ?? null,
             ];
         } catch (Throwable $e) {
 
@@ -850,8 +856,8 @@ class EpEcbService extends EpBookingService
      */
     private function buildQuotePayload(): array
     {
-        if (!$this->quote) {
-            throw new Exception("Quote not found for building quote payload");
+        if (! $this->quote) {
+            throw new Exception('Quote not found for building quote payload');
         }
 
         $productInfo = $this->getProductInfo(self::STEP_GET_QUOTE);
@@ -859,12 +865,12 @@ class EpEcbService extends EpBookingService
         $vehicleInfo = $this->getVehicleInfo(self::STEP_GET_QUOTE);
 
         return [
-            'client_reference_number' => "",
+            'client_reference_number' => '',
             'transaction_country' => $this->transactionCountry,
             'transaction_currency' => $this->transactionCurrency,
             'product_info' => $productInfo,
             'customer_info' => $customerInfo,
-            'vehicle_info' => $vehicleInfo
+            'vehicle_info' => $vehicleInfo,
         ];
     }
 
@@ -873,12 +879,12 @@ class EpEcbService extends EpBookingService
      */
     private function buildPolicyFromQuotePayload(): array
     {
-        if (!$this->quote) {
-            throw new Exception("Quote not found for building policy payload");
+        if (! $this->quote) {
+            throw new Exception('Quote not found for building policy payload');
         }
 
-        if (!$this->embeddedTransaction) {
-            throw new Exception("EmbeddedTransaction not found for building policy payload");
+        if (! $this->embeddedTransaction) {
+            throw new Exception('EmbeddedTransaction not found for building policy payload');
         }
 
         $salesInfo = $this->getSalesInfo(self::STEP_CREATE_POLICY_FROM_QUOTE);
@@ -898,7 +904,7 @@ class EpEcbService extends EpBookingService
             'customer_info' => $customerInfo,
             'vehicle_info' => $vehicleInfo,
             'motor_insurance_info' => $motorInsuranceInfo,
-            'document_info' => $mulkiyaDocuments
+            'document_info' => $mulkiyaDocuments,
         ];
     }
 
@@ -922,7 +928,7 @@ class EpEcbService extends EpBookingService
             'vehicle_info' => $vehicleInfo,
             'customer_info' => $customerInfo,
             'motor_insurance_info' => $motorInsuranceInfo,
-            'document_info' => $mulkiyaDocuments
+            'document_info' => $mulkiyaDocuments,
         ];
     }
 
@@ -934,8 +940,8 @@ class EpEcbService extends EpBookingService
         $emirateIdNumber = str_replace('-', '', $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '');
 
         if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
-            $emirateIdNumber = substr($emirateIdNumber, 0, 3) . '-' . substr($emirateIdNumber, 3, 4)
-                . '-' . substr($emirateIdNumber, 7, 7) . '-' . substr($emirateIdNumber, 14, 1);
+            $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
+                .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
         }
 
         return $emirateIdNumber;
@@ -943,20 +949,21 @@ class EpEcbService extends EpBookingService
 
     private function getMulkiyaDocuments(): array
     {
-        $storageBaseUrl = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        $storageBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         $mulkiyaDocuments = $this->quote->documents()->where('document_type_code', QuoteDocumentsEnum::CAR_MULKIY)
             ->select('document_type_code as document_type', 'doc_name as document_name', 'doc_url')
             ->get()
             ->map(function ($document) use ($storageBaseUrl) {
                 // Add storage base URL prefix if doc_url is not empty
-                if (!empty($document->doc_url)) {
-                    $document->document_url = $storageBaseUrl . $document->doc_url;
+                if (! empty($document->doc_url)) {
+                    $document->document_url = $storageBaseUrl.$document->doc_url;
                 } else {
                     $document->document_url = '';
                 }
                 // Remove the original doc_url field
                 unset($document->doc_url);
+
                 return $document;
             });
 
@@ -973,7 +980,7 @@ class EpEcbService extends EpBookingService
             'customer_mobile_no' => null,
             'customer_whatsapp_no' => null,
             'customer_email_id' => null,
-            'customer_id_type' => "EID",
+            'customer_id_type' => 'EID',
             'customer_id_no' => $emirateIdNumber,
             'customer_id_expiry_date' => null,
             'customer_address' => null,
@@ -985,7 +992,7 @@ class EpEcbService extends EpBookingService
             'co_buyer_email_id' => null,
             'co_buyer_id_type' => null,
             'co_buyer_id_no' => null,
-            'co_buyer_id_expiry_date' => null
+            'co_buyer_id_expiry_date' => null,
         ];
 
         return match ($step) {
@@ -1001,7 +1008,7 @@ class EpEcbService extends EpBookingService
         $productDetails = [
             'policy_product' => $this->policyProduct,
             'policy_coverage_type' => $this->policyProduct,
-            'policy_plan_type' => 'EXW-STANDARD'
+            'policy_plan_type' => 'EXW-STANDARD',
         ];
 
         return match ($step) {
@@ -1017,7 +1024,7 @@ class EpEcbService extends EpBookingService
             'policy_sold_date' => $this->formatDate(now()),
             'policy_sold_location' => null,
             'policy_sold_salesman' => null,
-            'policy_currency' => $this->transactionCurrency
+            'policy_currency' => $this->transactionCurrency,
         ];
 
         return match ($step) {
@@ -1033,13 +1040,13 @@ class EpEcbService extends EpBookingService
         $policyEndDate = $this->formatDate($this->quote->policy_expiry_date ?? '');
 
         return [
-            'mi_policy_number' => "NA",
+            'mi_policy_number' => 'NA',
             'mi_policy_issuer' => $this->quote?->insuranceProviderDetails?->ecb_insurer_id,
             'mi_start_date' => $policyStartDate,
             'mi_end_date' => $policyEndDate,
-            'mi_coverage_area' => "NA", // "UAE & OMAN",
+            'mi_coverage_area' => 'NA', // "UAE & OMAN",
             'mi_sum_insured' => $this->quote?->car_value,
-            'mi_policy_excess' => $this->quote?->carQuotePlanDetail?->excess ?: 0
+            'mi_policy_excess' => $this->quote?->carQuotePlanDetail?->excess ?: 0,
         ];
     }
 
@@ -1090,7 +1097,7 @@ class EpEcbService extends EpBookingService
             'vehicle_mw_start_km',
             'vehicle_mw_end_km',
             'vehicle_pwi_date',
-            'vehicle_pwi_km'
+            'vehicle_pwi_km',
         ];
         $policyWithoutQuoteFields = [
             'vehicle_type',
@@ -1130,7 +1137,7 @@ class EpEcbService extends EpBookingService
     private function getVehicleDetails(): array
     {
         $vehicleFirstRegnDate = $this->quote?->year_of_first_registration;
-        $vehicleFirstRegnDate = $this->formatDate(!empty($vehicleFirstRegnDate) ? $vehicleFirstRegnDate . '-01-01' : '');
+        $vehicleFirstRegnDate = $this->formatDate(! empty($vehicleFirstRegnDate) ? $vehicleFirstRegnDate.'-01-01' : '');
 
         return [
             // Only for CreatePolicyFromQuote, CreatePolicyWithoutQuote
@@ -1190,6 +1197,6 @@ class EpEcbService extends EpBookingService
 
     public function formatDate(string $date): ?string
     {
-        return !empty($date) ? date('Y-m-d', strtotime($date)) : null;
+        return ! empty($date) ? date('Y-m-d', strtotime($date)) : null;
     }
 }

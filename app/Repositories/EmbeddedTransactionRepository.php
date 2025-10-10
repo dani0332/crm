@@ -27,7 +27,7 @@ class EmbeddedTransactionRepository extends BaseRepository
     {
         $shortCodes = [...EmbeddedProductEnum::getSukoonMedexCodes(), EmbeddedProductEnum::ECB];
 
-        return $this->with('product:id,embedded_product_id','product.embeddedProduct:id,short_code')
+        return $this->with('product:id,embedded_product_id', 'product.embeddedProduct:id,short_code')
             ->select('id', 'quote_type_id', 'quote_request_id', 'is_selected', 'payment_status_id', 'product_id', 'policy_status')
             ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteId, 'is_selected' => true])
             ->whereHas('product.embeddedProduct', fn ($q) => $q->whereIn('short_code', $shortCodes))

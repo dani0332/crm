@@ -370,12 +370,12 @@ class SukoonMedexService
             };
 
         } else {
-            $underProcessEpDetails = $underProcessEpTransactions->map(function ($item) { 
+            $underProcessEpDetails = $underProcessEpTransactions->map(function ($item) {
                 return [
                     'et_id' => $item->id,
-                    'short_code' => $item->product->embeddedProduct->short_code ?? '', 
-                    'payment_status_id' => $item->payment_status_id ?? '', 
-                    'policy_status' => $item->policy_status ?? ''
+                    'short_code' => $item->product->embeddedProduct->short_code ?? '',
+                    'payment_status_id' => $item->payment_status_id ?? '',
+                    'policy_status' => $item->policy_status ?? '',
                 ];
             });
             LoggerService::info("{$this->logPrefix} Under process EP transactions found: ", extra: ['underProcessEpDetails' => $underProcessEpDetails]);

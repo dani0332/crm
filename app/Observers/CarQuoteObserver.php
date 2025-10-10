@@ -163,34 +163,37 @@ class CarQuoteObserver
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
-        
-        if(isset($dirty['car_make_id']) || isset($dirty['car_model_id']) || isset($dirty['registration_type']) || isset($dirty['vehicle_use']) || isset($dirty['is_modified'])) {
+
+        if (isset($dirty['car_make_id']) || isset($dirty['car_model_id']) || isset($dirty['registration_type']) || isset($dirty['vehicle_use']) || isset($dirty['is_modified'])) {
             $reason = [];
             $embeddedProductRepo = app(EmbeddedProductRepository::class);
             if ($embeddedProductRepo->checkIsEpEcbPaymentAuthorisedOrCaptured($lead->id)) {
-                if(isset($dirty['car_make_id'])) {
-                    if($embeddedProductRepo->checkIsCarMakeExcludedEcbVehicle($lead->car_make_id))
-                        $reason[] = "due to change of CarMake, matched with excluded ECB vehicle";
+                if (isset($dirty['car_make_id'])) {
+                    if ($embeddedProductRepo->checkIsCarMakeExcludedEcbVehicle($lead->car_make_id)) {
+                        $reason[] = 'due to change of CarMake, matched with excluded ECB vehicle';
+                    }
                 }
-                if(isset($dirty['car_model_id'])) {
-                    if($embeddedProductRepo->checkIsCarModelExcludedEcbVehicle($lead->car_model_id))
-                       $reason[] = "due to change of CarModel, matched with excluded ECB vehicle";
+                if (isset($dirty['car_model_id'])) {
+                    if ($embeddedProductRepo->checkIsCarModelExcludedEcbVehicle($lead->car_model_id)) {
+                        $reason[] = 'due to change of CarModel, matched with excluded ECB vehicle';
+                    }
                 }
-                if(isset($dirty['registration_type']) || isset($dirty['vehicle_use'])) {
-                    if($lead->vehicle_use == CarVehicleUse::COMMERCIAL)
+                if (isset($dirty['registration_type']) || isset($dirty['vehicle_use'])) {
+                    if ($lead->vehicle_use == CarVehicleUse::COMMERCIAL) {
                         $reason[] = "due to change of RegistrationType or VehicleUse: {$lead->vehicle_use}";
+                    }
                 }
-                if(isset($dirty['is_modified']) && $lead->is_modified == true) {
+                if (isset($dirty['is_modified']) && $lead->is_modified == true) {
                     $reason[] = "due to change of IsModified to {$lead->is_modified}";
                 }
 
-                if(!empty($reason)) {
+                if (! empty($reason)) {
                     $reason = implode(' & ', $reason);
                     $extraLog = ['cancel_payment_reason' => $reason, 'quote_id' => $lead->id, 'quote_type_id' => QuoteTypeId::Car, 'uuid' => $lead->uuid];
 
                     try {
                         $response = $embeddedProductRepo->processEpEcbCancelPayment($lead, QuoteTypeId::Car, $reason);
-                        if(!$response['success']) {
+                        if (! $response['success']) {
                             throw new \Exception($response['message'] ?? 'Failed to cancel payment for Embedded Product (ECB)');
                         }
 

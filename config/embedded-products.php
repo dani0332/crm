@@ -24,14 +24,14 @@ return [
                 'to' => [],
                 'cc' => ['nidhi.kaushal@myalfred.com', 'tasawar.hussain@myalfred.com'],
                 'bcc' => ['newleadpool@insurancemarket.ae'],
-            ]
+            ],
         ],
         'non_prod' => [
             'recipient_emails' => [
                 'to' => [],
                 'cc' => ['nidhi.kaushal@myalfred.com', 'tasawar.hussain@myalfred.com'],
                 'bcc' => ['newleadpool@insurancemarket.ae'],
-            ]
+            ],
         ],
         'policy_context' => [
             'policy_claim_limit' => 'One claim per policy term.',

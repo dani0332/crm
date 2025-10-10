@@ -12,7 +12,6 @@ class EpBookingContext implements Arrayable
     public string $quoteCode;
     public string $epShortCode;
     public int $insuranceProviderId;
-
     public array $logExtra;
 
     public function __construct(int $etId, string $quoteId, int $quoteTypeId, string $quoteCode, string $epShortCode, int $insuranceProviderId)
@@ -30,7 +29,7 @@ class EpBookingContext implements Arrayable
             'quoteTypeId' => $quoteTypeId,
             'quoteCode' => $quoteCode,
             'epShortCode' => $epShortCode,
-            'insuranceProviderId' => $insuranceProviderId
+            'insuranceProviderId' => $insuranceProviderId,
         ];
     }
 
