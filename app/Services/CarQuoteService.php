@@ -35,7 +35,6 @@ use App\Models\Tier;
 use App\Models\UserTeams;
 use App\Models\VehicleChassisDetail;
 use App\Services\Logger\LoggerService;
-use App\Services\CapiService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -148,14 +147,14 @@ class CarQuoteService extends BaseService
             // Add chassis number details
             $carMake = CarMake::find($request->car_make_id);
             $carModel = CarModel::find($request->car_model_id);
-            $carMakeAndModel = trim(($carMake ? $carMake->text : '') . ' ' . ($carModel ? $carModel->text : ''));
+            $carMakeAndModel = trim(($carMake ? $carMake->text : '').' '.($carModel ? $carModel->text : ''));
 
             $data = [
                 'chassis_number' => $request->chassis_number,
                 'vehicle_make_model' => $carMakeAndModel,
                 'cylinder' => $request->cylinder,
                 'seating_capacity' => $request->seat_capacity,
-                'vehicle_trim' => $request->trim
+                'vehicle_trim' => $request->trim,
             ];
 
             $this->saveVehicleChassisDetails($response->quoteUID, $data);
@@ -322,7 +321,7 @@ class CarQuoteService extends BaseService
 
         if ($deleteValuationResponse) {
             $carQuote->save();
-           
+
             // Check if OCR is enabled
             $isOCREnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_ENABLED, useCache: true) == '1';
             if ($isOCREnabled) {
@@ -334,7 +333,7 @@ class CarQuoteService extends BaseService
                 ];
 
                 LoggerService::info('Capi service request data', extra: $requestData);
-                $response = $this->capiService->request('/api/customer/documents-verify', 'PUT', $requestData); 
+                $response = $this->capiService->request('/api/customer/documents-verify', 'PUT', $requestData);
                 LoggerService::info('Capi service response', extra: [
                     'response' => $response,
                 ]);
