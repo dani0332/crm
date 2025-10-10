@@ -47,5 +47,4 @@ final class EpEcbExcludeVehicleEnum extends Enum
         self::MODEL_LAFERRARI_APERTA,
         self::MODEL_BENTLEY,
     ];
-8
 }
