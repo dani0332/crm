@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\QuoteTypes;
-use App\Enums\EmbeddedProductEnum;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
 use App\Factories\SagePayloadFactory;
@@ -113,7 +113,7 @@ class SageApiEmbeddedProductService
 
     public function getInsurerRequestResponse($quote, $epShortCode, $insuranceProviderId = null)
     {
-        return match($epShortCode) {
+        return match ($epShortCode) {
             EmbeddedProductEnum::ECB => self::getInsurerRequestResponseForECB($quote, $insuranceProviderId),
             default => self::getInsurerRequestResponseForSukoonMedXRedx($quote, $insuranceProviderId),
         };
@@ -126,6 +126,7 @@ class SageApiEmbeddedProductService
         })->where([
             'quote_uuid' => $quote->uuid, 'status' => 'passed', 'execution_method' => 'GetPolicyDocuments',  'call_type' => 'EpEcb',
         ])->latest()->first();
+
         return $insurerRequestResponse;
     }
 
@@ -151,7 +152,7 @@ class SageApiEmbeddedProductService
         $createEPARPayload = json_decode($createARInvoiceForEPLog->sage_payload, true);
         $sageRequest->customerId = $createEPARPayload['Invoices'][0]['CustomerNumber'];
 
-        $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse , $epShortCode);
+        $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
         $quoteTypeId = $sageRequest->quoteTypeId;
 
         $sageLogArray = $sendUpdateLog->sageApiLogs->keyBy('step')->toArray();
@@ -1055,7 +1056,7 @@ class SageApiEmbeddedProductService
 
     public static function createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode = null)
     {
-        return match($epShortCode) {
+        return match ($epShortCode) {
             EmbeddedProductEnum::ECB => self::createEmbeddedProductPayloadForECB($embeddedProductTransaction, $insurerRequestResponse),
             default => self::createEmbeddedProductPayloadSukoonMedXRedx($embeddedProductTransaction, $insurerRequestResponse),
         };

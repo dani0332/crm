@@ -118,6 +118,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTravelEnquiryEmail();
         $this->seedOcrSendUpdateLogFlag();
         $this->seedProductionApprovalEmails();
+        $this->seedAutoCaptureEPPayments();
         $this->seedSla();
     }
 
@@ -244,7 +245,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL],
             [
-                'value' => "https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f25be3f7-9382-426d-aa90-9f9aaa1825dd/invoke-sync",
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f25be3f7-9382-426d-aa90-9f9aaa1825dd/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -734,6 +735,30 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 15,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+    }
+
+    private function seedAutoCaptureEPPayments()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_AUTO_CAPTURE_EP_PAYMENTS],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AUTO_CAPTURE_EP_PAYMENTS_BOOKING_DAYS],
+            [
+                'value' => 7,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
     }

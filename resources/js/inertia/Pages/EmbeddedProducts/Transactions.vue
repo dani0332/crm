@@ -58,7 +58,7 @@ const tableHeader = [
   { text: 'Make', value: 'make' },
   { text: 'Model', value: 'model' },
   { text: 'Chassis Number', value: 'chassis_number' },
-  { text: 'Excess Amount', value: 'excess_amount' }
+  { text: 'Excess Amount', value: 'excess_amount' },
 ];
 
 function resetFilters() {
@@ -379,7 +379,14 @@ watch(
           }
 
           if (embeddedProduct.detail.short_code === ep_enums.ECB) {
-            let excludeHeaders = ['advisor_name', 'dob', 'age', 'passport_number', 'nationality', 'vehicle'];
+            let excludeHeaders = [
+              'advisor_name',
+              'dob',
+              'age',
+              'passport_number',
+              'nationality',
+              'vehicle',
+            ];
             return !excludeHeaders.includes(header.value);
           }
 

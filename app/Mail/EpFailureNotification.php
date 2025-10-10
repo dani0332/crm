@@ -13,15 +13,13 @@ use Illuminate\Queue\SerializesModels;
 
 class EpFailureNotification extends Mailable
 {
-    use Queueable, SerializesModels, GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, Queueable, SerializesModels;
 
     private int $quoteId;
     private int $quoteTypeId;
     private int $etId;
     private mixed $quoteObject = null;
-    
     private string $logPrefix = 'EpFailureNotification - Mail:';
-
 
     /**
      * Create a new message instance.
@@ -46,11 +44,11 @@ class EpFailureNotification extends Mailable
             'etId' => $this->etId,
         ]);
 
-        $ep = EmbeddedProduct::whereHas('prices.transactions', fn($q) => $q->where('id', $this->etId))->first();
+        $ep = EmbeddedProduct::whereHas('prices.transactions', fn ($q) => $q->where('id', $this->etId))->first();
         $epProductName = $ep->product_name ?? 'Unknown';
 
         $isProd = app()->environment('production');
-        
+
         // Get quote object first
         $quoteType = QuoteTypes::getName($this->quoteTypeId)->value;
         $this->quoteObject = $this->getQuoteObject($quoteType, $this->quoteId);
@@ -76,7 +74,7 @@ class EpFailureNotification extends Mailable
                 ->view('email.ep-booking-job-failed', [
                     'refId' => $refId,
                     'imcrmLink' => $imcrmLink,
-                    'epProductName' => $epProductName
+                    'epProductName' => $epProductName,
                 ]);
         } else {
             // Non-prod environment configuration (test, uat, staging)
@@ -88,7 +86,7 @@ class EpFailureNotification extends Mailable
                 ->view('email.ep-booking-job-failed', [
                     'refId' => $refId,
                     'imcrmLink' => $imcrmLink,
-                    'epProductName' => $epProductName
+                    'epProductName' => $epProductName,
                 ]);
         }
     }
@@ -114,6 +112,5 @@ class EpFailureNotification extends Mailable
 
         return $imcrmLink;
     }
-
 
 }

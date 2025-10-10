@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -29,9 +28,7 @@ class EpBookingService extends BaseService
     protected string $className = 'EpBookingService:';
     protected string $logPrefix = '';
     protected array $logExtra = [];
-
     public int $providerId = 0;
-
     public mixed $quote = null;
     public ?EmbeddedTransaction $embeddedTransaction = null;
     public array $reqDocTypeCodes = [];
@@ -58,7 +55,7 @@ class EpBookingService extends BaseService
 
     public static function buildContext(int $etId, string $quoteId, int $quoteTypeId, string $quoteCode)
     {
-        $ep = EmbeddedProduct::whereHas('prices.transactions', fn($q) => $q->where('id', $etId))->first();
+        $ep = EmbeddedProduct::whereHas('prices.transactions', fn ($q) => $q->where('id', $etId))->first();
 
         $epBookingContext = new EpBookingContext(
             etId: (int) $etId,
@@ -79,7 +76,7 @@ class EpBookingService extends BaseService
 
         LoggerService::info("{$this->className} Starting processWatermarkDocuments", extra: [
             'documentTypeCodes' => $documentTypes->pluck('code')->toArray(),
-            'documentItems' => $documents->select('is_watermarked', 'document_type_code')->toArray()
+            'documentItems' => $documents->select('is_watermarked', 'document_type_code')->toArray(),
         ]);
 
         $watermarkedDocuments = [];
@@ -92,19 +89,22 @@ class EpBookingService extends BaseService
                 // skip iteration when document_type_code is not from initial document types
                 if (! in_array($documentItem->document_type_code, $watermarkableDocTypeCodes)) {
                     $watermarkedStatus['skipped'][] = "{$documentItem->document_type_code} is not watermarkable";
+
                     continue;
                 }
 
                 // skip iteration when document is already watermarked
                 if ($documentItem->is_watermarked) {
                     $watermarkedStatus['skipped'][] = "{$documentItem->document_type_code} is already watermarked";
+
                     continue;
                 }
 
                 $documentType = $documentTypes->firstWhere('code', $documentItem->document_type_code);
 
-                if (!$documentType) {
+                if (! $documentType) {
                     $watermarkedStatus['skipped'][] = "{$documentItem->document_type_code} document_type is not found";
+
                     continue;
                 }
 
@@ -115,6 +115,7 @@ class EpBookingService extends BaseService
                     $message = $savedWatermarkedDocument['message'] ?? 'watermarked';
                     $watermarkedStatus['created'][] = "{$documentItem->document_type_code} {$message}";
                     $extraLog = [...$extraLog, ...$savedWatermarkedDocument['extraLog']];
+
                     continue;
                 }
 
@@ -143,7 +144,7 @@ class EpBookingService extends BaseService
         try {
             // Check if the file is already being processed
             if ($this->isFileBeingProcessed($lockKey)) {
-                throw new Error("File is already being processed. Retrying later");
+                throw new Error('File is already being processed. Retrying later');
             }
 
             // Check if the source file exists
@@ -176,7 +177,7 @@ class EpBookingService extends BaseService
                 'success' => true,
                 'data' => $quoteDocument,
                 'message' => 'Watermarked document successfully',
-                'extraLog' => $extraLog
+                'extraLog' => $extraLog,
             ];
 
         } catch (\Exception $e) {
@@ -184,7 +185,7 @@ class EpBookingService extends BaseService
                 'success' => false,
                 'data' => null,
                 'error' => $e->getMessage(),
-                'extraLog' => $extraLog
+                'extraLog' => $extraLog,
             ];
         }
     }
@@ -207,10 +208,10 @@ class EpBookingService extends BaseService
             dispatch(new EpSendDocumentJob($this->context));
         }
 
-        LoggerService::info($this->logPrefix . ' Transaction status updated', extra: [
+        LoggerService::info($this->logPrefix.' Transaction status updated', extra: [
             ...$this->logExtra,
             'policy_status' => $this->embeddedTransaction?->policy_status,
-            'missing_watermarable_doc_type_codes' => $missingWatermarableDocTypeCodes
+            'missing_watermarable_doc_type_codes' => $missingWatermarableDocTypeCodes,
         ]);
     }
 
@@ -235,12 +236,12 @@ class EpBookingService extends BaseService
             };
 
         } else {
-            $underProcessEpDetails = $underProcessEpTransactions->map(function ($item) { 
+            $underProcessEpDetails = $underProcessEpTransactions->map(function ($item) {
                 return [
                     'et_id' => $item->id,
-                    'short_code' => $item->product->embeddedProduct->short_code ?? '', 
-                    'payment_status_id' => $item->payment_status_id ?? '', 
-                    'policy_status' => $item->policy_status ?? ''
+                    'short_code' => $item->product->embeddedProduct->short_code ?? '',
+                    'payment_status_id' => $item->payment_status_id ?? '',
+                    'policy_status' => $item->policy_status ?? '',
                 ];
             });
             LoggerService::info("{$this->logPrefix} Under process EP transactions found: ", extra: ['underProcessEpDetails' => $underProcessEpDetails]);
@@ -295,7 +296,7 @@ class EpBookingService extends BaseService
     {
         return [
             QuoteDocumentsEnum::POLICY_SCHEDULE,
-            QuoteDocumentsEnum::CAR_TAX_INVOICE
+            QuoteDocumentsEnum::CAR_TAX_INVOICE,
         ];
     }
 
@@ -304,7 +305,7 @@ class EpBookingService extends BaseService
         return [
             QuoteDocumentsEnum::POLICY_SCHEDULE,
             QuoteDocumentsEnum::CAR_TAX_INVOICE,
-            QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER
+            QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER,
         ];
     }
 
@@ -335,7 +336,7 @@ class EpBookingService extends BaseService
     protected function makeFileNameFromUrl(string $url): string
     {
         $extractedFileName = str_replace('get', '', strtolower($this->extractFilename($url)));
-        if($this->getDocTypeFromUrl($url) == '2') {
+        if ($this->getDocTypeFromUrl($url) == '2') {
             $extractedFileName .= '_raise_by_buyer';
         }
 
@@ -353,6 +354,7 @@ class EpBookingService extends BaseService
     private function getDocTypeFromUrl(string $url): ?string
     {
         parse_str(parse_url($url, PHP_URL_QUERY) ?: '', $params);
+
         return $params['DOCTYPE'] ?? null;
     }
 
@@ -376,7 +378,7 @@ class EpBookingService extends BaseService
 
             return false;
         } catch (\Exception $e) {
-            LoggerService::error("{$this->className} Error checking file existence: {$path}. Error: " . $e->getMessage());
+            LoggerService::error("{$this->className} Error checking file existence: {$path}. Error: ".$e->getMessage());
 
             return false;
         }
@@ -386,12 +388,13 @@ class EpBookingService extends BaseService
      * Upload policy document.
      *
      * $response = $this->uploadDocument($fileName, $fileContent, $dir);
+     *
      * @return string The generated UUID.
      */
     protected function uploadDocument($docName, $fileContent, $dir): array
     {
         try {
-            $fileNameAzure = uniqid() . "_{$docName}";
+            $fileNameAzure = uniqid()."_{$docName}";
             $docUrl = "{$dir}/{$fileNameAzure}";
             $isSuccess = Storage::disk('azureIM')->put($docUrl, $fileContent);
 
@@ -403,14 +406,14 @@ class EpBookingService extends BaseService
                 'success' => $isSuccess,
                 'statusCode' => 200,
                 'statusMessage' => 'Success',
-                'data' => ['doc_name' => $docName, 'doc_url' => $docUrl]
+                'data' => ['doc_name' => $docName, 'doc_url' => $docUrl],
             ];
         } catch (Throwable $e) {
 
             return [
                 'success' => false,
                 'statusCode' => 402,
-                'error' => "UploadDocument: " . $e->getMessage(),
+                'error' => 'UploadDocument: '.$e->getMessage(),
             ];
         }
     }

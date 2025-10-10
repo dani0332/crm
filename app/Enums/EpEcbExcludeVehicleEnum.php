@@ -3,7 +3,6 @@
 namespace App\Enums;
 
 use BenSampo\Enum\Enum;
-use ReflectionClass;
 
 final class EpEcbExcludeVehicleEnum extends Enum
 {
@@ -25,7 +24,6 @@ final class EpEcbExcludeVehicleEnum extends Enum
     public const MODEL_LAFERRARI_APERTA = 10304643;
     public const MODEL_BENTLEY = 10300295;
 
-
     // CarMake Codes
     public const CAR_MAKE_CODES = [
         self::MAKE_LAMBORGHINI,
@@ -33,7 +31,7 @@ final class EpEcbExcludeVehicleEnum extends Enum
         self::MAKE_FERRARI,
         self::MAKE_ROLLS_ROYCE,
         self::MAKE_BENTLEY,
-        self::MAKE_KOENIGSEGG
+        self::MAKE_KOENIGSEGG,
     ];
 
     // CarModel Codes
@@ -47,5 +45,4 @@ final class EpEcbExcludeVehicleEnum extends Enum
         self::MODEL_LAFERRARI_APERTA,
         self::MODEL_BENTLEY,
     ];
-8
 }

@@ -49,7 +49,7 @@ class ECB extends EmbeddedProduct
             $certificate->make,
             $certificate->model,
             $certificate->chassis_number,
-            $certificate->excess_amount
+            $certificate->excess_amount,
         ];
     }
 
@@ -181,6 +181,7 @@ class ECB extends EmbeddedProduct
             $item->payment_date = isset($item->captured_at) ? Carbon::parse($item->captured_at)->format($dateFormat) : '';
             $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
             $item->status = $status;
+
             return $item;
         });
 
