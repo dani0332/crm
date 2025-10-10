@@ -294,7 +294,7 @@ onMounted(() => {
               class="space-y-4"
             >
               <!-- Contents Value Section -->
-              <div class="border-b pb-4">
+              <div class="pb-4">
                 <h5 class="text-sm font-medium text-gray-700 mb-3">
                   Contents Value
                 </h5>
@@ -345,7 +345,7 @@ onMounted(() => {
               </div>
 
               <!-- Building Value Section -->
-              <div class="border-b pb-4">
+              <div class="pb-4">
                 <h5 class="text-sm font-medium text-gray-700 mb-3">
                   Building Value
                 </h5>
