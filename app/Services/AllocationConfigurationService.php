@@ -17,50 +17,34 @@ class AllocationConfigurationService
 {
     private function resolveConfig(QuoteTypes $quoteType, array $data): array
     {
-        if ($quoteType === QuoteTypes::SAVINGS) {
-            return [
+        return match ($quoteType) {
+            QuoteTypes::SAVINGS => [
                 'lumpsum_brackets' => $data['lumpsum_brackets'] ?? [],
                 'regular_brackets' => $data['regular_brackets'] ?? [],
-            ];
-        }
-
-        if ($quoteType === QuoteTypes::HOME) {
-            return [
+            ],
+            QuoteTypes::HOME => [
                 'value_brackets' => $data['value_brackets'] ?? [],
                 'volume_brackets' => $data['volume_brackets'] ?? [],
-            ];
-        }
-
-        if ($quoteType === QuoteTypes::LIFE) {
-            return [
+            ],
+            QuoteTypes::LIFE => [
                 'type1_brackets' => $data['type1_brackets'] ?? [],
                 'type2_brackets' => $data['type2_brackets'] ?? [],
                 'type3_brackets' => $data['type3_brackets'] ?? [],
                 'type4_brackets' => $data['type4_brackets'] ?? [],
-            ];
-        }
-
-        if ($quoteType === QuoteTypes::PET || $quoteType === QuoteTypes::YACHT || $quoteType === QuoteTypes::CYCLE) {
-            return [
+            ],
+            QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE => [
                 'brackets' => $data['brackets'] ?? [],
-            ];
-        }
-
-        if ($quoteType === QuoteTypes::CORPLINE) {
-            return [
+            ],
+            QuoteTypes::CORPLINE => [
                 'value_brackets' => $data['value_brackets'] ?? [],
                 'volume_brackets' => $data['volume_brackets'] ?? [],
-            ];
-        }
-
-        if ($quoteType === QuoteTypes::GROUP_MEDICAL) {
-            return [
+            ],
+            QuoteTypes::GROUP_MEDICAL => [
                 'micro_brackets' => $data['micro_brackets'] ?? [],
                 'non_micro_brackets' => $data['non_micro_brackets'] ?? [],
-            ];
-        }
-
-        return [];
+            ],
+            default => [],
+        };
     }
 
     public function createConfiguration(QuoteTypes $quoteType, array $data, int $userId): AllocationConfiguration
