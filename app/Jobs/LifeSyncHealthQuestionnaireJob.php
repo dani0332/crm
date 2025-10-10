@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Services\Logger\LoggerService;
 use App\Services\MetLife\MetLifeApiService;
 use Exception;
@@ -10,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\Middleware\Skip;
 
 class LifeSyncHealthQuestionnaireJob implements ShouldQueue
 {
@@ -53,5 +55,14 @@ class LifeSyncHealthQuestionnaireJob implements ShouldQueue
         LoggerService::error('LifeSyncHealthQuestionnaireJob failed for quote_uuid: '.($this->requestData['quote_uuid'] ?? 'N/A'), [
             'error' => $exception->getMessage(),
         ]);
+    }
+
+    public function middleware()
+    {
+        $isMetLifeEnabled = getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_METLIFE, useCache: true) == '1';
+
+        return [
+            Skip::unless(fn () => $isMetLifeEnabled),
+        ];
     }
 }
