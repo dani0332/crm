@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Strategies\Validation;
 
 use App\Contracts\AllocationValidationStrategyInterface;
+use App\Enums\QuoteTypes;
 use App\Models\Nationality;
 use App\Models\User;
 use App\Traits\ValidatesBracketStructure;
@@ -15,9 +16,14 @@ class SimpleAllocationValidationStrategy implements AllocationValidationStrategy
 {
     use ValidatesBracketStructure;
 
+    private readonly string $lobName;
+
+
     public function __construct(
-        private readonly string $lobName = 'Simple'
-    ) {}
+        private readonly QuoteTypes $quoetType
+    ) {
+        $this->lobName = $this->quoetType->value;
+    }
 
     public function getRules(): array
     {
