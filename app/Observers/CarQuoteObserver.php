@@ -13,7 +13,7 @@ use App\Events\LeadStatusUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
-use App\Jobs\MAWelcomeJob;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendFailedPaymentEmailJob;
 use App\Models\CarQuote;
 use App\Repositories\EmbeddedProductRepository;
@@ -135,7 +135,7 @@ class CarQuoteObserver
         ) {
             LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Car, 'quoteUID' => $lead->uuid]);
-            MAWelcomeJob::dispatch(
+            ExtendCustomerSubscriptionViaSQS::dispatch(
                 $lead->customer,
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'

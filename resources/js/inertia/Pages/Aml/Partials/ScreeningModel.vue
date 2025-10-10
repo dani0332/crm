@@ -194,7 +194,7 @@ const customerTypeOptions = computed(() => {
 });
 
 const screeningFormDetails = useForm({
-  customer_type: null,
+  customer_type: page.props.insuredDetails?.insured?.customer_type ?? null,
   customer_id: quoteRequest.customer_id,
   quote_type: page.props.quoteType.code,
   // Individual Type
@@ -242,6 +242,12 @@ const modalHeaderMessage = () => {
     [customerTypeEnum.Individual, null].includes(
       screeningFormDetails.customer_type,
     )
+  ) {
+    headerMessage.value =
+      'Please confirm the Name, Nationality, and Date of Birth of the insured person(s) as per the Emirates ID';
+  } else if (
+    page.props.quoteType.code == page.props.quoteTypeCodeEnum.Business &&
+    screeningFormDetails.customer_type == customerTypeEnum.Individual
   ) {
     headerMessage.value =
       'Please confirm the Name, Nationality, and Date of Birth of the insured person(s) as per the Emirates ID';
