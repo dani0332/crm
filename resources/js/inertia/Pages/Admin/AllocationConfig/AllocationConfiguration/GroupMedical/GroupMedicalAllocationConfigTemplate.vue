@@ -201,7 +201,7 @@ defineExpose({
 <template>
   <div class="space-y-6">
     <GroupMedicalBracketModule
-      title="Micro Bracket"
+      title="Micro"
       type="Micro"
       :brackets="microBrackets"
       :advisor-options="advisorOptions"
@@ -214,7 +214,7 @@ defineExpose({
     />
 
     <GroupMedicalBracketModule
-      title="Non-Micro Bracket"
+      title="Non-Micro"
       type="Non-Micro"
       :brackets="nonMicroBrackets"
       :advisor-options="advisorOptions"

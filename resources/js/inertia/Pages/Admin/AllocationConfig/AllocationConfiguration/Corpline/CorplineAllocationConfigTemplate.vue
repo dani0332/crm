@@ -177,7 +177,7 @@ defineExpose({
 <template>
   <div class="space-y-6">
     <CorplineBracketModule
-      title="Value Bracket"
+      title="Value"
       type="Value"
       :brackets="valueBrackets"
       :advisor-options="advisorOptions"
@@ -190,7 +190,7 @@ defineExpose({
     />
 
     <CorplineBracketModule
-      title="Volume Bracket"
+      title="Volume"
       type="Volume"
       :brackets="volumeBrackets"
       :advisor-options="advisorOptions"
