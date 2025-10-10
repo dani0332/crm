@@ -375,6 +375,12 @@ class LookupSeeder extends Seeder
                     ],
                 ],
             ],
+            [
+                'text' => 'ECOM Lead Extension',
+                'code' => 'ecom-lead-extension',
+                'description' => null,
+                'children' => [],
+            ],
         ];
 
         foreach ($referralSources as $parentSource) {
