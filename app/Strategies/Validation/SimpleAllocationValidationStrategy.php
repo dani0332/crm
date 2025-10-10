@@ -18,7 +18,6 @@ class SimpleAllocationValidationStrategy implements AllocationValidationStrategy
 
     private readonly string $lobName;
 
-
     public function __construct(
         private readonly QuoteTypes $quoetType
     ) {
