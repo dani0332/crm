@@ -91,7 +91,7 @@ class AllocationConfigurationController extends Controller
     {
         try {
             $teams = Team::where('type', TeamTypeEnum::TEAM)
-                ->where('is_active', 1)
+                ->active()
                 ->orderBy('name')
                 ->get(['id', 'name']);
 
@@ -111,8 +111,7 @@ class AllocationConfigurationController extends Controller
     public function getPlanTypes()
     {
         try {
-            $planTypes = HealthPlanType::orderBy('text')
-                ->get(['id', 'text']);
+            $planTypes = HealthPlanType::orderBy('text')->get(['id', 'text']);
 
             return response()->json([
                 'success' => true,
