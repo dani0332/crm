@@ -283,8 +283,8 @@
                   </td>
               
                 <!-- Right Column -->
-                    <td class="footer-td" style="width:27%; padding:10px; text-align:left; margin-left:15px;">
-                        <div style="display:inline-block; background:#ffffff; color:#000; padding:12px; border-radius:12px; text-align:left; font-size:10px;  width:65%; height:110px; margin-top:5px; ">
+                    <td class="footer-td" style="width:27%;  @if(isset($quoteType) && $quoteType != 'Life') padding:10px; @endif text-align:left; margin-left:15px;">
+                        <div style="display:inline-block; background:#ffffff; color:#000; @if(isset($quoteType) && $quoteType != 'Life') padding:12px; @else padding:8px; @endif border-radius:12px; text-align:left; font-size:10px;  width:65%; @if(isset($quoteType) && $quoteType != 'Life') height:110px; @else height:124px; @endif margin-top:5px;  ">
                         
                         <!-- Photo + Details wrapper -->
                         <div class="advisor-info" style="text-align:left;">
@@ -301,16 +301,16 @@
                          
                             <p style="margin:0; font-weight:400; font-size:12px;">{{ $quote->advisor->name }}</p>
                             <p style="margin:0; font-size:10px; color:#555;">Insurance Advisor</p>
-                            <p style=" font-size:10px; line-height:1.1 !important;  margin-top: 5px;">
+                            <p style=" font-size:10px; line-height:1.1 !important; @if(isset($quoteType) && $quoteType != 'Life') margin-top: 5px; @else margin-top: 0px; @endif">
                               <a href="mailto:{{ $quote->advisor->email }}" style="color:#000; "><img src="{{ public_path('images/quote_plans_pages/icons/mail.svg') }}"
-                              style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block; margin-top: 8px;"> 
+                              style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block; @if(isset($quoteType) && $quoteType != 'Life') margin-top: 8px; @else margin-top: 0px; @endif"> 
                              {{ $quote->advisor->email }}</a><br>
                                  <img src="{{ public_path('images/quote_plans_pages/icons/mobile.svg') }}"
                                  style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block;"><a href="tel:+{{ formatMobileNumber($quote->advisor->mobile_no) }}" style="color:#000; text-decoration:none;">{{ formatMobileNumber($quote->advisor->mobile_no) }}</a>
                                 <a href="https://wa.me/{{ removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) }}"  target="_blank">
                                   <img src="https://cdn-icons-png.flaticon.com/512/124/124034.png" 
                                   width="10" 
-                                  style="vertical-align:middle; margin-left:4px; margin-top: 5px !important;">
+                                  style="vertical-align:middle; margin-left:4px;  margin-top: 5px !important;">
                                 </a><br>
                                 <img src="{{ public_path('images/quote_plans_pages/icons/call.svg') }}"
                                 style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block;">  <a href="tel:{{ $quote->advisor->landline_no }}" style="color:#000; text-decoration:none; ">{{ $quote->advisor->landline_no }}</a>
