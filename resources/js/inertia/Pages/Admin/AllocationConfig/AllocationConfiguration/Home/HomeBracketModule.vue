@@ -313,12 +313,11 @@ onMounted(() => {
             >
               <!-- Contents Value Section -->
               <div class="pb-4">
-                <div
-                  class="flex items-center space-x-2 mb-3 cursor-pointer"
-                  @click="toggleContents(bracketIndex)"
-                >
+                <div class="flex items-center space-x-2 mb-3">
                   <CollapseIcon
+                    class="cursor-pointer"
                     :is-expanded="!collapsedContents.has(bracketIndex)"
+                    @click="toggleContents(bracketIndex)"
                     size="sm"
                   />
                   <h5 class="text-sm font-medium text-gray-700">
@@ -376,13 +375,12 @@ onMounted(() => {
 
               <!-- Building Value Section -->
               <div class="pb-4">
-                <div
-                  class="flex items-center space-x-2 mb-3 cursor-pointer"
-                  @click="toggleBuilding(bracketIndex)"
-                >
+                <div class="flex items-center space-x-2 mb-3">
                   <CollapseIcon
+                    class="cursor-pointer"
                     :is-expanded="!collapsedBuilding.has(bracketIndex)"
                     size="sm"
+                    @click="toggleBuilding(bracketIndex)"
                   />
                   <h5 class="text-sm font-medium text-gray-700">
                     Building Value
