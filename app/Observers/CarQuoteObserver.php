@@ -163,7 +163,7 @@ class CarQuoteObserver
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
         
-        if(isset($dirty['car_make_id']) || isset($dirty['registration_type']) || isset($dirty['is_modified'])) {
+        if(isset($dirty['car_make_id']) || isset($dirty['car_model_id']) || isset($dirty['registration_type']) || isset($dirty['is_modified'])) {
             $reason = [];
             $embeddedProductRepo = app(EmbeddedProductRepository::class);
             if ($embeddedProductRepo->checkIsEpEcbPaymentAuthorisedOrCaptured($lead->id)) {
