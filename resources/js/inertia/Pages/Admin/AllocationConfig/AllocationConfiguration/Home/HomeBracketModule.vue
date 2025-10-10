@@ -49,6 +49,8 @@ const highlightedProfileKey = ref('');
 const collapsedBrackets = ref(new Set());
 const isModuleCollapsed = ref(false);
 const collapsedProfiles = ref(new Set());
+const collapsedContents = ref(new Set());
+const collapsedBuilding = ref(new Set());
 
 watch(
   () => props.brackets.length,
@@ -195,6 +197,22 @@ const toggleProfile = (bracketIndex, profileIndex) => {
   }
 };
 
+const toggleContents = bracketIndex => {
+  if (collapsedContents.value.has(bracketIndex)) {
+    collapsedContents.value.delete(bracketIndex);
+  } else {
+    collapsedContents.value.add(bracketIndex);
+  }
+};
+
+const toggleBuilding = bracketIndex => {
+  if (collapsedBuilding.value.has(bracketIndex)) {
+    collapsedBuilding.value.delete(bracketIndex);
+  } else {
+    collapsedBuilding.value.add(bracketIndex);
+  }
+};
+
 onMounted(() => {
   setTimeout(() => {
     isInitialized.value = true;
@@ -295,10 +313,22 @@ onMounted(() => {
             >
               <!-- Contents Value Section -->
               <div class="pb-4">
-                <h5 class="text-sm font-medium text-gray-700 mb-3">
-                  Contents Value
-                </h5>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div
+                  class="flex items-center space-x-2 mb-3 cursor-pointer"
+                  @click="toggleContents(bracketIndex)"
+                >
+                  <CollapseIcon
+                    :is-expanded="!collapsedContents.has(bracketIndex)"
+                    size="sm"
+                  />
+                  <h5 class="text-sm font-medium text-gray-700">
+                    Contents Value
+                  </h5>
+                </div>
+                <div
+                  v-show="!collapsedContents.has(bracketIndex)"
+                  class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
                   <div>
                     <x-input
                       v-model="bracket.contents_min"
@@ -346,10 +376,22 @@ onMounted(() => {
 
               <!-- Building Value Section -->
               <div class="pb-4">
-                <h5 class="text-sm font-medium text-gray-700 mb-3">
-                  Building Value
-                </h5>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div
+                  class="flex items-center space-x-2 mb-3 cursor-pointer"
+                  @click="toggleBuilding(bracketIndex)"
+                >
+                  <CollapseIcon
+                    :is-expanded="!collapsedBuilding.has(bracketIndex)"
+                    size="sm"
+                  />
+                  <h5 class="text-sm font-medium text-gray-700">
+                    Building Value
+                  </h5>
+                </div>
+                <div
+                  v-show="!collapsedBuilding.has(bracketIndex)"
+                  class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
                   <div>
                     <x-input
                       v-model="bracket.building_min"
@@ -396,7 +438,7 @@ onMounted(() => {
               </div>
 
               <!-- Advisor Allocation Profiles -->
-              <div class="border-t pt-4">
+              <div class="border-t">
                 <div class="flex items-center justify-between mb-4">
                   <h5 class="text-sm font-medium text-gray-700">
                     Advisor Allocation Profiles
