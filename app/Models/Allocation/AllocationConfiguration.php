@@ -102,4 +102,3 @@ class AllocationConfiguration extends Model implements AuditableContract
         );
     }
 }
-

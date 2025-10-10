@@ -255,4 +255,3 @@ class GroupMedicalAllocationValidationStrategy implements AllocationValidationSt
         return false;
     }
 }
-

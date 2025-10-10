@@ -22,16 +22,15 @@ class AllocationValidationStrategyFactory
     public static function create(QuoteTypes $quoteType): AllocationValidationStrategyInterface
     {
         return match ($quoteType) {
-            QuoteTypes::SAVINGS => new SavingsAllocationValidationStrategy(),
-            QuoteTypes::HOME => new HomeAllocationValidationStrategy(),
-            QuoteTypes::LIFE => new LifeAllocationValidationStrategy(),
+            QuoteTypes::SAVINGS => new SavingsAllocationValidationStrategy,
+            QuoteTypes::HOME => new HomeAllocationValidationStrategy,
+            QuoteTypes::LIFE => new LifeAllocationValidationStrategy,
             QuoteTypes::PET => new SimpleAllocationValidationStrategy('Pet'),
             QuoteTypes::YACHT => new SimpleAllocationValidationStrategy('Yacht'),
             QuoteTypes::CYCLE => new SimpleAllocationValidationStrategy('Cycle'),
-            QuoteTypes::CORPLINE => new CorplineAllocationValidationStrategy(),
-            QuoteTypes::GROUP_MEDICAL => new GroupMedicalAllocationValidationStrategy(),
+            QuoteTypes::CORPLINE => new CorplineAllocationValidationStrategy,
+            QuoteTypes::GROUP_MEDICAL => new GroupMedicalAllocationValidationStrategy,
             default => throw new InvalidArgumentException("No validation strategy found for quote type: {$quoteType->value}"),
         };
     }
 }
-

@@ -258,5 +258,3 @@ class LifeAllocationValidationStrategy implements AllocationValidationStrategyIn
         return true;
     }
 }
-
-

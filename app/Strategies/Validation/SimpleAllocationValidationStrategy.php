@@ -17,8 +17,7 @@ class SimpleAllocationValidationStrategy implements AllocationValidationStrategy
 
     public function __construct(
         private readonly string $lobName = 'Simple'
-    ) {
-    }
+    ) {}
 
     public function getRules(): array
     {
@@ -127,5 +126,3 @@ class SimpleAllocationValidationStrategy implements AllocationValidationStrategy
         return true;
     }
 }
-
-

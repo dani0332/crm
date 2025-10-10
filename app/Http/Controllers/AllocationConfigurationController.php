@@ -102,8 +102,8 @@ class AllocationConfigurationController extends Controller
             $teams = Team::
                 // whereNotNull('type')
                 where('is_active', 1)
-                ->orderBy('name')
-                ->get(['id', 'name']);
+                    ->orderBy('name')
+                    ->get(['id', 'name']);
 
             return response()->json([
                 'success' => true,
