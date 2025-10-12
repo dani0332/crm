@@ -2772,6 +2772,7 @@ function handleOcrNotification(event) {
       :expanded="sectionExpanded"
       :quote="record"
       :previousQuote="previousQuote"
+      :advisors="advisorOptions"
       modelType="Car"
       :insly-id="record?.insly_id"
       v-if="
