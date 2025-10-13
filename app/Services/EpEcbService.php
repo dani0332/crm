@@ -205,7 +205,7 @@ class EpEcbService extends EpBookingService
             } else {
                 // Dispatch job with 2 minutes delay, because documents are available after 2 minutes of policy creation
                 LoggerService::info($this->logPrefix.' Dispatch SyncEpDocumentsJob with 2 minutes delay', extra: $this->logExtra);
-                dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(2));
+                dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(1));
             }
         }
 
@@ -891,7 +891,7 @@ class EpEcbService extends EpBookingService
         $customerInfo = $this->getCustomerInfo(self::STEP_CREATE_POLICY_FROM_QUOTE);
         $vehicleInfo = $this->getVehicleInfo(self::STEP_CREATE_POLICY_FROM_QUOTE);
         $motorInsuranceInfo = $this->getMotorInsuranceInfo();
-        $mulkiyaDocuments = $this->getMulkiyaDocuments();
+        $documentsInfo = $this->getDocumentsInfo();
 
         $paymentChargeId = $this->embeddedTransaction?->paymentCharges?->first()?->transaction_id;
 
@@ -904,7 +904,7 @@ class EpEcbService extends EpBookingService
             'customer_info' => $customerInfo,
             'vehicle_info' => $vehicleInfo,
             'motor_insurance_info' => $motorInsuranceInfo,
-            'document_info' => $mulkiyaDocuments,
+            'document_info' => $documentsInfo,
         ];
     }
 
@@ -915,7 +915,7 @@ class EpEcbService extends EpBookingService
         $customerInfo = $this->getCustomerInfo(self::STEP_CREATE_POLICY_WITHOUT_QUOTE);
         $vehicleInfo = $this->getVehicleInfo(self::STEP_CREATE_POLICY_WITHOUT_QUOTE);
         $motorInsuranceInfo = $this->getMotorInsuranceInfo();
-        $mulkiyaDocuments = $this->getMulkiyaDocuments();
+        $documentsInfo = $this->getDocumentsInfo();
 
         $paymentChargeId = $this->embeddedTransaction?->paymentCharges?->first()?->transaction_id;
 
@@ -928,7 +928,7 @@ class EpEcbService extends EpBookingService
             'vehicle_info' => $vehicleInfo,
             'customer_info' => $customerInfo,
             'motor_insurance_info' => $motorInsuranceInfo,
-            'document_info' => $mulkiyaDocuments,
+            'document_info' => $documentsInfo,
         ];
     }
 
@@ -947,27 +947,20 @@ class EpEcbService extends EpBookingService
         return $emirateIdNumber;
     }
 
-    private function getMulkiyaDocuments(): array
+    private function getDocumentsInfo(): array
     {
-        $storageBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-
-        $mulkiyaDocuments = $this->quote->documents()->where('document_type_code', QuoteDocumentsEnum::CAR_MULKIY)
-            ->select('document_type_code as document_type', 'doc_name as document_name', 'doc_url')
+        $documentsInfo = \App\Models\CarQuote::whereUuid('7JCUF5NR')->first()->documents()->whereIn('document_type_code', [QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY])
+            ->select('document_type_code', 'doc_name', 'doc_url')
             ->get()
-            ->map(function ($document) use ($storageBaseUrl) {
-                // Add storage base URL prefix if doc_url is not empty
-                if (! empty($document->doc_url)) {
-                    $document->document_url = $storageBaseUrl.$document->doc_url;
-                } else {
-                    $document->document_url = '';
-                }
-                // Remove the original doc_url field
-                unset($document->doc_url);
-
-                return $document;
+            ->map(function ($document) {
+                return [
+                    'document_type' => $document->document_type_code,
+                    'document_name' => $document->doc_name,
+                    'document_url' => $document->document_url,
+                ];
             });
 
-        return $mulkiyaDocuments->toArray();
+        return $documentsInfo->toArray();
     }
 
     private function getCustomerInfo(string $step): array
