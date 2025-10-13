@@ -60,7 +60,6 @@ class SavingsQuoteService extends BaseQuoteService
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
             ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
             ->filterByPaymentDueDates('payment_due_date')
-            ->filterIn('sub_source_id')
             ->filterByDateRange('booking_date', 'policy_booking_date');
 
         if (request()->has('debug') && request()->debug == 'true') {

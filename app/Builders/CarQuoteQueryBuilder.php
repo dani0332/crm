@@ -155,7 +155,6 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('assignment_type', ignoreAll: true, requestParams: $requestParams)
             ->filterByTeams($getFilterValue('teams'))
             ->filterByAdvisors($getFilterValue('advisor_id'))
-            ->filterIn('sub_source_id', requestParams: $requestParams)
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at', requestParams: $requestParams)
             ->filterBySegment($getFilterValue('segment_filter'), QuoteTypeId::Car)
             ->filterBy('sic_advisor_requested', ignoreAll: true, requestParams: $requestParams)

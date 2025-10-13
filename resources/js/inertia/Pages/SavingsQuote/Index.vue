@@ -41,7 +41,6 @@ let availableFilters = {
   previous_quote_policy_number: '',
   quote_status_id: '',
   renewal_batch_id: [],
-  sub_source_id: [],
   page: 1,
   previous_quote_policy_number_text: '',
   payment_due_date: '',
@@ -583,34 +582,7 @@ const validateDateRange = () => {
           multi-calendars
           multi-calendars-solo
         />
-        <x-select
-          v-model="filters.sub_source_id"
-          label="IMCRM SUB-SOURCE"
-          name="sub_source_id"
-          :options="subSourceOptions"
-          placeholder="Select IMCRM SUB-SOURCE"
-          filterable
-          multiple
-          truncate
-          multipleCheckbox
-        >
-          <template #suffix="{ item }">
-            <x-tooltip v-if="item.suffix" placement="right">
-              <x-icon icon="info" color="error" />
-              <template #tooltip>
-                {{ item.suffix }}
-              </template>
-            </x-tooltip>
-          </template>
-          <template #content-footer>
-            <ui-select-actions
-              @select-all="
-                filters.sub_source_id = subSourceOptions.map(item => item.value)
-              "
-              @clear="filters.sub_source_id = []"
-            />
-          </template>
-        </x-select>
+        
         <DatePicker
           v-model="filters.last_modified_date"
           name="created_at_start"

@@ -134,7 +134,6 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('is_ecommerce', isBool: true, requestParams: $requestParams)
             ->filterIn('emirate_of_your_visa_id', requestParams: $requestParams)
             ->filterIn('insurer_aml_status', requestParams: $requestParams)
-            ->filterIn('sub_source_id', requestParams: $requestParams)
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at', requestParams: $requestParams)
             ->filterBySegment()
             ->filterByPaymentDueDates('payment_due_date')
