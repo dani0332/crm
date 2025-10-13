@@ -1109,7 +1109,7 @@ class EmbeddedProductRepository extends BaseRepository
 
                     return [
                         'data' => $processResponse,
-                        'code' => 200,
+                        'code' => $processResponse->getStatusCode() ?? 403,
                     ];
                 } else {
                     return [
@@ -1432,7 +1432,7 @@ class EmbeddedProductRepository extends BaseRepository
      * @param  string  $reason
      * @return array
      */
-    public function processEpEcbCancelPayment($quote, $quoteTypeId, $reason)
+    public function processEpEcbCancelPayment($quote, $quoteTypeId, $reason): array
     {
         $extraLog = ['quote_id' => $quote?->id, 'quote_type_id' => $quoteTypeId, 'reason' => $reason];
 
@@ -1461,11 +1461,12 @@ class EmbeddedProductRepository extends BaseRepository
         ];
         $response = app(EmbeddedProductRepository::class)->fetchCancelPayment($cancelPaymentData);
 
-        if ($response['code'] != 200) {
-            return ['success' => false, 'message' => $response['data'][0] ?? 'Failed to cancel payment for Embedded Product (ECB)'];
+        if ($response['code'] == 200) {
+            $epTransactionDetails->update(['is_active' => false]);
+            return ['success' => true, 'message' => $response['data'][0] ?? 'Payment cancelled successfully for Embedded Product (ECB)'];
         }
 
-        return ['success' => true, 'message' => $response['data'][0] ?? 'Payment cancelled successfully for Embedded Product (ECB)'];
+        return ['success' => false, 'message' => $response['data'][0] ?? 'Failed to cancel payment for Embedded Product (ECB)'];
     }
 
     public function getEpTransactionDetails($quoteTypeId, $quoteId, $shortCodes = [])
