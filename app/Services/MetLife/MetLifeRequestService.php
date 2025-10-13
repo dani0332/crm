@@ -29,15 +29,15 @@ class MetLifeRequestService
                 'url' => $this->baseUrl.$endpoint,
             ]);
 
-            $response = Http::baseUrl($this->baseUrl)
+            $http = Http::baseUrl($this->baseUrl)
                 ->timeout($this->timeout)
                 ->withHeaders($headers);
 
-            if ($method === 'GET') {
-                $response = $response->get($endpoint);
-            } else {
-                $response = $response->post($endpoint, $data);
-            }
+            $response = match (strtoupper($method)) {
+                'GET' => $http->get($endpoint, $data),
+                'POST' => $http->post($endpoint, $data),
+                default => throw new Exception("Unsupported HTTP method: {$method}"),
+            };
 
             LoggerService::info('MetLife API response', [
                 'endpoint' => $endpoint,

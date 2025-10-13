@@ -54,6 +54,14 @@ class MetLifeRequestServiceTest extends TestCase
         $this->assertEquals(201, $result['data']['status_code']);
     }
 
+    public function test_make_request_unsupported_method()
+    {
+        $result = $this->service->makeRequest('/test', 'PUT');
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('Unsupported HTTP method', $result['message']);
+    }
+
     public function test_make_request_failure()
     {
         Http::fake([
