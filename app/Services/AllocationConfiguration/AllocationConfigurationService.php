@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\Services\AllocationConfiguration;
 
-use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Models\Allocation\AllocationConfiguration;
@@ -15,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 
 class AllocationConfigurationService
 {
+    use AllocationConfigurationFindable;
+
     private function resolveConfig(QuoteTypes $quoteType, array $data): array
     {
         return match ($quoteType) {
@@ -114,40 +115,5 @@ class AllocationConfigurationService
         $quoteTypes = $quoteTypes->sortBy('text');
 
         return $quoteTypes->values();
-    }
-
-    public function getEligibleAdvisorIds(QuoteTypes $quoteType, InvestmentFrequencyEnum $investmentFrequency, float $amount, int $nationalityId): array
-    {
-        $configuration = $this->findConfig($quoteType);
-
-        if (! $configuration) {
-            return [];
-        }
-
-        $brackets = $investmentFrequency === InvestmentFrequencyEnum::LUMPSUM
-            ? $configuration->lumpsum_brackets
-            : $configuration->regular_brackets;
-
-        $brackets = collect($brackets);
-
-        $matchingBracket = $brackets
-            ->where('min', '<=', $amount)
-            ->where('max', '>=', $amount)
-            ->first();
-
-        if (! $matchingBracket) {
-            return [];
-        }
-
-        $profiles = collect($matchingBracket['profiles']);
-
-        $matchingProfile = $profiles->first(fn ($profile) => in_array($nationalityId, $profile['nationalityIds']));
-
-        return $matchingProfile ? ($matchingProfile['advisorIds'] ?? []) : [];
-    }
-
-    public function findConfig(QuoteTypes $quoteType): ?AllocationConfiguration
-    {
-        return AllocationConfiguration::where('quote_type', $quoteType)->latest()->first();
     }
 }

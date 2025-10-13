@@ -6,7 +6,7 @@ use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Services\AllocationConfigurationService;
+use App\Services\AllocationConfiguration\AllocationConfigurationService;
 use App\Services\Logger\LoggerService;
 use App\Services\RuleService;
 
@@ -46,6 +46,6 @@ class SavingsAllocation extends BaseAllocation
             return [];
         }
 
-        return app(AllocationConfigurationService::class)->getEligibleAdvisorIds(QuoteTypes::SAVINGS, $frequency, $amount, $nationalityId);
+        return app(AllocationConfigurationService::class)->getSavingsEligibleAdvisorIds(QuoteTypes::SAVINGS, $frequency, $amount, $nationalityId);
     }
 }

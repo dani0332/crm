@@ -10,7 +10,7 @@ use App\Models\Allocation\AllocationConfiguration;
 use App\Models\BusinessTypeOfInsurance;
 use App\Models\HealthPlanType;
 use App\Models\Team;
-use App\Services\AllocationConfigurationService;
+use App\Services\AllocationConfiguration\AllocationConfigurationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Response;
