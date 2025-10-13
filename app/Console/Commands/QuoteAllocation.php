@@ -168,6 +168,7 @@ class QuoteAllocation extends Command
             ->where(function ($q) {
                 $q->leadAllocationFailed()
                     ->orWhere->sicFlowDisabled()
+                    ->orWhere->hasPecTag()
                     ->orWhere(function ($subQuery) {
                         $subQuery->sicFlowEnabled()->advisorRequestedOrPaymentAuthorizedOrDeclined();
                     });

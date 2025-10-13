@@ -57,7 +57,10 @@ RUN docker-php-ext-install -j$(nproc) gd
 RUN php -r 'var_dump(function_exists("imagecreatefromwebp"));'
 RUN pecl install mongodb-2.1.0 && docker-php-ext-enable mongodb
 
-RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
+#RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
+RUN echo "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main" | tee /etc/apt/sources.list.d/doppler-cli.list 
+RUN curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | gpg --dearmor -o /usr/share/keyrings/doppler-archive-keyring.gpg
+RUN apt-get update && apt-get install doppler
 
 # Install supervisor
 #RUN apt-get install -y supervisor
