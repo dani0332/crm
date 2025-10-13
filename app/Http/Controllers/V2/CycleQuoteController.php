@@ -97,8 +97,6 @@ class CycleQuoteController extends Controller
             'type' => $request->input('type'),
             'subSourceId' => $request->input('subSourceId'),
             'subSourceOptionsId' => $request->input('subSourceOptionsId'),
-            'primaryRefId' => $request->input('primaryRefId'),
-            'partnerName' => $request->input('partnerName'),
         ]);
 
         $data = CycleQuoteRepository::getFormOptions();
@@ -109,8 +107,6 @@ class CycleQuoteController extends Controller
             'type' => $request->input('type'),
             'subSource' => $request->input('subSourceId'),
             'subSourceOption' => $request->input('subSourceOptionsId'),
-            'primaryRefId' => $request->input('primaryRefId'),
-            'partnerName' => $request->input('partnerName'),
         ];
 
         return inertia('CycleQuote/Form', $data);

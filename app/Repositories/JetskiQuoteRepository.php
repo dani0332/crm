@@ -37,7 +37,6 @@ class JetskiQuoteRepository extends BaseRepository
         LoggerService::info('JetskiQuoteRepository fetchCreate - Sub-source parameters', [
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'primary_ref_id' => $data['primary_ref_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ]);
 
@@ -58,7 +57,6 @@ class JetskiQuoteRepository extends BaseRepository
             'claimHistory' => $data['claim_history'],
             'subSourceId' => $data['sub_source_id'],
             'subSourceOptionsId' => $data['sub_source_options_id'],
-            'primaryRefId' => $data['primary_ref_id'],
             'notes' => $data['notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
@@ -82,7 +80,6 @@ class JetskiQuoteRepository extends BaseRepository
         LoggerService::info('JetskiQuoteRepository fetchUpdate - Sub-source parameters', [
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'primary_ref_id' => $data['primary_ref_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ]);
 
@@ -90,7 +87,7 @@ class JetskiQuoteRepository extends BaseRepository
             $quote = $this->byQuoteTypeId(QuoteTypes::JETSKI->id())->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no', 'sub_source_id', 'sub_source_options_id', 'primary_ref_id', 'notes',
+                'first_name', 'last_name', 'email', 'mobile_no', 'sub_source_id', 'sub_source_options_id', 'notes',
             ]);
 
             $quoteData['updated_by_id'] = Auth::user()->id;

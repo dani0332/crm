@@ -42,8 +42,6 @@ class YachtQuoteRequest extends FormRequest
             'nationality_id' => 'nullable|exists:nationality,id',
             'sub_source_id' => 'nullable|exists:lookups,id',
             'sub_source_options_id' => 'nullable|exists:lookups,id',
-            'primary_ref_id' => 'nullable|string|max:255',
-            'partner_name' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
         ];
     }

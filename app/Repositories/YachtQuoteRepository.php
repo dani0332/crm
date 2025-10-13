@@ -38,7 +38,6 @@ class YachtQuoteRepository extends BaseRepository
         LoggerService::info('YachtQuoteRepository fetchCreate - Sub-source parameters', [
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'primary_ref_id' => $data['primary_ref_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ]);
 
@@ -58,7 +57,6 @@ class YachtQuoteRepository extends BaseRepository
             'assetValue' => $data['asset_value'],
             'subSourceId' => $data['sub_source_id'],
             'subSourceOptionsId' => $data['sub_source_options_id'],
-            'primaryRefId' => $data['primary_ref_id'],
             'notes' => $data['notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
@@ -85,7 +83,6 @@ class YachtQuoteRepository extends BaseRepository
         LoggerService::info('YachtQuoteRepository fetchUpdate - Sub-source parameters', [
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'primary_ref_id' => $data['primary_ref_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ]);
 
@@ -94,7 +91,7 @@ class YachtQuoteRepository extends BaseRepository
 
             $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'company_name', 'company_address',
                 'asset_value', 'gender', 'dob', 'nationality_id', 'sub_source_id', 'sub_source_options_id',
-                'primary_ref_id', 'notes']);
+                'notes']);
             $quoteData['updated_by_id'] = Auth::user()->id;
 
             $quote->update($quoteData);
