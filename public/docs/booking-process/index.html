@@ -659,25 +659,22 @@
                     6. Main Lead & Send Update Processing
                 </h3>
                 <p>
-                    Comprehensive coverage of main lead policy booking and send update (endorsement) processes.
-                    All scenarios documented across AR, AP, and Apply Prepayment sections above.
+                    Comprehensive guide to initial policy booking (Main Lead) and policy modifications (Send Update/Endorsements)
+                    in Sage 300. Covers workflow orchestration, entry types, status tracking, and job queue processing.
                 </p>
                 <ul class="features">
-                    <li>Main Lead booking flow (see sections 1-5 above)</li>
-                    <li>Send Update: Straight endorsements (premium increase)</li>
-                    <li>Send Update: Reversal endorsements (premium decrease)</li>
-                    <li>Entry types: SCT_STRAIGHT, SCT_REVERSAL, SCT_CORRECTION</li>
-                    <li>Reversal + Correction invoice pattern</li>
-                    <li>Endorsement validation and processing</li>
-                    <li>Covered in AR/AP/Apply Prepayment documentation</li>
+                    <li>Main Lead: Initial policy booking with customer creation and full Sage workflow</li>
+                    <li>Send Update - STRAIGHT: Simple premium increases and coverage additions</li>
+                    <li>Send Update - REVERSAL: Full reversal and correction endorsement workflow</li>
+                    <li>Send Update - CORRECTION: Error corrections and minor adjustments</li>
+                    <li>Entry type determination (SCT_STRAIGHT, SCT_REVERSAL, SCT_CORRECTION)</li>
+                    <li>Status tracking: quote_status_id vs send_update_logs.status</li>
+                    <li>Payment differentiation: send_update_log_id NULL vs NOT NULL</li>
+                    <li>BookPolicyOnSageJob and BookEndorsementOnSageJob orchestration</li>
+                    <li>Database tables: quotes, send_update_logs, payments, sage_processes</li>
+                    <li>Integration with customer creation, receipts, invoices, and payment application</li>
                 </ul>
-                <div class="highlight" style="margin-top: 15px; padding: 15px; background: #3498db; border-radius: 5px;">
-                    <p style="margin: 0; font-size: 0.9em;">
-                        <strong>📚 Documentation Location:</strong> Main Lead and Send Update processes are comprehensively
-                        documented within the AR Invoice, AP Invoice, and Apply Prepayment sections above. Each section includes
-                        specific subsections for Send Update scenarios including straight and reversal endorsements.
-                    </p>
-                </div>
+                <a href="/docs/booking-process/main-lead-sendupdate.html" class="doc-link">View Main Lead & Send Update Processing →</a>
             </div>
 
             <!-- 7. Embedded Product -->
