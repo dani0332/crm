@@ -59,8 +59,9 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
 
         $quoteTypeId = QuoteTypes::getIdFromValue($this->request->modelType);
         $ePTransaction = (new SageApiService)->getEPTransactions($quote, $quoteTypeId);
+        $isEPTransactionFound = $ePTransaction ? count($ePTransaction) > 0 : false;
 
-        if (! $ePTransaction) {
+        if (! $isEPTransactionFound) {
             $message = 'Policy Book : BookEmbeddedProductOnSageJob - '.$this->epTransaction->code.' - can not proceed as transaction is not found';
             LoggerService::info($message, extra : ['quote' => $quote->code]);
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, $this->logFor);
