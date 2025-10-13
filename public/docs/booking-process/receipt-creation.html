@@ -1468,6 +1468,229 @@ if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
         </div>
 
         <div class="content-section">
+            <h2>🔄 NRA Use Case - Non-Regular Approval Receipt Creation</h2>
+            <p><strong>📍 Special Scenario:</strong> Creating prepayment receipts when payment is approved AFTER policy/send update has already been booked on Sage.</p>
+
+            <div class="highlight">
+                <h4>💡 What is NRA (Non-Regular Approval)?</h4>
+                <p>
+                    <strong>NRA handles the scenario where a payment split is approved AFTER the policy has already been booked on Sage.</strong><br>
+                    In the normal flow, prepayment receipts are created during policy booking. However, in NRA cases, the payment
+                    approval happens later (e.g., delayed bank confirmation, manual verification), requiring separate prepayment receipt creation.
+                </p>
+            </div>
+
+            <h3>🎯 NRA Trigger Conditions</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>✅ When NRA Receipt Creation Occurs</h4>
+                    <ul>
+                        <li><strong>Payment Approved:</strong> $request->is_approved is true</li>
+                        <li><strong>Not Already Paid:</strong> $splitPayment->payment_status_id != PAID</li>
+                        <li><strong>Sage Enabled:</strong> isSageEnabled() returns true</li>
+                        <li><strong>Post-Booking Approval:</strong> shouldCreateAndSchedulePostPrepayment() returns true</li>
+                        <li><strong>Not Health AUH:</strong> !$isHealthAUH (Health Abu Dhabi excluded)</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🚫 When NRA Receipt Creation is Skipped</h4>
+                    <ul>
+                        <li><strong>Already Paid:</strong> Split payment already has PAID status</li>
+                        <li><strong>Sage Disabled:</strong> Sage integration is disabled</li>
+                        <li><strong>Regular Booking:</strong> Payment approved during normal booking flow</li>
+                        <li><strong>Health AUH:</strong> Health Abu Dhabi quote type</li>
+                        <li><strong>Payment Declined:</strong> Payment is being declined instead of approved</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>🔧 NRA Implementation in PaymentRepository</h3>
+            <p>The NRA use case is implemented in the <code>fetchSplitPaymentApproveDecline()</code> method in <strong>PaymentRepository</strong>.</p>
+
+            <div class="code-block">
+                <pre>public function fetchSplitPaymentApproveDecline($request)
+{
+    LoggerService::startFeatureLogging(LoggerFeatureEnum::APPROVE_DECLINE_CHILD_PAYMENT);
+
+    // Fetch payment split and related data
+    $splitPayment = PaymentSplits::find($request->splitPaymentId);
+    $masterPayment = $splitPayment->payment;
+    $quote = $masterPayment?->paymentable;
+
+    $isHealthAUH = $this->isHealthAUHLead(ucfirst($request->modelType), $quote);
+
+    /* Handle NRA case where payment is approved after policy/send update is booked */
+    $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quote, $splitPayment);
+    info(self::class.' fn:'.__FUNCTION__.' Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no
+        .' trigger creation of Premium Sage receipt: ',
+        ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]
+    );
+
+    // Process Sage API call outside transaction if needed
+    if ($request->is_approved
+        && $splitPayment->payment_status_id != PaymentStatusEnum::PAID
+        && (new SageApiService)->isSageEnabled()
+        && $shouldCreatePrepaymentPremiumReceipt
+        && !$isHealthAUH
+    ) {
+        // Build Sage request for NRA receipt creation
+        $sageRequest = $request->safe();
+        $sageRequest->userId = auth()->id();
+        $sageRequest->quoteType = $request->modelType;
+        $sageRequest->quoteTypeId = QuoteTypes::getIdFromValue($request->modelType);
+        $sageRequest->advisor_id = $quote->advisor_id;
+        $sageRequest->collection_amount = $request->collection_amount;
+        $sageRequest->insurerReceiptNumber = $request->insurer_receipt_number;
+
+        /* Handle NRA case where payment is approved after policy/send update is booked */
+        $sageARPrepaymentResponse = (new SageApiService)->createARPrepaymentPremiumReceipt(
+            $sageRequest,
+            $quote,
+            $masterPayment,
+            $splitPayment,
+            $request->collection_amount
+        );
+
+        if (!$sageARPrepaymentResponse['status']) {
+            vAbort($sageARPrepaymentResponse['message']);
+        }
+
+        /* AP Prepayment creation is currently commented out
+        $sageRequest->sage_customer_number = $sageARPrepaymentResponse['sageCustomerNumber'];
+
+        $sageAPPrepaymentResponse = (new SageApiService)->createAPPrepaymentPremiumReceipt(
+            $sageRequest, $quote, $masterPayment, $splitPayment, $request->collection_amount
+        );
+
+        if (!$sageAPPrepaymentResponse['status']) {
+            vAbort($sageAPPrepaymentResponse['message']);
+        }
+        */
+    }
+
+    // Continue with database transaction for payment approval/decline
+    return $this->handleWithDeadlockRetries(function () use ($request, $splitPayment, $masterPayment) {
+        // Update payment split status, collection amount, etc.
+        // ... (transaction logic continues)
+    }, $maxRetries);
+}</pre>
+            </div>
+
+            <h3>📋 NRA Receipt Creation Flow</h3>
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="step-number">1</div>
+                    <h4>Policy Already Booked</h4>
+                    <p>Policy/send update has been booked on Sage without this payment split</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">2</div>
+                    <h4>Payment Approval Request</h4>
+                    <p>User approves payment split via fetchSplitPaymentApproveDecline()</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">3</div>
+                    <h4>NRA Validation Check</h4>
+                    <p>System validates if NRA receipt creation is needed</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">4</div>
+                    <h4>Create AR Prepayment Receipt</h4>
+                    <p>Calls createARPrepaymentPremiumReceipt() outside transaction</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">5</div>
+                    <h4>Update Payment Status</h4>
+                    <p>Complete approval in database transaction</p>
+                </div>
+            </div>
+
+            <h3>🔍 Key NRA Methods</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>shouldCreateAndSchedulePostPrepayment()</h4>
+                    <ul>
+                        <li><strong>Location:</strong> SageApiService</li>
+                        <li><strong>Purpose:</strong> Determines if NRA receipt creation is needed</li>
+                        <li><strong>Checks:</strong> Quote booking status, payment split status, Sage process status</li>
+                        <li><strong>Returns:</strong> Boolean indicating if post-booking receipt should be created</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>createARPrepaymentPremiumReceipt()</h4>
+                    <ul>
+                        <li><strong>Location:</strong> SageApiService</li>
+                        <li><strong>Called For:</strong> Both regular booking AND NRA scenarios</li>
+                        <li><strong>Parameters:</strong> sageRequest, quote, masterPayment, splitPayment, collectionAmount</li>
+                        <li><strong>Result:</strong> Creates AR prepayment receipt in Sage 300</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight">
+                <h4>⚠️ Important NRA Considerations</h4>
+                <p>
+                    <strong>Transaction Isolation:</strong> NRA receipt creation happens OUTSIDE the database transaction to prevent
+                    long-running Sage API calls from blocking database operations.<br><br>
+                    <strong>AP Receipt Commented:</strong> AP prepayment receipt creation is currently commented out in NRA flow (same as regular flow).<br><br>
+                    <strong>Error Handling:</strong> If AR receipt creation fails, the entire approval process is aborted with vAbort().<br><br>
+                    <strong>Audit Trail:</strong> NRA receipt creation is logged with specific feature flag (APPROVE_DECLINE_CHILD_PAYMENT).
+                </p>
+            </div>
+
+            <h3>📊 NRA vs Regular Receipt Creation</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>Regular Receipt Creation</th>
+                            <th>NRA Receipt Creation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Timing</strong></td>
+                            <td>During policy booking (BookPolicyOnSageJob)</td>
+                            <td>After policy booking (Payment approval)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Trigger</strong></td>
+                            <td>postBookPolicyToSage() workflow</td>
+                            <td>fetchSplitPaymentApproveDecline() approval</td>
+                        </tr>
+                        <tr>
+                            <td><strong>All Splits</strong></td>
+                            <td>Creates receipts for all paid splits at once</td>
+                            <td>Creates receipt for single approved split</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Transaction</strong></td>
+                            <td>Part of booking workflow transaction</td>
+                            <td>Outside payment approval transaction</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Use Case</strong></td>
+                            <td>Normal payment flow - pay then book</td>
+                            <td>Delayed approval - book then pay later</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Method Called</strong></td>
+                            <td>createARPrepaymentPremiumReceipts() (plural)</td>
+                            <td>createARPrepaymentPremiumReceipt() (singular)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="content-section">
             <h2>🔧 Integration Points</h2>
 
             <h3>📞 Called From</h3>
@@ -1478,6 +1701,7 @@ if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
                         <li>Main policy booking orchestrator</li>
                         <li>Triggers receipt creation after customer verification</li>
                         <li>Coordinates with invoice creation process</li>
+                        <li><strong>Flow:</strong> Regular booking - payment approved before/during booking</li>
                     </ul>
                 </div>
 
@@ -1487,6 +1711,16 @@ if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
                         <li>Handles prepayment receipt posting</li>
                         <li>Processes split payment installments</li>
                         <li>Manages payment schedule updates</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>PaymentRepository::fetchSplitPaymentApproveDecline()</h4>
+                    <ul>
+                        <li><strong>NRA Use Case:</strong> Post-booking payment approval</li>
+                        <li>Handles payment split approval/decline</li>
+                        <li>Creates prepayment receipt AFTER policy is booked</li>
+                        <li><strong>Flow:</strong> Book policy first, approve payment later</li>
                     </ul>
                 </div>
             </div>
@@ -1500,16 +1734,26 @@ if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
                         <li>PaymentSplits</li>
                         <li>SageApiLog</li>
                         <li>SendUpdateLog</li>
+                        <li>QuoteDocument</li>
                     </ul>
                 </div>
 
                 <div class="info-card">
                     <h4>Services</h4>
                     <ul>
+                        <li>SageApiService</li>
                         <li>SagePayloadFactory</li>
                         <li>LoggerService</li>
                         <li>SageCustomApiService</li>
-                        <li>PaymentService</li>
+                        <li>SplitPaymentService</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>Repositories</h4>
+                    <ul>
+                        <li>PaymentRepository (NRA use case)</li>
+                        <li>SendUpdateLogRepository</li>
                     </ul>
                 </div>
             </div>
