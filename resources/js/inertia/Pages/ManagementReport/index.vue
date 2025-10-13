@@ -10,6 +10,7 @@ import {
   PEC_FLAG_OPTIONS,
   PRIVATE_CLIENT_OPTIONS,
 } from '@/constants/reportOptions';
+import { XForm } from '@indielayer/ui';
 
 const props = defineProps({
   reportData: Object,
@@ -58,6 +59,7 @@ const filters = reactive({
   subTeams: [],
   leadSources: [],
   subSources: [],
+  sub_source_options_id: [],
   includeCancelledPolicies: 'Yes',
   groupBy: route().params.groupBy ?? 'advisor',
   utmGroupBy: [],
@@ -162,6 +164,25 @@ const subSourceOptions = computed(() => {
     label: source.text,
     suffix: source.description || source.tooltip || '',
   }));
+});
+
+const subSourceOptionOptions = computed(() => {
+  const parents = props.filterOptions?.subSources || [];
+  const selected = new Set(filters.subSources || []);
+  const options = [];
+  parents.forEach(p => {
+    if (selected.has(p.id) && Array.isArray(p.childs)) {
+      p.childs.forEach(c =>
+        options.push({
+          value: c.id,
+          label: c.text,
+          suffix: c.description || '',
+        }),
+      );
+    }
+  });
+  const seen = new Set();
+  return options.filter(o => (seen.has(o.value) ? false : (seen.add(o.value), true)));
 });
 
 const disabledGroupBy = computed(() => {
@@ -702,6 +723,46 @@ watch(
                 filters.subSources = subSourceOptions.map(item => item.value)
               "
               @clear="filters.subSources = []"
+            />
+          </template>
+        </x-select>
+      </div>
+      <div v-if="subSourceOptionOptions.length > 0">
+        <x-tooltip position="top">
+          <label
+            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+          >
+            SUB SOURCE OPTION
+          </label>
+          <template #tooltip>
+            Select one or more SUB SOURCE OPTION values
+          </template>
+        </x-tooltip>
+        <x-select
+          v-model="filters.sub_source_options_id"
+          placeholder="Search by SUB SOURCE OPTION"
+          :options="subSourceOptionOptions"
+          deselect-all
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          class="w-full"
+          multiple
+          truncate
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.sub_source_options_id = subSourceOptionOptions.map(o => o.value)
+              "
+              @clear="filters.sub_source_options_id = []"
             />
           </template>
         </x-select>

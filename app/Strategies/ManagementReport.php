@@ -90,7 +90,7 @@ class ManagementReport
         $subSources = Lookup::where('key', LookupsEnum::SUB_SOURCE)
             ->with('childs')
             ->where('is_active', 1)
-            ->orderBy('text')
+            ->orderBy('id')
             ->get(['id', 'text', 'code', 'description', 'parent_id'])
             ->map(function ($item) {
                 return [
@@ -98,6 +98,18 @@ class ManagementReport
                     'text' => $item->text,
                     'code' => $item->code,
                     'description' => $item->description,
+                    'childs' => $item->childs
+                        ->where('is_active', 1)
+                        ->sortBy('text')
+                        ->map(function ($c) {
+                            return [
+                                'id' => $c->id,
+                                'text' => $c->text,
+                                'description' => $c->description,
+                            ];
+                        })
+                        ->values()
+                        ->toArray(),
                 ];
             })
             ->values()
@@ -167,6 +179,12 @@ class ManagementReport
         if (! empty($request['subSources'])) {
             $codes = is_array($request['subSources']) ? $request['subSources'] : [$request['subSources']];
             $query->whereIn('personal_quotes.sub_source_id', $codes);
+        }
+
+        // Sub Source Option filter: gate to Sales Detail only (for now)
+        if (! empty($request['sub_source_options_id'])) {
+            $ids = is_array($request['sub_source_options_id']) ? $request['sub_source_options_id'] : [$request['sub_source_options_id']];
+            $query->whereIn('personal_quotes.sub_source_options_id', $ids);
         }
 
         $departments = $request['department_id'] ?? [];
