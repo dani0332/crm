@@ -1122,10 +1122,10 @@ class SendEmailCustomerService extends BaseService
                     'email' => $senderEmail,
                     'name' => 'InsuranceMarket.ae',
                 ],
-                'to' => [
+                'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->customerName,
-                ],
+                ]],
                 'templateId' => (int) $emailTemplateId,
                 'params' => $emailData,
                 'tags' => [
