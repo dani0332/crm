@@ -417,4 +417,20 @@ enum QuoteTypes: string
         };
     }
 
+    public function getTeams()
+    {
+        return match ($this) {
+            self::BUSINESS => [
+                self::CORPLINE,
+                self::GROUP_MEDICAL,
+            ],
+            default => [$this],
+        };
+    }
+
+    public function isGroupMedical(Model $quote): bool
+    {
+        return $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+    }
+
 }

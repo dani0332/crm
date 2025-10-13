@@ -6,7 +6,6 @@ use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\QuoteTypeId;
-use App\Exports\Reports\EndorsementReportExport;
 use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\SendUpdateLog;
@@ -23,7 +22,7 @@ class EndorsementReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ENDORSEMENT;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
@@ -131,7 +130,8 @@ class EndorsementReportService extends ManagementReport
                 'ps.sage_reciept_id',
                 DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
                 'ciw.text as currently_insured_with_text',
-                'cqr.currently_insured_with as currently_insured_with'
+                'cqr.currently_insured_with as currently_insured_with',
+                DB::raw('CASE WHEN hqr.id IS NULL THEN "N/A" WHEN hqr.pec_marked_at IS NOT NULL THEN "Yes" ELSE "No" END as pec_flag')
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -155,6 +155,10 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('car_quote_request as cqr', function ($join) {
                 $join->on('personal_quotes.quote_id', '=', 'cqr.id')
                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
+            ->leftJoin('health_quote_request as hqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'hqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
             })
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
@@ -230,7 +234,8 @@ class EndorsementReportService extends ManagementReport
                 DB::raw("'N/A' as sage_reciept_id"),
                 DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
                 'ciw.text as currently_insured_with_text',
-                'cqr.currently_insured_with as currently_insured_with'
+                'cqr.currently_insured_with as currently_insured_with',
+                DB::raw('CASE WHEN hqr.id IS NULL THEN "N/A" WHEN hqr.pec_marked_at IS NOT NULL THEN "Yes" ELSE "No" END as pec_flag')
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -252,6 +257,10 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('car_quote_request as cqr', function ($join) {
                 $join->on('personal_quotes.quote_id', '=', 'cqr.id')
                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
+            ->leftJoin('health_quote_request as hqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'hqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
             })
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereNotNull('send_update_logs.reversal_invoice')
@@ -280,13 +289,22 @@ class EndorsementReportService extends ManagementReport
         $query = $query->unionAll($reversalQuery);
         $query = $query->orderBy('id', 'desc');
 
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+
+        $query = $this->getReportQueryBuilder($request);
+
         LoggerService::sql(self::class.' - Endorsement Report Query', $query);
 
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
 
-            return (new EndorsementReportExport($data))->download("Endorsement Report {$this->reportDateRange}.xlsx");
+            return $data;
+
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
@@ -298,7 +316,7 @@ class EndorsementReportService extends ManagementReport
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
 
@@ -312,7 +330,7 @@ class EndorsementReportService extends ManagementReport
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
-            $item->commmission_percentage = number_format($item->commmission_percentage, 2);
+            $item->commmission_percentage = is_numeric($item->commmission_percentage) ? number_format($item->commmission_percentage, 2) : 0;
             $item->status = ucwords(str_replace('_', ' ', strtolower($item->status)));
             $item->currently_insured_with_text = $item->quote_type_id == QuoteTypeId::Car
                 ? ($item->currently_insured_with_text ?? $item->currently_insured_with ?? 'N/A')

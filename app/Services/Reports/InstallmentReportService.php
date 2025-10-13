@@ -6,7 +6,6 @@ use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\QuoteTypeId;
-use App\Exports\Reports\InstallmentReportExport;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -22,7 +21,7 @@ class InstallmentReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::INSTALLMENT;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::APPROVED_TRANSACTIONS;
@@ -79,7 +78,8 @@ class InstallmentReportService extends ManagementReport
                 'ps.sage_reciept_id',
                 DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
                 'ciw.text as currently_insured_with_text',
-                'cqr.currently_insured_with as currently_insured_with'
+                'cqr.currently_insured_with as currently_insured_with',
+                DB::raw('CASE WHEN hqr.id IS NULL THEN "N/A" WHEN hqr.pec_marked_at IS NOT NULL THEN "Yes" ELSE "No" END as pec_flag')
             )
             ->join('payments as p', function ($join) {
                 $join->on('personal_quotes.code', '=', 'p.code')
@@ -103,11 +103,22 @@ class InstallmentReportService extends ManagementReport
                 $join->on('personal_quotes.quote_id', '=', 'cqr.id')
                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
             })
+            ->leftJoin('health_quote_request as hqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'hqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
+            })
             ->orderBy('personal_quotes.id', 'desc')
             ->orderBy('ps.due_date', 'asc');
 
         $this->applyFilters($query, $request);
         $this->getUtmGroup($request, $query);
+
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+        $query = $this->getReportQueryBuilder($request);
 
         LoggerService::sql(self::class.' - Installment Report Query', $query);
 
@@ -115,7 +126,8 @@ class InstallmentReportService extends ManagementReport
             $data = $query->get();
             $this->formatData($data);
 
-            return (new InstallmentReportExport($data))->download("Installment Report {$this->reportDateRange}.xlsx");
+            return $data;
+
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
@@ -127,7 +139,7 @@ class InstallmentReportService extends ManagementReport
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
             $item->policy_start_date = ! empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;

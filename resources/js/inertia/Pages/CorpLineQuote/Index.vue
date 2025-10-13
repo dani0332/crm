@@ -81,6 +81,8 @@ const filters = reactive({
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   advisors: [],
+  authorize_date: '',
+  captured_date: '',
 });
 
 watch(
@@ -108,10 +110,17 @@ const leadStatusOptions = computed(() => {
 });
 
 const advisorOptions = computed(() => {
-  return page.props.dropdownSource.advisor_id.map(advisor => ({
+  let options = page.props.dropdownSource.advisor_id.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
   }));
+
+  options.push({
+    value: '-1',
+    label: 'UnAssigned',
+  });
+
+  return options;
 });
 
 const renewalBatchOptions = computed(() => {
@@ -918,6 +927,22 @@ const insurerAMLStatusOption = computed(() => {
         <DatePicker
           v-model="filters.booking_date"
           label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
           class="w-full"
           range
           multi-calendars

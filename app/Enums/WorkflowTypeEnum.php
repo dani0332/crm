@@ -19,6 +19,7 @@ final class WorkflowTypeEnum extends Enum
     public const HEALTH_APPLICATION_SUBMITTED = 'health_application_submitted';
     public const TRAVEL_RENEWALS_OCB = 'travel_renewals_ocb';
     public const HOME_AUTOMATED_FOLLOWUPS = 'home_automated_followups';
+    public const HOME_RENEWAL_AUTOMATED_FOLLOWUPS = 'home_renewal_automated_followups';
     public const WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS = 'whatsapp_notification_to_customer_no_plans';
     public const TRAVEL_ALLIANCE_FAILED_ALLOCATION = 'travel_alliance_failed_allocation';
     public const HOME_RENEWAL_OCB = 'home_renewal_ocb';
@@ -38,4 +39,15 @@ final class WorkflowTypeEnum extends Enum
     public const LIFE_AUTOMATED_FOLLOWUPS = 'life_automated_followups';
     public const SIC_HEALTH_FOLLOWUPS_WA = 'sic_health_followups_wa';
     public const CAR_INTRO_EMAIL = 'car_intro_email';
+    public const CAR_CQF_RENEWALS_ERRORS = 'car_cqf_renewals_errors';
+
+    // BOR workflow types
+    public const BOR_REQUEST = 'bor_request';
+    public const BOR_CANCEL = 'bor_cancel';
+    public const BOR_UPLOAD = 'bor_upload';
+    public const BOR_INSURER_NOTIFICATION = 'bor_insurer_notification';
+    public const BOR_STATUS_UPDATE = 'bor_status_update';
+    public const CAR_AUTOMATION_FAILED = 'car_automation_failed';
+    public const OE_ASSIGNMENT = 'oe_assignment';
+    public const CAR_CQF_RENEWAL_FOLLOWUPS = 'car_cqf_renewal_followups';
 }

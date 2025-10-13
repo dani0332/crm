@@ -5,7 +5,6 @@ namespace App\Services\Reports;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\QuoteTypeId;
-use App\Exports\Reports\EndingPoliciesReportExport;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
@@ -20,7 +19,7 @@ class EndingPoliciesReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ENDING_POLICIES;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::EXPIRING_POLICIES;
@@ -45,6 +44,10 @@ class EndingPoliciesReportService extends ManagementReport
             ->leftJoin('car_quote_request as cqr', function ($join) {
                 $join->on('personal_quotes.quote_id', '=', 'cqr.id')
                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
+            ->leftJoin('health_quote_request as hqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'hqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
             })
             ->select(
                 'c.first_name',
@@ -72,6 +75,7 @@ class EndingPoliciesReportService extends ManagementReport
                 'ciw.text as currently_insured_with_text',
                 'cqr.currently_insured_with as currently_insured_with',
                 'personal_quotes.quote_type_id',
+                DB::raw('CASE WHEN hqr.id IS NULL THEN "N/A" WHEN hqr.pec_marked_at IS NOT NULL THEN "Yes" ELSE "No" END as pec_flag')
             );
 
         $this->applyFilters($query, $request, isSSR: true);
@@ -84,13 +88,22 @@ class EndingPoliciesReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+
+        $query = $this->getReportQueryBuilder($request);
+
         LoggerService::sql(self::class.' - Ending Policies Report Query', $query);
 
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
 
-            return (new EndingPoliciesReportExport($data))->download("Ending Policies Report {$this->reportDateRange}.xlsx");
+            return $data;
+
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $this->formatData($data);
@@ -99,7 +112,7 @@ class EndingPoliciesReportService extends ManagementReport
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');

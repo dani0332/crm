@@ -2,10 +2,52 @@
 
 namespace App\Exports\Reports;
 
-use Maatwebsite\Excel\Events\AfterSheet;
+use App\Contracts\CsvExportableInterface;
+use App\Services\Logger\LoggerService;
+use App\Services\Reports\EndingPoliciesReportService;
+use App\Traits\ModernCsvExportable;
+use Illuminate\Support\Collection;
 
-class EndingPoliciesReportExport extends BaseReportsExport
+class EndingPoliciesReportExport implements CsvExportableInterface
 {
+    use ModernCsvExportable;
+
+    protected Collection $columnTotals;
+
+    public function __construct(
+        private EndingPoliciesReportService $endingPoliciesReportService,
+        private array $requestParams
+    ) {
+        request()->merge($this->requestParams);
+
+        $this->columnTotals = collect();
+
+        $totalsRow = $this->getEmptyRow();
+
+        $totalsRow[0] = 'Totals';
+
+        $this->columnTotals = collect($totalsRow);
+    }
+
+    /**
+     * Get the data collection for CSV export
+     */
+    public function collection(array $requestParams = []): Collection
+    {
+        $request = request()->merge($requestParams);
+
+        return $this->endingPoliciesReportService->getReportData($request);
+    }
+
+    /**
+     * Get the query builder instance for chunked processing
+     */
+    public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
+    {
+        $request = request()->merge($requestParams);
+
+        return $this->endingPoliciesReportService->getReportQueryBuilder($request);
+    }
     public function headings(): array
     {
         return [
@@ -30,12 +72,13 @@ class EndingPoliciesReportExport extends BaseReportsExport
             'Advisor',
             'Lead Source',
             'Notes',
+            'Policy PEC Flag',
         ];
     }
 
     public function map($quote): array
     {
-        return [
+        $row = collect([
             $quote->customer_name ?? 'N/A',
             $quote->policy_number ?? 'N/A',
             $quote->insurer ?? 'N/A',
@@ -57,11 +100,54 @@ class EndingPoliciesReportExport extends BaseReportsExport
             $quote->advisor ?? 'N/A',
             $quote->source ?? 'N/A',
             $quote->notes ?? 'N/A',
-        ];
+            $quote->pec_flag ?? 'N/A',
+        ]);
+
+        foreach ($this->columnTotals as $index => $field) {
+
+            if (is_numeric($row->get($index))) {
+                $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
+            }
+        }
+
+        return $row->values()->toArray();
     }
 
-    public static function afterSheet(AfterSheet $event)
+    public function processChunkedQuery($query, array $requestParams, $stream): int
     {
-        self::performSum($event, ['H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q']);
+        $totalRecords = 0;
+        $chunkSize = 1000;
+
+        LoggerService::info(__CLASS__.' processChunkedQuery Start');
+
+        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
+            $this->endingPoliciesReportService->formatData($chunk);
+
+            // Now process ALL records in the chunk (just like the download path does)
+            foreach ($chunk as $record) {
+                fputcsv($stream, $this->map($record));
+                $totalRecords++;
+            }
+        });
+
+        $this->postDataRows($stream);
+
+        return $totalRecords;
+    }
+
+    private function postDataRows($stream)
+    {
+        $totalsRow = $this->getEmptyRow();
+
+        foreach ($this->columnTotals as $index => $key) {
+            $totalsRow[$index] = $this->resolveNumberFormat($this->columnTotals->get($index));
+        }
+
+        fputcsv($stream, $totalsRow);
+    }
+
+    private function getEmptyRow(): array
+    {
+        return array_fill(0, count($this->map((object) [])), '');
     }
 }

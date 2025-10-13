@@ -10,6 +10,7 @@ use App\Enums\QuoteFlowType;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\CompanyCarFollowupJob;
@@ -207,7 +208,7 @@ class CarEmailService extends BaseService
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->plans = $insurerPlans;
         $emailData->totalPlans = count($insurerPlans);
-        $emailData->isReAssignment = ! empty($previousAdvisor);
+        $emailData->isReAssignment = $carQuote->isReAssignment();
 
         if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
             $emailData->isRenewal = true;
@@ -824,4 +825,63 @@ class CarEmailService extends BaseService
             'workflowType' => $isReAssignment ? 'ReAssigned' : 'Assigned',
         ];
     }
+    public function sendFailedCarRenewals($failedQuotes, $renewalsUploadLeadsId)
+    {
+
+        $workflow = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+        if ($workflow) {
+            $response = app(BirdService::class)->triggerWebHookRequest($workflow->value, $this->buildFailedCarRenewalsEmailData($failedQuotes, $renewalsUploadLeadsId));
+            LoggerService::info(self::class.' - sendFailedCarRenewals - Event triggered ');
+        }
+
+    }
+
+    public function buildFailedCarRenewalsEmailData($failedQuotes, $renewalsUploadLeadsId)
+    {
+        // Retrieve all CarRenewalManager emails in a single query
+        $renewalsManagersEmails = User::role(RolesEnum::RenewalsManager)
+            ->pluck('email')
+            ->filter()
+            ->values()
+            ->all();
+
+        // Get all failed renewal processes for the given policy numbers
+        $failedPolicyNumbers = collect($failedQuotes)->unique()->values()->all();
+
+        return (object) [
+            'failedQuotes' => implode(', ', $failedPolicyNumbers),
+            'quoteUID' => '', // Not used, reserved for future
+            'renewalsManagersEmails' => $renewalsManagersEmails,
+            'renewalManagerEmail' => $renewalsManagersEmails[0] ?? '',
+            'workflowType' => WorkflowTypeEnum::CAR_CQF_RENEWALS_ERRORS,
+            'dateOfAttempt' => now()->format('Y-m-d'),
+            'failedLeadsCount' => count($failedPolicyNumbers) ?? 0,
+            'fileDownloadUrl' => route('downloadValidationFailedFile', ['id' => $renewalsUploadLeadsId]),
+        ];
+    }
+    public function sendFollowUpEmailForCQF($lead)
+    {
+        try {
+
+            if (app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypeId::Car, QuoteFlowType::CAR_CQF_RENEWAL_FOLLOWUPS)) {
+                LoggerService::info(self::class." - Follow Up Email for CQF already executed for lead: {$lead->uuid}");
+
+                return;
+            }
+
+            LoggerService::info(self::class.' - Sending Follow Up Email for CQF');
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::CAR_CQF_RENEWAL_FOLLOWUPS);
+            $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+            $birdCQFEvent = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW, false, true);
+            if ($birdMotorEventNB) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdCQFEvent, $emailData);
+                app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::CAR_CQF_RENEWAL_FOLLOWUPS, QuoteTypeId::Car);
+                LoggerService::info(self::class." - sendFollowUpEmailForCQF - Event triggered successfully for lead: {$lead->uuid} ", ['response_status_code' => $response->status_code, 'lead_status_id' => $lead->quote_status_id]);
+            }
+        } catch (\Exception $exception) {
+            LoggerService::error(self::class.' - sendFollowUpEmailForCQF - Error while sending quote workflow for lead ', exception: $exception);
+        }
+    }
+
 }

@@ -2,10 +2,53 @@
 
 namespace App\Exports\Reports;
 
-use Maatwebsite\Excel\Events\AfterSheet;
+use App\Contracts\CsvExportableInterface;
+use App\Services\Logger\LoggerService;
+use App\Services\Reports\EndorsementReportService;
+use App\Traits\ModernCsvExportable;
+use Illuminate\Support\Collection;
 
-class EndorsementReportExport extends BaseReportsExport
+class EndorsementReportExport implements CsvExportableInterface
 {
+    use ModernCsvExportable;
+
+    protected Collection $columnTotals;
+
+    public function __construct(
+        private EndorsementReportService $endorsementReportService,
+        private array $requestParams
+    ) {
+        request()->merge($this->requestParams);
+
+        $this->columnTotals = collect();
+
+        $totalsRow = $this->getEmptyRow();
+
+        $totalsRow[0] = 'Totals';
+
+        $this->columnTotals = collect($totalsRow);
+    }
+
+    /**
+     * Get the data collection for CSV export
+     */
+    public function collection(array $requestParams = []): Collection
+    {
+        $request = request()->merge($requestParams);
+
+        return $this->endorsementReportService->getReportData($request);
+    }
+
+    /**
+     * Get the query builder instance for chunked processing
+     */
+    public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
+    {
+        $request = request()->merge($requestParams);
+
+        return $this->endorsementReportService->getReportQueryBuilder($request);
+    }
+
     public function headings(): array
     {
         return [
@@ -51,20 +94,28 @@ class EndorsementReportExport extends BaseReportsExport
             'SU Status',
             'Sage Receipt ID',
             'Private Client',
+            'Policy PEC Flag',
         ];
     }
 
     public function map($quote): array
     {
-        $paymentRefId = $quote->payment_ref_id ? ($quote->payment_ref_id.($quote->split_sr_no ? '-'.$quote->split_sr_no : '')) : 'N/A';
+        if (isset($quote->payment_ref_id)) {
+            $paymentRefId = $quote->payment_ref_id;
+            if (isset($quote->split_sr_no) && $quote->split_sr_no) {
+                $paymentRefId .= '-'.$quote->split_sr_no;
+            }
+        } else {
+            $paymentRefId = 'N/A';
+        }
 
-        return [
+        $row = collect([
             $quote->main_lead_code ?? 'N/A',
             $quote->department ?? 'N/A',
-            $quote->policy_number ? $quote->policy_number : ($quote->main_lead_policy_number ?? 'N/A'),
-            $quote->transactions ? $quote->transactions : 'N/A',
-            $quote->policy_start_date ? $quote->policy_start_date : ($quote->main_lead_policy_start_date ?? 'N/A'),
-            $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
+            $quote->policy_number ?? ($quote->main_lead_policy_number ?? 'N/A'),
+            $quote->transactions ?? 'N/A',
+            $quote->policy_start_date ?? ($quote->main_lead_policy_start_date ?? 'N/A'),
+            $quote->payment_due_date ?? ($quote->due_date ?? 'N/A'),
             $paymentRefId,
             $this->resolveNumberFormat($quote->price_vat_applicable ?? 0),
             $this->resolveNumberFormat($quote->vat ?? 0),
@@ -101,11 +152,54 @@ class EndorsementReportExport extends BaseReportsExport
             $quote->status ?? 'N/A',
             $quote->sage_reciept_id ?? 'N/A',
             $quote->pcp_tag_formatted ?? 'N/A',
-        ];
+            $quote->pec_flag ?? 'N/A',
+        ]);
+        foreach ($this->columnTotals as $index => $field) {
+
+            $sumColumns = [8, 9, 10, 11, 12, 11, 13, 14, 15, 16, 18];
+            if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
+                $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
+            }
+        }
+
+        return $row->values()->toArray();
     }
 
-    public static function afterSheet(AfterSheet $event)
+    public function processChunkedQuery($query, array $requestParams, $stream): int
     {
-        self::performSum($event, ['H', 'I', 'J', 'K', 'L', 'K', 'M', 'N', 'O', 'P', 'R']);
+        $totalRecords = 0;
+        $chunkSize = 1000;
+
+        LoggerService::info(__CLASS__.' processChunkedQuery Start');
+
+        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
+            $this->endorsementReportService->formatData($chunk);
+
+            // Now process ALL records in the chunk (just like the download path does)
+            foreach ($chunk as $record) {
+                fputcsv($stream, $this->map($record));
+                $totalRecords++;
+            }
+        });
+
+        $this->postDataRows($stream);
+
+        return $totalRecords;
+    }
+
+    private function postDataRows($stream)
+    {
+        $totalsRow = $this->getEmptyRow();
+
+        foreach ($this->columnTotals as $index => $key) {
+            $totalsRow[$index] = $this->resolveNumberFormat($this->columnTotals->get($index));
+        }
+
+        fputcsv($stream, $totalsRow);
+    }
+
+    private function getEmptyRow(): array
+    {
+        return array_fill(0, count($this->map((object) [])), '');
     }
 }

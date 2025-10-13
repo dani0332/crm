@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DefaultAdvisorEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -852,8 +853,11 @@ class SendEmailCustomerService extends BaseService
 
             if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
                 if (! empty($emailData->policyWordingHandbook)) {
+                    $policyHandbookUrl = str_starts_with($emailData->policyWordingHandbook['watermarked_doc_url'], 'https:')
+                                ? $emailData->policyWordingHandbook['watermarked_doc_url']
+                                : config('constants.AZURE_IM_STORAGE_URL').$emailData->policyWordingHandbook['watermarked_doc_url'];
                     $attachments[] = [
-                        'url' => $this->encodeUrl(config('constants.AZURE_IM_STORAGE_URL').$emailData->policyWordingHandbook['watermarked_doc_url']),
+                        'url' => $this->encodeUrl($policyHandbookUrl),
                         'name' => 'InsuranceMarket.ae™ '.$emailData->policyWordingHandbook['document_type_text'].' for Policy Number '.$emailData->policy_number.'.'.pathinfo($emailData->policyWordingHandbook['watermarked_doc_url'], PATHINFO_EXTENSION),
                     ];
                 }
@@ -867,10 +871,6 @@ class SendEmailCustomerService extends BaseService
 
                 $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
                 $bodyData['bcc'][] = ['email' => $newLeadPool->value];
-            }
-
-            if ($this->appEnv == EnvEnum::PRODUCTION && $emailData->quoteTypeId == QuoteTypeId::Travel) {
-                $bodyData['bcc'][] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL)];
             }
 
             $headers = [
@@ -946,6 +946,12 @@ class SendEmailCustomerService extends BaseService
                         ];
                     }
                 }
+            }
+
+            if ($this->appEnv == EnvEnum::PRODUCTION && $emailData->quoteTypeId == QuoteTypeId::Travel) {
+                $bodyData['bcc'][] = [
+                    'email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
+                ];
             }
 
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
@@ -1059,6 +1065,7 @@ class SendEmailCustomerService extends BaseService
             'emailTemplateId' => $emailTemplateId,
             'tag' => $tag,
         ]);
+
         $messageId = null;
         $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
 
@@ -1173,7 +1180,9 @@ class SendEmailCustomerService extends BaseService
             }
 
             if ($this->appEnv == EnvEnum::PRODUCTION && $quoteTypeId == QuoteTypeId::Travel) {
-                $body['bcc'][] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL)];
+                $body['bcc'][] = [
+                    'email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
+                ];
             }
 
             LoggerService::info('Send Policy Update email payload', extra: ['payload' => json_encode($body)]);
@@ -1674,6 +1683,7 @@ class SendEmailCustomerService extends BaseService
             $workflowType = WorkflowTypeEnum::INTRODUCTORY_EMAIL_TO_CUSTOMER;
         }
 
+        $bccEmails = $this->getBCCEmails($quoteType, $quote->source);
         $payload = [
             'customerEmail' => $quote->email,
             'customerName' => $quote->first_name.' '.$quote->last_name,
@@ -1691,6 +1701,7 @@ class SendEmailCustomerService extends BaseService
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'businessTypeInsurance' => $shortenedBusinessType ?? null,
             'workflowType' => $workflowType,
+            'bccEmails' => $bccEmails,
         ];
 
         $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW);
@@ -1700,7 +1711,71 @@ class SendEmailCustomerService extends BaseService
         } else {
             LoggerService::info(self::class.'- sendIntroAndReassignEmail - Webhook URL not found in storage');
         }
+    }
 
+    public function sendSupportUserAssignmentEmail($emailData)
+    {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SUPPORT_USER_ASSIGNMENT);
+
+        // Convert leads array to HTML list
+        $leads = collect($emailData->get('params')['leads'] ?? []);
+        $quotesHtml = '';
+
+        if ($leads->isNotEmpty()) {
+            $quotesHtml = $leads->map(function ($lead) {
+                $url = $lead['lead_url'] ?? '#';
+                $refId = $lead['code'] ?? 'Lead';
+
+                return "<li><a href='{$url}' target='_blank'>{$refId}</a></li>";
+            })->pipe(function ($items) {
+                return '<ul>'.$items->implode('').'</ul>';
+            });
+        }
+
+        $birdEmailData = (object) [
+            'supportUserEmail' => $emailData->get('to')['email'] ?? '',
+            'supportUserName' => $emailData->get('to')['name'] ?? '',
+            'assignerName' => $emailData->get('params')['assignerName'] ?? '',
+            'assignerEmail' => $emailData->get('params')['assignerEmail'] ?? '',
+            'ccEmails' => $emailData->get('cc') ?? [],
+            'quoteTypeName' => $emailData->get('params')['quoteTypeName'] ?? '',
+            'quotes' => $quotesHtml,
+            'workflowType' => WorkflowTypeEnum::OE_ASSIGNMENT,
+        ];
+
+        $oeAssignmentEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OE_ASSIGNMENT_WORKFLOW)->first();
+
+        if ($oeAssignmentEvent) {
+            info('Support User (OE) Assignment: workflow trigger on BIRD, BIRD_OE_ASSIGNMENT_WORKFLOW value: '.$oeAssignmentEvent->value);
+            $response = app(BirdService::class)->triggerWebHookRequest($oeAssignmentEvent->value, $birdEmailData);
+        } else {
+            LoggerService::error('Support User (OE) Assignment: BIRD_OE_ASSIGNMENT_WORKFLOW not found in ApplicationStorage. Bird request has not been triggered.');
+        }
+    }
+
+    public function getBCCEmails(string $quoteType, string $source)
+    {
+        $bccEmails = [];
+
+        switch ($quoteType) {
+            case QuoteTypes::HOME->value:
+                $bccEmails[] = getAppStorageValueByKey(ApplicationStorageEnums::HOME_LEAD_POOL_BCC);
+                if ($source === LeadSourceEnum::CPA_AUSTRALIA_HOME) {
+                    $bccEmails = array_merge($bccEmails, explode(',', getAppStorageValueByKey(ApplicationStorageEnums::CPA_AUSTRALIA_HOME_BCC_EMAILS)));
+                }
+                break;
+            case QuoteTypes::SAVINGS->value:
+                $bccEmails[] = getAppStorageValueByKey(ApplicationStorageEnums::SAVINGS_LEAD_POOL_BCC);
+                if ($source === LeadSourceEnum::CPA_AUSTRALIA_SAVINGS) {
+                    $bccEmails = array_merge($bccEmails, explode(',', getAppStorageValueByKey(ApplicationStorageEnums::CPA_AUSTRALIA_SAVINGS_BCC_EMAILS)));
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        return $bccEmails;
     }
 
     public function buildEmailDataForBirdFlow($lead, $advisor, $workflowType)

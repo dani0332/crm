@@ -370,11 +370,21 @@ class AllocationService extends BaseService
         ];
     }
 
+    public function getBusinessStartTime(): string
+    {
+        return getAppStorageValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_START_TIME, useCache: true);
+    }
+
+    public function getBusinessEndTime(): string
+    {
+        return getAppStorageValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_END_TIME, useCache: true);
+    }
+
     public function isBusinessHours(): bool
     {
         try {
-            $startTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
-            $endTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
+            $startTime = Carbon::createFromFormat('H:i', $this->getBusinessStartTime());
+            $endTime = Carbon::createFromFormat('H:i', $this->getBusinessEndTime());
 
             $currentTime = now();
             $isWeekend = $currentTime->isWeekend();
@@ -431,7 +441,7 @@ class AllocationService extends BaseService
         if ($isBusinessHours) {
             return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE];
         } else {
-            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE];
+            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE, UserStatusEnum::MANUAL_OFFLINE];
         }
     }
 }

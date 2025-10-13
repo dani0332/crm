@@ -6,6 +6,7 @@ use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentTooltip;
@@ -27,6 +28,8 @@ use App\Models\Entity;
 use App\Models\GroupMedicalType;
 use App\Models\KycLog;
 use App\Models\Nationality;
+use App\Models\User;
+use App\Repositories\ActivityRepository;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -41,12 +44,15 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
+use App\Traits\TeamHierarchyTrait;
 use Auth;
 use Carbon\Carbon;
 use DB;
@@ -55,7 +61,7 @@ use Illuminate\Support\Facades\Redirect;
 
 class AmtController extends Controller
 {
-    use GenericQueriesAllLobs, RolePermissionConditions;
+    use GenericQueriesAllLobs, RolePermissionConditions,TeamHierarchyTrait;
 
     /**
      * Display a listing of the resource.
@@ -68,6 +74,7 @@ class AmtController extends Controller
             ->leftJoin('business_quote_request_detail as bqrd', 'bqr.id', '=', 'bqrd.business_quote_request_id')
             ->leftJoin('business_type_of_insurance as bit', 'bqr.business_type_of_insurance_id', '=', 'bit.id')
             ->leftJoin('users as u', 'bqr.advisor_id', '=', 'u.id')
+            ->leftJoin('users as su', 'bqr.support_user_id', '=', 'su.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('quote_status as qs', 'bqr.quote_status_id', '=', 'qs.id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -84,9 +91,11 @@ class AmtController extends Controller
                 DB::raw('DATE_FORMAT(bqr.updated_at, "%d-%b-%Y %r") as updated_at'),
                 'bit.text as leadType',
                 'bqr.advisor_id',
+                'bqr.support_user_id',
                 'bqr.source',
                 'ls.text as lost_reason',
                 'u.name as advisor_id_text',
+                'su.name as support_user_name',
                 'bqr.premium',
                 'bqr.company_name',
                 DB::raw('DATE_FORMAT(bqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
@@ -115,7 +124,7 @@ class AmtController extends Controller
             // if user has advisor Role then fetch leads assigned to the user only
             $data->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
-        $this->whereBasedOnRole($data, 'bqr');
+        $this->whereBasedOnRole($data, 'bqr', quoteTypeCode::Business);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $advisors = DB::table('users as u')
@@ -123,7 +132,23 @@ class AmtController extends Controller
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->whereIn('r.name', ['GM_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
+
+        // Get support users (OE role with Group Medical product access)
+        $supportUsers = app(UserService::class)->getSupportUsers([
+            'product_filter' => QuoteTypes::GROUP_MEDICAL,
+            'include_role_in_name' => true,
+            'return_format' => 'collection',
+        ]);
+
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
+
+        /* Check all conditions for client support assignment */
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SUPPORT_USER_ASSIGNMENT);
+
+        $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT) &&
+                                 Auth::user()->hasRole(RolesEnum::CLIENTSUPPORTLEAD) &&
+                                 Auth::user()->hasProduct(QuoteTypes::GROUP_MEDICAL->value);
+
         $model = 'Business';
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
@@ -188,6 +213,14 @@ class AmtController extends Controller
                 $data->whereIn('bqr.advisor_id', $request->advisor_id);
             }
         }
+
+        if (isset($request->support_user_id) && is_array($request->support_user_id) && count($request->support_user_id) > 0) {
+            if (count($request->support_user_id) === 1 && $request->support_user_id[0] == '-1') {
+                $data->whereNull('bqr.support_user_id');
+            } else {
+                $data->whereIn('bqr.support_user_id', $request->support_user_id);
+            }
+        }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && isset($request->previous_policy_expiry_date_end) && $request->previous_policy_expiry_date_end != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date_end)->endOfDay()->toDateTimeString();
@@ -225,6 +258,20 @@ class AmtController extends Controller
             $data->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
 
+        // Apply authorize_date filter
+        if (! empty($request->authorize_date) && is_array($request->authorize_date) && count($request->authorize_date) >= 2) {
+            $startDate = Carbon::parse($request->authorize_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->authorize_date[1])->endOfDay();
+            $data->whereBetween('py.authorized_at', [$startDate, $endDate]);
+        }
+
+        // Apply captured_date filter
+        if (! empty($request->captured_date) && is_array($request->captured_date) && count($request->captured_date) >= 2) {
+            $startDate = Carbon::parse($request->captured_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->captured_date[1])->endOfDay();
+            $data->whereBetween('py.captured_at', [$startDate, $endDate]);
+        }
+
         $this->adjustQueryByDateFilters($data, 'bqr');
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -245,10 +292,16 @@ class AmtController extends Controller
         }
         $paymentAuthorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $authorizedDays = intval($paymentAuthorizedDays->value);
-        $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
+
+        $canAssignLeadAdvisor = auth()->user()->isAdmin() ||
+            $isManagerORDeputy ||
+            Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
+
+        $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport);
+
         $quotes = $data->simplePaginate(15)->withQueryString();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus'));
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus'));
     }
 
     /**
@@ -324,7 +377,8 @@ class AmtController extends Controller
         $allowedDuplicateLOB = $crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
-
+        $membersDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
+        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
@@ -390,6 +444,16 @@ class AmtController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
+        $activities = ActivityRepository::where([
+            'quote_type_id' => QuoteTypes::BUSINESS->id(),
+            'quote_request_id' => $record->id,
+        ])
+            ->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
+
+        $advisors = User::role(RolesEnum::GMAdvisor)
+            ->select('users.id', DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::GMAdvisor."') AS name"))
+            ->get();
+
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
@@ -417,6 +481,8 @@ class AmtController extends Controller
             'companyTypes' => $companyType,
             'UBOsDetails' => $UBODetails,
             'UBORelations' => $UBORelations,
+            'membersDetails' => $membersDetails,
+            'memberRelations' => $memberRelations,
             'nationalities' => $nationalities,
             'emirates' => $emirates,
             'insuranceProviders' => $insuranceProviders,
@@ -439,6 +505,8 @@ class AmtController extends Controller
             'paymentDocument' => $paymentDocuments,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'activities' => $activities,
+            'advisors' => $advisors,
         ]);
     }
 
@@ -509,6 +577,19 @@ class AmtController extends Controller
 
         return inertia('GroupMedicalQuote/Cards', [
             'quotes' => array_values($leadStatuses),
+            // 'quotes' => $quotes,
+            'quoteStatusEnum' => [],
+            'lostReasons' => [],
+            'leadStatuses' => $leadStatuses,
+            'advisors' => [],
+            'teams' => [],
+            'insuranceTypeOptions' => [],
+            'quoteTypeId' => QuoteTypes::BUSINESS->id(),
+            'quoteType' => QuoteTypes::BUSINESS->value,
+            'totalCount' => 0,
+            'areBothTeamsPresent' => false,
+            'is_renewal' => null,
+            'business_type_of_insurance_id' => \App\Enums\BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL,
         ]);
     }
 }

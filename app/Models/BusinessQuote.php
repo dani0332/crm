@@ -120,6 +120,11 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->belongsTo(User::class, 'previous_advisor_id', 'id');
     }
 
+    public function supportUser()
+    {
+        return $this->belongsTo(User::class, 'support_user_id', 'id');
+    }
+
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
@@ -171,6 +176,12 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->hasOne(BusinessQuoteRequestDetail::class);
     }
 
+    public function customerInsured()
+    {
+        return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Business);
+    }
+
     // Get all insured records for this quote (multiple AML screenings)
     public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
     {
@@ -195,6 +206,12 @@ class BusinessQuote extends Model implements AuditableContract
             'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
         )->latest('customer_insured.updated_at');
+    }
+
+    public function amlLogs()
+    {
+        return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Business)->withTrashed();
     }
 
     /**
@@ -304,5 +321,10 @@ class BusinessQuote extends Model implements AuditableContract
     public function ftcEmailLogs(): MorphMany
     {
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
+    }
+
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Business);
     }
 }

@@ -2,10 +2,54 @@
 
 namespace App\Exports\Reports;
 
+use App\Contracts\CsvExportableInterface;
+use App\Services\Logger\LoggerService;
+use App\Services\Reports\InstallmentReportService;
+use App\Traits\ModernCsvExportable;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Events\AfterSheet;
 
-class InstallmentReportExport extends BaseReportsExport
+class InstallmentReportExport implements CsvExportableInterface
 {
+    use ModernCsvExportable;
+
+    protected Collection $columnTotals;
+
+    public function __construct(
+        private InstallmentReportService $installmentReportService,
+        private array $requestParams
+    ) {
+        request()->merge($this->requestParams);
+
+        $this->columnTotals = collect();
+
+        $totalsRow = $this->getEmptyRow();
+
+        $totalsRow[0] = 'Totals';
+
+        $this->columnTotals = collect($totalsRow);
+    }
+
+    /**
+     * Get the data collection for CSV export
+     */
+    public function collection(array $requestParams = []): Collection
+    {
+        $request = request()->merge($requestParams);
+
+        return $this->installmentReportService->getReportData($request);
+    }
+
+    /**
+     * Get the query builder instance for chunked processing
+     */
+    public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
+    {
+        $request = request()->merge($requestParams);
+
+        return $this->installmentReportService->getReportQueryBuilder($request);
+    }
+
     public function headings(): array
     {
         return [
@@ -48,14 +92,22 @@ class InstallmentReportExport extends BaseReportsExport
             'Lead Source',
             'Sage Receipt ID',
             'Private Client',
+            'Policy PEC Flag',
         ];
     }
 
     public function map($quote): array
     {
-        $paymentRefId = $quote->code ? ($quote->code.($quote->split_sr_no ? '-'.$quote->split_sr_no : '')) : 'N/A';
+        if (isset($quote->code)) {
+            $paymentRefId = $quote->code;
+            if (isset($quote->split_sr_no) && $quote->split_sr_no) {
+                $paymentRefId .= '-'.$quote->split_sr_no;
+            }
+        } else {
+            $paymentRefId = 'N/A';
+        }
 
-        return [
+        $row = collect([
             $quote->code ?? 'N/A',
             $quote->department ?? 'N/A',
             $quote->policy_number ?? 'N/A',
@@ -95,7 +147,56 @@ class InstallmentReportExport extends BaseReportsExport
             $quote->source ?? 'N/A',
             $quote->sage_reciept_id ?? 'N/A',
             $quote->pcp_tag_formatted ?? 'N/A',
-        ];
+            $quote->pec_flag ?? 'N/A',
+        ]);
+
+        foreach ($this->columnTotals as $index => $field) {
+
+            $sumColumns = [8, 9, 10, 11, 12, 13, 14, 15, 16, 18];
+            if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
+                $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
+            }
+        }
+
+        return $row->values()->toArray();
+    }
+
+    public function processChunkedQuery($query, array $requestParams, $stream): int
+    {
+        $totalRecords = 0;
+        $chunkSize = 1000;
+
+        LoggerService::info(__CLASS__.' processChunkedQuery Start');
+
+        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
+            $this->installmentReportService->formatData($chunk);
+
+            // Now process ALL records in the chunk (just like the download path does)
+            foreach ($chunk as $record) {
+                fputcsv($stream, $this->map($record));
+                $totalRecords++;
+            }
+        });
+
+        $this->postDataRows($stream);
+
+        return $totalRecords;
+    }
+
+    private function postDataRows($stream)
+    {
+        $totalsRow = $this->getEmptyRow();
+
+        foreach ($this->columnTotals as $index => $key) {
+            $totalsRow[$index] = $this->resolveNumberFormat($this->columnTotals->get($index));
+        }
+
+        fputcsv($stream, $totalsRow);
+    }
+
+    private function getEmptyRow(): array
+    {
+        return array_fill(0, count($this->map((object) [])), '');
     }
 
     public static function afterSheet(AfterSheet $event)

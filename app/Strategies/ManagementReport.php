@@ -18,6 +18,7 @@ use App\Models\Team;
 use App\Services\ApplicationStorageService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -98,6 +99,13 @@ class ManagementReport
     }
     public function applyFilters($query, $request, $endorsementsQuery = false, $isSSR = false)
     {
+        if (! Auth::check()) {
+            $user = $request['user'] ?? null;
+            unset($request['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+
+        }
         $this->applyDateFilters($query, $request, $endorsementsQuery);
 
         if (isset($request['transactionType'])) {
@@ -188,6 +196,26 @@ class ManagementReport
                     ->when(! empty($filteredTags), fn ($q) => $q->orWhereIn('pcp_tag', $filteredTags));
             }, fn ($q) => $q->whereIn('pcp_tag', $pcpTag));
         });
+
+        if ($request['lob'] && in_array(quoteTypeCode::Health, $request['lob']) && isset($request['pec_flag']) && $request['pec_flag'] !== 'all') {
+            if ($request['pec_flag'] == '1') {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('health_quote_request')
+                        ->whereColumn('health_quote_request.id', 'personal_quotes.quote_id')
+                        ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health)
+                        ->whereNotNull('health_quote_request.pec_marked_at');
+                });
+            } else {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('health_quote_request')
+                        ->whereColumn('health_quote_request.id', 'personal_quotes.quote_id')
+                        ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health)
+                        ->whereNull('health_quote_request.pec_marked_at');
+                });
+            }
+        }
 
         $query->whereIn('personal_quotes.quote_type_id', $lobsIds);
     }
@@ -298,7 +326,7 @@ class ManagementReport
                 if ($this->isReportType($request, ManagementReportTypeEnum::ACTIVE_POLICIES)) {
                     $dateFilter = $request['createdAt'] ?? now()->startOfDay()->format(config('constants.DATE_FORMAT_ONLY'));
                     $query->where(function ($query) use ($dateFilter) {
-                        $query->where('policy_start_date', '>=', $dateFilter)
+                        $query->where('personal_quotes.policy_start_date', '>=', $dateFilter)
                             ->orWhere('p.policy_expiry_date', '<=', $dateFilter);
                     });
                 }

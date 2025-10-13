@@ -12,7 +12,8 @@ use App\Events\PrivateClientUpdatedEvent;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
-use App\Jobs\MAWelcomeJob;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Jobs\SendFailedPaymentEmailJob;
 use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
@@ -64,6 +65,8 @@ class TravelQuoteObserver
         if (isset($dirty['advisor_id'])) {
             try {
                 $travelQuote->markLeadAllocationPassed();
+
+                SendFailedPaymentEmailJob::dispatch($travelQuote->uuid, QuoteTypes::TRAVEL);
 
                 LogAllocation::dispatch($travelQuote, QuoteTypes::TRAVEL);
 
@@ -118,7 +121,7 @@ class TravelQuoteObserver
             in_array($travelQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Travel, 'quoteUID' => $travelQuote->uuid]);
-            MAWelcomeJob::dispatch(
+            ExtendCustomerSubscriptionViaSQS::dispatch(
                 $travelQuote->customer,
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'

@@ -148,6 +148,11 @@ const tableHeader = reactive([
     tooltip: 'Name of the customer',
   },
   {
+    text: 'OE/AE',
+    value: 'support_user',
+    tooltip: 'Name of the Assigned Operation Executive',
+  },
+  {
     text: 'Advisor',
     value: 'advisor',
     tooltip: 'The advisor assigned to the lead',
@@ -231,6 +236,11 @@ const tableHeader = reactive([
   {
     text: 'Private Client',
     value: 'pcp_tag_formatted',
+  },
+  {
+    text: 'Policy PEC Flag',
+    value: 'pec_flag',
+    tooltip: 'Indicates if the policy has Pre-Existing Condition (PEC) flag',
   },
 ]);
 const isIntegerColumn = key => {

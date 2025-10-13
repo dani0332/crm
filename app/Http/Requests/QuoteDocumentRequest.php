@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\InsurerProviderEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
@@ -43,6 +43,8 @@ class QuoteDocumentRequest extends FormRequest
             'quote_uuid' => 'required',
             'member_detail_id' => 'nullable',
             'is_base_64' => 'nullable',
+            'document_category' => 'nullable',
+            'file_name' => 'nullable|string|max:100', // only for base 64 file name to be used as original name
         ];
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->first())) {
@@ -58,7 +60,6 @@ class QuoteDocumentRequest extends FormRequest
         }
 
         return $rules;
-
     }
 
     /**
@@ -118,10 +119,10 @@ class QuoteDocumentRequest extends FormRequest
         $insuranceProvider = InsuranceProvider::find($quote->insurance_provider_id);
 
         $insurersWithoutCCRenewal = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::EMIRATES_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+            InsuranceProviderEnum::AXA->value,    // GIG_INSURANCE
+            InsuranceProviderEnum::EI->value,     // EMIRATES_INSURANCE
+            InsuranceProviderEnum::RSA->value,    // LIVANA_INSURANCE
+            InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 
         if (! $insuranceProvider) {

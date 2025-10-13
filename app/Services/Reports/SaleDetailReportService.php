@@ -5,7 +5,6 @@ namespace App\Services\Reports;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\QuoteTypeId;
-use App\Exports\Reports\SaleDetailReportExport;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -21,7 +20,7 @@ class SaleDetailReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_DETAIL;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
@@ -85,7 +84,8 @@ class SaleDetailReportService extends ManagementReport
                 'ps.sage_reciept_id',
                 DB::raw(Customer::formattedPcpTagCase('cm').' as pcp_tag_formatted'),
                 'ciw.text as currently_insured_with_text',
-                'cqr.currently_insured_with as currently_insured_with'
+                'cqr.currently_insured_with as currently_insured_with',
+                DB::raw('CASE WHEN hqr.id IS NULL THEN "N/A" WHEN hqr.pec_marked_at IS NOT NULL THEN "Yes" ELSE "No" END as pec_flag')
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -106,6 +106,10 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('car_quote_request as cqr', function ($join) {
                 $join->on('personal_quotes.quote_id', '=', 'cqr.id')
                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
+            ->leftJoin('health_quote_request as hqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'hqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
             });
 
         $this->applyFilters($query, $request);
@@ -118,13 +122,22 @@ class SaleDetailReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+
+        $query = $this->getReportQueryBuilder($request);
+
         LoggerService::sql(self::class.' - Sale Detail Report Query', $query);
 
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
 
-            return (new SaleDetailReportExport($data))->download("Sale Detail Report {$this->reportDateRange}.xlsx");
+            return $data;
+
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
@@ -136,7 +149,7 @@ class SaleDetailReportService extends ManagementReport
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
             $item->transactions = $this->concatValues([$item->insurer_tax_invoice_number, $item->notes, $item->reference], '-');
@@ -148,7 +161,7 @@ class SaleDetailReportService extends ManagementReport
             $item->total_commission = number_format($item->total_commission, 2);
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
-            $item->commmission_percentage = number_format($item->commmission_percentage, 2);
+            $item->commmission_percentage = is_numeric($item->commmission_percentage) ? number_format($item->commmission_percentage, 2) : 0;
             $item->policy_booking_date = ! empty($item->policy_booking_date) ? Carbon::parse($item->policy_booking_date)->format('Y-m-d') : null;
             $item->currently_insured_with_text = $item->quote_type_id == QuoteTypeId::Car
                 ? ($item->currently_insured_with_text ?? $item->currently_insured_with ?? 'N/A')

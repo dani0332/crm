@@ -18,6 +18,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
+use App\Facades\Ken;
 use App\Facades\Marshall;
 use App\Jobs\EP\CancelEPJob;
 use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
@@ -436,20 +437,18 @@ class EmbeddedProductRepository extends BaseRepository
             } elseif (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])
                 && EmbeddedProductStrategy::checkSukoonMedex($item->product->embeddedProduct->short_code ?? '')) {
 
+                $product_id = $item->product_id ?? null;
+                $embedded_product_id = EmbeddedProductOption::find($product_id)?->embedded_product_id;
+
                 if ($item->paid_at && Carbon::parse($item->paid_at)->lt(Carbon::parse(self::SALAMA_DATE))) {
 
-                    $product_id = $item->product_id;
-                    $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
-
                     // EP Send documents
-                    $data = [];
-                    $data['quoteId'] = $leadId;
-                    $data['modelType'] = $modelType;
-                    $data['epId'] = $embedded_product_id;
-                    $data['isSalama'] = true;
-                    $this->fetchSendDocument($data);
-
-                    $response = ['success' => true];
+                    $response = $this->fetchSendDocument([
+                        'quoteId' => $leadId,
+                        'modelType' => $modelType,
+                        'epId' => $embedded_product_id,
+                        'isSalama' => true,
+                    ]);
 
                 } else {
 
@@ -462,26 +461,26 @@ class EmbeddedProductRepository extends BaseRepository
                         $response = ['success' => true];
 
                     } else {
-                        try {
-                            $savedDocumentTypes = $item->documents->pluck('document_type_code')->toArray();
-                            $sukoonInitialDocTypes = QuoteDocumentsEnum::getSukoonInitialDocTypes();
+                        $watermarkedDocuments = $item->documents()
+                            ->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get()
+                            ->where('is_watermarked', true);
 
-                            // Check All email-required documents are saved
-                            if (empty(array_diff($sukoonInitialDocTypes, $savedDocumentTypes))) {
+                        $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
+                        $missingReqWatermarkedDocTypes = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $watermarkedDocumentTypes);
 
-                                $sukoonMedexService = app(SukoonMedexService::class);
-                                $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $item);
-                                $sukoonMedexService->sendDocuments();
+                        // make sure email required watermarked documents is not missing
+                        if (empty($missingReqWatermarkedDocTypes)) {
 
-                                $response = ['success' => true];
-                            } else {
-                                LoggerService::info('fetchSendDocumentsByLead - Required documents are not saved, please sync documents first', extra: $extra);
-                                $response = ['success' => false, 'message' => 'Required documents are not saved, please sync documents first'];
-                            }
+                            $response = $this->fetchSendDocument([
+                                'quoteId' => $leadId,
+                                'modelType' => $modelType,
+                                'epId' => $embedded_product_id,
+                            ]);
 
-                        } catch (Exception $e) {
-                            LoggerService::info('fetchSendDocumentsByLead - Failed', extra: [...$extra, 'exception' => $e->getMessage()]);
-                            $response = ['success' => false, 'message' => $e->getMessage()];
+                        } else {
+                            LoggerService::info('fetchSendDocumentsByLead - Required watermarked documents are not saved, please sync documents first', extra: $extra);
+                            $response = ['success' => false, 'message' => 'Required watermarked documents are not saved, please sync documents first'];
+                            break;
                         }
                     }
                 }
@@ -546,7 +545,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         $ep = $this->where('id', $epId)->first();
         if (! $ep) {
-            return 'Embedded Product not found';
+            return ['success' => false, 'message' => 'Embedded Product not found'];
         }
 
         $short_code = $ep->short_code;
@@ -557,11 +556,14 @@ class EmbeddedProductRepository extends BaseRepository
 
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
         if (empty($quoteObject)) {
-            return 'Quote not found';
+            return ['success' => false, 'message' => 'Quote not found'];
         }
 
         $advisorData = $this->fetchAdvisorData($quoteObject);
         $transaction = $this->fetchTransaction($modelType, $quoteId, $ep);
+        if ($transaction->isEmpty()) {
+            return ['success' => false, 'message' => 'Transaction not found'];
+        }
 
         $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
         if (! $isSalama) {
@@ -569,9 +571,16 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         if (! $canSendDocuments) {
-            info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
+            LoggerService::info('Documents cannot be sent',
+                extra: [
+                    'et_ids' => $transaction->pluck('id'),
+                    'ep_category' => $ep->product_category,
+                    'quote_status' => $quoteObject->quote_status_id,
+                ],
+                context: ['ref_id' => $quoteObject->code]
+            );
 
-            return 'Documents cannot be sent';
+            return ['success' => false, 'message' => 'Documents cannot be sent'];
         }
 
         if ($isAlfredProtect) {
@@ -708,9 +717,9 @@ class EmbeddedProductRepository extends BaseRepository
         info('Send Alfred Protect Email Response: '.json_encode($response));
 
         if ($response == 201) {
-            return $this->handleAjaxResponse('Certificate sent successfully.', 'success');
+            return ['success' => true, 'message' => 'Certificate sent successfully'];
         } else {
-            return $this->handleAjaxResponse('Error sending Certificate.', 'error');
+            return ['success' => false, 'message' => 'Error sending Certificate'];
         }
     }
 
@@ -730,11 +739,21 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
         } else {
+            $watermarkedDocuments = $transaction->documents()
+                ->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get()
+                ->where('is_watermarked', true);
 
-            $documents = $transaction->documents()->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get();
-            foreach ($documents as $document) {
+            $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
+            $missingReqWatermarkedDocTypes = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $watermarkedDocumentTypes);
+
+            // make sure email required watermarked documents is not missing
+            if (! empty($missingReqWatermarkedDocTypes)) {
+                return ['success' => false, 'message' => 'Required watermarked document is not found'];
+            }
+
+            foreach ($watermarkedDocuments as $document) {
                 $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-                $url = $websiteURL.$document->doc_url;
+                $url = $websiteURL.$document->watermarked_doc_url;
                 $file = file_get_contents($url);
                 $attachments[] = [
                     'Content' => base64_encode($file),
@@ -774,7 +793,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         SendEPDocumentsJob::dispatch($body);
 
-        return 'Certificate sent successfully';
+        return ['success' => true, 'message' => 'Certificate sent successfully'];
     }
 
     private function handleAjaxResponse($message, $status)
@@ -948,7 +967,7 @@ class EmbeddedProductRepository extends BaseRepository
 
             foreach ($epTransaction as $item) {
                 $product_id = $item->product_id;
-                $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
+                $embedded_product_id = EmbeddedProductOption::find($product_id)?->embedded_product_id;
                 $payment = $item['payments'][0];
 
                 $data = [
@@ -1284,5 +1303,16 @@ class EmbeddedProductRepository extends BaseRepository
                 }
             });
         }
+    }
+
+    public function saveEmbeddedTransaction($quote, $quoteTypeId)
+    {
+        $response = Ken::request('/save-embedded-transaction', 'post',
+            ['quoteUID' => $quote->uuid, 'quoteTypeId' => $quoteTypeId]);
+        if (isset($response->status) && $response->status == 200) {
+            return $response->data;
+        }
+
+        return null;
     }
 }

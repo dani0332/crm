@@ -26,5 +26,7 @@ class AiAdvisorSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        
     }
 }

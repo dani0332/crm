@@ -16,10 +16,10 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
     protected $nonPUALeads;
     protected $puaLeads;
 
-    public function __construct()
+    public function __construct($requestParams = [])
     {
-        $this->nonPUALeads = app(CarQuoteService::class)->exportnonPUAAuthorized();
-        $this->puaLeads = app(CarQuoteService::class)->exportPUAAuthorized();
+        $this->nonPUALeads = app(CarQuoteService::class)->exportnonPUAAuthorized($requestParams);
+        $this->puaLeads = app(CarQuoteService::class)->exportPUAAuthorized($requestParams);
     }
 
     public function collection()
@@ -38,11 +38,9 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
         }
 
         // ADD BlANK LINE
-        if ($teamCounts->isNotEmpty()) {
-            $exportData->push((object) [' ' => ' ']);
-            $exportData->push((object) [' ' => ' ']);
-            $exportData->push((object) [' ' => ' ']);
-        }
+        $exportData->push((object) [' ' => ' ']);
+        $exportData->push((object) [' ' => ' ']);
+        $exportData->push((object) [' ' => ' ']);
 
         $exportData->push((object) [
             'NonPUA' => 'PUA: ',

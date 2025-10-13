@@ -180,6 +180,16 @@ const confirmDeleteDoc = () => {
           title: 'File Deleted',
           position: 'top',
         });
+
+        // Emit custom event for accuracy matrix updates
+        window.dispatchEvent(
+          new CustomEvent('document-deleted', {
+            detail: {
+              docId: confirmDeleteData.doc_id,
+              docUuid: confirmDeleteData.doc_uuid,
+            },
+          }),
+        );
       },
     },
   );
@@ -260,14 +270,15 @@ onUnmounted(() => {
           class="flex gap-2 mb-4 justify-end"
           v-if="readOnlyMode.isDisable === true"
         >
-          <x-tag
+          <!-- TODO: Uncomment this when Customer OCR Journey is supported on prod/stage -->
+          <!-- <x-tag
             v-if="quoteType == quoteTypeCodeEnum.Car"
             :color="documentVerificationStatus ? 'success' : 'amber'"
           >
             {{
               documentVerificationStatus ? 'Verified' : 'Verification Pending'
             }}
-          </x-tag>
+          </x-tag> -->
           <DownloadDocuments
             v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
             :quote="page.props.quote"
@@ -338,7 +349,11 @@ onUnmounted(() => {
         <DataTable
           table-class-name="compact"
           :headers="quoteDocumentsTable.columns"
-          :items="quoteDocuments || []"
+          :items="
+            quoteDocuments.filter(
+              d => d.document_type_code != documentTypeCodeEnum.BOR_SIGN,
+            ) || []
+          "
           border-cell
           hide-rows-per-page
           :rows-per-page="15"

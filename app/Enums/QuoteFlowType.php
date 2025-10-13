@@ -13,10 +13,13 @@ enum QuoteFlowType: int
     case NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS = 7;
     case HOME_AUTOMATED_FOLLOWUPS = 8;
     case MOTOR_PCP_FOLLOWUPS = 9;
+    case CAR_CQF_RENEWAL_FOLLOWUPS = 11;
     case LIFE_AUTOMATED_FOLLOWUPS = 12;
     case LIFE_ADVANCE_BIRTHDAY_WISH = 13;
     case LIFE_BIRTHDAY_WISH = 14;
+    case HOME_RENEWAL_AUTOMATED_FOLLOWUPS = 15;
     case SIC_HEALTH_FOLLOWUPS_WA = 10;
+    case CAR_AUTOMATION_FAILED = 36;
 
     public function label(): string
     {
@@ -29,8 +32,13 @@ enum QuoteFlowType: int
             QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS => 'travel_automated_followups',
             QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS => 'nb_motor_automated_followups',
             QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS => 'home_automated_followups',
+            QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS => 'home_renewal_automated_followups',
             QuoteFlowType::MOTOR_PCP_FOLLOWUPS => 'motor_pcp_followups',
             QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA => 'sic_health_followups_wa',
+            QuoteFlowType::LIFE_AUTOMATED_FOLLOWUPS => 'life_automated_followups',
+            QuoteFlowType::LIFE_ADVANCE_BIRTHDAY_WISH => 'life_advance_birthday_wish',
+            QuoteFlowType::LIFE_BIRTHDAY_WISH => 'life_birthday_wish',
+            QuoteFlowType::CAR_AUTOMATION_FAILED => 'car_automation_failed',
         };
     }
 
@@ -47,6 +55,12 @@ enum QuoteFlowType: int
             8 => QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS,
             9 => QuoteFlowType::MOTOR_PCP_FOLLOWUPS,
             10 => QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA,
+            11 => QuoteFlowType::CAR_CQF_RENEWAL_FOLLOWUPS,
+            12 => QuoteFlowType::LIFE_AUTOMATED_FOLLOWUPS,
+            13 => QuoteFlowType::LIFE_ADVANCE_BIRTHDAY_WISH,
+            14 => QuoteFlowType::LIFE_BIRTHDAY_WISH,
+            15 => QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS,
+            36 => QuoteFlowType::CAR_AUTOMATION_FAILED,
             default => null,  // Return null if the value doesn't match any case
         };
     }

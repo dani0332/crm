@@ -8,6 +8,8 @@ use App\Services\OCR\OcrUtils;
 
 class EmiratesIdExtractor
 {
+    use OcrUtils;
+
     private array $extractedData = [];
 
     public function __construct(
@@ -45,16 +47,16 @@ class EmiratesIdExtractor
                 continue;
             }
 
-            $data = OcrUtils::ensureArray($ocrData);
+            $data = $this->ensureArray($ocrData);
 
-            $this->extractedData = array_merge($this->extractedData, OcrUtils::getCleanData([
+            $this->extractedData = array_merge($this->extractedData, $this->getCleanData([
                 'eid_number' => $data['idNumber'] ?? null,
                 'name' => $data['name'] ?? null,
-                'date_of_birth' => OcrUtils::formatDate($data['dateOfBirth'] ?? null),
+                'date_of_birth' => $this->formatDate($data['dateOfBirth'] ?? null),
                 'nationality' => $data['nationality'] ?? null,
-                'sex' => OcrUtils::formatGender($data['sex'] ?? null),
-                'issuing_date' => OcrUtils::formatDate($data['issuingDate'] ?? null),
-                'expiry_date' => OcrUtils::formatDate($data['expiryDate'] ?? null),
+                'sex' => $this->formatGender($data['sex'] ?? null),
+                'issuing_date' => $this->formatDate($data['issuingDate'] ?? null),
+                'expiry_date' => $this->formatDate($data['expiryDate'] ?? null),
                 'issuing_place' => $data['issuingPlace'] ?? null,
                 'occupation' => $data['occupation'] ?? null,
                 'sponsor' => $data['sponsor'] ?? null,

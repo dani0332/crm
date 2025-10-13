@@ -201,6 +201,10 @@ abstract class BaseAllocationPipe extends AllocationService
             $statuses[] = UserStatusEnum::UNAVAILABLE;
         }
 
+        if (! $this->isBusinessHours()) {
+            $statuses[] = UserStatusEnum::MANUAL_OFFLINE;
+        }
+
         return $statuses;
     }
 

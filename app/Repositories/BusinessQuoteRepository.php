@@ -45,6 +45,7 @@ class BusinessQuoteRepository extends BaseRepository
             'businessQuoteRequestDetail.lostReason',
             'quoteStatus',
             'advisor',
+            'supportUser',
             'businessTypeOfInsurance',
         ])->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
             $businessTypeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
@@ -88,6 +89,7 @@ class BusinessQuoteRepository extends BaseRepository
         $quote = $this->where($queryWhere)
             ->with([
                 'advisor',
+                'supportUser',
                 'previousAdvisor',
                 'businessQuoteRequestDetail.lostReason',
                 'customer',
@@ -113,6 +115,7 @@ class BusinessQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
+                'nationality',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -120,6 +123,10 @@ class BusinessQuoteRepository extends BaseRepository
             ->firstOrFail();
 
         $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Entity;
+
+        if (isset($quote->latestInsured)) {
+            $quote->emirates_id_number = $quote->latestInsured['id_type'] == 'emiratesId' ? $quote->latestInsured['id_number'] : null;
+        }
 
         return $quote;
     }
