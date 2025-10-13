@@ -6,12 +6,12 @@ namespace App\Factories;
 
 use App\Contracts\AllocationValidationStrategyInterface;
 use App\Enums\QuoteTypes;
+use App\Strategies\Validation\CommonAllocationValidationStrategy;
 use App\Strategies\Validation\CorplineAllocationValidationStrategy;
 use App\Strategies\Validation\GroupMedicalAllocationValidationStrategy;
 use App\Strategies\Validation\HomeAllocationValidationStrategy;
 use App\Strategies\Validation\LifeAllocationValidationStrategy;
 use App\Strategies\Validation\SavingsAllocationValidationStrategy;
-use App\Strategies\Validation\CommonAllocationValidationStrategy;
 use InvalidArgumentException;
 
 class AllocationValidationStrategyFactory
