@@ -20,8 +20,10 @@ class EpWatermarkDocumentJob implements ShouldQueue
     public $tries = 2;
     public $timeout = 180;
     public $backoff = 10;
+
     private ?EmbeddedTransaction $embeddedTransaction = null;
     private array $watermarkableDocTypeCodes = [];
+
     private string $logPrefix = 'EpWatermarkDocument - Job:';
     private array $logExtra = [];
 
@@ -32,7 +34,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
 
         $this->watermarkableDocTypeCodes = [
             QuoteDocumentsEnum::POLICY_SCHEDULE,
-            QuoteDocumentsEnum::CAR_TAX_INVOICE,
+            QuoteDocumentsEnum::CAR_TAX_INVOICE
         ];
     }
 
@@ -65,17 +67,14 @@ class EpWatermarkDocumentJob implements ShouldQueue
     {
         LoggerService::error("{$this->logPrefix} Failed", extra: [
             ...$this->logExtra,
-            'error' => $exception->getMessage(),
+            'error' => $exception->getMessage()
         ]);
     }
 
     public function shouldRetry(Throwable $exception): bool
     {
-        // Retry for file processing issues only
-        return str_contains($exception->getMessage(), 'timeout') ||
-            str_contains($exception->getMessage(), 'file') ||
-            str_contains($exception->getMessage(), 'permission') ||
-            str_contains($exception->getMessage(), 'temporary');
+        // Retry for file processing timeout issue only
+        return str_contains($exception->getMessage(), 'timeout');
     }
 
     /**
@@ -88,7 +87,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
         return [
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
-                ->expireAfter(180),
+                ->expireAfter(180)
         ];
     }
 }

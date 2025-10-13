@@ -20,6 +20,7 @@ class SyncEpDocumentsJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 180;
     public $backoff = 120;
+
     private string $logPrefix = 'SyncEpDocuments - Job:';
     private array $logExtra = [];
 
@@ -58,14 +59,14 @@ class SyncEpDocumentsJob implements ShouldQueue
     {
         LoggerService::error("{$this->logPrefix} Failed after all retries", extra: [
             ...$this->logExtra,
-            'error' => $exception->getMessage(),
+            'error' => $exception->getMessage()
         ]);
 
         try {
             Mail::send(new EpFailureNotification($this->context->quoteId, $this->context->quoteTypeId, $this->context->etId));
             LoggerService::info("{$this->logPrefix} Embedded Product failure email sent successfully");
         } catch (Throwable $e) {
-            LoggerService::error("{$this->logPrefix} Failed to send Embedded Product failure email: ".$e->getMessage());
+            LoggerService::error("{$this->logPrefix} Failed to send Embedded Product failure email: " . $e->getMessage());
         }
     }
 
@@ -74,12 +75,9 @@ class SyncEpDocumentsJob implements ShouldQueue
      */
     public function shouldRetry(Throwable $exception): bool
     {
-        // Retry for network/timeout issues and document download issues
-        if ($exception instanceof \Illuminate\Http\Client\ConnectionException ||
-            $exception instanceof \Illuminate\Http\Client\RequestException ||
+        // Retry for network/timeout issues
+        if ($exception instanceof \Illuminate\Http\Client\RequestException ||
             str_contains($exception->getMessage(), 'timeout') ||
-            str_contains($exception->getMessage(), 'connection') ||
-            str_contains($exception->getMessage(), 'download') ||
             str_contains($exception->getMessage(), 'server error')
         ) {
             return true;
@@ -99,7 +97,7 @@ class SyncEpDocumentsJob implements ShouldQueue
         return [
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
-                ->expireAfter(180),
+                ->expireAfter(180)
         ];
     }
 }

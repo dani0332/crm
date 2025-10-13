@@ -24,9 +24,11 @@ class EpSendDocumentJob implements ShouldQueue
 {
     use GenericQueriesAllLobs, Queueable;
 
-    public $timeout = 180;
+    public $timeout = 120;
+
     private string $logPrefix = 'EpSendDocument - Job:';
     private array $logExtra = [];
+
     public mixed $quote = null;
     private string $storageBaseUrl = '';
 
@@ -58,17 +60,8 @@ class EpSendDocumentJob implements ShouldQueue
     public function failed(Throwable $exception): void
     {
         LoggerService::error("{$this->logPrefix} Failed", extra: [
-            'error' => $exception->getMessage(),
+            'error' => $exception->getMessage()
         ]);
-    }
-
-    public function shouldRetry(Throwable $exception): bool
-    {
-        // Retry for email/notification service issues only
-        return str_contains($exception->getMessage(), 'mail') ||
-               str_contains($exception->getMessage(), 'notification') ||
-               str_contains($exception->getMessage(), 'smtp') ||
-               str_contains($exception->getMessage(), 'connection');
     }
 
     /**
@@ -81,7 +74,7 @@ class EpSendDocumentJob implements ShouldQueue
         return [
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
-                ->expireAfter(180),
+                ->expireAfter(120)
         ];
     }
 
@@ -107,7 +100,7 @@ class EpSendDocumentJob implements ShouldQueue
         $emailData = [
             'Attachments' => $attachments,
             'Tags' => WorkflowTypeEnum::SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL,
-            'customerName' => trim(($this->quote?->first_name ?? '').' '.($this->quote?->last_name ?? '')),
+            'customerName' => trim(($this->quote?->first_name ?? '') . ' ' . ($this->quote?->last_name ?? '')),
             'refID' => $this->quote?->code ?? '',
             'uuid' => $this->quote?->uuid ?? '',
             ...$recipients,
@@ -162,7 +155,7 @@ class EpSendDocumentJob implements ShouldQueue
         $recipients = [
             'to' => $toEmails,
             'cc' => $ccEmails,
-            'bcc' => $recipientEmails['bcc'],
+            'bcc' => $recipientEmails['bcc']
         ];
 
         return $recipients;
@@ -170,6 +163,8 @@ class EpSendDocumentJob implements ShouldQueue
 
     /**
      * This function use to trigger bird workflow
+     *
+     * @param  array  $birdEmailData
      */
     private function triggerBirdWorkflow(array $birdEmailData)
     {
@@ -223,12 +218,11 @@ class EpSendDocumentJob implements ShouldQueue
                 if (! empty($item->path)) {
                     $attachments[] = [
                         'fileUrl' => $policyWordingsUrl,
-                        'fileName' => $embeddedProduct->display_name.' - Policy Wordings.pdf',
+                        'fileName' => $embeddedProduct->display_name.' - Policy Wordings.pdf'
                     ];
                 }
             }
         }
-
         return $attachments;
     }
 }
