@@ -1192,6 +1192,8 @@ const getTotalAnnualPriceAED = () => {
     priceInAED * (page.props.quote?.life_quote?.payment_term ?? 1),
   );
 };
+
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 </script>
 <template>
   <div>
@@ -2328,7 +2330,7 @@ const getTotalAnnualPriceAED = () => {
                           !(
                             ecomDetail?.isUnderwritten &&
                             selectedProviderPlan == item.planId
-                          )
+                          ) && item.providerCode !== insuranceProviderCodeEnum?.MTL
                         "
                         size="xs"
                         color="emerald"
