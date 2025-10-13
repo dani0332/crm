@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
 use Illuminate\Database\Seeder;
 
@@ -635,7 +636,7 @@ class DocumentTypesSeeder extends Seeder
                 'text' => 'Emirates ID',
                 'description' => 'Please upload your valid Emirates ID license.',
                 'is_active' => 1,
-                'quote_type_id' => QuoteTypeId::Life,
+                'quote_type_id' => QuoteTypes::LIFE->id(),
                 'folder_path' => 'life',
                 'accepted_files' => '.pdf,.docx',
                 'max_files' => 2,
@@ -653,7 +654,7 @@ class DocumentTypesSeeder extends Seeder
                 'code' => DocumentTypeCode::LIFE_HEALTH_QUESTIONNAIRE,
                 'text' => 'Life Health Questionnaire',
                 'is_active' => 1,
-                'quote_type_id' => 4,
+                'quote_type_id' => QuoteTypes::LIFE->id(),
                 'folder_path' => 'life_health_questionnaire',
                 'accepted_files' => '.pdf',
                 'max_files' => 15,
