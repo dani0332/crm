@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\SLA;
 
+use App\Enums\EnvEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SLAStatusEnum;
@@ -68,7 +69,11 @@ trait SLAable
 
     private function getHeadEmail(): string
     {
-        return 'agatha.alicdan@insurancemarket.ae';
+        if ($this->isProduction()) {
+            return 'agatha.alicdan@insurancemarket.ae';
+        }
+
+        return 'usman.iqbal@myalfred.com';
     }
 
     private function getCCEmails(User $advisor): array
@@ -83,6 +88,12 @@ trait SLAable
 
     private function getManagersEmails(User $advisor)
     {
+        if (! $this->isProduction()) {
+            return [
+                'usman.iqbal@myalfred.com'
+            ];
+        }
+
         $advisorTeams = $advisor->teams->filter(function ($team) {
             return $team->is_active && $team->type === 'Team';
         })->pluck('name')->toArray();
@@ -231,5 +242,10 @@ trait SLAable
         $businessStart = $this->allocationService->getBusinessStartTime();
 
         return $nextBusinessDay->setTimeFromTimeString($businessStart);
+    }
+
+    private function isProduction(): bool
+    {
+        return config('constants.APP_ENV') == EnvEnum::PRODUCTION;
     }
 }
