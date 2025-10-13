@@ -534,6 +534,8 @@ class OCRService
         // if userId is null, it means the request is from ecom
         $isEcom = is_null($userId);
 
+        LoggerService::info('OCR Dispatch - Quote UUID: '.$quote->uuid);
+        LoggerService::info('OCR Dispatch - File Path Azure: '.$filePathAzure);
         if ($quote && $filePathAzure) {
             LoggerService::info('OCR Dispatch - Dispatching PopulateDocumentData job - Quote UUID: '.$quote->uuid);
 
