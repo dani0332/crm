@@ -18,13 +18,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
-  advisors: {
-    type: Array,
-    default: () => [],
-  },
 });
 
 const can = permission => useCan(permission);
+const advisors = page.advisors;
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const permissionsEnum = page.props.permissionsEnum;
@@ -71,15 +68,15 @@ const advisorOptions = ref([]);
 
 // Function to build advisor options - only runs when needed
 const buildAdvisorOptions = () => {
-  if (!props.advisors || props.advisors.length === 0) {
+  if (!advisors || advisors.length === 0) {
     advisorOptions.value = [];
     return;
   }
   
-  console.log('Building advisor options, count:', props.advisors.length);
+  console.log('Building advisor options, count:', advisors.length);
   
   // Simple mapping without sorting to improve performance
-  const options = props.advisors.map(advisor => ({
+  const options = advisors.map(advisor => ({
     value: advisor.id, // Keep as original type (string or number) - NO CONVERSION
     label: advisor.label || `Advisor ${advisor.id}`,
   }));
@@ -253,7 +250,7 @@ watch(() => props.quote, (newQuote) => {
 }, { deep: true });
 
 // Watch for advisors prop changes
-watch(() => props.advisors, () => {
+watch(() => advisors, () => {
   buildAdvisorOptions();
 }, { deep: true });
 
