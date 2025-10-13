@@ -25,6 +25,8 @@ const props = defineProps({
 });
 
 const can = permission => useCan(permission);
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const leadSource = page.props.leadSource;
 
@@ -236,9 +238,6 @@ function onSubmit(isValid) {
       });
   }
 }
-
-const hasRole = role => useHasRole(role);
-const rolesEnum = page.props.rolesEnum;
 const readOnlyMode = reactive({
   isDisable: true,
 });
@@ -410,7 +409,7 @@ onMounted(() => {
         </div>
 
         <!-- Debug Info (remove in production) -->
-        <div v-if="isEditMode" class="p-2 bg-gray-100 rounded mb-4 text-xs">
+        <div v-if="isEditMode && hasRole(rolesEnum.Engineering)" class="p-2 bg-gray-100 rounded mb-4 text-xs">
           <strong>Debug Info:</strong>
           <pre>{{ JSON.stringify(debugFormValues, null, 2) }}</pre>
         </div>
