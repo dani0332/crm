@@ -61,8 +61,10 @@ class LifeSyncHealthQuestionnaireJob implements ShouldQueue
     {
         $isMetLifeEnabled = getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_METLIFE, useCache: true) == '1';
 
-        return [
-            Skip::unless(fn () => $isMetLifeEnabled),
-        ];
+        if (! $isMetLifeEnabled) {
+            return [Skip::when(fn () => true)];
+        }
+
+        return [];
     }
 }

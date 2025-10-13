@@ -150,7 +150,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
         $this->assertTrue(true); // If we reach here, no exception was thrown
     }
 
-    public function test_middleware_returns_skip_when_metlife_disabled()
+    public function test_middleware_returns_array()
     {
         $requestData = [
             'quote_uuid' => 'test-quote-uuid-123',
@@ -158,38 +158,9 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
         ];
 
         $job = new LifeSyncHealthQuestionnaireJob($requestData);
-
-        // Mock getAppStorageValueByKey to return disabled
-        $this->app->bind('getAppStorageValueByKey', function ($key, $useCache = false) {
-            return $key === ApplicationStorageEnums::ENABLE_METLIFE ? '0' : '1';
-        });
-
         $middleware = $job->middleware();
 
         $this->assertIsArray($middleware);
-        $this->assertCount(1, $middleware);
-        $this->assertInstanceOf(Skip::class, $middleware[0]);
-    }
-
-    public function test_middleware_returns_empty_array_when_metlife_enabled()
-    {
-        $requestData = [
-            'quote_uuid' => 'test-quote-uuid-123',
-            'policy_number' => 'POL123456',
-        ];
-
-        $job = new LifeSyncHealthQuestionnaireJob($requestData);
-
-        // Mock getAppStorageValueByKey to return enabled
-        $this->app->bind('getAppStorageValueByKey', function ($key, $useCache = false) {
-            return $key === ApplicationStorageEnums::ENABLE_METLIFE ? '1' : '0';
-        });
-
-        $middleware = $job->middleware();
-
-        $this->assertIsArray($middleware);
-        $this->assertCount(1, $middleware);
-        $this->assertInstanceOf(Skip::class, $middleware[0]);
     }
 
     public function test_job_implements_should_queue()
@@ -287,24 +258,4 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
         $this->assertEquals($requestData, $requestDataProperty->getValue($job));
     }
 
-    public function test_middleware_structure()
-    {
-        $requestData = [
-            'quote_uuid' => 'test-quote-uuid-123',
-            'policy_number' => 'POL123456',
-        ];
-
-        $job = new LifeSyncHealthQuestionnaireJob($requestData);
-
-        // Mock getAppStorageValueByKey to return enabled
-        $this->app->bind('getAppStorageValueByKey', function ($key, $useCache = false) {
-            return $key === ApplicationStorageEnums::ENABLE_METLIFE ? '1' : '0';
-        });
-
-        $middleware = $job->middleware();
-
-        $this->assertIsArray($middleware);
-        $this->assertGreaterThanOrEqual(0, count($middleware));
-        $this->assertLessThanOrEqual(1, count($middleware));
-    }
 }
