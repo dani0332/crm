@@ -328,8 +328,9 @@
                 <h4 style="margin-bottom: 10px;">✅ Documentation Status - Updated October 2024</h4>
                 <p style="margin: 0;">
                     <strong>All documentation has been updated to reflect actual implementation:</strong><br>
-                    • Embedded Product booking with ECB product support documented<br>
-                    • AR/AP invoice lifecycles comprehensively covered for all scenarios<br>
+                    • Embedded Product booking for MDX (Driver Cover), RDX (Rider Medical Cover), and ECB (Excess Cashback) documented with product-specific differentiation<br>
+                    • AR/AP invoice lifecycles comprehensively covered for all scenarios (upfront, split, non-upfront)<br>
+                    • Prepayment receipt creation clarified (prepayment = receipt in Sage 300)<br>
                     • Payment mapping updated with zero-price and historic data handling<br>
                     • Job queue integration and error handling thoroughly documented<br>
                     • All code examples verified against current SageApiService implementation
@@ -683,20 +684,23 @@
             <div class="doc-card">
                 <h3>
                     <span class="icon">🔗</span>
-                    7. Embedded Product Booking
+                    7. Embedded Product Booking (MDX, RDX, ECB)
                 </h3>
                 <p>
-                    Comprehensive guide to embedded product integration and Sage 300 booking process including
-                    SukoonMedex, ECB (Embedded Credit Bureau), Roadside Assistance, and Courier services integration.
+                    Comprehensive guide to embedded product integration and Sage 300 booking process for three specific products:
+                    <strong>MDX</strong> (Driver Cover - MEDEX), <strong>RDX</strong> (Rider Medical Cover), and
+                    <strong>ECB</strong> (Excess Cashback).
                 </p>
                 <ul class="features">
+                    <li>Three product types with distinct API methods (viewQuotePolicy vs issuePolicy)</li>
+                    <li>MDX & RDX: Driver and rider medical cover using viewQuotePolicy with EmbeddedProduct call type</li>
+                    <li>ECB: Excess cashback benefit using issuePolicy with insurance_provider_id filtering</li>
                     <li>Product eligibility validation and LOB support (Car, Bike)</li>
-                    <li>ECB (Embedded Credit Bureau) product differentiation</li>
-                    <li>Automatic booking triggers during policy booking</li>
+                    <li>Automatic booking triggers during policy booking (TAP gateway)</li>
                     <li>EP-specific AR receipt and invoice creation (4-step process)</li>
                     <li>BookEmbeddedProductOnSageJob with WithoutOverlapping middleware</li>
-                    <li>Status management and workflow tracking</li>
-                    <li>Database schema for EP transactions (embedded_transactions table)</li>
+                    <li>Status management: READY_FOR_SAGE → QUEUED → COMPLETED/FAILED</li>
+                    <li>Database: embedded_transactions, sage_embedded_product_statuses</li>
                     <li>Note: AP receipt creation currently disabled for EP</li>
                 </ul>
                 <a href="/docs/booking-process/embedded-product-booking.html" class="doc-link">View Embedded Product Booking →</a>

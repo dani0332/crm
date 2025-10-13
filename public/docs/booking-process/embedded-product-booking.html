@@ -546,24 +546,24 @@
 
         <div class="header">
             <h1>🔗 Embedded Product Booking</h1>
-            <p>Comprehensive guide to embedded product integration and Sage 300 booking process</p>
+            <p>Comprehensive guide for MDX (Driver Cover), RDX (Rider Medical Cover), and ECB (Excess Cashback) - Sage 300 booking process</p>
         </div>
 
         <div class="content-section">
             <h2>🎯 Overview</h2>
             <p>
-                The Embedded Product Booking system manages the integration and booking of additional insurance products
-                (like SukoonMedex, Alfred Protect, Courier services) alongside main insurance policies. This process
-                handles the complete lifecycle from product selection through Sage 300 integration including receipts,
-                invoices, and payment applications.
+                The Embedded Product Booking system manages the integration and booking of three specific embedded products:
+                <strong>MDX (Driver Cover - MEDEX)</strong>, <strong>RDX (Rider Medical Cover)</strong>, and
+                <strong>ECB (Excess Cashback)</strong> alongside main insurance policies. This process handles the
+                complete lifecycle from product selection through Sage 300 integration including receipts, invoices, and payment applications.
             </p>
 
             <div class="highlight">
                 <h4>💡 Core Embedded Product Operations</h4>
                 <p>
                     Product eligibility validation, automatic booking triggers during policy booking, separate financial
-                    processing in Sage 300, status synchronization, and comprehensive audit logging. All embedded products
-                    follow the same booking workflow but with product-specific configurations and validation rules.
+                    processing in Sage 300, status synchronization, and comprehensive audit logging. All three embedded products
+                    (MDX, RDX, ECB) follow the same booking workflow but with product-specific API response retrieval and validation rules.
                 </p>
             </div>
 
@@ -591,31 +591,35 @@
 
         <div class="content-section">
             <h2>📋 Embedded Product Types</h2>
+            <p>The system currently supports booking for three specific embedded products, each with unique characteristics and API integration requirements:</p>
 
             <div class="product-types">
                 <div class="product-type">
-                    <span class="icon">🏥</span>
-                    <h4>SukoonMedex (MDX)</h4>
-                    <p>Medical assistance and emergency services for travelers and residents. Requires TAP payment gateway and specific status validations before Sage booking.</p>
-                </div>
-
-                <div class="product-type">
                     <span class="icon">🚗</span>
-                    <h4>Roadside Assistance (RDX)</h4>
-                    <p>24/7 roadside assistance services for vehicle breakdowns. Integrated with car insurance policies and follows standard booking workflow.</p>
+                    <h4>MDX - Driver Cover (MEDEX)</h4>
+                    <p>Driver medical cover provided by MEDEX for comprehensive driver protection. Requires TAP payment gateway, uses viewQuotePolicy API method with EmbeddedProduct call type, and requires specific status validations before Sage booking.</p>
                 </div>
 
                 <div class="product-type">
-                    <span class="icon">🛡️</span>
-                    <h4>Alfred Protect</h4>
-                    <p>Comprehensive protection services with automated document generation. Supports both individual and business policy holders.</p>
+                    <span class="icon">🏍️</span>
+                    <h4>RDX - Rider Medical Cover</h4>
+                    <p>Rider medical cover for motorcycle riders providing medical protection during rides. Integrated with bike/motorcycle insurance policies, uses viewQuotePolicy API method with EmbeddedProduct call type, and follows the same booking workflow as MDX.</p>
                 </div>
 
                 <div class="product-type">
-                    <span class="icon">📦</span>
-                    <h4>Courier Services (COU)</h4>
-                    <p>Document delivery and courier services with tracking integration. Special handling for document synchronization and status updates.</p>
+                    <span class="icon">💰</span>
+                    <h4>ECB - Excess Cashback</h4>
+                    <p>Excess cashback benefit offering financial reimbursement for policy excess amounts. Uses issuePolicy API method (not viewQuotePolicy), requires insurance_provider_id filtering, and has distinct API response retrieval logic compared to MDX/RDX products.</p>
                 </div>
+            </div>
+
+            <div class="highlight">
+                <h4>🔑 Key Product Differentiation</h4>
+                <p>
+                    <strong>MDX & RDX:</strong> Use <code>viewQuotePolicy</code> API method with <code>call_type = 'EmbeddedProduct'</code><br>
+                    <strong>ECB:</strong> Uses <code>issuePolicy</code> API method with <code>insurance_provider_id</code> filtering<br>
+                    All three products follow the same 4-step Sage booking workflow but differ in their API response retrieval.
+                </p>
             </div>
         </div>
 
@@ -685,7 +689,7 @@
             <p><strong>📍 Function Type:</strong> These are <span style="color: #e74c3c; font-weight: bold;">Sage API Service Methods</span> that orchestrate embedded product booking.</p>
 
             <h3>🔗 bookEmbeddedProductOnSage() - API Service Method</h3>
-            <p>Main function in <strong>SageApiEmbeddedProductService</strong> for booking embedded products with complete Sage integration. Supports multiple product types including ECB (Embedded Credit Bureau), SukoonMedex (MDX), and Roadside Assistance (RDX).</p>
+            <p>Main function in <strong>SageApiEmbeddedProductService</strong> for booking embedded products with complete Sage integration. Supports three specific product types: <strong>MDX (Driver Cover - MEDEX)</strong>, <strong>RDX (Rider Medical Cover)</strong>, and <strong>ECB (Excess Cashback)</strong>.</p>
 
             <div class="code-block">
                 <pre>public function bookEmbeddedProductOnSage($sageRequestDataArray, $epShortCode = null)
@@ -816,7 +820,9 @@ public function getInsurerRequestResponseForECB($quote, $insuranceProviderId = n
 
 public function getInsurerRequestResponseForSukoonMedXRedx($quote, $insuranceProviderId = null)
 {
-    // SukoonMedex and Roadside Assistance API response retrieval
+    // MDX and RDX API response retrieval
+    // Note: Function name kept as "SukoonMedXRedx" for backward compatibility
+    // MDX = Driver Cover (MEDEX), RDX = Rider Medical Cover
     return InsurerRequestResponse::where([
         'quote_uuid' => $quote->uuid,
         'status' => 'passed',
@@ -828,22 +834,24 @@ public function getInsurerRequestResponseForSukoonMedXRedx($quote, $insurancePro
 
             <div class="info-grid">
                 <div class="info-card">
-                    <h4>🏦 ECB (Embedded Credit Bureau) Products</h4>
+                    <h4>💰 ECB (Excess Cashback)</h4>
                     <ul>
+                        <li><strong>Product Code:</strong> ECB</li>
                         <li><strong>API Method:</strong> issuePolicy (not viewQuotePolicy)</li>
                         <li><strong>Provider Filtering:</strong> Uses insurance_provider_id</li>
                         <li><strong>Status:</strong> Passed execution status required</li>
-                        <li><strong>Use Case:</strong> Credit-related embedded products</li>
+                        <li><strong>Use Case:</strong> Excess cashback benefit for policy excess reimbursement</li>
                     </ul>
                 </div>
 
                 <div class="info-card">
-                    <h4>🏥 SukoonMedex / 🚗 Roadside Products</h4>
+                    <h4>🚗 MDX & 🏍️ RDX Products</h4>
                     <ul>
+                        <li><strong>Product Codes:</strong> MDX (Driver Cover), RDX (Rider Medical Cover)</li>
                         <li><strong>API Method:</strong> viewQuotePolicy</li>
                         <li><strong>Call Type:</strong> EmbeddedProduct</li>
                         <li><strong>Status:</strong> Passed execution status required</li>
-                        <li><strong>Use Case:</strong> Medical assistance and roadside services</li>
+                        <li><strong>Use Case:</strong> Driver and rider medical coverage</li>
                     </ul>
                 </div>
             </div>
@@ -951,6 +959,7 @@ public function getInsurerRequestResponseForSukoonMedXRedx($quote, $insurancePro
 
             <div class="code-block">
                 <pre>// Eligibility validation in SageApiService
+// Checks for MDX (Driver Cover), RDX (Rider Medical Cover), and ECB (Excess Cashback)
 $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
 $sukoonEPTransaction = $this->getSukoonEPTransaction($quote, $quoteTypeId);
 $isTapPaymentGateway = $payment->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
@@ -988,7 +997,7 @@ if ($isLobAllowedForEmbeddedProductBooking && $sukoonEPTransaction && $isTapPaym
                     <ul>
                         <li><strong>Purpose:</strong> Validate EP transaction status</li>
                         <li><strong>Required Status:</strong> STATUS_READY_FOR_SAGE</li>
-                        <li><strong>Products:</strong> SukoonMedex (MDX), Roadside (RDX)</li>
+                        <li><strong>Products:</strong> MEDX, RDX, and ECB</li>
                         <li><strong>Usage:</strong> Status gate before Sage processing</li>
                     </ul>
                 </div>
@@ -1413,6 +1422,7 @@ $isEmbeddedProductBookedOnSage = QuoteTag::where([
 
             <div class="code-block">
                 <pre>// Integration point in main booking process (SageApiService)
+// Automatically triggers booking for MDX (Driver Cover), RDX (Rider Medical Cover), or ECB (Excess Cashback)
 $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
 $sukoonEPTransaction = $this->getSukoonEPTransaction($quote, $quoteTypeId);
 $isTapPaymentGateway = $payment->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
