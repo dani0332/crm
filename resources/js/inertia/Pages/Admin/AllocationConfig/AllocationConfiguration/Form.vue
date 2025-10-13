@@ -6,6 +6,7 @@ import SavingsAllocationConfigTemplate from './Savings/SavingsAllocationConfigTe
 import HomeAllocationConfigTemplate from './Home/HomeAllocationConfigTemplate.vue';
 import LifeAllocationConfigTemplate from './Life/LifeAllocationConfigTemplate.vue';
 import SimpleAllocationConfigTemplate from './Simple/SimpleAllocationConfigTemplate.vue';
+import VerySimpleAllocationConfigTemplate from './Simple/VerySimpleAllocationConfigTemplate.vue';
 import CorplineAllocationConfigTemplate from './Corpline/CorplineAllocationConfigTemplate.vue';
 import GroupMedicalAllocationConfigTemplate from './GroupMedical/GroupMedicalAllocationConfigTemplate.vue';
 import ErrorDisplay from './components/ErrorDisplay.vue';
@@ -48,6 +49,7 @@ const {
   homeTemplateRef,
   lifeTemplateRef,
   simpleTemplateRef,
+  verySimpleTemplateRef,
   corplineTemplateRef,
   groupMedicalTemplateRef,
   auditLogsKey,
@@ -218,14 +220,13 @@ onMounted(() => {
             form.quote_type === quoteTypeCodeEnum.Cycle
           "
         >
-          <SimpleAllocationConfigTemplate
+          <VerySimpleAllocationConfigTemplate
             :configuration="currentConfiguration"
             :advisor-options="advisorOptions"
-            :team-options="teamOptions"
             :view-mode="isViewMode"
             :lob-name="form.quote_type"
             @data-update="onTemplateDataUpdate"
-            ref="simpleTemplateRef"
+            ref="verySimpleTemplateRef"
           />
         </div>
 

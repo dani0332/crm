@@ -33,7 +33,7 @@ class AllocationConfigurationService
                 'type4_brackets' => $data['type4_brackets'] ?? [],
             ],
             QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE => [
-                'brackets' => $data['brackets'] ?? [],
+                'advisor_ids' => $data['advisor_ids'] ?? [],
             ],
             QuoteTypes::CORPLINE => [
                 'value_brackets' => $data['value_brackets'] ?? [],

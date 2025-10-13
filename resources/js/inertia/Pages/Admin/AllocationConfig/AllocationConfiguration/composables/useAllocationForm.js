@@ -15,6 +15,7 @@ export function useAllocationForm(props, errorHandling) {
   const homeTemplateRef = ref(null);
   const lifeTemplateRef = ref(null);
   const simpleTemplateRef = ref(null);
+  const verySimpleTemplateRef = ref(null);
   const corplineTemplateRef = ref(null);
   const groupMedicalTemplateRef = ref(null);
   const auditLogsKey = ref(0);
@@ -231,6 +232,12 @@ export function useAllocationForm(props, errorHandling) {
         });
       }
 
+      if (verySimpleTemplateRef.value) {
+        nextTick(() => {
+          verySimpleTemplateRef.value.clearValidationErrors();
+        });
+      }
+
       if (corplineTemplateRef.value) {
         nextTick(() => {
           corplineTemplateRef.value.clearValidationErrors();
@@ -320,13 +327,13 @@ export function useAllocationForm(props, errorHandling) {
         (form.quote_type === props.quoteTypeCodeEnum.Pet ||
           form.quote_type === props.quoteTypeCodeEnum.Yacht ||
           form.quote_type === props.quoteTypeCodeEnum.Cycle) &&
-        simpleTemplateRef.value
+        verySimpleTemplateRef.value
       ) {
-        const templateValidation = simpleTemplateRef.value.validate();
+        const templateValidation = verySimpleTemplateRef.value.validate();
 
         if (!templateValidation.isValid) {
           templateValidation.errors.forEach(error => {
-            addError(error, 'bracket');
+            addError(error, 'general');
           });
           isSubmitting.value = false;
           return;
@@ -413,6 +420,10 @@ export function useAllocationForm(props, errorHandling) {
             simpleTemplateRef.value.clearValidationErrors();
           }
 
+          if (verySimpleTemplateRef.value) {
+            verySimpleTemplateRef.value.clearValidationErrors();
+          }
+
           if (corplineTemplateRef.value) {
             corplineTemplateRef.value.clearValidationErrors();
           }
@@ -495,6 +506,7 @@ export function useAllocationForm(props, errorHandling) {
     homeTemplateRef,
     lifeTemplateRef,
     simpleTemplateRef,
+    verySimpleTemplateRef,
     corplineTemplateRef,
     groupMedicalTemplateRef,
     auditLogsKey,
