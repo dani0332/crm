@@ -127,6 +127,7 @@ trait OcrValidator
             return false;
         }
 
-        return $this->isSupportedProvider($quoteType, $providerCode);
+        //return $this->isSupportedProvider($quoteType, $providerCode);
+        return true;
     }
 }
