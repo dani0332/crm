@@ -33,22 +33,7 @@ trait AllocationConfigurationFindable
             ? $configuration->lumpsum_brackets
             : $configuration->regular_brackets;
 
-        $brackets = collect($brackets);
-
-        $matchingBracket = $brackets
-            ->where('min', '<=', $amount)
-            ->where('max', '>=', $amount)
-            ->first();
-
-        if (! $matchingBracket) {
-            return [];
-        }
-
-        $profiles = collect($matchingBracket['profiles']);
-
-        $matchingProfile = $profiles->first(fn ($profile) => in_array($nationalityId, $profile['nationalityIds']));
-
-        return $matchingProfile ? ($matchingProfile['advisorIds'] ?? []) : [];
+        return $this->extractAdvisorIdsFromBrackets($brackets, $amount, $nationalityId);
     }
 
     public function getCommonEligibleAdvisorIds(QuoteTypes $quoteType): array
@@ -60,5 +45,62 @@ trait AllocationConfigurationFindable
         }
 
         return $configuration->advisor_ids;
+    }
+
+    public function getLifeEligibleAdvisorIds(PersonalQuote $lead): array
+    {
+        $configuration = $this->findConfig(QuoteTypes::LIFE);
+        $nationalityId = $lead?->nationality?->id;
+        $amount = $lead?->lifeQuote?->currency?->convertToAED((float) $lead?->lifeQuote?->sum_insured_value ?? 0);
+
+        if (! $configuration || ! $nationalityId || empty($amount)) {
+            return [];
+        }
+
+        foreach (range(1, 4) as $type) {
+            $advisorIds = $this->extractAdvisorIdsFromBrackets($configuration->{"type{$type}_brackets"}, $amount, $nationalityId);
+            if (! empty($advisorIds)) {
+                return $advisorIds;
+            }
+        }
+
+        return [];
+    }
+
+    private function extractAdvisorIdsFromBrackets(array $brackets, float $amount, int $nationalityId): array
+    {
+        $matchingBracket = $this->getMatchingBracket($brackets, $amount);
+
+        $matchingProfile = $this->getMatchingProfile($matchingBracket, $nationalityId);
+
+        return $this->getAdvisorIds($matchingProfile);
+    }
+
+    private function getMatchingBracket(array $brackets, float $amount): ?array
+    {
+        return collect($brackets)
+            ->where('min', '<=', $amount)
+            ->where('max', '>=', $amount)
+            ->first();
+    }
+
+    private function getMatchingProfile(?array $bracket, int $nationalityId): ?array
+    {
+        if (empty($bracket) || ! isset($bracket['profiles'])) {
+            return null;
+        }
+
+        $profiles = collect($bracket['profiles']);
+
+        return collect($profiles)->first(fn ($profile) => in_array($nationalityId, $profile['nationalityIds']));
+    }
+
+    private function getAdvisorIds(?array $profile): array
+    {
+        if (empty($profile) || ! isset($profile['advisorIds'])) {
+            return [];
+        }
+
+        return $profile['advisorIds'];
     }
 }
