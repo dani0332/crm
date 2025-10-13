@@ -98,7 +98,7 @@ const filters = reactive({
   age_group: 'all',
   authorize_date: '',
   captured_date: '',
-  sub_source_id: [],
+  
 });
 
 const loader = reactive({
@@ -1059,34 +1059,7 @@ const calculateAge = dateOfBirth => {
           placeholder="Insurer Commission Tax Invoice No"
         />
 
-        <x-select
-          v-model="filters.sub_source_id"
-          name="sub_source_id"
-          placeholder="Search by IMCRM SUB-SOURCE"
-          :options="subSourceOptions"
-          class="w-full"
-          filterable
-          label="IMCRM SUB-SOURCE"
-          multiple
-          truncate
-        >
-          <template #suffix="{ item }">
-            <x-tooltip v-if="item.suffix" placement="right">
-              <x-icon icon="info" color="error" />
-              <template #tooltip>
-                {{ item.suffix }}
-              </template>
-            </x-tooltip>
-          </template>
-          <template #content-footer>
-            <ui-select-actions
-              @select-all="
-                filters.sub_source_id = subSourceOptions.map(item => item.value)
-              "
-              @clear="filters.sub_source_id = []"
-            />
-          </template>
-        </x-select>
+        
 
         <x-select
           v-model="filters.api_issuance_status_id"

@@ -131,7 +131,6 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('is_ecommerce', isBool: true, requestParams: $requestParams)
             ->filterIn('insurer_aml_status', requestParams: $requestParams)
             ->filterIn('amlStatus', 'aml_status', requestParams: $requestParams)
-            ->filterIn('sub_source_id', requestParams: $requestParams)
             ->filterIn('plan_name', 'plan_id', requestParams: $requestParams)
             ->filterBy('source', requestParams: $requestParams)
             ->filterByAdvisors($this->getFilterValue('advisor_id', $requestParams))

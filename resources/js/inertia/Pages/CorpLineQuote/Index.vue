@@ -85,7 +85,6 @@ const filters = reactive({
   advisors: [],
   authorize_date: '',
   captured_date: '',
-  sub_source_id: [],
 });
 
 watch(
@@ -243,7 +242,6 @@ const setIntialState = () => {
     policy_expiry_date_end: '',
     last_modified_date: null,
     advisor_assigned_date: '',
-    sub_source_id: [],
   });
   filtersCount.value = 0;
 };
@@ -815,34 +813,7 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
 
-        <x-select
-          v-model="filters.sub_source_id"
-          label="IMCRM SUB-SOURCE"
-          name="sub_source_id"
-          :options="subSourceOptions"
-          placeholder="Select IMCRM SUB-SOURCE"
-          class="w-full"
-          filterable
-          multiple
-          truncate
-        >
-          <template #suffix="{ item }">
-            <x-tooltip v-if="item.suffix" placement="right">
-              <x-icon icon="info" color="error" />
-              <template #tooltip>
-                {{ item.suffix }}
-              </template>
-            </x-tooltip>
-          </template>
-          <template #content-footer>
-            <ui-select-actions
-              @select-all="
-                filters.sub_source_id = subSourceOptions.map(item => item.value)
-              "
-              @clear="filters.sub_source_id = []"
-            />
-          </template>
-        </x-select>
+        
 
         <DatePicker
           v-model="filters.policy_expiry_date"

@@ -254,11 +254,6 @@ class AmtController extends Controller
             $data->whereIn('bqr.insurer_aml_status', $request->insurer_aml_status);
         }
 
-        // Sub Source filter (multi-select)
-        if (! empty($request->sub_source_id) && is_array($request->sub_source_id)) {
-            $data->whereIn('bqr.sub_source_id', $request->sub_source_id);
-        }
-
         if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
             $dateArray = $request->advisor_assigned_date;
             $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
