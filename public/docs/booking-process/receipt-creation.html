@@ -530,25 +530,47 @@
         </div>
 
         <div class="header">
-            <h1>🧾 Receipt Creation Process</h1>
-            <p>Comprehensive guide to payment receipt generation and invoice mapping in Sage 300</p>
+            <h1>🧾 Prepayment Receipt Creation Process</h1>
+            <p>Comprehensive guide to prepayment receipt generation and posting in Sage 300</p>
         </div>
 
         <div class="content-section">
             <h2>🎯 Overview</h2>
             <p>
-                The receipt creation process specifically handles the generation and posting of payment receipts and prepayments
-                in Sage 300 ERP system for both Accounts Receivable (AR) and Accounts Payable (AP). This process manages the
-                complete lifecycle of receipts from creation through status transitions: Open → Ready to Post → Posted.
+                The prepayment receipt creation process handles the generation and posting of prepayment receipts
+                in Sage 300 ERP system for both Accounts Receivable (AR) and Accounts Payable (AP).
             </p>
 
             <div class="highlight">
-                <h4>💡 Core Receipt Operations</h4>
+                <h4>💡 Important: Prepayment = Receipt in Sage 300</h4>
                 <p>
-                    AR Prepayment Receipts for customer advance payments, AP Payment Receipts for vendor payments,
-                    Commission Receipts for broker/agent payments, and systematic status management through Sage 300
-                    batch processing workflow with comprehensive error handling and recovery mechanisms.
+                    <strong>In Sage 300, a prepayment receipt IS the prepayment record - they are the same thing, not separate concepts.</strong><br>
+                    When we create a "prepayment receipt", we're creating the payment record in Sage 300 that will later be applied to invoices.
+                    The term "prepayment" refers to payments made before (or separate from) invoice creation, and "receipt" is simply
+                    the Sage 300 document type that records these prepayments.
                 </p>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>📋 What is a Prepayment Receipt?</h4>
+                    <ul>
+                        <li><strong>Single Concept:</strong> Prepayment receipt = payment record</li>
+                        <li><strong>AR Prepayment Receipt:</strong> Records customer payment before/separate from invoice</li>
+                        <li><strong>AP Prepayment Receipt:</strong> Records vendor payment before/separate from invoice</li>
+                        <li><strong>Purpose:</strong> Created first, then applied to invoices later</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔄 Prepayment Receipt Lifecycle</h4>
+                    <ul>
+                        <li><strong>Step 1:</strong> Create prepayment receipt (OPEN status)</li>
+                        <li><strong>Step 2:</strong> Ready to Post (validation)</li>
+                        <li><strong>Step 3:</strong> Post to GL (POSTED status)</li>
+                        <li><strong>Later:</strong> Apply to invoices (separate process)</li>
+                    </ul>
+                </div>
             </div>
 
             <div class="info-grid">
@@ -562,48 +584,49 @@
                 </div>
 
                 <div class="info-card">
-                    <h4>🗄️ Database Storage</h4>
+                    <h4>🗄️ Database Storage for Prepayment Receipt References</h4>
                     <ul>
-                        <li><strong>AR Receipt IDs:</strong> payment_splits.sage_reciept_id</li>
-                        <li><strong>AP Payment IDs:</strong> payment_splits.sage_ap_payment_receipt_id</li>
-                        <li><strong>Purpose:</strong> Track and reference Sage receipt batches</li>
+                        <li><strong>payment_splits.sage_reciept_id:</strong> Stores AR prepayment receipt document number</li>
+                        <li><strong>payment_splits.sage_ap_payment_receipt_id:</strong> Stores AP prepayment receipt document number</li>
+                        <li><strong>Purpose:</strong> Reference to the prepayment receipt (payment record) in Sage 300</li>
+                        <li><strong>Note:</strong> These store the actual payment record references, not separate receipts</li>
                     </ul>
                 </div>
             </div>
         </div>
 
         <div class="content-section">
-            <h2>📋 AR & AP Receipt Types</h2>
+            <h2>📋 Prepayment Receipt Types in Sage 300</h2>
 
             <div class="receipt-types">
                 <div class="receipt-type">
                     <span class="icon">💳</span>
-                    <h4>AR Prepayment Receipts</h4>
-                    <p>Customer advance payment receipts created in AR module. Goes through Open → Ready to Post → Posted status cycle.</p>
+                    <h4>AR Prepayment Receipt</h4>
+                    <p>Customer payment record created in AR module BEFORE applying to invoices. The prepayment receipt IS the payment itself - recorded in Sage as a receipt document that goes through Open → Ready to Post → Posted workflow.</p>
                 </div>
 
                 <div class="receipt-type">
                     <span class="icon">🏦</span>
-                    <h4>AP Payment Receipts</h4>
-                    <p>Vendor payment receipts created in AP module for insurance provider payments. Follows same status workflow.</p>
+                    <h4>AP Prepayment Receipt</h4>
+                    <p>Vendor payment record created in AP module BEFORE applying to invoices. The prepayment receipt IS the payment to the vendor - recorded in Sage as a payment document following the same status workflow.</p>
                 </div>
 
                 <div class="receipt-type">
                     <span class="icon">💼</span>
-                    <h4>Commission Receipts</h4>
-                    <p>Broker/agent commission payment receipts. Can be both AR (receiving commission) or AP (paying commission) depending on flow.</p>
+                    <h4>Commission Prepayment</h4>
+                    <p>Commission payment records. Can be AR prepayment receipts (receiving commission) or AP prepayment receipts (paying commission) - both are simply payment records in their respective modules.</p>
                 </div>
 
                 <div class="receipt-type">
                     <span class="icon">🔄</span>
-                    <h4>Receipt Status Lifecycle</h4>
-                    <p>All receipts follow: Create (Open) → Mark Ready to Post → Post to General Ledger (Posted) → Complete</p>
+                    <h4>Prepayment Receipt Lifecycle</h4>
+                    <p>All prepayment receipts (payment records) follow: Create (Open) → Mark Ready to Post → Post to General Ledger (Posted) → Later applied to invoices</p>
                 </div>
             </div>
         </div>
 
         <div class="content-section">
-            <h2>🔄 Receipt Status Lifecycle Workflow</h2>
+            <h2>🔄 Prepayment Receipt Status Lifecycle Workflow</h2>
 
             <div class="process-flow">
                 <div class="process-step">
@@ -1109,14 +1132,14 @@
                         <tr>
                             <td>sage_reciept_id</td>
                             <td>VARCHAR(100) NULLABLE</td>
-                            <td>Sage receipt reference</td>
-                            <td>Stores Sage receipt ID after creation</td>
+                            <td>AR prepayment receipt reference</td>
+                            <td>Stores AR prepayment receipt document number (payment record reference in Sage)</td>
                         </tr>
                         <tr>
                             <td>sage_ap_payment_receipt_id</td>
                             <td>VARCHAR(100) NULLABLE</td>
-                            <td>AP receipt reference</td>
-                            <td>For vendor payment receipts</td>
+                            <td>AP prepayment receipt reference</td>
+                            <td>Stores AP prepayment receipt document number (payment record reference in Sage)</td>
                         </tr>
                         <tr>
                             <td>captured_at</td>
@@ -1136,53 +1159,60 @@
         </div>
 
         <div class="content-section">
-            <h2>🗄️ Database Storage - Receipt ID Columns</h2>
-            <p>After successful receipt creation, the system stores Sage receipt IDs in specific database columns for tracking and reference.</p>
+            <h2>🗄️ Database Storage - Prepayment Receipt References</h2>
+            <p>After successful prepayment receipt creation, the system stores the Sage document numbers in specific database columns. These are references to the actual payment records (prepayment receipts) in Sage 300.</p>
 
             <div class="info-grid">
                 <div class="info-card">
-                    <h4>💳 AR Receipt ID Storage</h4>
+                    <h4>💳 AR Prepayment Receipt Reference</h4>
                     <ul>
                         <li><strong>Table:</strong> payment_splits</li>
                         <li><strong>Column:</strong> sage_reciept_id</li>
                         <li><strong>Type:</strong> VARCHAR(100) NULLABLE</li>
-                        <li><strong>Stores:</strong> AR receipt batch document number</li>
+                        <li><strong>Stores:</strong> AR prepayment receipt document number (payment record reference)</li>
                         <li><strong>Updated By:</strong> createARPrepaymentPremiumReceipt()</li>
+                        <li><strong>Purpose:</strong> Links payment split to its AR prepayment receipt in Sage</li>
                     </ul>
                 </div>
 
                 <div class="info-card">
-                    <h4>🏦 AP Payment ID Storage</h4>
+                    <h4>🏦 AP Prepayment Receipt Reference</h4>
                     <ul>
                         <li><strong>Table:</strong> payment_splits</li>
                         <li><strong>Column:</strong> sage_ap_payment_receipt_id</li>
                         <li><strong>Type:</strong> VARCHAR(100) NULLABLE</li>
-                        <li><strong>Stores:</strong> AP payment batch document number</li>
+                        <li><strong>Stores:</strong> AP prepayment receipt document number (payment record reference)</li>
                         <li><strong>Updated By:</strong> createAPPrepaymentPremiumReceipt()</li>
+                        <li><strong>Purpose:</strong> Links payment split to its AP prepayment receipt in Sage</li>
                     </ul>
                 </div>
             </div>
 
             <div class="code-block">
-                <pre>// AR Receipt ID Storage Example
+                <pre>// AR Prepayment Receipt Reference Storage
+// The document number IS the prepayment receipt (payment record) reference
 if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
     $documentNumberForReceipt = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+    // Store AR prepayment receipt reference
     $paymentSplit->update(['sage_reciept_id' => $documentNumberForReceipt]);
 }
 
-// AP Payment ID Storage Example
+// AP Prepayment Receipt Reference Storage
+// The document number IS the prepayment receipt (payment record) reference
 if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
     $documentNumberForReceipt = $sageResponse['PaymentsAdjustments'][0]['DocumentNumber'];
+    // Store AP prepayment receipt reference
     $paymentSplit->update(['sage_ap_payment_receipt_id' => $documentNumberForReceipt]);
 }</pre>
             </div>
 
             <div class="highlight">
-                <h4>🔍 Usage of Stored Receipt IDs</h4>
+                <h4>🔍 Usage of Stored Prepayment Receipt References</h4>
                 <p>
-                    These stored receipt IDs are used for payment status tracking, reconciliation processes,
-                    error recovery, and linking payment splits to their corresponding Sage 300 receipt batches
-                    for audit trails and financial reporting.
+                    <strong>These references point to the actual payment records (prepayment receipts) in Sage 300.</strong><br>
+                    They are used for: payment status tracking, reconciliation processes, applying payments to invoices later,
+                    error recovery, linking payment splits to their Sage payment records, audit trails, and financial reporting.
+                    When we "apply prepayment", we're using these references to apply the payment record to an invoice.
                 </p>
             </div>
         </div>
@@ -1416,22 +1446,22 @@ if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
             <h3>🔍 Error Recovery in Actual Functions</h3>
             <div class="info-grid">
                 <div class="info-card">
-                    <h4>🚨 AR Receipt Error Handling</h4>
+                    <h4>🚨 AR Prepayment Receipt Error Handling</h4>
                     <ul>
                         <li><strong>Batch Status Check:</strong> GET AR/ARReceiptAndAdjustmentBatches</li>
                         <li><strong>Already Posted Check:</strong> BatchStatus == 'POSTED'</li>
                         <li><strong>Document Validation:</strong> Check DocumentNumber exists</li>
-                        <li><strong>Database Update:</strong> sage_reciept_id field</li>
+                        <li><strong>Database Update:</strong> sage_reciept_id field (stores receipt reference)</li>
                     </ul>
                 </div>
 
                 <div class="info-card">
-                    <h4>🚨 AP Payment Error Handling</h4>
+                    <h4>🚨 AP Prepayment Receipt Error Handling</h4>
                     <ul>
                         <li><strong>Batch Status Check:</strong> GET AP/APPaymentAndAdjustmentBatches</li>
                         <li><strong>Already Posted Check:</strong> BatchStatus == 'POSTED'</li>
                         <li><strong>Document Validation:</strong> Check DocumentNumber exists</li>
-                        <li><strong>Database Update:</strong> sage_ap_payment_receipt_id field</li>
+                        <li><strong>Database Update:</strong> sage_ap_payment_receipt_id field (stores receipt reference)</li>
                     </ul>
                 </div>
             </div>
