@@ -48,7 +48,6 @@ class LifeQuoteRepository extends BaseRepository
         LoggerService::info('LifeQuoteRepository fetchCreate called with sub-source parameters', [
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'primary_ref_id' => $data['primary_ref_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ]);
 
@@ -82,7 +81,6 @@ class LifeQuoteRepository extends BaseRepository
             // Sub-source fields
             'subSourceId' => $data['sub_source_id'] ?? null,
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
-            'primaryRefId' => $data['primary_ref_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ];
 
@@ -108,7 +106,6 @@ class LifeQuoteRepository extends BaseRepository
             'uuid' => $uuid,
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'primary_ref_id' => $data['primary_ref_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ]);
 
@@ -126,9 +123,7 @@ class LifeQuoteRepository extends BaseRepository
             if (isset($data['sub_source_options_id'])) {
                 $quoteData['sub_source_options_id'] = $data['sub_source_options_id'];
             }
-            if (isset($data['primary_ref_id'])) {
-                $quoteData['primary_ref_id'] = $data['primary_ref_id'];
-            }
+            // Removed primary_ref_id mapping
             if (isset($data['notes'])) {
                 $quoteData['notes'] = $data['notes'];
             }

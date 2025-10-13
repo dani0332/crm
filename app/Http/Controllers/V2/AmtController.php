@@ -333,8 +333,6 @@ class AmtController extends Controller
                 'type' => $request->input('type'),
                 'subSource' => $request->input('subSourceId'),
                 'subSourceOption' => $request->input('subSourceOptionsId'),
-                'primaryRefId' => $request->input('primaryRefId'),
-                'partnerName' => $request->input('partnerName'),
             ],
         ]);
     }

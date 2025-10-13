@@ -267,7 +267,6 @@ class HomeQuoteRepository extends BaseRepository
         LoggerService::info('Home fetchCreate - Sub-source parameters:', [
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'primary_ref_id' => $data['primary_ref_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ]);
 
@@ -297,7 +296,6 @@ class HomeQuoteRepository extends BaseRepository
             // Sub-source fields from CreateLeadModal
             'subSourceId' => 'sub_source_id',
             'subSourceOptionsId' => 'sub_source_options_id',
-            'primaryRefId' => 'primary_ref_id',
             'additionalNotes' => 'notes',
         ];
 
@@ -466,7 +464,6 @@ class HomeQuoteRepository extends BaseRepository
             'uuid' => $uuid,
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'primary_ref_id' => $data['primary_ref_id'] ?? null,
             'additional_notes' => $data['additional_notes'] ?? null,
         ]);
 

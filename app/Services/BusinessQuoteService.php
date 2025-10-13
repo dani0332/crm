@@ -95,7 +95,6 @@ class BusinessQuoteService extends BaseService
                 // Sub-source and notes fields
                 'bqr.sub_source_id',
                 'bqr.sub_source_options_id',
-                'bqr.primary_ref_id',
                 'bqr.additional_notes',
                 'ss.text as sub_source_text',
                 'ss.description as sub_source_description',
@@ -136,7 +135,6 @@ class BusinessQuoteService extends BaseService
                 'bqr.aml_status',
                 'bqr.sub_source_id',
                 'bqr.sub_source_options_id',
-                'bqr.primary_ref_id',
                 'bqr.additional_notes',
                 DB::raw('
                     CASE
@@ -264,7 +262,6 @@ class BusinessQuoteService extends BaseService
         LoggerService::info('BusinessQuoteService create - Sub-source parameters', [
             'sub_source_id' => $request->sub_source_id ?? null,
             'sub_source_options_id' => $request->sub_source_options_id ?? null,
-            'primary_ref_id' => $request->primary_ref_id ?? null,
         ]);
         $dataArr = [
             'firstName' => $request->first_name,
@@ -283,7 +280,6 @@ class BusinessQuoteService extends BaseService
             // Sub-source fields (CAPI will ignore if unsupported)
             'subSourceId' => $request->sub_source_id ?? null,
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
-            'primaryRefId' => $request->primary_ref_id ?? null,
             'additionalNotes' => $request->additional_notes ?? null,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
@@ -555,7 +551,6 @@ class BusinessQuoteService extends BaseService
                 'uuid' => $id,
                 'sub_source_id' => $request->sub_source_id ?? null,
                 'sub_source_options_id' => $request->sub_source_options_id ?? null,
-                'primary_ref_id' => $request->primary_ref_id ?? null,
             ]);
             $businessQuote->first_name = $request->first_name;
             $businessQuote->last_name = $request->last_name;
@@ -573,9 +568,7 @@ class BusinessQuoteService extends BaseService
             if ($request->has('sub_source_options_id')) {
                 $businessQuote->sub_source_options_id = $request->sub_source_options_id;
             }
-            if ($request->has('primary_ref_id')) {
-                $businessQuote->primary_ref_id = $request->primary_ref_id;
-            }
+            
             if ($request->has('additional_notes')) {
                 $businessQuote->additional_notes = $request->additional_notes;
             }

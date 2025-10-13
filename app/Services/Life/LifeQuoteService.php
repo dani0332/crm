@@ -301,14 +301,12 @@ class LifeQuoteService extends BaseService
             // Lead source fields from CreateLeadModal
             'subSourceId' => $data['sub_source_id'] ?? null,
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
-            'primaryRefId' => $data['primary_ref_id'] ?? null,
             'additionalNotes' => $data['notes'] ?? null,
         ];
 
         LoggerService::info('saveLifeQuote: ', [
             'subSourceId' => $data['sub_source_id'] ?? null,
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
-            'primaryRefId' => $data['primary_ref_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ]);
 
