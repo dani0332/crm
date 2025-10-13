@@ -949,7 +949,7 @@ class EpEcbService extends EpBookingService
 
     private function getDocumentsInfo(): array
     {
-        $documentsInfo = \App\Models\CarQuote::whereUuid('7JCUF5NR')->first()->documents()->whereIn('document_type_code', [QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY])
+        $documentsInfo = $this->quote->documents()->whereIn('document_type_code', [QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY])
             ->select('document_type_code', 'doc_name', 'doc_url')
             ->get()
             ->map(function ($document) {
