@@ -48,8 +48,8 @@ class DeleteQuoteDocumentRequest extends FormRequest
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
             }
 
-            $metLifeValidator = new MetLifeValidationService();
-            
+            $metLifeValidator = new MetLifeValidationService;
+
             // Skip payment validation for MetLife (MTL) only if MetLife integration is enabled
             if ($metLifeValidator->shouldValidatePayment(request()->provider_code)) {
                 // validate if payment is authorized

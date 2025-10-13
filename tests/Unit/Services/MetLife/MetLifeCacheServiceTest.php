@@ -15,7 +15,7 @@ class MetLifeCacheServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new MetLifeCacheService();
+        $this->service = new MetLifeCacheService;
     }
 
     protected function tearDown(): void

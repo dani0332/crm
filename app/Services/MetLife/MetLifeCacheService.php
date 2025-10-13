@@ -19,7 +19,7 @@ class MetLifeCacheService
             'session_id' => Cache::get(self::SESSION_CACHE_KEY),
             'csrf_token' => Cache::get(self::CSRF_TOKEN_CACHE_KEY),
             'session_created_at' => Cache::get(self::SESSION_CREATED_AT_CACHE_KEY),
-            'csrf_token_created_at' => Cache::get(self::CSRF_TOKEN_CREATED_AT_CACHE_KEY)
+            'csrf_token_created_at' => Cache::get(self::CSRF_TOKEN_CREATED_AT_CACHE_KEY),
         ];
     }
 
@@ -40,12 +40,12 @@ class MetLifeCacheService
     public function loadCachedSessionData(): array
     {
         $cachedData = $this->loadSession();
-        
+
         return [
             'session_id' => $cachedData['session_id'],
             'csrf_token' => $cachedData['csrf_token'],
             'session_created_at' => (int) $cachedData['session_created_at'],
-            'csrf_token_created_at' => (int) $cachedData['csrf_token_created_at']
+            'csrf_token_created_at' => (int) $cachedData['csrf_token_created_at'],
         ];
     }
 

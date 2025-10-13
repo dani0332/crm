@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\MetLife;
 
-use App\Services\MetLife\MetLifeRequestService;
 use App\Services\MetLife\MetLifeCacheService;
+use App\Services\MetLife\MetLifeRequestService;
 use App\Services\MetLife\MetLifeValidationService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -19,8 +19,8 @@ class MetLifeSimpleTest extends TestCase
             'https://api.metlife.com/init/' => Http::response([
                 'csrftoken' => 'test_csrf_token',
                 'session_id' => 'test_session_id',
-                'session_expiry' => 7200
-            ], 200)
+                'session_expiry' => 7200,
+            ], 200),
         ]);
 
         $requestService = new MetLifeRequestService(
@@ -37,7 +37,7 @@ class MetLifeSimpleTest extends TestCase
 
     public function test_cache_service_operations()
     {
-        $cacheService = new MetLifeCacheService();
+        $cacheService = new MetLifeCacheService;
 
         // Test caching
         $sessionId = 'test_session_123';
@@ -59,7 +59,7 @@ class MetLifeSimpleTest extends TestCase
 
     public function test_validation_service_logic()
     {
-        $validationService = new MetLifeValidationService();
+        $validationService = new MetLifeValidationService;
 
         // Test session validation
         $sessionId = 'valid_session';
@@ -103,7 +103,7 @@ class MetLifeSimpleTest extends TestCase
 
     public function test_cache_clear_functionality()
     {
-        $cacheService = new MetLifeCacheService();
+        $cacheService = new MetLifeCacheService;
 
         // Set some cache data
         Cache::put('metlife_session_id', 'test_session', 3600);
@@ -121,32 +121,32 @@ class MetLifeSimpleTest extends TestCase
 
     public function test_response_validation()
     {
-        $validationService = new MetLifeValidationService();
+        $validationService = new MetLifeValidationService;
 
         // Valid response
         $validResponse = [
             'status' => true,
-            'data' => ['test' => 'value']
+            'data' => ['test' => 'value'],
         ];
         $this->assertTrue($validationService->validateResponse($validResponse));
 
         // Invalid response
         $invalidResponse = [
             'status' => false,
-            'data' => ['test' => 'value']
+            'data' => ['test' => 'value'],
         ];
         $this->assertFalse($validationService->validateResponse($invalidResponse));
 
         // Missing status
         $missingStatusResponse = [
-            'data' => ['test' => 'value']
+            'data' => ['test' => 'value'],
         ];
         $this->assertFalse($validationService->validateResponse($missingStatusResponse));
     }
 
     public function test_exception_handling()
     {
-        $validationService = new MetLifeValidationService();
+        $validationService = new MetLifeValidationService;
 
         $exception = new \Exception('Test error message');
         $action = 'Test action';

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\MetLife;
 
-use App\Services\Logger\LoggerService;
-use App\Enums\QuoteTypes;
 use App\Enums\DocumentTypeCode;
-use App\Models\PersonalQuote;
+use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
+use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Exception;
 
@@ -17,33 +17,33 @@ class MTLHealthQuestionnaireService
     public function syncHealthQuestionnaire(array $requestData)
     {
         LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($requestData['quote_uuid']));
-        
+
         LoggerService::info('DEBUG: Starting health questionnaire sync', [
             'quote_uuid' => $requestData['quote_uuid'],
-            'policy_number' => $requestData['policy_number']
+            'policy_number' => $requestData['policy_number'],
         ]);
-        
+
         $quote = PersonalQuote::with('customer')->where('uuid', $requestData['quote_uuid'])->first();
-        if (!$quote) {
+        if (! $quote) {
             LoggerService::warning('DEBUG: Quote not found', ['quote_uuid' => $requestData['quote_uuid']]);
-            throw new Exception('Quote not found for UID: ' . $requestData['quote_uuid']);
+            throw new Exception('Quote not found for UID: '.$requestData['quote_uuid']);
         }
-        
+
         LoggerService::info('DEBUG: Quote found', ['quote_id' => $quote->id, 'quote_code' => $quote->code]);
 
         $healthQuestionnaire = $this->fetchHealthQuestionnaire($requestData['policy_number']);
         LoggerService::info('DEBUG: Health questionnaire fetched', [
             'form_name' => $healthQuestionnaire['form_name'] ?? 'Unknown',
-            'fields_count' => count($healthQuestionnaire['fields'] ?? [])
+            'fields_count' => count($healthQuestionnaire['fields'] ?? []),
         ]);
-        
+
         $data = $this->prepareHealthQuestionnaireData($healthQuestionnaire, $requestData['quote_uuid'], $quote);
         LoggerService::info('DEBUG: Data prepared for PDF', ['pdf_filename' => $data['pdf_filename']]);
 
         $documentType = DocumentType::where('code', DocumentTypeCode::LIFE_HEALTH_QUESTIONNAIRE)->first();
-        if (!$documentType) {
+        if (! $documentType) {
             LoggerService::warning('DEBUG: Document type not found', ['code' => DocumentTypeCode::LIFE_HEALTH_QUESTIONNAIRE]);
-            throw new Exception('Document type not found for code: ' . DocumentTypeCode::LIFE_HEALTH_QUESTIONNAIRE);
+            throw new Exception('Document type not found for code: '.DocumentTypeCode::LIFE_HEALTH_QUESTIONNAIRE);
         }
         $data['document_type_code'] = $documentType->code;
         LoggerService::info('DEBUG: Document type found', ['document_type_id' => $documentType->id]);
@@ -61,14 +61,14 @@ class MTLHealthQuestionnaireService
             true
         );
 
-        if (!$document) {
+        if (! $document) {
             LoggerService::warning('DEBUG: Document upload failed', ['quote_uuid' => $quote->uuid]);
-            throw new Exception('Failed to upload health questionnaire document for quote: ' . $quote->uuid);
+            throw new Exception('Failed to upload health questionnaire document for quote: '.$quote->uuid);
         }
 
         LoggerService::info('DEBUG: Health questionnaire sync completed successfully', [
             'document_id' => $document->id ?? 'N/A',
-            'quote_uuid' => $requestData['quote_uuid']
+            'quote_uuid' => $requestData['quote_uuid'],
         ]);
 
         return $document;
@@ -79,29 +79,29 @@ class MTLHealthQuestionnaireService
         LoggerService::info('DEBUG: Fetching health questionnaire from MetLife API', ['policy_number' => $policyNumber]);
 
         $metLifeService = app(MetLifeApiService::class);
-        $endpoint = '/en/api/v' . $metLifeService->getApiVersion() . '/policy/' . $policyNumber . '/';
+        $endpoint = '/en/api/v'.$metLifeService->getApiVersion().'/policy/'.$policyNumber.'/';
         LoggerService::info('DEBUG: Making API request', ['endpoint' => $endpoint]);
-        
+
         $response = $metLifeService->makeRequest($endpoint, 'GET');
         LoggerService::info('DEBUG: API response received', [
             'success' => $response['success'] ?? false,
             'has_data' => isset($response['data']),
-            'response_keys' => array_keys($response)
+            'response_keys' => array_keys($response),
         ]);
 
-        if (!$response['success']) {
+        if (! $response['success']) {
             LoggerService::warning('DEBUG: API request failed', [
                 'policy_number' => $policyNumber,
-                'error' => $response['message'] ?? 'Unknown error'
+                'error' => $response['message'] ?? 'Unknown error',
             ]);
-            throw new Exception('Failed to fetch health questionnaire: ' . ($response['message'] ?? 'Unknown error'));
+            throw new Exception('Failed to fetch health questionnaire: '.($response['message'] ?? 'Unknown error'));
         }
 
         $rawData = $response['data']['data'] ?? $response['data'] ?? $response;
         LoggerService::info('DEBUG: Raw API data structure', [
             'has_submitted_data' => isset($rawData['submitted_data']),
             'has_fields' => isset($rawData['submitted_data']['fields']),
-            'fields_count' => count($rawData['submitted_data']['fields'] ?? [])
+            'fields_count' => count($rawData['submitted_data']['fields'] ?? []),
         ]);
 
         $healthQuestionnaire = $this->extractHealthQuestionnaire($rawData);
@@ -109,15 +109,15 @@ class MTLHealthQuestionnaireService
         if (empty($healthQuestionnaire)) {
             LoggerService::warning('DEBUG: Health questionnaire not found in response', [
                 'policy_number' => $policyNumber,
-                'available_forms' => array_column($rawData['submitted_data']['fields'] ?? [], 'form_name')
+                'available_forms' => array_column($rawData['submitted_data']['fields'] ?? [], 'form_name'),
             ]);
-            throw new Exception('Health questionnaire not found for policy: ' . $policyNumber);
+            throw new Exception('Health questionnaire not found for policy: '.$policyNumber);
         }
 
         LoggerService::info('DEBUG: Health questionnaire extracted successfully', [
             'policy_number' => $policyNumber,
             'form_name' => $healthQuestionnaire['form_name'] ?? 'Unknown',
-            'fields_count' => count($healthQuestionnaire['fields'] ?? [])
+            'fields_count' => count($healthQuestionnaire['fields'] ?? []),
         ]);
 
         return $healthQuestionnaire;
@@ -128,27 +128,29 @@ class MTLHealthQuestionnaireService
         $fields = $responseData['submitted_data']['fields'] ?? [];
         LoggerService::info('DEBUG: Extracting health questionnaire', [
             'total_fields' => count($fields),
-            'field_names' => array_column($fields, 'form_name')
+            'field_names' => array_column($fields, 'form_name'),
         ]);
-        
+
         foreach ($fields as $index => $field) {
             LoggerService::info('DEBUG: Checking field', [
                 'index' => $index,
                 'form_name' => $field['form_name'] ?? 'N/A',
                 'form_type' => $field['form_type'] ?? 'N/A',
-                'is_health_questionnaire' => $this->isHealthQuestionnaire($field)
+                'is_health_questionnaire' => $this->isHealthQuestionnaire($field),
             ]);
-            
+
             if ($this->isHealthQuestionnaire($field)) {
                 LoggerService::info('DEBUG: Health questionnaire found', [
                     'form_name' => $field['form_name'],
-                    'fields_count' => count($field['fields'] ?? [])
+                    'fields_count' => count($field['fields'] ?? []),
                 ]);
+
                 return $field;
             }
         }
 
         LoggerService::warning('DEBUG: No health questionnaire found in fields');
+
         return null;
     }
 
@@ -164,11 +166,11 @@ class MTLHealthQuestionnaireService
     private function prepareHealthQuestionnaireData(array $healthQuestionnaire, string $quoteUuid, PersonalQuote $quote): array
     {
         $pdfFilename = $this->generatePdfFilename($quote);
-        
+
         return [
             'pdf_filename' => $pdfFilename,
             'health_questionnaire' => $healthQuestionnaire,
-            'quote_uuid' => $quoteUuid
+            'quote_uuid' => $quoteUuid,
         ];
     }
 
@@ -176,10 +178,10 @@ class MTLHealthQuestionnaireService
     {
         $insurerName = 'Metlife';
         $refId = $quote->code;
-        
+
         // Get customer name
         $customerName = $this->getCustomerName($quote);
-        
+
         // Build filename without .pdf extension (QuoteDocumentService will add it)
         if ($customerName) {
             return "{$insurerName} Health Questionnaire for {$customerName} {$refId}";
@@ -190,27 +192,29 @@ class MTLHealthQuestionnaireService
 
     private function getCustomerName(PersonalQuote $quote): ?string
     {
-        if (!$quote->customer) {
+        if (! $quote->customer) {
             LoggerService::warning('DEBUG: Customer not found for quote', [
                 'quote_uuid' => $quote->uuid,
-                'quote_code' => $quote->code
+                'quote_code' => $quote->code,
             ]);
+
             return null;
         }
 
         $firstName = trim($quote->customer->first_name ?? '');
         $lastName = trim($quote->customer->last_name ?? '');
-        
+
         if (empty($firstName) && empty($lastName)) {
             LoggerService::warning('DEBUG: Customer name is empty', [
                 'quote_uuid' => $quote->uuid,
                 'quote_code' => $quote->code,
-                'customer_id' => $quote->customer->id
+                'customer_id' => $quote->customer->id,
             ]);
+
             return null;
         }
 
-        return trim($firstName . ' ' . $lastName);
+        return trim($firstName.' '.$lastName);
     }
 
     private function generateHealthQuestionnairePdf(array $data): string

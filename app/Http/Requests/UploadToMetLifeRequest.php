@@ -27,7 +27,7 @@ class UploadToMetLifeRequest extends FormRequest
             'policy_number' => 'required|string|max:100',
         ];
 
-        if (!empty(request()->document_type_code)) {
+        if (! empty(request()->document_type_code)) {
             $this->documentType = DocumentType::where('code', request()->document_type_code)->first();
         }
 
@@ -50,7 +50,7 @@ class UploadToMetLifeRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            if (!$quote = $this->getQuoteObject(request()->route('quoteType'), request()->quote_uuid)) {
+            if (! $quote = $this->getQuoteObject(request()->route('quoteType'), request()->quote_uuid)) {
                 $validator->errors()->add('quote_uuid', 'Invalid quote type or UUID provided.');
             }
 

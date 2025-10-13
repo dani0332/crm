@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Services\MetLife;
 
 use App\Services\MetLife\MetLifeApiService;
-use App\Services\MetLife\MetLifeValidationService;
 use Illuminate\Support\Facades\Config;
 use Tests\TestCase;
 
@@ -16,7 +15,7 @@ class MetLifeApiServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         Config::set('constants.METLIFE_API_BASE_URL', 'https://test.metlife.com');
         Config::set('constants.METLIFE_API_VERSION', '3');
         Config::set('constants.METLIFE_USERNAME', 'test_user');
@@ -24,14 +23,14 @@ class MetLifeApiServiceTest extends TestCase
         Config::set('constants.METLIFE_API_TIMEOUT', 30);
         Config::set('constants.METLIFE_SESSION_TIMEOUT', 7200);
         Config::set('constants.METLIFE_CSRF_TOKEN_REFRESH_INTERVAL', 3600);
-        
-        $this->service = new MetLifeApiService();
+
+        $this->service = new MetLifeApiService;
     }
 
     public function test_is_metlife_enabled_returns_boolean()
     {
         $result = $this->service->isMetLifeEnabled();
-        
+
         $this->assertIsBool($result);
     }
 
@@ -42,7 +41,7 @@ class MetLifeApiServiceTest extends TestCase
         $method->setAccessible(true);
 
         $result = $method->invoke($this->service, 'pdf');
-        
+
         $this->assertEquals('application/pdf', $result);
     }
 
@@ -53,7 +52,7 @@ class MetLifeApiServiceTest extends TestCase
         $method->setAccessible(true);
 
         $result = $method->invoke($this->service, 'docx');
-        
+
         $this->assertEquals('application/vnd.openxmlformats-officedocument.wordprocessingml.document', $result);
     }
 
@@ -64,7 +63,7 @@ class MetLifeApiServiceTest extends TestCase
         $method->setAccessible(true);
 
         $result = $method->invoke($this->service, 'unknown');
-        
+
         $this->assertEquals('application/octet-stream', $result);
     }
 
@@ -75,7 +74,7 @@ class MetLifeApiServiceTest extends TestCase
         $method->setAccessible(true);
 
         $result = $method->invoke($this->service, 'PDF');
-        
+
         $this->assertEquals('application/pdf', $result);
     }
 
@@ -86,7 +85,7 @@ class MetLifeApiServiceTest extends TestCase
         $property->setAccessible(true);
 
         $mimeTypes = $property->getValue($this->service);
-        
+
         $this->assertIsArray($mimeTypes);
         $this->assertContains('application/pdf', $mimeTypes);
         $this->assertContains('image/jpeg', $mimeTypes);
@@ -96,15 +95,15 @@ class MetLifeApiServiceTest extends TestCase
     public function test_service_initialization_properties()
     {
         $reflection = new \ReflectionClass($this->service);
-        
+
         $baseUrlProperty = $reflection->getProperty('baseUrl');
         $baseUrlProperty->setAccessible(true);
         $this->assertEquals('https://test.metlife.com', $baseUrlProperty->getValue($this->service));
-        
+
         $apiVersionProperty = $reflection->getProperty('apiVersion');
         $apiVersionProperty->setAccessible(true);
         $this->assertEquals('3', $apiVersionProperty->getValue($this->service));
-        
+
         $timeoutProperty = $reflection->getProperty('timeout');
         $timeoutProperty->setAccessible(true);
         $this->assertEquals(30, $timeoutProperty->getValue($this->service));
@@ -114,7 +113,7 @@ class MetLifeApiServiceTest extends TestCase
     {
         $data = [
             'file' => 'test_file_data',
-            'file_name' => 'test.pdf'
+            'file_name' => 'test.pdf',
         ];
 
         $result = $this->service->uploadToMetLife($data, 'test.pdf');
@@ -127,7 +126,7 @@ class MetLifeApiServiceTest extends TestCase
     {
         $data = [
             'policy_number' => 'POL123',
-            'file_name' => 'test.pdf'
+            'file_name' => 'test.pdf',
         ];
 
         $result = $this->service->uploadToMetLife($data, 'test.pdf');
@@ -141,7 +140,7 @@ class MetLifeApiServiceTest extends TestCase
         $data = [
             'policy_number' => '',
             'file' => 'test_file_data',
-            'file_name' => 'test.pdf'
+            'file_name' => 'test.pdf',
         ];
 
         $result = $this->service->uploadToMetLife($data, 'test.pdf');
@@ -155,7 +154,7 @@ class MetLifeApiServiceTest extends TestCase
         $data = [
             'policy_number' => 'POL123',
             'file' => '',
-            'file_name' => 'test.pdf'
+            'file_name' => 'test.pdf',
         ];
 
         $result = $this->service->uploadToMetLife($data, 'test.pdf');
@@ -179,7 +178,7 @@ class MetLifeApiServiceTest extends TestCase
         $data = [
             'policy_number' => 'POL123',
             'file' => 'data:application/pdf;base64,test_file_data',
-            'quote_uuid' => 'QUOTE456'
+            'quote_uuid' => 'QUOTE456',
         ];
 
         // Mock the makeRequest method to return success
@@ -200,7 +199,7 @@ class MetLifeApiServiceTest extends TestCase
     {
         $data = [
             'policy_number' => null,
-            'file' => 'test_file_data'
+            'file' => 'test_file_data',
         ];
 
         $result = $this->service->uploadToMetLife($data, 'test.pdf');
@@ -213,7 +212,7 @@ class MetLifeApiServiceTest extends TestCase
     {
         $data = [
             'policy_number' => 'POL123',
-            'file' => null
+            'file' => null,
         ];
 
         $result = $this->service->uploadToMetLife($data, 'test.pdf');
@@ -226,7 +225,7 @@ class MetLifeApiServiceTest extends TestCase
     {
         $data = [
             'policy_number' => '   ',
-            'file' => 'test_file_data'
+            'file' => 'test_file_data',
         ];
 
         $result = $this->service->uploadToMetLife($data, 'test.pdf');
@@ -240,7 +239,7 @@ class MetLifeApiServiceTest extends TestCase
     {
         $data = [
             'policy_number' => 'POL123',
-            'file' => '   '
+            'file' => '   ',
         ];
 
         $result = $this->service->uploadToMetLife($data, 'test.pdf');
@@ -253,7 +252,7 @@ class MetLifeApiServiceTest extends TestCase
     public function test_get_api_version_returns_string()
     {
         $result = $this->service->getApiVersion();
-        
+
         $this->assertIsString($result);
         $this->assertEquals('3', $result);
     }
@@ -265,13 +264,13 @@ class MetLifeApiServiceTest extends TestCase
         $property->setAccessible(true);
 
         $mimeTypes = $property->getValue($this->service);
-        
+
         $expectedTypes = [
-            "application/pdf",
-            "image/jpeg",
-            "image/png",
-            "image/bmp",
-            "image/tiff"
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/bmp',
+            'image/tiff',
         ];
 
         foreach ($expectedTypes as $expectedType) {
@@ -286,7 +285,7 @@ class MetLifeApiServiceTest extends TestCase
         $property->setAccessible(true);
 
         $mimeTypes = $property->getValue($this->service);
-        
+
         $this->assertIsArray($mimeTypes);
         $this->assertGreaterThan(0, count($mimeTypes));
     }
@@ -298,7 +297,7 @@ class MetLifeApiServiceTest extends TestCase
         $method->setAccessible(true);
 
         $result = $method->invoke($this->service, 'doc');
-        
+
         $this->assertEquals('application/msword', $result);
     }
 
@@ -309,7 +308,7 @@ class MetLifeApiServiceTest extends TestCase
         $method->setAccessible(true);
 
         $result = $method->invoke($this->service, '');
-        
+
         $this->assertEquals('application/octet-stream', $result);
     }
 
@@ -320,7 +319,7 @@ class MetLifeApiServiceTest extends TestCase
         $method->setAccessible(true);
 
         $result = $method->invoke($this->service, '.pdf');
-        
+
         $this->assertEquals('application/octet-stream', $result);
     }
 
@@ -331,27 +330,27 @@ class MetLifeApiServiceTest extends TestCase
         $method->setAccessible(true);
 
         $result = $method->invoke($this->service, 'DoCx');
-        
+
         $this->assertEquals('application/vnd.openxmlformats-officedocument.wordprocessingml.document', $result);
     }
 
     public function test_service_constructor_initializes_dependencies()
     {
         $reflection = new \ReflectionClass($this->service);
-        
+
         // Check that all required services are initialized
         $requestProperty = $reflection->getProperty('request');
         $requestProperty->setAccessible(true);
         $this->assertNotNull($requestProperty->getValue($this->service));
-        
+
         $cacheProperty = $reflection->getProperty('cache');
         $cacheProperty->setAccessible(true);
         $this->assertNotNull($cacheProperty->getValue($this->service));
-        
+
         $responseServiceProperty = $reflection->getProperty('responseService');
         $responseServiceProperty->setAccessible(true);
         $this->assertNotNull($responseServiceProperty->getValue($this->service));
-        
+
         $validatorProperty = $reflection->getProperty('validator');
         $validatorProperty->setAccessible(true);
         $this->assertNotNull($validatorProperty->getValue($this->service));
@@ -362,7 +361,7 @@ class MetLifeApiServiceTest extends TestCase
         // Test with missing quote_uuid (should still work)
         $data = [
             'policy_number' => 'POL123',
-            'file' => 'test_file_data'
+            'file' => 'test_file_data',
         ];
 
         $result = $this->service->uploadToMetLife($data, 'test.pdf');
@@ -377,7 +376,7 @@ class MetLifeApiServiceTest extends TestCase
         $data = [
             'policy_number' => 'POL123',
             'file' => 'test_file_data',
-            'provider_code' => 'MTL'
+            'provider_code' => 'MTL',
         ];
 
         $result = $this->service->uploadToMetLife($data, 'test.pdf');
@@ -391,7 +390,7 @@ class MetLifeApiServiceTest extends TestCase
     {
         $data = [
             'policy_number' => 'POL123',
-            'file' => 'test_file_data'
+            'file' => 'test_file_data',
         ];
 
         // Test with various document names
@@ -400,12 +399,12 @@ class MetLifeApiServiceTest extends TestCase
             'test document.pdf',
             'test-document.pdf',
             'test_document.pdf',
-            'test document with spaces.pdf'
+            'test document with spaces.pdf',
         ];
 
         foreach ($documentNames as $docName) {
             $result = $this->service->uploadToMetLife($data, $docName);
-            
+
             $this->assertArrayHasKey('success', $result);
             $this->assertArrayHasKey('message', $result);
             $this->assertArrayHasKey('data', $result);
@@ -419,17 +418,17 @@ class MetLifeApiServiceTest extends TestCase
             'POL_123',
             'POL.123',
             'POL 123',
-            'POL123-ABC'
+            'POL123-ABC',
         ];
 
         foreach ($specialPolicyNumbers as $policyNumber) {
             $data = [
                 'policy_number' => $policyNumber,
-                'file' => 'test_file_data'
+                'file' => 'test_file_data',
             ];
 
             $result = $this->service->uploadToMetLife($data, 'test.pdf');
-            
+
             $this->assertArrayHasKey('success', $result);
             $this->assertArrayHasKey('message', $result);
             $this->assertArrayHasKey('data', $result);
@@ -440,7 +439,7 @@ class MetLifeApiServiceTest extends TestCase
     {
         $data = [
             'policy_number' => 'POL123',
-            'file' => 'test_file_data'
+            'file' => 'test_file_data',
         ];
 
         $result = $this->service->uploadToMetLife($data, 'test.pdf');
@@ -449,7 +448,7 @@ class MetLifeApiServiceTest extends TestCase
         $this->assertIsBool($result['success']);
         $this->assertIsString($result['message']);
         $this->assertIsArray($result['data']);
-        
+
         // Verify data array structure is consistent
         $this->assertIsArray($result['data']);
     }

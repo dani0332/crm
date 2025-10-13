@@ -20,12 +20,12 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $requestData = [
             'quote_uuid' => 'test-quote-uuid-123',
-            'policy_number' => 'POL123456'
+            'policy_number' => 'POL123456',
         ];
-        
+
         $this->job = new LifeSyncHealthQuestionnaireJob($requestData);
         $this->mockMetLifeApiService = Mockery::mock(MetLifeApiService::class);
     }
@@ -40,7 +40,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
     {
         $requestData = [
             'quote_uuid' => 'test-quote-uuid-456',
-            'policy_number' => 'POL789012'
+            'policy_number' => 'POL789012',
         ];
 
         $job = new LifeSyncHealthQuestionnaireJob($requestData);
@@ -59,7 +59,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
     {
         $requestData = [
             'quote_uuid' => 'test-quote-uuid-123',
-            'policy_number' => 'POL123456'
+            'policy_number' => 'POL123456',
         ];
 
         $job = new LifeSyncHealthQuestionnaireJob($requestData);
@@ -67,7 +67,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
         $mockResult = [
             'success' => true,
             'message' => 'Health questionnaire synced successfully',
-            'data' => ['document_id' => 123]
+            'data' => ['document_id' => 123],
         ];
 
         $this->app->instance(MetLifeApiService::class, $this->mockMetLifeApiService);
@@ -85,13 +85,13 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
     {
         $requestData = [
             'quote_uuid' => 'test-quote-uuid-123',
-            'policy_number' => 'POL123456'
+            'policy_number' => 'POL123456',
         ];
 
         $job = new LifeSyncHealthQuestionnaireJob($requestData);
 
         $mockResult = [
-            'error' => 'Sync failed'
+            'error' => 'Sync failed',
         ];
 
         $this->app->instance(MetLifeApiService::class, $this->mockMetLifeApiService);
@@ -109,7 +109,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
     {
         $requestData = [
             'quote_uuid' => 'test-quote-uuid-123',
-            'policy_number' => 'POL123456'
+            'policy_number' => 'POL123456',
         ];
 
         $job = new LifeSyncHealthQuestionnaireJob($requestData);
@@ -129,14 +129,14 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
     {
         $requestData = [
             'quote_uuid' => 'test-quote-uuid-123',
-            'policy_number' => 'POL123456'
+            'policy_number' => 'POL123456',
         ];
 
         $job = new LifeSyncHealthQuestionnaireJob($requestData);
 
         $mockResult = [
             'success' => true,
-            'message' => 'Success'
+            'message' => 'Success',
         ];
 
         $this->app->instance(MetLifeApiService::class, $this->mockMetLifeApiService);
@@ -154,7 +154,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
     {
         $requestData = [
             'quote_uuid' => 'test-quote-uuid-123',
-            'policy_number' => 'POL123456'
+            'policy_number' => 'POL123456',
         ];
 
         $job = new LifeSyncHealthQuestionnaireJob($requestData);
@@ -175,7 +175,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
     {
         $requestData = [
             'quote_uuid' => 'test-quote-uuid-123',
-            'policy_number' => 'POL123456'
+            'policy_number' => 'POL123456',
         ];
 
         $job = new LifeSyncHealthQuestionnaireJob($requestData);
@@ -213,7 +213,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
         $this->assertIsInt($this->job->tries);
         $this->assertIsInt($this->job->timeout);
         $this->assertIsInt($this->job->backoff);
-        
+
         $this->assertEquals(3, $this->job->tries);
         $this->assertEquals(120, $this->job->timeout);
         $this->assertEquals(300, $this->job->backoff);
@@ -222,7 +222,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
     public function test_job_has_required_methods()
     {
         $reflection = new \ReflectionClass($this->job);
-        
+
         $this->assertTrue($reflection->hasMethod('handle'));
         $this->assertTrue($reflection->hasMethod('failed'));
         $this->assertTrue($reflection->hasMethod('middleware'));
@@ -231,13 +231,13 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
     public function test_job_methods_are_public()
     {
         $reflection = new \ReflectionClass($this->job);
-        
+
         $handleMethod = $reflection->getMethod('handle');
         $this->assertTrue($handleMethod->isPublic());
-        
+
         $failedMethod = $reflection->getMethod('failed');
         $this->assertTrue($failedMethod->isPublic());
-        
+
         $middlewareMethod = $reflection->getMethod('middleware');
         $this->assertTrue($middlewareMethod->isPublic());
     }
@@ -247,7 +247,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
         $requestData = [
             'quote_uuid' => 'test-uuid',
             'policy_number' => 'POL123',
-            'additional_field' => 'value'
+            'additional_field' => 'value',
         ];
 
         $job = new LifeSyncHealthQuestionnaireJob($requestData);
@@ -275,7 +275,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
     public function test_job_constructor_with_minimal_data()
     {
         $requestData = [
-            'quote_uuid' => 'test-uuid'
+            'quote_uuid' => 'test-uuid',
         ];
 
         $job = new LifeSyncHealthQuestionnaireJob($requestData);
@@ -291,7 +291,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
     {
         $requestData = [
             'quote_uuid' => 'test-quote-uuid-123',
-            'policy_number' => 'POL123456'
+            'policy_number' => 'POL123456',
         ];
 
         $job = new LifeSyncHealthQuestionnaireJob($requestData);

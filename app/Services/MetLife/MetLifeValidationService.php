@@ -21,26 +21,28 @@ class MetLifeValidationService
         $isMetLifeEnabled = $this->isIntegrationEnabled();
         $providerCode = $providerCode;
 
-        return $providerCode !== InsuranceProviderEnum::MTL->value || !$isMetLifeEnabled;
+        return $providerCode !== InsuranceProviderEnum::MTL->value || ! $isMetLifeEnabled;
     }
 
     public function isSessionValid(?string $sessionId, ?int $sessionCreatedAt, int $sessionTimeout): bool
     {
-        if (!$sessionId || !$sessionCreatedAt) {
+        if (! $sessionId || ! $sessionCreatedAt) {
             return false;
         }
 
         $sessionAge = time() - $sessionCreatedAt;
+
         return $sessionAge < $sessionTimeout;
     }
 
     public function isCsrfTokenValid(?string $csrfToken, ?int $csrfTokenCreatedAt, int $csrfTokenRefreshInterval): bool
     {
-        if (!$csrfToken || !$csrfTokenCreatedAt) {
+        if (! $csrfToken || ! $csrfTokenCreatedAt) {
             return false;
         }
 
         $tokenAge = time() - $csrfTokenCreatedAt;
+
         return $tokenAge < $csrfTokenRefreshInterval;
     }
 
@@ -52,13 +54,13 @@ class MetLifeValidationService
     public function handleException(Exception $e, string $action): array
     {
         LoggerService::warning("MetLife API - {$action} failed", [
-            'error' => $e->getMessage()
+            'error' => $e->getMessage(),
         ]);
 
         return [
             'status' => false,
             'message' => "{$action} failed",
-            'error' => $e->getMessage()
+            'error' => $e->getMessage(),
         ];
     }
 

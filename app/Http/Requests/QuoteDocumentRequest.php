@@ -7,10 +7,10 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Services\MetLife\MetLifeValidationService;
 use App\Models\DocumentType;
 use App\Models\InsuranceProvider;
 use App\Rules\ValidateBase64;
+use App\Services\MetLife\MetLifeValidationService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -91,9 +91,9 @@ class QuoteDocumentRequest extends FormRequest
             }
 
             $quote_source = data_get($quote, 'source', '');
-            
-            $metLifeValidator = new MetLifeValidationService();
-            
+
+            $metLifeValidator = new MetLifeValidationService;
+
             // Skip payment validation for MetLife (MTL) only if MetLife integration is enabled
             if ($metLifeValidator->shouldValidatePayment(request()->provider_code)) {
                 if ($quote_source == LeadSourceEnum::DUBAI_NOW) {

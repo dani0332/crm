@@ -21,7 +21,7 @@ class MetLifeIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new MetLifeApiService();
+        $this->service = new MetLifeApiService;
     }
 
     protected function tearDown(): void
@@ -44,14 +44,14 @@ class MetLifeIntegrationTest extends TestCase
                 'org' => [],
                 'country' => null,
                 'date_format' => '%d/%m/%Y',
-                'theme_overrides' => []
+                'theme_overrides' => [],
             ], 200),
             'https://api.metlife.com/api/v3/login/' => Http::response([
                 'success' => true,
                 'session_id' => 'test_session_123',
                 'roles' => ['admin'],
-                'org' => ['id' => 1, 'name' => 'Test Org']
-            ], 200)
+                'org' => ['id' => 1, 'name' => 'Test Org'],
+            ], 200),
         ]);
 
         $result = $this->service->checkConnectionStatus();
@@ -74,8 +74,8 @@ class MetLifeIntegrationTest extends TestCase
         Http::fake([
             'https://api.metlife.com/api/v3/test/' => Http::response([
                 'success' => true,
-                'data' => ['test' => 'cached_session_used']
-            ], 200)
+                'data' => ['test' => 'cached_session_used'],
+            ], 200),
         ]);
 
         $reflection = new \ReflectionClass($this->service);
@@ -100,13 +100,13 @@ class MetLifeIntegrationTest extends TestCase
             'https://api.metlife.com/api/v3/init/' => Http::response([
                 'csrftoken' => 'new_csrf_token',
                 'session_id' => 'new_session_id',
-                'session_expiry' => 7200
+                'session_expiry' => 7200,
             ], 200),
             'https://api.metlife.com/api/v3/login/' => Http::response([
                 'success' => true,
                 'session_id' => 'new_session_id',
-                'roles' => ['user']
-            ], 200)
+                'roles' => ['user'],
+            ], 200),
         ]);
 
         $reflection = new \ReflectionClass($this->service);
@@ -135,8 +135,8 @@ class MetLifeIntegrationTest extends TestCase
 
         Http::fake([
             'https://api.metlife.com/api/v3/init/' => Http::response([
-                'error' => 'Service unavailable'
-            ], 503)
+                'error' => 'Service unavailable',
+            ], 503),
         ]);
 
         $result = $this->service->checkConnectionStatus();
@@ -166,12 +166,12 @@ class MetLifeIntegrationTest extends TestCase
             'https://api.metlife.com/api/v3/init/' => Http::response([
                 'csrftoken' => 'test_csrf_token',
                 'session_id' => 'test_session_id',
-                'session_expiry' => 7200
+                'session_expiry' => 7200,
             ], 200),
             'https://api.metlife.com/api/v3/login/' => Http::response([
                 'success' => false,
-                'message' => 'Invalid credentials'
-            ], 401)
+                'message' => 'Invalid credentials',
+            ], 401),
         ]);
 
         $result = $this->service->checkConnectionStatus();
@@ -184,7 +184,7 @@ class MetLifeIntegrationTest extends TestCase
         $this->enableMetLifeIntegration();
 
         Http::fake([
-            'https://api.metlife.com/api/v3/init/' => Http::response('invalid json', 200)
+            'https://api.metlife.com/api/v3/init/' => Http::response('invalid json', 200),
         ]);
 
         $result = $this->service->initialize();
@@ -200,12 +200,12 @@ class MetLifeIntegrationTest extends TestCase
             'https://api.metlife.com/api/v3/init/' => Http::response([
                 'csrftoken' => 'test_csrf_token',
                 'session_id' => 'test_session_id',
-                'session_expiry' => 7200
+                'session_expiry' => 7200,
             ], 200),
             'https://api.metlife.com/api/v3/login/' => Http::response([
                 'success' => false,
-                'message' => 'Authentication failed'
-            ], 200)
+                'message' => 'Authentication failed',
+            ], 200),
         ]);
 
         $result = $this->service->checkConnectionStatus();
@@ -240,7 +240,7 @@ class MetLifeIntegrationTest extends TestCase
             'value' => '1',
             'is_active' => 1,
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
     }
 
@@ -251,7 +251,7 @@ class MetLifeIntegrationTest extends TestCase
             'value' => '0',
             'is_active' => 1,
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
     }
 }

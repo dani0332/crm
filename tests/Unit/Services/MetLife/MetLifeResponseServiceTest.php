@@ -14,7 +14,7 @@ class MetLifeResponseServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new MetLifeResponseService();
+        $this->service = new MetLifeResponseService;
     }
 
     public function test_create_response_success()
@@ -39,7 +39,7 @@ class MetLifeResponseServiceTest extends TestCase
     public function test_handle_upload_response_success()
     {
         $response = [
-            'file_reference' => 'test_file_ref_123'
+            'file_reference' => 'test_file_ref_123',
         ];
         $policyNumber = 'POL123';
         $quoteUuid = 'QUOTE456';
@@ -56,8 +56,8 @@ class MetLifeResponseServiceTest extends TestCase
     {
         $response = [
             'data' => [
-                'file_reference' => 'nested_file_ref_456'
-            ]
+                'file_reference' => 'nested_file_ref_456',
+            ],
         ];
         $policyNumber = 'POL789';
 
@@ -70,7 +70,7 @@ class MetLifeResponseServiceTest extends TestCase
     public function test_handle_upload_response_failure()
     {
         $response = [
-            'message' => 'Upload failed'
+            'message' => 'Upload failed',
         ];
         $policyNumber = 'POL999';
 

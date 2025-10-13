@@ -26,8 +26,8 @@ class MetLifeRequestServiceTest extends TestCase
     {
         Http::fake([
             'https://api.metlife.com/test' => Http::response([
-                'test' => 'value'
-            ], 200)
+                'test' => 'value',
+            ], 200),
         ]);
 
         $result = $this->service->makeRequest('/test', 'GET');
@@ -42,8 +42,8 @@ class MetLifeRequestServiceTest extends TestCase
     {
         Http::fake([
             'https://api.metlife.com/test' => Http::response([
-                'created' => true
-            ], 201)
+                'created' => true,
+            ], 201),
         ]);
 
         $data = ['name' => 'test'];
@@ -58,8 +58,8 @@ class MetLifeRequestServiceTest extends TestCase
     {
         Http::fake([
             'https://api.metlife.com/test' => Http::response([
-                'error' => 'Not found'
-            ], 404)
+                'error' => 'Not found',
+            ], 404),
         ]);
 
         $result = $this->service->makeRequest('/test', 'GET');

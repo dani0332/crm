@@ -24,12 +24,12 @@ use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
+use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
-use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
@@ -47,11 +47,11 @@ use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\Logger\LoggerService;
+use App\Services\MetLife\MetLifeApiService;
 use App\Services\NotificationService;
 use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusService;
-use App\Services\MetLife\MetLifeApiService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
@@ -517,12 +517,12 @@ class ApiController extends Controller
 
     public function lifeSyncHealthQuestionnaire(LifeSyncHealthQuestionnaireRequest $request)
     {
-        $metLifeApiService = new MetLifeApiService();
-        
-        if (!$metLifeApiService->isMetLifeEnabled()) {
+        $metLifeApiService = new MetLifeApiService;
+
+        if (! $metLifeApiService->isMetLifeEnabled()) {
             return response()->json([
                 'success' => false,
-                'message' => 'MetLife feature is not enabled right now'
+                'message' => 'MetLife feature is not enabled right now',
             ], 403);
         }
 

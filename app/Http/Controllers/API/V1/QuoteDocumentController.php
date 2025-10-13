@@ -81,19 +81,19 @@ class QuoteDocumentController extends Controller
 
     public function handleMetLife($quoteType, UploadToMetLifeRequest $request)
     {
-        $metLifeApiService = new MetLifeApiService();
-        
-        if (!$metLifeApiService->isMetLifeEnabled()) {
+        $metLifeApiService = new MetLifeApiService;
+
+        if (! $metLifeApiService->isMetLifeEnabled()) {
             return response()->json([
                 'success' => false,
-                'message' => 'MetLife feature is not enabled right now'
+                'message' => 'MetLife feature is not enabled right now',
             ], 403);
         }
-        
-        LoggerService::info('API request recive to upload documents to MetLife against Quote uuid: '. $request->validated()['quote_uuid']);
+
+        LoggerService::info('API request recive to upload documents to MetLife against Quote uuid: '.$request->validated()['quote_uuid']);
         $quote = $this->getQuoteObject($quoteType, $request->validated()['quote_uuid']);
         $result = $metLifeApiService->handleDocumentUpload($request->validated(), $quote);
-        
+
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 }

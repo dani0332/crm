@@ -26,7 +26,7 @@ class MetLifeResponseService
             LoggerService::info('MetLife upload successful', [
                 'policy_number' => $policyNumber,
                 'quote_uuid' => $quoteUuid,
-                'file_reference' => $fileReference
+                'file_reference' => $fileReference,
             ]);
 
             return $this->createResponse(
@@ -40,12 +40,12 @@ class MetLifeResponseService
         LoggerService::warning('MetLife upload failed', [
             'policy_number' => $policyNumber,
             'quote_uuid' => $quoteUuid,
-            'error' => $errorMessage
+            'error' => $errorMessage,
         ]);
 
         return $this->createResponse(
             false,
-            'Document upload failed: ' . $errorMessage,
+            'Document upload failed: '.$errorMessage,
             ['policy_number' => $policyNumber]
         );
     }
@@ -67,7 +67,7 @@ class MetLifeResponseService
         LoggerService::warning('MetLife HTTP request failed', [
             'endpoint' => $endpoint,
             'status_code' => $statusCode,
-            'error' => $errorMessage
+            'error' => $errorMessage,
         ]);
 
         return $this->createResponse(
@@ -82,12 +82,12 @@ class MetLifeResponseService
         LoggerService::warning('MetLife exception occurred', [
             'error' => $exception->getMessage(),
             'file' => basename($exception->getFile()),
-            'line' => $exception->getLine()
+            'line' => $exception->getLine(),
         ]);
 
         return $this->createResponse(
             false,
-            'MetLife operation failed: ' . $exception->getMessage(),
+            'MetLife operation failed: '.$exception->getMessage(),
             ['exception_code' => $exception->getCode()]
         );
     }

@@ -26,7 +26,7 @@ class MetLifeRequestService
             LoggerService::info('MetLife API request', [
                 'endpoint' => $endpoint,
                 'method' => $method,
-                'url' => $this->baseUrl . $endpoint
+                'url' => $this->baseUrl.$endpoint,
             ]);
 
             $response = Http::baseUrl($this->baseUrl)
@@ -38,11 +38,11 @@ class MetLifeRequestService
             } else {
                 $response = $response->post($endpoint, $data);
             }
-            
+
             LoggerService::info('MetLife API response', [
                 'endpoint' => $endpoint,
                 'status_code' => $response->status(),
-                'successful' => $response->successful()
+                'successful' => $response->successful(),
             ]);
 
             return $this->handleResponse($response, $endpoint);
@@ -51,22 +51,22 @@ class MetLifeRequestService
             LoggerService::warning('MetLife request exception', [
                 'endpoint' => $endpoint,
                 'method' => $method,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'MetLife operation failed: ' . $e->getMessage(),
-                'data' => ['exception_code' => $e->getCode()]
+                'message' => 'MetLife operation failed: '.$e->getMessage(),
+                'data' => ['exception_code' => $e->getCode()],
             ];
         }
     }
 
-    public function buildHeaders(string $sessionId = null, string $csrfToken = null): array
+    public function buildHeaders(?string $sessionId = null, ?string $csrfToken = null): array
     {
         $headers = [
             'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
+            'Accept' => 'application/json',
         ];
 
         if ($sessionId && $csrfToken) {
@@ -86,7 +86,7 @@ class MetLifeRequestService
             return [
                 'success' => true,
                 'message' => 'Request successful',
-                'data' => ['status_code' => $statusCode, 'data' => $responseBody]
+                'data' => ['status_code' => $statusCode, 'data' => $responseBody],
             ];
         }
 
@@ -94,13 +94,13 @@ class MetLifeRequestService
         LoggerService::warning('MetLife HTTP request failed', [
             'endpoint' => $endpoint,
             'status_code' => $statusCode,
-            'error' => $errorMessage
+            'error' => $errorMessage,
         ]);
 
         return [
             'success' => false,
             'message' => "Request failed (Status: {$statusCode}): {$errorMessage}",
-            'data' => ['status_code' => $statusCode, 'endpoint' => $endpoint]
+            'data' => ['status_code' => $statusCode, 'endpoint' => $endpoint],
         ];
     }
 }

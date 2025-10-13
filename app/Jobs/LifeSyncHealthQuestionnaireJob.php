@@ -10,8 +10,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\Middleware\Skip;
+use Illuminate\Queue\SerializesModels;
 
 class LifeSyncHealthQuestionnaireJob implements ShouldQueue
 {
@@ -36,7 +36,7 @@ class LifeSyncHealthQuestionnaireJob implements ShouldQueue
             $result = $metLifeService->syncHealthQuestionnaire($this->requestData);
 
             if (is_array($result) && isset($result['error'])) {
-                throw new Exception('Health questionnaire sync failed: ' . $result['error']);
+                throw new Exception('Health questionnaire sync failed: '.$result['error']);
             }
 
             LoggerService::info('Health Questionnaire sync completed successfully.', ['quote_uuid' => $this->requestData['quote_uuid']]);

@@ -14,7 +14,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new MTLHealthQuestionnaireService();
+        $this->service = new MTLHealthQuestionnaireService;
     }
 
     public function test_is_health_questionnaire_validation()
@@ -29,7 +29,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
             'form_id' => 'Health Questionnaire',
             'form_title' => 'Health Questionnaire',
             'form_type' => 'form',
-            'fields' => []
+            'fields' => [],
         ];
 
         $this->assertTrue($method->invoke($this->service, $validField));
@@ -40,7 +40,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
             'form_id' => 'Health Questionnaire',
             'form_title' => 'Health Questionnaire',
             'form_type' => 'form',
-            'fields' => []
+            'fields' => [],
         ];
 
         $this->assertFalse($method->invoke($this->service, $invalidField1));
@@ -50,7 +50,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
             'form_name' => 'Health Questionnaire',
             'form_id' => 'Health Questionnaire',
             'form_title' => 'Health Questionnaire',
-            'form_type' => 'form'
+            'form_type' => 'form',
         ];
 
         $this->assertFalse($method->invoke($this->service, $invalidField2));
@@ -61,7 +61,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
             'form_id' => 'Health Questionnaire',
             'form_title' => 'Health Questionnaire',
             'form_type' => 'document',
-            'fields' => []
+            'fields' => [],
         ];
 
         $this->assertFalse($method->invoke($this->service, $invalidField3));
@@ -81,7 +81,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
                         'form_id' => 'Other Form',
                         'form_title' => 'Other Form',
                         'form_type' => 'form',
-                        'fields' => []
+                        'fields' => [],
                     ],
                     [
                         'form_name' => 'Health Questionnaire',
@@ -89,11 +89,11 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
                         'form_title' => 'Health Questionnaire',
                         'form_type' => 'form',
                         'fields' => [
-                            ['field_name' => 'test_field', 'value' => 'test_value']
-                        ]
-                    ]
-                ]
-            ]
+                            ['field_name' => 'test_field', 'value' => 'test_value'],
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         $result = $method->invoke($this->service, $responseData);
@@ -120,10 +120,10 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
                         'form_id' => 'Other Form',
                         'form_title' => 'Other Form',
                         'form_type' => 'form',
-                        'fields' => []
-                    ]
-                ]
-            ]
+                        'fields' => [],
+                    ],
+                ],
+            ],
         ];
 
         $result = $method->invoke($this->service, $responseData);
@@ -139,8 +139,8 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
 
         $responseData = [
             'submitted_data' => [
-                'fields' => []
-            ]
+                'fields' => [],
+            ],
         ];
 
         $result = $method->invoke($this->service, $responseData);
@@ -168,7 +168,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
         $method->setAccessible(true);
 
         $responseData = [
-            'submitted_data' => []
+            'submitted_data' => [],
         ];
 
         $result = $method->invoke($this->service, $responseData);
@@ -187,7 +187,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
             'form_id' => 'Health Questionnaire',
             'form_title' => 'Health Questionnaire',
             'form_type' => 'form',
-            'fields' => []
+            'fields' => [],
         ];
 
         $this->assertFalse($method->invoke($this->service, $invalidField1));
@@ -197,7 +197,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
             'form_name' => 'Health Questionnaire',
             'form_title' => 'Health Questionnaire',
             'form_type' => 'form',
-            'fields' => []
+            'fields' => [],
         ];
 
         $this->assertFalse($method->invoke($this->service, $invalidField2));
@@ -207,7 +207,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
             'form_name' => 'Health Questionnaire',
             'form_id' => 'Health Questionnaire',
             'form_type' => 'form',
-            'fields' => []
+            'fields' => [],
         ];
 
         $this->assertFalse($method->invoke($this->service, $invalidField3));
@@ -217,7 +217,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
             'form_name' => 'Health Questionnaire',
             'form_id' => 'Health Questionnaire',
             'form_title' => 'Health Questionnaire',
-            'fields' => []
+            'fields' => [],
         ];
 
         $this->assertFalse($method->invoke($this->service, $invalidField4));
@@ -251,7 +251,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
             'form_id' => 'Health Questionnaire',
             'form_title' => 'Health Questionnaire',
             'form_type' => 'form',
-            'fields' => []
+            'fields' => [],
         ];
 
         $this->assertFalse($method->invoke($this->service, $invalidField));
@@ -262,7 +262,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
             'form_id' => 'Health Questionnaire',
             'form_title' => 'Health Questionnaire',
             'form_type' => 'form',
-            'fields' => []
+            'fields' => [],
         ];
 
         $this->assertFalse($method->invoke($this->service, $invalidField2));
@@ -282,7 +282,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
             'form_type' => 'form',
             'fields' => [],
             'extra_field' => 'extra_value',
-            'another_field' => 123
+            'another_field' => 123,
         ];
 
         $this->assertTrue($method->invoke($this->service, $validField));
@@ -302,14 +302,14 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
                         'form_id' => 'Other Form 1',
                         'form_title' => 'Other Form 1',
                         'form_type' => 'form',
-                        'fields' => []
+                        'fields' => [],
                     ],
                     [
                         'form_name' => 'Other Form 2',
                         'form_id' => 'Other Form 2',
                         'form_title' => 'Other Form 2',
                         'form_type' => 'document',
-                        'fields' => []
+                        'fields' => [],
                     ],
                     [
                         'form_name' => 'Health Questionnaire',
@@ -317,11 +317,11 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
                         'form_title' => 'Health Questionnaire',
                         'form_type' => 'form',
                         'fields' => [
-                            ['field_name' => 'test_field', 'value' => 'test_value']
-                        ]
-                    ]
-                ]
-            ]
+                            ['field_name' => 'test_field', 'value' => 'test_value'],
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         $result = $method->invoke($this->service, $responseData);
@@ -338,7 +338,7 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
     public function test_service_has_required_methods()
     {
         $reflection = new \ReflectionClass($this->service);
-        
+
         $this->assertTrue($reflection->hasMethod('syncHealthQuestionnaire'));
         $this->assertTrue($reflection->hasMethod('isHealthQuestionnaire'));
         $this->assertTrue($reflection->hasMethod('extractHealthQuestionnaire'));
@@ -347,13 +347,13 @@ class MTLHealthQuestionnaireServiceTest extends TestCase
     public function test_service_methods_are_private_or_public()
     {
         $reflection = new \ReflectionClass($this->service);
-        
+
         $syncMethod = $reflection->getMethod('syncHealthQuestionnaire');
         $this->assertTrue($syncMethod->isPublic());
-        
+
         $isHealthMethod = $reflection->getMethod('isHealthQuestionnaire');
         $this->assertTrue($isHealthMethod->isPrivate());
-        
+
         $extractMethod = $reflection->getMethod('extractHealthQuestionnaire');
         $this->assertTrue($extractMethod->isPrivate());
     }
