@@ -643,7 +643,7 @@ class DocumentTypesSeeder extends Seeder
                 'is_required' => 0,
                 'send_to_customer' => 0,
                 'sort_order' => 1,
-                'receive_from_customer' => 0,
+                'receive_from_customer' => 1,
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
@@ -659,6 +659,7 @@ class DocumentTypesSeeder extends Seeder
                 'max_files' => 15,
                 'max_size' => 25,
                 'is_required' => 0,
+                'receive_from_customer' => 1,
                 'category' => DocumentTypeCode::QUOTE,
             ],
         ];
