@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Jobs;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Services\MetLife\MetLifeApiService;
 use Exception;
-use Illuminate\Queue\Middleware\Skip;
 use Mockery;
 use Tests\TestCase;
 
