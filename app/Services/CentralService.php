@@ -1686,7 +1686,7 @@ class CentralService extends BaseService
                     $emailData->handBookDocuments = str_contains($url, 'http') ? $url : $storageUrl.$url;
                 }
             } else {
-                $policyHandBook = $quoteDocuments->filter(fn ($document) => $document['document_type_code'] == DocumentTypeCode::PHB)->first()?->url ?? [];
+                $policyHandBook = $quoteDocuments->filter(fn ($document) => $document['document_type_code'] == DocumentTypeCode::PHB)->first()?->doc_url ?? [];
 
                 if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life])) {
                     $policyHandBook = PolicyWording::where('quote_type_id', $quoteTypeId)
@@ -1695,7 +1695,7 @@ class CentralService extends BaseService
 
                     $emailData->handBookDocuments = ! empty($policyHandBook) ? config('constants.AZURE_IM_STORAGE_URL').$policyHandBook : '';
                 } else {
-                    $emailData->handBookDocuments = $storageUrl.$policyHandBook['doc_url'] ?? '';
+                    $emailData->handBookDocuments = $storageUrl.$policyHandBook ?? '';
                 }
             }
             // for testing purpose.
