@@ -56,6 +56,7 @@ use App\Models\PaymentStatusHistory;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
+use App\Models\PolicyWording;
 use App\Models\QuoteBatches;
 use App\Models\QuoteExportLog;
 use App\Models\QuoteFlowDetails;
@@ -1685,9 +1686,17 @@ class CentralService extends BaseService
                     $emailData->handBookDocuments = str_contains($url, 'http') ? $url : $storageUrl.$url;
                 }
             } else {
-                $emailData->handBookDocuments = ! empty($quoteDocuments) ? $storageUrl.collect($quoteDocuments)->filter(function ($document) {
-                    return in_array($document['document_type_code'], [DocumentTypeCode::PHB]);
-                })->first()['doc_url'] ?? '' : [];
+                $policyHandBook = $quoteDocuments->filter(fn ($document) => $document['document_type_code'] == DocumentTypeCode::PHB)->first()?->url ?? [];
+
+                if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life])) {
+                    $policyHandBook = PolicyWording::where('quote_type_id', $quoteTypeId)
+                        ->where('plan_id', $quote->plan_id)
+                        ->first()?->link ?? [];
+
+                    $emailData->handBookDocuments = config('constants.AZURE_IM_STORAGE_URL').$policyHandBook;
+                } else {
+                    $emailData->handBookDocuments = $storageUrl.$policyHandBook['doc_url'] ?? '';
+                }
             }
             // for testing purpose.
             // $emailData->handBookDocuments = 'https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/documents/bike/68e64dd9b42a3_DD8X4MH7_68e64dd717a07_test.pdf';
