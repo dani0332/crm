@@ -16,7 +16,7 @@ export function useAllocationForm(props, errorHandling) {
   const homeTemplateRef = ref(null);
   const lifeTemplateRef = ref(null);
   const simpleTemplateRef = ref(null);
-  const verySimpleTemplateRef = ref(null);
+  const commonTemplateRef = ref(null);
   const corplineTemplateRef = ref(null);
   const groupMedicalTemplateRef = ref(null);
   const auditLogsKey = ref(0);
@@ -260,9 +260,9 @@ export function useAllocationForm(props, errorHandling) {
         });
       }
 
-      if (verySimpleTemplateRef.value) {
+      if (commonTemplateRef.value) {
         nextTick(() => {
-          verySimpleTemplateRef.value.clearValidationErrors();
+          commonTemplateRef.value.clearValidationErrors();
         });
       }
 
@@ -355,9 +355,9 @@ export function useAllocationForm(props, errorHandling) {
         (form.quote_type === props.quoteTypeCodeEnum.Pet ||
           form.quote_type === props.quoteTypeCodeEnum.Yacht ||
           form.quote_type === props.quoteTypeCodeEnum.Cycle) &&
-        verySimpleTemplateRef.value
+        commonTemplateRef.value
       ) {
-        const templateValidation = verySimpleTemplateRef.value.validate();
+        const templateValidation = commonTemplateRef.value.validate();
 
         if (!templateValidation.isValid) {
           templateValidation.errors.forEach(error => {
@@ -448,8 +448,8 @@ export function useAllocationForm(props, errorHandling) {
             simpleTemplateRef.value.clearValidationErrors();
           }
 
-          if (verySimpleTemplateRef.value) {
-            verySimpleTemplateRef.value.clearValidationErrors();
+          if (commonTemplateRef.value) {
+            commonTemplateRef.value.clearValidationErrors();
           }
 
           if (corplineTemplateRef.value) {
@@ -535,7 +535,7 @@ export function useAllocationForm(props, errorHandling) {
     homeTemplateRef,
     lifeTemplateRef,
     simpleTemplateRef,
-    verySimpleTemplateRef,
+    commonTemplateRef,
     corplineTemplateRef,
     groupMedicalTemplateRef,
     auditLogsKey,

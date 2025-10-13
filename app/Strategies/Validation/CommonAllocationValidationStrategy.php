@@ -10,7 +10,7 @@ use App\Models\User;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
-class VerySimpleAllocationValidationStrategy implements AllocationValidationStrategyInterface
+class CommonAllocationValidationStrategy implements AllocationValidationStrategyInterface
 {
     private readonly string $lobName;
 

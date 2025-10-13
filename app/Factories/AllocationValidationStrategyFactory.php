@@ -11,7 +11,7 @@ use App\Strategies\Validation\GroupMedicalAllocationValidationStrategy;
 use App\Strategies\Validation\HomeAllocationValidationStrategy;
 use App\Strategies\Validation\LifeAllocationValidationStrategy;
 use App\Strategies\Validation\SavingsAllocationValidationStrategy;
-use App\Strategies\Validation\VerySimpleAllocationValidationStrategy;
+use App\Strategies\Validation\CommonAllocationValidationStrategy;
 use InvalidArgumentException;
 
 class AllocationValidationStrategyFactory
@@ -22,9 +22,9 @@ class AllocationValidationStrategyFactory
             QuoteTypes::SAVINGS => new SavingsAllocationValidationStrategy,
             QuoteTypes::HOME => new HomeAllocationValidationStrategy,
             QuoteTypes::LIFE => new LifeAllocationValidationStrategy,
-            QuoteTypes::PET => new VerySimpleAllocationValidationStrategy(QuoteTypes::PET),
-            QuoteTypes::YACHT => new VerySimpleAllocationValidationStrategy(QuoteTypes::YACHT),
-            QuoteTypes::CYCLE => new VerySimpleAllocationValidationStrategy(QuoteTypes::CYCLE),
+            QuoteTypes::PET => new CommonAllocationValidationStrategy(QuoteTypes::PET),
+            QuoteTypes::YACHT => new CommonAllocationValidationStrategy(QuoteTypes::YACHT),
+            QuoteTypes::CYCLE => new CommonAllocationValidationStrategy(QuoteTypes::CYCLE),
             QuoteTypes::CORPLINE => new CorplineAllocationValidationStrategy,
             QuoteTypes::GROUP_MEDICAL => new GroupMedicalAllocationValidationStrategy,
             default => throw new InvalidArgumentException("No validation strategy found for quote type: {$quoteType->value}"),
