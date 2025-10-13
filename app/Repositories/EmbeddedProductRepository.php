@@ -1430,7 +1430,6 @@ class EmbeddedProductRepository extends BaseRepository
      * @param  Quote  $quote
      * @param  int  $quoteTypeId
      * @param  string  $reason
-     * @return array
      */
     public function processEpEcbCancelPayment($quote, $quoteTypeId, $reason): array
     {
@@ -1463,6 +1462,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         if ($response['code'] == 200) {
             $epTransactionDetails->update(['is_active' => false]);
+
             return ['success' => true, 'message' => $response['data'][0] ?? 'Payment cancelled successfully for Embedded Product (ECB)'];
         }
 
