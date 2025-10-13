@@ -1681,7 +1681,7 @@ class CentralService extends BaseService
                 // Get the latest document from the array
                 $latestDocument = collect($handBookDocuments)->last();
                 $url = $latestDocument['url'] ?? null;
-                
+
                 if ($url) {
                     $emailData->handBookDocuments = str_contains($url, 'http') ? $url : $storageUrl.$url;
                 }
@@ -1720,7 +1720,7 @@ class CentralService extends BaseService
 
             // E-Card
             if (
-                $quoteTypeId == QuoteTypeId::Health || 
+                $quoteTypeId == QuoteTypeId::Health ||
                 (
                     $quoteTypeId == QuoteTypeId::Business &&
                     $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)
