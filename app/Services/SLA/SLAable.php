@@ -73,7 +73,7 @@ trait SLAable
             return 'agatha.alicdan@insurancemarket.ae';
         }
 
-        return 'usman.iqbal@myalfred.com';
+        return 'managerkas94@gmail.com';
     }
 
     private function getCCEmails(User $advisor): array
@@ -86,14 +86,66 @@ trait SLAable
         ];
     }
 
-    private function getManagersEmails(User $advisor)
+    private function getPCManagerEmails(): array
     {
-        if (! $this->isProduction()) {
+        if ($this->isProduction()) {
             return [
-                'usman.iqbal@myalfred.com'
+                'moinuddin.lakdawala@insurancemarket.ae',
+            ];
+        } else {
+            return [
+                'nbhealthadvisor.01@gmail.com',
             ];
         }
+    }
 
+    private function getRMManagerEmails(): array
+    {
+        if ($this->isProduction()) {
+            return [
+                'murryell.tuppil@insurancemarket.ae',
+                'veeral.joshi@insurancemarket.ae',
+            ];
+        } else {
+            return [
+                'hhpadvisor@gmail.com',
+                'testalfredtester3@gmail.com',
+            ];
+        }
+    }
+
+    private function getRenewalsManagerEmails(): array
+    {
+        if ($this->isProduction()) {
+            return [
+                'mufti.hamid@insurancemarket.ae',
+                'veeral.joshi@insurancemarket.ae',
+            ];
+        } else {
+            return [
+                'alinapoly92@gmail.com',
+                'hhpadvisor@gmail.com',
+            ];
+        }
+    }
+
+    private function getOrganicManagerEmails(): array
+    {
+        if ($this->isProduction()) {
+            return [
+                'arsalan.khan@insurancemarket.ae',
+                'veeral.joshi@insurancemarket.ae',
+            ];
+        } else {
+            return [
+                'advisorcyc@gmail.com',
+                'hhpadvisor@gmail.com',
+            ];
+        }
+    }
+
+    private function getManagersEmails(User $advisor)
+    {
         $advisorTeams = $advisor->teams->filter(function ($team) {
             return $team->is_active && $team->type === 'Team';
         })->pluck('name')->toArray();
@@ -103,31 +155,28 @@ trait SLAable
         if (in_array(TeamNameEnum::PCP, $advisorTeams)) {
             $managerEmails = [
                 ...$managerEmails,
-                'moinuddin.lakdawala@insurancemarket.ae',
+                ...$this->getPCManagerEmails(),
             ];
         }
 
         if (in_array(TeamNameEnum::RM_SPEED, $advisorTeams)) {
             $managerEmails = [
                 ...$managerEmails,
-                'murryell.tuppil@insurancemarket.ae',
-                'veeral.joshi@insurancemarket.ae',
+                ...$this->getRMEmails(),
             ];
         }
 
         if (in_array(TeamNameEnum::RENEWALS, $advisorTeams)) {
             $managerEmails = [
                 ...$managerEmails,
-                'mufti.hamid@insurancemarket.ae',
-                'veeral.joshi@insurancemarket.ae',
+                ...$this->getRenewalsManagerEmails(),
             ];
         }
 
         if (in_array(TeamNameEnum::ORGANIC, $advisorTeams)) {
             $managerEmails = [
                 ...$managerEmails,
-                'arsalan.khan@insurancemarket.ae',
-                'veeral.joshi@insurancemarket.ae',
+                ...$this->getOrganicManagerEmails(),
             ];
         }
 
