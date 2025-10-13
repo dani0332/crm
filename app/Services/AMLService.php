@@ -2302,6 +2302,11 @@ class AMLService
             return false;
         }
 
+        // Need to discuss this with Bilal Saeed.
+        if ($insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
+            return true;
+        }
+
         if (
             $insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
             $quote->source == LeadSourceEnum::RENEWAL_UPLOAD &&
