@@ -11,7 +11,7 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  teamOptions: {
+  businessTypeOptions: {
     type: Array,
     default: () => [],
   },
@@ -77,9 +77,9 @@ const validateBracket = (bracket, bracketIndex, type) => {
         );
       }
 
-      if (!profile.teamIds || profile.teamIds.length === 0) {
+      if (!profile.businessTypeIds || profile.businessTypeIds.length === 0) {
         errors.push(
-          `${type} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one team must be selected`,
+          `${type} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one business type must be selected`,
         );
       }
     });
@@ -194,7 +194,7 @@ defineExpose({
       type="Value"
       :brackets="valueBrackets"
       :advisor-options="advisorOptions"
-      :team-options="teamOptions"
+      :business-type-options="businessTypeOptions"
       :view-mode="viewMode"
       @add-bracket="addValueBracket"
       @remove-bracket="removeValueBracket"
@@ -207,7 +207,7 @@ defineExpose({
       type="Volume"
       :brackets="volumeBrackets"
       :advisor-options="advisorOptions"
-      :team-options="teamOptions"
+      :business-type-options="businessTypeOptions"
       :view-mode="viewMode"
       @add-bracket="addVolumeBracket"
       @remove-bracket="removeVolumeBracket"

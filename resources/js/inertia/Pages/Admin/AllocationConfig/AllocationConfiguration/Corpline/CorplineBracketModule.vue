@@ -19,7 +19,7 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  teamOptions: {
+  businessTypeOptions: {
     type: Array,
     default: () => [],
   },
@@ -112,7 +112,7 @@ watch(
 
 const createEmptyProfile = () => ({
   advisorIds: [],
-  teamIds: [],
+  businessTypeIds: [],
 });
 
 const addBracket = () => {
@@ -442,28 +442,27 @@ const handleBlur = (event, bracket, field) => {
                       </div>
                       <div>
                         <x-select
-                          v-model="profile.teamIds"
-                          :options="teamOptions"
-                          placeholder="Select teams..."
+                          v-model="profile.businessTypeIds"
+                          :options="businessTypeOptions"
+                          placeholder="Select business types..."
                           multiple
                           filterable
                           :disabled="viewMode"
                           class="w-full min-h-[40px]"
-                          label="Teams"
+                          label="Business Types"
                           required
-                          tooltip="Select the teams this profile applies to."
+                          tooltip="Select the business types this profile applies to."
                         >
                           <template
                             #content-footer
-                            v-if="teamOptions.length > 0 && !viewMode"
+                            v-if="businessTypeOptions.length > 0 && !viewMode"
                           >
                             <ui-select-actions
                               @select-all="
-                                profile.teamIds = teamOptions.map(
-                                  item => item.value,
-                                )
+                                profile.businessTypeIds =
+                                  businessTypeOptions.map(item => item.value)
                               "
-                              @clear="profile.teamIds = []"
+                              @clear="profile.businessTypeIds = []"
                             />
                           </template>
                         </x-select>

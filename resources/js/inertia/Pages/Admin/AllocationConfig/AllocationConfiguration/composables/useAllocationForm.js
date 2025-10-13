@@ -9,6 +9,7 @@ export function useAllocationForm(props, errorHandling) {
   const advisorOptions = ref([]);
   const nationalityOptions = ref([]);
   const teamOptions = ref([]);
+  const businessTypeOptions = ref([]);
   const planTypeOptions = ref([]);
   const currentConfiguration = ref(null);
   const savingsTemplateRef = ref(null);
@@ -120,6 +121,26 @@ export function useAllocationForm(props, errorHandling) {
     }
   };
 
+  const fetchBusinessTypes = async () => {
+    businessTypeOptions.value = [];
+    try {
+      const response = await axios.get('/api/business-types');
+
+      if (
+        response.data.success &&
+        response.data.data &&
+        response.data.data.length > 0
+      ) {
+        businessTypeOptions.value = response.data.data.map(businessType => ({
+          value: businessType.id,
+          label: businessType.name,
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching business types:', error);
+    }
+  };
+
   const fetchConfiguration = async quoteType => {
     currentConfiguration.value = null;
     try {
@@ -153,6 +174,7 @@ export function useAllocationForm(props, errorHandling) {
     templateData.value = {};
     advisorOptions.value = [];
     teamOptions.value = [];
+    businessTypeOptions.value = [];
     planTypeOptions.value = [];
     currentConfiguration.value = null;
     successMessage.value = '';
@@ -166,8 +188,13 @@ export function useAllocationForm(props, errorHandling) {
         fetchConfiguration(quoteType),
       ];
 
+      // Fetch business types for Corpline
+      if (quoteType.code === props.quoteTypeCodeEnum.CORPLINE) {
+        fetchTasks.push(fetchBusinessTypes());
+      }
+
+      // Fetch teams for Simple LOBs (Pet, Yacht, Cycle)
       if (
-        quoteType.code === props.quoteTypeCodeEnum.CORPLINE ||
         quoteType.code === props.quoteTypeCodeEnum.Pet ||
         quoteType.code === props.quoteTypeCodeEnum.Yacht ||
         quoteType.code === props.quoteTypeCodeEnum.Cycle
@@ -175,6 +202,7 @@ export function useAllocationForm(props, errorHandling) {
         fetchTasks.push(fetchTeams());
       }
 
+      // Fetch plan types for Group Medical
       if (quoteType.code === props.quoteTypeCodeEnum.GroupMedical) {
         fetchTasks.push(fetchPlanTypes());
       }
@@ -500,6 +528,7 @@ export function useAllocationForm(props, errorHandling) {
     advisorOptions,
     nationalityOptions,
     teamOptions,
+    businessTypeOptions,
     planTypeOptions,
     currentConfiguration,
     savingsTemplateRef,

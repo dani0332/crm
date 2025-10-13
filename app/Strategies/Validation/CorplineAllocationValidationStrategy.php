@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Strategies\Validation;
 
 use App\Contracts\AllocationValidationStrategyInterface;
+use App\Models\BusinessTypeOfInsurance;
 use App\Models\User;
 use App\Traits\ValidatesBracketStructure;
 use Illuminate\Validation\Rule;
@@ -23,8 +24,8 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
             'value_brackets.*.profiles' => ['required_with:value_brackets', 'array', 'min:1'],
             'value_brackets.*.profiles.*.advisorIds' => ['required', 'array', 'min:1'],
             'value_brackets.*.profiles.*.advisorIds.*' => ['integer', Rule::exists(User::class, 'id')],
-            'value_brackets.*.profiles.*.teamIds' => ['required', 'array', 'min:1'],
-            'value_brackets.*.profiles.*.teamIds.*' => ['integer'],
+            'value_brackets.*.profiles.*.businessTypeIds' => ['required', 'array', 'min:1'],
+            'value_brackets.*.profiles.*.businessTypeIds.*' => ['integer', Rule::exists(BusinessTypeOfInsurance::class, 'id')],
 
             'volume_brackets' => ['required', 'array'],
             'volume_brackets.*.min' => ['required', 'numeric', 'min:1'],
@@ -32,8 +33,8 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
             'volume_brackets.*.profiles' => ['required_with:volume_brackets', 'array', 'min:1'],
             'volume_brackets.*.profiles.*.advisorIds' => ['required', 'array', 'min:1'],
             'volume_brackets.*.profiles.*.advisorIds.*' => ['integer', Rule::exists(User::class, 'id')],
-            'volume_brackets.*.profiles.*.teamIds' => ['required', 'array', 'min:1'],
-            'volume_brackets.*.profiles.*.teamIds.*' => ['integer'],
+            'volume_brackets.*.profiles.*.businessTypeIds' => ['required', 'array', 'min:1'],
+            'volume_brackets.*.profiles.*.businessTypeIds.*' => ['integer', Rule::exists(BusinessTypeOfInsurance::class, 'id')],
         ];
     }
 
@@ -57,10 +58,11 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
             'value_brackets.*.profiles.*.advisorIds.min' => 'Please select at least one advisor for each profile.',
             'value_brackets.*.profiles.*.advisorIds.*.integer' => 'Invalid advisor selected.',
             'value_brackets.*.profiles.*.advisorIds.*.exists' => 'One or more selected advisors do not exist.',
-            'value_brackets.*.profiles.*.teamIds.required' => 'Please select at least one team for each profile.',
-            'value_brackets.*.profiles.*.teamIds.array' => 'Team selection must be a valid array.',
-            'value_brackets.*.profiles.*.teamIds.min' => 'Please select at least one team for each profile.',
-            'value_brackets.*.profiles.*.teamIds.*.integer' => 'Invalid team selected.',
+            'value_brackets.*.profiles.*.businessTypeIds.required' => 'Please select at least one business type for each profile.',
+            'value_brackets.*.profiles.*.businessTypeIds.array' => 'Business type selection must be a valid array.',
+            'value_brackets.*.profiles.*.businessTypeIds.min' => 'Please select at least one business type for each profile.',
+            'value_brackets.*.profiles.*.businessTypeIds.*.integer' => 'Invalid business type selected.',
+            'value_brackets.*.profiles.*.businessTypeIds.*.exists' => 'One or more selected business types do not exist.',
 
             // Volume bracket messages
             'volume_brackets.required' => 'Volume brackets configuration is required.',
@@ -79,10 +81,11 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
             'volume_brackets.*.profiles.*.advisorIds.min' => 'Please select at least one advisor for each profile.',
             'volume_brackets.*.profiles.*.advisorIds.*.integer' => 'Invalid advisor selected.',
             'volume_brackets.*.profiles.*.advisorIds.*.exists' => 'One or more selected advisors do not exist.',
-            'volume_brackets.*.profiles.*.teamIds.required' => 'Please select at least one team for each profile.',
-            'volume_brackets.*.profiles.*.teamIds.array' => 'Team selection must be a valid array.',
-            'volume_brackets.*.profiles.*.teamIds.min' => 'Please select at least one team for each profile.',
-            'volume_brackets.*.profiles.*.teamIds.*.integer' => 'Invalid team selected.',
+            'volume_brackets.*.profiles.*.businessTypeIds.required' => 'Please select at least one business type for each profile.',
+            'volume_brackets.*.profiles.*.businessTypeIds.array' => 'Business type selection must be a valid array.',
+            'volume_brackets.*.profiles.*.businessTypeIds.min' => 'Please select at least one business type for each profile.',
+            'volume_brackets.*.profiles.*.businessTypeIds.*.integer' => 'Invalid business type selected.',
+            'volume_brackets.*.profiles.*.businessTypeIds.*.exists' => 'One or more selected business types do not exist.',
         ];
     }
 
@@ -104,23 +107,23 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
                 $validator->errors()->add('value_brackets', 'Value brackets have gaps in amount coverage. The maximum of one bracket should be followed by the next bracket starting at max + 1.');
             }
 
-            // Validate advisor-team combinations for value brackets
+            // Validate advisor-business type combinations for value brackets
             foreach ($data['value_brackets'] as $bracketIndex => $bracket) {
                 if (isset($bracket['profiles']) && is_array($bracket['profiles'])) {
                     $this->validateProfileCombinations(
                         $bracket['profiles'],
                         $bracketIndex,
                         $validator,
-                        'teamIds',
-                        'team'
+                        'businessTypeIds',
+                        'business type'
                     );
 
                     $this->checkDuplicatesInBracket(
                         $bracket['profiles'],
                         $bracketIndex,
                         $validator,
-                        'teamIds',
-                        'team'
+                        'businessTypeIds',
+                        'business type'
                     );
                 }
             }
@@ -142,23 +145,23 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
                 $validator->errors()->add('volume_brackets', 'Volume brackets have gaps in amount coverage. The maximum of one bracket should be followed by the next bracket starting at max + 1.');
             }
 
-            // Validate advisor-team combinations for volume brackets
+            // Validate advisor-business type combinations for volume brackets
             foreach ($data['volume_brackets'] as $bracketIndex => $bracket) {
                 if (isset($bracket['profiles']) && is_array($bracket['profiles'])) {
                     $this->validateProfileCombinations(
                         $bracket['profiles'],
                         $bracketIndex,
                         $validator,
-                        'teamIds',
-                        'team'
+                        'businessTypeIds',
+                        'business type'
                     );
 
                     $this->checkDuplicatesInBracket(
                         $bracket['profiles'],
                         $bracketIndex,
                         $validator,
-                        'teamIds',
-                        'team'
+                        'businessTypeIds',
+                        'business type'
                     );
                 }
             }
@@ -195,11 +198,11 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
             }
 
             foreach ($bracket['profiles'] as $profile) {
-                if (! isset($profile['advisorIds']) || ! isset($profile['teamIds'])) {
+                if (! isset($profile['advisorIds']) || ! isset($profile['businessTypeIds'])) {
                     return false;
                 }
 
-                if (! is_array($profile['advisorIds']) || ! is_array($profile['teamIds'])) {
+                if (! is_array($profile['advisorIds']) || ! is_array($profile['businessTypeIds'])) {
                     return false;
                 }
             }

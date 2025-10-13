@@ -7,6 +7,7 @@ use App\Enums\TeamTypeEnum;
 use App\Http\Requests\AllocationConfigurationRequest;
 use App\Http\Requests\FetchAllocationConfigurationRequest;
 use App\Models\Allocation\AllocationConfiguration;
+use App\Models\BusinessTypeOfInsurance;
 use App\Models\HealthPlanType;
 use App\Models\Team;
 use App\Services\AllocationConfigurationService;
@@ -121,6 +122,25 @@ class AllocationConfigurationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch plan types.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getBusinessTypes()
+    {
+        try {
+            $businessTypes = BusinessTypeOfInsurance::orderBy('id')
+                ->get(['id', 'text as name']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $businessTypes,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch business types.',
                 'error' => $e->getMessage(),
             ], 500);
         }

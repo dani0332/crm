@@ -875,6 +875,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ->name('admin.allocation-configuration.teams');
     Route::get('/api/plan-types', [AllocationConfigurationController::class, 'getPlanTypes'])
         ->name('admin.allocation-configuration.plan-types');
+    Route::get('/api/business-types', [AllocationConfigurationController::class, 'getBusinessTypes'])
+        ->name('admin.allocation-configuration.business-types');
 
     Route::get('/add-batch-number', function () {
         $addBtchNuimber = new AddBatchForNonMotors;

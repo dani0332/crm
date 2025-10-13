@@ -43,6 +43,7 @@ const {
   advisorOptions,
   nationalityOptions,
   teamOptions,
+  businessTypeOptions,
   planTypeOptions,
   currentConfiguration,
   savingsTemplateRef,
@@ -234,7 +235,7 @@ onMounted(() => {
           <CorplineAllocationConfigTemplate
             :configuration="currentConfiguration"
             :advisor-options="advisorOptions"
-            :team-options="teamOptions"
+            :business-type-options="businessTypeOptions"
             :view-mode="isViewMode"
             @data-update="onTemplateDataUpdate"
             ref="corplineTemplateRef"
