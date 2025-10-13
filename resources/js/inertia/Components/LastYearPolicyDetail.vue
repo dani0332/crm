@@ -21,7 +21,7 @@ const props = defineProps({
 });
 
 const can = permission => useCan(permission);
-const advisors = page.advisors;
+const advisors = page.props.advisors;
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const permissionsEnum = page.props.permissionsEnum;
@@ -78,7 +78,7 @@ const buildAdvisorOptions = () => {
   // Simple mapping without sorting to improve performance
   const options = advisors.map(advisor => ({
     value: advisor.id, // Keep as original type (string or number) - NO CONVERSION
-    label: advisor.label || `Advisor ${advisor.id}`,
+    label: advisor.name || `Advisor ${advisor.id}`,
   }));
   
   // Add current advisor if not in list
