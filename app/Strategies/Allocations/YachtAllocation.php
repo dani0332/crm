@@ -10,7 +10,6 @@ class YachtAllocation extends BaseAllocation
 {
     protected function fetchAdvisor(int $onlineStatus)
     {
-        $advisorIds = [];
         $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
 
         if (count($emails) > 0) {
