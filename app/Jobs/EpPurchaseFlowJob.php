@@ -18,7 +18,7 @@ class EpPurchaseFlowJob implements ShouldQueue
     use Queueable;
 
     public $tries = 3;
-    public $timeout = 300;
+    public $timeout = 180;
     public $backoff = 180;
     private string $logPrefix = 'EpPurchaseFlow - Job:';
     private array $logExtra = [];
@@ -46,8 +46,8 @@ class EpPurchaseFlowJob implements ShouldQueue
         $epEcbService = new EpEcbService($this->context);
         $epEcbService->init();
 
-        // Execute purchase flow steps (Token, Quote, Policy creation)
-        $epEcbService->executeSteps(); // STATUS_PAYMENT_SUCCEED
+        // Execute purchase flow steps (Token, Policy creation, dispatch SyncDocument or WatermarkDocument job)
+        $epEcbService->executeSteps();
     }
 
     /**
@@ -73,18 +73,13 @@ class EpPurchaseFlowJob implements ShouldQueue
      */
     public function shouldRetry(Throwable $exception): bool
     {
-        // Retry for network/timeout issues and document download issues
-        if ($exception instanceof \Illuminate\Http\Client\ConnectionException ||
-            $exception instanceof \Illuminate\Http\Client\RequestException ||
-            str_contains($exception->getMessage(), 'timeout') ||
-            str_contains($exception->getMessage(), 'connection') ||
-            str_contains($exception->getMessage(), 'download') ||
+        // Retry for network/timeout issues
+        if (str_contains($exception->getMessage(), 'timeout') ||
             str_contains($exception->getMessage(), 'server error')
         ) {
             return true;
         }
 
-        // Don't retry for business logic errors
         return false;
     }
 
@@ -98,7 +93,7 @@ class EpPurchaseFlowJob implements ShouldQueue
         return [
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
-                ->expireAfter(300),
+                ->expireAfter(180),
         ];
     }
 }

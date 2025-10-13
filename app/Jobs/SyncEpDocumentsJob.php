@@ -74,12 +74,9 @@ class SyncEpDocumentsJob implements ShouldQueue
      */
     public function shouldRetry(Throwable $exception): bool
     {
-        // Retry for network/timeout issues and document download issues
-        if ($exception instanceof \Illuminate\Http\Client\ConnectionException ||
-            $exception instanceof \Illuminate\Http\Client\RequestException ||
+        // Retry for network/timeout issues
+        if ($exception instanceof \Illuminate\Http\Client\RequestException ||
             str_contains($exception->getMessage(), 'timeout') ||
-            str_contains($exception->getMessage(), 'connection') ||
-            str_contains($exception->getMessage(), 'download') ||
             str_contains($exception->getMessage(), 'server error')
         ) {
             return true;

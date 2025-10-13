@@ -71,11 +71,8 @@ class EpWatermarkDocumentJob implements ShouldQueue
 
     public function shouldRetry(Throwable $exception): bool
     {
-        // Retry for file processing issues only
-        return str_contains($exception->getMessage(), 'timeout') ||
-            str_contains($exception->getMessage(), 'file') ||
-            str_contains($exception->getMessage(), 'permission') ||
-            str_contains($exception->getMessage(), 'temporary');
+        // Retry for file processing timeout issue only
+        return str_contains($exception->getMessage(), 'timeout');
     }
 
     /**

@@ -24,7 +24,7 @@ class EpSendDocumentJob implements ShouldQueue
 {
     use GenericQueriesAllLobs, Queueable;
 
-    public $timeout = 180;
+    public $timeout = 120;
     private string $logPrefix = 'EpSendDocument - Job:';
     private array $logExtra = [];
     public mixed $quote = null;
@@ -62,15 +62,6 @@ class EpSendDocumentJob implements ShouldQueue
         ]);
     }
 
-    public function shouldRetry(Throwable $exception): bool
-    {
-        // Retry for email/notification service issues only
-        return str_contains($exception->getMessage(), 'mail') ||
-               str_contains($exception->getMessage(), 'notification') ||
-               str_contains($exception->getMessage(), 'smtp') ||
-               str_contains($exception->getMessage(), 'connection');
-    }
-
     /**
      * Get the middleware the job should pass through.
      */
@@ -81,7 +72,7 @@ class EpSendDocumentJob implements ShouldQueue
         return [
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
-                ->expireAfter(180),
+                ->expireAfter(120),
         ];
     }
 
