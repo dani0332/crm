@@ -646,7 +646,7 @@ class SageApiService
                             extra: $captureableEmbeddedTransactions->toArray()
                         );
 
-                        return ['status' => false, 'message' => 'The embedded product payment is being captured, once done, booking process will begin.'];
+                        return ['status' => true, 'message' => 'The embedded product payment is being captured, once done, booking process will begin.'];
                     }
 
                 } catch (Exception $e) {
