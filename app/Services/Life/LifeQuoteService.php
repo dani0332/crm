@@ -484,6 +484,7 @@ class LifeQuoteService extends BaseService
             'currencyOptions' => CurrencyTypeRepository::withActive()->get(),
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'lifeCutOffDate' => $lifeCutOffDate,
+            'insuranceProviderCodeEnum' => InsuranceProviderEnum::asArray(),
         ];
 
     }
