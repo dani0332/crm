@@ -335,6 +335,7 @@ class RenewalsUploadService
                     ->finally(function () use ($logPrefix) {
                         LoggerService::info($logPrefix.' creating quotes everything done');
                     })
+                    ->name('Renewals Upload Create Batch')
                     ->allowFailures()
                     ->dispatch();
             } else {
@@ -380,7 +381,7 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
-                    ->name('Renewals Upload Batch')  // Optional: give your batch a name
+                    ->name('Renewals Upload Update Batch')  // Optional: give your batch a name
                     ->dispatch();
 
                 LoggerService::info($logPrefix.' jobs dispatched');
@@ -472,6 +473,7 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' fetching plans everything done');
                         EmbeddedProductRepository::generateEPRenewal($batch);
                     })
+                    ->name('Renewals Upload Fetch Plans Batch')
                     ->allowFailures()
                     ->dispatch();
 
@@ -2832,6 +2834,7 @@ class RenewalsUploadService
                     ->finally(function () use ($logPrefix) {
                         LoggerService::info($logPrefix.' scheduling OCB email everything done');
                     })
+                    ->name('Renewals Upload Schedule OCB Email Batch')
                     ->allowFailures()
                     ->dispatch();
             } else {
@@ -2975,6 +2978,7 @@ class RenewalsUploadService
                     ->finally(function () use ($logPrefix) {
                         LoggerService::info($logPrefix.' creating travel quotes everything done');
                     })
+                    ->name('Renewals Upload Create Travel Quotes Batch')
                     ->allowFailures()
                     ->dispatch();
             } else {
@@ -3202,6 +3206,7 @@ class RenewalsUploadService
                     ->finally(function () use ($logPrefix) {
                         LoggerService::info($logPrefix.' Batch retry process completed');
                     })
+                    ->name('Renewals Upload Retry Health Batch')
                     ->allowFailures()
                     ->dispatch();
 
