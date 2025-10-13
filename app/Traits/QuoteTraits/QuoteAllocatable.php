@@ -271,7 +271,7 @@ trait QuoteAllocatable
     {
         return ! empty($this->ai_advisor_assigned_at);
     }
-    
+
     public function isReAssignment()
     {
         return in_array($this->assignment_type, [AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD]);

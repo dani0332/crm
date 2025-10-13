@@ -112,7 +112,7 @@ class CarEmailService extends BaseService
                 return $responseCode;
             }
             if ($lead->advisor_id) {
-                $isPreviousAdvisorAi = !empty($previousAdvisor) && $previousAdvisor->isAi();
+                $isPreviousAdvisorAi = ! empty($previousAdvisor) && $previousAdvisor->isAi();
                 if ($lead->isAIAdvisorAssigned() || $isPreviousAdvisorAi) {
                     // Send AI Advisor Email
                     SendAIAdvisorOCBJob::dispatch(QuoteTypes::CAR, $lead->uuid, $isPreviousAdvisorAi)->delay(Carbon::now()->addMinute());

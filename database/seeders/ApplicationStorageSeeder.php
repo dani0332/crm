@@ -771,7 +771,7 @@ class ApplicationStorageSeeder extends Seeder
             [
                 'value' => 0,
                 'created_at' => now(),
-    
+
                 'updated_at' => now(),
                 'is_active' => 1,
             ]
