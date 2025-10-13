@@ -307,13 +307,33 @@
                     <div>Check/Create in Sage</div>
                 </div>
                 <div class="process-step">
-                    <strong>3. Process AR/AP and Mapping Entries</strong>
-                    <div>Create Receipts and Invoices</div>
+                    <strong>3. Create AR Receipts</strong>
+                    <div>Generate Payment Receipts</div>
                 </div>
                 <div class="process-step">
-                    <strong>4. Book Policy</strong>
-                    <div>Complete & Log</div>
+                    <strong>4. Create AR/AP Invoices</strong>
+                    <div>Generate Customer & Vendor Invoices</div>
                 </div>
+                <div class="process-step">
+                    <strong>5. Apply Prepayments</strong>
+                    <div>Map Receipts to Invoices</div>
+                </div>
+                <div class="process-step">
+                    <strong>6. Complete & Log</strong>
+                    <div>Mark Policy Booked</div>
+                </div>
+            </div>
+
+            <div class="highlight" style="margin-top: 20px; background: linear-gradient(135deg, #27ae60, #229954); padding: 20px; border-radius: 10px; color: white;">
+                <h4 style="margin-bottom: 10px;">✅ Documentation Status - Updated October 2024</h4>
+                <p style="margin: 0;">
+                    <strong>All documentation has been updated to reflect actual implementation:</strong><br>
+                    • Embedded Product booking with ECB product support documented<br>
+                    • AR/AP invoice lifecycles comprehensively covered for all scenarios<br>
+                    • Payment mapping updated with zero-price and historic data handling<br>
+                    • Job queue integration and error handling thoroughly documented<br>
+                    • All code examples verified against current SageApiService implementation
+                </p>
             </div>
 
             <div class="tech-specs">
@@ -521,10 +541,11 @@
 
 
         <div class="documentation-grid">
+            <!-- 1. Customer Creation -->
             <div class="doc-card">
                 <h3>
                     <span class="icon">👤</span>
-                    Customer Verification
+                    1. Customer Verification & Creation
                 </h3>
                 <p>
                     Comprehensive guide to the customer verification process including automatic customer creation,
@@ -542,10 +563,11 @@
                 <a href="/docs/booking-process/customer-verification.html" class="doc-link">View Customer Verification →</a>
             </div>
 
+            <!-- 2. Prepayment/Receipt Creation -->
             <div class="doc-card">
                 <h3>
                     <span class="icon">🧾</span>
-                    Receipt Creation
+                    2. Prepayment & Receipt Creation
                 </h3>
                 <p>
                     Detailed documentation on receipt creation workflows including payment processing,
@@ -563,46 +585,227 @@
                 <a href="/docs/booking-process/receipt-creation.html" class="doc-link">View Receipt Creation →</a>
             </div>
 
+            <!-- 3. AR Invoices -->
             <div class="doc-card">
                 <h3>
                     <span class="icon">📄</span>
-                    AR Invoice Lifecycle
+                    3. AR Invoice Lifecycle
                 </h3>
                 <p>
-                    Complete guide to Accounts Receivable invoice creation, management and posting in Sage 300
-                    including premium invoices, commission billing, discount credit notes, and status workflows.
+                    Complete guide to Accounts Receivable invoice creation with comprehensive coverage of
+                    upfront, split payment, and non-upfront scenarios for all three contexts: Main Lead, EP, and Send Update.
                 </p>
                 <ul class="features">
+                    <li>💰 Upfront Payment: Single full premium AR invoices</li>
+                    <li>📅 Split Payment: Installment invoices with PaymentSchedules</li>
+                    <li>🔄 Non-Upfront: Custom payment arrangement handling</li>
                     <li>Premium & Commission invoice creation</li>
-                    <li>Split payment invoice schedules</li>
                     <li>Discount credit note processing</li>
                     <li>Open → Ready to Post → Posted workflow</li>
-                    <li>Database schema and column usage</li>
-                    <li>Error handling and recovery</li>
-                    <li>API endpoint documentation</li>
+                    <li>Main Lead, Embedded Product, Send Update scenarios</li>
                 </ul>
                 <a href="/docs/booking-process/ar-invoice-lifecycle.html" class="doc-link">View AR Invoice Lifecycle →</a>
             </div>
 
+            <!-- 4. AP Invoices -->
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">🏭</span>
+                    4. AP Invoice Lifecycle
+                </h3>
+                <p>
+                    Complete guide to Accounts Payable invoice creation with detailed coverage of
+                    upfront, split payment, and non-upfront vendor payment scenarios across all contexts.
+                </p>
+                <ul class="features">
+                    <li>💰 Upfront Payment: Single vendor payment AP invoices</li>
+                    <li>📅 Split Payment: Installment vendor obligations</li>
+                    <li>🔄 Non-Upfront: Custom vendor payment arrangements</li>
+                    <li>Vendor payment invoice creation (insurance providers)</li>
+                    <li>Vendor ID and GL liability account mapping</li>
+                    <li>Entry types: STRAIGHT, REVERSAL for endorsements</li>
+                    <li>Main Lead, Embedded Product, Send Update scenarios</li>
+                </ul>
+                <a href="/docs/booking-process/ap-invoice-lifecycle.html" class="doc-link">View AP Invoice Lifecycle →</a>
+            </div>
+
+            <!-- 5. Apply Prepayment -->
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">💳</span>
+                    5. Payment Mapping & Apply Prepayment
+                </h3>
+                <p>
+                    Detailed documentation on payment-to-invoice mapping with comprehensive coverage of
+                    upfront, split payment, and non-upfront application scenarios for complete reconciliation.
+                </p>
+                <ul class="features">
+                    <li>💰 Upfront Application: One-to-one receipt-to-invoice mapping</li>
+                    <li>📅 Split Application: Installment payment-to-schedule matching</li>
+                    <li>🔄 Non-Upfront: Custom payment application logic</li>
+                    <li>Zero price policy handling (CreditApproval method)</li>
+                    <li>Historic data compatibility (skipApplyPrepaymentsForSpecificLeads)</li>
+                    <li>Payment frequency routing logic</li>
+                    <li>Main Lead, Embedded Product, Send Update scenarios</li>
+                </ul>
+                <a href="/docs/booking-process/payment-mapping.html" class="doc-link">View Payment Mapping →</a>
+            </div>
+
+            <!-- 6. Main Lead and Send Update -->
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">📋</span>
+                    6. Main Lead & Send Update Processing
+                </h3>
+                <p>
+                    Comprehensive coverage of main lead policy booking and send update (endorsement) processes.
+                    All scenarios documented across AR, AP, and Apply Prepayment sections above.
+                </p>
+                <ul class="features">
+                    <li>Main Lead booking flow (see sections 1-5 above)</li>
+                    <li>Send Update: Straight endorsements (premium increase)</li>
+                    <li>Send Update: Reversal endorsements (premium decrease)</li>
+                    <li>Entry types: SCT_STRAIGHT, SCT_REVERSAL, SCT_CORRECTION</li>
+                    <li>Reversal + Correction invoice pattern</li>
+                    <li>Endorsement validation and processing</li>
+                    <li>Covered in AR/AP/Apply Prepayment documentation</li>
+                </ul>
+                <div class="highlight" style="margin-top: 15px; padding: 15px; background: #3498db; border-radius: 5px;">
+                    <p style="margin: 0; font-size: 0.9em;">
+                        <strong>📚 Documentation Location:</strong> Main Lead and Send Update processes are comprehensively
+                        documented within the AR Invoice, AP Invoice, and Apply Prepayment sections above. Each section includes
+                        specific subsections for Send Update scenarios including straight and reversal endorsements.
+                    </p>
+                </div>
+            </div>
+
+            <!-- 7. Embedded Product -->
             <div class="doc-card">
                 <h3>
                     <span class="icon">🔗</span>
-                    Embedded Product Booking
+                    7. Embedded Product Booking
                 </h3>
                 <p>
                     Comprehensive guide to embedded product integration and Sage 300 booking process including
-                    SukoonMedex, Alfred Protect, Roadside Assistance, and Courier services integration.
+                    SukoonMedex, ECB (Embedded Credit Bureau), Roadside Assistance, and Courier services integration.
                 </p>
                 <ul class="features">
-                    <li>Product eligibility validation and LOB support</li>
+                    <li>Product eligibility validation and LOB support (Car, Bike)</li>
+                    <li>ECB (Embedded Credit Bureau) product differentiation</li>
                     <li>Automatic booking triggers during policy booking</li>
-                    <li>EP-specific receipt and invoice creation</li>
+                    <li>EP-specific AR receipt and invoice creation (4-step process)</li>
+                    <li>BookEmbeddedProductOnSageJob with WithoutOverlapping middleware</li>
                     <li>Status management and workflow tracking</li>
-                    <li>Database schema for EP transactions</li>
-                    <li>Integration with main policy booking</li>
-                    <li>Error handling and recovery processes</li>
+                    <li>Database schema for EP transactions (embedded_transactions table)</li>
+                    <li>Note: AP receipt creation currently disabled for EP</li>
                 </ul>
                 <a href="/docs/booking-process/embedded-product-booking.html" class="doc-link">View Embedded Product Booking →</a>
+            </div>
+        </div>
+
+        <div class="overview-section" style="margin-top: 60px;">
+            <h2>📚 Additional Resources</h2>
+            <p style="text-align: center; color: #7f8c8d; font-size: 1.1em; margin-bottom: 30px;">
+                Supporting documentation and integration guides for comprehensive Sage 300 integration understanding.
+            </p>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>📋 Sage Integration Rules</h4>
+                    <p>Comprehensive cursor rules and patterns for Sage integration development.</p>
+                    <ul style="font-size: 0.9em; color: #7f8c8d;">
+                        <li>ECB product handling patterns</li>
+                        <li>WithoutOverlapping middleware</li>
+                        <li>AR/AP invoice lifecycle patterns</li>
+                        <li>Payment mapping scenarios</li>
+                        <li>Status management constants</li>
+                        <li>Critical implementation notes</li>
+                    </ul>
+                    <p style="margin-top: 15px; font-size: 0.9em;">
+                        <strong>Location:</strong> <code>.cursor/rules/sage/sage-booking-rules.mdc</code>
+                    </p>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔧 Core Classes Reference</h4>
+                    <p>Key service classes and their responsibilities in the Sage integration system.</p>
+                    <ul style="font-size: 0.9em; color: #7f8c8d;">
+                        <li><strong>SageApiService:</strong> Main lead booking orchestration</li>
+                        <li><strong>SageApiEmbeddedProductService:</strong> EP booking handling</li>
+                        <li><strong>SagePayloadFactory:</strong> Payload generation</li>
+                        <li><strong>SageCustomApiService:</strong> Custom API operations</li>
+                        <li><strong>BookEmbeddedProductOnSageJob:</strong> EP queue processing</li>
+                        <li><strong>SageEnum:</strong> Constants and status values</li>
+                    </ul>
+                    <p style="margin-top: 15px; font-size: 0.9em;">
+                        <strong>Location:</strong> <code>app/Services/</code> & <code>app/Jobs/</code>
+                    </p>
+                </div>
+
+                <div class="info-card">
+                    <h4>🗄️ Database Schema</h4>
+                    <p>Key database tables and their relationships in Sage integration.</p>
+                    <ul style="font-size: 0.9em; color: #7f8c8d;">
+                        <li><strong>sage_processes:</strong> Process queue management</li>
+                        <li><strong>sage_api_logs:</strong> API call audit trail</li>
+                        <li><strong>embedded_transactions:</strong> EP transaction tracking</li>
+                        <li><strong>payments:</strong> Payment and invoice references</li>
+                        <li><strong>payment_splits:</strong> Installment and split data</li>
+                        <li><strong>quote_tags:</strong> Booking completion flags</li>
+                    </ul>
+                    <p style="margin-top: 15px; font-size: 0.9em;">
+                        <strong>Migrations:</strong> <code>database/migrations/</code>
+                    </p>
+                </div>
+
+                <div class="info-card">
+                    <h4>⚡ Key Workflows</h4>
+                    <p>High-level workflow patterns for different booking scenarios.</p>
+                    <ul style="font-size: 0.9em; color: #7f8c8d;">
+                        <li><strong>Main Lead:</strong> AR Receipt → AR/AP Invoice → Apply Payment</li>
+                        <li><strong>Embedded Product:</strong> AR Receipt → AR/AP Invoice → AR Apply (4 steps)</li>
+                        <li><strong>Send Update (Straight):</strong> Additional invoice for increased premium</li>
+                        <li><strong>Send Update (Reversal):</strong> Reversal + Correction invoices</li>
+                        <li><strong>Job Queue:</strong> WithoutOverlapping → Process → Reschedule</li>
+                        <li><strong>Status Flow:</strong> PENDING → PROCESSING → COMPLETED/FAILED</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="highlight" style="margin-top: 60px; background: linear-gradient(135deg, #3498db, #2980b9); padding: 30px; border-radius: 10px; color: white;">
+            <h3 style="margin-top: 0; font-size: 1.5em;">💡 Documentation Best Practices</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
+                <div>
+                    <h4 style="margin-bottom: 10px;">📖 Reading Order</h4>
+                    <ol style="margin: 0; padding-left: 20px; font-size: 0.95em;">
+                        <li>Start with <strong>Customer Verification</strong></li>
+                        <li>Then <strong>Receipt Creation</strong></li>
+                        <li>Understand <strong>AR/AP Invoice Lifecycles</strong></li>
+                        <li>Learn <strong>Payment Mapping</strong></li>
+                        <li>Finally <strong>Embedded Product</strong> specifics</li>
+                    </ol>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px;">🎯 Quick Reference</h4>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.95em;">
+                        <li>Each page has breadcrumb navigation</li>
+                        <li>Code examples are implementation-verified</li>
+                        <li>Visual diagrams show process flows</li>
+                        <li>Info cards highlight key concepts</li>
+                        <li>Tables show step-by-step breakdowns</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px;">⚠️ Critical Notes</h4>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.95em;">
+                        <li>AP receipt disabled for EP (4-step workflow)</li>
+                        <li>ECB uses issuePolicy API method</li>
+                        <li>Zero price requires CreditApproval</li>
+                        <li>Sage conflicts revert to PENDING</li>
+                        <li>WithoutOverlapping uses time-based locks</li>
+                    </ul>
+                </div>
             </div>
         </div>
 

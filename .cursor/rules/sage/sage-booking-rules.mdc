@@ -20,7 +20,47 @@ These rules define the patterns, conventions, and best practices for working wit
 - Use `ShouldQueue` interface for all Sage operations
 - Implement `WithoutOverlapping` middleware for concurrency control
 - Set appropriate timeouts (80 seconds for Sage operations)
-- Use single retry attempt (`tries = 1`)
+- Use single retry attempt (`tries = 1` to prevent duplicate bookings)
+- Use time-based lock postfix for unique WithoutOverlapping keys
+- Implement proper failed() method for error handling and status updates
+
+**WithoutOverlapping Pattern for BookEmbeddedProductOnSageJob:**
+```php
+class BookEmbeddedProductOnSageJob implements ShouldQueue
+{
+    public $tries = 1;
+    public $timeout = 80;
+    private $lockPostfix;
+
+    public function __construct($sageRequest, $epTransaction, $request, $sageProcess)
+    {
+        // Time-based lock to prevent concurrent processing
+        $this->lockPostfix = Carbon::now()->format('YmdHi'); // e.g., 2024102113
+    }
+
+    public function middleware()
+    {
+        // Unique lock key: {epTransactionCode}-{YmdHi}
+        return [(new WithoutOverlapping($this->epTransaction->code.'-'.$this->lockPostfix))->dontRelease()];
+    }
+
+    public function failed(Throwable $exception)
+    {
+        // Handle timeout separately from general failures
+        if (str_contains($exception->getMessage(), SageEnum::SAGE_TIMEOUT_REQUEST_MESSAGE)) {
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_TIMEOUT_STATUS, $exception->getMessage());
+        } else {
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $exception->getMessage());
+        }
+
+        // Update EP booking status
+        (new SageApiEmbeddedProductService)->updateAndLogEPBookingStatus($this->epTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), $this->logFor);
+
+        // Reschedule next process
+        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
+    }
+}
+```
 
 ## Sage Integration Patterns
 
@@ -41,13 +81,47 @@ These rules define the patterns, conventions, and best practices for working wit
 
 **Pattern Steps:**
 1. Update status to queued (updateAndLogEPBookingStatus with BOOKING_QUEUED)
-2. Check if already booked (QuoteTag lookup for EMBEDDED_PRODUCT_BOOKED_ON_SAGE)
-3. Create AR Prepayment Receipt (createARPrepaymentReceipt)
-4. Create AR Commission and Premium Invoice (createARInvoicePremAndComm)
-5. Create AP Premium Invoice (createAPPremInvoice)
-6. Apply Prepayments to AR Invoice (applyPaymentARInvoices)
-7. Mark as completed (updateAndLogEPBookingStatus with BOOKING_COMPLETED)
-8. Create quote tag (QuoteTag::create)
+2. Get product-specific API response (getInsurerRequestResponse with epShortCode)
+3. Create embedded product payload (createEmbeddedProductPayload with product differentiation)
+4. Check if already booked (QuoteTag lookup for EMBEDDED_PRODUCT_BOOKED_ON_SAGE)
+5. Create AR Prepayment Receipt (createARPrepaymentReceipt) - Step 1
+6. Create AR Commission and Premium Invoice (createARInvoicePremAndComm) - Step 2
+7. Create AP Premium Invoice (createAPPremInvoice) - Step 3
+8. Apply Prepayments to AR Invoice (applyPaymentARInvoices) - Step 4
+9. Mark as completed (updateAndLogEPBookingStatus with BOOKING_COMPLETED)
+10. Create quote tag (QuoteTag::create with EMBEDDED_PRODUCT_BOOKED_ON_SAGE)
+
+**IMPORTANT NOTES:**
+- **AP Prepayment Receipt Creation is DISABLED**: Lines 216-222 commented out in implementation
+- **AP Payment Application is DISABLED**: Lines 249-254 commented out in implementation
+- **Product Differentiation**: ECB uses different API method (issuePolicy vs viewQuotePolicy)
+- **Revenue Account**: EP uses 40010 (vs 40001/40002 for main policies)
+- **Optional Fields**: OPTFIELD1-3 used for EP metadata (tax invoice, product code, policy number)
+
+**ECB Product Handling:**
+```php
+// ECB products use issuePolicy method
+public function getInsurerRequestResponseForECB($quote, $insuranceProviderId = null)
+{
+    return InsurerRequestResponse::where([
+        'quote_uuid' => $quote->uuid,
+        'status' => 'passed',
+        'execution_method' => 'issuePolicy',  // Not viewQuotePolicy
+        'insurance_provider_id' => $insuranceProviderId,
+    ])->latest()->first();
+}
+
+// Other EP products (MDX, RDX) use viewQuotePolicy method
+public function getInsurerRequestResponseForSukoonMedXRedx($quote, $insuranceProviderId = null)
+{
+    return InsurerRequestResponse::where([
+        'quote_uuid' => $quote->uuid,
+        'status' => 'passed',
+        'execution_method' => 'viewQuotePolicy',
+        'call_type' => 'EmbeddedProduct',
+    ])->latest()->first();
+}
+```
 
 ### 3. Endorsement Processing
 **Reference:** `SageApiService::bookEndorsementOnSage()`
@@ -59,6 +133,121 @@ These rules define the patterns, conventions, and best practices for working wit
 4. Create AR Premium and Commission Invoice (createARInvoicePremAndComm)
 5. Create AP Premium Invoice (createAPPremInvoice)
 6. Apply Prepayments to AR Invoice (applyPaymentARInvoices)
+
+**Straight vs Reversal Endorsement:**
+- **Straight**: Use when new premium ≥ original premium (additions/increases)
+- **Reversal**: Use when new premium < original premium (deletions/decreases)
+- **Reversal Process**: Creates two entries - REVERSAL (negative) + CORRECTION (new amount)
+
+### 4. AR Invoice Lifecycle
+**Reference:** `SageApiService::createARInvoicePremAndComm()`
+
+**Invoice Status Flow:** OPEN → READY TO POST → POSTED → COMPLETE
+
+**Three Main Scenarios:**
+1. **Main Lead Booking**: Premium + Commission invoices for standard policies
+2. **Embedded Product**: EP Premium + Commission combined with OPTFIELD1-3
+3. **Send Update**: Straight or Reversal entries for endorsements
+
+**Upfront vs Split Payment:**
+```php
+// Upfront Payment - Single invoice
+private function createUpfrontARInvoicePremAndComm($sageRequestDataArray): array
+{
+    // Step 1: Create invoice (OPEN status)
+    $payLoadOptions = SagePayloadFactory::createARInvoicePremAndComm($sageRequest);
+    $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+
+    // Step 2: Ready to Post (OPEN → READY TO POST)
+    $readyToPostPayload = SagePayloadFactory::readyToPostInvoiceAr($postedResponse['BatchNumber']);
+    $this->postToSage300($readyToPostPayload['endPoint'], $readyToPostPayload['payload'], 'PATCH');
+
+    // Step 3: Post to GL (READY TO POST → POSTED)
+    $postPayload = SagePayloadFactory::aRPostInvoices($postedResponse['BatchNumber']);
+    $this->postToSage300($postPayload['endPoint'], $postPayload['payload']);
+}
+
+// Split Payment - Invoice with payment schedules
+private function createNonUpfrontARInvoicePremAndComm($sageRequestDataArray)
+{
+    // Separate paid and unpaid splits
+    $paidSplits = $paymentSplits->whereIn('payment_status_id', [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+    $unpaidSplits = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+
+    // Create invoice with PaymentSchedules array for future installments
+    $payLoadOptions = SagePayloadFactory::createARInvoiceSplitPayments($sageRequest, $unpaidSplits, SageEnum::SCT_STRAIGHT);
+    // ... Ready to Post and Post steps same as upfront
+}
+```
+
+### 5. AP Invoice Lifecycle
+**Reference:** `SageApiService::createAPInvoicePrem()`
+
+**Key Differences from AR:**
+- **Direction**: Payments TO vendors (insurance providers) vs FROM customers
+- **Vendor ID**: Uses sageVenderId from insurance_providers table
+- **GL Account**: Uses insurerGlLiaiblityAccount from insurer config
+- **Entry Types**: SCT_STRAIGHT, SCT_REVERSAL for endorsements
+
+**Pattern:**
+```php
+private function createAPInvoicePrem($sageRequestDataArray)
+{
+    $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
+
+    if ($isPaymentFrequencyUpfront) {
+        return $this->createUpfrontAPInvoicePrem($sageRequestDataArray);
+    } else {
+        return $this->createNonUpfrontAPInvoicePrem($sageRequestDataArray);
+    }
+}
+```
+
+### 6. Payment Mapping & Apply Prepayment
+**Reference:** `SageApiService::applyPaymentARInvoices()`
+
+**Three Main Scenarios:**
+1. **Main Lead**: AR customer receipts to invoices + AP vendor payments (if insurer direct)
+2. **Embedded Product**: AR only (AP mapping disabled in implementation)
+3. **Send Update**: Additional payment receipts to adjustment invoices
+
+**Critical Logic Checks:**
+```php
+public function applyPaymentARInvoices($sageRequestDataArray)
+{
+    // 1. Historic data compatibility check
+    $isQuoteFallUnderSkippableCriteria = $this->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $paymentSplits);
+    if ($isQuoteFallUnderSkippableCriteria['status']) {
+        return $isQuoteFallUnderSkippableCriteria;
+    }
+
+    // 2. Zero price policy check
+    if ($payment->total_price == 0) {
+        LoggerService::info('applyUpfrontPaymentARInvoices skipped due to zero price');
+        return ['status' => true, 'message' => 'Skipped - zero price'];
+    }
+
+    // 3. Payment frequency routing
+    if ($payment->frequency == PaymentFrequency::UPFRONT && $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID) {
+        return $this->applyUpfrontPaymentARInvoices($sageRequestDataArray);
+    } elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+        return $this->applySplitPaymentARInvoices($sageRequestDataArray);
+    } else {
+        return $this->applyNonSplitNonUpfrontPaymentARInvoices($sageRequestDataArray);
+    }
+}
+```
+
+**Payment Application Process:**
+1. Create AR Receipt Batch (createPaymentReceiptOneInvoice or arSplitPrepaymentPayload)
+2. Ready to Post (readyToPostReceiptAr)
+3. Post to GL (aRPostReceiptsPayment)
+
+**Requirements:**
+- Payment status must be PAID or CAPTURED
+- Receipt must exist (sage_reciept_id in payment_splits)
+- Invoice must be created and posted
+- Customer must exist in Sage 300
 
 ## Database Patterns
 
@@ -94,11 +283,73 @@ These rules define the patterns, conventions, and best practices for working wit
 ### 3. Status Management
 **Reference:** `SageEnum` status constants
 
-**Status Values:**
-- `SAGE_PROCESS_PENDING_STATUS` - Process queued
-- `SAGE_PROCESS_PROCESSING_STATUS` - Process in progress
+**Sage Process Status Values:**
+- `SAGE_PROCESS_PENDING_STATUS` - Process queued, awaiting execution
+- `SAGE_PROCESS_PROCESSING_STATUS` - Process currently executing
 - `SAGE_PROCESS_COMPLETED_STATUS` - Process completed successfully
-- `SAGE_PROCESS_FAILED_STATUS` - Process failed
+- `SAGE_PROCESS_FAILED_STATUS` - Process failed with error
+- `SAGE_PROCESS_TIMEOUT_STATUS` - Process timed out during execution
+
+**Embedded Product Booking Status Values:**
+- `BOOKING_PENDING` - EP booking not started
+- `BOOKING_QUEUED` - EP booking job dispatched to queue
+- `BOOKING_COMPLETED` - EP booking finished successfully
+- `BOOKING_FAILED` - EP booking failed with error
+
+**Sage Request Types (SRT) Constants:**
+- `SRT_CREATE_CUSTOMER` - Customer verification/creation
+- `SRT_CREATE_AR_PREM_COMM_INV` - AR Premium & Commission Invoice
+- `SRT_CREATE_AR_DIS_INV` - AR Discount Credit Note
+- `SRT_CREATE_AP_PREM_INV` - AP Premium Invoice
+- `SRT_CREATE_AR_RECEIPT` - AR Prepayment Receipt
+- `SRT_CREATE_AP_RECEIPT` - AP Prepayment Receipt
+- `SRT_APPLY_AR_PAYMENT` - Apply AR Prepayment
+- `SRT_APPLY_AP_PAYMENT` - Apply AP Prepayment
+- `EP_SRT_CREATE_AR_PREM_COMM_INV` - EP AR Invoice
+- `EP_SRT_CREATE_AP_PREM_INV` - EP AP Invoice
+- `EP_SRT_CREATE_AR_PREM_COMM_INV_SU` - EP AR Invoice for Send Update
+
+**Sage Entry Types (SCT) Constants:**
+- `SCT_STRAIGHT` - Normal forward entry (new charges)
+- `SCT_REVERSAL` - Negative entry (cancel original)
+- `SCT_CORRECTION` - Corrected forward entry (after reversal)
+
+**Sage Conflict Handling:**
+- `SAGE_PROCESSING_CONFLICT_MESSAGE` - "The process is already locked"
+- When conflict occurs: Revert status to PENDING for automatic retry
+- `SAGE_TIMEOUT_REQUEST_MESSAGE` - Indicates timeout error
+
+### 4. Sage Process Scheduling
+**Reference:** `SageApiService::scheduleSageProcesses()`
+
+**Scheduling Pattern:**
+```php
+public function scheduleSageProcesses($insurerId = null): void
+{
+    // Get pending processes ordered by created_at
+    $sageProcesses = SageProcess::where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
+        ->when($insurerId, fn($q) => $q->where('insurance_provider_id', $insurerId))
+        ->oldest()
+        ->get();
+
+    // Process each pending sage process
+    foreach ($sageProcesses as $sageProcess) {
+        // Dispatch appropriate job based on request type
+        if ($sageProcess->request->type == 'embedded_product') {
+            BookEmbeddedProductOnSageJob::dispatch(...)->onQueue('insly');
+        } else {
+            BookPolicyOnSageJob::dispatch(...)->onQueue('insly');
+        }
+    }
+}
+```
+
+**Key Points:**
+- Always call scheduleSageProcesses() after process completion or failure
+- Filters by insurer_id when provided for targeted scheduling
+- Processes oldest pending requests first (FIFO)
+- Automatically dispatches appropriate job type
+- Uses 'insly' queue for all Sage operations
 
 ## Payload Factory Patterns
 
@@ -398,17 +649,107 @@ These rules define the patterns, conventions, and best practices for working wit
 9. **Performance Review**: Check that new patterns don't impact performance
 10. **Documentation Update**: Keep README files updated with module changes
 
+## Critical Implementation Notes
+
+### 1. Embedded Product AP Receipt Handling
+**IMPORTANT**: AP prepayment receipt creation and AP payment application are currently **DISABLED** for embedded products.
+- Lines 216-222 in `SageApiEmbeddedProductService::bookEmbeddedProductOnSage()` are commented out
+- Lines 249-254 for AP payment application are also commented out
+- This is intentional - EP transactions are handled entirely through AR processing
+- The workflow is: AR Receipt → AR Invoice → AP Invoice → AR Payment Application (4 steps, not 6)
+
+### 2. ECB Product Differentiation
+**CRITICAL**: ECB (Embedded Credit Bureau) products use different API methods than other embedded products:
+- ECB uses `issuePolicy` method (not `viewQuotePolicy`)
+- ECB includes `insurance_provider_id` filtering
+- Other EP products (MDX, RDX) use `viewQuotePolicy` with `call_type = 'EmbeddedProduct'`
+- Always pass `$epShortCode` parameter to differentiate product handling
+
+### 3. Zero Price Policy Handling
+**IMPORTANT**: Policies with `total_price = 0` must be handled specially:
+- Skip prepayment application entirely
+- Must use `CreditApproval` payment method
+- Still create invoices but no payment mapping needed
+- Log operations with appropriate context
+
+### 4. Historic Data Compatibility
+**TEMPORARY CODE**: `skipApplyPrepaymentsForSpecificLeads()` function exists for M2 migration:
+- Maintains compatibility with pre-M2 data
+- Checks specific criteria to skip prepayment for certain leads
+- Should eventually be removed after full migration
+- Document any changes to this logic
+
+### 5. WithoutOverlapping Middleware
+**CRITICAL**: Always use time-based postfix for lock keys:
+- Format: `{identifier}-{YmdHi}` (e.g., `EP12345-2024102113`)
+- Prevents duplicate booking attempts
+- Use `dontRelease()` for manual cleanup
+- Implement proper `failed()` method to reschedule processes
+
+### 6. Sage Conflict Handling
+**IMPORTANT**: When Sage returns "process is already locked":
+- Revert SageProcess status to PENDING (not FAILED)
+- This allows automatic retry through scheduleSageProcesses()
+- Log conflict occurrence for monitoring
+- Don't increment failure counters
+
+### 7. Payment Frequency Routing
+**CRITICAL**: Different workflows for different payment frequencies:
+- **UPFRONT**: Single payment, immediate application
+- **SPLIT_PAYMENTS**: Multiple installments, payment schedules
+- **Other**: Non-split/non-upfront handling
+- Always check payment status (PAID or CAPTURED) before application
+
+## Comprehensive Checklist for Sage Operations
+
+### Before Starting Development:
+- [ ] Read relevant documentation in `public/docs/booking-process/`
+- [ ] Understand the specific scenario (Main Lead, EP, Send Update)
+- [ ] Identify payment frequency and type
+- [ ] Check if Sage is enabled (`isSageEnabled()`)
+- [ ] Verify required Sage IDs exist
+
+### During Implementation:
+- [ ] Use appropriate service class (SageApiService vs SageApiEmbeddedProductService)
+- [ ] Follow the 3-step invoice lifecycle: Create → Ready to Post → Post
+- [ ] Implement WithoutOverlapping middleware with time-based locks
+- [ ] Handle Sage conflicts by reverting to PENDING status
+- [ ] Log all operations with appropriate context
+- [ ] Update statuses at each step
+- [ ] Handle timeouts separately from failures
+
+### After Implementation:
+- [ ] Test with upfront and split payment scenarios
+- [ ] Test zero price policies
+- [ ] Test Sage conflict scenarios
+- [ ] Verify all statuses update correctly
+- [ ] Check logs for completeness
+- [ ] Update documentation if patterns changed
+- [ ] **Update this cursor rule file**
+
 ## Conclusion
 
-These cursor rules provide a comprehensive guide for working with the Sage Integration system. Following these patterns will ensure consistency, maintainability, and reliability in Sage-related development work.
+These cursor rules provide a comprehensive, up-to-date guide for working with the Sage Integration system. Following these patterns will ensure consistency, maintainability, and reliability in Sage-related development work.
+
+**Last Updated**: October 2024
+
+**Major Updates in This Version:**
+- ECB product handling patterns documented
+- AP receipt disabling for EP products clarified
+- WithoutOverlapping middleware with time-based locks explained
+- Comprehensive AR/AP invoice lifecycle patterns added
+- Payment mapping scenarios fully documented
+- Sage conflict and timeout handling clarified
+- Zero price policy handling documented
 
 Remember to:
-- Always validate input data
-- Handle errors gracefully
-- Log all operations
-- Update status appropriately
-- Test thoroughly
-- Document changes
+- Always validate input data and Sage IDs
+- Handle errors gracefully with proper status management
+- Log all operations with relevant context
+- Update statuses appropriately at each step
+- Test thoroughly across all scenarios
+- Document changes and patterns
 - Follow security best practices
-- Monitor performance
-- **Update this rule file when making changes**
+- Monitor performance and queue health
+- **Keep this rule file updated with implementation changes**
+- **Consult documentation in public/docs/booking-process/ for details**
