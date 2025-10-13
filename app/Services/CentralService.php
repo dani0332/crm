@@ -1693,7 +1693,7 @@ class CentralService extends BaseService
                         ->where('plan_id', $quote->plan_id)
                         ->first()?->link ?? [];
 
-                    $emailData->handBookDocuments = config('constants.AZURE_IM_STORAGE_URL').$policyHandBook;
+                    $emailData->handBookDocuments = ! empty($policyHandBook) ? config('constants.AZURE_IM_STORAGE_URL').$policyHandBook : '';
                 } else {
                     $emailData->handBookDocuments = $storageUrl.$policyHandBook['doc_url'] ?? '';
                 }
