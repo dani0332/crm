@@ -5,6 +5,7 @@ namespace App\Strategies\Allocations;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
+use App\Facades\AllocationConfigurer;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Services\RuleService;
@@ -63,7 +64,8 @@ class PetAllocation extends BaseAllocation
 
         $this->skipRuleUsers = true;
 
-        $petAdvisorEmails = $this->getAdvisorEmails(ApplicationStorageEnums::PET_ADVISORS);
+        $advisorIds = AllocationConfigurer::getCommonEligibleAdvisorIds($this->quoteType);
+        $petAdvisorEmails = User::whereIn('id', $advisorIds)->pluck('email')->toArray();
         if ($advisor = $this->findEligibleAdvisor($statusOrder, RolesEnum::PetAdvisor, $petAdvisorEmails)) {
             return $advisor;
         }
