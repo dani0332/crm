@@ -36,7 +36,6 @@ class PetQuoteRepository extends BaseRepository
         LoggerService::info('Pet fetchCreate called with sub-source parameters', [
             'sub_source_id' => $request['sub_source_id'] ?? null,
             'sub_source_options_id' => $request['sub_source_options_id'] ?? null,
-            'primary_ref_id' => $request['primary_ref_id'] ?? null,
             'additional_notes' => $request['additional_notes'] ?? null,
         ]);
 
@@ -71,7 +70,6 @@ class PetQuoteRepository extends BaseRepository
             // Sub-source fields
             'subSourceId' => $request['sub_source_id'] ?? null,
             'subSourceOptionsId' => $request['sub_source_options_id'] ?? null,
-            'primaryRefId' => $request['primary_ref_id'] ?? null,
             'additionalNotes' => $request['additional_notes'] ?? null,
         ];
 
@@ -90,7 +88,6 @@ class PetQuoteRepository extends BaseRepository
         LoggerService::info('Pet fetchUpdate called with sub-source parameters', [
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'primary_ref_id' => $data['primary_ref_id'] ?? null,
             'additional_notes' => $data['additional_notes'] ?? null,
         ]);
 
@@ -99,7 +96,7 @@ class PetQuoteRepository extends BaseRepository
 
             $quoteData = Arr::only($data, [
                 'first_name', 'last_name', 'email', 'mobile_no', 'gender', 'dob', 'nationality_id',
-                'sub_source_id', 'sub_source_options_id', 'primary_ref_id', 'notes',
+                'sub_source_id', 'sub_source_options_id', 'notes',
             ]);
 
             $quoteData['updated_by_id'] = Auth::user()->id;

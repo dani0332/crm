@@ -84,20 +84,7 @@ const subSourceOptionOptions = computed(() => {
   }));
 });
 
-// Check if Partner name field should be shown
-const showPartnerNameField = computed(() => {
-  if (!quoteForm.sub_source_options_id) return false;
 
-  const selectedSubSource = props.subSources?.find(
-    source => source.id == quoteForm.sub_source_id,
-  );
-  if (!selectedSubSource?.childs) return false;
-
-  const selectedSubSourceOption = selectedSubSource.childs.find(
-    child => child.id == quoteForm.sub_source_options_id,
-  );
-  return selectedSubSourceOption?.code === 'other-clubs-or-campaigns';
-});
 
 // Check if it's referral type
 const isReferralType = computed(() => {
@@ -106,15 +93,6 @@ const isReferralType = computed(() => {
   );
 });
 
-// Check if it's ecom lead extension
-const isEcomLeadExtension = computed(() => {
-  return (
-    props.leadSourceParams?.type === 'ecom_lead_extension' ||
-    (quoteForm.sub_source_id === null &&
-      quoteForm.sub_source_options_id === null &&
-      quoteForm.primary_ref_id)
-  );
-});
 
 // Role-based control like Life LOB
 const rolesEnum = page.props.rolesEnum;
@@ -142,18 +120,7 @@ const quoteForm = useForm({
   investment_amount: props.quote?.savings_quote?.investment_amount || '',
   investment_frequency:
     props.quote?.savings_quote?.investment_criteria_id || '',
-  notes: (() => {
-    let notes = props.quote?.notes || '';
-    const partnerName = props.leadSourceParams?.partnerName;
-    if (partnerName) {
-      if (notes) {
-        notes = `${notes}, ${partnerName}`;
-      } else {
-        notes = partnerName;
-      }
-    }
-    return notes;
-  })(),
+  notes: props.quote?.notes || '',
 
   // Sub-source fields
   sub_source_id:
@@ -164,9 +131,6 @@ const quoteForm = useForm({
     parseInt(props.quote?.sub_source_options_id, 10) ||
     parseInt(props.leadSourceParams?.subSourceOption, 10) ||
     null,
-  primary_ref_id:
-    props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || null,
-  partner_name: props.leadSourceParams?.partnerName || null,
 });
 
 const { isRequired, isEmail, isMobileNo, isValidName, maxCharacters } =
@@ -194,62 +158,17 @@ function onSubmit(isValid) {
   }
 }
 
-// Watchers for field resets and partner name handling
+// Watchers for field resets
 watch(
   () => quoteForm.sub_source_id,
   (newValue, oldValue) => {
     if (newValue !== oldValue) {
       quoteForm.sub_source_options_id = null;
-      quoteForm.partner_name = null;
-      if (!isEcomLeadExtension.value) {
-        quoteForm.primary_ref_id = null;
-      }
     }
   },
 );
 
-watch(
-  () => quoteForm.sub_source_options_id,
-  () => {
-    if (!showPartnerNameField.value) {
-      quoteForm.partner_name = null;
-    } else {
-      quoteForm.partner_name = props.leadSourceParams?.partnerName || null;
-    }
-    if (!isEcomLeadExtension.value) {
-      quoteForm.primary_ref_id = null;
-    }
-  },
-);
 
-// Watcher for partner_name to update notes
-watch(
-  () => quoteForm.partner_name,
-  (newValue, oldValue) => {
-    if (!showPartnerNameField.value) return;
-
-    if (oldValue) {
-      const oldPattern = new RegExp(
-        `(, ${oldValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')})`,
-        'g',
-      );
-      quoteForm.notes = (quoteForm.notes || '').replace(oldPattern, '').trim();
-      quoteForm.notes = quoteForm.notes
-        .replace(/,\s*,/g, ',')
-        .replace(/^,\s*|,\s*$/g, '');
-    }
-
-    if (newValue) {
-      if (quoteForm.notes) {
-        quoteForm.notes = `${quoteForm.notes}, ${newValue}`;
-      } else {
-        quoteForm.notes = newValue;
-      }
-    }
-  },
-);
-
-// No URL parsing here; values come via leadSourceParams for consistency with Life
 </script>
 
 <template>
@@ -274,7 +193,7 @@ watch(
       <div class="grid sm:grid-cols-2 gap-4">
         <!-- Lead Source Fields - Only show when type is referral -->
         <x-select
-          v-if="isReferralType && !isEcomLeadExtension"
+          v-if="isReferralType"
           label="IMCRM SUB-SOURCE"
           v-model="quoteForm.sub_source_id"
           :options="subSourceOptions"
@@ -298,9 +217,7 @@ watch(
         </x-select>
 
         <x-select
-          v-if="
-            isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension
-          "
+          v-if="isReferralType && quoteForm.sub_source_id"
           label="SUB SOURCE OPTION"
           v-model="quoteForm.sub_source_options_id"
           :options="subSourceOptionOptions"
@@ -323,34 +240,7 @@ watch(
           </template>
         </x-select>
 
-        <x-input
-          v-if="isEcomLeadExtension"
-          label="PRIMARY REF ID"
-          required
-          v-model="quoteForm.primary_ref_id"
-          class="w-full"
-          type="text"
-          placeholder="Enter Primary Ref ID"
-          :rules="[isRequired]"
-          :tooltip="'ID of the original ECOM lead'"
-          :error="quoteForm.errors.primary_ref_id"
-          :disabled="!canEditSubSourceFields"
-        />
 
-        <x-input
-          v-if="showPartnerNameField"
-          label="PARTNER NAME"
-          :required="canEditSubSourceFields"
-          v-model="quoteForm.partner_name"
-          class="w-full"
-          type="text"
-          placeholder="Enter Partner Name"
-          :tooltip="'Name of campaign, event or club'"
-          maxLength="50"
-          :rules="canEditSubSourceFields ? [isRequired, maxCharacters(50)] : []"
-          :error="quoteForm.errors.partner_name"
-          :disabled="!canEditSubSourceFields"
-        />
 
         <!-- Personal Details -->
         <x-input

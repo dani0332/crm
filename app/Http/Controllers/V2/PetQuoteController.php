@@ -100,8 +100,6 @@ class PetQuoteController extends Controller
             'type' => $request->input('type'),
             'subSourceId' => $request->input('subSourceId'),
             'subSourceOptionsId' => $request->input('subSourceOptionsId'),
-            'primaryRefId' => $request->input('primaryRefId'),
-            'partnerName' => $request->input('partnerName'),
         ]);
 
         $data = PetQuoteRepository::getFormOptions();
@@ -112,8 +110,6 @@ class PetQuoteController extends Controller
             'type' => $request->input('type'),
             'subSource' => $request->input('subSourceId'),
             'subSourceOption' => $request->input('subSourceOptionsId'),
-            'primaryRefId' => $request->input('primaryRefId'),
-            'partnerName' => $request->input('partnerName'),
         ];
 
         return inertia('PetQuote/Form', $data);

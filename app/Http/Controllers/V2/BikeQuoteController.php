@@ -105,8 +105,6 @@ class BikeQuoteController extends Controller
             'type' => $request->input('type'),
             'subSourceId' => $request->input('subSourceId'),
             'subSourceOptionsId' => $request->input('subSourceOptionsId'),
-            'primaryRefId' => $request->input('primaryRefId'),
-            'partnerName' => $request->input('partnerName'),
         ]);
 
         $data = BikeQuoteRepository::getFormOptions();
@@ -118,8 +116,6 @@ class BikeQuoteController extends Controller
             'type' => $request->input('type'),
             'subSource' => $request->input('subSourceId'),
             'subSourceOption' => $request->input('subSourceOptionsId'),
-            'primaryRefId' => $request->input('primaryRefId'),
-            'partnerName' => $request->input('partnerName'),
         ];
 
         return inertia('BikeQuote/Form', array_merge($data, ['quoteStatusEnums' => $quoteStatusEnums]));

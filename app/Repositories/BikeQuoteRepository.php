@@ -41,7 +41,6 @@ class BikeQuoteRepository extends BaseRepository
         LoggerService::info('Bike fetchCreate called with sub-source parameters', [
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'primary_ref_id' => $data['primary_ref_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ]);
 
@@ -79,7 +78,6 @@ class BikeQuoteRepository extends BaseRepository
             // Sub-source fields
             'subSourceId' => $data['sub_source_id'] ?? null,
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
-            'primaryRefId' => $data['primary_ref_id'] ?? null,
             'additionalNotes' => $data['notes'] ?? null,
         ];
 
@@ -95,7 +93,6 @@ class BikeQuoteRepository extends BaseRepository
         LoggerService::info('Bike fetchUpdate called with sub-source parameters', [
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'primary_ref_id' => $data['primary_ref_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ]);
 
@@ -104,7 +101,7 @@ class BikeQuoteRepository extends BaseRepository
 
             $quoteData = Arr::only($data, [
                 'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'gender',
-                'sub_source_id', 'sub_source_options_id', 'primary_ref_id', 'notes',
+                'sub_source_id', 'sub_source_options_id', 'notes',
             ]);
 
             $quoteData['currently_insured_with_id'] = $data['currently_insured_with'];

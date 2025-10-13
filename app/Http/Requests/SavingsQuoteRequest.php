@@ -49,8 +49,6 @@ class SavingsQuoteRequest extends FormRequest
             // Sub-source fields
             'sub_source_id' => ['nullable', Rule::exists(Lookup::class, 'id')],
             'sub_source_options_id' => ['nullable', Rule::exists(Lookup::class, 'id')],
-            'primary_ref_id' => 'nullable|string|max:255',
-            'partner_name' => 'nullable|string|max:255',
         ];
     }
 

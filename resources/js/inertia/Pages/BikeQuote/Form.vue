@@ -95,17 +95,7 @@ const isReferralType = computed(() => {
   );
 });
 
-const isEcomLeadExtension = computed(() => {
-  if (props.leadSourceParams?.type === 'ecom_lead_extension') return true;
-  if (
-    !quoteForm.sub_source_id &&
-    !quoteForm.sub_source_options_id &&
-    quoteForm.primary_ref_id
-  ) {
-    return true;
-  }
-  return false;
-});
+
 
 // Role-based permissions for sub-source fields
 const canEditSubSourceFields = computed(() => {
@@ -116,18 +106,7 @@ const canEditSubSourceFields = computed(() => {
   ]);
 });
 
-// Show partner name field when "other-clubs-or-campaigns" is selected
-const showPartnerNameField = computed(() => {
-  if (!quoteForm.sub_source_options_id) return false;
-  const selectedSubSource = props.subSources?.find(
-    source => source.id == quoteForm.sub_source_id,
-  );
-  if (!selectedSubSource?.childs) return false;
-  const selectedSubSourceOption = selectedSubSource.childs.find(
-    child => child.id == quoteForm.sub_source_options_id,
-  );
-  return selectedSubSourceOption?.code === 'other-clubs-or-campaigns';
-});
+
 
 const quoteForm = useForm({
   model: props.model,
@@ -166,16 +145,8 @@ const quoteForm = useForm({
     parseInt(props.quote?.sub_source_options_id, 10) ||
     parseInt(props.leadSourceParams?.subSourceOption, 10) ||
     null,
-  primary_ref_id:
-    props.quote?.primary_ref_id || props.leadSourceParams?.primaryRefId || null,
-  partner_name: props.leadSourceParams?.partnerName || null,
   notes: (() => {
-    let notes = props.quote?.notes || props.bikeQuoteDetail?.notes || '';
-    const partnerName = props.leadSourceParams?.partnerName;
-    if (partnerName) {
-      notes = notes ? `${notes}, ${partnerName}` : partnerName;
-    }
-    return notes;
+    return props.quote?.notes || props.bikeQuoteDetail?.notes || '';
   })(),
 });
 
@@ -193,60 +164,11 @@ const editMode = computed(() => {
   return props.quote ? true : false;
 });
 
-// Watchers for sub-source fields
 watch(
   () => quoteForm.sub_source_id,
   newValue => {
     if (newValue) {
       quoteForm.sub_source_options_id = null;
-      quoteForm.partner_name = null;
-      if (!isEcomLeadExtension.value) {
-        quoteForm.primary_ref_id = null;
-      }
-    }
-  },
-);
-
-watch(
-  () => quoteForm.sub_source_options_id,
-  newValue => {
-    if (!showPartnerNameField.value) {
-      quoteForm.partner_name = null;
-    } else {
-      quoteForm.partner_name = props.leadSourceParams?.partnerName || null;
-    }
-    if (!isEcomLeadExtension.value) {
-      quoteForm.primary_ref_id = null;
-    }
-  },
-);
-
-// Watcher for partner_name to update notes
-watch(
-  () => quoteForm.partner_name,
-  (newValue, oldValue) => {
-    if (!showPartnerNameField.value) return;
-
-    // Remove old partner name from notes if it exists
-    if (oldValue) {
-      const oldPattern = new RegExp(
-        `(, ${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, |${oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
-        'g',
-      );
-      quoteForm.notes = quoteForm.notes.replace(oldPattern, '').trim();
-      // Clean up any double commas or leading/trailing commas
-      quoteForm.notes = quoteForm.notes
-        .replace(/,\s*,/g, ',')
-        .replace(/^,\s*|,\s*$/g, '');
-    }
-
-    // Add new partner name to notes
-    if (newValue) {
-      if (quoteForm.notes) {
-        quoteForm.notes = `${quoteForm.notes}, ${newValue}`;
-      } else {
-        quoteForm.notes = newValue;
-      }
     }
   },
 );
@@ -431,7 +353,7 @@ const chassisNumberRule = v => {
       <div class="grid sm:grid-cols-2 gap-4">
         <!-- Lead Source Fields - Only show when type is referral -->
         <x-select
-          v-if="isReferralType && !isEcomLeadExtension"
+          v-if="isReferralType"
           label="IMCRM SUB-SOURCE"
           v-model="quoteForm.sub_source_id"
           :options="subSourceOptions"
@@ -455,9 +377,7 @@ const chassisNumberRule = v => {
         </x-select>
 
         <x-select
-          v-if="
-            isReferralType && quoteForm.sub_source_id && !isEcomLeadExtension
-          "
+          v-if="isReferralType && quoteForm.sub_source_id"
           label="SUB SOURCE OPTION"
           v-model="quoteForm.sub_source_options_id"
           :options="subSourceOptionOptions"
@@ -480,34 +400,7 @@ const chassisNumberRule = v => {
           </template>
         </x-select>
 
-        <x-input
-          v-if="isEcomLeadExtension"
-          label="PRIMARY REF ID"
-          required
-          v-model="quoteForm.primary_ref_id"
-          class="w-full"
-          type="text"
-          placeholder="Enter Primary Ref ID"
-          :rules="[isRequired]"
-          :tooltip="'ID of the original ECOM lead'"
-          :error="quoteForm.errors.primary_ref_id"
-          :disabled="!canEditSubSourceFields"
-        />
-
-        <x-input
-          v-if="showPartnerNameField"
-          label="PARTNER NAME"
-          :required="canEditSubSourceFields"
-          v-model="quoteForm.partner_name"
-          class="w-full"
-          maxlength="50"
-          type="text"
-          placeholder="Enter Partner Name"
-          :tooltip="'Name of campaign, event or club'"
-          :rules="canEditSubSourceFields ? [isRequired, maxCharacters(50)] : []"
-          :error="quoteForm.errors.partner_name"
-          :disabled="!canEditSubSourceFields"
-        />
+        
 
         <x-input
           label="FIRST NAME"

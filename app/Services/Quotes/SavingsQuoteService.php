@@ -91,8 +91,6 @@ class SavingsQuoteService extends BaseQuoteService
         LoggerService::info('SavingsQuoteService create - Sub-source parameters', [
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'primary_ref_id' => $data['primary_ref_id'] ?? null,
-            'partner_name' => $data['partner_name'] ?? null,
         ]);
 
         $data = [
@@ -122,8 +120,6 @@ class SavingsQuoteService extends BaseQuoteService
             // Sub-source fields
             'subSourceId' => $data['sub_source_id'] ?? null,
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
-            'primaryRefId' => $data['primary_ref_id'] ?? null,
-            'partnerName' => $data['partner_name'] ?? null,
         ];
 
         // Make API request to save the savings quote
@@ -212,7 +208,6 @@ class SavingsQuoteService extends BaseQuoteService
             'uuid' => $uuid,
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'partner_name' => $data['partner_name'] ?? null,
         ]);
 
         return DB::transaction(function () use ($uuid, $data) {
@@ -220,7 +215,7 @@ class SavingsQuoteService extends BaseQuoteService
 
             $quoteData = Arr::only($data, [
                 'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'gender',
-                'sub_source_id', 'sub_source_options_id', 'primary_ref_id', 'notes',
+                'sub_source_id', 'sub_source_options_id', 'notes',
             ]);
 
             $quoteData['updated_by_id'] = Auth::id();
