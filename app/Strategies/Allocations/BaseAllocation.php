@@ -310,4 +310,12 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         LoggerService::info(self::class.' - Non Advisor Email sent to customer');
     }
 
+    protected function getAdvisorsByEmailsOrIds(int $onlineStatus, array $roles, ?array $emails = null, ?array $advisorIds = null)
+    {
+        return $this->getAdvisorBaseQuery($onlineStatus, $roles)
+            ->when(! is_null($emails), fn ($q) => $q->whereIn('users.email', $emails))
+            ->when(! is_null($advisorIds), fn ($q) => $q->whereIn('users.id', $advisorIds))
+            ->logRawSql()
+            ->first();
+    }
 }

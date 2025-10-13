@@ -50,4 +50,15 @@ trait AllocationConfigurationFindable
 
         return $matchingProfile ? ($matchingProfile['advisorIds'] ?? []) : [];
     }
+
+    public function getCommonEligibleAdvisorIds(QuoteTypes $quoteType): array
+    {
+        $configuration = $this->findConfig($quoteType);
+
+        if (! $configuration) {
+            return [];
+        }
+
+        return $configuration->advisor_ids;
+    }
 }
