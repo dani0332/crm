@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     curl \
+    gnupg \
     dos2unix \
     iputils-ping \
     net-tools \
