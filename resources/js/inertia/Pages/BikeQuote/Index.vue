@@ -60,7 +60,6 @@ let availableFilters = {
   private_client: 'all',
   authorize_date: '',
   captured_date: '',
-  sub_source_id: [],
 };
 const canExport = ref(false);
 const permissionAssignLeads = ref(false);
@@ -630,42 +629,7 @@ const insurerAMLStatusOption = computed(() => {
             />
           </template>
         </x-select>
-        <x-select
-          v-model="filters.sub_source_id"
-          label="IMCRM SUB-SOURCE"
-          name="sub_source_id"
-          :options="
-            (page.props.subSources || []).map(source => ({
-              value: source.id,
-              label: source.text,
-              suffix: source.description || source.tooltip || '',
-            }))
-          "
-          placeholder="Select IMCRM SUB-SOURCE"
-          filterable
-          multiple
-          truncate
-          multipleCheckbox
-        >
-          <template #suffix="{ item }">
-            <x-tooltip v-if="item.suffix" placement="right">
-              <x-icon icon="info" color="error" />
-              <template #tooltip>
-                {{ item.suffix }}
-              </template>
-            </x-tooltip>
-          </template>
-          <template #content-footer>
-            <ui-select-actions
-              @select-all="
-                filters.sub_source_id = (page.props.subSources || []).map(
-                  item => item.id,
-                )
-              "
-              @clear="filters.sub_source_id = []"
-            />
-          </template>
-        </x-select>
+
         <x-select
           v-model="filters.previous_quote_policy_number"
           placeholder="Search by Renewal"

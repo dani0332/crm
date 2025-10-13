@@ -96,7 +96,6 @@ const filters = reactive({
   private_client: 'all',
   authorize_date: '',
   captured_date: '',
-  sub_source_id: [],
 });
 
 const filterButtonStatuses = [
@@ -300,7 +299,6 @@ function setQueryFilters() {
     'renewal_batch_id',
     'payment_status_id',
     'page',
-    'sub_source_id',
   ];
 
   // Group array parameters
@@ -783,42 +781,7 @@ const onLeadConfirmed = () => {
           </template>
         </x-select>
 
-        <x-select
-          v-model="filters.sub_source_id"
-          name="sub_source_id"
-          placeholder="Select IMCRM SUB-SOURCE"
-          :options="
-            (page.props.subSources || []).map(item => ({
-              value: item.id,
-              label: item.text,
-              suffix: item.description || item.tooltip || '',
-            }))
-          "
-          class="w-full"
-          filterable
-          label="IMCRM SUB-SOURCE"
-          multiple
-          truncate
-        >
-          <template #suffix="{ item }">
-            <x-tooltip v-if="item.suffix" placement="right">
-              <x-icon icon="info" color="error" />
-              <template #tooltip>
-                {{ item.suffix }}
-              </template>
-            </x-tooltip>
-          </template>
-          <template #content-footer>
-            <ui-select-actions
-              @select-all="
-                filters.sub_source_id = (page.props.subSources || []).map(
-                  item => item.id,
-                )
-              "
-              @clear="filters.sub_source_id = []"
-            />
-          </template>
-        </x-select>
+        
 
         <DatePicker
           v-model="filters.policy_expiry_date"

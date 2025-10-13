@@ -294,11 +294,7 @@ class BikeQuoteRepository extends BaseRepository
             }
         });
 
-        // Apply sub_source_id filter (multi-select)
-        $query->when($this->hasFilterValue('sub_source_id', $requestParams), function ($q) use ($requestParams) {
-            $values = (array) $this->getFilterValue('sub_source_id', $requestParams);
-            $q->whereIn('sub_source_id', $values);
-        });
+        
 
         $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 

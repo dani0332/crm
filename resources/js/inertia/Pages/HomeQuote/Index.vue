@@ -130,7 +130,6 @@ const filters = reactive({
   authorize_date: '',
   captured_date: '',
   private_client: 'all',
-  sub_source_id: [],
 });
 
 // PUA Export Modal state
@@ -391,7 +390,6 @@ function setQueryStringFilters() {
     'advisors',
     'renewal_batches',
     'payment_status',
-    'sub_source_id',
     'page',
   ];
 
@@ -783,34 +781,7 @@ const formatDate = dateString =>
             />
           </template>
         </x-select>
-        <x-select
-          v-model="filters.sub_source_id"
-          name="sub_source_id"
-          placeholder="Search by IMCRM SUB-SOURCE"
-          :options="subSourceOptions"
-          class="w-full"
-          filterable
-          label="IMCRM SUB-SOURCE"
-          multiple
-          truncate
-        >
-          <template #suffix="{ item }">
-            <x-tooltip v-if="item.suffix" placement="right">
-              <x-icon icon="info" color="error" />
-              <template #tooltip>
-                {{ item.suffix }}
-              </template>
-            </x-tooltip>
-          </template>
-          <template #content-footer>
-            <ui-select-actions
-              @select-all="
-                filters.sub_source_id = subSourceOptions.map(item => item.value)
-              "
-              @clear="filters.sub_source_id = []"
-            />
-          </template>
-        </x-select>
+        
         <DatePicker
           v-model="filters.policy_expiry_date"
           name="policy_expiry_date"
