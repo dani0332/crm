@@ -631,9 +631,9 @@ class DocumentTypesSeeder extends Seeder
                 'max_files' => 5,
             ],
             [
-                'code' => DocumentTypeCode::MTL_Illustration_Document,
-                'text' => 'MTL Illustration Document',
-                'description' => '',
+                'code' => DocumentTypeCode::MTL_EID,
+                'text' => 'Emirates ID',
+                'description' => 'Please upload your valid Emirates ID license.',
                 'is_active' => 1,
                 'quote_type_id' => QuoteTypeId::Life,
                 'folder_path' => 'life',

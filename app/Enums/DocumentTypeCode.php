@@ -82,7 +82,7 @@ class DocumentTypeCode extends Enum
     const Illustration_Document = 'LIFE_ID';
     const CPS = 'CPS'; // Car Policy Schedule
     const CPC = 'CPC'; // Car Policy Certificate
-    const MTL_Illustration_Document = 'MTL_EID';
+    const MTL_EID = 'MTL_EID';
 
     // HOME SAL
     const HOME_SAL = 'HOME_SAL';
