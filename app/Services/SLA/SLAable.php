@@ -68,7 +68,7 @@ trait SLAable
 
     private function getHeadEmail(): string
     {
-        return 'agatha.alicdan@insurancemarket.ae';
+        return 'health@insurancemarket.ae';
     }
 
     private function getCCEmails(User $advisor): array
