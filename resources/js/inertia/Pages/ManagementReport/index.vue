@@ -10,7 +10,6 @@ import {
   PEC_FLAG_OPTIONS,
   PRIVATE_CLIENT_OPTIONS,
 } from '@/constants/reportOptions';
-import { XForm } from '@indielayer/ui';
 
 const props = defineProps({
   reportData: Object,
