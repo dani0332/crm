@@ -20,10 +20,8 @@ class EpWatermarkDocumentJob implements ShouldQueue
     public $tries = 2;
     public $timeout = 180;
     public $backoff = 10;
-
     private ?EmbeddedTransaction $embeddedTransaction = null;
     private array $watermarkableDocTypeCodes = [];
-
     private string $logPrefix = 'EpWatermarkDocument - Job:';
     private array $logExtra = [];
 
@@ -34,7 +32,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
 
         $this->watermarkableDocTypeCodes = [
             QuoteDocumentsEnum::POLICY_SCHEDULE,
-            QuoteDocumentsEnum::CAR_TAX_INVOICE
+            QuoteDocumentsEnum::CAR_TAX_INVOICE,
         ];
     }
 
@@ -67,7 +65,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
     {
         LoggerService::error("{$this->logPrefix} Failed", extra: [
             ...$this->logExtra,
-            'error' => $exception->getMessage()
+            'error' => $exception->getMessage(),
         ]);
     }
 
@@ -87,7 +85,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
         return [
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
-                ->expireAfter(180)
+                ->expireAfter(180),
         ];
     }
 }

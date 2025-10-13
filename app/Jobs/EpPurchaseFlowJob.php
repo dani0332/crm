@@ -20,12 +20,9 @@ class EpPurchaseFlowJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 180;
     public $backoff = 180;
-
     private string $logPrefix = 'EpPurchaseFlow - Job:';
     private array $logExtra = [];
-
     public mixed $quote = null;
-
 
     /**
      * Create a new job instance.
@@ -60,14 +57,14 @@ class EpPurchaseFlowJob implements ShouldQueue
     {
         LoggerService::error("{$this->logPrefix} Failed after all retries", extra: [
             ...$this->logExtra,
-            'error' => $exception->getMessage()
+            'error' => $exception->getMessage(),
         ]);
 
         try {
             Mail::send(new EpFailureNotification($this->context->quoteId, $this->context->quoteTypeId, $this->context->etId));
             LoggerService::info("{$this->logPrefix} Embedded Product failure email sent successfully");
         } catch (Throwable $e) {
-            LoggerService::error("{$this->logPrefix} Failed to send Embedded Product failure email: " . $e->getMessage());
+            LoggerService::error("{$this->logPrefix} Failed to send Embedded Product failure email: ".$e->getMessage());
         }
     }
 
@@ -96,7 +93,7 @@ class EpPurchaseFlowJob implements ShouldQueue
         return [
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
-                ->expireAfter(180)
+                ->expireAfter(180),
         ];
     }
 }
