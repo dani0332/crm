@@ -348,8 +348,11 @@ class MetLifeApiService extends BaseService
         $successCount = collect($results)->where('success', true)->count();
 
         return [
-            'success' => $successCount > 0,
+            'success' => $successCount === count($results),
             'message' => $successCount === count($results) ? 'All documents uploaded successfully' : 'Some documents failed to upload',
+            'results' => $results,
+            'uploaded_count' => $successCount,
+            'total_count' => count($results),
         ];
     }
 
