@@ -998,7 +998,7 @@ class SageApiService
         $isAlreadyPosted = false;
         $sageLogArray = $paymentSplit->sageApiLogs->keyBy('step')->toArray();
         $sendUpdateLog = $paymentSplit->payment?->sendUpdateLog;
-        $quoteTypeId = $sageRequest->quoteTypeId;
+        $quoteTypeId = $sageRequest->quoteTypeId ?? QuoteTypes::getIdFromValue($sageRequest->quoteType);
         $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
         $quoteDetails = $sendUpdateLog ?? $quote;
 
