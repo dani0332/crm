@@ -185,7 +185,7 @@ class LifeQuoteService extends BaseService
                     }
                 }
             })
-            
+
             ->filter(! $isExportRequest, $isTotalLeadCountRequest)
             ->withFakeLeadCriteria($isTotalLeadCountRequest);
 

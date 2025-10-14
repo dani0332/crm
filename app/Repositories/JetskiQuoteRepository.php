@@ -198,8 +198,6 @@ class JetskiQuoteRepository extends BaseRepository
         $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        
-
         // Apply authorize_date filter
         $query->when(! empty($this->getFilterValue('authorize_date', $requestParams)), function ($q) use ($requestParams) {
             $authorizeDates = $this->getFilterValue('authorize_date', $requestParams);

@@ -131,11 +131,11 @@ class CarQuoteService extends BaseService
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
         ];
 
-        LoggerService::info("saveQuote ".print_r([
-                'subSourceId' => $request->sub_source_id ?? null,
-                'subSourceOptionsId' => $request->sub_source_options_id ?? null,
-                'additional_notes' => $request->additional_notes ?? null,
-            ], true));
+        LoggerService::info('saveQuote '.print_r([
+            'subSourceId' => $request->sub_source_id ?? null,
+            'subSourceOptionsId' => $request->sub_source_options_id ?? null,
+            'additional_notes' => $request->additional_notes ?? null,
+        ], true));
 
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -1700,8 +1700,6 @@ class CarQuoteService extends BaseService
                 }
             }
         }
-
-        
 
         if ($request->registration_type == CarRegistrationType::COMPANY) {
             $validationArray = array_merge($validationArray, [

@@ -405,7 +405,6 @@ class TravelController extends Controller
         $model = $this->genericModel;
         $subSources = $this->lookupService->getSubSource();
 
-        
         LoggerService::info('Travel create method called with parameters', [
             'type' => $request->input('type'),
             'subSourceId' => $request->input('subSourceId'),
