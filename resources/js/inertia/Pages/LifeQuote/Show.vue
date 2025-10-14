@@ -2330,7 +2330,8 @@ const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
                           !(
                             ecomDetail?.isUnderwritten &&
                             selectedProviderPlan == item.planId
-                          ) && item.providerCode !== insuranceProviderCodeEnum?.MTL
+                          ) &&
+                          item.providerCode !== insuranceProviderCodeEnum?.MTL
                         "
                         size="xs"
                         color="emerald"
