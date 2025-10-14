@@ -42,6 +42,8 @@ use setasign\Fpdi\Fpdi;
 
 class QuoteDocumentService extends BaseService
 {
+    private const MIME_TYPE_PDF = 'application/pdf';
+
     protected $client;
     use GenericQueriesAllLobs;
 
@@ -198,7 +200,7 @@ class QuoteDocumentService extends BaseService
 
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
-                $fileMimeType = 'application/pdf';
+                $fileMimeType = self::MIME_TYPE_PDF;
 
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
@@ -230,7 +232,7 @@ class QuoteDocumentService extends BaseService
 
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
-                $fileMimeType = 'application/pdf';
+                $fileMimeType = self::MIME_TYPE_PDF;
 
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
@@ -244,7 +246,7 @@ class QuoteDocumentService extends BaseService
 
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
-                $fileMimeType = 'application/pdf';
+                $fileMimeType = self::MIME_TYPE_PDF;
 
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
