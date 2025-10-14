@@ -87,6 +87,66 @@ const validateAllProfiles = () => {
     errors.push(...validateProfile(profile, index, 'Volume'));
   });
 
+  // Check for duplicate business types across value and volume profiles
+  const businessTypeDuplicates = checkBusinessTypeDuplicates();
+  if (businessTypeDuplicates.length > 0) {
+    errors.push(...businessTypeDuplicates);
+  }
+
+  return errors;
+};
+
+const checkBusinessTypeDuplicates = () => {
+  const errors = [];
+  const valueBusinessTypes = new Set();
+  const duplicateBusinessTypes = new Set();
+
+  // Collect all business types from value profiles
+  valueProfiles.value.forEach(profile => {
+    if (profile.businessTypeIds && Array.isArray(profile.businessTypeIds)) {
+      profile.businessTypeIds.forEach(btId => {
+        valueBusinessTypes.add(btId);
+      });
+    }
+  });
+
+  // Check volume profiles for duplicates
+  volumeProfiles.value.forEach(profile => {
+    if (profile.businessTypeIds && Array.isArray(profile.businessTypeIds)) {
+      profile.businessTypeIds.forEach(btId => {
+        if (valueBusinessTypes.has(btId)) {
+          duplicateBusinessTypes.add(btId);
+        }
+      });
+    }
+  });
+
+  // If duplicates found, get business type names and create error message
+  if (duplicateBusinessTypes.size > 0) {
+    const duplicateIds = Array.from(duplicateBusinessTypes);
+    const duplicateNames = duplicateIds
+      .map(id => {
+        const option = props.businessTypeOptions.find(
+          opt => opt.value === id || opt.id === id,
+        );
+        return option ? option.text || option.label || option.name : null;
+      })
+      .filter(name => name !== null);
+
+    if (duplicateNames.length > 0) {
+      errors.push(
+        `The following business type(s) are assigned to both Value and Volume profiles: ${duplicateNames.join(', ')}`,
+      );
+      errors.push(
+        'Each business type must be assigned to either Value or Volume section only.',
+      );
+    } else {
+      errors.push(
+        'Some business types are assigned to both Value and Volume profiles. Each business type must be assigned to either Value or Volume section only.',
+      );
+    }
+  }
+
   return errors;
 };
 

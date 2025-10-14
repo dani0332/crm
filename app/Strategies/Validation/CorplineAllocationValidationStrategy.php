@@ -122,6 +122,9 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
             (empty($data['volume_profiles']) || count($data['volume_profiles']) === 0)) {
             $validator->errors()->add('configuration', 'Please configure at least one Value or Volume profile to save the Corpline allocation configuration.');
         }
+
+        // Check for duplicate business types across value and volume profiles
+        $this->checkBusinessTypeAcrossProfiles($data, $validator);
     }
 
     public function getValidatedDefaults(): array
@@ -181,6 +184,69 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
 
                     $combinations[] = $key;
                 }
+            }
+        }
+    }
+
+    /**
+     * Check for duplicate business types across value and volume profiles
+     */
+    private function checkBusinessTypeAcrossProfiles(array $data, Validator $validator): void
+    {
+        $valueBusinessTypes = [];
+        $volumeBusinessTypes = [];
+
+        // Collect all business types from value profiles
+        if (isset($data['value_profiles']) && is_array($data['value_profiles'])) {
+            foreach ($data['value_profiles'] as $profile) {
+                if (isset($profile['businessTypeIds']) && is_array($profile['businessTypeIds'])) {
+                    foreach ($profile['businessTypeIds'] as $businessTypeId) {
+                        $valueBusinessTypes[] = $businessTypeId;
+                    }
+                }
+            }
+        }
+
+        // Collect all business types from volume profiles
+        if (isset($data['volume_profiles']) && is_array($data['volume_profiles'])) {
+            foreach ($data['volume_profiles'] as $profile) {
+                if (isset($profile['businessTypeIds']) && is_array($profile['businessTypeIds'])) {
+                    foreach ($profile['businessTypeIds'] as $businessTypeId) {
+                        $volumeBusinessTypes[] = $businessTypeId;
+                    }
+                }
+            }
+        }
+
+        // Find intersecting business types
+        $duplicates = array_intersect($valueBusinessTypes, $volumeBusinessTypes);
+
+        if (! empty($duplicates)) {
+            $duplicateIds = array_unique($duplicates);
+
+            // Get business type names for better error message
+            $businessTypeNames = BusinessTypeOfInsurance::whereIn('id', $duplicateIds)
+                ->pluck('business_type_of_insurance')
+                ->filter()
+                ->toArray();
+
+            if (! empty($businessTypeNames)) {
+                $validator->errors()->add(
+                    'configuration',
+                    'The following business type(s) are assigned to both Value and Volume profiles:'
+                );
+                foreach ($businessTypeNames as $businessType) {
+                    $validator->errors()->add('configuration', "  • {$businessType}");
+                }
+                $validator->errors()->add(
+                    'configuration',
+                    'Each business type must be assigned to either Value or Volume section only.'
+                );
+            } else {
+                $validator->errors()->add(
+                    'configuration',
+                    'Some business types are assigned to both Value and Volume profiles. Each business type must be assigned to either Value or Volume section only.'
+                );
             }
         }
     }
