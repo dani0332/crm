@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Storage;
 
 class MetLifeApiService extends BaseService
 {
+    private const UNKNOWN_ERROR_MESSAGE = 'Unknown error';
+
     private string $baseUrl;
     private string $apiVersion;
     private string $username;
@@ -90,7 +92,7 @@ class MetLifeApiService extends BaseService
                 $response = $this->responseService->createResponse(true, 'Session initialized successfully', $actualResponse);
             } else {
                 LoggerService::warning('MetLife Auth: Session initialization failed', [
-                    'error' => $response['message'] ?? 'Unknown error',
+                    'error' => $response['message'] ?? self::UNKNOWN_ERROR_MESSAGE,
                 ]);
             }
 
@@ -138,14 +140,14 @@ class MetLifeApiService extends BaseService
                     $response = $this->responseService->createResponse(true, 'Login successful', $actualResponse);
                 } else {
                     LoggerService::warning('MetLife Auth: Login failed - API returned success=false', [
-                        'message' => $actualResponse['message'] ?? 'Unknown error',
+                        'message' => $actualResponse['message'] ?? self::UNKNOWN_ERROR_MESSAGE,
                     ]);
 
-                    $response = $this->responseService->createResponse(false, 'Login failed: '.($actualResponse['message'] ?? 'Unknown error'), $actualResponse);
+                    $response = $this->responseService->createResponse(false, 'Login failed: '.($actualResponse['message'] ?? self::UNKNOWN_ERROR_MESSAGE), $actualResponse);
                 }
             } else {
                 LoggerService::warning('MetLife Auth: Login request failed', [
-                    'error' => $response['message'] ?? 'Unknown error',
+                    'error' => $response['message'] ?? self::UNKNOWN_ERROR_MESSAGE,
                 ]);
             }
 
@@ -205,7 +207,7 @@ class MetLifeApiService extends BaseService
             $initResult = $this->initialize();
             if (! $initResult['success']) {
                 LoggerService::warning('MetLife Auth: CSRF token refresh failed', [
-                    'error' => $initResult['message'] ?? 'Unknown error',
+                    'error' => $initResult['message'] ?? self::UNKNOWN_ERROR_MESSAGE,
                 ]);
 
                 return false;
@@ -220,7 +222,7 @@ class MetLifeApiService extends BaseService
             $loginResult = $this->login();
             if (! $loginResult['success']) {
                 LoggerService::warning('MetLife Auth: Login failed', [
-                    'error' => $loginResult['message'] ?? 'Unknown error',
+                    'error' => $loginResult['message'] ?? self::UNKNOWN_ERROR_MESSAGE,
                 ]);
 
                 return false;
