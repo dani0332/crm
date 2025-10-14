@@ -19,7 +19,6 @@ class MetLifeValidationService
     public function shouldValidatePayment(?string $providerCode): bool
     {
         $isMetLifeEnabled = $this->isIntegrationEnabled();
-        $providerCode = $providerCode;
 
         return $providerCode !== InsuranceProviderEnum::MTL->value || ! $isMetLifeEnabled;
     }
