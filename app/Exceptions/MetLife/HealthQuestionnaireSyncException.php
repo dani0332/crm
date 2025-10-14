@@ -12,7 +12,6 @@ use Exception;
 class HealthQuestionnaireSyncException extends Exception
 {
     protected ?string $quoteUuid;
-
     protected array $responseData;
 
     /**
@@ -52,4 +51,3 @@ class HealthQuestionnaireSyncException extends Exception
         return $this->responseData;
     }
 }
-
