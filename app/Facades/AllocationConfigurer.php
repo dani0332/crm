@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static array getCommonEligibleAdvisorIds(QuoteTypes $quoteType)
  * @method static array getLifeEligibleAdvisorIds(PersonalQuote $lead)
  * @method static array getGroupMedicalEligibleAdvisorIds(BusinessQuote $lead)
+ * @method static array getCorplineEligibleAdvisorIds(BusinessQuote $lead)
  *
  * @see AllocationConfigurationService
  */

@@ -2,9 +2,10 @@
 
 namespace App\Strategies\Allocations;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Facades\AllocationConfigurer;
+use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Services\RuleService;
 
@@ -12,7 +13,6 @@ class CorplineAllocation extends BaseAllocation
 {
     protected function fetchAdvisor(int $onlineStatus)
     {
-
         $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, QuoteTypeId::Business);
         if (count($emails) > 0) {
             LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", ['emails' => $emails]);
@@ -22,7 +22,8 @@ class CorplineAllocation extends BaseAllocation
 
         $this->skipRuleUsers = true;
 
-        $emails = $this->getAdvisorEmails(ApplicationStorageEnums::CORPLINE_ADVISORS);
+        $advisorIds = AllocationConfigurer::getCorplineEligibleAdvisorIds($this->lead);
+        $emails = User::whereIn('id', $advisorIds)->pluck('email')->toArray();
 
         return $this->getAdvisorByEmails($onlineStatus, $emails);
     }

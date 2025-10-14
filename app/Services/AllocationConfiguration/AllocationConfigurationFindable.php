@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Models\Allocation\AllocationConfiguration;
 use App\Models\BusinessQuote;
 use App\Models\PersonalQuote;
+use Illuminate\Support\Collection;
 
 trait AllocationConfigurationFindable
 {
@@ -91,6 +92,27 @@ trait AllocationConfigurationFindable
         return $this->extractAdvisorIdsFromBrackets($nonMicroBrackets, $numberOfEmployees, $healthPlanTypeId, 'planTypeIds', 'employees_min', 'employees_max');
     }
 
+    public function getCorplineEligibleAdvisorIds(BusinessQuote $lead): array
+    {
+        $configuration = $this->findConfig(QuoteTypes::CORPLINE);
+        $businessTypeId = $lead?->business_type_of_insurance_id;
+
+        if (! $configuration || ! $businessTypeId) {
+            return [];
+        }
+
+        foreach(['value_profiles', 'volume_profiles'] as $profileType) {
+            $profiles = $configuration?->{$profileType};
+            $profileData = $this->getMatchingProfileData($profiles, 'businessTypeIds', $businessTypeId);
+            $advisorIds = $this->getAdvisorIds($profileData);
+            if (! empty($advisorIds)) {
+                return $advisorIds;
+            }
+        }
+
+        return [];
+    }
+
     private function extractAdvisorIdsFromBrackets(
         array $brackets,
         int|float $bracketValue,
@@ -122,7 +144,18 @@ trait AllocationConfigurationFindable
 
         $profiles = collect($bracket['profiles']);
 
-        return collect($profiles)->first(fn ($profile) => in_array($value, $profile[$key]));
+        return $this->getMatchingProfileData($profiles, $key, $value);
+    }
+
+    private function getMatchingProfileData(Collection|array|null $profiles, string $key, int|string $value): ?array
+    {
+        if (empty($profiles)) {
+            return null;
+        }
+
+        $profiles = is_array($profiles) ? collect($profiles) : $profiles;
+
+        return $profiles->first(fn ($profile) => in_array($value, $profile[$key]));
     }
 
     private function getAdvisorIds(?array $profile): array
