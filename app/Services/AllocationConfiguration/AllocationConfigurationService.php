@@ -37,8 +37,8 @@ class AllocationConfigurationService
                 'advisor_ids' => $data['advisor_ids'] ?? [],
             ],
             QuoteTypes::CORPLINE => [
-                'value_brackets' => $data['value_brackets'] ?? [],
-                'volume_brackets' => $data['volume_brackets'] ?? [],
+                'value_profiles' => $data['value_profiles'] ?? [],
+                'volume_profiles' => $data['volume_profiles'] ?? [],
             ],
             QuoteTypes::GROUP_MEDICAL => [
                 'micro_brackets' => $data['micro_brackets'] ?? [],
