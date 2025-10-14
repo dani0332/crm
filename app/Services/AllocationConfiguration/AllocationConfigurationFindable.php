@@ -7,6 +7,7 @@ namespace App\Services\AllocationConfiguration;
 use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Allocation\AllocationConfiguration;
+use App\Models\BusinessQuote;
 use App\Models\PersonalQuote;
 
 trait AllocationConfigurationFindable
@@ -67,6 +68,27 @@ trait AllocationConfigurationFindable
         }
 
         return [];
+    }
+
+    public function getGroupMedicalEligibleAdvisorIds(BusinessQuote $lead): array
+    {
+        $configuration = $this->findConfig(QuoteTypes::GROUP_MEDICAL);
+        $numberOfEmployees = $lead?->number_of_employees;
+        $healthPlanTypeId = $lead?->health_plan_type_id;
+
+        if (! $configuration || ! $numberOfEmployees || ! $healthPlanTypeId) {
+            return [];
+        }
+
+        $microBrackets = $configuration?->micro_brackets;
+        $advisorIds = $this->extractAdvisorIdsFromBrackets($microBrackets, $numberOfEmployees, $healthPlanTypeId, 'planTypeIds', 'employees_min', 'employees_max');
+        if (! empty($advisorIds)) {
+            return $advisorIds;
+        }
+
+        $nonMicroBrackets = $configuration?->non_micro_brackets;
+
+        return $this->extractAdvisorIdsFromBrackets($nonMicroBrackets, $numberOfEmployees, $healthPlanTypeId, 'planTypeIds', 'employees_min', 'employees_max');
     }
 
     private function extractAdvisorIdsFromBrackets(
