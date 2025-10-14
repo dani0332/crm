@@ -402,6 +402,11 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsTo(Department::class)->select('id', 'name');
     }
 
+    public function rmCategory()
+    {
+        return $this->belongsTo(Lookup::class, 'rm_category_id', 'id');
+    }
+
     public function advisors()
     {
         return $this->hasMany(InslyAdvisor::class);
