@@ -8,7 +8,7 @@ use Exception;
 
 /**
  * General exception for MetLife integration operations.
- * 
+ *
  * This exception covers all MetLife-related failures with specific error types
  * for better context and debugging without over-engineering multiple exception classes.
  */
@@ -25,7 +25,6 @@ class MetLifeException extends Exception
     public const API_REQUEST_FAILED = 'api_request_failed';
 
     protected string $errorType;
-
     protected array $context;
 
     /**
@@ -73,4 +72,3 @@ class MetLifeException extends Exception
         return $this->context[$key] ?? $default;
     }
 }
-
