@@ -389,14 +389,9 @@ class MetLifeApiService extends BaseService
     {
         try {
             $docPath = $document->watermarked_doc_url ?: $document->doc_url;
+            $fileContent = empty($docPath) ? null : Storage::disk('azureIM')->get($docPath);
 
-            if (empty($docPath)) {
-                return null;
-            }
-
-            $fileContent = Storage::disk('azureIM')->get($docPath);
-
-            if (! $fileContent) {
+            if (empty($docPath) || ! $fileContent) {
                 return null;
             }
 
