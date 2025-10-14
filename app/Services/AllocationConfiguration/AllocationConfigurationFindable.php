@@ -101,7 +101,7 @@ trait AllocationConfigurationFindable
             return [];
         }
 
-        foreach(['value_profiles', 'volume_profiles'] as $profileType) {
+        foreach (['value_profiles', 'volume_profiles'] as $profileType) {
             $profiles = $configuration?->{$profileType};
             $profileData = $this->getMatchingProfileData($profiles, 'businessTypeIds', $businessTypeId);
             $advisorIds = $this->getAdvisorIds($profileData);
