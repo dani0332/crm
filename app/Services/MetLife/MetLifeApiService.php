@@ -425,12 +425,9 @@ class MetLifeApiService extends BaseService
     public function uploadToMetLife(array $data, string $docName): array
     {
         try {
-            if (! isset($data['policy_number']) || empty($data['policy_number'])) {
-                return $this->responseService->createResponse(false, 'Policy number is required for MetLife upload', ['doc_name' => $docName]);
-            }
-
-            if (! isset($data['file']) || empty($data['file'])) {
-                return $this->responseService->createResponse(false, 'File data is required for MetLife upload', ['doc_name' => $docName, 'policy_number' => $data['policy_number']]);
+            $validationError = $this->validateUploadData($data, $docName);
+            if ($validationError) {
+                return $validationError;
             }
 
             $payload = [
@@ -451,6 +448,19 @@ class MetLifeApiService extends BaseService
         } catch (Exception $e) {
             return $this->responseService->handleExceptionResponse($e);
         }
+    }
+
+    private function validateUploadData(array $data, string $docName): ?array
+    {
+        if (! isset($data['policy_number']) || empty($data['policy_number'])) {
+            return $this->responseService->createResponse(false, 'Policy number is required for MetLife upload', ['doc_name' => $docName]);
+        }
+
+        if (! isset($data['file']) || empty($data['file'])) {
+            return $this->responseService->createResponse(false, 'File data is required for MetLife upload', ['doc_name' => $docName, 'policy_number' => $data['policy_number']]);
+        }
+
+        return null;
     }
 
     public function syncHealthQuestionnaire(array $requestData): array
