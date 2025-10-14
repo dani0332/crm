@@ -23,21 +23,21 @@ const props = defineProps({
 
 const emit = defineEmits(['data-update']);
 
-const valueBrackets = ref([]);
-const volumeBrackets = ref([]);
+const valueProfiles = ref([]);
+const volumeProfiles = ref([]);
 const validationErrors = ref({});
 
 const initializeData = () => {
   if (props.configuration) {
-    valueBrackets.value = props.configuration.value_brackets
-      ? JSON.parse(JSON.stringify(props.configuration.value_brackets))
+    valueProfiles.value = props.configuration.value_profiles
+      ? JSON.parse(JSON.stringify(props.configuration.value_profiles))
       : [];
-    volumeBrackets.value = props.configuration.volume_brackets
-      ? JSON.parse(JSON.stringify(props.configuration.volume_brackets))
+    volumeProfiles.value = props.configuration.volume_profiles
+      ? JSON.parse(JSON.stringify(props.configuration.volume_profiles))
       : [];
   } else {
-    valueBrackets.value = [];
-    volumeBrackets.value = [];
+    valueProfiles.value = [];
+    volumeProfiles.value = [];
   }
 
   emitData();
@@ -45,76 +45,53 @@ const initializeData = () => {
 
 const emitData = () => {
   const data = {
-    value_brackets: valueBrackets.value,
-    volume_brackets: volumeBrackets.value,
+    value_profiles: valueProfiles.value,
+    volume_profiles: volumeProfiles.value,
   };
   emit('data-update', data);
 };
 
-const validateBracket = (bracket, bracketIndex, type) => {
+const validateProfile = (profile, profileIndex, type) => {
   const errors = [];
 
-  // Validate min/max amounts
-  if (!bracket.min || !bracket.max) {
+  if (!profile.advisorIds || profile.advisorIds.length === 0) {
     errors.push(
-      `${type} Bracket ${bracketIndex + 1}: Minimum and Maximum amounts are required`,
-    );
-  } else if (parseFloat(bracket.min) > parseFloat(bracket.max)) {
-    errors.push(
-      `${type} Bracket ${bracketIndex + 1}: Minimum amount cannot be greater than Maximum amount`,
+      `${type} Profile ${profileIndex + 1}: At least one advisor must be selected`,
     );
   }
 
-  if (!bracket.profiles || bracket.profiles.length === 0) {
+  if (!profile.businessTypeIds || profile.businessTypeIds.length === 0) {
     errors.push(
-      `${type} Bracket ${bracketIndex + 1}: At least one advisor profile is required`,
+      `${type} Profile ${profileIndex + 1}: At least one business type must be selected`,
     );
-  } else {
-    bracket.profiles.forEach((profile, profileIndex) => {
-      if (!profile.advisorIds || profile.advisorIds.length === 0) {
-        errors.push(
-          `${type} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one advisor must be selected`,
-        );
-      }
-
-      if (!profile.businessTypeIds || profile.businessTypeIds.length === 0) {
-        errors.push(
-          `${type} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one business type must be selected`,
-        );
-      }
-    });
   }
 
   return errors;
 };
 
-const validateAllBrackets = () => {
+const validateAllProfiles = () => {
   const errors = [];
 
-  if (valueBrackets.value.length === 0 || volumeBrackets.value.length === 0) {
-    if (valueBrackets.value.length === 0) {
-      errors.push('At least one Value bracket must be configured');
-    }
-
-    if (volumeBrackets.value.length === 0) {
-      errors.push('At least one Volume bracket must be configured');
-    }
+  if (valueProfiles.value.length === 0 && volumeProfiles.value.length === 0) {
+    errors.push(
+      'At least one profile must be configured in either Value or Volume section',
+    );
     return errors;
   }
 
-  valueBrackets.value.forEach((bracket, index) => {
-    errors.push(...validateBracket(bracket, index, 'Value'));
+  valueProfiles.value.forEach((profile, index) => {
+    errors.push(...validateProfile(profile, index, 'Value'));
   });
 
-  volumeBrackets.value.forEach((bracket, index) => {
-    errors.push(...validateBracket(bracket, index, 'Volume'));
+  volumeProfiles.value.forEach((profile, index) => {
+    errors.push(...validateProfile(profile, index, 'Volume'));
   });
 
   return errors;
 };
 
 const validate = () => {
-  const errors = validateAllBrackets();
+  const errors = validateAllProfiles();
   validationErrors.value = errors;
   return {
     isValid: errors.length === 0,
@@ -127,7 +104,7 @@ const clearValidationErrors = () => {
 };
 
 watch(
-  [valueBrackets, volumeBrackets],
+  [valueProfiles, volumeProfiles],
   () => {
     if (Object.keys(validationErrors.value).length > 0) {
       clearValidationErrors();
@@ -151,36 +128,6 @@ watch(
   { deep: true },
 );
 
-const createEmptyBracket = () => ({
-  min: 0,
-  max: 0,
-  profiles: [],
-});
-
-const addValueBracket = () => {
-  valueBrackets.value.push(createEmptyBracket());
-};
-
-const removeValueBracket = index => {
-  valueBrackets.value.splice(index, 1);
-};
-
-const addVolumeBracket = () => {
-  volumeBrackets.value.push(createEmptyBracket());
-};
-
-const removeVolumeBracket = index => {
-  volumeBrackets.value.splice(index, 1);
-};
-
-const onAddProfile = () => {
-  // Profile addition is handled within CorplineBracketModule
-};
-
-const onRemoveProfile = () => {
-  // Profile removal is handled within CorplineBracketModule
-};
-
 defineExpose({
   validate,
   clearValidationErrors,
@@ -192,27 +139,19 @@ defineExpose({
     <CorplineBracketModule
       title="Value"
       type="Value"
-      :brackets="valueBrackets"
+      :profiles="valueProfiles"
       :advisor-options="advisorOptions"
       :business-type-options="businessTypeOptions"
       :view-mode="viewMode"
-      @add-bracket="addValueBracket"
-      @remove-bracket="removeValueBracket"
-      @add-profile="onAddProfile"
-      @remove-profile="onRemoveProfile"
     />
 
     <CorplineBracketModule
       title="Volume"
       type="Volume"
-      :brackets="volumeBrackets"
+      :profiles="volumeProfiles"
       :advisor-options="advisorOptions"
       :business-type-options="businessTypeOptions"
       :view-mode="viewMode"
-      @add-bracket="addVolumeBracket"
-      @remove-bracket="removeVolumeBracket"
-      @add-profile="onAddProfile"
-      @remove-profile="onRemoveProfile"
     />
   </div>
 </template>
