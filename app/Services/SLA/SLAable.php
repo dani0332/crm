@@ -158,7 +158,7 @@ trait SLAable
         if (in_array(TeamNameEnum::RM_SPEED, $advisorTeams)) {
             $managerEmails = [
                 ...$managerEmails,
-                ...$this->getRMEmails(),
+                ...$this->getRMManagerEmails(),
             ];
         }
 
