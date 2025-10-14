@@ -21,13 +21,11 @@ class LifeSyncHealthQuestionnaireRequest extends FormRequest
      */
     public function rules(): array
     {
-        $rules = [
+        return [
             'quote_uuid' => 'required|string',
             'policy_number' => 'required|string|max:100',
             'provider_code' => 'required|string|max:10',
         ];
-
-        return $rules;
     }
 
     /**
