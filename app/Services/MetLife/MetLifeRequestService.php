@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\MetLife;
 
+use App\Exceptions\MetLife\MetLifeException;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Client\Response;
@@ -36,7 +37,11 @@ class MetLifeRequestService
             $response = match (strtoupper($method)) {
                 'GET' => $http->get($endpoint, $data),
                 'POST' => $http->post($endpoint, $data),
-                default => throw new Exception("Unsupported HTTP method: {$method}"),
+                default => throw new MetLifeException(
+                    "Unsupported HTTP method: {$method}",
+                    MetLifeException::API_REQUEST_FAILED,
+                    ['method' => $method, 'endpoint' => $endpoint]
+                ),
             };
 
             LoggerService::info('MetLife API response', [
@@ -47,6 +52,20 @@ class MetLifeRequestService
 
             return $this->handleResponse($response, $endpoint);
 
+        } catch (MetLifeException $e) {
+            LoggerService::warning('MetLife request exception', [
+                'endpoint' => $endpoint,
+                'method' => $method,
+                'error' => $e->getMessage(),
+                'error_type' => $e->getErrorType(),
+                'context' => $e->getContext(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'MetLife operation failed: '.$e->getMessage(),
+                'data' => ['exception_code' => $e->getCode(), 'error_type' => $e->getErrorType()],
+            ];
         } catch (Exception $e) {
             LoggerService::warning('MetLife request exception', [
                 'endpoint' => $endpoint,
