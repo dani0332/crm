@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Facades;
 
 use App\Enums\QuoteTypes;
+use App\Models\BusinessQuote;
 use App\Models\PersonalQuote;
 use App\Services\AllocationConfiguration\AllocationConfigurationService;
 use Illuminate\Support\Facades\Facade;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static array getSavingsEligibleAdvisorIds(PersonalQuote $lead)
  * @method static array getCommonEligibleAdvisorIds(QuoteTypes $quoteType)
  * @method static array getLifeEligibleAdvisorIds(PersonalQuote $lead)
+ * @method static array getGroupMedicalEligibleAdvisorIds(BusinessQuote $lead)
  *
  * @see AllocationConfigurationService
  */

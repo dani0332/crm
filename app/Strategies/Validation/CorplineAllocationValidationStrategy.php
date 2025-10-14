@@ -233,11 +233,8 @@ class CorplineAllocationValidationStrategy implements AllocationValidationStrate
             if (! empty($businessTypeNames)) {
                 $validator->errors()->add(
                     'configuration',
-                    'The following business type(s) are assigned to both Value and Volume profiles:'
+                    'The following business type(s) are assigned to both Value and Volume profiles: '.implode(', ', $businessTypeNames)
                 );
-                foreach ($businessTypeNames as $businessType) {
-                    $validator->errors()->add('configuration', "  • {$businessType}");
-                }
                 $validator->errors()->add(
                     'configuration',
                     'Each business type must be assigned to either Value or Volume section only.'
