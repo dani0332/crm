@@ -25,7 +25,6 @@ class AutomationFailedJob implements ShouldQueue
 
     public int $timeout = 100;
     public int $tries = 3;
-
     private $quoteId;
     private $quoteTypeId;
     private $actionRequired;
@@ -66,7 +65,7 @@ class AutomationFailedJob implements ShouldQueue
         LoggerService::startQuoteLogging($quote);
         LoggerService::info('job:AutomationFailedJob - Job started', extra: [
             'userToSendEmail' => $this->userToSendEmail,
-            'quoteCode' => $quote->code ?? 'unknown'
+            'quoteCode' => $quote->code ?? 'unknown',
         ]);
 
         $payment = $quote->payments()->mainLeadPayment()->first();

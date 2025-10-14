@@ -8,7 +8,6 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
@@ -559,7 +558,7 @@ class CarQuote extends BaseModel
     {
         return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
             ->where('quote_type_id', QuoteTypeId::Car)->withTrashed();
-    }    
+    }
 
     public function carQuotePlanDetail()
     {
