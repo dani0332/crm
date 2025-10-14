@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Jobs;
 
+use App\Exceptions\MetLife\HealthQuestionnaireSyncException;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Services\MetLife\MetLifeApiService;
 use Exception;
@@ -97,7 +98,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
             ->with($requestData)
             ->andReturn($mockResult);
 
-        $this->expectException(Exception::class);
+        $this->expectException(HealthQuestionnaireSyncException::class);
         $this->expectExceptionMessage('Health questionnaire sync failed: Sync failed');
 
         $job->handle($this->mockMetLifeApiService);

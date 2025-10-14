@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Exceptions\MetLife\HealthQuestionnaireSyncException;
 use App\Services\Logger\LoggerService;
 use App\Services\MetLife\MetLifeApiService;
 use Exception;
@@ -35,12 +36,24 @@ class LifeSyncHealthQuestionnaireJob implements ShouldQueue
             $result = $metLifeService->syncHealthQuestionnaire($this->requestData);
 
             if (is_array($result) && ($result['success'] ?? true) === false) {
-                throw new Exception('Health questionnaire sync failed: '.($result['message'] ?? 'Unknown error'));
+                throw new HealthQuestionnaireSyncException(
+                    'Health questionnaire sync failed: '.($result['message'] ?? 'Unknown error'),
+                    $this->requestData['quote_uuid'] ?? null,
+                    $result
+                );
             }
 
             LoggerService::info('Health Questionnaire sync completed successfully.', ['quote_uuid' => $this->requestData['quote_uuid']]);
+        } catch (HealthQuestionnaireSyncException $e) {
+            LoggerService::warning('Health Questionnaire sync job failed.', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'quote_uuid' => $e->getQuoteUuid(),
+                'response_data' => $e->getResponseData(),
+            ]);
+            throw $e;
         } catch (Exception $e) {
-            LoggerService::error('Health Questionnaire sync job failed.', [
+            LoggerService::warning('Health Questionnaire sync job failed.', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'quote_uuid' => $this->requestData['quote_uuid'],
@@ -51,7 +64,8 @@ class LifeSyncHealthQuestionnaireJob implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        LoggerService::error('LifeSyncHealthQuestionnaireJob failed for quote_uuid: '.($this->requestData['quote_uuid'] ?? 'N/A'), [
+        LoggerService::warning('LifeSyncHealthQuestionnaireJob failed', [
+            'quote_uuid' => $this->requestData['quote_uuid'] ?? 'N/A',
             'error' => $exception->getMessage(),
         ]);
     }

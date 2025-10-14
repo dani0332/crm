@@ -204,7 +204,7 @@ class MetLifeApiService extends BaseService
             LoggerService::info('MetLife Auth: CSRF token invalid, refreshing...');
             $initResult = $this->initialize();
             if (! $initResult['success']) {
-                LoggerService::error('MetLife Auth: CSRF token refresh failed', [
+                LoggerService::warning('MetLife Auth: CSRF token refresh failed', [
                     'error' => $initResult['message'] ?? 'Unknown error',
                 ]);
 
@@ -219,7 +219,7 @@ class MetLifeApiService extends BaseService
             LoggerService::info('MetLife Auth: Session invalid, logging in...');
             $loginResult = $this->login();
             if (! $loginResult['success']) {
-                LoggerService::error('MetLife Auth: Login failed', [
+                LoggerService::warning('MetLife Auth: Login failed', [
                     'error' => $loginResult['message'] ?? 'Unknown error',
                 ]);
 
@@ -246,7 +246,7 @@ class MetLifeApiService extends BaseService
         ]);
 
         if (! $this->ensureValidSession()) {
-            LoggerService::error('MetLife Auth: Unable to establish valid session');
+            LoggerService::warning('MetLife Auth: Unable to establish valid session');
 
             return $this->responseService->createResponse(false, 'Unable to establish valid session');
         }
@@ -451,7 +451,7 @@ class MetLifeApiService extends BaseService
             ]);
 
         } catch (Exception $e) {
-            LoggerService::error('MetLifeApiService: Exception in health questionnaire sync', [
+            LoggerService::warning('MetLifeApiService: Exception in health questionnaire sync', [
                 'quote_uuid' => $requestData['quote_uuid'] ?? 'N/A',
                 'error' => $e->getMessage(),
             ]);
