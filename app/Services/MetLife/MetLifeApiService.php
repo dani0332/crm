@@ -438,24 +438,15 @@ class MetLifeApiService extends BaseService
             ]);
 
             $healthQuestionnaireService = app(MTLHealthQuestionnaireService::class);
-            $result = $healthQuestionnaireService->syncHealthQuestionnaire($requestData);
-
-            if (isset($result['error'])) {
-                LoggerService::warning('MetLifeApiService: Health questionnaire sync failed', [
-                    'quote_uuid' => $requestData['quote_uuid'],
-                    'error' => $result['error'],
-                ]);
-
-                return $this->responseService->createResponse(false, 'Health questionnaire sync failed: '.$result['error']);
-            }
+            $document = $healthQuestionnaireService->syncHealthQuestionnaire($requestData);
 
             LoggerService::info('MetLifeApiService: Health questionnaire sync completed successfully', [
                 'quote_uuid' => $requestData['quote_uuid'],
-                'document_id' => $result->id ?? 'N/A',
+                'document_id' => $document->id ?? 'N/A',
             ]);
 
             return $this->responseService->createResponse(true, 'Health questionnaire synced successfully', [
-                'document_id' => $result->id ?? null,
+                'document_id' => $document->id ?? null,
                 'quote_uuid' => $requestData['quote_uuid'],
             ]);
 

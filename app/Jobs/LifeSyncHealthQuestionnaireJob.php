@@ -35,8 +35,8 @@ class LifeSyncHealthQuestionnaireJob implements ShouldQueue
             $metLifeService = app(MetLifeApiService::class);
             $result = $metLifeService->syncHealthQuestionnaire($this->requestData);
 
-            if (is_array($result) && isset($result['error'])) {
-                throw new Exception('Health questionnaire sync failed: '.$result['error']);
+            if (is_array($result) && ($result['success'] ?? true) === false) {
+                throw new Exception('Health questionnaire sync failed: '.($result['message'] ?? 'Unknown error'));
             }
 
             LoggerService::info('Health Questionnaire sync completed successfully.', ['quote_uuid' => $this->requestData['quote_uuid']]);

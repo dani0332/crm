@@ -89,7 +89,9 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
         $job = new LifeSyncHealthQuestionnaireJob($requestData);
 
         $mockResult = [
-            'error' => 'Sync failed',
+            'success' => false,
+            'message' => 'Sync failed',
+            'data' => [],
         ];
 
         $this->app->instance(MetLifeApiService::class, $this->mockMetLifeApiService);
@@ -123,7 +125,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
         $job->handle();
     }
 
-    public function test_handle_with_array_result_without_error_key()
+    public function test_handle_with_array_result_success_true()
     {
         $requestData = [
             'quote_uuid' => 'test-quote-uuid-123',
@@ -135,6 +137,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
         $mockResult = [
             'success' => true,
             'message' => 'Success',
+            'data' => ['document_id' => 123],
         ];
 
         $this->app->instance(MetLifeApiService::class, $this->mockMetLifeApiService);
@@ -142,7 +145,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
             ->with($requestData)
             ->andReturn($mockResult);
 
-        // Should not throw any exception since no 'error' key
+        // Should not throw any exception since success is true
         $job->handle();
 
         $this->assertTrue(true); // If we reach here, no exception was thrown
