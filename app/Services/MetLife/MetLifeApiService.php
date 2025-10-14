@@ -186,8 +186,8 @@ class MetLifeApiService extends BaseService
         }
 
         LoggerService::info('MetLife Auth: Checking session validity', [
-            'session_id' => $this->sessionId ? substr($this->sessionId, 0, 8).'...' : 'null',
-            'csrf_token' => $this->csrfToken ? substr($this->csrfToken, 0, 8).'...' : 'null',
+            'session_id' => $this->maskToken($this->sessionId),
+            'csrf_token' => $this->maskToken($this->csrfToken),
             'session_created_at' => $this->sessionCreatedAt,
             'csrf_token_created_at' => $this->csrfTokenCreatedAt,
         ]);
@@ -202,39 +202,62 @@ class MetLifeApiService extends BaseService
             'session_age' => $this->sessionCreatedAt ? (time() - $this->sessionCreatedAt) : 'null',
         ]);
 
-        if (! $csrfValid) {
-            LoggerService::info('MetLife Auth: CSRF token invalid, refreshing...');
-            $initResult = $this->initialize();
-            if (! $initResult['success']) {
-                LoggerService::warning('MetLife Auth: CSRF token refresh failed', [
-                    'error' => $initResult['message'] ?? self::UNKNOWN_ERROR_MESSAGE,
-                ]);
-
-                return false;
-            }
-            LoggerService::info('MetLife Auth: CSRF token refreshed successfully', [
-                'new_csrf_token' => $this->csrfToken ? substr($this->csrfToken, 0, 8).'...' : 'null',
-            ]);
+        if (! $csrfValid && ! $this->refreshCsrfToken()) {
+            return false;
         }
 
-        if (! $sessionValid) {
-            LoggerService::info('MetLife Auth: Session invalid, logging in...');
-            $loginResult = $this->login();
-            if (! $loginResult['success']) {
-                LoggerService::warning('MetLife Auth: Login failed', [
-                    'error' => $loginResult['message'] ?? self::UNKNOWN_ERROR_MESSAGE,
-                ]);
-
-                return false;
-            }
-            LoggerService::info('MetLife Auth: Login successful', [
-                'new_session_id' => $this->sessionId ? substr($this->sessionId, 0, 8).'...' : 'null',
-            ]);
+        if (! $sessionValid && ! $this->refreshSession()) {
+            return false;
         }
 
         LoggerService::info('MetLife Auth: Session validation completed', [
-            'final_session_id' => $this->sessionId ? substr($this->sessionId, 0, 8).'...' : 'null',
-            'final_csrf_token' => $this->csrfToken ? substr($this->csrfToken, 0, 8).'...' : 'null',
+            'final_session_id' => $this->maskToken($this->sessionId),
+            'final_csrf_token' => $this->maskToken($this->csrfToken),
+        ]);
+
+        return true;
+    }
+
+    private function maskToken(?string $token): string
+    {
+        return $token ? substr($token, 0, 8).'...' : 'null';
+    }
+
+    private function refreshCsrfToken(): bool
+    {
+        LoggerService::info('MetLife Auth: CSRF token invalid, refreshing...');
+        $initResult = $this->initialize();
+
+        if (! $initResult['success']) {
+            LoggerService::warning('MetLife Auth: CSRF token refresh failed', [
+                'error' => $initResult['message'] ?? self::UNKNOWN_ERROR_MESSAGE,
+            ]);
+
+            return false;
+        }
+
+        LoggerService::info('MetLife Auth: CSRF token refreshed successfully', [
+            'new_csrf_token' => $this->maskToken($this->csrfToken),
+        ]);
+
+        return true;
+    }
+
+    private function refreshSession(): bool
+    {
+        LoggerService::info('MetLife Auth: Session invalid, logging in...');
+        $loginResult = $this->login();
+
+        if (! $loginResult['success']) {
+            LoggerService::warning('MetLife Auth: Login failed', [
+                'error' => $loginResult['message'] ?? self::UNKNOWN_ERROR_MESSAGE,
+            ]);
+
+            return false;
+        }
+
+        LoggerService::info('MetLife Auth: Login successful', [
+            'new_session_id' => $this->maskToken($this->sessionId),
         ]);
 
         return true;
