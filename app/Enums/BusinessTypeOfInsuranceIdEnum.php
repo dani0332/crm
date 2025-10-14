@@ -18,4 +18,5 @@ final class BusinessTypeOfInsuranceIdEnum extends Enum
     const MARINE_HULL = 11;
     const PROPERTY = 3;
     const SEVERAL_INSURANCES = 1;
+    const CAR_FLEET = 9;
 }

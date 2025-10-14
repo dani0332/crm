@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\DocumentType;
@@ -629,6 +630,42 @@ class DocumentTypesSeeder extends Seeder
                 'folder_path' => 'bor',
                 'accepted_files' => '.pdf,.png,.jpeg,.jpg',
                 'max_files' => 5,
+            ],
+            [
+                'code' => DocumentTypeCode::PHB,
+                'text' => 'Policy Handbook',
+                'description' => '',
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypeId::Business,
+                'folder_path' => 'business',
+                'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+                'max_files' => 4,
+                'max_size' => 25,
+                'is_required' => 1,
+                'send_to_customer' => 1,
+                'receive_from_customer' => 0,
+                'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
+                'is_required_for_send_policy' => 1,
+                'business_type_of_insurance_id' => BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL,
+                'business_type_of_customer' => DocumentTypeCode::COMPANY_BUSINESS_TYPE_OF_CUSTOMER,
+            ],
+            [
+                'code' => DocumentTypeCode::PHB,
+                'text' => 'Policy Handbook',
+                'description' => '',
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypeId::Business,
+                'folder_path' => 'business',
+                'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+                'max_files' => 4,
+                'max_size' => 25,
+                'is_required' => 1,
+                'send_to_customer' => 1,
+                'receive_from_customer' => 0,
+                'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
+                'is_required_for_send_policy' => 1,
+                'business_type_of_insurance_id' => BusinessTypeOfInsuranceIdEnum::CAR_FLEET,
+                'business_type_of_customer' => DocumentTypeCode::COMPANY_BUSINESS_TYPE_OF_CUSTOMER,
             ],
         ];
 
