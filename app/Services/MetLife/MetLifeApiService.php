@@ -87,12 +87,12 @@ class MetLifeApiService extends BaseService
                     LoggerService::info('MetLife Auth: CSRF token cached');
                 }
 
-                return $this->responseService->createResponse(true, 'Session initialized successfully', $actualResponse);
+                $response = $this->responseService->createResponse(true, 'Session initialized successfully', $actualResponse);
+            } else {
+                LoggerService::warning('MetLife Auth: Session initialization failed', [
+                    'error' => $response['message'] ?? 'Unknown error',
+                ]);
             }
-
-            LoggerService::warning('MetLife Auth: Session initialization failed', [
-                'error' => $response['message'] ?? 'Unknown error',
-            ]);
 
             return $response;
 
@@ -135,19 +135,19 @@ class MetLifeApiService extends BaseService
                     $this->cache->cacheSession($this->sessionId, $this->sessionCreatedAt, $this->sessionTimeout);
                     LoggerService::info('MetLife Auth: Session cached');
 
-                    return $this->responseService->createResponse(true, 'Login successful', $actualResponse);
+                    $response = $this->responseService->createResponse(true, 'Login successful', $actualResponse);
+                } else {
+                    LoggerService::warning('MetLife Auth: Login failed - API returned success=false', [
+                        'message' => $actualResponse['message'] ?? 'Unknown error',
+                    ]);
+
+                    $response = $this->responseService->createResponse(false, 'Login failed: '.($actualResponse['message'] ?? 'Unknown error'), $actualResponse);
                 }
-
-                LoggerService::warning('MetLife Auth: Login failed - API returned success=false', [
-                    'message' => $actualResponse['message'] ?? 'Unknown error',
+            } else {
+                LoggerService::warning('MetLife Auth: Login request failed', [
+                    'error' => $response['message'] ?? 'Unknown error',
                 ]);
-
-                return $this->responseService->createResponse(false, 'Login failed: '.($actualResponse['message'] ?? 'Unknown error'), $actualResponse);
             }
-
-            LoggerService::warning('MetLife Auth: Login request failed', [
-                'error' => $response['message'] ?? 'Unknown error',
-            ]);
 
             return $response;
 
