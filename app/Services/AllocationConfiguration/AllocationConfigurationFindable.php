@@ -58,7 +58,9 @@ trait AllocationConfigurationFindable
         }
 
         foreach (range(1, 4) as $type) {
-            $advisorIds = $this->extractAdvisorIdsFromBrackets($configuration->{"type{$type}_brackets"}, $amount, $nationalityId);
+            $configKey = "type{$type}_brackets";
+            $brackets = $configuration->{$configKey};
+            $advisorIds = $this->extractAdvisorIdsFromBrackets($brackets, $amount, $nationalityId);
             if (! empty($advisorIds)) {
                 return $advisorIds;
             }
@@ -67,24 +69,30 @@ trait AllocationConfigurationFindable
         return [];
     }
 
-    private function extractAdvisorIdsFromBrackets(array $brackets, float $amount, int $nationalityId): array
-    {
-        $matchingBracket = $this->getMatchingBracket($brackets, $amount);
+    private function extractAdvisorIdsFromBrackets(
+        array $brackets,
+        int|float $bracketValue,
+        int|string $profileValue,
+        string $profileKey = 'nationalityIds',
+        string $bracketMinKey = 'min',
+        string $bracketMaxKey = 'max'
+    ): array {
+        $matchingBracket = $this->getMatchingBracket($brackets, $bracketValue, $bracketMinKey, $bracketMaxKey);
 
-        $matchingProfile = $this->getMatchingProfile($matchingBracket, $nationalityId);
+        $matchingProfile = $this->getMatchingProfile($matchingBracket, $profileKey, $profileValue);
 
         return $this->getAdvisorIds($matchingProfile);
     }
 
-    private function getMatchingBracket(array $brackets, float $amount): ?array
+    private function getMatchingBracket(array $brackets, int|float $value, string $minKey = 'min', string $maxKey = 'max'): ?array
     {
         return collect($brackets)
-            ->where('min', '<=', $amount)
-            ->where('max', '>=', $amount)
+            ->where($minKey, '<=', $value)
+            ->where($maxKey, '>=', $value)
             ->first();
     }
 
-    private function getMatchingProfile(?array $bracket, int $nationalityId): ?array
+    private function getMatchingProfile(?array $bracket, string $key, int|string $value): ?array
     {
         if (empty($bracket) || ! isset($bracket['profiles'])) {
             return null;
@@ -92,7 +100,7 @@ trait AllocationConfigurationFindable
 
         $profiles = collect($bracket['profiles']);
 
-        return collect($profiles)->first(fn ($profile) => in_array($nationalityId, $profile['nationalityIds']));
+        return collect($profiles)->first(fn ($profile) => in_array($value, $profile[$key]));
     }
 
     private function getAdvisorIds(?array $profile): array
