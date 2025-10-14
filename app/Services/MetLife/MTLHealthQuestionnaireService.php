@@ -14,6 +14,8 @@ use App\Services\QuoteDocumentService;
 
 class MTLHealthQuestionnaireService
 {
+    private const HEALTH_QUESTIONNAIRE_FORM_NAME = 'Health Questionnaire';
+
     public function syncHealthQuestionnaire(array $requestData)
     {
         LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($requestData['quote_uuid']));
@@ -178,9 +180,9 @@ class MTLHealthQuestionnaireService
     private function isHealthQuestionnaire(array $field): bool
     {
         return isset($field['form_name'], $field['form_id'], $field['form_title'], $field['form_type'], $field['fields']) &&
-               $field['form_name'] === 'Health Questionnaire' &&
-               $field['form_id'] === 'Health Questionnaire' &&
-               $field['form_title'] === 'Health Questionnaire' &&
+               $field['form_name'] === self::HEALTH_QUESTIONNAIRE_FORM_NAME &&
+               $field['form_id'] === self::HEALTH_QUESTIONNAIRE_FORM_NAME &&
+               $field['form_title'] === self::HEALTH_QUESTIONNAIRE_FORM_NAME &&
                $field['form_type'] === 'form';
     }
 
