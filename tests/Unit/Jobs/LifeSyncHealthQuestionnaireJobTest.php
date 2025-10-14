@@ -68,13 +68,12 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
             'data' => ['document_id' => 123],
         ];
 
-        $this->app->instance(MetLifeApiService::class, $this->mockMetLifeApiService);
         $this->mockMetLifeApiService->shouldReceive('syncHealthQuestionnaire')
             ->with($requestData)
             ->andReturn($mockResult);
 
         // Should not throw any exception
-        $job->handle();
+        $job->handle($this->mockMetLifeApiService);
 
         $this->assertTrue(true); // If we reach here, no exception was thrown
     }
@@ -94,7 +93,6 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
             'data' => [],
         ];
 
-        $this->app->instance(MetLifeApiService::class, $this->mockMetLifeApiService);
         $this->mockMetLifeApiService->shouldReceive('syncHealthQuestionnaire')
             ->with($requestData)
             ->andReturn($mockResult);
@@ -102,7 +100,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Health questionnaire sync failed: Sync failed');
 
-        $job->handle();
+        $job->handle($this->mockMetLifeApiService);
     }
 
     public function test_handle_with_exception()
@@ -114,7 +112,6 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
 
         $job = new LifeSyncHealthQuestionnaireJob($requestData);
 
-        $this->app->instance(MetLifeApiService::class, $this->mockMetLifeApiService);
         $this->mockMetLifeApiService->shouldReceive('syncHealthQuestionnaire')
             ->with($requestData)
             ->andThrow(new Exception('API Error'));
@@ -122,7 +119,7 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('API Error');
 
-        $job->handle();
+        $job->handle($this->mockMetLifeApiService);
     }
 
     public function test_handle_with_array_result_success_true()
@@ -140,13 +137,12 @@ class LifeSyncHealthQuestionnaireJobTest extends TestCase
             'data' => ['document_id' => 123],
         ];
 
-        $this->app->instance(MetLifeApiService::class, $this->mockMetLifeApiService);
         $this->mockMetLifeApiService->shouldReceive('syncHealthQuestionnaire')
             ->with($requestData)
             ->andReturn($mockResult);
 
         // Should not throw any exception since success is true
-        $job->handle();
+        $job->handle($this->mockMetLifeApiService);
 
         $this->assertTrue(true); // If we reach here, no exception was thrown
     }

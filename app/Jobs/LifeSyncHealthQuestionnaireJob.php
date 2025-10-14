@@ -27,12 +27,11 @@ class LifeSyncHealthQuestionnaireJob implements ShouldQueue
         $this->requestData = $requestData;
     }
 
-    public function handle(): void
+    public function handle(MetLifeApiService $metLifeService): void
     {
         LoggerService::info('Processing Health Questionnaire sync job.', ['quote_uuid' => $this->requestData['quote_uuid']]);
 
         try {
-            $metLifeService = app(MetLifeApiService::class);
             $result = $metLifeService->syncHealthQuestionnaire($this->requestData);
 
             if (is_array($result) && ($result['success'] ?? true) === false) {
