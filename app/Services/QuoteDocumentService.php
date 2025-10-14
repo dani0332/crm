@@ -43,6 +43,8 @@ use setasign\Fpdi\Fpdi;
 class QuoteDocumentService extends BaseService
 {
     private const MIME_TYPE_PDF = 'application/pdf';
+    private const CREATED_BY_RELATION = 'createdBy:id,name,email';
+    private const LOG_WITH_KEY = ' with key: ';
 
     protected $client;
     use GenericQueriesAllLobs;
@@ -378,7 +380,7 @@ class QuoteDocumentService extends BaseService
             // Return documents filtered by document type codes if provided
             // If watermarked_doc_url is not null then we can send watermarked document in email
             // Bor Signature document is not show on document section
-            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->with('createdBy:id,name,email')->latest()->get();
+            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->with(self::CREATED_BY_RELATION)->latest()->get();
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
                     // Exclude documents that contain "Certificate of Insurance" followed by any text or space
@@ -390,7 +392,7 @@ class QuoteDocumentService extends BaseService
         }
 
         // Return all documents associated with the quote if no specific document type codes are provided
-        return $quote ? $quote->documents()->with('createdBy:id,name,email')->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get() : [];
+        return $quote ? $quote->documents()->with(self::CREATED_BY_RELATION)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get() : [];
     }
 
     /**
@@ -471,7 +473,7 @@ class QuoteDocumentService extends BaseService
     {
         $sendUpdateLog = SendUpdateLog::where('id', $sendUpdateLogId)->firstOrFail();
 
-        return $sendUpdateLog->documents()->with('createdBy:id,name,email')->latest()->get();
+        return $sendUpdateLog->documents()->with(self::CREATED_BY_RELATION)->latest()->get();
     }
 
     /**
@@ -563,22 +565,22 @@ class QuoteDocumentService extends BaseService
 
             $healthNetwork = $plan->healthNetwork;
             $code = str_replace(' ', '_', trim($healthNetwork->text)).'_HEALTH_DOC';
-            LoggerService::info('Trying health network doc for quote code: '.$quote->code.' with key: '.$code);
+            LoggerService::info('Trying health network doc for quote code: '.$quote->code.self::LOG_WITH_KEY.$code);
             $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
 
             // If no document found network provider  will check provider document
             if ($providerHealthDoc == null) {
                 $code = trim($plan->insuranceProvider->code).'_HEALTH_DOC';
-                LoggerService::info('Provider doc for quote code: '.$quote->code.' with key: '.$code);
+                LoggerService::info('Provider doc for quote code: '.$quote->code.self::LOG_WITH_KEY.$code);
                 $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
             }
             // If these two documents then we send complete url
             if (in_array($code, [ApplicationStorageEnums::BUP_HEALTH_DOC, ApplicationStorageEnums::CIG_HEALTH_DOC])) {
-                LoggerService::info('Direct link used for quote code: '.$quote->code.' with key: '.$code);
+                LoggerService::info('Direct link used for quote code: '.$quote->code.self::LOG_WITH_KEY.$code);
                 $appDownloadLink = $providerHealthDoc;
             } else {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
-                LoggerService::info('Base URL prepended for quote code: '.$quote->code.' with key: '.$code);
+                LoggerService::info('Base URL prepended for quote code: '.$quote->code.self::LOG_WITH_KEY.$code);
                 $appDownloadLink = $baseUrl.$providerHealthDoc;
             }
         }
