@@ -6,11 +6,11 @@ namespace App\Services\MetLife;
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
+use App\Exceptions\MetLife\MetLifeException;
 use App\Models\DocumentType;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
-use Exception;
 
 class MTLHealthQuestionnaireService
 {
@@ -26,7 +26,11 @@ class MTLHealthQuestionnaireService
         $quote = PersonalQuote::with('customer')->where('uuid', $requestData['quote_uuid'])->first();
         if (! $quote) {
             LoggerService::warning('DEBUG: Quote not found', ['quote_uuid' => $requestData['quote_uuid']]);
-            throw new Exception('Quote not found for UID: '.$requestData['quote_uuid']);
+            throw new MetLifeException(
+                'Quote not found for UID: '.$requestData['quote_uuid'],
+                MetLifeException::QUOTE_NOT_FOUND,
+                ['quote_uuid' => $requestData['quote_uuid']]
+            );
         }
 
         LoggerService::info('DEBUG: Quote found', ['quote_id' => $quote->id, 'quote_code' => $quote->code]);
@@ -43,7 +47,11 @@ class MTLHealthQuestionnaireService
         $documentType = DocumentType::where('code', DocumentTypeCode::LIFE_HEALTH_QUESTIONNAIRE)->first();
         if (! $documentType) {
             LoggerService::warning('DEBUG: Document type not found', ['code' => DocumentTypeCode::LIFE_HEALTH_QUESTIONNAIRE]);
-            throw new Exception('Document type not found for code: '.DocumentTypeCode::LIFE_HEALTH_QUESTIONNAIRE);
+            throw new MetLifeException(
+                'Document type not found for code: '.DocumentTypeCode::LIFE_HEALTH_QUESTIONNAIRE,
+                MetLifeException::DOCUMENT_TYPE_NOT_FOUND,
+                ['document_type_code' => DocumentTypeCode::LIFE_HEALTH_QUESTIONNAIRE]
+            );
         }
         $data['document_type_code'] = $documentType->code;
         LoggerService::info('DEBUG: Document type found', ['document_type_id' => $documentType->id]);
@@ -63,7 +71,11 @@ class MTLHealthQuestionnaireService
 
         if (! $document) {
             LoggerService::warning('DEBUG: Document upload failed', ['quote_uuid' => $quote->uuid]);
-            throw new Exception('Failed to upload health questionnaire document for quote: '.$quote->uuid);
+            throw new MetLifeException(
+                'Failed to upload health questionnaire document for quote: '.$quote->uuid,
+                MetLifeException::DOCUMENT_UPLOAD_FAILED,
+                ['quote_uuid' => $quote->uuid, 'pdf_filename' => $data['pdf_filename'] ?? null]
+            );
         }
 
         LoggerService::info('DEBUG: Health questionnaire sync completed successfully', [
@@ -94,7 +106,11 @@ class MTLHealthQuestionnaireService
                 'policy_number' => $policyNumber,
                 'error' => $response['message'] ?? 'Unknown error',
             ]);
-            throw new Exception('Failed to fetch health questionnaire: '.($response['message'] ?? 'Unknown error'));
+            throw new MetLifeException(
+                'Failed to fetch health questionnaire: '.($response['message'] ?? 'Unknown error'),
+                MetLifeException::FETCH_FAILED,
+                ['policy_number' => $policyNumber, 'api_response' => $response]
+            );
         }
 
         $rawData = $response['data']['data'] ?? $response['data'] ?? $response;
@@ -107,11 +123,16 @@ class MTLHealthQuestionnaireService
         $healthQuestionnaire = $this->extractHealthQuestionnaire($rawData);
 
         if (empty($healthQuestionnaire)) {
+            $availableForms = array_column($rawData['submitted_data']['fields'] ?? [], 'form_name');
             LoggerService::warning('DEBUG: Health questionnaire not found in response', [
                 'policy_number' => $policyNumber,
-                'available_forms' => array_column($rawData['submitted_data']['fields'] ?? [], 'form_name'),
+                'available_forms' => $availableForms,
             ]);
-            throw new Exception('Health questionnaire not found for policy: '.$policyNumber);
+            throw new MetLifeException(
+                'Health questionnaire not found for policy: '.$policyNumber,
+                MetLifeException::QUESTIONNAIRE_NOT_FOUND,
+                ['policy_number' => $policyNumber, 'available_forms' => $availableForms]
+            );
         }
 
         LoggerService::info('DEBUG: Health questionnaire extracted successfully', [

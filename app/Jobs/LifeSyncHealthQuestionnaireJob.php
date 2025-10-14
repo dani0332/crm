@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Exceptions\MetLife\HealthQuestionnaireSyncException;
+use App\Exceptions\MetLife\MetLifeException;
 use App\Services\Logger\LoggerService;
 use App\Services\MetLife\MetLifeApiService;
 use Exception;
@@ -36,20 +36,23 @@ class LifeSyncHealthQuestionnaireJob implements ShouldQueue
             $result = $metLifeService->syncHealthQuestionnaire($this->requestData);
 
             if (is_array($result) && ($result['success'] ?? true) === false) {
-                throw new HealthQuestionnaireSyncException(
+                throw new MetLifeException(
                     'Health questionnaire sync failed: '.($result['message'] ?? 'Unknown error'),
-                    $this->requestData['quote_uuid'] ?? null,
-                    $result
+                    MetLifeException::SYNC_FAILED,
+                    [
+                        'quote_uuid' => $this->requestData['quote_uuid'] ?? null,
+                        'api_response' => $result,
+                    ]
                 );
             }
 
             LoggerService::info('Health Questionnaire sync completed successfully.', ['quote_uuid' => $this->requestData['quote_uuid']]);
-        } catch (HealthQuestionnaireSyncException $e) {
+        } catch (MetLifeException $e) {
             LoggerService::warning('Health Questionnaire sync job failed.', [
                 'error' => $e->getMessage(),
+                'error_type' => $e->getErrorType(),
                 'trace' => $e->getTraceAsString(),
-                'quote_uuid' => $e->getQuoteUuid(),
-                'response_data' => $e->getResponseData(),
+                'context' => $e->getContext(),
             ]);
             throw $e;
         } catch (Exception $e) {
