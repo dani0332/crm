@@ -202,20 +202,24 @@ class MetLifeApiService extends BaseService
             'session_age' => $this->sessionCreatedAt ? (time() - $this->sessionCreatedAt) : 'null',
         ]);
 
+        $isValid = true;
+
         if (! $csrfValid && ! $this->refreshCsrfToken()) {
-            return false;
+            $isValid = false;
         }
 
-        if (! $sessionValid && ! $this->refreshSession()) {
-            return false;
+        if ($isValid && ! $sessionValid && ! $this->refreshSession()) {
+            $isValid = false;
         }
 
-        LoggerService::info('MetLife Auth: Session validation completed', [
-            'final_session_id' => $this->maskToken($this->sessionId),
-            'final_csrf_token' => $this->maskToken($this->csrfToken),
-        ]);
+        if ($isValid) {
+            LoggerService::info('MetLife Auth: Session validation completed', [
+                'final_session_id' => $this->maskToken($this->sessionId),
+                'final_csrf_token' => $this->maskToken($this->csrfToken),
+            ]);
+        }
 
-        return true;
+        return $isValid;
     }
 
     private function maskToken(?string $token): string
