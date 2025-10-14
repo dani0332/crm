@@ -865,6 +865,12 @@ class AMLService
                         $screeningResponse['message'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED;
                         $screeningResponse['is_previous_policy_expired'] = $getQuoteResponse['isPolicyExpired'];
                     }
+
+                    if ($quoteTypeId == QuoteTypes::CAR->id() && in_array($providerCode, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA]) && isset($getQuoteResponse['isGetQuoteAPIFailed']) && $getQuoteResponse['isGetQuoteAPIFailed']) {
+                        LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - GetQuote API failed - Ref-ID: '.$quoteDetails->code);
+                        $screeningResponse['message'] = $getQuoteResponse['message'] ?? 'Insurer GetQuote API failed';
+                        $screeningResponse['is_get_quote_api_failed'] = true;
+                    }
                 }
             } catch (\Exception $e) {
                 LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Exception while calling getQuote API for renewal upload - Ref-ID: '.$quoteDetails->code.' - Error: '.$e->getMessage());

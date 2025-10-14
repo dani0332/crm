@@ -548,6 +548,7 @@ class AMLController extends Controller
                         'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
                         'isRenewalLead' => $getInsurerScreeningResponse['isRenewalLead'] ?? false,
                         'is_previous_policy_expired' => $getInsurerScreeningResponse['is_previous_policy_expired'] ?? false,
+                        'is_get_quote_api_failed' => $getInsurerScreeningResponse['is_get_quote_api_failed'] ?? false,
                     ];
 
                     if (isset($getInsurerScreeningResponse['autoCaptureStatus'])) {
@@ -932,6 +933,7 @@ class AMLController extends Controller
                     'autoCaptureStatus' => $insurerAMLScreeningResponse['autoCaptureStatus'] ?? null,
                     'autoCaptureMessage' => $insurerAMLScreeningResponse['autoCaptureMessage'] ?? null,
                     'isPolicyExpired' => $insurerAMLScreeningResponse['is_previous_policy_expired'] ?? false,
+                    'isGetQuoteAPIFailed' => $insurerAMLScreeningResponse['is_get_quote_api_failed'] ?? false,
                 ];
             }
         }

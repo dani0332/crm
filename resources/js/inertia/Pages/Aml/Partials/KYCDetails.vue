@@ -360,6 +360,11 @@ const submitInsuredKycForm = isValid => {
               title: 'Capture Payment Manually',
               position: 'top',
             });
+          } else if (response.data.insurer_screening.isGetQuoteAPIFailed) {
+            notification.error({
+              title: response.data.insurer_screening.message,
+              position: 'top',
+            });
           }
         }
         if (response.data.success) {
