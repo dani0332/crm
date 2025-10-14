@@ -29,6 +29,15 @@ const { modals, customerVerificationData } = defineProps({
             <div class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-2">
+                  Name
+                </label>
+                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
+                  {{  customerVerificationData.webForm?.name || '-' }}
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">
                   Nationality
                 </label>
                 <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
@@ -72,6 +81,14 @@ const { modals, customerVerificationData } = defineProps({
             </div>
             
             <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">
+                  Name
+                </label>
+                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
+                  {{  customerVerificationData.customerVerified?.name || '-' }}
+                </div>
+              </div>
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Nationality

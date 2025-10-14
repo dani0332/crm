@@ -126,6 +126,7 @@ class CustomerVerificationService
     private function getCarVerificationData($record): array
     {
         $webFormData = [
+            'name' => "{$record->first_name} {$record->last_name}",
             'nationality' => $record->nationality_id_text ?? '',
             'carMakeAndModel' => trim(($record->car_make_id_text ?? '').' '.($record->car_model_id_text ?? '')),
             'carModelYear' => $record->year_of_manufacture ?? '',
@@ -169,6 +170,9 @@ class CustomerVerificationService
             $customerVerifiedData = json_decode($verificationRecord->customer_verified_data, true);
 
             return [
+                'name' => array_key_exists('name', $customerVerifiedData)
+                    ? $customerVerifiedData['name']
+                    : '',
                 'nationality' => array_key_exists('nationality_id', $customerVerifiedData)
                     ? $this->getNationalityById($customerVerifiedData['nationality_id'])
                     : '',
