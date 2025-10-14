@@ -69,11 +69,7 @@ trait SLAable
 
     private function getHeadEmail(): string
     {
-        if ($this->isProduction()) {
-            return 'agatha.alicdan@insurancemarket.ae';
-        }
-
-        return 'managerkas94@gmail.com';
+        return 'health@insurancemarket.ae';
     }
 
     private function getCCEmails(User $advisor): array
