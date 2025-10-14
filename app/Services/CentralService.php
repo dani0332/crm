@@ -1958,8 +1958,8 @@ class CentralService extends BaseService
 
         // Filter only filled fields from the request
         $updateData = collect($fieldMapping)
-            ->filter(fn($column, $field) => $request->filled($field))
-            ->mapWithKeys(fn($column, $field) => [$column => $request->input($field)])
+            ->filter(fn ($column, $field) => $request->filled($field))
+            ->mapWithKeys(fn ($column, $field) => [$column => $request->input($field)])
             ->toArray();
 
         // Auto-update renewal batch for non-motor LOBs based on expiry date
@@ -1972,7 +1972,7 @@ class CentralService extends BaseService
         }
 
         // Update the quote with all provided fields
-        if (!empty($updateData)) {
+        if (! empty($updateData)) {
             $quote->update($updateData);
         }
 
@@ -1985,6 +1985,7 @@ class CentralService extends BaseService
     private function isNonMotorQuoteType(string $quoteType): bool
     {
         $nonMotorTypes = ['health', 'travel', 'life', 'home', 'pet', 'bike', 'yacht', 'cycle', 'jetski', 'business', 'savings'];
+
         return in_array(strtolower($quoteType), $nonMotorTypes);
     }
 

@@ -57,7 +57,7 @@ class UpdateLastYearPolicyRequest extends FormRequest
         // Only validate if both fields are present
         $expiryDate = $this->input('previous_policy_expiry_date');
         $policyNumber = $this->input('previous_quote_policy_number');
-        
+
         if (empty($expiryDate) || empty($policyNumber)) {
             return;
         }
@@ -65,17 +65,17 @@ class UpdateLastYearPolicyRequest extends FormRequest
         // Get the model class based on quote type
         $modelType = $this->input('model_type');
         $quoteId = $this->input('quote_id');
-        
+
         if (empty($modelType) || empty($quoteId)) {
             return;
         }
 
         $nameSpace = '\\App\\Models\\';
-        $model = (checkPersonalQuotes(ucwords($modelType))) 
-            ? $nameSpace.'PersonalQuote' 
+        $model = (checkPersonalQuotes(ucwords($modelType)))
+            ? $nameSpace.'PersonalQuote'
             : $nameSpace.ucwords($modelType).'Quote';
 
-        if (!class_exists($model)) {
+        if (! class_exists($model)) {
             return;
         }
 
