@@ -2382,4 +2382,29 @@ class AMLService
             ];
         }
     }
+
+    public function getAdditionaVehicleDriverLookups($quoteTypeCode, $insuranceProviderId)
+    {
+        if ($quoteTypeCode != quoteTypeCode::Car || is_null($insuranceProviderId)) {
+            return [];
+        }
+
+        if (is_numeric($insuranceProviderId)) {
+            $insuranceProviderCode = InsuranceProvider::find($insuranceProviderId)?->code;
+        } else {
+            $insuranceProviderCode = $insuranceProviderId;
+        }
+
+        // for GIG
+        if (in_array($insuranceProviderCode, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA])) {
+            return $this->getAMLLookups($insuranceProviderId, [
+                LookupsEnum::RTA_TRANSACTION_TYPE,
+                LookupsEnum::RTA_PLATE_CATEGORY,
+                LookupsEnum::VEHICLE_COLOR,
+                LookupsEnum::BANK_NAME,
+            ])->toArray();
+        }
+
+        return [];
+    }
 }
