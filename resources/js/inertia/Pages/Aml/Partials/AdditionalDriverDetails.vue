@@ -30,13 +30,13 @@ const vehicleDriverDetail = computed(() => {
 
 const formatDate = date => {
   if (!date) return '';
-  
+
   const dateObj = new Date(date);
   // Use local timezone to avoid date shifting
   const year = dateObj.getFullYear();
   const month = String(dateObj.getMonth() + 1).padStart(2, '0');
   const day = String(dateObj.getDate()).padStart(2, '0');
-  
+
   return `${year}-${month}-${day}`;
 };
 
@@ -55,7 +55,8 @@ const additionalDriverDetailsForm = useForm({
   quote_uuid: quoteRequest?.uuid,
   source: quoteRequest?.source,
   insurance_provider_code: quoteRequest?.plan?.insurance_provider.code ?? '',
-  is_insured_and_driver_same: vehicleDriverDetail.value?.is_insured_and_driver_same?.toString() ?? '',
+  is_insured_and_driver_same:
+    vehicleDriverDetail.value?.is_insured_and_driver_same?.toString() ?? '',
   driver_first_name: vehicleDriverDetail.value?.driver_first_name ?? '',
   driver_last_name: vehicleDriverDetail.value?.driver_last_name ?? '',
   driver_dob: formatDate(vehicleDriverDetail.value?.driver_dob) ?? '',
@@ -184,15 +185,19 @@ const nationalitiesOptions = computed(() => {
 
 const drivingExperienceOptions = computed(() => {
   if (isLIVA.value) {
-    return useGenerateOptions(lookups?.driving_experience ?? [], 'code', 'text');
+    return useGenerateOptions(
+      lookups?.driving_experience ?? [],
+      'code',
+      'text',
+    );
   }
-  const options = [{ value: '0', label: 'No Experience' }]
+  const options = [{ value: '0', label: 'No Experience' }];
 
   for (let i = 1; i <= 50; i++) {
     options.push({
       value: i.toString(),
-      label: i === 1 ? '1 Year' : `${i} Years`
-    })
+      label: i === 1 ? '1 Year' : `${i} Years`,
+    });
   }
 
   return options;
@@ -215,52 +220,68 @@ const isDriverNameFieldsRequired = computed(() => {
 });
 
 // Watch for changes in is_insured_and_driver_same to clear driver names when they become disabled
-watch(() => additionalDriverDetailsForm.is_insured_and_driver_same, (newValue) => {
-  // If insured and driver are the same (1 or '1'), clear the driver name fields
-  if ((newValue === 1 || newValue === '1') && !isSyncFromInsurer.value) {
-    additionalDriverDetailsForm.driver_first_name = quoteRequest?.customer?.first_name;
-    additionalDriverDetailsForm.driver_last_name = quoteRequest?.customer?.last_name;
-    additionalDriverDetailsForm.driver_dob = quoteRequest?.customer?.dob;
-    additionalDriverDetailsForm.driver_gender = normalizeGender(quoteRequest?.customer?.gender);
-  }
-});
-
-watch(() => props.insurerPortalSyncData, (driverDetails) => {
-  if (driverDetails) {
-    const fieldMappings = {
-      driverDetails: {
-        is_insured_and_driver_same: 'is_insured_and_driver_same',
-        driver_first_name: 'driver_first_name',
-        driver_last_name: 'driver_last_name',
-        driver_dob: 'driver_dob',
-        driver_gender: 'driver_gender',
-        driver_license_number: 'driver_license_number',
-        driver_license_issue_place: 'license_issue_place',
-        // driver_license_issue_date: 'license_issue_date',
-        // driver_license_expiry_date: 'license_expiry_date',
-        driver_uae_driving_experience: 'uae_driving_experience',
-        driver_home_country_license_issuance: 'home_country_license_issuance',
-        driver_home_country_driving_experience: 'home_country_driving_experience',
-      },
-    };
-
-    Object.entries(fieldMappings.driverDetails).forEach(([sourceKey, targetKey]) => {
-      if (driverDetails?.[sourceKey]) {
-        additionalDriverDetailsForm[targetKey] = driverDetails[sourceKey];
-      }
-    });
-    if (driverDetails?.is_insured_and_driver_same === '1') {
-      isSyncFromInsurer.value = true;
+watch(
+  () => additionalDriverDetailsForm.is_insured_and_driver_same,
+  newValue => {
+    // If insured and driver are the same (1 or '1'), clear the driver name fields
+    if ((newValue === 1 || newValue === '1') && !isSyncFromInsurer.value) {
+      additionalDriverDetailsForm.driver_first_name =
+        quoteRequest?.customer?.first_name;
+      additionalDriverDetailsForm.driver_last_name =
+        quoteRequest?.customer?.last_name;
+      additionalDriverDetailsForm.driver_dob = quoteRequest?.customer?.dob;
+      additionalDriverDetailsForm.driver_gender = normalizeGender(
+        quoteRequest?.customer?.gender,
+      );
     }
-  }
-}, { deep: true },
+  },
 );
 
-watch(() => additionalDriverDetailsForm.driver_dob, (newValue) => {
-  if (newValue) {
-    additionalDriverDetailsForm.driver_dob = formatDate(newValue);
-  }
-});
+watch(
+  () => props.insurerPortalSyncData,
+  driverDetails => {
+    if (driverDetails) {
+      const fieldMappings = {
+        driverDetails: {
+          is_insured_and_driver_same: 'is_insured_and_driver_same',
+          driver_first_name: 'driver_first_name',
+          driver_last_name: 'driver_last_name',
+          driver_dob: 'driver_dob',
+          driver_gender: 'driver_gender',
+          driver_license_number: 'driver_license_number',
+          driver_license_issue_place: 'license_issue_place',
+          // driver_license_issue_date: 'license_issue_date',
+          // driver_license_expiry_date: 'license_expiry_date',
+          driver_uae_driving_experience: 'uae_driving_experience',
+          driver_home_country_license_issuance: 'home_country_license_issuance',
+          driver_home_country_driving_experience:
+            'home_country_driving_experience',
+        },
+      };
+
+      Object.entries(fieldMappings.driverDetails).forEach(
+        ([sourceKey, targetKey]) => {
+          if (driverDetails?.[sourceKey]) {
+            additionalDriverDetailsForm[targetKey] = driverDetails[sourceKey];
+          }
+        },
+      );
+      if (driverDetails?.is_insured_and_driver_same === '1') {
+        isSyncFromInsurer.value = true;
+      }
+    }
+  },
+  { deep: true },
+);
+
+watch(
+  () => additionalDriverDetailsForm.driver_dob,
+  newValue => {
+    if (newValue) {
+      additionalDriverDetailsForm.driver_dob = formatDate(newValue);
+    }
+  },
+);
 </script>
 
 <template>
@@ -368,8 +389,8 @@ watch(() => additionalDriverDetailsForm.driver_dob, (newValue) => {
         <DatePicker
           v-model="additionalDriverDetailsForm.license_expiry_date"
           placeholder="License Expiry Date"
-          :rules="(! isLIVA) ? [isRequired] : []"
-          :required="! isLIVA"
+          :rules="!isLIVA ? [isRequired] : []"
+          :required="!isLIVA"
           :disabled="hasNotEditPermission"
           label="License Expiry Date"
           :tooltip="`Expiry date of the current driver's license`"

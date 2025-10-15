@@ -201,7 +201,8 @@ const additionalVehicleTransactionDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: page.props.quoteRequest?.uuid,
   source: page.props.quoteRequest?.source,
-  insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
+  insurance_provider_code:
+    page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
   additional_vehicle_transaction_details: true,
   rta_transaction_type:
     vehicleDriverDetail.value?.rta_transaction_type?.toString() ?? '',
@@ -308,7 +309,9 @@ const chassisNumberValidate = eventType => {
     const lengthValid =
       additionalVehicleTransactionDetailsForm.chassis_number?.length >= 8 &&
       additionalVehicleTransactionDetailsForm.chassis_number?.length <= 17;
-    const isAlphanumeric = regex.test(additionalVehicleTransactionDetailsForm.chassis_number);
+    const isAlphanumeric = regex.test(
+      additionalVehicleTransactionDetailsForm.chassis_number,
+    );
     if (
       additionalVehicleTransactionDetailsForm.chassis_number &&
       (!lengthValid || !isAlphanumeric)
@@ -371,7 +374,9 @@ const isVehicleRenewalNonUpload = computed(() => {
 });
 
 const isRenewal = computed(() => {
-  return page.props.quoteRequest?.source === page.props.leadSource.RENEWAL_UPLOAD;
+  return (
+    page.props.quoteRequest?.source === page.props.leadSource.RENEWAL_UPLOAD
+  );
 });
 
 const isLivaRenewal = computed(() => {
@@ -684,13 +689,13 @@ const applyAutoCalculations = (forceCalculation = false) => {
 
 const LIVAEnums = page.props.LIVAEnums;
 
-const livaValidations = (rtaTransactionType) => {
+const livaValidations = rtaTransactionType => {
   if (
     [
       LIVAEnums.REGISTRATION_OF_NEW_VEHICLE,
       LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_VALID,
-      LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_TO_EXPIRE].
-      includes(rtaTransactionType)
+      LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_TO_EXPIRE,
+    ].includes(rtaTransactionType)
   ) {
     livaConfig.value.policy_effective_date = false;
     livaConfig.value.policy_expiry_date = true;
@@ -712,7 +717,9 @@ const loadFieldConfigurationFromProps = (shouldAutoCalculate = false) => {
   }
 
   if (isLIVA.value) {
-    livaValidations(additionalVehicleTransactionDetailsForm.rta_transaction_type);
+    livaValidations(
+      additionalVehicleTransactionDetailsForm.rta_transaction_type,
+    );
   }
 
   const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
@@ -1076,20 +1083,23 @@ watch(
 
 watch(
   () => additionalVehicleTransactionDetailsForm.certificate_start_date,
-  (newVal) => {
-  if (isLIVA.value && newVal && true) {
-    // Add 13 months to policy_effective_date for policy_expiry_date
-    const effectiveDate = new Date(newVal);
-    const expiryDate = new Date(effectiveDate);
-    expiryDate.setMonth(expiryDate.getMonth() + 13);
-    expiryDate.setDate(expiryDate.getDate() - 1);
+  newVal => {
+    if (isLIVA.value && newVal && true) {
+      // Add 13 months to policy_effective_date for policy_expiry_date
+      const effectiveDate = new Date(newVal);
+      const expiryDate = new Date(effectiveDate);
+      expiryDate.setMonth(expiryDate.getMonth() + 13);
+      expiryDate.setDate(expiryDate.getDate() - 1);
 
-    // Format date as YYYY-MM-DD for the form
-    const formattedExpiryDate = expiryDate.toISOString().split('T')[0];
-    additionalVehicleTransactionDetailsForm.certificate_end_date = formattedExpiryDate;
-    additionalVehicleTransactionDetailsForm.policy_expiry_date = formattedExpiryDate;
-  }
-});
+      // Format date as YYYY-MM-DD for the form
+      const formattedExpiryDate = expiryDate.toISOString().split('T')[0];
+      additionalVehicleTransactionDetailsForm.certificate_end_date =
+        formattedExpiryDate;
+      additionalVehicleTransactionDetailsForm.policy_expiry_date =
+        formattedExpiryDate;
+    }
+  },
+);
 
 watch(
   () => additionalVehicleTransactionDetailsForm.chassis_number,
@@ -1098,11 +1108,15 @@ watch(
   },
 );
 
-watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newValue) => {
-  if (newValue) {
-    additionalVehicleTransactionDetailsForm.policy_effective_date = formatDate(newValue);
-  }
-});
+watch(
+  () => additionalVehicleTransactionDetailsForm.policy_effective_date,
+  newValue => {
+    if (newValue) {
+      additionalVehicleTransactionDetailsForm.policy_effective_date =
+        formatDate(newValue);
+    }
+  },
+);
 </script>
 
 <template>
@@ -1139,8 +1153,16 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newV
           <x-input
             v-if="isGIG || isLIVA"
             v-model="additionalVehicleTransactionDetailsForm.plate_code"
-            :rules="isLIVA ? (registrationNoValidation ? [isRequired] : []) : getFieldRules('plate_code')"
-            :required="isLIVA ? registrationNoValidation : isFieldRequired('plate_code')"
+            :rules="
+              isLIVA
+                ? registrationNoValidation
+                  ? [isRequired]
+                  : []
+                : getFieldRules('plate_code')
+            "
+            :required="
+              isLIVA ? registrationNoValidation : isFieldRequired('plate_code')
+            "
             placeholder="Plate Code"
             type="text"
             :disabled="isFieldDisabled('plate_code') || hasNotEditPermission"
@@ -1207,13 +1229,21 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newV
           <!-- Chassis Number -->
           <x-input
             v-model="additionalVehicleTransactionDetailsForm.chassis_number"
-            :rules="isFieldRequired('chassis_number') ? [isRequired, rules.chassisNumberCheck] : []"
+            :rules="
+              isFieldRequired('chassis_number')
+                ? [isRequired, rules.chassisNumberCheck]
+                : []
+            "
             @keypress="chassisNumberValidate('keypress')"
             @blur="chassisNumberValidate('blur')"
             placeholder="Chassis Number"
             type="text"
-            :error="additionalVehicleTransactionDetailsForm.errors.chassis_number"
-            :disabled="isFieldDisabled('chassis_number') || hasNotEditPermission"
+            :error="
+              additionalVehicleTransactionDetailsForm.errors.chassis_number
+            "
+            :disabled="
+              isFieldDisabled('chassis_number') || hasNotEditPermission
+            "
             :required="isFieldRequired('chassis_number')"
             label="Chassis Number"
             :tooltip="`Vehicle chassis number`"
@@ -1239,7 +1269,9 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newV
             :required="isFieldRequired('rta_plate_category')"
             :options="rtaPlateCategoryOptions"
             placeholder="Select RTA Plate Category"
-            :disabled="isFieldDisabled('rta_plate_category') || hasNotEditPermission"
+            :disabled="
+              isFieldDisabled('rta_plate_category') || hasNotEditPermission
+            "
             label="RTA Plate Category"
             :tooltip="`Vehicle plate type as defined by the traffic department (e.g., private, commercial)`"
           />
@@ -1336,7 +1368,9 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newV
             :rules="getFieldRules('first_registration_date')"
             :required="isFieldRequired('first_registration_date')"
             placeholder="First Registration Date"
-            :disabled="isFieldDisabled('first_registration_date') || hasNotEditPermission"
+            :disabled="
+              isFieldDisabled('first_registration_date') || hasNotEditPermission
+            "
             label="First Registration Date"
             :tooltip="`Date the vehicle was first registered with the traffic department`"
           />
@@ -1353,7 +1387,11 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newV
                 .policy_effective_date
             "
             placeholder="Policy Effective Date"
-            :disabled="isFieldDisabled('policy_effective_date') || hasNotEditPermission || livaConfig.policy_effective_date"
+            :disabled="
+              isFieldDisabled('policy_effective_date') ||
+              hasNotEditPermission ||
+              livaConfig.policy_effective_date
+            "
             :readonly="fieldConfig.policy_effective_date?.readonly"
             label="Policy Effective Date"
             :tooltip="`Start date of the insurance policy coverage`"
@@ -1366,7 +1404,9 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newV
             :required="isFieldRequired('policy_expiry_date')"
             placeholder="Policy Expiry Date"
             :disabled="
-              isFieldDisabled('policy_expiry_date') || hasNotEditPermission || livaConfig.policy_expiry_date
+              isFieldDisabled('policy_expiry_date') ||
+              hasNotEditPermission ||
+              livaConfig.policy_expiry_date
             "
             :readonly="fieldConfig.policy_expiry_date?.readonly"
             label="Policy Expiry Date"
@@ -1386,7 +1426,9 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newV
             "
             placeholder="Certificate Start Date"
             :disabled="
-              isFieldDisabled('certificate_start_date') || hasNotEditPermission || livaConfig.certificate_start_date
+              isFieldDisabled('certificate_start_date') ||
+              hasNotEditPermission ||
+              livaConfig.certificate_start_date
             "
             :readonly="fieldConfig.certificate_start_date?.readonly"
             label="Certificate Start Date"
@@ -1401,7 +1443,11 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newV
             :rules="getFieldRules('certificate_end_date')"
             :required="isFieldRequired('certificate_end_date')"
             placeholder="Certificate End Date"
-            :disabled="isFieldDisabled('certificate_end_date') || hasNotEditPermission || (livaConfig.certificate_end_date)"
+            :disabled="
+              isFieldDisabled('certificate_end_date') ||
+              hasNotEditPermission ||
+              livaConfig.certificate_end_date
+            "
             :readonly="fieldConfig.certificate_end_date?.readonly"
             label="Certificate End Date"
             :tooltip="`End date for the insurance certificate validity period`"
@@ -1479,7 +1525,7 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newV
   </div>
 </template>
 <style>
-  /* .x-popover-container .min-w-\[280px\] {
+/* .x-popover-container .min-w-\[280px\] {
     overflow-x: auto;
   }
 
@@ -1491,7 +1537,7 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newV
     width: max-content;
   } */
 
-  .v-popper__wrapper {
-    width: fit-content !important;
-  }
+.v-popper__wrapper {
+  width: fit-content !important;
+}
 </style>

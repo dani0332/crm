@@ -277,7 +277,9 @@ const syncInsurerPortalUpdates = () => {
     })
     .then(response => {
       // Safely check response.data exists and has expected structure
-      const hasValidData = response.data && (response.data.success == true || response.status === 200);
+      const hasValidData =
+        response.data &&
+        (response.data.success == true || response.status === 200);
 
       if (hasValidData) {
         notification.success({
@@ -317,7 +319,8 @@ const syncInsurerPortalUpdates = () => {
 const submitInsuredKycForm = isValid => {
   if (!isValid) return;
 
-  let insuranceProviderCode =page.props.quoteRequest?.plan?.insurance_provider?.code;
+  let insuranceProviderCode =
+    page.props.quoteRequest?.plan?.insurance_provider?.code;
 
   if (insuredKycFormValidate()) {
     kycFormDetails.processing = true;
@@ -334,23 +337,28 @@ const submitInsuredKycForm = isValid => {
               `${insuranceProviderCode} server connection issue. Please check API logs for details of the error`;
 
             if (response.data.insurer_screening.isEmailMismatched == true) {
-              failureResponseMessage =
-                `Email ID Mismatch Between ${insuranceProviderCode} Portal and IMCRM`;
+              failureResponseMessage = `Email ID Mismatch Between ${insuranceProviderCode} Portal and IMCRM`;
             }
             notification.error({
               title: failureResponseMessage,
               position: 'top',
             });
-          } else if(response.data.insurer_screening.status == 'AML_SCREENING_CLEARED') {
-            if(response.data.insurer_screening.autoCaptureStatus == 'success') {
+          } else if (
+            response.data.insurer_screening.status == 'AML_SCREENING_CLEARED'
+          ) {
+            if (
+              response.data.insurer_screening.autoCaptureStatus == 'success'
+            ) {
               notification.success({
                 title: response.data.insurer_screening.autoCaptureMessage,
                 timeout: 30000,
               });
             }
-            if(response.data.insurer_screening.autoCaptureStatus == 'failed') {
+            if (response.data.insurer_screening.autoCaptureStatus == 'failed') {
               notification.error({
-                title: response.data.insurer_screening.autoCaptureMessage ?? 'Auto capture payment process failed',
+                title:
+                  response.data.insurer_screening.autoCaptureMessage ??
+                  'Auto capture payment process failed',
                 position: 'top',
                 timeout: 30000,
               });
@@ -384,7 +392,6 @@ const submitInsuredKycForm = isValid => {
           });
           kycFormDetails.processing = false;
         }
-
       })
       .catch(errors => {
         Object.keys(errors.response.data.errors).forEach(function (key) {
@@ -750,15 +757,19 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] =
         />
       </x-field>
       <DatePicker
-          v-model="kycFormDetails.id_issue_date"
-          :label="isScreeningIndividual ? 'ID Issue Date' : 'ID / Document Issue Date'"
+        v-model="kycFormDetails.id_issue_date"
+        :label="
+          isScreeningIndividual ? 'ID Issue Date' : 'ID / Document Issue Date'
+        "
       />
       <DatePicker
         v-model="kycFormDetails.id_expiry_date"
         :rules="[isRequired]"
         :error="idExpiryDateError"
         :min-date="new Date()"
-        :label="isScreeningIndividual ? 'ID Expiry Date' : 'ID / Document Expiry Date'"
+        :label="
+          isScreeningIndividual ? 'ID Expiry Date' : 'ID / Document Expiry Date'
+        "
       />
     </dl>
     <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
