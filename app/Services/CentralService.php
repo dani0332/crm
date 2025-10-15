@@ -1592,7 +1592,6 @@ class CentralService extends BaseService
             ];
 
             return Ken::request('/capture-payment-validation', 'put', $data);
-
         } catch (\Throwable $th) {
             LoggerService::error('capturePaymentValidation failed',
                 context: [
@@ -1767,7 +1766,7 @@ class CentralService extends BaseService
                 'processInvolved' => 'Payment Capture',
             ]);
             AutomationFailedJob::dispatch(
-                $quote,
+                $quote->id,
                 QuoteTypeId::Car,
                 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                 'Quote Referred To Insurer UW',
@@ -1780,7 +1779,11 @@ class CentralService extends BaseService
 
         if ($premiumCheckEnabled) {
             $captureAmount = $payment->total_amount;
-            if ($quoteType->code == QuoteTypes::CAR->value && $insuranceProvider?->code == InsuranceProviderEnum::AXA->value && $payment->total_amount != $payment->premium_authorized) {
+            if (
+                $quoteType->code == QuoteTypes::CAR->value &&
+                in_array($insuranceProvider?->code, [InsuranceProviderEnum::AXA->value, InsuranceProviderEnum::RSA->value]) &&
+                $payment->total_amount != $payment->premium_authorized
+            ) {
                 $captureAmount = $payment->premium_authorized;
             }
 
@@ -1805,7 +1808,7 @@ class CentralService extends BaseService
                         'processInvolved' => 'Payment Capture',
                     ]);
                     AutomationFailedJob::dispatch(
-                        $quote,
+                        $quote->id,
                         QuoteTypeId::Car,
                         'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                         'Premium Not Matched With Insurer',
@@ -1819,7 +1822,7 @@ class CentralService extends BaseService
                         'processInvolved' => 'Payment Capture',
                     ]);
                     AutomationFailedJob::dispatch(
-                        $quote,
+                        $quote->id,
                         QuoteTypeId::Car,
                         'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
                         'Quote Referred To Insurer UW',
