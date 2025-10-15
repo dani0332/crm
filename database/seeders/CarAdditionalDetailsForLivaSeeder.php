@@ -7,6 +7,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
+use App\Models\Nationality;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Seeder;
 
@@ -1871,16 +1872,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
         ];
 
         foreach ($nationalities as $nationality) {
-            Lookup::updateOrCreate([
-                'quote_type_id' => QuoteTypeId::Car,
-                'key' => LookupsEnum::NATIONALITY_LIST,
-                'code' => $nationality['id'],
-                'text' => $nationality['text'],
-                'insurance_provider_id' => $this->insuranceProviderId,
-            ], [
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $this->syncNationalityWithLiva($nationality['text'], $nationality['id']);
         }
     }
 
@@ -1903,6 +1895,41 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+        }
+    }
+
+    /**
+     * Sync nationality with LIVA nationality ID
+     * Searches for matching nationality by text and updates liva_nationality_id
+     * If no match found, creates a new nationality record
+     *
+     * @param string $livaText The nationality text from LIVA
+     * @param int $livaId The LIVA nationality ID
+     * @return void
+     */
+    private function syncNationalityWithLiva(string $livaText, int $livaId): void
+    {
+        $normalizedText = trim($livaText);
+        $nationality = Nationality::whereRaw('LOWER(text) = ?', [strtolower($normalizedText)])->first();
+
+        if ($nationality) {
+            $nationality->update([
+                'liva_nationality_id' => $livaId,
+                'updated_at' => now(),
+            ]);
+
+            LoggerService::info($livaText.' - Matched and updated nationality');
+        } else {
+            Nationality::create([
+                'text' => $normalizedText,
+                'code' => $normalizedText,
+                'liva_nationality_id' => $livaId,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            LoggerService::info($livaText.' - Created new nationality');
         }
     }
 }
