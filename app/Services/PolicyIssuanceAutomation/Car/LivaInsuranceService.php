@@ -975,7 +975,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Updating quote details');
                     $carQuoteRequestDetails->update($getQuoteResponseMapping);
                     $quoteDetails->update($quoteDetailsData);
-                    $quoteDetails->vehicleDriverDetail()->updateOrCreate([], $vehicleDriverDetailsData); // TODO: need to discuss update or create.
+                    $quoteDetails->vehicleDriverDetail()->updateOrCreate([], $vehicleDriverDetailsData);
                 }
 
                 $getQuoteResponseMapping = array_merge($getQuoteResponseMapping, $vehicleDriverDetailsData, $quoteDetailsData, ['QuoteStatus' => $responseData['QuoteStatus']]);
@@ -1144,7 +1144,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $response['message'] = 'All Steps are editable';
         }
 
-        // TODO: need to discusss this with Bilal Saeed, this is issuing while status is processing.
         if (
             $policyIssuance?->status === PolicyIssuanceEnum::PROCESSING_STATUS &&
             $policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
