@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Facades;
 
 use App\Enums\QuoteTypes;
-use App\Models\HomeQuote;
 use App\Models\BusinessQuote;
+use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
-use Illuminate\Support\Facades\Facade;
 use App\Services\AllocationConfiguration\AllocationConfigurationService;
+use Illuminate\Support\Facades\Facade;
 
 /**
  * Facade for Allocation Configuration Service
