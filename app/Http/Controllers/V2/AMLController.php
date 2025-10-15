@@ -254,8 +254,9 @@ class AMLController extends Controller
             return $log['decision'] == AMLDecisionStatusEnum::ESCALATED;
         })) : 0;
 
-        $isLIVA = $quoteRequest?->plan?->insuranceProvider?->code == InsuranceProvidersEnum::RSA;
-        $isGIG = $quoteRequest?->plan?->insuranceProvider?->code == InsuranceProvidersEnum::AXA;
+        $providerCode = $quoteRequest?->plan?->insuranceProvider?->code ?? '';
+        $isLIVA = $providerCode == InsuranceProvidersEnum::RSA;
+        $isGIG = $providerCode == InsuranceProvidersEnum::AXA;
         $lookups = app(AMLService::class)->getAMLLookups();
 
         if ($quoteType->code == quoteTypeCode::Car && ($isLIVA || $isGIG)) {
