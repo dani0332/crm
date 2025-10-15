@@ -128,7 +128,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_LIVA_CAR_POLICY_ISSUANCE],
             [
-                'value' => true,
+                'value' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -139,6 +139,16 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE],
             [
                 'value' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::LIVA_AUTOMATION_API_TIMEOUT],
+            [
+                'value' => 90,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

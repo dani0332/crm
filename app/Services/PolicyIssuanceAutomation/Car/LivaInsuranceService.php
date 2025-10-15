@@ -64,11 +64,13 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     public $currentInsurerApiStatus = null;
     public $headers = [];
     private $appEnv;
+    private $apiTimeout;
 
     public function __construct()
     {
         $this->baseUrl = config('constants.LIVA_API_BASE_URL');
         $this->appEnv = config('constants.APP_ENV');
+        $this->apiTimeout = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::LIVA_AUTOMATION_API_TIMEOUT);
     }
 
     private function getAPISteps(): array
@@ -815,7 +817,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     {
         $response = ['status' => false, 'error' => null, 'message' => null, 'data' => null, 'completed_step' => null];
         $url = $this->baseUrl.$endPoint;
-        $timeOut = $this->appEnv == EnvEnum::PRODUCTION ? 20 : 120;
+        $timeOut = $this->apiTimeout;
 
         try {
             $httpResponse = Http::timeout($timeOut)->withHeaders($this->headers)->post($url, $payload);
@@ -1043,7 +1045,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         ];
 
         try {
-            $timeOut = $this->appEnv == EnvEnum::PRODUCTION ? 20 : 120;
+            $timeOut = $this->apiTimeout;
 
             $response = Http::timeout($timeOut)
                 ->withHeaders($headers)
