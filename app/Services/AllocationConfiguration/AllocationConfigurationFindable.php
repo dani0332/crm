@@ -8,8 +8,10 @@ use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Allocation\AllocationConfiguration;
 use App\Models\BusinessQuote;
+use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 trait AllocationConfigurationFindable
 {
@@ -81,15 +83,15 @@ trait AllocationConfigurationFindable
             return [];
         }
 
-        $microBrackets = $configuration?->micro_brackets;
-        $advisorIds = $this->extractAdvisorIdsFromBrackets($microBrackets, $numberOfEmployees, $healthPlanTypeId, 'planTypeIds', 'employees_min', 'employees_max');
-        if (! empty($advisorIds)) {
-            return $advisorIds;
+        foreach (['micro_brackets', 'non_micro_brackets'] as $bracketType) {
+            $brackets = $configuration?->{$bracketType};
+            $advisorIds = $this->extractAdvisorIdsFromBrackets($brackets, $numberOfEmployees, $healthPlanTypeId, 'planTypeIds', 'employees_min', 'employees_max');
+            if (! empty($advisorIds)) {
+                return $advisorIds;
+            }
         }
 
-        $nonMicroBrackets = $configuration?->non_micro_brackets;
-
-        return $this->extractAdvisorIdsFromBrackets($nonMicroBrackets, $numberOfEmployees, $healthPlanTypeId, 'planTypeIds', 'employees_min', 'employees_max');
+        return [];
     }
 
     public function getCorplineEligibleAdvisorIds(BusinessQuote $lead): array
@@ -101,12 +103,64 @@ trait AllocationConfigurationFindable
             return [];
         }
 
-        foreach(['value_profiles', 'volume_profiles'] as $profileType) {
+        foreach (['value_profiles', 'volume_profiles'] as $profileType) {
             $profiles = $configuration?->{$profileType};
             $profileData = $this->getMatchingProfileData($profiles, 'businessTypeIds', $businessTypeId);
             $advisorIds = $this->getAdvisorIds($profileData);
             if (! empty($advisorIds)) {
                 return $advisorIds;
+            }
+        }
+
+        return [];
+    }
+
+    public function getHomeEligibleAdvisorIds(HomeQuote $lead): array
+    {
+        $configuration = $this->findConfig(QuoteTypes::HOME);
+        $address = Str::lower($lead?->subArea?->text ?? '');
+
+        if (! $configuration || ! $address || (! $lead->hasContents() && ! $lead->hasBuilding() && ! $lead->hasPersonalBelongings())) {
+            return [];
+        }
+
+        if ($lead->hasContents()) {
+            $contentsValue = $lead->contents?->min_value ?? 0;
+
+            $advisorIds = $this->evaluateHomeAdvisorIds($configuration, 'contents_min', 'contents_max', $contentsValue, $address);
+
+            if (! empty($advisorIds)) {
+                return $advisorIds;
+            }
+        }
+
+        if ($lead->hasBuilding()) {
+            $buildingValue = (float) $lead->building_value ?? 0;
+
+            $advisorIds = $this->evaluateHomeAdvisorIds($configuration, 'building_min', 'building_max', $buildingValue, $address);
+
+            if (! empty($advisorIds)) {
+                return $advisorIds;
+            }
+        }
+
+        // $personalBelongingsValue = $lead->personalBelongings?->min_value ?? 0;
+
+        return [];
+    }
+
+    private function evaluateHomeAdvisorIds(AllocationConfiguration $configuration, string $minKey, string $maxKey, float|int $value, string $address): array
+    {
+        foreach (['value_brackets', 'volume_brackets'] as $bracketType) {
+            $brackets = $configuration?->{$bracketType};
+            $bracketData = $this->getMatchingBracket($brackets, $value, $minKey, $maxKey);
+            if ($bracketData) {
+                $profile = $this->getMatchingProfileData($bracketData['profiles'], 'locations', $address);
+                $advisorIds = $this->getAdvisorIds($profile);
+
+                if (! empty($advisorIds)) {
+                    return $advisorIds;
+                }
             }
         }
 
@@ -131,6 +185,12 @@ trait AllocationConfigurationFindable
     private function getMatchingBracket(array $brackets, int|float $value, string $minKey = 'min', string $maxKey = 'max'): ?array
     {
         return collect($brackets)
+            ->map(function ($bracket) use ($minKey, $maxKey) {
+                $bracket[$minKey] = (float) $bracket[$minKey];
+                $bracket[$maxKey] = (float) $bracket[$maxKey];
+
+                return $bracket;
+            })
             ->where($minKey, '<=', $value)
             ->where($maxKey, '>=', $value)
             ->first();
@@ -156,6 +216,19 @@ trait AllocationConfigurationFindable
         $profiles = is_array($profiles) ? collect($profiles) : $profiles;
 
         return $profiles->first(fn ($profile) => in_array($value, $profile[$key]));
+    }
+
+    private function matchesTargetLocations(string $address): bool
+    {
+        $targetKeywords = ['arabian ranches', 'palm jumeriah'];
+
+        foreach ($targetKeywords as $keyword) {
+            if (Str::contains($address, $keyword)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function getAdvisorIds(?array $profile): array
