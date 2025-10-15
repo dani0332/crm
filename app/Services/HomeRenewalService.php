@@ -624,9 +624,9 @@ class HomeRenewalService extends RenewalsUploadService
             'building' => $data['building'] ?? null,
         ]);
 
-        $previousBuildingAed = (!empty($data['building'])) ? $data['building'] : null;
-        
-        LoggerService::info('fn: getPreviousBuildingAed - previous building AED: ' . $previousBuildingAed);
+        $previousBuildingAed = (! empty($data['building'])) ? $data['building'] : null;
+
+        LoggerService::info('fn: getPreviousBuildingAed - previous building AED: '.$previousBuildingAed);
 
         return $previousBuildingAed;
     }
@@ -643,7 +643,7 @@ class HomeRenewalService extends RenewalsUploadService
 
         // Convert contents range to actual AED value if it's a range lookup
         $previousContentsAed = null;
-        if (!empty($data['contents'])) {
+        if (! empty($data['contents'])) {
             // If it's a numeric value, use it directly
             if (is_numeric($data['contents'])) {
                 $previousContentsAed = $data['contents'];
@@ -654,7 +654,7 @@ class HomeRenewalService extends RenewalsUploadService
             }
         }
 
-        LoggerService::info('fn: getPreviousContentsAed - previous contents AED: ' . $previousContentsAed);
+        LoggerService::info('fn: getPreviousContentsAed - previous contents AED: '.$previousContentsAed);
 
         return $previousContentsAed;
     }
@@ -671,7 +671,7 @@ class HomeRenewalService extends RenewalsUploadService
 
         // Convert personal belongings range to actual AED value if it's a range lookup
         $previousPersonalBelongingsAed = null;
-        if (!empty($data['personal_belongings'])) {
+        if (! empty($data['personal_belongings'])) {
             // If it's a numeric value, use it directly
             if (is_numeric($data['personal_belongings'])) {
                 $previousPersonalBelongingsAed = $data['personal_belongings'];
@@ -682,7 +682,7 @@ class HomeRenewalService extends RenewalsUploadService
             }
         }
 
-        LoggerService::info('fn: getPreviousPersonalBelongingsAed - previous personal belongings AED: ' . $previousPersonalBelongingsAed);
+        LoggerService::info('fn: getPreviousPersonalBelongingsAed - previous personal belongings AED: '.$previousPersonalBelongingsAed);
 
         return $previousPersonalBelongingsAed;
     }
@@ -697,7 +697,7 @@ class HomeRenewalService extends RenewalsUploadService
         $existingHomeQuote = $quote->homeQuote;
 
         // Previous Building AED - only set if not already populated
-        if (!$existingHomeQuote || is_null($existingHomeQuote->previous_building_aed)) {
+        if (! $existingHomeQuote || is_null($existingHomeQuote->previous_building_aed)) {
             $quoteData['previous_building_aed'] = $this->getPreviousBuildingAed($data);
         } else {
             // Keep existing value - don't overwrite
@@ -705,7 +705,7 @@ class HomeRenewalService extends RenewalsUploadService
         }
 
         // Previous Contents AED - only set if not already populated
-        if (!$existingHomeQuote || is_null($existingHomeQuote->previous_contents_aed)) {
+        if (! $existingHomeQuote || is_null($existingHomeQuote->previous_contents_aed)) {
             $quoteData['previous_contents_aed'] = $this->getPreviousContentsAed($data);
         } else {
             // Keep existing value - don't overwrite
@@ -713,7 +713,7 @@ class HomeRenewalService extends RenewalsUploadService
         }
 
         // Previous Personal Belongings AED - only set if not already populated
-        if (!$existingHomeQuote || is_null($existingHomeQuote->previous_personal_belongings_aed)) {
+        if (! $existingHomeQuote || is_null($existingHomeQuote->previous_personal_belongings_aed)) {
             $quoteData['previous_personal_belongings_aed'] = $this->getPreviousPersonalBelongingsAed($data);
         } else {
             // Keep existing value - don't overwrite

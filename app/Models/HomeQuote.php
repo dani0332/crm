@@ -246,7 +246,7 @@ class HomeQuote extends Model implements AuditableContract
      */
     public function hasPreviousBuilding(): bool
     {
-        return !empty($this->previous_building_aed);
+        return ! empty($this->previous_building_aed);
     }
 
     /**
@@ -254,7 +254,7 @@ class HomeQuote extends Model implements AuditableContract
      */
     public function hasPreviousContents(): bool
     {
-        return !empty($this->previous_contents_aed);
+        return ! empty($this->previous_contents_aed);
     }
 
     /**
@@ -262,7 +262,7 @@ class HomeQuote extends Model implements AuditableContract
      */
     public function hasPreviousPersonalBelongings(): bool
     {
-        return !empty($this->previous_personal_belongings_aed);
+        return ! empty($this->previous_personal_belongings_aed);
     }
 
     /**
@@ -270,7 +270,7 @@ class HomeQuote extends Model implements AuditableContract
      */
     public function getFormattedPreviousBuildingAed(): string
     {
-        return $this->previous_building_aed ? number_format($this->previous_building_aed, 2) . ' AED' : 'N/A';
+        return $this->previous_building_aed ? number_format($this->previous_building_aed, 2).' AED' : 'N/A';
     }
 
     /**
@@ -278,7 +278,7 @@ class HomeQuote extends Model implements AuditableContract
      */
     public function getFormattedPreviousContentsAed(): string
     {
-        return $this->previous_contents_aed ? number_format($this->previous_contents_aed, 2) . ' AED' : 'N/A';
+        return $this->previous_contents_aed ? number_format($this->previous_contents_aed, 2).' AED' : 'N/A';
     }
 
     /**
@@ -286,6 +286,6 @@ class HomeQuote extends Model implements AuditableContract
      */
     public function getFormattedPreviousPersonalBelongingsAed(): string
     {
-        return $this->previous_personal_belongings_aed ? number_format($this->previous_personal_belongings_aed, 2) . ' AED' : 'N/A';
+        return $this->previous_personal_belongings_aed ? number_format($this->previous_personal_belongings_aed, 2).' AED' : 'N/A';
     }
 }
