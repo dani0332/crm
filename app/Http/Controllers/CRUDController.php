@@ -1364,6 +1364,7 @@ class CRUDController extends Controller
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
             $dropdownSource['business_activities'] = $this->dropdownSourceService->getDropdownSource('business_activity');
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
+            $epTransactions = app(EmbeddedProductRepository::class)->getEpTransactionDetails(QuoteTypeId::Car, $record->id);
             $courierQuoteResponse = app(MACRMService::class)->getCourierQuoteStatus($record->uuid, QuoteTypeId::Car);
             $courierQuoteStatus = isset($courierQuoteResponse['data']['status'])
                 ? $courierQuoteResponse['data']['status']
@@ -1382,6 +1383,7 @@ class CRUDController extends Controller
                 'customerAddressData' => $customerAddressData,
                 'courierQuoteStatus' => $courierQuoteStatus,
                 'quoteStatusEnums' => QuoteStatusEnum::asArray(),
+                'epTransactions' => $epTransactions
             ]);
         }
 

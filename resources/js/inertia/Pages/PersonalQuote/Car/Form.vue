@@ -9,6 +9,10 @@ const props = defineProps({
     default: {},
   },
   quoteStatusEnums: Array,
+  epTransactions: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const { isRequired, isEmail, maxValue } = useRules();
@@ -28,6 +32,12 @@ const kycStatusEnum = page.props.kycEnums;
 
 const isEdit = computed(() => {
   return route().current().includes('edit');
+});
+
+const isLoading = ref(false);
+const modals = reactive({
+  confirmationMessage: 'Are you sure, do you want to proceed?',
+  isActive: false,
 });
 
 const carMakeOptions = computed(() => {
@@ -204,18 +214,35 @@ const validateDecimal = event => {
   }
 };
 
-function onSubmit(isValid) {
-  if (
-    quoteForm.nationality_id == null ||
-    quoteForm.currently_insured_with == null
-  ) {
-    isEmptyField.value = true;
-  } else {
-    isEmptyField.value = false;
+/**
+ * Find an embedded product transaction by short code
+ * @param {string} shortCode - The embedded product short code to search for
+ * @returns {Object|undefined} The found transaction or undefined
+ */
+const findEpTransaction = (shortCode) => {
+  // Validate required data exists
+  if (!shortCode || !Array.isArray(props.epTransactions) || props.epTransactions.length === 0) {
+    return undefined;
   }
 
-  if (!isValid) return;
+  const paymentStatusEnum = page.props.paymentStatusEnum;
 
+  return props.epTransactions.find(function (ep) {
+    const embeddedProduct = ep?.product?.embedded_product;
+
+    const isSelected = ep?.is_selected === 1;
+    const hasMatchingShortCode = embeddedProduct?.short_code === shortCode;
+    const hasValidPaymentStatus = ep?.payment_status_id && 
+      [paymentStatusEnum.AUTHORISED, paymentStatusEnum.CAPTURED].includes(ep.payment_status_id);
+
+    return isSelected && hasMatchingShortCode && hasValidPaymentStatus;
+  });
+};
+
+/**
+ * Proceed with the actual form submission
+ */
+const proceedWithSubmission = () => {
   clearFormValues();
   quoteForm.clearErrors();
 
@@ -235,6 +262,41 @@ function onSubmit(isValid) {
   quoteForm
     .transform(data => ({ ...data, isDisbaled }))
     .submit(method, url, options);
+};
+
+/**
+ * Handle modal confirmation and trigger form submission
+ */
+const confirmToUpdateCarDetails = () => {
+  modals.isActive = false;
+  
+  // Proceed with form submission after confirmation
+  proceedWithSubmission();
+};
+
+function onSubmit(isValid) {
+  // Validate required fields
+  if (
+    quoteForm.nationality_id == null ||
+    quoteForm.currently_insured_with == null
+  ) {
+    isEmptyField.value = true;
+  } else {
+    isEmptyField.value = false;
+  }
+
+  if (!isValid) return;
+
+  // Check if customer has an active ECB transaction that requires confirmation
+  const selectedEpECB = findEpTransaction(page.props.embeddedProductEnum.ECB);
+  if (selectedEpECB) {
+    // ECB transaction found - show confirmation modal before proceeding
+    modals.confirmationMessage = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
+    modals.isActive = true;
+    return;
+  }
+
+  proceedWithSubmission();
 }
 
 const clearFormValues = () => {
@@ -993,5 +1055,43 @@ const gender = computed(() => {
         </x-button>
       </div>
     </x-form>
+
+    <x-modal
+      v-model="modals.isActive"
+      size="lg"
+      title="Are you sure?"
+      show-close
+      backdrop
+    >
+      <div class="items-center">
+        <div class="ml-2">
+          <p>{{ modals.confirmationMessage }}</p>
+        </div>
+        <div class="ml-2 mt-2">
+          <p class="font-semibold">Do you want to proceed?</p>
+        </div>
+      </div>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            :disabled="isLoading"
+            @click.prevent="modals.isActive = false"
+          >
+            Cancel
+          </x-button>
+
+          <x-button
+            size="sm"
+            color="error"
+            @click.prevent="confirmToUpdateCarDetails"
+            :loading="isLoading"
+          >
+            Confirm
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
   </div>
 </template>
