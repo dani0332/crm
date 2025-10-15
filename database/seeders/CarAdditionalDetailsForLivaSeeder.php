@@ -31,34 +31,13 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
      */
     public function run(): void
     {
-        // $this->plateCode();
-        // $this->rtaTransactionType();
-        // $this->rtaPlateCategory();
+        $this->rtaTransactionType();
+        $this->rtaPlateCategory();
         $this->vehicleColor();
-        // $this->bankName();
-        // $this->annualMileageEstimate();
-        // $this->nationalityList();
-        // $this->drivingExperience();
-    }
-
-    private function plateCode()
-    {
-        $plateCodes = [
-            'A', 'AA', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'WHITE', 'X', 'Y', 'Z', 'BB', 'CC', 'DD', 'EE', 'HH', 'MM', 'NN',
-        ];
-
-        foreach ($plateCodes as $plateCode) {
-            Lookup::updateOrCreate([
-                'quote_type_id' => QuoteTypeId::Car,
-                'key' => LookupsEnum::PLATE_CODE,
-                'code' => $plateCode,
-                'text' => $plateCode,
-                'insurance_provider_id' => $this->insuranceProviderId,
-            ], [
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
+        $this->bankName();
+        $this->annualMileageEstimate();
+        $this->nationalityList();
+        $this->drivingExperience();
     }
 
     private function rtaTransactionType()
