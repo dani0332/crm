@@ -8,7 +8,6 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
-use App\Models\QuoteType;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
