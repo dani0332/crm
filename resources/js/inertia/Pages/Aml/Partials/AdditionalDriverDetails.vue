@@ -169,7 +169,11 @@ const isSUKOON = computed(() => {
 
 const licenseIssuePlaceOptions = computed(() => {
   if (isLIVA.value) {
-    return useGenerateOptions(page.props.nationalities ?? [], 'rsa_country_code', 'text');
+    return useGenerateOptions(
+      page.props.nationalities ?? [],
+      'rsa_country_code',
+      'text',
+    );
   } else {
     return useGenerateOptions(lookups?.issuance_place ?? [], 'code', 'text');
   }
