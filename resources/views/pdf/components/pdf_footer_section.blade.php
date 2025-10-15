@@ -186,14 +186,14 @@
                         <a href="https://www.centralbank.ae/en/" target="_blank" style="color: #ffffff; text-decoration: underline;">
                           Central Bank of the UAE
                         </a> | Registration No.
-                        <a href="https://insurancemarket.blob.core.windows.net/policy-wordings/footer_pdf/CB%20License%202025.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">85</a>
+                        <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/CB%20License%202025.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">85</a>
                       </p>
                       <p class="footer-content-1">
                         Trade License issued by 
                         <a href="https://eservices.dubaided.gov.ae/Pages/Anon/GstHme.aspx?dedqs=PM671p6QBb0lV1okx2JABgxoLLKXOgPx" target="_blank" style="color: #ffffff; text-decoration: underline;">
                           Department of Economy & Tourism in Dubai
                         </a> | License No.
-                        <a href="https://insurancemarket.blob.core.windows.net/policy-wordings/footer_pdf/AFIA%20-%20T-L%202025-26%20One%20PAge.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                        <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/AFIA%20-%20T-L%202025-26%20One%20PAge.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
                           238534
                         </a>
                       </p>
@@ -208,21 +208,21 @@
                         <a href="https://www.added.gov.ae/en" target="_blank" style="color: #ffffff; text-decoration: underline;">
                           Abu Dhabi Department of Economic Development
                         </a> | ADED License no. 
-                        <a href="https://insurancemarket.blob.core.windows.net/policy-wordings/footer_pdf/Trade%20License%20-%20Abu%20Dhabi%20Branch%20-%202025-26.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                        <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/Trade%20License%20-%20Abu%20Dhabi%20Branch%20-%202025-26.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
                         CN-5385024
                         </a>
                       </p>
                       <p class="footer-content-1">
                         <a href="https://www.doh.gov.ae/en/" target="_blank" style="color: #ffffff; text-decoration: underline;">
                           Department of Health Abu Dhabi
-                        </a> | License no.  <a href="https://insurancemarket.blob.core.windows.net/policy-wordings/footer_pdf/DOH%20Licesne%202025-26.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;"> B092  </a>
+                        </a> | License no.  <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/DOH%20Licesne%202025-26.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;"> B092  </a>
                       </p>
                       <p class="footer-content-1">Member of the 
                         <a href="https://difcia.org/" target="_blank" style="color: #ffffff; text-decoration: underline;">
                         DIFC Insurance Association
                         </a>
                         | Membership No. 
-                        <a href="https://insurancemarket.blob.core.windows.net/policy-wordings/footer_pdf/DIFCIA%20Member%20Certificate%202025%20-%20Member%20number%20049.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                        <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/DIFCIA%20Member%20Certificate%202025%20-%20Member%20number%20049.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
                         10049
                         </a>
                       </p>
@@ -231,7 +231,7 @@
                         Dubai Chamber of Commerce
                         </a>
                          | Membership No. 
-                         <a href="https://insurancemarket.blob.core.windows.net/policy-wordings/footer_pdf/DCCI%20Certificate%20AFIA%202025-26.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
+                         <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/DCCI%20Certificate%20AFIA%202025-26.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
                          34774
                          </a>
                          </p>
