@@ -50,6 +50,9 @@ class PersonalQuote extends Model implements AuditableContract
         'is_cold' => FilterTypes::EXACT,
         'stale_at' => FilterTypes::NULL_CHECK,
         'previous_policy_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'enquiry_count' => FilterTypes::EXACT,
+        'is_renewal_tier_email_sent' => FilterTypes::EXACT,
+        'is_early_renewal' => FilterTypes::EXACT,
     ];
     protected $appends = ['age', 'gender_label', 'pc_qualified_formatted'];
 
@@ -62,7 +65,7 @@ class PersonalQuote extends Model implements AuditableContract
 
     public $allowedColumns = [
         'first_name', 'last_name', 'email', 'mobile_no', 'source', 'dob', 'company_name', 'company_address',
-        'customer_id', 'gender', 'nationality_id', 'payment_status_id', 'quote_status_id', 'device', 'reference_url', 'notes', 'created_at', 'updated_at', 'code', 'uuid', 'policy_number', 'advisor_id', 'premium', 'parent_duplicate_quote_id', 'renewal_batch', 'renewal_expiry_date', 'previous_quote_policy_number', 'renewal_import_code', 'previous_policy_expiry_date', 'previous_quote_policy_premium', 'policy_start_date', 'policy_issuance_date', 'paid_at', 'payment_status_date', 'quote_status_date', 'premium_authorized', 'premium_captured', 'premium_refunded', 'price_vat_not_applicable', 'price_without_vat', 'price_with_vat', 'vat', 'insurer_quote_number', 'policy_issuance_status_id', 'policy_issuance_status_other', 'kyc_decision',
+        'customer_id', 'gender', 'nationality_id', 'payment_status_id', 'quote_status_id', 'device', 'reference_url', 'notes', 'created_at', 'updated_at', 'code', 'uuid', 'policy_number', 'advisor_id', 'premium', 'parent_duplicate_quote_id', 'renewal_batch', 'renewal_expiry_date', 'previous_quote_policy_number', 'renewal_import_code', 'previous_policy_expiry_date', 'previous_quote_policy_premium', 'policy_start_date', 'policy_issuance_date', 'paid_at', 'payment_status_date', 'quote_status_date', 'premium_authorized', 'premium_captured', 'premium_refunded', 'price_vat_not_applicable', 'price_without_vat', 'price_with_vat', 'vat', 'insurer_quote_number', 'policy_issuance_status_id', 'policy_issuance_status_other', 'kyc_decision', 'enquiry_count', 'is_renewal_tier_email_sent', 'is_early_renewal',
     ];
 
     protected static function booted()
@@ -582,5 +585,37 @@ class PersonalQuote extends Model implements AuditableContract
     public function ftcEmailLogs(): MorphMany
     {
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
+    }
+
+    /**
+     * Check if renewal tier email has been sent
+     */
+    public function isRenewalTierEmailSent(): bool
+    {
+        return $this->is_renewal_tier_email_sent == 1;
+    }
+
+    /**
+     * Check if this is an early renewal quote
+     */
+    public function isEarlyRenewal(): bool
+    {
+        return $this->is_early_renewal == 1;
+    }
+
+    /**
+     * Increment enquiry count
+     */
+    public function incrementEnquiryCount(): void
+    {
+        $this->increment('enquiry_count');
+    }
+
+    /**
+     * Get enquiry count with default value
+     */
+    public function getEnquiryCountAttribute($value): int
+    {
+        return $value ?? 0;
     }
 }

@@ -19,7 +19,7 @@ class HomeQuote extends Model implements AuditableContract
     protected $table = 'home_quote_request';
     protected $fillable = [];
     protected $guarded = [];
-    public $allowedColumns = ['first_name', 'last_name', 'previous_quote_policy_number', 'code', 'email', 'source', 'policy_expiry_date', 'policy_number', 'policy_start_date', 'uuid', 'mobile_no', 'customer_id', 'advisor_id', 'premium', 'insurance_provider_id', 'insly_migrated', 'quote_status_id'];
+    public $allowedColumns = ['first_name', 'last_name', 'previous_quote_policy_number', 'code', 'email', 'source', 'policy_expiry_date', 'policy_number', 'policy_start_date', 'uuid', 'mobile_no', 'customer_id', 'advisor_id', 'premium', 'insurance_provider_id', 'insly_migrated', 'quote_status_id', 'previous_building_aed', 'previous_contents_aed', 'previous_personal_belongings_aed'];
     public $filterables = [
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
@@ -33,6 +33,9 @@ class HomeQuote extends Model implements AuditableContract
         'created_at' => FilterTypes::DATE_BETWEEN,
         'quote_status_id' => FilterTypes::IN,
         'advisor_id' => FilterTypes::IN,
+        'previous_building_aed' => FilterTypes::EXACT,
+        'previous_contents_aed' => FilterTypes::EXACT,
+        'previous_personal_belongings_aed' => FilterTypes::EXACT,
     ];
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
@@ -236,5 +239,53 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
             ->where('quote_type_id', QuoteTypeId::Home)->withTrashed();
+    }
+
+    /**
+     * Check if previous building AED exists
+     */
+    public function hasPreviousBuilding(): bool
+    {
+        return !empty($this->previous_building_aed);
+    }
+
+    /**
+     * Check if previous contents AED exists
+     */
+    public function hasPreviousContents(): bool
+    {
+        return !empty($this->previous_contents_aed);
+    }
+
+    /**
+     * Check if previous personal belongings AED exists
+     */
+    public function hasPreviousPersonalBelongings(): bool
+    {
+        return !empty($this->previous_personal_belongings_aed);
+    }
+
+    /**
+     * Get formatted previous building AED
+     */
+    public function getFormattedPreviousBuildingAed(): string
+    {
+        return $this->previous_building_aed ? number_format($this->previous_building_aed, 2) . ' AED' : 'N/A';
+    }
+
+    /**
+     * Get formatted previous contents AED
+     */
+    public function getFormattedPreviousContentsAed(): string
+    {
+        return $this->previous_contents_aed ? number_format($this->previous_contents_aed, 2) . ' AED' : 'N/A';
+    }
+
+    /**
+     * Get formatted previous personal belongings AED
+     */
+    public function getFormattedPreviousPersonalBelongingsAed(): string
+    {
+        return $this->previous_personal_belongings_aed ? number_format($this->previous_personal_belongings_aed, 2) . ' AED' : 'N/A';
     }
 }
