@@ -1,6 +1,7 @@
 <script setup>
 import { ref, nextTick, watch, onMounted } from 'vue';
 import CollapseIcon from '../Savings/components/CollapseIcon.vue';
+import LocationTagsInput from './LocationTagsInput.vue';
 
 const props = defineProps({
   title: {
@@ -30,16 +31,6 @@ const emit = defineEmits([
   'remove-bracket',
   'add-profile',
   'remove-profile',
-]);
-
-const locationOptions = ref([
-  { value: 'abu_dhabi', label: 'Abu Dhabi' },
-  { value: 'dubai', label: 'Dubai' },
-  { value: 'sharjah', label: 'Sharjah' },
-  { value: 'ajman', label: 'Ajman' },
-  { value: 'umm_al_quwain', label: 'Umm Al Quwain' },
-  { value: 'ras_al_khaimah', label: 'Ras Al Khaimah' },
-  { value: 'fujairah', label: 'Fujairah' },
 ]);
 
 const highlightedBracketIndex = ref(-1);
@@ -154,7 +145,7 @@ const handleBlur = (event, bracket, field) => {
 
 const createEmptyProfile = () => ({
   advisorIds: [],
-  locationIds: [],
+  locationIds: [], // Will store location names as strings
 });
 
 const addBracket = () => {
@@ -565,32 +556,13 @@ onMounted(() => {
                         </x-select>
                       </div>
                       <div>
-                        <x-select
+                        <LocationTagsInput
                           v-model="profile.locationIds"
-                          :options="locationOptions"
-                          placeholder="Select locations..."
-                          multiple
-                          filterable
                           :disabled="viewMode"
-                          class="w-full min-h-[40px]"
                           label="Locations"
-                          required
-                          tooltip="Select the UAE locations this profile applies to."
-                        >
-                          <template
-                            #content-footer
-                            v-if="locationOptions.length > 0 && !viewMode"
-                          >
-                            <ui-select-actions
-                              @select-all="
-                                profile.locationIds = locationOptions.map(
-                                  item => item.value,
-                                )
-                              "
-                              @clear="profile.locationIds = []"
-                            />
-                          </template>
-                        </x-select>
+                          placeholder="Type location and press Enter..."
+                          tooltip="Type location names (e.g., Abu Dhabi, Dubai) and press Enter to add them. This profile will apply to these locations."
+                        />
                       </div>
                     </div>
                   </div>
