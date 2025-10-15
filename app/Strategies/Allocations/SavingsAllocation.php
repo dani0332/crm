@@ -27,6 +27,7 @@ class SavingsAllocation extends BaseAllocation
 
         $advisorIds = AllocationConfigurer::getSavingsEligibleAdvisorIds($this->lead);
 
+
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager])
             ->whereIn('users.id', $advisorIds)
             ->logRawSql()
