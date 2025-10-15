@@ -2,13 +2,13 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\TravelQuoteEnum;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
-use App\Enums\TravelQuoteEnum;
 use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -195,8 +195,8 @@ class TransactionReportService extends ManagementReport
                         ? $item->travel_coverage_code
                         : ($item->travel_days_cover_for <= 92
                             ? TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP
-                            : TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP .
-                            '/' .
+                            : TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP.
+                            '/'.
                             TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP));
 
                 $item->traveling_where = $item->travel_direction_code !== null
