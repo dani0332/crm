@@ -1383,7 +1383,7 @@ class CRUDController extends Controller
                 'customerAddressData' => $customerAddressData,
                 'courierQuoteStatus' => $courierQuoteStatus,
                 'quoteStatusEnums' => QuoteStatusEnum::asArray(),
-                'epTransactions' => $epTransactions
+                'epTransactions' => $epTransactions,
             ]);
         }
 
