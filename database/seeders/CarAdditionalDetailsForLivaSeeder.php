@@ -1903,9 +1903,8 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
      * Searches for matching nationality by text and updates rsa_country_code
      * If no match found, creates a new nationality record
      *
-     * @param string $livaText The nationality text from LIVA
-     * @param int $livaId The LIVA nationality ID
-     * @return void
+     * @param  string  $livaText  The nationality text from LIVA
+     * @param  int  $livaId  The LIVA nationality ID
      */
     private function syncNationalityWithLiva(string $livaText, int $livaId): void
     {
