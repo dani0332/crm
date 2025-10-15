@@ -119,6 +119,8 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedOcrSendUpdateLogFlag();
         $this->seedProductionApprovalEmails();
         $this->seedCustomerVerificationEnabled();
+        $this->seedAutoCaptureEPPayments();
+        $this->seedSla();
     }
 
     private function seedBirdWorkflowUrls()
@@ -702,6 +704,51 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'approval.production@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
+            ]
+        );
+    }
+
+    private function seedSla()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SLA_CALLBACK_HOURS],
+            [
+                'value' => 2,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SLA_REMINDER_MINUTES],
+            [
+                'value' => 15,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+    }
+
+    private function seedAutoCaptureEPPayments()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_AUTO_CAPTURE_EP_PAYMENTS],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AUTO_CAPTURE_EP_PAYMENTS_BOOKING_DAYS],
+            [
+                'value' => 7,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
     }

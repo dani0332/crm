@@ -15,6 +15,7 @@ import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerVerificationDetails from './Partials/CustomerVerificationDetails.vue';
 import AdditionalVehicleTransactionDetails from '../../Aml/Partials/AdditionalVehicleTransactionDetails.vue';
 import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 defineProps({
   quote: Object,
@@ -134,6 +135,7 @@ const selectedProviderPlan = ref({
 const modelClass = 'App\\Models\\CarQuote';
 
 const processingOCBEmailNB = ref(false);
+const processingOCBEmail = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
@@ -1168,6 +1170,7 @@ const onExportPlans = () => {
 const confirmSendEmail = () => {
   const first_name = page.props.record.first_name || '';
   const last_name = page.props.record.last_name || '';
+  processingOCBEmail.value = true;
   axios
     .post(
       `/quotes/car/${page.props.record.uuid}/send-email-one-click-buy`,
@@ -1201,15 +1204,18 @@ const confirmSendEmail = () => {
     )
 
     .then(response => {
+      processingOCBEmail.value = false;
       notification.success({
         title: response.data.success,
         position: 'top',
       });
     })
     .catch(error => {
+      processingOCBEmail.value = false;
       console.log(error);
     })
     .finally(() => {
+      processingOCBEmail.value = false;
       modals.sendConfirm = false;
     });
 };
@@ -3877,7 +3883,12 @@ function handleCustomerVerificationUpdated(event) {
             >
               Cancel
             </x-button>
-            <x-button size="sm" color="error" @click.prevent="confirmSendEmail">
+            <x-button
+              size="sm"
+              color="error"
+              :loading="processingOCBEmail"
+              @click.prevent="confirmSendEmail"
+            >
               Send
             </x-button>
           </div>
@@ -4107,6 +4118,12 @@ function handleCustomerVerificationUpdated(event) {
       :insuranceProviders="insuranceProviders"
       :expanded="sectionExpanded"
       :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="record.id"
+      :lob="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy

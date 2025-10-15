@@ -246,6 +246,7 @@ final class ApplicationStorageEnums extends Enum
     public const SAVINGS_SEND_POLICY_TEMPLATE = 'SAVINGS_SEND_POLICY_TEMPLATE';
     public const NEW_LEAD_POOL_BCC = 'NEW_LEAD_POOL_BCC';
     public const OCR_ENABLED = 'OCR_ENABLED';
+    public const CAR_INTRO_EMAIL = 'CAR_INTRO_EMAIL';
     public const CAR_CQF_RENEWALS_DAYS_THRESHOLD = 'CAR_CQF_RENEWALS_DAYS_THRESHOLD';
     public const CAR_CQF_RENEWALS_SWITCH = 'CAR_CQF_RENEWALS_SWITCH';
 
@@ -270,4 +271,10 @@ final class ApplicationStorageEnums extends Enum
     
     // Customer Verification Feature Toggle
     public const CUSTOMER_VERIFICATION_ENABLED = 'CUSTOMER_VERIFICATION_ENABLED';
+    public const ENABLE_AUTO_CAPTURE_EP_PAYMENTS = 'ENABLE_AUTO_CAPTURE_EP_PAYMENTS';
+    public const AUTO_CAPTURE_EP_PAYMENTS_BOOKING_DAYS = 'AUTO_CAPTURE_EP_PAYMENTS_BOOKING_DAYS';
+
+    /* Customer Callback SLA Configuration */
+    public const SLA_CALLBACK_HOURS = 'SLA_CALLBACK_HOURS';
+    public const SLA_REMINDER_MINUTES = 'SLA_REMINDER_MINUTES';
 }

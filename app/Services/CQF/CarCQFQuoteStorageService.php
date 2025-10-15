@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\CQF;
 
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
@@ -51,12 +52,29 @@ class CarCQFQuoteStorageService
 
             if (! empty($quote->embeddedTransactions)) {
                 foreach ($quote->embeddedTransactions as $embeddedTransaction) {
-                    if ($embeddedTransaction->is_selected == 1) {
+
+                    $isSelected = $embeddedTransaction->is_selected == 1;
+                    $isPaymentCaptured = $embeddedTransaction->payment_status_id === PaymentStatusEnum::CAPTURED;
+                    $isMdxProduct = str_contains($embeddedTransaction->code, EmbeddedProductEnum::MDX);
+
+                    $shouldCreateEP = $isSelected && $isPaymentCaptured && $isMdxProduct;
+
+                    if ($shouldCreateEP) {
                         $epCodes[] = EmbeddedProductEnum::MDX.'-'.$newQuote->code;
                         LoggerService::info(self::class.' - Embedded Transaction found for quote', [
-                            'embeddedTransaction' => $embeddedTransaction,
+                            'embeddedTransaction' => [
+                                'code' => $embeddedTransaction->code,
+                                'is_selected' => $embeddedTransaction->is_selected,
+                                'payment_status_id' => $embeddedTransaction->payment_status_id,
+                                'product_id' => $embeddedTransaction->product_id ?? null,
+                                'previous_quote_uuid' => $quote->uuid,
+                                'new_quote_uuid' => $newQuote->uuid,
+                                'previous_quote_id' => $quote->id,
+                                'new_quote_id' => $newQuote->id,
+                            ],
                         ]);
                     }
+
                 }
             }
 
