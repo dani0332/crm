@@ -300,7 +300,7 @@
         .full-page-image {
             width: 100%;
             z-index: 999;
-            height: 100%;
+            height: 88%;
         }
 
         .text-center {
@@ -374,7 +374,7 @@
 
 <body>
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/comparison-table-health.jpg') }}" class="full-page-image"  style="height:90%;"/>
+    <img src="{{ public_path('images/quote_plans_pages/comparison-table-health.jpg') }}" class="full-page-image"  style="height:90% ;"/>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quote->uuid])
       
      
