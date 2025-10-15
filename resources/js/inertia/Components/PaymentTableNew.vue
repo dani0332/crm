@@ -455,7 +455,8 @@ const addPaymentModal = async () => {
     !isLifePlanDetailsEnabled.value &&
     props.quoteType === quoteTypeCodeEnum.Life
   ) {
-    const planCurrency = props.quoteRequest?.quote_customer_plan?.plan?.currency;
+    const planCurrency =
+      props.quoteRequest?.quote_customer_plan?.plan?.currency;
     if (
       planDetail.value &&
       planCurrency &&
