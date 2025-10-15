@@ -1273,7 +1273,11 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
     isCustomReasonEnabled.value = false;
   }
 
-  if (noPaymentUpdate && paymentMethodsForm.credit_approval == '' && paymentMethodsForm.frequency == paymentFrequencyEnum.CUSTOM) {
+  if (
+    noPaymentUpdate &&
+    paymentMethodsForm.credit_approval == '' &&
+    paymentMethodsForm.frequency == paymentFrequencyEnum.CUSTOM
+  ) {
     resetCreditApproval();
   }
   //customize payment method based on collection type
