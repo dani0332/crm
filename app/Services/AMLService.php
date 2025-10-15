@@ -2332,14 +2332,6 @@ class AMLService
 
         $screeningResult = json_decode($kycLogs->results);
 
-        if (
-            $insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
-            isset($screeningResult->quoteStatus) &&
-            $screeningResult->quoteStatus == 20
-        ) {
-            return true;
-        }
-
         if (! isset($screeningResult->uwApprovalStatus, $screeningResult->quoteStatus)) {
             return false;
         }
