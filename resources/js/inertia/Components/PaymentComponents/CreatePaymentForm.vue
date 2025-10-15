@@ -1273,7 +1273,7 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
     isCustomReasonEnabled.value = false;
   }
 
-  if (noPaymentUpdate && paymentMethodsForm.credit_approval == '' && paymentMethodsForm.frequency == paymentFrequencyEnum.CUSTOM) {
+  if (noPaymentUpdate && paymentMethodsForm.credit_approval == '' && paymentMethodsForm.frequency == paymentFrequencyEnum.CUSTOM && !isResetCreditApproval.value) {
     resetCreditApproval();
   }
   //customize payment method based on collection type
@@ -1784,7 +1784,7 @@ const resetCreditApproval = () => {
   if (isCustomFrequency.value && isSinglePayment.value) {
     paymentMethodsForm.frequency = paymentFrequencyEnum.UPFRONT;
   }
-  handleApprovalReasonChange();
+  handleApprovalReasonChange(false);
   handleFrequencyChange(false);
   if (isPaymentLocked.value && paymentMethodsForm.status == 'edit') {
     // If payment is locked, reset the payment method for split payments
@@ -1795,6 +1795,7 @@ const resetCreditApproval = () => {
       paymentMethodsModels.value[i] = '';
     }
   }
+  isResetCreditApproval.value = false;
 };
 
 const resetDiscount = (callDiscountChang = true) => {
