@@ -624,7 +624,10 @@ class HomeRenewalService extends RenewalsUploadService
             'building' => $data['building'] ?? null,
         ]);
 
-        $previousBuildingAed = (!empty($data['building'])) ? $data['building'] : null;
+        $previousBuildingAed = null;
+        if (!empty($data['building']) && is_numeric($data['building'])) {
+            $previousBuildingAed = (float) $data['building'];
+        }
         
         LoggerService::info('fn: getPreviousBuildingAed - previous building AED: ' . $previousBuildingAed);
 
@@ -646,11 +649,14 @@ class HomeRenewalService extends RenewalsUploadService
         if (!empty($data['contents'])) {
             // If it's a numeric value, use it directly
             if (is_numeric($data['contents'])) {
-                $previousContentsAed = $data['contents'];
+                $previousContentsAed = (float) $data['contents'];
             } else {
-                // If it's a range text, get the range lookup value
+                // If it's a range text, get the range lookup and use min_value as the numeric representation
                 $contentsRange = $this->renewalsHelperService->getRangeLookupByText(RangeLookupKeyEnums::CONTENT_VALUES->value, $data['contents']);
-                $previousContentsAed = $contentsRange?->text ?? $data['contents'];
+                if ($contentsRange) {
+                    // Use min_value as the numeric representation, fallback to max_value if min_value is null
+                    $previousContentsAed = $contentsRange->min_value ?? $contentsRange->max_value ?? null;
+                }
             }
         }
 
@@ -674,11 +680,14 @@ class HomeRenewalService extends RenewalsUploadService
         if (!empty($data['personal_belongings'])) {
             // If it's a numeric value, use it directly
             if (is_numeric($data['personal_belongings'])) {
-                $previousPersonalBelongingsAed = $data['personal_belongings'];
+                $previousPersonalBelongingsAed = (float) $data['personal_belongings'];
             } else {
-                // If it's a range text, get the range lookup value
+                // If it's a range text, get the range lookup and use min_value as the numeric representation
                 $personalBelongingsRange = $this->renewalsHelperService->getRangeLookupByText(RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES->value, $data['personal_belongings']);
-                $previousPersonalBelongingsAed = $personalBelongingsRange?->text ?? $data['personal_belongings'];
+                if ($personalBelongingsRange) {
+                    // Use min_value as the numeric representation, fallback to max_value if min_value is null
+                    $previousPersonalBelongingsAed = $personalBelongingsRange->min_value ?? $personalBelongingsRange->max_value ?? null;
+                }
             }
         }
 
