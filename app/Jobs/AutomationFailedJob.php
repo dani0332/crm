@@ -69,7 +69,6 @@ class AutomationFailedJob implements ShouldQueue
         ]);
 
         $payment = $quote->payments()->mainLeadPayment()->first();
-        $quoteType = QuoteType::where('id', $this->quoteTypeId)->first();
         $this->insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
         $this->insurerName = InsuranceProvidersEnum::getTextByCode($this->insuranceProvider?->code);
 
