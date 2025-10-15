@@ -555,6 +555,8 @@ const formattedActualPremium = useFormattedNumberField(
   editForm,
   'actualPremium',
 );
+
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 </script>
 
 <template>
@@ -979,7 +981,7 @@ const formattedActualPremium = useFormattedNumberField(
 
             <x-button
               v-if="
-                editForm.isApi && !editForm.isUnderwritten && !isPdfGenerated
+                editForm.isApi && !editForm.isUnderwritten && !isPdfGenerated && props.selectedPlan.providerCode === insuranceProviderCodeEnum?.ZILL
               "
               @click="generatePdf()"
               class="mt-2"
