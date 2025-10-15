@@ -1910,26 +1910,17 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
     private function syncNationalityWithLiva(string $livaText, int $livaId): void
     {
         $normalizedText = trim($livaText);
-        $nationality = Nationality::whereRaw('LOWER(text) = ?', [strtolower($normalizedText)])->first();
 
-        if ($nationality) {
-            $nationality->update([
-                'liva_nationality_id' => $livaId,
-                'updated_at' => now(),
-            ]);
-
-            LoggerService::info($livaText.' - Matched and updated nationality');
-        } else {
-            Nationality::create([
-                'text' => $normalizedText,
+        $nationality = Nationality::updateOrCreate(
+            ['text' => $normalizedText],
+            [
                 'code' => $normalizedText,
+                'text' => $normalizedText,
                 'liva_nationality_id' => $livaId,
                 'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            ]
+        );
 
-            LoggerService::info($livaText.' - Created new nationality');
-        }
+        LoggerService::info($livaText.' - '.($nationality->wasRecentlyCreated ? 'Created new' : 'Updated existing').' nationality');
     }
 }
