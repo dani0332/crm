@@ -104,14 +104,6 @@ const supportUserOptions = computed(() => {
   }));
 });
 
-const subSourceOptions = computed(() => {
-  const sources = page.props.subSources || [];
-  return sources.map(source => ({
-    value: source.id,
-    label: source.text,
-    suffix: source.description || source.tooltip || '',
-  }));
-});
 
 const assignableSupportUserOptions = computed(() => {
   // Check if user has only OE_AE_CLIENT_SUPPORT role and not OE_AE_CLIENT_SUPPORT_LEAD

@@ -315,17 +315,6 @@ const advisorOptions = computed(() => {
   }));
 });
 
-// Sub source options with tooltip suffix
-const subSourceOptions = computed(() => {
-  return (page.props.subSources || []).map(source => ({
-    value: source.id,
-    label: source.text,
-    suffix:
-      source.description ||
-      source.tooltip ||
-      `Information about ${source.text}`,
-  }));
-});
 
 const onLeadAssigned = () => {
   quotesSelected.value = [];

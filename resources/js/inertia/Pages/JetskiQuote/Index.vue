@@ -373,14 +373,6 @@ const insurerAMLStatusOption = computed(() => {
   }));
 });
 
-const subSourceOptions = computed(() => {
-  const sources = page.props.subSources || [];
-  return sources.map(source => ({
-    value: source.id,
-    label: source.text,
-    suffix: source.description || source.tooltip || '',
-  }));
-});
 
 // CreateLeadModal setup
 const createLeadModal = ref(false);

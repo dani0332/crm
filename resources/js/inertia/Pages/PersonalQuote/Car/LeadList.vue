@@ -212,14 +212,6 @@ const providers = computed(() => {
   }));
 });
 
-const subSourceOptions = computed(() => {
-  const sources = page.props.subSources || [];
-  return sources.map(source => ({
-    value: source.id,
-    label: source.text,
-    suffix: source.description || source.tooltip || '',
-  }));
-});
 
 const batchOptions = computed(() => {
   return page.props.dropdownSource.quote_batch_id.map(batch => ({

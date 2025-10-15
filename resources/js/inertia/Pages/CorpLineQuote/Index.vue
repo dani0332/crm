@@ -141,18 +141,6 @@ const insuranceTypeOptions = computed(() => {
   );
 });
 
-// Sub Source options with tooltip suffix
-const subSourceOptions = computed(() => {
-  const list = (page.props.subSources || []).map(source => ({
-    value: source.id,
-    label: source.text,
-    suffix:
-      source.description ||
-      source.tooltip ||
-      `Information about ${source.text}`,
-  }));
-  return list;
-});
 
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
