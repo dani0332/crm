@@ -111,7 +111,7 @@ class HomeAllocation extends BaseAllocation
 
         $advisorIds = AllocationConfigurer::getHomeEligibleAdvisorIds($homeQuote);
 
-        return dd(User::whereIn('id', $advisorIds)->pluck('email')->toArray());
+        return User::whereIn('id', $advisorIds)->pluck('email')->toArray();
     }
 
     /**
