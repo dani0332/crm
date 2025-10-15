@@ -625,11 +625,11 @@ class HomeRenewalService extends RenewalsUploadService
         ]);
 
         $previousBuildingAed = null;
-        if (!empty($data['building']) && is_numeric($data['building'])) {
+        if (! empty($data['building']) && is_numeric($data['building'])) {
             $previousBuildingAed = (float) $data['building'];
         }
-        
-        LoggerService::info('fn: getPreviousBuildingAed - previous building AED: ' . $previousBuildingAed);
+
+        LoggerService::info('fn: getPreviousBuildingAed - previous building AED: '.$previousBuildingAed);
 
         return $previousBuildingAed;
     }
