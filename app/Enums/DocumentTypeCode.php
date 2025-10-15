@@ -116,4 +116,9 @@ class DocumentTypeCode extends Enum
     const PS_LIFE = 'PS_LIFE'; // Life Policy Schedule
     const AC_LIFE = 'AC_LIFE'; // Life Application Copy
     const PHB = 'PHB'; // Policy Handbook
+    const COMP_PH = 'COMP_PH'; // Trade Credit Policy Handbook
+    const COMP_AEA = 'COMP_AEA'; // Trade Credit Additional Email Attachments
+    const COMP_EC = 'COMP_EC'; // Trade Credit E-Card
+    const COMP_PC = 'COMP_PC'; // Trade Credit Policy Certificate
+    const COMP_PS = 'COMP_PS'; // Trade Credit Policy Schedule
 }

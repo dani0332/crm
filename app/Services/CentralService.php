@@ -1672,6 +1672,7 @@ class CentralService extends BaseService
                 $quoteTypeId == QuoteTypeId::Business &&
                 in_array($quote?->business_type_of_insurance_id, [
                     quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit),
                     quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet),
                 ])
             )
@@ -1686,7 +1687,9 @@ class CentralService extends BaseService
                     $emailData->handBookDocuments = str_contains($url, 'http') ? $url : $storageUrl.$url;
                 }
             } else {
-                $policyHandBook = $quoteDocuments->filter(fn ($document) => $document['document_type_code'] == DocumentTypeCode::PHB)->first()?->doc_url ?? [];
+                $policyHandBook = $quoteDocuments->filter(function ($document) {
+                    return in_array($document['document_type_code'], [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH]);
+                })->first()?->doc_url ?? [];
 
                 if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life])) {
                     $policyHandBook = PolicyWording::where('quote_type_id', $quoteTypeId)
@@ -1707,7 +1710,7 @@ class CentralService extends BaseService
 
             if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business])) {
                 $emailData->policyCertificate = $storageUrl.$quoteDocuments->filter(function ($document) {
-                    return in_array($document['document_type_code'], [DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL, DocumentTypeCode::PC_YTCH]);
+                    return in_array($document['document_type_code'], [DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL, DocumentTypeCode::PC_YTCH, DocumentTypeCode::COMP_PC]);
                 })->first()['doc_url'] ?? '';
             }
 
@@ -1748,7 +1751,7 @@ class CentralService extends BaseService
             }
 
             $emailData->policySchedule = $storageUrl.$quoteDocuments->filter(function ($document) {
-                return in_array($document['document_type_code'], [DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL]);
+                return in_array($document['document_type_code'], [DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS]);
             })->first()['doc_url'] ?? '';
         }
 
