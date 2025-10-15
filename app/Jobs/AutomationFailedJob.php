@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\QuoteType;
@@ -59,8 +60,8 @@ class AutomationFailedJob implements ShouldQueue
      */
     public function handle()
     {
-        $quoteType = QuoteType::where('id', $this->quoteTypeId)->first();
-        $quote = $this->getQuoteObject($quoteType->code, $this->quoteId);
+        $quoteType = QuoteTypes::getName($this->quoteTypeId)->value;
+        $quote = $this->getQuoteObject($quoteType, $this->quoteId);
 
         LoggerService::startQuoteLogging($quote);
         LoggerService::info('job:AutomationFailedJob - Job started', extra: [
@@ -69,7 +70,7 @@ class AutomationFailedJob implements ShouldQueue
         ]);
 
         $payment = $quote->payments()->mainLeadPayment()->first();
-        $this->insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
+        $this->insuranceProvider = getInsuranceProvider($payment, $quoteType);
         $this->insurerName = InsuranceProvidersEnum::getTextByCode($this->insuranceProvider?->code);
 
         if ($this->userToSendEmail == UserNameEnum::PA_USER) {
