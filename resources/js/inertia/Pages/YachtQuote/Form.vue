@@ -153,7 +153,7 @@ const gender = computed(() => {
           filterPlaceholder="Filter IMCRM SUB-SOURCE...."
           :disabled="!canEditSubSourceFields"
           :rules="[isRequired]"
-          :required="subSourceOptions.length > 0"
+          required
           :error="quoteForm.errors.sub_source_id"
         >
           <template #suffix="{ item }">
