@@ -25,8 +25,8 @@ class HomeAllocationValidationStrategy implements AllocationValidationStrategyIn
             'value_brackets.*.profiles' => ['required_with:value_brackets', 'array', 'min:1'],
             'value_brackets.*.profiles.*.advisorIds' => ['required', 'array', 'min:1'],
             'value_brackets.*.profiles.*.advisorIds.*' => ['integer', Rule::exists(User::class, 'id')],
-            'value_brackets.*.profiles.*.locationIds' => ['required', 'array', 'min:1'],
-            'value_brackets.*.profiles.*.locationIds.*' => ['string'],
+            'value_brackets.*.profiles.*.locations' => ['required', 'array', 'min:1'],
+            'value_brackets.*.profiles.*.locations.*' => ['string'],
 
             'volume_brackets' => ['required', 'array'],
             'volume_brackets.*.contents_min' => ['required_with:volume_brackets', 'numeric', 'min:1'],
@@ -36,8 +36,8 @@ class HomeAllocationValidationStrategy implements AllocationValidationStrategyIn
             'volume_brackets.*.profiles' => ['required_with:volume_brackets', 'array', 'min:1'],
             'volume_brackets.*.profiles.*.advisorIds' => ['required', 'array', 'min:1'],
             'volume_brackets.*.profiles.*.advisorIds.*' => ['integer', Rule::exists(User::class, 'id')],
-            'volume_brackets.*.profiles.*.locationIds' => ['required', 'array', 'min:1'],
-            'volume_brackets.*.profiles.*.locationIds.*' => ['string'],
+            'volume_brackets.*.profiles.*.locations' => ['required', 'array', 'min:1'],
+            'volume_brackets.*.profiles.*.locations.*' => ['string'],
         ];
     }
 
@@ -67,9 +67,9 @@ class HomeAllocationValidationStrategy implements AllocationValidationStrategyIn
             'value_brackets.*.profiles.*.advisorIds.min' => 'Please select at least one advisor for each profile.',
             'value_brackets.*.profiles.*.advisorIds.*.integer' => 'Invalid advisor selected.',
             'value_brackets.*.profiles.*.advisorIds.*.exists' => 'One or more selected advisors do not exist.',
-            'value_brackets.*.profiles.*.locationIds.required' => 'Please select at least one location for each profile.',
-            'value_brackets.*.profiles.*.locationIds.array' => 'Location selection must be a valid array.',
-            'value_brackets.*.profiles.*.locationIds.min' => 'Please select at least one location for each profile.',
+            'value_brackets.*.profiles.*.locations.required' => 'Please select at least one location for each profile.',
+            'value_brackets.*.profiles.*.locations.array' => 'Location selection must be a valid array.',
+            'value_brackets.*.profiles.*.locations.min' => 'Please select at least one location for each profile.',
 
             // Volume bracket messages
             'volume_brackets.required' => 'Volume brackets configuration is required.',
@@ -94,9 +94,9 @@ class HomeAllocationValidationStrategy implements AllocationValidationStrategyIn
             'volume_brackets.*.profiles.*.advisorIds.min' => 'Please select at least one advisor for each profile.',
             'volume_brackets.*.profiles.*.advisorIds.*.integer' => 'Invalid advisor selected.',
             'volume_brackets.*.profiles.*.advisorIds.*.exists' => 'One or more selected advisors do not exist.',
-            'volume_brackets.*.profiles.*.locationIds.required' => 'Please select at least one location for each profile.',
-            'volume_brackets.*.profiles.*.locationIds.array' => 'Location selection must be a valid array.',
-            'volume_brackets.*.profiles.*.locationIds.min' => 'Please select at least one location for each profile.',
+            'volume_brackets.*.profiles.*.locations.required' => 'Please select at least one location for each profile.',
+            'volume_brackets.*.profiles.*.locations.array' => 'Location selection must be a valid array.',
+            'volume_brackets.*.profiles.*.locations.min' => 'Please select at least one location for each profile.',
         ];
     }
 
@@ -180,7 +180,7 @@ class HomeAllocationValidationStrategy implements AllocationValidationStrategyIn
                 $bracket['profiles'],
                 $bracketIndex,
                 $validator,
-                'locationIds',
+                'locations',
                 'location'
             );
 
@@ -188,7 +188,7 @@ class HomeAllocationValidationStrategy implements AllocationValidationStrategyIn
                 $bracket['profiles'],
                 $bracketIndex,
                 $validator,
-                'locationIds',
+                'locations',
                 'location'
             );
         }
@@ -236,15 +236,15 @@ class HomeAllocationValidationStrategy implements AllocationValidationStrategyIn
             }
 
             foreach ($bracket['profiles'] as $profile) {
-                if (! isset($profile['advisorIds']) || ! isset($profile['locationIds'])) {
+                if (! isset($profile['advisorIds']) || ! isset($profile['locations'])) {
                     return false;
                 }
 
-                if (! is_array($profile['advisorIds']) || ! is_array($profile['locationIds'])) {
+                if (! is_array($profile['advisorIds']) || ! is_array($profile['locations'])) {
                     return false;
                 }
 
-                if (empty($profile['locationIds'])) {
+                if (empty($profile['locations'])) {
                     return false;
                 }
             }

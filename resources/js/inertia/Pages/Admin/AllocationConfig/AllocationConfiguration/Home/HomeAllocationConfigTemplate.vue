@@ -102,7 +102,7 @@ const validateBracket = (bracket, bracketIndex, type) => {
         );
       }
 
-      if (!profile.locationIds || profile.locationIds.length === 0) {
+      if (!profile.locations || profile.locations.length === 0) {
         errors.push(
           `${type} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one location must be selected`,
         );

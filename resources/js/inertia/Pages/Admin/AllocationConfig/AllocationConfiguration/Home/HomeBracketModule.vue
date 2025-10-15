@@ -145,7 +145,7 @@ const handleBlur = (event, bracket, field) => {
 
 const createEmptyProfile = () => ({
   advisorIds: [],
-  locationIds: [], // Will store location names as strings
+  locations: [], // Will store location names as strings
 });
 
 const addBracket = () => {
@@ -557,7 +557,7 @@ onMounted(() => {
                       </div>
                       <div>
                         <LocationTagsInput
-                          v-model="profile.locationIds"
+                          v-model="profile.locations"
                           :disabled="viewMode"
                           label="Locations"
                           placeholder="Type location and press Enter..."
