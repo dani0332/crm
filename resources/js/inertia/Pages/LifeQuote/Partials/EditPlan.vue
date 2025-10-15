@@ -981,7 +981,11 @@ const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 
             <x-button
               v-if="
-                editForm.isApi && !editForm.isUnderwritten && !isPdfGenerated && props.selectedPlan.providerCode === insuranceProviderCodeEnum?.ZILL
+                editForm.isApi &&
+                !editForm.isUnderwritten &&
+                !isPdfGenerated &&
+                props.selectedPlan.providerCode ===
+                  insuranceProviderCodeEnum?.ZILL
               "
               @click="generatePdf()"
               class="mt-2"
