@@ -119,6 +119,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTravelEnquiryEmail();
         $this->seedOcrSendUpdateLogFlag();
         $this->seedProductionApprovalEmails();
+        $this->seedAutoCaptureEPPayments();
         $this->seedSla();
     }
 
@@ -738,6 +739,30 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 15,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+    }
+
+    private function seedAutoCaptureEPPayments()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_AUTO_CAPTURE_EP_PAYMENTS],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AUTO_CAPTURE_EP_PAYMENTS_BOOKING_DAYS],
+            [
+                'value' => 7,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
     }
