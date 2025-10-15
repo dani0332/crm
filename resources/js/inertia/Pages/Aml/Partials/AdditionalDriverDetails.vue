@@ -169,18 +169,16 @@ const isSUKOON = computed(() => {
 
 const licenseIssuePlaceOptions = computed(() => {
   if (isLIVA.value) {
-    return useGenerateOptions(lookups?.nationality_list ?? [], 'code', 'text');
+    return useGenerateOptions(page.props.nationalities ?? [], 'rsa_country_code', 'text');
   } else {
     return useGenerateOptions(lookups?.issuance_place ?? [], 'code', 'text');
   }
 });
 
 const nationalitiesOptions = computed(() => {
-  if (isLIVA.value) {
-    return useGenerateOptions(lookups?.nationality_list ?? [], 'code', 'text');
-  } else {
-    return useGenerateOptions(page.props.nationalities ?? [], 'code', 'text');
-  }
+  let code = isLIVA.value ? 'rsa_country_code' : 'code';
+
+  return useGenerateOptions(page.props.nationalities ?? [], code, 'text');
 });
 
 const drivingExperienceOptions = computed(() => {

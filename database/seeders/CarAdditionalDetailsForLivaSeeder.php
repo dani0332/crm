@@ -1900,7 +1900,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
     /**
      * Sync nationality with LIVA nationality ID
-     * Searches for matching nationality by text and updates liva_nationality_id
+     * Searches for matching nationality by text and updates rsa_country_code
      * If no match found, creates a new nationality record
      *
      * @param string $livaText The nationality text from LIVA
@@ -1916,7 +1916,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             [
                 'code' => $normalizedText,
                 'text' => $normalizedText,
-                'liva_nationality_id' => $livaId,
+                'rsa_country_code' => $livaId,
                 'is_active' => 1,
             ]
         );

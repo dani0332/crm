@@ -31,6 +31,10 @@ class Nationality extends BaseModel
         ],
     ];
 
+    public $casts = [
+        'rsa_country_code' => 'string',
+    ];
+
     public function delete()
     {
         $this->setKeysForSaveQuery($this->newModelQuery())->update(['is_deleted' => true]);
