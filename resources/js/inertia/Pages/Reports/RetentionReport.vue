@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+import { PEC_FLAG_OPTIONS } from '@/constants/reportOptions';
 
 const props = defineProps({
   filterOptions: Object,
@@ -61,6 +62,7 @@ const getFiltersObject = () => {
     quote_batch_id: '',
     batch: [],
     renewal_batch_id: '',
+    pec_flag: 'all',
   };
 };
 
@@ -315,6 +317,11 @@ onMounted(() => {
   filters.department = queryParams.get('department')
     ? +queryParams.get('department')
     : '';
+
+  // Initialize PEC flag from URL parameters
+  if (queryParams.has('pec_flag')) {
+    filters.pec_flag = queryParams.get('pec_flag');
+  }
 
   if ([quoteTypeCodeEnum.CORPLINE].includes(filters.lob)) {
     loadTeams(filters.lob);
@@ -847,6 +854,17 @@ function handleDateChange(dateRange) {
             { value: '', label: 'Select insurance type' },
             ...insuranceTypeOptions,
           ]"
+        />
+
+        <x-select
+          v-if="filters.lob === quoteTypeCodeEnum.Health"
+          v-model="filters.pec_flag"
+          placeholder="Select PEC Flag"
+          label="Policy PEC Flag"
+          :options="PEC_FLAG_OPTIONS"
+          class="w-full"
+          filterable
+          filterPlaceholder="Filter PEC Flag...."
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
