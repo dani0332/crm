@@ -832,13 +832,11 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             if (in_array($httpResponse->status(), [JsonResponse::HTTP_OK, JsonResponse::HTTP_CREATED])) {
                 if (
                     isset($responseObject?->$keyAPI?->errors) ||
-                    (isset($responseObject?->$keyAPI?->Status) && $responseObject?->$keyAPI?->Status == false) ||
-                    (isset($responseObject?->statusCode) && $responseObject?->statusCode == 404) ||
-                    (isset($responseObject?->string) && str_contains($responseObject?->string, 'Exception'))
+                    (isset($responseObject?->$keyAPI?->Status) && $responseObject?->$keyAPI?->Status == false)
                 ) {
                     $response['error'] = $responseObject?->$keyAPI?->Status ?? $keyAPI.' API Failed';
                     $response['status'] = false;
-                    $response['message'] = json_encode($responseObject?->$keyAPI?->errors) ?? $responseObject?->message ?? $responseObject;
+                    $response['message'] = $this->extractErrorMessage($responseObject, $keyAPI);
                 } else {
                     $response['status'] = true;
                     $response['data'] = $responseObject;
@@ -849,9 +847,9 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 $response['status'] = false;
                 $response['message'] = '404 Not Found';
             } else {
-                $response['error'] = $responseObject?->$keyAPI?->Status ?? $keyAPI.' API Failed';
+                $response['error'] = $keyAPI.' API Failed';
                 $response['status'] = false;
-                $response['message'] = json_encode($responseObject?->$keyAPI?->errors) ?? $responseObject?->message ?? $responseObject;
+                $response['message'] = 'There is an Exception on LIVA API call.';
             }
         } catch (Exception $ex) {
             LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__, [
@@ -866,6 +864,27 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
 
         return $response;
+    }
+
+    /**
+     * Extract error message from API response object
+     *
+     * @param  \stdClass|null  $responseObject  The API response object
+     * @param  string  $keyAPI  The API key to access nested error details
+     * @return string|mixed The extracted error message
+     */
+    private function extractErrorMessage($responseObject, string $keyAPI)
+    {
+        if (isset($responseObject?->$keyAPI?->errors)) {
+            return json_encode($responseObject->$keyAPI->errors);
+        }
+
+        if (isset($responseObject?->message)) {
+            return $responseObject->message;
+        }
+
+        // Return entire response object as fallback
+        return $responseObject ?? $keyAPI.' API Failed';
     }
 
     /**
@@ -1215,7 +1234,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
                 LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Failed logs count : '.$failedLogsCount);
 
-                if ($failedNullLogFound->isNotEmpty() && $failedLogsCount < 3) {
+                if ($failedNullLogFound->isNotEmpty() && $failedLogsCount < 2) {
                     LoggerService::info($this->className.' fn:'.__FUNCTION__.' - PolicyIssuanceJob was failed due to timeout', extra: [
                         'error' => $failedNullLogFound->first()?->response,
                     ]);
@@ -1242,5 +1261,34 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
 
         return false;
+    }
+
+    /**
+     * Check if policy issuance timed out and update status accordingly
+     *
+     * @param  \App\Models\PolicyIssuance  $policyIssuance
+     */
+    public function handleTimeoutStatusUpdate($policyIssuance): void
+    {
+        LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
+            'status' => $policyIssuance->status,
+            'completed_step' => $policyIssuance->completed_step,
+        ]);
+
+        try {
+            $isTimeout = $this->livaPortalTimeoutResponse($policyIssuance);
+
+            if ($isTimeout) {
+                $policyIssuance->update([
+                    'status' => PolicyIssuanceEnum::TIMEOUT_STATUS,
+                ]);
+
+                LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updated Policy Issuance ID : '.$policyIssuance->id.' to TIMEOUT_STATUS');
+            }
+        } catch (\Exception $ex) {
+            LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
+                'errorMessage' => $ex->getMessage(),
+            ]);
+        }
     }
 }
