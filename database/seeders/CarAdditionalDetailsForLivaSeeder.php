@@ -38,7 +38,6 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
         $this->bankName();
         $this->annualMileageEstimate();
         $this->nationalityList();
-        $this->drivingExperience();
     }
 
     private function rtaTransactionType()
@@ -1873,28 +1872,6 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         foreach ($nationalities as $nationality) {
             $this->syncNationalityWithLiva($nationality['text'], $nationality['id']);
-        }
-    }
-
-    private function drivingExperience()
-    {
-        for ($i = 0; $i <= 51; $i++) {
-            $text = match (true) {
-                $i === 0 => 'No Experience',
-                $i === 1 => '1 Year',
-                default => $i.' Years',
-            };
-
-            Lookup::updateOrCreate([
-                'quote_type_id' => QuoteTypeId::Car,
-                'key' => LookupsEnum::DRIVING_EXPERIENCE,
-                'code' => $i,
-                'text' => $text,
-                'insurance_provider_id' => $this->insuranceProviderId,
-            ], [
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
         }
     }
 
