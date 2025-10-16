@@ -30,7 +30,6 @@ const leadSource = page.props.leadSource;
 
 const dateFormat = date => {
   try {
-    console.log('date', date);
     if (!date || date == '' || date == null) {
       return '-';
     }
@@ -42,7 +41,6 @@ const dateFormat = date => {
     const formattedDate = parseDate(date);
     return formattedDate;
   } catch (error) {
-    console.error(`Error parsing date "${date}": ${error.message}`);
   }
 };
 
@@ -73,8 +71,6 @@ const buildAdvisorOptions = () => {
     return;
   }
   
-  console.log('Building advisor options, count:', advisors.length);
-  
   // Simple mapping without sorting to improve performance
   const options = advisors.map(advisor => ({
     value: advisor.id, // Keep as original type (string or number) - NO CONVERSION
@@ -91,59 +87,12 @@ const buildAdvisorOptions = () => {
   }
   
   advisorOptions.value = options;
-  console.log('Advisor options built:', options.length, 'Current advisor ID:', currentAdvisorId);
 };
 
 // Edit mode state
 const isEditMode = ref(false);
 
 const { isRequired, isNumber, isEmail } = useRules();
-
-// Helper function to format date for input
-const formatDateForInput = (date) => {
-  if (!date || date === '' || date === 'null' || date === 'undefined') return null;
-  
-  try {
-    // If date is already in YYYY-MM-DD format, return as is
-    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return date;
-    }
-    
-    // Handle DD-MM-YYYY format (common in the system)
-    if (typeof date === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(date)) {
-      const [day, month, year] = date.split('-');
-      return `${year}-${month}-${day}`;
-    }
-    
-    // Handle DD/MM/YYYY format
-    if (typeof date === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
-      const [day, month, year] = date.split('/');
-      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-    
-    // Handle YYYY/MM/DD format
-    if (typeof date === 'string' && /^\d{4}\/\d{2}\/\d{2}$/.test(date)) {
-      return date.replace(/\//g, '-');
-    }
-    
-    // Try to parse as Date object for other formats
-    const dateObj = new Date(date);
-    if (isNaN(dateObj.getTime())) {
-      console.warn('Unable to parse date:', date);
-      return null;
-    }
-    
-    // Convert to YYYY-MM-DD format
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}`;
-  } catch (error) {
-    console.error('Error formatting date:', date, error);
-    return null;
-  }
-};
 
 // Initialize form with reactive data
 const initializeFormData = () => ({
@@ -159,14 +108,6 @@ const initializeFormData = () => ({
 
 // Enhanced form with all editable fields
 const policyForm = useForm(initializeFormData());
-
-// Debug logging to see what date values we're getting
-console.log('Date debugging:', {
-  original_expiry: props?.quote?.previous_policy_expiry_date,
-  original_start: props?.quote?.previous_policy_start_date,
-  formatted_expiry: formatDateForInput(props?.quote?.previous_policy_expiry_date),
-  formatted_start: formatDateForInput(props?.quote?.previous_policy_start_date),
-});
 
 // Computed property for debugging form values
 const debugFormValues = computed(() => ({

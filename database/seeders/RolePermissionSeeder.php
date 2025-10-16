@@ -467,10 +467,5 @@ class RolePermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-
-        $adminRole = Role::where('name', RolesEnum::Admin)->first();
-        if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
-            $adminRole->givePermissionTo($permission);
-        }
     }
 }
