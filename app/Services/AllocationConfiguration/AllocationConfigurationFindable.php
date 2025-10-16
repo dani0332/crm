@@ -155,7 +155,7 @@ trait AllocationConfigurationFindable
             $brackets = $configuration?->{$bracketType};
             $bracketData = $this->getMatchingBracket($brackets, $value, $minKey, $maxKey);
             if ($bracketData) {
-                $profile = $this->getMatchingProfileData($bracketData['profiles'], 'locations', $address);
+                $profile = $this->getMatchingProfileDataForLocation($bracketData['profiles'], 'locations', $address);
                 $advisorIds = $this->getAdvisorIds($profile);
 
                 if (! empty($advisorIds)) {
@@ -218,11 +218,20 @@ trait AllocationConfigurationFindable
         return $profiles->first(fn ($profile) => in_array($value, $profile[$key]));
     }
 
-    private function matchesTargetLocations(string $address): bool
+    private function getMatchingProfileDataForLocation(Collection|array|null $profiles, string $key, int|string $value): ?array
     {
-        $targetKeywords = ['arabian ranches', 'palm jumeriah'];
+        if (empty($profiles)) {
+            return null;
+        }
 
-        foreach ($targetKeywords as $keyword) {
+        $profiles = is_array($profiles) ? collect($profiles) : $profiles;
+
+        return $profiles->filter(fn ($profile) => $this->matchesTargetLocations($value, $profile[$key]))->first();
+    }
+
+    private function matchesTargetLocations(string $address, array $locations): bool
+    {
+        foreach ($locations as $keyword) {
             if (Str::contains($address, $keyword)) {
                 return true;
             }
