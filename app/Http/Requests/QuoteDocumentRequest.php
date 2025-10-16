@@ -87,6 +87,20 @@ class QuoteDocumentRequest extends FormRequest
                 $validator->errors()->add('member_detail_id', 'Member can be attached only for Health Insurance type');
             }
 
+            // check for maximum number of files uploaded against selected quote and document type
+            if ($this->documentType && $quote && $quote->documents->where('document_type_code', request()->document_type_code)->count() >= $this->documentType->max_files) {
+                $validator->errors()->add('file', 'You can only upload a maximum of '.$this->documentType->max_files.' files');
+                return; // Stop validation if max files exceeded
+            }
+
+            // For health LOB we can bypass the payment validation
+            if (ucfirst(request()->quoteType) == quoteTypeCode::Health) {
+                if (empty($quote->plan_id)) {
+                    $validator->errors()->add('type', 'Documents can be uploaded once plan is selected.');
+                }
+                return; // Skip payment validation for health quotes with plan
+            }
+
             $quote_source = data_get($quote, 'source', '');
             if ($quote_source == LeadSourceEnum::DUBAI_NOW) {
                 // validate if payment is authorized capture or partial capture
@@ -105,11 +119,6 @@ class QuoteDocumentRequest extends FormRequest
                         }
                     }
                 }
-            }
-
-            // check for maximum number of files uploaded against selected quote and document type
-            if ($this->documentType && $quote && $quote->documents->where('document_type_code', request()->document_type_code)->count() >= $this->documentType->max_files) {
-                $validator->errors()->add('file', 'You can only upload a maximum of '.$this->documentType->max_files.' files');
             }
         });
     }
