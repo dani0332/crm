@@ -23,6 +23,7 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
+use App\Models\UAELicenseHeldFor;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
@@ -1183,8 +1184,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             LookupsEnum::VEHICLE_COLOR,
             LookupsEnum::BANK_NAME,
             LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
-            LookupsEnum::DRIVING_EXPERIENCE,
         ])->toArray();
+        $additionalLookups['driving_experience'] = UAELicenseHeldFor::select('id', 'rsa_driving_experience', 'text')->get()->toArray();
 
         if ($quoteRequest?->source == LeadSourceEnum::RENEWAL_UPLOAD) {
             $rtaTransactionType = array_filter($additionalLookups['rta_transaction_type'], function ($item) {
