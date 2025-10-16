@@ -38,6 +38,7 @@ trait SLAable
             QuoteStatusEnum::AMLScreeningFailed,
             QuoteStatusEnum::Lost,
             QuoteStatusEnum::Fake,
+            QuoteStatusEnum::ApplicationPending,
         ];
     }
 
