@@ -148,8 +148,12 @@ const fetchProviderRepresentor = async insuranceProviderId => {
     insuranceProviderRepresentor.value =
       response.data.providerRepresentor ?? [];
   } catch (error) {
-    console.error('Error fetching provider representor:', error);
     insuranceProviderRepresentor.value = [];
+    notification.error({
+      title: 'Error',
+      message: 'Failed to fetch insurance provider representatives',
+      position: 'top',
+    });
   }
 };
 
@@ -549,7 +553,6 @@ const viewSignedPdf = async () => {
       throw new Error(response.data.message || 'Failed to load document');
     }
   } catch (error) {
-    console.error('Error viewing signed PDF:', error);
     notification.error({
       title: 'View Error',
       message: 'Failed to view signed document. Please try again.',

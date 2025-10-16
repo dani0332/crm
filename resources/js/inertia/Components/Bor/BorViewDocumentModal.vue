@@ -139,7 +139,6 @@ const viewSignedPdf = async () => {
       throw new Error(response.data.message || 'Failed to load document');
     }
   } catch (error) {
-    console.error('Error viewing signed PDF:', error);
     const notification = useNotifications('toast');
     notification.error({
       title: 'View Error',
