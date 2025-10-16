@@ -566,12 +566,6 @@ class CarQuote extends BaseModel
             ->where('plan_id', $this->plan_id);
     }
 
-    public function carQuotePlanDetail()
-    {
-        return $this->hasOne(CarQuotePlanDetail::class, 'quote_uuid', 'uuid')
-            ->where('plan_id', $this->plan_id);
-    }
-
     /**
      * Get quote tags for this car quote
      */
