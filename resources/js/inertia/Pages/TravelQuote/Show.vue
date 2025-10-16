@@ -6,6 +6,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import { usePayment } from '@/inertia/Composables/usePayment.js';
 
 const page = usePage();
 defineProps({
@@ -82,6 +83,7 @@ const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const checkedItems = ref([]);
+const { hasAnyAuthorizedPaymentSplit } = usePayment();
 const checkCheckedPlans = computed(() => {
   return true;
 });
@@ -1388,6 +1390,10 @@ const isEmbeddedProduct = code => {
   return code.includes('TRA-CAR');
 };
 
+const isAuthorizedPayment = computed(() => {
+  return hasAnyAuthorizedPaymentSplit(page.props.payments);
+});
+
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const selectedPlanIds = computed(() => {
   return page.props.payments.length > 0
@@ -1643,6 +1649,7 @@ const fullAddress = computed(() => {
   // Filter out null or undefined parts and join the rest with comma and space
   return parts.filter(part => part).join(', ');
 });
+
 </script>
 
 <template>
@@ -2611,12 +2618,18 @@ const fullAddress = computed(() => {
         </template>
         <template #body>
           <x-divider class="my-4" />
+          <p
+          class="font-semibold text-primary-600 text-ms mb-1"
+            v-if="isAuthorizedPayment"
+          >
+            Member actions have been disabled because a payment has already been authorized for this lead.
+          </p>
           <AddMemberButtonTemplate v-slot="{ isDisabled }">
             <x-button
               size="sm"
               color="orange"
               @click.prevent="onAddTraveler"
-              :disabled="isDisabled"
+              :disabled="isDisabled || isAuthorizedPayment"
               v-if="readOnlyMode.isDisable === true"
             >
               Add Member
@@ -2643,7 +2656,7 @@ const fullAddress = computed(() => {
               color="primary"
               @click.prevent="onEditTraveler(item)"
               outlined
-              :disabled="isDisabled"
+              :disabled="isDisabled || isAuthorizedPayment"
               v-if="readOnlyMode.isDisable === true"
             >
               Edit
@@ -2659,7 +2672,7 @@ const fullAddress = computed(() => {
                 confirmModal.show = true;
               "
               outlined
-              :disabled="isDisabled"
+              :disabled="isDisabled || isAuthorizedPayment"
               v-if="readOnlyMode.isDisable === true"
             >
               Delete

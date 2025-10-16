@@ -119,6 +119,29 @@ export const usePayment = () => {
     return '';
   };
 
+  /**
+   * Checks if any payment split in the given payments array has an authorized status.
+   * Returns true if any payment split matches authorized statuses, false otherwise.
+   */
+  const hasAnyAuthorizedPaymentSplit = (payments) => {
+    const authorizedStatuses = [
+      paymentStatusEnum.AUTHORISED,
+      paymentStatusEnum.PAID,
+      paymentStatusEnum.CAPTURED,
+      paymentStatusEnum.PARTIAL_CAPTURED,
+      paymentStatusEnum.PARTIALLY_PAID
+    ];
+    
+    if (!Array.isArray(payments)) return false;
+    
+    return payments.some(payment => 
+      Array.isArray(payment.payment_splits) &&
+      payment.payment_splits.some(split => 
+        authorizedStatuses.includes(split.payment_status_id)
+      )
+    );
+  };
+
   return {
     formatDate,
     formatAmount,
@@ -129,5 +152,6 @@ export const usePayment = () => {
     verifyCreditApproved,
     hasAnyCCSplitPayment,
     paymentAllocationStatusTooltip,
+    hasAnyAuthorizedPaymentSplit,
   };
 };
