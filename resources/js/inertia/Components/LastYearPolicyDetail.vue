@@ -20,6 +20,11 @@ const props = defineProps({
   },
 });
 
+// Computed properties
+const isMotorLob = computed(() => {
+  return ['car', 'bike', 'Car', 'Bike'].includes(props.modelType);
+});
+
 const can = permission => useCan(permission);
 const advisors = page.props.advisors;
 const hasRole = role => useHasRole(role);
@@ -359,6 +364,7 @@ onMounted(() => {
               <!-- Renewal Batch -->
               <x-input
                 label="Renewal Batch"
+                :disabled="!isMotorLob"
                 v-model="policyForm.renewal_batch"
                 type="text"
                 :error="policyForm.errors.renewal_batch"
