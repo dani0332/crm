@@ -64,7 +64,7 @@ class ConversionAsAtReportExport implements CsvExportableInterface
                 $titleHeader = str_replace('_', ' ', $this->displayBy);
                 $titleHeader = ucwords($titleHeader);
             } else {
-                $titleHeader = 'Assignment';
+                $titleHeader = 'Assignment Type';
             }
 
             $this->headers = collect([$titleHeader])->merge($baseHeaders);
