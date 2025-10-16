@@ -514,12 +514,6 @@ class ReportsController extends Controller
                 $row->end_date = Carbon::make($request->startEndDate[1] ?? null)?->format($dateFormat) ?? 'N/A';
                 $row->as_at_date = Carbon::make($request->asAtDate ?? null)?->format($dateFormat) ?? 'N/A';
                 $row->_is_unassigned_row = true;
-
-                if (!empty($displayByColumn) && !isset($row->{$displayByColumn})) {
-                    $row->{$displayByColumn} = 'Unassigned Leads';
-                }else{
-                    $row->assignment_type = 'Unassigned Leads';
-                }
             }else {
                 /** Incase data isn't in eloquent model object -- HIGHLY UNLIKELY */
                 $row = (object) [
@@ -533,6 +527,12 @@ class ReportsController extends Controller
                     'as_at_date' => Carbon::make($request->asAtDate ?? null)?->format($dateFormat) ?? 'N/A',
                 ];
                 $row->_is_unassigned_row = true;
+            }
+
+            if (!empty($displayByColumn) && !isset($row->{$displayByColumn})) {
+                $row->{$displayByColumn} = 'Unassigned Leads';
+            } else {
+                $row->assignment_type = 'Unassigned Leads';
             }
 
             if (isset($row)) {
