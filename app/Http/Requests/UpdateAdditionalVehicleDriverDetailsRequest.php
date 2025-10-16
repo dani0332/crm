@@ -63,7 +63,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['driver_gender'] = 'required|string|in:male,female';
             $rules['driver_license_number'] = 'required|max:255';
             $rules['uae_driving_experience'] = 'nullable|numeric|min:0|max:50';
-            $rules['home_country_license_issuance'] = 'nullable|string|max:255';
+            $rules['home_country_license_issuance'] = 'nullable|max:255';
             $rules['home_country_driving_experience'] = 'nullable|numeric|min:0|max:50';
         }
 
