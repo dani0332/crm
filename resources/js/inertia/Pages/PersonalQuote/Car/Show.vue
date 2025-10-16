@@ -3285,7 +3285,7 @@ const handleModalCancel = () => {
               >
                 Cancel
               </x-button>
-              <template v-if="true || !can(permissionEnum.ApprovePayments)">
+              <template v-if="!can(permissionEnum.ApprovePayments)">
                 <x-button
                   v-if="assumptionState.isEditing"
                   class="mt-4"
