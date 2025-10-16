@@ -112,7 +112,8 @@ class DrivingLicenseDataProcessor
             return null;
         }
 
-        return Nationality::where('text', 'LIKE', '%'.$nationality.'%')
+        return Nationality::where('text', $nationality)
+            ->orWhere('country_name', $nationality)
             ->orWhere('code', $nationality)
             ->value('id');
     }
