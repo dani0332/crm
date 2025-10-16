@@ -233,7 +233,8 @@ watch(
       additionalDriverDetailsForm.driver_gender = normalizeGender(
         quoteRequest?.gender,
       );
-      additionalDriverDetailsForm.uae_driving_experience = quoteRequest?.uae_license_held_for?.rsa_driving_experience;
+      additionalDriverDetailsForm.uae_driving_experience =
+        quoteRequest?.uae_license_held_for?.rsa_driving_experience;
     }
   },
 );
