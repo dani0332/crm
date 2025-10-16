@@ -466,9 +466,6 @@ class ReportsController extends Controller
 
     public function renderConversionAsAtReport(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
     {
-
-
-
         $displayBy = $request->displayBy ?? null;
         $createdAtDate = $request->createdAtDate ?? null;
         $includeUnassignedLeads = $request->includeUnassignedLeads ?? null;
