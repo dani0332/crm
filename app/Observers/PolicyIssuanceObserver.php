@@ -29,20 +29,7 @@ class PolicyIssuanceObserver
             $policyIssuance->insuranceProvider->code === InsuranceProvidersEnum::RSA &&
             $policyIssuance->status === PolicyIssuanceEnum::FAILED_STATUS
         ) {
-            LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updating Policy Issuance ID : '.$policyIssuance->id.' - Status : '.PolicyIssuanceEnum::PENDING_STATUS);
-            try {
-                $isTimeout = app(LivaInsuranceService::class)->livaPortalTimeoutResponse($policyIssuance);
-
-                if ($isTimeout) {
-                    $policyIssuance->update([
-                        'status' => PolicyIssuanceEnum::TIMEOUT_STATUS,
-                    ]);
-                }
-            } catch (\Exception $ex) {
-                LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
-                    'errorMessage' => $ex->getMessage(),
-                ]);
-            }
+            app(LivaInsuranceService::class)->handleTimeoutStatusUpdate($policyIssuance);
         } elseif (
             $policyIssuance->isDirty('status') &&
             $policyIssuance->status === PolicyIssuanceEnum::BOOKING_PENDING_STATUS &&
