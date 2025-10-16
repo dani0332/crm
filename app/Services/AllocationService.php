@@ -327,7 +327,7 @@ class AllocationService extends BaseService
             ];
         }
 
-        if ($request->isAllocated() || $request->isSameAdvisor() || !empty($lead->advisor_id)) {
+        if ($request->isAllocated() || $request->isSameAdvisor() || ! empty($lead->advisor_id)) {
             $message = 'Advisor assigned successfully!';
 
             if ($request->isSameAdvisor()) {
