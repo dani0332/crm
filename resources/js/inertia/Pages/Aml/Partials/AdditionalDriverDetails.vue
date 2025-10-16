@@ -228,7 +228,9 @@ watch(
       additionalDriverDetailsForm.driver_first_name = quoteRequest?.first_name;
       additionalDriverDetailsForm.driver_last_name = quoteRequest?.last_name;
       additionalDriverDetailsForm.driver_dob = quoteRequest?.dob;
-      additionalDriverDetailsForm.driver_gender = normalizeGender(quoteRequest?.gender);
+      additionalDriverDetailsForm.driver_gender = normalizeGender(
+        quoteRequest?.gender,
+      );
     }
   },
 );
