@@ -108,14 +108,22 @@ class DrivingLicenseDataProcessor
 
     private function getNationalityId(?string $nationality): ?int
     {
+        LoggerService::info('Getting nationality ID for nationality: '.$nationality);
         if (empty($nationality)) {
             return null;
         }
 
-        return Nationality::where('text', $nationality)
+        $query = Nationality::where('text', $nationality)
             ->orWhere('country_name', $nationality)
-            ->orWhere('code', $nationality)
-            ->value('id');
+            ->orWhere('code', $nationality);
+
+        LoggerService::info('Nationality query:');
+        LoggerService::info(vsprintf(
+            str_replace('?', "'%s'", $query->toSql()),
+            $query->getBindings()
+        ));
+
+        return $query->value('id');
     }
 
     public function getProcessingSummary(): array
