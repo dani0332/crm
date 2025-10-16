@@ -965,7 +965,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     'bank_loan' => ! empty($responseData['VehicleDetails']['CarFinanceCode']) ? '1' : '0',
                     'bank_name' => $responseData['VehicleDetails']['CarFinanceCode'] ?? '', // optional
                     'first_registration_date' => $responseData['VehicleDetails']['DateOfRegn'] ?? '',
-                    // 'annual_mileage_estimate' => '', // Not available in response
                     'driver_first_name' => $driverFirstName, // optional
                     'driver_last_name' => $driverLastName, // optional
                     'driver_dob' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverDOB'] ?? '', // optional
@@ -1184,7 +1183,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             LookupsEnum::VEHICLE_COLOR,
             LookupsEnum::BANK_NAME,
             LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
-            LookupsEnum::NATIONALITY_LIST,
             LookupsEnum::DRIVING_EXPERIENCE,
         ])->toArray();
 
