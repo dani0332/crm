@@ -41,6 +41,7 @@ use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
 use App\Services\CQF\CarCQFFileExportService;
+use App\Services\CQF\CarCQFRenewalExecutionService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
@@ -510,5 +511,32 @@ class ApiController extends Controller
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    public function runCQFJobs(Request $request)
+    {
+        try {
+            LoggerService::info(self::class.': Running CQF jobs');
+
+            // Validate the date parameter - make it optional since the service can handle null
+            $request->validate([
+                'date' => 'nullable|date',
+            ]);
+
+            $startDate = null;
+            if ($request->has('date') && ! empty($request->date)) {
+                $startDate = Carbon::parse($request->date);
+            }
+
+            app(CarCQFRenewalExecutionService::class)->processCarCQFRenewalLeads($startDate);
+            LoggerService::info(self::class.': CQF jobs have been completed');
+
+            return apiResponse(null, Response::HTTP_OK, 'car cqf renewals process has been completed');
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': CQF jobs failed', exception: $e);
+
+            return apiResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, 'Failed to run CQF jobs');
+        }
+
     }
 }
