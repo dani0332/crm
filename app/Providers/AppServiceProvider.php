@@ -17,6 +17,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\PolicyIssuance;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
@@ -36,6 +37,7 @@ use App\Observers\PaymentObserver;
 use App\Observers\PaymentSplitsObserver;
 use App\Observers\PersonalQuoteObserver;
 use App\Observers\PetQuoteObserver;
+use App\Observers\PolicyIssuanceObserver;
 use App\Observers\SendUpdateLogObserver;
 use App\Observers\TravelQuoteDetailObserver;
 use App\Observers\TravelQuoteObserver;
@@ -91,6 +93,8 @@ class AppServiceProvider extends ServiceProvider
         PaymentSplits::observe(PaymentSplitsObserver::class);
         CustomerAddress::observe(CustomerAddressObserver::class);
         SendUpdateLog::observe(SendUpdateLogObserver::class);
+        // TODO: this PolicyIssuanceObserver is not for PROD.
+        PolicyIssuance::observe(PolicyIssuanceObserver::class);
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,

@@ -8,7 +8,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProviderEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -67,6 +67,7 @@ use App\Models\EmbeddedTransaction;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\InsuranceProvider;
 use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -825,14 +826,17 @@ class CentralController extends Controller
         ];
 
         $response = ['status' => false, 'message' => ''];
+        $insuranceProvider = InsuranceProvider::where('id', $request->insuranceProviderId)->first();
+        // only for those insurer where TAP enabled.
+        $providerName = InsuranceProvidersEnum::getTextByCode($insuranceProvider->code);
         if (in_array($request->insurerAMLStatus, $insurerAMLFailureStatus)) {
-            $responseMessage = 'GIG server connection issue. Please check API logs for details of the error';
+            $responseMessage = $providerName.' server connection issue. Please check API logs for details of the error';
 
             if ($request->insurerAMLStatus == AMLStatusCode::InsurerAMLScreeningFailed) {
                 $insurerAMLScreeningResponse = AML::where([
                     'quote_type_id' => $request->quoteType,
                     'quote_request_id' => $request->quoteRequestId,
-                    'screening_type' => 'INSURER_'.InsuranceProviderEnum::AXA->value,
+                    'screening_type' => 'INSURER_'.$insuranceProvider->code,
                 ])->latest()->first();
 
                 $amlResponse = ! empty($insurerAMLScreeningResponse) ? json_decode($insurerAMLScreeningResponse->results) : [];

@@ -6,6 +6,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Models\PolicyIssuance;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
 class PolicyIssuanceObserver
@@ -16,15 +17,40 @@ class PolicyIssuanceObserver
      */
     public function updated(PolicyIssuance $policyIssuance): void
     {
-        $dirty = $policyIssuance->getDirty();
+        $policyIssuance->getDirty();
+        LoggerService::startQuoteLogging($policyIssuance->model);
+        LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Start Policy Issuance ID : '.$policyIssuance->id, extra: [
+            'status' => $policyIssuance->status,
+            'completed_step' => $policyIssuance->completed_step,
+        ]);
+
         if (
+            $policyIssuance->isDirty('status') &&
+            $policyIssuance->insuranceProvider->code === InsuranceProvidersEnum::RSA &&
+            $policyIssuance->status === PolicyIssuanceEnum::FAILED_STATUS
+        ) {
+            LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updating Policy Issuance ID : '.$policyIssuance->id.' - Status : '.PolicyIssuanceEnum::PENDING_STATUS);
+            try {
+                $isTimeout = app(LivaInsuranceService::class)->livaPortalTimeoutResponse($policyIssuance);
+
+                if ($isTimeout) {
+                    $policyIssuance->update([
+                        'status' => PolicyIssuanceEnum::TIMEOUT_STATUS,
+                    ]);
+                }
+            } catch (\Exception $ex) {
+                LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
+                    'errorMessage' => $ex->getMessage(),
+                ]);
+            }
+        } elseif (
             $policyIssuance->isDirty('status') &&
             $policyIssuance->status === PolicyIssuanceEnum::BOOKING_PENDING_STATUS &&
             $policyIssuance->insuranceProvider->code === InsuranceProvidersEnum::AXA
         ) {
-            LoggerService::info($this->className.' fn:'.__FUNCTION__.' Started');
             app(PolicyIssuanceService::class)->executePolicyIssuanceAutomationSteps();
-            LoggerService::info($this->className.' fn:'.__FUNCTION__.' Ended');
         }
+
+        LoggerService::info($this->className.' fn:'.__FUNCTION__.' - End Policy Issuance ID : '.$policyIssuance->id);
     }
 }
