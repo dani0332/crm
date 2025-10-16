@@ -62,6 +62,8 @@ use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
+use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\QuoteDocumentService;
 use App\Services\RtaTransactionTypeService;
 use App\Services\SIBService;
@@ -252,6 +254,9 @@ class AMLController extends Controller
             return $log['decision'] == AMLDecisionStatusEnum::ESCALATED;
         })) : 0;
 
+        $providerCode = $quoteRequest?->plan?->insuranceProvider?->code ?? '';
+        $isLIVA = $providerCode == InsuranceProvidersEnum::RSA;
+        $isGIG = $providerCode == InsuranceProvidersEnum::AXA;
         $lookups = app(AMLService::class)->getAMLLookups();
         $insuranceProvider = $quoteRequest?->plan?->insuranceProvider;
         $isAddionalFieldsEnabled = app(AMLService::class)->isAdditionalVehicleAndDriverDetailsEnabled($quoteType?->code, $insuranceProvider?->code, $quoteRequest?->registration_type);
@@ -285,6 +290,12 @@ class AMLController extends Controller
         // Add RTA configuration data for Car quotes
         $rtaConfigurationData = app(AMLService::class)->getRTATransactionConfigurations($quoteType->code);
 
+        if ($isLIVA) {
+            $gigInsurerDefaultEmail = GenericModelTypeEnum::LIVA_INSURER_SCREENIN_DEFAULT_EMAIL;
+        } else {
+            $gigInsurerDefaultEmail = GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL;
+        }
+
         return inertia('Aml/DetailPage', array_merge([
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
@@ -308,11 +319,14 @@ class AMLController extends Controller
             'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->aml_status] ?? null,
             'defaultNationality' => GenericRequestEnum::DEFAULT_NATIONALITY,
             'screeningType' => $screeningType,
-            'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
+            'gigInsurerDefaultEmail' => $gigInsurerDefaultEmail,
             'isAnyEscalated' => $isAnyEscalated,
             'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType, $quoteRequest),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'isAddionalFieldsEnabled' => $isAddionalFieldsEnabled,
+            'isPrivateCar' => $quoteRequest?->registration_type === CarRegistrationType::PERSONAL,
+            'LIVAEnums' => app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
+            'insurerName' => InsuranceProvidersEnum::getTextByCode($quoteRequest?->plan?->insuranceProvider?->code),
         ], $businessPayload ?? [], $rtaConfigurationData));
     }
 
@@ -501,6 +515,7 @@ class AMLController extends Controller
                         'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
                         'isRenewalLead' => $getInsurerScreeningResponse['isRenewalLead'] ?? false,
                         'is_previous_policy_expired' => $getInsurerScreeningResponse['is_previous_policy_expired'] ?? false,
+                        'is_get_quote_api_failed' => $getInsurerScreeningResponse['is_get_quote_api_failed'] ?? false,
                     ];
 
                     if (isset($getInsurerScreeningResponse['autoCaptureStatus'])) {
@@ -885,6 +900,7 @@ class AMLController extends Controller
                     'autoCaptureStatus' => $insurerAMLScreeningResponse['autoCaptureStatus'] ?? null,
                     'autoCaptureMessage' => $insurerAMLScreeningResponse['autoCaptureMessage'] ?? null,
                     'isPolicyExpired' => $insurerAMLScreeningResponse['is_previous_policy_expired'] ?? false,
+                    'isGetQuoteAPIFailed' => $insurerAMLScreeningResponse['is_get_quote_api_failed'] ?? false,
                 ];
             }
         }

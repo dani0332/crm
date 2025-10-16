@@ -30,6 +30,7 @@ const { isRequired } = useRules();
 const notification = useToast();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const insurerName = page.props.insurerName;
 const generateOptions = (items, valueKey, labelKey) =>
   useGenerateOptions(items, valueKey, labelKey);
 const rules = {
@@ -216,7 +217,7 @@ const screeningFormDetails = useForm({
   get_quote_email_gig:
     (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
       ? quoteRequest?.car_quote_request_detail?.insurer_quote_email
-      : quoteRequest?.quote_detail?.insurer_quote_email) ??
+      : quoteRequest?.quote_detail?.insurer_quote_email) ||
     page.props.gigInsurerDefaultEmail,
   chassis_number:
     (page.props.quoteType.code === props.quoteTypeCodeEnum.Car
@@ -889,15 +890,13 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             :hasError="validateNationality"
           />
         </x-field>
-        <x-field label="Date of Birth" required>
-          <DatePicker
-            v-model="screeningFormDetails.dob"
-            :rules="[isRequired]"
-            placeholder="Date of Birth"
-            class="w-full"
-            :error="screeningFormDetails.errors.dob"
-          />
-        </x-field>
+        <DatePicker
+          v-model="screeningFormDetails.dob"
+          :rules="[isRequired]"
+          :required="true"
+          placeholder="Date of Birth"
+          label="Date of Birth"
+        />
         <x-field label="Gender" required>
           <x-select
             v-model="screeningFormDetails.screening_gender"
@@ -920,11 +919,11 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike ||
             page.props.quoteType.id === page.props.quoteTypeIdEnum.Home
           "
-          label="Email in GIG Portal"
+          :label="`Email in ${insurerName} Portal`"
         >
           <x-input
             v-model="screeningFormDetails.get_quote_email_gig"
-            placeholder="Email in GIG Portal"
+            :placeholder="`Email in ${insurerName} Portal`"
             type="text"
             class="w-full"
           />

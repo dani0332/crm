@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 const { isRequired } = useRules();
 
 const props = defineProps({
@@ -23,30 +23,21 @@ const driverGenderOptions = computed(() => [
   { value: 'female', label: 'Female' },
 ]);
 
-const licenseIssuePlaceOptions = computed(() => {
-  return useGenerateOptions(lookups?.issuance_place ?? [], 'code', 'text');
-});
-
-const nationalitiesOptions = computed(() => {
-  return useGenerateOptions(page.props.nationalities ?? [], 'code', 'text');
-});
-
-const drivingExperienceOptions = computed(() => {
-  const options = [{ value: '0', label: 'No Experience' }];
-
-  for (let i = 1; i <= 50; i++) {
-    options.push({
-      value: i.toString(),
-      label: i === 1 ? '1 Year' : `${i} Years`,
-    });
-  }
-
-  return options;
-});
-
 const vehicleDriverDetail = computed(() => {
   return quote?.vehicle_driver_detail;
 });
+
+const formatDate = date => {
+  if (!date) return '';
+
+  const dateObj = new Date(date);
+  // Use local timezone to avoid date shifting
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
 
 const additionalDriverDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
@@ -57,7 +48,7 @@ const additionalDriverDetailsForm = useForm({
     vehicleDriverDetail.value?.is_insured_and_driver_same?.toString() ?? '',
   driver_first_name: vehicleDriverDetail.value?.driver_first_name ?? '',
   driver_last_name: vehicleDriverDetail.value?.driver_last_name ?? '',
-  driver_dob: vehicleDriverDetail.value?.driver_dob ?? '',
+  driver_dob: formatDate(vehicleDriverDetail.value?.driver_dob) ?? '',
   driver_gender: vehicleDriverDetail.value?.driver_gender ?? '',
   driver_license_number: vehicleDriverDetail.value?.driver_license_number ?? '',
   license_issue_place:
@@ -102,7 +93,7 @@ const submitAdditionalDriverDetailsForm = async isValid => {
           response.data.is_insured_driver_same == '0'
         ) {
           notification.success({
-            title: 'Please Update Additional Drivers on GIG Portal',
+            title: `Please Update Additional Drivers on ${insurerName} Portal`,
             position: 'top',
             timeout: 5000,
           });
@@ -165,6 +156,42 @@ const isSUKOON = computed(() => {
   );
 });
 
+const licenseIssuePlaceOptions = computed(() => {
+  if (isLIVA.value) {
+    return useGenerateOptions(lookups?.nationality_list ?? [], 'code', 'text');
+  } else {
+    return useGenerateOptions(lookups?.issuance_place ?? [], 'code', 'text');
+  }
+});
+
+const nationalitiesOptions = computed(() => {
+  if (isLIVA.value) {
+    return useGenerateOptions(lookups?.nationality_list ?? [], 'code', 'text');
+  } else {
+    return useGenerateOptions(page.props.nationalities ?? [], 'code', 'text');
+  }
+});
+
+const drivingExperienceOptions = computed(() => {
+  if (isLIVA.value) {
+    return useGenerateOptions(
+      lookups?.driving_experience ?? [],
+      'code',
+      'text',
+    );
+  }
+  const options = [{ value: '0', label: 'No Experience' }];
+
+  for (let i = 1; i <= 50; i++) {
+    options.push({
+      value: i.toString(),
+      label: i === 1 ? '1 Year' : `${i} Years`,
+    });
+  }
+
+  return options;
+});
+
 // Computed property to check if driver name fields should be disabled
 const isDriverNameFieldsDisabled = computed(() => {
   return (
@@ -205,8 +232,13 @@ watch(
           driver_dob: 'driver_dob',
           driver_gender: 'driver_gender',
           driver_license_number: 'driver_license_number',
-          driver_license_expiry_date: 'license_expiry_date',
+          driver_license_issue_place: 'license_issue_place',
+          // driver_license_issue_date: 'license_issue_date',
+          // driver_license_expiry_date: 'license_expiry_date',
           driver_uae_driving_experience: 'uae_driving_experience',
+          driver_home_country_license_issuance: 'home_country_license_issuance',
+          driver_home_country_driving_experience:
+            'home_country_driving_experience',
         },
       };
 
@@ -223,6 +255,15 @@ watch(
     }
   },
   { deep: true },
+);
+
+watch(
+  () => additionalDriverDetailsForm.driver_dob,
+  newValue => {
+    if (newValue) {
+      additionalDriverDetailsForm.driver_dob = formatDate(newValue);
+    }
+  },
 );
 </script>
 
@@ -277,7 +318,7 @@ watch(
         <DatePicker
           v-model="additionalDriverDetailsForm.driver_dob"
           :rules="isSUKOON ? [isRequired] : []"
-          :required="isSUKOON"
+          :required="isSUKOON || isLIVA"
           placeholder="Driver DOB"
           :disabled="hasNotEditPermission"
           label="Driver DOB"
@@ -307,6 +348,7 @@ watch(
         />
 
         <x-select
+          filterable
           v-model="additionalDriverDetailsForm.license_issue_place"
           :rules="isSUKOON ? [isRequired] : []"
           :required="isSUKOON"

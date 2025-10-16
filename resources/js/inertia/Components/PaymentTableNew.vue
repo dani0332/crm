@@ -1016,6 +1016,7 @@ const fetchInsurerAMLStatus = async () => {
         quoteRequestId: props.quoteRequest.id,
         quoteType: page.props.quoteTypeId,
         insurerAMLStatus: props.quoteRequest.insurer_aml_status,
+        insuranceProviderId: props.quoteRequest?.insurance_provider_id,
       },
     });
     NProgress.done();

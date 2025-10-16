@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class VehicleDriverDetail extends Model
@@ -35,6 +36,18 @@ class VehicleDriverDetail extends Model
         'driver_home_country_driving_experience',
         'nationality_id',
     ];
+    protected $casts = [
+        'driver_dob' => 'date',
+        'driver_license_issue_date' => 'date',
+        'driver_license_expiry_date' => 'date',
+        'uae_driving_experience' => 'integer',
+        'nationality_id' => 'integer',
+    ];
+
+    public function nationality(): BelongsTo
+    {
+        return $this->belongsTo(Nationality::class);
+    }
 
     public function quoteable(): MorphTo
     {
