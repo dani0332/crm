@@ -1234,7 +1234,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
                 LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Failed logs count : '.$failedLogsCount);
 
-                if ($failedNullLogFound->isNotEmpty() && $failedLogsCount < 3) {
+                if ($failedNullLogFound->isNotEmpty() && $failedLogsCount < 2) {
                     LoggerService::info($this->className.' fn:'.__FUNCTION__.' - PolicyIssuanceJob was failed due to timeout', extra: [
                         'error' => $failedNullLogFound->first()?->response,
                     ]);
@@ -1261,5 +1261,35 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
 
         return false;
+    }
+
+    /**
+     * Check if policy issuance timed out and update status accordingly
+     *
+     * @param  \App\Models\PolicyIssuance  $policyIssuance
+     * @return void
+     */
+    public function handleTimeoutStatusUpdate($policyIssuance): void
+    {
+        LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
+            'status' => $policyIssuance->status,
+            'completed_step' => $policyIssuance->completed_step,
+        ]);
+
+        try {
+            $isTimeout = $this->livaPortalTimeoutResponse($policyIssuance);
+
+            if ($isTimeout) {
+                $policyIssuance->update([
+                    'status' => PolicyIssuanceEnum::TIMEOUT_STATUS,
+                ]);
+
+                LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updated Policy Issuance ID : '.$policyIssuance->id.' to TIMEOUT_STATUS');
+            }
+        } catch (\Exception $ex) {
+            LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
+                'errorMessage' => $ex->getMessage(),
+            ]);
+        }
     }
 }
