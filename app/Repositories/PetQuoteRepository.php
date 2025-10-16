@@ -36,7 +36,7 @@ class PetQuoteRepository extends BaseRepository
         LoggerService::info('Pet fetchCreate called with sub-source parameters', [
             'sub_source_id' => $request['sub_source_id'] ?? null,
             'sub_source_options_id' => $request['sub_source_options_id'] ?? null,
-            'additional_notes' => $request['additional_notes'] ?? null,
+            'notes' => $request['notes'] ?? null,
         ]);
 
         $sourceName = Config::get('constants.SOURCE_NAME');
@@ -70,7 +70,7 @@ class PetQuoteRepository extends BaseRepository
             // Sub-source fields
             'subSourceId' => $request['sub_source_id'] ?? null,
             'subSourceOptionsId' => $request['sub_source_options_id'] ?? null,
-            'additionalNotes' => $request['additional_notes'] ?? null,
+            'additionalNotes' => $request['notes'] ?? null,
         ];
 
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
@@ -88,7 +88,7 @@ class PetQuoteRepository extends BaseRepository
         LoggerService::info('Pet fetchUpdate called with sub-source parameters', [
             'sub_source_id' => $data['sub_source_id'] ?? null,
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-            'additional_notes' => $data['additional_notes'] ?? null,
+            'notes' => $data['notes'] ?? null,
         ]);
 
         return DB::transaction(function () use ($uuid, $data) {
