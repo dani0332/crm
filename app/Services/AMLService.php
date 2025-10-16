@@ -6,6 +6,7 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
@@ -2325,16 +2326,17 @@ class AMLService
             return false;
         }
 
-        // Need to discuss this with Bilal Saeed.
-        if ($insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
-            return true;
-        }
-
         if (
             $insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
-            $quote->source == LeadSourceEnum::RENEWAL_UPLOAD &&
             auth()->user()->can(PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
         ) {
+            if (
+                app(LeadAllocationService::class)->isCommercialVehicles($quote) ||
+                $quote->vehicle_use == CarVehicleUse::COMMERCIAL
+            ) {
+                return false;
+            }
+
             return true;
         }
 
