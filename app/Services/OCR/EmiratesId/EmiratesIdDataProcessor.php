@@ -128,7 +128,7 @@ class EmiratesIdDataProcessor
             'customer_type' => 'Individual',
             'first_name' => $this->extractFirstName($this->extractedData['name'] ?? ''),
             'last_name' => $this->extractLastName($this->extractedData['name'] ?? ''),
-            // 'dob' => $this->extractedData['date_of_birth'],
+            'dob' => $this->extractedData['date_of_birth'],
             'nationality_id' => $this->getNationalityId($this->extractedData['nationality'] ?? null),
             'gender' => $this->formatGender($this->extractedData['sex']),
             'id_type' => 'emiratesId',
@@ -289,9 +289,9 @@ class EmiratesIdDataProcessor
             return null;
         }
 
-        $nationalityRecord = Nationality::where('text', 'LIKE', '%'.$nationality.'%')
+        $nationalityRecord = Nationality::where('text', $nationality)
             ->orWhere('code', $nationality)
-            ->orWhere('country_name', 'LIKE', '%'.$nationality.'%')
+            ->orWhere('country_name', $nationality)
             ->first();
 
         return $nationalityRecord?->id;

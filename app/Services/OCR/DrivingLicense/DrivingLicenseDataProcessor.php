@@ -117,12 +117,6 @@ class DrivingLicenseDataProcessor
             ->orWhere('country_name', $nationality)
             ->orWhere('code', $nationality);
 
-        LoggerService::info('Nationality query:');
-        LoggerService::info(vsprintf(
-            str_replace('?', "'%s'", $query->toSql()),
-            $query->getBindings()
-        ));
-
         return $query->value('id');
     }
 
