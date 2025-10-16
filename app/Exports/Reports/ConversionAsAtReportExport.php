@@ -180,9 +180,9 @@ class ConversionAsAtReportExport implements CsvExportableInterface
             $unassignedRow = array_fill(0, count($this->headers), 0);
 
             $unassignedRow[0] = 'Unassigned Leads';
-            $unassignedRow[1] = Carbon::parse($this->requestParams['createdAtDate'][0])->format($dateFormat) ?? 'N/A';
-            $unassignedRow[2] = Carbon::parse($this->requestParams['createdAtDate'][1])->format($dateFormat) ?? 'N/A';
-            $unassignedRow[3] = Carbon::parse($this->requestParams['asAtDate'])->format($dateFormat) ?? 'N/A';
+            $unassignedRow[1] = Carbon::make($this->requestParams['startEndDate'][0] ?? null)?->format($dateFormat) ?? 'N/A';
+            $unassignedRow[2] = Carbon::make($this->requestParams['startEndDate'][1] ?? null)?->format($dateFormat) ?? 'N/A';
+            $unassignedRow[3] = Carbon::make($this->requestParams['asAtDate'] ?? null)?->format($dateFormat) ?? 'N/A';
 
             $unassignedRow[4] = $this->resolveNumberFormat($unassignedLeadsCount);
 

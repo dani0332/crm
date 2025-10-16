@@ -510,9 +510,9 @@ class ReportsController extends Controller
                 $row->bad_leads = 0;
                 $row->net_conversion = 0;
                 $row->gross_conversion = 0;
-                $row->start_date = Carbon::parse($request->startEndDate[0])->format($dateFormat);
-                $row->end_date = Carbon::parse($request->startEndDate[1])->format($dateFormat);
-                $row->as_at_date = Carbon::parse($request->asAtDate)->format($dateFormat);
+                $row->start_date = Carbon::make($request->startEndDate[0] ?? null)?->format($dateFormat) ?? 'N/A';
+                $row->end_date = Carbon::make($request->startEndDate[1] ?? null)?->format($dateFormat) ?? 'N/A';
+                $row->as_at_date = Carbon::make($request->asAtDate ?? null)?->format($dateFormat) ?? 'N/A';
                 $row->_is_unassigned_row = true;
 
                 if (!empty($displayByColumn) && !isset($row->{$displayByColumn})) {
@@ -540,9 +540,9 @@ class ReportsController extends Controller
             'lob' => $lob,
             'display_by_column' => $displayByColumn,
             'display_by' => $displayBy,
-            'start_date' => Carbon::parse($request->startEndDate[0])->format($dateFormat),
-            'end_date' => Carbon::parse($request->startEndDate[1])->format($dateFormat),
-            'as_at_date' => Carbon::parse($request->asAtDate)->format($dateFormat),
+            'start_date' => Carbon::make($request->startEndDate[0] ?? null)?->format($dateFormat) ?? 'N/A',
+            'end_date' => Carbon::make($request->startEndDate[1] ?? null)?->format($dateFormat) ?? 'N/A',
+            'as_at_date' => Carbon::make($request->asAtDate ?? null)?->format($dateFormat) ?? 'N/A',
             'title' => 'Conversion As At Report',
             'auth' => auth()->user()->name,
             'date' => date($dateFormat),
