@@ -884,7 +884,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
 
         // Return entire response object as fallback
-        return $responseObject ?? 'Unknown error occurred';
+        return $responseObject ?? $keyAPI.' API Failed';
     }
 
     /**
