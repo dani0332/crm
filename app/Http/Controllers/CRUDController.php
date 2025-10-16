@@ -2321,6 +2321,12 @@ class CRUDController extends Controller
 
             return response()->json(['success' => 'OCB email sent to customer']);
         }
+
+        if ($carQuote->source != LeadSourceEnum::RENEWAL_UPLOAD && $carQuote->advisor_id) {
+            app(SendEmailCustomerService::class)->sendCarIntroEmailWithAdvisor($carQuote);
+
+            return response()->json(['success' => 'OCB email sent to customer']);
+        }
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true, true);
 

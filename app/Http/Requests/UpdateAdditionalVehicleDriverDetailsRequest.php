@@ -32,32 +32,42 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             'insurance_provider_code' => 'required|string',
         ];
 
+        $isLiva = $this->insurance_provider_code === InsuranceProvidersEnum::RSA;
+        $isGIG = $this->insurance_provider_code === InsuranceProvidersEnum::AXA;
+
         if (isset($this->additional_vehicle_transaction_details) && $this->additional_vehicle_transaction_details == true) {
             $rules['rta_transaction_type'] = 'required';
-            $rules['plate_color'] = 'required|string';
             $rules['traffic_code_number'] = 'required';
+            $rules['bank_loan'] = 'required';
+
             $rules['engine_number'] = 'required';
             $rules['chassis_number'] = 'required';
             $rules['vehicle_color'] = 'required';
-            $rules['bank_loan'] = 'required';
             $rules['first_registration_date'] = 'required|date';
-            if ($this->insurance_provider_code === InsuranceProvidersEnum::RSA) {
+
+            if ($isLiva) {
                 $rules['policy_effective_date'] = 'required|after_or_equal:today';
+            } else {
+                $rules['plate_color'] = 'required|string';
             }
         } else {
+
+            if (! $isLiva) {
+                $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
+            }
+
             $rules['is_insured_and_driver_same'] = 'required|integer';
             $rules['driver_first_name'] = 'nullable|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
             $rules['driver_last_name'] = 'nullable|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
             $rules['driver_dob'] = 'nullable|date|before:today';
             $rules['driver_gender'] = 'required|string|in:male,female';
-            $rules['driver_license_number'] = 'required|string|max:255';
+            $rules['driver_license_number'] = 'required|max:255';
             $rules['uae_driving_experience'] = 'nullable|numeric|min:0|max:50';
             $rules['home_country_license_issuance'] = 'nullable|string|max:255';
             $rules['home_country_driving_experience'] = 'nullable|numeric|min:0|max:50';
-            $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
         }
 
-        if ($this->insurance_provider_code === InsuranceProvidersEnum::AXA) {
+        if ($isGIG) {
             $rules = array_merge($rules, $this->getRtaSpecificRules());
         }
 

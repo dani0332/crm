@@ -560,9 +560,10 @@ class CarQuote extends BaseModel
             ->where('quote_type_id', QuoteTypeId::Car)->withTrashed();
     }
 
-    public function policyIssuance()
+    public function carQuotePlanDetail()
     {
-        return $this->morphOne(PolicyIssuance::class, 'model');
+        return $this->hasOne(CarQuotePlanDetail::class, 'quote_uuid', 'uuid')
+            ->where('plan_id', $this->plan_id);
     }
 
     /**
@@ -572,6 +573,11 @@ class CarQuote extends BaseModel
     {
         return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
             ->where('quote_type_id', QuoteTypeId::Car);
+    }
+
+    public function policyIssuance()
+    {
+        return $this->morphOne(PolicyIssuance::class, 'model');
     }
 
     public function kycDocumentUser()
