@@ -2408,7 +2408,7 @@ class AMLService
         }
 
         // for GIG
-        if (in_array($insuranceProviderCode, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA])) {
+        if (in_array($insuranceProviderCode, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::QIC, InsuranceProvidersEnum::TM])) {
             return $this->getAMLLookups($insuranceProviderId, [
                 LookupsEnum::RTA_TRANSACTION_TYPE,
                 LookupsEnum::RTA_PLATE_CATEGORY,
