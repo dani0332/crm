@@ -19,7 +19,7 @@ class SyncEpDocumentsJob implements ShouldQueue
 
     public $tries = 3;
     public $timeout = 180;
-    public $backoff = 120;
+    public $backoff = 60;
     private string $logPrefix = 'SyncEpDocuments - Job:';
     private array $logExtra = [];
 
