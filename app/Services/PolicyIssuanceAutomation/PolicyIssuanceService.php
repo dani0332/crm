@@ -30,6 +30,7 @@ class PolicyIssuanceService
     use GenericQueriesAllLobs;
 
     private string $className = 'policyIssuanceService';
+
     public function __construct() {}
 
     public function init($quoteType, $insurerCode)
