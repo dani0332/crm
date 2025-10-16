@@ -513,20 +513,21 @@ class ApiController extends Controller
         }
     }
 
-    public function runCQFJobs(Request $request){
+    public function runCQFJobs(Request $request)
+    {
         try {
             LoggerService::info(self::class.': Running CQF jobs');
-            
+
             // Validate the date parameter - make it optional since the service can handle null
             $request->validate([
                 'date' => 'nullable|date',
             ]);
-            
+
             $startDate = null;
-            if ($request->has('date') && !empty($request->date)) {
+            if ($request->has('date') && ! empty($request->date)) {
                 $startDate = Carbon::parse($request->date);
             }
-            
+
             app(CarCQFRenewalExecutionService::class)->processCarCQFRenewalLeads($startDate);
             LoggerService::info(self::class.': CQF jobs have been completed');
 
