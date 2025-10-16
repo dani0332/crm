@@ -467,6 +467,8 @@ class ReportsController extends Controller
     public function renderConversionAsAtReport(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
     {
 
+
+
         $displayBy = $request->displayBy ?? null;
         $createdAtDate = $request->createdAtDate ?? null;
         $includeUnassignedLeads = $request->includeUnassignedLeads ?? null;
@@ -492,12 +494,42 @@ class ReportsController extends Controller
         $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
         $timeOnlyFormat = config('constants.TIME_ONLY_FORMAT');
         $dateTimeFormat = config('constants.DATETIME_DISPLAY_FORMAT');
+        $includeUnassignedLeads = ($request['includeUnassignedLeads'] ?? 'no') === 'yes';
 
         $displayByColumn = $request->displayBy ?? null;
         $displayBy = $request->displayBy ? ucfirst(str_replace('_', ' ', $request->displayBy)) : 'N/A';
         $lob = QuoteTypes::getName($request->lob)->value.' Insurance';
 
         $reportData = $conversionAsAtReportService->getReportData($request);
+
+        $unassignedLeadsCount = $conversionAsAtReportService->getUnassignedLeadsCount($request);
+
+        if ($includeUnassignedLeads) {
+            $prototype = $reportData->first();
+            if ($prototype instanceof \Illuminate\Database\Eloquent\Model) {
+                $row = $prototype->newInstance([], true);
+                $row->total_leads = $unassignedLeadsCount;
+                $row->sale_leads = 0;
+                $row->bad_leads = 0;
+                $row->net_conversion = 0;
+                $row->gross_conversion = 0;
+                $row->start_date = Carbon::parse($request->startEndDate[0])->format($dateFormat);
+                $row->end_date = Carbon::parse($request->startEndDate[1])->format($dateFormat);
+                $row->as_at_date = Carbon::parse($request->asAtDate)->format($dateFormat);
+                $row->_is_unassigned_row = true;
+
+                if (!empty($displayByColumn) && !isset($row->{$displayByColumn})) {
+                    $row->{$displayByColumn} = 'Unassigned Leads';
+                }else{
+                    $row->assignment_type = 'Unassigned Leads';
+                }
+            }
+
+            if (isset($row)) {
+                $reportData->push($row);
+            }
+        }
+
         $totalGrossConversion = $conversionAsAtReportService->calculateTotalGrossConversion($reportData);
         $totalNetConversion = $conversionAsAtReportService->calculateTotalNetConversion($reportData);
 
