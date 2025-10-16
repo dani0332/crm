@@ -590,11 +590,15 @@ const assumptionsForm = useForm({
   car_quote_id: page.props.record.id,
 });
 
-const findEpTransaction = (shortCode) => {
+const findEpTransaction = shortCode => {
   const epTransactions = page.props.epTransactions;
   const paymentStatusEnum = page.props.paymentStatusEnum;
 
-  if (!shortCode || !Array.isArray(epTransactions) || epTransactions.length === 0) {
+  if (
+    !shortCode ||
+    !Array.isArray(epTransactions) ||
+    epTransactions.length === 0
+  ) {
     return undefined;
   }
 
@@ -603,8 +607,11 @@ const findEpTransaction = (shortCode) => {
 
     const isSelected = ep?.is_selected === 1;
     const hasMatchingShortCode = embeddedProduct?.short_code === shortCode;
-    const hasValidPaymentStatus = ep?.payment_status_id && 
-      [paymentStatusEnum.AUTHORISED, paymentStatusEnum.CAPTURED].includes(ep.payment_status_id);
+    const hasValidPaymentStatus =
+      ep?.payment_status_id &&
+      [paymentStatusEnum.AUTHORISED, paymentStatusEnum.CAPTURED].includes(
+        ep.payment_status_id,
+      );
 
     return isSelected && hasMatchingShortCode && hasValidPaymentStatus;
   });
@@ -625,7 +632,7 @@ const onUpdateAssumption = () => {
       assumptionState.isEditing = false;
     },
     // Reset confirmation flag after form submission completes
-    onFinish: () => modals.isConfirmed = false,
+    onFinish: () => (modals.isConfirmed = false),
   });
 };
 
@@ -3315,7 +3322,7 @@ const handleModalCancel = () => {
           </div>
         </template>
       </Collapsible>
-      
+
       <ConfirmationModal
         v-model="modals.showConfirmationModal"
         title="Are you sure?"

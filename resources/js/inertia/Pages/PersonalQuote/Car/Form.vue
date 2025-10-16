@@ -220,11 +220,15 @@ const validateDecimal = event => {
  * @param {string} shortCode - The embedded product short code to search for
  * @returns {Object|undefined} The found transaction or undefined
  */
-const findEpTransaction = (shortCode) => {
+const findEpTransaction = shortCode => {
   const epTransactions = page.props.epTransactions;
   const paymentStatusEnum = page.props.paymentStatusEnum;
 
-  if (!shortCode || !Array.isArray(epTransactions) || epTransactions.length === 0) {
+  if (
+    !shortCode ||
+    !Array.isArray(epTransactions) ||
+    epTransactions.length === 0
+  ) {
     return undefined;
   }
 
@@ -233,8 +237,11 @@ const findEpTransaction = (shortCode) => {
 
     const isSelected = ep?.is_selected === 1;
     const hasMatchingShortCode = embeddedProduct?.short_code === shortCode;
-    const hasValidPaymentStatus = ep?.payment_status_id && 
-      [paymentStatusEnum.AUTHORISED, paymentStatusEnum.CAPTURED].includes(ep.payment_status_id);
+    const hasValidPaymentStatus =
+      ep?.payment_status_id &&
+      [paymentStatusEnum.AUTHORISED, paymentStatusEnum.CAPTURED].includes(
+        ep.payment_status_id,
+      );
 
     return isSelected && hasMatchingShortCode && hasValidPaymentStatus;
   });
@@ -260,7 +267,7 @@ const proceedWithSubmission = () => {
       quoteForm.setError(errors);
     },
     // Reset confirmation flag after form submission completes
-    onFinish: () => modals.isConfirmed = false,
+    onFinish: () => (modals.isConfirmed = false),
   };
 
   quoteForm
@@ -274,7 +281,7 @@ const proceedWithSubmission = () => {
 const handleConfirmUpdateCarDetails = () => {
   modals.showConfirmationModal = false;
   modals.isConfirmed = true;
-  
+
   // Proceed with form submission after confirmation
   proceedWithSubmission();
 };

@@ -1,7 +1,7 @@
 <script setup>
 /**
  * Reusable confirmation modal component
- * 
+ *
  * @example
  * <ConfirmationModal
  *   v-model="showModal"
@@ -36,7 +36,7 @@ const emit = defineEmits(['update:modelValue', 'confirm', 'cancel']);
 
 const isActive = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value),
+  set: value => emit('update:modelValue', value),
 });
 
 const handleConfirm = () => {
@@ -49,13 +49,7 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <x-modal
-    v-model="isActive"
-    size="lg"
-    :title="title"
-    show-close
-    backdrop
-  >
+  <x-modal v-model="isActive" size="lg" :title="title" show-close backdrop>
     <div class="items-center">
       <div v-if="message" class="ml-2">
         <p>{{ message }}</p>
