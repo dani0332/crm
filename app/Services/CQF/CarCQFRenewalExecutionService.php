@@ -31,11 +31,11 @@ class CarCQFRenewalExecutionService
     private array $validationErrorsList = [];
     private array $epCodes = [];
 
-    public function processCarCQFRenewalLeads($startDate =null): void
+    public function processCarCQFRenewalLeads($startDate = null): void
     {
         $renewalDaysThreshold = getAppStorageValueByKey(ApplicationStorageEnums::CAR_CQF_RENEWALS_DAYS_THRESHOLD);
         $startDate = $startDate ?: Carbon::now()->addDays((int) $renewalDaysThreshold);
- 
+
         LoggerService::info(self::class." - Car CQF Renewal Leads processing started with Start Date: {$startDate}");
 
         $isQuoteExists = CarQuote::whereDate('policy_expiry_date', $startDate)
