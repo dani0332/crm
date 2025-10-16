@@ -3,6 +3,7 @@
 namespace App\Builders;
 
 use App\Enums\CarRegistrationType;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
@@ -231,8 +232,8 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->when($hasFilterValue('api_issuance_status_id'), function ($query) use ($getFilterValue) {
                 $apiIssuanceStatusIds = (array) $getFilterValue('api_issuance_status_id');
 
-                $hasBlank = in_array('blank', $apiIssuanceStatusIds);
-                $otherIds = array_diff($apiIssuanceStatusIds, ['blank']);
+                $hasBlank = in_array(GenericRequestEnum::API_ISSUANCE_STATUS_ID_BLANK, $apiIssuanceStatusIds);
+                $otherIds = array_diff($apiIssuanceStatusIds, [GenericRequestEnum::API_ISSUANCE_STATUS_ID_BLANK]);
 
                 $query->where(function ($q) use ($hasBlank, $otherIds) {
                     if ($hasBlank) {
