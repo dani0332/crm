@@ -529,7 +529,7 @@ class ReportsController extends Controller
                 $row->_is_unassigned_row = true;
             }
 
-            if (!empty($displayByColumn) && !isset($row->{$displayByColumn})) {
+            if (! empty($displayByColumn) && ! isset($row->{$displayByColumn})) {
                 $row->{$displayByColumn} = 'Unassigned Leads';
             } else {
                 $row->assignment_type = 'Unassigned Leads';
