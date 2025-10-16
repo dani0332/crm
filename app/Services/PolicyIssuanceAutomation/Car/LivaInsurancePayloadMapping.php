@@ -1,0 +1,228 @@
+<?php
+
+namespace App\Services\PolicyIssuanceAutomation\Car;
+
+class LivaInsurancePayloadMapping
+{
+    public function useCode($useCode)
+    {
+        return match ($useCode) {
+            1 => 'Social, Domestic and Pleasure',
+            2 => 'Social, Domestic, Pleasure and Commuting',
+            3 => 'Social, Domestic, Pleasure, Commuting and Personal Biz Use',
+            4 => 'Commercial',
+            5 => 'Limited to TP only',
+            6 => 'Taxi',
+            7 => 'Rent A Car',
+            8 => 'Driving School',
+            9 => 'Gas/Fuel Tankers',
+            10 => 'Water and Sewerage Tankers',
+            default => null
+        };
+    }
+
+    public function vehicleMakeList($make)
+    {
+        return match ($make) {
+            'ACURA' => 302,
+            'ALBANY' => 446,
+            'ALFA ROMEO' => 303,
+            'APRILIA' => 394,
+            'ASTON MARTIN' => 305,
+            'AUDI' => 131,
+            'AUSTIN-HEALEY' => 410,
+            'BACKDRAFT' => 457,
+            'BAIC' => 458,
+            'BESTUNE' => 522,
+            'BMW' => 141,
+            'BRILLIANCE' => 456,
+            'BYD' => 534,
+            'BAJAJ' => 346,
+            'BAOTIAN' => 453,
+            'BENTLEY' => 306,
+            'BIG BEAR CHOPPER' => 411,
+            'BIG DOG' => 434,
+            'BOSS HOSS' => 392,
+            'BRAMWITH' => 401,
+            'BUELL' => 418,
+            'BUGATTI' => 420,
+            'BUICK' => 146,
+            'C P I' => 425,
+            'CHANGAN' => 464,
+            'CADILLAC' => 137,
+            'CAN AM' => 408,
+            'CAPMAN' => 423,
+            'CARVER' => 451,
+            'CATERHAM' => 398,
+            'CFMOTO' => 450,
+            'CHERY' => 379,
+            'CHEVROLET' => 14,
+            'CHRYSLER' => 133,
+            'CITROEN' => 142,
+            'DEEPAL' => 840,
+            'DONGFENG' => 600,
+            'DAEWOO' => 130,
+            'DAIHATSU' => 147,
+            'DAIMLER' => 307,
+            'DODGE' => 123,
+            'DUCATI' => 301,
+            'ENERGICA' => 555,
+            'EXEED' => 805,
+            'EXILE' => 428,
+            'FACTORY FIVE' => 462,
+            'FANTIC' => 800,
+            'FERRARI' => 308,
+            'FIAT' => 309,
+            'FORD' => 34,
+            'FUQI' => 391,
+            'GASGAS' => 610,
+            'GENESIS' => 470,
+            'GMC' => 135,
+            'GTS' => 375,
+            'GAC' => 454,
+            'GEELY' => 400,
+            'GILERA' => 445,
+            'GREAT WALL' => 340,
+            'HAVAL' => 557,
+            'HONGQI' => 488,
+            'HUSQVARNA' => 463,
+            'HAIMA' => 393,
+            'HARLEY DAVIDSON' => 310,
+            'HEADBANGER' => 447,
+            'HELLBOUND STEEL' => 436,
+            'HERO' => 493,
+            'HONDA' => 134,
+            'HOTROD' => 543,
+            'HUMMER' => 337,
+            'HYUNDAI' => 36,
+            'INDIAN' => 461,
+            'INEOS' => 803,
+            'INFINITI' => 382,
+            'INTERNATIONAL' => 165,
+            'ISUZU' => 4,
+            'JAC' => 177,
+            'JENSEN' => 459,
+            'JAGUAR' => 138,
+            'JEEP' => 22,
+            'JETOUR' => 615,
+            'KIA' => 129,
+            'KTM' => 381,
+            'KAWASAKI' => 380,
+            'KOVE' => 748,
+            'KRAZYHORSE' => 431,
+            'KYMCO' => 412,
+            'LI' => 838,
+            'LAMBORGHINI' => 383,
+            'LANCIA' => 314,
+            'LANDROVER' => 136,
+            'LEXUS' => 5,
+            'LINCOLN' => 316,
+            'LML' => 441,
+            'LOTUS' => 317,
+            'M G B' => 403,
+            'M G F' => 414,
+            'MG' => 444,
+            'MV AUGUSTA' => 426,
+            'MAHINDRA' => 331,
+            'MASERATI' => 318,
+            'MAXUS' => 491,
+            'MAZDA' => 119,
+            'MC LAREN' => 442,
+            'MERCEDES BENZ' => 6,
+            'MERCURY' => 390,
+            'MINI' => 319,
+            'MITSUBISHI' => 121,
+            'MORGAN' => 455,
+            'MOTO ENDURO' => 448,
+            'MOTO GUZZI' => 430,
+            'NIO' => 820,
+            'NISSAN' => 7,
+            'NORTON' => 443,
+            'OLDSMOBILE' => 159,
+            'OPEL' => 158,
+            'P' => 429,
+            'POLESTAR' => 553,
+            'PEUGEOT' => 28,
+            'PGO' => 384,
+            'PIAGGIO' => 432,
+            'PONTIAC' => 9,
+            'PORSCHE' => 320,
+            'PROTON' => 321,
+            'RAM' => 471,
+            'ROX' => 813,
+            'RENAULT' => 127,
+            'RIDLEY' => 440,
+            'ROLLS ROYCE' => 322,
+            'ROVER' => 323,
+            'ROYAL ENFIELD' => 419,
+            'SHARMAX' => 846,
+            'SOUEAST' => 821,
+            'SAAB' => 33,
+            'SATURN' => 437,
+            'SEAT' => 25,
+            'SHELBY' => 399,
+            'SKODA' => 124,
+            'SMART' => 324,
+            'SPYDER' => 406,
+            'SSANG YONG' => 164,
+            'SUBARU' => 35,
+            'SUZUKI' => 10,
+            'TESLA' => 460,
+            'TVS' => 421,
+            'TAZZARI' => 427,
+            'TOYOTA' => 112,
+            'TRAVERTSON' => 438,
+            'TRIUMPH' => 395,
+            'UM' => 422,
+            'ULTIMA' => 405,
+            'URAL' => 433,
+            'V' => 415,
+            'V P G' => 452,
+            'VESPA' => 424,
+            'VICTORY' => 402,
+            'VMOTO' => 413,
+            'VOLKSWAGEN' => 139,
+            'VOLVO' => 113,
+            'WATCO' => 449,
+            'WIESMANN' => 439,
+            'XIAOMI' => 835,
+            'XPENG' => 816,
+            'YAMAHA' => 339,
+            'ZERO' => 801,
+            'ZDO NOTUSE ENFIELD' => 354,
+            'ZEEKR' => 809,
+            'ZENVO' => 409,
+            default => null
+        };
+    }
+
+    /**
+     * Map document types to LIVA document type codes
+     */
+    public function getDocumentType($documentType): string
+    {
+        return match ($documentType) {
+            'CEID' => '16', // Emirates ID (Front side & Back side)
+            'DL' => '4', // Driving License (Front side & Back side)
+            'CAR_MULKIY' => '5', // Registration card (Mulkiya)
+            default => null
+        };
+    }
+
+    public function renewalRtaTransactionType(): array
+    {
+        return ['40', '50'];
+    }
+
+    public function rtaTransactionTypeEnum(): array
+    {
+        return [
+            'REGISTRATION_OF_NEW_VEHICLE' => '10',
+            'CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_VALID' => '20',
+            'CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_TO_EXPIRE' => '30',
+            'RENEWAL_OF_VEHICLE_WITH_CURRENT_NUMBER_PLATE' => '40',
+            'RENEWAL_OF_VEHICLE_WITH_NEW_NUMBER_PLATE' => '50',
+        ];
+    }
+
+}
