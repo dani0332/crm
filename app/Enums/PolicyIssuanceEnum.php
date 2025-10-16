@@ -89,6 +89,11 @@ final class PolicyIssuanceEnum extends Enum
     const ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS = 'FillPolicyBookingDetails';
     const ALLIANCE_TRAVEL_BOOK_POLICY = 'BookPolicy';
 
+    /* LIVA AML API Statuses */
+
+    const LIVA_AML_ACTIVE = 1;
+    const LIVA_AML_ACCEPTED = 23;
+
     /* Alliance Travel Steps */
     public static function getPolicyIssuanceSteps($insurerCode, $quoteType)
     {
