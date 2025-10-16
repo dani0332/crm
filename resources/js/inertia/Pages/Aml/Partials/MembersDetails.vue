@@ -237,7 +237,7 @@ function onEditMember(member) {
       page.props.quoteType.code == page.props.quoteTypeCodeEnum.Health ||
       page.props.quoteType.code == page.props.quoteTypeCodeEnum.Travel
         ? member.last_name
-        : null;
+        : '';
   }
   memberForm.dob = member.dob;
   memberForm.relation_code = member.relation_code;
