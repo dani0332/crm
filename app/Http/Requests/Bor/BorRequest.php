@@ -49,6 +49,16 @@ class BorRequest extends FormRequest
                     'doc_uuid' => 'required|string|max:255',
                 ]);
 
+            case 'uploadDocument':
+                return [
+                    'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240', // 10MB max
+                    'quote_type' => 'required|string',
+                    'quote_uuid' => 'required|string',
+                    'is_base_64' => 'nullable|boolean',
+                    'document_type_code' => 'nullable|string|exists:document_types,code,is_active,1',
+                    'document_category' => 'nullable|string|max:255',
+                ];
+
             default:
                 return $baseRules;
         }
@@ -88,6 +98,18 @@ class BorRequest extends FormRequest
                     'doc_uuid.max' => 'Document UUID must not exceed 255 characters.',
                 ]);
 
+            case 'uploadDocument':
+                return [
+                    'file.required' => 'Document file is required.',
+                    'file.file' => 'The uploaded document must be a valid file.',
+                    'file.mimes' => 'The file must be a PDF, JPG, JPEG, PNG, DOC, or DOCX.',
+                    'file.max' => 'The file size must not exceed 10MB.',
+                    'quote_type.required' => 'Quote type is required.',
+                    'quote_uuid.required' => 'Quote UUID is required.',
+                    'document_type_code.exists' => 'The specified document type code does not exist.',
+                    'document_category.max' => 'Document category must not exceed 255 characters.',
+                ];
+
             default:
                 return $baseMessages;
         }
@@ -100,8 +122,8 @@ class BorRequest extends FormRequest
     {
         $action = $this->route()->getActionMethod();
         
-        // Only apply boolean conversion for signDocument action
-        if ($action === 'signDocument') {
+        // Apply boolean conversion for signDocument and uploadDocument actions
+        if (in_array($action, ['signDocument', 'uploadDocument'])) {
             // Convert string boolean values to actual booleans
             if ($this->has('is_base_64')) {
                 $this->merge([
@@ -109,7 +131,7 @@ class BorRequest extends FormRequest
                 ]);
             }
 
-            if ($this->has('download_clicked')) {
+            if ($action === 'signDocument' && $this->has('download_clicked')) {
                 $this->merge([
                     'download_clicked' => filter_var($this->input('download_clicked'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false,
                 ]);
