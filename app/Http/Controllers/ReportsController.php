@@ -520,6 +520,19 @@ class ReportsController extends Controller
                 }else{
                     $row->assignment_type = 'Unassigned Leads';
                 }
+            }else {
+                /** Incase data isn't in eloquent model object -- HIGHLY UNLIKELY */
+                $row = (object) [
+                    'total_leads' => $unassignedLeadsCount,
+                    'sale_leads' => 0,
+                    'bad_leads' => 0,
+                    'net_conversion' => 0,
+                    'gross_conversion' => 0,
+                    'start_date' => Carbon::make($request->startEndDate[0] ?? null)?->format($dateFormat) ?? 'N/A',
+                    'end_date' => Carbon::make($request->startEndDate[1] ?? null)?->format($dateFormat) ?? 'N/A',
+                    'as_at_date' => Carbon::make($request->asAtDate ?? null)?->format($dateFormat) ?? 'N/A',
+                ];
+                $row->_is_unassigned_row = true;
             }
 
             if (isset($row)) {
