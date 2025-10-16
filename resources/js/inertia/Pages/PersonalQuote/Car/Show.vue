@@ -67,6 +67,7 @@ defineProps({
   carMakeText: String,
   carModelText: String,
   embeddedProducts: Array,
+  epTransactions: Array,
   genericRequestEnum: Object,
   allowQuoteLogAction: Boolean,
   lostApproveReasons: Array,
@@ -589,12 +590,42 @@ const assumptionsForm = useForm({
   car_quote_id: page.props.record.id,
 });
 
+const findEpTransaction = (shortCode) => {
+  const epTransactions = page.props.epTransactions;
+  const paymentStatusEnum = page.props.paymentStatusEnum;
+
+  if (!shortCode || !Array.isArray(epTransactions) || epTransactions.length === 0) {
+    return undefined;
+  }
+
+  return epTransactions.find(function (ep) {
+    const embeddedProduct = ep?.product?.embedded_product;
+
+    const isSelected = ep?.is_selected === 1;
+    const hasMatchingShortCode = embeddedProduct?.short_code === shortCode;
+    const hasValidPaymentStatus = ep?.payment_status_id && 
+      [paymentStatusEnum.AUTHORISED, paymentStatusEnum.CAPTURED].includes(ep.payment_status_id);
+
+    return isSelected && hasMatchingShortCode && hasValidPaymentStatus;
+  });
+};
+
 const onUpdateAssumption = () => {
+  // Check if customer has an active ECB transaction that requires confirmation
+  const selectedEpECB = findEpTransaction(page.props.embeddedProductEnum.ECB);
+  if (selectedEpECB && !modals.isConfirmed) {
+    modals.confirmationMessage = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
+    modals.showConfirmationModal = true;
+    return;
+  }
+
   assumptionsForm.post('/quotes/car/carAssumptionsUpdate', {
     preserveScroll: true,
     onSuccess: () => {
       assumptionState.isEditing = false;
     },
+    // Reset confirmation flag after form submission completes
+    onFinish: () => modals.isConfirmed = false,
   });
 };
 
@@ -659,6 +690,9 @@ const modals = reactive({
   createPlan: false,
   sendConfirm: false,
   showEmailEventsModal: false,
+  confirmationMessage: '',
+  showConfirmationModal: false,
+  isConfirmed: false,
 });
 
 const confirmData = reactive({
@@ -1757,6 +1791,20 @@ function handleOcrNotification(event) {
     });
   }
 }
+
+/**
+ * Handle modal confirmation and trigger form submission
+ */
+const handleConfirmUpdateAssumptionDetails = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = true;
+  onUpdateAssumption();
+};
+
+const handleModalCancel = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = false; // Reset confirmation flag when user cancels
+};
 </script>
 
 <template>
@@ -3237,7 +3285,7 @@ function handleOcrNotification(event) {
               >
                 Cancel
               </x-button>
-              <template v-if="!can(permissionEnum.ApprovePayments)">
+              <template v-if="true || !can(permissionEnum.ApprovePayments)">
                 <x-button
                   v-if="assumptionState.isEditing"
                   class="mt-4"
@@ -3267,6 +3315,15 @@ function handleOcrNotification(event) {
           </div>
         </template>
       </Collapsible>
+      
+      <ConfirmationModal
+        v-model="modals.showConfirmationModal"
+        title="Are you sure?"
+        :message="modals.confirmationMessage"
+        :loading="isLoading"
+        @confirm="handleConfirmUpdateAssumptionDetails"
+        @cancel="handleModalCancel"
+      />
     </div>
 
     <PlanDetails

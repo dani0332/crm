@@ -36,8 +36,9 @@ const isEdit = computed(() => {
 
 const isLoading = ref(false);
 const modals = reactive({
-  confirmationMessage: 'Are you sure, do you want to proceed?',
-  isActive: false,
+  confirmationMessage: '',
+  showConfirmationModal: false,
+  isConfirmed: false,
 });
 
 const carMakeOptions = computed(() => {
@@ -220,14 +221,14 @@ const validateDecimal = event => {
  * @returns {Object|undefined} The found transaction or undefined
  */
 const findEpTransaction = (shortCode) => {
-  // Validate required data exists
-  if (!shortCode || !Array.isArray(props.epTransactions) || props.epTransactions.length === 0) {
+  const epTransactions = page.props.epTransactions;
+  const paymentStatusEnum = page.props.paymentStatusEnum;
+
+  if (!shortCode || !Array.isArray(epTransactions) || epTransactions.length === 0) {
     return undefined;
   }
 
-  const paymentStatusEnum = page.props.paymentStatusEnum;
-
-  return props.epTransactions.find(function (ep) {
+  return epTransactions.find(function (ep) {
     const embeddedProduct = ep?.product?.embedded_product;
 
     const isSelected = ep?.is_selected === 1;
@@ -240,7 +241,8 @@ const findEpTransaction = (shortCode) => {
 };
 
 /**
- * Proceed with the actual form submission
+ * Proceed with actual form submission
+ * This is called after validation and confirmation checks pass
  */
 const proceedWithSubmission = () => {
   clearFormValues();
@@ -257,6 +259,8 @@ const proceedWithSubmission = () => {
       setCarMakeAndModalValues();
       quoteForm.setError(errors);
     },
+    // Reset confirmation flag after form submission completes
+    onFinish: () => modals.isConfirmed = false,
   };
 
   quoteForm
@@ -267,11 +271,17 @@ const proceedWithSubmission = () => {
 /**
  * Handle modal confirmation and trigger form submission
  */
-const confirmToUpdateCarDetails = () => {
-  modals.isActive = false;
+const handleConfirmUpdateCarDetails = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = true;
   
   // Proceed with form submission after confirmation
   proceedWithSubmission();
+};
+
+const handleModalCancel = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = false; // Reset confirmation flag when user cancels
 };
 
 function onSubmit(isValid) {
@@ -289,10 +299,9 @@ function onSubmit(isValid) {
 
   // Check if customer has an active ECB transaction that requires confirmation
   const selectedEpECB = findEpTransaction(page.props.embeddedProductEnum.ECB);
-  if (selectedEpECB) {
-    // ECB transaction found - show confirmation modal before proceeding
+  if (selectedEpECB && !modals.isConfirmed) {
     modals.confirmationMessage = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
-    modals.isActive = true;
+    modals.showConfirmationModal = true;
     return;
   }
 
@@ -1056,42 +1065,13 @@ const gender = computed(() => {
       </div>
     </x-form>
 
-    <x-modal
-      v-model="modals.isActive"
-      size="lg"
+    <ConfirmationModal
+      v-model="modals.showConfirmationModal"
       title="Are you sure?"
-      show-close
-      backdrop
-    >
-      <div class="items-center">
-        <div class="ml-2">
-          <p>{{ modals.confirmationMessage }}</p>
-        </div>
-        <div class="ml-2 mt-2">
-          <p class="font-semibold">Do you want to proceed?</p>
-        </div>
-      </div>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            :disabled="isLoading"
-            @click.prevent="modals.isActive = false"
-          >
-            Cancel
-          </x-button>
-
-          <x-button
-            size="sm"
-            color="error"
-            @click.prevent="confirmToUpdateCarDetails"
-            :loading="isLoading"
-          >
-            Confirm
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
+      :message="modals.confirmationMessage"
+      :loading="isLoading"
+      @confirm="handleConfirmUpdateCarDetails"
+      @cancel="handleModalCancel"
+    />
   </div>
 </template>

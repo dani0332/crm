@@ -786,6 +786,7 @@ class CRUDController extends Controller
 
                 $paymentEntityModel->load(['plan.insuranceProvider']);
                 $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
+                $epTransactions = app(EmbeddedProductRepository::class)->getEpTransactionDetails(QuoteTypeId::Car, $record->id);
 
                 if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager])) {
                     if (InsuranceProviderRepository::isCommercialVehicles($record)) {
@@ -882,6 +883,7 @@ class CRUDController extends Controller
                     'trimList',
                     'autoAllocationDisabled',
                     'embeddedProducts',
+                    'epTransactions',
                     'genericRequestEnum',
                     'paymentEntityModel',
                     'payments',
