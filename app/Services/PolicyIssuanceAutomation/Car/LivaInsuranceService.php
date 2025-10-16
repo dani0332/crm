@@ -1267,7 +1267,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
      * Check if policy issuance timed out and update status accordingly
      *
      * @param  \App\Models\PolicyIssuance  $policyIssuance
-     * @return void
      */
     public function handleTimeoutStatusUpdate($policyIssuance): void
     {
