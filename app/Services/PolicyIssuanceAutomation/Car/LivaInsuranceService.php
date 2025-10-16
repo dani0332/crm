@@ -846,10 +846,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 $response['error'] = '404 Not Found';
                 $response['status'] = false;
                 $response['message'] = '404 Not Found';
-            } elseif ((isset($responseObject?->string) && str_contains($responseObject?->string, 'Exception'))) {
+            } else {
                 $response['error'] = $keyAPI.' API Failed';
                 $response['status'] = false;
-                $response['message'] = 'There is an Exception on LIVA API.';
+                $response['message'] = 'There is an Exception on LIVA API call.';
             }
         } catch (Exception $ex) {
             LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__, [
