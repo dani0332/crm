@@ -189,7 +189,7 @@ const drivingExperienceOptions = computed(() => {
   if (isLIVA.value) {
     return useGenerateOptions(
       lookups?.driving_experience ?? [],
-      'code',
+      'rsa_driving_experience',
       'text',
     );
   }
@@ -233,6 +233,7 @@ watch(
       additionalDriverDetailsForm.driver_gender = normalizeGender(
         quoteRequest?.gender,
       );
+      additionalDriverDetailsForm.uae_driving_experience = quoteRequest?.uae_license_held_for?.rsa_driving_experience;
     }
   },
 );
