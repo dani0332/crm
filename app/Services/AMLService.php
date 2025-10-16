@@ -846,7 +846,23 @@ class AMLService
 
                 if ($getQuoteResponse['success']) {
                     LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Successfully retrieved and updated quote details from insurer - Ref-ID: '.$quoteDetails->code);
-                    $insurerAMLStatusForRenewalUpload = $getQuoteResponse['data']['uwApprovalStatus'] == 'Y' ? AMLStatusCode::AMLScreeningCleared : AMLStatusCode::AMLScreeningFailed;
+                    if (isset($getQuoteResponse['data']['uwApprovalStatus'])) {
+                        $insurerAMLStatusForRenewalUpload = $getQuoteResponse['data']['uwApprovalStatus'] == 'Y'
+                            ? AMLStatusCode::AMLScreeningCleared
+                            : AMLStatusCode::AMLScreeningFailed;
+                    }
+
+                    if (isset($getQuoteResponse['data']['QuoteStatus'])) {
+                        $insurerAMLStatusForRenewalUpload = in_array($getQuoteResponse['data']['QuoteStatus'], [1, 23])
+                            ? AMLStatusCode::AMLScreeningCleared
+                            : AMLStatusCode::AMLScreeningFailed;
+                    }
+
+                    if (! isset($insurerAMLStatusForRenewalUpload)) {
+                        LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurer AML status for renewal upload is not set - Ref-ID: '.$quoteDetails->code);
+                        $insurerAMLStatusForRenewalUpload = AMLStatusCode::AMLPending;
+                    }
+
                     $screeningResponse = [
                         'status' => $insurerAMLStatusForRenewalUpload,
                         'message' => $isRenewalUpload ? 'Renewal upload - check insurer AML status after GetQuote API call' : 'Insured and Driver are not the same - check insurer AML status after GetQuote API call',
