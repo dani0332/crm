@@ -609,6 +609,7 @@ const onAddDocumentSubmit = event => {
                     @change="toggleProduct(priceItem, $event)"
                     color="primary"
                     :disabled="
+                      priceItem.transactions[0]?.is_active === 0 ||
                       priceItem.transactions[0]?.payment_status_id ==
                         paymentStatusEnum.AUTHORISED ||
                       priceItem.transactions[0]?.payment_status_id ==
