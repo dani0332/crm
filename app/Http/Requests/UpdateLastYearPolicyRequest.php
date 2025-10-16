@@ -28,31 +28,28 @@ class UpdateLastYearPolicyRequest extends FormRequest
             'model_type' => 'required|string',
             'quote_id' => 'required|integer',
             'renewal_batch' => 'nullable|string|max:255',
-            'previous_policy_expiry_date' => [
-                'nullable',
-                'date',
-                function ($attribute, $value, $fail) {
-                    $this->validateUniquePolicyExpiryAndNumber($value, $fail);
-                },
-            ],
+            'previous_policy_expiry_date' => 'nullable|date',
             'previous_policy_start_date' => 'nullable|date|before_or_equal:previous_policy_expiry_date',
-            'previous_quote_policy_number' => [
-                'nullable',
-                'string',
-                'max:255',
-                function ($attribute, $value, $fail) {
-                    $this->validateUniquePolicyExpiryAndNumber($value, $fail);
-                },
-            ],
+            'previous_quote_policy_number' => 'nullable|string|max:255',
             'previous_quote_policy_premium' => 'nullable|numeric|min:0',
             'previous_advisor_id' => 'nullable|integer|exists:users,id',
         ];
     }
 
     /**
+     * Configure the validator instance.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $this->validateUniquePolicyExpiryAndNumber($validator);
+        });
+    }
+
+    /**
      * Validate that the combination of previous_policy_expiry_date and previous_quote_policy_number is unique.
      */
-    protected function validateUniquePolicyExpiryAndNumber($value, $fail): void
+    protected function validateUniquePolicyExpiryAndNumber($validator): void
     {
         // Only validate if both fields are present
         $expiryDate = $this->input('previous_policy_expiry_date');
@@ -86,7 +83,10 @@ class UpdateLastYearPolicyRequest extends FormRequest
             ->exists();
 
         if ($exists) {
-            $fail('The combination of previous policy expiry date and policy number already exists.');
+            $validator->errors()->add(
+                'previous_policy_combination',
+                'The combination of previous policy expiry date and policy number already exists.'
+            );
         }
     }
 
