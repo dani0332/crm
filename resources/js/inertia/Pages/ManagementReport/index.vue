@@ -6,6 +6,10 @@ import Installment from './Partials/Installment.vue';
 import SalesDetail from './Partials/SalesDetail.vue';
 import SalesSummary from './Partials/SaleSummary.vue';
 import Transaction from './Partials/Transaction.vue';
+import {
+  PEC_FLAG_OPTIONS,
+  PRIVATE_CLIENT_OPTIONS,
+} from '@/constants/reportOptions';
 
 const props = defineProps({
   reportData: Object,
@@ -59,6 +63,7 @@ const filters = reactive({
   export: 0, //false
   page: 1,
   lob: [],
+  pec_flag: 'all',
 });
 
 const filterkeys = () => {
@@ -761,6 +766,24 @@ watch(
           </template>
         </x-select>
       </div>
+
+      <x-field
+        label="Policy PEC Flag"
+        v-if="
+          filters.reportCategory != 'Sales Summary' &&
+          filters.lob.includes('Health')
+        "
+      >
+        <x-select
+          v-model="filters.pec_flag"
+          placeholder="Select PEC Flag"
+          :options="PEC_FLAG_OPTIONS"
+          class="w-full"
+          filterable
+          filterPlaceholder="Filter PEC Flag...."
+        />
+      </x-field>
+
       <x-field
         label="Private Client"
         v-if="
@@ -776,12 +799,7 @@ watch(
           :single="false"
           v-model="filters.pcp_tag"
           placeholder="Search by Private Client tag"
-          :options="[
-            { value: 'all', label: 'All' },
-            { value: 1, label: 'Yes' },
-            { value: 'no', label: 'No' },
-            { value: 0, label: 'Ex-Pc' },
-          ]"
+          :options="PRIVATE_CLIENT_OPTIONS"
           deselect-all
         />
       </x-field>

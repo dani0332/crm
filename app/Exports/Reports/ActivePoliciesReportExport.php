@@ -55,6 +55,7 @@ class ActivePoliciesReportExport implements CsvExportableInterface
             'Insurer',
             'Line of Business',
             'Active Policy Count',
+            'PEC Policy Count',
             'Price (VAT applicable)',
             'Price (VAT not applicable)',
         ];
@@ -66,13 +67,14 @@ class ActivePoliciesReportExport implements CsvExportableInterface
             $quote->insurer ?? 'N/A',
             $quote->line_of_business ?? 'N/A',
             $this->resolveNumberFormat($quote->active_policy_count ?? 0),
+            $this->resolveNumberFormat($quote->pec_count ?? 0),
             $this->resolveNumberFormat($quote->price_with_vat ?? 0),
             $this->resolveNumberFormat($quote->price_without_vat ?? 0),
         ]);
 
         foreach ($this->columnTotals as $index => $field) {
 
-            $sumColumns = [3, 4, 5];
+            $sumColumns = [3, 4, 5, 6];
 
             if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));

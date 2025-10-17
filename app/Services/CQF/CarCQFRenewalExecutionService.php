@@ -23,7 +23,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Sleep;
 
-class CarCQFRenewalOrchestratorService
+class CarCQFRenewalExecutionService
 {
     private int $totalQuotesProcessed = 0;
     private int $errorQuotes = 0;
@@ -31,10 +31,10 @@ class CarCQFRenewalOrchestratorService
     private array $validationErrorsList = [];
     private array $epCodes = [];
 
-    public function processCarCQFRenewalLeads(): void
+    public function processCarCQFRenewalLeads($startDate = null): void
     {
         $renewalDaysThreshold = getAppStorageValueByKey(ApplicationStorageEnums::CAR_CQF_RENEWALS_DAYS_THRESHOLD);
-        $startDate = Carbon::now()->addDays((int) $renewalDaysThreshold);
+        $startDate = $startDate ?: Carbon::now()->addDays((int) $renewalDaysThreshold);
 
         LoggerService::info(self::class." - Car CQF Renewal Leads processing started with Start Date: {$startDate}");
 
