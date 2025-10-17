@@ -638,7 +638,7 @@ class DocumentTypesSeeder extends Seeder
                 'is_active' => 1,
                 'quote_type_id' => QuoteTypes::LIFE->id(),
                 'folder_path' => 'life',
-                'accepted_files' => '.pdf,.docx',
+                'accepted_files' => '.pdf,.xlsx,.docx,.jpeg,.jpg,.png',
                 'max_files' => 2,
                 'max_size' => 25,
                 'is_required' => 0,
