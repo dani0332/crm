@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BirdFlowStatusEnum;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -1484,18 +1485,18 @@ class CentralService extends BaseService
     public function checkBusinessTypeOfInsurance($businessTypeOfInsuranceId): string
     {
         if ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
-            return 'GROUP_MEDICAL';
+            return BirdFlowStatusEnum::GROUP_MEDICAL;
         } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet)) {
-            return 'CAR_FLEET';
+            return BirdFlowStatusEnum::CAR_FLEET;
         } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit)) {
-            return 'TRADE';
+            return BirdFlowStatusEnum::TRADE;
         } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::several)) {
-            return 'BUSINESS'; // in only several business type, we are sending business similar email template.
+            return BirdFlowStatusEnum::BUSINESS;
         } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::proIndemnity)) {
-            return 'PROFESSIONAL'; // in only several business type, we are sending business similar email template.
+            return BirdFlowStatusEnum::PROFESSIONAL;
         }
 
-        return 'OTHER_BUSINESS';
+        return BirdFlowStatusEnum::OTHER_BUSINESS;
     }
 
     public function prepareBirdData($quote, $quoteTypeId, $sendUpdateLog = null, $existingEmailData = null)
@@ -1512,12 +1513,6 @@ class CentralService extends BaseService
                 $quoteType = 'COMMERCIAL_'.$quoteType;
             }
         }
-        /* if ($sendUpdateLog) {
-            $workflowType = 'SU_'.$quoteType.'_UPDATE';
-            $workflowType = constant("App\Enums\WorkflowTypeEnum::{$workflowType}");
-
-            return $this->prepareUpdateToCustomerData($quote, $quoteTypeId, $sendUpdateLog, $workflowType);
-        } */
 
         $workflowType = $quoteType.'_NEW_POLICY';
         $workflowType = constant("App\Enums\WorkflowTypeEnum::{$workflowType}");
@@ -1577,7 +1572,7 @@ class CentralService extends BaseService
         $emailData->advisorProfilePhotoPath = $quote->advisor->profile_photo_path ?? '';
         $emailData->advisorWhatsAppNo = str_replace(' ', '', $quote->advisor->mobile_no ?? '');
         $emailData->customerFullName = ucfirst($quote->first_name);
-        $emailData->rtaPortalLink = 'https://vls.rta.ae/renewal/identityVerification';
+        $emailData->rtaPortalLink = getAppStorageValueByKey(ApplicationStorageEnums::RTA_PORTAL_LINK);
         $emailData->customerEmail = $quote->email;
         $emailData->workflowType = $workflowType;
 

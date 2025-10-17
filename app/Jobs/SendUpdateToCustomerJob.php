@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\BirdFlowStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Jobs\EP\SendEPJob;
@@ -63,7 +64,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
                 $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId);
                 LoggerService::info('job: SendUpdateToCustomerJob - Job Response ', extra: ['emailData' => json_encode($response)]);
 
-                if (in_array($response, [200, 201])) {
+                if ($response == BirdFlowStatusEnum::BIRD_SUCCESS_STATUS_CODE) {
                     LoggerService::info('job:SendUpdateToCustomerJob - Updating status', extra: [
                         'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
                     ]);

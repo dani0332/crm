@@ -52,6 +52,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedProductionApprovalEmails();
         $this->seedAutoCaptureEPPayments();
         $this->seedSla();
+        $this->rtaPortalLink();
     }
 
     private function livaCarAutomationSeed()
@@ -866,6 +867,19 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
                 'is_active' => 1,
             ]
+        );
+    }
+
+    private function rtaPortalLink()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RTA_PORTAL_LINK],
+            [
+                'value' => 'https://vls.rta.ae/renewal/identityVerification',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
         );
     }
 }
