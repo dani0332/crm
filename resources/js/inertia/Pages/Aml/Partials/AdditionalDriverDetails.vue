@@ -226,14 +226,14 @@ watch(
   newValue => {
     // If insured and driver are the same (1 or '1'), clear the driver name fields
     if ((newValue === 1 || newValue === '1') && !isSyncFromInsurer.value) {
-      additionalDriverDetailsForm.driver_first_name = quoteRequest?.first_name;
-      additionalDriverDetailsForm.driver_last_name = quoteRequest?.last_name;
-      additionalDriverDetailsForm.driver_dob = quoteRequest?.dob;
+      additionalDriverDetailsForm.driver_first_name = quote?.first_name;
+      additionalDriverDetailsForm.driver_last_name = quote?.last_name;
+      additionalDriverDetailsForm.driver_dob = quote?.dob;
       additionalDriverDetailsForm.driver_gender = normalizeGender(
-        quoteRequest?.gender,
+        quote?.gender,
       );
       additionalDriverDetailsForm.uae_driving_experience =
-        quoteRequest?.uae_license_held_for?.rsa_driving_experience;
+        quote?.uae_license_held_for?.rsa_driving_experience;
     }
   },
 );

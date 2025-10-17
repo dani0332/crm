@@ -261,7 +261,7 @@ class AMLController extends Controller
         $insuranceProvider = $quoteRequest?->plan?->insuranceProvider;
         $isAddionalFieldsEnabled = app(AMLService::class)->isAdditionalVehicleAndDriverDetailsEnabled($quoteType?->code, $insuranceProvider?->code, $quoteRequest?->registration_type);
         if ($isAddionalFieldsEnabled) {
-            $additionalLookups = app(AMLService::class)->getAdditionaVehicleDriverLookups($quoteType->code, $insuranceProvider?->id);
+            $additionalLookups = app(AMLService::class)->getAdditionaVehicleDriverLookups($quoteType->code, $insuranceProvider?->id, $quoteRequest?->source);
             $lookups = array_merge($lookups->toArray(), $additionalLookups);
         }
 

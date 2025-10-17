@@ -2414,7 +2414,7 @@ class AMLService
         return in_array($insuranceProviderId, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA]);
     }
 
-    public function getAdditionaVehicleDriverLookups($quoteTypeCode, $insuranceProviderId)
+    public function getAdditionaVehicleDriverLookups($quoteTypeCode, $insuranceProviderId, $leadSource)
     {
         if ($quoteTypeCode != quoteTypeCode::Car || is_null($insuranceProviderId)) {
             return [];
@@ -2426,8 +2426,13 @@ class AMLService
             $insuranceProviderCode = $insuranceProviderId;
         }
 
+        // for LIVA
+        if ($insuranceProviderCode == InsuranceProvidersEnum::RSA) {
+            return app(LivaInsuranceService::class)->getLIVALookups($leadSource);
+        }
+
         // for GIG
-        if (in_array($insuranceProviderCode, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::QIC, InsuranceProvidersEnum::TM])) {
+        if (in_array($insuranceProviderCode, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::QIC, InsuranceProvidersEnum::TM])) {
             return $this->getAMLLookups($insuranceProviderId, [
                 LookupsEnum::RTA_TRANSACTION_TYPE,
                 LookupsEnum::RTA_PLATE_CATEGORY,
