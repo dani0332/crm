@@ -380,6 +380,8 @@ class CRUDController extends Controller
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
             $productTeam = $this->getProductByName(quoteTypeCode::Car);
             $teams = $this->getTeamsByProductId($productTeam->id);
+            $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
+            $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses();
 
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
@@ -400,6 +402,8 @@ class CRUDController extends Controller
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
                 'insurerAMLStatus' => $insurerAMLStatus,
+                'issuanceStatuses' => $issuanceStatuses,
+                'insurerApiStatus' => $insurerApiStatus,
             ]);
         }
 
@@ -836,8 +840,8 @@ class CRUDController extends Controller
                 $customerAddressData = $this->customerService->getCustomerAddressData($record);
                 $amlStatusName = AMLStatusCode::getName($record->aml_status);
                 $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
-                $apiIssuanceStatus = PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id);
-                $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record, QuoteTypes::CAR->value)[$record->insurer_api_status_id] ?? null;
+                $apiIssuanceStatus = $record->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id) : null;
+                $insurerApiStatus = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
                 $previousQuote = $this->carQuoteService->getPreviousQuote($record->previous_quote_id);
 
                 return inertia('PersonalQuote/Car/Show', compact([
@@ -2314,6 +2318,12 @@ class CRUDController extends Controller
         LoggerService::info(self::class.' - PCP Team Advisor: '.$isPCPTeamAdvisor.' | Lead source: '.$carQuote->source.' | Ref-ID: '.$carQuote->uuid.' | time: '.now());
         if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD && $isPCPTeamAdvisor) {
             app(CarEmailService::class)->sendPCPOCBIntroEmail($carQuote);
+
+            return response()->json(['success' => 'OCB email sent to customer']);
+        }
+
+        if ($carQuote->source != LeadSourceEnum::RENEWAL_UPLOAD && $carQuote->advisor_id) {
+            app(SendEmailCustomerService::class)->sendCarIntroEmailWithAdvisor($carQuote);
 
             return response()->json(['success' => 'OCB email sent to customer']);
         }
