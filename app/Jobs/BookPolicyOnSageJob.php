@@ -24,7 +24,7 @@ class BookPolicyOnSageJob implements ShouldQueue
     public $tries = 1;
     public $timeout = 80;
     private $sageRequest;
-    private $quote;
+    public $quote;
     private $request;
     private $sageProcess;
     private $lockPostfix;
