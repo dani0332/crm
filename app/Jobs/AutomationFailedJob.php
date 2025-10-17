@@ -94,7 +94,7 @@ class AutomationFailedJob implements ShouldQueue
             $prodEmail = getAppStorageValueByKey(ApplicationStorageEnums::PRODUCTION_APPROVAL_EMAIL);
             $cc['approvalemail'] = $approvalEmail;
             $cc['prodemail'] = $prodEmail;
-            $cc['advisoremail'] = $this->quote?->advisor?->email ?? '';
+            $cc['advisoremail'] = $quote?->advisor?->email ?? '';
         }
 
         if (! $this->recipientEmail || ! $this->recipientName) {
