@@ -419,7 +419,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$process->id.' - Step : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
         $response = ['status' => false, 'completed_step' => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, 'error' => null, 'message' => null];
-        $endPoint = 'motor/transactions/retrieve/v1';
+        $endPoint = 'motor/transactions/retrieve/v2';
 
         $uploadedDocumentsToIMCRM = collect();
 
