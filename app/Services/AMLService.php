@@ -6,6 +6,7 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
@@ -19,6 +20,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -848,7 +850,23 @@ class AMLService
 
                 if ($getQuoteResponse['success']) {
                     LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Successfully retrieved and updated quote details from insurer - Ref-ID: '.$quoteDetails->code);
-                    $insurerAMLStatusForRenewalUpload = $getQuoteResponse['data']['uwApprovalStatus'] == 'Y' ? AMLStatusCode::AMLScreeningCleared : AMLStatusCode::AMLScreeningFailed;
+                    if (isset($getQuoteResponse['data']['uwApprovalStatus'])) {
+                        $insurerAMLStatusForRenewalUpload = $getQuoteResponse['data']['uwApprovalStatus'] == 'Y'
+                            ? AMLStatusCode::AMLScreeningCleared
+                            : AMLStatusCode::AMLScreeningFailed;
+                    }
+
+                    if (isset($getQuoteResponse['data']['QuoteStatus'])) {
+                        $insurerAMLStatusForRenewalUpload = in_array($getQuoteResponse['data']['QuoteStatus'], [PolicyIssuanceEnum::LIVA_AML_ACTIVE, PolicyIssuanceEnum::LIVA_AML_ACCEPTED])
+                            ? AMLStatusCode::AMLScreeningCleared
+                            : AMLStatusCode::AMLScreeningFailed;
+                    }
+
+                    if (! isset($insurerAMLStatusForRenewalUpload)) {
+                        LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurer AML status for renewal upload is not set - Ref-ID: '.$quoteDetails->code);
+                        $insurerAMLStatusForRenewalUpload = AMLStatusCode::AMLPending;
+                    }
+
                     $screeningResponse = [
                         'status' => $insurerAMLStatusForRenewalUpload,
                         'message' => $isRenewalUpload ? 'Renewal upload - check insurer AML status after GetQuote API call' : 'Insured and Driver are not the same - check insurer AML status after GetQuote API call',
@@ -864,7 +882,7 @@ class AMLService
 
                     if ($providerCode == InsuranceProvidersEnum::AXA && isset($getQuoteResponse['isPolicyExpired']) && $getQuoteResponse['isPolicyExpired']) {
                         LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Previous policy has expired - Ref-ID: '.$quoteDetails->code);
-                        $screeningResponse['message'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED;
+                        $screeningResponse['message'] = PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED;
                         $screeningResponse['is_previous_policy_expired'] = $getQuoteResponse['isPolicyExpired'];
                     }
 
@@ -1035,7 +1053,7 @@ class AMLService
             if ($paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA && isset($screeningResponse['isPolicyExpired']) && $screeningResponse['isPolicyExpired']) {
                 LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Previous policy has expired - Ref-ID: '.$quoteDetails->code);
                 $screeningResponse['status'] = AMLStatusCode::AMLPending;
-                $screeningResponse['message'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED;
+                $screeningResponse['message'] = PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED;
                 $screeningResponse['is_previous_policy_expired'] = $screeningResponse['isPolicyExpired'];
             }
 
@@ -1105,7 +1123,7 @@ class AMLService
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningPending];
 
                 if (isset($screeningResponse['is_previous_policy_expired']) && $screeningResponse['is_previous_policy_expired']) {
-                    $insurerAMLStatus['insurer_api_status_id'] = GenericRequestEnum::PREVIOUS_POLICY_EXPIRED_STATUS_ID; // this code: 99 is the status id for previous policy expired
+                    $insurerAMLStatus['insurer_api_status_id'] = PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED_STATUS_ID; // this code: 99 is the status id for previous policy expired
                 }
 
             } else {
@@ -2310,16 +2328,17 @@ class AMLService
             return false;
         }
 
-        // Need to discuss this with Bilal Saeed.
-        if ($insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
-            return true;
-        }
-
         if (
             $insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
-            $quote->source == LeadSourceEnum::RENEWAL_UPLOAD &&
             auth()->user()->can(PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
         ) {
+            if (
+                app(LeadAllocationService::class)->isCommercialVehicles($quote) ||
+                $quote->vehicle_use == CarVehicleUse::COMMERCIAL
+            ) {
+                return false;
+            }
+
             return true;
         }
 
