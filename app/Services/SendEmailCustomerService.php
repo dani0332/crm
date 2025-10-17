@@ -1581,6 +1581,7 @@ class SendEmailCustomerService extends BaseService
             'mobilePhone' => isset($advisor->mobile_no) && ! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : '',
             'whatsAppNumber' => $whatsAppNumber,
             'mobileNoWithoutSpaces' => $mobileNoWithoutSpaces,
+            'profilePicture' => $advisor->profile_photo_path ?? '',
         ];
 
         // Build previous advisor details with comprehensive null safety
@@ -1597,6 +1598,7 @@ class SendEmailCustomerService extends BaseService
                 'mobilePhone' => isset($previousAdvisor->mobile_no) && ! empty($previousAdvisor->mobile_no) ? formatMobileNoDisplay($previousAdvisor->mobile_no) : '',
                 'whatsAppNumber' => $prevWhatsAppNumber,
                 'mobileNoWithoutSpaces' => $prevMobileNoWithoutSpaces,
+                'profilePicture' => $previousAdvisor->profile_photo_path ?? '',
             ];
         }
 
