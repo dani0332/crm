@@ -126,9 +126,9 @@ class BorInsurerNotificationMail extends Mailable
     }
 
     /**
-     * Get customer display name based on customer type
+     * Get customer display name for insurer notification
      */
-    private function getCustomerName()
+    private function getCustomerName(): string
     {
         if ($this->borLog->customer_type === 'Entity') {
             return $this->borLog->company_name ?? $this->customerData['company_name'] ?? 'Valued Company';
@@ -140,18 +140,22 @@ class BorInsurerNotificationMail extends Mailable
 
         return $this->borLog->insurer_name ?? $name ?: 'Valued Customer';
     }
-    private function getSubjectLine($personalQuote, $quoteType)
+
+    /**
+     * Get subject line for insurer notification
+     */
+    private function getSubjectLine($personalQuote, string $quoteType): string
     {
         $provider = \App\Models\InsuranceProvider::find($this->borLog->insurance_provider_id);
         $name = $this->getCustomerName();
-        if ($personalQuote->quote_type_id === QuoteTypeId::Car && $provider && (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
-            $subjectLine = 'Request for BOR '.$this->borLog->chassis_number.' - '.$name.' '.$personalQuote->code;
-
-            return $subjectLine;
+        
+        if ($personalQuote->quote_type_id === QuoteTypeId::Car && 
+            $provider && 
+            (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
+            return 'Request for BOR '.$this->borLog->chassis_number.' - '.$name.' '.$personalQuote->code;
         }
-        $subjectLine = 'Request for BOR '.$name.' '.$personalQuote->code;
-
-        return $subjectLine;
+        
+        return 'Request for BOR '.$name.' '.$personalQuote->code;
     }
 
     /**

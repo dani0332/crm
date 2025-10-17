@@ -17,7 +17,7 @@ use Illuminate\Queue\SerializesModels;
 
 class BorRequestMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use Queueable, SerializesModels, BorMailTrait;
 
     protected $borLog;
     protected $customerData;
@@ -130,36 +130,6 @@ class BorRequestMail extends Mailable
             'attachPdf' => $this->borLog->customer_type == 'Entity' ? app(BorPdfService::class)->generateTemporaryBorPdf($this->borLog) : null,
             'advisor' => $this->advisorData,
         ];
-    }
-
-    private function getSubjectLine($personalQuote, $quoteType, $isSubjectLine = false)
-    {
-        $provider = \App\Models\InsuranceProvider::find($this->borLog->insurance_provider_id);
-        $name = $this->getCustomerName();
-        if ($personalQuote->quote_type_id === QuoteTypeId::Car && $provider && (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
-            $subjectLine = 'BOR '.$this->borLog->chassis_number.' - '.$name;
-
-            return $subjectLine;
-        }
-        $subjectLine = $name.' For signature - Broker Appointment Letter '.$personalQuote->code;
-
-        return $subjectLine;
-    }
-
-    /**
-     * Get customer display name based on customer type
-     */
-    private function getCustomerName($isFirstName = false)
-    {
-        $firstName = $this->customerData['first_name'] ?? '';
-        $lastName = $this->customerData['last_name'] ?? '';
-        $name = trim($firstName.' '.$lastName);
-
-        if ($isFirstName) {
-            return $firstName;
-        }
-
-        return $name ?? $this->borLog->insurer_name ?: 'Valued Customer';
     }
 
     /**

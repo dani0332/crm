@@ -12,11 +12,9 @@ use App\Services\Bor\BorEmailService;
 use App\Services\Bor\BorPdfService;
 use App\Services\Bor\BorService;
 use App\Services\Logger\LoggerService;
-use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BorController extends Controller
@@ -85,10 +83,18 @@ class BorController extends Controller
         try {
             $refId = $request->input('bor_ref_id');
             $borLog = BorLog::where('bor_reference', $refId)->first();
-            $borPdfService = new BorPdfService;
+            
+            if (!$borLog) {
+                return response()->json(['error' => 'BOR log not found'], 404);
+            }
+
+            $$borPdfService = new BorPdfService;
             $pdf = $borPdfService->generatePreviewBorPdf($borLog);
 
-            return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf['pdf']->download()), 'name' => $pdf['name']]);
+            return response()->json([
+                'data' => 'data:application/pdf;base64,'.base64_encode($pdf['pdf']->download()), 
+                'name' => $pdf['name']
+            ]);
         } catch (\Throwable $th) {
             LoggerService::error('Failed to generate PDF', [
                 'error' => $th->getMessage(),
@@ -143,21 +149,21 @@ class BorController extends Controller
         }
     }
 
-    public function uploadDocument(Request $request)
+    public function uploadDocument(BorRequest $request)
     {
-        $quoteType = $request->quote_type;
+        try {
+            $result = $this->borService->uploadQuoteDocument($request->validated(), $request->file('file'));
 
-        if (
-            ! $request->hasFile('file') ||
-            ! ($quote = $this->getQuoteObject($quoteType, $request->quote_uuid))
-        ) {
-            return response()->json(['error' => 'Quote not found'], 404);
+            return new QuoteDocumentResource($result['document']);
+        } catch (Exception $th) {
+            LoggerService::error('Failed to upload document', [
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString(),
+                'request' => $request->all(),
+            ]);
+
+            return response()->json(['message' => 'failed', 'error' => $th->getMessage()], 500);
         }
-
-        $quoteDocumentService = new QuoteDocumentService;
-        $document = $quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->all(), $quote);
-
-        return new QuoteDocumentResource($document);
     }
 
     public function deleteDocument(BorRequest $request)
@@ -182,25 +188,45 @@ class BorController extends Controller
 
     public function borCompletionEmailTrigger($borRefId)
     {
-        LoggerService::info('BOR Completion Email Trigger', [
-            'bor_ref_id' => $borRefId,
-        ]);
-        $borLog = BorLog::where('bor_reference', $borRefId)->first();
-        $borEmailService = new BorEmailService;
-        $result = $borEmailService->sendBorCompletionEmail($borLog);
-        if ($borLog->insurance_contact_id != null) {
-            LoggerService::info('Sending BOR Insurer Notification', [
+        try {
+            LoggerService::info('BOR Completion Email Trigger', [
                 'bor_ref_id' => $borRefId,
             ]);
-            $isInsurerEmailSent = $borEmailService->sendBorInsurerNotification($borLog);
-            if ($isInsurerEmailSent) {
-                $borLog->update([
-                    'email_sent' => 1,
-                ]);
-            }
-        }
 
-        return response()->json(['message' => 'success', 'result' => $result]);
+            $borLog = BorLog::where('bor_reference', $borRefId)->first();
+
+            if (!$borLog) {
+                return response()->json(['error' => 'BOR log not found'], 404);
+            }
+            $borEmailService = new BorEmailService;
+
+            $result = $borEmailService->sendBorCompletionEmail($borLog);
+
+            if ($borLog->insurance_contact_id) {
+                LoggerService::info('Sending BOR Insurer Notification', [
+                    'bor_ref_id' => $borRefId,
+                ]);
+
+                $isInsurerEmailSent = $borEmailService->sendBorInsurerNotification($borLog);
+
+                if ($isInsurerEmailSent) {
+                    $borLog->update(['email_sent' => true]);
+                }
+            }
+
+            return response()->json([
+                'message' => 'success', 
+                'result' => $result
+            ]);
+        } catch (Exception $th) {
+            LoggerService::error('BOR completion email trigger failed', [
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString(),
+                'bor_ref_id' => $borRefId,
+            ]);
+
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
     }
 
 }

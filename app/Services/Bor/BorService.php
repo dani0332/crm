@@ -21,8 +21,10 @@ class BorService
     protected $borEmailService;
     protected $borPdfService;
 
-    public function __construct(BorEmailService $borEmailService, BorPdfService $borPdfService)
-    {
+    public function __construct(
+        BorEmailService $borEmailService, 
+        BorPdfService $borPdfService,
+    ) {
         $this->borEmailService = $borEmailService;
         $this->borPdfService = $borPdfService;
     }
@@ -77,10 +79,10 @@ class BorService
             $borLog->total_documents = $isDocumentUploaded || $isSignedDocument ? 1 : 0;
         } catch (\Exception $e) {
             // Log error but don't fail the entire request
-            \Illuminate\Support\Facades\Log::warning('Failed to load documents for BOR log', [
+            LoggerService::warning('Failed to load documents for BOR log', [
                 'bor_log_id' => $borLog->id,
                 'error' => $e->getMessage(),
-            ]);
+            ], $e);
 
             // Add empty collections to prevent frontend errors
             $borLog->uploaded_documents = collect([]);
@@ -128,9 +130,6 @@ class BorService
         if ($quoteObject->advisor_id !== null) {
             $emailSent = $this->borEmailService->sendBorRequestEmail($borLog);
         }
-
-        // Update email sent status
-        // $borLog->update(['email_sent' => $emailSent]);
 
         // Enrich the created BOR log with document data
         $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote', 'signedDocument', 'document']));
@@ -256,6 +255,8 @@ class BorService
             throw $e;
         }
     }
+
+    
 
     /**
      * Upload a BOR document
@@ -498,6 +499,34 @@ class BorService
             DB::rollBack();
             throw $e;
         }
+    }
+
+
+    /**
+     * Upload a quote document for BOR
+     *
+     * @param array $data
+     * @param \Illuminate\Http\UploadedFile|string $file
+     * @return array
+     */
+    public function uploadQuoteDocument(array $data, $file): array
+    {
+        $quoteType = $data['quote_type'];
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+
+        if (!$quote) {
+            throw new \Exception('Quote not found');
+        }
+
+        $fileToUpload = $data['is_base_64'] ?? false ? $file : $file;
+        $quoteDocumentService = new QuoteDocumentService;
+        $document = $quoteDocumentService->uploadQuoteDocument($fileToUpload, $data, $quote);
+
+        return [
+            'success' => true,
+            'message' => 'Document uploaded successfully',
+            'document' => $document,
+        ];
     }
 
     /**
