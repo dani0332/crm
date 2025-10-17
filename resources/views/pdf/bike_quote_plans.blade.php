@@ -300,7 +300,7 @@
         .full-page-image {
             width: 100%;
             z-index: 999;
-            height: 88%;
+            height:100%;
         }
         .text-center {
             text-align: center;
@@ -329,14 +329,7 @@
     }
 
    
-   
-
-        .full-page-image {
-            width: 100%;
-            z-index: 999;
-            height: 100%;
-        }
-
+  
 
         .footer-content-1 {
         font-size: 8px !important;

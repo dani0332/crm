@@ -243,7 +243,7 @@
         }
     
         .provider-logo {
-            width: 45px;
+            width: 55px;
             height: auto;
         }
     
@@ -268,7 +268,7 @@
         .full-page-image {
             width: 100%;
             z-index: 999;
-            height: 88%;
+            height: 100%;
         }
     
         .text-center {
