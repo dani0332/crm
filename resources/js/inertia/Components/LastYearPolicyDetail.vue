@@ -32,7 +32,6 @@ const rolesEnum = page.props.rolesEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const leadSource = page.props.leadSource;
 
-
 const dateFormat = date => {
   try {
     if (!date || date == '' || date == null) {
@@ -45,8 +44,7 @@ const dateFormat = date => {
 
     const formattedDate = parseDate(date);
     return formattedDate;
-  } catch (error) {
-  }
+  } catch (error) {}
 };
 
 // Check if user can edit last year details
@@ -75,13 +73,13 @@ const buildAdvisorOptions = () => {
     advisorOptions.value = [];
     return;
   }
-  
+
   // Simple mapping without sorting to improve performance
   const options = advisors.map(advisor => ({
     value: advisor.id, // Keep as original type (string or number) - NO CONVERSION
     label: advisor.name || `Advisor ${advisor.id}`,
   }));
-  
+
   // Add current advisor if not in list
   const currentAdvisorId = props?.quote?.previous_advisor_id;
   if (currentAdvisorId && !options.find(opt => opt.value == currentAdvisorId)) {
@@ -90,7 +88,7 @@ const buildAdvisorOptions = () => {
       label: `Previous Advisor (ID: ${currentAdvisorId})`,
     });
   }
-  
+
   advisorOptions.value = options;
 };
 
@@ -104,10 +102,16 @@ const initializeFormData = () => ({
   model_type: props?.modelType,
   quote_id: props?.quote?.id,
   renewal_batch: props?.quote?.renewal_batch || null,
-  previous_policy_expiry_date: formatDateForInput(props?.quote?.previous_policy_expiry_date),
-  previous_policy_start_date: formatDateForInput(props?.quote?.previous_policy_start_date),
-  previous_quote_policy_number: props?.quote?.previous_quote_policy_number || null,
-  previous_quote_policy_premium: props?.quote?.previous_quote_policy_premium || null,
+  previous_policy_expiry_date: formatDateForInput(
+    props?.quote?.previous_policy_expiry_date,
+  ),
+  previous_policy_start_date: formatDateForInput(
+    props?.quote?.previous_policy_start_date,
+  ),
+  previous_quote_policy_number:
+    props?.quote?.previous_quote_policy_number || null,
+  previous_quote_policy_premium:
+    props?.quote?.previous_quote_policy_premium || null,
   previous_advisor_id: props?.quote?.previous_advisor_id || null, // Keep original type - NO CONVERSION
 });
 
@@ -123,15 +127,19 @@ const debugFormValues = computed(() => ({
   advisor_id_form: policyForm.previous_advisor_id,
   advisor_id_prop: props?.quote?.previous_advisor_id,
   advisor_options_count: advisorOptions.value.length,
-  selected_advisor: advisorOptions.value.find(opt => opt.value == policyForm.previous_advisor_id), // Use loose equality
-  advisor_exists: advisorOptions.value.find(opt => opt.value == props?.quote?.previous_advisor_id),
+  selected_advisor: advisorOptions.value.find(
+    opt => opt.value == policyForm.previous_advisor_id,
+  ), // Use loose equality
+  advisor_exists: advisorOptions.value.find(
+    opt => opt.value == props?.quote?.previous_advisor_id,
+  ),
 }));
 
 // Validation rules
 const validatePremium = value => {
   if (!value) return true;
   const num = parseFloat(value);
-  return !isNaN(num) && num >= 0 || 'Premium must be a valid positive number';
+  return (!isNaN(num) && num >= 0) || 'Premium must be a valid positive number';
 };
 
 const validateDate = value => {
@@ -143,13 +151,13 @@ const validateDate = value => {
 const validateStartDate = value => {
   if (!value) return true;
   if (!policyForm.previous_policy_expiry_date) return validateDate(value);
-  
+
   const startDate = new Date(value);
   const expiryDate = new Date(policyForm.previous_policy_expiry_date);
-  
+
   if (isNaN(startDate.getTime())) return 'Please enter a valid date';
   if (startDate > expiryDate) return 'Start date must be before expiry date';
-  
+
   return true;
 };
 
@@ -186,28 +194,40 @@ const readOnlyMode = reactive({
 });
 
 // Watch for prop changes and update form accordingly
-watch(() => props.quote, (newQuote) => {
-  if (newQuote && !isEditMode.value) {
-    const newData = initializeFormData();
-    Object.keys(newData).forEach(key => {
-      policyForm[key] = newData[key];
-    });
-  }
-}, { deep: true });
+watch(
+  () => props.quote,
+  newQuote => {
+    if (newQuote && !isEditMode.value) {
+      const newData = initializeFormData();
+      Object.keys(newData).forEach(key => {
+        policyForm[key] = newData[key];
+      });
+    }
+  },
+  { deep: true },
+);
 
 // Watch for advisors prop changes
-watch(() => advisors, () => {
-  buildAdvisorOptions();
-}, { deep: true });
+watch(
+  () => advisors,
+  () => {
+    buildAdvisorOptions();
+  },
+  { deep: true },
+);
 
 // Watch for quote changes to update advisor selection
-watch(() => props.quote?.previous_advisor_id, (newAdvisorId) => {
-  if (newAdvisorId && !isEditMode.value) {
-    policyForm.previous_advisor_id = newAdvisorId; // Keep original type
-    // Rebuild options to include current advisor if not present
-    buildAdvisorOptions();
-  }
-}, { immediate: true });
+watch(
+  () => props.quote?.previous_advisor_id,
+  newAdvisorId => {
+    if (newAdvisorId && !isEditMode.value) {
+      policyForm.previous_advisor_id = newAdvisorId; // Keep original type
+      // Rebuild options to include current advisor if not present
+      buildAdvisorOptions();
+    }
+  },
+  { immediate: true },
+);
 
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
@@ -224,21 +244,25 @@ onMounted(() => {
           <h3 class="font-semibold text-primary-800 text-lg">
             Last Year's Policy Details
           </h3>
-          <div v-if="canEditLastYearDetails && readOnlyMode.isDisable" class="flex gap-2" @click.stop>
-            <x-button 
+          <div
+            v-if="canEditLastYearDetails && readOnlyMode.isDisable"
+            class="flex gap-2"
+            @click.stop
+          >
+            <x-button
               v-if="!isEditMode"
               @click.stop="toggleEditMode"
-              size="sm" 
-              color="primary" 
+              size="sm"
+              color="primary"
               variant="outline"
             >
               Edit Details
             </x-button>
             <div v-if="isEditMode" class="flex gap-2">
-              <x-button 
+              <x-button
                 @click.stop="toggleEditMode"
-                size="sm" 
-                color="gray" 
+                size="sm"
+                color="gray"
                 variant="outline"
               >
                 Cancel
@@ -251,7 +275,11 @@ onMounted(() => {
         <x-divider class="my-4" />
         <div class="flex gap-2 mb-4 justify-end">
           <Link
-            v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS) && !quote.previous_quote_policy_number"
+            v-if="
+              inslyId &&
+              can(permissionsEnum.VIEW_LEGACY_DETAILS) &&
+              !quote.previous_quote_policy_number
+            "
             :href="`/legacy-policy/${inslyId}`"
             preserve-scroll
           >
@@ -299,7 +327,9 @@ onMounted(() => {
 
               <div class="grid sm:grid-cols-2">
                 <div class="font-medium">Previous Policy Number</div>
-                <div>{{ props?.quote?.previous_quote_policy_number || 'N/A' }}</div>
+                <div>
+                  {{ props?.quote?.previous_quote_policy_number || 'N/A' }}
+                </div>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -311,7 +341,9 @@ onMounted(() => {
 
               <div class="grid sm:grid-cols-2">
                 <div class="font-medium">Previous Policy Premium</div>
-                <div>{{ props?.quote?.previous_quote_policy_premium || 'N/A' }}</div>
+                <div>
+                  {{ props?.quote?.previous_quote_policy_premium || 'N/A' }}
+                </div>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -352,7 +384,10 @@ onMounted(() => {
         </div>
 
         <!-- Debug Info (remove in production) -->
-        <div v-if="isEditMode && hasRole(rolesEnum.Engineering)" class="p-2 bg-gray-100 rounded mb-4 text-xs">
+        <div
+          v-if="isEditMode && hasRole(rolesEnum.Engineering)"
+          class="p-2 bg-gray-100 rounded mb-4 text-xs"
+        >
           <strong>Debug Info:</strong>
           <pre>{{ JSON.stringify(debugFormValues, null, 2) }}</pre>
         </div>
@@ -422,18 +457,18 @@ onMounted(() => {
               />
             </div>
           </div>
-          
+
           <div class="flex justify-end gap-3">
-            <x-button 
+            <x-button
               @click="toggleEditMode"
-              color="gray" 
+              color="gray"
               variant="outline"
               type="button"
             >
               Cancel
             </x-button>
-            <x-button 
-              color="primary" 
+            <x-button
+              color="primary"
               type="submit"
               :disabled="policyForm.processing"
             >
@@ -443,7 +478,11 @@ onMounted(() => {
         </x-form>
 
         <!-- Legacy renewal batch edit (for backward compatibility) -->
-        <x-form v-if="!isEditMode && !canEditLastYearDetails" @submit="onSubmit" :auto-focus="false">
+        <x-form
+          v-if="!isEditMode && !canEditLastYearDetails"
+          @submit="onSubmit"
+          :auto-focus="false"
+        >
           <div
             class="flex justify-between gap-3 items-center"
             v-if="canAddBatchNumber"
