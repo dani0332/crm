@@ -47,9 +47,19 @@ const tableHeader = computed(() => [
   { text: 'Quote Code', value: 'quote_code', width: 150, sortable: true },
   { text: 'Quote Type', value: 'quote_type_name', width: 120, sortable: true },
   { text: 'Quote Status', value: 'quote_status', width: 180, sortable: true },
-  { text: 'Insurance Provider', value: 'insurance_provider_name', width: 180, sortable: true },
+  {
+    text: 'Insurance Provider',
+    value: 'insurance_provider_name',
+    width: 180,
+    sortable: true,
+  },
   { text: 'User', value: 'user_name', width: 150, sortable: true },
-  { text: 'Sage Request Type', value: 'sage_request_type', width: 180, sortable: true },
+  {
+    text: 'Sage Request Type',
+    value: 'sage_request_type',
+    width: 180,
+    sortable: true,
+  },
   { text: 'Sage Status', value: 'sage_api_status', width: 120, sortable: true },
   { text: 'Process Message', value: 'message', width: 250, sortable: false },
   { text: 'Updated At', value: 'updated_at', width: 160, sortable: true },
@@ -79,8 +89,11 @@ const dateFormat = dateString =>
     : '';
 
 // Get detail page route
-const getDetailPageRoute = (uuid, quote_type_id, business_type_of_insurance_id) => 
-  useGetShowPageRoute(uuid, quote_type_id, business_type_of_insurance_id);
+const getDetailPageRoute = (
+  uuid,
+  quote_type_id,
+  business_type_of_insurance_id,
+) => useGetShowPageRoute(uuid, quote_type_id, business_type_of_insurance_id);
 
 // Truncate text
 const truncate = (text, length = 50) => {
@@ -92,7 +105,7 @@ const truncate = (text, length = 50) => {
 onMounted(() => {
   const filtersCleaned = cleanObj(availableFilters);
   filtersCount.value = Object.keys(filtersCleaned).length;
-  
+
   // Show error notification if any
   if (props.error) {
     notification.error({
@@ -145,7 +158,7 @@ function exportExcel() {
 // Update server options
 function updateServerOptions(newOptions) {
   serverOptions.value = { ...serverOptions.value, ...newOptions };
-  
+
   router.visit(route('sage-failed-processes.index'), {
     method: 'get',
     data: {
@@ -181,24 +194,25 @@ function onSort(column, sortType) {
           Failed Sage Processes
         </h2>
         <template #tooltip>
-          Displays failed sage processes along with related quote/send update entries and sage api logs
+          Displays failed sage processes along with related quote/send update
+          entries and sage api logs
         </template>
       </x-tooltip>
       <div class="space-x-3">
-        <x-tooltip v-if="can(permissionsEnum.VIEW_SAGE_API_LOGS) && tableData.length === 0" placement="bottom">
-          <x-button
-            disabled
-            size="sm"
-            color="emerald"
-            :loading="loader.export"
-          >
+        <x-tooltip
+          v-if="
+            can(permissionsEnum.VIEW_SAGE_API_LOGS) && tableData.length === 0
+          "
+          placement="bottom"
+        >
+          <x-button disabled size="sm" color="emerald" :loading="loader.export">
             Export to Excel
           </x-button>
           <template #tooltip>
             No data available to export. Apply filters to see results.
           </template>
         </x-tooltip>
-        
+
         <x-button
           v-if="can(permissionsEnum.VIEW_SAGE_API_LOGS) && tableData.length > 0"
           size="sm"
@@ -208,7 +222,7 @@ function onSort(column, sortType) {
         >
           Export to Excel
         </x-button>
-        
+
         <x-button
           size="sm"
           color="orange"
@@ -221,7 +235,12 @@ function onSort(column, sortType) {
             class="transition transform duration-300"
           />
           Search Filters
-          <x-badge v-if="filtersCount > 0" color="danger" size="sm" class="ml-2">
+          <x-badge
+            v-if="filtersCount > 0"
+            color="danger"
+            size="sm"
+            class="ml-2"
+          >
             {{ filtersCount }}
           </x-badge>
         </x-button>
@@ -295,9 +314,13 @@ function onSort(column, sortType) {
     </DataTable>
 
     <!-- Pagination -->
-    <div v-if="tableData.length > 0" class="mt-4 flex justify-between items-center">
+    <div
+      v-if="tableData.length > 0"
+      class="mt-4 flex justify-between items-center"
+    >
       <div class="text-sm text-gray-600">
-        Showing {{ paginationInfo.from }} to {{ paginationInfo.to }} of {{ paginationInfo.total }} entries
+        Showing {{ paginationInfo.from }} to {{ paginationInfo.to }} of
+        {{ paginationInfo.total }} entries
       </div>
       <x-pagination
         :current-page="paginationInfo.current_page"
@@ -307,16 +330,23 @@ function onSort(column, sortType) {
     </div>
 
     <!-- Empty State -->
-    <div v-if="tableData.length === 0 && !loader.table" class="text-center py-12">
-      <x-icon icon="documentMagnifyingGlass" size="xl" class="text-gray-400 mb-4" />
+    <div
+      v-if="tableData.length === 0 && !loader.table"
+      class="text-center py-12"
+    >
+      <x-icon
+        icon="documentMagnifyingGlass"
+        size="xl"
+        class="text-gray-400 mb-4"
+      />
       <p class="text-gray-600 text-lg">No failed sage processes found</p>
-      <p class="text-gray-500 text-sm mt-2">Try adjusting your search filters</p>
+      <p class="text-gray-500 text-sm mt-2">
+        Try adjusting your search filters
+      </p>
     </div>
- 
   </div>
 </template>
 
 <style scoped>
 /* Add any custom styles here */
 </style>
-
