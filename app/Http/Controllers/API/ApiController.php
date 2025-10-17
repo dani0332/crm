@@ -31,6 +31,7 @@ use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
+use App\Jobs\RunCQFJobs;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -41,7 +42,6 @@ use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
 use App\Services\CQF\CarCQFFileExportService;
-use App\Services\CQF\CarCQFRenewalExecutionService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
@@ -528,7 +528,8 @@ class ApiController extends Controller
                 $startDate = Carbon::parse($request->date);
             }
 
-            app(CarCQFRenewalExecutionService::class)->processCarCQFRenewalLeads($startDate);
+            RunCQFJobs::dispatch($startDate);
+
             LoggerService::info(self::class.': CQF jobs have been completed');
 
             return apiResponse(null, Response::HTTP_OK, 'car cqf renewals process has been completed');
