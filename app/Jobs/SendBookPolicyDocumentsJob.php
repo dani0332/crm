@@ -125,8 +125,6 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $quote->load('advisor');
 
         $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
-        // if (! empty($templateId)) {
-        // TODO:  Hard coded format and variable values should be form env file
         $roadsideAssistance = '';
         $emailData = new \stdClass;
         $emailData->code = $quote->code;
@@ -192,7 +190,6 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
         }
         info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));
-        // }
 
         if ($this->forceEmailSend == false) {
             $quoteTag = QuoteTag::create([

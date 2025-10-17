@@ -1059,7 +1059,7 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendUpdateToCustomerEmail($emailTemplateId, $emailData, $tag, $quoteTypeId/* , $sendUpdateLog */)
+    public function sendUpdateToCustomerEmail($emailTemplateId, $emailData, $tag, $quoteTypeId)
     {
         LoggerService::info('fn:sendUpdateToCustomerEmail - SendEmailCustomerService, email sending started', extra: [
             'emailTemplateId' => $emailTemplateId,
@@ -1073,10 +1073,6 @@ class SendEmailCustomerService extends BaseService
         $subject = $emailData->customerName.'\'s Savings with Alfred - '.$emailData->code;
 
         try {
-            /* if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht,
-                QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
-                return app(CentralService::class)->sendInslyEmailToCustomer($sendUpdateLog, $emailData, $quoteTypeId, 'Send Update');
-            } */
             LoggerService::info('fn: sendUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
 
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;

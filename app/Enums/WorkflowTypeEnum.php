@@ -22,22 +22,6 @@ final class WorkflowTypeEnum extends Enum
     public const HOME_RENEWAL_AUTOMATED_FOLLOWUPS = 'home_renewal_automated_followups';
     public const WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS = 'whatsapp_notification_to_customer_no_plans';
     public const TRAVEL_ALLIANCE_FAILED_ALLOCATION = 'travel_alliance_failed_allocation';
-
-    // public const SU_CAR_UPDATE = 'su_car_update';
-    // public const SU_COMMERCIAL_CAR_UPDATE = 'su_commercial_car_update';
-    // public const SU_BIKE_UPDATE = 'su_bike_update';
-    // public const SU_CYCLE_UPDATE = 'su_cycle_update';
-    // public const SU_YACHT_UPDATE = 'su_yacht_update';
-    // public const SU_TRAVEL_UPDATE = 'su_travel_update';
-    // public const SU_HOME_UPDATE = 'su_home_update';
-    // public const SU_LIFE_UPDATE = 'su_life_update';
-    // public const SU_BUSINESS_UPDATE = 'su_business_update';
-    // public const SU_PET_UPDATE = 'su_pet_update';
-    // public const SU_HEALTH_UPDATE = 'su_health_update';
-    // public const SU_GROUP_MEDICAL_UPDATE = 'su_group_medical_update';
-    // public const SU_CAR_FLEET_UPDATE = 'su_car_fleet_update';
-    // public const SU_TRADE_UPDATE = 'su_trade_update';
-    // public const SU_OTHER_BUSINESS_UPDATE = 'su_other_business_update';
     public const CAR_NEW_POLICY = 'car_new_policy';
     public const COMMERCIAL_CAR_NEW_POLICY = 'commercial_car_new_policy';
     public const BIKE_NEW_POLICY = 'bike_new_policy';

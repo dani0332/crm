@@ -1348,15 +1348,8 @@ class SendUpdateLogService
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
 
-        // $insuranceProviderText = $sendUpdateLog?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
-
-        /* if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::EN]) && $optionCode != SendUpdateLogStatusEnum::MPC) {
-            $update = $sendUpdateLog?->option->text;
-        } elseif (in_array($categoryCode, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
-            $update = quoteStatusCode::POLICY_CANCELLED;
-        } */
 
         if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings])) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
@@ -1384,7 +1377,6 @@ class SendUpdateLogService
         }
 
         $emailData = (object) [
-            // 'clientFirstName' => $quote->first_name,
             'customerName' => $quote->first_name.' '.$quote->last_name,
             'reason' => $notes ?? '',
             'insuredName' => $quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name,
@@ -1394,9 +1386,6 @@ class SendUpdateLogService
             'policyPeriodStart' => Carbon::parse($sendUpdateLog->start_date ?? $quote->policy_start_date)->format('d/m/Y'),
             'policyPeriodEnd' => Carbon::parse($sendUpdateLog->expiry_date ?? $quote->policy_expiry_date)->format('d/m/Y'),
             'assistanceNumber' => $quote?->plan?->insuranceProvider?->roadside_phone_number ?? $quote?->insuranceProvider?->roadside_phone_number ?? '',
-            // 'carQuoteId' => $sendUpdateLog->code,
-            // 'currentInsurer' => $insuranceProviderText,
-            // 'policyUpdate' => $update ?? '',
             'customerEmail' => $quote->email,
             'advisor' => (object) [
                 'landLine' => $quote->advisor->landline_no ?? '',
@@ -1409,7 +1398,6 @@ class SendUpdateLogService
             'documents' => $documents,
             'quoteTypeId' => $quoteTypeId,
             'code' => $sendUpdateLog->code,
-            // 'quote' => $sendUpdateLog->code,
             'quoteId' => $sendUpdateLog->personal_quote_id, // for email status save
             'refID' => $sendUpdateLog->code,
             'product' => $quoteType,
