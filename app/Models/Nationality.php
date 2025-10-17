@@ -30,6 +30,9 @@ class Nationality extends BaseModel
             'invoicing' => ['id', 'code', 'text'],
         ],
     ];
+    public $casts = [
+        'rsa_country_code' => 'string',
+    ];
 
     public function delete()
     {

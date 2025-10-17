@@ -169,25 +169,27 @@ const isSUKOON = computed(() => {
 
 const licenseIssuePlaceOptions = computed(() => {
   if (isLIVA.value) {
-    return useGenerateOptions(lookups?.nationality_list ?? [], 'code', 'text');
+    return useGenerateOptions(
+      page.props.nationalities ?? [],
+      'rsa_country_code',
+      'text',
+    );
   } else {
     return useGenerateOptions(lookups?.issuance_place ?? [], 'code', 'text');
   }
 });
 
 const nationalitiesOptions = computed(() => {
-  if (isLIVA.value) {
-    return useGenerateOptions(lookups?.nationality_list ?? [], 'code', 'text');
-  } else {
-    return useGenerateOptions(page.props.nationalities ?? [], 'code', 'text');
-  }
+  let code = isLIVA.value ? 'rsa_country_code' : 'code';
+
+  return useGenerateOptions(page.props.nationalities ?? [], code, 'text');
 });
 
 const drivingExperienceOptions = computed(() => {
   if (isLIVA.value) {
     return useGenerateOptions(
       lookups?.driving_experience ?? [],
-      'code',
+      'rsa_driving_experience',
       'text',
     );
   }
@@ -225,14 +227,14 @@ watch(
   newValue => {
     // If insured and driver are the same (1 or '1'), clear the driver name fields
     if ((newValue === 1 || newValue === '1') && !isSyncFromInsurer.value) {
-      additionalDriverDetailsForm.driver_first_name =
-        quoteRequest?.customer?.first_name;
-      additionalDriverDetailsForm.driver_last_name =
-        quoteRequest?.customer?.last_name;
-      additionalDriverDetailsForm.driver_dob = quoteRequest?.customer?.dob;
+      additionalDriverDetailsForm.driver_first_name = quoteRequest?.first_name;
+      additionalDriverDetailsForm.driver_last_name = quoteRequest?.last_name;
+      additionalDriverDetailsForm.driver_dob = quoteRequest?.dob;
       additionalDriverDetailsForm.driver_gender = normalizeGender(
-        quoteRequest?.customer?.gender,
+        quoteRequest?.gender,
       );
+      additionalDriverDetailsForm.uae_driving_experience =
+        quoteRequest?.uae_license_held_for?.rsa_driving_experience;
     }
   },
 );
