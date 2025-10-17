@@ -89,6 +89,11 @@ class DocumentTypeCode extends Enum
     const PC_SAV = 'PC_SAV';
     const AC_SAV = 'AC_SAV';
     const PAYMENT_RECEIPT = 'SPD';
+    const DRIVING_LICENSE = 'DL';
+    const EMIRATES_ID = 'CEID';
+    const REGISTRATION_CARD_MULKIYA = 'CAR_MULKIY';
+    const POLICY_CERTIFICATE = 'CPC';
+    const POLICY_SCHEDULE = 'CPS';
 
     // BAL
     const BAL = 'BAL';

@@ -3,6 +3,7 @@
 namespace App\Builders;
 
 use App\Enums\CarRegistrationType;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
@@ -75,6 +76,8 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'lead_assignment_trigger',
             'customer_id',
             'insurance_provider_id',
+            'api_issuance_status_id',
+            'insurer_api_status_id',
         ], [
             'payment:id,paymentable_id,paymentable_type,authorized_at',
             'batch:id,name',
@@ -225,6 +228,34 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when($hasFilterValue('company_name'), function ($query) use ($getFilterValue) {
                 $query->where('company_name', $getFilterValue('company_name'));
+            })
+            ->when($hasFilterValue('api_issuance_status_id'), function ($query) use ($getFilterValue) {
+                $apiIssuanceStatusIds = (array) $getFilterValue('api_issuance_status_id');
+
+                $hasBlank = in_array(GenericRequestEnum::API_ISSUANCE_STATUS_ID_BLANK, $apiIssuanceStatusIds);
+                $otherIds = array_diff($apiIssuanceStatusIds, [GenericRequestEnum::API_ISSUANCE_STATUS_ID_BLANK]);
+
+                $query->where(function ($q) use ($hasBlank, $otherIds) {
+                    if ($hasBlank) {
+                        $q->where(function ($subQuery) {
+                            $subQuery->whereNull('api_issuance_status_id')
+                                ->orWhere('api_issuance_status_id', '');
+                        });
+                    }
+
+                    if (! empty($otherIds)) {
+                        if ($hasBlank) {
+                            $q->orWhereIn('api_issuance_status_id', $otherIds);
+                        } else {
+                            $q->whereIn('api_issuance_status_id', $otherIds);
+                        }
+                    }
+                });
+            })
+            ->when($hasFilterValue('insurer_api_status_id'), function ($query) use ($getFilterValue) {
+                $insurerApiStatusIds = (array) $getFilterValue('insurer_api_status_id');
+
+                $query->whereIn('insurer_api_status_id', $insurerApiStatusIds);
             });
     }
 
