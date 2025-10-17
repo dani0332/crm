@@ -1107,9 +1107,14 @@ class EmbeddedProductRepository extends BaseRepository
                         CancelCourierQuoteOnMACRM::dispatch($transaction->quoteRequest, $type->id);
                     }
 
+                    // Response is empty for success, non-empty for error
+                    if (! empty($response)) {
+                        return ['data' => $processResponse, 'code' => 403];
+                    }
+
                     return [
                         'data' => $processResponse,
-                        'code' => $processResponse->getStatusCode() ?? 403,
+                        'code' => 200,
                     ];
                 } else {
                     return [
@@ -1459,20 +1464,21 @@ class EmbeddedProductRepository extends BaseRepository
             'uuid' => $quote->uuid,
         ];
         $response = app(EmbeddedProductRepository::class)->fetchCancelPayment($cancelPaymentData);
-
-        if ($response['code'] == 200) {
-            $epTransactionDetails->update(['is_active' => false]);
-
-            return ['success' => true, 'message' => $response['data'][0] ?? 'Payment cancelled successfully for Embedded Product (ECB)'];
+        if ($response['code'] != 200) {
+            LoggerService::info('fn:processEpEcbCancelPayment - Cancel payment process failed for payment code: '.$epTransactionDetails->code);
+            return ['success' => false, 'message' => 'Cancel payment process failed'];
         }
 
-        return ['success' => false, 'message' => $response['data'][0] ?? 'Failed to cancel payment for Embedded Product (ECB)'];
+        $epTransactionDetails->update(['is_active' => false]);
+        LoggerService::info('fn:processEpEcbCancelPayment - Cancel payment process completed for payment code: '.$epTransactionDetails->code);
+
+        return ['success' => true, 'message' => 'Cancel payment processed'];
     }
 
     public function getEpTransactionDetails($quoteTypeId, $quoteId, $shortCodes = [])
     {
         return EmbeddedTransaction::with('payments:id,paymentable_id,paymentable_type,premium_authorized', 'product:id,embedded_product_id', 'product.embeddedProduct:id,short_code,insurance_provider_id')
-            ->select('id', 'quote_type_id', 'quote_request_id', 'is_selected', 'payment_status_id', 'product_id')
+            ->select('id', 'quote_type_id', 'quote_request_id', 'code', 'is_selected', 'payment_status_id', 'product_id')
             ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteId, 'is_selected' => true])
             ->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED])
             ->when(! empty($shortCodes),
