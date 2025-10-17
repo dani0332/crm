@@ -641,6 +641,15 @@ class CentralController extends Controller
     {
         $healthQuote = HealthQuote::where('uuid', $request->quote_uuid)->first();
 
+        if (! $healthQuote) {
+            LoggerService::warning(self::class.' - sendOCBEmail - Health quote not found', extra: [
+                'quote_uuid' => $request->quote_uuid,
+            ]);
+            return response()->json(['error' => 'Health quote not found'], 404);
+        }
+
+        LoggerService::startQuoteLogging($healthQuote);
+
         $previousAdvisor = null;
         if (isset($healthQuote) && ! empty($healthQuote->previous_advisor_id)) {
             $previousAdvisor = app(UserService::class)->getUserById($healthQuote->previous_advisor_id);
@@ -650,10 +659,12 @@ class CentralController extends Controller
         // Fetch all quote plans
         $listQuotePlans = app(HealthQuoteService::class)->getQuotePlans($request->quote_uuid);
         if (! isset($listQuotePlans)) {
+            LoggerService::warning(self::class.' - sendOCBEmail - No plans returned from service');
             return response()->json(['error' => 'OCB Health Plan Not Found'], 404);
         }
         if (! empty($request->selected_plans) && is_array($request->selected_plans)) {
             if (! isset($listQuotePlans->quote->plans)) {
+                LoggerService::warning(self::class.' - sendOCBEmail - Plans not available in quote object');
                 $listQuotePlans = 'Plans not available!';
             } else {
                 $allPlans = $listQuotePlans->quote->plans;
@@ -679,16 +690,19 @@ class CentralController extends Controller
             $listQuotePlans = $randomPlans;
         }
 
-        LoggerService::info('sendHealthEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
+        LoggerService::info(self::class.' - sendOCBEmail - OCB email plans fetched');
 
         $emailTemplateId = (int) ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE)->value('value');
 
         if (! isset($emailTemplateId)) {
+            LoggerService::warning(self::class.' - sendOCBEmail - Invalid email template ID');
             return response()->json(['error' => 'Invalid email template ID'], 400);
         }
         $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
 
         $emailData = app(SendEmailCustomerService::class)->buildEmailData($healthQuote, $listQuotePlans, $previousAdvisor, $request, $emailTemplateId);
+
+        LoggerService::info(self::class.' - sendOCBEmail - Email data built successfully');
 
         $responseCode = app(SendEmailCustomerService::class)->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'health-quote-one-click-buy');
         if ($responseCode == 201) {
@@ -697,12 +711,17 @@ class CentralController extends Controller
                 $healthQuote->quote_status_date = now();
                 $healthQuote->save();
 
+                LoggerService::info(self::class.' - sendOCBEmail - Quote status updated to QUOTED', extra: [
+                    'new_status' => QuoteStatusEnum::Quoted,
+                ]);
             }
-            LoggerService::info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
+            LoggerService::info(self::class.' - sendOCBEmail - OCB Email sent successfully & Quote Status Changed to "QUOTED"');
 
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
-            LoggerService::info('sendHealthEmailOneClickBuy OCB email sending failed for quote uuid: '.$request->quote_uuid.' with error code: '.$responseCode);
+            LoggerService::warning(self::class.' - sendOCBEmail - Email sending failed', extra: [
+                'response_code' => $responseCode,
+            ]);
 
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }

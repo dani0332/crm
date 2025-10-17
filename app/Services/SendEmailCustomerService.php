@@ -339,7 +339,10 @@ class SendEmailCustomerService extends BaseService
     public function sendRenewalsOcbEmail($emailTemplateId, $emailData, $tag)
     {
         try {
-            LoggerService::info('fn: sendRenewalsOcbEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
+            LoggerService::info(self::class.' - sendRenewalsOcbEmail - Starting email sending process', extra: [
+                'email_template_id' => $emailTemplateId,
+                'tag' => $tag,
+            ]);
 
             $attachments = [];
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
@@ -347,7 +350,9 @@ class SendEmailCustomerService extends BaseService
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
 
             if ($emailAttachments) {
-                LoggerService::info('fn: sendRenewalsOcbEmail - emailAttachments exists');
+                LoggerService::info(self::class.' - sendRenewalsOcbEmail - Processing email attachments', extra: [
+                    'attachments_count' => count($emailAttachments),
+                ]);
 
                 foreach ($emailAttachments as $emailAttachment) {
                     $attachments[] = [
@@ -358,13 +363,14 @@ class SendEmailCustomerService extends BaseService
             }
 
             if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
-                LoggerService::info('fn: sendRenewalsOcbEmail - pdfAttachment exists');
+                LoggerService::info(self::class.' - sendRenewalsOcbEmail - Processing PDF attachment', extra: [
+                    'pdf_name' => $emailData->pdfAttachment->name,
+                ]);
 
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,
                 ];
-                LoggerService::info('attachments: ', extra: ['attachments' => $attachments]);
             }
 
             $body = [
@@ -412,12 +418,23 @@ class SendEmailCustomerService extends BaseService
 
             $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
 
+            LoggerService::info(self::class.' - sendRenewalsOcbEmail - Calling sendMail method');
+
             ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
+
+            LoggerService::info(self::class.' - sendRenewalsOcbEmail - Email sent successfully', extra: [
+                'response_code' => $responseCode,
+                'is_email_sent' => $isEmailSent,
+            ]);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $quoteCdbId = isset($emailData->carQuoteId) ? $emailData->carQuoteId : null;
-            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
-            LoggerService::info($responseDetail);
+            
+            LoggerService::warning(self::class.' - sendRenewalsOcbEmail - Email sending failed with exception', extra: [
+                'error_code' => $responseCode,
+                'error_message' => $ex->getMessage(),
+            ]);
+            
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
         }
@@ -1584,6 +1601,10 @@ class SendEmailCustomerService extends BaseService
             'profilePicture' => $advisor->profile_photo_path ?? '',
         ];
 
+        LoggerService::info(self::class.' - buildCommonEmailData - Advisor details built successfully', extra: [
+            'advisor_details' => $advisorDetails,
+        ]);
+
         // Build previous advisor details with comprehensive null safety
         $previousAdvisorDetails = [];
         if (! empty($previousAdvisor) && is_object($previousAdvisor)) {
@@ -1638,6 +1659,12 @@ class SendEmailCustomerService extends BaseService
 
     public function buildEmailData($lead, $plans, $previousAdvisor, $request, $emailTemplateId)
     {
+        LoggerService::info(self::class.' - buildEmailData - Building email data', extra: [
+            'has_plans' => isset($plans) && is_array($plans),
+            'plans_count' => is_array($plans) ? count($plans) : 0,
+            'email_template_id' => $emailTemplateId,
+        ]);
+
         if (isset($plans) && is_array($plans)) {
             return $this->buildPlansEmailData($lead, $plans, $previousAdvisor, $request, $emailTemplateId);
         } else {
