@@ -8,7 +8,6 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
@@ -100,17 +99,17 @@ class CarQuote extends BaseModel
 
     public function getInsurerApiStatusAttribute()
     {
-        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this, QuoteTypes::CAR->value) : null;
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this->insurer_api_status_id) : null;
     }
 
     public function isBookingFailed()
     {
-        return $this->insurer_api_status_id === app(PolicyIssuanceService::class)->getFailedBookingInsurerAPIStatus($this, QuoteTypes::CAR->value);
+        return $this->insurer_api_status_id === PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
     }
 
     public function isPolicyIssuanceFailed()
     {
-        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getFailedPolicyIssuanceAPIStatuses($this, QuoteTypes::CAR->value));
+        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
     }
 
     public function fullName()
@@ -561,9 +560,10 @@ class CarQuote extends BaseModel
             ->where('quote_type_id', QuoteTypeId::Car)->withTrashed();
     }
 
-    public function policyIssuance()
+    public function carQuotePlanDetail()
     {
-        return $this->morphOne(PolicyIssuance::class, 'model');
+        return $this->hasOne(CarQuotePlanDetail::class, 'quote_uuid', 'uuid')
+            ->where('plan_id', $this->plan_id);
     }
 
     /**
@@ -573,6 +573,11 @@ class CarQuote extends BaseModel
     {
         return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
             ->where('quote_type_id', QuoteTypeId::Car);
+    }
+
+    public function policyIssuance()
+    {
+        return $this->morphOne(PolicyIssuance::class, 'model');
     }
 
     public function kycDocumentUser()

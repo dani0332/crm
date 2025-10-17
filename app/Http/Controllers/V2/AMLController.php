@@ -62,6 +62,8 @@ use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
+use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\QuoteDocumentService;
 use App\Services\RtaTransactionTypeService;
 use App\Services\SIBService;
@@ -252,17 +254,24 @@ class AMLController extends Controller
             return $log['decision'] == AMLDecisionStatusEnum::ESCALATED;
         })) : 0;
 
+        $providerCode = $quoteRequest?->plan?->insuranceProvider?->code ?? '';
+        $isLIVA = $providerCode == InsuranceProvidersEnum::RSA;
+        $isGIG = $providerCode == InsuranceProvidersEnum::AXA;
         $lookups = app(AMLService::class)->getAMLLookups();
 
-        if ($quoteType->code == quoteTypeCode::Car && ($quoteRequest?->plan?->insuranceProvider?->code == InsuranceProvidersEnum::AXA)) {
-            $additionalLookups = app(AMLService::class)->getAMLLookups($quoteRequest?->plan?->provider_id, [
-                LookupsEnum::RTA_TRANSACTION_TYPE,
-                LookupsEnum::RTA_PLATE_CATEGORY,
-                LookupsEnum::VEHICLE_COLOR,
-                LookupsEnum::BANK_NAME,
-            ]);
+        if ($quoteType->code == quoteTypeCode::Car && ($isLIVA || $isGIG)) {
+            if ($isGIG) {
+                $additionalLookups = app(AMLService::class)->getAMLLookups($quoteRequest?->plan?->provider_id, [
+                    LookupsEnum::RTA_TRANSACTION_TYPE,
+                    LookupsEnum::RTA_PLATE_CATEGORY,
+                    LookupsEnum::VEHICLE_COLOR,
+                    LookupsEnum::BANK_NAME,
+                ]);
 
-            $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
+                $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
+            } else {
+                $lookups = array_merge($lookups->toArray(), app(LivaInsuranceService::class)->getLIVALookups($quoteRequest));
+            }
         }
 
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);
@@ -316,6 +325,12 @@ class AMLController extends Controller
             }
         }
 
+        if ($isLIVA) {
+            $gigInsurerDefaultEmail = GenericModelTypeEnum::LIVA_INSURER_SCREENIN_DEFAULT_EMAIL;
+        } else {
+            $gigInsurerDefaultEmail = GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL;
+        }
+
         return inertia('Aml/DetailPage', array_merge([
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
@@ -339,11 +354,13 @@ class AMLController extends Controller
             'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->aml_status] ?? null,
             'defaultNationality' => GenericRequestEnum::DEFAULT_NATIONALITY,
             'screeningType' => $screeningType,
-            'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
+            'gigInsurerDefaultEmail' => $gigInsurerDefaultEmail,
             'isAnyEscalated' => $isAnyEscalated,
             'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType, $quoteRequest),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'isPrivateCar' => $quoteRequest?->registration_type === CarRegistrationType::PERSONAL,
+            'LIVAEnums' => app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
+            'insurerName' => InsuranceProvidersEnum::getTextByCode($quoteRequest?->plan?->insuranceProvider?->code),
         ], $businessPayload ?? [], $rtaConfigurationData));
     }
 
@@ -532,6 +549,7 @@ class AMLController extends Controller
                         'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
                         'isRenewalLead' => $getInsurerScreeningResponse['isRenewalLead'] ?? false,
                         'is_previous_policy_expired' => $getInsurerScreeningResponse['is_previous_policy_expired'] ?? false,
+                        'is_get_quote_api_failed' => $getInsurerScreeningResponse['is_get_quote_api_failed'] ?? false,
                     ];
 
                     if (isset($getInsurerScreeningResponse['autoCaptureStatus'])) {
@@ -916,6 +934,7 @@ class AMLController extends Controller
                     'autoCaptureStatus' => $insurerAMLScreeningResponse['autoCaptureStatus'] ?? null,
                     'autoCaptureMessage' => $insurerAMLScreeningResponse['autoCaptureMessage'] ?? null,
                     'isPolicyExpired' => $insurerAMLScreeningResponse['is_previous_policy_expired'] ?? false,
+                    'isGetQuoteAPIFailed' => $insurerAMLScreeningResponse['is_get_quote_api_failed'] ?? false,
                 ];
             }
         }
