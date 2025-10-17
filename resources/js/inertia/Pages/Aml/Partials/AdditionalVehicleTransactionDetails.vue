@@ -444,17 +444,13 @@ const isFieldRequired = fieldName => {
   }
 };
 
-// Format date to YYYY-MM-DD
 const formatDate = date => {
   if (!date) return '';
 
-  // If it's already a string in YYYY-MM-DD format, return it
   if (typeof date === 'string') {
-    // Extract just the date part if it's a datetime string (YYYY-MM-DD HH:MM:SS)
     return date.split(' ')[0];
   }
 
-  // If it's a Date object, convert to ISO string
   if (date instanceof Date) {
     return date.toISOString().split('T')[0];
   }
@@ -1113,6 +1109,16 @@ watch(
   newValue => {
     if (newValue) {
       additionalVehicleTransactionDetailsForm.policy_effective_date =
+        formatDate(newValue);
+    }
+  },
+);
+
+watch(
+  () => additionalVehicleTransactionDetailsForm.first_registration_date,
+  newValue => {
+    if (newValue) {
+      additionalVehicleTransactionDetailsForm.first_registration_date =
         formatDate(newValue);
     }
   },

@@ -269,17 +269,13 @@ class CentralController extends Controller
      */
     public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request)
     {
-        $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+        $response = app(CentralService::class)->updateLastYearPolicy($request);
 
-        if (! $quote) {
-            return redirect()->back()->with('error', 'Error Updating Policy Details.');
+        if (! $response['status']) {
+            return redirect()->back()->with('error', $response['message']);
         }
 
-        $quote->update([
-            'renewal_batch' => $request->renewal_batch,
-        ]);
-
-        return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
+        return redirect()->back()->with('success', 'Last Year Policy Details have been updated successfully.');
     }
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
