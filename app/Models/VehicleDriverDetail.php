@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-
+use Illuminate\Database\Eloquent\Casts\Attribute;
 class VehicleDriverDetail extends Model
 {
     protected $table = 'vehicle_driver_details';
@@ -43,6 +44,27 @@ class VehicleDriverDetail extends Model
         'uae_driving_experience' => 'integer',
         'nationality_id' => 'integer',
     ];
+
+    public function driverLicenseIssueDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
+        );
+    }
+
+    public function driverLicenseExpiryDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
+        );
+    }
+
+    public function driverDob(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
+        );
+    }
 
     public function nationality(): BelongsTo
     {
