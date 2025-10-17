@@ -39,6 +39,16 @@ const formatDate = date => {
   return `${year}-${month}-${day}`;
 };
 
+/**
+ * Normalize gender value
+ * If starts with 'M' or 'm', returns 'male', otherwise returns 'female'
+ */
+const normalizeGender = gender => {
+  if (!gender) return '';
+  const genderStr = String(gender).trim();
+  return genderStr.toLowerCase().startsWith('m') ? 'male' : 'female';
+};
+
 const additionalDriverDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: quote?.uuid,
@@ -158,25 +168,27 @@ const isSUKOON = computed(() => {
 
 const licenseIssuePlaceOptions = computed(() => {
   if (isLIVA.value) {
-    return useGenerateOptions(lookups?.nationality_list ?? [], 'code', 'text');
+    return useGenerateOptions(
+      page.props.nationalities ?? [],
+      'rsa_country_code',
+      'text',
+    );
   } else {
     return useGenerateOptions(lookups?.issuance_place ?? [], 'code', 'text');
   }
 });
 
 const nationalitiesOptions = computed(() => {
-  if (isLIVA.value) {
-    return useGenerateOptions(lookups?.nationality_list ?? [], 'code', 'text');
-  } else {
-    return useGenerateOptions(page.props.nationalities ?? [], 'code', 'text');
-  }
+  let code = isLIVA.value ? 'rsa_country_code' : 'code';
+
+  return useGenerateOptions(page.props.nationalities ?? [], code, 'text');
 });
 
 const drivingExperienceOptions = computed(() => {
   if (isLIVA.value) {
     return useGenerateOptions(
       lookups?.driving_experience ?? [],
-      'code',
+      'rsa_driving_experience',
       'text',
     );
   }
@@ -214,8 +226,14 @@ watch(
   newValue => {
     // If insured and driver are the same (1 or '1'), clear the driver name fields
     if ((newValue === 1 || newValue === '1') && !isSyncFromInsurer.value) {
-      additionalDriverDetailsForm.driver_first_name = '';
-      additionalDriverDetailsForm.driver_last_name = '';
+      additionalDriverDetailsForm.driver_first_name = quote?.first_name;
+      additionalDriverDetailsForm.driver_last_name = quote?.last_name;
+      additionalDriverDetailsForm.driver_dob = quote?.dob;
+      additionalDriverDetailsForm.driver_gender = normalizeGender(
+        quote?.gender,
+      );
+      additionalDriverDetailsForm.uae_driving_experience =
+        quote?.uae_license_held_for?.rsa_driving_experience;
     }
   },
 );

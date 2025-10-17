@@ -92,6 +92,11 @@ final class PolicyIssuanceEnum extends Enum
 
     /* Alliance Travel Steps */ // These are in used for Travel Alliance Insurance
 
+    /* LIVA AML API Statuses */
+
+    const LIVA_AML_ACTIVE = 1;
+    const LIVA_AML_ACCEPTED = 23;
+
     public static function getPolicyIssuanceSteps($insurerCode, $quoteType)
     {
         return match (ucfirst($quoteType)) {
