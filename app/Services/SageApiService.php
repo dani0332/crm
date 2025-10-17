@@ -995,14 +995,22 @@ class SageApiService
         $response = ['status' => false, 'message' => '', 'error' => '', 'documentNumber' => null, 'sageCustomerNumber' => null];
         $sageApiService = new SageApiService;
 
-        $sageRequest = SagePayloadFactory::globalSagePrepaymentReceiptPayloadData([$quote, $payment, $paymentSplit, $sageRequest, $splitAmount]);
-
-        $quoteTypeId = $sageRequest->quoteTypeId;
-        $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
         $isAlreadyPosted = false;
         $sageLogArray = $paymentSplit->sageApiLogs->keyBy('step')->toArray();
         $sendUpdateLog = $paymentSplit->payment?->sendUpdateLog;
+        $quoteTypeId = $sageRequest->quoteTypeId ?? QuoteTypes::getIdFromValue($sageRequest->quoteType);
+        $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
         $quoteDetails = $sendUpdateLog ?? $quote;
+
+        if ($sendUpdateLog) {
+            $quoteDetails->fill([
+                'advisor_id' => $quote?->advisor_id ?? null,
+                'customer_id' => $quote?->customer_id,
+                'policy_booking_date' => $sendUpdateLog->booking_date,
+            ]);
+        }
+
+        $sageRequest = SagePayloadFactory::globalSagePrepaymentReceiptPayloadData([$quoteDetails, $payment, $paymentSplit, $sageRequest, $splitAmount]);
 
         $sageCustomerNumberResponse = $sageApiService->getSageCustomerNumber($quoteDetails, $sageRequest->customer_id, $customerData, $paymentSplit, $sageRequest->advisor_id);
         if ($sageCustomerNumberResponse['status'] === false) {
@@ -2727,7 +2735,7 @@ class SageApiService
             /* if the Policy Issuance exist for the Insurer and LOB than assign the Advisor */
             if ($insuranceProviderAutomation) {
                 LoggerService::info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor and update insurer and api issuance status of quote');
-                if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
+                if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA])) {
                     app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType);
                 } else {
                     // TODO:: This should be updated with the new function in PolicyIssuanceService

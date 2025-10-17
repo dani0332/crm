@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\helpers\LookUpModelHelper;
-use App\Jobs\MAWelcomeJob;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Models\CarQuote;
 use App\Models\CarQuotePaymentHistory;
 use App\Models\CarQuotePolicy;
@@ -66,7 +66,7 @@ class TransAppService extends BaseService
         $customer->myalfred_expiry_date = $expiryDate;
         $customer->save();
 
-        MAWelcomeJob::dispatch($customer, 'TRANSAPP', 'transapp-myalfred-we');
+        ExtendCustomerSubscriptionViaSQS::dispatch($customer, 'TRANSAPP', 'transapp-myalfred-we');
 
         if ($existingCustomer) { // Existing customer
             if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true

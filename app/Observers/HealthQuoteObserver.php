@@ -13,6 +13,7 @@ use App\Events\HealthQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\Health\SendApplicationSubmittedEmailJob;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\MAWelcomeJob;
@@ -20,6 +21,7 @@ use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\SLA\SLAService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
@@ -65,6 +67,8 @@ class HealthQuoteObserver
 
                 HealthQuoteAdvisorUpdated::dispatch($healthQuote, $healthQuote->getOriginal('advisor_id'));
                 $healthQuote->markLeadAllocationPassed();
+
+                app(SLAService::class)->initiateSLATracking(QuoteTypes::HEALTH, $healthQuote);
             } catch (Exception $e) {
                 Log::error('HealthQuoteObserver - handle health update advisor failed', [
                     'error' => $e->getMessage(),
@@ -124,7 +128,7 @@ class HealthQuoteObserver
             in_array($healthQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Health, 'quoteUID' => $healthQuote->uuid]);
-            MAWelcomeJob::dispatch(
+            ExtendCustomerSubscriptionViaSQS::dispatch(
                 $healthQuote->customer,
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
@@ -139,6 +143,10 @@ class HealthQuoteObserver
             $payment = $healthQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($healthQuote, $payment, QuoteTypes::HEALTH->value);
             event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
+        }
+
+        if (isset($dirty['quote_status_id'])) {
+            app(SLAService::class)->meetSLAOnStatusUpdate($healthQuote);
         }
     }
 }

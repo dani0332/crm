@@ -63,7 +63,7 @@ class BorFormRequest extends FormRequest
                 if ($insuranceProviderId !== null && $this->isSukoonInsurance($insuranceProviderId)) {
                     $rules['chassis_number'] = ['required', 'string', 'min:8', 'max:17', 'regex:/^(?!\s*$).+/'];
                 } else {
-                    $rules['insurance_provider_id'] = ['integer', 'exists:insurance_provider,id'];
+                    $rules['insurance_provider_id'] = ['nullable', 'integer', 'exists:insurance_provider,id'];
                     $rules['chassis_number'] = ['nullable', 'string', 'min:8', 'max:17', 'regex:/^(?!\s*$).+/'];
                 }
             } else {
@@ -187,7 +187,7 @@ class BorFormRequest extends FormRequest
         // Ensure numeric fields are properly formatted
         if ($this->has('insurance_provider_id')) {
             $this->merge([
-                'insurance_provider_id' => (int) $this->input('insurance_provider_id'),
+                'insurance_provider_id' => $this->input('insurance_provider_id'),
             ]);
         }
 
