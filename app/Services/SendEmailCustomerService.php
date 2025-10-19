@@ -429,12 +429,12 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $quoteCdbId = isset($emailData->carQuoteId) ? $emailData->carQuoteId : null;
-            
+
             LoggerService::warning(self::class.' - sendRenewalsOcbEmail - Email sending failed with exception', extra: [
                 'error_code' => $responseCode,
                 'error_message' => $ex->getMessage(),
             ]);
-            
+
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
         }
@@ -1431,7 +1431,7 @@ class SendEmailCustomerService extends BaseService
     {
         $advisor = User::find($healthQuote->advisor_id);
         $insurerPlans = [];
-        
+
         foreach ($plans as $plan) {
             // Safely extract premium data with null checks
             $premium = 0;
@@ -1445,13 +1445,13 @@ class SendEmailCustomerService extends BaseService
                     }
                 }
             }
-            
+
             // Initialize benefit texts
             $regionCoverText = '';
             $annualLimitText = '';
             $medicineText = '';
             $outpatientConsultationText = '';
-            
+
             // Get outpatient consultation text from coPayments if available (with proper null safety)
             if (isset($plan->coPayments) && is_array($plan->coPayments) && count($plan->coPayments) > 0) {
                 $firstCopay = $plan->coPayments[0] ?? null;
@@ -1459,7 +1459,7 @@ class SendEmailCustomerService extends BaseService
                     $outpatientConsultationText = $firstCopay->text;
                 }
             }
-            
+
             // Extract region cover from benefits
             if (isset($plan->benefits) && isset($plan->benefits->regionCover) && is_array($plan->benefits->regionCover) && ! empty($plan->benefits->regionCover)) {
                 foreach ($plan->benefits->regionCover as $regionCover) {
@@ -1469,7 +1469,7 @@ class SendEmailCustomerService extends BaseService
                     }
                 }
             }
-            
+
             // Extract annual limit from features
             if (isset($plan->benefits) && isset($plan->benefits->feature) && is_array($plan->benefits->feature) && ! empty($plan->benefits->feature)) {
                 foreach ($plan->benefits->feature as $feature) {
@@ -1479,7 +1479,7 @@ class SendEmailCustomerService extends BaseService
                     }
                 }
             }
-            
+
             // Extract medicine text from outpatient benefits
             if (isset($plan->benefits) && isset($plan->benefits->outpatient) && is_array($plan->benefits->outpatient) && ! empty($plan->benefits->outpatient)) {
                 foreach ($plan->benefits->outpatient as $outPatient) {
@@ -1493,32 +1493,32 @@ class SendEmailCustomerService extends BaseService
             // Build hospital and clinic data from healthNetwork with comprehensive null checks
             $hospitalData = ['count' => 0, 'text' => ''];
             $clinicData = ['count' => 0, 'text' => ''];
-            
+
             if (isset($plan->healthNetwork) && is_object($plan->healthNetwork)) {
                 // Safely get counts
                 $hospitalData['count'] = isset($plan->healthNetwork->noOfHospitals) ? (int) $plan->healthNetwork->noOfHospitals : 0;
                 $clinicData['count'] = isset($plan->healthNetwork->noOfClinics) ? (int) $plan->healthNetwork->noOfClinics : 0;
-                
+
                 // Build hospital and clinic text from featured facilities
                 if (isset($plan->healthNetwork->featuredFacilities) && is_array($plan->healthNetwork->featuredFacilities) && ! empty($plan->healthNetwork->featuredFacilities)) {
                     $hospitals = [];
                     $clinics = [];
-                    
+
                     foreach ($plan->healthNetwork->featuredFacilities as $facility) {
                         if (! isset($facility->type) || ! isset($facility->text)) {
                             continue;
                         }
-                        
+
                         $facilityType = strtoupper(trim($facility->type));
                         $facilityText = trim($facility->text);
-                        
+
                         if ($facilityType === 'HOSPITAL') {
                             $hospitals[] = $facilityText;
                         } elseif ($facilityType === 'CLINIC' || $facilityType === 'CLINC') {
                             $clinics[] = $facilityText;
                         }
                     }
-                    
+
                     $hospitalData['text'] = ! empty($hospitals) ? implode(', ', $hospitals) : '';
                     $clinicData['text'] = ! empty($clinics) ? implode(', ', $clinics) : '';
                 }
@@ -1552,7 +1552,7 @@ class SendEmailCustomerService extends BaseService
         $emailData->isReAssignment = ! empty($previousAdvisor);
         $emailData->isRenewal = true;
         $emailData->policyNumber = $healthQuote->previous_quote_policy_number ?? null;
-        
+
         // Safely handle previous policy expiry date
         $renewalDueDate = '';
         if (isset($healthQuote->previous_policy_expiry_date) && ! empty($healthQuote->previous_policy_expiry_date)) {
@@ -1579,7 +1579,7 @@ class SendEmailCustomerService extends BaseService
             $advisor->mobile_no = '';
             $advisor->landline_no = '';
         }
-        
+
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
         $mobileNoWithoutSpaces = ! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : '';
 
@@ -1594,8 +1594,8 @@ class SendEmailCustomerService extends BaseService
             'id' => $advisor->id ?? null,
             'name' => $advisor->name ?? '',
             'email' => $advisor->email ?? '',
-            'landLine' => isset($advisor->landline_no) && ! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : '',
-            'mobilePhone' => isset($advisor->mobile_no) && ! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : '',
+            'landlineNo' => isset($advisor->landline_no) && ! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : '',
+            'mobileNo' => isset($advisor->mobile_no) && ! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : '',
             'whatsAppNumber' => $whatsAppNumber,
             'mobileNoWithoutSpaces' => $mobileNoWithoutSpaces,
             'profilePicture' => $advisor->profile_photo_path ?? '',
@@ -1610,7 +1610,7 @@ class SendEmailCustomerService extends BaseService
         if (! empty($previousAdvisor) && is_object($previousAdvisor)) {
             $prevWhatsAppNumber = isset($previousAdvisor->mobile_no) && ! empty($previousAdvisor->mobile_no) ? formatMobileNo($previousAdvisor->mobile_no) : '';
             $prevMobileNoWithoutSpaces = isset($previousAdvisor->mobile_no) && ! empty($previousAdvisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($previousAdvisor->mobile_no)) : '';
-            
+
             $previousAdvisorDetails = [
                 'id' => $previousAdvisor->id ?? null,
                 'name' => $previousAdvisor->name ?? '',
@@ -1627,7 +1627,7 @@ class SendEmailCustomerService extends BaseService
         $firstName = $healthQuote->first_name ?? '';
         $lastName = $healthQuote->last_name ?? '';
         $customerFullName = trim($firstName.' '.$lastName);
-        
+
         // Build quote UUID safely
         $quoteUuid = $healthQuote->uuid ?? '';
         $quoteCode = $healthQuote->code ?? '';
@@ -1680,18 +1680,18 @@ class SendEmailCustomerService extends BaseService
         $providerCode = $plan->providerCode ?? '';
         $planId = $plan->id ?? null;
         $selectedCopayId = $plan->selectedCopayId ?? null;
-        
+
         if (empty($uuid) || empty($providerCode) || empty($planId) || empty($selectedCopayId)) {
             return '';
         }
-        
+
         $baseUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$uuid.'/payment/';
         $queryParams = http_build_query([
             'planId' => $planId,
             'providerCode' => strtoupper($providerCode),
             'selectedCopayId' => $selectedCopayId,
         ]);
-        
+
         $buyNowLink = $baseUrl.'?'.$queryParams;
 
         return $buyNowLink;
