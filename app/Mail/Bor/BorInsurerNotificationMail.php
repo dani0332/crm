@@ -148,13 +148,13 @@ class BorInsurerNotificationMail extends Mailable
     {
         $provider = \App\Models\InsuranceProvider::find($this->borLog->insurance_provider_id);
         $name = $this->getCustomerName();
-        
-        if ($personalQuote->quote_type_id === QuoteTypeId::Car && 
-            $provider && 
+
+        if ($personalQuote->quote_type_id === QuoteTypeId::Car &&
+            $provider &&
             (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
             return 'Request for BOR '.$this->borLog->chassis_number.' - '.$name.' '.$personalQuote->code;
         }
-        
+
         return 'Request for BOR '.$name.' '.$personalQuote->code;
     }
 

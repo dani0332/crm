@@ -25,7 +25,7 @@ class BorRequest extends FormRequest
     public function rules(): array
     {
         $action = $this->route()->getActionMethod();
-        
+
         // Base rules that apply to all BOR requests
         $baseRules = [
             'bor_ref_id' => 'required|string|exists:bor_logs,bor_reference',
@@ -72,7 +72,7 @@ class BorRequest extends FormRequest
     public function messages(): array
     {
         $action = $this->route()->getActionMethod();
-        
+
         // Base messages
         $baseMessages = [
             'bor_ref_id.required' => 'BOR reference ID is required.',
@@ -121,7 +121,7 @@ class BorRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $action = $this->route()->getActionMethod();
-        
+
         // Apply boolean conversion for signDocument and uploadDocument actions
         if (in_array($action, ['signDocument', 'uploadDocument'])) {
             // Convert string boolean values to actual booleans
@@ -145,17 +145,17 @@ class BorRequest extends FormRequest
     protected function failedValidation(Validator $validator): void
     {
         $action = $this->route()->getActionMethod();
-        
+
         LoggerService::info("BorRequest Validation failed for action: {$action}", [
             'action' => $action,
-            'request' => $this->all(), 
-            'errors' => $validator->errors()
+            'request' => $this->all(),
+            'errors' => $validator->errors(),
         ]);
-        
+
         throw new HttpResponseException(
             response()->json([
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422)
         );
     }

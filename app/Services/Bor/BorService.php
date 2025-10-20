@@ -22,7 +22,7 @@ class BorService
     protected $borPdfService;
 
     public function __construct(
-        BorEmailService $borEmailService, 
+        BorEmailService $borEmailService,
         BorPdfService $borPdfService,
     ) {
         $this->borEmailService = $borEmailService;
@@ -256,8 +256,6 @@ class BorService
         }
     }
 
-    
-
     /**
      * Upload a BOR document
      *
@@ -420,19 +418,16 @@ class BorService
         return $documentTypes;
     }
 
-
     /**
      * Sign a BOR document
      *
-     * @param array $data
-     * @param \Illuminate\Http\UploadedFile|string|null $file
-     * @return array
+     * @param  \Illuminate\Http\UploadedFile|string|null  $file
      */
     public function signDocument(array $data, $file = null): array
     {
         $borLog = BorLog::with('personalQuote')->where('bor_reference', $data['bor_ref_id'])->first();
-        
-        if (!$borLog) {
+
+        if (! $borLog) {
             throw new \Exception('BOR log not found');
         }
 
@@ -440,7 +435,7 @@ class BorService
         $quoteType = QuoteTypes::getName($quote->quote_type_id)->value;
         $quote = checkPersonalQuotes($quoteType) ? $quote : $this->getQuoteObject($quoteType, $quote->quote_id);
 
-        if (!$quote) {
+        if (! $quote) {
             throw new \Exception('Quote not found');
         }
 
@@ -470,7 +465,7 @@ class BorService
                 $document = $quoteDocumentService->uploadQuoteDocument($fileToUpload, $uploadData, $quote);
             }
 
-            $docIsPresent = isset($document) && !is_null($document);
+            $docIsPresent = isset($document) && ! is_null($document);
 
             // Update BOR log
             $updateData = [
@@ -478,8 +473,8 @@ class BorService
                 'document_id' => ($docIsPresent && $document) ? ($document->doc_uuid ?? null) : $borLog->document_id,
                 'user_agent' => getUserIpAddress(request()),
                 'download_clicked' => $borLog->download_clicked == 1 ? 1 : ($data['download_clicked'] ?? 0),
-                'insurer_name' => !empty(trim($data['insurer_name'] ?? '')) ? $data['insurer_name'] : $borLog->insurer_name,
-                'policy_number' => !empty(trim($data['policy_number'] ?? '')) ? $data['policy_number'] : $borLog->policy_number,
+                'insurer_name' => ! empty(trim($data['insurer_name'] ?? '')) ? $data['insurer_name'] : $borLog->insurer_name,
+                'policy_number' => ! empty(trim($data['policy_number'] ?? '')) ? $data['policy_number'] : $borLog->policy_number,
                 'status' => $docIsPresent ? BorStatusEnum::DOCUMENT_SIGNED : $borLog->status,
                 'date_signed' => $docIsPresent ? now() : $borLog->date_signed,
             ];
@@ -501,20 +496,17 @@ class BorService
         }
     }
 
-
     /**
      * Upload a quote document for BOR
      *
-     * @param array $data
-     * @param \Illuminate\Http\UploadedFile|string $file
-     * @return array
+     * @param  \Illuminate\Http\UploadedFile|string  $file
      */
     public function uploadQuoteDocument(array $data, $file): array
     {
         $quoteType = $data['quote_type'];
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
 
-        if (!$quote) {
+        if (! $quote) {
             throw new \Exception('Quote not found');
         }
 
@@ -531,20 +523,17 @@ class BorService
 
     /**
      * Delete a BOR document
-     *
-     * @param array $data
-     * @return array
      */
     public function deleteDocument(array $data): array
     {
         $borLog = BorLog::with('personalQuote.documents')->where('bor_reference', $data['bor_ref_id'])->first();
 
-        if (!$borLog) {
+        if (! $borLog) {
             throw new \Exception('BOR log not found');
         }
 
         $quote = $borLog->personalQuote;
-        if (!$quote) {
+        if (! $quote) {
             throw new \Exception('Personal quote not found');
         }
 
@@ -552,7 +541,7 @@ class BorService
         $isPersonalQuote = checkPersonalQuotes($quoteName->value);
         $quote = $isPersonalQuote ? $this->getQuoteObject($quoteName->value, $quote->id) : $this->getQuoteObject($quoteName->value, $quote->quote_id);
 
-        if (!$quote) {
+        if (! $quote) {
             throw new \Exception('Quote not found');
         }
 
@@ -576,9 +565,6 @@ class BorService
 
     /**
      * Handle SSE streaming for BOR log updates
-     *
-     * @param string $borRefId
-     * @return callable
      */
     public function streamBorLogUpdates(string $borRefId): callable
     {
@@ -748,8 +734,6 @@ class BorService
 
     /**
      * Get the SSE headers for streaming response
-     *
-     * @return array
      */
     public function getSseHeaders(): array
     {
@@ -784,9 +768,9 @@ class BorService
             case CONNECTION_TIMEOUT:
                 return 'TIMEOUT';
             default:
-                return 'UNKNOWN_' . $status;
+                return 'UNKNOWN_'.$status;
         }
     }
-    
+
     /****************************************** SSE ******************************************/
 }

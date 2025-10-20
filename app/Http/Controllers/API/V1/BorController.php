@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Enums\BorStatusEnum;
-use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Bor\BorRequest;
 use App\Http\Resources\QuoteDocumentResource;
@@ -62,7 +60,7 @@ class BorController extends Controller
         try {
             $streamCallback = $this->borService->streamBorLogUpdates($borRefId);
             $headers = $this->borService->getSseHeaders();
-            
+
             $response = new StreamedResponse($streamCallback, 200, $headers);
 
             return $response;
@@ -83,8 +81,8 @@ class BorController extends Controller
         try {
             $refId = $request->input('bor_ref_id');
             $borLog = BorLog::where('bor_reference', $refId)->first();
-            
-            if (!$borLog) {
+
+            if (! $borLog) {
                 return response()->json(['error' => 'BOR log not found'], 404);
             }
 
@@ -92,8 +90,8 @@ class BorController extends Controller
             $pdf = $borPdfService->generatePreviewBorPdf($borLog);
 
             return response()->json([
-                'data' => 'data:application/pdf;base64,'.base64_encode($pdf['pdf']->download()), 
-                'name' => $pdf['name']
+                'data' => 'data:application/pdf;base64,'.base64_encode($pdf['pdf']->download()),
+                'name' => $pdf['name'],
             ]);
         } catch (\Throwable $th) {
             LoggerService::error('Failed to generate PDF', [
@@ -118,7 +116,7 @@ class BorController extends Controller
 
             return response()->json([
                 'message' => $result['message'],
-                'data' => $result['data']
+                'data' => $result['data'],
             ]);
         } catch (Exception $th) {
             LoggerService::error('Failed to sign document', [
@@ -173,7 +171,7 @@ class BorController extends Controller
 
             return response()->json([
                 'message' => $result['message'],
-                'data' => $result['data']
+                'data' => $result['data'],
             ]);
         } catch (Exception $th) {
             LoggerService::error('Bor Failed to delete document', [
@@ -195,7 +193,7 @@ class BorController extends Controller
 
             $borLog = BorLog::where('bor_reference', $borRefId)->first();
 
-            if (!$borLog) {
+            if (! $borLog) {
                 return response()->json(['error' => 'BOR log not found'], 404);
             }
             $borEmailService = new BorEmailService;
@@ -215,8 +213,8 @@ class BorController extends Controller
             }
 
             return response()->json([
-                'message' => 'success', 
-                'result' => $result
+                'message' => 'success',
+                'result' => $result,
             ]);
         } catch (Exception $th) {
             LoggerService::error('BOR completion email trigger failed', [

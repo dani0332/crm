@@ -32,8 +32,8 @@ trait BorMailTrait
         $name = $this->getCustomerName();
 
         // Special handling for Sukoon/OIC car insurance
-        if ($personalQuote->quote_type_id === QuoteTypeId::Car && 
-            $provider && 
+        if ($personalQuote->quote_type_id === QuoteTypeId::Car &&
+            $provider &&
             (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
             return $prefix.'BOR '.$this->borLog->chassis_number.' - '.$name.($prefix ? '' : ' '.$personalQuote->code);
         }
@@ -42,4 +42,3 @@ trait BorMailTrait
         return $prefix.$name.' For signature - Broker Appointment Letter '.$personalQuote->code;
     }
 }
-

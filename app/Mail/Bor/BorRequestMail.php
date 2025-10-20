@@ -3,7 +3,6 @@
 namespace App\Mail\Bor;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
@@ -17,7 +16,7 @@ use Illuminate\Queue\SerializesModels;
 
 class BorRequestMail extends Mailable
 {
-    use Queueable, SerializesModels, BorMailTrait;
+    use BorMailTrait, Queueable, SerializesModels;
 
     protected $borLog;
     protected $customerData;
