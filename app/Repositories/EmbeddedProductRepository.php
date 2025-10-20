@@ -322,9 +322,9 @@ class EmbeddedProductRepository extends BaseRepository
     private function isDisableEmbeddedProduct($transaction, $quote, $shortCode, $quoteTypeId)
     {
         $isPaymentPaid = in_array($transaction?->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
-        
+
         $isTPLPlanSelected = false;
-        if($quoteTypeId == QuoteTypeId::Car && $shortCode == EmbeddedProductEnum::ECB) {
+        if ($quoteTypeId == QuoteTypeId::Car && $shortCode == EmbeddedProductEnum::ECB) {
             $isTPLPlanSelected = $quote->plan?->repair_type == CarPlanType::TPL;
         }
 
@@ -1505,17 +1505,19 @@ class EmbeddedProductRepository extends BaseRepository
                 }
             }
 
-            if($epTransactionDetails->is_active == 1) {
-                if($isTPLPlanSelected)
+            if ($epTransactionDetails->is_active == 1) {
+                if ($isTPLPlanSelected) {
                     $epTransactionDetails->update(['is_selected' => 0]);
-                else
+                } else {
                     $epTransactionDetails->update(['is_selected' => 0, 'is_active' => 0]);
+                }
             }
 
         } else {
 
-            if(!$isTPLPlanSelected && $epTransactionDetails->is_active == 0 && $epTransactionDetails->payment_status_id == PaymentStatusEnum::DRAFT)
+            if (! $isTPLPlanSelected && $epTransactionDetails->is_active == 0 && $epTransactionDetails->payment_status_id == PaymentStatusEnum::DRAFT) {
                 $epTransactionDetails->update(['is_active' => 1]);
+            }
         }
 
         LoggerService::info('fn:syncEpEcb - Sync embedded transaction for ECB is completed');
