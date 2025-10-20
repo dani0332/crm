@@ -240,11 +240,11 @@ const onCancel = () => {
 };
 
 watch(() => sendUpdateForm.notes, (newValue) => {
-  if (newValue) notesFieldError.value = false;
+  if (newValue && newValue.length > 0) notesFieldError.value = false;
 });
 
 const onUpdateLog = isValid => {
-  if ((! sendUpdateForm.notes) && isCarOrBike.value) {
+  if ((!sendUpdateForm.notes || sendUpdateForm.notes.length === 0) && isCarOrBike.value) {
     notesFieldError.value = true;
     return;
   }
