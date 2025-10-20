@@ -12,8 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\OCB\SendAIAdvisorOCBJob;
-use Carbon\Carbon;
+
 
 class AIGWorkflowJob implements ShouldQueue
 {
@@ -63,9 +62,8 @@ class AIGWorkflowJob implements ShouldQueue
                 return;
             }
             if ($quote->isAIAdvisorAssigned()) {
-                // Send AI Advisor Email
-                SendAIAdvisorOCBJob::dispatch(QuoteTypes::CAR, $quote->uuid)->delay(Carbon::now()->addMinute());
-                LoggerService::info('AIGWorkflowJob - AI Advisor Email sent ');
+                LoggerService::info('AIGWorkflowJob - AI Advisor is already assigned');
+                return;
             } else {
                 // Use the CarEmailService to send the AIG workflow
                 $carEmailService->sendAIGWorkflow($quote);
