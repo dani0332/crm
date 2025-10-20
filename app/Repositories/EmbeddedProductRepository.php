@@ -240,11 +240,12 @@ class EmbeddedProductRepository extends BaseRepository
             $optionsIds = $item->prices->pluck('id');
             $item->sync_document_button = false;
 
-            $transaction = EmbeddedTransaction::with('documents', 'product.embeddedProduct')->where([
+            $allTransactions = EmbeddedTransaction::with('documents', 'product.embeddedProduct')->where([
                 ['quote_type_id', '=', $quoteTypeId],
                 ['quote_request_id',  '=', $quoteRequestId],
-                ['is_selected',  '=', true],
             ])->whereIn('product_id', $optionsIds)->get();
+            $transaction = $allTransactions->where('is_selected', true);
+
             $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
 
             $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($item->short_code);
@@ -272,6 +273,7 @@ class EmbeddedProductRepository extends BaseRepository
             $item->can_cancel_payment = $this->canCancelPayment($transaction->first(), $quoteTypeId);
             $item->can_void_payment = $this->canVoidPayment($transaction->first());
             $item->can_book_embedded_product = $this->canBookEmbeddedProduct($transaction->first(), $quoteObject, $item);
+            $item->is_disabled = $this->isDisableEmbeddedProduct($allTransactions->first(), $quoteObject, $item->short_code, $quoteTypeId);
         });
 
         return $ep;
@@ -315,6 +317,18 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return false;
+    }
+
+    private function isDisableEmbeddedProduct($transaction, $quote, $shortCode, $quoteTypeId)
+    {
+        $isPaymentPaid = in_array($transaction?->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
+        
+        $isTPLPlanSelected = false;
+        if($quoteTypeId == QuoteTypeId::Car && $shortCode == EmbeddedProductEnum::ECB) {
+            $isTPLPlanSelected = $quote->plan?->repair_type == CarPlanType::TPL;
+        }
+
+        return $transaction?->is_active === 0 || $isTPLPlanSelected || $isPaymentPaid;
     }
 
     private function canBookEmbeddedProduct($transaction, $quote, $ep)
@@ -1449,6 +1463,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         $epEcbMatchingCriteriaResult = $this->getEpEcbMatchingCriteriaResult($quote);
         $unmatchedEpEcbCarQuoteDetails = array_filter($epEcbMatchingCriteriaResult, fn ($value) => $value === false);
+        $isTPLPlanSelected = $epEcbMatchingCriteriaResult['plan_id'] == false;
         LoggerService::info('fn:syncEpEcb - EpEcb matching criteria result: ', context: ['payment_status_id' => $epTransactionDetails->payment_status_id, 'matching_criteria_result' => $epEcbMatchingCriteriaResult]);
 
         // Check if any CarQuoteDetails unmatched with EP ECB criteria
@@ -1490,13 +1505,16 @@ class EmbeddedProductRepository extends BaseRepository
                 }
             }
 
-            if ($epTransactionDetails->is_active == 1) {
-                $epTransactionDetails->update(['is_active' => 0, 'is_selected' => 0]);
+            if($epTransactionDetails->is_active == 1) {
+                if($isTPLPlanSelected)
+                    $epTransactionDetails->update(['is_selected' => 0]);
+                else
+                    $epTransactionDetails->update(['is_selected' => 0, 'is_active' => 0]);
             }
 
         } else {
 
-            if ($epTransactionDetails->is_active == 0 && $epTransactionDetails->payment_status_id == PaymentStatusEnum::DRAFT) {
+            if(!$isTPLPlanSelected && $epTransactionDetails->is_active == 0 && $epTransactionDetails->payment_status_id == PaymentStatusEnum::DRAFT)
                 $epTransactionDetails->update(['is_active' => 1]);
             }
         }
