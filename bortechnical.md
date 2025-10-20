@@ -1,6 +1,7 @@
 # Digital Broker on Record (BOR) - Technical Documentation
 
 ## Table of Contents
+
 1. [Overview](#overview)
 2. [Architecture](#architecture)
 3. [Database Schema](#database-schema)
@@ -17,6 +18,7 @@
 The Digital Broker on Record (BOR) feature enables insurance brokers to digitally initiate, track, and manage broker appointment requests across all Lines of Business (LOBs). The system supports both Individual and Entity customer types with different workflows for document signing and upload.
 
 ### Key Features
+
 - **BOR Request Creation**: Dynamic forms based on customer type and LOB
 - **Digital Signatures**: Individual customers can sign documents online
 - **Document Upload**: Entity customers can upload signed documents
@@ -42,6 +44,7 @@ The Digital Broker on Record (BOR) feature enables insurance brokers to digitall
 ```
 
 ### Technology Stack
+
 - **Backend**: Laravel 10+ with PHP 8.2+
 - **Frontend**: Vue.js 3.5+ with Inertia.js
 - **Database**: MySQL with polymorphic relationships
@@ -54,6 +57,7 @@ The Digital Broker on Record (BOR) feature enables insurance brokers to digitall
 ### Primary Tables
 
 #### `bor_logs`
+
 ```sql
 CREATE TABLE bor_logs (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -83,7 +87,7 @@ CREATE TABLE bor_logs (
     policy_expiry DATE NULL,
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL,
-    
+
     FOREIGN KEY (personal_quote_id) REFERENCES personal_quotes(id),
     FOREIGN KEY (insurance_provider_id) REFERENCES insurance_provider(id),
     FOREIGN KEY (insurance_contact_id) REFERENCES insurance_provider_contacts(id),
@@ -92,6 +96,7 @@ CREATE TABLE bor_logs (
 ```
 
 #### `insurance_provider_contacts`
+
 ```sql
 CREATE TABLE insurance_provider_contacts (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -99,13 +104,14 @@ CREATE TABLE insurance_provider_contacts (
     quote_type_id INT NOT NULL,
     department VARCHAR(255) NULL,
     emails MEDIUMTEXT NOT NULL,
-    
+
     FOREIGN KEY (insurance_provider_id) REFERENCES insurance_provider(id),
     FOREIGN KEY (quote_type_id) REFERENCES quote_type(id)
 );
 ```
 
 ### Relationships
+
 - **BorLog** belongs to **PersonalQuote** (polymorphic)
 - **BorLog** belongs to **InsuranceProvider**
 - **BorLog** belongs to **InsuranceProviderContact**
@@ -116,7 +122,9 @@ CREATE TABLE insurance_provider_contacts (
 ### V2 Controller (IMCRM Integration)
 
 #### `GET /bor/requests`
+
 **Purpose**: Fetch BOR logs for a specific lead
+
 ```php
 // Parameters
 - leadId: int (required)
@@ -139,7 +147,9 @@ CREATE TABLE insurance_provider_contacts (
 ```
 
 #### `POST /bor/requests`
+
 **Purpose**: Create new BOR request
+
 ```php
 // Request Body
 {
@@ -163,14 +173,18 @@ CREATE TABLE insurance_provider_contacts (
 ```
 
 #### `PUT /bor/requests/{id}`
+
 **Purpose**: Update existing BOR request
+
 ```php
 // Same request body as POST
 // Response includes updatedBorLog
 ```
 
 #### `POST /bor/requests/{id}/upload`
+
 **Purpose**: Upload BOR document (requires BOR_DOCUMENT_UPLOAD permission)
+
 ```php
 // Request (multipart/form-data)
 - file: File (required, max 10MB)
@@ -186,7 +200,9 @@ CREATE TABLE insurance_provider_contacts (
 ```
 
 #### `GET /bor/requests/{id}/generate-link`
+
 **Purpose**: Generate customer-facing BOR link
+
 ```php
 // Response
 {
@@ -198,7 +214,9 @@ CREATE TABLE insurance_provider_contacts (
 ### API V1 Controller (Customer Portal)
 
 #### `GET /api/v1/bor/{borRefId}`
+
 **Purpose**: Get BOR log with documents for customer portal
+
 ```php
 // Response
 {
@@ -210,7 +228,9 @@ CREATE TABLE insurance_provider_contacts (
 ```
 
 #### `POST /api/v1/bor/sign-document`
+
 **Purpose**: Sign BOR document (customer action)
+
 ```php
 // Request Body
 {
@@ -225,7 +245,9 @@ CREATE TABLE insurance_provider_contacts (
 ```
 
 #### `POST /api/v1/bor/upload-document`
+
 **Purpose**: Upload BOR document (customer action)
+
 ```php
 // Request Body
 {
@@ -238,7 +260,9 @@ CREATE TABLE insurance_provider_contacts (
 ```
 
 #### `POST /api/v1/bor/completion-email/{borRefId}`
+
 **Purpose**: Trigger completion email workflow
+
 ```php
 // Response
 {
@@ -264,18 +288,21 @@ BorLogsSection.vue (Main Container)
 ### Key Component Features
 
 #### BorLogsSection.vue
+
 - **Auto-collapse**: Collapses when lead status is "Policy Issued"
 - **Pagination**: Laravel-style pagination with 15 items per page
 - **Real-time Updates**: Refreshes data after actions
 - **Error Handling**: Comprehensive error states and retry mechanisms
 
 #### BorRequestForm.vue
+
 - **Dynamic Forms**: Different fields based on customer type and LOB
 - **Validation**: Client-side validation with server-side backup
 - **Edit Mode**: Supports editing existing BOR requests
 - **Document Preview**: Shows uploaded/signed documents in edit mode
 
 #### BorLogsList.vue
+
 - **Action Buttons**: Context-sensitive actions based on BOR status
 - **Status Badges**: Visual status indicators with color coding
 - **Permission Checks**: Respects BOR_DOCUMENT_UPLOAD permission
@@ -285,26 +312,26 @@ BorLogsSection.vue (Main Container)
 
 ```javascript
 const statusConfig = {
-    SIGNATURE_REQUESTED: {
-        class: 'bg-yellow-100 text-yellow-800',
-        text: 'Signature Requested'
-    },
-    DOCUMENT_SIGNED: {
-        class: 'bg-indigo-100 text-indigo-800',
-        text: 'Document Signed'
-    },
-    DOCUMENT_UPLOADED: {
-        class: 'bg-purple-100 text-purple-800',
-        text: 'Document Uploaded'
-    },
-    CANCELLED: {
-        class: 'bg-gray-100 text-gray-800',
-        text: 'Cancelled'
-    },
-    COMPLETED: {
-        class: 'bg-green-100 text-green-800',
-        text: 'Completed'
-    }
+  SIGNATURE_REQUESTED: {
+    class: 'bg-yellow-100 text-yellow-800',
+    text: 'Signature Requested',
+  },
+  DOCUMENT_SIGNED: {
+    class: 'bg-indigo-100 text-indigo-800',
+    text: 'Document Signed',
+  },
+  DOCUMENT_UPLOADED: {
+    class: 'bg-purple-100 text-purple-800',
+    text: 'Document Uploaded',
+  },
+  CANCELLED: {
+    class: 'bg-gray-100 text-gray-800',
+    text: 'Cancelled',
+  },
+  COMPLETED: {
+    class: 'bg-green-100 text-green-800',
+    text: 'Completed',
+  },
 };
 ```
 
@@ -313,13 +340,16 @@ const statusConfig = {
 ### Email Types
 
 #### 1. BOR Request Email (BorRequestMail)
+
 **Trigger**: When BOR request is created
 **Recipients**: Customer's primary email
 **Template**: Dynamic based on customer type
+
 - **Individual**: Sign and Accept workflow
 - **Entity**: Upload BOR letter workflow
 
 **Bird Integration**:
+
 ```php
 // Workflow URL stored in ApplicationStorage
 ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL
@@ -358,14 +388,17 @@ ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL
 ```
 
 #### 2. BOR Completion Email (BorCompletionMail)
+
 **Trigger**: When document is signed/uploaded
 **Recipients**: Customer's primary email
 **Purpose**: Confirmation of successful BOR completion
 
 #### 3. Insurer Notification Email (BorInsurerNotificationMail)
+
 **Trigger**: When BOR document is uploaded/signed
 **Recipients**: Insurance provider contacts
-**Special Handling**: 
+**Special Handling**:
+
 - Car LOB with Sukoon: Subject includes chassis number
 - Only sent if insurance provider is configured
 - Sent only once per BOR request
@@ -373,13 +406,14 @@ ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL
 ### Email Configuration
 
 #### Bird Service Integration
+
 ```php
 // Service Configuration
 BirdService::triggerWebHookRequest($workflowUrl, $emailData)
 
 // Workflow URLs stored in ApplicationStorage
 - BIRD_BOR_WORKFLOW_URL: BOR request emails
-- BIRD_BOR_COMPLETION_WORKFLOW_URL: Completion emails  
+- BIRD_BOR_COMPLETION_WORKFLOW_URL: Completion emails
 - BIRD_BOR_INSURER_WORKFLOW_URL: Insurer notifications
 ```
 
@@ -406,12 +440,14 @@ $lobToDocumentType = [
 ### Document Storage
 
 #### Azure Blob Storage
+
 - **Container**: Configured via `azureIM` disk
 - **Path Structure**: `/bor/{bor_reference}/{document_type}/{filename}`
 - **File Types**: PDF, DOC, DOCX, JPG, JPEG, PNG
 - **Size Limit**: 10MB per file
 
 #### Document Processing
+
 ```php
 // Upload Process
 1. Validate file type and size
@@ -425,12 +461,14 @@ $lobToDocumentType = [
 ### PDF Generation
 
 #### BorPdfService Features
+
 - **Dynamic Templates**: Different layouts for Individual vs Entity
 - **Signature Integration**: Embeds digital signatures
 - **LOB-specific Data**: Includes policy numbers, chassis numbers
 - **Base64 Encoding**: For email attachments and previews
 
 #### PDF Template (bor-document.blade.php)
+
 ```php
 // Template Variables
 - customer_type: 'Individual' | 'Entity'
@@ -453,9 +491,10 @@ $lobToDocumentType = [
 ### Permission System
 
 #### BOR_DOCUMENT_UPLOAD Permission
+
 ```php
 // Middleware Protection
-$this->middleware('permission:' . PermissionsEnum::BOR_DOCUMENT_UPLOAD, 
+$this->middleware('permission:' . PermissionsEnum::BOR_DOCUMENT_UPLOAD,
     ['only' => ['uploadDocument']]);
 
 // Frontend Check
@@ -463,6 +502,7 @@ const canUpload = can(permissionsEnum.BOR_DOCUMENT_UPLOAD);
 ```
 
 #### Role-Based Access
+
 - **Advisor**: Can create, edit, cancel BOR requests
 - **Admin**: Full access including document upload
 - **Customer**: Can only sign/upload via secure links
@@ -470,6 +510,7 @@ const canUpload = can(permissionsEnum.BOR_DOCUMENT_UPLOAD);
 ### Security Measures
 
 #### BOR Reference Generation
+
 ```php
 // Format: IM-BOR-{ddmmyyHis}-{count}
 // Example: IM-BOR-150124103045-1
@@ -482,6 +523,7 @@ public static function generateBorId(int $leadId): string
 ```
 
 #### Secure Links
+
 - **Customer Portal**: Uses BOR reference for access
 - **No Authentication**: Links are self-contained
 - **Time-based**: Links expire after reasonable time
@@ -492,10 +534,11 @@ public static function generateBorId(int $leadId): string
 ### Application Storage Settings
 
 #### Required CMS Configuration
+
 ```php
 // Bird Workflow URLs
 ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL
-ApplicationStorageEnums::BIRD_BOR_COMPLETION_WORKFLOW_URL  
+ApplicationStorageEnums::BIRD_BOR_COMPLETION_WORKFLOW_URL
 ApplicationStorageEnums::BIRD_BOR_INSURER_WORKFLOW_URL
 
 // Portal Configuration
@@ -505,6 +548,7 @@ config('constants.AFIA_WEBSITE_DOMAIN')
 #### Database Seeders
 
 ##### ApplicationStorageSeeder
+
 ```php
 // BIRD_BOR_WORKFLOW_URL Configuration
 ApplicationStorage::create([
@@ -515,6 +559,7 @@ ApplicationStorage::create([
 ```
 
 ##### RolePermissionSeeder
+
 ```php
 // BOR Document Upload Permission
 Permission::create([
@@ -525,6 +570,7 @@ Permission::create([
 ```
 
 ##### DocumentTypesSeeder
+
 ```php
 // BOR Signature Document Type
 [
@@ -569,6 +615,7 @@ Permission::create([
 ```
 
 ##### BorDocumentSeeder
+
 ```php
 // Updates existing BOR document types to maintain consistency
 $documentTypes = [
@@ -589,7 +636,7 @@ foreach ($documentTypes as $documentType) {
     $existingDocumentType = ModelsDocumentType::where('code', $documentType)
         ->where('category', 'QUOTE')
         ->get();
-    
+
     foreach ($existingDocumentType as $documentTypeObj) {
         if ($documentTypeObj) {
             $documentTypeObj->update([
@@ -606,6 +653,7 @@ foreach ($documentTypes as $documentType) {
 ### Environment Variables
 
 #### Required Configuration
+
 ```env
 # Azure Storage
 AZURE_STORAGE_CONNECTION_STRING=
@@ -624,11 +672,13 @@ AFIA_WEBSITE_DOMAIN=https://portal.domain.com
 ### Database Migrations
 
 #### Required Migrations
+
 1. `create_bor_logs_table.php`
 2. `create_insurance_provider_contacts_table.php`
 3. `add_bor_document_upload_permission.php`
 
 #### Migration Order
+
 ```bash
 php artisan migrate --path=database/migrations/create_insurance_provider_contacts_table.php
 php artisan migrate --path=database/migrations/create_bor_logs_table.php
@@ -639,18 +689,20 @@ php artisan db:seed --class=ApplicationStorageSeeder
 ### Frontend Build
 
 #### Component Registration
+
 ```javascript
 // Auto-imported components (unplugin-vue-components)
-- BorLogsSection
-- BorLogsList  
-- BorRequestForm
-- BorUploadDocument
-- BorCancelModal
-- BorDoneModal
-- BorViewDocumentModal
+-BorLogsSection -
+  BorLogsList -
+  BorRequestForm -
+  BorUploadDocument -
+  BorCancelModal -
+  BorDoneModal -
+  BorViewDocumentModal;
 ```
 
 #### Route Configuration
+
 ```php
 // Web Routes (IMCRM)
 Route::prefix('bor')->name('bor.')->group(function () {
@@ -682,6 +734,7 @@ Route::prefix('api/v1/bor')->group(function () {
 ### Testing Checklist
 
 #### Functional Testing
+
 - [ ] BOR request creation for all LOBs
 - [ ] Customer type validation (Individual/Entity)
 - [ ] LOB-specific field requirements
@@ -693,6 +746,7 @@ Route::prefix('api/v1/bor')->group(function () {
 - [ ] Permission-based access control
 
 #### Integration Testing
+
 - [ ] Bird service connectivity
 - [ ] Azure storage integration
 - [ ] PDF generation
@@ -701,6 +755,7 @@ Route::prefix('api/v1/bor')->group(function () {
 - [ ] Frontend-backend communication
 
 #### Performance Testing
+
 - [ ] Large file upload handling
 - [ ] Concurrent BOR requests
 - [ ] Database query optimization
@@ -710,6 +765,7 @@ Route::prefix('api/v1/bor')->group(function () {
 ### Monitoring & Logging
 
 #### Key Metrics
+
 - BOR request creation rate
 - Email delivery success rate
 - Document upload success rate
@@ -717,6 +773,7 @@ Route::prefix('api/v1/bor')->group(function () {
 - Error rates by component
 
 #### Logging Points
+
 ```php
 // Critical Logging Events
 LoggerService::info('BOR Request Created', [...]);
@@ -730,16 +787,19 @@ LoggerService::info('Insurer Notification Sent', [...]);
 #### Common Issues
 
 1. **Email Delivery Failures**
+
    - Check Bird service connectivity
    - Verify workflow URLs in ApplicationStorage
    - Check customer email validity
 
 2. **Document Upload Issues**
+
    - Verify Azure storage configuration
    - Check file size limits (10MB)
    - Verify BOR_DOCUMENT_UPLOAD permission
 
 3. **PDF Generation Problems**
+
    - Check DomPDF configuration
    - Verify template file paths
    - Check memory limits for large documents
