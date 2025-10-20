@@ -20,6 +20,7 @@ const complianceDisable = ref(true);
 const patternFieldDisable = ref(true);
 const isSyncEnabled = ref(page.props.isInsurerSyncEnabled ?? false);
 const syncProcessLoading = ref(false);
+const quoteRequest = page.props.quoteRequest;
 
 const emit = defineEmits(['update:insurerPortalSyncData']);
 
@@ -127,8 +128,8 @@ const noEscalated = computed(() => {
 });
 
 const kycFormDetails = useForm({
-  customer_id: page.props.quoteRequest.customer_id,
-  quote_uuid: page.props.quoteRequest.uuid,
+  customer_id: quoteRequest.customer_id,
+  quote_uuid: quoteRequest.uuid,
   quote_type_id: page.props.quoteType.id,
   insured_id: insuredDetails?.insured?.id,
   first_name:
@@ -143,8 +144,8 @@ const kycFormDetails = useForm({
     (isScreeningIndividual
       ? insuredDetails?.insured?.insured_kyc?.residential_address
       : insuredDetails?.insured?.insured_kyc?.registered_address) ?? null,
-  mobile_number: page.props.quoteRequest.mobile_no,
-  email: page.props.quoteRequest.email,
+  mobile_number: quoteRequest.mobile_no,
+  email: quoteRequest.email,
   customer_tenure:
     insuredDetails?.insured?.insured_kyc?.customer_tenure ?? null,
   id_type:
@@ -255,12 +256,12 @@ const kycFormDetails = useForm({
   // GIG Screening specific fields (Only for GIG Screening API)
   chassis_number:
     (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
-      ? page.props.quoteRequest?.car_quote_request_detail?.chassis_number
-      : page.props.quoteRequest?.bike_quote?.chassis_number) ?? null,
+      ? quoteRequest?.car_quote_request_detail?.chassis_number
+      : quoteRequest?.bike_quote?.chassis_number) ?? null,
   get_quote_email_gig:
     (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
-      ? page.props.quoteRequest?.car_quote_request_detail?.insurer_quote_email
-      : page.props.quoteRequest?.quote_detail?.insurer_quote_email) ??
+      ? quoteRequest?.car_quote_request_detail?.insurer_quote_email
+      : quoteRequest?.quote_detail?.insurer_quote_email) ??
     page.props.gigInsurerDefaultEmail,
 });
 function insuredKycFormValidate() {
@@ -273,7 +274,7 @@ const syncInsurerPortalUpdates = () => {
   axios
     .post('/get-quote-details-from-insurer', {
       quoteTypeId: page.props.quoteType.id,
-      quoteUID: page.props.quoteRequest.uuid,
+      quoteUID: quoteRequest.uuid,
     })
     .then(response => {
       // Safely check response.data exists and has expected structure
@@ -320,7 +321,7 @@ const submitInsuredKycForm = isValid => {
   if (!isValid) return;
 
   let insuranceProviderCode =
-    page.props.quoteRequest?.plan?.insurance_provider?.code;
+    quoteRequest?.plan?.insurance_provider?.code;
 
   if (insuredKycFormValidate()) {
     kycFormDetails.processing = true;
