@@ -193,11 +193,13 @@ class TransactionReportService extends ManagementReport
                     ? TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP
                     : ($item->travel_coverage_code != null
                         ? $item->travel_coverage_code
-                        : ($item->travel_days_cover_for <= 92
+                        : ($item->travel_days_cover_for !== null && $item->travel_days_cover_for <= 92
                             ? TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP
-                            : TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP.
-                            '/'.
-                            TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP));
+                            : ($item->travel_days_cover_for !== null
+                                ? TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP.
+                                '/'.
+                                TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP
+                                : 'N/A')));
 
                 $item->traveling_where = $item->travel_direction_code !== null
                     ? $item->travel_direction_code
