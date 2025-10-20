@@ -21,6 +21,7 @@ const patternFieldDisable = ref(true);
 const isSyncEnabled = ref(page.props.isInsurerSyncEnabled ?? false);
 const syncProcessLoading = ref(false);
 const quoteRequest = page.props.quoteRequest;
+const isPrivateCar = page.props.isPrivateCar;
 
 const emit = defineEmits(['update:insurerPortalSyncData']);
 
@@ -1188,6 +1189,7 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] =
         @click="syncInsurerPortalUpdates"
         :disabled="!isSyncEnabled"
         :loading="syncProcessLoading"
+        v-if="isPrivateCar"
       >
         Sync
       </x-button>
