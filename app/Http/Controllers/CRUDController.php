@@ -845,7 +845,7 @@ class CRUDController extends Controller
                 $insurerApiStatus = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
                 $previousQuote = $this->carQuoteService->getPreviousQuote($record->previous_quote_id);
 
-                $isEpEcbSelected = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB);
+                $isEpEcbPaymentPaid = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB, true);
 
                 return inertia('PersonalQuote/Car/Show', compact([
                     'record',
@@ -889,7 +889,7 @@ class CRUDController extends Controller
                     'trimList',
                     'autoAllocationDisabled',
                     'embeddedProducts',
-                    'isEpEcbSelected',
+                    'isEpEcbPaymentPaid',
                     'genericRequestEnum',
                     'paymentEntityModel',
                     'payments',
@@ -1372,7 +1372,7 @@ class CRUDController extends Controller
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
             $dropdownSource['business_activities'] = $this->dropdownSourceService->getDropdownSource('business_activity');
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
-            $isEpEcbSelected = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB);
+            $isEpEcbPaymentPaid = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB, true);
             $courierQuoteResponse = app(MACRMService::class)->getCourierQuoteStatus($record->uuid, QuoteTypeId::Car);
             $courierQuoteStatus = isset($courierQuoteResponse['data']['status'])
                 ? $courierQuoteResponse['data']['status']
@@ -1391,7 +1391,7 @@ class CRUDController extends Controller
                 'customerAddressData' => $customerAddressData,
                 'courierQuoteStatus' => $courierQuoteStatus,
                 'quoteStatusEnums' => QuoteStatusEnum::asArray(),
-                'isEpEcbSelected' => $isEpEcbSelected,
+                'isEpEcbPaymentPaid' => $isEpEcbPaymentPaid,
             ]);
         }
 

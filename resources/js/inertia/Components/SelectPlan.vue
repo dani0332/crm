@@ -269,7 +269,7 @@ const updateSelectedPlan = () => {
   if (props.quoteType.toLocaleLowerCase() == 'car') {
     // Check if customer has an active ECB transaction that requires confirmation
     if (props.plan.repairType != page.props.carPlanTypeEnum.COMP
-      && page.props.isEpEcbSelected
+      && page.props.isEpEcbPaymentPaid
       && !confirmationModal.isConfirmed
     ) {
       confirmationModal.message = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;

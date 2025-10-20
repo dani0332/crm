@@ -9,7 +9,7 @@ const props = defineProps({
     default: {},
   },
   quoteStatusEnums: Array,
-  isEpEcbSelected: Boolean,
+  isEpEcbPaymentPaid: Boolean,
 });
 
 const { isRequired, isEmail, maxValue } = useRules();
@@ -270,7 +270,7 @@ function onSubmit(isValid) {
   if (!isValid) return;
 
   // Check if customer has an active ECB transaction that requires confirmation
-  if (props.isEpEcbSelected && !modals.isConfirmed) {
+  if (props.isEpEcbPaymentPaid && !modals.isConfirmed) {
     modals.confirmationMessage = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
     modals.showConfirmationModal = true;
     return;
