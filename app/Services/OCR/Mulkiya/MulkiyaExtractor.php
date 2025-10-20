@@ -87,7 +87,7 @@ class MulkiyaExtractor
                 'chassis_number' => $data['chassisNumber'] ?? null,
 
                 // Car Quote fields
-                'policy_expiry_date' => $this->formatDate($data['insuranceExpiryDate'] ?? null),
+                'policy_expiry_date' => $this->formatDate($data['insuranceExpiryDate'] ?? null), 
 
                 // Registration Certificate fields
                 'place_of_issue' => $data['placeOfIssue'] ?? null,
