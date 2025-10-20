@@ -30,7 +30,7 @@ class MulkiyaDataProcessor
         try {
             $processedData = $this->mulkiyaExtractor->extractMulkiyaData()->getProcessedData();
 
-            LoggerService::info('Mulkiya data processor started');
+            LoggerService::info('Mulkiya data processor started with data: '. json_encode($processedData));
 
             if (empty($processedData['vehicle_driver_detail_fields']) && empty($processedData['car_quote_detail_fields']) && empty($processedData['car_quote_fields']) && empty($processedData['registration_certificate_fields'])) {
                 LoggerService::warning('Mulkiya data processor - No valid data to process');

@@ -47,6 +47,7 @@ trait OcrUtils
         try {
             return Carbon::parse($date)->format('Y-m-d');
         } catch (\Exception $e) {
+            LoggerService::error('Failed to format date', exception: $e);
             return null;
         }
     }
