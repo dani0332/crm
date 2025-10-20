@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class SendAIAdvisorOCBJob implements ShouldQueue
 {
@@ -39,5 +40,10 @@ class SendAIAdvisorOCBJob implements ShouldQueue
         if ($this->quoteType === QuoteTypes::CAR) {
             $carEmailService->sendCarAIAdvisorOCB($lead, $this->isReAssignment);
         }
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->quoteUuid))->dontRelease()];
     }
 }
