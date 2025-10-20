@@ -744,6 +744,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering]),
+                        'System Health',
+                        route('admin.system-health.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
                         'Permissions Docs',
                         url('/permissions-docs/index.php'),

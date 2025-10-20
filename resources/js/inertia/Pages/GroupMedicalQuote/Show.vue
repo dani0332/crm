@@ -6,7 +6,7 @@ import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   quoteDetails: Object,
   allowedDuplicateLOB: Array,
@@ -20,6 +20,8 @@ defineProps({
   nationalities: Array,
   UBORelations: Array,
   UBOsDetails: Array,
+  membersDetails: Array,
+  memberRelations: Array,
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
@@ -41,12 +43,16 @@ defineProps({
   amlStatusName: String,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  activities: Array,
+  advisors: Array,
 });
 
 const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
 const leadSource = page.props.leadSource;
+
+let countDays = ref(useDaysSinceStale(props.quote?.stale_at));
 
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -75,6 +81,9 @@ const genderText = gender =>
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
+const dateFormatYMD = date =>
+  date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
+
 const modals = reactive({
   duplicate: false,
   member: false,
@@ -83,8 +92,6 @@ const modals = reactive({
   docConfirm: false,
   plan: false,
   createPlan: false,
-  activity: false,
-  activityConfirm: false,
   addContact: false,
   contactDeleteConfirm: false,
   contactPrimaryConfirm: false,
@@ -162,11 +169,14 @@ const onLeadStatus = () => {
     {
       preserveScroll: true,
       onError: errors => {
-        console.log(errors);
         notification.error({
           title: errors.value,
           position: 'top',
         });
+      },
+      onSuccess: response => {
+        countDays.value = useDaysSinceStale(response.props.quote?.stale_at);
+        router.reload({ only: ['quote'] });
       },
     },
   );
@@ -235,7 +245,10 @@ const customerProfileForm = useForm({
     page.props.quote.latest_insured?.last_name ??
     page.props.quote.customer_insured_last_name ??
     '',
-  emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
+  emirates_id_number:
+    (page.props.quote?.emirates_id_number ??
+      page.props.quote?.customer.emirates_id_number) ||
+    null,
   emirates_id_expiry_date:
     page.props.quote?.customer.emirates_id_expiry_date || null,
 
@@ -501,7 +514,16 @@ function handleOcrNotification(event) {
     <OcrNotification />
     <Head title="Group Medical Lead Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+      <div class="flex items-center gap-2">
+        <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }}
+        </p>
+      </div>
+      <div></div>
       <div
         class="flex gap-2 mb-3 justify-end"
         v-if="readOnlyMode.isDisable === true"
@@ -858,7 +880,12 @@ function handleOcrNotification(event) {
         <template #header>
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
-              Entity Profile
+              {{
+                enabledCustomerType == page.props.customerTypeEnum.Individual
+                  ? 'Customer '
+                  : 'Entity '
+              }}
+              Profile
             </h3>
           </div>
         </template>
@@ -873,7 +900,109 @@ function handleOcrNotification(event) {
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <dl
+                v-if="
+                  enabledCustomerType === page.props.customerTypeEnum.Individual
+                "
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+              >
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">FIRST NAME</dt>
+                  <dd>{{ quote.first_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">LAST NAME</dt>
+                  <dd>{{ quote.last_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INSURED FIRST NAME</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.insured_first_name"
+                      :rules="[isRequired]"
+                      placeholder="INSURED FIRST NAME"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INSURED LAST NAME</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.insured_last_name"
+                      :rules="[isRequired]"
+                      placeholder="INSURED LAST NAME"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">MOBILE NUMBER</dt>
+                  <dd>{{ quote.mobile_no }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMAIL</dt>
+                  <dd class="break-words">{{ quote.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ quote?.nationality?.text }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">DATE OF BIRTH</dt>
+                  <dd>{{ dateFormatYMD(quote.dob) }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ genderText(quote.gender).value }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>
+                    {{
+                      quote.customer.receive_marketing_updates ? 'Yes' : 'No'
+                    }}
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.emirates_id_number"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
+                  <dd>
+                    <DatePicker
+                      v-model="customerProfileForm.emirates_id_expiry_date"
+                      placeholder="EMIRATES ID EXPIRY DATE"
+                      :disabled="!isProfileUpdateAllow"
+                      :min-date="new Date()"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.customer?.pcp_tag_formatted }}</dd>
+                </div>
+                <RiskRatingScoreDetails
+                  :quote="quote"
+                  :modelType="'Business'"
+                />
+              </dl>
+              <dl
+                v-if="
+                  enabledCustomerType === page.props.customerTypeEnum.Entity
+                "
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+              >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
@@ -1088,6 +1217,16 @@ function handleOcrNotification(event) {
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
       :UBORelations="UBORelations"
+      quote_type="Business"
+      :expanded="sectionExpanded"
+    />
+
+    <MemberDetails
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
+      :quote="quote"
+      :membersDetails="membersDetails"
+      :nationalities="nationalities"
+      :memberRelations="memberRelations"
       quote_type="Business"
       :expanded="sectionExpanded"
     />
@@ -1316,6 +1455,16 @@ function handleOcrNotification(event) {
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+    />
+
+    <Activities
+      :quote="quote"
+      :quoteType="page.props.quoteType"
+      :modelType="page.props.modelType"
+      :advisors="advisors"
+      :activities="activities"
+      :expanded="sectionExpanded"
+      :readOnlyMode="readOnlyMode"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

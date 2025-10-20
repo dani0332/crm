@@ -76,6 +76,7 @@ use App\Http\Controllers\V2\BuyLeadController;
 use App\Http\Controllers\V2\CarQuoteController;
 use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\V2\CentralController;
+use App\Http\Controllers\V2\CustomerAcceptanceLogController;
 use App\Http\Controllers\V2\CustomerController as V2CustomerController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
@@ -581,6 +582,17 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
 
         Route::get('/allocation-audit', [AllocationAuditController::class, 'index'])->name('admin.allocation-audit.index');
+
+        // System Health Dashboard - Engineering role only
+        Route::get('/system-health', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'index'])
+            ->name('admin.system-health.index');
+        Route::get('/system-health/databases', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'databases'])
+            ->name('admin.system-health.databases');
+        Route::get('/system-health/redis', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'redis'])
+            ->name('admin.system-health.redis');
+        Route::get('/system-health/queues', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'queues'])
+            ->name('admin.system-health.queues');
+
     });
 
     Route::prefix('buy-leads')->group(function () {
@@ -939,6 +951,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         // Document Management
         Route::post('logs/{id}/documents', [BorController::class, 'uploadDocument'])->name('bor.documents.upload');
+    });
+
+    // Customer Acceptance Logs Routes
+    Route::group(['prefix' => 'consent-logs'], function () {
+        Route::get('request', [CustomerAcceptanceLogController::class, 'index']);
     });
 
     // This route is only for testing purposes to preview the BOR PDF

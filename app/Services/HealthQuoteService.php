@@ -19,9 +19,11 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SLAActionTypeEnum;
 use App\Facades\Ken;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
+use App\Jobs\ReEvaluatePecJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\Customer;
@@ -40,6 +42,7 @@ use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
+use App\Services\SLA\SLAService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
@@ -63,7 +66,7 @@ class HealthQuoteService extends BaseService
 
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder, protected SLAService $slaService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
@@ -272,11 +275,9 @@ class HealthQuoteService extends BaseService
         return $branchName;
     }
 
-    public function isAUHLead($id): bool
+    public function getLead($id): HealthQuote
     {
-        $quote = HealthQuote::findOrFail($id);
-
-        return $quote->isAUHLead(false);
+        return HealthQuote::findOrFail($id);
     }
 
     public function getEntityPlain($id)
@@ -355,6 +356,7 @@ class HealthQuoteService extends BaseService
             'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
             'salaryBandId' => $request->salary_band_id,
             'memberCategoryId' => $request->member_category_id,
+            'isPecMarked' => $request->pec == 1,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -426,7 +428,6 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
-
         $healthQuote = HealthQuote::where('uuid', $id)->first();
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
         $healthQuote->first_name = $request->first_name;
@@ -450,6 +451,7 @@ class HealthQuoteService extends BaseService
                 'salary_band_id' => $request->salary_band_id,
                 'gender' => $request->gender,
                 'dob' => $request->dob,
+                'is_pec_marked' => $request->pec == 1,
             ];
 
             $healthQuoteFirstMember = HealthMemberDetail::where('health_quote_request_id', $healthQuote->id)->first();
@@ -475,7 +477,12 @@ class HealthQuoteService extends BaseService
         $healthQuote->dob = $request->dob;
         $healthQuote->policy_start_date = $request->policy_start_date;
         $healthQuote->health_plan_type_id = $request->plan_type_id;
+
         $healthQuote->save();
+
+        $this->slaService->meetSLAOnEdit($healthQuote, SLAActionTypeEnum::LEAD_EDIT);
+
+        ReEvaluatePecJob::dispatch($healthQuote->uuid);
 
         if (isset($request->return_to_view)) {
             return redirect('quote/health/'.$id)->with('success', 'Health Quote has been updated');
@@ -1320,6 +1327,7 @@ class HealthQuoteService extends BaseService
                 'salaryBandId' => $request->salary_band_id,
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
+                'isPecMarked' => $request->pec == 1,
             ];
 
             $dataArray = [
@@ -1355,6 +1363,7 @@ class HealthQuoteService extends BaseService
                 'salaryBandId' => $request->salary_band_id,
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
+                'isPecMarked' => $request->pec == 1,
             ];
 
             $dataArray = [

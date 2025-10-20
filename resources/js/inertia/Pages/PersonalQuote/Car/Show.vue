@@ -11,6 +11,7 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 defineProps({
   quote: Object,
@@ -105,6 +106,7 @@ defineProps({
   isFuncsEnabled: Array,
   insurerAMLStatus: String,
   businessActivities: Object,
+  previousQuote: Object,
   borLogs: Array,
   apiIssuanceStatus: String,
   insurerApiStatus: String,
@@ -125,6 +127,7 @@ const selectedProviderPlan = ref({
 const modelClass = 'App\\Models\\CarQuote';
 
 const processingOCBEmailNB = ref(false);
+const processingOCBEmail = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
@@ -1157,6 +1160,7 @@ const onExportPlans = () => {
 const confirmSendEmail = () => {
   const first_name = page.props.record.first_name || '';
   const last_name = page.props.record.last_name || '';
+  processingOCBEmail.value = true;
   axios
     .post(
       `/quotes/car/${page.props.record.uuid}/send-email-one-click-buy`,
@@ -1190,15 +1194,18 @@ const confirmSendEmail = () => {
     )
 
     .then(response => {
+      processingOCBEmail.value = false;
       notification.success({
         title: response.data.success,
         position: 'top',
       });
     })
     .catch(error => {
+      processingOCBEmail.value = false;
       console.log(error);
     })
     .finally(() => {
+      processingOCBEmail.value = false;
       modals.sendConfirm = false;
     });
 };
@@ -2769,6 +2776,7 @@ function handleOcrNotification(event) {
       :canAddBatchNumber="hasRole(rolesEnum.CarManager)"
       :expanded="sectionExpanded"
       :quote="record"
+      :previousQuote="previousQuote"
       modelType="Car"
       :insly-id="record?.insly_id"
       v-if="
@@ -3767,7 +3775,12 @@ function handleOcrNotification(event) {
             >
               Cancel
             </x-button>
-            <x-button size="sm" color="error" @click.prevent="confirmSendEmail">
+            <x-button
+              size="sm"
+              color="error"
+              :loading="processingOCBEmail"
+              @click.prevent="confirmSendEmail"
+            >
               Send
             </x-button>
           </div>
@@ -3997,6 +4010,12 @@ function handleOcrNotification(event) {
       :insuranceProviders="insuranceProviders"
       :expanded="sectionExpanded"
       :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="record.id"
+      :lob="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy

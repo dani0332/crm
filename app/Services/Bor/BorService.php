@@ -39,6 +39,10 @@ class BorService
         ! $isPersonalQuote && $quoteObject->load('personalQuote');
         $personalQuote = $isPersonalQuote ? $quoteObject : $quoteObject->personalQuote;
 
+        if (! $personalQuote) {
+            throw new \Exception('Personal quote not found for BOR logs');
+        }
+
         // Get paginated BOR logs with relationships
         $logs = BorLog::where('personal_quote_id', $personalQuote->id)
             ->with(['insuranceProvider', 'personalQuote', 'signedDocument', 'document'])
@@ -100,6 +104,14 @@ class BorService
         $isPersonalQuote = checkPersonalQuotes(ucfirst($data['lob']));
         ! $isPersonalQuote && $quoteObject->load('personalQuote');
         $personalQuote = $isPersonalQuote ? $quoteObject : $quoteObject->personalQuote;
+
+        // if length of representor is 1, then set the insurance_contact_id to the first value by default
+        if (isset($data['insurance_provider_id']) && $data['insurance_provider_id'] != null) {
+            $representor = $this->getRepresentor($data['insurance_provider_id'], $personalQuote->quote_type_id);
+            if (count($representor) == 1 && $data['insurance_contact_id'] == null) {
+                $data['insurance_contact_id'] = $representor[0]['value'];
+            }
+        }
 
         $data['personal_quote_id'] = $personalQuote->id;
         $data['status'] = BorStatusEnum::SIGNATURE_REQUESTED;

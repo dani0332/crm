@@ -116,6 +116,7 @@ class BusinessQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
+                'nationality',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -123,6 +124,10 @@ class BusinessQuoteRepository extends BaseRepository
             ->firstOrFail();
 
         $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Entity;
+
+        if (isset($quote->latestInsured)) {
+            $quote->emirates_id_number = $quote->latestInsured['id_type'] == 'emiratesId' ? $quote->latestInsured['id_number'] : null;
+        }
 
         return $quote;
     }

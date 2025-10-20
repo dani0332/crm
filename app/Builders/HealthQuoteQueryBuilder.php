@@ -70,6 +70,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'assignment_type',
             'gender',
             'emirate_of_your_visa_id',
+            'pec_marked_at',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
@@ -221,6 +222,13 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when($this->shouldApplyDatesFilter($requestParams) && ! $this->hasFilterValue('renewal_batches', $requestParams) && $this->hasFilterValue('created_at_start', $requestParams) && $this->hasFilterValue('created_at_end', $requestParams), function ($query) use ($requestParams) {
                 $query->whereBetween('created_at', [$this->parseDate($this->getFilterValue('created_at_start', $requestParams), true), $this->parseDate($this->getFilterValue('created_at_end', $requestParams), false)]);
+            })
+            ->when(request()->has('pec_flag') && request('pec_flag') != 'all', function ($q) {
+                if (request('pec_flag') == 1) {
+                    $q->hasPecTag();
+                } else {
+                    $q->whereNull('pec_marked_at');
+                }
             })
             ->when(
                 $this->hasFilterValue('sortBy', $requestParams),

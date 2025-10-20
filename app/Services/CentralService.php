@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
@@ -878,6 +879,7 @@ class CentralService extends BaseService
                 'eligible_for_automate' => true,
                 'quote_type_id' => QuoteTypeId::Business,
                 'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::CORPLINE_RENEWALS])->first()->id,
+                'group_medical_renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::RM_RENEWALS])->first()->id,
             ],
             TravelQuote::class => [
                 'eligible_for_automate' => false,
@@ -981,8 +983,14 @@ class CentralService extends BaseService
                 ->when(! empty($scheduledActivitiesIDs), function ($previousSchedule) use ($scheduledActivitiesIDs) {
                     $previousSchedule->whereNotIn('id', $scheduledActivitiesIDs);
                 })
-                ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteTypeDetail) {
-                    $renewalTeamID = $quoteTypeDetail['renewal_team'];
+                ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteTypeDetail, $quoteDetails) {
+                    $renewalTeamID = $quoteTypeDetail['renewal_team'] ?? null;
+
+                    // Check if this is a Group Medical business quote (business_type_of_insurance_id = 5)
+                    if (isset($quoteTypeDetail['group_medical_renewal_team']) &&
+                        $quoteDetails->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                        $renewalTeamID = $quoteTypeDetail['group_medical_renewal_team'];
+                    }
 
                     $query->where('team_id', $renewalTeamID ?? null);
                 })
@@ -1584,7 +1592,6 @@ class CentralService extends BaseService
             ];
 
             return Ken::request('/capture-payment-validation', 'put', $data);
-
         } catch (\Throwable $th) {
             LoggerService::error('capturePaymentValidation failed',
                 context: [
@@ -1759,7 +1766,7 @@ class CentralService extends BaseService
                 'processInvolved' => 'Payment Capture',
             ]);
             AutomationFailedJob::dispatch(
-                $quote,
+                $quote->id,
                 QuoteTypeId::Car,
                 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                 'Quote Referred To Insurer UW',
@@ -1772,7 +1779,11 @@ class CentralService extends BaseService
 
         if ($premiumCheckEnabled) {
             $captureAmount = $payment->total_amount;
-            if ($quoteType->code == QuoteTypes::CAR->value && $insuranceProvider->code == InsuranceProviderEnum::AXA->value && $payment->total_amount != $payment->premium_authorized) {
+            if (
+                $quoteType->code == QuoteTypes::CAR->value &&
+                in_array($insuranceProvider?->code, [InsuranceProviderEnum::AXA->value, InsuranceProviderEnum::RSA->value]) &&
+                $payment->total_amount != $payment->premium_authorized
+            ) {
                 $captureAmount = $payment->premium_authorized;
             }
 
@@ -1797,7 +1808,7 @@ class CentralService extends BaseService
                         'processInvolved' => 'Payment Capture',
                     ]);
                     AutomationFailedJob::dispatch(
-                        $quote,
+                        $quote->id,
                         QuoteTypeId::Car,
                         'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                         'Premium Not Matched With Insurer',
@@ -1811,7 +1822,7 @@ class CentralService extends BaseService
                         'processInvolved' => 'Payment Capture',
                     ]);
                     AutomationFailedJob::dispatch(
-                        $quote,
+                        $quote->id,
                         QuoteTypeId::Car,
                         'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
                         'Quote Referred To Insurer UW',
@@ -1928,5 +1939,69 @@ class CentralService extends BaseService
         }
 
         return $return;
+    }
+
+    public function updateLastYearPolicy($request)
+    {
+        $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+
+        if (! $quote) {
+            return redirect()->back()->with('error', 'Error Updating Policy Details.');
+        }
+
+        // Map of request fields to database columns
+        $fieldMapping = [
+            'renewal_batch' => 'renewal_batch',
+            'previous_policy_expiry_date' => 'previous_policy_expiry_date',
+            'previous_policy_start_date' => 'previous_policy_start_date',
+            'previous_quote_policy_number' => 'previous_quote_policy_number',
+            'previous_quote_policy_premium' => 'previous_quote_policy_premium',
+            'previous_advisor_id' => 'previous_advisor_id',
+        ];
+
+        // Filter only filled fields from the request
+        $updateData = collect($fieldMapping)
+            ->filter(fn ($column, $field) => $request->filled($field))
+            ->mapWithKeys(fn ($column, $field) => [$column => $request->input($field)])
+            ->toArray();
+
+        // Auto-update renewal batch for non-motor LOBs based on expiry date
+        if ($request->filled('previous_policy_expiry_date') && $this->isNonMotorQuoteType($request->model_type)) {
+            $renewalBatch = $this->findRenewalBatchByExpiryDate($request->previous_policy_expiry_date);
+            if ($renewalBatch) {
+                $updateData['renewal_batch_id'] = $renewalBatch->id;
+                $updateData['renewal_batch'] = $renewalBatch->name;
+            }
+        }
+
+        // Update the quote with all provided fields
+        if (! empty($updateData)) {
+            $quote->update($updateData);
+        }
+
+        return ['status' => true, 'message' => 'Last Year Policy Details have been updated successfully.'];
+    }
+
+    /**
+     * Check if the quote type is non-motor
+     */
+    private function isNonMotorQuoteType(string $quoteType): bool
+    {
+        $nonMotorTypes = ['health', 'travel', 'life', 'home', 'pet', 'bike', 'yacht', 'cycle', 'jetski', 'business', 'savings'];
+
+        return in_array(strtolower($quoteType), $nonMotorTypes);
+    }
+
+    /**
+     * Find renewal batch by expiry date for non-motor LOBs
+     */
+    private function findRenewalBatchByExpiryDate(string $expiryDate): ?\App\Models\RenewalBatch
+    {
+        $expiryDate = \Carbon\Carbon::parse($expiryDate);
+
+        return \App\Models\RenewalBatch::whereNull('quote_type_id') // Non-motor batches
+            ->where('start_date', '<=', $expiryDate)
+            ->where('end_date', '>=', $expiryDate)
+            ->first();
     }
 }

@@ -7,6 +7,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Models\TravelQuote;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
 {

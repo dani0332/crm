@@ -275,7 +275,7 @@ class BorController extends Controller
     public function signDocument(Request $request)
     {
         try {
-            $borLog = BorLog::where('bor_reference', $request->input('bor_ref_id'))->first();
+            $borLog = BorLog::with('personalQuote')->where('bor_reference', $request->input('bor_ref_id'))->first();
             $quote = $borLog->personalQuote;
             $quoteType = QuoteTypes::getName($quote->quote_type_id)->value;
             $quote = checkPersonalQuotes($quoteType) ? $quote : $this->getQuoteObject($quoteType, $quote->quote_id);
@@ -303,8 +303,8 @@ class BorController extends Controller
                 'document_id' => $docIsPresent ? $document->doc_uuid : $borLog->document_id,
                 'user_agent' => getUserIpAddress($request),
                 'download_clicked' => $borLog->download_clicked == 1 ? 1 : $request->download_clicked ?? 0,
-                'insurer_name' => $request->insurer_name,
-                'policy_number' => $request->policy_number,
+                'insurer_name' => ! empty(trim($request->insurer_name ?? '')) ? $request->insurer_name : $borLog->insurer_name,
+                'policy_number' => ! empty(trim($request->policy_number ?? '')) ? $request->policy_number : $borLog->policy_number,
                 'status' => $docIsPresent ? BorStatusEnum::DOCUMENT_SIGNED : $borLog->status,
                 'date_signed' => $docIsPresent ? now() : $borLog->date_signed,
             ]);

@@ -290,6 +290,15 @@ class CRUDController extends Controller
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
+            $pecFlag = request('pec_flag');
+            $gridData->when(request()->has('pec_flag') && $pecFlag != 'all', function ($q) use ($pecFlag) {
+                if ($pecFlag == 1) {
+                    $q->hasPecTag();
+                } else {
+                    $q->whereNull('pec_marked_at');
+                }
+            });
+
             $gridData = $gridData->simplePaginate(10)->withQueryString();
             $gridData->map(function ($item) {
                 $item->branch_name = app(HealthQuoteService::class)->getBranchName($item->emirate_of_your_visa_id, $item->advisor?->primaryBranch?->branch?->name);
@@ -376,6 +385,8 @@ class CRUDController extends Controller
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
             $productTeam = $this->getProductByName(quoteTypeCode::Car);
             $teams = $this->getTeamsByProductId($productTeam->id);
+            $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
+            $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses();
 
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
@@ -396,6 +407,8 @@ class CRUDController extends Controller
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
                 'insurerAMLStatus' => $insurerAMLStatus,
+                'issuanceStatuses' => $issuanceStatuses,
+                'insurerApiStatus' => $insurerApiStatus,
             ]);
         }
 
@@ -444,6 +457,7 @@ class CRUDController extends Controller
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'branchOptions' => EmirateEnum::getBranchMapping(),
+                'emirateEnum' => EmirateEnum::asArray(),
             ]);
         }
 
@@ -831,8 +845,9 @@ class CRUDController extends Controller
                 $customerAddressData = $this->customerService->getCustomerAddressData($record);
                 $amlStatusName = AMLStatusCode::getName($record->aml_status);
                 $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
-                $apiIssuanceStatus = PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id);
-                $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record, QuoteTypes::CAR->value)[$record->insurer_api_status_id] ?? null;
+                $apiIssuanceStatus = $record->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id) : null;
+                $insurerApiStatus = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
+                $previousQuote = $this->carQuoteService->getPreviousQuote($record->previous_quote_id);
 
                 return inertia('PersonalQuote/Car/Show', compact([
                     'record',
@@ -928,6 +943,7 @@ class CRUDController extends Controller
                     'businessActivities',
                     'apiIssuanceStatus',
                     'insurerApiStatus',
+                    'previousQuote',
                 ]));
             }
 
@@ -1169,13 +1185,16 @@ class CRUDController extends Controller
                 $record->branch_name = $this->healthQuoteService->getBranchName($record->emirate_of_your_visa_id, $record->branch_name);
                 $record->payment_status_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_text);
                 $amlStatusName = AMLStatusCode::getName($record->aml_status);
-                $isAUHLead = $this->healthQuoteService->isAUHLead($record->id);
+                $lead = $this->healthQuoteService->getLead($record->id);
+                $isAUHLead = $lead->isAUHLead(false);
+                $hasPecTag = $lead->has_pec_tag;
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
                     'emailStatuses' => $emailStatuses,
                     'quote' => $record,
                     'isAUHLead' => $isAUHLead,
+                    'hasPecTag' => $hasPecTag,
                     'amlStatusName' => $amlStatusName,
                     'sendUpdateOptions' => $sendUpdateOptions,
                     'sendUpdateLogs' => $sendUpdateLogs,
@@ -1336,6 +1355,7 @@ class CRUDController extends Controller
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
                 'branchOptions' => EmirateEnum::getBranchMapping(),
+                'emirateEnum' => EmirateEnum::asArray(),
             ]);
         }
 
@@ -2304,6 +2324,12 @@ class CRUDController extends Controller
         LoggerService::info(self::class.' - PCP Team Advisor: '.$isPCPTeamAdvisor.' | Lead source: '.$carQuote->source.' | Ref-ID: '.$carQuote->uuid.' | time: '.now());
         if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD && $isPCPTeamAdvisor) {
             app(CarEmailService::class)->sendPCPOCBIntroEmail($carQuote);
+
+            return response()->json(['success' => 'OCB email sent to customer']);
+        }
+
+        if ($carQuote->source != LeadSourceEnum::RENEWAL_UPLOAD && $carQuote->advisor_id) {
+            app(SendEmailCustomerService::class)->sendCarIntroEmailWithAdvisor($carQuote);
 
             return response()->json(['success' => 'OCB email sent to customer']);
         }
