@@ -7,6 +7,10 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  quote_type_id: {
+    type: Number,
+    default: null
+  },
 });
 
 const page = usePage();
@@ -16,6 +20,7 @@ const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const isSyncFromInsurer = ref(false);
 const quote = page.props?.quoteRequest ?? page.props?.record;
+const insuranceProviderCode = quote?.plan?.insurance_provider?.code ?? quote?.plan_provider_code;
 
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [
@@ -50,10 +55,9 @@ const normalizeGender = gender => {
 };
 
 const additionalDriverDetailsForm = useForm({
-  quote_type_id: page.props.quoteType.id,
+  quote_type_id: page.props.quoteType.id ?? props.quote_type_id,
   quote_uuid: quote?.uuid,
-  insurance_provider_code:
-    quote?.plan?.insurance_provider.code ?? '',
+  insurance_provider_code: insuranceProviderCode ?? '',
   is_insured_and_driver_same:
     vehicleDriverDetail.value?.is_insured_and_driver_same?.toString() ?? '',
   driver_first_name: vehicleDriverDetail.value?.driver_first_name ?? '',
@@ -103,7 +107,7 @@ const submitAdditionalDriverDetailsForm = async isValid => {
           response.data.is_insured_driver_same == '0'
         ) {
           notification.success({
-            title: `Please Update Additional Drivers on ${insurerName} Portal`,
+            title: `Please Update Additional Drivers on ${insuranceProviderCode} Portal`,
             position: 'top',
             timeout: 5000,
           });
