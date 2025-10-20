@@ -1778,6 +1778,35 @@ class SendEmailCustomerService extends BaseService
         return $bccEmails;
     }
 
+    public function sendCarIntroEmailWithAdvisor($quote)
+    {
+        $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
+        if (! empty($carIntroEmailWorkflowUrl)) {
+            $advisor = User::where('id', $quote->advisor_id)->first() ?? null;
+            $emailData = $this->buildEmailDataForBirdFlow($quote, $advisor, WorkflowTypeEnum::CAR_INTRO_EMAIL);
+            app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
+            LoggerService::info('sendCarIntroEmailWithAdvisor - Webhook request sent to: '.$carIntroEmailWorkflowUrl.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
+        } else {
+            LoggerService::info('sendCarIntroEmailWithAdvisor - Webhook URL not found in storage with Ref-ID:'.$quote->uuid.' | Time:'.now());
+        }
+
+        return true;
+    }
+
+    public function sendCarIntroEmailWithoutAdvisor($quote)
+    {
+        $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
+        if (! empty($carIntroEmailWorkflowUrl)) {
+            $emailData = $this->buildEmailDataForBirdFlow($quote, null, WorkflowTypeEnum::CAR_INTRO_EMAIL);
+            app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
+            LoggerService::info('sendCarIntroEmailWithoutAdvisor - Webhook request sent to: '.$carIntroEmailWorkflowUrl);
+        } else {
+            LoggerService::info('sendCarIntroEmailWithoutAdvisor - Webhook URL not found in storage');
+        }
+
+        return true;
+    }
+
     public function buildEmailDataForBirdFlow($lead, $advisor, $workflowType)
     {
         $documentUrl = getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
@@ -1822,4 +1851,7 @@ class SendEmailCustomerService extends BaseService
 
         return true;
     }
+
+     
+
 }

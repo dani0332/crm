@@ -34,6 +34,7 @@ use App\Models\QuoteTag;
 use App\Models\SageApiLog;
 use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SageApiLogRepository;
 use App\Services\Logger\LoggerService;
@@ -629,6 +630,36 @@ class SageApiService
         $quoteType = $request->model_type;
 
         $quoteTypeId = QuoteTypes::getIdFromValue($request->model_type) ?? $quote->quote_type_id;
+
+        if (in_array($quoteTypeId, EmbeddedProductRepository::ALLOWED_LOBS)) {
+
+            $captureableEmbeddedTransactions = EmbeddedProductRepository::authorisedTransactions($quoteTypeId, $quote->id);
+            if ($captureableEmbeddedTransactions->isNotEmpty()) {
+                try {
+                    EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType));
+                    $hasSukoonMedexProducts = EmbeddedProductRepository::hasSukoonMedexProducts($captureableEmbeddedTransactions);
+
+                    // Return response only if EP has any Sukoon MEDEX Product, otherwise proceed to Sage booking
+                    if ($hasSukoonMedexProducts) {
+                        LoggerService::info(
+                            'Embedded Product payment is being captured, once done, booking process will begin',
+                            extra: $captureableEmbeddedTransactions->toArray()
+                        );
+
+                        return ['status' => true, 'message' => 'The embedded product payment is being captured, once done, booking process will begin.'];
+                    }
+
+                } catch (Exception $e) {
+                    LoggerService::error('Embedded Product payment capture failed', [
+                        'error' => $e->getMessage(),
+                        'uuid' => $quote->uuid,
+                    ]);
+
+                    return ['status' => false, 'message' => 'Embedded Product payment capture failed'];
+                }
+            }
+        }
+
         /* Check EP Booking */
         $isEPTransStatusReadyForSage = $this->isEmbeddedTransactionStatusReadyForSage($quote, $quoteTypeId);
         if (! $isEPTransStatusReadyForSage) {
@@ -2735,7 +2766,7 @@ class SageApiService
             /* if the Policy Issuance exist for the Insurer and LOB than assign the Advisor */
             if ($insuranceProviderAutomation) {
                 LoggerService::info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor and update insurer and api issuance status of quote');
-                if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
+                if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA])) {
                     app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType);
                 } else {
                     // TODO:: This should be updated with the new function in PolicyIssuanceService
