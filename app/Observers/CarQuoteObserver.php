@@ -164,34 +164,13 @@ class CarQuoteObserver
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
 
-        if (isset($dirty['car_make_id']) || isset($dirty['car_model_id']) || isset($dirty['registration_type']) || isset($dirty['vehicle_use']) || isset($dirty['is_modified'])) {
-            $reason = [];
-            $embeddedProductRepo = app(EmbeddedProductRepository::class);
-            if ($embeddedProductRepo->checkIsEpEcbPaymentAuthorisedOrCaptured($lead->id)) {
-                if (isset($dirty['car_make_id'])) {
-                    if ($embeddedProductRepo->checkIsCarMakeExcludedEcbVehicle($lead->car_make_id)) {
-                        $reason[] = 'car_make_id';
-                    }
-                }
-                if (isset($dirty['car_model_id'])) {
-                    if ($embeddedProductRepo->checkIsCarModelExcludedEcbVehicle($lead->car_model_id)) {
-                        $reason[] = 'car_model_id';
-                    }
-                }
-                if (isset($dirty['registration_type']) || isset($dirty['vehicle_use'])) {
-                    if ($lead->vehicle_use == CarVehicleUse::COMMERCIAL) {
-                        $reason[] = '(registration_type or vehicle_use)';
-                    }
-                }
-                if (isset($dirty['is_modified']) && $lead->is_modified == true) {
-                    $reason[] = 'is_modified';
-                }
-
-                if (! empty($reason)) {
-                    $reason = 'Payment void / cancel, due to change in car details like ('.implode(', ', $reason).')';
-                    $embeddedProductRepo->processEpEcbCancelPayment($lead, QuoteTypeId::Car, $reason);
-                }
-            }
+        if (isset($dirty['car_make_id']) 
+            || isset($dirty['car_model_id']) 
+            || isset($dirty['registration_type']) 
+            || isset($dirty['vehicle_use']) 
+            || isset($dirty['is_modified'])
+        ) {
+            app(EmbeddedProductRepository::class)->syncCarQuoteEpEcb($lead, QuoteTypeId::Car);
         }
     }
 }

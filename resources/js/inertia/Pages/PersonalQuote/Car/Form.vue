@@ -9,10 +9,7 @@ const props = defineProps({
     default: {},
   },
   quoteStatusEnums: Array,
-  epTransactions: {
-    type: Array,
-    default: () => [],
-  },
+  isEpEcbSelected: Boolean,
 });
 
 const { isRequired, isEmail, maxValue } = useRules();
@@ -216,38 +213,6 @@ const validateDecimal = event => {
 };
 
 /**
- * Find an embedded product transaction by short code
- * @param {string} shortCode - The embedded product short code to search for
- * @returns {Object|undefined} The found transaction or undefined
- */
-const findEpTransaction = shortCode => {
-  const epTransactions = page.props.epTransactions;
-  const paymentStatusEnum = page.props.paymentStatusEnum;
-
-  if (
-    !shortCode ||
-    !Array.isArray(epTransactions) ||
-    epTransactions.length === 0
-  ) {
-    return undefined;
-  }
-
-  return epTransactions.find(function (ep) {
-    const embeddedProduct = ep?.product?.embedded_product;
-
-    const isSelected = ep?.is_selected === 1;
-    const hasMatchingShortCode = embeddedProduct?.short_code === shortCode;
-    const hasValidPaymentStatus =
-      ep?.payment_status_id &&
-      [paymentStatusEnum.AUTHORISED, paymentStatusEnum.CAPTURED].includes(
-        ep.payment_status_id,
-      );
-
-    return isSelected && hasMatchingShortCode && hasValidPaymentStatus;
-  });
-};
-
-/**
  * Proceed with actual form submission
  * This is called after validation and confirmation checks pass
  */
@@ -305,8 +270,7 @@ function onSubmit(isValid) {
   if (!isValid) return;
 
   // Check if customer has an active ECB transaction that requires confirmation
-  const selectedEpECB = findEpTransaction(page.props.embeddedProductEnum.ECB);
-  if (selectedEpECB && !modals.isConfirmed) {
+  if (props.isEpEcbSelected && !modals.isConfirmed) {
     modals.confirmationMessage = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
     modals.showConfirmationModal = true;
     return;

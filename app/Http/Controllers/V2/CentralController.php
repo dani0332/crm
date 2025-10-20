@@ -430,6 +430,10 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($quoteType, $uuid);
         if ($quote) {
             app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::AVAILABLE_PLAN_SELECTED);
+
+            if(ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                app(EmbeddedProductRepository::class)->syncCarQuoteEpEcb($quote, QuoteTypeId::Car);
+            }
         }
 
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
