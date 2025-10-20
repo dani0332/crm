@@ -589,7 +589,6 @@ const assumptionsForm = useForm({
   car_quote_id: page.props.record.id,
 });
 
-
 const onUpdateAssumption = () => {
   // Check if customer has an active ECB transaction that requires confirmation
   if (page.props.isEpEcbPaymentPaid && !modals.isConfirmed) {
