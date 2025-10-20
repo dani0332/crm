@@ -71,9 +71,9 @@ const form = useForm({
   company_name: props.customerData.companyName,
   insurance_provider_id: props.customerData.currentlyInsuredWith,
   insurance_contact_id: props.borLog?.insurance_contact_id ?? null,
-  policy_number: '',
-  policy_expiry: '',
-  chassis_number: '',
+  policy_number: props.borLog?.policy_number ?? '',
+  policy_expiry: props.borLog?.policy_expiry ?? '',
+  chassis_number: props.borLog?.chassis_number ?? '',
   // Edit mode fields - these will NOT be updated
   additional_notes: '',
   reason: '',
@@ -253,9 +253,15 @@ watch(
 // Watch for customer type changes to reset relevant fields
 watch(
   () => form.customer_type,
-  newValue => {
+  (newValue, oldValue) => {
+    // Skip clearing fields during initial load or edit mode prefill
+    // Only clear when user actively changes from Individual to Entity
+    if (isEditMode.value || !oldValue) {
+      return;
+    }
+
     // Clear policy fields when switching to Entity (since they won't be visible)
-    if (newValue === 'Entity') {
+    if (newValue === 'Entity' && oldValue === 'Individual') {
       form.policy_number = '';
       form.policy_expiry = '';
       form.chassis_number = '';
