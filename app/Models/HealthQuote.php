@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -12,6 +14,7 @@ use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -24,7 +27,7 @@ class HealthQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
-    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted'];
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'has_pec_tag'];
     protected $table = 'health_quote_request';
     protected $fillable = [];
     public $filterables = [
@@ -290,7 +293,7 @@ class HealthQuote extends Model implements AuditableContract
             ->where('is_primary', false);
     }
 
-    public function renewalBatch()
+    public function renewalBatchModel()
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
@@ -345,7 +348,12 @@ class HealthQuote extends Model implements AuditableContract
         }
     }
 
-    // TODO:: Need to verify this function
+    public function customerInsured()
+    {
+        return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Health);
+    }
+
     public function insuredDetails()
     {
         return $this->hasOneThrough(
@@ -370,6 +378,12 @@ class HealthQuote extends Model implements AuditableContract
             'insured_id' // customer_insured.insured_id
         )->where('customer_insured.quote_type_id', QuoteTypeId::Health)
             ->latest('customer_insured.updated_at');
+    }
+
+    public function amlLogs()
+    {
+        return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Health)->withTrashed();
     }
 
     /******************************* Quote Status Logs Related Methods Below *******************************/
@@ -489,5 +503,34 @@ class HealthQuote extends Model implements AuditableContract
     public function ftcEmailLogs()
     {
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
+    }
+
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Health);
+    }
+
+    public function isAUHLead(bool $shouldCheckSource = true)
+    {
+        return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI && ($shouldCheckSource ? $this->source === LeadSourceEnum::IMCRM : true);
+    }
+
+    public function hasPecTag(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return ! empty($this->pec_marked_at);
+            }
+        );
+    }
+
+    public function scopeHasPecTag($query)
+    {
+        $query->whereNotNull('pec_marked_at');
+    }
+
+    public function isLeadSourceRevivalOrInsuranceWallet()
+    {
+        return in_array($this->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::INSURANCE_WALLET]);
     }
 }

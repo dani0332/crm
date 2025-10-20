@@ -2,10 +2,10 @@
 
 namespace App\Traits\QuoteTraits;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -121,33 +121,9 @@ trait QuoteAllocatable
         return ! $this->isSICFlowEnabled();
     }
 
-    public function scopePaymentLinkRequested($q)
-    {
-        $q->where('quote_status_id', QuoteStatusEnum::PaymentLinkRequestedByCustomer);
-    }
-
-    public function scopeHasOneOfPaidStatus($q)
-    {
-        $q->where(function ($sq) {
-            $sq->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])->orWhere->paymentLinkRequested();
-        });
-    }
-
-    public function scopeRequestedAdvisorOrPaymentAuthorized($q)
-    {
-        $q->where(function ($sq) {
-            $sq->where('sic_advisor_requested', 1)->orWhere->hasOneOfPaidStatus();
-        });
-    }
-
     public function isFakeOrDuplicate()
     {
         return in_array($this->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
-    }
-
-    public function isRequestedAdvisorOrPaymentAuthorized()
-    {
-        return $this->sic_advisor_requested == 1 || in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
 
     public function isRenewalUpload()
@@ -187,7 +163,7 @@ trait QuoteAllocatable
                 // AIG leads with advisor requested or payment authorized
                 ->where(function ($aigQuery) use ($quoteType) {
                     $aigQuery->isAIG($quoteType)
-                        ->requestedAdvisorOrPaymentAuthorized();
+                        ->advisorRequestedOrPaymentAuthorizedOrDeclined();
                 })
 
                 // OR Other lead types
@@ -197,7 +173,7 @@ trait QuoteAllocatable
                         $sq->where(function ($q) {
                             $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                                 ->sicFlowEnabled()
-                                ->requestedAdvisorOrPaymentAuthorized();
+                                ->advisorRequestedOrPaymentAuthorizedOrDeclined();
                         })
                         // Non-renewal leads with SIC logic
                             ->orWhere(function ($q) {
@@ -205,7 +181,7 @@ trait QuoteAllocatable
                                     ->where(function ($inner) {
                                         $inner
                                             ->where(fn ($x) => $x->sicFlowDisabled())
-                                            ->orWhere(fn ($x) => $x->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized());
+                                            ->orWhere(fn ($x) => $x->sicFlowEnabled()->advisorRequestedOrPaymentAuthorizedOrDeclined());
                                     });
                             });
                     });
@@ -252,15 +228,15 @@ trait QuoteAllocatable
         return $this->lead_assignment_trigger == LeadAssignmentTriggerEnum::INSTANT_ALFRED;
     }
 
-    public function isPaymentAuthorizedOrLinkRequested()
-    {
-        return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
-    }
-
     public function isFIC(QuoteTypes $quoteType): bool
     {
         return QuoteTag::where('quote_uuid', $this->uuid)
             ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
             ->where('quote_tags.quote_type_id', $quoteType->id())->exists();
+    }
+
+    public function isReAssignment()
+    {
+        return in_array($this->assignment_type, [AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD]);
     }
 }

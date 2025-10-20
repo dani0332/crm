@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\BorStatusEnum;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeText;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -17,6 +19,7 @@ use App\Enums\WatermarkDocTypesEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
+use App\Models\BorLog;
 use App\Models\CarPlanPolicyWording;
 use App\Models\DocumentType;
 use App\Models\HealthPlanPolicyWording;
@@ -26,9 +29,11 @@ use App\Models\SendUpdateLog;
 use App\Models\TravelPlanPolicyWording;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\OCR\OCRService;
 use App\Traits\GenericQueriesAllLobs;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
@@ -131,6 +136,34 @@ class QuoteDocumentService extends BaseService
     }
 
     /**
+     * @param  $data  doc_name, doc_uuid
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteBorDocument($quote, $data)
+    {
+        // load quote document with provided detail
+        $quote->load(['documents' => function ($q) use ($data) {
+            $q->where([
+                'doc_name' => $data['doc_name'],
+                'doc_uuid' => $data['doc_uuid'],
+                'document_category' => $data['document_category'],
+            ]);
+        }]);
+        // check for document and delete if found
+        if (($document = $quote->documents->first())) {
+            $document->delete();
+            // LoggerService::info('Document deleted', [
+            //     'quote_uuid' => $data['quote_uuid'],
+            //     'doc_name' => $data['doc_name']
+            // ]);
+
+            return response()->json(['message' => 'document deleted successfully']);
+        }
+
+        return response()->json(['message' => 'document not found'], 404);
+    }
+
+    /**
      * upload quote document and store document record in db.
      *
      * @param  $documentTypeCode
@@ -144,14 +177,13 @@ class QuoteDocumentService extends BaseService
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
-        // dd($documentType);
 
         $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType);
 
         try {
 
             if (data_get($data, 'is_base_64', 0) == 1) {
-                $originalName = 'Base 64 file';
+                $originalName = data_get($data, 'file_name', 'Base 64 file');
                 @[$extension, $fileMimeType, $file_data] = getBase64FileInfo($fileOrBase64);
 
                 // Generate a unique filename
@@ -236,13 +268,20 @@ class QuoteDocumentService extends BaseService
                 'member_detail_id' => $data['member_detail_id'] ?? null,
                 'payment_split_type' => $data['split_payment_doc_type'] ?? null,
                 'payment_split_id' => $data['payment_split_id'] ?? null,
+                'document_category' => $data['document_category'] ?? null,
                 'created_by_id' => auth()->id(),
             ]);
+
+            // update the Bor log reference with uploaded document time and status
+            (isset($data['document_category']) && ! isset($data['bor_signature']) && $data['document_category'] !== null) && $this->updateBorLogReference($data['document_category'], $quoteDocument);
 
             if (ucfirst(request('quoteType')) == QuoteTypes::TRAVEL->value && $documentType->code == DocumentTypeCode::TRVLPAS) {
                 SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
                 LoggerService::info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
             }
+
+            LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
+            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL) {
                 WatermarkDocumentsJob::dispatch(
@@ -254,7 +293,7 @@ class QuoteDocumentService extends BaseService
 
             return $quoteDocument;
         } catch (\Exception $exception) {
-            LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
+            LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'], exception: $exception);
 
             return response()->json(['error' => 'Document upload failed, please try again'], 500);
         }
@@ -322,7 +361,8 @@ class QuoteDocumentService extends BaseService
         if ($quote && $documentTypeCodes) {
             // Return documents filtered by document type codes if provided
             // If watermarked_doc_url is not null then we can send watermarked document in email
-            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
+            // Bor Signature document is not show on document section
+            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->with('createdBy:id,name,email')->latest()->get();
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
                     // Exclude documents that contain "Certificate of Insurance" followed by any text or space
@@ -334,7 +374,7 @@ class QuoteDocumentService extends BaseService
         }
 
         // Return all documents associated with the quote if no specific document type codes are provided
-        return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
+        return $quote ? $quote->documents()->with('createdBy:id,name,email')->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get() : [];
     }
 
     /**
@@ -346,6 +386,9 @@ class QuoteDocumentService extends BaseService
      */
     public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null, $quoteType = null)
     {
+        $borPermission = PermissionsEnum::BOR_DOCUMENT_UPLOAD;
+        $havePermission = Auth::user()->hasPermissionTo($borPermission);
+        $borDocCodes = [DocumentTypeCode::BAL, DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YACHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_PET, DocumentTypeCode::BAL_BS, DocumentTypeCode::BUS_BAL, DocumentTypeCode::GM_BOL];
         // Fetch active document types, excluding 'SEND_UPDATE' and 'ENDORSEMENT_DOCUMENTS' categories, and filter by quote type ID.
         $documentTypes = DocumentType::active()
             ->whereNotIn('category', ['SEND_UPDATE', 'ENDORSEMENT_DOCUMENTS'])
@@ -354,13 +397,15 @@ class QuoteDocumentService extends BaseService
             ->when($businessTypeOfInsurance, function ($query) use ($businessTypeOfInsurance) {
                 return $query->byBusinessTypeOfInsurance($businessTypeOfInsurance);
             })
+            ->when($havePermission == false, function ($query) use ($borDocCodes) {
+                return $query->whereNotIn('code', $borDocCodes);
+            })
             ->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer, $businessTypeOfInsurance) {
                 $businessInsurerName = DocumentTypeRepository::businessInsurerName($businessTypeOfInsurance);
 
                 return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer, $businessInsurerName);
             })
             ->sortDocumentType()->get();
-
         // Handle documents for quote types like CORPLINE and GroupMedical.
         if ($quoteTypeId == QuoteTypeId::Business) {
             if ($quoteType == quoteTypeCode::CORPLINE) {
@@ -371,6 +416,10 @@ class QuoteDocumentService extends BaseService
                 $businessDocumetTypes = [DocumentTypeCode::GMQPD, DocumentTypeCode::GMQPDR, DocumentTypeCode::GMQDPDR, DocumentTypeCode::PPR];
             } elseif ($quoteType == quoteTypeCode::CORPLINE) {
                 $businessDocumetTypes = [DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR, DocumentTypeCode::PPR];
+                // If business type of insurance is available but not available in document types then add it to the business document types
+                if ($documentTypes->whereIn('code', [DocumentTypeCode::BAL_BS, DocumentTypeCode::BUS_BAL])->count() == 0 && $havePermission) {
+                    $businessDocumetTypes[] = DocumentTypeCode::BAL_BS;
+                }
             }
             $businessDocumetTypes[] = DocumentTypeCode::AUDIT;
             // Fetch additional business document types based on the specific quote type.
@@ -380,6 +429,7 @@ class QuoteDocumentService extends BaseService
 
         // Filter for payment-related document types.
         $paymentDocumentCodes = $this->paymentDocumentTypesOptions($quoteTypeId);
+
         $paymentDocuments = $documentTypes->filter(function ($type) use ($paymentDocumentCodes) {
             return in_array($type->code, $paymentDocumentCodes);
         })->values()->all();
@@ -462,7 +512,10 @@ class QuoteDocumentService extends BaseService
 
             $policyWording = $policyWording->map(function ($policyWording) use ($quote) {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
-                if (strpos($policyWording->link, $baseUrl) !== 0) {
+                if (
+                    (strpos($policyWording->link, $baseUrl) !== 0) &&
+                    ! str_starts_with($policyWording->link, 'https:')
+                ) {
                     $policyWording->link = rtrim($baseUrl, '/').'/'.ltrim($policyWording->link, '/');
                 }
                 $link = preg_replace('/[\n\r\t]+/', '', $policyWording->link);
@@ -559,10 +612,7 @@ class QuoteDocumentService extends BaseService
             // Use QPDF as our primary watermarking approach
             return $this->qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType);
         } catch (\Exception $e) {
-            LoggerService::error('Error in watermarkPdf: '.$e->getMessage()." for UUID: $uuid", context: [
-                'line' => $e->getLine(),
-                'file' => $e->getFile(),
-            ]);
+            LoggerService::error('Error in watermarkPdf for UUID: '.$uuid, exception: $e);
 
             // Incase qpdfWatermark() fails/throw exception. Made sure that we delete the file that it created.
             $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
@@ -661,7 +711,10 @@ class QuoteDocumentService extends BaseService
             $size = $pdf->getTemplateSize($templateId);
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
 
-            // Add watermark based on orientation
+            // Layer the original page content first
+            $pdf->useTemplate($templateId);
+
+            // Add watermark as overlay (on top)
             if ($size['orientation'] === 'P') {
                 $pdf->Image(
                     $watermarkImagePath,
@@ -676,8 +729,6 @@ class QuoteDocumentService extends BaseService
                 );
             }
 
-            // Layer the original page content over the watermark
-            $pdf->useTemplate($templateId);
         }
 
         $pdf->Output($outputPath, 'F');
@@ -1014,6 +1065,38 @@ class QuoteDocumentService extends BaseService
         } catch (RequestException $e) {
             return ['exists' => false, 'size' => null];
         }
+    }
+
+    /**
+     * Update the Bor log reference with uploaded document time and status
+     *
+     * @param  string  $borReference
+     * @return void
+     */
+    private function updateBorLogReference($borReference, $quoteDocument)
+    {
+        $borLog = BorLog::where('bor_reference', $borReference)->first();
+        if ($borLog) {
+            $borLog->update([
+                'date_uploaded' => now(),
+                'document_id' => $quoteDocument->doc_uuid,
+                'user_agent' => getUserIpAddress(request()),
+                'quote_document_id' => $quoteDocument->id,
+                'status' => BorStatusEnum::DOCUMENT_UPLOADED,
+            ]);
+        }
+    }
+
+    private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType)
+    {
+        LoggerService::info('Dispatching OCR job from API');
+
+        app(OCRService::class)->dispatchJobIfEligible(
+            $documentType,
+            $quote,
+            $filePathAzure,
+            $fileMimeType
+        );
     }
 
 }

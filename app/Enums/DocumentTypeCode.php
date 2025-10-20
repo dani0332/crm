@@ -79,6 +79,8 @@ class DocumentTypeCode extends Enum
     const AUDIT = 'AUDIT';
     const TRVLPAS = 'TRVLPAS';
     const Illustration_Document = 'LIFE_ID';
+    const CPS = 'CPS'; // Car Policy Schedule
+    const CPC = 'CPC'; // Car Policy Certificate
 
     // HOME SAL
     const HOME_SAL = 'HOME_SAL';
@@ -86,4 +88,24 @@ class DocumentTypeCode extends Enum
     const PC_SAV = 'PC_SAV';
     const AC_SAV = 'AC_SAV';
     const PAYMENT_RECEIPT = 'SPD';
+    const DRIVING_LICENSE = 'DL';
+    const EMIRATES_ID = 'CEID';
+    const REGISTRATION_CARD_MULKIYA = 'CAR_MULKIY';
+    const POLICY_CERTIFICATE = 'CPC';
+    const POLICY_SCHEDULE = 'CPS';
+
+    // BAL
+    const BAL = 'BAL';
+    const BAL_BIKE = 'BAL_Bike';
+    const GM_BOL = 'GM_BOL';
+    const BAL_TRVL = 'BAL_TRVL';
+    const BAL_HOME = 'BAL_HOME';
+    const BAL_HLTH = 'BAL_HLTH';
+    const BAL_YACHT = 'BAL_YCHT';
+    const BAL_CYCLE = 'BAL_CYCLE';
+    const BAL_LIFE = 'BAL_Life';
+    const BAL_PET = 'BAL_PET';
+    const BOR_SIGN = 'BOR_SIGN';
+    const BAL_BS = 'BAL_BS';
+    const BUS_BAL = 'BUS_BAL';
 }

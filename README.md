@@ -6,7 +6,7 @@ Staging Pipeline Status = [![Build Status](https://dev.azure.com/insurancemarket
 
 Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes
 
-IMCRM is developed on Laravel using PHP 8.2 or above, and MySQL.
+IMCRM is developed on Laravel using PHP 8.2 or above, and MySQL
 
 URLs:
 
@@ -190,4 +190,4 @@ I have created separate Docker files and configurations for local environments. 
 
 ## Conclusion
 
-By following these steps, you can easily run the project locally on Docker. Docker provides a convenient and isolated environment for development, ensuring consistency across different systems. If you encounter any issues, refer to the Docker documentation or seek assistance from the project team
+By following these steps, you can easily run the project locally on Docker. Docker provides a convenient and isolated environment for development, ensuring consistency across different systems. If you encounter any issues, refer to the Docker documentation or seek assistance from the project team.

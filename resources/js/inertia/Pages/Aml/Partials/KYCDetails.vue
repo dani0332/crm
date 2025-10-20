@@ -18,10 +18,16 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const complianceDisable = ref(true);
 const patternFieldDisable = ref(true);
+const isSyncEnabled = ref(page.props.isInsurerSyncEnabled ?? false);
+const syncProcessLoading = ref(false);
+
+const emit = defineEmits(['update:insurerPortalSyncData']);
+
 const insuredDetails = page.props.insuredDetails;
 const lookups = page.props.lookups;
 const isScreeningIndividual =
   page.props.screeningType == page.props.customerTypeEnum.IndividualShort;
+
 const dateFormat = date =>
   date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
 const incomeSource = computed(() => {
@@ -246,24 +252,129 @@ const kycFormDetails = useForm({
   transaction_activities:
     insuredDetails?.insured?.insured_kyc?.transaction_activities ?? null,
   customer_type: props.customerType,
+  // GIG Screening specific fields (Only for GIG Screening API)
+  chassis_number:
+    (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
+      ? page.props.quoteRequest?.car_quote_request_detail?.chassis_number
+      : page.props.quoteRequest?.bike_quote?.chassis_number) ?? null,
+  get_quote_email_gig:
+    (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
+      ? page.props.quoteRequest?.car_quote_request_detail?.insurer_quote_email
+      : page.props.quoteRequest?.quote_detail?.insurer_quote_email) ??
+    page.props.gigInsurerDefaultEmail,
 });
 function insuredKycFormValidate() {
   kycFormDetails.clearErrors();
   let isValid = true;
   return isValid;
 }
+const syncInsurerPortalUpdates = () => {
+  syncProcessLoading.value = true;
+  axios
+    .post('/get-quote-details-from-insurer', {
+      quoteTypeId: page.props.quoteType.id,
+      quoteUID: page.props.quoteRequest.uuid,
+    })
+    .then(response => {
+      // Safely check response.data exists and has expected structure
+      const hasValidData =
+        response.data &&
+        (response.data.success == true || response.status === 200);
+
+      if (hasValidData) {
+        notification.success({
+          title: 'Quote details synced successfully from insurer portal',
+          position: 'top',
+        });
+
+        // Safely check nested data properties
+        if (response.data?.data) {
+          emit('update:insurerPortalSyncData', response.data.data);
+        }
+        if (response.data?.original?.data) {
+          emit('update:insurerPortalSyncData', response.data.original.data);
+        }
+      } else {
+        // Handle case where request succeeded but data indicates failure
+        notification.error({
+          title:
+            response.data?.message ||
+            'Failed to sync quote details from insurer portal',
+          position: 'top',
+        });
+      }
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error syncing quote details from insurer portal',
+        position: 'top',
+      });
+      console.error('Sync error:', error);
+    })
+    .finally(() => {
+      syncProcessLoading.value = false;
+    });
+};
+
 const submitInsuredKycForm = isValid => {
   if (!isValid) return;
+
+  let insuranceProviderCode =
+    page.props.quoteRequest?.plan?.insurance_provider?.code;
 
   if (insuredKycFormValidate()) {
     kycFormDetails.processing = true;
 
-    // Debug customer_type value
-    // console.log('Submitting KYC form with customer_type:', kycFormDetails.customer_type);
-
     axios
       .post('/update-insured-kyc', kycFormDetails)
       .then(response => {
+        if (response.data.insurer_screening) {
+          if (
+            response.data.insurer_screening.status == 'AML_SCREENING_FAILED'
+          ) {
+            let failureResponseMessage =
+              response.data.insurer_screening.message ||
+              `${insuranceProviderCode} server connection issue. Please check API logs for details of the error`;
+
+            if (response.data.insurer_screening.isEmailMismatched == true) {
+              failureResponseMessage = `Email ID Mismatch Between ${insuranceProviderCode} Portal and IMCRM`;
+            }
+            notification.error({
+              title: failureResponseMessage,
+              position: 'top',
+            });
+          } else if (
+            response.data.insurer_screening.status == 'AML_SCREENING_CLEARED'
+          ) {
+            if (
+              response.data.insurer_screening.autoCaptureStatus == 'success'
+            ) {
+              notification.success({
+                title: response.data.insurer_screening.autoCaptureMessage,
+                timeout: 30000,
+              });
+            }
+            if (response.data.insurer_screening.autoCaptureStatus == 'failed') {
+              notification.error({
+                title:
+                  response.data.insurer_screening.autoCaptureMessage ??
+                  'Auto capture payment process failed',
+                position: 'top',
+                timeout: 30000,
+              });
+            }
+          } else if (response.data.insurer_screening.isPolicyExpired) {
+            notification.success({
+              title: 'Capture Payment Manually',
+              position: 'top',
+            });
+          } else if (response.data.insurer_screening.isGetQuoteAPIFailed) {
+            notification.error({
+              title: response.data.insurer_screening.message,
+              position: 'top',
+            });
+          }
+        }
         if (response.data.success) {
           notification.success({
             title: 'KYC Document uploaded successfully',
@@ -454,6 +565,9 @@ watch(
     }
   },
 );
+
+const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] =
+  createReusableTemplate();
 </script>
 <template>
   <x-form @submit="submitInsuredKycForm" :auto-focus="false">
@@ -485,13 +599,11 @@ watch(
         />
       </x-field>
       <template v-if="isScreeningIndividual">
-        <x-field label="Date of Birth">
-          <DatePicker
-            v-model="kycFormDetails.dob"
-            placeholder="Date of Birth"
-            class="w-full"
-          />
-        </x-field>
+        <DatePicker
+          v-model="kycFormDetails.dob"
+          placeholder="Date of Birth"
+          label="Date of Birth"
+        />
         <x-field label="Nationality">
           <ComboBox
             v-model="kycFormDetails.nationality_id"
@@ -644,25 +756,21 @@ watch(
           :disabled="isScreeningIndividual"
         />
       </x-field>
-      <x-field
+      <DatePicker
+        v-model="kycFormDetails.id_issue_date"
         :label="
           isScreeningIndividual ? 'ID Issue Date' : 'ID / Document Issue Date'
         "
-      >
-        <DatePicker v-model="kycFormDetails.id_issue_date" />
-      </x-field>
-      <x-field
+      />
+      <DatePicker
+        v-model="kycFormDetails.id_expiry_date"
+        :rules="[isRequired]"
+        :error="idExpiryDateError"
+        :min-date="new Date()"
         :label="
           isScreeningIndividual ? 'ID Expiry Date' : 'ID / Document Expiry Date'
         "
-      >
-        <DatePicker
-          v-model="kycFormDetails.id_expiry_date"
-          :rules="[isRequired]"
-          :error="idExpiryDateError"
-          :min-date="new Date()"
-        />
-      </x-field>
+      />
     </dl>
     <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
       <x-field v-if="!isScreeningIndividual" label="Place of issue">
@@ -1070,26 +1178,49 @@ watch(
       </x-field>
     </dl>
     <div class="flex justify-end my-5 gap-x-2">
+      <!-- :disabled="!isSyncEnabled || !can(permissionsEnum.AMLList)" -->
       <x-button
-        v-if="kycFormDetails.insured_id"
         size="sm"
-        color="orange"
-        type="submit"
+        color="primary"
+        type="button"
         class="px-6"
-        :loading="kycFormDetails.processing"
+        @click="syncInsurerPortalUpdates"
+        :disabled="!isSyncEnabled"
+        :loading="syncProcessLoading"
       >
-        Save
+        Sync
       </x-button>
-      <x-tooltip v-else placement="left">
-        <x-button size="sm" color="orange" type="submit" class="px-6" disabled>
+      <SubmitInsuredKycFormBtnTemplate>
+        <x-button
+          size="sm"
+          color="orange"
+          type="submit"
+          class="px-6"
+          :loading="kycFormDetails.processing"
+          :disabled="
+            !can(permissionsEnum.AMLList) || !kycFormDetails.insured_id
+          "
+        >
           Save
         </x-button>
+      </SubmitInsuredKycFormBtnTemplate>
+
+      <x-tooltip
+        v-if="!can(permissionsEnum.AMLList) || !kycFormDetails.insured_id"
+        placement="left"
+      >
+        <SubmitInsuredKycFormBtnReuseTemplate />
         <template #tooltip>
-          <span class="custom-tooltip-content">
-            Search the Insured's ID number
-          </span>
+          {{
+            kycFormDetails.insured_id
+              ? "You don't have permission to edit this section"
+              : "Search the Insured's ID number"
+          }}
         </template>
       </x-tooltip>
+      <template v-else>
+        <SubmitInsuredKycFormBtnReuseTemplate />
+      </template>
     </div>
   </x-form>
 </template>

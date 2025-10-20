@@ -161,6 +161,10 @@ const tableHeader = reactive([
     tooltip: 'Insurance provider',
   },
   {
+    text: 'Currently Insured With',
+    value: 'currently_insured_with_text',
+  },
+  {
     text: 'Line of Business',
     value: 'line_of_business',
     tooltip: 'Line of business of the lead',
@@ -217,6 +221,21 @@ const tableHeader = reactive([
   {
     text: 'Private Client',
     value: 'pcp_tag_formatted',
+  },
+  {
+    text: 'Policy PEC Flag',
+    value: 'pec_flag',
+    tooltip: 'Indicates if the policy has Pre-Existing Condition (PEC) flag',
+  },
+  {
+    text: 'Travel Coverage',
+    value: 'travel_coverage',
+    tooltip: 'Travel Coverage',
+  },
+  {
+    text: 'Traveling Where',
+    value: 'traveling_where',
+    tooltip: 'Traveling Where',
   },
 ]);
 

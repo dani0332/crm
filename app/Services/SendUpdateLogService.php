@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
+use App\Enums\EmirateEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentChargesEnum;
 use App\Enums\PaymentFrequency;
@@ -124,6 +125,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => CarQuote::class,
@@ -142,6 +145,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => HomeQuote::class,
@@ -160,6 +165,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => array_merge($parentSkipColumns, ['health_plan_type_id', 'price_starting_from', 'health_plan_co_payment_id']),
                     'parentClass' => HealthQuote::class,
@@ -178,6 +185,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => LifeQuote::class,
@@ -196,6 +205,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => BusinessQuote::class,
@@ -214,6 +225,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                         'travelDestinations' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
@@ -304,6 +317,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => PersonalQuote::class,
@@ -502,10 +517,10 @@ class SendUpdateLogService
         $quoteModel = $this->getModelObject($quoteTypeCode);
         $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get()->toArray();
 
-        if (count($childRecords) > 0) {
-            $childRecords = array_filter($childRecords, function ($item) use ($quote) {
+        if (! empty($childRecords)) {
+            $childRecords = array_values(array_filter($childRecords, function ($item) use ($quote) {
                 return str_starts_with($item['code'], $quote->code);
-            });
+            }));
         }
 
         $_return = [
@@ -1298,14 +1313,11 @@ class SendUpdateLogService
         return (isset($carQuote->plan->carAddons)) ? $carQuote?->plan?->carAddons->toArray() : [];
     }
 
-    public function sendUpdateToCustomerEmailData($sendUpdateLog): array
+    public function sendUpdateToCustomerEmailData($sendUpdateLog, $quote): array
     {
         LoggerService::info('fn:sendUpdateToCustomerEmailData - SendUpdateLogService');
 
         $quoteTypeId = $sendUpdateLog->quote_type_id;
-        $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
-        $quoteModel = $this->getModelObject($quoteType);
-        $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
         $insuranceProviderText = $sendUpdateLog?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
@@ -1354,6 +1366,10 @@ class SendUpdateLogService
             'quoteId' => $sendUpdateLog->personal_quote_id, // for email status save
             'refID' => $sendUpdateLog->code,
         ];
+
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $emailData->isHealthAUH = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI;
+        }
 
         if ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->lobType = BusinessQuoteType::where('id', $quote->business_type_of_insurance_id)->where('is_active', true)->first()->text;
@@ -1800,5 +1816,22 @@ class SendUpdateLogService
     public function isReversalInvoiceEndorsement($taxInvoiceNumber)
     {
         return SendUpdateLog::where('insurer_tax_invoice_number', $taxInvoiceNumber)->first();
+    }
+
+    public function isEndorsementBookingActionDisabled($sendUpdateLog)
+    {
+        if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health) {
+            $personalQuote = PersonalQuote::where('id', $sendUpdateLog->personal_quote_id)->first();
+            $quoteDetails = HealthQuote::where('code', $personalQuote->code)->first();
+
+            $emirateOfYourVisaId = $quoteDetails?->emirate_of_your_visa_id;
+            if ($emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
+                return true;
+            }
+
+            return false;
+        }
+
+        return false;
     }
 }

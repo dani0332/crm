@@ -1,14 +1,32 @@
 <script setup>
+import AdditionalVehicleTransactionDetails from './AdditionalVehicleTransactionDetails.vue';
+import AdditionalDriverDetails from './AdditionalDriverDetails.vue';
 import KYCDetails from './KYCDetails.vue';
 import MembersDetails from './MembersDetails.vue';
 import { computed, ref, watch } from 'vue';
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   quoteTypeCodeEnum: Object,
+  // RTA Configuration props (for Car quotes)
+  rta_transaction_types: {
+    type: Object,
+    default: () => ({}),
+  },
+  rta_field_configurations: {
+    type: Object,
+    default: () => ({}),
+  },
+  rta_validation_summaries: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 const page = usePage();
 const { isRequired } = useRules();
 const notification = useToast();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const insurerName = page.props.insurerName;
 const generateOptions = (items, valueKey, labelKey) =>
   useGenerateOptions(items, valueKey, labelKey);
 const rules = {
@@ -172,8 +190,33 @@ const customerTypeOptions = computed(() => {
   ];
 });
 
+const showVehicleAndDrvicerDetails = computed(() => {
+  console.log(
+    'page.props.quoteType.id',
+    page.props.quoteType.id,
+    page.props.quoteTypeIdEnum.Car,
+    page.props.quoteType.id === page.props.quoteTypeIdEnum.Car,
+  );
+  console.log(
+    'page.props.insuranceProviderCodeEnum.AXA',
+    page.props.quoteRequest?.plan?.insurance_provider.code,
+    page.props.insuranceProviderCodeEnum.AXA,
+  );
+  console.log('page.props.isPrivateCar', page.props.isPrivateCar);
+
+  return (
+    page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
+    [
+      page.props.insuranceProviderCodeEnum.RSA, // LIVA
+      page.props.insuranceProviderCodeEnum.AXA, // GIG
+      // page.props.insuranceProviderCodeEnum.OIC, // SUKOON
+    ].includes(page.props.quoteRequest?.plan?.insurance_provider.code) &&
+    (page.props.isPrivateCar ?? false)
+  );
+});
+
 const screeningFormDetails = useForm({
-  customer_type: null,
+  customer_type: page.props.insuredDetails?.insured?.customer_type ?? null,
   customer_id: quoteRequest.customer_id,
   quote_type: page.props.quoteType.code,
   // Individual Type
@@ -195,7 +238,7 @@ const screeningFormDetails = useForm({
   get_quote_email_gig:
     (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
       ? quoteRequest?.car_quote_request_detail?.insurer_quote_email
-      : quoteRequest?.quote_detail?.insurer_quote_email) ??
+      : quoteRequest?.quote_detail?.insurer_quote_email) ||
     page.props.gigInsurerDefaultEmail,
   chassis_number:
     (page.props.quoteType.code === props.quoteTypeCodeEnum.Car
@@ -211,6 +254,9 @@ const screeningFormDetails = useForm({
   industry_type_code: page.props.insuredDetails?.insured?.industry_type_code,
   emirate_of_registration_id:
     page.props.insuredDetails?.insured?.emirate_of_registration_id,
+  lead_source: quoteRequest.source,
+  insurance_provider_code:
+    page.props.quoteRequest?.plan?.insurance_provider.code,
 });
 const modalHeaderMessage = () => {
   if (
@@ -218,6 +264,12 @@ const modalHeaderMessage = () => {
     [customerTypeEnum.Individual, null].includes(
       screeningFormDetails.customer_type,
     )
+  ) {
+    headerMessage.value =
+      'Please confirm the Name, Nationality, and Date of Birth of the insured person(s) as per the Emirates ID';
+  } else if (
+    page.props.quoteType.code == page.props.quoteTypeCodeEnum.Business &&
+    screeningFormDetails.customer_type == customerTypeEnum.Individual
   ) {
     headerMessage.value =
       'Please confirm the Name, Nationality, and Date of Birth of the insured person(s) as per the Emirates ID';
@@ -324,6 +376,7 @@ const entityTypes = computed(() => {
     { value: 'SubEntity', label: 'Sub Entity' },
   ];
 });
+
 const chassisNumberDisabled = computed(() => {
   let disallowedStatus = [
     page.props.quoteStatusEnums.PolicySentToCustomer,
@@ -331,6 +384,7 @@ const chassisNumberDisabled = computed(() => {
   ];
   return disallowedStatus.includes(page.props?.quoteRequest?.quote_status_id);
 });
+
 const individualSearchValidation = computed(() => {
   if (
     screeningFormDetails.screening_id_type === '' ||
@@ -381,6 +435,7 @@ const entitySearchValidation = computed(() => {
 });
 const searchResultData = ref(null);
 const searchSuccessStatus = ref(false);
+const insurerPortalSyncData = ref(null);
 const searchInsuredDetails = customerType => {
   let searchInsuredValidation = [customerTypeEnum.Individual, ''].includes(
     customerType,
@@ -614,7 +669,8 @@ function screeningFormValidate() {
   if (
     (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
       page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
-    !chassisNumberDisabled.value
+    !chassisNumberDisabled.value &&
+    !showVehicleAndDrvicerDetails.value
   ) {
     if (!screeningFormDetails.chassis_number) {
       screeningFormDetails.setError('chassis_number', 'This field is required');
@@ -634,30 +690,28 @@ function screeningFormValidate() {
 }
 const submitScreeningForm = isValid => {
   if (screeningFormValidate()) {
-    // updateFormDetails();
     screeningFormDetails.get(`${quoteRequest.id}/quoteUpdate`, {
       preserveScroll: true,
       onError: errors => {
-        notification.error({
-          title: errors.error || 'Quote not updated',
-          position: 'top',
-        });
+        console.log('errors', errors);
+        if (typeof errors === 'object') {
+          Object.keys(errors).forEach(function (key) {
+            notification.error({
+              title: errors[key],
+              position: 'top',
+            });
+          });
+        } else {
+          notification.error({
+            title: errors.error || 'Quote not updated',
+            position: 'top',
+          });
+        }
       },
       onSuccess: response => {
         if (response.props.flash.success?.length === 0) {
           notification.success({
             title: 'Quote is updated',
-            position: 'top',
-          });
-        }
-        if (
-          typeof response.props.flash.info !== 'undefined' &&
-          response.props.flash.info?.length > 0
-        ) {
-          notification.error({
-            title:
-              response.props.flash.info?.message ||
-              'GIG server connection issue. Please check API logs for details of the error',
             position: 'top',
           });
         }
@@ -714,6 +768,17 @@ const handleModalClose = () => {
   screeningFormDetails.customer_type = oldCustomerType.value;
   customerTypeConfirmationModel.value = false;
 };
+
+const updateInsurerPortalSyncData = data => {
+  insurerPortalSyncData.value = data;
+};
+
+const updateChassisNumber = chassisNumber => {
+  screeningFormDetails.chassis_number = chassisNumber;
+};
+
+const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
+  createReusableTemplate();
 </script>
 <template>
   <x-modal
@@ -726,6 +791,19 @@ const handleModalClose = () => {
     persistent
     @submit="submitScreeningForm"
   >
+    <template v-if="showVehicleAndDrvicerDetails">
+      <AdditionalVehicleTransactionDetails
+        :insurerPortalSyncData="insurerPortalSyncData"
+        :rta_transaction_types="rta_transaction_types"
+        :rta_field_configurations="rta_field_configurations"
+        :rta_validation_summaries="rta_validation_summaries"
+        @update:chassisNumber="updateChassisNumber"
+      />
+      <x-divider class="mb-4 mt-4" />
+      <AdditionalDriverDetails :insurerPortalSyncData="insurerPortalSyncData" />
+      <x-divider class="mb-4 mt-4" />
+    </template>
+
     <x-field label="Customer Type" required>
       <div class="grid md:grid-cols-3" id="customer-type-field">
         <x-select
@@ -833,15 +911,13 @@ const handleModalClose = () => {
             :hasError="validateNationality"
           />
         </x-field>
-        <x-field label="Date of Birth" required>
-          <DatePicker
-            v-model="screeningFormDetails.dob"
-            :rules="[isRequired]"
-            placeholder="Date of Birth"
-            class="w-full"
-            :error="screeningFormDetails.errors.dob"
-          />
-        </x-field>
+        <DatePicker
+          v-model="screeningFormDetails.dob"
+          :rules="[isRequired]"
+          :required="true"
+          placeholder="Date of Birth"
+          label="Date of Birth"
+        />
         <x-field label="Gender" required>
           <x-select
             v-model="screeningFormDetails.screening_gender"
@@ -864,11 +940,11 @@ const handleModalClose = () => {
             page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike ||
             page.props.quoteType.id === page.props.quoteTypeIdEnum.Home
           "
-          label="Email in GIG Portal"
+          :label="`Email in ${insurerName} Portal`"
         >
           <x-input
             v-model="screeningFormDetails.get_quote_email_gig"
-            placeholder="Email in GIG Portal"
+            :placeholder="`Email in ${insurerName} Portal`"
             type="text"
             class="w-full"
           />
@@ -972,8 +1048,9 @@ const handleModalClose = () => {
     <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
       <div
         v-if="
-          page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
-          page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike
+          (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
+            page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
+          !showVehicleAndDrvicerDetails
         "
       >
         <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
@@ -1018,8 +1095,7 @@ const handleModalClose = () => {
         </x-field>
       </div>
     </dl>
-    <x-divider class="mb-4 mt-1" />
-    <!-- This Component is used for Members and UBO Details -->
+
     <MembersDetails
       :customerType="
         isScreeningIndividual
@@ -1038,16 +1114,28 @@ const handleModalClose = () => {
       "
       :isPayerDetails="true"
     />
-    <div class="flex justify-center my-5">
+    <SubmitForScreeningBtnTemplate>
       <x-button
         class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
         size="sm"
         color="success"
         type="submit"
         :loading="screeningFormDetails.processing"
+        :disabled="!can(permissionsEnum.AMLList)"
       >
         Submit For AML Screening
       </x-button>
+    </SubmitForScreeningBtnTemplate>
+    <div class="flex justify-center my-5">
+      <x-tooltip v-if="!can(permissionsEnum.AMLList)" placement="bottom">
+        <SubmitForScreeningBtnReuseTemplate />
+        <template #tooltip
+          >You don't have permission to edit this section</template
+        >
+      </x-tooltip>
+      <template v-else>
+        <SubmitForScreeningBtnReuseTemplate />
+      </template>
     </div>
     <x-divider class="mb-4 mt-1" />
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
@@ -1057,6 +1145,7 @@ const handleModalClose = () => {
       :searchData="searchResultData"
       :searchSuccess="searchSuccessStatus"
       :customerType="screeningFormDetails.customer_type"
+      @update:insurerPortalSyncData="updateInsurerPortalSyncData"
     />
     <x-modal
       v-model="customerTypeConfirmationModel"

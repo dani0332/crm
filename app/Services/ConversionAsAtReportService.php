@@ -32,7 +32,7 @@ class ConversionAsAtReportService extends BaseService
     use Reportable;
     use TeamHierarchyTrait;
 
-    public function getReportData($request)
+    public function getReportQueryBuilder($request)
     {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
@@ -95,15 +95,27 @@ class ConversionAsAtReportService extends BaseService
                 'vehicle_use' => $request->vehicle_use,
                 'segment_filter' => $request->segment_filter,
                 'page' => $request->page,
+                'pec_flag' => $request->pec_flag,
             ];
 
-            $query = $this->applyFilters($query, $filters, $alias, $detailAlias, $model->getForeignKey());
+            $this->applyFilters($query, $filters, $alias, $detailAlias, $model->getForeignKey());
 
-            $query = $query->get();
+            return $query;
 
-            // map operation to calculate gross and net conversions of records
-            return $this->mapConversionData($query, $request);
         }
+    }
+
+    public function getReportData(Request $request)
+    {
+
+        $query = $this->getReportQueryBuilder($request);
+
+        if (empty($query)) {
+            return null;
+        }
+
+        // map operation to calculate gross and net conversions of records
+        return $this->mapConversionData($query->get(), $request);
     }
 
     /**
@@ -144,6 +156,16 @@ class ConversionAsAtReportService extends BaseService
                     ->where('business_quote_request.business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
             } elseif ($request->lob != QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
                 $query->where("{$alias}.quote_type_id", $request->lob);
+            }
+
+            if ($request->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Health) && isset($request->pec_flag) && $request->pec_flag !== 'all') {
+                $query->join('health_quote_request as hqr', 'hqr.uuid', "{$alias}.uuid");
+
+                if ($request->pec_flag == '1') {
+                    $query->whereNotNull('hqr.pec_marked_at');
+                } else {
+                    $query->whereNull('hqr.pec_marked_at');
+                }
             }
 
             $unassignedLeadsCount = $query
@@ -244,6 +266,14 @@ class ConversionAsAtReportService extends BaseService
 
             if (isset($filters->vehicle_use) && $filters->vehicle_use != 'All' && isset($filters->registration_type) && $filters->registration_type == CarRegistrationType::COMPANY) {
                 $query->where("{$alias}.vehicle_use", $filters->vehicle_use);
+            }
+        }
+
+        if (isset($filters->lob) && $filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Health) && isset($filters->pec_flag) && $filters->pec_flag !== 'all') {
+            if ($filters->pec_flag == '1') {
+                $query->whereNotNull('hqr.pec_marked_at');
+            } else {
+                $query->whereNull('hqr.pec_marked_at');
             }
         }
 

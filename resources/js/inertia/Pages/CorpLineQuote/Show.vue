@@ -1,6 +1,8 @@
 <script setup>
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const props = defineProps({
   quote: {
@@ -111,6 +113,8 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  memberRelations: Array,
+  membersDetails: Array,
   nationalities: {
     type: Array,
     required: true,
@@ -239,6 +243,9 @@ const genderText = gender =>
   computed(() => {
     return page.props.genderOptions[gender];
   });
+
+const dateFormatYMD = date =>
+  date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
 
 const modals = reactive({
   duplicate: false,
@@ -1041,7 +1048,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         <template #header>
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
-              Entity Profile
+              {{
+                enabledCustomerType == page.props.customerTypeEnum.Individual
+                  ? 'Customer '
+                  : 'Entity '
+              }}
+              Profile
             </h3>
           </div>
         </template>
@@ -1056,7 +1068,105 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <dl
+                v-if="
+                  enabledCustomerType === page.props.customerTypeEnum.Individual
+                "
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+              >
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">FIRST NAME</dt>
+                  <dd>{{ quote.first_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">LAST NAME</dt>
+                  <dd>{{ quote.last_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INSURED FIRST NAME</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.insured_first_name"
+                      :rules="[isRequired]"
+                      placeholder="INSURED FIRST NAME"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INSURED LAST NAME</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.insured_last_name"
+                      :rules="[isRequired]"
+                      placeholder="INSURED LAST NAME"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">MOBILE NUMBER</dt>
+                  <dd>{{ quote.mobile_no }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMAIL</dt>
+                  <dd class="break-words">{{ quote.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ quote?.nationality_id_text ?? '' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">DATE OF BIRTH</dt>
+                  <dd>{{ dateFormatYMD(quote.dob) }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ genderText(quote.gender).value }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.emirates_id_number"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
+                  <dd>
+                    <DatePicker
+                      v-model="customerProfileForm.emirates_id_expiry_date"
+                      placeholder="EMIRATES ID EXPIRY DATE"
+                      :disabled="!isProfileUpdateAllow"
+                      :min-date="new Date()"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.customer?.pcp_tag_formatted }}</dd>
+                </div>
+                <RiskRatingScoreDetails
+                  :quote="quote"
+                  :modelType="'Business'"
+                />
+              </dl>
+              <dl
+                v-if="
+                  enabledCustomerType === page.props.customerTypeEnum.Entity
+                "
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+              >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
@@ -1268,6 +1378,16 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :expanded="sectionExpanded"
     />
 
+    <MemberDetails
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
+      :quote="quote"
+      :membersDetails="membersDetails"
+      :nationalities="nationalities"
+      :memberRelations="memberRelations"
+      quote_type="Business"
+      :expanded="sectionExpanded"
+    />
+
     <!-- Additional Contact -->
     <CustomerAdditionalContacts
       quoteType="Business"
@@ -1466,6 +1586,28 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :bookPolicyDetails="bookPolicyDetails"
     />
 
+    <BorLogsSection
+      :leadId="quote.id"
+      lob="Business"
+      :customerData="{
+        customerType: quote.customer_type,
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.business_company_name,
+        currentlyInsuredWith: quote.insurance_provider_id,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      lob="Business"
+      :expanded="sectionExpanded"
+    />
+
     <BookPolicy
       v-if="
         canAny([
@@ -1609,6 +1751,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             class="w-full"
             withTime
             :min-date="new Date()"
+            :min-time="{
+              hours: new Date().getHours(),
+              minutes: new Date().getMinutes(),
+            }"
             required
           />
         </div>

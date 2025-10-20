@@ -7,8 +7,10 @@ use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Events\DocumentNotificationEvent;
 use App\Http\Requests\AIGWorkflowRequest;
 use App\Http\Requests\AssignLeadRequest;
+use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
@@ -31,6 +33,8 @@ use InvalidArgumentException;
 
 class ApiService
 {
+    private const LEAD_NOT_FOUND = 'Lead not found!';
+    private const QUOTE_NOT_FOUND = 'Quote not found!';
     public function fetchSignupUrl($request)
     {
         try {
@@ -192,7 +196,7 @@ class ApiService
             if (! $lead) {
                 LoggerService::warning("Lead not found: {$request->quoteUuid} for quoteTypeId: {$quoteTypeId}");
 
-                return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found');
+                return apiResponse(null, Response::HTTP_BAD_REQUEST, self::LEAD_NOT_FOUND);
             }
 
             if ($lead->sic_flow_enabled) {
@@ -281,7 +285,7 @@ class ApiService
         $lead = $quoteType?->model()->where('uuid', $request->quoteUuid)->first();
 
         if (! $lead) {
-            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, self::LEAD_NOT_FOUND);
         }
 
         if ($lead instanceof TravelQuote && $lead->isMultiTrip()) {
@@ -308,7 +312,11 @@ class ApiService
         $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
 
         if (! $lead) {
-            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, self::LEAD_NOT_FOUND);
+        }
+
+        if ($lead->isAUHLead() || ($lead->isAUHLead(false) && $lead->isLeadSourceRevivalOrInsuranceWallet())) {
+            return apiResponse(null, Response::HTTP_OK, 'AUH or AUH and Revival/Insurance Wallet Leads are not allowed to send OCA Email!');
         }
 
         if (! $lead->isApplyNowEmailSent()) {
@@ -330,7 +338,7 @@ class ApiService
 
         $quote = $model::where('uuid', $data['quoteUUID'])->first();
         if (! $quote) {
-            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+            return apiResponse(null, Response::HTTP_NOT_FOUND, self::QUOTE_NOT_FOUND);
         }
 
         // Sync Courier Quote with MACRM if Policy Issued
@@ -365,7 +373,7 @@ class ApiService
                 if (! $quote) {
                     info("Quote not found with uuid: {$quoteUuid} for quoteTypeId: {$quoteTypeId}");
 
-                    return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+                    return apiResponse(null, Response::HTTP_NOT_FOUND, self::QUOTE_NOT_FOUND);
                 }
             }
 
@@ -418,7 +426,7 @@ class ApiService
             if (! $quote) {
                 LoggerService::info('Quote not found');
 
-                return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+                return apiResponse(null, Response::HTTP_NOT_FOUND, self::QUOTE_NOT_FOUND);
             }
 
             // Atomic update - only proceeds if travel_aig_flow_executed_at is null
@@ -454,7 +462,7 @@ class ApiService
             case QuoteTypes::HEALTH:
                 $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
                 if (! $lead) {
-                    return apiResponse(null, Response::HTTP_NOT_FOUND, 'Lead not found!');
+                    return apiResponse(null, Response::HTTP_NOT_FOUND, self::LEAD_NOT_FOUND);
                 }
                 if (getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid)) {
                     if (! app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value)) {
@@ -474,4 +482,23 @@ class ApiService
 
         return apiResponse(null, Response::HTTP_OK, 'SIC WhatsApp workflow triggered successfully!');
     }
+
+    public function documentNotification(DocumentNotificationRequest $request)
+    {
+        try {
+            $notificationData = [
+                'quoteUID' => $request->quoteUID,
+                'status' => $request->status,
+            ];
+
+            event(new DocumentNotificationEvent($notificationData));
+
+            return apiResponse(null, Response::HTTP_OK, 'Document notification received!');
+        } catch (Exception $e) {
+            LoggerService::error('Document notification processing failed', exception: $e);
+
+            return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Document notification processing failed!');
+        }
+    }
+
 }

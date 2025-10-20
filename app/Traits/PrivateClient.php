@@ -25,11 +25,30 @@ trait PrivateClient
     private const OPERATOR_IS_NULL = 'is null';
     private const OPERATOR_IS_NOT_NULL = 'is not null';
 
+    private function isLOBEligibleForPCP(int $quoteTypeId)
+    {
+        return in_array($quoteTypeId, [
+            QuoteTypeId::Car,
+            QuoteTypeId::Home,
+            QuoteTypeId::Health,
+            QuoteTypeId::Life,
+            QuoteTypeId::Yacht,
+        ]);
+    }
+
     /**
      * Apply PCP conditions and update pcp_tag on customer profile.
      */
     public function applyPcpTag(string $leadUuid, int $quoteTypeId): bool
     {
+        if (! $this->isLOBEligibleForPCP($quoteTypeId)) {
+            LoggerService::warning('LOB not eligible for PCP yet.', extra: [
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return false;
+        }
+
         $modelClass = $quoteTypeId === QuoteTypeId::Yacht || $quoteTypeId === QuoteTypeId::Home ? PersonalQuote::class : QuoteTypes::getQuoteTypeIdToClass($quoteTypeId);
         if (! class_exists($modelClass)) {
             LoggerService::warning('Model class not found.', extra: [
@@ -70,6 +89,8 @@ trait PrivateClient
 
         $version = $configs->first()->version;
 
+        LoggerService::info('PCP tag version '.$version.' found for '.$leadUuid);
+
         // Apply PCP tags
         return $this->applyPcpTagsToLeadAndCustomer($model, $version);
     }
@@ -103,6 +124,8 @@ trait PrivateClient
     {
         $conditions = $this->getQuoteTypeConditions($quoteTypeId);
 
+        LoggerService::info('conditions', ['conditions' => $conditions]);
+
         foreach ($conditions as $condition) {
             $query->where($condition['column'], $condition['operator'], $condition['value']);
         }
@@ -133,12 +156,29 @@ trait PrivateClient
     private function doesLeadMatchPcpCriteria($model, $configs, string $modelClass, int $quoteTypeId): bool
     {
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
+
+        LoggerService::info('tableColumns', ['tableColumns' => $tableColumns]);
+
         $whereClause = $this->buildConfigWhereClause($configs, $tableColumns, $model);
+
+        // Log the configs that will be used to build the where clause for debugging
+        LoggerService::info('PCP configs for where clause', [
+            'configs' => $configs->map(function ($config) {
+                return [
+                    'field_name' => $config->field_name,
+                    'operator' => $config->operator,
+                    'value' => $config->value,
+                    'currency_type_id' => $config->currency_type_id ?? null,
+                ];
+            })->toArray(),
+        ]);
 
         $query = (new $modelClass)->where('uuid', $model->uuid)
             ->where($whereClause);
 
         $this->applyQuoteTypeSpecificConditions($query, $quoteTypeId);
+
+        LoggerService::sql('doesLeadMatchPcpCriteria', $query);
 
         return $query->exists();
     }
@@ -191,7 +231,12 @@ trait PrivateClient
     {
         try {
             return DB::transaction(function () use ($pcpTagVersion, $model) {
+                LoggerService::info('Applying PCP tag to lead and customer.', extra: [
+                    'leadUuid' => $model->uuid,
+                    'pcpTagVersion' => $pcpTagVersion,
+                ]);
                 $updateResults = $this->updateLeadAndPersonalQuote($model, $pcpTagVersion);
+
                 $customerUpdateResult = $this->updateCustomer($model, $pcpTagVersion);
 
                 $this->logUpdateResults($updateResults, $customerUpdateResult);

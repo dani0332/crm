@@ -16,6 +16,9 @@ import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CreatePlanVariant from './Partials/CreateVariant.vue';
 import EditPlan from './Partials/EditPlan.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 
 const page = usePage();
 const props = defineProps({
@@ -275,7 +278,10 @@ const sendOCAEmail = () => {
   axios
     .post(route('life-quotes-send-oca-email'), {
       quote_uuid: page.props.quote.uuid,
-      plan_ids: selectedPlans.value.map(plan => plan.planId),
+      // Add the version to the plan ID to ensure each selected plan is uniquely identified
+      plan_ids: selectedPlans.value.map(
+        plan => plan.planId + '_v' + plan.version,
+      ),
     })
     .then(res => {
       notification.success({
@@ -330,7 +336,10 @@ const downloadComparisionPdf = () => {
       route('life-quotes-download-comparision-pdf'),
       {
         quote_uuid: page.props.quote.uuid,
-        plan_ids: selectedPlans.value.map(plan => plan.planId),
+        // Add the version to the plan ID to ensure each selected plan is uniquely identified
+        plan_ids: selectedPlans.value.map(
+          plan => plan.planId + '_v' + plan.version,
+        ),
       },
       {
         responseType: 'blob',
@@ -956,6 +965,8 @@ const confirmSendEmail = () => {
   loader.value.link = true;
 };
 
+const leadSourceEnum = page.props.leadSource;
+
 const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
   selectPlanLoader.value[planUuid] = true;
   axios
@@ -964,6 +975,7 @@ const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
       quoteId: quoteId,
       version: version,
       isUW: isUW,
+      callSource: leadSourceEnum?.IMCRM?.toLowerCase(),
     })
     .then(response => {
       selectPlanLoader.value[planUuid] = false;
@@ -1178,6 +1190,26 @@ const getTotalAnnualPriceAED = () => {
 
   return numberFormat(
     priceInAED * (page.props.quote?.life_quote?.payment_term ?? 1),
+  );
+};
+
+const showSelectedButton = item => {
+  // Early return for invalid data
+  if (!item?.planId) return false;
+
+  // Get isUnderwritten from the currently selected plan
+  const isUnderwritten =
+    page.props?.quote?.quote_customer_plan?.plan?.isUnderwritten;
+
+  const isDisabled = item?.isDisabled;
+  const planId = item?.planId;
+  const version = item?.version;
+
+  return (
+    selectedProviderPlan == planId &&
+    selectedProviderPlanVersion == (version || 0) &&
+    !isDisabled &&
+    isUnderwritten === item?.isUnderwritten
   );
 };
 </script>
@@ -2299,11 +2331,7 @@ const getTotalAnnualPriceAED = () => {
                     </x-button>
                     <span>
                       <x-button
-                        v-if="
-                          selectedProviderPlan == item.planId &&
-                          selectedProviderPlanVersion == (item.version || 0) &&
-                          !item.isDisabled
-                        "
+                        v-if="showSelectedButton(item)"
                         size="xs"
                         color="orange"
                         outlined
@@ -2312,12 +2340,7 @@ const getTotalAnnualPriceAED = () => {
                       >
 
                       <x-button
-                        v-else-if="
-                          !(
-                            ecomDetail?.isUnderwritten &&
-                            selectedProviderPlan == item.planId
-                          )
-                        "
+                        v-else-if="!item.isDisabled"
                         size="xs"
                         color="emerald"
                         outlined
@@ -2717,7 +2740,7 @@ const getTotalAnnualPriceAED = () => {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      :isPlanDetailSectionEnabled="false"
+      :isPlanDetailSectionEnabled="shouldShowPlanDetailsSection"
     />
 
     <QuotePayments
@@ -2760,6 +2783,28 @@ const getTotalAnnualPriceAED = () => {
       :bookPolicyDetails="bookPolicyDetails"
     />
 
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :customerData="{
+        customerType: quote.customer_type,
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :expanded="sectionExpanded"
+    />
+
     <BookPolicy
       v-if="
         canAny([
@@ -2774,6 +2819,7 @@ const getTotalAnnualPriceAED = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :isPlanDetailSectionEnabled="shouldShowPlanDetailsSection"
     />
 
     <SendUpdates
@@ -2793,40 +2839,7 @@ const getTotalAnnualPriceAED = () => {
       :quote-type="quoteType"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
+    <LeadHistory :quote="$page.props.quote" />
 
     <FtcEmailTrack
       :quoteType="$page.props.modelType"

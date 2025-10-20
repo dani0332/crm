@@ -9,6 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -90,6 +91,9 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         } finally {
             // Always reset database connection back to default
             DB::setDefaultConnection('mysql');
+            if (Auth::check()) {
+                Auth::logout();
+            }
             gc_collect_cycles();
         }
     }
@@ -114,8 +118,20 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             return app($this->exportClass, ['quoteType' => $quoteType]);
         }
 
-        // Handle AmlCftReportExport which needs requestParams in constructor
-        if ($this->exportClass === 'App\\Exports\\AmlCftReportExport') {
+        // Handle exportClass which needs requestParams in constructor
+        $exportWithRequestParams = [
+            'App\\Exports\\AmlCftReportExport',
+            'App\\Exports\\Reports\\SaleSummaryReportExport',
+            'App\\Exports\\Reports\\SaleDetailReportExport',
+            'App\\Exports\\Reports\\EndingPoliciesReportExport',
+            'App\\Exports\\Reports\\TransactionReportExport',
+            'App\\Exports\\Reports\\ActivePoliciesReportExport',
+            'App\\Exports\\Reports\\EndorsementReportExport',
+            'App\\Exports\\Reports\\InstallmentReportExport',
+            'App\\Exports\\Reports\\ConversionAsAtReportExport',
+        ];
+
+        if (in_array($this->exportClass, $exportWithRequestParams)) {
             return app($this->exportClass, ['requestParams' => $this->requestParams]);
         }
 

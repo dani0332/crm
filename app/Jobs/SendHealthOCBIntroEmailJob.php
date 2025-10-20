@@ -5,11 +5,13 @@ namespace App\Jobs;
 use App\Enums\LeadSourceEnum;
 use App\Models\HealthQuote;
 use App\Services\HealthEmailService;
+use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\Skip;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
@@ -78,5 +80,19 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
         } catch (Exception $e) {
             Log::error("SendHealthOCBIntroEmailJob - Exception: {$e->getMessage()} | Stack Trace: {$e->getTraceAsString()}");
         }
+    }
+
+    public function middleware()
+    {
+        $healthQuote = HealthQuote::where('uuid', $this->quoteUuid)->first();
+        $isAUHAndRevivalOrInsuranceWallet = $healthQuote?->isAUHLead() || ($healthQuote?->isAUHLead(false) && $healthQuote?->isLeadSourceRevivalOrInsuranceWallet());
+
+        if ($isAUHAndRevivalOrInsuranceWallet) {
+            LoggerService::info(self::class." - Skipping OCB Email because lead is from AUH or AUH and Revival/Insurance Wallet for UUID: {$this->quoteUuid}");
+        }
+
+        return [
+            Skip::when(fn () => $isAUHAndRevivalOrInsuranceWallet),
+        ];
     }
 }

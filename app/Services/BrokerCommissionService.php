@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CarRegistrationType;
-use App\Enums\InsurerProviderEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\QuoteTypeId;
@@ -28,7 +28,7 @@ class BrokerCommissionService
         // Check if the insurance provider exists and has a payment gateway ID
         if (! $insuranceProvider || $insuranceProvider->payment_gateway_id == null) {
             // Return default values if the insurance provider is not valid
-            return [false, null, false];
+            return [false, null, false, false];
         }
 
         if ($quoteTypeId == QuoteTypeId::Car && $quote && strtolower($quote->registration_type) == strtolower(CarRegistrationType::COMPANY)) {
@@ -64,8 +64,12 @@ class BrokerCommissionService
                                 ? (! $brokerCommission->enable_payment_link && $insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL)
                                 : ($insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL);
 
+        $isPaymentLinkEnabled = $brokerCommission
+                                ? $brokerCommission->enable_payment_link
+                                : false;
+
         $insurersWithoutCCRenewal = [
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+            InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 
         try {
@@ -80,7 +84,7 @@ class BrokerCommissionService
             Log::error('Quote code '.$quote->code.'Error in BrokerCommissionService::fetchBrokerCommission: '.$e->getMessage());
         }
 
-        return [$isCreditCardEnabled, $brokerCommission, false];
+        return [$isCreditCardEnabled, $brokerCommission, false, $isPaymentLinkEnabled];
     }
 
     /**

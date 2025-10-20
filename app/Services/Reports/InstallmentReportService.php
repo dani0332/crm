@@ -2,10 +2,12 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\PaymentFrequency;
-use App\Exports\Reports\InstallmentReportExport;
+use App\Enums\QuoteTypeId;
+use App\Enums\TravelQuoteEnum;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -21,7 +23,7 @@ class InstallmentReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::INSTALLMENT;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::APPROVED_TRANSACTIONS;
@@ -76,7 +78,16 @@ class InstallmentReportService extends ManagementReport
                 DB::raw('CASE WHEN ps.sr_no=1 THEN p.commmission_percentage ELSE 0 END as commmission_percentage'),
                 'personal_quotes.source',
                 'ps.sage_reciept_id',
-                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted')
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+                'ciw.text as currently_insured_with_text',
+                'cqr.currently_insured_with as currently_insured_with',
+                DB::raw('CASE WHEN hqr.id IS NULL THEN "N/A" WHEN hqr.pec_marked_at IS NOT NULL THEN "Yes" ELSE "No" END as pec_flag'),
+                'tqr.coverage_code as travel_coverage_code',
+                'tqr.days_cover_for as travel_days_cover_for',
+                'tqr.direction_code as travel_direction_code',
+                'cli.text as travel_currently_located_in_id_text',
+                'tqr.region_cover_for_id as travel_region_cover_for_id',
+                'n.text as travel_destination_id_text',
             )
             ->join('payments as p', function ($join) {
                 $join->on('personal_quotes.code', '=', 'p.code')
@@ -95,11 +106,33 @@ class InstallmentReportService extends ManagementReport
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id')
             ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
+            ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
+            ->leftJoin('car_quote_request as cqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'cqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
+            ->leftJoin('health_quote_request as hqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'hqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
+            })
+            ->leftJoin('travel_quote_request as tqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'tqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Travel);
+            })
+            ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
+            ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id')
             ->orderBy('personal_quotes.id', 'desc')
             ->orderBy('ps.due_date', 'asc');
 
         $this->applyFilters($query, $request);
         $this->getUtmGroup($request, $query);
+
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+        $query = $this->getReportQueryBuilder($request);
 
         LoggerService::sql(self::class.' - Installment Report Query', $query);
 
@@ -107,7 +140,8 @@ class InstallmentReportService extends ManagementReport
             $data = $query->get();
             $this->formatData($data);
 
-            return (new InstallmentReportExport($data))->download("Installment Report {$this->reportDateRange}.xlsx");
+            return $data;
+
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
@@ -119,7 +153,7 @@ class InstallmentReportService extends ManagementReport
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
             $item->policy_start_date = ! empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;
@@ -133,6 +167,40 @@ class InstallmentReportService extends ManagementReport
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->transactions = $this->concatValues([$item->insurer_invoice_number, $item->notes, $item->reference], '-');
             $item->commmission_percentage = number_format($item->commmission_percentage, 2);
+            $item->currently_insured_with_text = $item->quote_type_id == QuoteTypeId::Car
+                ? ($item->currently_insured_with_text ?? $item->currently_insured_with ?? 'N/A')
+                : ($item->currently_insured_with_text ?? 'N/A');
+
+            if ($item->quote_type_id == QuoteTypeId::Travel) {
+                $item->travel_coverage = $item->source == LeadSourceEnum::RENEWAL_UPLOAD
+                    ? TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP
+                    : ($item->travel_coverage_code != null
+                        ? $item->travel_coverage_code
+                        : ($item->travel_days_cover_for !== null && $item->travel_days_cover_for <= 92
+                            ? TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP
+                            : ($item->travel_days_cover_for !== null
+                                ? TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP.
+                                '/'.
+                                TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP
+                                : 'N/A')));
+
+                $item->traveling_where = $item->travel_direction_code !== null
+                    ? $item->travel_direction_code
+                    : (
+                        ($item->travel_currently_located_in_id_text == TravelQuoteEnum::LOCATION_UAE_TEXT &&
+                            $item->travel_region_cover_for_id != TravelQuoteEnum::REGION_COVER_ID_UAE
+                        ) ? TravelQuoteEnum::TRAVEL_UAE_OUTBOUND
+                        : (
+                            ($item->travel_destination_id_text == TravelQuoteEnum::LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                                $item->travel_region_cover_for_id == TravelQuoteEnum::REGION_COVER_ID_UAE
+                            ) ? TravelQuoteEnum::TRAVEL_UAE_INBOUND
+                            : 'N/A'
+                        )
+                    );
+            } else {
+                $item->travel_coverage = 'N/A';
+                $item->traveling_where = 'N/A';
+            }
         });
     }
 

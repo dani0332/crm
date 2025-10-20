@@ -18,9 +18,11 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SLAActionTypeEnum;
 use App\Facades\Ken;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
+use App\Jobs\ReEvaluatePecJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\Customer;
@@ -39,6 +41,7 @@ use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
+use App\Services\SLA\SLAService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
@@ -62,7 +65,7 @@ class HealthQuoteService extends BaseService
 
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder, protected SLAService $slaService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
@@ -249,6 +252,11 @@ class HealthQuoteService extends BaseService
         return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
     }
 
+    public function getLead($id): HealthQuote
+    {
+        return HealthQuote::findOrFail($id);
+    }
+
     public function getEntityPlain($id)
     {
         return HealthQuote::where('id', $id)->with([
@@ -325,6 +333,7 @@ class HealthQuoteService extends BaseService
             'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
             'salaryBandId' => $request->salary_band_id,
             'memberCategoryId' => $request->member_category_id,
+            'isPecMarked' => $request->pec == 1,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -396,7 +405,6 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
-
         $healthQuote = HealthQuote::where('uuid', $id)->first();
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
         $healthQuote->first_name = $request->first_name;
@@ -420,6 +428,7 @@ class HealthQuoteService extends BaseService
                 'salary_band_id' => $request->salary_band_id,
                 'gender' => $request->gender,
                 'dob' => $request->dob,
+                'is_pec_marked' => $request->pec == 1,
             ];
 
             $healthQuoteFirstMember = HealthMemberDetail::where('health_quote_request_id', $healthQuote->id)->first();
@@ -445,7 +454,12 @@ class HealthQuoteService extends BaseService
         $healthQuote->dob = $request->dob;
         $healthQuote->policy_start_date = $request->policy_start_date;
         $healthQuote->health_plan_type_id = $request->plan_type_id;
+
         $healthQuote->save();
+
+        $this->slaService->meetSLAOnEdit($healthQuote, SLAActionTypeEnum::LEAD_EDIT);
+
+        ReEvaluatePecJob::dispatch($healthQuote->uuid);
 
         if (isset($request->return_to_view)) {
             return redirect('quote/health/'.$id)->with('success', 'Health Quote has been updated');
@@ -1102,32 +1116,44 @@ class HealthQuoteService extends BaseService
         $response['priceWithVAT'] = '';
         $response['priceWithLP'] = ''; // Premium with loading price
 
-        $planData = HealthQuotePlan::where('health_quote_request_id', $data->id)->first();
-        if ($planData) {
-            $planPayload = json_decode($planData->plan_payload, true);
-            if (isset($planPayload['plans'])) {
-                foreach ($planPayload['plans'] as $plan) {
-                    if ($plan['id'] == $data->plan_id) {
-                        $response['providerName'] = $plan['providerName'];
-                        $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
-                        $response['paidAt'] = GenericRequestEnum::NotApplicable;
-                        $response['planName'] = $plan['name'];
-                        if (isset($plan['ratesPerCopay'])) {
-                            foreach ($plan['ratesPerCopay'] as $ratePerCopay) {
-                                if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
-                                    $response['priceWithVAT'] = (float) $ratePerCopay['discountPremium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
-                                    $response['priceWithLP'] = (float) $ratePerCopay['discountPremium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
-                                }
-                            }
-                        }
-                        $response['priceWithVAT'] = ((float) $response['priceWithVAT'] ?? 0) + ((isset($plan['basmah']) ? (float) $plan['basmah'] : 0)) + ((isset($plan['policyFee']) ? (float) $plan['policyFee'] : 0));
-                        if (isset($plan['benefits'], $plan['benefits']['feature'])) {
-                            foreach ($plan['benefits']['feature'] as $value) {
-                                if ($value['code'] == GenericRequestEnum::TPA_Code) {
-                                    $response['network'] = $value['value'];
-                                }
-                            }
-                        }
+        if (empty($data->plan_id)) {
+            return $response;
+        }
+
+        $kenResponse = Ken::request('/fetch-health-selected-plan', 'post', [
+            'quoteUID' => $data->uuid,
+        ]);
+
+        $plans = collect($kenResponse['plans'] ?? []);
+
+        $plan = (object) $plans->first();
+
+        if ($plan) {
+            $response['providerName'] = property_exists($plan, 'providerName') ? $plan->providerName : '';
+            $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
+            $response['paidAt'] = GenericRequestEnum::NotApplicable;
+            $response['planName'] = property_exists($plan, 'name') ? $plan->name : '';
+
+            if (property_exists($plan, 'ratesPerCopay')) {
+                foreach ($plan->ratesPerCopay as $ratePerCopay) {
+                    if (isset($ratePerCopay['healthPlanCoPaymentId']) && $ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
+                        $response['priceWithVAT'] = (float) $ratePerCopay['discountPremium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
+                        $response['priceWithLP'] = (float) $ratePerCopay['discountPremium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
+                    }
+                }
+            }
+
+            $basmah = property_exists($plan, 'basmah') ? (float) $plan->basmah : 0;
+            $policyFee = property_exists($plan, 'policyFee') ? (float) $plan->policyFee : 0;
+            $icpFee = property_exists($plan, 'icpFee') ? (float) $plan->icpFee : 0;
+
+            $response['priceWithVAT'] = ((float) $response['priceWithVAT'] ?? 0) + $basmah + $policyFee + $icpFee;
+            $benefits = property_exists($plan, 'benefits') ? $plan->benefits : [];
+            if (isset($benefits['feature'])) {
+                $features = $benefits['feature'];
+                foreach ($features as $value) {
+                    if (isset($value['code']) && $value['code'] == GenericRequestEnum::TPA_Code) {
+                        $response['network'] = $value['value'];
                     }
                 }
             }
@@ -1278,6 +1304,7 @@ class HealthQuoteService extends BaseService
                 'salaryBandId' => $request->salary_band_id,
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
+                'isPecMarked' => $request->pec == 1,
             ];
 
             $dataArray = [
@@ -1313,6 +1340,7 @@ class HealthQuoteService extends BaseService
                 'salaryBandId' => $request->salary_band_id,
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
+                'isPecMarked' => $request->pec == 1,
             ];
 
             $dataArray = [
@@ -1405,8 +1433,10 @@ class HealthQuoteService extends BaseService
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
 
+        $isAUH = $quote->isAUHLead(false);
+
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
-            ->loadView('pdf.health_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
+            ->loadView('pdf.health_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'isAUH'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
         $pdfName = 'InsuranceMarket.ae™ Health Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';

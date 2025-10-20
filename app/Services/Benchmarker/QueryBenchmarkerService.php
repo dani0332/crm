@@ -43,7 +43,7 @@ class QueryBenchmarkerService
             '/\b(password|passwd|pwd|user_password|hash|secret)\b/i',
             '/\b(ssn|social_security|tax_id|national_id|id_number)\b/i',
             '/\b(credit_card|card_number|cc_number|payment_card)\b/i',
-            '/\b(address|street|city|postal_code|zip_code|zip)\b/i',
+            '/\b(address|street|postal_code|zip_code|zip)\b/i',
         ];
 
         // Extract SELECT clause from the query

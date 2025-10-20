@@ -20,6 +20,7 @@ defineProps({
   authorizedDays: Number,
   assignmentTypes: Object,
   insurerAMLStatus: Array,
+  emirates: Array,
 });
 
 const page = usePage();
@@ -65,6 +66,8 @@ const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'EMIRATE OF VISA', value: 'emirate.text', is_active: true },
+  { text: 'POLICY PEC FLAG', value: 'has_pec_tag', is_active: true },
   {
     text: 'PAYMENT AUTHORISED DATE',
     value: 'payment.authorized_at',
@@ -146,7 +149,11 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch.name', is_active: true },
+  {
+    text: 'Renewal Batch',
+    value: 'renewal_batch_model.name',
+    is_active: true,
+  },
   {
     text: 'Private Client',
     value: 'customer.pcp_tag_formatted',
@@ -200,6 +207,10 @@ const filters = reactive({
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   private_client: 'all',
+  emirate_of_your_visa_id: [],
+  pec_flag: 'all',
+  authorize_date: '',
+  captured_date: '',
 });
 
 const canExport = ref(false);
@@ -374,24 +385,65 @@ function onAssignLead(isValid) {
 }
 
 function setQueryStringFilters() {
+  // Define which fields should have integer values
+  const integerFields = [
+    'quote_status',
+    'insurer_aml_status',
+    'advisors',
+    'renewal_batches',
+    'payment_status',
+    'emirate_of_your_visa_id',
+    'page',
+  ];
+
+  // Group array parameters
+  const arrayParams = {};
+  const singleParams = {};
+
   for (const [key, value] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = value;
-    } else {
-      // Handle different data types appropriately
-      if (key.includes('_id') && !isNaN(parseInt(value))) {
-        // ID fields should be integers
-        filters[key] = parseInt(value);
-      } else if (key === 'page' && !isNaN(parseInt(value))) {
-        // Page should be integer
-        filters[key] = parseInt(value);
-      } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
-        // Boolean-like fields
-        filters[key] = parseInt(value);
-      } else {
-        // Keep as string for dates, text fields, etc.
-        filters[key] = value;
+    // Check for indexed array format like authorize_date[0], authorize_date[1]
+    const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+
+    if (arrayMatch) {
+      const [, fieldName, index] = arrayMatch;
+      if (!arrayParams[fieldName]) {
+        arrayParams[fieldName] = [];
       }
+      arrayParams[fieldName][parseInt(index)] = value;
+    } else if (key.includes('[]')) {
+      // Handle simple array format like quote_status[]
+      const fieldName = key.substring(0, key.length - 2);
+      arrayParams[fieldName] = Array.isArray(value) ? value : [value];
+    } else {
+      // Single parameters
+      singleParams[key] = value;
+    }
+  }
+
+  // Process array parameters
+  for (const [fieldName, values] of Object.entries(arrayParams)) {
+    // Filter out undefined values and convert to correct type
+    const cleanValues = values.filter(v => v !== undefined);
+
+    if (integerFields.includes(fieldName)) {
+      filters[fieldName] = cleanValues
+        .map(v => parseInt(v))
+        .filter(v => !isNaN(v));
+    } else {
+      filters[fieldName] = cleanValues;
+    }
+  }
+
+  // Process single parameters
+  for (const [key, value] of Object.entries(singleParams)) {
+    if (integerFields.includes(key) && !isNaN(parseInt(value))) {
+      filters[key] = parseInt(value);
+    } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
+      // Boolean-like fields
+      filters[key] = parseInt(value);
+    } else {
+      // Keep as string for dates, text fields, enums, etc.
+      filters[key] = value;
     }
   }
 }
@@ -1005,6 +1057,22 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars
           multi-calendars-solo
         />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
         <x-select
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
@@ -1075,6 +1143,26 @@ const insurerAMLStatusOption = computed(() => {
           ]"
           class="w-full"
           :single="true"
+        />
+        <ComboBox
+          v-model="filters.pec_flag"
+          label="Policy PEC Flag"
+          placeholder="Search by PEC flag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
+          v-model="filters.emirate_of_your_visa_id"
+          label="Emirate of Visa"
+          placeholder="Search by Emirate of Visa"
+          :options="emirates"
+          class="w-full"
+          :single="false"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -1220,6 +1308,13 @@ const insurerAMLStatusOption = computed(() => {
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
             {{ is_ecommerce ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-has_pec_tag="{ has_pec_tag }">
+        <div class="text-center">
+          <x-tag size="sm" :color="has_pec_tag ? 'error' : 'success'">
+            {{ has_pec_tag ? 'Yes' : 'No' }}
           </x-tag>
         </div>
       </template>

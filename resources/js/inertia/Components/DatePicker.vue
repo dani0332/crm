@@ -51,12 +51,20 @@ const props = defineProps({
     default: '',
   },
   range: {
-    type: Boolean,
+    type: [Boolean, Object],
     default: false,
   },
   required: {
     type: Boolean,
     default: false,
+  },
+  minTime: {
+    type: Object,
+    default: null,
+  },
+  maxTime: {
+    type: Object,
+    default: null,
   },
 });
 
@@ -86,6 +94,8 @@ const iconPosition = computed(() => {
     class="w-full"
     :clearable="!props.disabled"
     :range="range"
+    :min-time="props.minTime"
+    :max-time="props.maxTime"
     text-input
     :teleport-center="false"
     teleport="body"
@@ -127,5 +137,9 @@ const iconPosition = computed(() => {
 
 .dp__cell_disabled {
   @apply opacity-20;
+}
+
+.dp--clear-btn {
+  top: 2.75rem !important;
 }
 </style>

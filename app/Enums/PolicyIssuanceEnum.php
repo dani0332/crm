@@ -11,15 +11,58 @@ final class PolicyIssuanceEnum extends Enum
     // Advisor email to be used to assign advisor to leads which booked automatically using policy issuance automations
     const API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL = 'happiness@support.insurancemarket.ae';
     const API_POLICY_ISSUANCE_AUTOMATION_USER_LABEL = 'Auto Issued';
+
+    // Policy Issuance Automation Job Statuses
     const PENDING_STATUS = 'pending';
     const PROCESSING_STATUS = 'processing';
     const TIMEOUT_STATUS = 'timeout';
     const COMPLETED_STATUS = 'completed';
     const FAILED_STATUS = 'failed';
     const SUCCESS_STATUS = 'success';
+    const BOOKING_PENDING_STATUS = 'booking_pending';
+    const BOOKING_PROCESSING_STATUS = 'booking_processing';
 
-    /* Insurer API Generic Status */
+    // Policy Issuance Automation Statuses IDs
+    const PIA_POLICY_AUTOMATION_STATUS_YES_ID = 1;
+    const PIA_POLICY_AUTOMATION_STATUS_NO_ID = 2;
 
+    // Policy Issuance Automation Statuses Messages
+    const PIA_POLICY_AUTOMATION_STATUS_YES = 'Yes';
+    const PIA_POLICY_AUTOMATION_STATUS_NO = 'No';
+
+    // Policy Issuance Insurer API Statuses for all automations
+    // Policy Issuance Automation Insurer Statuses IDs
+    const PIA_AUTO_CAPTURE_FAILED_STATUS_ID = 1;
+    const PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID = 2;
+    const PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID = 3;
+    const PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID = 4;
+    const PIA_OCR_PROCESSING_API_FAILED_STATUS_ID = 5;
+    const PIA_BOOK_POLICY_API_FAILED_STATUS_ID = 6;
+    const PIA_PREVIOUS_POLICY_EXPIRED_STATUS_ID = 99;
+
+    // Policy Issuance Automation Insurer Statuses Messages
+    const PIA_AUTO_CAPTURE_FAILED = 'Auto Capture Failed';
+    const PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED = 'Insurer Document Upload Failed';
+    const PIA_POLICY_ISSUANCE_API_FAILED = 'Policy Creation Failed';
+    const PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED = 'Policy Document Retrieval Failed';
+    const PIA_OCR_PROCESSING_API_FAILED = 'OCR Processing Failed';
+    const PIA_BOOK_POLICY_API_FAILED = 'Send and Book Policy Failed';
+    const PIA_PREVIOUS_POLICY_EXPIRED = 'Previous policy has expired';
+
+    // Policy Issuance Automation Insurer Statuses Action Messages
+    const PIA_AUTO_CAPTURE_ACTION_MESSAGE = 'Auto Capture Payment';
+    const PIA_UPLOAD_POLICY_DOCUMENTS_API_ACTION_MESSAGE = 'Insurer Document Upload via API';
+    const PIA_POLICY_ISSUANCE_API_ACTION_MESSAGE = 'Policy Issuance via API';
+    const PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_ACTION_MESSAGE = 'Get and Upload Policy Documents to IMCRM via API';
+    const PIA_OCR_PROCESSING_API_ACTION_MESSAGE = 'OCR Processing via API';
+    const PIA_BOOK_POLICY_API_ACTION_MESSAGE = 'Book Policy via API';
+    const PIA_PREVIOUS_POLICY_EXPIRED_ACTION_MESSAGE = 'Previous policy has expired';
+
+    // Policy Issuance AutomationRTA statuses
+    const PIA_RTA_UPLOAD_STATUS_PENDING = '0';
+    const PIA_RTA_UPLOAD_STATUS_DONE = '1';
+
+    /* Insurer API Generic Status */ // These are in used for Travel Alliance Insurance
     const POLICY_ISSUANCE_API_STATUS_YES_ID = 1;
     const POLICY_ISSUANCE_API_STATUS_YES = 'Yes';
     const POLICY_ISSUANCE_API_STATUS_NO_ID = 2;
@@ -37,9 +80,9 @@ final class PolicyIssuanceEnum extends Enum
     const BOOKING_DETAILS_API_FAILED = 'Booking Details API Failed';
     const BOOKING_DETAILS_API_ACTION_MESSAGE = 'Retrieval of Required Booking Details via API';
 
-    /* Insurer API Generic Status */
+    /* Insurer API Generic Status */ // These are in used for Travel Alliance Insurance
 
-    /* Alliance Travel Steps */
+    /* Alliance Travel Steps */ // These are in used for Travel Alliance Insurance
 
     const ALLIANCE_TRAVEL_ISSUE_POLICY = 'IssuePolicy';
     const ALLIANCE_TRAVEL_PURCHASE_POLICY = 'PurchasePolicy';
@@ -47,12 +90,18 @@ final class PolicyIssuanceEnum extends Enum
     const ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS = 'FillPolicyBookingDetails';
     const ALLIANCE_TRAVEL_BOOK_POLICY = 'BookPolicy';
 
-    /* Alliance Travel Steps */
+    /* Alliance Travel Steps */ // These are in used for Travel Alliance Insurance
+
+    /* LIVA AML API Statuses */
+
+    const LIVA_AML_ACTIVE = 1;
+    const LIVA_AML_ACCEPTED = 23;
+
     public static function getPolicyIssuanceSteps($insurerCode, $quoteType)
     {
         return match (ucfirst($quoteType)) {
             QuoteTypes::TRAVEL->value => match ($insurerCode) {
-                InsuranceProvidersEnum::ALNC => self::getTravelAlliancePolicyIssuanceSteps(),
+                InsuranceProviderEnum::ALNC->value => self::getTravelAlliancePolicyIssuanceSteps(),
                 default => null,
             },
             default => null,

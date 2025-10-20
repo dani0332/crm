@@ -210,6 +210,7 @@ class HealthEmailService extends BaseService
             'members' => $members,
             'plan' => $plan,
             'isCampaign' => getAppStorageValueByKey(ApplicationStorageEnums::IS_CAMPAIGN) == '1',
+            'emirateOfYourVisaId' => $lead->emirate_of_your_visa_id,
         ];
 
         if ($advisor) {
@@ -229,6 +230,12 @@ class HealthEmailService extends BaseService
 
     public function initiateApplyNowEmail(HealthQuote $lead)
     {
+        if ($lead->isAUHLead() || ($lead->isAUHLead(false) && $lead->isLeadSourceRevivalOrInsuranceWallet())) {
+            LoggerService::info(self::class." - Skipping Apply Now Email because lead is from AUH or AUH and Revival/Insurance Wallet for uuid: {$lead->uuid}");
+
+            return;
+        }
+
         LoggerService::info(self::class." Inside Apply Now for uuid: {$lead->uuid}");
         try {
             if (! $lead->isApplicationPending()) {
@@ -263,6 +270,12 @@ class HealthEmailService extends BaseService
 
     public function sendOCAHealthWorkFlow($lead)
     {
+        if ($lead->isAUHLead() || ($lead->isAUHLead(false) && $lead->isLeadSourceRevivalOrInsuranceWallet())) {
+            LoggerService::info(self::class." - Skipping OCA Health Workflow because lead is from AUH or AUH and Revival/Insurance Wallet for uuid: {$lead->uuid}");
+
+            return;
+        }
+
         LoggerService::info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
         if (! $lead->oca_flow_enabled) {
             $advisor = User::where('id', $lead->advisor_id)->first();

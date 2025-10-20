@@ -20,6 +20,11 @@ const props = defineProps({
 
 const page = usePage();
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const leadSourceEnum = page.props.leadSource;
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
+const quote = page.props.quote;
+
 const notification = useNotifications('toast');
 const isLoading = ref(false);
 const isPlanSelectionEnable = ref(false);
@@ -32,6 +37,31 @@ const can = permission => useCan(permission);
 const permissionEnum = page.props.permissionsEnum;
 
 const emit = defineEmits(['update:selectedPlanChanged']);
+
+const isPlanSelectionDisable = computed(() => {
+  const quoteType = props.quoteType?.toLowerCase();
+  const isNormalPlan = props.extraDetails?.planType == 'normalPlans';
+  const isSourceIMCRM = quote?.source == leadSourceEnum?.IMCRM;
+  const isALNCProvider =
+    props.plan?.providerCode == insuranceProviderCodeEnum?.ALNC;
+
+  if (
+    quoteType == quoteTypeCodeEnum?.Travel?.toLowerCase() &&
+    isSourceIMCRM &&
+    isNormalPlan &&
+    isALNCProvider
+  ) {
+    const travelers = page.props.travelers ?? [];
+    return (
+      travelers.filter(
+        traveler =>
+          !traveler.first_name || !traveler.last_name || !traveler.passport,
+      ).length > 0
+    );
+  }
+
+  return false;
+});
 
 const closeSelectPlanConfirmModal = () => {
   showSelectPlanConfirm.value = false;
@@ -221,6 +251,9 @@ const updateSelectedPlan = () => {
 
   if (props.quoteType.toLocaleLowerCase() == 'travel') {
     data.planType = props.extraDetails?.planType;
+    data.quoteSource = quote?.source;
+    data.quoteId = quote?.id;
+
     if (props.extraDetails?.selectedPlansIds.length > 0) {
       for (let i = 0; i < props.extraDetails?.selectedPlansIds.length; i++) {
         if (
@@ -323,7 +356,9 @@ const updateSelectedPlan = () => {
 };
 
 watch(() => {
-  if (props.quoteType.toLowerCase() == 'health') {
+  const quoteType = props.quoteType?.toLowerCase();
+
+  if (quoteType == quoteTypeCodeEnum?.Health?.toLowerCase()) {
     let premiumCalculate =
       props.plan?.actualPremium +
       (props.plan?.policyFee || 0) +
@@ -350,7 +385,7 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
       color="success"
       outlined
       :loading="isLoading"
-      :disabled="isDisabled"
+      :disabled="isDisabled || isPlanSelectionDisable"
       @click.prevent="checkAndUpdateSelectedPlan()"
     >
       Select

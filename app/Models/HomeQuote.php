@@ -92,6 +92,22 @@ class HomeQuote extends Model implements AuditableContract
         return $this->belongsTo(HomePossessionType::class, 'iam_possesion_type_id');
     }
 
+    public function lookupAccommodationType()
+    {
+        return $this->belongsTo(Lookup::class, 'accommodation_type_id')->where([
+            'key' => 'accommodation-type',
+        ]);
+
+    }
+
+    public function lookupPossessionType()
+    {
+        return $this->belongsTo(Lookup::class, 'possession_type_id')->where([
+            'key' => 'possession-type',
+        ]);
+
+    }
+
     public function advisor()
     {
         return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
@@ -203,5 +219,22 @@ class HomeQuote extends Model implements AuditableContract
     public function allowedColumns()
     {
         return $this->allowedColumns;
+    }
+
+    public function renewalBatchModel()
+    {
+        return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
+    }
+
+    public function customerInsured()
+    {
+        return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Home);
+    }
+
+    public function amlLogs()
+    {
+        return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Home)->withTrashed();
     }
 }
