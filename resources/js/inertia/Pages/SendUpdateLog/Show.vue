@@ -239,12 +239,18 @@ const onCancel = () => {
   notesFieldError.value = false;
 };
 
-watch(() => sendUpdateForm.notes, (newValue) => {
-  if (newValue && newValue.length > 0) notesFieldError.value = false;
-});
+watch(
+  () => sendUpdateForm.notes,
+  newValue => {
+    if (newValue && newValue.length > 0) notesFieldError.value = false;
+  },
+);
 
 const onUpdateLog = isValid => {
-  if ((!sendUpdateForm.notes || sendUpdateForm.notes.length === 0) && isCarOrBike.value) {
+  if (
+    (!sendUpdateForm.notes || sendUpdateForm.notes.length === 0) &&
+    isCarOrBike.value
+  ) {
     notesFieldError.value = true;
     return;
   }
@@ -398,7 +404,10 @@ const isBookUpdate = computed(() => {
 });
 
 const isCarOrBike = computed(() => {
-  return [page.props.quoteTypeCodeEnum.Car, page.props.quoteTypeCodeEnum.Bike].includes(props.quoteType);
+  return [
+    page.props.quoteTypeCodeEnum.Car,
+    page.props.quoteTypeCodeEnum.Bike,
+  ].includes(props.quoteType);
 });
 
 const notesOptions = computed(() => {
@@ -575,14 +584,14 @@ const cancelOptionsList = computed(() => {
                   <dt class="font-bold">NOTES</dt>
                   <dd v-if="isCarOrBike">
                     <ComboBox
-                        v-model="sendUpdateForm.notes"
-                        :single="false"
-                        placeholder="Select Notes"
-                        :options="notesOptions"
-                        size="xs"
-                        :disabled="!state.edit"
-                        :class="{ 'pointer-events-none': !state.edit }"
-                        :has-error="notesFieldError"
+                      v-model="sendUpdateForm.notes"
+                      :single="false"
+                      placeholder="Select Notes"
+                      :options="notesOptions"
+                      size="xs"
+                      :disabled="!state.edit"
+                      :class="{ 'pointer-events-none': !state.edit }"
+                      :has-error="notesFieldError"
                     />
                   </dd>
                   <dd v-else>
