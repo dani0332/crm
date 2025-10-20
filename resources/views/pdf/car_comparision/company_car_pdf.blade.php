@@ -301,7 +301,7 @@
         .full-page-image {
             width: 100%;
             z-index: 999;
-            height: 100%;
+            height: 88%;
         }
 
         .text-center {
