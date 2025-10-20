@@ -1516,7 +1516,6 @@ class EmbeddedProductRepository extends BaseRepository
 
             if(!$isTPLPlanSelected && $epTransactionDetails->is_active == 0 && $epTransactionDetails->payment_status_id == PaymentStatusEnum::DRAFT)
                 $epTransactionDetails->update(['is_active' => 1]);
-            }
         }
 
         LoggerService::info('fn:syncEpEcb - Sync embedded transaction for ECB is completed');
