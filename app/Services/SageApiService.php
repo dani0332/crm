@@ -2144,12 +2144,12 @@ class SageApiService
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $isTotalPriceZero = $payment->total_price == 0;
 
-        /* Start: Temporary code for historic data to allow book polciy after m2 launch */
+        /* Start: Temporary code for historic data to allow book policy after m2 launch */
         $isQuoteFallUnderSkippableCriteria = $this->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $paymentSplits);
         if ($isQuoteFallUnderSkippableCriteria['status']) {
             return $isQuoteFallUnderSkippableCriteria;
         }
-        /* End: Temporary code for historic data to allow book polciy after m2 launch */
+        /* End: Temporary code for historic data to allow book policy after m2 launch */
 
         /* applyPaymentARInvoices */
         $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
