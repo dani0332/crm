@@ -3,6 +3,8 @@
 namespace App\Services\PolicyIssuanceAutomation\Car;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
@@ -27,6 +29,7 @@ use App\Models\UAELicenseHeldFor;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
+use App\Services\LeadAllocationService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SageApiService;
@@ -1112,7 +1115,9 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     public function getStepsLockingStatus($quote): array
     {
+        $isAutomationInitiated = app(PolicyIssuanceService::class)->isAutomationInitiated(QuoteTypes::CAR->value, $quote);
         $policyIssuance = $quote->policyIssuance;
+
         $response = [
             'policyIssuance' => $policyIssuance,
             'isEditPolicyDetailsDisabled' => true,
@@ -1121,10 +1126,23 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'insurer_api_status' => $quote->insurer_api_status,
         ];
 
-        if ($policyIssuance?->status === PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS) {
+        if (! $isAutomationInitiated) {
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
-            $response['message'] = 'All Steps are editable';
+            $response['message'] = 'All steps are editable';
+
+            return $response;
+        }
+
+        if ($quote?->registration_type !== CarRegistrationType::PERSONAL) {
+            $response['isEditPolicyDetailsDisabled'] = false;
+            $response['isEditBookingDetailsDisabled'] = false;
+            $response['message'] = 'All steps are editable';
+
+            return $response;
+        }
+
+        if ($isAutomationInitiated && (! $policyIssuance || $policyIssuance?->status !== PolicyIssuanceEnum::FAILED_STATUS)) {
 
             return $response;
         }
