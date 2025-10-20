@@ -602,6 +602,7 @@ const onUpdateAssumption = () => {
     preserveScroll: true,
     onSuccess: () => {
       assumptionState.isEditing = false;
+      loadEmbeddedProducts();
     },
     // Reset confirmation flag after form submission completes
     onFinish: () => (modals.isConfirmed = false),
@@ -1516,6 +1517,9 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
+
+  loadEmbeddedProducts();
+
   router.reload({
     preserveState: true,
     preserveScroll: true,
