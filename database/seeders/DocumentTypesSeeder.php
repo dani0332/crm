@@ -674,7 +674,7 @@ class DocumentTypesSeeder extends Seeder
                 [
                     'code' => $document['code'],
                     'quote_type_id' => $document['quote_type_id'],
-                    'business_type_of_insurance_id' => $document['business_type_of_insurance_id'] ?? null
+                    'business_type_of_insurance_id' => $document['business_type_of_insurance_id'] ?? null,
                 ],
                 $document
             );
