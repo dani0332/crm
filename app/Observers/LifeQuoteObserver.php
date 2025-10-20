@@ -14,6 +14,7 @@ use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\LifeQuote;
 use App\Repositories\PaymentRepository;
 use App\Services\CentralService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\PersonalQuoteSyncTrait;
 
@@ -92,8 +93,7 @@ class LifeQuoteObserver
             isset($dirty['quote_status_id']) &&
             $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
-            info(self::class.' fn:'.__FUNCTION__.' - Quote Code '.$lifeQuote->code.' Policy Issued ');
-            /* (new CentralService)->triggerPolicyIssuedWhatsappMessageToCustomer($lifeQuote, QuoteTypes::LIFE->id()); */
+            LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code '.$lifeQuote->code.' Policy Issued ');
             SendPolicyIssueWhatsappMessageJob::dispatch($lifeQuote, QuoteTypes::LIFE->id())->onQueue('insly');
             $payment = $lifeQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lifeQuote, $payment, QuoteTypes::LIFE->value);

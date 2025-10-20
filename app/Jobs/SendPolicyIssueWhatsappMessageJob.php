@@ -8,6 +8,8 @@ use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Carbon;
 
 class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
 {
@@ -19,6 +21,8 @@ class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
     private $quote;
     private $quoteTypeId;
 
+    private $lockPostfix;
+
     /**
      * Create a new job instance.
      */
@@ -26,6 +30,7 @@ class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
     {
         $this->quote = $quote;
         $this->quoteTypeId = $quoteTypeId;
+        $this->lockPostfix = Carbon::now()->format('YmdHi'); // lock postfix to release the WithoutOverlapping lock i.e 2024102113
         LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code '.$quote?->code.' sendPolicyIssueWhatsappMessageJob dispatched ');
     }
 
@@ -61,5 +66,11 @@ class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
             LoggerService::error(self::class." - Error: {$e->getMessage()} for Quote Code {$this->quote?->code} with stack trace {$e->getTraceAsString()}");
         }
 
+    }
+
+    public function middleware()
+    {
+        // release the WithoutOverlapping lock 5 minutes after the job has processed
+        return [(new WithoutOverlapping($this->quote->code.'-'.$this->lockPostfix))->dontRelease()];
     }
 }
