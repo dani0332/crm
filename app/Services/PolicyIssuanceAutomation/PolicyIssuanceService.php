@@ -438,10 +438,16 @@ class PolicyIssuanceService
 
     public function isAutomationInitiated($quoteType, $quote)
     {
+        LoggerService::info('class: '.$this->className.' fn: '.__FUNCTION__.' Quote : '.$quote->code);
         $payment = $quote->payments()->mainLeadPayment()->first();
-        $insurer = getInsuranceProvider($payment, $quoteType);
 
+        if (! $payment) {
+            return false;
+        }
+
+        $insurer = getInsuranceProvider($payment, $quoteType);
         $insurerAutomation = $this->init($quoteType, $insurer?->code);
+
         if (! $insurerAutomation?->isPolicyIssuanceAutomationEnabled()) {
             return false;
         }

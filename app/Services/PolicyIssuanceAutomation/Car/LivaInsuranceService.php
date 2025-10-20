@@ -1113,6 +1113,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     public function getStepsLockingStatus($quote): array
     {
+        LoggerService::info('class: '.$this->className.' fn: '.__FUNCTION__.' Quote : '.$quote->code);
         $isAutomationInitiated = app(PolicyIssuanceService::class)->isAutomationInitiated(QuoteTypes::CAR->value, $quote);
         $policyIssuance = $quote->policyIssuance;
 
