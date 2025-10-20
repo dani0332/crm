@@ -128,6 +128,7 @@ class MulkiyaExtractor
             'vehicle_color' => $this->extractedData['vehicle_color'] ?? null,
             'vehicle_engine_number' => $this->extractedData['vehicle_engine_number'] ?? null,
             'bank_name' => $this->extractedData['bank_name'] ?? null,
+            'traffic_code_number' => $this->extractedData['traffic_code_number'] ?? null,
         ]);
     }
 
