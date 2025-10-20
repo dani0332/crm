@@ -1530,7 +1530,7 @@ class EmbeddedProductRepository extends BaseRepository
         if ($quote->is_modified == true)
             $eligibleCarQuoteDetails['is_modified'] = false;
 
-        if ($quote->plan?->repair_type !== CarPlanType::COMP)
+        if ($quote->plan?->repair_type == CarPlanType::TPL)
             $eligibleCarQuoteDetails['plan_id'] = false;
 
         return $eligibleCarQuoteDetails;

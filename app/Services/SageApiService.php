@@ -642,7 +642,7 @@ class SageApiService
                     EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType));
                     $hasMedexOrEcbProduct = EmbeddedProductRepository::hasMedexOrEcbProduct($captureableEmbeddedTransactions);
 
-                    // Return response only if EP has any Sukoon MEDEX Product, otherwise proceed to Sage booking
+                    // Return response only if EP has any MEDEX / ECB Product, otherwise proceed to Sage booking
                     if ($hasMedexOrEcbProduct) {
                         LoggerService::info(
                             'Embedded Product payment is being captured, once done, booking process will begin',
