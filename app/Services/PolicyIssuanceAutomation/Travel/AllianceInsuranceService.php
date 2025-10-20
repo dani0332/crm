@@ -617,7 +617,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     public function allocateLead($quote, $isInsurerApiStatusAlreadyFailed)
     {
         $uuid = $quote->uuid;
-        LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
+        LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Going to allocate lead ................ Ref-ID: '.$uuid);
         $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
         $advisorId = $quote?->advisor_id;
@@ -628,10 +628,11 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
             if ($response && $response['advisorId']) {
                 $advisorId = $response['advisorId'];
-                LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
-                    'advisorId' => $advisorId,
-                ]);
             }
+            LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
+                'advisorId' => $advisorId,
+                'allocation_response' => $response,
+            ]);
         }
 
         LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor', extra: [
