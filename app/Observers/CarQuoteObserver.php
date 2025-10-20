@@ -3,7 +3,6 @@
 namespace App\Observers;
 
 use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -164,10 +163,10 @@ class CarQuoteObserver
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
 
-        if (isset($dirty['car_make_id']) 
-            || isset($dirty['car_model_id']) 
-            || isset($dirty['registration_type']) 
-            || isset($dirty['vehicle_use']) 
+        if (isset($dirty['car_make_id'])
+            || isset($dirty['car_model_id'])
+            || isset($dirty['registration_type'])
+            || isset($dirty['vehicle_use'])
             || isset($dirty['is_modified'])
         ) {
             app(EmbeddedProductRepository::class)->syncCarQuoteEpEcb($lead, QuoteTypeId::Car);

@@ -1436,12 +1436,14 @@ class EmbeddedProductRepository extends BaseRepository
         $modelType = QuoteTypes::getName($quoteTypeId);
         if ($quoteTypeId != QuoteTypeId::Car || empty($quote?->id)) {
             LoggerService::info('fn:syncEpEcb - Invalid quote, quote_type_id');
+
             return ['success' => false, 'message' => 'Invalid quote, quote_type_id'];
         }
 
         $epTransactionDetails = $this->getEpTransactionDetails($quoteTypeId, $quote->id, EmbeddedProductEnum::ECB)->first();
-        if(empty($epTransactionDetails)) {
+        if (empty($epTransactionDetails)) {
             LoggerService::info('fn:syncEpEcb - Sync embedded transaction for ECB');
+
             return ['success' => true, 'message' => 'Sync embedded transaction for ECB'];
         }
 
@@ -1450,10 +1452,10 @@ class EmbeddedProductRepository extends BaseRepository
         LoggerService::info('fn:syncEpEcb - EpEcb matching criteria result: ', context: ['payment_status_id' => $epTransactionDetails->payment_status_id, 'matching_criteria_result' => $epEcbMatchingCriteriaResult]);
 
         // Check if any CarQuoteDetails unmatched with EP ECB criteria
-        if(count($unmatchedEpEcbCarQuoteDetails) > 0) {
+        if (count($unmatchedEpEcbCarQuoteDetails) > 0) {
 
             // Payment void/cancel if payment is authorised or captured
-            if(in_array($epTransactionDetails->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED])) {
+            if (in_array($epTransactionDetails->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED])) {
 
                 $unmatchedDetails = implode(', ', array_keys($unmatchedEpEcbCarQuoteDetails));
                 $reason = 'Payment void / cancel, due to change in car details ('.$unmatchedDetails.')';
@@ -1463,6 +1465,7 @@ class EmbeddedProductRepository extends BaseRepository
 
                 if (empty($epId) || empty($payment?->premium_authorized)) {
                     LoggerService::info('fn:syncEpEcb - Not Found - embedded_product_id or payment_amount');
+
                     return ['success' => false, 'message' => 'Not Found - embedded_product_id or payment_amount'];
                 }
 
@@ -1479,6 +1482,7 @@ class EmbeddedProductRepository extends BaseRepository
                 if ($response['code'] != 200) {
 
                     LoggerService::info('fn:syncEpEcb - Cancel payment process failed for payment code: '.$epTransactionDetails->code);
+
                     return ['success' => false, 'message' => 'Cancel payment process failed'];
 
                 } else {
@@ -1486,16 +1490,19 @@ class EmbeddedProductRepository extends BaseRepository
                 }
             }
 
-            if($epTransactionDetails->is_active == 1)
+            if ($epTransactionDetails->is_active == 1) {
                 $epTransactionDetails->update(['is_active' => 0, 'is_selected' => 0]);
+            }
 
         } else {
 
-            if($epTransactionDetails->is_active == 0 && $epTransactionDetails->payment_status_id == PaymentStatusEnum::DRAFT)
+            if ($epTransactionDetails->is_active == 0 && $epTransactionDetails->payment_status_id == PaymentStatusEnum::DRAFT) {
                 $epTransactionDetails->update(['is_active' => 1]);
+            }
         }
 
         LoggerService::info('fn:syncEpEcb - Sync embedded transaction for ECB is completed');
+
         return ['success' => true, 'message' => 'Sync embedded transaction for ECB is completed'];
     }
 
@@ -1505,7 +1512,7 @@ class EmbeddedProductRepository extends BaseRepository
      *
      * @param  Quote  $quote
      * @return array associative array
-     * 
+     *
      * Example: [ 'car_make_id' => false, ...propertyNamesWithResult ]
      */
     public function getEpEcbMatchingCriteriaResult($quote): array
@@ -1519,19 +1526,24 @@ class EmbeddedProductRepository extends BaseRepository
             'plan_id' => true,
         ];
 
-        if ($this->checkIsCarMakeExcludedEcbVehicle($quote->car_make_id))
+        if ($this->checkIsCarMakeExcludedEcbVehicle($quote->car_make_id)) {
             $eligibleCarQuoteDetails['car_make_id'] = false;
-        if ($this->checkIsCarModelExcludedEcbVehicle($quote->car_model_id))
+        }
+        if ($this->checkIsCarModelExcludedEcbVehicle($quote->car_model_id)) {
             $eligibleCarQuoteDetails['car_model_id'] = false;
+        }
 
-        if ($quote->vehicle_use == CarVehicleUse::COMMERCIAL)
+        if ($quote->vehicle_use == CarVehicleUse::COMMERCIAL) {
             $eligibleCarQuoteDetails['vehicle_use'] = false;
+        }
 
-        if ($quote->is_modified == true)
+        if ($quote->is_modified == true) {
             $eligibleCarQuoteDetails['is_modified'] = false;
+        }
 
-        if ($quote->plan?->repair_type == CarPlanType::TPL)
+        if ($quote->plan?->repair_type == CarPlanType::TPL) {
             $eligibleCarQuoteDetails['plan_id'] = false;
+        }
 
         return $eligibleCarQuoteDetails;
     }
@@ -1540,8 +1552,8 @@ class EmbeddedProductRepository extends BaseRepository
     {
         return EmbeddedTransaction::where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteId, 'is_selected' => true])
             ->when($isPaymentPaid, fn ($query) => $query->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED]))
-            ->when($epShortCode, 
-                fn ($query) => $query->whereHas('product.embeddedProduct', 
+            ->when($epShortCode,
+                fn ($query) => $query->whereHas('product.embeddedProduct',
                     fn ($q) => $q->where('short_code', $epShortCode)
                 )
             )->exists();

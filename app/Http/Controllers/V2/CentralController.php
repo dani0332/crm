@@ -370,7 +370,7 @@ class CentralController extends Controller
         if ($quote) {
             app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::AVAILABLE_PLAN_SELECTED);
 
-            if(ucfirst($quoteType) == QuoteTypes::CAR->value) {
+            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
                 app(EmbeddedProductRepository::class)->syncCarQuoteEpEcb($quote, QuoteTypeId::Car);
             }
         }
