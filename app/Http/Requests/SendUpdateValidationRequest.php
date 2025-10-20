@@ -66,9 +66,7 @@ class SendUpdateValidationRequest extends FormRequest
             $uploadedDocuments = $sendUpdateLog?->documents()->pluck('document_type_code')->toArray();
 
             if ($sendUpdateLog->quote_type_id == QuoteTypeId::Car) {
-                if ($sendUpdateLog->option?->code == SendUpdateLogStatusEnum::AOCOV && empty($sendUpdateLog->car_addons)) {
-                    return $validator->errors()->add('error', 'Please select Addons');
-                } elseif ($sendUpdateLog->option?->code == SendUpdateLogStatusEnum::COE && empty($sendUpdateLog->emirates_id)) {
+                if ($sendUpdateLog->option?->code == SendUpdateLogStatusEnum::COE && empty($sendUpdateLog->emirates_id)) {
                     return $validator->errors()->add('error', 'Please select Emirate');
                 } elseif ($sendUpdateLog->option?->code == SendUpdateLogStatusEnum::CISC && empty($sendUpdateLog->seating_capacity)) {
                     return $validator->errors()->add('error', 'Please select Seating capacity');

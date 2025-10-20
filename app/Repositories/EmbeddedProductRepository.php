@@ -62,6 +62,12 @@ class EmbeddedProductRepository extends BaseRepository
     public const SALAMA_DATE = '2025-07-15 21:00:00';
     public const SALAMA_POLICY_WORDINGS_PATH = 'documents/embedded_products/687774f80a867_embedded_product_687774f80a862_SalamaDriverCover(MEDEX)-PolicyWordings.pdf';
     public const SALAMA_POLICY_WORDINGS_URL = 'https://insurancemarket.blob.core.windows.net/imcrm/'.self::SALAMA_POLICY_WORDINGS_PATH;
+    public const ALLOWED_LOBS = [
+        QuoteTypeId::Car,
+        QuoteTypeId::Bike,
+        QuoteTypeId::Home,
+        QuoteTypeId::Travel,
+    ];
 
     public function model()
     {
@@ -1314,5 +1320,34 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return null;
+    }
+
+    public function fetchAuthorisedTransactions($quoteTypeId, $quoteId)
+    {
+        return EmbeddedTransaction::where([
+            ['quote_type_id', $quoteTypeId],
+            ['quote_request_id', $quoteId],
+            ['is_selected', 1],
+            ['payment_status_id', PaymentStatusEnum::AUTHORISED],
+        ])
+            ->whereHas('product.embeddedProduct', function ($query) {
+                $query->where('product_category', EpCategoryEnum::BOLT_ON);
+            })
+            ->with(['product.embeddedProduct:id,short_code'])
+            ->select('code', 'payment_status_id', 'policy_status', 'product_id')
+            ->get();
+    }
+
+    public function fetchHasSukoonMedexProducts($transactions)
+    {
+        $sukoonMedexCodes = EmbeddedProductEnum::getSukoonMedexCodes();
+
+        return $transactions
+            ->filter(function ($transaction) use ($sukoonMedexCodes) {
+                $epShortCode = $transaction?->product?->embeddedProduct?->short_code;
+
+                return $epShortCode && in_array($epShortCode, $sukoonMedexCodes);
+            })
+            ->isNotEmpty();
     }
 }
