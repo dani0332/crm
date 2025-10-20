@@ -15,6 +15,16 @@ class ApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/aca43f6c-5b22-48f3-ba68-5642a074b853/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BULK_POLICY_DOCUMENT_SEND_CODES],
             [

@@ -28,6 +28,7 @@ enum LoggerFeatureEnum: string
     case SEND_AND_BOOK_POLICY_EMAIL_JOB = 'send-and-book-policy-email-job';
     case POLICY_AUTOMATION = 'policy-automation';
     case SAGE_POLICY_BOOKING = 'sage-policy-booking';
+    case POLICY_ISSUE_WHATSAPP_MESSAGE = 'policy-issue-whatsapp-message';
     case SAGE_ENDORSEMENT_BOOKING = 'sage-endorsement-booking';
     case SAGE_POST_PREPAYMENT = 'sage-post-prepayment';
     case CAR_OCB_INTRO_EMAIL = 'car-ocb-intro-email';
