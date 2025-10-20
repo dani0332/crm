@@ -48,6 +48,7 @@ class MembersDetailController extends Controller
             }
             unset($quoteMemberDetails['customer_id']);
             unset($quoteMemberDetails['quote_request_id']);
+            unset($quoteMemberDetails['pec']);
 
             if ($quoteMemberDetails['first_name'] == null && $quoteMemberDetails['last_name'] == null) {
                 $quoteMemberCount = CustomerMembers::where([
@@ -127,6 +128,8 @@ class MembersDetailController extends Controller
                 ]);
             }
 
+            unset($quoteMemberDetails['pec']);
+
             $memberDetail = CustomerMembers::findOrFail($id);
             $memberDetail->update(array_merge($quoteMemberDetails,
                 [
@@ -171,6 +174,8 @@ class MembersDetailController extends Controller
                     'customer_type' => CustomerTypeEnum::Entity,
                 ]);
             }
+
+            unset($quoteMemberDetails['pec']);
 
             $memberDetail = CustomerMembers::findOrFail($request->id);
             $memberDetail->update(array_merge($quoteMemberDetails,

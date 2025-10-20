@@ -26,6 +26,7 @@ const { isRequired } = useRules();
 const notification = useToast();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const insurerName = page.props.insurerName;
 const generateOptions = (items, valueKey, labelKey) =>
   useGenerateOptions(items, valueKey, labelKey);
 const rules = {
@@ -206,7 +207,7 @@ const showVehicleAndDrvicerDetails = computed(() => {
   return (
     page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
     [
-      // page.props.insuranceProviderCodeEnum.RSA, // LIVA
+      page.props.insuranceProviderCodeEnum.RSA, // LIVA
       page.props.insuranceProviderCodeEnum.AXA, // GIG
       // page.props.insuranceProviderCodeEnum.OIC, // SUKOON
     ].includes(page.props.quoteRequest?.plan?.insurance_provider.code) &&
@@ -214,10 +215,8 @@ const showVehicleAndDrvicerDetails = computed(() => {
   );
 });
 
-console.log('showVehicleAndDrvicerDetails', showVehicleAndDrvicerDetails.value);
-
 const screeningFormDetails = useForm({
-  customer_type: null,
+  customer_type: page.props.insuredDetails?.insured?.customer_type ?? null,
   customer_id: quoteRequest.customer_id,
   quote_type: page.props.quoteType.code,
   // Individual Type
@@ -239,7 +238,7 @@ const screeningFormDetails = useForm({
   get_quote_email_gig:
     (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
       ? quoteRequest?.car_quote_request_detail?.insurer_quote_email
-      : quoteRequest?.quote_detail?.insurer_quote_email) ??
+      : quoteRequest?.quote_detail?.insurer_quote_email) ||
     page.props.gigInsurerDefaultEmail,
   chassis_number:
     (page.props.quoteType.code === props.quoteTypeCodeEnum.Car
@@ -265,6 +264,12 @@ const modalHeaderMessage = () => {
     [customerTypeEnum.Individual, null].includes(
       screeningFormDetails.customer_type,
     )
+  ) {
+    headerMessage.value =
+      'Please confirm the Name, Nationality, and Date of Birth of the insured person(s) as per the Emirates ID';
+  } else if (
+    page.props.quoteType.code == page.props.quoteTypeCodeEnum.Business &&
+    screeningFormDetails.customer_type == customerTypeEnum.Individual
   ) {
     headerMessage.value =
       'Please confirm the Name, Nationality, and Date of Birth of the insured person(s) as per the Emirates ID';
@@ -906,15 +911,13 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             :hasError="validateNationality"
           />
         </x-field>
-        <x-field label="Date of Birth" required>
-          <DatePicker
-            v-model="screeningFormDetails.dob"
-            :rules="[isRequired]"
-            placeholder="Date of Birth"
-            class="w-full"
-            :error="screeningFormDetails.errors.dob"
-          />
-        </x-field>
+        <DatePicker
+          v-model="screeningFormDetails.dob"
+          :rules="[isRequired]"
+          :required="true"
+          placeholder="Date of Birth"
+          label="Date of Birth"
+        />
         <x-field label="Gender" required>
           <x-select
             v-model="screeningFormDetails.screening_gender"
@@ -937,11 +940,11 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike ||
             page.props.quoteType.id === page.props.quoteTypeIdEnum.Home
           "
-          label="Email in GIG Portal"
+          :label="`Email in ${insurerName} Portal`"
         >
           <x-input
             v-model="screeningFormDetails.get_quote_email_gig"
-            placeholder="Email in GIG Portal"
+            :placeholder="`Email in ${insurerName} Portal`"
             type="text"
             class="w-full"
           />

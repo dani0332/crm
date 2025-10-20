@@ -111,6 +111,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->savingsLOB();
 
         $this->seedOcrEnabled();
+        $this->livaCarAutomationSeed();
         $this->seedGIGCarPolicyIssuance();
         $this->seedSukoonMedexProductSlug();
         $this->seedLOBCutOffDates();
@@ -118,6 +119,41 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTravelEnquiryEmail();
         $this->seedOcrSendUpdateLogFlag();
         $this->seedProductionApprovalEmails();
+        $this->seedAutoCaptureEPPayments();
+        $this->seedSla();
+    }
+
+    private function livaCarAutomationSeed()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_LIVA_CAR_POLICY_ISSUANCE],
+            [
+                'value' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE],
+            [
+                'value' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::LIVA_AUTOMATION_API_TIMEOUT],
+            [
+                'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedBirdWorkflowUrls()
@@ -321,11 +357,29 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_CQF_RENEWALS_DAYS_THRESHOLD],
+            [
+                'value' => '120',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
 
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CPA_AUSTRALIA_HOME_BCC_EMAILS],
             [
                 'value' => 'moinuddin.lakdawala@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_CQF_RENEWALS_SWITCH],
+            [
+                'value' => '1',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -358,6 +412,7 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
     }
 
     private function seedUnavailableTimeThreshold()
@@ -413,6 +468,7 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
     }
 
     public function seedStopDeduplicateScript()
@@ -681,6 +737,51 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'approval.production@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
+            ]
+        );
+    }
+
+    private function seedSla()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SLA_CALLBACK_HOURS],
+            [
+                'value' => 2,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SLA_REMINDER_MINUTES],
+            [
+                'value' => 15,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+    }
+
+    private function seedAutoCaptureEPPayments()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_AUTO_CAPTURE_EP_PAYMENTS],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AUTO_CAPTURE_EP_PAYMENTS_BOOKING_DAYS],
+            [
+                'value' => 7,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
     }

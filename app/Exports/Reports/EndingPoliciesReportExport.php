@@ -72,6 +72,9 @@ class EndingPoliciesReportExport implements CsvExportableInterface
             'Advisor',
             'Lead Source',
             'Notes',
+            'Policy PEC Flag',
+            'Travel Coverage',
+            'Traveling Where',
         ];
     }
 
@@ -99,6 +102,9 @@ class EndingPoliciesReportExport implements CsvExportableInterface
             $quote->advisor ?? 'N/A',
             $quote->source ?? 'N/A',
             $quote->notes ?? 'N/A',
+            $quote->pec_flag ?? 'N/A',
+            $quote->travel_coverage ?? 'N/A',
+            $quote->traveling_where ?? 'N/A',
         ]);
 
         foreach ($this->columnTotals as $index => $field) {

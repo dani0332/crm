@@ -31,6 +31,7 @@ use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
+use App\Jobs\RunCQFJobs;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -40,6 +41,7 @@ use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
+use App\Services\CQF\CarCQFFileExportService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
@@ -53,7 +55,6 @@ use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
@@ -476,6 +477,10 @@ class ApiController extends Controller
         ]);
     }
 
+    public function downloadValidationFailedFile($id)
+    {
+        return app(CarCQFFileExportService::class)->downloadValidationFailedFile($id);
+    }
     public function documentNotification(DocumentNotificationRequest $request)
     {
         return $this->apiService->documentNotification($request);
@@ -506,5 +511,33 @@ class ApiController extends Controller
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    public function runCQFJobs(Request $request)
+    {
+        try {
+            LoggerService::info(self::class.': Running CQF jobs');
+
+            // Validate the date parameter - make it optional since the service can handle null
+            $request->validate([
+                'date' => 'nullable|date',
+            ]);
+
+            $startDate = null;
+            if ($request->has('date') && ! empty($request->date)) {
+                $startDate = Carbon::parse($request->date);
+            }
+
+            RunCQFJobs::dispatch($startDate);
+
+            LoggerService::info(self::class.': CQF jobs have been completed');
+
+            return apiResponse(null, Response::HTTP_OK, 'car cqf renewals process has been completed');
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': CQF jobs failed', exception: $e);
+
+            return apiResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, 'Failed to run CQF jobs');
+        }
+
     }
 }
