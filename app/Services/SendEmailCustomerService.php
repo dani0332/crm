@@ -1067,9 +1067,14 @@ class SendEmailCustomerService extends BaseService
         ]);
 
         $messageId = null;
-        $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
+        $response = null;
+        $isEmailSent = 0;
+        $responseCode = 0;
+        $subject = $emailData->customerName.'\'s Savings with Alfred - '.$emailData->code;
 
         try {
+            LoggerService::info('fn: sendUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
+
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
 
             $headers = [
@@ -1093,7 +1098,7 @@ class SendEmailCustomerService extends BaseService
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $documentURL,
-                        'name' => 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.' - '.$emailData->carQuoteId.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
+                        'name' => 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.' - '.$emailData->code.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
                     ];
                 }
             }
@@ -1115,7 +1120,7 @@ class SendEmailCustomerService extends BaseService
                 ],
                 'to' => [[
                     'email' => $emailData->customerEmail,
-                    'name' => $emailData->clientFullName,
+                    'name' => $emailData->customerName,
                 ]],
                 'templateId' => (int) $emailTemplateId,
                 'params' => $emailData,
@@ -1212,12 +1217,13 @@ class SendEmailCustomerService extends BaseService
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $quoteCdbId = isset($emailData->carQuoteId) ? $emailData->carQuoteId : null;
+            $quoteCdbId = isset($emailData->code) ? $emailData->code : null;
             LoggerService::error('Send Update Email failed', extra: [
                 'Code/Message' => $responseCode,
                 'CustomerEmail' => $emailData->customerEmail,
                 'QuoteCdbId' => $quoteCdbId,
                 'Class' => get_class(),
+                'line' => $ex->getLine(),
             ], exception: $ex);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
