@@ -453,7 +453,7 @@ class PolicyIssuanceService
         if (
             $quote->aml_status == AMLStatusCode::AMLScreeningCleared &&
             $quote->kyc_decision == Kyc::COMPLETE &&
-            $payment->payment_method == PaymentMethodsEnum::CreditCard
+            $payment->payment_methods_code == PaymentMethodsEnum::CreditCard
         ) {
             return true;
         }
