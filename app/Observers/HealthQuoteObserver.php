@@ -123,7 +123,7 @@ class HealthQuoteObserver
             isset($dirty['quote_status_id']) &&
             $healthQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
-            SendPolicyIssueWhatsappMessageJob::dispatch($healthQuote, QuoteTypes::HEALTH->id())->onQueue('insly');
+            SendPolicyIssueWhatsappMessageJob::dispatch($healthQuote->uuid, QuoteTypes::HEALTH->id())->onQueue('insly');
             $payment = $healthQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($healthQuote, $payment, QuoteTypes::HEALTH->value);
             event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));

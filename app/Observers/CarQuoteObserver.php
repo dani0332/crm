@@ -158,7 +158,7 @@ class CarQuoteObserver
             isset($dirty['quote_status_id']) &&
             $lead->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
-            SendPolicyIssueWhatsappMessageJob::dispatch($lead, QuoteTypes::CAR->id())->onQueue('insly');
+            SendPolicyIssueWhatsappMessageJob::dispatch($lead->uuid, QuoteTypes::CAR->id())->onQueue('insly');
             LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);

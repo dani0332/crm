@@ -121,7 +121,7 @@ class BusinessQuoteObserver
             isset($dirty['quote_status_id']) &&
             $businessQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
-            SendPolicyIssueWhatsappMessageJob::dispatch($businessQuote, QuoteTypes::BUSINESS->id())->onQueue('insly');
+            SendPolicyIssueWhatsappMessageJob::dispatch($businessQuote->uuid, QuoteTypes::BUSINESS->id())->onQueue('insly');
             $payment = $businessQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($businessQuote, $payment, QuoteTypes::BUSINESS->value);
 

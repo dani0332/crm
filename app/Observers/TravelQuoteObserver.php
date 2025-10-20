@@ -140,7 +140,7 @@ class TravelQuoteObserver
             isset($dirty['quote_status_id']) &&
             $travelQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
-            SendPolicyIssueWhatsappMessageJob::dispatch($travelQuote, QuoteTypes::TRAVEL->id())->onQueue('insly');
+            SendPolicyIssueWhatsappMessageJob::dispatch($travelQuote->uuid, QuoteTypes::TRAVEL->id())->onQueue('insly');
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($travelQuote, $payment, QuoteTypes::TRAVEL->value);
             event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
