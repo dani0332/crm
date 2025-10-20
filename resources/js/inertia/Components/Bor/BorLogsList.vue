@@ -88,10 +88,6 @@ const getStatusBadge = status => {
       class: 'bg-yellow-100 text-yellow-800',
       text: 'Signature Requested',
     },
-    SENT_TO_INSURER: {
-      class: 'bg-blue-100 text-blue-800',
-      text: 'Sent to Insurer',
-    },
     DOCUMENT_SIGNED: {
       class: 'bg-indigo-100 text-indigo-800',
       text: 'Document Signed',
@@ -216,7 +212,6 @@ const statusOptions = [
 
   // New BorStatusEnum statuses
   { value: 'SIGNATURE_REQUESTED', label: 'Signature Requested' },
-  { value: 'SENT_TO_INSURER', label: 'Sent to Insurer' },
   { value: 'DOCUMENT_SIGNED', label: 'Document Signed' },
   { value: 'DOCUMENT_UPLOADED', label: 'Document Uploaded' },
   { value: 'CANCELLED', label: 'Cancelled' },
