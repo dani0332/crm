@@ -155,7 +155,7 @@ class SendUpdateLogRepository extends BaseRepository
             $sendUpdate = $this->find($id)->update([
                 'notes' => $data['notes'],
                 'option_id' => $data['option_id'],
-                'car_addons' => $data['car_addons'] ?? null,
+                // 'car_addons' => $data['car_addons'] ?? null,
                 'emirates_id' => $data['emirates_id'] ?? null,
                 'seating_capacity' => $data['seating_capacity'] ?? null,
                 'endorsement_number' => $data['endorsement_number'] ?? null,
