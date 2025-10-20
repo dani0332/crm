@@ -20,7 +20,6 @@ class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
     public $backoff = 300;
     private $quote;
     private $quoteTypeId;
-
     private $lockPostfix;
 
     /**

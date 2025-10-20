@@ -13,7 +13,6 @@ use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\LifeQuote;
 use App\Repositories\PaymentRepository;
-use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\PersonalQuoteSyncTrait;
