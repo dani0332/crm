@@ -13,7 +13,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-
 class AIGWorkflowJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -63,6 +62,7 @@ class AIGWorkflowJob implements ShouldQueue
             }
             if ($quote->isAIAdvisorAssigned()) {
                 LoggerService::info('AIGWorkflowJob - AI Advisor is already assigned');
+
                 return;
             } else {
                 // Use the CarEmailService to send the AIG workflow

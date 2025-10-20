@@ -1852,6 +1852,4 @@ class SendEmailCustomerService extends BaseService
         return true;
     }
 
-     
-
 }

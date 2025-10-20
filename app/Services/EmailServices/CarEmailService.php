@@ -107,7 +107,7 @@ class CarEmailService extends BaseService
                     // Send AI Advisor Email
                     SendAIAdvisorOCBJob::dispatch(QuoteTypes::CAR, $lead->uuid, $isPreviousAdvisorAi)->delay(Carbon::now()->addMinute());
                 } else {
-                    $responseCode =  $this->sendEmailCustomerService->sendCarIntroEmailWithAdvisor($lead);
+                    $responseCode = $this->sendEmailCustomerService->sendCarIntroEmailWithAdvisor($lead);
 
                     $nbFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION)->first();
                     $nbFollowupDelayDuration = ! empty($nbFollowupDelayDuration->value) ? $nbFollowupDelayDuration->value : 24;
@@ -807,6 +807,7 @@ class CarEmailService extends BaseService
     private function buildCarAIAdvisorOCBData($lead, User $advisor, bool $isReAssignment = false)
     {
         $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypeId::Car, QuoteFlowType::CAR_AI_ADVISOR_OCB);
+
         return (object) [
             'CarMake' => $lead->carMake?->text,
             'CarModel' => $lead->carModel?->text,
@@ -825,7 +826,7 @@ class CarEmailService extends BaseService
             'quoteUID' => $lead->uuid,
             'refID' => $lead->code,
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::CAR, $lead->uuid),
-            'isFollowupExecuted' => $isFollowupExecuted ,
+            'isFollowupExecuted' => $isFollowupExecuted,
             'isAIAdvisor' => $advisor->isAi(),
             'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
             'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
