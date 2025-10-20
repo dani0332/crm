@@ -34,6 +34,7 @@ use App\Models\QuoteTag;
 use App\Models\SageApiLog;
 use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SageApiLogRepository;
 use App\Services\Logger\LoggerService;
@@ -629,6 +630,36 @@ class SageApiService
         $quoteType = $request->model_type;
 
         $quoteTypeId = QuoteTypes::getIdFromValue($request->model_type) ?? $quote->quote_type_id;
+
+        if (in_array($quoteTypeId, EmbeddedProductRepository::ALLOWED_LOBS)) {
+
+            $captureableEmbeddedTransactions = EmbeddedProductRepository::authorisedTransactions($quoteTypeId, $quote->id);
+            if ($captureableEmbeddedTransactions->isNotEmpty()) {
+                try {
+                    EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType));
+                    $hasSukoonMedexProducts = EmbeddedProductRepository::hasSukoonMedexProducts($captureableEmbeddedTransactions);
+
+                    // Return response only if EP has any Sukoon MEDEX Product, otherwise proceed to Sage booking
+                    if ($hasSukoonMedexProducts) {
+                        LoggerService::info(
+                            'Embedded Product payment is being captured, once done, booking process will begin',
+                            extra: $captureableEmbeddedTransactions->toArray()
+                        );
+
+                        return ['status' => true, 'message' => 'The embedded product payment is being captured, once done, booking process will begin.'];
+                    }
+
+                } catch (Exception $e) {
+                    LoggerService::error('Embedded Product payment capture failed', [
+                        'error' => $e->getMessage(),
+                        'uuid' => $quote->uuid,
+                    ]);
+
+                    return ['status' => false, 'message' => 'Embedded Product payment capture failed'];
+                }
+            }
+        }
+
         /* Check EP Booking */
         $isEPTransStatusReadyForSage = $this->isEmbeddedTransactionStatusReadyForSage($quote, $quoteTypeId);
         if (! $isEPTransStatusReadyForSage) {
@@ -2113,12 +2144,12 @@ class SageApiService
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $isTotalPriceZero = $payment->total_price == 0;
 
-        /* Start: Temporary code for historic data to allow book polciy after m2 launch */
+        /* Start: Temporary code for historic data to allow book policy after m2 launch */
         $isQuoteFallUnderSkippableCriteria = $this->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $paymentSplits);
         if ($isQuoteFallUnderSkippableCriteria['status']) {
             return $isQuoteFallUnderSkippableCriteria;
         }
-        /* End: Temporary code for historic data to allow book polciy after m2 launch */
+        /* End: Temporary code for historic data to allow book policy after m2 launch */
 
         /* applyPaymentARInvoices */
         $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;

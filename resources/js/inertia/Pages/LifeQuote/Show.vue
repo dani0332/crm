@@ -1193,6 +1193,26 @@ const getTotalAnnualPriceAED = () => {
   );
 };
 
+const showSelectedButton = item => {
+  // Early return for invalid data
+  if (!item?.planId) return false;
+
+  // Get isUnderwritten from the currently selected plan
+  const isUnderwritten =
+    page.props?.quote?.quote_customer_plan?.plan?.isUnderwritten;
+
+  const isDisabled = item?.isDisabled;
+  const planId = item?.planId;
+  const version = item?.version;
+
+  return (
+    selectedProviderPlan == planId &&
+    selectedProviderPlanVersion == (version || 0) &&
+    !isDisabled &&
+    isUnderwritten === item?.isUnderwritten
+  );
+};
+
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 </script>
 <template>
@@ -2313,11 +2333,7 @@ const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
                     </x-button>
                     <span>
                       <x-button
-                        v-if="
-                          selectedProviderPlan == item.planId &&
-                          selectedProviderPlanVersion == (item.version || 0) &&
-                          !item.isDisabled
-                        "
+                        v-if="showSelectedButton(item)"
                         size="xs"
                         color="orange"
                         outlined
@@ -2326,13 +2342,7 @@ const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
                       >
 
                       <x-button
-                        v-else-if="
-                          !(
-                            ecomDetail?.isUnderwritten &&
-                            selectedProviderPlan == item.planId
-                          ) &&
-                          item.providerCode !== insuranceProviderCodeEnum?.MTL
-                        "
+                        v-else-if="!item.isDisabled && item.providerCode !== insuranceProviderCodeEnum?.MTL"
                         size="xs"
                         color="emerald"
                         outlined

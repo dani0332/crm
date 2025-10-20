@@ -38,6 +38,7 @@ trait SLAable
             QuoteStatusEnum::AMLScreeningFailed,
             QuoteStatusEnum::Lost,
             QuoteStatusEnum::Fake,
+            QuoteStatusEnum::ApplicationPending,
         ];
     }
 
@@ -158,7 +159,7 @@ trait SLAable
         if (in_array(TeamNameEnum::RM_SPEED, $advisorTeams)) {
             $managerEmails = [
                 ...$managerEmails,
-                ...$this->getRMEmails(),
+                ...$this->getRMManagerEmails(),
             ];
         }
 
