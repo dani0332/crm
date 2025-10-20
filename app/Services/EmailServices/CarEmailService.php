@@ -105,7 +105,7 @@ class CarEmailService extends BaseService
 
                 $nbFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION)->first();
                 $nbFollowupDelayDuration = ! empty($nbFollowupDelayDuration->value) ? $nbFollowupDelayDuration->value : 24;
-                NBMotorFollowupEmailJob::dispatch(arguments: $lead->uuid)->delay(Carbon::now()->addHours((int) $nbFollowupDelayDuration));
+                NBMotorFollowupEmailJob::dispatch(quoteUuid: $lead->uuid)->delay(Carbon::now()->addHours((int) $nbFollowupDelayDuration));
 
                 LoggerService::info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
 
