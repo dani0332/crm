@@ -321,8 +321,7 @@ const syncInsurerPortalUpdates = () => {
 const submitInsuredKycForm = isValid => {
   if (!isValid) return;
 
-  let insuranceProviderCode =
-    quoteRequest?.plan?.insurance_provider?.code;
+  let insuranceProviderCode = quoteRequest?.plan?.insurance_provider?.code;
 
   if (insuredKycFormValidate()) {
     kycFormDetails.processing = true;
