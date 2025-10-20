@@ -125,7 +125,12 @@ class QuoteAllocation extends Command
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
             ->orderByDesc('created_at')
-            ->eligibleForAllocation(QuoteTypes::CAR)
+            ->where(function($q) {
+                $q->eligibleForAllocation(QuoteTypes::CAR);
+                $q->orWhere(function($sq) {
+                    $sq->whereNull('advisor_id')->where('ai_advisor_required', true);
+                });
+            })
             ->take($chunkSize);
 
         $leads->logRawSql();
