@@ -20,6 +20,11 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  quote_type_id: {
+    type: Number,
+    default: null
+  },
+
 });
 
 const emit = defineEmits(['update:chassisNumber']);
@@ -201,10 +206,9 @@ const dateToYMD = date => {
 };
 
 const additionalVehicleTransactionDetailsForm = useForm({
-  quote_type_id: page.props.quoteType.id,
+  quote_type_id: page.props.quoteType.id ?? props.quote_type_id,
   quote_uuid: quote?.uuid,
-  insurance_provider_code:
-    quote?.plan?.insurance_provider.code ?? '',
+  insurance_provider_code: insuranceProviderCode ?? '',
   additional_vehicle_transaction_details: true,
   rta_transaction_type:
     vehicleDriverDetail.value?.rta_transaction_type?.toString() ?? '',

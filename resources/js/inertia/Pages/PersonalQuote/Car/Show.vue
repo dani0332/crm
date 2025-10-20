@@ -2406,9 +2406,10 @@ function handleCustomerVerificationUpdated(event) {
         :rta_transaction_types="rtaConfigurationData.rta_transaction_types"
         :rta_field_configurations="rtaConfigurationData.rta_field_configurations"
         :rta_validation_summaries="rtaConfigurationData.rta_validation_summaries"
+        :quote_type_id="$page.props.quoteTypeId"
       />
       <x-divider class="mb-4 mt-4" />
-      <AdditionalDriverDetails :insurerPortalSyncData="insurerPortalSyncData" />
+      <AdditionalDriverDetails :insurerPortalSyncData="insurerPortalSyncData" :quote_type_id="$page.props.quoteTypeId"/>
       <template #actions>
         <div class="text-right space-x-4">
           <x-button size="sm" ghost @click.prevent="modals.additionalVehicleDriverDetails = false">
