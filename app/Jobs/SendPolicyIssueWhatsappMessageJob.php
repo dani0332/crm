@@ -33,10 +33,10 @@ class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
     {
         $this->quoteUuid = $quoteUuid;
         $this->quoteTypeId = $quoteTypeId;
-        $this->lockPostfix = Carbon::now()->format('YmdHi'); // lock postfix to release the WithoutOverlapping lock i.e 2024102113
+        $this->lockPostfix = $quoteUuid .'-'.Carbon::now()->format('YmdHi'); // lock postfix to release the WithoutOverlapping lock i.e 2024102113
         LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code '.$quoteUuid.' sendPolicyIssueWhatsappMessageJob dispatched ', extra: [
-            'uuid' => $this->quoteUuid,
-            'quoteTypeId' => $this->quoteTypeId,
+            'uuid' => $quoteUuid,
+            'quoteTypeId' => $quoteTypeId,
         ]);
     }
 
@@ -93,6 +93,6 @@ class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
     public function middleware()
     {
         // release the WithoutOverlapping lock 5 minutes after the job has processed
-        return [(new WithoutOverlapping($this->quote->code.'-'.$this->lockPostfix))->dontRelease()];
+        return [(new WithoutOverlapping($this->lockPostfix))->dontRelease()];
     }
 }
