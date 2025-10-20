@@ -6,7 +6,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProviderEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -64,6 +64,7 @@ use App\Models\CustomerInsured;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\InsuranceProvider;
 use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -264,17 +265,13 @@ class CentralController extends Controller
      */
     public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request)
     {
-        $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+        $response = app(CentralService::class)->updateLastYearPolicy($request);
 
-        if (! $quote) {
-            return redirect()->back()->with('error', 'Error Updating Policy Details.');
+        if (! $response['status']) {
+            return redirect()->back()->with('error', $response['message']);
         }
 
-        $quote->update([
-            'renewal_batch' => $request->renewal_batch,
-        ]);
-
-        return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
+        return redirect()->back()->with('success', 'Last Year Policy Details have been updated successfully.');
     }
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
@@ -766,14 +763,17 @@ class CentralController extends Controller
         ];
 
         $response = ['status' => false, 'message' => ''];
+        $insuranceProvider = InsuranceProvider::where('id', $request->insuranceProviderId)->first();
+        // only for those insurer where TAP enabled.
+        $providerName = InsuranceProvidersEnum::getTextByCode($insuranceProvider->code);
         if (in_array($request->insurerAMLStatus, $insurerAMLFailureStatus)) {
-            $responseMessage = 'GIG server connection issue. Please check API logs for details of the error';
+            $responseMessage = $providerName.' server connection issue. Please check API logs for details of the error';
 
             if ($request->insurerAMLStatus == AMLStatusCode::InsurerAMLScreeningFailed) {
                 $insurerAMLScreeningResponse = AML::where([
                     'quote_type_id' => $request->quoteType,
                     'quote_request_id' => $request->quoteRequestId,
-                    'screening_type' => 'INSURER_'.InsuranceProviderEnum::AXA->value,
+                    'screening_type' => 'INSURER_'.$insuranceProvider->code,
                 ])->latest()->first();
 
                 $amlResponse = ! empty($insurerAMLScreeningResponse) ? json_decode($insurerAMLScreeningResponse->results) : [];
