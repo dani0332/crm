@@ -48,6 +48,7 @@ const props = defineProps({
   disableMainBtn: String,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  notesList: Array,
   cancelOptions: Array,
   isEndorsementBookingActionDisabled: Boolean,
   ocrDocumentTypeEnum: Object,
@@ -122,10 +123,11 @@ const sendUpdateForm = useForm({
   personal_quote_id: props.sendUpdateLog?.personal_quote_id || null,
   status: props.sendUpdateLog?.status || '',
   quote_uuid: props.realQuote.uuid,
-  car_addons: props.sendUpdateLog?.car_addons || null,
+  // car_addons: props.sendUpdateLog?.car_addons || null,
   emirates_id: props.sendUpdateLog?.emirates_id || null,
   seating_capacity: props.sendUpdateLog?.seating_capacity || null,
   endorsement_number: props.sendUpdateLog?.endorsement_number || null,
+  code: props.sendUpdateLog?.code || null,
 });
 
 // Track OCR loading state
@@ -221,19 +223,37 @@ const onEdit = () => {
   }
 };
 
+const notesFieldError = ref(false);
+
 const onCancel = () => {
   state.edit = false;
   sendUpdateForm.notes = props.sendUpdateLog?.notes || '';
   sendUpdateForm.option_id = props.sendUpdateLog?.option_id || null;
-  sendUpdateForm.car_addons = props.sendUpdateLog?.car_addons || null;
+  // sendUpdateForm.car_addons = props.sendUpdateLog?.car_addons || null;
   sendUpdateForm.emirates_id = props.sendUpdateLog?.emirates_id || null;
   sendUpdateForm.seating_capacity =
     props.sendUpdateLog?.seating_capacity || null;
   sendUpdateForm.endorsement_number =
     props.sendUpdateLog?.endorsement_number || null;
+
+  notesFieldError.value = false;
 };
 
+watch(
+  () => sendUpdateForm.notes,
+  newValue => {
+    if (newValue && newValue.length > 0) notesFieldError.value = false;
+  },
+);
+
 const onUpdateLog = isValid => {
+  if (
+    (!sendUpdateForm.notes || sendUpdateForm.notes.length === 0) &&
+    isCarOrBike.value
+  ) {
+    notesFieldError.value = true;
+    return;
+  }
   if (!isValid) return;
   sendUpdateForm.patch(
     route('send-update.update', { id: props.sendUpdateLog.id }),
@@ -381,6 +401,22 @@ const isBookUpdate = computed(() => {
   return (
     props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKED
   );
+});
+
+const isCarOrBike = computed(() => {
+  return [
+    page.props.quoteTypeCodeEnum.Car,
+    page.props.quoteTypeCodeEnum.Bike,
+  ].includes(props.quoteType);
+});
+
+const notesOptions = computed(() => {
+  if (isCarOrBike.value) {
+    return props.notesList.map(list => ({
+      value: list.code,
+      label: list.text,
+    }));
+  }
 });
 
 const disableCancelButton = computed(() => {
@@ -546,7 +582,19 @@ const cancelOptionsList = computed(() => {
                 </div>
                 <div class="grid md:grid-cols-2">
                   <dt class="font-bold">NOTES</dt>
-                  <dd>
+                  <dd v-if="isCarOrBike">
+                    <ComboBox
+                      v-model="sendUpdateForm.notes"
+                      :single="false"
+                      placeholder="Select Notes"
+                      :options="notesOptions"
+                      size="xs"
+                      :disabled="!state.edit"
+                      :class="{ 'pointer-events-none': !state.edit }"
+                      :has-error="notesFieldError"
+                    />
+                  </dd>
+                  <dd v-else>
                     <x-textarea
                       v-model="sendUpdateForm.notes"
                       size="xs"
@@ -634,32 +682,10 @@ const cancelOptionsList = computed(() => {
                   class="grid sm:grid-cols-2 mb-2"
                   v-if="
                     props.quoteType === page.props.quoteTypeCodeEnum.Car &&
-                    (isAOCOV || isCOEOrCOE_NFI || isCISCOrCISC_NFI)
+                    (isCOEOrCOE_NFI || isCISCOrCISC_NFI)
                   "
                 >
-                  <template v-if="props.additionalField && isAOCOV">
-                    <dt>
-                      <label
-                        class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
-                      >
-                        ADDONS
-                      </label>
-                    </dt>
-                    <dd>
-                      <x-select
-                        :rules="[isRequired]"
-                        v-model="sendUpdateForm.car_addons"
-                        placeholder="Select Addons"
-                        :options="additionalFieldOptions"
-                        size="xs"
-                        :disabled="!state.edit"
-                        :class="{ 'pointer-events-none': !state.edit }"
-                        multiple
-                        :error="isAdditionalFieldError"
-                      />
-                    </dd>
-                  </template>
-                  <template v-else-if="props.additionalField && isCOEOrCOE_NFI">
+                  <template v-if="props.additionalField && isCOEOrCOE_NFI">
                     <dt>
                       <label
                         class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
