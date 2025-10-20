@@ -58,9 +58,10 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
         $quote = $this->getQuoteObjectBy($this->request->modelType, $this->request->quoteId);
 
         $quoteTypeId = QuoteTypes::getIdFromValue($this->request->modelType);
-        $sukoonEPTransaction = (new SageApiService)->getSukoonEPTransaction($quote, $quoteTypeId);
+        $ePTransaction = (new SageApiService)->getEPTransactions($quote, $quoteTypeId);
+        $isEPTransactionFound = $ePTransaction ? count($ePTransaction) > 0 : false;
 
-        if (! $sukoonEPTransaction) {
+        if (! $isEPTransactionFound) {
             $message = 'Policy Book : BookEmbeddedProductOnSageJob - '.$this->epTransaction->code.' - can not proceed as transaction is not found';
             LoggerService::info($message, extra : ['quote' => $quote->code]);
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, $this->logFor);
@@ -71,7 +72,7 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
         if ($this->sageProcess->status === SageEnum::SAGE_PROCESS_PENDING_STATUS) {
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS, null, $this->logFor);
 
-            $response = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $this->sageRequest, $this->epTransaction]);
+            $response = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $this->sageRequest, $this->epTransaction], $this->sageRequest->epShortCode);
 
             if (! $response['status']) {
                 $message = $response['message'];
@@ -107,9 +108,13 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
         }
 
         if ($this->isFailedDueToAttemptsOrTimeout($message)) {
-            LoggerService::info('EP Booking : BookEmbeddedProductOnSageJob failed: '.$this->epTransaction->code.' - Code : '.$code.' - Error : '.$message);
+            LoggerService::info('EP Booking : BookEmbeddedProductOnSageJob failed: '.$this->epTransaction->code.' - Code : '.$code.' - Error : '.$message, extra: [
+                'errorTraceMessage' => $exception->getTraceAsString(),
+            ]);
         } else {
-            LoggerService::error('EP Booking : BookEmbeddedProductOnSageJob failed: '.$this->epTransaction->code.' - Code : '.$code.' - Error : '.$message);
+            LoggerService::error('EP Booking : BookEmbeddedProductOnSageJob failed: '.$this->epTransaction->code.' - Code : '.$code.' - Error : '.$message, extra: [
+                'errorTraceMessage' => $exception->getTraceAsString(),
+            ]);
         }
 
         LoggerService::info('EP Booking : BookEmbeddedProductOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->epTransaction->code.' updating status to failed');
