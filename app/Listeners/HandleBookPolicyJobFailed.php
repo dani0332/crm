@@ -34,7 +34,7 @@ class HandleBookPolicyJobFailed
             $errorTrace = $exception->getTraceAsString();
 
             LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::SAGE_POLICY_BOOKING);
-            LoggerService::info(self::LOG_PREFIX.'  failed due to '.$errorMessage.' -  Setting status to pending instead of failed');
+            LoggerService::info(self::LOG_PREFIX.'  failed due to '.$errorMessage.' -  Setting status to pending instead of failed in case error is timeout or max retries reached');
 
             // Check if this is the "attempted too many times" error
 
