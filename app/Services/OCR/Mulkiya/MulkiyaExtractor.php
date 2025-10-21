@@ -87,7 +87,7 @@ class MulkiyaExtractor
                 'chassis_number' => $data['chassisNumber'] ?? null,
 
                 // Car Quote fields
-                'policy_expiry_date' => $this->formatDate($data['insuranceExpiryDate'] ?? null), 
+                'policy_expiry_date' => $this->formatDate($data['insuranceExpiryDate'] ?? null),
 
                 // Registration Certificate fields
                 'place_of_issue' => $data['placeOfIssue'] ?? null,
@@ -176,7 +176,7 @@ class MulkiyaExtractor
         return [
             'vehicle_driver_detail_fields' => $this->getVehicleDriverDetailFields(),
             'car_quote_detail_fields' => $this->getCarQuoteDetailFields(),
-            'car_quote_fields' => $this->getCarQuoteFields(), 
+            'car_quote_fields' => $this->getCarQuoteFields(),
             'registration_certificate_fields' => $this->getRegistrationCertificateFields(),
         ];
     }

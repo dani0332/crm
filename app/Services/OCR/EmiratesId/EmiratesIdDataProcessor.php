@@ -233,7 +233,7 @@ class EmiratesIdDataProcessor
                 $kycData['employer_company_name'] = $this->extractedData['sponsor'];
                 $kycData['source_of_income'] = KycSourceOfIncomeEnum::EMPLOYED->value;
                 LoggerService::info('Emirates ID OCR: Auto-populated employer company name', [
-                    'employer_company_name' => $this->extractedData['sponsor']
+                    'employer_company_name' => $this->extractedData['sponsor'],
                 ]);
             }
 
@@ -451,14 +451,14 @@ class EmiratesIdDataProcessor
             LoggerService::info('Emirates ID OCR: Professional title matched', [
                 'original_occupation' => $occupation,
                 'matched_title' => $professionalTitle->text,
-                'lookup_code' => $professionalTitle->code
+                'lookup_code' => $professionalTitle->code,
             ]);
-            
+
             return $professionalTitle->code;
         }
 
         LoggerService::info('Emirates ID OCR: No professional title match found', [
-            'original_occupation' => $occupation
+            'original_occupation' => $occupation,
         ]);
 
         return null;
