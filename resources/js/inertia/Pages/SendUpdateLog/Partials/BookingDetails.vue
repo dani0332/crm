@@ -211,7 +211,7 @@ const checkSectionToEdit = () => {
 
   const additionalInvoiceTypes = [
     sendUpdateStatusEnum.ACB,
-    // sendUpdateStatusEnum.ATIB,
+    sendUpdateStatusEnum.ATIB,
     sendUpdateStatusEnum.ATCRNB,
     sendUpdateStatusEnum.ATCRNB_RBB,
   ];
@@ -254,8 +254,7 @@ const checkSectionToEdit = () => {
     }
 
     if (
-      // [sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(
-      [sendUpdateStatusEnum.ATCRNB].includes(
+      [sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(
         props.sendUpdateLog?.option?.code,
       ) &&
       !props.uploadedDocuments.includes('SUTAXINV')
@@ -443,8 +442,7 @@ const calculateCommission = () => {
   ) {
     calculateCommisionDetailsForACB();
   } else if (
-    // [sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(
-    [sendUpdateStatusEnum.ATCRNB].includes(
+    [sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(
       props.sendUpdateLog?.option?.code,
     )
   ) {
@@ -1273,7 +1271,7 @@ const noDiscountType = computed(() => {
     sendUpdateStatusEnum.DTSI,
     sendUpdateStatusEnum.DOV,
     sendUpdateStatusEnum.ED,
-    // sendUpdateStatusEnum.ATIB,
+    sendUpdateStatusEnum.ATIB,
     sendUpdateStatusEnum.ACB,
     sendUpdateStatusEnum.ATCRNB,
     sendUpdateStatusEnum.ATCRNB_RBB,
@@ -1909,6 +1907,7 @@ watch(
                 v-if="
                   ![
                     sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
                     sendUpdateStatusEnum.ATCRNB,
                     sendUpdateStatusEnum.ATCRNB_RBB,
                   ].includes(props.sendUpdateLog.option?.code)
@@ -2074,6 +2073,7 @@ watch(
               <div
                 v-if="
                   ![
+                    sendUpdateStatusEnum.ATIB,
                     sendUpdateStatusEnum.ATCRNB,
                   ].includes(props.sendUpdateLog.option?.code)
                 "
@@ -2120,6 +2120,7 @@ watch(
                 v-if="
                   ![
                     sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
                     sendUpdateStatusEnum.ATCRNB,
                     sendUpdateStatusEnum.ATCRNB_RBB,
                   ].includes(props.sendUpdateLog.option?.code)
@@ -2204,6 +2205,7 @@ watch(
                 v-if="
                   ![
                     sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
                     sendUpdateStatusEnum.ATCRNB,
                     sendUpdateStatusEnum.ATCRNB_RBB,
                   ].includes(props.sendUpdateLog.option?.code)
@@ -2281,6 +2283,7 @@ watch(
               <div
                 v-if="
                   ![
+                    sendUpdateStatusEnum.ATIB,
                     sendUpdateStatusEnum.ATCRNB,
                   ].includes(props.sendUpdateLog.option?.code)
                 "
@@ -2309,6 +2312,7 @@ watch(
               <div
                 v-if="
                   ![
+                    sendUpdateStatusEnum.ATIB,
                     sendUpdateStatusEnum.ATCRNB,
                   ].includes(props.sendUpdateLog.option?.code)
                 "
@@ -2401,6 +2405,7 @@ watch(
               <div
                 v-if="
                   ![
+                    sendUpdateStatusEnum.ATIB,
                     sendUpdateStatusEnum.ATCRNB,
                   ].includes(props.sendUpdateLog.option?.code)
                 "
@@ -2430,6 +2435,7 @@ watch(
               <div
                 v-if="
                   ![
+                    sendUpdateStatusEnum.ATIB,
                     sendUpdateStatusEnum.ATCRNB,
                   ].includes(props.sendUpdateLog.option?.code)
                 "
