@@ -1,10 +1,12 @@
 FROM ubuntu:22.04 AS dependencies
-RUN apt update && apt install curl wget -y
+RUN apt-get update && apt-get install -y \
+    curl wget gpg apt-transport-https ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 ARG IMCRM_TOKEN
 #RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
 RUN echo "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main" | tee /etc/apt/sources.list.d/doppler-cli.list 
 RUN curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | gpg --dearmor -o /usr/share/keyrings/doppler-archive-keyring.gpg
-RUN apt-get update && apt-get install doppler
+RUN apt-get update && apt-get install doppler -y
 RUN doppler configure set token ${IMCRM_TOKEN}
 
 FROM node:22.12.0 AS frontend
