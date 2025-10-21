@@ -600,7 +600,7 @@ const onAddDocumentSubmit = event => {
             {{ short_code + '-' + props.code }}
           </template>
 
-          <template #item-prices="{ prices }">
+          <template #item-prices="{ prices, is_disabled }">
             <div v-if="prices.length > 0" class="flex gap-3">
               <div v-for="(priceItem, index) in prices" :key="index">
                 <x-tag v-if="priceItem.transactions.length" color="primary">
@@ -608,14 +608,7 @@ const onAddDocumentSubmit = event => {
                     v-model="priceItem.transactions[0].is_selected"
                     @change="toggleProduct(priceItem, $event)"
                     color="primary"
-                    :disabled="
-                      priceItem.transactions[0]?.payment_status_id ==
-                        paymentStatusEnum.AUTHORISED ||
-                      priceItem.transactions[0]?.payment_status_id ==
-                        paymentStatusEnum.CAPTURED ||
-                      priceItem.transactions[0]?.payment_status_id ==
-                        paymentStatusEnum.PARTIAL_CAPTURED
-                    "
+                    :disabled="is_disabled"
                   />
                   {{
                     (
