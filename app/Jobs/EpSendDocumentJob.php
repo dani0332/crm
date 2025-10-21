@@ -207,11 +207,11 @@ class EpSendDocumentJob implements ShouldQueue
     public function fetchPolicyWordings(EmbeddedProduct $embeddedProduct)
     {
         $attachments = [];
-        $documents = json_decode($embeddedProduct->company_documents ?? false);
+        $documents = json_decode($embeddedProduct->company_documents ?? '[]', true);
         if (! empty($documents)) {
             foreach ($documents as $item) {
-                $policyWordingsUrl = $item->path !== '' ? $this->storageBaseUrl.$item->path : '';
-                if (! empty($item->path)) {
+                $policyWordingsUrl = isset($item['path']) && $item['path'] !== '' ? $this->storageBaseUrl.$item['path'] : '';
+                if (! empty($item['path'])) {
                     $attachments[] = [
                         'fileUrl' => $policyWordingsUrl,
                         'fileName' => $embeddedProduct->display_name.' - Policy Wordings.pdf',
