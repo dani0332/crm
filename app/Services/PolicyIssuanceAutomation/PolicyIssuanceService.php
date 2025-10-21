@@ -2,13 +2,10 @@
 
 namespace App\Services\PolicyIssuanceAutomation;
 
-use App\Enums\AMLStatusCode;
 use App\Enums\CarRegistrationType;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\InsuranceProvidersEnum;
-use App\Enums\Kyc;
-use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
