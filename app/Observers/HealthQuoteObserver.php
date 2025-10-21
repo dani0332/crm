@@ -14,6 +14,7 @@ use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\Health\SendApplicationSubmittedEmailJob;
 use App\Jobs\IntroEmailJob;
+use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\HealthQuote;
 use App\Repositories\PaymentRepository;
 use App\Services\SLA\SLAService;
@@ -122,6 +123,7 @@ class HealthQuoteObserver
             isset($dirty['quote_status_id']) &&
             $healthQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
+            SendPolicyIssueWhatsappMessageJob::dispatch($healthQuote->uuid, QuoteTypes::HEALTH->id())->onQueue('insly');
             $payment = $healthQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($healthQuote, $payment, QuoteTypes::HEALTH->value);
             event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
