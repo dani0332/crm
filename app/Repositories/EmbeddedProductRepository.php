@@ -1506,7 +1506,7 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             if ($epTransactionDetails->is_active == 1) {
-                if (!$isTPLPlanSelected) {
+                if (! $isTPLPlanSelected) {
                     $epTransactionDetails->update(['is_active' => 0]);
                 }
             }
