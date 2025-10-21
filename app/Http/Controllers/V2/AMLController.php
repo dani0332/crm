@@ -885,11 +885,19 @@ class AMLController extends Controller
         $quoteType = QuoteTypes::getName($insuredKycRequest->quote_type_id)->value;
         $quote = $this->getQuoteObjectBy($quoteType, $insuredKycRequest->quote_uuid, 'uuid');
         LoggerService::startQuoteLogging($quote);
+        $payment = $quote->payments()->mainLeadPayment()->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
         $response = ['success' => false];
         $insurerAMLScreeningResponse = [];
 
-        if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
+        if (
+            $insuredKycRequest->customer_type == CustomerTypeEnum::Individual &&
+            ! (
+                $insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
+                $quote?->registration_type != CarRegistrationType::PERSONAL
+            )
+        ) {
             $insurerAMLScreeningResponse = $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
 
             if (! empty($insurerAMLScreeningResponse)) {

@@ -227,6 +227,16 @@ const tableHeader = reactive([
     value: 'pec_flag',
     tooltip: 'Indicates if the policy has Pre-Existing Condition (PEC) flag',
   },
+  {
+    text: 'Travel Coverage',
+    value: 'travel_coverage',
+    tooltip: 'Travel Coverage',
+  },
+  {
+    text: 'Traveling Where',
+    value: 'traveling_where',
+    tooltip: 'Traveling Where',
+  },
 ]);
 
 const calculateTotalSum = useCalculateTotalSum;

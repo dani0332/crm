@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
             AutomationSeeder::class,
             TravelLeadAllocationDashboardSeeder::class,
             VehicleColorSeeder::class,
+            SendUpdateNotesSeeder::class,
         ]);
     }
 }

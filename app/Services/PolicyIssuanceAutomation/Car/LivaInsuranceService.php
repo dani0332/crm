@@ -3,6 +3,7 @@
 namespace App\Services\PolicyIssuanceAutomation\Car;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
@@ -419,7 +420,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$process->id.' - Step : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
         $response = ['status' => false, 'completed_step' => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, 'error' => null, 'message' => null];
-        $endPoint = 'motor/transactions/retrieve/v1';
+        $endPoint = 'motor/transactions/retrieve/v2';
 
         $uploadedDocumentsToIMCRM = collect();
 
@@ -1112,7 +1113,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     public function getStepsLockingStatus($quote): array
     {
+        LoggerService::info('class: '.$this->className.' fn: '.__FUNCTION__.' Quote : '.$quote->code);
+        $isAutomationInitiated = app(PolicyIssuanceService::class)->isAutomationInitiated(QuoteTypes::CAR->value, $quote);
         $policyIssuance = $quote->policyIssuance;
+
         $response = [
             'policyIssuance' => $policyIssuance,
             'isEditPolicyDetailsDisabled' => true,
@@ -1121,10 +1125,23 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'insurer_api_status' => $quote->insurer_api_status,
         ];
 
-        if ($policyIssuance?->status === PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS) {
+        if (! $isAutomationInitiated) {
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
-            $response['message'] = 'All Steps are editable';
+            $response['message'] = 'All steps are editable';
+
+            return $response;
+        }
+
+        if ($quote?->registration_type !== CarRegistrationType::PERSONAL) {
+            $response['isEditPolicyDetailsDisabled'] = false;
+            $response['isEditBookingDetailsDisabled'] = false;
+            $response['message'] = 'All steps are editable';
+
+            return $response;
+        }
+
+        if ($isAutomationInitiated && (! $policyIssuance || $policyIssuance?->status !== PolicyIssuanceEnum::FAILED_STATUS)) {
 
             return $response;
         }

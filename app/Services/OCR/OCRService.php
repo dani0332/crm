@@ -405,6 +405,32 @@ class OCRService
 
         $url = $this->quoteDocumentService->getDocumentUrl($documentPath);
 
+        // Validate URL before proceeding
+        if (! $url || empty($url)) {
+            LoggerService::warning('OCR processing failed - Document URL is null or empty - Quote UUID: '.$quote->uuid, [
+                'document_path' => $documentPath,
+                'document_type' => $docType?->value,
+                'quote_type' => $quoteType->value,
+            ]);
+
+            $this->ocrLogService->logActivity(
+                $quote,
+                $documentType,
+                'failed',
+                null,
+                null,
+                null,
+                'Document file not found in storage',
+                $userId
+            );
+
+            if (! $isEcom && $this->requiresOcrNotifications($docType)) {
+                event(new OcrNotifications($quote, 'end', 'OCR processing failed - Document not found in storage', null, $docType?->value, $userId));
+            }
+
+            return false;
+        }
+
         try {
             // Record start time for OCR API call
             $apiCallStartTime = microtime(true);
