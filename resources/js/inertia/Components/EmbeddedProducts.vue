@@ -372,7 +372,9 @@ const paymentStatus = id => {
 const toggleProduct = (ep, event) => {
   if (!props.quote.plan_id) {
     // Revert the checkbox state
-    ep.transactions[0].is_selected = !event.target.checked;
+    if (ep.transactions?.[0]) {
+      ep.transactions[0].is_selected = !event.target.checked;
+    }
     notification.error({
       title: 'Please select a plan',
       position: 'top',
