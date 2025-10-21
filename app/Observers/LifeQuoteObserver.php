@@ -9,9 +9,11 @@ use App\Enums\QuoteTypes;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
-use App\Jobs\MAWelcomeJob;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\LifeQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\PersonalQuoteSyncTrait;
 
@@ -79,7 +81,7 @@ class LifeQuoteObserver
             in_array($lifeQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Life, 'quoteUID' => $lifeQuote->uuid]);
-            MAWelcomeJob::dispatch(
+            ExtendCustomerSubscriptionViaSQS::dispatch(
                 $lifeQuote->customer,
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
@@ -90,6 +92,8 @@ class LifeQuoteObserver
             isset($dirty['quote_status_id']) &&
             $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
+            LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code '.$lifeQuote->code.' Policy Issued ');
+            SendPolicyIssueWhatsappMessageJob::dispatch($lifeQuote->uuid, QuoteTypes::LIFE->id())->onQueue('insly');
             $payment = $lifeQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lifeQuote, $payment, QuoteTypes::LIFE->value);
             event(new PrivateClientUpdatedEvent($lifeQuote, QuoteTypeId::Life));

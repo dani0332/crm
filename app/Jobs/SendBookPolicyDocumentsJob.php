@@ -6,12 +6,14 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Models\HealthPlanCoPayment;
 use App\Models\QuoteTag;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\ActivitiesService;
+use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
@@ -123,66 +125,71 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $quote->load('advisor');
 
         $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
-        // Prepare the data to be sent to Brevo for email template dispatch
-        if (! empty($templateId)) {
-            // TODO:  Hard coded format and variable values should be form env file
-            $roadsideAssistance = '';
-            $emailData = new \stdClass;
-            $emailData->code = $quote->code;
-            $emailData->customerEmail = $quote->email;
-            $emailData->customerId = $quote->customer_id;
-            $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
-            $emailData->clientFirstName = $quote->first_name;
-            $emailData->policy_number = $quote->policy_number;
-            $emailData->policyNumber = $quote->policy_number;
-            $emailData->renewalDueDate = date('d/m/Y', strtotime($quote['policy_expiry_date']));
-            $emailData->policyStartDate = date('d/m/Y', strtotime($quote['policy_start_date']));
-            $emailData->quoteDocuments = $docs;
-            $emailData->advisorName = '';
-            $emailData->advisorEmail = '';
-            $emailData->advisorMobileNo = '';
-            $emailData->advisorLandlineNo = '';
-            $emailData->googleMeet = '';
-            $emailData->insuranceType = $insuranceType;
-            $emailData->planName = $planName;
-            $emailData->currentInsurer = '';
-            $emailData->profilePicture = '';
-            $emailData->isChsAdvisor = false;
-            if (! empty($quote->advisor)) {
-                $emailData->advisorName = $quote->advisor->name;
-                $emailData->advisorEmail = $quote->advisor->email;
-                $advisorMobileNo = formatMobileNo($quote->advisor->mobile_no);
-                $emailData->advisorMobileNo = str_replace('+', '', $advisorMobileNo);
-                $emailData->advisorLandlineNo = $quote->advisor->landline_no;
-                $emailData->googleMeet = $quote->advisor->calendar_link;
-                $emailData->profilePicture = $quote->advisor->profile_photo_path;
-                if ($emailData->advisorEmail === PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL) {
-                    $emailData->isChsAdvisor = true;
-                }
+        $roadsideAssistance = '';
+        $emailData = new \stdClass;
+        $emailData->code = $quote->code;
+        $emailData->customerEmail = $quote->email;
+        $emailData->customerId = $quote->customer_id;
+        $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
+        $emailData->clientFirstName = $quote->first_name;
+        $emailData->policy_number = $quote->policy_number;
+        $emailData->policyNumber = $quote->policy_number;
+        $emailData->renewalDueDate = date('d/m/Y', strtotime($quote['policy_expiry_date']));
+        $emailData->policyStartDate = date('d/m/Y', strtotime($quote['policy_start_date']));
+        $emailData->quoteDocuments = $docs;
+        $emailData->advisorName = '';
+        $emailData->advisorEmail = '';
+        $emailData->advisorMobileNo = '';
+        $emailData->advisorLandlineNo = '';
+        $emailData->googleMeet = '';
+        $emailData->insuranceType = $insuranceType;
+        $emailData->planName = $planName;
+        $emailData->currentInsurer = '';
+        $emailData->profilePicture = '';
+        $emailData->isChsAdvisor = false;
+        if (! empty($quote->advisor)) {
+            $emailData->advisorName = $quote->advisor->name;
+            $emailData->advisorEmail = $quote->advisor->email;
+            $advisorMobileNo = formatMobileNo($quote->advisor->mobile_no);
+            $emailData->advisorMobileNo = str_replace('+', '', $advisorMobileNo);
+            $emailData->advisorLandlineNo = $quote->advisor->landline_no;
+            $emailData->googleMeet = $quote->advisor->calendar_link;
+            $emailData->profilePicture = $quote->advisor->profile_photo_path;
+            if ($emailData->advisorEmail === PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL) {
+                $emailData->isChsAdvisor = true;
             }
-            if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
-                if (isset($quote->plan) && isset($quote->plan->insuranceProvider)) {
-                    $emailData->currentInsurer = $quote->plan->insuranceProvider->text;
-                    $roadsideAssistance = $quote->plan->insuranceProvider->roadside_phone_number;
-                }
-            } else {
-                if (isset($quote->insuranceProvider)) {
-                    $emailData->currentInsurer = $quote->insuranceProvider->text;
-                    $roadsideAssistance = $quote->insuranceProvider->roadside_phone_number;
-                }
-            }
-
-            $emailData->emailTemplateId = $templateId;
-            $emailData->handBookDocuments = $handBookDocuments;
-            $emailData->roadsideAssistance = $roadsideAssistance;
-            $emailData->quoteTypeId = $quoteTypeId;
-            $emailData->quoteId = $quote->id;
-            $emailData->policyWordingHandbook = $policyWordingDoc;
-            $emailData->isHealthAUH = $isAUHHealthLead;
-            $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
-            $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
-            info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));
         }
+        if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
+            if (isset($quote->plan) && isset($quote->plan->insuranceProvider)) {
+                $emailData->currentInsurer = $quote->plan->insuranceProvider->text;
+                $roadsideAssistance = $quote->plan->insuranceProvider->roadside_phone_number;
+            }
+        } else {
+            if (isset($quote->insuranceProvider)) {
+                $emailData->currentInsurer = $quote->insuranceProvider->text;
+                $roadsideAssistance = $quote->insuranceProvider->roadside_phone_number;
+            }
+        }
+
+        // for Savings
+        $emailData->emailTemplateId = $templateId ?? null;
+        $emailData->handBookDocuments = $handBookDocuments;
+        $emailData->roadsideAssistance = $roadsideAssistance;
+        $emailData->quoteTypeId = $quoteTypeId;
+        $emailData->quoteId = $quote->id;
+        $emailData->policyWordingHandbook = $policyWordingDoc;
+        $emailData->isHealthAUH = $isAUHHealthLead;
+        $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Travel, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Business, QuoteTypeId::Pet])) {
+            $emailData = app(CentralService::class)->prepareBirdData(quote: $quote, quoteTypeId: $quoteTypeId, existingEmailData: $emailData);
+
+            if (! empty($emailData)) {
+                $response = app(CentralService::class)->sendInslyEmailToCustomer($quote, $emailData, $quoteTypeId, 'Main Lead');
+            }
+        } else {
+            $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
+        }
+        info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));
 
         if ($this->forceEmailSend == false) {
             $quoteTag = QuoteTag::create([
@@ -198,7 +205,11 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public function failed(Throwable $exception)
     {
-        info('Quote Code: '.$this->code.' SendBookPolicyDocumentsJob Error: '.$exception->getMessage());
+        LoggerService::info('Quote Code: '.$this->code.' SendBookPolicyDocumentsJob Error', extra: [
+            'errorTraceMessage' => $exception->getTraceAsString(),
+            'exception' => $exception->getMessage(),
+            'line' => $exception->getLine(),
+        ]);
     }
 
     public function middleware()

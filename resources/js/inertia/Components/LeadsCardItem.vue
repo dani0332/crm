@@ -19,6 +19,10 @@ const quoteStatusEnum = inject('quoteStatusEnum');
 const quoteTypeId = inject('quoteTypeId');
 const lostReasons = inject('lostReasons');
 const quoteType = inject('quoteType');
+const business_type_of_insurance_id = inject(
+  'business_type_of_insurance_id',
+  null,
+);
 
 const { isRequired } = useRules();
 
@@ -51,11 +55,19 @@ const updateList = async data => {
       data,
     });
     emit('UpdateLeadsCount', data);
+    // Handle message display - string or array
+    let messageTitle;
+    if (typeof response.data.message === 'string') {
+      messageTitle = response.data.message;
+    } else if (Array.isArray(response.data.message)) {
+      // Join array messages with line breaks or separator
+      messageTitle = response.data.message.join('<br>');
+    } else {
+      messageTitle = 'Operation completed successfully';
+    }
+
     notification.success({
-      title:
-        typeof response.data.message != 'string'
-          ? response.data.message[0]
-          : response.data.message,
+      title: messageTitle,
       position: 'top',
     });
     router.reload();
@@ -163,7 +175,8 @@ const handleConfirmation = result => {
   resolveConfirm(result);
 };
 
-const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
+const getUrl = (url, quoteTypeId) =>
+  useGetShowPageRoute(url, quoteTypeId, business_type_of_insurance_id);
 const formatDate = date => {
   if (!date) return '';
   let parsedDate;
@@ -240,6 +253,7 @@ const getInsuranceType = (planId, insurance_provider_plan) => {
         insurance_provider_plan,
         age,
         plan_id,
+        has_pec_tag,
       } in leads"
       :key="id"
       :href="getUrl(uuid, quoteTypeId)"
@@ -256,9 +270,20 @@ const getInsuranceType = (planId, insurance_provider_plan) => {
     >
       <div class="flex flex-col">
         <stale-leads-badge :date="stale_at" :position="'bottom'" />
-        <span class="font-semibold text-sm">
-          {{ first_name }} {{ last_name }}
-        </span>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="font-semibold text-sm">
+            {{ first_name }} {{ last_name }}
+          </span>
+          <x-button
+            v-if="has_pec_tag && quoteType === 'Health'"
+            size="xs"
+            color="#DC2626"
+            tag="div"
+            class="text-[10px] px-1 py-0.5"
+          >
+            PEC
+          </x-button>
+        </div>
       </div>
       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
         <x-icon icon="sheildCheck" size="sm" class="text-primary-400" />

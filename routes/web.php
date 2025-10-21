@@ -53,9 +53,9 @@ use App\Http\Controllers\TmLeadStatusController;
 use App\Http\Controllers\TmUploadLeadController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TravelController;
-use App\Http\Controllers\TravelLeadAllocationController;
 use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserStatusLogController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\Admin\AllocationAuditController;
 use App\Http\Controllers\V2\Admin\PrivateClientConfigController;
@@ -68,11 +68,13 @@ use App\Http\Controllers\V2\AlfredChatController;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\BorController;
 use App\Http\Controllers\V2\BuyLeadConfigController;
 use App\Http\Controllers\V2\BuyLeadController;
 use App\Http\Controllers\V2\CarQuoteController;
 use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\V2\CentralController;
+use App\Http\Controllers\V2\CustomerAcceptanceLogController;
 use App\Http\Controllers\V2\CustomerController as V2CustomerController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
@@ -93,7 +95,9 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Models\BorLog;
 use App\Services\AddBatchForNonMotors;
+use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -269,7 +273,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
 
         Route::get('customer', [V2CustomerController::class, 'index'])->name('customers-list');
-        Route::get('leads-by-email', [V2CustomerController::class, 'listByEmail'])->name('leads-by-email');
+        Route::get('leads-by-email', [V2CustomerController::class, 'listByEmail'])->can(PermissionsEnum::CustomersList);
         Route::get('customer/{uuid}', [V2CustomerController::class, 'show'])->name('customers-show');
         Route::get('customer/{uuid}/edit', [V2CustomerController::class, 'edit'])->name('customers-edit');
         Route::put('customer/{uuid}', [V2CustomerController::class, 'update'])->name('customers-update');
@@ -417,9 +421,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
-    Route::resource('travel-lead-allocation', TravelLeadAllocationController::class);
     Route::get('allocation-dashboard/{quoteType}', [V2LeadAllocationController::class, 'index'])->name('lead-allocation-dashboard');
-    Route::post('/travel-lead-allocation/update-hard-stop', [TravelLeadAllocationController::class, 'updateUserHardStopStatus']);
 
     Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsAllocation']);
     Route::get('/advisor-by-quotetype/{user_id}', [LeadAllocationController::class, 'getAdvisorByQuoteType'])->name('allocations.advisor-quotestype');
@@ -434,6 +436,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
     Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
+    Route::post('/lead-allocation/update-hard-stop', [LeadAllocationController::class, 'updateUserHardStopStatus']);
 
     Route::post('quotes/documents/get-s3-temp-url', [QuoteDocumentController::class, 'getS3TempUrl']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
@@ -496,6 +499,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
+        Route::get('user-status-logs', [UserStatusLogController::class, 'index'])->name('admin.user-status-logs.index');
         Route::resource('roles', RoleController::class);
         Route::resource('permissions', PermissionController::class);
         Route::resource('sic-health-config', SICConfigurableController::class)->names([
@@ -567,6 +571,17 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
 
         Route::get('/allocation-audit', [AllocationAuditController::class, 'index'])->name('admin.allocation-audit.index');
+
+        // System Health Dashboard - Engineering role only
+        Route::get('/system-health', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'index'])
+            ->name('admin.system-health.index');
+        Route::get('/system-health/databases', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'databases'])
+            ->name('admin.system-health.databases');
+        Route::get('/system-health/redis', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'redis'])
+            ->name('admin.system-health.redis');
+        Route::get('/system-health/queues', [\App\Http\Controllers\V2\Admin\SystemHealthController::class, 'queues'])
+            ->name('admin.system-health.queues');
+
     });
 
     Route::prefix('buy-leads')->group(function () {
@@ -908,5 +923,39 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             'message' => "Handbook documents check for {$quoteType} has been queued for background processing",
             'status' => 'dispatched',
         ]);
+    });
+
+    // BOR (Broker on Record) Routes
+    Route::group(['prefix' => 'bor'], function () {
+        // BOR Request Management
+        Route::get('requests/{id}/generate-link', [BorController::class, 'generateLink'])->name('bor.requests.generate-link');
+        Route::resource('requests', BorController::class)->names('bor.requests')->only(['index', 'store', 'update']);
+        Route::get('/get-representor', [BorController::class, 'getRepresentor'])->name('bor.get-representor');
+
+        // BOR Status and Action Management (CRM Interface)
+        Route::post('logs/{id}/cancel', [BorController::class, 'cancelBor'])->name('bor.logs.cancel');
+        Route::post('logs/{id}/done', [BorController::class, 'markDone'])->name('bor.logs.mark-done');
+        Route::get('logs/{id}/download', [BorController::class, 'downloadDocument'])->name('bor.logs.download-document');
+        Route::get('logs/{borLogId}/signed-pdf', [BorController::class, 'viewSignedPdf'])->name('bor.logs.view-signed-pdf');
+
+        // Document Management
+        Route::post('logs/{id}/documents', [BorController::class, 'uploadDocument'])->name('bor.documents.upload');
+    });
+
+    // Customer Acceptance Logs Routes
+    Route::group(['prefix' => 'consent-logs'], function () {
+        Route::get('request', [CustomerAcceptanceLogController::class, 'index']);
+    });
+
+    // This route is only for testing purposes to preview the BOR PDF
+    Route::get('bor-pdf-preview', function () {
+        // entity bor log
+        // $borLog = BorLog::where('bor_reference', 'IM-BOR-200825175545-4')->first();
+
+        $borLog = BorLog::where('bor_reference', 'IM-BOR-210825153043-1')->first();
+        $borPdfService = new BorPdfService;
+        $pdfData = $borPdfService->preparePdfData($borLog, $borLog->personalQuote, true);
+
+        return view('pdf.bor-document', $pdfData);
     });
 });

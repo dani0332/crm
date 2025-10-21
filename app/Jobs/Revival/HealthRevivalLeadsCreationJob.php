@@ -12,6 +12,7 @@ use App\Models\ApplicationStorage;
 use App\Models\DttRevival;
 use App\Models\HealthQuote;
 use App\Models\QuoteBatches;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
@@ -209,13 +210,25 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue
                 $emailData->tag = 'health-revival-initial-email';
                 $emailData->templateType = 'revivalHealthInitial';
 
-                $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
+                if ($healthQuote->isAUHLead(false) && $healthQuote->isLeadSourceRevivalOrInsuranceWallet()) {
+                    // skip email for AUH and Revival/Insurance Wallet
+                    LoggerService::info('HealthRevivalLeadsCreationJob - Skipping email for AUH and Revival/Insurance Wallet for uuid: '.$healthQuote->uuid);
+                    $response = 201;
+                } else {
+                    $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
+                }
                 if ($response == 201) {
                     info($logPrefix.'ParentLead - '.$this->lead->uuid.' - childLead - '.$capiResponse->quoteUID.' - emailSent - '.$emailData->customerEmail);
 
                     $healthRevival->update(['email_sent' => true]);
+
+                    $quoteStatusId = ($healthQuote->isAUHLead(false) && $healthQuote->isLeadSourceRevivalOrInsuranceWallet())
+                        ? QuoteStatusEnum::NewLead
+                        : QuoteStatusEnum::Quoted;
+
                     // update child lead
-                    HealthQuote::find($healthQuote->id)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
+                    HealthQuote::find($healthQuote->id)->update(['quote_status_id' => $quoteStatusId]);
+
                     // update parent lead
                     HealthQuote::find($this->lead->id)->update(['is_revived' => true]);
                 } else {

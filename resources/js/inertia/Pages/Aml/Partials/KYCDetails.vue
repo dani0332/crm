@@ -20,6 +20,8 @@ const complianceDisable = ref(true);
 const patternFieldDisable = ref(true);
 const isSyncEnabled = ref(page.props.isInsurerSyncEnabled ?? false);
 const syncProcessLoading = ref(false);
+const quoteRequest = page.props.quoteRequest;
+const isPrivateCar = page.props.isPrivateCar;
 
 const emit = defineEmits(['update:insurerPortalSyncData']);
 
@@ -127,8 +129,8 @@ const noEscalated = computed(() => {
 });
 
 const kycFormDetails = useForm({
-  customer_id: page.props.quoteRequest.customer_id,
-  quote_uuid: page.props.quoteRequest.uuid,
+  customer_id: quoteRequest.customer_id,
+  quote_uuid: quoteRequest.uuid,
   quote_type_id: page.props.quoteType.id,
   insured_id: insuredDetails?.insured?.id,
   first_name:
@@ -143,8 +145,8 @@ const kycFormDetails = useForm({
     (isScreeningIndividual
       ? insuredDetails?.insured?.insured_kyc?.residential_address
       : insuredDetails?.insured?.insured_kyc?.registered_address) ?? null,
-  mobile_number: page.props.quoteRequest.mobile_no,
-  email: page.props.quoteRequest.email,
+  mobile_number: quoteRequest.mobile_no,
+  email: quoteRequest.email,
   customer_tenure:
     insuredDetails?.insured?.insured_kyc?.customer_tenure ?? null,
   id_type:
@@ -255,12 +257,12 @@ const kycFormDetails = useForm({
   // GIG Screening specific fields (Only for GIG Screening API)
   chassis_number:
     (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
-      ? page.props.quoteRequest?.car_quote_request_detail?.chassis_number
-      : page.props.quoteRequest?.bike_quote?.chassis_number) ?? null,
+      ? quoteRequest?.car_quote_request_detail?.chassis_number
+      : quoteRequest?.bike_quote?.chassis_number) ?? null,
   get_quote_email_gig:
     (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
-      ? page.props.quoteRequest?.car_quote_request_detail?.insurer_quote_email
-      : page.props.quoteRequest?.quote_detail?.insurer_quote_email) ??
+      ? quoteRequest?.car_quote_request_detail?.insurer_quote_email
+      : quoteRequest?.quote_detail?.insurer_quote_email) ??
     page.props.gigInsurerDefaultEmail,
 });
 function insuredKycFormValidate() {
@@ -273,11 +275,13 @@ const syncInsurerPortalUpdates = () => {
   axios
     .post('/get-quote-details-from-insurer', {
       quoteTypeId: page.props.quoteType.id,
-      quoteUID: page.props.quoteRequest.uuid,
+      quoteUID: quoteRequest.uuid,
     })
     .then(response => {
       // Safely check response.data exists and has expected structure
-      const hasValidData = response.data && response.data.success == true;
+      const hasValidData =
+        response.data &&
+        (response.data.success == true || response.status === 200);
 
       if (hasValidData) {
         notification.success({
@@ -301,7 +305,6 @@ const syncInsurerPortalUpdates = () => {
           position: 'top',
         });
       }
-      syncProcessLoading.value = false;
     })
     .catch(error => {
       notification.error({
@@ -309,6 +312,8 @@ const syncInsurerPortalUpdates = () => {
         position: 'top',
       });
       console.error('Sync error:', error);
+    })
+    .finally(() => {
       syncProcessLoading.value = false;
     });
 };
@@ -316,21 +321,27 @@ const syncInsurerPortalUpdates = () => {
 const submitInsuredKycForm = isValid => {
   if (!isValid) return;
 
+  let insuranceProviderCode = quoteRequest?.plan?.insurance_provider?.code;
+
   if (insuredKycFormValidate()) {
     kycFormDetails.processing = true;
 
     axios
       .post('/update-insured-kyc', kycFormDetails)
       .then(response => {
-        console.log('response', response); // TODO:: this log is temporary
         if (response.data.insurer_screening) {
           if (
             response.data.insurer_screening.status == 'AML_SCREENING_FAILED'
           ) {
+            let failureResponseMessage =
+              response.data.insurer_screening.message ||
+              `${insuranceProviderCode} server connection issue. Please check API logs for details of the error`;
+
+            if (response.data.insurer_screening.isEmailMismatched == true) {
+              failureResponseMessage = `Email ID Mismatch Between ${insuranceProviderCode} Portal and IMCRM`;
+            }
             notification.error({
-              title:
-                response.data.insurer_screening.message ||
-                'GIG server connection issue. Please check API logs for details of the error',
+              title: failureResponseMessage,
               position: 'top',
             });
           } else if (
@@ -353,6 +364,16 @@ const submitInsuredKycForm = isValid => {
                 timeout: 30000,
               });
             }
+          } else if (response.data.insurer_screening.isPolicyExpired) {
+            notification.success({
+              title: 'Capture Payment Manually',
+              position: 'top',
+            });
+          } else if (response.data.insurer_screening.isGetQuoteAPIFailed) {
+            notification.error({
+              title: response.data.insurer_screening.message,
+              position: 'top',
+            });
           }
         }
         if (response.data.success) {
@@ -579,13 +600,11 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] =
         />
       </x-field>
       <template v-if="isScreeningIndividual">
-        <x-field label="Date of Birth">
-          <DatePicker
-            v-model="kycFormDetails.dob"
-            placeholder="Date of Birth"
-            class="w-full"
-          />
-        </x-field>
+        <DatePicker
+          v-model="kycFormDetails.dob"
+          placeholder="Date of Birth"
+          label="Date of Birth"
+        />
         <x-field label="Nationality">
           <ComboBox
             v-model="kycFormDetails.nationality_id"
@@ -738,25 +757,21 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] =
           :disabled="isScreeningIndividual"
         />
       </x-field>
-      <x-field
+      <DatePicker
+        v-model="kycFormDetails.id_issue_date"
         :label="
           isScreeningIndividual ? 'ID Issue Date' : 'ID / Document Issue Date'
         "
-      >
-        <DatePicker v-model="kycFormDetails.id_issue_date" />
-      </x-field>
-      <x-field
+      />
+      <DatePicker
+        v-model="kycFormDetails.id_expiry_date"
+        :rules="[isRequired]"
+        :error="idExpiryDateError"
+        :min-date="new Date()"
         :label="
           isScreeningIndividual ? 'ID Expiry Date' : 'ID / Document Expiry Date'
         "
-      >
-        <DatePicker
-          v-model="kycFormDetails.id_expiry_date"
-          :rules="[isRequired]"
-          :error="idExpiryDateError"
-          :min-date="new Date()"
-        />
-      </x-field>
+      />
     </dl>
     <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
       <x-field v-if="!isScreeningIndividual" label="Place of issue">
@@ -1164,14 +1179,16 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] =
       </x-field>
     </dl>
     <div class="flex justify-end my-5 gap-x-2">
+      <!-- :disabled="!isSyncEnabled || !can(permissionsEnum.AMLList)" -->
       <x-button
         size="sm"
         color="primary"
         type="button"
         class="px-6"
         @click="syncInsurerPortalUpdates"
-        :disabled="!isSyncEnabled || !can(permissionsEnum.AMLList)"
+        :disabled="!isSyncEnabled"
         :loading="syncProcessLoading"
+        v-if="isPrivateCar"
       >
         Sync
       </x-button>

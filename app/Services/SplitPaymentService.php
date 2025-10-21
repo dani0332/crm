@@ -690,7 +690,7 @@ class SplitPaymentService
                 'amountCollected' => $amountCollected,
                 'isFromJob' => $isFromJob,
             ];
-            LoggerService::error("processSplitPaymentApprove: Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}", extra: $extra);
+            LoggerService::info("processSplitPaymentApprove: Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}", extra: $extra);
             if ($isFromJob) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => PaymentProcessJobEnum::QUOTE_NOTFOUND_MESSAGE]);
 
@@ -763,10 +763,11 @@ class SplitPaymentService
 
             if (! in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])) {
                 $createdBy = null;
-                if ($modelType == quoteTypeCode::Car) {
+                // this is only for car main lead payment, whenever this function is called from automation job.
+                if ($modelType == quoteTypeCode::Car && ! $sendUpdateId) {
                     $mainLeadPayment = $quoteModel->payments()->mainLeadPayment()->first();
                     $insuranceProvider = getInsuranceProvider($mainLeadPayment, $modelType, $quoteModel);
-                    if (in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA])) {
+                    if ($insuranceProvider->code == InsuranceProvidersEnum::AXA) {
                         $createdBy = $quoteModel->kycDocumentUser?->createdBy?->email;
                     }
                 }
@@ -864,6 +865,7 @@ class SplitPaymentService
                 if ($isFromJob) { // TODO : Add Ecom check to make sure only customer purchased policy schedule for automation
                     LoggerService::info("Split payment Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no}  createPolicyIssuanceAutomation started");
                     $this->createPolicyIssuanceAutomation($quoteModel, $modelType, $paymentSplit->payment);
+
                 }
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
 
@@ -1402,7 +1404,7 @@ class SplitPaymentService
         LoggerService::info("Split payment Code: {$paymentCode} isTravelOrCarQuote: ".($isTravelOrCarQuote ? 'true' : 'false'));
 
         // Check if the insurance provider is ALNC or AXA
-        $isAlncOrAxa = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA]);
+        $isAlncOrAxa = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA]);
         LoggerService::info("Split payment Code: {$paymentCode} isAlncOrAxa: ".($isAlncOrAxa ? 'true' : 'false'));
 
         // Only process if payment is not approved and:

@@ -8,7 +8,6 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
@@ -100,17 +99,17 @@ class CarQuote extends BaseModel
 
     public function getInsurerApiStatusAttribute()
     {
-        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this, QuoteTypes::CAR->value) : null;
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this->insurer_api_status_id) : null;
     }
 
     public function isBookingFailed()
     {
-        return $this->insurer_api_status_id === app(PolicyIssuanceService::class)->getFailedBookingInsurerAPIStatus($this, QuoteTypes::CAR->value);
+        return $this->insurer_api_status_id === PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
     }
 
     public function isPolicyIssuanceFailed()
     {
-        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getFailedPolicyIssuanceAPIStatuses($this, QuoteTypes::CAR->value));
+        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
     }
 
     public function fullName()
@@ -492,6 +491,11 @@ class CarQuote extends BaseModel
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Car);
+    }
+
     public function hasExemptedSource()
     {
         // Check if Dubai Now exclusion should be applied
@@ -516,6 +520,12 @@ class CarQuote extends BaseModel
     public function isProvider($code)
     {
         return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
+    }
+
+    public function customerInsured()
+    {
+        return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Car);
     }
 
     public function insured()
@@ -544,9 +554,16 @@ class CarQuote extends BaseModel
             ->latest('customer_insured.updated_at');
     }
 
-    public function policyIssuance()
+    public function amlLogs()
     {
-        return $this->morphOne(PolicyIssuance::class, 'model');
+        return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Car)->withTrashed();
+    }
+
+    public function carQuotePlanDetail()
+    {
+        return $this->hasOne(CarQuotePlanDetail::class, 'quote_uuid', 'uuid')
+            ->where('plan_id', $this->plan_id);
     }
 
     /**
@@ -556,6 +573,11 @@ class CarQuote extends BaseModel
     {
         return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
             ->where('quote_type_id', QuoteTypeId::Car);
+    }
+
+    public function policyIssuance()
+    {
+        return $this->morphOne(PolicyIssuance::class, 'model');
     }
 
     public function kycDocumentUser()
@@ -580,4 +602,21 @@ class CarQuote extends BaseModel
     {
         return $this->morphOne(VehicleDriverDetail::class, 'quoteable');
     }
+    /**
+     * Get the previous quote for this car quote.
+     * Returns null if no previous quote exists.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function previousQuote()
+    {
+        // The previous_quote_id is stored on this model, referencing the previous CarQuote's id
+        return $this->belongsTo(
+            CarQuote::class,
+            'previous_quote_id',
+            'id'
+        )->select(['id', 'code', 'uuid'])
+            ->with('payments');
+    }
+
 }

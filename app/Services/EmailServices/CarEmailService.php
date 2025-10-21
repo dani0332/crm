@@ -10,6 +10,7 @@ use App\Enums\QuoteFlowType;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\CompanyCarFollowupJob;
@@ -93,40 +94,48 @@ class CarEmailService extends BaseService
             }
         }
 
-        $responseCode = null;
+        $response = null;
 
         if (! $triggerOnlyWorkflow) {
             if ($lead->registration_type == CarRegistrationType::COMPANY && $lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-                info(self::class." -s ending company car ocb intro email- Ref ID: {$lead->uuid} | Time: ".now());
-                CompanyCarOCBJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes(1));
-
-                if (empty($lead->nb_flow_executed_at)) {
-                    $companyCarFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::COMPANY_CAR_FOLLOWUP_DELAY_DURATION)->first();
-                    $companyCarFollowupDelayDuration = ! empty($companyCarFollowupDelayDuration->value) ? $companyCarFollowupDelayDuration->value : 24;
-                    CompanyCarFollowupJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes((int) $companyCarFollowupDelayDuration));
-                    info('CompanyCarFollowupJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
-                }
-
-                return $responseCode;
+                return $this->sendCarCompanyOCBIntroEmail($lead);
             }
             if ($lead->advisor_id) {
-                $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+                $response = $this->sendEmailCustomerService->sendCarIntroEmailWithAdvisor($lead);
 
                 $nbFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION)->first();
                 $nbFollowupDelayDuration = ! empty($nbFollowupDelayDuration->value) ? $nbFollowupDelayDuration->value : 24;
-                NBMotorFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addHours((int) $nbFollowupDelayDuration));
-                info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
+                NBMotorFollowupEmailJob::dispatch(quoteUuid: $lead->uuid)->delay(Carbon::now()->addHours((int) $nbFollowupDelayDuration));
+
+                LoggerService::info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
+
             } else {
-                info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
-                $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
-                if ($responseCode) {
+                LoggerService::info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
+
+                $response = $this->sendEmailCustomerService->sendCarIntroEmailWithoutAdvisor($lead);
+                if ($response) {
                     $this->sendEmailCustomerService->sendSICFollowupEmail($lead, QuoteTypes::CAR);
                     // after 24 hour email is being triggered from KEN api using bird flow
                 }
             }
         }
 
-        return $responseCode;
+        return $response;
+    }
+
+    private function sendCarCompanyOCBIntroEmail($lead)
+    {
+        LoggerService::info(self::class." -sendCarCompanyOCBIntroEmail company car ocb intro email- Ref ID: {$lead->uuid} ");
+        CompanyCarOCBJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes(1));
+
+        if (empty($lead->nb_flow_executed_at)) {
+            $companyCarFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::COMPANY_CAR_FOLLOWUP_DELAY_DURATION)->first();
+            $companyCarFollowupDelayDuration = ! empty($companyCarFollowupDelayDuration->value) ? $companyCarFollowupDelayDuration->value : 24;
+            CompanyCarFollowupJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes((int) $companyCarFollowupDelayDuration));
+            LoggerService::info('CompanyCarFollowupJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
+        }
+
+        return null;
     }
 
     private function validatePdfFileSize($pdfObject): array
@@ -199,7 +208,7 @@ class CarEmailService extends BaseService
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->plans = $insurerPlans;
         $emailData->totalPlans = count($insurerPlans);
-        $emailData->isReAssignment = ! empty($previousAdvisor);
+        $emailData->isReAssignment = $carQuote->isReAssignment();
 
         if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
             $emailData->isRenewal = true;
@@ -657,7 +666,7 @@ class CarEmailService extends BaseService
         try {
             LoggerService::info('Sending Company Car OCB email for lead: '.$lead->uuid.' | Time: '.now());
             $advisor = User::where('id', $lead->advisor_id)->first();
-            $pdfUrl = $this->attachCarCompanyOCBPDFToEmail($lead->uuid, $lead->code);
+            $pdfUrl = $this->attachCarOCBPDF($lead->uuid, $lead->code);
             $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::COMPANY_CAR_OCB, pdfUrl: $pdfUrl);
 
             $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
@@ -681,10 +690,10 @@ class CarEmailService extends BaseService
         }
     }
 
-    public function attachCarCompanyOCBPDFToEmail($quoteUID, $code = null)
+    public function attachCarOCBPDF($quoteUID, $code = null)
     {
         try {
-            LoggerService::info(self::class.' - attachCarCompanyOCBPDFToEmail - Generating PDF Ref-ID: '.$quoteUID);
+            LoggerService::info(self::class.' - attachCarOCBPDF - Generating PDF Ref-ID: '.$quoteUID);
 
             $quotePlans = app(CarQuoteService::class)->getQuotePlans($quoteUID);
 
@@ -702,7 +711,7 @@ class CarEmailService extends BaseService
             }
 
             if (empty($planIds)) {
-                LoggerService::info(self::class.' - attachCarCompanyOCBPDFToEmail - No plans found for Ref-ID: '.$quoteUID);
+                LoggerService::info(self::class.' - attachCarOCBPDF - No plans found for Ref-ID: '.$quoteUID);
 
                 return '';
             }
@@ -723,14 +732,14 @@ class CarEmailService extends BaseService
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
 
-            LoggerService::info(self::class.' - attachCarCompanyOCBPDFToEmail - Public URL generated for Ref-ID: '.$quoteUID.' | URL: '.$publicUrl);
+            LoggerService::info(self::class.' - attachCarOCBPDF - Public URL generated for Ref-ID: '.$quoteUID.' | URL: '.$publicUrl);
 
             return $publicUrl;
         } catch (\Exception $e) {
             // Log the error details
-            LoggerService::error(self::class." - Error: attachCarCompanyOCBPDFToEmail - Error attaching PDF  | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $code]);
+            LoggerService::error(self::class." - Error: attachCarOCBPDF - Error attaching PDF  | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $code]);
 
-            return false;
+            return '';
         }
     }
     protected function scheduleFileDeletion($filePath)
@@ -745,7 +754,7 @@ class CarEmailService extends BaseService
         try {
             LoggerService::info(self::class.' - Sending Car Company Commercial OCB email');
             $advisor = User::where('id', $lead->advisor_id)->first();
-            $pdfUrl = $this->attachCarCompanyOCBPDFToEmail($lead->uuid, $lead->code);
+            $pdfUrl = $this->attachCarOCBPDF($lead->uuid, $lead->code);
             $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::CAR_COMMERCIAL_OCB, pdfUrl: $pdfUrl);
 
             $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
@@ -766,6 +775,40 @@ class CarEmailService extends BaseService
         }
     }
 
+    public function sendFailedCarRenewals($failedQuotes, $renewalsUploadLeadsId)
+    {
+
+        $workflow = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+        if ($workflow) {
+            $response = app(BirdService::class)->triggerWebHookRequest($workflow->value, $this->buildFailedCarRenewalsEmailData($failedQuotes, $renewalsUploadLeadsId));
+            LoggerService::info(self::class.' - sendFailedCarRenewals - Event triggered ');
+        }
+
+    }
+
+    public function buildFailedCarRenewalsEmailData($failedQuotes, $renewalsUploadLeadsId)
+    {
+        // Retrieve all CarRenewalManager emails in a single query
+        $renewalsManagersEmails = User::role(RolesEnum::RenewalsManager)
+            ->pluck('email')
+            ->filter()
+            ->values()
+            ->all();
+
+        // Get all failed renewal processes for the given policy numbers
+        $failedPolicyNumbers = collect($failedQuotes)->unique()->values()->all();
+
+        return (object) [
+            'failedQuotes' => implode(', ', $failedPolicyNumbers),
+            'quoteUID' => '', // Not used, reserved for future
+            'renewalsManagersEmails' => $renewalsManagersEmails,
+            'renewalManagerEmail' => $renewalsManagersEmails[0] ?? '',
+            'workflowType' => WorkflowTypeEnum::CAR_CQF_RENEWALS_ERRORS,
+            'dateOfAttempt' => now()->format('Y-m-d'),
+            'failedLeadsCount' => count($failedPolicyNumbers) ?? 0,
+            'fileDownloadUrl' => route('downloadValidationFailedFile', ['id' => $renewalsUploadLeadsId]),
+        ];
+    }
     public function sendFollowUpEmailForCQF($lead)
     {
         try {

@@ -349,7 +349,11 @@ onUnmounted(() => {
         <DataTable
           table-class-name="compact"
           :headers="quoteDocumentsTable.columns"
-          :items="quoteDocuments || []"
+          :items="
+            quoteDocuments.filter(
+              d => d.document_type_code != documentTypeCodeEnum.BOR_SIGN,
+            ) || []
+          "
           border-cell
           hide-rows-per-page
           :rows-per-page="15"

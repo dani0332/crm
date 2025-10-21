@@ -694,6 +694,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $sageRequest = $request->safe();
             $sageRequest->userId = auth()->id();
             $sageRequest->quoteType = $request->modelType;
+            $sageRequest->quoteTypeId = QuoteTypes::getIdFromValue($request->modelType);
             $sageRequest->advisor_id = $quote->advisor_id;
             $sageRequest->collection_amount = $request->collection_amount;
             $sageRequest->insurerReceiptNumber = $request->insurer_receipt_number;

@@ -109,6 +109,7 @@ const memberForm = useForm({
   is_payer: props.is_payer ?? false,
   from_aml_model: true,
   entity_id: page.props.entityDetails?.entity?.id ?? null,
+  pec: false,
   ...(props.isPayerDetails && {
     first_name: page.props.cardHolderName
       ? page.props.cardHolderName.card_holder_name
@@ -187,6 +188,7 @@ function onEditMember(member) {
   memberForm.relation_code = member.relation_code;
   memberForm.nationality_id = member.nationality_id;
   memberForm.is_payer = member.is_payer;
+  memberForm.pec = member.pec ?? false;
 }
 function memberSubmit(isValid) {
   if (!isValid) return;
