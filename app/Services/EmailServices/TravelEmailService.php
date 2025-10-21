@@ -167,6 +167,7 @@ class TravelEmailService extends BaseService
             'wfsBannerRedirectUrl' => $emailCampaignBannerRedirectUrl,
             'workflowType' => $workflowType ?? null,
             'quoteUUID' => $lead->uuid,
+            'quoteUID' => $lead->code,
             'refId' => $lead->code,
             'refID' => $lead->code,
         ];
