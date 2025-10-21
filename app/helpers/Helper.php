@@ -1731,6 +1731,13 @@ if (! function_exists('userHasProduct')) {
     }
 }
 
+if (! function_exists('convertFromCamelCase')) {
+    function convertFromCamelCase($string): string
+    {
+        return preg_replace('/(?<!^)([A-Z])/', ' $1', $string);
+    }
+}
+
 /**
  * Get the user's IP address with proper handling of proxies and load balancers
  *
