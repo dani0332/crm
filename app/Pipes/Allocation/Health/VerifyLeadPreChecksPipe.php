@@ -17,11 +17,11 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        if ($this->lead->has_pec_tag && ! empty($this->lead->price_starting_from) && empty($this->lead->advisor_id)) {
-            LoggerService::info('Lead has PEC tag and price starting from, Continuing allocation');
+        if ($this->lead->has_pec_tag  && ! empty($this->lead->price_starting_from)  && ($this->allocationRequest->isOverrideAdvisorRequest() || empty($this->lead->advisor_id))) {
+        LoggerService::info('Lead has PEC tag and price starting from, Continuing allocation');
 
-            return $next($request);
-        }
+        return $next($request);
+       }
 
         $lead = $this->findLead();
 
