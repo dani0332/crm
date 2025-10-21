@@ -15,6 +15,7 @@ use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Services\EmailServices\CarEmailService;
+use App\Services\EmailServices\TravelEmailService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -76,6 +77,9 @@ class GenericLobController extends Controller
             case QuoteTypes::CAR:
                 $pdfUrl = app(CarEmailService::class)->attachCarOCBPDF($request->quote_uuid);
 
+                return response()->json(['pdf_url' => $pdfUrl]);
+            case QuoteTypes::TRAVEL:
+                $pdfUrl = app(TravelEmailService::class)->attachTravelOCBPDF($request->quote_uuid);
                 return response()->json(['pdf_url' => $pdfUrl]);
             default:
                 return response()->json(['error' => 'Invalid quote type'], 400);

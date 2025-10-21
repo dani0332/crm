@@ -11,6 +11,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
+use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Jobs\SICFollowupEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\QuoteFlowDetails;
@@ -25,6 +26,7 @@ use App\Services\TravelQuoteService;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class TravelEmailService extends BaseService
@@ -478,6 +480,113 @@ class TravelEmailService extends BaseService
             }
         } else {
             LoggerService::info(self::class." - Automated Travel Followup workflow url not found for quote: {$travelQuote->uuid}");
+        }
+    }
+      /**
+     * Generate PDF and create temporary URL for Bird workflow
+     * Uses already fetched plans data to avoid duplicate API calls
+     */
+    private function attachTravelOCBPDFToEmail($quoteUID, $plans, int $pdfExpiry = 120)
+    {
+        try {
+            LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - Generating PDF for uuid: '.$quoteUID);
+
+            // Use already fetched plans data instead of calling API again
+            if (! isset($plans->quotes->plans) || empty($plans->quotes->plans)) {
+                LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - No plans available for uuid: '.$quoteUID);
+
+                return '';
+            }
+
+            // Extract plan IDs from the correct structure
+            $planIds = collect($plans->quotes->plans)
+                ->take(5)
+                ->pluck('id')
+                ->toArray();
+
+            if (empty($planIds)) {
+                LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - No valid plan IDs found for uuid: '.$quoteUID);
+
+                return '';
+            }
+
+            // Generate PDF using existing travel quote service with already fetched plans
+            $pdfData = [
+                'plan_ids' => $planIds,
+                'quote_uuid' => $quoteUID,
+            ];
+
+            $pdf = $this->travelQuoteService->exportPlansPdf(
+                quoteTypeCode::Travel,
+                $pdfData,
+                json_decode(json_encode(['quotes' => ['plans' => $plans->quotes->plans], 'isDataSorted' => true]))
+            );
+
+            if (isset($pdf['error'])) {
+                LoggerService::error(self::class.' - attachTravelOCBPDFToEmail - PDF generation failed: '.$pdf['error'].' for uuid: '.$quoteUID);
+
+                return '';
+            }
+
+            // Get PDF content
+            $pdfContent = $pdf['pdf']->output(); // Use output() to get raw PDF content
+
+            LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - Storing PDF temporarily for uuid: '.$quoteUID);
+
+            // Generate a unique temporary file path (exactly like HomeEmailService)
+            $tempFilePath = 'temp/'.uniqid().'.pdf';
+            Storage::disk('azureIM')->put($tempFilePath, $pdfContent);
+
+            LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - PDF stored successfully at path: '.$tempFilePath.' for uuid: '.$quoteUID);
+
+            // Generate a public URL (exactly like HomeEmailService)
+            try {
+                // @phpstan-ignore-next-line
+                $publicUrl = Storage::disk('azureIM')->temporaryUrl(
+                    $tempFilePath,
+                    now()->addMinutes($pdfExpiry)
+                );
+            } catch (\Exception $urlException) {
+                LoggerService::error(self::class.' - attachTravelOCBPDFToEmail - Failed to generate temporary URL: '.$urlException->getMessage().' for uuid: '.$quoteUID, exception: $urlException);
+                return '';
+            }
+
+            // Schedule deletion after expiry time (24 hours)
+            $this->scheduleFileDeletion($tempFilePath);
+
+            LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - Final URL for Bird workflow: '.$publicUrl.' for uuid: '.$quoteUID);
+
+            return $publicUrl;
+        } catch (Exception $e) {
+            LoggerService::error(self::class." - attachTravelOCBPDFToEmail - Error: {$e->getMessage()} for uuid: {$quoteUID}", exception: $e);
+
+            return '';
+        }
+    }
+
+    /**
+     * Schedule file deletion job (similar to Home service)
+     */
+    protected function scheduleFileDeletion($filePath)
+    {
+        // Use the existing job to handle file deletion (24 hours)
+        DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(120));
+    }
+
+    public function attachTravelOCBPDF($quoteUID, $code = null)
+    {
+        try {
+            LoggerService::info(self::class.' - attachTravelOCBPDF - Generating PDF Ref-ID: '.$quoteUID);
+
+            $quotePlans = app(TravelQuoteService::class)->getQuotePlans($quoteUID);
+
+            // Use the existing private method with the fetched plans
+            return $this->attachTravelOCBPDFToEmail($quoteUID, $quotePlans);
+        } catch (\Exception $e) {
+            // Log the error details
+            LoggerService::error(self::class." - Error: attachTravelOCBPDF - Error attaching PDF  | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $code]);
+
+            return '';
         }
     }
 }
