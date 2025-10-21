@@ -203,7 +203,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         }
     }
 
-    public function failed(Exception $exception)
+    public function failed(Throwable $exception)
     {
         LoggerService::info('Quote Code: '.$this->code.' SendBookPolicyDocumentsJob Error', extra: [
             'errorTraceMessage' => $exception->getTraceAsString(),
