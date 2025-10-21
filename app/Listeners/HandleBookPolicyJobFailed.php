@@ -34,7 +34,8 @@ class HandleBookPolicyJobFailed
             $errorMessage = $event->exception->getMessage();
             $errorCode = $event->exception->getCode();
             $errorTrace = $event->exception->getTraceAsString();
-            if (str_contains($errorMessage, 'has been attempted too many times')) {
+            $shouldReattempt = str_contains($errorMessage, 'has been attempted too many times') || str_contains($errorMessage, 'has timed out');
+            if ($shouldReattempt) {
                 LoggerService::info('handleBookPolicyJobFailed fn:handle - Policy Book : BookPolicyOnSageJob failed due to max attempts - '.$quote->code.' - Setting status to pending instead of failed', extra: [
                     'error' => $errorMessage,
                     'errorCode' => $errorCode,
