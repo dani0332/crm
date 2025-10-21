@@ -228,7 +228,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
                 }
 
                 // Bulk insert failed records to reduce memory and improve performance
-                if (!empty($failed)) {
+                if (! empty($failed)) {
                     RenewalQuoteProcess::insert($failed);
                 }
 
