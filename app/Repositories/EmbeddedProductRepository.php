@@ -328,7 +328,7 @@ class EmbeddedProductRepository extends BaseRepository
         if ($quoteTypeId == QuoteTypeId::Car && $shortCode == EmbeddedProductEnum::ECB) {
             $isTPLPlanSelected = $quote->plan?->repair_type == CarPlanType::TPL;
 
-            if($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
                 $isPolicyBookedDateInvalid = Carbon::parse($quote->policy_booking_date)->diffInDays(Carbon::now()) > 30;
             }
         }
