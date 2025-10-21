@@ -324,11 +324,16 @@ class EmbeddedProductRepository extends BaseRepository
         $isPaymentPaid = in_array($transaction?->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
 
         $isTPLPlanSelected = false;
+        $isPolicyBookedDateInvalid = false;
         if ($quoteTypeId == QuoteTypeId::Car && $shortCode == EmbeddedProductEnum::ECB) {
             $isTPLPlanSelected = $quote->plan?->repair_type == CarPlanType::TPL;
+
+            if($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+                $isPolicyBookedDateInvalid = Carbon::parse($quote->policy_booking_date)->diffInDays(Carbon::now()) > 30;
+            }
         }
 
-        return $transaction?->is_active === 0 || $isTPLPlanSelected || $isPaymentPaid;
+        return $transaction?->is_active === 0 || $isTPLPlanSelected || $isPaymentPaid || $isPolicyBookedDateInvalid;
     }
 
     private function canBookEmbeddedProduct($transaction, $quote, $ep)
