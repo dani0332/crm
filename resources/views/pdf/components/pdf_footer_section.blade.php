@@ -182,73 +182,49 @@
                   <td class="footer-td" style="width:38%; position: relative; vertical-align: top;">
                     <div class="footer-box">
                       <p class="footer-content-1">
-                        Licensed and regulated by the 
-                        <a href="https://www.centralbank.ae/en/" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                          Central Bank of the UAE
-                        </a> | Registration No.
+                        Licensed and regulated by the
+                        <a href="https://www.centralbank.ae/en/" target="_blank" style="color: #ffffff; text-decoration: underline;">Central Bank of the UAE</a> | Registration No.
                         <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/CB%20License%202025.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">85</a>
                       </p>
                       <p class="footer-content-1">
-                        Trade License issued by 
-                        <a href="https://eservices.dubaided.gov.ae/Pages/Anon/GstHme.aspx?dedqs=PM671p6QBb0lV1okx2JABgxoLLKXOgPx" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                          Department of Economy & Tourism in Dubai
-                        </a> | License No.
-                        <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/AFIA%20-%20T-L%202025-26%20One%20PAge.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                          238534
-                        </a>
+                        Trade License issued by
+                        <a href="https://eservices.dubaided.gov.ae/Pages/Anon/GstHme.aspx?dedqs=PM671p6QBb0lV1okx2JABgxoLLKXOgPx" target="_blank" style="color: #ffffff; text-decoration: underline;">Department of Economy & Tourism in Dubai</a> | License No.
+                        <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/AFIA%20-%20T-L%202025-26%20One%20PAge.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">238534</a>
                       </p>
                       <p class="footer-content-1">
-                        Health Insurance Intermediary Permit issued by 
-                        <a href="https://www.dha.gov.ae/en" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                          Dubai Health Authority
-                        </a> | ID: 
+                        Health Insurance Intermediary Permit issued by
+                        <a href="https://www.dha.gov.ae/en" target="_blank" style="color: #ffffff; text-decoration: underline;">Dubai Health Authority</a> | ID:
                         <a href="https://www.isahd.ae/Home/PermittedIntermediaries" target="_blank" style="color: #ffffff; text-decoration: underline;">BRK-00003</a>
                       </p>
                       <p class="footer-content-1">
-                        <a href="https://www.added.gov.ae/en" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                          Abu Dhabi Department of Economic Development
-                        </a> | ADED License no. 
-                        <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/Trade%20License%20-%20Abu%20Dhabi%20Branch%20-%202025-26.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                        CN-5385024
-                        </a>
+                        <a href="https://www.added.gov.ae/en" target="_blank" style="color: #ffffff; text-decoration: underline;">Abu Dhabi Department of Economic Development</a> | ADED License no.
+                        <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/Trade%20License%20-%20Abu%20Dhabi%20Branch%20-%202025-26.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">CN-5385024</a>
                       </p>
                       <p class="footer-content-1">
-                        <a href="https://www.doh.gov.ae/en/" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                          Department of Health Abu Dhabi
-                        </a> | License no.  <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/DOH%20Licesne%202025-26.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;"> B092  </a>
+                        <a href="https://www.doh.gov.ae/en/" target="_blank" style="color: #ffffff; text-decoration: underline;">Department of Health Abu Dhabi</a> | License no. <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/DOH%20Licesne%202025-26.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">B092</a>
                       </p>
                       <p class="footer-content-1">Member of the 
                         <a href="https://difcia.org/" target="_blank" style="color: #ffffff; text-decoration: underline;">
                         DIFC Insurance Association
                         </a>
-                        | Membership No. 
-                        <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/DIFCIA%20Member%20Certificate%202025%20-%20Member%20number%20049.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                        10049
-                        </a>
+                        | Membership No.
+                        <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/DIFCIA%20Member%20Certificate%202025%20-%20Member%20number%20049.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">10049</a>
                       </p>
                       <p class="footer-content-1">Member of the Insurance Business Group under 
-                        <a href="https://www.dubaichambercommerce.com/en/" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                        Dubai Chamber of Commerce
-                        </a>
-                         | Membership No. 
-                         <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/DCCI%20Certificate%20AFIA%202025-26.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                         34774
-                         </a>
+                        <a href="https://www.dubaichambercommerce.com/en/" target="_blank" style="color: #ffffff; text-decoration: underline;">Dubai Chamber of Commerce</a>
+                         | Membership No.
+                         <a href="https://azstorinsurancemarketprd.blob.core.windows.net/policy-wordings/footer_pdf/DCCI%20Certificate%20AFIA%202025-26.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">34774</a>
                          </p>
                       <p class="footer-content-1">
                         Member of the 
-                        <a href="https://gulf-if.net/" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                          Gulf Insurance Federation
-                        </a>
+                        <a href="https://gulf-if.net/" target="_blank" style="color: #ffffff; text-decoration: underline;">Gulf Insurance Federation</a>
                       </p>
                       <p class="footer-content-1">
                         Member of the
                         <a href="https://eifuae.com/" target="_blank" style="color: #ffffff; text-decoration: underline;">
                           Emirates Insurance Federation
                         </a> | Membership No.
-                        <a href="https://cdn.alfred.ae/docs/EIA-Membership.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">
-                          B6
-                        </a>
+                        <a href="https://cdn.alfred.ae/docs/EIA-Membership.pdf" target="_blank" style="color: #ffffff; text-decoration: underline;">B6</a>
                       </p>
                     </div>
               
