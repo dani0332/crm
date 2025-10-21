@@ -3,10 +3,13 @@
 namespace App\Repositories;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarPlanType;
+use App\Enums\CarVehicleUse;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\EpCategoryEnum;
+use App\Enums\EpEcbExcludeVehicleEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
@@ -15,18 +18,23 @@ use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
 use App\Facades\Ken;
 use App\Facades\Marshall;
 use App\Jobs\EP\CancelEPJob;
+use App\Jobs\EpPurchaseFlowJob;
+use App\Jobs\EpSendDocumentJob;
 use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
 use App\Jobs\SukoonMedexPurchaseFlowJob;
 use App\Models\ApplicationStorage;
+use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\CustomerAddress;
 use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
@@ -38,11 +46,13 @@ use App\Models\PaymentSplits;
 use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Models\SageProcess;
+use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SukoonMedexService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\COU;
+use App\Strategies\EmbeddedProducts\ECB;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
 use App\Strategies\EmbeddedProducts\RDX;
@@ -230,14 +240,19 @@ class EmbeddedProductRepository extends BaseRepository
             $optionsIds = $item->prices->pluck('id');
             $item->sync_document_button = false;
 
-            $transaction = EmbeddedTransaction::with('documents', 'product.embeddedProduct')->where([
+            $allTransactions = EmbeddedTransaction::with('documents', 'product.embeddedProduct')->where([
                 ['quote_type_id', '=', $quoteTypeId],
                 ['quote_request_id',  '=', $quoteRequestId],
-                ['is_selected',  '=', true],
             ])->whereIn('product_id', $optionsIds)->get();
+            $transaction = $allTransactions->where('is_selected', true);
+
             $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
 
             $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($item->short_code);
+            $isSukoonMedex = EmbeddedProductStrategy::checkSukoonMedex($item->short_code);
+            $isECB = $item->short_code == EmbeddedProductEnum::ECB;
+            $isMedxOrEcb = $isSukoonMedex || $isECB;
+
             if ($isAlfredProtect) {
                 $isDocPresent = count($transaction) > 0 ? $transaction[0]->documents()->count() > 0 : false;
                 $item->download_document_button = $isDocPresent && $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
@@ -246,7 +261,7 @@ class EmbeddedProductRepository extends BaseRepository
                     $documentCount = ($isDocPresent == true) ? $transaction[0]->documents()->count() : 0;
                     $item->sync_document_button = $documentCount < 5;
                 }
-            } elseif (EmbeddedProductStrategy::checkSukoonMedex($item->short_code) && count($transaction) > 0) {
+            } elseif ($isMedxOrEcb && count($transaction) > 0) {
 
                 $isSukoonEpReadyForSage = $transaction[0]->policy_status == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
                 $canSendDocuments = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction)
@@ -258,6 +273,7 @@ class EmbeddedProductRepository extends BaseRepository
             $item->can_cancel_payment = $this->canCancelPayment($transaction->first(), $quoteTypeId);
             $item->can_void_payment = $this->canVoidPayment($transaction->first());
             $item->can_book_embedded_product = $this->canBookEmbeddedProduct($transaction->first(), $quoteObject, $item);
+            $item->is_disabled = $this->isDisableEmbeddedProduct($allTransactions->first(), $quoteObject, $item->short_code, $quoteTypeId);
         });
 
         return $ep;
@@ -301,6 +317,23 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return false;
+    }
+
+    private function isDisableEmbeddedProduct($transaction, $quote, $shortCode, $quoteTypeId)
+    {
+        $isPaymentPaid = in_array($transaction?->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
+
+        $isTPLPlanSelected = false;
+        $isPolicyBookedDateInvalid = false;
+        if ($quoteTypeId == QuoteTypeId::Car && $shortCode == EmbeddedProductEnum::ECB) {
+            $isTPLPlanSelected = $quote->plan?->repair_type == CarPlanType::TPL;
+
+            if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+                $isPolicyBookedDateInvalid = Carbon::parse($quote->policy_booking_date)->diffInDays(Carbon::now()) > 30;
+            }
+        }
+
+        return $transaction?->is_active === 0 || $isTPLPlanSelected || $isPaymentPaid || $isPolicyBookedDateInvalid;
     }
 
     private function canBookEmbeddedProduct($transaction, $quote, $ep)
@@ -405,7 +438,7 @@ class EmbeddedProductRepository extends BaseRepository
             ['quote_request_id', $leadId],
             ['is_selected', 1],
         ])
-            ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+            ->where('payment_status_id', PaymentStatusEnum::CAPTURED)
             ->with(['product.embeddedProduct']);
 
         if (! empty($epId)) {
@@ -428,12 +461,15 @@ class EmbeddedProductRepository extends BaseRepository
         foreach ($epTransaction as $item) {
 
             $isDocPresent = $item->documents->count() > 0;
-            if (EmbeddedProductStrategy::checkAlfredProtect($item->product->embeddedProduct->short_code) && ! $isDocPresent) {
+            $epShortCode = $item->product->embeddedProduct->short_code ?? '';
+            $sukoonMedexCodes = EmbeddedProductEnum::getSukoonMedexCodes();
+
+            if (EmbeddedProductStrategy::checkAlfredProtect($epShortCode) && ! $isDocPresent) {
                 $quoteObject = $this->getQuoteObject($modelType, $leadId);
                 ProcessSyncAlfredProtect::dispatch($quoteObject);
                 $response = ['success' => true];
 
-            } elseif ($item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
+            } elseif ($epShortCode == EmbeddedProductEnum::COURIER
             && in_array(ucwords($modelType), [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])) {
 
                 $quoteObject = $this->getQuoteObject($modelType, $leadId);
@@ -441,12 +477,12 @@ class EmbeddedProductRepository extends BaseRepository
                 $response = ['success' => true];
 
             } elseif (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])
-                && EmbeddedProductStrategy::checkSukoonMedex($item->product->embeddedProduct->short_code ?? '')) {
+                && in_array($epShortCode, [...$sukoonMedexCodes, EmbeddedProductEnum::ECB])) {
 
                 $product_id = $item->product_id ?? null;
                 $embedded_product_id = EmbeddedProductOption::find($product_id)?->embedded_product_id;
 
-                if ($item->paid_at && Carbon::parse($item->paid_at)->lt(Carbon::parse(self::SALAMA_DATE))) {
+                if (in_array($epShortCode, $sukoonMedexCodes) && $item->paid_at && Carbon::parse($item->paid_at)->lt(Carbon::parse(self::SALAMA_DATE))) {
 
                     // EP Send documents
                     $response = $this->fetchSendDocument([
@@ -462,8 +498,15 @@ class EmbeddedProductRepository extends BaseRepository
                     $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
 
                     if ($callPurchaseFlow) {
-                        // Sukoon Medex Purchase Flow
-                        SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item, isSendEmail: true);
+                        if (in_array($epShortCode, $sukoonMedexCodes)) {
+                            // Sukoon Medex Purchase Flow
+                            SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item, isSendEmail: true);
+                        } elseif ($quoteTypeId == QuoteTypeId::Car && $epShortCode == EmbeddedProductEnum::ECB) {
+                            // ECB Purchase Flow
+                            $quote = $this->getQuoteObject($modelType, $leadId);
+                            $context = EpEcbService::buildContext($item->id, $leadId, $quoteTypeId, $quote->code);
+                            dispatch(new EpPurchaseFlowJob($context));
+                        }
                         $response = ['success' => true];
 
                     } else {
@@ -490,6 +533,7 @@ class EmbeddedProductRepository extends BaseRepository
                         }
                     }
                 }
+
             }
         }
 
@@ -524,6 +568,7 @@ class EmbeddedProductRepository extends BaseRepository
             $transaction = $this->fetchTransaction($modelType, $quoteId, $ep, shortCodes: $shortCodes)
                 ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
                 ->first();
+
             if (empty($transaction)) {
                 LoggerService::info("No transaction found, ref_id: {$quoteObject->code}");
 
@@ -534,6 +579,26 @@ class EmbeddedProductRepository extends BaseRepository
                 $sukoonMedexService = app(SukoonMedexService::class);
                 $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
                 $sukoonMedexService->processPurchaseFlow();
+            } catch (Exception $e) {
+                return ['success' => false, 'message' => $e->getMessage()];
+            }
+
+        } elseif ($shortCode == EmbeddedProductEnum::ECB) {
+
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+            $transaction = $this->fetchTransaction($modelType, $quoteId, $ep, shortCodes: [EmbeddedProductEnum::ECB])
+                ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+                ->first();
+
+            if (empty($transaction)) {
+                LoggerService::info("No transaction found, ref_id: {$quoteObject->code}");
+
+                return ['success' => false, 'message' => 'No transaction found'];
+            }
+
+            try {
+                $context = EpEcbService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quoteObject->code);
+                dispatch(new EpPurchaseFlowJob($context));
             } catch (Exception $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }
@@ -557,6 +622,8 @@ class EmbeddedProductRepository extends BaseRepository
         $short_code = $ep->short_code;
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($short_code);
         $isSukoonMedex = EmbeddedProductStrategy::checkSukoonMedex($short_code);
+        $isECB = $short_code == EmbeddedProductEnum::ECB;
+        $isMedxOrEcb = $isSukoonMedex || $isECB;
 
         [$attachments, $attachmentsUrls] = $this->fetchAttachments($ep, $isAlfredProtect, $isSalama);
 
@@ -572,8 +639,8 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
-        if (! $isSalama) {
-            $canSendDocuments = $canSendDocuments || ($isSukoonMedex && $this->canSendSukoonMedexDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction));
+        if ($isECB || ! $isSalama) {
+            $canSendDocuments = $canSendDocuments || ($isMedxOrEcb && $this->canSendSukoonMedexDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction));
         }
 
         if (! $canSendDocuments) {
@@ -593,6 +660,8 @@ class EmbeddedProductRepository extends BaseRepository
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
         } elseif ($isSukoonMedex) {
             return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep, $modelType, $isSalama);
+        } elseif ($isECB) {
+            return $this->sendECBEmail($transaction->first(), $quoteObject->id, $modelType);
         }
     }
 
@@ -727,6 +796,17 @@ class EmbeddedProductRepository extends BaseRepository
         } else {
             return ['success' => false, 'message' => 'Error sending Certificate'];
         }
+    }
+
+    private function sendECBEmail($transaction, $quoteId, $modelType)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $quote = $this->getQuoteObject($modelType, $quoteId);
+
+        $context = EpEcbService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quote->code);
+        dispatch(new EpSendDocumentJob($context));
+
+        return ['success' => true, 'message' => 'Certificate sent successfully'];
     }
 
     private function sendMedexEmail($short_code, $quoteObject, $transaction, $attachments, $advisorData, $ep, $modelType, $isSalama)
@@ -941,6 +1021,8 @@ class EmbeddedProductRepository extends BaseRepository
             $strategy = new RDX;
         } elseif ($shortCode == EmbeddedProductEnum::COURIER) {
             $strategy = new COU;
+        } elseif ($shortCode == EmbeddedProductEnum::ECB) {
+            $strategy = new ECB;
         } else {
             $strategy = new EmbeddedProductStrategy;
         }
@@ -1050,6 +1132,11 @@ class EmbeddedProductRepository extends BaseRepository
                         && in_array($type->code, [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])
                     ) {
                         CancelCourierQuoteOnMACRM::dispatch($transaction->quoteRequest, $type->id);
+                    }
+
+                    // Response is empty for success, non-empty for error
+                    if (! empty($response)) {
+                        return ['data' => $processResponse, 'code' => 403];
                     }
 
                     return [
@@ -1322,6 +1409,192 @@ class EmbeddedProductRepository extends BaseRepository
         return null;
     }
 
+    /**
+     * Check if the CarMakeId is matched with the excluded vehicles of EpEcb
+     * Only for CAR Quote With EP ECB
+     *
+     * @param  int  $makeId
+     */
+    public function checkIsCarMakeExcludedEcbVehicle($makeId): bool
+    {
+        $carMake = CarMake::select('id', 'code')->find($makeId);
+        if (empty($carMake?->code)) {
+            return false;
+        }
+
+        return in_array($carMake->code, EpEcbExcludeVehicleEnum::CAR_MAKE_CODES);
+    }
+
+    /**
+     * Check if the CarModelId is matched with the excluded vehicles of EpEcb
+     * Only for CAR Quote With EP ECB
+     *
+     * @param  int  $modelId
+     */
+    public function checkIsCarModelExcludedEcbVehicle($modelId): bool
+    {
+        $carModel = CarModel::select('id', 'code')->find($modelId);
+        if (empty($carModel?->code)) {
+            return false;
+        }
+
+        return in_array($carModel->code, EpEcbExcludeVehicleEnum::CAR_MODEL_CODES);
+    }
+
+    /**
+     * Process cancel payment
+     * Only for CAR Quote With EP ECB
+     *
+     * @param  Quote  $quote
+     * @param  int  $quoteTypeId
+     * @param  string  $reason
+     */
+    public function syncCarQuoteEpEcb($quote, $quoteTypeId): array
+    {
+        LoggerService::startQuoteLogging($quote->code);
+        $modelType = QuoteTypes::getName($quoteTypeId);
+        if ($quoteTypeId != QuoteTypeId::Car || empty($quote?->id)) {
+            LoggerService::info('fn:syncEpEcb - Invalid quote, quote_type_id');
+
+            return ['success' => false, 'message' => 'Invalid quote, quote_type_id'];
+        }
+
+        $epTransactionDetails = $this->getEpTransactionDetails($quoteTypeId, $quote->id, EmbeddedProductEnum::ECB)->first();
+        if (empty($epTransactionDetails)) {
+            LoggerService::info('fn:syncEpEcb - Sync embedded transaction for ECB');
+
+            return ['success' => true, 'message' => 'Sync embedded transaction for ECB'];
+        }
+
+        $epEcbMatchingCriteriaResult = $this->getEpEcbMatchingCriteriaResult($quote);
+        $unmatchedEpEcbCarQuoteDetails = array_filter($epEcbMatchingCriteriaResult, fn ($value) => $value === false);
+        $isTPLPlanSelected = $epEcbMatchingCriteriaResult['plan_id'] == false;
+        LoggerService::info('fn:syncEpEcb - EpEcb matching criteria result: ', context: ['payment_status_id' => $epTransactionDetails->payment_status_id, 'matching_criteria_result' => $epEcbMatchingCriteriaResult]);
+
+        // Check if any CarQuoteDetails unmatched with EP ECB criteria
+        if (count($unmatchedEpEcbCarQuoteDetails) > 0) {
+
+            // Payment void/cancel if payment is authorised or captured
+            if (in_array($epTransactionDetails->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED])) {
+
+                $unmatchedDetails = implode(', ', array_keys($unmatchedEpEcbCarQuoteDetails));
+                $reason = 'Payment void / cancel, due to change in car details ('.$unmatchedDetails.')';
+
+                $epId = $epTransactionDetails->product->embedded_product_id ?? null;
+                $payment = $epTransactionDetails->payments->first();
+
+                if (empty($epId) || empty($payment?->premium_authorized)) {
+                    LoggerService::info('fn:syncEpEcb - Not Found - embedded_product_id or payment_amount');
+
+                    return ['success' => false, 'message' => 'Not Found - embedded_product_id or payment_amount'];
+                }
+
+                $cancelPaymentData = [
+                    'embedded_id' => $epId,
+                    'quote_id' => $quote->id,
+                    'modelType' => $modelType,
+                    'reason' => $reason,
+                    'amount' => $payment->premium_authorized,
+                    'uuid' => $quote->uuid,
+                ];
+
+                $response = app(EmbeddedProductRepository::class)->fetchCancelPayment($cancelPaymentData);
+                if ($response['code'] != 200) {
+
+                    LoggerService::info('fn:syncEpEcb - Cancel payment process failed for payment code: '.$epTransactionDetails->code);
+
+                    return ['success' => false, 'message' => 'Cancel payment process failed'];
+
+                } else {
+                    LoggerService::info('fn:syncEpEcb - Cancel payment process completed for payment code: '.$epTransactionDetails->code);
+                }
+            }
+
+            if ($epTransactionDetails->is_active == 1) {
+                if (! $isTPLPlanSelected) {
+                    $epTransactionDetails->update(['is_active' => 0]);
+                }
+            }
+
+        } else {
+
+            if (! $isTPLPlanSelected && $epTransactionDetails->is_active == 0 && $epTransactionDetails->payment_status_id == PaymentStatusEnum::DRAFT) {
+                $epTransactionDetails->update(['is_active' => 1]);
+            }
+        }
+
+        LoggerService::info('fn:syncEpEcb - Sync embedded transaction for ECB is completed');
+
+        return ['success' => true, 'message' => 'Sync embedded transaction for ECB is completed'];
+    }
+
+    /**
+     * Get unmatched EP ECB car quote details
+     * Only for CAR Quote With EP ECB
+     *
+     * @param  Quote  $quote
+     * @return array associative array
+     *
+     * Example: [ 'car_make_id' => false, ...propertyNamesWithResult ]
+     */
+    public function getEpEcbMatchingCriteriaResult($quote): array
+    {
+        $eligibleCarQuoteDetails = [
+            // 'registration_type' => true,
+            'vehicle_use' => true,
+            'car_make_id' => true,
+            'car_model_id' => true,
+            'is_modified' => true,
+            'plan_id' => true,
+        ];
+
+        if ($this->checkIsCarMakeExcludedEcbVehicle($quote->car_make_id)) {
+            $eligibleCarQuoteDetails['car_make_id'] = false;
+        }
+        if ($this->checkIsCarModelExcludedEcbVehicle($quote->car_model_id)) {
+            $eligibleCarQuoteDetails['car_model_id'] = false;
+        }
+
+        if ($quote->vehicle_use == CarVehicleUse::COMMERCIAL) {
+            $eligibleCarQuoteDetails['vehicle_use'] = false;
+        }
+
+        if ($quote->is_modified == true) {
+            $eligibleCarQuoteDetails['is_modified'] = false;
+        }
+
+        if ($quote->plan?->repair_type == CarPlanType::TPL) {
+            $eligibleCarQuoteDetails['plan_id'] = false;
+        }
+
+        return $eligibleCarQuoteDetails;
+    }
+
+    public function checkIsEpSelected($quoteId, $quoteTypeId, $epShortCode = null, $isPaymentPaid = false): bool
+    {
+        return EmbeddedTransaction::where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteId, 'is_selected' => true])
+            ->when($isPaymentPaid, fn ($query) => $query->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED]))
+            ->when($epShortCode,
+                fn ($query) => $query->whereHas('product.embeddedProduct',
+                    fn ($q) => $q->where('short_code', $epShortCode)
+                )
+            )->exists();
+    }
+
+    public function getEpTransactionDetails($quoteTypeId, $quoteId, $epShortCode = null, $isSelected = null, $isPaymentPaid = false)
+    {
+        return EmbeddedTransaction::with('payments:id,paymentable_id,paymentable_type,premium_authorized', 'product:id,embedded_product_id', 'product.embeddedProduct:id,short_code,insurance_provider_id')
+            ->select('id', 'quote_type_id', 'quote_request_id', 'code', 'is_selected', 'is_active', 'payment_status_id', 'product_id')
+            ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteId])
+            ->when(isset($isSelected), fn ($query) => $query->where('is_selected', $isSelected))
+            ->when($isPaymentPaid, fn ($query) => $query->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED]))
+            ->when($epShortCode,
+                fn ($query) => $query->whereHas('product.embeddedProduct',
+                    fn ($q) => $q->where('short_code', $epShortCode)
+                )
+            )->get();
+    }
+
     public function fetchAuthorisedTransactions($quoteTypeId, $quoteId)
     {
         return EmbeddedTransaction::where([
@@ -1338,7 +1611,7 @@ class EmbeddedProductRepository extends BaseRepository
             ->get();
     }
 
-    public function fetchHasSukoonMedexProducts($transactions)
+    public function fetchHasMedexOrEcbProduct($transactions)
     {
         $sukoonMedexCodes = EmbeddedProductEnum::getSukoonMedexCodes();
 
@@ -1346,7 +1619,7 @@ class EmbeddedProductRepository extends BaseRepository
             ->filter(function ($transaction) use ($sukoonMedexCodes) {
                 $epShortCode = $transaction?->product?->embeddedProduct?->short_code;
 
-                return $epShortCode && in_array($epShortCode, $sukoonMedexCodes);
+                return $epShortCode && (in_array($epShortCode, $sukoonMedexCodes) || $epShortCode == EmbeddedProductEnum::ECB);
             })
             ->isNotEmpty();
     }

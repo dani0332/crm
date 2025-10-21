@@ -9,6 +9,7 @@ const props = defineProps({
     default: {},
   },
   quoteStatusEnums: Array,
+  isEpEcbPaymentPaid: Boolean,
 });
 
 const { isRequired, isEmail, maxValue } = useRules();
@@ -28,6 +29,13 @@ const kycStatusEnum = page.props.kycEnums;
 
 const isEdit = computed(() => {
   return route().current().includes('edit');
+});
+
+const isLoading = ref(false);
+const modals = reactive({
+  confirmationMessage: '',
+  showConfirmationModal: false,
+  isConfirmed: false,
 });
 
 const carMakeOptions = computed(() => {
@@ -204,18 +212,11 @@ const validateDecimal = event => {
   }
 };
 
-function onSubmit(isValid) {
-  if (
-    quoteForm.nationality_id == null ||
-    quoteForm.currently_insured_with == null
-  ) {
-    isEmptyField.value = true;
-  } else {
-    isEmptyField.value = false;
-  }
-
-  if (!isValid) return;
-
+/**
+ * Proceed with actual form submission
+ * This is called after validation and confirmation checks pass
+ */
+const proceedWithSubmission = () => {
   clearFormValues();
   quoteForm.clearErrors();
 
@@ -230,11 +231,52 @@ function onSubmit(isValid) {
       setCarMakeAndModalValues();
       quoteForm.setError(errors);
     },
+    // Reset confirmation flag after form submission completes
+    onFinish: () => (modals.isConfirmed = false),
   };
 
   quoteForm
     .transform(data => ({ ...data, isDisbaled }))
     .submit(method, url, options);
+};
+
+/**
+ * Handle modal confirmation and trigger form submission
+ */
+const handleConfirmUpdateCarDetails = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = true;
+
+  // Proceed with form submission after confirmation
+  proceedWithSubmission();
+};
+
+const handleModalCancel = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = false; // Reset confirmation flag when user cancels
+};
+
+function onSubmit(isValid) {
+  // Validate required fields
+  if (
+    quoteForm.nationality_id == null ||
+    quoteForm.currently_insured_with == null
+  ) {
+    isEmptyField.value = true;
+  } else {
+    isEmptyField.value = false;
+  }
+
+  if (!isValid) return;
+
+  // Check if customer has an active ECB transaction that requires confirmation
+  if (props.isEpEcbPaymentPaid && !modals.isConfirmed) {
+    modals.confirmationMessage = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
+    modals.showConfirmationModal = true;
+    return;
+  }
+
+  proceedWithSubmission();
 }
 
 const clearFormValues = () => {
@@ -993,5 +1035,14 @@ const gender = computed(() => {
         </x-button>
       </div>
     </x-form>
+
+    <ConfirmationModal
+      v-model="modals.showConfirmationModal"
+      title="Are you sure?"
+      :message="modals.confirmationMessage"
+      :loading="isLoading"
+      @confirm="handleConfirmUpdateCarDetails"
+      @cancel="handleModalCancel"
+    />
   </div>
 </template>
