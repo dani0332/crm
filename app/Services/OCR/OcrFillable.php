@@ -189,8 +189,8 @@ trait OcrFillable
                     'processing_summary' => $summary,
                 ]);
 
-                  // Update customer verification details
-                  app(CustomerVerificationService::class)->processOcrVerification($quote, $data, $this->documentTypeCode);
+                // Update customer verification details
+                app(CustomerVerificationService::class)->processOcrVerification($quote, $data, $this->documentTypeCode);
             } else {
                 LoggerService::warning(self::class.' - Mulkiya data processing failed - Quote UUID: '.$quote->uuid);
             }
@@ -287,7 +287,7 @@ trait OcrFillable
         try {
             // Use enum value for logging (e.g., 'IDC', 'RC', 'DL')
             $this->documentTypeCode = $documentType->value;
-            
+
             return match ($documentType) {
                 OCRDocumentTypeEnum::TAX_INVOICE => $this->fillTaxInvoice($quote, $data),
                 OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER => $this->fillTaxInvoiceRaisedByBuyer($quote, $data),
