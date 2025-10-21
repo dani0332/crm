@@ -322,19 +322,7 @@ const ppDoc = str => {
 const { copy, copied } = useClipboard();
 
 const onCopyText = () => {
-  let providerCode = props.quote.plan_provider_code;
-  if (
-    props.modelType.toLowerCase() ==
-    page.props.quoteTypeCodeEnum.Bike.toLowerCase()
-  ) {
-    providerCode = props.quote.car_plan?.insurance_provider?.code;
-  } else if (
-    props.modelType.toLowerCase() ==
-    page.props.quoteTypeCodeEnum.Home.toLowerCase()
-  ) {
-    providerCode = props.quote.insurance_provider?.code;
-  }
-
+  const providerCode = getProviderCode();
   let paymentLink =
     page.props.epLink +
     '/' +
@@ -353,6 +341,22 @@ const onCopyText = () => {
     });
 };
 
+const getProviderCode = () => {
+  let providerCode = props.quote.plan_provider_code;
+  if (
+    props.modelType.toLowerCase() ==
+    page.props.quoteTypeCodeEnum.Bike.toLowerCase()
+  ) {
+    providerCode = props.quote.car_plan?.insurance_provider?.code;
+  } else if (
+    props.modelType.toLowerCase() ==
+    page.props.quoteTypeCodeEnum.Home.toLowerCase()
+  ) {
+    providerCode = props.quote.insurance_provider?.code;
+  }
+  return providerCode;
+};
+
 const getFirstPriceWithTransaction = prices => {
   return prices.find(
     price => price.transactions && price.transactions.length > 0,
@@ -366,6 +370,18 @@ const paymentStatus = id => {
 };
 
 const toggleProduct = (ep, event) => {
+  if (!props.quote.plan_id) {
+    // Revert the checkbox state
+    if (ep.transactions?.[0]) {
+      ep.transactions[0].is_selected = !event.target.checked;
+    }
+    notification.error({
+      title: 'Please select a plan',
+      position: 'top',
+    });
+    return;
+  }
+
   let removeIdFromSelection = [];
   propsDataReactive.value?.forEach(item => {
     if (item.id === ep.embedded_product_id) {
@@ -402,6 +418,8 @@ const toggleProduct = (ep, event) => {
     quote_uuid: props.quote.uuid,
     id: id,
     modelType: props.modelType,
+    planId: props.quote.plan_id,
+    insuranceProviderCode: getProviderCode(),
   };
   let requestUrl = '/quotes/' + props.modelType + '/toggle-product';
   axios
