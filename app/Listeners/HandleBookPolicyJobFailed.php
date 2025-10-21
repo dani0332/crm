@@ -54,7 +54,7 @@ class HandleBookPolicyJobFailed
 
                 LoggerService::info(self::LOG_PREFIX.' : scheduleSageProcesses triggered for code - Insurer - '.$sageRequest->insurerID);
             } else {
-                LoggerService::error(self::LOG_PREFIX.'  failed: Quote Code : Error Code : '.$errorCode.' - Error : '.$errorMessage);
+                LoggerService::error(self::LOG_PREFIX.'  failed due to '.$errorMessage, exception : $exception);
             }
         }
 
