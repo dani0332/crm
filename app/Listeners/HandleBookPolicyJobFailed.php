@@ -11,6 +11,7 @@ use Illuminate\Queue\Events\JobFailed;
 
 class HandleBookPolicyJobFailed
 {
+    public const LOG_PREFIX = 'handleBookPolicyJobFailed fn:handle - Policy Book : BookPolicyOnSageJob';
     /**
      * Handle the event.
      */
@@ -27,30 +28,33 @@ class HandleBookPolicyJobFailed
             $sageProcess = $jobData->sageProcess;
             $sageRequest = $jobData->sageRequest;
 
+            $exception = $event->exception;
+            $errorMessage = $exception->getMessage();
+            $errorCode = $exception->getCode();
+            $errorTrace = $exception->getTraceAsString();
+
             LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::SAGE_POLICY_BOOKING);
-            LoggerService::info('handleBookPolicyJobFailed fn:handle Policy Book  : Quote Code: '.$quote->code.' - BookPolicyOnSageJob failed due to max attempts -  Setting status to pending instead of failed');
+            LoggerService::info(self::LOG_PREFIX.'  failed due to '.$errorMessage.' -  Setting status to pending instead of failed');
 
             // Check if this is the "attempted too many times" error
-            $errorMessage = $event->exception->getMessage();
-            $errorCode = $event->exception->getCode();
-            $errorTrace = $event->exception->getTraceAsString();
+
             $shouldReattempt = str_contains($errorMessage, 'has been attempted too many times') || str_contains($errorMessage, 'has timed out');
             if ($shouldReattempt) {
-                LoggerService::info('handleBookPolicyJobFailed fn:handle - Policy Book : BookPolicyOnSageJob failed due to max attempts - '.$quote->code.' - Setting status to pending instead of failed', extra: [
+                LoggerService::info(self::LOG_PREFIX.' failed due to '.$errorMessage.' - Setting status to pending instead of failed', extra: [
                     'error' => $errorMessage,
                     'errorCode' => $errorCode,
                     'errorTrace' => $errorTrace,
                 ]);
 
                 // Set status to pending instead of failed
-                (new SageApiService)->updateSageProcessStatus($sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $event->exception->getMessage());
+                (new SageApiService)->updateSageProcessStatus($sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $errorMessage);
 
                 // Schedule sage processes to potentially retry later
                 (new SageApiService)->scheduleSageProcesses($sageRequest->insurerID);
 
-                LoggerService::info('handleBookPolicyJobFailed fn:handle - Policy Book : Quote Code : '.$quote->code.'  - BookPolicyOnSageJob : scheduleSageProcesses triggered for code - Insurer - '.$sageRequest->insurerID);
+                LoggerService::info(self::LOG_PREFIX.' : scheduleSageProcesses triggered for code - Insurer - '.$sageRequest->insurerID);
             } else {
-                LoggerService::error('handleBookPolicyJobFailed fn:handle Policy Book : BookPolicyOnSageJob failed: Quote Code : '.$quote->code.' - Error Code : '.$errorCode.' - Error : '.$errorMessage);
+                LoggerService::error(self::LOG_PREFIX.'  failed: Quote Code : Error Code : '.$errorCode.' - Error : '.$errorMessage);
             }
         }
 
