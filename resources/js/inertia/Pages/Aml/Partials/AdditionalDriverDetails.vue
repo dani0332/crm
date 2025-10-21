@@ -9,7 +9,7 @@ const props = defineProps({
   },
   quote_type_id: {
     type: Number,
-    default: null
+    default: null,
   },
 });
 
@@ -20,7 +20,8 @@ const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const isSyncFromInsurer = ref(false);
 const quote = page.props?.quoteRequest ?? page.props?.record;
-const insuranceProviderCode = quote?.plan?.insurance_provider?.code ?? quote?.plan_provider_code;
+const insuranceProviderCode =
+  quote?.plan?.insurance_provider?.code ?? quote?.plan_provider_code;
 
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [

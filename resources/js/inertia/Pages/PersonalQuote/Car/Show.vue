@@ -1326,12 +1326,18 @@ onMounted(() => {
   }
   window.addEventListener('ocr-notification', handleOcrNotification);
   window.addEventListener('lead-status-updated', handleLeadStatusUpdated);
-  window.addEventListener('customer-verification-updated', handleCustomerVerificationUpdated);
+  window.addEventListener(
+    'customer-verification-updated',
+    handleCustomerVerificationUpdated,
+  );
 });
 onUnmounted(() => {
   window.removeEventListener('ocr-notification', handleOcrNotification);
   window.removeEventListener('lead-status-updated', handleLeadStatusUpdated);
-  window.removeEventListener('customer-verification-updated', handleCustomerVerificationUpdated);
+  window.removeEventListener(
+    'customer-verification-updated',
+    handleCustomerVerificationUpdated,
+  );
 });
 //activities
 const emailEventsTable = [
@@ -1803,9 +1809,9 @@ function handleCustomerVerificationUpdated(event) {
     onSuccess: () => {
       console.log('Customer verification data reloaded successfully', {
         quoteUuid,
-        verificationSuccess
+        verificationSuccess,
       });
-      
+
       // Show appropriate toast notification based on verification result
       if (verificationSuccess) {
         notification.success({
@@ -1821,19 +1827,19 @@ function handleCustomerVerificationUpdated(event) {
         });
       }
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to reload customer verification data:', {
         quoteUuid,
         verificationSuccess,
-        error
+        error,
       });
-      
+
       notification.error({
         title: 'Update Failed',
         text: 'Failed to refresh customer verification data',
         position: 'top',
       });
-    }
+    },
   });
 }
 /**
@@ -2069,7 +2075,10 @@ const handleCancelConfirmationModal = () => {
           <div class="flex gap-2 mb-4 justify-end">
             <!-- Dynamic Customer Verification Button -->
             <x-button
-              v-if="isCustomerVerificationEnabled && customerVerificationData?.buttonData?.shouldShow"
+              v-if="
+                isCustomerVerificationEnabled &&
+                customerVerificationData?.buttonData?.shouldShow
+              "
               size="sm"
               :color="customerVerificationData.buttonData.color"
               :class="customerVerificationData.buttonData.class"
@@ -2433,15 +2442,26 @@ const handleCancelConfirmationModal = () => {
       <AdditionalVehicleTransactionDetails
         :insurerPortalSyncData="insurerPortalSyncData"
         :rta_transaction_types="rtaConfigurationData.rta_transaction_types"
-        :rta_field_configurations="rtaConfigurationData.rta_field_configurations"
-        :rta_validation_summaries="rtaConfigurationData.rta_validation_summaries"
+        :rta_field_configurations="
+          rtaConfigurationData.rta_field_configurations
+        "
+        :rta_validation_summaries="
+          rtaConfigurationData.rta_validation_summaries
+        "
         :quote_type_id="$page.props.quoteTypeId"
       />
       <x-divider class="mb-4 mt-4" />
-      <AdditionalDriverDetails :insurerPortalSyncData="insurerPortalSyncData" :quote_type_id="$page.props.quoteTypeId"/>
+      <AdditionalDriverDetails
+        :insurerPortalSyncData="insurerPortalSyncData"
+        :quote_type_id="$page.props.quoteTypeId"
+      />
       <template #actions>
         <div class="text-right space-x-4">
-          <x-button size="sm" ghost @click.prevent="modals.additionalVehicleDriverDetails = false">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.additionalVehicleDriverDetails = false"
+          >
             Close
           </x-button>
         </div>
@@ -4601,10 +4621,10 @@ const handleCancelConfirmationModal = () => {
 
   <lead-raw-data :modelType="'Car'"></lead-raw-data>
 
-  <CustomerVerificationDetails 
-    v-if="isCustomerVerificationEnabled" 
-    :quote="quote" 
-    :modals="modals" 
-    :customerVerificationData="customerVerificationData" 
+  <CustomerVerificationDetails
+    v-if="isCustomerVerificationEnabled"
+    :quote="quote"
+    :modals="modals"
+    :customerVerificationData="customerVerificationData"
   />
 </template>

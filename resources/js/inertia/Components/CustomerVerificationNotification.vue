@@ -12,11 +12,14 @@ const listen = () => {
   worker = new SharedWorker(
     '/build/workers/pusher.worker.js?v=' + new Date().getTime(),
   );
-  
+
   worker.port.addEventListener('message', e => {
     // Since the message contains our customer verification data directly,
     // we can dispatch it without checking event type (similar to OCR pattern)
-    if (e.data.quoteUuid && e.data.message === 'Customer verification status updated') {
+    if (
+      e.data.quoteUuid &&
+      e.data.message === 'Customer verification status updated'
+    ) {
       // Dispatch to window event listener
       window.dispatchEvent(
         new CustomEvent('customer-verification-updated', {
