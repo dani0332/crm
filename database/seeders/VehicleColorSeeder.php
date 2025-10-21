@@ -7,7 +7,6 @@ use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class VehicleColorSeeder extends Seeder
