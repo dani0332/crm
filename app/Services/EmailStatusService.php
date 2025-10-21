@@ -8,6 +8,7 @@ use App\Models\CarQuote;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Cache;
 
@@ -54,6 +55,9 @@ class EmailStatusService extends BaseService
             case QuoteTypeId::Savings:
             case QuoteTypeId::Life:
                 $quote = PersonalQuote::where('uuid', $request->uuid)->first();
+                break;
+            case QuoteTypeId::Travel:
+                $quote = TravelQuote::where('uuid', $request->uuid)->first();
                 break;
 
             default:
