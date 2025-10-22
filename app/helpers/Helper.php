@@ -599,10 +599,11 @@ if (! function_exists('getQueryForLogWithBindings')) {
 if (! function_exists('formatMobileNo')) {
     function formatMobileNo($mobile)
     {
-        // Sanitize mobile number: remove quotes, special characters, and keep only digits and plus sign
-        $mobile = preg_replace('/[^0-9+]/', '', trim($mobile));
+        // Sanitize mobile number: remove all non-digit characters
+        $mobile = preg_replace("/[^0-9]/", '', trim($mobile));
 
-        return preg_replace('/^(?:\+?971|0)?/', '+971', $mobile);
+        // Remove leading 971 or 0, then add +971 prefix
+        return preg_replace('/^(?:971|0)?/', '+971', $mobile);
     }
 }
 
