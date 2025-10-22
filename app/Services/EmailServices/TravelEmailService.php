@@ -147,6 +147,7 @@ class TravelEmailService extends BaseService
         return (object) [
             'clientFullName' => "{$lead->first_name} {$lead->last_name}",
             'customerName' => "{$lead->first_name} {$lead->last_name}",
+            'customerFullName' => "{$lead->first_name} {$lead->last_name}",
             'customerEmail' => $lead->email,
             'whatsAppNumber' => $whatsAppNumber,
             'landLine' => (! empty($advisor?->landline_no) ? formatLandlineDisplay($advisor?->landline_no) : ''),
