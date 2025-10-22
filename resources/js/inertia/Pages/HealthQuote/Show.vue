@@ -3373,7 +3373,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               >
                 Download PDF
               </x-button>
-              <x-tooltip placement="top" align="left" v-if="!isAUHLead">
+              <x-tooltip placement="top" align="left">
                 <x-button
                   @click.prevent="validateEmailSending"
                   size="sm"
@@ -3393,7 +3393,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </x-tooltip>
 
               <x-button
-                v-if="plansTable.data.length > 0 && !isAUHLead"
+                v-if="plansTable.data.length > 0"
                 size="sm"
                 color="orange"
                 @click.prevent="
