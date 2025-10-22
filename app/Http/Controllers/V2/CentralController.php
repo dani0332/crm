@@ -72,6 +72,7 @@ use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\SendUpdateLog;
 use App\Repositories\CarQuoteRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
@@ -369,6 +370,10 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($quoteType, $uuid);
         if ($quote) {
             app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::AVAILABLE_PLAN_SELECTED);
+
+            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                app(EmbeddedProductRepository::class)->syncCarQuoteEpEcb($quote, QuoteTypeId::Car);
+            }
         }
 
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);

@@ -50,9 +50,9 @@ use Auth;
 use Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use PDF;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthQuoteService extends BaseService
 {
@@ -1014,8 +1014,11 @@ class HealthQuoteService extends BaseService
         $userId = (int) $request->assigned_to_id_new;
         $quote_type = $request->modelType;
         $quoteBatch = QuoteBatches::latest()->first();
+        $jobs = [];
+        $delayCounter = 0;
 
         foreach ($leadsIds as $leadId) {
+            $currentJobChains = [];
             $lead = $this->getEntityPlain($leadId);
 
             if (isset($request->assign_team) && $request->assign_team !== '') {
@@ -1052,13 +1055,18 @@ class HealthQuoteService extends BaseService
 
             $lead->save();
 
-            Haystack::build()
-                ->addJob(new GetQuotePlansJob($lead))
-                ->then(function () use ($lead, $isReassignment, $previousAdvisorId) {
-                    if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                        IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment)->delay(now()->addSeconds(15));
-                    }
-                })->dispatch();
+            $currentJobChains[] = new GetQuotePlansJob($lead);
+            if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
+                $currentJobChains[] = (new IntroEmailJob(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment))->delay(now()->addSeconds(15 + $delayCounter));
+                $delayCounter += 15;
+            }
+            $jobs[] = $currentJobChains;
+        }
+
+        if ($jobs != null && count($jobs) > 0) {
+            Bus::batch($jobs)
+                ->name('Health Leads Manual Assignment')
+                ->dispatch();
         }
 
         return [];

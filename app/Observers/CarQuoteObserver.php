@@ -164,5 +164,14 @@ class CarQuoteObserver
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
+
+        if (isset($dirty['car_make_id'])
+            || isset($dirty['car_model_id'])
+            || isset($dirty['registration_type'])
+            || isset($dirty['vehicle_use'])
+            || isset($dirty['is_modified'])
+        ) {
+            app(EmbeddedProductRepository::class)->syncCarQuoteEpEcb($lead, QuoteTypeId::Car);
+        }
     }
 }

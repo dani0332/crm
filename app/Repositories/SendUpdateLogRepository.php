@@ -298,6 +298,11 @@ class SendUpdateLogRepository extends BaseRepository
     {
         LoggerService::info('fn:fetchSendUpdateToCustomer - SendUpdateLogRepository');
         $sendUpdateLog = $this->find($request['sendUpdateId']);
+        if (empty($sendUpdateLog->notes)) {
+            $response[] = ['status' => 500, 'message' => 'Notes are required to send update to customer'];
+
+            return $response;
+        }
 
         try {
             if (isset($request['action']) && $request['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {

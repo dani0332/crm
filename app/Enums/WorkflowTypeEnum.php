@@ -22,6 +22,22 @@ final class WorkflowTypeEnum extends Enum
     public const HOME_RENEWAL_AUTOMATED_FOLLOWUPS = 'home_renewal_automated_followups';
     public const WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS = 'whatsapp_notification_to_customer_no_plans';
     public const TRAVEL_ALLIANCE_FAILED_ALLOCATION = 'travel_alliance_failed_allocation';
+    public const CAR_NEW_POLICY = 'car_new_policy';
+    public const COMMERCIAL_CAR_NEW_POLICY = 'commercial_car_new_policy';
+    public const BIKE_NEW_POLICY = 'bike_new_policy';
+    public const LIFE_NEW_POLICY = 'life_new_policy';
+    public const TRAVEL_NEW_POLICY = 'travel_new_policy';
+    public const CYCLE_NEW_POLICY = 'cycle_new_policy';
+    public const YACHT_NEW_POLICY = 'yacht_new_policy';
+    public const HOME_NEW_POLICY = 'home_new_policy';
+    public const BUSINESS_NEW_POLICY = 'business_new_policy';
+    public const PET_NEW_POLICY = 'pet_new_policy';
+    public const HEALTH_NEW_POLICY = 'health_new_policy';
+    public const PROFESSIONAL_NEW_POLICY = 'professional_new_policy';
+    public const GROUP_MEDICAL_NEW_POLICY = 'group_medical_new_policy';
+    public const CAR_FLEET_NEW_POLICY = 'car_fleet_new_policy';
+    public const TRADE_NEW_POLICY = 'trade_new_policy';
+    public const OTHER_BUSINESS_NEW_POLICY = 'other_business_new_policy';
     public const HOME_RENEWAL_OCB = 'home_renewal_ocb';
     public const CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR = 'customer_notify_unavailable_advisor';
     public const INTRODUCTORY_EMAIL_TO_CUSTOMER = 'introductory_email_to_customer';
@@ -51,4 +67,5 @@ final class WorkflowTypeEnum extends Enum
     public const CAR_AUTOMATION_FAILED = 'car_automation_failed';
     public const OE_ASSIGNMENT = 'oe_assignment';
     public const CAR_CQF_RENEWAL_FOLLOWUPS = 'car_cqf_renewal_followups';
+    public const SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL = 'send_ep_ecb_policy_documents_email';
 }
