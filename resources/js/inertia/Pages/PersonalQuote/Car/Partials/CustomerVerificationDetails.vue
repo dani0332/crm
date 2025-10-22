@@ -31,7 +31,7 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Name
                 </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
+                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150">
                   {{  customerVerificationData.webForm?.name || '-' }}
                 </div>
               </div>
@@ -40,7 +40,7 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Nationality
                 </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
+                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150">
                   {{ customerVerificationData.webForm?.nationality || '-' }}
                 </div>
               </div>
@@ -49,7 +49,7 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Car Make and Model
                 </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
+                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150">
                   {{ customerVerificationData.webForm?.carMakeAndModel || '-' }}
                 </div>
               </div>
@@ -58,7 +58,7 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Car Model Year
                 </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
+                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150">
                   {{ customerVerificationData.webForm?.carModelYear || '-' }}
                 </div>
               </div>
@@ -67,7 +67,7 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   DOB
                 </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:bg-blue-25 hover:border-blue-200 transition-colors duration-150">
+                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150">
                   {{ customerVerificationData.webForm?.dob || '-' }}
                 </div>
               </div>        
@@ -85,7 +85,7 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Name
                 </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
+                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:border-green-200 transition-colors duration-150">
                   {{  customerVerificationData.customerVerified?.name || '-' }}
                 </div>
               </div>
@@ -93,7 +93,7 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Nationality
                 </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
+                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:border-green-200 transition-colors duration-150">
                   {{ customerVerificationData.customerVerified?.nationality || '-' }}
                 </div>
               </div>
@@ -102,7 +102,7 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Car Make and Model
                 </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
+                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:border-green-200 transition-colors duration-150">
                   {{ customerVerificationData.customerVerified?.carMakeAndModel || '-' }}
                 </div>
               </div>
@@ -111,7 +111,7 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Car Model Year
                 </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
+                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:border-green-200 transition-colors duration-150">
                   {{ customerVerificationData.customerVerified?.carModelYear || '-' }}
                 </div>
               </div>
@@ -120,7 +120,7 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   DOB
                 </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:bg-green-25 hover:border-green-200 transition-colors duration-150">
+                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:border-green-200 transition-colors duration-150">
                   {{ customerVerificationData.customerVerified?.dob || '-' }}
                 </div>
               </div>
