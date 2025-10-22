@@ -242,6 +242,16 @@ const tableHeader = reactive([
     value: 'pec_flag',
     tooltip: 'Indicates if the policy has Pre-Existing Condition (PEC) flag',
   },
+  {
+    text: 'Travel Coverage',
+    value: 'travel_coverage',
+    tooltip: 'The coverage of the travel policy',
+  },
+  {
+    text: 'Traveling Where',
+    value: 'traveling_where',
+    tooltip: 'The traveling where of the travel policy',
+  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer

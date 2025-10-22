@@ -2,6 +2,7 @@
 
 namespace App\Services\PolicyIssuanceAutomation;
 
+use App\Enums\CarRegistrationType;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\InsuranceProvidersEnum;
@@ -67,6 +68,13 @@ class PolicyIssuanceService
         }
 
         if (! in_array($insuranceProvider?->code, $allowedInsuranceProviders)) {
+            return false;
+        }
+
+        if (
+            $insuranceProvider?->code === InsuranceProvidersEnum::RSA &&
+            $quote?->registration_type !== CarRegistrationType::PERSONAL
+        ) {
             return false;
         }
 
