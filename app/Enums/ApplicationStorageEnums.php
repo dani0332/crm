@@ -286,9 +286,9 @@ final class ApplicationStorageEnums extends Enum
 
     /* Sent EP Policy Documents Email */
     public const BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL = 'BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL';
-    public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_SUPPORT_USER = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_SUPPORT_USER';// supportUserEmail: arsalan.mughal@myalfred.com
-    public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC';// bcc: newleadpool@insurancemarket.ae
-    public const EP_ECB_POLICY_CLAIM_LIMIT = 'EP_ECB_POLICY_CLAIM_LIMIT';// policy_claim_limit: One claim per policy term.
-    public const EP_ECB_POLICY_COVERAGE = 'EP_ECB_POLICY_COVERAGE';// policy_coverage: If you have an accident, you pay part of the repair bill (this is called "excess"), usually between AED 350 to AED 1,400. This benefit gives you back up to AED 1,200.
-    public const EP_ECB_POLICY_DURATION = 'EP_ECB_POLICY_DURATION';// policy_duration: Your coverage lasts for 13 months or until the expiry of your motor insurance policy, whichever comes first.
+    public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_SUPPORT_USER = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_SUPPORT_USER'; // supportUserEmail: arsalan.mughal@myalfred.com
+    public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC'; // bcc: newleadpool@insurancemarket.ae
+    public const EP_ECB_POLICY_CLAIM_LIMIT = 'EP_ECB_POLICY_CLAIM_LIMIT'; // policy_claim_limit: One claim per policy term.
+    public const EP_ECB_POLICY_COVERAGE = 'EP_ECB_POLICY_COVERAGE'; // policy_coverage: If you have an accident, you pay part of the repair bill (this is called "excess"), usually between AED 350 to AED 1,400. This benefit gives you back up to AED 1,200.
+    public const EP_ECB_POLICY_DURATION = 'EP_ECB_POLICY_DURATION'; // policy_duration: Your coverage lasts for 13 months or until the expiry of your motor insurance policy, whichever comes first.
 }

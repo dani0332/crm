@@ -50,7 +50,6 @@ class EpSendDocumentJob implements ShouldQueue
 
         $this->getEpConfigurations();
 
-
         $this->sendEmail();
 
         LoggerService::info("{$this->logPrefix} Completed");
@@ -64,7 +63,7 @@ class EpSendDocumentJob implements ShouldQueue
     }
 
     private function getEpConfigurations()
-    {        
+    {
         $epEcbAppStorageKeys = [
             ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL,
             ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_SUPPORT_USER,
@@ -164,6 +163,7 @@ class EpSendDocumentJob implements ShouldQueue
     private function getRecipients(string $customerEmail, string $advisorEmail): array
     {
         $bccEmails = $this->epEcbConfiguration[ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC] ?? [];
+
         return [
             'to' => empty($customerEmail) ? [] : [$customerEmail],
             'cc' => empty($advisorEmail) ? [] : [$advisorEmail],
