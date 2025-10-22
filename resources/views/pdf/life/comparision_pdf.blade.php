@@ -399,7 +399,9 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 150px;
+            height: 85px;
+            background: white;
+            z-index: 1;
         }
     
         /* Bottom Header Container */
@@ -621,7 +623,7 @@
     
 </head>
 
-<body>
+<body style="margin: 0; padding: 0;">
 @php
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
     // $plans = [];
@@ -678,7 +680,9 @@
 @endphp
 
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom-life/pdf-intro.jpg') }}" class="full-page-image" style="height: 90%;"/>
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/ecom-life/pdf-intro.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'quoteType' => \App\Enums\quoteTypeCode::Life,'ecomInsuranceLink'=>config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL').$quote->uuid])
       
      
@@ -724,7 +728,7 @@
         @endphp
         <table class="main-table {{ $tableClass }}">
             <thead>
-                <p style="margin-top:200px"></p>
+                <p style="margin-top:100px"></p>
                 <tr>
                     <th class="bg-light-blue" rowspan="2">
                         <p class="quote-info raleway-font" style="font-weight:700;">Insurance company

@@ -27,9 +27,11 @@
             position: fixed;
             top: 0;
             left: 0;
-            height: 200px;
+            height: 85px;
             width: 100%;
             display: block;
+            background: white;
+            z-index: 1;
         }
 
         div,
@@ -377,9 +379,11 @@
     </style>
 </head>
 
-<body>
+<body style="margin: 0; padding: 0;">
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/travel-p1-1.jpg') }}" class="full-page-image"  style="height: 90%;"/>
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/travel-p1-1.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
 
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
@@ -709,7 +713,7 @@ foreach ($quotePlan->addons as &$addon) {
 {{-- End of PDF Page Footer Section --}}
     <main>
         <table class="table-fixed text-center tbl-plans"
-            style="position: relative;top: 90px;margin-bottom: 70px;table-layout: fixed">
+            style="position: relative;top: 100px;margin-bottom: 70px;table-layout: fixed">
             <thead>
                 <tr>
                     <th class="alfred" id="alfred-th">
