@@ -318,7 +318,7 @@ class CustomerVerificationService
             ->where('quote_type_id', QuoteTypes::CAR->id())
             ->first();
 
-        LoggerService::info('Customer verification found:'.$data);
+        LoggerService::info('Customer verification found:'. json_encode($data));
         if ($data) {
             $existingData = json_decode($data->customer_verified_data, true);
             $existingData = array_merge($existingData, $verificationData);
