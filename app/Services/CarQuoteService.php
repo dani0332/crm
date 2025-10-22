@@ -499,7 +499,7 @@ class CarQuoteService extends BaseService
                 'insured.last_name as insured_last_name',
                 'insured_kyc.id as insured_kyc_id',
                 DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
-                'c.emirates_id_expiry_date',
+                DB::raw('insured_kyc.id_expiry_date as emirates_id_expiry_date'),
                 'c.receive_marketing_updates',
                 'qrem.entity_id',
                 'ent.code as entity_code',
