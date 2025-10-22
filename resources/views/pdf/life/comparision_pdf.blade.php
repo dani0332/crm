@@ -399,7 +399,7 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 85px;
+            height: 60px;
             background: white;
             z-index: 1;
         }
@@ -410,9 +410,9 @@
             display: table;
             border-top: 2px solid #D3D3D3;
             border-bottom: 2px solid #D3D3D3;
-            font-size: 14px;
+            font-size: 12px;
             color: #5B5F60;
-            padding: 10px 0;
+            padding: 5px 0;
         }
     
         /* Left Side Text */
@@ -681,7 +681,7 @@
 
     {{-- First Page --}}
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/ecom-life/pdf-intro.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+        <img src="{{ public_path('images/quote_plans_pages/ecom-life/pdf-intro.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'quoteType' => \App\Enums\quoteTypeCode::Life,'ecomInsuranceLink'=>config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL').$quote->uuid])
       
@@ -718,9 +718,9 @@
             </div>
         </div>
     </header>
-    
+ 
     {{-- PDF Page Inner Content --}}
-    <main>
+    <main style="margin-top: 100px;">
         @if(count($planIds) > 0)
         @php
             // Limit to maximum 5 plans
