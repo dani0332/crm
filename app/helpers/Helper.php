@@ -600,7 +600,7 @@ if (! function_exists('formatMobileNo')) {
     function formatMobileNo($mobile)
     {
         // Sanitize mobile number: remove quotes, special characters, and keep only digits and plus sign
-        $mobile = preg_replace("/[^0-9+]/", '', trim($mobile));
+        $mobile = preg_replace('/[^0-9+]/', '', trim($mobile));
 
         return preg_replace('/^(?:\+?971|0)?/', '+971', $mobile);
     }
