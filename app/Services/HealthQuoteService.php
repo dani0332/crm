@@ -1312,6 +1312,7 @@ class HealthQuoteService extends BaseService
                 'salaryBandId' => $request->salary_band_id,
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
+                'isPrincipal' => false,
                 'isPecMarked' => $request->pec == 1,
             ];
 
@@ -1349,6 +1350,7 @@ class HealthQuoteService extends BaseService
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
                 'isPecMarked' => $request->pec == 1,
+                'isPrincipal' => $request->is_principal,
             ];
 
             $dataArray = [
@@ -1357,6 +1359,7 @@ class HealthQuoteService extends BaseService
             ];
 
             $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
+
         } else {
             $response = [
                 'status' => false,
@@ -1366,6 +1369,7 @@ class HealthQuoteService extends BaseService
 
         return $response;
     }
+
 
     public function healthQuoteDeleteMember($request)
     {
