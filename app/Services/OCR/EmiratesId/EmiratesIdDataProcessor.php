@@ -152,17 +152,6 @@ class EmiratesIdDataProcessor
                 $updateData['last_name'] = $this->extractLastName($this->extractedData['name']);
             }
 
-            /*if (! empty($this->extractedData['date_of_birth'])) {
-                $updateData['dob'] = $this->extractedData['date_of_birth'];
-            }*/
-
-            /*if (! empty($this->extractedData['nationality'])) {
-                $nationalityId = $this->getNationalityId($this->extractedData['nationality']);
-                if ($nationalityId) {
-                    $updateData['nationality_id'] = $nationalityId;
-                }
-            }*/
-
             if (! empty($this->extractedData['sex'])) {
                 $updateData['gender'] = $this->formatGender($this->extractedData['sex']);
             }
