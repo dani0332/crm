@@ -1067,9 +1067,14 @@ class SendEmailCustomerService extends BaseService
         ]);
 
         $messageId = null;
-        $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
+        $response = null;
+        $isEmailSent = 0;
+        $responseCode = 0;
+        $subject = $emailData->customerName.'\'s Savings with Alfred - '.$emailData->code;
 
         try {
+            LoggerService::info('fn: sendUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
+
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
 
             $headers = [
@@ -1093,7 +1098,7 @@ class SendEmailCustomerService extends BaseService
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $documentURL,
-                        'name' => 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.' - '.$emailData->carQuoteId.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
+                        'name' => 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.' - '.$emailData->code.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
                     ];
                 }
             }
@@ -1115,7 +1120,7 @@ class SendEmailCustomerService extends BaseService
                 ],
                 'to' => [[
                     'email' => $emailData->customerEmail,
-                    'name' => $emailData->clientFullName,
+                    'name' => $emailData->customerName,
                 ]],
                 'templateId' => (int) $emailTemplateId,
                 'params' => $emailData,
@@ -1212,12 +1217,13 @@ class SendEmailCustomerService extends BaseService
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $quoteCdbId = isset($emailData->carQuoteId) ? $emailData->carQuoteId : null;
+            $quoteCdbId = isset($emailData->code) ? $emailData->code : null;
             LoggerService::error('Send Update Email failed', extra: [
                 'Code/Message' => $responseCode,
                 'CustomerEmail' => $emailData->customerEmail,
                 'QuoteCdbId' => $quoteCdbId,
                 'Class' => get_class(),
+                'line' => $ex->getLine(),
             ], exception: $ex);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
@@ -1777,4 +1783,65 @@ class SendEmailCustomerService extends BaseService
 
         return $bccEmails;
     }
+
+    public function sendCarIntroEmailWithAdvisor($quote)
+    {
+        $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
+        if (! empty($carIntroEmailWorkflowUrl)) {
+            $advisor = User::where('id', $quote->advisor_id)->first() ?? null;
+            $emailData = $this->buildEmailDataForBirdFlow($quote, $advisor, WorkflowTypeEnum::CAR_INTRO_EMAIL);
+            app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
+            LoggerService::info('sendCarIntroEmailWithAdvisor - Webhook request sent to: '.$carIntroEmailWorkflowUrl.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
+        } else {
+            LoggerService::info('sendCarIntroEmailWithAdvisor - Webhook URL not found in storage with Ref-ID:'.$quote->uuid.' | Time:'.now());
+        }
+
+        return true;
+    }
+
+    public function sendCarIntroEmailWithoutAdvisor($quote)
+    {
+        $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
+        if (! empty($carIntroEmailWorkflowUrl)) {
+            $emailData = $this->buildEmailDataForBirdFlow($quote, null, WorkflowTypeEnum::CAR_INTRO_EMAIL);
+            app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
+            LoggerService::info('sendCarIntroEmailWithoutAdvisor - Webhook request sent to: '.$carIntroEmailWorkflowUrl);
+        } else {
+            LoggerService::info('sendCarIntroEmailWithoutAdvisor - Webhook URL not found in storage');
+        }
+
+        return true;
+    }
+
+    public function buildEmailDataForBirdFlow($lead, $advisor, $workflowType)
+    {
+        $documentUrl = getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
+
+        return (object) [
+            'quoteUID' => $lead->uuid,
+            'customerEmail' => $lead->email,
+            'refID' => $lead->code,
+            'customerFullName' => $lead->first_name.' '.$lead->last_name,
+            'companyName' => $lead->company_name ?? '',
+            'advisorId' => $advisor->id ?? null,
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'advisorDetails' => $advisor ?? null,
+            'documentUrl' => $documentUrl ?? null,
+            'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
+            'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
+            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'workflowType' => $workflowType,
+            'whatsappConsent' => getWhatsappConsent(QuoteTypes::CAR, $lead->uuid),
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
+            'createdAt' => $lead->created_at,
+
+        ];
+    }
+
 }

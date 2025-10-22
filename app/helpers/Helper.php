@@ -1009,6 +1009,14 @@ if (! function_exists('getCardViewRequestFilters')) {
         if ($request->has('private_client') && $request->filled('private_client')) {
             $partialQuery->filterByPrivateClient($request->private_client);
         }
+
+        if ($modelType == HealthQuote::class && $request->has('pec_flag') && $request->pec_flag != 'all') {
+            if ($request->pec_flag == 1) {
+                $partialQuery->hasPecTag();
+            } else {
+                $partialQuery->whereNull('pec_marked_at');
+            }
+        }
     }
 }
 
@@ -1720,6 +1728,13 @@ if (! function_exists('userHasProduct')) {
         $productIds = auth()->user()->products->pluck('id');
 
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
+    }
+}
+
+if (! function_exists('convertFromCamelCase')) {
+    function convertFromCamelCase($string): string
+    {
+        return preg_replace('/(?<!^)([A-Z])/', ' $1', $string);
     }
 }
 

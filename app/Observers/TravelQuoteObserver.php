@@ -12,8 +12,9 @@ use App\Events\PrivateClientUpdatedEvent;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
-use App\Jobs\MAWelcomeJob;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendFailedPaymentEmailJob;
+use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
@@ -121,7 +122,7 @@ class TravelQuoteObserver
             in_array($travelQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Travel, 'quoteUID' => $travelQuote->uuid]);
-            MAWelcomeJob::dispatch(
+            ExtendCustomerSubscriptionViaSQS::dispatch(
                 $travelQuote->customer,
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
@@ -139,6 +140,7 @@ class TravelQuoteObserver
             isset($dirty['quote_status_id']) &&
             $travelQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
+            SendPolicyIssueWhatsappMessageJob::dispatch($travelQuote->uuid, QuoteTypes::TRAVEL->id())->onQueue('insly');
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($travelQuote, $payment, QuoteTypes::TRAVEL->value);
             event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));

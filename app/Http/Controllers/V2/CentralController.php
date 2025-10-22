@@ -5,10 +5,8 @@ namespace App\Http\Controllers\V2;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\EmbeddedProductEnum;
-use App\Enums\EpCategoryEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProviderEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -17,6 +15,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\SendPolicyTypeEnum;
+use App\Enums\SLAActionTypeEnum;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
 use App\Exports\CarQuoteExportWithMakeModelTrims;
@@ -62,10 +61,10 @@ use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
 use App\Models\Customer;
 use App\Models\CustomerInsured;
-use App\Models\EmbeddedTransaction;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\InsuranceProvider;
 use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -85,6 +84,7 @@ use App\Services\PaymentService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SLA\SLAService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
@@ -252,6 +252,12 @@ class CentralController extends Controller
             }
         }
 
+        $quoteType = QuoteTypes::getName($customerProfileRequest->quote_type_id);
+        $quote = $this->getQuoteObject($quoteType->value, $customerProfileRequest->quote_request_id);
+        if ($quote) {
+            app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::CUSTOMER_PROFILE_EDIT);
+        }
+
         return redirect()->back();
     }
 
@@ -260,17 +266,13 @@ class CentralController extends Controller
      */
     public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request)
     {
-        $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+        $response = app(CentralService::class)->updateLastYearPolicy($request);
 
-        if (! $quote) {
-            return redirect()->back()->with('error', 'Error Updating Policy Details.');
+        if (! $response['status']) {
+            return redirect()->back()->with('error', $response['message']);
         }
 
-        $quote->update([
-            'renewal_batch' => $request->renewal_batch,
-        ]);
-
-        return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
+        return redirect()->back()->with('success', 'Last Year Policy Details have been updated successfully.');
     }
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
@@ -325,59 +327,6 @@ class CentralController extends Controller
                 ]], 403);
             }
 
-            $quoteType = QuoteTypes::getNameShortCode($this->getQuoteCodeType($quote) ?? '');
-            $quoteTypeId = $quoteType?->id();
-
-            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
-
-                $captureableEmbeddedTransactions = EmbeddedTransaction::where([
-                    ['quote_type_id', $quoteTypeId],
-                    ['quote_request_id', $quote->id],
-                    ['is_selected', 1],
-                    ['payment_status_id', PaymentStatusEnum::AUTHORISED],
-                ])
-                    ->whereHas('product.embeddedProduct', function ($query) {
-                        $query->where('product_category', EpCategoryEnum::BOLT_ON);
-                    })
-                    ->with(['product.embeddedProduct:id,short_code'])
-                    ->select('code', 'payment_status_id', 'policy_status', 'product_id')
-                    ->get();
-
-                if ($captureableEmbeddedTransactions->isNotEmpty()) {
-                    try {
-                        EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType->value));
-
-                        $sukoonMedexCodes = EmbeddedProductEnum::getSukoonMedexCodes();
-                        $hasSukoonMedexProducts = $captureableEmbeddedTransactions
-                            ->filter(function ($transaction) use ($sukoonMedexCodes) {
-                                $epShortCode = $transaction?->product?->embeddedProduct?->short_code;
-
-                                return $epShortCode && in_array($epShortCode, $sukoonMedexCodes);
-                            })
-                            ->isNotEmpty();
-
-                        // Return response only if EP has any Sukoon MEDEX Product, otherwise proceed to Sage booking
-                        if ($hasSukoonMedexProducts) {
-                            LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin',
-                                extra: $captureableEmbeddedTransactions->toArray()
-                            );
-
-                            return response()->json(['message' => 'The embedded product payment is being captured, once done, booking process will begin.'], 200);
-                        }
-
-                    } catch (Exception $e) {
-                        LoggerService::error('Embedded Product payment capture failed', [
-                            'error' => $e->getMessage(),
-                            'uuid' => $quote->uuid,
-                        ]);
-
-                        return response()->json(['errors' => [
-                            'message' => 'Embedded Product payment capture failed',
-                        ]], 403);
-                    }
-                }
-            }
-
             $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
 
             return response()->json(['message' => $response['message']], 200);
@@ -417,6 +366,15 @@ class CentralController extends Controller
         }
 
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
+
+        $quote = $this->getQuoteObject($quoteType, $uuid);
+        if ($quote) {
+            app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::AVAILABLE_PLAN_SELECTED);
+
+            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                app(EmbeddedProductRepository::class)->syncCarQuoteEpEcb($quote, QuoteTypeId::Car);
+            }
+        }
 
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
 
@@ -810,14 +768,17 @@ class CentralController extends Controller
         ];
 
         $response = ['status' => false, 'message' => ''];
+        $insuranceProvider = InsuranceProvider::where('id', $request->insuranceProviderId)->first();
+        // only for those insurer where TAP enabled.
+        $providerName = InsuranceProvidersEnum::getTextByCode($insuranceProvider->code);
         if (in_array($request->insurerAMLStatus, $insurerAMLFailureStatus)) {
-            $responseMessage = 'GIG server connection issue. Please check API logs for details of the error';
+            $responseMessage = $providerName.' server connection issue. Please check API logs for details of the error';
 
             if ($request->insurerAMLStatus == AMLStatusCode::InsurerAMLScreeningFailed) {
                 $insurerAMLScreeningResponse = AML::where([
                     'quote_type_id' => $request->quoteType,
                     'quote_request_id' => $request->quoteRequestId,
-                    'screening_type' => 'INSURER_'.InsuranceProviderEnum::AXA->value,
+                    'screening_type' => 'INSURER_'.$insuranceProvider->code,
                 ])->latest()->first();
 
                 $amlResponse = ! empty($insurerAMLScreeningResponse) ? json_decode($insurerAMLScreeningResponse->results) : [];

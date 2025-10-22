@@ -4,6 +4,27 @@ export const useRoundIt = (num, decimalPlaces = 2) => {
   return Math.round(n) / p;
 };
 
+/**
+ * Format a Date object to YYYY-MM-DD string format
+ * Uses UTC methods to avoid timezone-related date shifts
+ * @param {Date|string} date - Date object or date string to format
+ * @returns {string} - Date in YYYY-MM-DD format, empty string if invalid
+ */
+export const useFormatDateToYMD = date => {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+
+  // Use UTC methods to avoid timezone issues when parsing ISO strings
+  return (
+    d.getUTCFullYear() +
+    '-' +
+    String(d.getUTCMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(d.getUTCDate()).padStart(2, '0')
+  );
+};
+
 export const useCleanObj = reactive => {
   Object.keys(reactive).forEach(key => {
     if (
@@ -323,6 +344,51 @@ export const parseDate = dateString => {
   }
 
   throw new Error('Invalid date format');
+};
+
+// Helper function to format date for input
+export const formatDateForInput = date => {
+  if (!date || date === '' || date === 'null' || date === 'undefined')
+    return null;
+
+  try {
+    // If date is already in YYYY-MM-DD format, return as is
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return date;
+    }
+
+    // Handle DD-MM-YYYY format (common in the system)
+    if (typeof date === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(date)) {
+      const [day, month, year] = date.split('-');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Handle DD/MM/YYYY format
+    if (typeof date === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+      const [day, month, year] = date.split('/');
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    // Handle YYYY/MM/DD format
+    if (typeof date === 'string' && /^\d{4}\/\d{2}\/\d{2}$/.test(date)) {
+      return date.replace(/\//g, '-');
+    }
+
+    // Try to parse as Date object for other formats
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      return null;
+    }
+
+    // Convert to YYYY-MM-DD format
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    return null;
+  }
 };
 
 export function getQuoteType(id, returnType = 'code') {

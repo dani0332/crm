@@ -41,6 +41,7 @@ class RolePermissionSeeder extends Seeder
 
         $this->addExportHomePuaUpdatesPermission();
         $this->addUtmReportExportPermission();
+        $this->addEditLastYearDetailsPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -451,5 +452,20 @@ class RolePermissionSeeder extends Seeder
         if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
             $adminRole->givePermissionTo($permission);
         }
+    }
+
+    /**
+     * Create the 'edit-last-year-details' permission.
+     * This permission is NOT granted by default and requires HM approval.
+     */
+    private function addEditLastYearDetailsPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::EDIT_LAST_YEAR_DETAILS,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

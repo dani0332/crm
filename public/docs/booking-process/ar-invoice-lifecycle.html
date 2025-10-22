@@ -649,6 +649,346 @@
         </div>
 
         <div class="content-section">
+            <h2>📦 AR Invoice Creation Scenarios</h2>
+            <p>The system handles three main AR invoice creation scenarios, each with specific workflows and validation rules:</p>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>🏠 Main Lead Policy Booking</h4>
+                    <ul>
+                        <li><strong>Context:</strong> Standard policy booking through BookPolicyOnSageJob</li>
+                        <li><strong>Invoice Types:</strong> Premium Invoice + Commission Invoice</li>
+                        <li><strong>Payment Modes:</strong> Upfront or Split Payment schedules</li>
+                        <li><strong>Discount Handling:</strong> Separate credit note if discount > 0</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔗 Embedded Product Booking</h4>
+                    <ul>
+                        <li><strong>Context:</strong> EP booking through BookEmbeddedProductOnSageJob</li>
+                        <li><strong>Invoice Types:</strong> EP Premium + EP Commission combined</li>
+                        <li><strong>Special Fields:</strong> OPTFIELD1-3 for EP metadata</li>
+                        <li><strong>Revenue Account:</strong> 40010 (Embedded Product specific)</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>📝 Send Update (Endorsements)</h4>
+                    <ul>
+                        <li><strong>Context:</strong> Policy changes through SendUpdateSageJob</li>
+                        <li><strong>Invoice Types:</strong> Straight or Reversal entries</li>
+                        <li><strong>Entry Types:</strong> SCT_STRAIGHT, SCT_REVERSAL, SCT_CORRECTION</li>
+                        <li><strong>Purpose:</strong> Adjust premium/commission for policy changes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>💰 Upfront Payment AR Invoice Creation</h2>
+            <p><strong>Payment Frequency:</strong> PaymentFrequency::UPFRONT | <strong>Context:</strong> Single full premium payment</p>
+
+            <h3>📋 Characteristics</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>💳 Payment Structure</h4>
+                    <ul>
+                        <li>Single payment covering entire premium</li>
+                        <li>Immediate payment expected</li>
+                        <li>No payment schedules or future installments</li>
+                        <li>Payment status: PAID or CAPTURED</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>📄 Invoice Structure</h4>
+                    <ul>
+                        <li>Two invoices: Premium + Commission</li>
+                        <li>Full premium amount on single invoice</li>
+                        <li>Terms Code: 'COD' (Cash on Delivery)</li>
+                        <li>No PaymentSchedules array in payload</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🗄️ Database Storage</h4>
+                    <ul>
+                        <li>payments.tax_invoice_number - Premium invoice</li>
+                        <li>payments.insurer_commmission_invoice_number - Commission invoice</li>
+                        <li>payments.frequency = PaymentFrequency::UPFRONT</li>
+                        <li>Single payment_split record with full amount</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔄 Workflow Steps</h4>
+                    <ul>
+                        <li>Step 1: Create AR Invoice (OPEN status)</li>
+                        <li>Step 2: Ready to Post (PATCH to READY_TO_POST)</li>
+                        <li>Step 3: Post to GL (POST to POSTED status)</li>
+                        <li>Payment application follows immediately</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>🔧 Implementation: createUpfrontARInvoicePremAndComm()</h3>
+            <p><strong>Service:</strong> SageApiService.php | <strong>Method:</strong> createUpfrontARInvoicePremAndComm()</p>
+
+            <div class="code-block">
+                <pre>private function createUpfrontARInvoicePremAndComm($sageRequestDataArray): array
+{
+    [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+    $totalSteps = 15;
+    $currentStep = 7;
+
+    // Step 1: Create Premium and Commission Invoices
+    $payLoadOptions = SagePayloadFactory::createARInvoicePremAndComm($sageRequest);
+    $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+    $postedResponse = json_decode($resp, true);
+
+    // Store invoice numbers in payments table
+    if (!empty($postedResponse['Invoices'][0]['InvoiceNumber'])) {
+        $payment->tax_invoice_number = $postedResponse['Invoices'][0]['InvoiceNumber'];
+        $payment->save();
+    }
+
+    if (!empty($postedResponse['Invoices'][1]['InvoiceNumber'])) {
+        $payment->insurer_commmission_invoice_number = $postedResponse['Invoices'][1]['InvoiceNumber'];
+        $payment->save();
+    }
+
+    // Log the API call
+    $this->logSageApiCall($payLoadOptions, $postedResponse, $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+
+    // Step 2: Ready to Post
+    $currentStep = 8;
+    $readyToPostPayload = SagePayloadFactory::readyToPostInvoiceAr($postedResponse['BatchNumber']);
+    $readyResp = $this->postToSage300($readyToPostPayload['endPoint'], $readyToPostPayload['payload'], 'PATCH');
+
+    $this->logSageApiCall($readyToPostPayload, json_decode($readyResp, true), $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+
+    // Step 3: Post to General Ledger
+    $currentStep = 9;
+    $postPayload = SagePayloadFactory::aRPostInvoices($postedResponse['BatchNumber']);
+    $postResp = $this->postToSage300($postPayload['endPoint'], $postPayload['payload']);
+
+    $this->logSageApiCall($postPayload, json_decode($postResp, true), $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+
+    return ['status' => true, 'message' => 'Upfront AR invoices created and posted'];
+}</pre>
+            </div>
+
+            <div class="highlight">
+                <h4>💡 Key Points for Upfront Payments</h4>
+                <p>
+                    <strong>Single Transaction:</strong> Everything happens in one go - full premium, no future payments<br>
+                    <strong>Immediate Settlement:</strong> Payment expected and applied immediately after invoice creation<br>
+                    <strong>Simple Structure:</strong> No complex payment schedules or installment tracking<br>
+                    <strong>Terms Code:</strong> Always 'COD' for upfront full payment policies
+                </p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>📅 Split Payment AR Invoice Creation</h2>
+            <p><strong>Payment Frequency:</strong> PaymentFrequency::SPLIT_PAYMENTS | <strong>Context:</strong> Installment-based premium payment</p>
+
+            <h3>📋 Characteristics</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>💳 Payment Structure</h4>
+                    <ul>
+                        <li>Multiple installments (2-10+ payments)</li>
+                        <li>First payment typically paid upfront</li>
+                        <li>Future installments with due dates</li>
+                        <li>Each split tracked separately in payment_splits table</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>📄 Invoice Structure</h4>
+                    <ul>
+                        <li>Invoice includes PaymentSchedules array</li>
+                        <li>Each unpaid split becomes a schedule entry</li>
+                        <li>Terms Code: SPLIT2-SPLIT9, SPLI10+ (based on count)</li>
+                        <li>Partial payments tracked via schedules</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🗄️ Database Storage</h4>
+                    <ul>
+                        <li>payments.frequency = PaymentFrequency::SPLIT_PAYMENTS</li>
+                        <li>Multiple payment_split records (one per installment)</li>
+                        <li>payment_splits.due_date for each installment</li>
+                        <li>payment_splits.payment_status_id tracks each split status</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔄 Workflow Steps</h4>
+                    <ul>
+                        <li>Separate paid vs unpaid splits</li>
+                        <li>Create invoice with future payment schedules</li>
+                        <li>Only unpaid splits in PaymentSchedules array</li>
+                        <li>Paid splits handled via receipt application</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>🔧 Implementation: createNonUpfrontARInvoicePremAndComm()</h3>
+            <p><strong>Service:</strong> SageApiService.php | <strong>Method:</strong> createNonUpfrontARInvoicePremAndComm()</p>
+
+            <div class="code-block">
+                <pre>private function createNonUpfrontARInvoicePremAndComm($sageRequestDataArray)
+{
+    [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+    $totalSteps = 15;
+    $currentStep = 7;
+
+    // Separate paid and unpaid splits
+    $paidSplits = $paymentSplits->whereIn('payment_status_id', [
+        PaymentStatusEnum::PAID,
+        PaymentStatusEnum::CAPTURED
+    ]);
+
+    $unpaidSplits = $paymentSplits->whereNotIn('payment_status_id', [
+        PaymentStatusEnum::PAID,
+        PaymentStatusEnum::CAPTURED
+    ]);
+
+    LoggerService::info('Split Payment AR Invoice: Paid='.$paidSplits->count().' Unpaid='.$unpaidSplits->count());
+
+    // Create invoice with payment schedules for unpaid splits
+    $payLoadOptions = SagePayloadFactory::createARInvoiceSplitPayments(
+        $sageRequest,
+        $unpaidSplits,  // Only unpaid splits go into PaymentSchedules
+        SageEnum::SCT_STRAIGHT
+    );
+
+    $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+    $postedResponse = json_decode($resp, true);
+
+    // Store invoice numbers
+    if (!empty($postedResponse['Invoices'][0]['InvoiceNumber'])) {
+        $payment->tax_invoice_number = $postedResponse['Invoices'][0]['InvoiceNumber'];
+        $payment->save();
+    }
+
+    if (!empty($postedResponse['Invoices'][1]['InvoiceNumber'])) {
+        $payment->insurer_commmission_invoice_number = $postedResponse['Invoices'][1]['InvoiceNumber'];
+        $payment->save();
+    }
+
+    $this->logSageApiCall($payLoadOptions, $postedResponse, $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+
+    // Ready to Post
+    $currentStep = 8;
+    $readyToPostPayload = SagePayloadFactory::readyToPostInvoiceAr($postedResponse['BatchNumber']);
+    $readyResp = $this->postToSage300($readyToPostPayload['endPoint'], $readyToPostPayload['payload'], 'PATCH');
+
+    $this->logSageApiCall($readyToPostPayload, json_decode($readyResp, true), $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+
+    // Post to GL
+    $currentStep = 9;
+    $postPayload = SagePayloadFactory::aRPostInvoices($postedResponse['BatchNumber']);
+    $postResp = $this->postToSage300($postPayload['endPoint'], $postPayload['payload']);
+
+    $this->logSageApiCall($postPayload, json_decode($postResp, true), $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+
+    return ['status' => true, 'message' => 'Split payment AR invoices created'];
+}</pre>
+            </div>
+
+            <h3>📊 Payment Schedule Structure</h3>
+            <div class="code-block">
+                <pre>// Example PaymentSchedules array in invoice payload
+"PaymentSchedules" => [
+    [
+        "DueDate" => "2024-11-15",
+        "PaymentAmount" => 500.00,  // Second installment
+        "ScheduleNumber" => 2
+    ],
+    [
+        "DueDate" => "2024-12-15",
+        "PaymentAmount" => 500.00,  // Third installment
+        "ScheduleNumber" => 3
+    ],
+    // ... additional unpaid installments
+]</pre>
+            </div>
+
+            <div class="highlight">
+                <h4>💡 Key Points for Split Payments</h4>
+                <p>
+                    <strong>Paid vs Unpaid:</strong> Only unpaid splits go into PaymentSchedules, paid splits handled via receipts<br>
+                    <strong>Terms Code Logic:</strong> SPLIT2-SPLIT9 for 2-9 payments, SPLI10-SPLI99 for 10+ payments<br>
+                    <strong>Schedule Numbers:</strong> Sequential numbering starting from 1 for each installment<br>
+                    <strong>Due Dates:</strong> From payment_splits.due_date for each future installment
+                </p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔄 Non-Split/Non-Upfront AR Invoice Creation</h2>
+            <p><strong>Payment Frequency:</strong> Other (Not UPFRONT, Not SPLIT_PAYMENTS) | <strong>Context:</strong> Alternative payment arrangements</p>
+
+            <h3>📋 Characteristics</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>💳 Payment Structure</h4>
+                    <ul>
+                        <li>Neither single upfront nor standard split</li>
+                        <li>May have custom payment arrangement</li>
+                        <li>First payment typically paid or captured</li>
+                        <li>Flexible payment timing</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>📄 Invoice Structure</h4>
+                    <ul>
+                        <li>Similar to split payment structure</li>
+                        <li>May or may not have payment schedules</li>
+                        <li>Terms Code based on payment count</li>
+                        <li>Handles edge cases and custom scenarios</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔄 Workflow Steps</h4>
+                    <ul>
+                        <li>Check first payment status (PAID/CAPTURED)</li>
+                        <li>Create invoice similar to split payment</li>
+                        <li>Apply first payment if available</li>
+                        <li>Track remaining payments</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>⚠️ Use Cases</h4>
+                    <ul>
+                        <li>Custom payment arrangements</li>
+                        <li>Special financing terms</li>
+                        <li>Deferred payment scenarios</li>
+                        <li>Migration data compatibility</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight">
+                <h4>💡 Key Points for Non-Split/Non-Upfront</h4>
+                <p>
+                    <strong>Flexibility:</strong> Handles edge cases not covered by upfront or standard split<br>
+                    <strong>First Payment Check:</strong> Requires first payment to be PAID or CAPTURED before processing<br>
+                    <strong>Similar Processing:</strong> Follows split payment logic internally but with custom rules<br>
+                    <strong>Custom Terms:</strong> May use custom terms codes based on payment arrangement
+                </p>
+            </div>
+        </div>
+
+        <div class="content-section">
             <h2>🛠️ Core Invoice Creation Functions</h2>
             <p><strong>📍 Function Type:</strong> These are <span style="color: #e74c3c; font-weight: bold;">Sage API Service Methods</span> that orchestrate invoice creation and posting.</p>
 

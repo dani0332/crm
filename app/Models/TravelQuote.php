@@ -14,6 +14,7 @@ use App\Traits\QuoteModelTrait;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -339,6 +340,11 @@ class TravelQuote extends Model implements AuditableContract
         return $this->customerMembers->where('age', '>=', 65)->count() > 0;
     }
 
+    public function primaryMember(): HasOne
+    {
+        return $this->hasOne(CustomerMembers::class, 'id', 'primary_member_id');
+    }
+
     public function renewalBatch()
     {
         return $this->belongsTo(renewalBatch::class, 'renewal_batch_id');
@@ -354,7 +360,12 @@ class TravelQuote extends Model implements AuditableContract
         return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
 
-    // TODO:: Need to verify this function
+    public function customerInsured()
+    {
+        return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Travel);
+    }
+
     public function insured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
@@ -379,6 +390,12 @@ class TravelQuote extends Model implements AuditableContract
             'insured_id' // customer_insured.insured_id
         )->where('customer_insured.quote_type_id', QuoteTypeId::Travel)
             ->latest('customer_insured.updated_at');
+    }
+
+    public function amlLogs()
+    {
+        return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
+            ->where('quote_type_id', QuoteTypeId::Travel)->withTrashed();
     }
 
     public function embeddedTransactions()
