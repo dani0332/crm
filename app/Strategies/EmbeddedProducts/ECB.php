@@ -53,82 +53,40 @@ class ECB extends EmbeddedProduct
         ];
     }
 
-    public function filterReport($ep, $filters)
+    protected function getReportRelations()
     {
-        $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
-            $query->where('id', $ep->id);
-        });
-        $dataset = $productTransaction->with(
+        return [
             'product.embeddedProduct',
-            'quoteRequest',
+            'quoteRequest.carMake',
+            'quoteRequest.carModel',
             'quoteRequest.customer',
+            'quoteRequest.customer.customerInsured',
+            'quoteRequest.customer.customerInsured.insured',
             'quoteRequest.quoteStatus',
             'quoteRequest.quoteRequestEntityMapping',
-        )
-            ->join('payments', function ($join) {
-                $join->on('embedded_transactions.code', '=', 'payments.code')
-                    ->where('payments.paymentable_type', '=', 'App\\Models\\EmbeddedTransaction');
-            })
-            ->join('car_quote_request_detail', function ($join) {
-                $join->on('embedded_transactions.quote_request_id', '=', 'car_quote_request_detail.car_quote_request_id')
-                    ->where('embedded_transactions.quote_request_type', '=', 'App\\Models\\CarQuote');
-            })
-            ->where('embedded_transactions.is_selected', true)
-            ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
-            ->when(isset($filters['ref_id']), function ($query) use ($filters) {
-                $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
-            })
+        ];
+    }
+
+    public function updateQuery($query, $filters)
+    {
+        return $query->join('car_quote_request_detail', function ($join) {
+            $join->on('embedded_transactions.quote_request_id', '=', 'car_quote_request_detail.car_quote_request_id')
+                ->where('embedded_transactions.quote_request_type', '=', 'App\\Models\\CarQuote');
+        })
             ->when(isset($filters['chassis_number']), function ($query) use ($filters) {
                 $query->where('car_quote_request_detail.chassis_number', 'like', "%{$filters['chassis_number']}%");
-            })
-            ->when(isset($filters['months']), function ($query) use ($filters) {
-                $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');
-                $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');
-                $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
-
-            })
-            ->when(isset($filters['name']), function ($query) use ($filters) {
-                $name = $filters['name'];
-
-                $query->whereHas('quoteRequest', function ($query) use ($name) {
-                    $query->where('first_name', 'like', "%{$name}%")
-                        ->orWhere('last_name', 'like', "%{$name}%");
-                });
-            })
-            ->when(isset($filters['email']), function ($query) use ($filters) {
-                $query->whereHas('quoteRequest', function ($query) use ($filters) {
-                    $email = $filters['email'];
-                    $query->where('email', 'like', "%{$email}%");
-                });
-            })
-            ->when((isset($filters['date_of_purchase']) && count($filters['date_of_purchase'])), function ($query) use ($filters) {
-                $query->whereHas('quoteRequest', function ($query) use ($filters) {
-                    $startDate = Carbon::parse($filters['date_of_purchase'][0] ?? '')->startOfDay();
-                    $endDate = Carbon::parse($filters['date_of_purchase'][1] ?? '')->endOfDay();
-                    $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
-                });
             });
+    }
 
-        $sortBy = 'embedded_transactions.id';
-        $sortOrder = 'desc';
-        if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
-            $sortableColumns = [
-                'payment_date' => 'payments.captured_at',
-                'contribution_amount' => 'embedded_transactions.price_with_vat',
-            ];
-            $sortBy = $sortableColumns[$filters['sortBy']] ?? 'embedded_transactions.id';
-            $sortOrder = $filters['sortType'] ?? 'desc';
-        }
+    public function processReportRecord($quoteObject, $item)
+    {
+        $item->model_year = $quoteObject?->year_of_manufacture ?? '';
+        $item->make = $quoteObject?->carMake?->text ?? '';
+        $item->model = $quoteObject?->carModel?->text ?? '';
+        $item->chassis_number = $quoteObject?->carQuoteRequestDetail?->chassis_number ?? '';
+        $item->excess_amount = $quoteObject?->carQuoteRequestDetail?->excess . '/-';
 
-        $dataset = $dataset->orderBy($sortBy, $sortOrder);
-
-        if (isset($filters['excel_export']) && $filters['excel_export'] == true) {
-            $dataset = $dataset->get();
-        } else {
-            $dataset = $dataset->simplePaginate()->withQueryString();
-        }
-
-        return $dataset;
+        return $item;
     }
 
     /**
@@ -136,7 +94,7 @@ class ECB extends EmbeddedProduct
      *
      * @return Collection
      */
-    public function getTransactionData($dataset, $isAlfredProtect = false)
+    public function getTransactionData1($dataset, $isAlfredProtect = false)
     {
         $dataset->each(function ($item) {
             $dateFormat = config('constants.DATE_DISPLAY_FORMAT');

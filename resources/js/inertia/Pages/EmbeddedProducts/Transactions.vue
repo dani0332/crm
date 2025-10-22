@@ -208,6 +208,37 @@ watch(
   },
   { deep: true },
 );
+
+const filteredHeaders = computed(() => {
+  return tableHeader.filter(header => {
+    if (header.value === 'sync_status') {
+      return page.props.embeddedProduct.detail.short_code === page.props.ep_enums.COURIER;
+    }
+
+    if (page.props.embeddedProduct.detail.short_code === page.props.ep_enums.ECB) {
+      let excludeHeaders = [
+        'advisor_name',
+        'dob',
+        'age',
+        'passport_number',
+        'nationality',
+        'vehicle',
+      ];
+      return !excludeHeaders.includes(header.value);
+    } else {
+      let excludeHeaders = [
+        'model_year',
+        'make',
+        'model',
+        'chassis_number',
+        'excess_amount',
+      ];
+      return !excludeHeaders.includes(header.value);
+    }
+
+    return true;
+  });
+});
 </script>
 
 <template>
@@ -267,7 +298,7 @@ watch(
             placeholder="Search by Ref-ID"
           />
         </div>
-        <div>
+        <div v-if="embeddedProduct.detail.short_code === ep_enums.ECB">
           <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
@@ -372,27 +403,7 @@ watch(
     <DataTable
       v-model:server-options="serverOptions"
       table-class-name=""
-      :headers="
-        tableHeader.filter(header => {
-          if (header.value === 'sync_status') {
-            return embeddedProduct.detail.short_code === ep_enums.COURIER;
-          }
-
-          if (embeddedProduct.detail.short_code === ep_enums.ECB) {
-            let excludeHeaders = [
-              'advisor_name',
-              'dob',
-              'age',
-              'passport_number',
-              'nationality',
-              'vehicle',
-            ];
-            return !excludeHeaders.includes(header.value);
-          }
-
-          return true;
-        })
-      "
+      :headers="filteredHeaders"
       :loading="loader.table"
       :items="embeddedProduct.transactions.data || []"
       border-cell
