@@ -162,12 +162,12 @@ class EpSendDocumentJob implements ShouldQueue
 
     private function getRecipients(string $customerEmail, string $advisorEmail): array
     {
-        $bccEmails = $this->epEcbConfiguration[ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC] ?? [];
+        $bccEmail = $this->epEcbConfiguration[ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC] ?? '';
 
         return [
             'to' => empty($customerEmail) ? [] : [$customerEmail],
             'cc' => empty($advisorEmail) ? [] : [$advisorEmail],
-            'bcc' => $bccEmails,
+            'bcc' => empty($bccEmail) ? [] : [$bccEmail],
         ];
     }
 
