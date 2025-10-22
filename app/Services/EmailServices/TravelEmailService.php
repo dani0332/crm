@@ -274,6 +274,7 @@ class TravelEmailService extends BaseService
                 $emailData->pdfAttachment = (object) $pdf;
                 info(self::class." - attaching pdf: {$lead->uuid}");
             }
+            $this->updateTravelQuoteStatus($lead->uuid);
         }
 
         // trigger SIC workflow
@@ -292,9 +293,7 @@ class TravelEmailService extends BaseService
         $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId, QuoteTypes::TRAVEL);
 
         if ($responseCode) {
-            if($quotePlansCount > 0) {
-                $this->updateTravelQuoteStatus($lead->uuid);
-            }
+           
             // Dispatch the job with a 24 hours delay
             if (isLeadSic($lead->uuid)) {
                 SICFollowupEmailJob::dispatch($lead->uuid, QuoteTypes::TRAVEL)->delay(now()->addminutes(1));
