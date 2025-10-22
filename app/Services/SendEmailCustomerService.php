@@ -11,7 +11,6 @@ use App\Enums\ProcessStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Jobs\OCAHealthFollowupEmailJob;
@@ -1578,7 +1577,7 @@ class SendEmailCustomerService extends BaseService
     {
         // Null safety for advisor
         if (! $advisor) {
-            $advisor = new \stdClass();
+            $advisor = new \stdClass;
             $advisor->id = null;
             $advisor->name = '';
             $advisor->email = '';

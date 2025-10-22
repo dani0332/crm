@@ -593,6 +593,7 @@ class CentralController extends Controller
             LoggerService::warning(self::class.' - sendOCBEmail - Health quote not found', extra: [
                 'quote_uuid' => $request->quote_uuid,
             ]);
+
             return response()->json(['error' => 'Health quote not found'], 404);
         }
 
@@ -608,6 +609,7 @@ class CentralController extends Controller
         $listQuotePlans = app(HealthQuoteService::class)->getQuotePlans($request->quote_uuid);
         if (! isset($listQuotePlans)) {
             LoggerService::warning(self::class.' - sendOCBEmail - No plans returned from service');
+
             return response()->json(['error' => 'OCB Health Plan Not Found'], 404);
         }
         if (! empty($request->selected_plans) && is_array($request->selected_plans)) {
@@ -644,6 +646,7 @@ class CentralController extends Controller
 
         if (! isset($emailTemplateId)) {
             LoggerService::warning(self::class.' - sendOCBEmail - Invalid email template ID');
+
             return response()->json(['error' => 'Invalid email template ID'], 400);
         }
         $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
