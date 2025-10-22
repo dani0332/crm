@@ -1696,8 +1696,7 @@ class CentralService extends BaseService
                     $emailData->handBookDocuments = $storageUrl.$policyHandBook ?? '';
                 }
             }
-            // for testing purpose.
-            // $emailData->handBookDocuments = 'https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/documents/bike/68e64dd9b42a3_DD8X4MH7_68e64dd717a07_test.pdf';
+            $emailData->handBookExt = ! empty($emailData->handBookDocuments) ? pathinfo($emailData->handBookDocuments, PATHINFO_EXTENSION) : '';
         }
 
         if (! empty($quoteDocuments)) {
@@ -1707,6 +1706,8 @@ class CentralService extends BaseService
                 $emailData->policyCertificate = $storageUrl.$quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL, DocumentTypeCode::PC_YTCH, DocumentTypeCode::COMP_PC]);
                 })->first()['doc_url'] ?? '';
+
+                $emailData->certificateExt = ! empty($emailData->policyCertificate) ? pathinfo($emailData->policyCertificate, PATHINFO_EXTENSION) : '';
             }
 
             // Signed Medical Application form
@@ -1714,6 +1715,8 @@ class CentralService extends BaseService
                 $emailData->signedMedicalApplicationForm = $storageUrl.$quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::SMAF_HLTH;
                 })->first()['doc_url'] ?? '';
+
+                $emailData->medAppExt = ! empty($emailData->signedMedicalApplicationForm) ? pathinfo($emailData->signedMedicalApplicationForm, PATHINFO_EXTENSION) : '';
             }
 
             // E-Card
@@ -1727,6 +1730,8 @@ class CentralService extends BaseService
                 $emailData->eCard = $storageUrl.$quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [DocumentTypeCode::GH_EC, DocumentTypeCode::ECARD_HLTH]);
                 })->first()['doc_url'] ?? '';
+
+                $emailData->eCardExt = ! empty($emailData->eCard) ? pathinfo($emailData->eCard, PATHINFO_EXTENSION) : '';
             }
 
             // Network List
@@ -1737,17 +1742,23 @@ class CentralService extends BaseService
                 $emailData->networkList = $storageUrl.$quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::GH_NL;
                 })->first()['doc_url'] ?? '';
+
+                $emailData->networkListExt = ! empty($emailData->networkList) ? pathinfo($emailData->networkList, PATHINFO_EXTENSION) : '';
             }
 
             if ($quoteTypeId == QuoteTypeId::Life) {
                 $emailData->applicationCopy = $storageUrl.$quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::AC_LIFE;
                 })->first()['doc_url'] ?? '';
+
+                $emailData->appCopyExt = ! empty($emailData->applicationCopy) ? pathinfo($emailData->applicationCopy, PATHINFO_EXTENSION) : '';
             }
 
             $emailData->policySchedule = $storageUrl.$quoteDocuments->filter(function ($document) {
                 return in_array($document['document_type_code'], [DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS]);
             })->first()['doc_url'] ?? '';
+
+            $emailData->scheduleExt = ! empty($emailData->policySchedule) ? pathinfo($emailData->policySchedule, PATHINFO_EXTENSION) : '';
         }
 
         if ($quoteTypeId == QuoteTypeId::Business) {
