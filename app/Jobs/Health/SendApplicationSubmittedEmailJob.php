@@ -30,9 +30,4 @@ class SendApplicationSubmittedEmailJob implements ShouldQueue
         info(self::class." - Going to Send Application Submitted Email Job for UUID: {$this->healthQuote->uuid}");
         app(HealthEmailService::class)->sendApplicationSubmittedEmail($this->healthQuote);
     }
-
-    public function middleware()
-    {
-        return [];
-    }
 }
