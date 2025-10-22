@@ -648,7 +648,7 @@ const memberDelete = id => {
   memberForm.customer_member_id = id;
 };
 
-const memberPrincipal = (data) => {
+const memberPrincipal = data => {
   // Update member form as we need to call update Kapi Api with all data
   updateMemberForm(data);
   memberForm.is_principal = 1;
@@ -656,7 +656,7 @@ const memberPrincipal = (data) => {
   modals.memberPrincipal = true;
   confirmPrincipalData.member = data.id;
   memberForm.customer_member_id = data.id;
-}
+};
 
 const memberDeleteConfirmed = () => {
   memberForm.post(
@@ -681,29 +681,26 @@ const memberDeleteConfirmed = () => {
 };
 
 const memberPrincipalConfirmed = () => {
-  memberForm.put(
-    `/health-quote-update-member`,
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: `${memberForm.first_name} ${memberForm.last_name} has been made principal`,
-          position: 'top',
-        });
-        onLoadAvailablePlansData();
-      },
-      onError: () => {
-        notification.error({
-          title: 'Some error occurred while processing request',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        modals.memberPrincipal = false;
-      },
+  memberForm.put(`/health-quote-update-member`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: `${memberForm.first_name} ${memberForm.last_name} has been made principal`,
+        position: 'top',
+      });
+      onLoadAvailablePlansData();
     },
-  );
-}
+    onError: () => {
+      notification.error({
+        title: 'Some error occurred while processing request',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      modals.memberPrincipal = false;
+    },
+  });
+};
 
 const onRecieveMembersDetailsReview = () => {
   membersDetailsUpdated.value = false;
@@ -2210,10 +2207,19 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     >
                       SUB SOURCE
                     </label>
-                    <template #tooltip>{{ quote?.sub_source_description || 'N/A' }}</template>
+                    <template #tooltip>{{
+                      quote?.sub_source_description || 'N/A'
+                    }}</template>
                   </x-tooltip>
                 </div>
-                <div>{{ quote?.sub_source?.text || quote.sub_source_text || quote.sub_source_id || 'N/A' }}</div>
+                <div>
+                  {{
+                    quote?.sub_source?.text ||
+                    quote.sub_source_text ||
+                    quote.sub_source_id ||
+                    'N/A'
+                  }}
+                </div>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -2224,10 +2230,19 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     >
                       SUB SOURCE OPTION
                     </label>
-                    <template #tooltip>{{ quote?.sub_source_option_description || 'N/A' }}</template>
+                    <template #tooltip>{{
+                      quote?.sub_source_option_description || 'N/A'
+                    }}</template>
                   </x-tooltip>
                 </div>
-                <div>{{ quote?.sub_source_option?.text || quote.sub_source_option_text || quote.sub_source_options_id || 'N/A' }}</div>
+                <div>
+                  {{
+                    quote?.sub_source_option?.text ||
+                    quote.sub_source_option_text ||
+                    quote.sub_source_options_id ||
+                    'N/A'
+                  }}
+                </div>
               </div>
 
               <div class="grid sm:grid-cols-2">
