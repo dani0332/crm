@@ -598,12 +598,12 @@ class TravelEmailService extends BaseService
     {
         try {
             $travelQuote = TravelQuote::where('uuid', $uuid)->first();
-            if ($travelQuote) {
+            if ($travelQuote && $travelQuote->quote_status_id == QuoteStatusEnum::NewLead) {
                 $travelQuote->quote_status_id = QuoteStatusEnum::Quoted;
                 $travelQuote->save();
             }
         } catch (\Exception $e) {
-            LoggerService::error(self::class." - Error: UpdateTravelQuoteStatus - Error updating travel quote status | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $uuid], exception: $e);
+            LoggerService::error(self::class." - Error: updateTravelQuoteStatus - Error updating travel quote status | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $uuid], exception: $e);
         }
     }
 }
