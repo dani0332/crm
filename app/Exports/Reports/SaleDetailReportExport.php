@@ -94,6 +94,8 @@ class SaleDetailReportExport implements CsvExportableInterface
             'Sage Receipt ID',
             'Private Client',
             'Policy PEC Flag',
+            'Travel Coverage',
+            'Traveling Where',
         ];
     }
 
@@ -140,6 +142,8 @@ class SaleDetailReportExport implements CsvExportableInterface
             $quote->sage_reciept_id ?? 'N/A',
             $quote->pcp_tag_formatted ?? 'N/A',
             $quote->pec_flag ?? 'N/A',
+            $quote->travel_coverage ?? 'N/A',
+            $quote->traveling_where ?? 'N/A',
         ]);
 
         foreach ($this->columnTotals as $index => $field) {

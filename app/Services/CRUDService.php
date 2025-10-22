@@ -613,6 +613,8 @@ class CRUDService extends BaseService
             'quoteUid' => $data->quote_uuid,
             'quoteTypeId' => $quoteTypeId,
             'epOptionId' => $data->id,
+            'planId' => $data->planId,
+            'insuranceProviderCode' => $data->insuranceProviderCode,
         ];
 
         $response = Ken::request('/toggle-embedded-product', 'post', $toggleData);

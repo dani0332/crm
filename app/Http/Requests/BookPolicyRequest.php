@@ -55,7 +55,7 @@ class BookPolicyRequest extends FormRequest
             }
 
             $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($quoteModel, request()->model_type);
-            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' testing line#58', extra: [
+            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__, extra: [
                 'isPolicyAutomationEnabled' => $lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'],
                 'isEditBookingDetailsDisabled' => $lockStatusOfPolicyIssuanceSteps['isEditBookingDetailsDisabled'] ?? null,
             ]);

@@ -1,5 +1,9 @@
 FROM php:8.2-fpm
 
+# Add these environment variables
+ENV PHP_IDE_CONFIG="serverName=Docker"
+ENV XDEBUG_CONFIG="client_host=host.docker.internal"
+
 # Copy composer.lock and composer.json
 COPY composer.lock composer.json /var/www/
 
@@ -22,11 +26,16 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     curl \
+    gnupg \
     dos2unix \
+    iputils-ping \
+    net-tools \
+    && pecl install xdebug \
     && pecl install redis \
     && docker-php-ext-enable redis \
+    && docker-php-ext-enable xdebug \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && rm -rf /var/cache/apk/*
+    && rm -rf /var/cache/apk/* \
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -55,6 +64,9 @@ RUN mkdir -p /var/log/supervisor \
 # Ensure entrypoint script has Unix line endings and proper permissions
 RUN dos2unix /var/www/docker-local/entrypoint.sh \
     && chmod +x /var/www/docker-local/entrypoint.sh
+
+# Add this to create xdebug log file
+RUN touch /var/log/xdebug.log && chmod 666 /var/log/xdebug.log
 
 # Copy Supervisor configuration
 COPY ./docker-local/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
