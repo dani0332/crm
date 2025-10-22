@@ -957,10 +957,9 @@
                             stipulated by the UAE Government and/or relevant authorities.</p>
                         <span class="text-sm"><b>DISCLAIMER</b></span>
                         <p class="text-left text-xs">
-                            Whilst we try to ensure the currency and accuracy of the details in the comparison table,
-                            there may occasion where there are differences in the covers provided. In such cases, the
-                            covers detailed in the insurer's policy wordings and schedules will supersede the details
-                            provided by us.<br /><br />
+                            Whilst we try to ensure the currency and accuracy of the details in the comparison table, there may occasion where there are differences in the covers provided. 
+                            In such cases, the  covers detailed in the insurer's policy wordings and table of benefit will supersede the details provided by us.<br />
+                            Prices may change from time to time owing to policy amendments, coverage adjustments, underwriting criteria revisions, or regulatory mandates.<br /><br />
                             To view the full text of <b>MATERIAL INFORMATION DECLARATION</b> and <b>DISCLAIMER</b>,
                             please refer to the <a class="text-black"
                                 href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid }}"><b>quote</b></a>.
