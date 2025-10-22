@@ -1369,7 +1369,6 @@ class HealthQuoteService extends BaseService
         return $response;
     }
 
-
     public function healthQuoteDeleteMember($request)
     {
         $quoteId = $request->quoteId ?? null;
