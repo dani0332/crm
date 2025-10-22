@@ -29,6 +29,7 @@ class EpSendDocumentJob implements ShouldQueue
     private array $logExtra = [];
     public mixed $quote = null;
     private string $storageBaseUrl = '';
+    private array $epEcbConfiguration = [];
 
     public function __construct(
         public EpBookingContext $context
@@ -45,10 +46,10 @@ class EpSendDocumentJob implements ShouldQueue
 
         // Start feature and quote logging
         LoggerService::startQuoteLogging($this->quote?->code, LoggerFeatureEnum::EP_PROCESS_SEND_DOCUMENT);
-
-        $this->storageBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-
         LoggerService::info("{$this->logPrefix} Starting");
+
+        $this->getEpConfigurations();
+
 
         $this->sendEmail();
 
@@ -60,6 +61,31 @@ class EpSendDocumentJob implements ShouldQueue
         LoggerService::error("{$this->logPrefix} Failed", extra: [
             'error' => $exception->getMessage(),
         ]);
+    }
+
+    private function getEpConfigurations()
+    {        
+        $epEcbAppStorageKeys = [
+            ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL,
+            ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_SUPPORT_USER,
+            ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC,
+            ApplicationStorageEnums::EP_ECB_POLICY_CLAIM_LIMIT,
+            ApplicationStorageEnums::EP_ECB_POLICY_COVERAGE,
+            ApplicationStorageEnums::EP_ECB_POLICY_DURATION,
+        ];
+        $appStorageRecords = ApplicationStorage::select('value', 'key_name')
+            ->where('is_active', ApplicationStorageEnums::ACTIVE)
+            ->whereIn('key_name', $epEcbAppStorageKeys)
+            ->whereNotNull('value')
+            ->get();
+        $missingAppStorageKeys = array_diff($epEcbAppStorageKeys, $appStorageRecords->pluck('key_name')->toArray());
+
+        $this->storageBaseUrl = storageUrl();
+        if (empty($this->storageBaseUrl) || count($missingAppStorageKeys) > 0) {
+            throw new \Error('EP ECB configuration not found');
+        }
+
+        $this->epEcbConfiguration = $appStorageRecords->pluck('value', 'key_name')->toArray();
     }
 
     /**
@@ -86,7 +112,7 @@ class EpSendDocumentJob implements ShouldQueue
      */
     private function sendEmail()
     {
-        // LoggerService::info("{$this->logPrefix} Email sending for uuid: {$this->quote->uuid}");
+        LoggerService::info("{$this->logPrefix} Email sending for code: {$this->quote?->code}");
 
         $advisor = $this->quote?->advisor;
 
@@ -94,10 +120,12 @@ class EpSendDocumentJob implements ShouldQueue
         $recipients = $this->getRecipients($this->quote->email ?? '', $advisor->email ?? '');
         $advisorData = $this->getAdvisorData($advisor);
         $attachments = $this->fetchAttachments();
+        $supportUserEmail = $this->epEcbConfiguration[ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_SUPPORT_USER] ?? '';
 
         $emailData = [
             'Attachments' => $attachments,
             'Tags' => WorkflowTypeEnum::SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL,
+            'workflowType' => WorkflowTypeEnum::SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL,
             'customerName' => trim(($this->quote?->first_name ?? '').' '.($this->quote?->last_name ?? '')),
             'refID' => $this->quote?->code ?? '',
             'uuid' => $this->quote?->uuid ?? '',
@@ -105,7 +133,7 @@ class EpSendDocumentJob implements ShouldQueue
             ...$advisorData,
             'attachingDocsEmail' => count($attachments) > 0 ? 'yes' : 'no',
             'DisplayName' => 'InsuranceMarket.ae',
-            'supportUserEmail' => 'arsalan.mughal@myalfred.com',
+            'supportUserEmail' => $supportUserEmail,
             ...$policyContext,
         ];
 
@@ -126,37 +154,21 @@ class EpSendDocumentJob implements ShouldQueue
 
     private function getPolicyContext(): array
     {
-        $policyContext = config('embedded-products.ecb.policy_context');
-
         return [
-            'policyClaimLimit' => $policyContext['policy_claim_limit'] ?? '',
-            'policyCoverage' => $policyContext['policy_coverage'] ?? '',
-            'policyDuration' => $policyContext['policy_duration'] ?? '',
+            'policyClaimLimit' => $this->epEcbConfiguration[ApplicationStorageEnums::EP_ECB_POLICY_CLAIM_LIMIT] ?? '',
+            'policyCoverage' => $this->epEcbConfiguration[ApplicationStorageEnums::EP_ECB_POLICY_COVERAGE] ?? '',
+            'policyDuration' => $this->epEcbConfiguration[ApplicationStorageEnums::EP_ECB_POLICY_DURATION] ?? '',
         ];
     }
 
     private function getRecipients(string $customerEmail, string $advisorEmail): array
     {
-        $configEnv = app()->environment('production') ? 'prod' : 'non_prod';
-        $recipientEmails = config("embedded-products.ecb.{$configEnv}.recipient_emails");
-
-        $toEmails = $recipientEmails['to'];
-        if (! empty($customerEmail)) {
-            $toEmails[] = $customerEmail;
-        }
-
-        $ccEmails = $recipientEmails['cc'];
-        if (! empty($advisorEmail)) {
-            $ccEmails[] = $advisorEmail;
-        }
-
-        $recipients = [
-            'to' => $toEmails,
-            'cc' => $ccEmails,
-            'bcc' => $recipientEmails['bcc'],
+        $bccEmails = $this->epEcbConfiguration[ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC] ?? [];
+        return [
+            'to' => empty($customerEmail) ? [] : [$customerEmail],
+            'cc' => empty($advisorEmail) ? [] : [$advisorEmail],
+            'bcc' => $bccEmails,
         ];
-
-        return $recipients;
     }
 
     /**
@@ -164,11 +176,8 @@ class EpSendDocumentJob implements ShouldQueue
      */
     private function triggerBirdWorkflow(array $birdEmailData)
     {
-        $sendEpDocumentsEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL)->first();
-        // LoggerService::info('SendEpDocuments Email: ', extra: $birdEmailData);
-
-        $url = $sendEpDocumentsEvent->value;
-        app(BirdService::class)->triggerWebHookRequest($url, (object) $birdEmailData);
+        $birdWorkflowUrl = $this->epEcbConfiguration[ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL] ?? '';
+        app(BirdService::class)->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
     }
 
     public function fetchAttachments()
