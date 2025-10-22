@@ -12,14 +12,12 @@ class CustomerVerificationDetail extends Model
     use HasFactory;
 
     protected $table = 'customer_verification_details';
-
     protected $fillable = [
         'customer_verified_data',
         'quote_type_id',
         'quotable_type',
         'quotable_id',
     ];
-
     protected $casts = [
         'date_of_birth' => 'date',
         'created_at' => 'datetime',
@@ -59,6 +57,6 @@ class CustomerVerificationDetail extends Model
     public function scopeForQuotable($query, $quotableType, $quotableId)
     {
         return $query->where('quotable_type', $quotableType)
-                    ->where('quotable_id', $quotableId);
+            ->where('quotable_id', $quotableId);
     }
 }

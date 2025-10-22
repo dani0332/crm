@@ -60,7 +60,7 @@ enum CustomerVerificationStatus: string
     public static function getOptions(): array
     {
         return array_map(
-            fn(self $status) => [
+            fn (self $status) => [
                 'value' => $status->value,
                 'label' => $status->getText(),
                 'color' => $status->getColor(),

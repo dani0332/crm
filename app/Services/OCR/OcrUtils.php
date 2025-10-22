@@ -48,6 +48,7 @@ trait OcrUtils
             return Carbon::parse($date)->format('Y-m-d');
         } catch (\Exception $e) {
             LoggerService::error('Failed to format date', exception: $e);
+
             return null;
         }
     }
@@ -414,11 +415,12 @@ trait OcrUtils
         LoggerService::info('OCR Utils - getVehicleColorCode called', extra: [
             'vehicleColor' => $vehicleColor,
             'quoteTypeId' => $quoteTypeId,
-            'providerId' => $providerId
+            'providerId' => $providerId,
         ]);
 
         if (empty($vehicleColor)) {
             LoggerService::info('OCR Utils - Vehicle color is empty, returning null');
+
             return null;
         }
 
@@ -426,7 +428,7 @@ trait OcrUtils
             LoggerService::warning('OCR Utils - No valid provider id for vehicle color code', extra: [
                 'vehicleColor' => $vehicleColor,
                 'quoteTypeId' => $quoteTypeId,
-                'providerId' => $providerId
+                'providerId' => $providerId,
             ]);
 
             return null;
@@ -443,7 +445,7 @@ trait OcrUtils
             'providerId' => $providerId,
             'availableColors' => $vehicleColors->pluck('text')->toArray(),
             'matchedColor' => $matchedColor?->code,
-            'matchedColorText' => $matchedColor?->text
+            'matchedColorText' => $matchedColor?->text,
         ]);
 
         return $matchedColor?->code ?? null;

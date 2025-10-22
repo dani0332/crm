@@ -22,9 +22,8 @@ const props = defineProps({
   },
   quote_type_id: {
     type: Number,
-    default: null
+    default: null,
   },
-
 });
 
 const emit = defineEmits(['update:chassisNumber']);
@@ -35,7 +34,8 @@ const lookups = page.props.lookups;
 const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const quote = page.props?.quoteRequest ?? page.props?.record;
-const insuranceProviderCode = quote?.plan?.insurance_provider?.code ?? quote?.plan_provider_code;
+const insuranceProviderCode =
+  quote?.plan?.insurance_provider?.code ?? quote?.plan_provider_code;
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 
 // RTA Transaction Type Constants
@@ -224,16 +224,13 @@ const additionalVehicleTransactionDetailsForm = useForm({
   bank_name: vehicleDriverDetail.value?.bank_name ?? '',
   first_registration_date:
     vehicleDriverDetail.value?.first_registration_date ?? '',
-  policy_effective_date:
-    dateToYMD(quote?.policy_start_date) ?? '',
-  policy_expiry_date:
-    dateToYMD(quote?.policy_expiry_date) ?? '',
+  policy_effective_date: dateToYMD(quote?.policy_start_date) ?? '',
+  policy_expiry_date: dateToYMD(quote?.policy_expiry_date) ?? '',
   certificate_start_date: quote?.certificate_start_date ?? '',
   certificate_end_date: quote?.certificate_end_date ?? '',
   annual_mileage_estimate:
     vehicleDriverDetail.value?.annual_mileage_estimate?.toString() ?? '',
-  previous_policy_provider:
-    quote?.currently_insured_with?.toString() ?? '',
+  previous_policy_provider: quote?.currently_insured_with?.toString() ?? '',
   lead_source: quote?.source?.toString() ?? '',
 });
 
