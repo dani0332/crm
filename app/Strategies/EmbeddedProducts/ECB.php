@@ -2,8 +2,6 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
-use App\Enums\PaymentStatusEnum;
-use App\Models\EmbeddedTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -84,7 +82,7 @@ class ECB extends EmbeddedProduct
         $item->make = $quoteObject?->carMake?->text ?? '';
         $item->model = $quoteObject?->carModel?->text ?? '';
         $item->chassis_number = $quoteObject?->carQuoteRequestDetail?->chassis_number ?? '';
-        $item->excess_amount = $quoteObject?->carQuoteRequestDetail?->excess . '/-';
+        $item->excess_amount = $quoteObject?->carQuoteRequestDetail?->excess.'/-';
 
         return $item;
     }

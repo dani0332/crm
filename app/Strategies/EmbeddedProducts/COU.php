@@ -69,7 +69,7 @@ class COU extends EmbeddedProduct
         $item->nationality = $quoteObject?->customer?->nationality?->text ?? '';
         $item->policy_issuance_date = $quoteObject?->policy_issuance_date ?? '';
         $item->age = isset($quoteObject?->dob) ?
-            floor(Carbon::parse($quoteObject?->dob)->diffInYears(Carbon::now())) . ' Years'
+            floor(Carbon::parse($quoteObject?->dob)->diffInYears(Carbon::now())).' Years'
             : '';
 
         return $item;
