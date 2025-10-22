@@ -1015,6 +1015,7 @@ class HealthQuoteService extends BaseService
         $quote_type = $request->modelType;
         $quoteBatch = QuoteBatches::latest()->first();
         $jobs = [];
+        $delayCounter = 0;
 
         foreach ($leadsIds as $leadId) {
             $currentJobChains = [];
@@ -1056,7 +1057,8 @@ class HealthQuoteService extends BaseService
 
             $currentJobChains[] = new GetQuotePlansJob($lead);
             if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                $currentJobChains[] = new IntroEmailJob(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment);
+                $currentJobChains[] = (new IntroEmailJob(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment))->delay(now()->addSeconds(15 + $delayCounter));
+                $delayCounter += 15;
             }
             $jobs[] = $currentJobChains;
         }

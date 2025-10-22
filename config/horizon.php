@@ -283,7 +283,7 @@ return [
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
                 'tries' => 3,
-                'timeout' => 5000,  // Increased from 60 to 1800 seconds (30 minutes) for heavy jobs
+                'timeout' => 5000,  // Increased from 60 to 5000 seconds (83 minutes) for heavy jobs
                 'memory' => 3072,   // Set memory limit to 3GB for job workers
             ],
             'supervisor-local-shared' => [
