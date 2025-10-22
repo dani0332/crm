@@ -292,6 +292,9 @@ class TravelEmailService extends BaseService
         $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId, QuoteTypes::TRAVEL);
 
         if ($responseCode) {
+            if($quotePlansCount > 0) {
+                $this->updateTravelQuoteStatus($lead->uuid);
+            }
             // Dispatch the job with a 24 hours delay
             if (isLeadSic($lead->uuid)) {
                 SICFollowupEmailJob::dispatch($lead->uuid, QuoteTypes::TRAVEL)->delay(now()->addminutes(1));
@@ -588,6 +591,19 @@ class TravelEmailService extends BaseService
             LoggerService::error(self::class." - Error: attachTravelOCBPDF - Error attaching PDF  | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $code]);
 
             return '';
+        }
+    }
+
+    private function updateTravelQuoteStatus(string $uuid): void
+    {
+        try {
+            $travelQuote = TravelQuote::where('uuid', $uuid)->first();
+            if ($travelQuote) {
+                $travelQuote->quote_status_id = QuoteStatusEnum::Quoted;
+                $travelQuote->save();
+            }
+        } catch (\Exception $e) {
+            LoggerService::error(self::class." - Error: UpdateTravelQuoteStatus - Error updating travel quote status | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $uuid], exception: $e);
         }
     }
 }
