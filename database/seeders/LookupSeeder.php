@@ -22,6 +22,7 @@ class LookupSeeder extends Seeder
         $this->createEndorsementNonFinancialSavings();
         $this->createCIRSavings();
         $this->createCISavings();
+        $this->createRmCategories();
         $this->createReferralSources();
     }
 
@@ -299,6 +300,30 @@ class LookupSeeder extends Seeder
             'updated_at' => now(),
         ]);
     }
+
+    private function createRmCategories(): void
+    {
+        Lookup::firstOrCreate([
+            'key' => LookupsEnum::RM_CATEGORY,
+            'code' => 'core',
+            'text' => 'Core',
+        ], [
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => LookupsEnum::RM_CATEGORY,
+            'code' => 'rgta',
+            'text' => 'RGTA',
+        ], [
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
 
     /**
      * Create referral sources lookup data for all quote types

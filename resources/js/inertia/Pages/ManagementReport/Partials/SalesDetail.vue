@@ -228,6 +228,16 @@ const tableHeader = reactive([
     tooltip: 'Indicates if the policy has Pre-Existing Condition (PEC) flag',
   },
   {
+    text: 'Travel Coverage',
+    value: 'travel_coverage',
+    tooltip: 'Travel Coverage',
+  },
+  {
+    text: 'Traveling Where',
+    value: 'traveling_where',
+    tooltip: 'Traveling Where',
+  },
+  {
     text: 'IMCRM SUB-SOURCE',
     value: 'sub_source',
     tooltip: 'The IMCRM SUB-SOURCE of the lead',

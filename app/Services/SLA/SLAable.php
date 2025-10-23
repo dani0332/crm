@@ -38,6 +38,7 @@ trait SLAable
             QuoteStatusEnum::AMLScreeningFailed,
             QuoteStatusEnum::Lost,
             QuoteStatusEnum::Fake,
+            QuoteStatusEnum::ApplicationPending,
         ];
     }
 
@@ -69,11 +70,7 @@ trait SLAable
 
     private function getHeadEmail(): string
     {
-        if ($this->isProduction()) {
-            return 'agatha.alicdan@insurancemarket.ae';
-        }
-
-        return 'managerkas94@gmail.com';
+        return 'health@insurancemarket.ae';
     }
 
     private function getCCEmails(User $advisor): array
@@ -162,7 +159,7 @@ trait SLAable
         if (in_array(TeamNameEnum::RM_SPEED, $advisorTeams)) {
             $managerEmails = [
                 ...$managerEmails,
-                ...$this->getRMEmails(),
+                ...$this->getRMManagerEmails(),
             ];
         }
 

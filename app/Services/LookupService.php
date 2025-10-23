@@ -243,6 +243,14 @@ class LookupService extends BaseService
         });
     }
 
+    public function getRmCategories()
+    {
+        return Lookup::where('key', LookupsEnum::RM_CATEGORY)
+            ->where('is_active', true)
+            ->orderBy('text')
+            ->get(['id', 'code', 'text']);
+    }
+
     public function getSubSource()
     {
         $isPCP = auth()->user()->hasTeam(TeamNameEnum::PCP);

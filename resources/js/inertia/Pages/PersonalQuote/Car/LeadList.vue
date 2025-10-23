@@ -90,6 +90,8 @@ const tableHeader = [
     text: 'FOLLOW UP DATE',
     value: 'car_quote_request_detail.next_followup_date_formatted',
   },
+  { text: 'API ISSUANCE STATUS', value: 'api_issuance_status_id' },
+  { text: 'INSURER API STATUS', value: 'insurer_api_status_id' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'UPDATED BY', value: 'updated_by' },
   { text: 'ADDITIONAL NOTES', value: 'additional_notes' },
@@ -261,6 +263,24 @@ const paymentStatusOptions = computed(() => {
   }
 });
 
+const issuanceStatuses = computed(() => {
+  return Object.entries(page.props.issuanceStatuses).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
+    };
+  });
+});
+
+const insurerApiStatus = computed(() => {
+  return Object.entries(page.props.insurerApiStatus).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
+    };
+  });
+});
+
 const filters = reactive({
   code: '',
   first_name: '',
@@ -302,6 +322,8 @@ const filters = reactive({
   private_client: 'all',
   authorize_date: '',
   captured_date: '',
+  api_issuance_status_id: [],
+  insurer_api_status_id: [],
 });
 
 const teamUsers =
@@ -452,6 +474,8 @@ function setQueryStringFilters() {
     'teams',
     'payment_status_id',
     'page',
+    'api_issuance_status_id',
+    'insurer_api_status_id',
   ];
 
   // Group array parameters
@@ -1174,6 +1198,55 @@ const onConfirmPUAExport = () => {
           class="w-full"
           filterable
         />
+
+        <x-select
+          v-model="filters.api_issuance_status_id"
+          name="api_issuance_status_id"
+          placeholder="Search by API Issuance Status"
+          :options="issuanceStatuses"
+          class="w-full"
+          label="API Issuance Status"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.api_issuance_status_id = issuanceStatuses.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.api_issuance_status_id = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
+          v-model="filters.insurer_api_status_id"
+          name="insurer_api_status_id"
+          placeholder="Search by Insurer API Status"
+          :options="insurerApiStatus"
+          class="w-full"
+          label="Insurer API Status"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_api_status_id = insurerApiStatus.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.insurer_api_status_id = []"
+            />
+          </template>
+        </x-select>
+
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -1429,6 +1502,31 @@ const onConfirmPUAExport = () => {
           <x-tag size="sm" :color="is_gcc_standard ? 'success' : 'error'">
             {{ is_gcc_standard ? 'Yes' : 'No' }}
           </x-tag>
+        </div>
+      </template>
+      <template #item-api_issuance_status_id="{ api_issuance_status_id }">
+        <div class="text-center">
+          <x-tag
+            v-if="api_issuance_status_id"
+            size="sm"
+            :color="api_issuance_status_id == 1 ? 'success' : 'error'"
+          >
+            {{
+              issuanceStatuses.find(s => s.value == api_issuance_status_id)
+                ?.label
+            }}
+          </x-tag>
+          <span v-else>N/A</span>
+        </div>
+      </template>
+      <template #item-insurer_api_status_id="{ insurer_api_status_id }">
+        <div class="text-center">
+          {{
+            insurer_api_status_id
+              ? insurerApiStatus.find(s => s.value == insurer_api_status_id)
+                  ?.label
+              : 'N/A'
+          }}
         </div>
       </template>
       <template #item-is_modified="{ is_modified }">

@@ -73,6 +73,8 @@ class EndingPoliciesReportExport implements CsvExportableInterface
             'Lead Source',
             'Notes',
             'Policy PEC Flag',
+            'Travel Coverage',
+            'Traveling Where',
             'IMCRM SUB-SOURCE',
         ];
     }
@@ -102,6 +104,8 @@ class EndingPoliciesReportExport implements CsvExportableInterface
             $quote->source ?? 'N/A',
             $quote->notes ?? 'N/A',
             $quote->pec_flag ?? 'N/A',
+            $quote->travel_coverage ?? 'N/A',
+            $quote->traveling_where ?? 'N/A',
             $quote->sub_source ?? 'N/A',
         ]);
 

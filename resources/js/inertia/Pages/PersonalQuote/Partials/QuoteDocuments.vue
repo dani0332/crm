@@ -278,10 +278,17 @@ const submitToCustomer = () => {
     .then(response => {
       if (response.status == 200) {
         Object.keys(response.data).forEach(function (key) {
-          notification.success({
-            title: response.data[key],
-            position: 'top',
-          });
+          if (response.data[key].status == 500) {
+            notification.error({
+              title: response.data[key].message,
+              position: 'top',
+            });
+          } else {
+            notification.success({
+              title: response.data[key].message,
+              position: 'top',
+            });
+          }
         });
         router.reload({ preserveState: true });
         modals.sendConfirm = isLoading.value = false;

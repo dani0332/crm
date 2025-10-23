@@ -1192,6 +1192,26 @@ const getTotalAnnualPriceAED = () => {
     priceInAED * (page.props.quote?.life_quote?.payment_term ?? 1),
   );
 };
+
+const showSelectedButton = item => {
+  // Early return for invalid data
+  if (!item?.planId) return false;
+
+  // Get isUnderwritten from the currently selected plan
+  const isUnderwritten =
+    page.props?.quote?.quote_customer_plan?.plan?.isUnderwritten;
+
+  const isDisabled = item?.isDisabled;
+  const planId = item?.planId;
+  const version = item?.version;
+
+  return (
+    selectedProviderPlan == planId &&
+    selectedProviderPlanVersion == (version || 0) &&
+    !isDisabled &&
+    isUnderwritten === item?.isUnderwritten
+  );
+};
 </script>
 <template>
   <div>
@@ -2349,11 +2369,7 @@ const getTotalAnnualPriceAED = () => {
                     </x-button>
                     <span>
                       <x-button
-                        v-if="
-                          selectedProviderPlan == item.planId &&
-                          selectedProviderPlanVersion == (item.version || 0) &&
-                          !item.isDisabled
-                        "
+                        v-if="showSelectedButton(item)"
                         size="xs"
                         color="orange"
                         outlined
@@ -2362,12 +2378,7 @@ const getTotalAnnualPriceAED = () => {
                       >
 
                       <x-button
-                        v-else-if="
-                          !(
-                            ecomDetail?.isUnderwritten &&
-                            selectedProviderPlan == item.planId
-                          )
-                        "
+                        v-else-if="!item.isDisabled"
                         size="xs"
                         color="emerald"
                         outlined

@@ -59,6 +59,9 @@ enum LookupsEnum: string
     case VEHICLE_COLOR = 'vehicle-color';
     case BANK_NAME = 'bank-name';
     case ANNUAL_MILEAGE_ESTIMATE = 'annual-mileage-estimate';
+    case NATIONALITY_LIST = 'nationality-list';
+    case DRIVING_EXPERIENCE = 'driving-experience';
+    case RM_CATEGORY = 'rm-category';
     case SUB_SOURCE = 'sub-source';
     case SUB_SOURCE_OPTION = 'sub-source-option';
 
