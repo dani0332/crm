@@ -356,6 +356,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'payment_code' => $payment->code,
                 'model_type' => self::TYPE,
                 'quote_id' => $quote->id,
+                'through_automation' => true,
             ];
 
             request()->merge($updateBookingRequest);
@@ -1119,7 +1120,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
     }
 
-    public function getStepsLockingStatus($quote): array
+    public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {
         LoggerService::info('class: '.$this->className.' fn: '.__FUNCTION__.' Quote : '.$quote->code);
         $policyIssuance = $quote->policyIssuance;
@@ -1131,6 +1132,14 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'message' => 'All steps are locked',
             'insurer_api_status' => $quote->insurer_api_status,
         ];
+
+        if ($throughAutomation) {
+            $response['isEditPolicyDetailsDisabled'] = false;
+            $response['isEditBookingDetailsDisabled'] = false;
+            $response['message'] = 'All steps are editable';
+
+            return $response;
+        }
 
         if ($quote?->registration_type !== CarRegistrationType::PERSONAL) {
             $response['isEditPolicyDetailsDisabled'] = false;

@@ -1301,7 +1301,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         }
     }
 
-    public function getStepsLockingStatus($quote): array
+    public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {
         $policyIssuance = $quote->policyIssuance;
         $response = [
