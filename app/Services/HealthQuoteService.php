@@ -1349,14 +1349,14 @@ class HealthQuoteService extends BaseService
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
                 'isPecMarked' => $request->pec == 1,
-                'isPrincipal' => $request->is_principal,
+                'isPrincipal' => $request->is_principal == 1,
             ];
 
             $dataArray = [
                 'quoteUID' => $quoteId,
                 'memberDetails' => [$memberDetails],
             ];
-
+            
             $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
 
         } else {
