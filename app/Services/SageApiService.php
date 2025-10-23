@@ -47,6 +47,7 @@ use Cache;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
+use App\Services\BranchAssignmentService;
 
 class SageApiService
 {
@@ -630,6 +631,13 @@ class SageApiService
         $quoteType = $request->model_type;
 
         $quoteTypeId = QuoteTypes::getIdFromValue($request->model_type) ?? $quote->quote_type_id;
+
+        $hasBranchAssignment = app(BranchAssignmentService::class)->hasBranchAssignment($quote, $quoteTypeId);
+        if (!$hasBranchAssignment) {
+            return ['status' => false, 'message' => 'Branch assignment missing. Please ensure ' .
+                ($quoteTypeId === QuoteTypeId::Health ? 'Emirate of visa or advisor branch' : 'advisor branch') .
+                ' is configured OR contact admin.'];
+        }
 
         if (in_array($quoteTypeId, EmbeddedProductRepository::ALLOWED_LOBS)) {
 

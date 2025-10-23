@@ -326,14 +326,17 @@ class CentralController extends Controller
                 ]], 403);
             }
 
-            $quoteType = QuoteTypes::getNameShortCode($this->getQuoteCodeType($quote) ?? '');
-
-            $branchValidationResponse = $this->validateBranchAssignment($quote, $quoteType);
-            if ($branchValidationResponse) {
-                return $branchValidationResponse;
-            }
-
             $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
+
+            if(!$response['status']) {
+                return response()->json([
+                    'errors' => [
+                        'message' => [
+                            $response['message']
+                        ],
+                    ]
+                ], 422);
+            }
 
             return response()->json(['message' => $response['message']], 200);
         }
@@ -936,35 +939,5 @@ class CentralController extends Controller
         $response = app(ManualCommissionUpdateService::class)->updateCommissionForLeads();
 
         return $response;
-    }
-
-    /**
-     * Validates branch assignment for a given quote
-     *
-     * @param  mixed  $quote  The quote object to validate
-     * @param  QuoteTypes  $quoteType  The type of quote
-     * @return \Illuminate\Http\JsonResponse|null Returns error response if validation fails, null otherwise
-     */
-    private function validateBranchAssignment($quote, $quoteType)
-    {
-        $hasBranch = $quoteType === QuoteTypes::HEALTH
-            ? ($quote->advisor?->primaryBranch()->exists() || $quote->emirate_of_your_visa_id !== null)
-            : $quote->advisor?->primaryBranch()->exists();
-
-        if (! $hasBranch) {
-            LoggerService::warning('Branch missing for quote: '.$quote->code);
-
-            return response()->json([
-                'errors' => [
-                    'message' => [
-                        'Branch assignment missing. Please ensure '.
-                        ($quoteType === QuoteTypes::HEALTH ? 'Emirate of visa or advisor branch' : 'advisor branch').
-                        ' is configured OR contact admin.',
-                    ],
-                ],
-            ], 422);
-        }
-
-        return null;
     }
 }

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\UserBranch;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\DB;
+use App\Enums\QuoteTypeId;
 
 class BranchAssignmentService extends BaseService
 {
@@ -89,5 +90,26 @@ class BranchAssignmentService extends BaseService
             DB::rollBack();
             LoggerService::warning('Failed to make primary branch for user '.$userId.' and branch '.$branchId.' - Error: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Validates branch assignment for a given quote
+     *
+     * @param  mixed  $quote  The quote object to validate
+     * @param  QuoteTypeId  $quoteTypeId  The type of quote
+     * @return bool Returns false if validation fails, true otherwise
+     */
+    public function hasBranchAssignment($quote, $quoteTypeId): bool
+    {
+        $hasBranch = $quoteTypeId == QuoteTypeId::Health
+            ? ($quote->advisor?->primaryBranch()->exists() || $quote->emirate_of_your_visa_id !== null)
+            : $quote->advisor?->primaryBranch()->exists();
+
+        if (!$hasBranch) {
+            LoggerService::warning('Branch missing for quote: ' . $quote->code);
+            return false;
+        }
+
+        return true;
     }
 }
