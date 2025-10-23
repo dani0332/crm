@@ -910,7 +910,16 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_SUPPORT_USER],
             [
-                'value' => 'arsalan.mughal@myalfred.com',
+                'value' => 'diya.lekhwani@myalfred.com',// PROD: sandeep.sharma@insurancemarket.ae
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC],
+            [
+                'value' => 'diya.lekhwani@myalfred.com',// PROD: diya.lekhwani@myalfred.com
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
