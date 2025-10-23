@@ -12,6 +12,7 @@ use App\Enums\QuoteTypes;
 use App\Events\CustomerVerificationUpdated;
 use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
+use App\Models\RegistrationCertificate;
 use App\Services\CapiService;
 use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
@@ -70,6 +71,21 @@ class CustomerVerificationService
         ];
     }
 
+    private function getEmptyRegistrationCertificateData(QuoteTypes $quoteType): array
+    {
+        return match ($quoteType) {
+            QuoteTypes::CAR => $this->getEmptyCarRegistrationCertificateData(),
+            default => [],
+        };
+    }
+
+    private function getEmptyCarRegistrationCertificateData(): array
+    {
+        return [
+            'placeOfIssue' => '',
+        ];
+    }
+
     private function getButtonConfigForStatus(CustomerVerificationStatus $status): array
     {
         return $status->getButtonConfig();
@@ -112,7 +128,7 @@ class CustomerVerificationService
                 'quote_type' => $quoteType->value,
             ]);
 
-            return ['webForm' => [], 'customerVerified' => [], 'buttonData' => ['shouldShow' => false]];
+            return ['webForm' => [], 'customerVerified' => [], 'registrationCertificate' => [], 'buttonData' => ['shouldShow' => false]];
         }
 
         LoggerService::startQuoteLogging($record->code ?? null);
@@ -136,14 +152,42 @@ class CustomerVerificationService
         ];
 
         $customerVerifiedData = $this->getCustomerVerifiedDetails($record->id, QuoteTypes::CAR);
+        $registrationCertificateData = $this->getRegistrationCertificateDetails($record->id, QuoteTypes::CAR);
 
         $verificationButtonData = $this->getVerificationButtonData($record, $webFormData, $customerVerifiedData);
 
         return [
             'webForm' => $webFormData,
             'customerVerified' => $customerVerifiedData,
+            'registrationCertificate' => $registrationCertificateData,
             'buttonData' => $verificationButtonData,
         ];
+    }
+
+    public function getRegistrationCertificateDetails(int $quoteId, QuoteTypes $quoteType): array
+    {
+        try {
+            $registrationCertificateRecord = RegistrationCertificate::forQuotable($quoteType->modelClass(), $quoteId)
+                ->select('place_of_issue')
+                ->first();
+                
+            if (! $registrationCertificateRecord) {
+                LoggerService::info('No registration certificate record found');
+
+                return $this->getEmptyRegistrationCertificateData($quoteType);
+            }
+
+            return [
+                'placeOfIssue' => $registrationCertificateRecord->place_of_issue,
+            ];
+
+        } catch (Exception $e) {
+            LoggerService::warning('Error fetching registration certificate details', extra: [
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->getEmptyRegistrationCertificateData($quoteType);
+        }
     }
 
     public function getCustomerVerifiedDetails(int $quoteId, QuoteTypes $quoteType): array
