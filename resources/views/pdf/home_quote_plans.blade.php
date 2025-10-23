@@ -400,7 +400,9 @@
 @endcomponent
     <div style="page-break-after: always;"></div>
     {{-- Second Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" class="full-page-image" style="height: 90%;"/>
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$quote->uuid])
       
      
@@ -838,8 +840,9 @@
     
 
     {{-- Second Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page_with_header.jpg') }}"
-        class="full-page-image" style="height: 90%;"/>
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page_with_header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$quote->uuid])
       
      
@@ -847,8 +850,9 @@
     <div style="page-break-after: always;"></div>
 
     {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page_with_header.jpg') }}"
-    class="full-page-image" style="height: 90%;"/>
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page_with_header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$quote->uuid])
       
      
