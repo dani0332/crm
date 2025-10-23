@@ -167,12 +167,14 @@ class EpSendDocumentJob implements ShouldQueue
         $bccEmail = $this->epEcbConfiguration[ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC] ?? '';
 
         $ccEmails = [];
-        if(!empty($ccEmail))
+        if (! empty($ccEmail)) {
             $ccEmails[] = $ccEmail;
+        }
 
-        if(!empty($advisorEmail))
+        if (! empty($advisorEmail)) {
             $ccEmails[] = $advisorEmail;
-        
+        }
+
         return [
             'to' => empty($customerEmail) ? [] : [$customerEmail],
             'cc' => $ccEmails,
