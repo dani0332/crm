@@ -82,7 +82,7 @@ class EpSendDocumentJob implements ShouldQueue
 
         $this->storageBaseUrl = storageUrl();
         if (empty($this->storageBaseUrl) || count($missingAppStorageKeys) > 0) {
-            throw new \Error('EP ECB configuration not found');
+            throw new \Exception('EP ECB configuration not found');
         }
 
         $this->epEcbConfiguration = $appStorageRecords->pluck('value', 'key_name')->toArray();
