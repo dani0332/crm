@@ -78,11 +78,11 @@
         }
 
         table {
-            min-width: 1220px;
-            width: 1220px;
+            min-width: 1150px;
+            width: 1150px;
             text-indent: 0;
             border-color: #bfbfbf;
-            max-width: 1220px;
+            max-width: 1150px;
             margin: 7px 12px auto;
             border-spacing: 0;
         }
@@ -94,12 +94,12 @@
         .header {
             background: #1d83bc;
             color: #ffffff;
-            font-size: 16px;
+            font-size: 19px;
             text-align: center;
             padding: 8px 10px;
             width: 100%;
-            height: 57px;
-            max-height: 57px;
+            height: 60px;
+            max-height: 60px;
         }
 
         .header .logo {
@@ -180,7 +180,6 @@
             vertical-align: middle;
             max-height: 50px;
             height: 50px;
-            position: relative;
         }
 
         .spacer {
@@ -258,28 +257,8 @@
             font-size: 12px;
         }
 
-        .image-wrapper {
-            min-width: 150px;
-            min-height: 150px;
-            width: 150px;
-            height: 150px;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            margin: 20px auto;
-        }
-
         .provider-logo {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            display: block;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            width: 100px;
         }
 
 
