@@ -205,7 +205,11 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public function failed(Throwable $exception)
     {
-        info('Quote Code: '.$this->code.' SendBookPolicyDocumentsJob Error: '.$exception->getMessage());
+        LoggerService::info('Quote Code: '.$this->code.' SendBookPolicyDocumentsJob Error', extra: [
+            'errorTraceMessage' => $exception->getTraceAsString(),
+            'exception' => $exception->getMessage(),
+            'line' => $exception->getLine(),
+        ]);
     }
 
     public function middleware()

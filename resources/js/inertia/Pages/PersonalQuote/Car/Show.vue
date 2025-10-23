@@ -417,7 +417,9 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       availablePlansTable.data = res.data;
-      loadEmbeddedProducts();
+      if (!isPlanDetailEnabled.value) {
+        loadEmbeddedProducts();
+      }
     })
     .catch(err => {
       console.log(err);
@@ -4135,6 +4137,7 @@ const handleCancelConfirmationModal = () => {
       :expanded="sectionExpanded"
       :isEpLoading="lazyEmbeddedProductsLoading"
       :key="lazyEmbeddedProductsLoading"
+      :isPlanDetailEnabled="isPlanDetailEnabled"
     />
 
     <PolicyDetail

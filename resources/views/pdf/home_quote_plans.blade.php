@@ -7,568 +7,406 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-    * {
-        font-family: 'Prompt', sans-serif !important;
-    }
-
-    .raleway-font {
-        font-family: 'Raleway', sans-serif !important;
-    }
-
-    @page {
-        margin: 0;
-        padding: 0;
-        margin-bottom: 170px;
-    }
-
-    html {
-        line-height: 1;
-        margin: 0;
-        padding: 0;
-    }
-
-    body {
-        line-height: 1;
-        margin: 0;
-        padding: 0;
-        font-size: 12px;
-        font-weight: 400;
-    }
-
-    div,
-    span,
-    table,
-    tbody,
-    tfoot,
-    thead,
-    tr,
-    th,
-    td,
-    blockquote,
-    dl,
-    dd,
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6,
-    hr,
-    figure,
-    p,
-    pre {
-        margin: 0;
-        font-size: 12px;
-        font-weight: 400;
-    }
-
-    a {
-        text-decoration: inherit;
-    }
-
-    b,
-    strong {
-        font-weight: 700;
-    }
-
-    table.tbl-dec {
-        margin: auto;
-        padding: auto;
-        border: none;
-        font-size: 12px;
-    }
-
-    table.tbl-dec tr td,
-    table.tbl-dec tr td a {
-        border: none;
-    }
-
-    table {
-        text-indent: 0;
-        border-color: #bfbfbf;
-        color: #333333;
-        border-spacing: 0;
-        border-radius: 10px;
-        border-collapse: collapse;
-        font-size: 12px;
-        table-layout: auto;
-    }
-
-    .not-full {
-        width: auto;
-        margin: 0 auto;
-    }
-
-    .is-full {
-        width: 100%;
-        min-width: 100%;
-        max-width: 100%;
-    }
-
-    tbody {
-        margin-bottom: 170px;
-    }
-
-    tbody>tr>td {
-        border: 1px solid #bfbfbf;
-    }
-
-    thead>tr>th {
-        border: 1px solid #bfbfbf;
-    }
-
-    td>p,
-    th>p {
-        padding: 2px;
-        font-size: 12px !important;
-        text-align: center;
-        font-weight: 400;
-    }
-
-    .text-left {
-        text-align: left;
-    }
-
-    .text-xs {
-        font-size: 10px;
-        font-weight: 400;
-    }
-
-    .text-sm {
-        font-size: 12px;
-        font-weight: 400;
-    }
-
-    .text-xl {
-        font-size: 16px;
-        font-weight: 600;
-    }
-
-    .blue-box {
-        background: #ddfdfc;
-    }
-
-    .bg-light-blue {
-        border: 1px solid #bfbfbf;
-        padding: 1px 8px;
-        color: #5B5F60;
-    }
-
-    .bg-light-blue p {
-        padding: 1px !important;
-    }
-
-    .text-black {
-        color: #000000;
-    }
-
-    .provider {
-        border: 1px solid #bfbfbf;
-        font-size: 14px;
-        line-height: 1;
-        font-weight: 400;
-        color: #4ea4a8;
-        vertical-align: middle;
-        max-height: 35px;
-        height: 35px;
-    }
-
-    .spacer {
-        padding: 3px;
-    }
-
-    .alfred {
-        text-align: right;
-        padding: 0;
-        width: 100px;
-        min-width: 100px;
-        height: 100px;
-    }
-
-    .quote-info {
-        text-align: right;
-        vertical-align: bottom;
-        margin-top: -1px;
-        font-size: 14px;
-        font-weight: 400;
-        text-align: left;
-        padding: 0;
-        max-width: 100%;
-    }
-
-    .info h5 {
-        background: #1d83bc;
-        color: #ffffff;
-        padding: 3px;
-        font-weight: 600;
-        margin: 0 0 10px 0;
-    }
-
-    .info p {
-        font-size: 14px;
-        font-weight: 400;
-    }
-
-    .btn-all-quotes {
-        background-color: #1d83bc;
-        color: #ffffff;
-        padding-left: 70px;
-        padding-right: 70px;
-        padding-bottom: 7px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        font-weight: 600;
-        border-radius: 5px;
-        position: relative;
-    }
-
-    .btn-buy {
-        background-color: #FE7333;
-        color: #ffffff;
-        padding: 3px 35px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 14px;
-        border-radius: 5px;
-        line-height: 0.7;
-    }
-
-    .btn-buy:hover {
-        background-color: #d7fbd0;
-    }
-
-    .provider-logo {
-        width: 45px;
-        height: auto;
-    }
-
-    .no-border {
-        border: none;
-    }
-
-    th.provider-name {
-        padding: 0;
-        margin: 0;
-    }
-
-    .text-left {
-        text-align: left;
-    }
-
-    .text-right {
-        text-align: right;
-    }
-
-
-    .full-page-image {
-        width: 100%;
-        z-index: 999;
-        height: 88%;
-    }
-
-    .text-center {
-        text-align: center;
-    }
-
-    .text-white {
-        color: #ffffff;
-    }
-
-    .text-underline {
-        text-decoration: underline;
-    }
-
-    .hidden {
-        display: none;
-    }
-
-    tr:has(td) {
-        display: none;
-    }
-    .text-blue {
-        color: #1d83bc;
-    }
-
-    table td,
-    table th {
-        max-width: 160px;
-        width: 160px;
-        height: auto;
-        padding: 2px;
-        text-align: center;
-        vertical-align: middle;
-        word-wrap: break-word;
-        white-space: normal;
-    }
-
-    main {
-        padding: 10px 20px;
-    }
-
-    .head-caption {
-        padding: 10px;
-        right: 5px !important;
-        top: 150px !important;
-        font-size: 14px;
-        font-weight: 600;
-        text-align: right;
-    }
-
-    td,
-    th {
-        width: auto;
-    }
-    tr {
-        page-break-inside: avoid;
-        page-break-after: auto;
-    }
-
-    table.disclaimer-table {
-        margin: auto;
-        padding: auto;
-        table-layout: fixed;
-        page-break-inside: avoid;
-        page-break-before: auto;
-        width: 100%;
-        border-collapse: separate;
-        border: none !important;
-    }
-
-    table.disclaimer-table td {
-        page-break-inside: avoid;
-        page-break-before: auto;
-        padding: 10px;
-        text-align: left;
-        vertical-align: top;
-        font-size: 14px;
-        line-height: 1;
-        border: none;
-    }
-
-    .disclaimer-text {
-        page-break-inside: avoid;
-        page-break-before: auto;
-        margin: 0;
-        font-size: 14px;
-        line-height: 1;
-        text-align: left;
-    }
-
-    .content {}
-
-    .disclaimer-td {
-        padding: 10px;
-        text-align: left;
-        vertical-align: top;
-        font-size: 14px;
-        line-height: 1;
-        border: none;
-    }
-
-    .header {
-        color: #ffffff;
-        font-size: 14px;
-        font-weight: 600;
-        text-align: center;
-        padding: 8px 10px;
-        width: 100%;
-        height: 150px;
-        max-height: 150px;
-    }
-
-    .header .logo {
-        background-color: white;
-        border-radius: 5px;
-        padding: 5px 10px 5px 0px;
-        height: 125px;
-        max-height: 125px;
-    }
-
-    .header .logo img {
-        max-height: 125px;
-        height: 125px;
-    }
-
-    header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 150px;
-    }
-
-
-
-    /* Bottom Header Container */
-    .header-bottom {
-        width: 100%;
-        display: table;
-        border-top: 2px solid #D3D3D3;
-        border-bottom: 2px solid #D3D3D3;
-        font-size: 14px;
-        color: #5B5F60;
-        padding: 10px 0;
-    }
-
-    /* Left Side Text */
-    .header-text {
-        display: table-cell;
-        text-align: left;
-        width: 75%;
-        vertical-align: middle;
-    }
-
-    /* Right Side Quote Number */
-    .quote-number {
-        display: table-cell;
-        text-align: right;
-        white-space: nowrap;
-        width: 25%;
-        padding-right: 20px;
-        vertical-align: middle;
-    }
-
-    .quote-number strong {
-        font-weight: 600; /* Reduce boldness */
-    }
-
-    /* Highlighted Text */
-    .header-text-highlight {
-        font-weight: 600;
-    }
-
-    /* Separator Styling */
-    .separator {
-        color: #D3D3D3; /* Match border color */
-        font-weight: normal; /* Ensure it's not bold */
-        padding: 0 5px; /* Adjust spacing */
-    }
-
-    .footer {
+   @page {
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            line-height: 1;
+            font-family: "DejaVu Sans", sans-serif;
+
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 85px;
+            width: 100%;
+            display: block;
+            background: white;
+            z-index: 1;
+        }
+
+        div,
+        span,
+        table,
+        tbody,
+        tfoot,
+        thead,
+        tr,
+        th,
+        td,
+        blockquote,
+        dl,
+        dd,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        hr,
+        figure,
+        p,
+        pre {
+            margin: 0;
+        }
+
+        a {
+            text-decoration: inherit;
+        }
+
+        b,
+        strong {
+            font-weight: bolder;
+        }
+
+        table.tbl-dec {
+            border: none;
+        }
+
+        table.tbl-dec tr td,
+        table.tbl-dec tr td a {
+            border: none;
+        }
+
+        table {
+            min-width: 1220px;
+            width: 1220px;
+            text-indent: 0;
+            border-color: #bfbfbf;
+            max-width: 1220px;
+            margin: 7px 12px auto;
+            border-spacing: 0;
+        }
+
+        tbody {
+            margin-bottom: 130px;
+        }
+
+        .header {
+            background: #1d83bc;
+            color: #ffffff;
+            font-size: 16px;
+            text-align: center;
+            padding: 8px 10px;
+            width: 100%;
+            height: 57px;
+            max-height: 57px;
+        }
+
+        .header .logo {
+            float: left;
+            background-color: white;
+            border-radius: 5px;
+            padding: 5px 10px 5px 0px;
+            height: 50px;
+            max-height: 50px;
+        }
+
+        .header .logo img {
+            max-height: 50px;
+            height: 50px;
+        }
+
+        .header h3 {
+            float: right;
+            text-align: right;
+            padding-right: 18px;
+        }
+
+        tbody>tr>td {
+            border: 1px solid #bfbfbf;
+        }
+
+        thead>tr>th {
+            border: 1px solid #bfbfbf;
+        }
+
+        td>p,
+        td>div>p,
+        td>div>div>p,
+        th>p {
+            padding: 4px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: normal;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .text-xs {
+            font-size: 13px;
+        }
+
+        .text-sm {
+            font-size: 14px;
+        }
+
+        .text-xl {
+            font-size: 16px;
+        }
+
+        .blue-box {
+            background: #ddfdfc;
+        }
+
+        .bg-light-blue {
+            border: 1px solid #bfbfbf;
+            background: #EFF6FF;
+            padding: 8px;
+            color: #252525;
+        }
+
+        .text-black {
+            color: #000000;
+        }
+
+        .provider {
+            border: 1px solid #bfbfbf;
+            font-size: 15px;
+            line-height: 28px;
+            font-weight: 400;
+            color: #4ea4a8;
+            vertical-align: middle;
+            max-height: 50px;
+            height: 50px;
+            position: relative;
+        }
+
+        .spacer {
+            padding: 3px;
+        }
+
+        .alfred {
+            text-align: right;
+            padding-right: 0;
+            vertical-align: bottom;
+            border-left: none;
+            border-top: none;
+        }
+
+        .quote-info {
+            text-align: right;
+            vertical-align: bottom;
+            margin-top: -1px;
+            background: #EFF6FF;
+            font-size: 14px;
+            text-align: left;
+            padding: 8px;
+            max-width: 100%;
+            font-weight: normal;
+        }
+
+        .info h5 {
+            background: #1d83bc;
+            color: #ffffff;
+            padding: 3px;
+            font-weight: normal;
+            margin: 0 0 10px 0;
+        }
+
+        .info p {
+            font-size: 12px;
+        }
+
+        .btn-all-quotes {
+            background-color: #1d83bc;
+            color: #ffffff;
+            padding: 8px 25px;
+            margin-top: 50px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 5px;
+            margin-bottom: 0px;
+        }
+
+        .btn-buy {
+            background-color: #FE7333;
+            color: #ffffff;
+            padding: 12px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+
+        .btn-buy:hover {
+            background-color: #d7fbd0;
+        }
+
+        .text-heading {
+            color: #ffffff;
+            background-color: #1d83bc;
+        }
+
+        .heading-desc {
+            font-size: 12px;
+        }
+
+        .image-wrapper {
+            min-width: 150px;
+            min-height: 150px;
+            width: 150px;
+            height: 150px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+        .provider-logo {
+            width: 100%;
+            max-width: 120px;
+            max-height: 100px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .provider-logo {
+                max-width: 80px;
+                max-height: 60px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .provider-logo {
+                max-width: 60px;
+                max-height: 40px;
+            }
+        }
+
+
+        .no-border {
+            border: none;
+        }
+
+    
+
+      
+
+        .text-left {
+            text-align: left;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .full-page-image {
+            width: 100%;
+            z-index: 999;
+            height: 88%;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-white {
+            color: #ffffff
+        }
+
+        .text-underline {
+            text-decoration: underline
+        }
+
+        .footer {
         position: fixed;
         bottom: 0;
+        /* top: 50px !important; */
         left: 0;
         right: 0;
         width: 100%;
         background-color: #1d83bc;
         color: #ffffff;
-        padding: 10px;
-        text-align: center;
-        height: 160px;
+        padding: 2px 2px 2px 2px;
+        text-align: left;
+        height: 165px !important;
     }
 
-    .footer-table {
+   
+ 
+
+
+        .footer-content-1 {
+        font-size: 8px !important;
+        line-height: 0.7 !important;
+        word-break: break-word;
+        white-space: normal !important;
         width: 100%;
-        table-layout: fixed;
-        border-collapse: collapse;
-        color: #ffffff
-    }
-
-    .footer-td {
-        padding: 10px;
-        vertical-align: top;
-        border: none;
-    }
-
-    .footer-box {
-        border-radius: 24px;
-        border: 2px solid #CF9E3C;
-        padding: 6px 10px;
+        box-sizing: border-box;
+        align-items: left;
         text-align: left;
     }
 
-    .footer-link {
-        color: #ffffff;
-        text-decoration: none;
-    }
-
-    .footer-link:hover {
-        text-decoration: underline;
-    }
-
-    .material-icons {
-        font-size: 14px;
-        color: #ffffff;
-        margin-right: 5px;
-        vertical-align: middle;
-    }
-
-    .footer-header {
-        font-size: 14px;
-        font-weight: bold;
-        text-align: center;
-    }
-
-    .footer-content-1{
-        font-size: 9px !important;
+    @media (max-width: 600px) {
+        .footer-content-1 {
+            font-size: 8px !important;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
     }
 
     .footer-content-2{
-        font-size: 13px !important;
-    }
-
-
-
-    .advisor-section {
-        display: table;
+        font-size: 8px !important;
+        align-items: center;
+        text-align: center;
+        line-height: 0.8 !important;
+        word-break: break-word;
+        white-space: normal !important;
         width: 100%;
+        box-sizing: border-box;
+        align-items: left;
+        text-align: left;
     }
-
-    .advisor-photo-container {
-        display: table-cell;
-        vertical-align: middle;
-        width: 70px;
-    }
-
-    .advisor-photo {
-        width: 70px;
-        height: 70px;
-        border-radius: 50%;
-        display: block;
-        margin: auto;
-    }
-
-    .advisor-details {
-        display: table-cell;
-        vertical-align: middle;
-        line-height: 0.9;
-        padding-left: 10px;
-    }
-
-    .advisor-name {
-        font-weight: bold;
-        font-size: 12px;
-        margin: 0;
-    }
-
-    .advisor-role {
-        font-size: 10px;
-        margin: 0;
-    }
-
-    .advisor-contact {
-        font-size: 12px;
-        line-height: 1;
-    }
-
-    .advisor-contact .icon {
-        width: 10px;
-        height: 10px;
-        vertical-align: baseline;
-        display: inline-block;
+    @media (max-width: 600px) {
+        .footer-content-2 {
+            font-size: 9px !important;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
     }
 </style>
 </head>
 
-<body>
+<body style="margin: 0; padding: 0;">
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header_and_footer.jpg') }}" class="full-page-image" style="height: 100%;"/>
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header_and_footer.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent
     <div style="page-break-after: always;"></div>
     {{-- Second Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" class="full-page-image" />
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent
     <div style="page-break-after: always;"></div>
 
     @php
@@ -712,7 +550,7 @@
     <main>
         <table class="main-table {{ $tableClass }}">
             <thead>
-                <p style="margin-top:200px"></p>
+                <p style="margin-top:100px"></p>
                 <tr>
                     <th class="bg-light-blue" rowspan="2">
                         <p class="quote-info raleway-font" style="font-weight:700;">Insurance company
@@ -993,105 +831,32 @@
         </table>
     </main>
 
-    {{-- PDF Page Footer --}}
-    <div class="footer">
-        <h4 class="footer-header">
-            InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC
-        </h4>
+   
+    {{-- PDF Page Footer Section --}}
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+    @endcomponent
+{{-- End of PDF Page Footer Section --}}
     
-        <table class="footer-table" align="center">
-            <tr>
-                <td class="footer-td" style="width: 42%">
-                    <div class="footer-box" style="line-height: 0.8;">
-                        <p class="footer-content-1">UAE Central Bank Registration No. 85</p>
-                        <p class="footer-content-1">Registered Member of Gulf Insurance Federation</p>
-                        <p class="footer-content-1">Registered Member of Emirates Insurance Federation, number B6</p>
-                        <p class="footer-content-1">Department of Economy & Tourism in Dubai Trade Licence No. 238534</p>
-                        <p class="footer-content-1">Registered member of the DIFC Insurance Association with membership number 10049</p>
-                        <p class="footer-content-1">Holder of Health Insurance Intermediary Permit ID No. BRK-00003 from Dubai Health Authority</p>
-                        <p class="footer-content-1">Registered member of Insurance Business Group under the Dubai Chamber of Commerce and Industry, number 34774</p>
-                    </div>
-                </td>
-    
-                <td class="footer-td" style="width: 28%">
-                    <div class="footer-box" style="margin-top: 8px; line-height: 0.8; position: relative;">
-                        <p class="footer-content-2">27th floor, Control Tower, Detroit Road,<br>Motor City, PO Box - 26423,<br>Dubai, United Arab Emirates.
-                        </p>
-                        <p class="footer-content-2">Happiness Center number:</p>
-                        <p class="footer-content-2">800 ALFRED (800 256 733)</p>
-                        <div class="open-new-icon" style="position: absolute; right:5px; top:42px;">
-                            <a
-                            class="text-white"
-                            href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">
-                                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
-                                style="width: 22px; height: 22px; vertical-align: baseline; display: inline-block;">
-                            </a>
-                        </div>
-                    </div>
-                </td>
-    
-                <td class="footer-td" style="width: 30%;">
-                    <div class="footer-box" style="margin-right: 20px; padding: 5px 10px">
-                        <div class="advisor-section">
-                            @if($quote->advisor)
-                                <div class="advisor-photo-container">
-                                    <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('image/alfred-theme.png') }}"
-                                         alt="Advisor Photo" class="advisor-photo">
-                                </div>
-                                <div class="advisor-details">
-                                    <p class="advisor-name">{{ $quote->advisor->name }}</p>
-                                    <p class="advisor-role">Insurance Advisor</p>
-                                    <p class="advisor-contact">
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
-                                        @if (strlen($quote->advisor->email) > 35)
-                                        <span style="text-decoration: underline; font-size:10px">{{ $quote->advisor->email }}</span>
-                                        @else
-                                        <span style="text-decoration: underline;">{{ $quote->advisor->email }}</span>
-                                        @endif
-                                        <br>
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon"> 
-                                        <a href="tel:{{ removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) }}" class="text-white" style="color: #ffffff; text-decoration: none;">
-                                            <span>{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
-                                        </a>
-                                        <a href="https://wa.me/{{ removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) }}">
-                                            <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon" style="margin-left: 1px;">
-                                        </a>
-                                        <br>
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon"> 
-                                        <a href="tel:{{ removeSpaces($quote->advisor->landline_no) }}" class="text-white" style="color: #ffffff; text-decoration: none;">
-                                            <span>{{ $quote->advisor->landline_no }}</span>
-                                        </a>
-                                        <br>
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
-                                        <span>800 ALFRED (800 253 733)</span>
-                                    </p>
-                                </div>
-                            @else
-                                <div style="text-align: center; width: 100%;">
-                                    <img src="{{ public_path('image/alfred-theme.png') }}"
-                                         alt="Advisor Photo" class="advisor-photo" style="margin: 0 auto; display: block;">
-                                    <p class="advisor-contact" style="text-align: center; margin-top: 8px;">
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
-                                        <span>800 ALFRED (800 253 733)</span>
-                                    </p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </td>
-                
-            </tr>
-        </table>
-    </div>
 
     {{-- Second Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page_with_header.jpg') }}"
-        class="full-page-image" />
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page_with_header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent
     <div style="page-break-after: always;"></div>
 
     {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page_with_header.jpg') }}"
-    class="full-page-image" />
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page_with_header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent
 </body>
 
 </html>

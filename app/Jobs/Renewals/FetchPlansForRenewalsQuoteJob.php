@@ -4,7 +4,9 @@ namespace App\Jobs\Renewals;
 
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalStatusProcess;
+use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,13 +14,11 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use Sammyjo20\LaravelHaystack\Concerns\Stackable;
-use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
 
-class FetchPlansForRenewalsQuoteJob implements ShouldQueue, StackableJob
+class FetchPlansForRenewalsQuoteJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $renewalQuoteProcess;
     protected $renewalStatusProcess;
@@ -33,7 +33,7 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue, StackableJob
      */
     public function __construct(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
     {
-        info('FetchPlansForRenewalsQuoteJob: inside constructor');
+        LoggerService::info('FetchPlansForRenewalsQuoteJob: inside constructor');
         $this->renewalQuoteProcess = $renewalQuoteProcess;
         $this->renewalStatusProcess = $renewalStatusProcess;
     }
@@ -45,7 +45,7 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue, StackableJob
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        info('FetchPlansForRenewalsQuoteJob: job being started for policy_number: '.$this->renewalQuoteProcess->policy_number);
+        LoggerService::info('FetchPlansForRenewalsQuoteJob: job being started for policy_number: '.$this->renewalQuoteProcess->policy_number);
         $renewalsUploadService->fetchQuotePlans($this->renewalQuoteProcess, $this->renewalStatusProcess);
     }
 
@@ -62,7 +62,7 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue, StackableJob
      */
     public function failed(Throwable $exception)
     {
-        info('CL: '.get_class().' FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' Error: '.$exception->getMessage());
+        LoggerService::info('CL: '.get_class().' FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' Error: '.$exception->getMessage());
         RenewalStatusProcess::where('id', $this->renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
     }
 }
