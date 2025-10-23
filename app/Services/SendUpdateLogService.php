@@ -1834,7 +1834,7 @@ class SendUpdateLogService
      * @param $sendUpdateLog - Send Update Log
      * @return string
      */
-    public function disableMainBtn($sendUpdateLog, $payment = [], $brokerCommission = null): string
+    public function disableMainBtn($sendUpdateLog, $payment = [], $brokerCommission = null, $quote): string
     {
         LoggerService::info('fn:disableMainBtn - Start - SendUpdateLogService');
 
@@ -1844,6 +1844,14 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::CIR,
         ]) && empty($sendUpdateLog->endorsement_number)) {
             return 'Endorsement Number is required before proceeding.';
+        }
+
+        if (
+            $sendUpdateLog->category?->code == SendUpdateLogStatusEnum::CIR &&
+            ! $quote->policy_booking_date &&
+            $quote->source != LeadSourceEnum::INSLY
+        ) {
+            return 'Please complete the main policy booking before continuing with cancellation.';
         }
 
         if (isTapEnabled()) {

@@ -277,7 +277,7 @@ class SendUpdateLogController extends Controller
             'isEditDisabledForQueuedBooking' => $isEditDisabledForQueuedBooking,
             'insuranceProviderId' => $insuranceProviderId ?? null,
             'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
-            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog, $sendUpdatePayments, $bookingDetails['brokerCommission']),
+            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog, $sendUpdatePayments, $bookingDetails['brokerCommission'], $quote),
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'notesList' => $notesList ?? [],
