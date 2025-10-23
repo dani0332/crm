@@ -1151,23 +1151,23 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         if (
             $policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS ||
-            ($policyIssuance->completed_step && $policyIssuance?->status == '')
+            ($policyIssuance?->completed_step && $policyIssuance?->status == '')
         ) {
-            if (! $policyIssuance->completed_step || $policyIssuance->completed_step === self::UPLOAD_DOCUMENTS) {
+            if (! $policyIssuance?->completed_step || $policyIssuance?->completed_step === self::UPLOAD_DOCUMENTS) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'All Steps are editable';
 
                 return $response;
             }
-            if ($policyIssuance->completed_step === self::ISSUE_POLICY) {
+            if ($policyIssuance?->completed_step === self::ISSUE_POLICY) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Upload Documents and Update Booking Details are editable';
 
                 return $response;
             }
-            if ($policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
+            if ($policyIssuance?->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Booking Details is editable';
@@ -1184,7 +1184,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         if (
             $policyIssuance?->status === PolicyIssuanceEnum::PROCESSING_STATUS &&
-            $policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
+            $policyIssuance?->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
         ) {
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';
