@@ -356,7 +356,7 @@ class SendUpdateLogController extends Controller
                 case SendUpdateLogStatusEnum::CI:
                 case SendUpdateLogStatusEnum::CIR:
                     $quote = $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->first();
-                    if (! $quote->policy_booking_date) {
+                    if ($quote->policy_booking_date) {
                         $oldLeadStatus = $quote->quote_status_id;
                         $newLeadStatus = QuoteStatusEnum::CancellationPending;
     
