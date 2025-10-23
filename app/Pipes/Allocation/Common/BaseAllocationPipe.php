@@ -418,7 +418,7 @@ abstract class BaseAllocationPipe extends AllocationService
         }
 
         $superAdvisorIds = User::whereHas('permissions', function ($query) {
-            $query->where('name', PermissionsEnum::BYPASS_RULE_EXCLUSION);
+            $query->where('name', PermissionsEnum::NONRULE_LEADALLOCATION);
         })->pluck('id')->toArray();
 
         $excludedAdvisorIds = array_diff($excludedAdvisorIds, $superAdvisorIds);

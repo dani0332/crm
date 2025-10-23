@@ -23,7 +23,7 @@ class PermissionSeeder extends Seeder
                 'guard_name' => 'web',
             ],
             [
-                'name' => PermissionsEnum::BYPASS_RULE_EXCLUSION,
+                'name' => PermissionsEnum::NONRULE_LEADALLOCATION,
                 'guard_name' => 'web',
             ],
         ];
