@@ -11,6 +11,8 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -574,6 +576,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             return $policyIssuanceResponse;
         }
 
+        $quote->update([
+            'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+            'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
+            'quote_status_date' => now(),
+        ]);
+
         $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
         $process = $process->refresh();
 
@@ -1114,7 +1122,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     public function getStepsLockingStatus($quote): array
     {
         LoggerService::info('class: '.$this->className.' fn: '.__FUNCTION__.' Quote : '.$quote->code);
-        $isAutomationInitiated = app(PolicyIssuanceService::class)->isAutomationInitiated(QuoteTypes::CAR->value, $quote);
         $policyIssuance = $quote->policyIssuance;
 
         $response = [
@@ -1125,23 +1132,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'insurer_api_status' => $quote->insurer_api_status,
         ];
 
-        if (! $isAutomationInitiated) {
-            $response['isEditPolicyDetailsDisabled'] = false;
-            $response['isEditBookingDetailsDisabled'] = false;
-            $response['message'] = 'All steps are editable';
-
-            return $response;
-        }
-
         if ($quote?->registration_type !== CarRegistrationType::PERSONAL) {
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All steps are editable';
-
-            return $response;
-        }
-
-        if ($isAutomationInitiated && (! $policyIssuance || $policyIssuance?->status !== PolicyIssuanceEnum::FAILED_STATUS)) {
 
             return $response;
         }

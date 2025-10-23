@@ -1400,7 +1400,7 @@ class SendUpdateLogService
             $emailData->planType = is_null($quote?->coverage_code) ? '' : ucwords(convertFromCamelCase($quote?->coverage_code));
             $emailData->primaryTraveler = $quote?->primaryMember?->first_name.' '.$quote?->primaryMember?->last_name;
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
-            $emailData->companyName = $quote?->company_name ?? '';
+            $emailData->companyName = $quote?->company_name ?? '-';
         } elseif ($quoteTypeId == QuoteTypeId::Health) {
             $emailData->policyHolderName = implode(', ', array_map(function ($member) {
                 return $member['first_name'];
@@ -1441,6 +1441,7 @@ class SendUpdateLogService
                     $quote->vehicle_use == CarVehicleUse::COMMERCIAL
                 )
             ) {
+                $emailData->companyName = $quote?->company_name ?? '-';
                 $templateCode = 'COMMERCIAL_'.$templateCode;
             }
             $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;

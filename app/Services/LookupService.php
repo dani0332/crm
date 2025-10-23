@@ -242,6 +242,14 @@ class LookupService extends BaseService
         });
     }
 
+    public function getRmCategories()
+    {
+        return Lookup::where('key', LookupsEnum::RM_CATEGORY)
+            ->where('is_active', true)
+            ->orderBy('text')
+            ->get(['id', 'code', 'text']);
+    }
+
     public function getVehicleColors($quoteTypeId, $providerId)
     {
         return Lookup::where('key', LookupsEnum::VEHICLE_COLOR)
