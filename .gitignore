@@ -17,6 +17,7 @@ resources/views/.DS_Store
 .DS_Store
 storage/framework/laravel-excel/*.tmp
 
+
 # extras
 notes.txt
 .eslintcache
