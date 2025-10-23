@@ -2,6 +2,7 @@
 
 namespace App\Services\OCR;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
@@ -495,11 +496,16 @@ class OCRService
 
         // early return if Customer OCR Journey is not supported on prod
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
-        /*if (in_array($docType, [OCRDocumentTypeEnum::ID_CARD, OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE, OCRDocumentTypeEnum::DRIVING_LICENSE])) {
-            LoggerService::info(self::class.' - Customer OCR Journey is not supported for now');
+        $isOCRCustomerJourneyEnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_ENABLED, useCache: true) == '1';
+        if (! $isOCRCustomerJourneyEnabled && in_array($docType, [OCRDocumentTypeEnum::ID_CARD, OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE, OCRDocumentTypeEnum::DRIVING_LICENSE])) {
+            LoggerService::info(self::class.' - OCR Customer Journey is not supported for now', [
+                'docType' => $docType,
+                'isOCRCustomerJourneyEnabled' => $isOCRCustomerJourneyEnabled,
+                'quote_uuid' => $quote->uuid,
+            ]);
 
             return;
-        }*/
+        }
 
         // Skip OCR only for SendUpdate logs that are NOT eligible (e.g., Car SendUpdate)
         if ($quote instanceof SendUpdateLog && ! $isSendUpdateEligibleForOCR) {

@@ -289,4 +289,7 @@ final class ApplicationStorageEnums extends Enum
     public const SLA_CALLBACK_HOURS = 'SLA_CALLBACK_HOURS';
     public const SLA_REMINDER_MINUTES = 'SLA_REMINDER_MINUTES';
     public const RTA_PORTAL_LINK = 'RTA_PORTAL_LINK';
+
+    /* OCR Customer Journey Flag */
+    public const OCR_CUSTOMER_JOURNEY_ENABLED = 'OCR_CUSTOMER_JOURNEY_ENABLED';
 }

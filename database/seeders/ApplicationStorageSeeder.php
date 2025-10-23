@@ -64,6 +64,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAutoCaptureEPPayments();
         $this->seedSla();
         $this->rtaPortalLink();
+        $this->seedOCRCustomerJourneyFlag();
     }
 
     private function livaCarAutomationSeed()
@@ -915,6 +916,19 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
                 'is_active' => 1,
             ],
+        );
+    }
+
+    private function seedOCRCustomerJourneyFlag()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
         );
     }
 }
