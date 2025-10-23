@@ -6,6 +6,7 @@ use App\Contracts\CsvExportableInterface;
 use App\Services\ConversionAsAtReportService;
 use App\Services\Logger\LoggerService;
 use App\Traits\ModernCsvExportable;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class ConversionAsAtReportExport implements CsvExportableInterface
@@ -164,6 +165,7 @@ class ConversionAsAtReportExport implements CsvExportableInterface
 
     private function postDataRows($stream)
     {
+        $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
         $totalsRow = $this->getEmptyRow();
         $request = request()->merge($this->requestParams);
         $unassignedLeadsCount = $this->conversionAsAtReportService->getUnassignedLeadsCount($request);
@@ -178,9 +180,10 @@ class ConversionAsAtReportExport implements CsvExportableInterface
             $unassignedRow = array_fill(0, count($this->headers), 0);
 
             $unassignedRow[0] = 'Unassigned Leads';
-            $unassignedRow[1] = $this->requestParams['createdAtDate'][0] ?? 'N/A';
-            $unassignedRow[2] = $this->requestParams['createdAtDate'][1] ?? 'N/A';
-            $unassignedRow[3] = $this->requestParams['asAtDate'] ?? 'N/A';
+            $unassignedRow[1] = Carbon::make($this->requestParams['startEndDate'][0] ?? null)?->format($dateFormat) ?? 'N/A';
+            $unassignedRow[2] = Carbon::make($this->requestParams['startEndDate'][1] ?? null)?->format($dateFormat) ?? 'N/A';
+            $unassignedRow[3] = Carbon::make($this->requestParams['asAtDate'] ?? null)?->format($dateFormat) ?? 'N/A';
+
             $unassignedRow[4] = $this->resolveNumberFormat($unassignedLeadsCount);
 
             fputcsv($stream, $unassignedRow);

@@ -27,9 +27,11 @@
             position: fixed;
             top: 0;
             left: 0;
-            height: 200px;
+            height: 85px;
             width: 100%;
             display: block;
+            background: white;
+            z-index: 1;
         }
 
         div,
@@ -76,28 +78,28 @@
         }
 
         table {
-            min-width: 1220px;
-            width: 1220px;
+            min-width: 1150px;
+            width: 1150px;
             text-indent: 0;
             border-color: #bfbfbf;
-            max-width: 1220px;
+            max-width: 1150px;
             margin: 7px 12px auto;
             border-spacing: 0;
         }
 
         tbody {
-            margin-bottom: 130px;
+            margin-bottom: 200px;
         }
 
         .header {
             background: #1d83bc;
             color: #ffffff;
-            font-size: 16px;
+            font-size: 19px;
             text-align: center;
             padding: 8px 10px;
             width: 100%;
-            height: 57px;
-            max-height: 57px;
+            height: 60px;
+            max-height: 60px;
         }
 
         .header .logo {
@@ -178,7 +180,6 @@
             vertical-align: middle;
             max-height: 50px;
             height: 50px;
-            position: relative;
         }
 
         .spacer {
@@ -256,28 +257,8 @@
             font-size: 12px;
         }
 
-        .image-wrapper {
-            min-width: 150px;
-            min-height: 150px;
-            width: 150px;
-            height: 150px;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            margin: 20px auto;
-        }
-
         .provider-logo {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            display: block;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            width: 100px;
         }
 
 
@@ -285,40 +266,9 @@
             border: none;
         }
 
-        footer {
-            position: fixed;
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
-            padding: 0px;
-            margin: 80px 0 0 0;
-            background-color: #1d83bc;
-            color: black;
-            text-align: center;
-            position: fixed;
-            bottom: 0px;
-            height: 145px;
-            z-index: 1500;
-        }
+    
 
-        table.tbl-footer {
-            padding: 18px 12px;
-            margin: 0;
-            width: 100%;
-            border: none;
-        }
-
-        th.provider-name {
-            padding: 0;
-            margin: 0;
-        }
-
-        table.tbl-footer tr td,
-        table.tbl-footer tr td a {
-            color: #ffffff;
-            border: none;
-            font-size: 14px;
-        }
+      
 
         .text-left {
             text-align: left;
@@ -331,6 +281,7 @@
         .full-page-image {
             width: 100%;
             z-index: 999;
+            height: 88%;
         }
 
         .text-center {
@@ -344,12 +295,72 @@
         .text-underline {
             text-decoration: underline
         }
+      
+     .footer {
+        position: fixed;
+        bottom: 0;
+        /* top: 50px !important; */
+        left: 0;
+        right: 0;
+        width: 100%;
+        background-color: #1d83bc;
+        color: #ffffff;
+        padding: 2px 2px 2px 2px;
+        text-align: left;
+        height: 167px !important;
+    }
+
+    .footer-content-1 {
+        font-size: 8px !important;
+        line-height: 0.7 !important;
+        word-break: break-word;
+        white-space: normal !important;
+        width: 100%;
+        box-sizing: border-box;
+        align-items: left;
+        text-align: left;
+    }
+
+    @media (max-width: 600px) {
+        .footer-content-1 {
+            font-size: 8px !important;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
+    }
+
+    .footer-content-2{
+        font-size: 8px !important;
+        align-items: center;
+        text-align: center;
+        line-height: 0.8 !important;
+        word-break: break-word;
+        white-space: normal !important;
+        width: 100%;
+        box-sizing: border-box;
+        align-items: left;
+        text-align: left;
+    }
+    @media (max-width: 600px) {
+        .footer-content-2 {
+            font-size: 9px !important;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
+    }
+
+
     </style>
 </head>
 
-<body>
-    {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/rm-p1-1.png') }}" class="full-page-image" />
+<body style="margin: 0; padding: 0;">
+    {{-- First Page Cover --}}
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/comparison-table-health.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quote->uuid])
+    @endcomponent
+    <div style="page-break-after: always; clear: both;"></div>
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
@@ -684,66 +695,29 @@
         $features = array_merge($features, $featureItems);
     @endphp
 
-    {{-- PDF Page Header --}}
+    {{-- PDF Page Header - Only for comparison pages --}}
     <header>
         <div>
             <img src="{{ public_path('images/header.png') }}">
         </div>
     </header>
 
-    {{-- PDF Page Footer --}}
-    <footer>
-        <table class="tbl-footer">
-            <div style="float: left;">
-                <img style="height: 110px; border-radius: 50%;"
-                    src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}">
-            </div>
-            <div style="float: left; margin-left: 10px; margin-top: 20px">
-                @if (isset($quote->advisor->name) && !empty($quote->advisor->name))
-                    <p class="text-left text-white text-xl">Name: {{ $quote->advisor?->name }}</p>
-                @endif
-                @if (isset($quote->advisor->email) && !empty($quote->advisor->email))
-                    <p class="text-left text-white text-xl">Email: <a class="text-white"
-                            href="mailto:{{ $quote->advisor->email }}">{{ $quote->advisor->email }}</a></p>
-                @endif
-                @if (isset($quote->advisor->mobile_no) && !empty($quote->advisor->mobile_no))
-                    <p class="text-left text-white text-xl mar">Mobile number:
-                        {{ formatMobileNumber($quote->advisor->mobile_no) }} <span class="text-white"
-                            style="margin-top:3px"><img style="height:20px;"
-                                src="{{ public_path('images/whatsapp-small.png') }}"></span></p>
-                @endif
-                @if (isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no))
-                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white"
-                            href="tel:{{ $quote->advisor->landline_no }}">{{ formatLandlineNumber($quote->advisor->landline_no) }}</a>
-                    </p>
-                @endif
-
-            </div>
-            <div>
-                <h4 class="text-right text-white">InsuranceMarket.ae</h4>
-                <p class="text-right text-white text-xl"><a class="text-white" href="tel:+800253733">Happiness Center:
-                        800 ALFRED (800-253-733)</a></p>
-                <p class="text-right text-white text-xl"><a class="text-white"
-                        href="https://insurancemarket.ae">www.insurancemarket.ae</a></p>
-                <p class="text-right text-white text-xl">27th Floor, Control Tower, Motor City, Dubai,</p>
-                <p class="text-right text-white text-xl">United Arab Emirates, PO Box 26423 <a
-                        class="text-white text-underline"
-                        href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">(map)</a>
-                </p>
-            </div>
-        </table>
-    </footer>
+    {{-- PDF Page Footer Section --}}
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quote->uuid])
+    @endcomponent
+{{-- End of PDF Page Footer Section --}}
 
     {{-- PDF Page Inner Content --}}
     <main>
-        <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 130px;">
+        <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 200px;">
             <thead>
                 <tr>
                     <th class="alfred" rowspan="3">
                         <img src="{{ public_path('images/alfred.png') }}" />
                     </th>
                     @foreach ($planIds as $planId)
-                        <th class="provider" style="border: solid 1px #bfbfbf; position : relative">
+                        <th class="provider" style="border: solid 1px #bfbfbf;">
+                            <p class="text-center">
                                 @php
                                     $providerCode = strtolower($plans[$planId]->providerCode);
                                     $providerLogoImage = "https://cdn.alfred.ae/assets/logo/partners/{$providerCode}.png";
@@ -754,10 +728,8 @@
                                         $providerLogoImage = public_path('images/insurance_providers/default.png');
                                     }
                                 @endphp
-
-                                <div class="image-wrapper">
-                                    <img class="provider-logo" src="{{ $providerLogoImage }}" alt="Provider Logo" />
-                                </div>
+                                <img class="provider-logo" src="{{ $providerLogoImage }}" alt="Provider Logo" />
+                            </p>
                             {{-- @php
                                 $providerLogoImage = public_path(
                                     'images/insurance_providers/' . strtolower($plans[$planId]->providerCode) . '.png',
@@ -791,7 +763,6 @@
                     @endforeach
                 </tr>
                 {{-- buy now row --}}
-                @if(!$isAUH)
                     <tr>
                         <th class="bg-light-blue">
                             <p class="quote-info">Health insurance comparison for: <b>{{ $quote->first_name }}
@@ -811,7 +782,6 @@
                             </th>
                             @endforeach
                     </tr>
-                @endif
             </thead>
             <tbody>
                 @foreach ($features as $feature)
@@ -875,12 +845,10 @@
                                         </div>
                                     @endif
 
-                                    @if(!$isAUH)
                                         <p class="text-left" style="text-decoration: underline; font-style: italic;"><a
                                                 target="_blank"
                                                 href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . (isset($plans[$planId]->addons['coPayment']['id']) ? '&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id'] : '') }}">See
                                                 full list</a></p>
-                                    @endif
                                 </td>
                             @endforeach
 
@@ -901,14 +869,12 @@
                                     @elseif($feature['type'] == 'prop')
                                         {!! $plans[$planId]->{$feature['code']} !!}
                                     @elseif($feature['type'] == 'buy')
-                                        @if(!$isAUH)
                                             @if ($plans[$planId]->discountPremium)
                                                 <a target="_blank" class="btn-buy"
                                                     href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId }}">APPLY
                                                     Now</a>
                                             @else
                                                 N/A
-                                            @endif
                                         @endif
                                     @elseif(is_array($feature['type']))
                                         @php $value = "Excluded"; @endphp
@@ -933,7 +899,6 @@
                         @endforeach
                     </tr>
                 @endforeach
-                @if(!$isAUH)
                     <tr>
                         <td colspan="{{ sizeof($planIds) + 1 }}" class="no-border text-center">
                             <a target="_blank" class="btn-all-quotes"
@@ -941,7 +906,6 @@
                                 quotes</a>
                         </td>
                     </tr>
-                @endif
             </tbody>
         </table>
 
@@ -972,7 +936,7 @@
     </main>
 
     {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/rm-p3-2.png') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/rm-p3-2.png') }}" class="full-page-image" style="height:90%;" />
 </body>
 
 </html>

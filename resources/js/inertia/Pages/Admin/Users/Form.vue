@@ -18,6 +18,7 @@ const props = defineProps({
   userPermissions: Array,
   businessTypes: Array,
   userBusinessTypeIds: Array,
+  rmCategories: Array,
 });
 
 const page = usePage();
@@ -73,6 +74,12 @@ const userForm = useForm({
   department_id: props.user?.department_id ?? null,
   businessTypes: props?.userBusinessTypeIds ?? [],
   department_ids: props.department_ids?.length > 0 ? props.department_ids : [],
+  // rm_category_id: props.user?.rm_category_id,
+  rm_category_id: props.user
+    ? props.user.rm_category_id === null
+      ? -1
+      : props.user.rm_category_id
+    : null,
 });
 
 const isAdvisor = computed(() => {
@@ -481,6 +488,18 @@ watch(
           />
         </template>
       </x-select>
+
+      <x-select
+        label="RM CATEGORY"
+        v-model="userForm.rm_category_id"
+        :options="
+          props.rmCategories?.map(x => ({ value: x.id, label: x.text }))
+        "
+        :rules="[isRequired]"
+        placeholder="Select RM Category"
+        filterPlaceholder="Filter RM categories...."
+        required
+      />
 
       <x-select
         v-if="hasRole(rolesEnum.Admin)"
