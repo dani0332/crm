@@ -5,7 +5,6 @@ import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
-import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const props = defineProps({
   quote: Object,
@@ -23,7 +22,6 @@ const props = defineProps({
   quoteDocuments: Object,
   documentTypes: Object,
   documentType: Object,
-  cdnPath: String,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
   customerAdditionalContacts: Array,
@@ -54,7 +52,6 @@ const props = defineProps({
   paymentLink: String,
   quoteType: String,
   paymentTooltipEnum: Object,
-  storageUrl: String,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   amlStatusName: String,
@@ -149,6 +146,7 @@ const modals = reactive({
   activityConfirm: false,
   planFilters: false,
   sendConfirm: false,
+  memberPrincipal: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -200,6 +198,10 @@ const confirmDeleteData = reactive({
   member: null,
   activity: null,
   contact: null,
+});
+
+const confirmPrincipalData = reactive({
+  member: null,
 });
 
 const cleanObj = obj => useCleanObj(obj);
@@ -503,6 +505,7 @@ const memberForm = useForm({
   customer_member_id: null,
   quoteId: page.props.quote.uuid,
   pec: null,
+  is_principal: null,
 });
 
 const rules = {
@@ -523,6 +526,16 @@ function onEditMember(data) {
   memberActionEdit.value = true;
   modals.member = true;
 
+  updateMemberForm(data);
+
+  // set initialEditCategoryId to member_category_id when any member is edited
+  initialEditCategoryId.value = data.member_category_id;
+
+  // set previouslySelectedCategoryId for the refernece of initialEditCategoryId
+  previouslySelectedCategoryId.value = initialEditCategoryId.value;
+}
+
+function updateMemberForm(data) {
   memberForm.id = data.id;
   memberForm.gender = data.gender;
   memberForm.dob = data.dob;
@@ -535,12 +548,7 @@ function onEditMember(data) {
   memberForm.relation_code = data.relation_code;
   memberForm.update_lead_against_member = data.index === 1;
   memberForm.pec = data.is_pec_marked ? 1 : 2;
-
-  // set initialEditCategoryId to member_category_id when any member is edited
-  initialEditCategoryId.value = data.member_category_id;
-
-  // set previouslySelectedCategoryId for the refernece of initialEditCategoryId
-  previouslySelectedCategoryId.value = initialEditCategoryId.value;
+  memberForm.is_principal = data.is_principal;
 }
 
 const onAddMemberModal = () => {
@@ -640,6 +648,16 @@ const memberDelete = id => {
   memberForm.customer_member_id = id;
 };
 
+const memberPrincipal = data => {
+  // Update member form as we need to call update Kapi Api with all data
+  updateMemberForm(data);
+  memberForm.is_principal = 1;
+
+  modals.memberPrincipal = true;
+  confirmPrincipalData.member = data.id;
+  memberForm.customer_member_id = data.id;
+};
+
 const memberDeleteConfirmed = () => {
   memberForm.post(
     `/health-quote-delete-member`,
@@ -660,6 +678,28 @@ const memberDeleteConfirmed = () => {
       },
     },
   );
+};
+
+const memberPrincipalConfirmed = () => {
+  memberForm.put(`/health-quote-update-member`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: `${memberForm.first_name} ${memberForm.last_name} has been made principal`,
+        position: 'top',
+      });
+      onLoadAvailablePlansData();
+    },
+    onError: () => {
+      notification.error({
+        title: 'Some error occurred while processing request',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      modals.memberPrincipal = false;
+    },
+  });
 };
 
 const onRecieveMembersDetailsReview = () => {
@@ -1747,6 +1787,8 @@ const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
   createReusableTemplate();
 const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
   createReusableTemplate();
+const [PrincipalMemberButtonTemplate, PrincipalMemberButtonReuseTemplate] =
+  createReusableTemplate();
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
   createReusableTemplate();
 
@@ -1942,7 +1984,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
           :notes="quoteNotes"
           :modelType="modelType"
           :quote="quote"
-          :cdn="cdnPath"
         />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
@@ -2157,6 +2198,67 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
+
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  {{
+                    quote?.sub_source?.text ||
+                    quote.sub_source_text ||
+                    quote.sub_source_id ||
+                    'N/A'
+                  }}
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_option_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  {{
+                    quote?.sub_source_option?.text ||
+                    quote.sub_source_option_text ||
+                    quote.sub_source_options_id ||
+                    'N/A'
+                  }}
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      PRIMARY REF ID
+                    </label>
+                    <template #tooltip> ID of the original ECOM lead </template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote.primary_ref_id || 'N/A' }}</div>
+              </div>
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
@@ -2692,11 +2794,22 @@ const applyEmiratesIdNumMasking = emiratesId =>
               outlined
               @click.prevent="memberDelete(item.id)"
               :disabled="isDisabled"
-              v-if="readOnlyMode.isDisable === true"
+              v-if="readOnlyMode.isDisable === true && !item.is_principal"
             >
               Delete
             </x-button>
           </DeleteMemberButtonTemplate>
+          <PrincipalMemberButtonTemplate v-slot="{ isDisabled, item }">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              @click.prevent="memberPrincipal(item)"
+              v-if="!item.is_principal"
+            >
+              Make Principal
+            </x-button>
+          </PrincipalMemberButtonTemplate>
           <DataTable
             table-class-name="tablefixed overflow-auto"
             :headers="memberDetailsTable.columns"
@@ -2783,6 +2896,27 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   </template>
                 </x-tooltip>
                 <DeleteMemberButtonReuseTemplate v-else :item="item" />
+
+                <x-tooltip
+                  v-if="page.props.lockLeadSectionsDetails.member_details"
+                  position="left"
+                  align="center"
+                  class="yoyo-tip"
+                >
+                  <PrincipalMemberButtonReuseTemplate
+                    :isDisabled="true"
+                    :item="item"
+                  />
+                  <template #tooltip>
+                    <div class="whitespace-normal text-xs">
+                      This lead is now locked as the policy has been booked. If
+                      changes are needed such midterm deletion of member or
+                      marital status change, go to 'Send Update', select 'Add
+                      Update', and choose 'Endorsement Financial'
+                    </div>
+                  </template>
+                </x-tooltip>
+                <PrincipalMemberButtonReuseTemplate v-else :item="item" />
               </div>
             </template>
           </DataTable>
@@ -2992,6 +3126,61 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   :loading="memberForm.processing"
                 >
                   Delete
+                </x-button>
+              </div>
+            </template>
+          </x-modal>
+
+          <!-- Modal to make member principal -->
+          <x-modal
+            v-model="modals.memberPrincipal"
+            title="Confirm Principal Member"
+            show-close
+            backdrop
+          >
+            <div
+              v-if="isManualPlansCount > 0"
+              class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
+              role="alert"
+            >
+              <div class="flex">
+                <div class="py-1">
+                  <svg
+                    class="fill-current h-6 w-6 text-read-900 mr-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
+                  <p class="text-sm">
+                    Please revist all manual plan(s) and update the per member
+                    price
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p>Are you sure you want to make this member principal?</p>
+            <template #actions>
+              <div class="text-right space-x-4">
+                <x-button
+                  size="sm"
+                  ghost
+                  @click.prevent="modals.memberPrincipal = false"
+                >
+                  Cancel
+                </x-button>
+                <x-button
+                  size="sm"
+                  color="error"
+                  @click.prevent="memberPrincipalConfirmed"
+                  :loading="memberForm.processing"
+                >
+                  Confirm
                 </x-button>
               </div>
             </template>
@@ -3860,7 +4049,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
       :eCommercePriceWithLP="
         ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
@@ -3920,7 +4108,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
@@ -3944,12 +4131,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :insuranceProviders="insuranceProviders"
       :expanded="sectionExpanded"
       :documentTypes="documentTypes"
-    />
-
-    <CustomerAcceptanceLogsSection
-      :leadId="quote.id"
-      :lob="quoteType"
-      :expanded="sectionExpanded"
     />
 
     <BookPolicy
