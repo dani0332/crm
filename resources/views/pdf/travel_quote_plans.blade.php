@@ -952,8 +952,12 @@ foreach ($quotePlan->addons as &$addon) {
         </table>
     </main>
 
+    <div style="page-break-after: always;"></div>
+
     {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/travel-p1-2.png') }}" class="full-page-image"  style="height: 90%;"/>
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/travel-p1-2.png') }}" class="full-page-image"  style="height: 90%;"/>
+    </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$quote->uuid])
       
      
