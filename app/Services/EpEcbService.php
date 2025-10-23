@@ -204,7 +204,7 @@ class EpEcbService extends EpBookingService
                 dispatch(new SyncEpDocumentsJob($this->context));
             } else {
                 // Dispatch job with 2 minutes delay, because documents are available after 2 minutes of policy creation
-                LoggerService::info($this->logPrefix.' Dispatch SyncEpDocumentsJob with 2 minutes delay', extra: $this->logExtra);
+                LoggerService::info($this->logPrefix.' Dispatch SyncEpDocumentsJob with 1 minutes delay', extra: $this->logExtra);
                 dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(1));
             }
         }
