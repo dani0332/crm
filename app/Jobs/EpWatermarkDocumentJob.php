@@ -30,10 +30,7 @@ class EpWatermarkDocumentJob implements ShouldQueue
     ) {
         $this->logExtra = $this->context->logExtra;
 
-        $this->watermarkableDocTypeCodes = [
-            QuoteDocumentsEnum::POLICY_SCHEDULE,
-            QuoteDocumentsEnum::CAR_TAX_INVOICE,
-        ];
+        $this->watermarkableDocTypeCodes = QuoteDocumentsEnum::getWatermarkableDocTypeCodes($this->context->epShortCode);
     }
 
     public function handle(): void
