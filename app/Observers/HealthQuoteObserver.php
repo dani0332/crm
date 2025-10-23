@@ -21,13 +21,13 @@ use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\Logger\LoggerService;
 use App\Services\SLA\SLAService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
-use App\Services\Logger\LoggerService;
 
 class HealthQuoteObserver
 {
