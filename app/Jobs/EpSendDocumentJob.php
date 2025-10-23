@@ -168,7 +168,7 @@ class EpSendDocumentJob implements ShouldQueue
 
         $ccEmails = [];
         if(!empty($ccEmail))
-            $ccEmails[] = $ccEmails;
+            $ccEmails[] = $ccEmail;
 
         if(!empty($advisorEmail))
             $ccEmails[] = $advisorEmail;
