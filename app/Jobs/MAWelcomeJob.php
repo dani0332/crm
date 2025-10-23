@@ -2,8 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\MyAlFredUser;
 use App\Services\CustomerService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendSmsCustomerService;
 use Exception;
@@ -35,77 +37,15 @@ class MAWelcomeJob implements ShouldQueue
 
     public function handle()
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::MA_WELCOME_JOB);
+        LoggerService::info('MAWelcomeJob - Job started');
         if (! $this->customer || ! $this->customer->email || ! isValidEmail($this->customer->email)) {
-            info('MAWelcomeJob - Error - Empty/Invalid Customer email.');
+            LoggerService::info('MAWelcomeJob - Error - Empty/Invalid Customer email.');
 
             return false;
         }
 
-        if (! $this->extendCustomerSubscription()) {
-            if ($this->customer->is_we_sent) {
-                info('MAWelcomeJob - Invite already sent - Customer ID: '.$this->customer->id);
-
-                return false;
-            } else {
-                $this->sendMAWelcomeEmail();
-            }
-
-        }
-    }
-
-    private function extendCustomerSubscription()
-    {
-        $customer = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $this->customer->id)->latest()->first();
-
-        if (! $customer) {
-            $customer = $this->customer;
-            $customer->code = null;
-        }
-
-        $isToken = strlen($customer->code) > 8;
-        $hasToken = ! is_null($customer->code);
-
-        $customerDataArr = [];
-
-        if ($hasToken) {
-            $customerDataArr[$isToken ? 'token' : 'otp'] = $customer->code;
-        }
-
-        $customerDataArr['email'] = $this->customer->email;
-        $customerDataJson = json_encode($customerDataArr);
-        $magicUrlGeneratauthBasic = base64_encode(config('constants.BERLIN_BASIC_AUTH_USER_NAME').':'.config('constants.BERLIN_BASIC_AUTH_PASSWORD'));
-        $clientExtendSubscription = new \GuzzleHttp\Client;
-
-        try {
-            $requestExtendSubscription = $clientExtendSubscription->post(
-                config('constants.BERLIN_API_ENDPOINT').'/internal/extend-subscription',
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                        'Authorization' => 'Basic '.$magicUrlGeneratauthBasic,
-                    ],
-                    'body' => $customerDataJson,
-                    'timeout' => 20,
-                ]
-            );
-
-            $statusCode = $requestExtendSubscription->getStatusCode();
-
-            return true;
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $statusCode = $e->getResponse()->getStatusCode();
-
-            $errorData = json_decode($e->getResponse()->getBody()->getContents(), true);
-
-            if (isset($errorData['code']) && $errorData['code'] == 'CUSTOMER_NOT_FOUND') {
-                return false;
-            } else {
-                Log::error('Berlin Service - extendCustomerSubscription - Fail - Customer ID: '.$customer->id.' Status Code: '.$statusCode.' - Message: '.$e->getMessage());
-            }
-
-            return false;
-        }
+        $this->sendMAWelcomeEmail();
     }
 
     private function sendMAWelcomeEmail()

@@ -87,11 +87,11 @@ class HealthEmailService extends BaseService
                 return collect($member)
                     ->merge([
                         'index' => $index + 1,
-                        'dob' => isset($member->dob) ? Carbon::parse($member->dob)->format('d/m/Y') : null,
-                        'ageValue' => isset($member->dob) ? Carbon::parse($member->dob)->age : null,
+                        'dob' => isset($member['dob']) ? Carbon::parse($member['dob'])->format('d/m/Y') : null,
+                        'ageValue' => isset($member['dob']) ? Carbon::parse($member['dob'])->age : null,
                     ])
-                    ->when(isset($member->gender), function ($collection) use ($member) {
-                        return $collection->put('gender', strtoupper($member->gender) === 'M' ? 'Male' : 'Female');
+                    ->when(isset($member['gender']), function ($collection) use ($member) {
+                        return $collection->put('gender', strtoupper($member['gender']) === 'M' ? 'Male' : 'Female');
                     });
             })
             ->toArray();
@@ -230,16 +230,15 @@ class HealthEmailService extends BaseService
 
     public function initiateApplyNowEmail(HealthQuote $lead)
     {
-        if ($lead->isAUHLead() && $lead->isLeadSourceRevivalOrInsuranceWallet()) {
-            LoggerService::info(self::class." - Skipping Apply Now Email because lead is from AUH and Revival/Insurance Wallet for uuid: {$lead->uuid}");
-
-            return;
-        }
-
         LoggerService::info(self::class." Inside Apply Now for uuid: {$lead->uuid}");
         try {
             if (! $lead->isApplicationPending()) {
                 LoggerService::info(self::class." Skipping Apply Now Email becuase quote status is not application pending for uuid: {$lead->uuid}");
+
+                return;
+            }
+            if ($lead->isAUHLead() && $lead->isLeadSourceRevivalOrInsuranceWallet()) {
+                LoggerService::info(self::class." - Skipping Apply Now Email because lead is from AUH and Revival/Insurance Wallet for uuid: {$lead->uuid}");
 
                 return;
             }

@@ -39,6 +39,7 @@ use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\Life\EmbeddedProductService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\CentralTrait;
@@ -568,8 +569,16 @@ class SplitPaymentService
 
         $payment = $splitPayment->payment;
         $modelType = $request->modelType;
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $processNewUrl = true;
 
-        if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard) {
+        // for car quote with plan detail enabled, de-select embeded products & generate old url
+        if ($quoteTypeId == QuoteTypeId::Car && $request->isPlanDetailEnabled) {
+            (new EmbeddedProductService)->deSelectEPTransactions($payment->paymentable_id);
+            $processNewUrl = false;
+        }
+
+        if ($processNewUrl && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard) {
             // Check if the transaction is an "embedded" transaction from the main website's quote flow.
             $isEmbedded = EmbeddedTransaction::where('quote_request_type', $payment->paymentable_type)
                 ->where('quote_request_id', $payment->paymentable_id)
@@ -610,7 +619,6 @@ class SplitPaymentService
         $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
         $paymentLink .= $splitPayment->payment_method === PaymentMethodsEnum::InsureNowPayLater ? 'tabby' : 'checkout';
 
-        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $paymentParams = [
             'code' => $payment->code.'-'.$splitPayment->sr_no,
             'quoteTypeId' => $quoteTypeId,
@@ -690,7 +698,7 @@ class SplitPaymentService
                 'amountCollected' => $amountCollected,
                 'isFromJob' => $isFromJob,
             ];
-            LoggerService::error("processSplitPaymentApprove: Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}", extra: $extra);
+            LoggerService::info("processSplitPaymentApprove: Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}", extra: $extra);
             if ($isFromJob) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => PaymentProcessJobEnum::QUOTE_NOTFOUND_MESSAGE]);
 
@@ -865,6 +873,7 @@ class SplitPaymentService
                 if ($isFromJob) { // TODO : Add Ecom check to make sure only customer purchased policy schedule for automation
                     LoggerService::info("Split payment Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no}  createPolicyIssuanceAutomation started");
                     $this->createPolicyIssuanceAutomation($quoteModel, $modelType, $paymentSplit->payment);
+
                 }
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
 
@@ -1403,7 +1412,7 @@ class SplitPaymentService
         LoggerService::info("Split payment Code: {$paymentCode} isTravelOrCarQuote: ".($isTravelOrCarQuote ? 'true' : 'false'));
 
         // Check if the insurance provider is ALNC or AXA
-        $isAlncOrAxa = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA]);
+        $isAlncOrAxa = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA]);
         LoggerService::info("Split payment Code: {$paymentCode} isAlncOrAxa: ".($isAlncOrAxa ? 'true' : 'false'));
 
         // Only process if payment is not approved and:

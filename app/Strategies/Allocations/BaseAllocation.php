@@ -175,6 +175,10 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
 
+        if (! $this->isBusinessHours()) {
+            $statusOrder[] = UserStatusEnum::MANUAL_OFFLINE;
+        }
+
         $this->resolveNationalityConfig();
 
         foreach ($statusOrder as $status) {

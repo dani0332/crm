@@ -433,6 +433,7 @@ final class PermissionsEnum extends Enum
     public const PLAN_DETAILS_EDIT = 'plan-details-edit';
     public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
     public const LEADS_BY_EMAIL = 'leads-by-email';
+    public const BOR_DOCUMENT_UPLOAD = 'bor-document-upload';
     public const ASSIGN_CLIENT_SUPPORT = 'oe-ae-assign-client-support';
     public const ASSIGN_LEAD_ADVISOR = 'pe-oe-assign-leads-advisor';
 
@@ -451,6 +452,7 @@ final class PermissionsEnum extends Enum
 
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
     public const EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS = 'edit-vehicle-transaction-driver-details';
+    public const EDIT_LAST_YEAR_DETAILS = 'edit-last-year-details';
     public const NONRULE_LEADALLOCATION = 'nonrule_leadallocation';
 
     public static function getAdvisorConversionReportPermissions()

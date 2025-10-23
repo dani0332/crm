@@ -28,6 +28,7 @@ enum LoggerFeatureEnum: string
     case SEND_AND_BOOK_POLICY_EMAIL_JOB = 'send-and-book-policy-email-job';
     case POLICY_AUTOMATION = 'policy-automation';
     case SAGE_POLICY_BOOKING = 'sage-policy-booking';
+    case POLICY_ISSUE_WHATSAPP_MESSAGE = 'policy-issue-whatsapp-message';
     case SAGE_ENDORSEMENT_BOOKING = 'sage-endorsement-booking';
     case SAGE_POST_PREPAYMENT = 'sage-post-prepayment';
     case CAR_OCB_INTRO_EMAIL = 'car-ocb-intro-email';
@@ -37,4 +38,10 @@ enum LoggerFeatureEnum: string
     case SEND_FAILED_PAYMENT_EMAIL = 'send-failed-payment-email';
     case CAR_CQF_RENEWALS = 'car-cqf-renewals';
     case SUPPORT_USER_ASSIGNMENT = 'support-user-assignment';
+    case EP_PROCESS_PURCHASE_FLOW = 'ep-process-purchase-flow';
+    case EP_PROCESS_SYNC_DOCUMENT = 'ep-process-sync-document';
+    case EP_PROCESS_WATERMARK_DOCUMENT = 'ep-process-watermark-document';
+    case EP_PROCESS_SEND_DOCUMENT = 'ep-process-send-document';
+    case SLA_TRACKING = 'sla-tracking';
+    case MA_WELCOME_JOB = 'ma-welcome-job';
 }

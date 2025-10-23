@@ -14,6 +14,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProviderEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
@@ -310,20 +311,20 @@ class RenewalsUploadService
 
         try {
             $jobs = null;
-
+            $delayCounter = 0;
             RenewalQuoteProcess::where([
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
-            ])->chunkById(50, function ($leads) use (&$jobs) {
+            ])->chunkById(50, function ($leads) use (&$jobs, &$delayCounter) {
                 foreach ($leads as $lead) {
-                    $jobs[] = new CreateRenewalQuotesJob($lead);
+                    $jobs[] = (new CreateRenewalQuotesJob($lead))->delay(now()->addSeconds(2 + $delayCounter));
+                    $delayCounter += 2;
                 }
             });
 
             if ($jobs != null && count($jobs)) {
-                Haystack::build()
+                Bus::batch($jobs)
                     ->onQueue('renewals')
-                    ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
                         LoggerService::info($logPrefix.' creating quotes all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -335,8 +336,8 @@ class RenewalsUploadService
                     ->finally(function () use ($logPrefix) {
                         LoggerService::info($logPrefix.' creating quotes everything done');
                     })
+                    ->name('Renewals Upload Create Batch')
                     ->allowFailures()
-                    ->withDelay(2)
                     ->dispatch();
             } else {
                 LoggerService::info($logPrefix.' No jobs to create quotes');
@@ -355,20 +356,21 @@ class RenewalsUploadService
 
         try {
             $jobs = [];
-
+            $delayCounter = 0;
             RenewalQuoteProcess::where([
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
-            ])->chunkById(50, function ($leads) use (&$jobs) {
+            ])->chunkById(50, function ($leads) use (&$jobs, &$delayCounter) {
                 foreach ($leads as $lead) {
-                    $jobs[] = new UpdateRenewalQuotesJob($lead);
+                    $jobs[] = (new UpdateRenewalQuotesJob($lead))->delay(now()->addSeconds(2 + $delayCounter));
+                    $delayCounter += 2;
                 }
             });
 
             if (count($jobs) > 0) {
                 Bus::batch($jobs)
                     ->onQueue('renewals')
-                    ->then(function (Batch $batch) use ($logPrefix, $renewalsUploadLead) {
+                    ->then(function () use ($logPrefix, $renewalsUploadLead) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
@@ -380,7 +382,7 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
-                    ->name('Renewals Upload Batch')  // Optional: give your batch a name
+                    ->name('Renewals Upload Update Batch')  // Optional: give your batch a name
                     ->dispatch();
 
                 LoggerService::info($logPrefix.' jobs dispatched');
@@ -425,9 +427,9 @@ class RenewalsUploadService
         LoggerService::info($logPrefix.'  Fetch plans started');
 
         try {
-            $jobs = null;
+            $jobs = [];
             $totalSkipped = 0;
-
+            $delayCounter = 0;
             $query = RenewalQuoteProcess::where([
                 'status' => RenewalProcessStatuses::PROCESSED,
                 'quote_type' => QuoteTypeShortCode::CAR,
@@ -436,10 +438,11 @@ class RenewalsUploadService
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
             ])->with(['renewalUploadLead', 'carQuote']);
 
-            $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
+            $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped, &$delayCounter) {
                 foreach ($leads as $lead) {
                     if (! $lead->renewalUploadLead->skip_plans) {
-                        $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
+                        $jobs[] = (new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess))->delay(now()->addSeconds(10 + $delayCounter));
+                        $delayCounter += 10;
                     } else {
                         LoggerService::info($logPrefix.' skipping fetch plans for uuid : '.$lead->carQuote->uuid);
                         $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
@@ -453,12 +456,11 @@ class RenewalsUploadService
                 LoggerService::info($logPrefix.' total leads for skipped plans ('.$totalSkipped.')');
             }
 
-            if ($jobs != null && count($jobs)) {
+            if (count($jobs) > 0) {
                 LoggerService::info($logPrefix.' '.count($jobs).' found to schedule for fetch plans');
 
-                Haystack::build()
+                Bus::batch($jobs)
                     ->onQueue('renewals')
-                    ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalStatusProcess) {
                         LoggerService::info($logPrefix.' fetching plans all jobs completed successfully');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -472,8 +474,8 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' fetching plans everything done');
                         EmbeddedProductRepository::generateEPRenewal($batch);
                     })
+                    ->name('Renewals Upload Fetch Plans Batch')
                     ->allowFailures()
-                    ->withDelay(10)
                     ->dispatch();
 
                 LoggerService::info($logPrefix.' all jobs are scheduled');
@@ -1127,7 +1129,7 @@ class RenewalsUploadService
                 $isNameChanged = true;
             }
 
-            $isReAssignment = $quote->advisor_id != $advisorId;
+            $isReAssignment = $quote->advisor_id && $quote->advisor_id != $advisorId;
 
             $this->updateCustomer($quote, $customerData);
             $renewalBatchId = $quoteType->id !== QuoteTypeId::Car && isset($data['renewal_batch_id']) && $data['renewal_batch_id'] != null ? $data['renewal_batch_id'] ?? null : null;
@@ -1147,7 +1149,6 @@ class RenewalsUploadService
 
             if ($isQuoteTypeCar) {
                 $quoteData['dob'] = (! empty($data['dob'])) ? $this->formatDate($data['dob']) : null;
-                $quoteData['car_type_insurance_id'] = $carTypeOfInsurance->id ?? null;
                 $quoteData['claim_history_id'] = $claimHistory->id ?? null;
                 $quoteData['nationality_id'] = $nationality->id ?? null;
                 $quoteData['emirate_of_registration_id'] = $emirate->id ?? null;
@@ -1161,7 +1162,8 @@ class RenewalsUploadService
                 $quoteData['vehicle_category'] = $vehicleType->category ?? null;
                 $quoteData['year_of_manufacture'] = $data['year'] ?? null;
                 $quoteData['previous_advisor_id'] = ! empty($previousAdvisor) ? $previousAdvisor->name : '';
-                $quoteData['has_ncd_supporting_documents'] = $data['nc_letter'];
+                // Store as boolean for tinyint(1) compatibility
+                $quoteData['has_ncd_supporting_documents'] = (int) (isset($data['nc_letter']) && strtolower(trim($data['nc_letter'])) === 'yes');
             }
 
             $quoteData = $this->getNonEmptyValues($quoteData);
@@ -1187,14 +1189,11 @@ class RenewalsUploadService
                     ->first())) {
                     $quoteData['cylinder'] = $carModelDetail->cylinder;
                     $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
-                    $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
                 }
 
                 if ($renewalUploadLead->skip_plans == 2 && $data['make'] == GenericRequestEnum::MOTOR_BIKE) {
                     $quoteData['vehicle_type_id'] = VehicleType::where('text', GenericRequestEnum::BIKE)->first()->id ?? null;
                 }
-
-                $quoteData['vehicle_type_id'] = ! empty($data['vehicle_type_id'] ?? '') ? $data['vehicle_type_id'] : ($quoteData['vehicle_type_id'] ?? null);
 
                 if ($quoteType->code == quoteTypeCode::Car && ! empty($data['year_of_first_registration'])) {
                     $quoteData['year_of_first_registration'] = $data['year_of_first_registration'];
@@ -2136,7 +2135,7 @@ class RenewalsUploadService
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
                     $leadValidationErrors->push('Policy Number is mandatory for update process');
                 } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS && $lead->policy_number && $quoteTypeObject) {
-                    LoggerService::info('CQF VALIDATION - Checking Quote Existence 1 - '.$lead->policy_number);
+                    LoggerService::info('CQF VALIDATION - Checking Quote Existence  - '.$lead->policy_number);
                     if (! $quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)->first()) {
                         $leadValidationErrors->push('Quote does not exist for this policy number, use upload and create');
                     } else {
@@ -2224,7 +2223,7 @@ class RenewalsUploadService
                             }
 
                             if ($leadData->premium) {
-                                if (! $leadData->plan_type) {
+                                if (! empty($leadData->provider_name) && ! $leadData->plan_type) {
                                     $leadValidationErrors->push('Repair Type is required');
                                 } elseif ($leadData->plan_type == CarPlanType::TPL && $leadData->excess != 0) {
                                     $leadValidationErrors->push('Excess should be 0 with TPL');
@@ -2237,13 +2236,13 @@ class RenewalsUploadService
                                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && ! $leadData->insurer_quote_no) {
                                     $leadValidationErrors->push('Insurer Quote No is required');
                                 }
-                                if (! $leadData->premium && $leadData->excess) {
-                                    $leadValidationErrors->push('Renewal Premium is required with Excess');
+                                if ($leadData->excess && (! isset($leadData->premium) || $leadData->premium <= 0)) {
+                                    $leadValidationErrors->push('Renewal Premium is required when Excess is provided');
                                 }
                                 if (! $leadData->provider_name) {
                                     $leadValidationErrors->push('Provider Name is required');
                                 }
-                                if (! $leadData->plan_name) {
+                                if (! empty($leadData->provider_name) && ! $leadData->plan_name) {
                                     $leadValidationErrors->push('Plan Name is required');
                                 }
 
@@ -2254,145 +2253,161 @@ class RenewalsUploadService
                                 } else {
                                     $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
                                 }
+                                // Check if quote exists and validate 'Currently insured with' matches 'Provider Name'
+                                if (isset($quoteExist) && $quoteExist) {
+                                    // 'currently_insured_with' is the provider in Car Details, 'provider_name' is the column value
+                                    $currentlyInsuredWith = trim($quoteExist->currently_insured_with ?? '');
+                                    info('currentlyInsuredWith:'.$currentlyInsuredWith);
+                                    $providerName = trim($leadData->provider_name ?? '');
+                                    info('providerName:'.$providerName);
+                                    if ($currentlyInsuredWith !== '' && $providerName !== '' && strcasecmp($currentlyInsuredWith, $providerName) !== 0) {
+                                        $leadValidationErrors->push('Provider Name must match Currently Insured With');
+                                    }
+                                }
                                 if (isset($carPlan)) {
-                                    if (! $leadData->driver_cover) {
-                                        $leadValidationErrors->push('PAB Driver is required with Renewal Premium & Excess');
+                                    // Required if Renewal Premium is available
+                                    if ((isset($leadData->premium) && $leadData->premium <= 0) && ! $leadData->driver_cover) {
+                                        $leadValidationErrors->push('PAB Driver is required with Renewal Premium');
                                     }
-                                    if ($leadData->driver_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
+                                    // Required if Renewal Premium is available
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->driver_cover_amount === '') {
+                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium ');
                                     }
-                                    if (! $leadData->passenger_cover) {
-                                        $leadValidationErrors->push('PAB Passenger is required with Renewal Premium & Excess');
-                                    }
-                                    if ($leadData->driver_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
-                                    }
-                                    if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProviderEnum::TM->value && ! $leadData->car_hire) {
-                                        $leadValidationErrors->push('Rent a car is required with TPL & TM');
-                                    }
-                                    if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
-                                        $leadValidationErrors->push('Amount - Rent a Car is required with TPL & TM');
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) && ! $leadData->passenger_cover) {
+                                        $leadValidationErrors->push('PAB Passenger is required with Renewal Premium ');
                                     }
 
-                                    if ($leadData->plan_type != CarPlanType::TPL && $leadData->oman_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount- Oman Cover is required');
-                                    }
-                                    if ($leadData->road_side_assistance_amount == '') {
-                                        $leadValidationErrors->push('Amount- Road Side Assistance is required with Renewal Premium & Excess');
-                                    }
-                                    if ($leadData->plan_type != CarPlanType::TPL && ! $leadData->oman_cover) {
-                                        $leadValidationErrors->push('Oman cover is required');
-                                    }
-                                    if (! $leadData->road_side_assistance) {
-                                        $leadValidationErrors->push('Road Side Assistance is required with Renewal Premium & Excess');
-                                    }
-                                    if (! $leadData->year_of_first_registration) {
-                                        $leadValidationErrors->push('First Year of Registration is required with Renewal Premium & Excess');
-                                    }
-
-                                    $carPlan->load([
-                                        'carAddons' => function ($q) {
-                                            $q->whereIn('code', [
-                                                CarPlanAddonsCode::DRIVER_COVER,
-                                                CarPlanAddonsCode::PASSENGER_COVER,
-                                                CarPlanAddonsCode::CAR_HIRE,
-                                                CarPlanAddonsCode::OMAN_COVER,
-                                                CarPlanAddonsCode::BREAKDOWN_COVER,
-                                            ])->with('carAddonOptions');
-                                        },
-                                    ]);
-
-                                    $planAddons = collect($carPlan->carAddons)->keyBy('code')->toArray();
-
-                                    $addons = [
-                                        'driver_cover' => CarPlanAddonsCode::DRIVER_COVER,
-                                        'passenger_cover' => CarPlanAddonsCode::PASSENGER_COVER,
-                                        'car_hire' => CarPlanAddonsCode::CAR_HIRE,
-                                        'oman_cover' => CarPlanAddonsCode::OMAN_COVER,
-                                        'road_side_assistance' => CarPlanAddonsCode::BREAKDOWN_COVER,
-                                    ];
-
-                                    foreach ($addons as $key => $addonCode) {
-                                        LoggerService::info('planType:'.$leadData->plan_type.' insurer:'.$leadData->insurer.' addonCode:'.$addonCode);
-
-                                        if (
-                                            $leadData->plan_type == CarPlanType::TPL &&
-                                            $leadData->insurer == InsuranceProviderEnum::TM->value &&
-                                            $addonCode == CarPlanAddonsCode::CAR_HIRE
-                                        ) {
-                                            continue;
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProvidersEnum::TM && ! $leadData->car_hire) {
+                                        if ($leadData->driver_cover_amount == '') {
+                                            $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
+                                        }
+                                        if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProviderEnum::TM->value && ! $leadData->car_hire) {
+                                            $leadValidationErrors->push('Rent a car is required with TPL & TM');
+                                        }
+                                        if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
+                                            $leadValidationErrors->push('Amount - Rent a Car is required with TPL & TM');
                                         }
 
-                                        if (isset($planAddons[$addonCode])) {
-                                            $addon = $planAddons[$addonCode];
+                                        if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && $leadData->oman_cover_amount == '') {
+                                            $leadValidationErrors->push('Amount- Oman Cover is required');
+                                        }
+                                        if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->road_side_assistance_amount == '') {
+                                            $leadValidationErrors->push('Amount- Road Side Assistance is required with Renewal Premium & Excess');
+                                        }
+                                        if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && ! $leadData->oman_cover) {
+                                            $leadValidationErrors->push('Oman cover is required');
+                                        }
+                                        if ((isset($leadData->premium) && $leadData->premium > 0) && ! $leadData->road_side_assistance) {
+                                            $leadValidationErrors->push('Road Side Assistance is required with Renewal Premium & Excess');
+                                        }
+                                        // if (! $leadData->year_of_first_registration) {
+                                        //     $leadValidationErrors->push('First Year of Registration is required with Renewal Premium & Excess');
+                                        // }
 
-                                            $found = false;
-                                            foreach ($addon['car_addon_options'] as $option) {
-                                                if (strtolower(trim($option['value'])) == strtolower(trim($leadData->{$key}))) {
-                                                    $found = true;
-                                                    break;
+                                        $carPlan->load([
+                                            'carAddons' => function ($q) {
+                                                $q->whereIn('code', [
+                                                    CarPlanAddonsCode::DRIVER_COVER,
+                                                    CarPlanAddonsCode::PASSENGER_COVER,
+                                                    CarPlanAddonsCode::CAR_HIRE,
+                                                    CarPlanAddonsCode::OMAN_COVER,
+                                                    CarPlanAddonsCode::BREAKDOWN_COVER,
+                                                ])->with('carAddonOptions');
+                                            },
+                                        ]);
+
+                                        $planAddons = collect($carPlan->carAddons)->keyBy('code')->toArray();
+
+                                        $addons = [
+                                            'driver_cover' => CarPlanAddonsCode::DRIVER_COVER,
+                                            'passenger_cover' => CarPlanAddonsCode::PASSENGER_COVER,
+                                            'car_hire' => CarPlanAddonsCode::CAR_HIRE,
+                                            'oman_cover' => CarPlanAddonsCode::OMAN_COVER,
+                                            'road_side_assistance' => CarPlanAddonsCode::BREAKDOWN_COVER,
+                                        ];
+
+                                        foreach ($addons as $key => $addonCode) {
+                                            LoggerService::info('planType:'.$leadData->plan_type.' insurer:'.$leadData->insurer.' addonCode:'.$addonCode);
+
+                                            if (
+                                                $leadData->plan_type == CarPlanType::TPL &&
+                                                $leadData->insurer == InsuranceProviderEnum::TM->value &&
+                                                $addonCode == CarPlanAddonsCode::CAR_HIRE
+                                            ) {
+                                                continue;
+                                            }
+
+                                            if (isset($planAddons[$addonCode])) {
+                                                $addon = $planAddons[$addonCode];
+
+                                                $found = false;
+                                                foreach ($addon['car_addon_options'] as $option) {
+                                                    if (strtolower(trim($option['value'])) == strtolower(trim($leadData->{$key}))) {
+                                                        $found = true;
+                                                        break;
+                                                    }
+                                                }
+
+                                                if (! $found) {
+                                                    $leadValidationErrors->push('Invalid car addon option provided for  - '.$addonCode);
                                                 }
                                             }
-
-                                            if (! $found) {
-                                                $leadValidationErrors->push('Invalid car addon option provided for  - '.$addonCode);
-                                            }
                                         }
                                     }
                                 }
-                            }
-                            if (! empty($leadData->registration_location) && ! Emirate::where('text', $leadData->registration_location)->first()) {
-                                $leadValidationErrors->push('Invalid Registration Location');
-                            }
-                            if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {
-                                $leadValidationErrors->push('Invalid Previous Advisor Email');
-                            }
+                                if (! empty($leadData->registration_location) && ! Emirate::where('text', $leadData->registration_location)->first()) {
+                                    $leadValidationErrors->push('Invalid Registration Location');
+                                }
+                                if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {
+                                    $leadValidationErrors->push('Invalid Previous Advisor Email');
+                                }
 
-                            // Validation batch for car removed as per the discussion with the team
-                            // click up: https://app.clickup.com/t/86eqmrdec
-                            // if ($leadData->batch) {
-                            //     $batchRef = $leadData->batch == null ? false : RenewalBatch::where([['name', $leadData->batch], ['quote_type_id', QuoteTypeId::Car]])->first();
-                            //     ! $batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
-                            // }
+                                // Validation batch for car removed as per the discussion with the team
+                                // click up: https://app.clickup.com/t/86eqmrdec
+                                // if ($leadData->batch) {
+                                //     $batchRef = $leadData->batch == null ? false : RenewalBatch::where([['name', $leadData->batch], ['quote_type_id', QuoteTypeId::Car]])->first();
+                                //     ! $batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
+                                // }
 
-                            if (isset($leadData->registration_type) && empty($leadData->registration_type)) {
-                                $leadValidationErrors->push('Registration Type is required');
-                            }
-                            if (isset($leadData->registration_type) && ! empty($leadData->registration_type) && ! CarRegistrationType::hasValue($leadData->registration_type)) {
-                                $leadValidationErrors->push('Invalid Registration Type');
-                            }
-                            if (! empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY) {
-                                if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::COMMERCIAL) {
+                                if (isset($leadData->registration_type) && empty($leadData->registration_type)) {
+                                    $leadValidationErrors->push('Registration Type is required');
+                                }
+                                if (isset($leadData->registration_type) && ! empty($leadData->registration_type) && ! CarRegistrationType::hasValue($leadData->registration_type)) {
+                                    $leadValidationErrors->push('Invalid Registration Type');
+                                }
+                                if (! empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY) {
+                                    if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::COMMERCIAL) {
 
-                                    if (empty($leadData->business_activity)) {
-                                        $leadValidationErrors->push('Business Activity is required');
+                                        if (empty($leadData->business_activity)) {
+                                            $leadValidationErrors->push('Business Activity is required');
+                                        }
+                                        if (! empty($leadData->business_activity) && ! BusinessActivity::where('name', $leadData->business_activity)->first()) {
+                                            $leadValidationErrors->push('Invalid Business Activity');
+                                        }
+
                                     }
-                                    if (! empty($leadData->business_activity) && ! BusinessActivity::where('name', $leadData->business_activity)->first()) {
-                                        $leadValidationErrors->push('Invalid Business Activity');
+                                    if (empty($leadData->vehicle_use)) {
+                                        $leadValidationErrors->push('Vehicle Use is required');
+                                    }
+                                    if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::PRIVATE) {
+                                        if (empty($leadData->driver_name)) {
+                                            $leadValidationErrors->push('Driver Name is required');
+                                        }
+                                        if (empty($leadData->nationality)) {
+                                            $leadValidationErrors->push('Driver Nationality is required');
+                                        }
+                                        if (empty($leadData->dob)) {
+                                            $leadValidationErrors->push('Driver Date of Birth is required');
+                                        }
+                                        if (empty($leadData->driving_experience)) {
+                                            $leadValidationErrors->push('Driver Experience is required');
+                                        }
+                                        if (! empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
+                                            $leadValidationErrors->push('Invalid Driver Experience');
+                                        }
                                     }
 
                                 }
-                                if (empty($leadData->vehicle_use)) {
-                                    $leadValidationErrors->push('Vehicle Use is required');
-                                }
-                                if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::PRIVATE) {
-                                    if (empty($leadData->driver_name)) {
-                                        $leadValidationErrors->push('Driver Name is required');
-                                    }
-                                    if (empty($leadData->nationality)) {
-                                        $leadValidationErrors->push('Driver Nationality is required');
-                                    }
-                                    if (empty($leadData->dob)) {
-                                        $leadValidationErrors->push('Driver Date of Birth is required');
-                                    }
-                                    if (empty($leadData->driving_experience)) {
-                                        $leadValidationErrors->push('Driver Experience is required');
-                                    }
-                                    if (! empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
-                                        $leadValidationErrors->push('Invalid Driver Experience');
-                                    }
-                                }
-
                             }
                         }
                         break;
@@ -2800,19 +2815,19 @@ class RenewalsUploadService
 
         try {
             $jobs = null;
-
+            $delayCounter = 0;
             $this->getOcbLeadsQuery($batch)
-                ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail) {
+                ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail, &$delayCounter) {
                     foreach ($leads as $lead) {
-                        $jobs[] = new RenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead);
+                        $jobs[] = (new RenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead))->delay(now()->addSeconds(1 + $delayCounter));
+                        $delayCounter += 1;
                     }
                 });
 
-            if ($jobs != null && count($jobs)) {
+            if (count($jobs) > 0) {
                 LoggerService::info($logPrefix.'total leads to be scheduled for OCB : '.count($jobs));
-                Haystack::build()
+                Bus::batch($jobs)
                     ->onQueue('renewals')
-                    ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsBatchEmail, $batch) {
                         LoggerService::info($logPrefix.' scheduling OCB email all jobs completed successfully');
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -2833,8 +2848,8 @@ class RenewalsUploadService
                     ->finally(function () use ($logPrefix) {
                         LoggerService::info($logPrefix.' scheduling OCB email everything done');
                     })
+                    ->name('Renewals Upload Schedule OCB Email Batch')
                     ->allowFailures()
-                    ->withDelay(1)
                     ->dispatch();
             } else {
                 LoggerService::info($logPrefix.' No leads to schedule OCB email');
@@ -2951,21 +2966,21 @@ class RenewalsUploadService
 
         try {
             $jobs = null;
-
+            $delayCounter = 0;
             RenewalQuoteProcess::where([
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
-            ])->chunkById(50, function ($leads) use (&$jobs) {
+            ])->chunkById(50, function ($leads) use (&$jobs, &$delayCounter) {
                 foreach ($leads as $lead) {
-                    $jobs[] = new CreateTravelRenewalQuotesJob($lead);
+                    $jobs[] = (new CreateTravelRenewalQuotesJob($lead))->delay(now()->addSeconds(2 + $delayCounter));
+                    $delayCounter += 2;
                 }
             });
 
-            if ($jobs != null && count($jobs)) {
+            if (count($jobs) > 0) {
                 LoggerService::info('the value of $jobs is : '.count($jobs));
-                Haystack::build()
+                Bus::batch($jobs)
                     ->onQueue('renewals')
-                    ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -2977,8 +2992,8 @@ class RenewalsUploadService
                     ->finally(function () use ($logPrefix) {
                         LoggerService::info($logPrefix.' creating travel quotes everything done');
                     })
+                    ->name('Renewals Upload Create Travel Quotes Batch')
                     ->allowFailures()
-                    ->withDelay(2)
                     ->dispatch();
             } else {
                 LoggerService::info($logPrefix.' No jobs to create quotes');
@@ -3068,14 +3083,20 @@ class RenewalsUploadService
 
     public function getSearch($data)
     {
-        $quotes = [];
-        $product = $data->product;
-        if ($product == QuoteTypeId::Business) {
-            $quotes = BusinessQuoteRepository::getDataOfBusiness()->withQueryString();
-        } else {
-            $quoteType = QuoteTypes::getName($product);
-            $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
-            $quotes = $repository::getData()->withQueryString();
+        try {
+            $quotes = [];
+            $product = $data->product;
+            if ($product == QuoteTypeId::Business) {
+                $quotes = BusinessQuoteRepository::getDataOfBusiness()->withQueryString();
+            } else {
+                $quoteType = QuoteTypes::getName($product);
+                $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
+                $quotes = $repository::getData()->withQueryString();
+            }
+        } catch (\Exception $e) {
+            LoggerService::error('UAC FN: getSearch Error: '.$e->getMessage());
+
+            return [];
         }
 
         return $quotes;
@@ -3087,7 +3108,12 @@ class RenewalsUploadService
         $product = $data->product;
         $quoteType = QuoteTypes::getName($product);
         $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
-        $quotes = $repository::export();
+
+        if ($quoteType->value == QuoteTypes::CAR->value) {
+            $quotes = $repository::RenewalExport();
+        } else {
+            $quotes = $repository::export();
+        }
 
         return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal');
     }
@@ -3205,6 +3231,7 @@ class RenewalsUploadService
                     ->finally(function () use ($logPrefix) {
                         LoggerService::info($logPrefix.' Batch retry process completed');
                     })
+                    ->name('Renewals Upload Retry Health Batch')
                     ->allowFailures()
                     ->dispatch();
 
@@ -3331,7 +3358,7 @@ class RenewalsUploadService
             if (! $entityMapping) {
 
                 $entity = Entity::create([
-                    'company_name' => $data['customer_name'],
+                    'company_name' => ! empty($data['customer_name']) ? $data['customer_name'] : ($quoteData->first_name.' '.$quoteData->last_name),
                 ]);
                 $entityId = $entity->id;
                 $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entityId]);

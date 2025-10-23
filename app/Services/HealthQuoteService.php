@@ -18,9 +18,11 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SLAActionTypeEnum;
 use App\Facades\Ken;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
+use App\Jobs\ReEvaluatePecJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\Customer;
@@ -39,6 +41,7 @@ use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
+use App\Services\SLA\SLAService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
@@ -47,9 +50,9 @@ use Auth;
 use Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use PDF;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthQuoteService extends BaseService
 {
@@ -62,7 +65,7 @@ class HealthQuoteService extends BaseService
 
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder, protected SLAService $slaService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
@@ -249,11 +252,9 @@ class HealthQuoteService extends BaseService
         return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
     }
 
-    public function isAUHLead($id): bool
+    public function getLead($id): HealthQuote
     {
-        $quote = HealthQuote::findOrFail($id);
-
-        return $quote->isAUHLead(false);
+        return HealthQuote::findOrFail($id);
     }
 
     public function getEntityPlain($id)
@@ -332,6 +333,7 @@ class HealthQuoteService extends BaseService
             'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
             'salaryBandId' => $request->salary_band_id,
             'memberCategoryId' => $request->member_category_id,
+            'isPecMarked' => $request->pec == 1,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -403,7 +405,6 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
-
         $healthQuote = HealthQuote::where('uuid', $id)->first();
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
         $healthQuote->first_name = $request->first_name;
@@ -427,6 +428,7 @@ class HealthQuoteService extends BaseService
                 'salary_band_id' => $request->salary_band_id,
                 'gender' => $request->gender,
                 'dob' => $request->dob,
+                'is_pec_marked' => $request->pec == 1,
             ];
 
             $healthQuoteFirstMember = HealthMemberDetail::where('health_quote_request_id', $healthQuote->id)->first();
@@ -452,7 +454,12 @@ class HealthQuoteService extends BaseService
         $healthQuote->dob = $request->dob;
         $healthQuote->policy_start_date = $request->policy_start_date;
         $healthQuote->health_plan_type_id = $request->plan_type_id;
+
         $healthQuote->save();
+
+        $this->slaService->meetSLAOnEdit($healthQuote, SLAActionTypeEnum::LEAD_EDIT);
+
+        ReEvaluatePecJob::dispatch($healthQuote->uuid);
 
         if (isset($request->return_to_view)) {
             return redirect('quote/health/'.$id)->with('success', 'Health Quote has been updated');
@@ -1007,8 +1014,11 @@ class HealthQuoteService extends BaseService
         $userId = (int) $request->assigned_to_id_new;
         $quote_type = $request->modelType;
         $quoteBatch = QuoteBatches::latest()->first();
+        $jobs = [];
+        $delayCounter = 0;
 
         foreach ($leadsIds as $leadId) {
+            $currentJobChains = [];
             $lead = $this->getEntityPlain($leadId);
 
             if (isset($request->assign_team) && $request->assign_team !== '') {
@@ -1045,13 +1055,18 @@ class HealthQuoteService extends BaseService
 
             $lead->save();
 
-            Haystack::build()
-                ->addJob(new GetQuotePlansJob($lead))
-                ->then(function () use ($lead, $isReassignment, $previousAdvisorId) {
-                    if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                        IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment)->delay(now()->addSeconds(15));
-                    }
-                })->dispatch();
+            $currentJobChains[] = new GetQuotePlansJob($lead);
+            if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
+                $currentJobChains[] = (new IntroEmailJob(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment))->delay(now()->addSeconds(15 + $delayCounter));
+                $delayCounter += 15;
+            }
+            $jobs[] = $currentJobChains;
+        }
+
+        if ($jobs != null && count($jobs) > 0) {
+            Bus::batch($jobs)
+                ->name('Health Leads Manual Assignment')
+                ->dispatch();
         }
 
         return [];
@@ -1297,6 +1312,7 @@ class HealthQuoteService extends BaseService
                 'salaryBandId' => $request->salary_band_id,
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
+                'isPecMarked' => $request->pec == 1,
             ];
 
             $dataArray = [
@@ -1332,6 +1348,8 @@ class HealthQuoteService extends BaseService
                 'salaryBandId' => $request->salary_band_id,
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
+                'isPecMarked' => $request->pec == 1,
+                'isPrincipal' => $request->is_principal == 1,
             ];
 
             $dataArray = [
@@ -1340,6 +1358,7 @@ class HealthQuoteService extends BaseService
             ];
 
             $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
+
         } else {
             $response = [
                 'status' => false,
@@ -1426,7 +1445,7 @@ class HealthQuoteService extends BaseService
 
         $isAUH = $quote->isAUHLead(false);
 
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150, 'isRemoteEnabled' => true])
             ->loadView('pdf.health_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'isAUH'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf

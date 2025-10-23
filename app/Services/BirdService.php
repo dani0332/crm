@@ -19,7 +19,14 @@ class BirdService extends BaseService
     }
     public function triggerWebHookRequest($url, $data, $method = 'post', $isAccessKey = false)
     {
-        $uuid = $data->uuid ?? '';
+
+        if (is_array($data)) {
+            $uuid = $data['uuid'] ?? $data['refId'] ?? $data['quoteUID'] ?? '';
+        } elseif (is_object($data)) {
+            $uuid = $data->uuid ?? $data->refId ?? $data->quoteUID ?? '';
+        } else {
+            $uuid = '';
+        }
         $logContext = ['Ref-ID' => $uuid, 'URL' => $url, 'Method' => $method];
 
         try {
@@ -79,8 +86,8 @@ class BirdService extends BaseService
     public function createQuoteWorkFlowDetails($lead, $response, $flowType = null, $quoteTypeId = null)
     {
         try {
-            $runId = collect($response->headers['Run-Id'])->first();
-            if (! empty($runId)) {
+            if (! empty($response->headers['Run-Id'])) {
+                $runId = collect($response->headers['Run-Id'])->first();
                 QuoteFlowDetails::create([
                     'quote_uuid' => $lead->uuid,
                     'quote_type_id' => $quoteTypeId,

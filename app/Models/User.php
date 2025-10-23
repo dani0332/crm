@@ -38,6 +38,7 @@ class User extends Authenticatable implements AuditableContract
         'email',
         'password',
         'profile_photo_path',
+        'rm_category_id',
     ];
 
     /**
@@ -402,6 +403,11 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsTo(Department::class)->select('id', 'name');
     }
 
+    public function rmCategory()
+    {
+        return $this->belongsTo(Lookup::class, 'rm_category_id', 'id');
+    }
+
     public function advisors()
     {
         return $this->hasMany(InslyAdvisor::class);
@@ -415,6 +421,11 @@ class User extends Authenticatable implements AuditableContract
     public function departments()
     {
         return $this->belongsToMany(Department::class, 'user_departments', 'user_id', 'department_id');
+    }
+
+    public function statusLogs()
+    {
+        return $this->hasMany(UserStatusAuditLog::class, 'user_id');
     }
 
     public function isValueUser(QuoteTypes $quoteType): bool
