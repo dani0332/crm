@@ -1356,7 +1356,7 @@ class HealthQuoteService extends BaseService
                 'quoteUID' => $quoteId,
                 'memberDetails' => [$memberDetails],
             ];
-            
+
             $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
 
         } else {
