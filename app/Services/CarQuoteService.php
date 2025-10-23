@@ -1591,7 +1591,7 @@ class CarQuoteService extends BaseService
 
         $ecomInsuranceLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid;
         try {
-            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150, 'isPhpEnabled' => true])
+            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150, 'isPhpEnabled' => true, 'isRemoteEnabled' => true])
                 ->loadView($view, compact('quotePlans', 'planIds', 'quote', 'addons', 'ecomInsuranceLink'));
         } catch (\Throwable $e) {
             LoggerService::error('Error generating PDF: '.$e->getMessage(), extra: [

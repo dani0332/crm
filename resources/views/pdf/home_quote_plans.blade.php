@@ -28,9 +28,11 @@
             position: fixed;
             top: 0;
             left: 0;
-            height: 200px;
+            height: 85px;
             width: 100%;
             display: block;
+            background: white;
+            z-index: 1;
         }
 
         div,
@@ -387,16 +389,20 @@
 </style>
 </head>
 
-<body>
+<body style="margin: 0; padding: 0;">
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header_and_footer.jpg') }}" class="full-page-image" style="height: 90%;"/>
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header_and_footer.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$quote->uuid])
       
      
 @endcomponent
     <div style="page-break-after: always;"></div>
     {{-- Second Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" class="full-page-image" style="height: 90%;"/>
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$quote->uuid])
       
      
@@ -544,7 +550,7 @@
     <main>
         <table class="main-table {{ $tableClass }}">
             <thead>
-                <p style="margin-top:200px"></p>
+                <p style="margin-top:100px"></p>
                 <tr>
                     <th class="bg-light-blue" rowspan="2">
                         <p class="quote-info raleway-font" style="font-weight:700;">Insurance company
@@ -834,8 +840,9 @@
     
 
     {{-- Second Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page_with_header.jpg') }}"
-        class="full-page-image" style="height: 90%;"/>
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page_with_header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$quote->uuid])
       
      
@@ -843,8 +850,9 @@
     <div style="page-break-after: always;"></div>
 
     {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page_with_header.jpg') }}"
-    class="full-page-image" style="height: 90%;"/>
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page_with_header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$quote->uuid])
       
      
