@@ -239,6 +239,17 @@ watch(
       );
       additionalDriverDetailsForm.uae_driving_experience =
         quote?.uae_license_held_for?.rsa_driving_experience;
+    } else if (newValue === 0 || newValue === '0') {
+      additionalDriverDetailsForm.driver_first_name = '';
+      additionalDriverDetailsForm.driver_last_name = '';
+      additionalDriverDetailsForm.driver_dob = '';
+      additionalDriverDetailsForm.driver_gender = null;
+      additionalDriverDetailsForm.driver_license_number = null;
+      additionalDriverDetailsForm.license_issue_place = null;
+      additionalDriverDetailsForm.license_issue_date = null;
+      additionalDriverDetailsForm.license_expiry_date = null;
+      additionalDriverDetailsForm.uae_driving_experience = null;
+      additionalDriverDetailsForm.home_country_license_issuance = null;
     }
   },
 );
