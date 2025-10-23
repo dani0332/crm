@@ -312,7 +312,7 @@ const disableOption = (slug) => {
 
   if (
     props.reportable.source != leadSourceEnum.INSLY &&
-    props.reportable.qutoe_status_id != quoteStatusEnum.PolicyBooked
+    props.reportable.quote_status_id != quoteStatusEnum.PolicyBooked
   ) {
     return [sendUpdateEnum.MPC, sendUpdateEnum.CI].includes(slug);
   }
