@@ -26,6 +26,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use App\Services\Logger\LoggerService;
 
 class HealthQuoteObserver
 {
@@ -91,7 +93,8 @@ class HealthQuoteObserver
                 if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                     $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
                     if ($healthQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-                        OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(now()->addMinutes(2));
+                        OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
+                        LoggerService::info('OCAHealthFollowupEmailJob dispatched ');
                     }
 
                 }
