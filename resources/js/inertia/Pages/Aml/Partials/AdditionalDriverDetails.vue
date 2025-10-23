@@ -250,6 +250,7 @@ watch(
       additionalDriverDetailsForm.license_expiry_date = null;
       additionalDriverDetailsForm.uae_driving_experience = null;
       additionalDriverDetailsForm.home_country_license_issuance = null;
+      additionalDriverDetailsForm.home_country_driving_experience = null;
     }
   },
 );
