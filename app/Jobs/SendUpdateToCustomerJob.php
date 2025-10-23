@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\BirdFlowStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Jobs\EP\SendEPJob;
@@ -55,7 +56,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
             $quoteTypeId = $sendUpdateLog->quote_type_id;
             $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
             $quoteModel = $this->getModelObject($quoteType);
-            $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
+            $quote = $quoteModel::with('latestInsured')->where('uuid', $sendUpdateLog->quote_uuid)->first();
 
             @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmailData($this->sendUpdate, $quote);
             if (! empty($templateId)) {
@@ -63,7 +64,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
                 $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId);
                 LoggerService::info('job: SendUpdateToCustomerJob - Job Response ', extra: ['emailData' => json_encode($response)]);
 
-                if ($response == 201) {
+                if ($response == BirdFlowStatusEnum::BIRD_SUCCESS_STATUS_CODE) {
                     LoggerService::info('job:SendUpdateToCustomerJob - Updating status', extra: [
                         'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
                     ]);
