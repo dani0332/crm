@@ -235,9 +235,6 @@ final class ApplicationStorageEnums extends Enum
     /* BOR (Broker on Record) Workflow Integration */
     public const BIRD_BOR_WORKFLOW_URL = 'BIRD_BOR_WORKFLOW_URL';
 
-    /* Sent EP Policy Documents Email */
-    public const BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL = 'BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL';
-
     /* Advisor Emails for Allocation */
     public const YACHT_ADVISORS = 'YACHT_ADVISORS';
     public const PET_ADVISORS = 'PET_ADVISORS';
@@ -286,4 +283,13 @@ final class ApplicationStorageEnums extends Enum
     public const SLA_CALLBACK_HOURS = 'SLA_CALLBACK_HOURS';
     public const SLA_REMINDER_MINUTES = 'SLA_REMINDER_MINUTES';
     public const RTA_PORTAL_LINK = 'RTA_PORTAL_LINK';
+
+    /* EP ECB Policy Configuration */
+    public const BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL = 'BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL';
+    public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_SUPPORT_USER = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_SUPPORT_USER';
+    public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC';
+    public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC';
+    public const EP_ECB_POLICY_CLAIM_LIMIT = 'EP_ECB_POLICY_CLAIM_LIMIT';
+    public const EP_ECB_POLICY_COVERAGE = 'EP_ECB_POLICY_COVERAGE';
+    public const EP_ECB_POLICY_DURATION = 'EP_ECB_POLICY_DURATION';
 }

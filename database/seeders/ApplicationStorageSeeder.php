@@ -63,6 +63,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAutoCaptureEPPayments();
         $this->seedSla();
         $this->rtaPortalLink();
+        $this->seedEpEcbConfigurations();
     }
 
     private function livaCarAutomationSeed()
@@ -897,6 +898,64 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::RTA_PORTAL_LINK],
             [
                 'value' => 'https://vls.rta.ae/renewal/identityVerification',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedEpEcbConfigurations()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_SUPPORT_USER],
+            [
+                'value' => 'sandeep.sharma@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC],
+            [
+                'value' => 'diya.lekhwani@myalfred.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC],
+            [
+                'value' => 'newleadpool@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::EP_ECB_POLICY_CLAIM_LIMIT],
+            [
+                'value' => 'One claim per policy term.',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::EP_ECB_POLICY_COVERAGE],
+            [
+                'value' => 'If you have an accident, you pay part of the repair bill (this is called "excess"), usually between AED 350 to AED 1,400. This benefit gives you back up to AED 1,200.',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::EP_ECB_POLICY_DURATION],
+            [
+                'value' => 'Your coverage lasts for 13 months or until the expiry of your motor insurance policy, whichever comes first.',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
