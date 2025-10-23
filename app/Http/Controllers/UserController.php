@@ -238,7 +238,7 @@ class UserController extends Controller
             'advisors' => function ($advisor) {
                 $advisor->select('user_id', 'name');
             },
-            'rmCategory'
+            'rmCategory',
         ]);
 
         return inertia('Admin/Users/Show', [
@@ -342,7 +342,7 @@ class UserController extends Controller
         $user->calendar_link = $request->calendar_link;
         $user->phone_calendar_link = $request->phone_calendar_link;
         $user->department_id = $request->department_id ?? null;
-        $user->rm_category_id = (!empty($request->rm_category_id) && $request->rm_category_id > 0) ? $request->rm_category_id : null;
+        $user->rm_category_id = (! empty($request->rm_category_id) && $request->rm_category_id > 0) ? $request->rm_category_id : null;
         if (isset($request->password)) {
             $user->password = bcrypt($request->password);
         }
