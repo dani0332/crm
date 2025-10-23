@@ -74,7 +74,8 @@ const userForm = useForm({
   department_id: props.user?.department_id ?? null,
   businessTypes: props?.userBusinessTypeIds ?? [],
   department_ids: props.department_ids?.length > 0 ? props.department_ids : [],
-  rm_category_id: props.user?.rm_category_id,
+  // rm_category_id: props.user?.rm_category_id,
+  rm_category_id: props.user ? (props.user.rm_category_id === null ? -1 : props.user.rm_category_id) : null,
 });
 
 const isAdvisor = computed(() => {

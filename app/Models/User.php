@@ -38,6 +38,7 @@ class User extends Authenticatable implements AuditableContract
         'email',
         'password',
         'profile_photo_path',
+        'rm_category_id'
     ];
 
     /**
