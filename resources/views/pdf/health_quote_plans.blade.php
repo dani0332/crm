@@ -27,9 +27,11 @@
             position: fixed;
             top: 0;
             left: 0;
-            height: 200px;
+            height: 85px;
             width: 100%;
             display: block;
+            background: white;
+            z-index: 1;
         }
 
         div,
@@ -372,14 +374,14 @@
     </style>
 </head>
 
-<body>
-    {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/comparison-table-health.jpg') }}" class="full-page-image"  style="height:90%;"/>
+<body style="margin: 0; padding: 0;">
+    {{-- First Page Cover --}}
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/comparison-table-health.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quote->uuid])
-      
-     
     @endcomponent
-    <div style="page-break-after: always;"></div>
+    <div style="page-break-after: always; clear: both;"></div>
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
@@ -714,7 +716,7 @@
         $features = array_merge($features, $featureItems);
     @endphp
 
-    {{-- PDF Page Header --}}
+    {{-- PDF Page Header - Only for comparison pages --}}
     <header>
         <div>
             <img src="{{ public_path('images/header.png') }}">
@@ -723,8 +725,6 @@
 
     {{-- PDF Page Footer Section --}}
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quote->uuid])
-      
-     
     @endcomponent
 {{-- End of PDF Page Footer Section --}}
 
