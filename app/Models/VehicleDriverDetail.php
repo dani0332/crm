@@ -76,4 +76,10 @@ class VehicleDriverDetail extends Model
     {
         return $this->morphTo();
     }
+
+    public function scopeForQuotable($query, $quotableType, $quotableId)
+    {
+        return $query->where('quoteable_type', $quotableType)
+            ->where('quoteable_id', $quotableId);
+    }
 }

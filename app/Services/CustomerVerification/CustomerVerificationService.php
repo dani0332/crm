@@ -13,6 +13,7 @@ use App\Events\CustomerVerificationUpdated;
 use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
 use App\Models\RegistrationCertificate;
+use App\Models\VehicleDriverDetail;
 use App\Services\CapiService;
 use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
@@ -79,10 +80,25 @@ class CustomerVerificationService
         };
     }
 
+    private function getEmptyVehicleDriverDetailsData(QuoteTypes $quoteType): array
+    {
+        return match ($quoteType) {
+            QuoteTypes::CAR => $this->getEmptyCarVehicleDriverDetailsData(),
+            default => [],
+        };
+    }
+
     private function getEmptyCarRegistrationCertificateData(): array
     {
         return [
             'placeOfIssue' => '',
+        ];
+    }
+
+    private function getEmptyCarVehicleDriverDetailsData(): array
+    {
+        return [
+            'driverLicenseIssueDate' => '',
         ];
     }
 
@@ -128,7 +144,7 @@ class CustomerVerificationService
                 'quote_type' => $quoteType->value,
             ]);
 
-            return ['webForm' => [], 'customerVerified' => [], 'registrationCertificate' => [], 'buttonData' => ['shouldShow' => false]];
+            return ['webForm' => [], 'customerVerified' => [], 'registrationCertificate' => [], 'vehicleDriverDetails' => [], 'buttonData' => ['shouldShow' => false]];
         }
 
         LoggerService::startQuoteLogging($record->code ?? null);
@@ -152,15 +168,13 @@ class CustomerVerificationService
         ];
 
         $customerVerifiedData = $this->getCustomerVerifiedDetails($record->id, QuoteTypes::CAR);
-        $registrationCertificateData = $this->getRegistrationCertificateDetails($record->id, QuoteTypes::CAR);
-
-        $verificationButtonData = $this->getVerificationButtonData($record, $webFormData, $customerVerifiedData);
 
         return [
             'webForm' => $webFormData,
             'customerVerified' => $customerVerifiedData,
-            'registrationCertificate' => $registrationCertificateData,
-            'buttonData' => $verificationButtonData,
+            'registrationCertificate' =>  $this->getRegistrationCertificateDetails($record->id, QuoteTypes::CAR),
+            'vehicleDriverDetails' => $this->getVehicleDriverDetails($record->id, QuoteTypes::CAR),
+            'buttonData' => $this->getVerificationButtonData($record, $webFormData, $customerVerifiedData)
         ];
     }
 
@@ -170,7 +184,7 @@ class CustomerVerificationService
             $registrationCertificateRecord = RegistrationCertificate::forQuotable($quoteType->modelClass(), $quoteId)
                 ->select('place_of_issue')
                 ->first();
-                
+
             if (! $registrationCertificateRecord) {
                 LoggerService::info('No registration certificate record found');
 
@@ -187,6 +201,30 @@ class CustomerVerificationService
             ]);
 
             return $this->getEmptyRegistrationCertificateData($quoteType);
+        }
+    }
+
+    public function getVehicleDriverDetails(int $quoteId, QuoteTypes $quoteType): array
+    {
+        try {
+            $vehicleDriverDetailsRecord = VehicleDriverDetail::forQuotable($quoteType->modelClass(), $quoteId)
+                ->select('driver_license_issue_date')
+                ->first();
+
+           if (!$vehicleDriverDetailsRecord) {
+            LoggerService::info('No vehicle driver details record found');
+           }
+
+           return [
+            'driverLicenseIssueDate' => $vehicleDriverDetailsRecord->driver_license_issue_date,
+           ];
+
+        } catch (Exception $e) {
+            LoggerService::warning('Error fetching vehicle driver details', extra: [
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->getEmptyVehicleDriverDetailsData($quoteType);
         }
     }
 

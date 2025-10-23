@@ -175,7 +175,7 @@ const { modals, customerVerificationData } = defineProps({
                   UAE License Held For
                 </label>
                 <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:border-green-200 transition-colors duration-150">
-                  {{ customerVerificationData.customerVerified?.uaeLicenseHeldFor || '-' }}
+                  {{ customerVerificationData.vehicleDriverDetails?.driverLicenseIssueDate || '-' }}
                 </div>
               </div>
             </div>
