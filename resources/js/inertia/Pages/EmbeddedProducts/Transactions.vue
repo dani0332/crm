@@ -212,15 +212,10 @@ watch(
 const filteredHeaders = computed(() => {
   return tableHeader.filter(header => {
     if (header.value === 'sync_status') {
-      return (
-        page.props.embeddedProduct.detail.short_code ===
-        page.props.ep_enums.COURIER
-      );
+      return page.props.embeddedProduct.detail.short_code === page.props.ep_enums.COURIER;
     }
 
-    if (
-      page.props.embeddedProduct.detail.short_code === page.props.ep_enums.ECB
-    ) {
+    if (page.props.embeddedProduct.detail.short_code === page.props.ep_enums.ECB) {
       let excludeHeaders = [
         'advisor_name',
         'dob',
