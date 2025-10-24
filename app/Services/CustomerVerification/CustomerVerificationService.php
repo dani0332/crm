@@ -18,9 +18,9 @@ use App\Services\CapiService;
 use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
 class CustomerVerificationService
 {
@@ -173,9 +173,9 @@ class CustomerVerificationService
         return [
             'webForm' => $webFormData,
             'customerVerified' => $customerVerifiedData,
-            'registrationCertificate' =>  $this->getRegistrationCertificateDetails($record->id, QuoteTypes::CAR),
+            'registrationCertificate' => $this->getRegistrationCertificateDetails($record->id, QuoteTypes::CAR),
             'vehicleDriverDetails' => $this->getVehicleDriverDetails($record->id, QuoteTypes::CAR),
-            'buttonData' => $this->getVerificationButtonData($record, $webFormData, $customerVerifiedData)
+            'buttonData' => $this->getVerificationButtonData($record, $webFormData, $customerVerifiedData),
         ];
     }
 
@@ -212,28 +212,27 @@ class CustomerVerificationService
                 ->select('driver_license_issue_date')
                 ->first();
 
-           if (!$vehicleDriverDetailsRecord) {
-            LoggerService::info('No vehicle driver details record found');
+            if (! $vehicleDriverDetailsRecord) {
+                LoggerService::info('No vehicle driver details record found');
 
-            return $this->getEmptyVehicleDriverDetailsData($quoteType);
-           }
+                return $this->getEmptyVehicleDriverDetailsData($quoteType);
+            }
 
-           // If license issue date is null
-           if (!$vehicleDriverDetailsRecord->driver_license_issue_date) {
+            // If license issue date is null
+            if (! $vehicleDriverDetailsRecord->driver_license_issue_date) {
+                return [
+                    'driverLicenseIssueDate' => $vehicleDriverDetailsRecord->driver_license_issue_date,
+                ];
+            }
+
+            // Calculate difference in years between driver license issue date and current date
+            $driverLicenseIssueDate = Carbon::parse($vehicleDriverDetailsRecord->driver_license_issue_date);
+            $yearsDifference = (int) $driverLicenseIssueDate->diffInYears(Carbon::now());
+            $formattedDriverLicenseIssueDate = $driverLicenseIssueDate->format('d/m/Y');
+
             return [
-                'driverLicenseIssueDate' => $vehicleDriverDetailsRecord->driver_license_issue_date
-            ];         
-           }
-
-           // Calculate difference in years between driver license issue date and current date
-           $driverLicenseIssueDate = Carbon::parse($vehicleDriverDetailsRecord->driver_license_issue_date);
-           $yearsDifference = (int)$driverLicenseIssueDate->diffInYears(Carbon::now());
-           $formattedDriverLicenseIssueDate = $driverLicenseIssueDate->format('d/m/Y');
-
-           return [
-            'driverLicenseIssueDate' => "{$yearsDifference} years ({$formattedDriverLicenseIssueDate})"
-           ];
-
+                'driverLicenseIssueDate' => "{$yearsDifference} years ({$formattedDriverLicenseIssueDate})",
+            ];
         } catch (Exception $e) {
             LoggerService::warning('Error fetching vehicle driver details', extra: [
                 'error' => $e->getMessage(),
