@@ -227,18 +227,18 @@ class CustomerVerificationService
 
             // If less than 1, calculate difference in months
             if ($yearsDifference < 1) {
-                $yearsDifference = (int)$driverLicenseIssueDate->diffInMonths(Carbon::now()). ' months';
+                $yearsDifference = (int) $driverLicenseIssueDate->diffInMonths(Carbon::now()).' months';
             } else {
                 $yearsDifference = "{$yearsDifference} years";
             }
 
             // Format date for display
             $formattedDriverLicenseIssueDate = $driverLicenseIssueDate->format('d/m/Y');
-     
+
             return [
                 'driverLicenseIssueDate' => [
                     'value' => "{$yearsDifference} ({$formattedDriverLicenseIssueDate})",
-                    'error' => $this->verifyLicenseHeldFor($yearsDifference, $record->uae_license_held_for_id_text)
+                    'error' => $this->verifyLicenseHeldFor($yearsDifference, $record->uae_license_held_for_id_text),
                 ],
             ];
         } catch (Exception $e) {
@@ -315,14 +315,14 @@ class CustomerVerificationService
         }
     }
 
-    private function verifyWithWebForm(string | int $ocrValue, string | int $webFormValue): bool
+    private function verifyWithWebForm(string|int $ocrValue, string|int $webFormValue): bool
     {
         return $ocrValue !== $webFormValue;
     }
 
     private function verifyLicenseHeldFor(string $ocrLicenseHeldFor, string $webFormLicenseHeldFor): bool
     {
-        //dd($ocrLicenseHeldFor, $webFormLicenseHeldFor);
+        // dd($ocrLicenseHeldFor, $webFormLicenseHeldFor);
         $ocrLicenseHeldForData = explode(' ', $ocrLicenseHeldFor);  // 2 years or 4 months
         $webFormLicenseHeldForData = explode(' ', $webFormLicenseHeldFor); // 3 years or 0 to 6 months
 
@@ -332,7 +332,7 @@ class CustomerVerificationService
         }
 
         if ($ocrLicenseHeldForData[1] === 'months' && $webFormLicenseHeldForData[3] === 'months') {
-            return !in_array($ocrLicenseHeldForData[0], range($webFormLicenseHeldForData[0], $webFormLicenseHeldForData[2]));
+            return ! in_array($ocrLicenseHeldForData[0], range($webFormLicenseHeldForData[0], $webFormLicenseHeldForData[2]));
         }
 
         return true; // true is mismatch
