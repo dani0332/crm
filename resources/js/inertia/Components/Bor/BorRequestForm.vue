@@ -128,6 +128,16 @@ const isSukoonInsurance = computed(() => {
   );
 });
 
+// Function to initialize selectedInsurer based on current form data
+const initializeSelectedInsurer = () => {
+  if (form.insurance_provider_id) {
+    selectedInsurer.value =
+      props.insuranceProviders.find(p => p.id == form.insurance_provider_id) || null;
+  } else {
+    selectedInsurer.value = null;
+  }
+};
+
 // Function to fetch provider representors
 const fetchProviderRepresentor = async insuranceProviderId => {
   if (!insuranceProviderId) {
@@ -245,6 +255,9 @@ watch(
       if (isEditMode.value) {
         prefillFormFromBorLog();
         loadEmbeddedDocuments();
+      } else {
+        // For create mode, initialize selectedInsurer if there's a default provider
+        initializeSelectedInsurer();
       }
     }
   },
@@ -311,6 +324,9 @@ const resetForm = () => {
   } else if (isMotorLob.value || isHealthLob.value) {
     form.customer_type = props.customerData.customerType;
   }
+
+  // Initialize selectedInsurer after setting form values
+  initializeSelectedInsurer();
 };
 
 // Prefill form with BorLog data for edit mode
@@ -331,13 +347,11 @@ const prefillFormFromBorLog = async () => {
   form.reason = borLog.reason || '';
   form.insurance_contact_id = borLog.insurance_contact_id || null;
 
-  // Set the selected insurer
+  // Initialize selectedInsurer based on the prefilled insurance_provider_id
+  initializeSelectedInsurer();
+
+  // Fetch representors for the selected provider if it exists
   if (borLog.insurance_provider_id) {
-    selectedInsurer.value =
-      props.insuranceProviders.find(
-        p => p.id == borLog.insurance_provider_id,
-      ) || null;
-    // Fetch representors for the selected provider
     await fetchProviderRepresentor(borLog.insurance_provider_id);
   }
 };
