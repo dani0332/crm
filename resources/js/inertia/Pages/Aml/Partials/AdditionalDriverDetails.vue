@@ -36,7 +36,19 @@ const vehicleDriverDetail = computed(() => {
 const formatDate = date => {
   if (!date) return '';
 
-  const dateObj = new Date(date);
+  let dateObj;
+  
+  // Check if date is in DD-MM-YYYY format
+  if (typeof date === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(date)) {
+    const [day, month, year] = date.split('-');
+    dateObj = new Date(`${year}-${month}-${day}`);
+  } else {
+    dateObj = new Date(date);
+  }
+  
+  // Validate the date
+  if (isNaN(dateObj.getTime())) return '';
+
   // Use local timezone to avoid date shifting
   const year = dateObj.getFullYear();
   const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -233,7 +245,7 @@ watch(
     if ((newValue === 1 || newValue === '1') && !isSyncFromInsurer.value) {
       additionalDriverDetailsForm.driver_first_name = quote?.first_name;
       additionalDriverDetailsForm.driver_last_name = quote?.last_name;
-      additionalDriverDetailsForm.driver_dob = quote?.dob;
+      additionalDriverDetailsForm.driver_dob = formatDate(quote?.dob);
       additionalDriverDetailsForm.driver_gender = normalizeGender(
         quote?.gender,
       );
