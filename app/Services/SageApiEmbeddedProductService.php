@@ -198,7 +198,7 @@ class SageApiEmbeddedProductService
         $isEmbeddedProductBookedOnSage = QuoteTag::where([
             'quote_type_id' => $quoteTypeId,
             'quote_uuid' => $quote->uuid,
-            'name' => QuoteTagEnums::EMBEDDED_PRODUCT_BOOKED_ON_SAGE,
+            'name' => QuoteTagEnums::EMBEDDED_PRODUCT_BOOKED_ON_SAGE.'_'.$epShortCode,
             'value' => 1,
         ])->first();
 
