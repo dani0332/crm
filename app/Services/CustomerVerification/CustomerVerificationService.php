@@ -214,8 +214,18 @@ class CustomerVerificationService
 
            if (!$vehicleDriverDetailsRecord) {
             LoggerService::info('No vehicle driver details record found');
+
+            return $this->getEmptyVehicleDriverDetailsData($quoteType);
            }
 
+           // If license issue date is null
+           if (!$vehicleDriverDetailsRecord->driver_license_issue_date) {
+            return [
+                'driverLicenseIssueDate' => $vehicleDriverDetailsRecord->driver_license_issue_date
+            ];         
+           }
+
+           // Calculate difference in years between driver license issue date and current date
            $driverLicenseIssueDate = Carbon::parse($vehicleDriverDetailsRecord->driver_license_issue_date);
            $yearsDifference = (int)$driverLicenseIssueDate->diffInYears(Carbon::now());
            $formattedDriverLicenseIssueDate = $driverLicenseIssueDate->format('d/m/Y');
