@@ -988,10 +988,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 ];
 
                 $quoteDetailsData = [
-                    'policy_start_date' => $responseData['PolicyEffectiveDate'] ?? '',
-                    'policy_expiry_date' => $responseData['PolicyExpiryDate'] ?? '', // optional
-                    'certificate_start_date' => $responseData['VehicleDetails']['CertificateStartDate'] ?? '',
-                    'certificate_end_date' => $responseData['VehicleDetails']['CertificateEndDate'] ?? '', // optional
+                    'policy_start_date' => $this->formatDateToYmd($responseData['PolicyEffectiveDate'] ?? ''),
+                    'policy_expiry_date' => $this->formatDateToYmd($responseData['PolicyExpiryDate'] ?? ''), // optional
+                    'certificate_start_date' => $this->formatDateToYmd($responseData['VehicleDetails']['CertificateStartDate'] ?? ''),
+                    'certificate_end_date' => $this->formatDateToYmd($responseData['VehicleDetails']['CertificateEndDate'] ?? ''), // optional
                 ];
 
                 $getQuoteResponseMapping = [
@@ -1308,6 +1308,27 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
                 'errorMessage' => $ex->getMessage(),
             ]);
+        }
+    }
+
+    /**
+     * Format LIVA date to Y-m-d format
+     */
+    private function formatDateToYmd(string $date): string
+    {
+        if (empty($date)) {
+            return '';
+        }
+
+        try {
+            return Carbon::parse($date)->format('Y-m-d');
+        } catch (Exception $ex) {
+            LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Failed to parse date: '.$date, extra: [
+                'error' => $ex->getMessage(),
+                'line' => $ex->getLine(),
+            ]);
+
+            return '';
         }
     }
 }

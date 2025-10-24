@@ -251,10 +251,13 @@ const hasNotEditPermission = computed(() => {
   );
 });
 
+const isSync = ref(false);
+
 watch(
   () => props.insurerPortalSyncData,
   vehicleTransactionDetails => {
     if (vehicleTransactionDetails) {
+      isSync.value = true;
       const fieldMappings = {
         vehicleTransactionDetails: {
           rta_transaction_type: 'rta_transaction_type',
@@ -1024,7 +1027,8 @@ onMounted(() => {
 const calculateDatesForLiva = (forceCalculation = false) => {
   if (
     isLIVA.value &&
-    additionalVehicleTransactionDetailsForm.policy_effective_date
+    additionalVehicleTransactionDetailsForm.policy_effective_date &&
+    !isSync.value
   ) {
     const effectiveDate = parseDateString(
       additionalVehicleTransactionDetailsForm.policy_effective_date,
@@ -1080,7 +1084,7 @@ watch(
 watch(
   () => additionalVehicleTransactionDetailsForm.certificate_start_date,
   newVal => {
-    if (isLIVA.value && newVal && true) {
+    if (isLIVA.value && newVal && !isSync.value) {
       // Add 13 months to policy_effective_date for policy_expiry_date
       const effectiveDate = new Date(newVal);
       const expiryDate = new Date(effectiveDate);
