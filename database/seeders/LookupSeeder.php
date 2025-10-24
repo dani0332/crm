@@ -403,7 +403,7 @@ class LookupSeeder extends Seeder
             [
                 'text' => 'ECOM Lead Extension',
                 'code' => 'ecom-lead-extension',
-                'description' => null,
+                'description' => 'This lead is an extension of an ECOM lead.',
                 'children' => [],
             ],
         ];
