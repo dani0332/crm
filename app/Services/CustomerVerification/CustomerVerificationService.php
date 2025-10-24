@@ -284,7 +284,7 @@ class CustomerVerificationService
                     'value' => array_key_exists('nationality_id', $customerVerifiedData)
                     ? $this->getNationalityById($customerVerifiedData['nationality_id'])
                     : '',
-                    'error' => $this->verifyWithWebForm($customerVerifiedData['nationality_id'], $record->nationality_id),
+                    'error' => $this->verifyWithWebForm((int)$customerVerifiedData['nationality_id'], $record->nationality_id),
                 ],
                 'carMakeAndModel' => [
                     'value' => array_key_exists('carMakeAndModel', $customerVerifiedData)
