@@ -20,6 +20,7 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class CustomerVerificationService
 {
@@ -215,8 +216,12 @@ class CustomerVerificationService
             LoggerService::info('No vehicle driver details record found');
            }
 
+           $driverLicenseIssueDate = Carbon::parse($vehicleDriverDetailsRecord->driver_license_issue_date);
+           $yearsDifference = (int)$driverLicenseIssueDate->diffInYears(Carbon::now());
+           $formattedDriverLicenseIssueDate = $driverLicenseIssueDate->format('d/m/Y');
+
            return [
-            'driverLicenseIssueDate' => $vehicleDriverDetailsRecord->driver_license_issue_date,
+            'driverLicenseIssueDate' => "{$yearsDifference} years ({$formattedDriverLicenseIssueDate})"
            ];
 
         } catch (Exception $e) {
