@@ -284,7 +284,7 @@ class CustomerVerificationService
                     'value' => array_key_exists('nationality_id', $customerVerifiedData)
                     ? $this->getNationalityById($customerVerifiedData['nationality_id'])
                     : '',
-                    'error' => $this->verifyWithWebForm((int)$customerVerifiedData['nationality_id'], $record->nationality_id),
+                    'error' => $this->verifyWithWebForm((int) $customerVerifiedData['nationality_id'], $record->nationality_id),
                 ],
                 'carMakeAndModel' => [
                     'value' => array_key_exists('carMakeAndModel', $customerVerifiedData)
@@ -317,7 +317,7 @@ class CustomerVerificationService
 
     private function verifyWithWebForm(string|int $ocrValue, string|int $webFormValue): bool
     {
-        return $ocrValue !== $webFormValue;
+        return strtolower((string) $ocrValue) !== strtolower((string) $webFormValue);
     }
 
     private function verifyLicenseHeldFor(string $ocrLicenseHeldFor, string $webFormLicenseHeldFor): bool
