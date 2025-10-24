@@ -121,62 +121,111 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Name
                 </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:border-green-200 transition-colors duration-150">
-                  {{  customerVerificationData.customerVerified?.name || '-' }}
+                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                 :class="customerVerificationData.customerVerified?.name.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
+                  {{  customerVerificationData.customerVerified?.name.value || '-' }}
                 </div>
+                <span 
+                  class="text-red-600 text-sm"
+                  v-if="customerVerificationData.customerVerified?.name?.error"
+                >
+                  Name mismatch found
+                </span>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Nationality
                 </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:border-green-200 transition-colors duration-150">
-                  {{ customerVerificationData.customerVerified?.nationality || '-' }}
+                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                :class="customerVerificationData.customerVerified?.nationality.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
+                  {{ customerVerificationData.customerVerified?.nationality.value || '-' }}
                 </div>
+                <span 
+                  class="text-red-600 text-sm"
+                  v-if="customerVerificationData.customerVerified?.nationality?.error"
+                >
+                  Nationality mismatch found
+                </span>
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Car Make and Model
                 </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:border-green-200 transition-colors duration-150">
-                  {{ customerVerificationData.customerVerified?.carMakeAndModel || '-' }}
+                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                :class="customerVerificationData.customerVerified?.carMakeAndModel.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
+                  {{ customerVerificationData.customerVerified?.carMakeAndModel.value || '-' }}
                 </div>
+                <span 
+                  class="text-red-600 text-sm"
+                  v-if="customerVerificationData.customerVerified?.carMakeAndModel?.error"
+                >
+                  Make and model mismatch found
+                </span>
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Car Model Year
                 </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:border-green-200 transition-colors duration-150">
-                  {{ customerVerificationData.customerVerified?.carModelYear || '-' }}
+                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                :class="customerVerificationData.customerVerified?.carModelYear.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
+                  {{ customerVerificationData.customerVerified?.carModelYear.value || '-' }}
                 </div>
+                <span 
+                  class="text-red-600 text-sm"
+                  v-if="customerVerificationData.customerVerified?.carModelYear?.error"
+                >
+                  Car model year mismatch found
+                </span>
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   DOB
                 </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:border-green-200 transition-colors duration-150">
-                  {{ customerVerificationData.customerVerified?.dob || '-' }}
+                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                :class="customerVerificationData.customerVerified?.dob.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
+                  {{ customerVerificationData.customerVerified?.dob.value || '-' }}
                 </div>
+                <span 
+                  class="text-red-600 text-sm"
+                  v-if="customerVerificationData.customerVerified?.dob?.error"
+                >
+                  DOB mismatch found
+                </span>
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Emirate Of Registration
                 </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:border-green-200 transition-colors duration-150">
-                  {{ customerVerificationData.registrationCertificate?.placeOfIssue || '-' }}
+                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                :class="customerVerificationData.registrationCertificate?.placeOfIssue.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
+                  {{ customerVerificationData.registrationCertificate?.placeOfIssue.value || '-' }}
                 </div>
+                <span
+                  class="text-red-600 text-sm"
+                  v-if="customerVerificationData.registrationCertificate?.placeOfIssue?.error"
+                >
+                  Emirate of registration mismatch found
+                </span>
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   UAE License Held For
                 </label>
-                <div class="p-3 bg-white border border-green-100 rounded-md text-gray-800 font-medium hover:border-green-200 transition-colors duration-150">
-                  {{ customerVerificationData.vehicleDriverDetails?.driverLicenseIssueDate || '-' }}
+                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                :class="customerVerificationData.vehicleDriverDetails?.driverLicenseIssueDate.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
+                  {{ customerVerificationData.vehicleDriverDetails?.driverLicenseIssueDate.value || '-' }}
                 </div>
+                <span
+                  class="text-red-600 text-sm"
+                  v-if="customerVerificationData.vehicleDriverDetails?.driverLicenseIssueDate?.error"
+                >
+                  UAE License Held For mismatch found
+                </span>
               </div>
             </div>
           </div>

@@ -64,12 +64,12 @@ class CustomerVerificationService
     private function getEmptyCarVerificationData(): array
     {
         return [
-            'nationality' => '',
-            'carMakeAndModel' => '',
-            'carModelYear' => '',
-            'dob' => '',
-            'emirateOfRegistration' => '',
-            'uaeLicenseHeldFor' => '',
+            'nationality' => ['value' => '', 'error' => false],
+            'carMakeAndModel' => ['value' => '', 'error' => false],
+            'carModelYear' => ['value' => '', 'error' => false],
+            'dob' => ['value' => '', 'error' => false],
+            'emirateOfRegistration' => ['value' => '', 'error' => false],
+            'uaeLicenseHeldFor' => ['value' => '', 'error' => false],
         ];
     }
 
@@ -92,14 +92,14 @@ class CustomerVerificationService
     private function getEmptyCarRegistrationCertificateData(): array
     {
         return [
-            'placeOfIssue' => '',
+            'placeOfIssue' => ['value' => '', 'error' => false],
         ];
     }
 
     private function getEmptyCarVehicleDriverDetailsData(): array
     {
         return [
-            'driverLicenseIssueDate' => '',
+            'driverLicenseIssueDate' => ['value' => '', 'error' => false],
         ];
     }
 
@@ -168,21 +168,21 @@ class CustomerVerificationService
             'uaeLicenseHeldFor' => $record->uae_license_held_for_id_text ?? '',
         ];
 
-        $customerVerifiedData = $this->getCustomerVerifiedDetails($record->id, QuoteTypes::CAR);
+        $customerVerifiedData = $this->getCustomerVerifiedDetails($record, QuoteTypes::CAR);
 
         return [
             'webForm' => $webFormData,
             'customerVerified' => $customerVerifiedData,
-            'registrationCertificate' => $this->getRegistrationCertificateDetails($record->id, QuoteTypes::CAR),
-            'vehicleDriverDetails' => $this->getVehicleDriverDetails($record->id, QuoteTypes::CAR),
+            'registrationCertificate' => $this->getRegistrationCertificateDetails($record, QuoteTypes::CAR),
+            'vehicleDriverDetails' => $this->getVehicleDriverDetails($record, QuoteTypes::CAR),
             'buttonData' => $this->getVerificationButtonData($record, $webFormData, $customerVerifiedData),
         ];
     }
 
-    public function getRegistrationCertificateDetails(int $quoteId, QuoteTypes $quoteType): array
+    public function getRegistrationCertificateDetails($record, QuoteTypes $quoteType): array
     {
         try {
-            $registrationCertificateRecord = RegistrationCertificate::forQuotable($quoteType->modelClass(), $quoteId)
+            $registrationCertificateRecord = RegistrationCertificate::forQuotable($quoteType->modelClass(), $record->id)
                 ->select('place_of_issue')
                 ->first();
 
@@ -193,7 +193,10 @@ class CustomerVerificationService
             }
 
             return [
-                'placeOfIssue' => $registrationCertificateRecord->place_of_issue,
+                'placeOfIssue' => [
+                    'value' => $registrationCertificateRecord->place_of_issue,
+                    'error' => $this->verifyWithWebForm($registrationCertificateRecord->place_of_issue, $record->emirate_of_registration_id_text),
+                ],
             ];
 
         } catch (Exception $e) {
@@ -205,10 +208,10 @@ class CustomerVerificationService
         }
     }
 
-    public function getVehicleDriverDetails(int $quoteId, QuoteTypes $quoteType): array
+    public function getVehicleDriverDetails($record, QuoteTypes $quoteType): array
     {
         try {
-            $vehicleDriverDetailsRecord = VehicleDriverDetail::forQuotable($quoteType->modelClass(), $quoteId)
+            $vehicleDriverDetailsRecord = VehicleDriverDetail::forQuotable($quoteType->modelClass(), $record->id)
                 ->select('driver_license_issue_date')
                 ->first();
 
@@ -221,10 +224,22 @@ class CustomerVerificationService
             // Calculate difference in years between driver license issue date and current date
             $driverLicenseIssueDate = Carbon::parse($vehicleDriverDetailsRecord->driver_license_issue_date);
             $yearsDifference = (int) $driverLicenseIssueDate->diffInYears(Carbon::now());
-            $formattedDriverLicenseIssueDate = $driverLicenseIssueDate->format('d/m/Y');
 
+            // If less than 1, calculate difference in months
+            if ($yearsDifference < 1) {
+                $yearsDifference = (int)$driverLicenseIssueDate->diffInMonths(Carbon::now()). ' months';
+            } else {
+                $yearsDifference = "{$yearsDifference} years";
+            }
+
+            // Format date for display
+            $formattedDriverLicenseIssueDate = $driverLicenseIssueDate->format('d/m/Y');
+     
             return [
-                'driverLicenseIssueDate' => "{$yearsDifference} years ({$formattedDriverLicenseIssueDate})",
+                'driverLicenseIssueDate' => [
+                    'value' => "{$yearsDifference} ({$formattedDriverLicenseIssueDate})",
+                    'error' => $this->verifyLicenseHeldFor($yearsDifference, $record->uae_license_held_for_id_text)
+                ],
             ];
         } catch (Exception $e) {
             LoggerService::warning('Error fetching vehicle driver details', extra: [
@@ -235,7 +250,7 @@ class CustomerVerificationService
         }
     }
 
-    public function getCustomerVerifiedDetails(int $quoteId, QuoteTypes $quoteType): array
+    public function getCustomerVerifiedDetails($record, QuoteTypes $quoteType): array
     {
         try {
             $verificationRecord = CustomerVerificationDetail::with([
@@ -245,7 +260,7 @@ class CustomerVerificationService
                 'emirate',
                 'uaeLicenseHeldFor',
             ])
-                ->forQuotable($quoteType->modelClass(), $quoteId)
+                ->forQuotable($quoteType->modelClass(), $record->id)
                 ->where('quote_type_id', $quoteType->id())
                 ->latest()
                 ->first();
@@ -259,21 +274,36 @@ class CustomerVerificationService
             $customerVerifiedData = json_decode($verificationRecord->customer_verified_data, true);
 
             return [
-                'name' => array_key_exists('name', $customerVerifiedData)
+                'name' => [
+                    'value' => array_key_exists('name', $customerVerifiedData)
                     ? $customerVerifiedData['name']
                     : '',
-                'nationality' => array_key_exists('nationality_id', $customerVerifiedData)
+                    'error' => $this->verifyWithWebForm($customerVerifiedData['name'], "{$record->first_name} {$record->last_name}"),
+                ],
+                'nationality' => [
+                    'value' => array_key_exists('nationality_id', $customerVerifiedData)
                     ? $this->getNationalityById($customerVerifiedData['nationality_id'])
                     : '',
-                'carMakeAndModel' => array_key_exists('carMakeAndModel', $customerVerifiedData)
+                    'error' => $this->verifyWithWebForm($customerVerifiedData['nationality_id'], $record->nationality_id),
+                ],
+                'carMakeAndModel' => [
+                    'value' => array_key_exists('carMakeAndModel', $customerVerifiedData)
                     ? trim($customerVerifiedData['carMakeAndModel'] ?? '')
                     : '',
-                'carModelYear' => array_key_exists('carModelYear', $customerVerifiedData)
+                    'error' => $this->verifyWithWebForm($customerVerifiedData['carMakeAndModel'], "{$record->car_make_id_text} {$record->car_model_id_text}"),
+                ],
+                'carModelYear' => [
+                    'value' => array_key_exists('carModelYear', $customerVerifiedData)
                     ? $customerVerifiedData['carModelYear']
                     : '',
-                'dob' => array_key_exists('date_of_birth', $customerVerifiedData)
+                    'error' => $this->verifyWithWebForm($customerVerifiedData['carModelYear'], $record->year_of_manufacture),
+                ],
+                'dob' => [
+                    'value' => array_key_exists('date_of_birth', $customerVerifiedData)
                     ? $this->formatDateToDisplay($customerVerifiedData['date_of_birth'])
                     : '',
+                    'error' => $this->verifyWithWebForm(Carbon::parse($customerVerifiedData['date_of_birth'])->format('d-m-Y'), $record->dob),
+                ],
             ];
 
         } catch (Exception $e) {
@@ -283,6 +313,29 @@ class CustomerVerificationService
 
             return $this->getEmptyVerificationData($quoteType);
         }
+    }
+
+    private function verifyWithWebForm(string | int $ocrValue, string | int $webFormValue): bool
+    {
+        return $ocrValue !== $webFormValue;
+    }
+
+    private function verifyLicenseHeldFor(string $ocrLicenseHeldFor, string $webFormLicenseHeldFor): bool
+    {
+        //dd($ocrLicenseHeldFor, $webFormLicenseHeldFor);
+        $ocrLicenseHeldForData = explode(' ', $ocrLicenseHeldFor);  // 2 years or 4 months
+        $webFormLicenseHeldForData = explode(' ', $webFormLicenseHeldFor); // 3 years or 0 to 6 months
+
+        // Check for years
+        if ($ocrLicenseHeldForData[1] === $webFormLicenseHeldForData[1]) {
+            return $ocrLicenseHeldForData[0] !== $webFormLicenseHeldForData[0];
+        }
+
+        if ($ocrLicenseHeldForData[1] === 'months' && $webFormLicenseHeldForData[3] === 'months') {
+            return !in_array($ocrLicenseHeldForData[0], range($webFormLicenseHeldForData[0], $webFormLicenseHeldForData[2]));
+        }
+
+        return true; // true is mismatch
     }
 
     public function processEmiratesIdVerification($quote, QuoteTypes $quoteType, array $ocrData, string $documentType): void
