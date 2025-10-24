@@ -19,7 +19,14 @@ class BirdService extends BaseService
     }
     public function triggerWebHookRequest($url, $data, $method = 'post', $isAccessKey = false)
     {
-        $uuid = $data->uuid ?? '';
+
+        if (is_array($data)) {
+            $uuid = $data['uuid'] ?? $data['refId'] ?? $data['quoteUID'] ?? '';
+        } elseif (is_object($data)) {
+            $uuid = $data->uuid ?? $data->refId ?? $data->quoteUID ?? '';
+        } else {
+            $uuid = '';
+        }
         $logContext = ['Ref-ID' => $uuid, 'URL' => $url, 'Method' => $method];
 
         try {

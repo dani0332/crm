@@ -37,6 +37,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | TPA Client API Configuration
+    |--------------------------------------------------------------------------
+    |
+    | This is the TPAAClientAPIV2 configuration for Embedded-Product Excess-Cashback (EP-ECB).
+    |
+    */
+    'tpa_client_api' => [
+        'base_url' => env('TPA_CLIENT_API_BASE_URL', 'https://devwp.waypoint-systems.com:446/TPAClientAPI'),
+        'client_code' => env('TPA_CLIENT_CODE', 'ENOC'),
+        'client_id' => env('TPA_CLIENT_ID'),
+        'client_secret' => env('TPA_CLIENT_SECRET'),
+        'timeout' => env('TPA_CLIENT_API_TIMEOUT', 300),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Sage API Configuration
     |--------------------------------------------------------------------------
     |

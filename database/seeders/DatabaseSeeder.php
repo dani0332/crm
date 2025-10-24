@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
             BorDocumentSeeder::class,
             AutomationSeeder::class,
             TravelLeadAllocationDashboardSeeder::class,
+            SendUpdateNotesSeeder::class,
         ]);
     }
 }
