@@ -5,8 +5,6 @@ namespace App\Http\Controllers\V2;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\EmbeddedProductEnum;
-use App\Enums\EpCategoryEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
@@ -56,14 +54,12 @@ use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
-use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
 use App\Models\Customer;
 use App\Models\CustomerInsured;
-use App\Models\EmbeddedTransaction;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
@@ -91,7 +87,6 @@ use App\Services\SLA\SLAService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -330,59 +325,6 @@ class CentralController extends Controller
                 ]], 403);
             }
 
-            $quoteType = QuoteTypes::getNameShortCode($this->getQuoteCodeType($quote) ?? '');
-            $quoteTypeId = $quoteType?->id();
-
-            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
-
-                $captureableEmbeddedTransactions = EmbeddedTransaction::where([
-                    ['quote_type_id', $quoteTypeId],
-                    ['quote_request_id', $quote->id],
-                    ['is_selected', 1],
-                    ['payment_status_id', PaymentStatusEnum::AUTHORISED],
-                ])
-                    ->whereHas('product.embeddedProduct', function ($query) {
-                        $query->where('product_category', EpCategoryEnum::BOLT_ON);
-                    })
-                    ->with(['product.embeddedProduct:id,short_code'])
-                    ->select('code', 'payment_status_id', 'policy_status', 'product_id')
-                    ->get();
-
-                if ($captureableEmbeddedTransactions->isNotEmpty()) {
-                    try {
-                        EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType->value));
-
-                        $sukoonMedexCodes = EmbeddedProductEnum::getSukoonMedexCodes();
-                        $hasSukoonMedexProducts = $captureableEmbeddedTransactions
-                            ->filter(function ($transaction) use ($sukoonMedexCodes) {
-                                $epShortCode = $transaction?->product?->embeddedProduct?->short_code;
-
-                                return $epShortCode && in_array($epShortCode, $sukoonMedexCodes);
-                            })
-                            ->isNotEmpty();
-
-                        // Return response only if EP has any Sukoon MEDEX Product, otherwise proceed to Sage booking
-                        if ($hasSukoonMedexProducts) {
-                            LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin',
-                                extra: $captureableEmbeddedTransactions->toArray()
-                            );
-
-                            return response()->json(['message' => 'The embedded product payment is being captured, once done, booking process will begin.'], 200);
-                        }
-
-                    } catch (Exception $e) {
-                        LoggerService::error('Embedded Product payment capture failed', [
-                            'error' => $e->getMessage(),
-                            'uuid' => $quote->uuid,
-                        ]);
-
-                        return response()->json(['errors' => [
-                            'message' => 'Embedded Product payment capture failed',
-                        ]], 403);
-                    }
-                }
-            }
-
             $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
 
             return response()->json(['message' => $response['message']], 200);
@@ -426,6 +368,10 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($quoteType, $uuid);
         if ($quote) {
             app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::AVAILABLE_PLAN_SELECTED);
+
+            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                app(EmbeddedProductRepository::class)->syncCarQuoteEpEcb($quote, QuoteTypeId::Car);
+            }
         }
 
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
@@ -643,6 +589,16 @@ class CentralController extends Controller
     {
         $healthQuote = HealthQuote::where('uuid', $request->quote_uuid)->first();
 
+        if (! $healthQuote) {
+            LoggerService::warning(self::class.' - sendOCBEmail - Health quote not found', extra: [
+                'quote_uuid' => $request->quote_uuid,
+            ]);
+
+            return response()->json(['error' => 'Health quote not found'], 404);
+        }
+
+        LoggerService::startQuoteLogging($healthQuote);
+
         $previousAdvisor = null;
         if (isset($healthQuote) && ! empty($healthQuote->previous_advisor_id)) {
             $previousAdvisor = app(UserService::class)->getUserById($healthQuote->previous_advisor_id);
@@ -652,10 +608,13 @@ class CentralController extends Controller
         // Fetch all quote plans
         $listQuotePlans = app(HealthQuoteService::class)->getQuotePlans($request->quote_uuid);
         if (! isset($listQuotePlans)) {
+            LoggerService::warning(self::class.' - sendOCBEmail - No plans returned from service');
+
             return response()->json(['error' => 'OCB Health Plan Not Found'], 404);
         }
         if (! empty($request->selected_plans) && is_array($request->selected_plans)) {
             if (! isset($listQuotePlans->quote->plans)) {
+                LoggerService::warning(self::class.' - sendOCBEmail - Plans not available in quote object');
                 $listQuotePlans = 'Plans not available!';
             } else {
                 $allPlans = $listQuotePlans->quote->plans;
@@ -681,16 +640,20 @@ class CentralController extends Controller
             $listQuotePlans = $randomPlans;
         }
 
-        LoggerService::info('sendHealthEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
+        LoggerService::info(self::class.' - sendOCBEmail - OCB email plans fetched');
 
         $emailTemplateId = (int) ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE)->value('value');
 
         if (! isset($emailTemplateId)) {
+            LoggerService::warning(self::class.' - sendOCBEmail - Invalid email template ID');
+
             return response()->json(['error' => 'Invalid email template ID'], 400);
         }
         $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
 
         $emailData = app(SendEmailCustomerService::class)->buildEmailData($healthQuote, $listQuotePlans, $previousAdvisor, $request, $emailTemplateId);
+
+        LoggerService::info(self::class.' - sendOCBEmail - Email data built successfully');
 
         $responseCode = app(SendEmailCustomerService::class)->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'health-quote-one-click-buy');
         if ($responseCode == 201) {
@@ -698,19 +661,18 @@ class CentralController extends Controller
                 $healthQuote->quote_status_id = QuoteStatusEnum::Quoted;
                 $healthQuote->quote_status_date = now();
                 $healthQuote->save();
-                $healthAutoFollowupSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH)->first();
-                // Send Automated Followup Email Job if Health Auto-Followups is enabled.
-                if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
-                    $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
-                    OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
-                    LoggerService::info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
-                }
+
+                LoggerService::info(self::class.' - sendOCBEmail - Quote status updated to QUOTED', extra: [
+                    'new_status' => QuoteStatusEnum::Quoted,
+                ]);
             }
-            LoggerService::info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
+            LoggerService::info(self::class.' - sendOCBEmail - OCB Email sent successfully & Quote Status Changed to "QUOTED"');
 
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
-            LoggerService::info('sendHealthEmailOneClickBuy OCB email sending failed for quote uuid: '.$request->quote_uuid.' with error code: '.$responseCode);
+            LoggerService::warning(self::class.' - sendOCBEmail - Email sending failed', extra: [
+                'response_code' => $responseCode,
+            ]);
 
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }

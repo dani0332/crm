@@ -409,7 +409,9 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       availablePlansTable.data = res.data;
-      loadEmbeddedProducts();
+      if (!isPlanDetailEnabled.value) {
+        loadEmbeddedProducts();
+      }
     })
     .catch(err => {
       console.log(err);
@@ -590,11 +592,21 @@ const assumptionsForm = useForm({
 });
 
 const onUpdateAssumption = () => {
+  // Check if customer has an active ECB transaction that requires confirmation
+  if (page.props.isEpEcbPaymentPaid && !modals.isConfirmed) {
+    modals.confirmationMessage = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
+    modals.showConfirmationModal = true;
+    return;
+  }
+
   assumptionsForm.post('/quotes/car/carAssumptionsUpdate', {
     preserveScroll: true,
     onSuccess: () => {
       assumptionState.isEditing = false;
+      loadEmbeddedProducts();
     },
+    // Reset confirmation flag after form submission completes
+    onFinish: () => (modals.isConfirmed = false),
   });
 };
 
@@ -659,6 +671,9 @@ const modals = reactive({
   createPlan: false,
   sendConfirm: false,
   showEmailEventsModal: false,
+  confirmationMessage: '',
+  showConfirmationModal: false,
+  isConfirmed: false,
 });
 
 const confirmData = reactive({
@@ -1503,6 +1518,9 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
+
+  loadEmbeddedProducts();
+
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -1757,6 +1775,20 @@ function handleOcrNotification(event) {
     });
   }
 }
+
+/**
+ * Handle modal confirmation and trigger form submission
+ */
+const handleConfirmConfirmationModal = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = true;
+  onUpdateAssumption();
+};
+
+const handleCancelConfirmationModal = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = false; // Reset confirmation flag when user cancels
+};
 </script>
 
 <template>
@@ -3267,6 +3299,15 @@ function handleOcrNotification(event) {
           </div>
         </template>
       </Collapsible>
+
+      <ConfirmationModal
+        v-model="modals.showConfirmationModal"
+        title="Are you sure?"
+        :message="modals.confirmationMessage"
+        :loading="isLoading"
+        @confirm="handleConfirmConfirmationModal"
+        @cancel="handleCancelConfirmationModal"
+      />
     </div>
 
     <PlanDetails
@@ -3968,6 +4009,7 @@ function handleOcrNotification(event) {
       :expanded="sectionExpanded"
       :isEpLoading="lazyEmbeddedProductsLoading"
       :key="lazyEmbeddedProductsLoading"
+      :isPlanDetailEnabled="isPlanDetailEnabled"
     />
 
     <PolicyDetail

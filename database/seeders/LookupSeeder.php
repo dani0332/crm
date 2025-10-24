@@ -27,6 +27,7 @@ class LookupSeeder extends Seeder
         $this->createClaimRequestTypes();
         $this->createClaimServiceTypes();
         $this->createClaimRequestAccessTypes();
+        $this->createRmCategories();
     }
 
     private function sendUpdateCancelOptions(): void
@@ -487,4 +488,28 @@ class LookupSeeder extends Seeder
             ]);
         }
     }
+
+    private function createRmCategories(): void
+    {
+        Lookup::firstOrCreate([
+            'key' => LookupsEnum::RM_CATEGORY,
+            'code' => 'core',
+            'text' => 'Core',
+        ], [
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => LookupsEnum::RM_CATEGORY,
+            'code' => 'rgta',
+            'text' => 'RGTA',
+        ], [
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
 }

@@ -35,6 +35,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     // Route::post('/imcrm/fix-quote-status-date', [ApiController::class, 'fixQuoteStatusDate']);
     Route::post('/imcrm/event/quote-updated', [ApiController::class, 'quoteUpdated'])->name('quoteUpdated');
     Route::post('/imcrm/trigger-sic-whatsapp', [ApiController::class, 'triggerSICWhatsapp'])->name('triggerSICWhatsapp');
+    Route::post('/imcrm/run-cqf-jobs', [ApiController::class, 'runCQFJobs']);
 
     // FTC email tracking routes
     Route::post('ftc/{quoteType}/{uuid}', [FtcEmailLogController::class, 'store']);

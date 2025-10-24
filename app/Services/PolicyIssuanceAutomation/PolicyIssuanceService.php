@@ -2,6 +2,7 @@
 
 namespace App\Services\PolicyIssuanceAutomation;
 
+use App\Enums\CarRegistrationType;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\InsuranceProvidersEnum;
@@ -70,6 +71,13 @@ class PolicyIssuanceService
             return false;
         }
 
+        if (
+            $insuranceProvider?->code === InsuranceProvidersEnum::RSA &&
+            $quote?->registration_type !== CarRegistrationType::PERSONAL
+        ) {
+            return false;
+        }
+
         return true;
     }
 
@@ -130,7 +138,7 @@ class PolicyIssuanceService
         return $policyIssuanceProcesses;
     }
 
-    public function getPolicyIssuanceStepsStatus($quote, $quoteType): array
+    public function getPolicyIssuanceStepsStatus($quote, $quoteType, $throughAutomation = false): array
     {
         $response = [
             'isPolicyAutomationEnabled' => true,
@@ -144,7 +152,7 @@ class PolicyIssuanceService
             return $response;
         }
 
-        return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote));
+        return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote, $throughAutomation));
     }
 
     private function processPolicyIssuanceRecords($policyIssuanceAutomationStatus)

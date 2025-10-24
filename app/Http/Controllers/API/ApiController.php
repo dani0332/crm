@@ -32,6 +32,7 @@ use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Resources\GenericDocumentResource;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
+use App\Jobs\RunCQFJobs;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -516,5 +517,33 @@ class ApiController extends Controller
     public function getGenericDocuments(Request $request)
     {
         return GenericDocumentResource::collection($this->apiService->getGenericDocuments($request));
+    }
+
+    public function runCQFJobs(Request $request)
+    {
+        try {
+            LoggerService::info(self::class.': Running CQF jobs');
+
+            // Validate the date parameter - make it optional since the service can handle null
+            $request->validate([
+                'date' => 'nullable|date',
+            ]);
+
+            $startDate = null;
+            if ($request->has('date') && ! empty($request->date)) {
+                $startDate = Carbon::parse($request->date);
+            }
+
+            RunCQFJobs::dispatch($startDate);
+
+            LoggerService::info(self::class.': CQF jobs have been completed');
+
+            return apiResponse(null, Response::HTTP_OK, 'car cqf renewals process has been completed');
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': CQF jobs failed', exception: $e);
+
+            return apiResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, 'Failed to run CQF jobs');
+        }
+
     }
 }

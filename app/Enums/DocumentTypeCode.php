@@ -109,4 +109,22 @@ class DocumentTypeCode extends Enum
     const BOR_SIGN = 'BOR_SIGN';
     const BAL_BS = 'BAL_BS';
     const BUS_BAL = 'BUS_BAL';
+    const GH_PS = 'GH_PS'; // Group Health Policy Schedule
+    const GH_NL = 'GH_NL'; // Group Health Network List
+    const GH_EC = 'GH_EC'; // Group Health E-Card
+    const GH_PC = 'GH_PC'; // Group Health Policy Certificate
+    const ECARD_HLTH = 'ECARD_HLTH'; // Health E-Card
+    const SMAF_HLTH = 'SMAF_HLTH'; // Health Signed medical application form
+    const POLC = 'POLC'; // Health Policy Certificate
+    const PC_TRVL = 'PC_TRVL'; // Travel Policy Certificate
+    const CPS_TRVL = 'CPS_TRVL'; // Travel Policy Schedule
+    const PC_YTCH = 'PC_YTCH'; // Yacht Policy Certificate
+    const PS_LIFE = 'PS_LIFE'; // Life Policy Schedule
+    const AC_LIFE = 'AC_LIFE'; // Life Application Copy
+    const PHB = 'PHB'; // Policy Handbook
+    const COMP_PH = 'COMP_PH'; // Trade Credit Policy Handbook
+    const COMP_AEA = 'COMP_AEA'; // Trade Credit Additional Email Attachments
+    const COMP_EC = 'COMP_EC'; // Trade Credit E-Card
+    const COMP_PC = 'COMP_PC'; // Trade Credit Policy Certificate
+    const COMP_PS = 'COMP_PS'; // Trade Credit Policy Schedule
 }

@@ -6,7 +6,7 @@
     <title>Plans Comparison PDF</title>
 
     <style>
-        @page {
+     @page {
             margin: 0;
             padding: 0;
         }
@@ -27,9 +27,11 @@
             position: fixed;
             top: 0;
             left: 0;
-            height: 200px;
+            height: 85px;
             width: 100%;
             display: block;
+            background: white;
+            z-index: 1;
         }
 
         div,
@@ -68,7 +70,6 @@
 
         table.tbl-dec {
             border: none;
-            font-size: 3px;
         }
 
         table.tbl-dec tr td,
@@ -129,21 +130,12 @@
             border: 1px solid #bfbfbf;
         }
 
-        thead>tr>th:first-child {
-            max-width: 30%;
-        }
-
-        tr th:first-child,
-        tr td:first-child {
-            width: 400px;
-            min-width: 400px;
-            max-width: 400px;
-        }
-
         td>p,
+        td>div>p,
+        td>div>div>p,
         th>p {
             padding: 4px;
-            font-size: 12px !important;
+            font-size: 14px;
             text-align: center;
             font-weight: normal;
         }
@@ -153,11 +145,11 @@
         }
 
         .text-xs {
-            font-size: 10px;
+            font-size: 13px;
         }
 
         .text-sm {
-            font-size: 10px;
+            font-size: 14px;
         }
 
         .text-xl {
@@ -171,12 +163,8 @@
         .bg-light-blue {
             border: 1px solid #bfbfbf;
             background: #EFF6FF;
-            padding: 1px 8px;
+            padding: 8px;
             color: #252525;
-        }
-
-        .bg-light-blue p {
-            padding: 1px !important;
         }
 
         .text-black {
@@ -185,13 +173,14 @@
 
         .provider {
             border: 1px solid #bfbfbf;
-            /*font-size: 15px;*/
-            /*line-height: 28px;*/
+            font-size: 15px;
+            line-height: 28px;
             font-weight: 400;
             color: #4ea4a8;
             vertical-align: middle;
-            /*max-height: 50px;*/
-            /*height: 50px;*/
+            max-height: 50px;
+            height: 50px;
+            position: relative;
         }
 
         .spacer {
@@ -204,8 +193,6 @@
             vertical-align: bottom;
             border-left: none;
             border-top: none;
-            width: 400px;
-            min-width: 400px;
         }
 
         .quote-info {
@@ -213,7 +200,7 @@
             vertical-align: bottom;
             margin-top: -1px;
             background: #EFF6FF;
-            font-size: 10px;
+            font-size: 14px;
             text-align: left;
             padding: 8px;
             max-width: 100%;
@@ -235,12 +222,12 @@
         .btn-all-quotes {
             background-color: #1d83bc;
             color: #ffffff;
-            padding: 8px 12px;
-            margin-top: 30px;
+            padding: 8px 25px;
+            margin-top: 50px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 12px;
+            font-size: 15px;
             font-weight: bold;
             border-radius: 5px;
             margin-bottom: 0px;
@@ -249,13 +236,13 @@
         .btn-buy {
             background-color: #FE7333;
             color: #ffffff;
-            padding: 10px 12px;
+            padding: 12px 15px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 10px;
+            font-size: 14px;
             font-weight: bold;
-            border-radius: 4px;
+            border-radius: 5px;
         }
 
         .btn-buy:hover {
@@ -268,51 +255,41 @@
         }
 
         .heading-desc {
-            font-size: 10px;
+            font-size: 12px;
+        }
+
+        .image-wrapper {
+            min-width: 150px;
+            min-height: 150px;
+            width: 150px;
+            height: 150px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin: 20px auto;
         }
 
         .provider-logo {
-            width: 100px;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
+
 
         .no-border {
             border: none;
         }
 
-        footer {
-            position: fixed;
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
-            padding: 0px;
-            margin: 80px 0 0 0;
-            background-color: #1d83bc;
-            color: black;
-            text-align: center;
-            position: fixed;
-            bottom: 0px;
-            height: 145px;
-            z-index: 1500;
-        }
+    
 
-        table.tbl-footer {
-            padding: 18px 12px;
-            margin: 0;
-            width: 100%;
-            border: none;
-        }
-
-        th.provider-name {
-            padding: 0;
-            margin: 0;
-        }
-
-        table.tbl-footer tr td,
-        table.tbl-footer tr td a {
-            color: #ffffff;
-            border: none;
-            font-size: 14px;
-        }
+      
 
         .text-left {
             text-align: left;
@@ -322,10 +299,6 @@
             text-align: right;
         }
 
-        .full-page-image {
-            width: 100%;
-            z-index: 999;
-        }
 
         .text-center {
             text-align: center;
@@ -339,50 +312,79 @@
             text-decoration: underline
         }
 
-        .hidden {
-            display: none;
-        }
+        .footer {
+        position: fixed;
+        bottom: 0;
+        /* top: 50px !important; */
+        left: 0;
+        right: 0;
+        width: 100%;
+        background-color: #1d83bc;
+        color: #ffffff;
+        padding: 2px 2px 2px 2px;
+        text-align: left;
+        height: 167px !important;
+    }
 
-        tr:has(td) {
-            display: none;
-        }
+   
+   
 
-        .header {
-            background: #1d83bc;
-            color: #ffffff;
-            font-size: 19px;
-            text-align: center;
-            padding: 8px 10px;
+        .full-page-image {
             width: 100%;
-            height: 60px;
-            max-height: 60px;
+            z-index: 999;
+            height: 88%;
         }
 
-        .header .logo {
-            float: left;
-            background-color: white;
-            border-radius: 5px;
-            padding: 5px 10px 5px 0px;
-            height: 50px;
-            max-height: 50px;
-        }
 
-        .header .logo img {
-            max-height: 50px;
-            height: 50px;
-        }
+        .footer-content-1 {
+        font-size: 8px !important;
+        line-height: 0.7 !important;
+        word-break: break-word;
+        white-space: normal !important;
+        width: 100%;
+        box-sizing: border-box;
+        align-items: left;
+        text-align: left;
+    }
 
-        .header h3 {
-            float: right;
-            text-align: right;
-            padding-right: 18px;
+    @media (max-width: 600px) {
+        .footer-content-1 {
+            font-size: 8px !important;
+            padding-left: 2px;
+            padding-right: 2px;
         }
+    }
+
+    .footer-content-2{
+        font-size: 8px !important;
+        align-items: center;
+        text-align: center;
+        line-height: 0.8 !important;
+        word-break: break-word;
+        white-space: normal !important;
+        width: 100%;
+        box-sizing: border-box;
+        align-items: left;
+        text-align: left;
+    }
+    @media (max-width: 600px) {
+        .footer-content-2 {
+            font-size: 9px !important;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
+    }
+
+       
     </style>
 </head>
 
-<body>
+<body style="margin: 0; padding: 0;">
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/travel-p1-1.png') }}" class="full-page-image" />
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/travel-p1-1.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
+
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
@@ -702,53 +704,16 @@ foreach ($quotePlan->addons as &$addon) {
         </div>
     </header>
 
-    {{-- PDF Page Footer --}}
-    <footer>
-        <table class="tbl-footer">
-            <div style="float: left;">
-                <img style="height: 110px; border-radius: 50%;"
-                    src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
-                    alt="advisor">
-            </div>
-            <div style="float: left; margin-left: 10px; margin-top: 10px">
-                @if (isset($quote->advisor->name) && !empty($quote->advisor->name))
-                    <p class="text-left text-white text-xl">Name: {{ $quote->advisor?->name }}</p>
-                @endif
-                @if (isset($quote->advisor->email) && !empty($quote->advisor->email))
-                    <p class="text-left text-white text-xl">Email: <a class="text-white"
-                            href="mailto:{{ $quote->advisor->email }}">{{ $quote->advisor->email }}</a></p>
-                @endif
-                @if (isset($quote->advisor->mobile_no) && !empty($quote->advisor->mobile_no))
-                    <p class="text-left text-white text-xl mar">Mobile number:
-                        {{ formatMobileNumber($quote->advisor->mobile_no) }} <span class="text-white"
-                            style="margin-top:3px"><img style="height:20px;"
-                                src="{{ public_path('images/whatsapp-small.png') }}" alt="advisor phone"></span></p>
-                @endif
-                @if (isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no))
-                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white"
-                            href="tel:{{ $quote->advisor->landline_no }}">{{ $quote->advisor->landline_no }}</a></p>
-                @endif
-
-            </div>
-            <div>
-                <h4 class="text-right text-white">InsuranceMarket.ae</h4>
-                <p class="text-right text-white text-xl"><a class="text-white" href="tel:+800253733">Happiness Center:
-                        800 ALFRED (800-253-733)</a></p>
-                <p class="text-right text-white text-xl"><a class="text-white"
-                        href="https://insurancemarket.ae">www.insurancemarket.ae</a></p>
-                <p class="text-right text-white text-xl">27th Floor, Control Tower, Motor City, Dubai,</p>
-                <p class="text-right text-white text-xl">United Arab Emirates, PO Box 26423 <a
-                        class="text-white text-underline"
-                        href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">(map)</a>
-                </p>
-            </div>
-        </table>
-    </footer>
-
-    {{-- PDF Page Inner Content --}}
+  
+    {{-- PDF Page Footer Section --}}
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$quote->uuid])
+        
+     
+    @endcomponent
+{{-- End of PDF Page Footer Section --}}
     <main>
         <table class="table-fixed text-center tbl-plans"
-            style="position: relative;top: 90px;margin-bottom: 70px;table-layout: fixed">
+            style="position: relative;top: 100px;margin-bottom: 70px;table-layout: fixed">
             <thead>
                 <tr>
                     <th class="alfred" id="alfred-th">
@@ -987,8 +952,16 @@ foreach ($quotePlan->addons as &$addon) {
         </table>
     </main>
 
+    <div style="page-break-after: always;"></div>
+
     {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/travel-p1-2.png') }}" class="full-page-image" />
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/travel-p1-2.png') }}" class="full-page-image"  style="height: 90%;"/>
+    </div>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$quote->uuid])
+      
+     
+@endcomponent
 </body>
 
 </html>

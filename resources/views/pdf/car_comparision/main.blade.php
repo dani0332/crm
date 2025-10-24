@@ -42,6 +42,7 @@
             background-color: white;
             margin: 0;
             padding: 0;
+            position: relative;
         }
         
         .font-700 {
@@ -309,12 +310,16 @@
         
         .hero-image {
             width: 100%;
-            height: 1150px;
+            margin: 0;
+            padding: 0;
+            line-height: 0;
         }
         
         .hero-image img {
             width: 100%;
-            height: 1150px;
+            display: block;
+            margin: 0;
+            padding: 0;
         }
         
         .content-page {

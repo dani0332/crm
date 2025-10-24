@@ -310,6 +310,8 @@ class ApiService
 
     public function sendHealthApplyNowEmail(SendHealthApplyNowEmailRequest $request)
     {
+        LoggerService::startQuoteLogging($request->quoteUuid);
+        LoggerService::info('------ Request received to send Apply Now email for lead ------');
         $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
 
         if (! $lead) {
@@ -317,7 +319,7 @@ class ApiService
         }
 
         if ($lead->isAUHLead() || ($lead->isAUHLead(false) && $lead->isLeadSourceRevivalOrInsuranceWallet())) {
-            return apiResponse(null, Response::HTTP_OK, 'AUH or AUH and Revival/Insurance Wallet Leads are not allowed to send OCA Email!');
+            return apiResponse(null, Response::HTTP_OK, 'AUH and Revival/Insurance Wallet Leads are not allowed to send OCA Email!');
         }
 
         if (! $lead->isApplyNowEmailSent()) {
@@ -325,6 +327,8 @@ class ApiService
 
             return apiResponse(null, Response::HTTP_OK, 'Email Sent');
         }
+
+        LoggerService::info('------ Apply Now email already sent for lead ------');
 
         return apiResponse(null, Response::HTTP_OK, 'Email Already Sent!');
     }
