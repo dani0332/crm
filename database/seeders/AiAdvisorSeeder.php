@@ -15,14 +15,15 @@ class AiAdvisorSeeder extends Seeder
     public function run(): void
     {
         User::firstOrCreate(
-            ['email' => 'ai@insurancemarket.ae'],
+            ['email' => 'instant@alfred.insurancemarket.ae'],
             [
-                'name' => 'AI Advisor',
+                'name' => 'Sarah',
                 'is_ai_user' => true,
                 'password' => Hash::make(Str::random(30)),
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
+                'landline_no' => '048185799',
                 'is_active' => 1,
             ],
         );
