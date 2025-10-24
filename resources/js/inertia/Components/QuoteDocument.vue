@@ -370,7 +370,7 @@ onUnmounted(() => {
 
             <a
               v-else
-              @click.prevent="getS3TempUrl(item.doc_url)"
+              :href="storageUrl + (item.watermarked_doc_url || item.doc_url)"
               target="_blank"
               class="text-primary-600 cursor-pointer"
             >
