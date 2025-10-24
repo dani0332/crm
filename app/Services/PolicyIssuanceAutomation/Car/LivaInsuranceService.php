@@ -1327,7 +1327,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'error' => $ex->getMessage(),
                 'line' => $ex->getLine(),
             ]);
-            
+
             return '';
         }
     }
