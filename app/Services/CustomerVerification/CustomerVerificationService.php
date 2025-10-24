@@ -322,7 +322,6 @@ class CustomerVerificationService
 
     private function verifyLicenseHeldFor(string $ocrLicenseHeldFor, string $webFormLicenseHeldFor): bool
     {
-        // dd($ocrLicenseHeldFor, $webFormLicenseHeldFor);
         $ocrLicenseHeldForData = explode(' ', $ocrLicenseHeldFor);  // 2 years or 4 months
         $webFormLicenseHeldForData = explode(' ', $webFormLicenseHeldFor); // 3 years or 0 to 6 months
 
@@ -331,7 +330,7 @@ class CustomerVerificationService
             return $ocrLicenseHeldForData[0] !== $webFormLicenseHeldForData[0];
         }
 
-        if ($ocrLicenseHeldForData[1] === 'months' && $webFormLicenseHeldForData[3] === 'months') {
+        if ($ocrLicenseHeldForData[1] === 'months' && in_array('months', $webFormLicenseHeldForData)) {
             return ! in_array($ocrLicenseHeldForData[0], range($webFormLicenseHeldForData[0], $webFormLicenseHeldForData[2]));
         }
 
