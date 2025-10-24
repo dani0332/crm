@@ -14,6 +14,7 @@ use App\Traits\QuoteModelTrait;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -337,6 +338,11 @@ class TravelQuote extends Model implements AuditableContract
     public function isSenior()
     {
         return $this->customerMembers->where('age', '>=', 65)->count() > 0;
+    }
+
+    public function primaryMember(): HasOne
+    {
+        return $this->hasOne(CustomerMembers::class, 'id', 'primary_member_id');
     }
 
     public function renewalBatch()

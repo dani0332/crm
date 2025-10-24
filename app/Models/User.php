@@ -38,6 +38,7 @@ class User extends Authenticatable implements AuditableContract
         'email',
         'password',
         'profile_photo_path',
+        'rm_category_id',
     ];
 
     /**
@@ -400,6 +401,11 @@ class User extends Authenticatable implements AuditableContract
     public function department()
     {
         return $this->belongsTo(Department::class)->select('id', 'name');
+    }
+
+    public function rmCategory()
+    {
+        return $this->belongsTo(Lookup::class, 'rm_category_id', 'id');
     }
 
     public function advisors()

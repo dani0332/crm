@@ -681,7 +681,7 @@ const plansTable = reactive({
     {
       text: 'CO-PAY/CO-INSURANCE',
       value: 'copayName',
-      width: 100,
+      width: 230,
     },
     {
       text: 'Price',
@@ -2188,7 +2188,7 @@ const updateProfileDetails = isValid => {
           :hide-footer="listQuotePlansFiltered.length < 15"
         >
           <template #item-copayName="item">
-            <span class="copay-max">{{ item.copayName }}</span>
+            <p class="copay-max">{{ item.copayName }}</p>
           </template>
           <template #item-planTypeId="item">
             <span class="copay-max">{{ item.plan_type }}</span>
