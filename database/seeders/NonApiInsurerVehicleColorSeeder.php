@@ -15,6 +15,7 @@ class NonApiInsurerVehicleColorSeeder extends Seeder
      */
     public function run(): void
     {
+        // Target providers
         $insurerList = [
             InsuranceProvidersEnum::RAK,
             InsuranceProvidersEnum::DNIRC,
