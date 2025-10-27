@@ -192,21 +192,21 @@
             color: #000000;
         }
 
+  
         .provider {
-            border: 1px solid #bfbfbf;
-            font-size: 14px;
-            line-height: 1;
-            font-weight: 400;
-            color: #4ea4a8;
-            vertical-align: middle;
-            max-height: 35px;
-            height: 35px;
-        }
+        border: 1px solid #bfbfbf;
+        font-size: 14px;
+        line-height: 1;
+        font-weight: 400;
+        color: #4ea4a8;
+        vertical-align: middle;
+        max-height: 35px;
+        height: 35px;
+    }
 
-        .spacer {
-            padding: 3px;
-        }
-
+    .spacer {
+        padding: 3px;
+    }
         .alfred {
             text-align: right;
             padding: 0;
@@ -274,10 +274,11 @@
             font-size: 12px;
         }
 
-        .provider-logo {
-            width: 55px;
-            height: auto;
-        }
+       
+    .provider-logo {
+        width: 45px;
+        height: auto;
+    }
 
         .no-border {
             border: none;
@@ -322,17 +323,18 @@
             color: #1d83bc;
         }
     
-        table td,
-        table th {
-            max-width: 160px;
-            width: 160px;
-            height: auto;
-            padding: 2px;
-            text-align: center;
-            vertical-align: middle;
-            word-wrap: break-word;
-            white-space: normal;
-        }
+    table td,
+    table th {
+        max-width: 160px;
+        width: 160px;
+        height: auto;
+        padding: 2px;
+        text-align: center;
+        vertical-align: middle;
+        word-wrap: break-word;
+        white-space: normal;
+    }
+
     
         main {
             padding: 10px 20px;
@@ -712,10 +714,12 @@
     </header>
     
     {{-- PDF Page Inner Content --}}
-    <main style="margin-top: 100px;">
+       
+    {{-- PDF Page Inner Content --}}
+    <main>
         <table class="main-table {{ $tableClass }}">
             <thead>
-                <p style="margin-top:100px"></p>
+                <p style="margin-top:200px"></p>
                 <tr>
                     <th class="bg-light-blue" rowspan="2">
                         <p class="quote-info raleway-font" style="font-weight:700;">Insurance company
@@ -995,6 +999,7 @@
             </tbody>
         </table>
     </main>
+
 
    
     {{-- PDF Page Footer Section --}}
