@@ -968,7 +968,7 @@ class TravelQuoteService extends BaseService
         $quote->load(['advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150, 'isRemoteEnabled' => true])
             ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'selectedPlanIds', 'hasAdultAndSeniorMember'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf

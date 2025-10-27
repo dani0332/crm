@@ -226,11 +226,10 @@ function onSubmit(isValid) {
         <x-input
           v-if="form.product_category == 'bolt-on'"
           v-model="form.product_validity"
-          :rules="[isRequired]"
+          :rules="[]"
           placeholder="Enter number of days"
           class="w-full"
           label="Product Validity"
-          required
         />
 
         <x-select

@@ -3,6 +3,7 @@
 namespace App\Services\PolicyIssuanceAutomation\Car;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
@@ -10,6 +11,8 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -353,6 +356,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'payment_code' => $payment->code,
                 'model_type' => self::TYPE,
                 'quote_id' => $quote->id,
+                'through_automation' => true,
             ];
 
             request()->merge($updateBookingRequest);
@@ -419,7 +423,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$process->id.' - Step : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
         $response = ['status' => false, 'completed_step' => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, 'error' => null, 'message' => null];
-        $endPoint = 'motor/transactions/retrieve/v1';
+        $endPoint = 'motor/transactions/retrieve/v2';
 
         $uploadedDocumentsToIMCRM = collect();
 
@@ -572,6 +576,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
             return $policyIssuanceResponse;
         }
+
+        $quote->update([
+            'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+            'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
+            'quote_status_date' => now(),
+        ]);
 
         $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
         $process = $process->refresh();
@@ -1110,9 +1120,11 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
     }
 
-    public function getStepsLockingStatus($quote): array
+    public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {
+        LoggerService::info('class: '.$this->className.' fn: '.__FUNCTION__.' Quote : '.$quote->code);
         $policyIssuance = $quote->policyIssuance;
+
         $response = [
             'policyIssuance' => $policyIssuance,
             'isEditPolicyDetailsDisabled' => true,
@@ -1121,33 +1133,41 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'insurer_api_status' => $quote->insurer_api_status,
         ];
 
-        if ($policyIssuance?->status === PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS) {
+        if ($throughAutomation) {
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
-            $response['message'] = 'All Steps are editable';
+            $response['message'] = 'All steps are editable';
+
+            return $response;
+        }
+
+        if ($quote?->registration_type !== CarRegistrationType::PERSONAL) {
+            $response['isEditPolicyDetailsDisabled'] = false;
+            $response['isEditBookingDetailsDisabled'] = false;
+            $response['message'] = 'All steps are editable';
 
             return $response;
         }
 
         if (
             $policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS ||
-            ($policyIssuance->completed_step && $policyIssuance?->status == '')
+            ($policyIssuance?->completed_step && $policyIssuance?->status == '')
         ) {
-            if (! $policyIssuance->completed_step || $policyIssuance->completed_step === self::UPLOAD_DOCUMENTS) {
+            if (! $policyIssuance?->completed_step || $policyIssuance?->completed_step === self::UPLOAD_DOCUMENTS) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'All Steps are editable';
 
                 return $response;
             }
-            if ($policyIssuance->completed_step === self::ISSUE_POLICY) {
+            if ($policyIssuance?->completed_step === self::ISSUE_POLICY) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Upload Documents and Update Booking Details are editable';
 
                 return $response;
             }
-            if ($policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
+            if ($policyIssuance?->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Booking Details is editable';
@@ -1164,7 +1184,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         if (
             $policyIssuance?->status === PolicyIssuanceEnum::PROCESSING_STATUS &&
-            $policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
+            $policyIssuance?->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
         ) {
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';

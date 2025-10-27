@@ -466,7 +466,6 @@ class ReportsController extends Controller
 
     public function renderConversionAsAtReport(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
     {
-
         $displayBy = $request->displayBy ?? null;
         $createdAtDate = $request->createdAtDate ?? null;
         $includeUnassignedLeads = $request->includeUnassignedLeads ?? null;
@@ -492,12 +491,55 @@ class ReportsController extends Controller
         $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
         $timeOnlyFormat = config('constants.TIME_ONLY_FORMAT');
         $dateTimeFormat = config('constants.DATETIME_DISPLAY_FORMAT');
+        $includeUnassignedLeads = ($request['includeUnassignedLeads'] ?? 'no') === 'yes';
 
         $displayByColumn = $request->displayBy ?? null;
         $displayBy = $request->displayBy ? ucfirst(str_replace('_', ' ', $request->displayBy)) : 'N/A';
         $lob = QuoteTypes::getName($request->lob)->value.' Insurance';
 
         $reportData = $conversionAsAtReportService->getReportData($request);
+
+        $unassignedLeadsCount = $conversionAsAtReportService->getUnassignedLeadsCount($request);
+
+        if ($includeUnassignedLeads) {
+            $prototype = $reportData->first();
+            if ($prototype instanceof \Illuminate\Database\Eloquent\Model) {
+                $row = $prototype->newInstance([], true);
+                $row->total_leads = $unassignedLeadsCount;
+                $row->sale_leads = 0;
+                $row->bad_leads = 0;
+                $row->net_conversion = 0;
+                $row->gross_conversion = 0;
+                $row->start_date = Carbon::make($request->startEndDate[0] ?? null)?->format($dateFormat) ?? 'N/A';
+                $row->end_date = Carbon::make($request->startEndDate[1] ?? null)?->format($dateFormat) ?? 'N/A';
+                $row->as_at_date = Carbon::make($request->asAtDate ?? null)?->format($dateFormat) ?? 'N/A';
+                $row->_is_unassigned_row = true;
+            } else {
+                /** Incase data isn't in eloquent model object -- HIGHLY UNLIKELY */
+                $row = (object) [
+                    'total_leads' => $unassignedLeadsCount,
+                    'sale_leads' => 0,
+                    'bad_leads' => 0,
+                    'net_conversion' => 0,
+                    'gross_conversion' => 0,
+                    'start_date' => Carbon::make($request->startEndDate[0] ?? null)?->format($dateFormat) ?? 'N/A',
+                    'end_date' => Carbon::make($request->startEndDate[1] ?? null)?->format($dateFormat) ?? 'N/A',
+                    'as_at_date' => Carbon::make($request->asAtDate ?? null)?->format($dateFormat) ?? 'N/A',
+                ];
+                $row->_is_unassigned_row = true;
+            }
+
+            if (! empty($displayByColumn) && ! isset($row->{$displayByColumn})) {
+                $row->{$displayByColumn} = 'Unassigned Leads';
+            } else {
+                $row->assignment_type = 'Unassigned Leads';
+            }
+
+            if (isset($row)) {
+                $reportData->push($row);
+            }
+        }
+
         $totalGrossConversion = $conversionAsAtReportService->calculateTotalGrossConversion($reportData);
         $totalNetConversion = $conversionAsAtReportService->calculateTotalNetConversion($reportData);
 
@@ -511,9 +553,9 @@ class ReportsController extends Controller
             'lob' => $lob,
             'display_by_column' => $displayByColumn,
             'display_by' => $displayBy,
-            'start_date' => Carbon::parse($request->startEndDate[0])->format($dateFormat),
-            'end_date' => Carbon::parse($request->startEndDate[1])->format($dateFormat),
-            'as_at_date' => Carbon::parse($request->asAtDate)->format($dateFormat),
+            'start_date' => Carbon::make($request->startEndDate[0] ?? null)?->format($dateFormat) ?? 'N/A',
+            'end_date' => Carbon::make($request->startEndDate[1] ?? null)?->format($dateFormat) ?? 'N/A',
+            'as_at_date' => Carbon::make($request->asAtDate ?? null)?->format($dateFormat) ?? 'N/A',
             'title' => 'Conversion As At Report',
             'auth' => auth()->user()->name,
             'date' => date($dateFormat),
