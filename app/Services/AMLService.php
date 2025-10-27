@@ -56,6 +56,7 @@ use App\Models\PetQuote;
 use App\Models\QuoteMemberDetail;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatusLog;
+use App\Models\QuoteType;
 use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
@@ -1154,7 +1155,7 @@ class AMLService
         LoggerService::info('fn:amlScreeningGIG - Insurer AML Status updated in quote table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
         $quoteDetails->refresh();
 
-        if ($quoteTypeId == QuoteTypes::CAR->id() && ($insurerAMLStatus['insurer_aml_status'] == AMLStatusCode::InsurerAMLScreeningCleared)) {
+        if ($this->shouldProcessAutomation($quoteTypeId, $quoteDetails)) {
             $insurerAMLScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
             $insurerAMLScreeningResponse['autoCaptureStatus'] = GenericRequestEnum::FAILED;
 
@@ -1168,6 +1169,25 @@ class AMLService
 
             session()->put('insurerAMLScreeningResponse', [$insurerAMLScreeningResponse]);
         }
+    }
+
+    private function shouldProcessAutomation($quoteTypeId, $quoteDetails)
+    {
+        $quoteType = QuoteType::where('id', $quoteTypeId)->first();
+        $payment = $quoteDetails->payments()->mainLeadPayment()->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
+
+        if ($quoteTypeId == QuoteTypes::CAR->id() && in_array($insuranceProvider?->code, [InsuranceProviderEnum::AXA->value, InsuranceProviderEnum::RSA->value, InsuranceProviderEnum::OIC->value])) {
+            if (
+                $quoteDetails->registration_type == CarRegistrationType::PERSONAL &&
+                $quoteDetails->insurer_aml_status == AMLStatusCode::InsurerAMLScreeningCleared &&
+                $payment->payment_methods_code == PaymentMethodsEnum::CreditCard
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function formatGender($gender)

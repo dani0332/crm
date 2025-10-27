@@ -41,6 +41,12 @@ const hasAnyPendingPayment = ref(false);
 const hasSameGateway = ref(true);
 const showSelectPlanConfirm = ref(false);
 
+const confirmationModal = reactive({
+  isConfirmed: false,
+  show: false,
+  message: '',
+});
+
 const can = permission => useCan(permission);
 const permissionEnum = page.props.permissionsEnum;
 
@@ -245,6 +251,17 @@ const checkAndUpdateSelectedPlan = async () => {
   updateSelectedPlan();
 };
 
+const handleConfirmConfirmationModal = () => {
+  confirmationModal.show = false;
+  confirmationModal.isConfirmed = true;
+  updateSelectedPlan();
+};
+
+const handleCancelConfirmationModal = () => {
+  confirmationModal.show = false;
+  confirmationModal.isConfirmed = false; // Reset confirmation flag when user cancels
+};
+
 const updateSelectedPlan = () => {
   isLoading.value = true;
   showSelectPlanConfirm.value = false;
@@ -255,6 +272,20 @@ const updateSelectedPlan = () => {
 
   if (props.quoteType.toLocaleLowerCase() == 'health') {
     data.copay_id = props.plan.selectedCopayId;
+  }
+
+  if (props.quoteType.toLocaleLowerCase() == 'car') {
+    // Check if customer has an active ECB transaction that requires confirmation
+    if (
+      props.plan.repairType != page.props.carPlanTypeEnum.COMP &&
+      page.props.isEpEcbPaymentPaid &&
+      !confirmationModal.isConfirmed
+    ) {
+      confirmationModal.message = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
+      confirmationModal.show = true;
+      isLoading.value = false;
+      return;
+    }
   }
 
   if (props.quoteType.toLocaleLowerCase() == 'travel') {
@@ -480,6 +511,14 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
       </div>
     </div>
   </div>
+
+  <ConfirmationModal
+    v-model="confirmationModal.show"
+    title="Are you sure?"
+    :message="confirmationModal.message"
+    @confirm="handleConfirmConfirmationModal"
+    @cancel="handleCancelConfirmationModal"
+  />
 </template>
 
 <style scoped>

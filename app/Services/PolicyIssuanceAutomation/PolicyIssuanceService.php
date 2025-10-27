@@ -2,12 +2,10 @@
 
 namespace App\Services\PolicyIssuanceAutomation;
 
-use App\Enums\AMLStatusCode;
+use App\Enums\CarRegistrationType;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\InsuranceProvidersEnum;
-use App\Enums\Kyc;
-use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -73,6 +71,13 @@ class PolicyIssuanceService
             return false;
         }
 
+        if (
+            $insuranceProvider?->code === InsuranceProvidersEnum::RSA &&
+            $quote?->registration_type !== CarRegistrationType::PERSONAL
+        ) {
+            return false;
+        }
+
         return true;
     }
 
@@ -133,7 +138,7 @@ class PolicyIssuanceService
         return $policyIssuanceProcesses;
     }
 
-    public function getPolicyIssuanceStepsStatus($quote, $quoteType): array
+    public function getPolicyIssuanceStepsStatus($quote, $quoteType, $throughAutomation = false): array
     {
         $response = [
             'isPolicyAutomationEnabled' => true,
@@ -147,7 +152,7 @@ class PolicyIssuanceService
             return $response;
         }
 
-        return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote));
+        return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote, $throughAutomation));
     }
 
     private function processPolicyIssuanceRecords($policyIssuanceAutomationStatus)
@@ -434,36 +439,5 @@ class PolicyIssuanceService
         }
 
         return $status !== null ? ($statuses[$status] ?? null) : $statuses;
-    }
-
-    public function isAutomationInitiated($quoteType, $quote)
-    {
-        LoggerService::info('class: '.$this->className.' fn: '.__FUNCTION__.' Quote : '.$quote->code);
-        $payment = $quote->payments()->mainLeadPayment()->first();
-
-        if (! $payment) {
-            return false;
-        }
-
-        $insurer = getInsuranceProvider($payment, $quoteType);
-        $insurerAutomation = $this->init($quoteType, $insurer?->code);
-
-        if (! $insurerAutomation?->isPolicyIssuanceAutomationEnabled()) {
-            return false;
-        }
-
-        if ($quote->insurer_api_status_id == PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED_STATUS_ID) {
-            return false;
-        }
-
-        if (
-            $quote->aml_status == AMLStatusCode::AMLScreeningCleared &&
-            $quote->kyc_decision == Kyc::COMPLETE &&
-            $payment->payment_methods_code == PaymentMethodsEnum::CreditCard
-        ) {
-            return true;
-        }
-
-        return false;
     }
 }
