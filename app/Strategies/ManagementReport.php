@@ -226,8 +226,8 @@ class ManagementReport
             if (is_array($request[$filterKey])) {
                 $dates = [];
                 foreach ($request[$filterKey] as $key => $dateString) {
-                    // Add null check before parsing (including string 'null')
-                    if ($dateString != null && $dateString != '' && $dateString != 'null') {
+                    // Validate date before parsing
+                    if (isValidDate($dateString)) {
                         $carbonDate = Carbon::parse($dateString);
                         if ($key == 0) {
                             $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
@@ -245,8 +245,8 @@ class ManagementReport
                 }
                 $request[$filterKey] = $dates;
             } else {
-                // Add null check for single date value (including string 'null')
-                if ($request[$filterKey] != null && $request[$filterKey] != '' && $request[$filterKey] != 'null') {
+                // Validate date before parsing
+                if (isValidDate($request[$filterKey])) {
                     $carbonDate = Carbon::parse($request[$filterKey]);
                     $dates = $carbonDate->startOfDay();
                     $request[$filterKey] = $dates;
