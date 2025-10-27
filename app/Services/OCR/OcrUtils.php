@@ -396,7 +396,7 @@ trait OcrUtils
 
         $cleaned = trim($plateNumber);
 
-        //$parts = explode('/', $cleaned, 2);
+        // $parts = explode('/', $cleaned, 2);
         if (preg_match('/^([A-Z0-9]+)[\/:\-\s\']*(\d+)$/i', $cleaned, $matches)) {
             LoggerService::info('OCR Utils - extractPlateCodeNumber - Plate code and number extracted', extra: [
                 'plate_number' => $plateNumber,
@@ -404,9 +404,9 @@ trait OcrUtils
             ]);
 
             return [
-                'plate_code' => $matches[1], 
-                'plate_number' => $matches[2]
-            ]; 
+                'plate_code' => $matches[1],
+                'plate_number' => $matches[2],
+            ];
         }
 
         return [

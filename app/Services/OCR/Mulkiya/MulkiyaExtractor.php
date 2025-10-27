@@ -72,7 +72,7 @@ class MulkiyaExtractor
 
             $data = $this->ensureArray($ocrData);
             $plateInfo = $this->extractPlateCodeNumber($data['trafficPlateNumber'] ?? null);
-        
+
             $this->extractedData = array_merge($this->extractedData, $this->getCleanData([
                 // vehicle driver detail fields
                 'vehicle_plate_code' => $plateInfo['plate_code'] ?? null,
