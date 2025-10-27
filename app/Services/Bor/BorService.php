@@ -463,7 +463,7 @@ class BorService
                 // Add is_base_64 flag to upload data for proper handling
                 $uploadData['is_base_64'] = $data['is_base_64'] ?? 0;
                 $uploadData['file_name'] = $data['file_name'] ?? null;
-                
+
                 $quoteDocumentService = app(QuoteDocumentService::class);
                 $document = $quoteDocumentService->uploadQuoteDocument($file, $uploadData, $quote);
             }
@@ -515,7 +515,7 @@ class BorService
 
         // Ensure is_base_64 flag is set in data for proper handling
         $data['is_base_64'] = $data['is_base_64'] ?? 0;
-        
+
         $quoteDocumentService = new QuoteDocumentService;
         $document = $quoteDocumentService->uploadQuoteDocument($file, $data, $quote);
 
