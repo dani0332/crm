@@ -86,7 +86,7 @@ class BorController extends Controller
                 return response()->json(['error' => 'BOR log not found'], 404);
             }
 
-            $$borPdfService = new BorPdfService;
+            $borPdfService = new BorPdfService;
             $pdf = $borPdfService->generatePreviewBorPdf($borLog);
 
             return response()->json([
