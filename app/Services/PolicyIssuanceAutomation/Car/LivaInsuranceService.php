@@ -1239,7 +1239,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'reason' => $policyIssuance->message,
             ]);
 
-            return true;
+            return false;
         } else {
             $policyIssuanceLogs = $policyIssuance->policyIssuanceLogs;
             if (
@@ -1301,7 +1301,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             if ($isTimeout) {
                 $policyIssuance->update([
                     'status' => PolicyIssuanceEnum::TIMEOUT_STATUS,
-                    'message' => null,
                 ]);
 
                 LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updated Policy Issuance ID : '.$policyIssuance->id.' to TIMEOUT_STATUS');
