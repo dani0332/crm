@@ -856,7 +856,7 @@ class CRUDController extends Controller
                 $isAddionalFieldsEnabled = app(AMLService::class)->isAdditionalVehicleAndDriverDetailsEnabled($this->genericModel->modelType, $record?->insurance_provider_id, $record?->registration_type, true);
                 $lookups = $rtaConfigurationData = [];
                 $LIVAEnums ?? [];
-                
+
                 if ($isAddionalFieldsEnabled) {
                     $lookups = app(AMLService::class)->getAdditionaVehicleDriverLookups($this->genericModel->modelType, $record?->insurance_provider_id, $record?->source);
                     $lookups['issuance_place'] = LookupRepository::where('key', LookupsEnum::ISSUANCE_PLACE)->get()->toArray();
