@@ -104,7 +104,7 @@ class BorRequestMail extends Mailable
             'workflow_type' => WorkflowTypeEnum::BOR_REQUEST ?? '',
             'quote_link' => $quoteLink ?? '',
             'customer_name' => $this->getCustomerName(true) ?? '',
-            'subject_line' => $this->getSubjectLine($personalQuote, $quoteType) ?? '',
+            'subject_line' => $this->getSubjectLine($personalQuote) ?? '',
             'insurance' => [
                 'insurance_name' => $this->borLog->insuranceProvide?->text ?? '',
                 'insurance_representative' => 'insurance_representative@email.com',

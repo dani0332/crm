@@ -99,7 +99,7 @@ class BorCompletionMail extends Mailable
             'workflow_type' => WorkflowTypeEnum::BOR_UPLOAD ?? '',
             'quote_link' => $quoteLink ?? '',
             'customer_name' => $this->getCustomerName(true) ?? '',
-            'subject_line' => $this->getSubjectLine($personalQuote, $quoteType) ?? '',
+            'subject_line' => $this->getSubjectLine($personalQuote) ?? '',
             'customer' => [
                 'email' => $this->customerData['email'],
                 'first_name' => $this->customerData['first_name'] ?? '',
