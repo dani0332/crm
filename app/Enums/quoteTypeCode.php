@@ -58,7 +58,8 @@ class quoteTypeCode extends Enum
     const SAVINGS = 'Savings';
     const Marine = 'Marine';
     const CompanyCar = 'CompanyCar';
-
+    const CYBER = 'Cyber';
+    
     public static function getName($value)
     {
         return match ($value) {

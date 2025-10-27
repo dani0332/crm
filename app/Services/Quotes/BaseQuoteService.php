@@ -38,12 +38,13 @@ use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\CentralTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 abstract class BaseQuoteService extends BaseService
 {
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, CentralTrait;
 
     public function __construct(public QuoteTypes $quoteType) {}
 
@@ -149,6 +150,8 @@ abstract class BaseQuoteService extends BaseService
 
         $emailStatuses = app(EmailStatusService::class)->getEmailStatus($quoteType->id(), $quote->id);
 
+        $planURL = $this->getEcomQuoteLink($quoteType, $quote->uuid);
+
         return [
             'quote' => $quote,
             'quoteType' => $quoteType,
@@ -194,6 +197,7 @@ abstract class BaseQuoteService extends BaseService
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'emailStatuses' => $emailStatuses,
+            'planURL' => $planURL,
         ];
     }
 

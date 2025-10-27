@@ -73,6 +73,7 @@ use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\Quotes\CyberQuoteService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
@@ -338,6 +339,8 @@ class CentralService extends BaseService
                 return app(HomeQuoteService::class)->getQuotePlans($id, ['getLatestRating' => $getLatestRating]);
             case quoteTypeCode::SAVINGS:
                 return app(SavingsQuoteService::class)->getAvailablePlans($id);
+            case quoteTypeCode::CYBER:
+                return app(CyberQuoteService::class)->getAvailablePlans($id);
             default:
                 return [];
         }

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             QuoteStatusSeeder::class,
             LookupSeeder::class,
             SavingsQuoteDataSeeder::class,
+            CyberQuoteDataSeeder::class,
             // ILAGMPermissionSeeder::class,
             // TravelRenewalTeamSeeder::class,
             // QuoteTypeTableSeeder::class,

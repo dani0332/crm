@@ -453,6 +453,19 @@ final class PermissionsEnum extends Enum
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
     public const EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS = 'edit-vehicle-transaction-driver-details';
     public const EDIT_LAST_YEAR_DETAILS = 'edit-last-year-details';
+    
+    // Cyber Permissions
+    public const CYBER_QUOTES_LIST = 'cyber-quotes-list';
+    public const CYBER_QUOTES_CREATE = 'cyber-quotes-create';
+    public const CYBER_QUOTES_EDIT = 'cyber-quotes-edit';
+    public const CYBER_QUOTES_SHOW = 'cyber-quotes-show';
+    public const CYBER_COMPREHENSIVE_DASHBOARD = 'cyber-comprehensive-dashboard';
+    public const CYBER_CONVERSION_REPORT = 'cyber-conversion-report';
+    public const CYBER_DISTRIBUTION_REPORT = 'cyber-distribution-report';
+    public const CYBER_LEAD_ALLOCATION_DASHBOARD = 'cyber-lead-allocation-dashboard';
+    public const CYBER_AS_AT_REPORT_MANAGER = 'cyber-as-at-report-manager';
+    public const CYBER_LEADPOOL = 'cyber-leadpool';
+    // End of Cyber Permissions
 
     public static function getAdvisorConversionReportPermissions()
     {
@@ -469,6 +482,7 @@ final class PermissionsEnum extends Enum
             self::CORPLINE_CONVERSION_REPORT,
             self::GROUPMEDICAL_CONVERSION_REPORT,
             self::SAVINGS_CONVERSION_REPORT,
+            self::CYBER_CONVERSION_REPORT,
         ];
     }
 
@@ -487,6 +501,7 @@ final class PermissionsEnum extends Enum
             self::CORPLINE_COMPREHENSIVE_DASHBOARD,
             self::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
             self::SAVINGS_COMPREHENSIVE_DASHBOARD,
+            self::CYBER_COMPREHENSIVE_DASHBOARD,
         ];
     }
 
@@ -505,6 +520,7 @@ final class PermissionsEnum extends Enum
             self::CORPLINE_DISTRIBUTION_REPORT,
             self::GROUPMEDICAL_DISTRIBUTION_REPORT,
             self::SAVINGS_DISTRIBUTION_REPORT,
+            self::CYBER_DISTRIBUTION_REPORT,
         ];
     }
 

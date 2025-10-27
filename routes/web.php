@@ -75,6 +75,7 @@ use App\Http\Controllers\V2\CarQuoteController;
 use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\V2\CustomerAcceptanceLogController;
+use App\Http\Controllers\V2\CyberQuoteController;
 use App\Http\Controllers\V2\CustomerController as V2CustomerController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
@@ -299,6 +300,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             // Non Motor
             Route::get('non-motor/update', [RenewalsUploadController::class, 'updateNonMotorRenewals'])->name('non-motor-renewals-upload-update');
             Route::get('renewals/retry/{renewalsUploadLead}', [RenewalsUploadController::class, 'retryRenewalProcesses'])->name('renewals.retry');
+        });
+
+        Route::prefix('personal-quotes')->group(function () {
+            Route::resource('/cyber', CyberQuoteController::class)->names(generateRouteNames('cyber-quotes'));
         });
     });
 

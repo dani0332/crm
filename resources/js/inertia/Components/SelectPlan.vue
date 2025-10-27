@@ -16,6 +16,14 @@ const props = defineProps({
   },
   insuranceProviderId: Number,
   code: String,
+  buttonSize: {
+    type: String,
+    default: 'xs',
+  },
+  buttonClass: {
+    type: String,
+    default: '',
+  },
 });
 
 const page = usePage();
@@ -381,12 +389,16 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
   <SelectPlanButtonTemplate v-slot="{ isDisabled }">
     <x-button
       v-if="isPlanSelectionEnable"
-      size="xs"
+      :size="buttonSize"
       color="success"
       outlined
       :loading="isLoading"
       :disabled="isDisabled || isPlanSelectionDisable"
       @click.prevent="checkAndUpdateSelectedPlan()"
+      :class="[
+        buttonSize === 'sm' ? 'min-w-[100px]' : '',
+        buttonClass
+      ]"
     >
       Select
     </x-button>

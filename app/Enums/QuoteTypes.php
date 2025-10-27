@@ -44,6 +44,7 @@ use App\Strategies\Allocations\HomeAllocation;
 use App\Strategies\Allocations\LifeAllocation;
 use App\Strategies\Allocations\PetAllocation;
 use App\Strategies\Allocations\SavingsAllocation;
+use App\Strategies\Allocations\CyberAllocation;
 use App\Strategies\Allocations\TravelAllocation;
 use App\Strategies\Allocations\YachtAllocation;
 use Illuminate\Database\Eloquent\Model;
@@ -71,6 +72,7 @@ enum QuoteTypes: string
     case CAR_REVIVAL = 'CarRevival';
     case CAR_BIKE = 'Car_Bike';
     case SAVINGS = 'Savings';
+    case CYBER = 'Cyber';
 
     public function id(): string
     {
@@ -94,6 +96,7 @@ enum QuoteTypes: string
             QuoteTypes::CORPLINE => 101,
             QuoteTypes::GROUP_MEDICAL => 102,
             QuoteTypes::SAVINGS => 18,
+            QuoteTypes::CYBER => 19,
             default => null,
         };
     }
@@ -115,6 +118,7 @@ enum QuoteTypes: string
             101 => QuoteTypes::CORPLINE,
             102 => QuoteTypes::GROUP_MEDICAL,
             18 => QuoteTypes::SAVINGS,
+            19 => QuoteTypes::CYBER,
         ];
 
         return isset($types[$value]) ? $types[$value] : null;
@@ -137,6 +141,7 @@ enum QuoteTypes: string
             'CorpLine' => QuoteTypes::CORPLINE,
             'Group Medical' => QuoteTypes::GROUP_MEDICAL,
             'Savings' => QuoteTypes::SAVINGS,
+            'Cyber' => QuoteTypes::CYBER,
             default => null,
         };
 
@@ -158,6 +163,7 @@ enum QuoteTypes: string
             self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote : new CycleQuote,
             self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote : new JetskiQuote,
             self::SAVINGS => checkPersonalQuotes($this->value) ? new PersonalQuote : new SavingsQuote,
+            self::CYBER => new PersonalQuote,
             default => new PersonalQuote,
         };
     }
@@ -218,6 +224,7 @@ enum QuoteTypes: string
             self::CYCLE => 'CYC-',
             self::JETSKI => 'JSK-',
             self::SAVINGS => 'SAV-',
+            self::CYBER => 'CYB-',
         };
     }
 
@@ -236,6 +243,7 @@ enum QuoteTypes: string
             'CYC' => self::CYCLE,
             'JSK' => self::JETSKI,
             'SAV' => self::SAVINGS,
+            'CYB' => self::CYBER,
         ];
 
         return $codes[$code] ?? null;
@@ -260,6 +268,7 @@ enum QuoteTypes: string
             self::CORPLINE => $isPersonalQuote ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
             self::GROUP_MEDICAL => $isPersonalQuote ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
             self::SAVINGS => route('savings-quotes-show', $uuid),
+            self::CYBER => route('cyber-quotes-show', $uuid),
         };
     }
 
@@ -289,6 +298,7 @@ enum QuoteTypes: string
             self::HOME => new HomeAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::SAVINGS => new SavingsAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::GROUP_MEDICAL => new GroupMedicalAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
+            self::CYBER => new CyberAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             default => null,
         };
 
@@ -315,6 +325,7 @@ enum QuoteTypes: string
             self::SAVINGS => [RolesEnum::SavingsAdvisor],
             self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
             self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
+            self::CYBER => [RolesEnum::CyberAdvisor],
             default => [],
         };
     }
@@ -413,6 +424,7 @@ enum QuoteTypes: string
             self::CAR_REVIVAL => [],
             self::CAR_BIKE => [],
             self::SAVINGS => [],
+            self::CYBER => [],
             default => [],
         };
     }

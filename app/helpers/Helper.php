@@ -545,6 +545,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
             QuoteTypes::LIFE->value,
+            QuoteTypes::CYBER->value,
         ]);
     }
 }

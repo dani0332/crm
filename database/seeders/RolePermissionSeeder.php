@@ -210,6 +210,7 @@ class RolePermissionSeeder extends Seeder
             PermissionsEnum::CORPLINE_LEADPOOL,
             PermissionsEnum::GROUP_MEDICAL_LEADPOOL,
             PermissionsEnum::SAVINGS_LEADPOOL,
+            PermissionsEnum::CYBER_LEADPOOL,
         ];
 
         foreach ($permissions as $permission) {
