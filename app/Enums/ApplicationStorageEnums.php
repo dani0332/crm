@@ -290,4 +290,9 @@ final class ApplicationStorageEnums extends Enum
     public const EP_ECB_POLICY_CLAIM_LIMIT = 'EP_ECB_POLICY_CLAIM_LIMIT';
     public const EP_ECB_POLICY_COVERAGE = 'EP_ECB_POLICY_COVERAGE';
     public const EP_ECB_POLICY_DURATION = 'EP_ECB_POLICY_DURATION';
+
+    // EP Failure Notification Email
+    public const EP_FAILURE_EMAIL_TO = 'EP_FAILURE_EMAIL_TO';
+    public const EP_FAILURE_EMAIL_REPLY_TO = 'EP_FAILURE_EMAIL_REPLY_TO';
+    public const EP_FAILURE_EMAIL_CC = 'EP_FAILURE_EMAIL_CC';
 }
