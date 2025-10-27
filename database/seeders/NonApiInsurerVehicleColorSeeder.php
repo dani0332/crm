@@ -24,9 +24,11 @@ class NonApiInsurerVehicleColorSeeder extends Seeder
             InsuranceProvidersEnum::NT,
             InsuranceProvidersEnum::AFNIC,
         ];
-        $GIGInsurerProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
 
-        DB::transaction(function () use ($insurerList, $GIGInsurerProvider) {
+        // Source insurer is LIVA
+        $LIVAInsurerProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::RSA)->first();
+
+        DB::transaction(function () use ($insurerList, $LIVAInsurerProvider) {
             foreach ($insurerList as $insurer) {
                 $targetProvider = InsuranceProvider::where('code', $insurer)->first();
 
@@ -48,8 +50,8 @@ class NonApiInsurerVehicleColorSeeder extends Seeder
                             'quote_type_id, ? as insurance_provider_id, `key`, `code`, `text`, `parent_id`, `is_active`, NOW(), NOW()',
                             [$targetProvider->id]
                         )
-                        ->where('insurance_provider_id', $GIGInsurerProvider->id)
-                        ->where('key', LookupsEnum::VEHICLE_COLOR)
+                        ->where('insurance_provider_id', $LIVAInsurerProvider->id)
+                        ->whereIn('key', [LookupsEnum::VEHICLE_COLOR, LookupsEnum::PLATE_CODE, LookupsEnum::RTA_TRANSACTION_TYPE])
                 );
             }
         });
