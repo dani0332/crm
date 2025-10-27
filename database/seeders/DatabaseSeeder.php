@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
             TravelLeadAllocationDashboardSeeder::class,
             VehicleColorSeeder::class,
             SendUpdateNotesSeeder::class,
+            NonApiInsurerVehicleColorSeeder::class,
         ]);
     }
 }
