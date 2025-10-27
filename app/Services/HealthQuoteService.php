@@ -1349,6 +1349,7 @@ class HealthQuoteService extends BaseService
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
                 'isPecMarked' => $request->pec == 1,
+                'isPrincipal' => $request->is_principal == 1,
             ];
 
             $dataArray = [
@@ -1357,6 +1358,7 @@ class HealthQuoteService extends BaseService
             ];
 
             $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
+
         } else {
             $response = [
                 'status' => false,
@@ -1443,7 +1445,7 @@ class HealthQuoteService extends BaseService
 
         $isAUH = $quote->isAUHLead(false);
 
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150, 'isRemoteEnabled' => true])
             ->loadView('pdf.health_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'isAUH'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf

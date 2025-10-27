@@ -7,6 +7,7 @@
     "content-hash": "4e53261978988b735512e306c173dee3",
     "packages": [
         {
+<<<<<<< HEAD
             "name": "aws/aws-crt-php",
             "version": "v1.2.7",
             "source": {
@@ -59,6 +60,156 @@
                 "source": "https://github.com/awslabs/aws-crt-php/tree/v1.2.7"
             },
             "time": "2024-10-18T22:15:13+00:00"
+=======
+          "name": "AWS SDK Common Runtime Team",
+          "email": "aws-sdk-common-runtime@amazon.com"
+        }
+      ],
+      "description": "AWS Common Runtime for PHP",
+      "homepage": "https://github.com/awslabs/aws-crt-php",
+      "keywords": ["amazon", "aws", "crt", "sdk"],
+      "support": {
+        "issues": "https://github.com/awslabs/aws-crt-php/issues",
+        "source": "https://github.com/awslabs/aws-crt-php/tree/v1.2.7"
+      },
+      "time": "2024-10-18T22:15:13+00:00"
+    },
+    {
+      "name": "aws/aws-sdk-php",
+      "version": "3.357.0",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/aws/aws-sdk-php.git",
+        "reference": "0325c653b022aedb38f397cf559ab4d0f7967901"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/0325c653b022aedb38f397cf559ab4d0f7967901",
+        "reference": "0325c653b022aedb38f397cf559ab4d0f7967901",
+        "shasum": ""
+      },
+      "require": {
+        "aws/aws-crt-php": "^1.2.3",
+        "ext-json": "*",
+        "ext-pcre": "*",
+        "ext-simplexml": "*",
+        "guzzlehttp/guzzle": "^7.4.5",
+        "guzzlehttp/promises": "^2.0",
+        "guzzlehttp/psr7": "^2.4.5",
+        "mtdowling/jmespath.php": "^2.8.0",
+        "php": ">=8.1",
+        "psr/http-message": "^1.0 || ^2.0"
+      },
+      "require-dev": {
+        "andrewsville/php-token-reflection": "^1.4",
+        "aws/aws-php-sns-message-validator": "~1.0",
+        "behat/behat": "~3.0",
+        "composer/composer": "^2.7.8",
+        "dms/phpunit-arraysubset-asserts": "^0.4.0",
+        "doctrine/cache": "~1.4",
+        "ext-dom": "*",
+        "ext-openssl": "*",
+        "ext-pcntl": "*",
+        "ext-sockets": "*",
+        "phpunit/phpunit": "^5.6.3 || ^8.5 || ^9.5",
+        "psr/cache": "^2.0 || ^3.0",
+        "psr/simple-cache": "^2.0 || ^3.0",
+        "sebastian/comparator": "^1.2.3 || ^4.0 || ^5.0",
+        "symfony/filesystem": "^v6.4.0 || ^v7.1.0",
+        "yoast/phpunit-polyfills": "^2.0"
+      },
+      "suggest": {
+        "aws/aws-php-sns-message-validator": "To validate incoming SNS notifications",
+        "doctrine/cache": "To use the DoctrineCacheAdapter",
+        "ext-curl": "To send requests using cURL",
+        "ext-openssl": "Allows working with CloudFront private distributions and verifying received SNS messages",
+        "ext-sockets": "To use client-side monitoring"
+      },
+      "type": "library",
+      "extra": {
+        "branch-alias": {
+          "dev-master": "3.0-dev"
+        }
+      },
+      "autoload": {
+        "files": ["src/functions.php"],
+        "psr-4": {
+          "Aws\\": "src/"
+        },
+        "exclude-from-classmap": ["src/data/"]
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": ["Apache-2.0"],
+      "authors": [
+        {
+          "name": "Amazon Web Services",
+          "homepage": "http://aws.amazon.com"
+        }
+      ],
+      "description": "AWS SDK for PHP - Use Amazon Web Services in your PHP project",
+      "homepage": "http://aws.amazon.com/sdkforphp",
+      "keywords": [
+        "amazon",
+        "aws",
+        "cloud",
+        "dynamodb",
+        "ec2",
+        "glacier",
+        "s3",
+        "sdk"
+      ],
+      "support": {
+        "forum": "https://github.com/aws/aws-sdk-php/discussions",
+        "issues": "https://github.com/aws/aws-sdk-php/issues",
+        "source": "https://github.com/aws/aws-sdk-php/tree/3.357.0"
+      },
+      "time": "2025-10-22T19:43:07+00:00"
+    },
+    {
+      "name": "azure-oss/storage",
+      "version": "1.5.0",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/Azure-OSS/azure-storage-php.git",
+        "reference": "c065ad267ca54a2dca7ffcb22915a4f7ab10bbea"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/Azure-OSS/azure-storage-php/zipball/c065ad267ca54a2dca7ffcb22915a4f7ab10bbea",
+        "reference": "c065ad267ca54a2dca7ffcb22915a4f7ab10bbea",
+        "shasum": ""
+      },
+      "require": {
+        "caseyamcl/guzzle_retry_middleware": "^2.10",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-simplexml": "*",
+        "guzzlehttp/guzzle": "^7.8",
+        "php": "^8.1"
+      },
+      "require-dev": {
+        "ext-zlib": "*",
+        "guzzlehttp/test-server": "^0.1.0",
+        "laravel/pint": "1.20.0",
+        "phpbench/phpbench": "^1.3",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-deprecation-rules": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^10.5"
+      },
+      "type": "library",
+      "autoload": {
+        "psr-4": {
+          "AzureOss\\Storage\\": "src/"
+        }
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": ["MIT"],
+      "authors": [
+        {
+          "name": "Brecht Vermeersch",
+          "email": "brechtvermeersch@outlook.be"
+>>>>>>> a7d7e09046fafe96192d46d818d48b9acd2f3711
         },
         {
             "name": "aws/aws-sdk-php",

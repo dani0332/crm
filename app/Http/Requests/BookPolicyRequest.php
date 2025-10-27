@@ -54,11 +54,13 @@ class BookPolicyRequest extends FormRequest
                 $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
             }
 
-            $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($quoteModel, request()->model_type);
+            $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($quoteModel, request()->model_type, request()->has('through_automation'));
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__, extra: [
                 'isPolicyAutomationEnabled' => $lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'],
                 'isEditBookingDetailsDisabled' => $lockStatusOfPolicyIssuanceSteps['isEditBookingDetailsDisabled'] ?? null,
+                'through_automation' => request()->has('through_automation'),
             ]);
+
             if ($lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'] && $lockStatusOfPolicyIssuanceSteps['isEditBookingDetailsDisabled']) {
                 $validator->errors()->add('value', 'Policy Booking is scheduled! You are not allowed to edit booking details');
             }

@@ -138,7 +138,7 @@ class PolicyIssuanceService
         return $policyIssuanceProcesses;
     }
 
-    public function getPolicyIssuanceStepsStatus($quote, $quoteType): array
+    public function getPolicyIssuanceStepsStatus($quote, $quoteType, $throughAutomation = false): array
     {
         $response = [
             'isPolicyAutomationEnabled' => true,
@@ -152,7 +152,7 @@ class PolicyIssuanceService
             return $response;
         }
 
-        return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote));
+        return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote, $throughAutomation));
     }
 
     private function processPolicyIssuanceRecords($policyIssuanceAutomationStatus)

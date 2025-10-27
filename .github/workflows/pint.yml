@@ -25,7 +25,7 @@ jobs:
           coverage: none
 
       - name: Install Composer dependencies
-        run: rm -Rf composer.lock && rm -Rf vendor && composer install
+        run: composer install
 
       - name: Run Pint
         run: composer pint:fix

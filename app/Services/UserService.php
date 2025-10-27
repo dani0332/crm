@@ -40,6 +40,7 @@ class UserService extends BaseService
         $user->department_id = $request->department_id ?? null;
         $user->password = bcrypt($request->password);
         $user->is_active = true;
+        $user->rm_category_id = (! empty($request->rm_category_id) && $request->rm_category_id > 0) ? $request->rm_category_id : null;
         if ((! empty($request->additionalTeams) && $request->sub_team_id != '0')) {
             $user->sub_team_id = $request->sub_team_id;
         }

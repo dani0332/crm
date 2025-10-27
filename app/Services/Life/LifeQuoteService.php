@@ -796,7 +796,9 @@ class LifeQuoteService extends BaseService
     {
         $quotePlans = $this->quotePlans($data);
 
-        $quote = PersonalQuote::where('uuid', $data['quote_uuid'])->first();
+        $quote = PersonalQuote::where('uuid', $data['quote_uuid'])->with(['advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
+        }])->first();
 
         if (! $quotePlans || ! isset($quotePlans->quotes) || ! isset($quotePlans->quotes->plans)) {
             LoggerService::info('fn: exportPlansPdf - No plans found for the quote');
