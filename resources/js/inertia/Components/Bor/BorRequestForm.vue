@@ -132,7 +132,8 @@ const isSukoonInsurance = computed(() => {
 const initializeSelectedInsurer = () => {
   if (form.insurance_provider_id) {
     selectedInsurer.value =
-      props.insuranceProviders.find(p => p.id == form.insurance_provider_id) || null;
+      props.insuranceProviders.find(p => p.id == form.insurance_provider_id) ||
+      null;
   } else {
     selectedInsurer.value = null;
   }
