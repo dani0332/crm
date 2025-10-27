@@ -22,6 +22,7 @@ const isSyncFromInsurer = ref(false);
 const quote = page.props?.quoteRequest ?? page.props?.record;
 const insuranceProviderCode =
   quote?.plan?.insurance_provider?.code ?? quote?.plan_provider_code;
+const providerCodeEnum = page.props.insuranceProviderCodeEnum;
 
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [
@@ -164,22 +165,22 @@ const submitAdditionalDriverDetailsForm = async isValid => {
 
 const isGIG = computed(() => {
   return (
-    quote?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.AXA
+    quote?.plan?.insurance_provider.code === providerCodeEnum.AXA ||
+    quote?.plan_provider_code === providerCodeEnum.AXA
   );
 });
 
 const isLIVA = computed(() => {
   return (
-    quote?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.RSA
+    quote?.plan?.insurance_provider.code === providerCodeEnum.RSA ||
+    quote?.plan_provider_code === providerCodeEnum.RSA
   );
 });
 
 const isSUKOON = computed(() => {
   return (
-    quote?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.OIC
+    quote?.plan?.insurance_provider.code === providerCodeEnum.OIC ||
+    quote?.plan_provider_code === providerCodeEnum.OIC
   );
 });
 
