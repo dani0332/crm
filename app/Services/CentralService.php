@@ -651,7 +651,7 @@ class CentralService extends BaseService
                 $data = [
                     'planId' => intval($data->plan_id),
                     'quoteUID' => $uuid,
-                    'quoteTypeId' => QuoteTypes::CYBER->id(),
+                    'quoteTypeId' => (int) QuoteTypes::CYBER->id(),
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
                 ];
                 $response = Ken::request($endpoint, 'post', $data);
