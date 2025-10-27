@@ -26,7 +26,8 @@ class BorRequest extends FormRequest
     {
         $action = $this->route()->getActionMethod();
 
-        // Base rules that apply to all BOR requests
+        // Base rules that apply to BOR actions that use 'bor_ref_id' field
+        // Note: uploadDocument uses 'document_category' instead of 'bor_ref_id'
         $baseRules = [
             'bor_ref_id' => 'required|string|exists:bor_logs,bor_reference',
         ];
@@ -50,13 +51,16 @@ class BorRequest extends FormRequest
                 ]);
 
             case 'uploadDocument':
+                // Note: uploadDocument uses 'document_category' as the BOR reference instead of 'bor_ref_id'
+                // This is intentional as this action has a different parameter structure
                 return [
                     'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240', // 10MB max
                     'quote_type' => 'required|string',
                     'quote_uuid' => 'required|string',
                     'is_base_64' => 'nullable|boolean',
                     'document_type_code' => 'nullable|string|exists:document_types,code,is_active,1',
-                    'document_category' => 'nullable|string|max:255',
+                    // document_category serves as the BOR reference for this action
+                    'document_category' => 'nullable|string|max:255|exists:bor_logs,bor_reference',
                 ];
 
             default:
@@ -108,6 +112,7 @@ class BorRequest extends FormRequest
                     'quote_uuid.required' => 'Quote UUID is required.',
                     'document_type_code.exists' => 'The specified document type code does not exist.',
                     'document_category.max' => 'Document category must not exceed 255 characters.',
+                    'document_category.exists' => 'The specified BOR reference does not exist.',
                 ];
 
             default:
