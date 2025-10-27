@@ -7,32 +7,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-   @page {
+        * {
+            font-family: 'Prompt', sans-serif !important;
+        }
+    
+        .raleway-font {
+            font-family: 'Raleway', sans-serif !important;
+        }
+    
+        @page {
             margin: 0;
             padding: 0;
+            margin-bottom: 170px;
         }
-
         html {
-            line-height: 1.5;
+            line-height: 1;
             margin: 0;
             padding: 0;
         }
 
         body {
             line-height: 1;
-            font-family: "DejaVu Sans", sans-serif;
-
-        }
-
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 85px;
-            width: 100%;
-            display: block;
-            background: white;
-            z-index: 1;
+            margin: 0;
+            padding: 0;
+            font-size: 10px;
+            font-weight: 400;
+            color: #333333;
         }
 
         div,
@@ -58,6 +58,8 @@
         p,
         pre {
             margin: 0;
+            font-size: 12px;
+            font-weight: 400;
         }
 
         a {
@@ -66,11 +68,14 @@
 
         b,
         strong {
-            font-weight: bolder;
+            font-weight: 700;
         }
 
         table.tbl-dec {
+            margin: auto;
+            padding: auto;
             border: none;
+            font-size: 12px;
         }
 
         table.tbl-dec tr td,
@@ -79,42 +84,69 @@
         }
 
         table {
-            min-width: 1220px;
-            width: 1220px;
             text-indent: 0;
             border-color: #bfbfbf;
-            max-width: 1220px;
-            margin: 7px 12px auto;
+            color: #333333;
             border-spacing: 0;
+            border-radius: 10px;
+            border-collapse: collapse;
+            font-size: 12px;
+            table-layout: auto;
+        }
+    
+        .not-full {
+            width: auto;
+            margin: 0 auto;
+        }
+    
+        .is-full {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
         }
 
         tbody {
-            margin-bottom: 130px;
+            margin-bottom: 170px;
+        }
+    
+        tbody>tr>td {
+            border: 1px solid #bfbfbf;
+        }
+    
+        thead>tr>th {
+            border: 1px solid #bfbfbf;
+        }
+    
+        td>p,
+        th>p {
+            padding: 2px;
+            font-size: 12px !important;
+            text-align: center;
+            font-weight: 400;
         }
 
         .header {
-            background: #1d83bc;
             color: #ffffff;
-            font-size: 16px;
+            font-size: 14px;
+            font-weight: 600;
             text-align: center;
             padding: 8px 10px;
             width: 100%;
-            height: 57px;
-            max-height: 57px;
+            height: 150px;
+            max-height: 150px;
         }
 
         .header .logo {
-            float: left;
             background-color: white;
             border-radius: 5px;
             padding: 5px 10px 5px 0px;
-            height: 50px;
-            max-height: 50px;
+            height: 125px;
+            max-height: 125px;
         }
 
         .header .logo img {
-            max-height: 50px;
-            height: 50px;
+            max-height: 125px;
+            height: 125px;
         }
 
         .header h3 {
@@ -123,38 +155,23 @@
             padding-right: 18px;
         }
 
-        tbody>tr>td {
-            border: 1px solid #bfbfbf;
-        }
-
-        thead>tr>th {
-            border: 1px solid #bfbfbf;
-        }
-
-        td>p,
-        td>div>p,
-        td>div>div>p,
-        th>p {
-            padding: 4px;
-            font-size: 14px;
-            text-align: center;
-            font-weight: normal;
-        }
-
         .text-left {
             text-align: left;
         }
 
         .text-xs {
-            font-size: 13px;
+            font-size: 10px;
+            font-weight: 400;
         }
 
         .text-sm {
-            font-size: 14px;
+            font-size: 12px;
+            font-weight: 400;
         }
 
         .text-xl {
             font-size: 16px;
+            font-weight: 600;
         }
 
         .blue-box {
@@ -163,9 +180,12 @@
 
         .bg-light-blue {
             border: 1px solid #bfbfbf;
-            background: #EFF6FF;
-            padding: 8px;
-            color: #252525;
+            padding: 1px 8px;
+            color: #5B5F60;
+        }
+    
+        .bg-light-blue p {
+            padding: 1px !important;
         }
 
         .text-black {
@@ -174,14 +194,13 @@
 
         .provider {
             border: 1px solid #bfbfbf;
-            font-size: 15px;
-            line-height: 28px;
+            font-size: 14px;
+            line-height: 1;
             font-weight: 400;
             color: #4ea4a8;
             vertical-align: middle;
-            max-height: 50px;
-            height: 50px;
-            position: relative;
+            max-height: 35px;
+            height: 35px;
         }
 
         .spacer {
@@ -190,119 +209,84 @@
 
         .alfred {
             text-align: right;
-            padding-right: 0;
-            vertical-align: bottom;
-            border-left: none;
-            border-top: none;
+            padding: 0;
+            width: 100px;
+            min-width: 100px;
+            height: 100px;
         }
 
         .quote-info {
             text-align: right;
             vertical-align: bottom;
             margin-top: -1px;
-            background: #EFF6FF;
             font-size: 14px;
+            font-weight: 400;
             text-align: left;
-            padding: 8px;
+            padding: 0;
             max-width: 100%;
-            font-weight: normal;
         }
 
         .info h5 {
             background: #1d83bc;
             color: #ffffff;
             padding: 3px;
-            font-weight: normal;
+            font-weight: 600;
             margin: 0 0 10px 0;
         }
 
         .info p {
-            font-size: 12px;
+            font-size: 14px;
+            font-weight: 400;
         }
 
         .btn-all-quotes {
             background-color: #1d83bc;
             color: #ffffff;
-            padding: 8px 25px;
-            margin-top: 50px;
+            padding-left: 70px;
+            padding-right: 70px;
+            padding-bottom: 7px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 15px;
-            font-weight: bold;
+            font-size: 16px;
+            font-weight: 600;
             border-radius: 5px;
-            margin-bottom: 0px;
+            position: relative;
         }
 
         .btn-buy {
             background-color: #FE7333;
             color: #ffffff;
-            padding: 12px 15px;
+            padding: 3px 35px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
             font-size: 14px;
-            font-weight: bold;
             border-radius: 5px;
+            line-height: 0.7;
         }
 
         .btn-buy:hover {
             background-color: #d7fbd0;
         }
 
-        .text-heading {
-            color: #ffffff;
-            background-color: #1d83bc;
-        }
-
         .heading-desc {
             font-size: 12px;
         }
 
-        .image-wrapper {
-            min-width: 150px;
-            min-height: 150px;
-            width: 150px;
-            height: 150px;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            margin: 20px auto;
-        }
         .provider-logo {
-            width: 100%;
-            max-width: 120px;
-            max-height: 100px;
-            object-fit: contain;
-            display: block;
-            margin: 0 auto;
-            position: relative;
+            width: 55px;
+            height: auto;
         }
-
-        @media (max-width: 768px) {
-            .provider-logo {
-                max-width: 80px;
-                max-height: 60px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .provider-logo {
-                max-width: 60px;
-                max-height: 40px;
-            }
-        }
-
 
         .no-border {
             border: none;
         }
-
     
-
-      
+        th.provider-name {
+            padding: 0;
+            margin: 0;
+        }
 
         .text-left {
             text-align: left;
@@ -323,69 +307,250 @@
         }
 
         .text-white {
-            color: #ffffff
+            color: #ffffff;
         }
 
         .text-underline {
-            text-decoration: underline
+            text-decoration: underline;
+        }
+    
+        .hidden {
+            display: none;
+        }
+    
+        .text-blue {
+            color: #1d83bc;
+        }
+    
+        table td,
+        table th {
+            max-width: 160px;
+            width: 160px;
+            height: auto;
+            padding: 2px;
+            text-align: center;
+            vertical-align: middle;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+    
+        main {
+            padding: 10px 20px;
+        }
+    
+        .head-caption {
+            padding: 10px;
+            right: 5px !important;
+            top: 150px !important;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: right;
+        }
+    
+        td,
+        th {
+            width: auto;
+        }
+        
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+    
+        table.disclaimer-table {
+            margin: auto;
+            padding: auto;
+            table-layout: fixed;
+            page-break-inside: avoid;
+            page-break-before: auto;
+            width: 100%;
+            border-collapse: separate;
+            border: none !important;
+        }
+    
+        table.disclaimer-table td {
+            page-break-inside: avoid;
+            page-break-before: auto;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+            font-size: 14px;
+            line-height: 1;
+            border: none;
+        }
+    
+        .disclaimer-text {
+            page-break-inside: avoid;
+            page-break-before: auto;
+            margin: 0;
+            font-size: 14px;
+            line-height: 1;
+            text-align: left;
+        }
+    
+        .content {}
+    
+        .disclaimer-td {
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+            font-size: 14px;
+            line-height: 1;
+            border: none;
+        }
+
+         header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: white;
+            z-index: 1;
+        }
+    
+        /* Bottom Header Container */
+        .header-bottom {
+            width: 100%;
+            display: table;
+            border-top: 2px solid #D3D3D3;
+            border-bottom: 2px solid #D3D3D3;
+            font-size: 12px;
+            color: #5B5F60;
+            padding: 5px 0;
+          
+        }
+    
+        /* Left Side Text */
+        .header-text {
+            display: table-cell;
+            text-align: left;
+            width: 75%;
+            vertical-align: middle;
+        }
+    
+        /* Right Side Quote Number */
+        .quote-number {
+            display: table-cell;
+            text-align: right;
+            white-space: nowrap;
+            width: 25%;
+            padding-right: 20px;
+            vertical-align: middle;
+        }
+    
+        .quote-number strong {
+            font-weight: 600; /* Reduce boldness */
+        }
+    
+        /* Highlighted Text */
+        .header-text-highlight {
+            font-weight: 600;
+        }
+    
+        /* Separator Styling */
+        .separator {
+            color: #D3D3D3; /* Match border color */
+            font-weight: normal; /* Ensure it's not bold */
+            padding: 0 5px; /* Adjust spacing */
         }
 
         .footer {
-        position: fixed;
-        bottom: 0;
-        /* top: 50px !important; */
-        left: 0;
-        right: 0;
-        width: 100%;
-        background-color: #1d83bc;
-        color: #ffffff;
-        padding: 2px 2px 2px 2px;
-        text-align: left;
-        height: 165px !important;
-    }
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            background-color: #1d83bc;
+            color: #ffffff;
+            padding: 2px 2px 2px 2px;
+            text-align: left;
+            height: 165px !important;
+        }
+    
+        .footer-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            color: #ffffff;
+        }
+    
+        .footer-link {
+            color: #ffffff;
+            text-decoration: none;
+        }
+    
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+    
+        .material-icons {
+            font-size: 14px;
+            color: #ffffff;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+    
+        .footer-header {
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+        }
 
-   
- 
-
-
-        .footer-content-1 {
-        font-size: 8px !important;
-        line-height: 0.7 !important;
-        word-break: break-word;
-        white-space: normal !important;
-        width: 100%;
-        box-sizing: border-box;
-        align-items: left;
-        text-align: left;
-    }
-
-    @media (max-width: 600px) {
         .footer-content-1 {
             font-size: 8px !important;
-            padding-left: 2px;
-            padding-right: 2px;
+            line-height: 0.7 !important;
+            word-break: break-word;
+            white-space: normal !important;
+            width: 90% !important;
+            box-sizing: border-box;
+            align-items: left;
+            text-align: left;
         }
-    }
 
-    .footer-content-2{
-        font-size: 8px !important;
-        align-items: center;
-        text-align: center;
-        line-height: 0.8 !important;
-        word-break: break-word;
-        white-space: normal !important;
-        width: 100%;
-        box-sizing: border-box;
-        align-items: left;
-        text-align: left;
-    }
-    @media (max-width: 600px) {
-        .footer-content-2 {
-            font-size: 9px !important;
-            padding-left: 2px;
-            padding-right: 2px;
+        @media (max-width: 600px) {
+            .footer-content-1 {
+                font-size: 8px !important;
+                padding-left: 2px;
+                padding-right: 2px;
+            }
         }
-    }
+
+        .footer-content-2{
+            font-size: 8px !important;
+            align-items: center;
+            text-align: center;
+            line-height: 0.8 !important;
+            word-break: break-word;
+            white-space: normal !important;
+            width: 80% !important;
+            box-sizing: border-box;
+            align-items: left;
+            text-align: left;
+        }
+        
+        @media (max-width: 600px) {
+            .footer-content-2 {
+                font-size: 9px !important;
+                padding-left: 2px;
+                padding-right: 2px;
+            }
+        }
+    
+        .section-header {
+            background-color: #1D83BC !important;
+            color: white !important;
+            font-family: 'Raleway', sans-serif !important;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 5px;
+            width: 100% !important;
+            text-align: left;
+        }
+        
+        .not-applicable{
+            color: red; 
+        }
 </style>
 </head>
 
@@ -547,7 +712,7 @@
     </header>
     
     {{-- PDF Page Inner Content --}}
-    <main>
+    <main style="margin-top: 100px;">
         <table class="main-table {{ $tableClass }}">
             <thead>
                 <p style="margin-top:100px"></p>
