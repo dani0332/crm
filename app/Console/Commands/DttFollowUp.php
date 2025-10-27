@@ -6,9 +6,10 @@ use App\Enums\ApplicationStorageEnums;
 use App\Jobs\Revival\CarRevivalFollowUpEmailJob;
 use App\Models\DttRevival;
 use App\Services\ApplicationStorageService;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
+use Illuminate\Support\Facades\Bus;
 
 class DttFollowUp extends Command
 {
@@ -45,7 +46,7 @@ class DttFollowUp extends Command
     {
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
-            info('Dtt is not enabled from cms');
+            LoggerService::info('Dtt is not enabled from cms');
 
             return false;
         }
@@ -68,28 +69,28 @@ class DttFollowUp extends Command
         $logPrefix = 'carRevivalFollowUpEmailJob -';
 
         $jobs = [];
+        $delayCounter = 0;
         foreach ($unreplied as $item) {
-            $jobs[] = new CarRevivalFollowUpEmailJob($item);
+            $jobs[] = (new CarRevivalFollowUpEmailJob($item))->delay(now()->addSeconds(10 + $delayCounter));
+            $delayCounter += 10;
         }
 
         if ($jobs != null && count($jobs)) {
-            Haystack::build()
-                ->addJobs($jobs)
-
+            Bus::batch($jobs)
                 ->then(function () use ($logPrefix) {
-                    info($logPrefix.' all jobs completed successfully');
+                    LoggerService::info($logPrefix.' all jobs completed successfully');
                 })
                 ->catch(function () use ($logPrefix) {
-                    info($logPrefix.' one of batch is failed.');
+                    LoggerService::info($logPrefix.' one of batch is failed.');
                 })
                 ->finally(function () use ($logPrefix) {
-                    info($logPrefix.' everything done');
+                    LoggerService::info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->withDelay(10)
+                ->name('Car Revival Follow Up Email Jobs')
                 ->dispatch();
         } else {
-            info($logPrefix.'No lead Found');
+            LoggerService::info($logPrefix.'No lead Found');
         }
     }
 }

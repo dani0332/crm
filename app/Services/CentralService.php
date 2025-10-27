@@ -50,7 +50,6 @@ use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
 use App\Models\InsurerRequestResponse;
 use App\Models\LifeQuote;
-use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusHistory;
@@ -1536,32 +1535,6 @@ class CentralService extends BaseService
         return $emailData;
     }
 
-    /* public function prepareUpdateToCustomerData($quote, $quoteTypeId, $sendUpdateLog, $workflowType)
-    {
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
-            $quoteType = strtolower(QuoteTypes::getName($quoteTypeId)->value).'-su-notes';
-            $notes = Lookup::where('key', $quoteType)->whereIn('code', json_decode($sendUpdateLog->notes, true))->get() ?? [];
-            if (! empty($notes)) {
-                $notes = implode(', ', $notes->pluck('description')->toArray());
-            }
-        } else {
-            $notes = $sendUpdateLog->notes;
-        }
-
-        $emailData = (object) [
-            'policyNumber' => $sendUpdateLog->policy_number ?? $quote->policy_number ?? '',
-            'policyPeriodStart' => Carbon::parse($sendUpdateLog->start_date ?? $quote->policy_start_date)->format('d/m/Y'),
-            'policyPeriodEnd' => Carbon::parse($sendUpdateLog->expiry_date ?? $quote->policy_expiry_date)->format('d/m/Y'),
-            'reason' => $notes,
-            'refID' => $sendUpdateLog->code,
-            'code' => $sendUpdateLog->code,
-        ];
-
-        $this->emailDataExtend($emailData, $quote, $quoteTypeId, $sendUpdateLog, $workflowType);
-
-        return [1, $emailData, 'send-update', $quoteTypeId, $workflowType];
-    } */
-
     private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $workflowType = null, $existingEmailData = null): void
     {
         $emailData->advisorEmail = $quote->advisor->email ?? '';
@@ -1585,7 +1558,7 @@ class CentralService extends BaseService
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Home])) {
             $emailData->assistanceNumber = $quote?->plan?->insuranceProvider?->roadside_phone_number ?? $emailData->assistanceNumber ?? '';
             $emailData->insuranceCompany = $quote?->plan?->insuranceProvider?->text ?? $emailData->insuranceCompany ?? '';
-            $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? '-';
+            $emailData->planName = $quote?->insuranceProviderPlan?->text ?? $quote?->plan?->text ?? $quote?->carPlan?->text ?? '-';
         }
 
         $quote->load('latestInsured');
@@ -1626,9 +1599,6 @@ class CentralService extends BaseService
             $emailData->planType = $quote?->lifeQuote?->insuranceTenure?->text ?? 'Life Insurance';
             $emailData->policyTerm = $quote?->lifeQuote?->numberOfYears?->text;
             $emailData->planName = $quote?->insuranceProviderPlan?->text ?? '-';
-            /* if ($sendUpdateLog) {
-                $emailData->lifeDetails = '-';
-            } */
         }
 
         if ($quoteTypeId == QuoteTypeId::Home) {
@@ -1684,20 +1654,19 @@ class CentralService extends BaseService
             } else {
                 $policyHandBook = $quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH]);
-                })->first()?->doc_url ?? [];
+                })->first()?->doc_url ?? '';
 
                 if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life])) {
                     $policyHandBook = PolicyWording::where('quote_type_id', $quoteTypeId)
                         ->where('plan_id', $quote->plan_id)
-                        ->first()?->link ?? [];
+                        ->first()?->link ?? '';
 
                     $emailData->handBookDocuments = ! empty($policyHandBook) ? config('constants.AZURE_IM_STORAGE_URL').$policyHandBook : '';
                 } else {
                     $emailData->handBookDocuments = $storageUrl.$policyHandBook ?? '';
                 }
             }
-            // for testing purpose.
-            // $emailData->handBookDocuments = 'https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/documents/bike/68e64dd9b42a3_DD8X4MH7_68e64dd717a07_test.pdf';
+            $emailData->handBookExt = ! empty($emailData->handBookDocuments) ? pathinfo($emailData->handBookDocuments, PATHINFO_EXTENSION) : '';
         }
 
         if (! empty($quoteDocuments)) {
@@ -1707,6 +1676,8 @@ class CentralService extends BaseService
                 $emailData->policyCertificate = $storageUrl.$quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL, DocumentTypeCode::PC_YTCH, DocumentTypeCode::COMP_PC]);
                 })->first()['doc_url'] ?? '';
+
+                $emailData->certificateExt = ! empty($emailData->policyCertificate) ? pathinfo($emailData->policyCertificate, PATHINFO_EXTENSION) : '';
             }
 
             // Signed Medical Application form
@@ -1714,6 +1685,8 @@ class CentralService extends BaseService
                 $emailData->signedMedicalApplicationForm = $storageUrl.$quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::SMAF_HLTH;
                 })->first()['doc_url'] ?? '';
+
+                $emailData->medAppExt = ! empty($emailData->signedMedicalApplicationForm) ? pathinfo($emailData->signedMedicalApplicationForm, PATHINFO_EXTENSION) : '';
             }
 
             // E-Card
@@ -1727,6 +1700,8 @@ class CentralService extends BaseService
                 $emailData->eCard = $storageUrl.$quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [DocumentTypeCode::GH_EC, DocumentTypeCode::ECARD_HLTH]);
                 })->first()['doc_url'] ?? '';
+
+                $emailData->eCardExt = ! empty($emailData->eCard) ? pathinfo($emailData->eCard, PATHINFO_EXTENSION) : '';
             }
 
             // Network List
@@ -1737,17 +1712,23 @@ class CentralService extends BaseService
                 $emailData->networkList = $storageUrl.$quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::GH_NL;
                 })->first()['doc_url'] ?? '';
+
+                $emailData->networkListExt = ! empty($emailData->networkList) ? pathinfo($emailData->networkList, PATHINFO_EXTENSION) : '';
             }
 
             if ($quoteTypeId == QuoteTypeId::Life) {
                 $emailData->applicationCopy = $storageUrl.$quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::AC_LIFE;
                 })->first()['doc_url'] ?? '';
+
+                $emailData->appCopyExt = ! empty($emailData->applicationCopy) ? pathinfo($emailData->applicationCopy, PATHINFO_EXTENSION) : '';
             }
 
             $emailData->policySchedule = $storageUrl.$quoteDocuments->filter(function ($document) {
                 return in_array($document['document_type_code'], [DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS]);
             })->first()['doc_url'] ?? '';
+
+            $emailData->scheduleExt = ! empty($emailData->policySchedule) ? pathinfo($emailData->policySchedule, PATHINFO_EXTENSION) : '';
         }
 
         if ($quoteTypeId == QuoteTypeId::Business) {
