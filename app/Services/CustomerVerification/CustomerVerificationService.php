@@ -315,7 +315,7 @@ class CustomerVerificationService
         }
     }
 
-    private function verifyWithWebForm(string|int $ocrValue, string|int $webFormValue): bool
+    private function verifyWithWebForm(string|int|null $ocrValue, string|int|null $webFormValue): bool
     {
         return strtolower((string) $ocrValue) !== strtolower((string) $webFormValue);
     }

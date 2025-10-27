@@ -395,17 +395,22 @@ trait OcrUtils
         }
 
         $cleaned = trim($plateNumber);
-        if (strpos($cleaned, '/') !== false) {
-            $parts = explode('/', $cleaned, 2);
+
+        //$parts = explode('/', $cleaned, 2);
+        if (preg_match('/^([A-Z0-9]+)[\/:\-\s\']*(\d+)$/i', $cleaned, $matches)) {
+            LoggerService::info('OCR Utils - extractPlateCodeNumber - Plate code and number extracted', extra: [
+                'plate_number' => $plateNumber,
+                'matches' => $matches,
+            ]);
 
             return [
-                'place_code' => trim($parts[0]),
-                'plate_number' => trim($parts[1]),
-            ];
+                'plate_code' => $matches[1], 
+                'plate_number' => $matches[2]
+            ]; 
         }
 
         return [
-            'place_code' => null,
+            'plate_code' => null,
             'plate_number' => null,
         ];
     }

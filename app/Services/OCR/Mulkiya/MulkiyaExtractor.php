@@ -72,12 +72,11 @@ class MulkiyaExtractor
 
             $data = $this->ensureArray($ocrData);
             $plateInfo = $this->extractPlateCodeNumber($data['trafficPlateNumber'] ?? null);
-            $plateCode = $plateInfo['place_code'] ?? null;
-
+        
             $this->extractedData = array_merge($this->extractedData, $this->getCleanData([
                 // vehicle driver detail fields
-                'vehicle_plate_code' => $plateCode,
-                'vehicle_plate_number' => $data['trafficPlateNumber'] ?? null,
+                'vehicle_plate_code' => $plateInfo['plate_code'] ?? null,
+                'vehicle_plate_number' => $plateInfo['plate_number'] ?? null,
                 'first_registration_date' => $this->formatDate($data['registrationDate'] ?? null),
                 'vehicle_color' => $this->getVehicleColorCode($data['vehicalColor'] ?? null, QuoteTypeId::Car, $this->providerId),
                 'vehicle_engine_number' => $data['engineNumber'] ?? null,
@@ -128,6 +127,7 @@ class MulkiyaExtractor
             'vehicle_color' => $this->extractedData['vehicle_color'] ?? null,
             'vehicle_engine_number' => $this->extractedData['vehicle_engine_number'] ?? null,
             'bank_name' => $this->extractedData['bank_name'] ?? null,
+            'bank_loan' => $this->extractedData['bank_name'] ? 1 : 0,
             'traffic_code_number' => $this->extractedData['traffic_code_number'] ?? null,
         ]);
     }
