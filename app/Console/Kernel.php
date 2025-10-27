@@ -40,6 +40,7 @@ class Kernel extends ConsoleKernel
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
         Commands\TravelRenewalLeads::class,
+        Commands\CaptureEPPaymentsCommand::class,
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
@@ -131,7 +132,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('sage-process:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
         $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('leads:process-travel-renewals')->timezone('Asia/Dubai')->dailyAt('00:50')->onOneServer()->withoutOverlapping();
-        $schedule->command('leads:process-car-cqf-renewals')->timezone('Asia/Dubai')->dailyAt('10:15')->onOneServer()->withoutOverlapping();
+        $schedule->command('leads:process-car-cqf-renewals')->timezone('Asia/Dubai')->dailyAt('03:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('policy-issuance-automation:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
         $schedule->command('aml-screening-automation:run')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
@@ -144,6 +145,20 @@ class Kernel extends ConsoleKernel
         $schedule->command('horizon:snapshot')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
         $schedule->command('remove-pcp-tag')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
+        $schedule->command('ep:capture-payments')
+            ->everyThirtyMinutes()
+            ->onOneServer()
+            ->withoutOverlapping(30)
+            ->onSuccess(function (Stringable $output) {
+                LoggerService::info('----------- CaptureEPPaymentsJob Completed -----------', extra: [
+                    'output' => $output,
+                ]);
+            })
+            ->onFailure(function (Stringable $output) {
+                LoggerService::info('----------- CaptureEPPaymentsJob Failed -----------', extra: [
+                    'output' => $output,
+                ]);
+            });
         $schedule->job(new SLAMonitoringJob)->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
     }
 

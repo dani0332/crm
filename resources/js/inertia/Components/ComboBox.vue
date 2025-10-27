@@ -80,7 +80,7 @@ const filteredList = computed(() => {
   return query.value === ''
     ? props.options
     : props.options.filter(option => {
-        return option.label.toLowerCase().includes(query.value.toLowerCase());
+        return option.label?.toLowerCase().includes(query.value.toLowerCase());
       });
 });
 

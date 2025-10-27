@@ -241,4 +241,12 @@ class LookupService extends BaseService
             return Capi::request('/api/v1-get-all-savings-lookups', 'post');
         });
     }
+
+    public function getRmCategories()
+    {
+        return Lookup::where('key', LookupsEnum::RM_CATEGORY)
+            ->where('is_active', true)
+            ->orderBy('text')
+            ->get(['id', 'code', 'text']);
+    }
 }
