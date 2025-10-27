@@ -825,6 +825,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     private function httpCall($endPoint, $payload, $keyAPI)
     {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' calling API: '.$keyAPI);
         $response = ['status' => false, 'error' => null, 'message' => null, 'data' => null, 'completed_step' => null];
         $url = $this->baseUrl.$endPoint;
         $timeOut = $this->apiTimeout;
@@ -1238,7 +1239,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'reason' => $policyIssuance->message,
             ]);
 
-            return true;
+            return false;
         } else {
             $policyIssuanceLogs = $policyIssuance->policyIssuanceLogs;
             if (
