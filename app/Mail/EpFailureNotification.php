@@ -81,7 +81,7 @@ class EpFailureNotification extends Mailable
         $epEcbAppStorageKeys = [
             ApplicationStorageEnums::EP_FAILURE_EMAIL_TO,
             ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO,
-            ApplicationStorageEnums::EP_FAILURE_EMAIL_CC
+            ApplicationStorageEnums::EP_FAILURE_EMAIL_CC,
         ];
         $appStorageRecords = ApplicationStorage::select('value', 'key_name')
             ->where('is_active', ApplicationStorageEnums::ACTIVE)
