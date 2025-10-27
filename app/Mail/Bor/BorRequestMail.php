@@ -2,10 +2,8 @@
 
 namespace App\Mail\Bor;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
-use App\Models\ApplicationStorage;
 use App\Models\BorLog;
 use App\Services\BirdService;
 use App\Services\Bor\BorPdfService;

@@ -2,15 +2,10 @@
 
 namespace App\Mail\Bor;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\InsuranceProviderEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
-use App\Models\ApplicationStorage;
 use App\Models\BorLog;
-use App\Models\InsuranceProvider;
 use App\Services\BirdService;
 use App\Services\Bor\BorPdfService;
 use App\Services\Logger\LoggerService;
