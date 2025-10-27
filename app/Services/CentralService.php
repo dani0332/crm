@@ -646,6 +646,16 @@ class CentralService extends BaseService
                 ];
                 $response = Ken::request($endpoint, 'post', $data);
                 break;
+            case QuoteTypes::CYBER->value:
+                $endpoint = '/cyber/process-quote-plan';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteUID' => $uuid,
+                    'quoteTypeId' => QuoteTypes::CYBER->id(),
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                ];
+                $response = Ken::request($endpoint, 'post', $data);
+                break;
         }
 
         return $response;
