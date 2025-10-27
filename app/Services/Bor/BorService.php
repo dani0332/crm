@@ -460,9 +460,12 @@ class BorService
             // Upload new document if provided
             $document = null;
             if ($file) {
+                // Add is_base_64 flag to upload data for proper handling
+                $uploadData['is_base_64'] = $data['is_base_64'] ?? 0;
+                $uploadData['file_name'] = $data['file_name'] ?? null;
+                
                 $quoteDocumentService = app(QuoteDocumentService::class);
-                $fileToUpload = (isset($data['is_base_64']) && $data['is_base_64'] == 1) ? $file : $file;
-                $document = $quoteDocumentService->uploadQuoteDocument($fileToUpload, $uploadData, $quote);
+                $document = $quoteDocumentService->uploadQuoteDocument($file, $uploadData, $quote);
             }
 
             $docIsPresent = isset($document) && ! is_null($document);
@@ -510,9 +513,11 @@ class BorService
             throw new \Exception('Quote not found');
         }
 
-        $fileToUpload = $data['is_base_64'] ?? false ? $file : $file;
+        // Ensure is_base_64 flag is set in data for proper handling
+        $data['is_base_64'] = $data['is_base_64'] ?? 0;
+        
         $quoteDocumentService = new QuoteDocumentService;
-        $document = $quoteDocumentService->uploadQuoteDocument($fileToUpload, $data, $quote);
+        $document = $quoteDocumentService->uploadQuoteDocument($file, $data, $quote);
 
         return [
             'success' => true,
