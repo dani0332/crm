@@ -825,6 +825,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     private function httpCall($endPoint, $payload, $keyAPI)
     {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' calling API: '.$keyAPI);
         $response = ['status' => false, 'error' => null, 'message' => null, 'data' => null, 'completed_step' => null];
         $url = $this->baseUrl.$endPoint;
         $timeOut = $this->apiTimeout;
@@ -1300,6 +1301,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             if ($isTimeout) {
                 $policyIssuance->update([
                     'status' => PolicyIssuanceEnum::TIMEOUT_STATUS,
+                    'message' => null,
                 ]);
 
                 LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updated Policy Issuance ID : '.$policyIssuance->id.' to TIMEOUT_STATUS');
