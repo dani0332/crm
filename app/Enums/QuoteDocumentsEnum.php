@@ -9,6 +9,7 @@ final class QuoteDocumentsEnum extends Enum
     public const CAR_POLICY_CERTIFICATE = 'CPC';
     public const POLICY_SCHEDULE = 'CPS';
     public const CAR_TAX_INVOICE = 'CTI';
+    public const CAR_EP_TAX_INVOICE = 'TI';
     public const CAR_TAX_INVOICE_RAISE_BY_BUYER = 'CTIRBB';
     public const CAR_TAX_CREDIT = 'CTC';
     public const CAR_TAX_CREDIT_RAISE_BY_BUYER = 'CTCRBB';
@@ -17,6 +18,7 @@ final class QuoteDocumentsEnum extends Enum
     public const FINAL_TERMS_AND_CONDITIONS = 'CTC';
     public const POLICY_HANDBOOK = 'PHB';
     public const EP = 'EP';
+    public const RECEIPT = 'RECEIPT';
     public const CAR_MULKIY = 'CAR_MULKIY';
 
     // Life Quote
@@ -45,6 +47,8 @@ final class QuoteDocumentsEnum extends Enum
     public const SAVINGS_ADDITIONAL_EMAIL_ATTACHMENTS = 'TAEA';
     // End of Savings Quote
 
+    public const CAR_REGISTRATION_CARD = 'CAR_MULKIY';
+
     public static function getSukoonAllDocTypes(): array
     {
         return [self::CAR_TAX_INVOICE, self::POLICY_SCHEDULE, self::CAR_TAX_INVOICE_RAISE_BY_BUYER];
@@ -53,5 +57,14 @@ final class QuoteDocumentsEnum extends Enum
     public static function getSukoonInitialDocTypes(): array
     {
         return [self::CAR_TAX_INVOICE, self::POLICY_SCHEDULE];
+    }
+
+    public static function getWatermarkableDocTypeCodes($shortCode): array
+    {
+        return match ($shortCode) {
+            EmbeddedProductEnum::ECB => [self::CAR_EP_TAX_INVOICE, self::POLICY_SCHEDULE],
+            EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX => self::getSukoonInitialDocTypes(),
+            default => []
+        };
     }
 }

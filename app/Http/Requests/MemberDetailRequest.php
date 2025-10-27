@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -42,8 +43,18 @@ class MemberDetailRequest extends FormRequest
             $rules['modelType'] = '';
             $rules['first_name'] = 'sometimes|required';
             $rules['last_name'] = 'nullable';
+            $rules['pec'] = 'required';
         }
 
         return $rules;
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if (request()->from_aml_model && ! auth()->user()->can(PermissionsEnum::AMLList)) {
+                $validator->errors()->add('error', 'You don\'t have permission to edit this section.');
+            }
+        });
     }
 }

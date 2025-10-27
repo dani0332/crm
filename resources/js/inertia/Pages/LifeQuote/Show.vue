@@ -16,6 +16,8 @@ import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CreatePlanVariant from './Partials/CreateVariant.vue';
 import EditPlan from './Partials/EditPlan.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 
 const page = usePage();
@@ -963,6 +965,8 @@ const confirmSendEmail = () => {
   loader.value.link = true;
 };
 
+const leadSourceEnum = page.props.leadSource;
+
 const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
   selectPlanLoader.value[planUuid] = true;
   axios
@@ -971,6 +975,7 @@ const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
       quoteId: quoteId,
       version: version,
       isUW: isUW,
+      callSource: leadSourceEnum?.IMCRM?.toLowerCase(),
     })
     .then(response => {
       selectPlanLoader.value[planUuid] = false;
@@ -1185,6 +1190,26 @@ const getTotalAnnualPriceAED = () => {
 
   return numberFormat(
     priceInAED * (page.props.quote?.life_quote?.payment_term ?? 1),
+  );
+};
+
+const showSelectedButton = item => {
+  // Early return for invalid data
+  if (!item?.planId) return false;
+
+  // Get isUnderwritten from the currently selected plan
+  const isUnderwritten =
+    page.props?.quote?.quote_customer_plan?.plan?.isUnderwritten;
+
+  const isDisabled = item?.isDisabled;
+  const planId = item?.planId;
+  const version = item?.version;
+
+  return (
+    selectedProviderPlan == planId &&
+    selectedProviderPlanVersion == (version || 0) &&
+    !isDisabled &&
+    isUnderwritten === item?.isUnderwritten
   );
 };
 </script>
@@ -2306,11 +2331,7 @@ const getTotalAnnualPriceAED = () => {
                     </x-button>
                     <span>
                       <x-button
-                        v-if="
-                          selectedProviderPlan == item.planId &&
-                          selectedProviderPlanVersion == (item.version || 0) &&
-                          !item.isDisabled
-                        "
+                        v-if="showSelectedButton(item)"
                         size="xs"
                         color="orange"
                         outlined
@@ -2319,12 +2340,7 @@ const getTotalAnnualPriceAED = () => {
                       >
 
                       <x-button
-                        v-else-if="
-                          !(
-                            ecomDetail?.isUnderwritten &&
-                            selectedProviderPlan == item.planId
-                          )
-                        "
+                        v-else-if="!item.isDisabled"
                         size="xs"
                         color="emerald"
                         outlined
@@ -2765,6 +2781,28 @@ const getTotalAnnualPriceAED = () => {
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"
       :bookPolicyDetails="bookPolicyDetails"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :customerData="{
+        customerType: quote.customer_type,
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Exports\EmailStatusExport;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AIGWorkflowRequest;
@@ -29,6 +31,7 @@ use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
+use App\Jobs\RunCQFJobs;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -38,6 +41,7 @@ use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
+use App\Services\CQF\CarCQFFileExportService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
@@ -51,7 +55,6 @@ use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
@@ -90,7 +93,7 @@ class ApiController extends Controller
         try {
 
             // Log the incoming request parameters
-            info(self::class.'assignLeads: request params as : '.json_encode($request->all()));
+            LoggerService::info(self::class.': Processing assign leads request', extra: $request->all());
 
             // Check if lead allocation endpoint is disabled
             if ($this->apiService->isLeadAllocationEndpointDisabled()) {
@@ -99,11 +102,11 @@ class ApiController extends Controller
 
             return $this->apiService->processAssignLead($request);
         } catch (\Exception $e) {
-            info('------ Lead allocation ended for lead with An error occurred ------');
+            LoggerService::error(self::class.': Lead allocation failed with error', exception: $e);
 
             return apiResponse($e, Response::HTTP_INTERNAL_SERVER_ERROR);
         } catch (ValidationException $e) {
-            info('------ Lead allocation ended for lead with Required parameters missing ------');
+            LoggerService::error(self::class.': Lead allocation failed due to validation errors', exception: $e);
 
             return apiResponse($e, Response::HTTP_BAD_REQUEST);
         }
@@ -270,7 +273,14 @@ class ApiController extends Controller
 
     public function markAutoCaptureFailed($quoteUuid, $quoteType)
     {
-        info('class:'.basename(self::class).' fn:'.__FUNCTION__.' - Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType);
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        if ($quoteTypeId) {
+            LoggerService::startQuoteLogging(QuoteTypes::getName($quoteTypeId)->refId($quoteUuid));
+        }
+        LoggerService::info(self::class.': Marking auto capture as failed', extra: [
+            'function' => __FUNCTION__,
+            'quote_type' => $quoteType,
+        ]);
 
         $quote = $this->getQuoteObject($quoteType, $quoteUuid);
         $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
@@ -284,15 +294,34 @@ class ApiController extends Controller
         }
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
         if ($insuranceProvider) {
-            info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.', Insurance Provider: '.$insuranceProvider->code.' - Update statuses and lead allocate');
+            LoggerService::info(self::class.': Updating statuses and allocating lead', extra: [
+                'function' => __FUNCTION__,
+                'quote_type' => $quoteType,
+                'insurance_provider' => $insuranceProvider->code,
+            ]);
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
-            $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
-            info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.', Insurance Provider: '.$insuranceProvider->code.' - Statuses updated and allocation triggered');
+
+            if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
+                app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+            } else {
+                // TODO:: This should be updated with the new function in PolicyIssuanceService
+                $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+            }
+
+            LoggerService::info(self::class.': Statuses updated and allocation triggered', extra: [
+                'function' => __FUNCTION__,
+                'quote_type' => $quoteType,
+                'insurance_provider' => $insuranceProvider->code,
+            ]);
 
             return response()->json(['status' => true, 'message' => 'Insurer and API Issuance statuses updated and Lead allocation is triggered successfully']);
         }
 
-        info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.',  Insurance Provider: '.$insuranceProvider?->code.' - Status update and allocation failed');
+        LoggerService::info(self::class.': Status update and allocation failed', extra: [
+            'function' => __FUNCTION__,
+            'quote_type' => $quoteType,
+            'insurance_provider' => $insuranceProvider?->code,
+        ]);
 
         return response()->json(['success' => false, 'message' => 'Failed to update Insurer and API Issuance statuses and lead allocation!']);
     }
@@ -303,12 +332,13 @@ class ApiController extends Controller
             'quoteUID' => self::REQUIRED_STRING, // Ensure quoteUID is present
         ]);
 
-        Log::info('Received request to sync SAL data.', ['quoteUID' => $request->quoteUID]);
+        LoggerService::startQuoteLogging(QuoteTypes::getName(QuoteTypes::HOME->id())->refId($request->quoteUID));
+        LoggerService::info(self::class.': Received request to sync SAL data');
 
         try {
             HomeSyncSALJob::dispatch($request->all());
 
-            Log::info('SAL sync job dispatched.', ['quoteUID' => $request->quoteUID]);
+            LoggerService::info(self::class.': SAL sync job dispatched');
 
             return response()->json([
                 'status' => 'success',
@@ -316,12 +346,9 @@ class ApiController extends Controller
                 'quoteUID' => $request->quoteUID,
             ], 202);
         } catch (\Exception $e) {
-            Log::error('SAL sync failed.', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'quoteUID' => $request->quoteUID,
+            LoggerService::error(self::class.': SAL sync failed', extra: [
                 'request' => $request->all(),
-            ]);
+            ], exception: $e);
 
             return response()->json([
                 'status' => 'error',
@@ -351,7 +378,7 @@ class ApiController extends Controller
      */
     public function tagPrivateClients(Request $request)
     {
-        LoggerService::info('private client tag exercise has been initiated');
+        LoggerService::info(self::class.': Private client tag exercise has been initiated');
 
         $request->validate([
             'batch_size' => 'required|integer|min:1',
@@ -376,7 +403,7 @@ class ApiController extends Controller
             $quotes = $quotes->limit($batchSize)->orderBy('created_at', 'asc')->get();
 
             if ($quotes->isEmpty()) {
-                LoggerService::info('No quotes found without PCP tag.');
+                LoggerService::info(self::class.': No quotes found without PCP tag');
 
                 return apiResponse(
                     null,
@@ -405,18 +432,18 @@ class ApiController extends Controller
                     'email' => $quote->customer->email,
                 ];
 
-                LoggerService::info('private client tag marking activity has been started on customer', extra: $customerData);
+                LoggerService::info(self::class.': Private client tag marking activity started', extra: $customerData);
 
                 LoggerService::startQuoteLogging(QuoteTypes::getName($quote->quote_type_id)->refId($quote->uuid), LoggerFeatureEnum::PCP_CLIENT);
                 $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
                 LoggerService::endLogging();
 
-                LoggerService::info('private client tag marking activity has been ended on customer', extra: $customerData);
+                LoggerService::info(self::class.': Private client tag marking activity completed', extra: $customerData);
             }
 
             return apiResponse($data, Response::HTTP_OK);
         } catch (\Exception $e) {
-            LoggerService::error('An error occurred while completing the private client tagging exercise', exception: $e);
+            LoggerService::error(self::class.': Private client tagging exercise failed', exception: $e);
 
             return apiResponse(
                 $e->getMessage(),
@@ -424,7 +451,7 @@ class ApiController extends Controller
                 'An error occurred while completing the private client tagging exercise.'
             );
         }
-        LoggerService::info('private client tag exercise has been completed');
+        LoggerService::info(self::class.': Private client tag exercise has been completed');
     }
 
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
@@ -450,8 +477,67 @@ class ApiController extends Controller
         ]);
     }
 
+    public function downloadValidationFailedFile($id)
+    {
+        return app(CarCQFFileExportService::class)->downloadValidationFailedFile($id);
+    }
     public function documentNotification(DocumentNotificationRequest $request)
     {
         return $this->apiService->documentNotification($request);
+    }
+
+    /**
+     * Export email status logs as Excel file for a specific quote
+     *
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
+    public function exportEmailStatusLogs(int $quoteTypeId, int $quoteId)
+    {
+        try {
+            $export = new EmailStatusExport($quoteId, $quoteTypeId);
+            $fileName = "email-status-logs-quote-{$quoteId}-type-{$quoteTypeId}";
+
+            return $export->download($fileName);
+        } catch (\Exception $e) {
+            Log::error('Failed to export email status logs', [
+                'quote_id' => $quoteId,
+                'quote_type_id' => $quoteTypeId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export email status logs',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function runCQFJobs(Request $request)
+    {
+        try {
+            LoggerService::info(self::class.': Running CQF jobs');
+
+            // Validate the date parameter - make it optional since the service can handle null
+            $request->validate([
+                'date' => 'nullable|date',
+            ]);
+
+            $startDate = null;
+            if ($request->has('date') && ! empty($request->date)) {
+                $startDate = Carbon::parse($request->date);
+            }
+
+            RunCQFJobs::dispatch($startDate);
+
+            LoggerService::info(self::class.': CQF jobs have been completed');
+
+            return apiResponse(null, Response::HTTP_OK, 'car cqf renewals process has been completed');
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': CQF jobs failed', exception: $e);
+
+            return apiResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, 'Failed to run CQF jobs');
+        }
+
     }
 }

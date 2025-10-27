@@ -12,7 +12,7 @@ use App\Models\Transaction;
 use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
+use Illuminate\Support\Facades\Bus;
 
 class DttHealth extends Command
 {
@@ -82,7 +82,7 @@ class DttHealth extends Command
             ->where('created_at', '<', $dateTwo)
             ->whereNotIn('source', $excludeSources)
             ->where(function ($q) {
-                $q->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved]);
+                $q->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked]);
                 $q->orWhereNull('quote_status_id');
             })
             ->where(function ($q) {
@@ -117,14 +117,14 @@ class DttHealth extends Command
         info($logPrefix.' count - '.count($filteredLeads).' - '.json_encode($filteredLeads->pluck('uuid')->toArray()));
 
         $jobs = [];
+        $delayCounter = 0;
         foreach ($filteredLeads as $item) {
-            $jobs[] = new HealthRevivalLeadsCreationJob($item);
+            $jobs[] = (new HealthRevivalLeadsCreationJob($item))->delay(now()->addSeconds(30 + $delayCounter));
+            $delayCounter += 30;
         }
 
         if ($jobs != null && count($jobs)) {
-            Haystack::build()
-                ->addJobs($jobs)
-
+            Bus::batch($jobs)
                 ->then(function () use ($logPrefix) {
                     info($logPrefix.' all jobs completed successfully');
                 })
@@ -135,7 +135,7 @@ class DttHealth extends Command
                     info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->withDelay(30)
+                ->name('Health DTT Batch Jobs')
                 ->dispatch();
         } else {
             info($logPrefix.'------No lead Found------');

@@ -79,6 +79,8 @@ class DocumentTypeCode extends Enum
     const AUDIT = 'AUDIT';
     const TRVLPAS = 'TRVLPAS';
     const Illustration_Document = 'LIFE_ID';
+    const CPS = 'CPS'; // Car Policy Schedule
+    const CPC = 'CPC'; // Car Policy Certificate
 
     // HOME SAL
     const HOME_SAL = 'HOME_SAL';
@@ -86,4 +88,42 @@ class DocumentTypeCode extends Enum
     const PC_SAV = 'PC_SAV';
     const AC_SAV = 'AC_SAV';
     const PAYMENT_RECEIPT = 'SPD';
+    const DRIVING_LICENSE = 'DL';
+    const EMIRATES_ID = 'CEID';
+    const REGISTRATION_CARD_MULKIYA = 'CAR_MULKIY';
+    const POLICY_CERTIFICATE = 'CPC';
+    const POLICY_SCHEDULE = 'CPS';
+
+    // BAL
+    const BAL = 'BAL';
+    const BAL_BIKE = 'BAL_Bike';
+    const GM_BOL = 'GM_BOL';
+    const BAL_TRVL = 'BAL_TRVL';
+    const BAL_HOME = 'BAL_HOME';
+    const BAL_HLTH = 'BAL_HLTH';
+    const BAL_YACHT = 'BAL_YCHT';
+    const BAL_CYCLE = 'BAL_CYCLE';
+    const BAL_LIFE = 'BAL_Life';
+    const BAL_PET = 'BAL_PET';
+    const BOR_SIGN = 'BOR_SIGN';
+    const BAL_BS = 'BAL_BS';
+    const BUS_BAL = 'BUS_BAL';
+    const GH_PS = 'GH_PS'; // Group Health Policy Schedule
+    const GH_NL = 'GH_NL'; // Group Health Network List
+    const GH_EC = 'GH_EC'; // Group Health E-Card
+    const GH_PC = 'GH_PC'; // Group Health Policy Certificate
+    const ECARD_HLTH = 'ECARD_HLTH'; // Health E-Card
+    const SMAF_HLTH = 'SMAF_HLTH'; // Health Signed medical application form
+    const POLC = 'POLC'; // Health Policy Certificate
+    const PC_TRVL = 'PC_TRVL'; // Travel Policy Certificate
+    const CPS_TRVL = 'CPS_TRVL'; // Travel Policy Schedule
+    const PC_YTCH = 'PC_YTCH'; // Yacht Policy Certificate
+    const PS_LIFE = 'PS_LIFE'; // Life Policy Schedule
+    const AC_LIFE = 'AC_LIFE'; // Life Application Copy
+    const PHB = 'PHB'; // Policy Handbook
+    const COMP_PH = 'COMP_PH'; // Trade Credit Policy Handbook
+    const COMP_AEA = 'COMP_AEA'; // Trade Credit Additional Email Attachments
+    const COMP_EC = 'COMP_EC'; // Trade Credit E-Card
+    const COMP_PC = 'COMP_PC'; // Trade Credit Policy Certificate
+    const COMP_PS = 'COMP_PS'; // Trade Credit Policy Schedule
 }

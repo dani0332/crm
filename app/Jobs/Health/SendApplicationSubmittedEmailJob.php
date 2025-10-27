@@ -4,12 +4,10 @@ namespace App\Jobs\Health;
 
 use App\Models\HealthQuote;
 use App\Services\HealthEmailService;
-use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\Skip;
 use Illuminate\Queue\SerializesModels;
 
 class SendApplicationSubmittedEmailJob implements ShouldQueue
@@ -31,18 +29,5 @@ class SendApplicationSubmittedEmailJob implements ShouldQueue
     {
         info(self::class." - Going to Send Application Submitted Email Job for UUID: {$this->healthQuote->uuid}");
         app(HealthEmailService::class)->sendApplicationSubmittedEmail($this->healthQuote);
-    }
-
-    public function middleware()
-    {
-        $isAUHLead = $this->healthQuote?->isAUHLead() ?? false;
-
-        if ($isAUHLead) {
-            LoggerService::info(self::class." - Skipping Application Submitted Email because lead is from AUH for uuid: {$this->healthQuote->uuid}");
-        }
-
-        return [
-            Skip::when(fn () => $isAUHLead),
-        ];
     }
 }

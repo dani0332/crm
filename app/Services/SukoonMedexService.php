@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -19,6 +19,7 @@ use App\Models\InsuranceProvider;
 use App\Models\InsurerRequestResponse;
 use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
@@ -106,7 +107,7 @@ class SukoonMedexService
 
             $this->productSlug = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_MEDEX_PRODUCT_SLUG)->value('value');
             $this->paymentGateway = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY)->value('value');
-            $this->providerId = InsuranceProvider::where('code', InsuranceProvidersEnum::OIC)->value('id');
+            $this->providerId = InsuranceProvider::where('code', InsuranceProviderEnum::OIC->value)->value('id');
 
         } catch (Exception $e) {
             throw $e;
@@ -359,12 +360,25 @@ class SukoonMedexService
 
         LoggerService::info("{$this->logPrefix} Begin handleJobSuccess: QuoteStatusId: {$quoteStatusId}, EpPolicyStatus: {$epPolicyStatus}");
 
-        if ($epPolicyStatus == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE) {
+        $epTransactionRepo = app(EmbeddedTransactionRepository::class);
+        $underProcessEpTransactions = $epTransactionRepo->getUnderProcessEpTransactions($this->quoteTypeId, $this->currentQuote->id);
+        if ($underProcessEpTransactions->isEmpty()) {
             $response = match ($quoteStatusId) {
                 QuoteStatusEnum::PolicyIssued => $this->callSageBookingProcess(),
                 QuoteStatusEnum::PolicyBooked => $this->scheduleSageBookingForSukoonEp(),
                 default => ['status' => true, 'message' => 'Sage booking is not called'],
             };
+
+        } else {
+            $underProcessEpDetails = $underProcessEpTransactions->map(function ($item) {
+                return [
+                    'et_id' => $item->id,
+                    'short_code' => $item->product->embeddedProduct->short_code ?? '',
+                    'payment_status_id' => $item->payment_status_id ?? '',
+                    'policy_status' => $item->policy_status ?? '',
+                ];
+            });
+            LoggerService::info("{$this->logPrefix} Under process EP transactions found: ", extra: ['underProcessEpDetails' => $underProcessEpDetails]);
         }
 
         LoggerService::info("{$this->logPrefix} Finish handleJobSuccess: QuoteStatusId: {$quoteStatusId}, EpPolicyStatus: {$epPolicyStatus}", extra: ['response' => $response]);

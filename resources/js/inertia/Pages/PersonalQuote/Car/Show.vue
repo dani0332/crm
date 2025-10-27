@@ -10,6 +10,8 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 defineProps({
   quote: Object,
@@ -104,6 +106,10 @@ defineProps({
   isFuncsEnabled: Array,
   insurerAMLStatus: String,
   businessActivities: Object,
+  previousQuote: Object,
+  borLogs: Array,
+  apiIssuanceStatus: String,
+  insurerApiStatus: String,
 });
 
 const page = usePage();
@@ -121,6 +127,7 @@ const selectedProviderPlan = ref({
 const modelClass = 'App\\Models\\CarQuote';
 
 const processingOCBEmailNB = ref(false);
+const processingOCBEmail = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
@@ -402,7 +409,9 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       availablePlansTable.data = res.data;
-      loadEmbeddedProducts();
+      if (!isPlanDetailEnabled.value) {
+        loadEmbeddedProducts();
+      }
     })
     .catch(err => {
       console.log(err);
@@ -483,6 +492,20 @@ const paymentItems = computed(() => {
 
 const isRenewalUpload = computed(() => {
   return page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD;
+});
+
+const isGIG = computed(() => {
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.AXA
+  );
+});
+
+const isLIVA = computed(() => {
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.RSA
+  );
 });
 
 const leadStatusOptions = computed(() => {
@@ -569,11 +592,21 @@ const assumptionsForm = useForm({
 });
 
 const onUpdateAssumption = () => {
+  // Check if customer has an active ECB transaction that requires confirmation
+  if (page.props.isEpEcbPaymentPaid && !modals.isConfirmed) {
+    modals.confirmationMessage = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
+    modals.showConfirmationModal = true;
+    return;
+  }
+
   assumptionsForm.post('/quotes/car/carAssumptionsUpdate', {
     preserveScroll: true,
     onSuccess: () => {
       assumptionState.isEditing = false;
+      loadEmbeddedProducts();
     },
+    // Reset confirmation flag after form submission completes
+    onFinish: () => (modals.isConfirmed = false),
   });
 };
 
@@ -638,6 +671,9 @@ const modals = reactive({
   createPlan: false,
   sendConfirm: false,
   showEmailEventsModal: false,
+  confirmationMessage: '',
+  showConfirmationModal: false,
+  isConfirmed: false,
 });
 
 const confirmData = reactive({
@@ -1139,6 +1175,7 @@ const onExportPlans = () => {
 const confirmSendEmail = () => {
   const first_name = page.props.record.first_name || '';
   const last_name = page.props.record.last_name || '';
+  processingOCBEmail.value = true;
   axios
     .post(
       `/quotes/car/${page.props.record.uuid}/send-email-one-click-buy`,
@@ -1172,15 +1209,18 @@ const confirmSendEmail = () => {
     )
 
     .then(response => {
+      processingOCBEmail.value = false;
       notification.success({
         title: response.data.success,
         position: 'top',
       });
     })
     .catch(error => {
+      processingOCBEmail.value = false;
       console.log(error);
     })
     .finally(() => {
+      processingOCBEmail.value = false;
       modals.sendConfirm = false;
     });
 };
@@ -1478,6 +1518,9 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
+
+  loadEmbeddedProducts();
+
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -1624,6 +1667,22 @@ const bookPolicyReloadKey = ref(0);
 const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
 const ocrLoadingDocTypes = reactive(new Set());
 
+// Check if all required policy fields are filled (moved from OcrNotification to avoid duplicates)
+const checkRequiredPolicyFields = () => {
+  const quote = usePage().props?.quote;
+  if (!quote) return false;
+  const requiredFields = [
+    { field: 'policy_number', property: 'quote_policy_number' },
+    { field: 'policy_start_date', property: 'quote_policy_start_date' },
+    { field: 'policy_expiry_date', property: 'quote_policy_expiry_date' },
+    { field: 'price_vat_applicable', property: 'price_vat_applicable' },
+  ];
+  return requiredFields.every(item => {
+    const value = quote[item.field] || quote[item.property];
+    return value !== null && value !== undefined && String(value).trim() !== '';
+  });
+};
+
 // Helper function to check if a document type is currently being processed
 const isDocTypeLoading = docType => {
   const result = ocrLoadingDocTypes.has(docType);
@@ -1688,6 +1747,21 @@ function handleOcrNotification(event) {
         ocrLoadingDocTypes.clear();
         policyDetailReloadKey.value++;
         bookPolicyReloadKey.value++;
+
+        // Check policy fields completion after data reload (only for CERTIFICATE_OF_ISSUANCE)
+        if (
+          status === 'end' &&
+          !event.detail?.error &&
+          docType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value
+        ) {
+          const allFieldsFilled = checkRequiredPolicyFields();
+          if (!allFieldsFilled) {
+            notification.info({
+              title: 'Some required fields are still missing in Policy details',
+              position: 'top',
+            });
+          }
+        }
       },
       preserveState: true,
       preserveScroll: true,
@@ -1701,6 +1775,20 @@ function handleOcrNotification(event) {
     });
   }
 }
+
+/**
+ * Handle modal confirmation and trigger form submission
+ */
+const handleConfirmConfirmationModal = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = true;
+  onUpdateAssumption();
+};
+
+const handleCancelConfirmationModal = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = false; // Reset confirmation flag when user cancels
+};
 </script>
 
 <template>
@@ -1845,6 +1933,18 @@ function handleOcrNotification(event) {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT REFERENCE</dt>
                 <dd>{{ record.payment_reference ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ insurerApiStatus ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ apiIssuanceStatus ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">RTA UPLOAD STATUS</dt>
+                <dd>{{ record.rta_upload_status ? 'Done' : 'Pending' }}</dd>
               </div>
             </dl>
             <div class="grid sm:grid-cols-1 mt-3">
@@ -2708,6 +2808,7 @@ function handleOcrNotification(event) {
       :canAddBatchNumber="hasRole(rolesEnum.CarManager)"
       :expanded="sectionExpanded"
       :quote="record"
+      :previousQuote="previousQuote"
       modelType="Car"
       :insly-id="record?.insly_id"
       v-if="
@@ -3198,6 +3299,15 @@ function handleOcrNotification(event) {
           </div>
         </template>
       </Collapsible>
+
+      <ConfirmationModal
+        v-model="modals.showConfirmationModal"
+        title="Are you sure?"
+        :message="modals.confirmationMessage"
+        :loading="isLoading"
+        @confirm="handleConfirmConfirmationModal"
+        @cancel="handleCancelConfirmationModal"
+      />
     </div>
 
     <PlanDetails
@@ -3706,7 +3816,12 @@ function handleOcrNotification(event) {
             >
               Cancel
             </x-button>
-            <x-button size="sm" color="error" @click.prevent="confirmSendEmail">
+            <x-button
+              size="sm"
+              color="error"
+              :loading="processingOCBEmail"
+              @click.prevent="confirmSendEmail"
+            >
               Send
             </x-button>
           </div>
@@ -3894,6 +4009,7 @@ function handleOcrNotification(event) {
       :expanded="sectionExpanded"
       :isEpLoading="lazyEmbeddedProductsLoading"
       :key="lazyEmbeddedProductsLoading"
+      :isPlanDetailEnabled="isPlanDetailEnabled"
     />
 
     <PolicyDetail
@@ -3919,6 +4035,29 @@ function handleOcrNotification(event) {
       quoteType="Car"
       :paymentStatusEnum="paymentStatusEnum"
       :bookPolicyDetails="bookPolicyDetails"
+    />
+
+    <BorLogsSection
+      :leadId="record.id"
+      :lob="quoteType"
+      :isCompanyCar="isCompanyCar"
+      :customerData="{
+        customerType: enabledCustomerType,
+        firstName: record.first_name,
+        lastName: record.last_name,
+        companyName: record.company_name,
+        currentlyInsuredWith: record.insurance_provider_id,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="record.id"
+      :lob="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy
@@ -4335,12 +4474,20 @@ function handleOcrNotification(event) {
     :expanded="sectionExpanded"
   />
 
-  <!-- <OcrLogs
+  <PolicyIssuanceApiLogs
+    v-if="isGIG || isLIVA"
+    :type="modelClass"
+    :quoteTypeId="$page.props.quoteTypeId"
+    :id="$page.props.record.id"
+    :expanded="sectionExpanded"
+  />
+
+  <OcrLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="modelClass"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
-  /> -->
+  />
 
   <ClientInquiryLogs
     v-if="clientInquiryLogs?.length > 0"

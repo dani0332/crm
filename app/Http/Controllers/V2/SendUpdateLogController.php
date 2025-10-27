@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
@@ -146,9 +147,16 @@ class SendUpdateLogController extends Controller
         $quoteType = QuoteTypeRepository::where('id', $quoteTypeId)->value('code');
 
         if ($quoteType == quoteTypeCode::Car) {
-            if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::AOCOV, SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
-                $additionalField = $this->sendUpdateLogService->getAdditionalOptionsForCar($sendUpdateLog);
+            if (
+                in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::EN]) &&
+                in_array($sendUpdateLog?->option?->code, [SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])
+            ) {
+                $additionalField = $this->sendUpdateLogService->getAdditionalOptionsForCar();
             }
+        }
+
+        if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Bike])) {
+            $notesList = $this->sendUpdateLogService->getSendUpdateLogNotes($quoteType);
         }
 
         $quote = PersonalQuoteRepository::getById($sendUpdateLog->personal_quote_id);
@@ -272,8 +280,10 @@ class SendUpdateLogController extends Controller
             'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog, $sendUpdatePayments, $bookingDetails['brokerCommission']),
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'notesList' => $notesList ?? [],
             'cancelOptions' => app(LookupService::class)->getSendUpdateCancelOptions(),
             'isEndorsementBookingActionDisabled' => $this->sendUpdateLogService->isEndorsementBookingActionDisabled($sendUpdateLog),
+            'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
         ]);
     }
 
@@ -290,6 +300,7 @@ class SendUpdateLogController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        LoggerService::startQuoteLogging($request->code);
         $data = $request->all();
 
         $log = SendUpdateLogRepository::updateLog($id, $data);

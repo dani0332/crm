@@ -4,13 +4,19 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BirdFlowStatusEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
+use App\Enums\EmirateEnum;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
-use App\Enums\InsurerProviderEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentCaptureValidationEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -24,19 +30,25 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Facades\Marshall;
+use App\Http\Requests\SplitPaymentApproveRequest;
+use App\Jobs\AutomationFailedJob;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
 use App\Models\BrokerCommission;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CustomerAddress;
+use App\Models\CustomerMembers;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
+use App\Models\InsurerRequestResponse;
 use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -44,15 +56,19 @@ use App\Models\PaymentStatusHistory;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
+use App\Models\PolicyWording;
 use App\Models\QuoteBatches;
 use App\Models\QuoteExportLog;
+use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
+use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
+use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
@@ -62,6 +78,7 @@ use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class CentralService extends BaseService
 {
@@ -415,10 +432,10 @@ class CentralService extends BaseService
         $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
 
         $insurersWithoutCCRenewal = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::EMIRATES_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+            InsuranceProviderEnum::AXA->value,    // GIG_INSURANCE
+            InsuranceProviderEnum::EI->value,     // EMIRATES_INSURANCE
+            InsuranceProviderEnum::RSA->value,    // LIVANA_INSURANCE
+            InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 
         info('Updating payment method for home renewal lead', [
@@ -465,6 +482,87 @@ class CentralService extends BaseService
                 'new_method' => $newPaymentMethod,
             ]);
         }
+    }
+
+    public function validateIsPlanSelectable($quoteType, $data): array
+    {
+        return match (ucfirst($quoteType)) {
+            QuoteTypes::TRAVEL->value => $this->validateIsTravelPlanSelectable($quoteType, $data),
+            default => [],
+        };
+    }
+
+    public function validateIsTravelPlanSelectable($quoteType, $data): array
+    {
+        $validator = Validator::make($data, [
+            'quoteId' => 'required',
+            'quoteSource' => 'required',
+            'planType' => 'required',
+            'provider_code' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $validator->errors()->toArray();
+        }
+
+        $isTravelQuote = ucfirst($quoteType) == QuoteTypes::TRAVEL->value;
+        $isNormalPlan = $data['planType'] == 'normalPlans';
+        $isSourceIMCRM = $data['quoteSource'] == LeadSourceEnum::IMCRM;
+        $isALNCProvider = $data['provider_code'] == InsuranceProviderEnum::ALNC->value;
+
+        if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isALNCProvider) {
+            $quoteModelObject = $this->getModelObject(strtolower($quoteType));
+            $customerMembers = CustomerMembers::where([
+                'quote_type' => ltrim($quoteModelObject, '\\'),
+                'quote_id' => $data['quoteId'] ?? null,
+                'customer_type' => CustomerTypeEnum::Individual,
+                'deleted_at' => null,
+            ])
+                ->select('id', 'code', 'first_name', 'last_name', 'passport')
+                ->get();
+
+            $errorsMessages = $this->validateCustomerMembersInfo($customerMembers->toArray());
+
+            return $errorsMessages;
+        }
+
+        return [];
+    }
+
+    public function validateCustomerMembersInfo(array $members): array
+    {
+        $validator = Validator::make(
+            ['members' => $members],
+            [
+                'members' => 'required|array|min:1',
+                'members.*.first_name' => 'required',
+                'members.*.last_name' => 'required',
+                'members.*.passport' => 'required',
+            ]
+        );
+
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+
+            $finalErrors = [];
+
+            if ($errors->has('members')) {
+                $finalErrors['members_count'] = ['At least one customer member is required.'];
+            }
+            if ($errors->has('members.*.first_name')) {
+                $finalErrors['first_name'] = ['Please enter first_name for all members before selecting a plan.'];
+            }
+            if ($errors->has('members.*.last_name')) {
+                $finalErrors['last_name'] = ['Please enter last_name for all members before selecting a plan.'];
+            }
+            if ($errors->has('members.*.passport')) {
+                $finalErrors['passport'] = ['Please enter passport numbers for all members before selecting a plan.'];
+            }
+
+            return $finalErrors;
+        }
+
+        return [];
     }
 
     public function updateSelectedPlan($quoteType, $uuid, $data)
@@ -786,6 +884,7 @@ class CentralService extends BaseService
                 'eligible_for_automate' => true,
                 'quote_type_id' => QuoteTypeId::Business,
                 'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::CORPLINE_RENEWALS])->first()->id,
+                'group_medical_renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::RM_RENEWALS])->first()->id,
             ],
             TravelQuote::class => [
                 'eligible_for_automate' => false,
@@ -889,8 +988,14 @@ class CentralService extends BaseService
                 ->when(! empty($scheduledActivitiesIDs), function ($previousSchedule) use ($scheduledActivitiesIDs) {
                     $previousSchedule->whereNotIn('id', $scheduledActivitiesIDs);
                 })
-                ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteTypeDetail) {
-                    $renewalTeamID = $quoteTypeDetail['renewal_team'];
+                ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteTypeDetail, $quoteDetails) {
+                    $renewalTeamID = $quoteTypeDetail['renewal_team'] ?? null;
+
+                    // Check if this is a Group Medical business quote (business_type_of_insurance_id = 5)
+                    if (isset($quoteTypeDetail['group_medical_renewal_team']) &&
+                        $quoteDetails->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                        $renewalTeamID = $quoteTypeDetail['group_medical_renewal_team'];
+                    }
 
                     $query->where('team_id', $renewalTeamID ?? null);
                 })
@@ -1164,6 +1269,11 @@ class CentralService extends BaseService
         }
 
         $quote = $this->getQuoteObject($type, $id);
+        if (! $quote) {
+            info("Quote not found for type: {$type}, id: {$id}");
+
+            return;
+        }
         $quoteCode = $quote->code;
         $currentQuoteStatus = $quote->quote_status_id;
         // Check if quote status is locked - if so, don't change status due to document uploads
@@ -1281,8 +1391,8 @@ class CentralService extends BaseService
         // Get broker commission details
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId, $quote);
 
-        $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
-        $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE && $quoteTypeId == QuoteTypeId::Health;
+        $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsuranceProviderEnum::AXA->value;    // GIG_INSURANCE
+        $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsuranceProviderEnum::ADNIC->value && $quoteTypeId == QuoteTypeId::Health;    // ABU_DHABI_NATIONAL_INSURANCE
 
         // Check if multiple payments are enabled for the provider
         $isMultiplePaymentsEnabled = $insuranceProvider && $insuranceProvider->multiple_payments;
@@ -1371,6 +1481,352 @@ class CentralService extends BaseService
         return ['status' => true, 'message' => 'Void payment processed'];
     }
 
+    public function checkBusinessTypeOfInsurance($businessTypeOfInsuranceId): string
+    {
+        if ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+            return BirdFlowStatusEnum::GROUP_MEDICAL;
+        } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet)) {
+            return BirdFlowStatusEnum::CAR_FLEET;
+        } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit)) {
+            return BirdFlowStatusEnum::TRADE;
+        } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::several)) {
+            return BirdFlowStatusEnum::BUSINESS;
+        } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::proIndemnity)) {
+            return BirdFlowStatusEnum::PROFESSIONAL;
+        }
+
+        return BirdFlowStatusEnum::OTHER_BUSINESS;
+    }
+
+    public function prepareBirdData($quote, $quoteTypeId, $sendUpdateLog = null, $existingEmailData = null)
+    {
+        if ($quoteTypeId == QuoteTypeId::Business) {
+            if ($quote->business_type_of_insurance_id) {
+                $quoteType = $this->checkBusinessTypeOfInsurance($quote->business_type_of_insurance_id);
+            } else {
+                $quoteType = 'BUSINESS';
+            }
+        } else {
+            $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
+            if ($quoteTypeId == QuoteTypeId::Car && app(LeadAllocationService::class)->isCommercialVehicles($quote)) {
+                $quoteType = 'COMMERCIAL_'.$quoteType;
+            }
+        }
+
+        $workflowType = $quoteType.'_NEW_POLICY';
+        $workflowType = constant("App\Enums\WorkflowTypeEnum::{$workflowType}");
+
+        return $this->preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $existingEmailData);
+    }
+
+    public function preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $existingEmailData)
+    {
+        $emailData = (object) [
+            'appLink' => $existingEmailData->appDownloadLink ?? '',
+            'policyNumber' => $quote->policy_number ?? '',
+            'policyPeriodStart' => Carbon::parse($quote->policy_start_date)->format('d/m/Y'),
+            'policyPeriodEnd' => Carbon::parse($quote->policy_expiry_date)->format('d/m/Y'),
+            'refID' => $quote->code,
+            'code' => $quote->code,
+        ];
+
+        $this->emailDataExtend(emailData: $emailData, quote: $quote, quoteTypeId: $quoteTypeId, workflowType: $workflowType, existingEmailData: $existingEmailData);
+
+        return $emailData;
+    }
+
+    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $workflowType = null, $existingEmailData = null): void
+    {
+        $emailData->advisorEmail = $quote->advisor->email ?? '';
+        $emailData->customerName = $quote->first_name.' '.$quote->last_name;
+        $emailData->advisorLandLine = $quote->advisor->landline_no ?? '';
+        $emailData->advisorMobilePhone = $quote->advisor->mobile_no ?? '';
+        $emailData->advisorName = $quote->advisor->name ?? '';
+        $emailData->advisorProfilePhotoPath = $quote->advisor->profile_photo_path ?? '';
+        $emailData->advisorWhatsAppNo = str_replace(' ', '', $quote->advisor->mobile_no ?? '');
+        $emailData->customerFullName = ucfirst($quote->first_name);
+        $emailData->rtaPortalLink = getAppStorageValueByKey(ApplicationStorageEnums::RTA_PORTAL_LINK);
+        $emailData->customerEmail = $quote->email;
+        $emailData->workflowType = $workflowType;
+
+        $storageUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+
+        $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? '';
+        $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? '';
+        $emailData->planName = '-';
+
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Home])) {
+            $emailData->assistanceNumber = $quote?->plan?->insuranceProvider?->roadside_phone_number ?? $emailData->assistanceNumber ?? '';
+            $emailData->insuranceCompany = $quote?->plan?->insuranceProvider?->text ?? $emailData->insuranceCompany ?? '';
+            $emailData->planName = $quote?->insuranceProviderPlan?->text ?? $quote?->plan?->text ?? $quote?->carPlan?->text ?? '-';
+        }
+
+        $quote->load('latestInsured');
+        $emailData->insuredName = $quote?->latestInsured?->first_name ? strtoupper($quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name) : '-';
+
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
+            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
+            $emailData->quoteUID = $quote->uuid;
+            $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Car) {
+            $emailData->carDetails = $quote?->carMake?->text.' '.$quote?->carModel?->text.' '.$quote?->carModelDetail?->text;
+            if (app(LeadAllocationService::class)->isCommercialVehicles($quote)) {
+                $emailData->companyName = $quote->company_name ?? null;
+            }
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Bike) {
+            $emailData->bikeDetails = $quote->bikeQuote->bikeMake->text.' '.$quote->bikeQuote->bikeModel->text.' '.$quote->bikeQuote->cubic_capacity;
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Cycle) {
+            $emailData->cycleDetails = $quote?->cycleQuote?->cycle_make.' '.$quote?->cycleQuote?->cycle_model.' '.$quote?->cycleQuote?->yearOfManufacture?->text;
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Yacht) {
+            // need to confirm.
+            $emailData->yachtDetails = $quote->yachtQuote->boat_details;
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Travel) {
+            $emailData->planType = is_null($quote->coverage_code) ? '' : ucwords(convertFromCamelCase($quote->coverage_code));
+            $emailData->primaryTraveler = $quote?->primaryMember?->first_name.' '.$quote?->primaryMember?->last_name;
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Life) {
+            $emailData->planType = $quote?->lifeQuote?->insuranceTenure?->text ?? 'Life Insurance';
+            $emailData->policyTerm = $quote?->lifeQuote?->numberOfYears?->text;
+            $emailData->planName = $quote?->insuranceProviderPlan?->text ?? '-';
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Home) {
+            $customerAddress = CustomerAddress::where('customer_id', $quote->customer->id)
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('quote_uuid', $quote->uuid)
+                ->first();
+
+            if ($customerAddress) {
+                $emailData->homeDetails = "$customerAddress->office_number, $customerAddress->floor_number, $customerAddress->building_name, $customerAddress->street, $customerAddress->area, $customerAddress->city, $customerAddress->landmark";
+            } else {
+                $emailData->homeDetails = '-';
+            }
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Pet) {
+            $emailData->typeOfPet = $quote?->petQuote?->petType?->text.' - '.$quote->gender; // Cat - Female
+            $emailData->breedOfPet = $quote?->petQuote?->breed_of_pet1 ?? ''; // Persian
+            $emailData->microchipNumber = $quote->petQuote->microchip_no ?? '';
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $emailData->tpa = $quote?->plan?->healthNetwork->text;
+            $emailData->numberOfMembersCovered = (string) count($quote->members);
+            $emailData->policyHolderName = implode(', ', array_map(function ($member) {
+                return $member['first_name'];
+            }, $quote->members->toArray()));
+
+            $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
+        }
+
+        $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
+        if (
+            $quoteTypeId != QuoteTypeId::Business ||
+            (
+                $quoteTypeId == QuoteTypeId::Business &&
+                in_array($quote?->business_type_of_insurance_id, [
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit),
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet),
+                ])
+            )
+        ) {
+            $handBookDocuments = $existingEmailData->handBookDocuments ?? [];
+            if (! empty($handBookDocuments)) {
+                // Get the latest document from the array
+                $latestDocument = collect($handBookDocuments)->last();
+                $url = $latestDocument['url'] ?? null;
+
+                if ($url) {
+                    $emailData->handBookDocuments = str_contains($url, 'http') ? $url : $storageUrl.$url;
+                }
+            } else {
+                $policyHandBook = $quoteDocuments->filter(function ($document) {
+                    return in_array($document['document_type_code'], [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH]);
+                })->first()?->doc_url ?? '';
+
+                if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life])) {
+                    $policyHandBook = PolicyWording::where('quote_type_id', $quoteTypeId)
+                        ->where('plan_id', $quote->plan_id)
+                        ->first()?->link ?? '';
+
+                    $emailData->handBookDocuments = ! empty($policyHandBook) ? config('constants.AZURE_IM_STORAGE_URL').$policyHandBook : '';
+                } else {
+                    $emailData->handBookDocuments = $storageUrl.$policyHandBook ?? '';
+                }
+            }
+            $emailData->handBookExt = ! empty($emailData->handBookDocuments) ? pathinfo($emailData->handBookDocuments, PATHINFO_EXTENSION) : '';
+        }
+
+        if (! empty($quoteDocuments)) {
+            $quoteDocuments = collect($quoteDocuments);
+
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business])) {
+                $emailData->policyCertificate = $storageUrl.$quoteDocuments->filter(function ($document) {
+                    return in_array($document['document_type_code'], [DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL, DocumentTypeCode::PC_YTCH, DocumentTypeCode::COMP_PC]);
+                })->first()['doc_url'] ?? '';
+
+                $emailData->certificateExt = ! empty($emailData->policyCertificate) ? pathinfo($emailData->policyCertificate, PATHINFO_EXTENSION) : '';
+            }
+
+            // Signed Medical Application form
+            if ($quoteTypeId == QuoteTypeId::Health) {
+                $emailData->signedMedicalApplicationForm = $storageUrl.$quoteDocuments->filter(function ($document) {
+                    return $document['document_type_code'] == DocumentTypeCode::SMAF_HLTH;
+                })->first()['doc_url'] ?? '';
+
+                $emailData->medAppExt = ! empty($emailData->signedMedicalApplicationForm) ? pathinfo($emailData->signedMedicalApplicationForm, PATHINFO_EXTENSION) : '';
+            }
+
+            // E-Card
+            if (
+                $quoteTypeId == QuoteTypeId::Health ||
+                (
+                    $quoteTypeId == QuoteTypeId::Business &&
+                    $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)
+                )
+            ) {
+                $emailData->eCard = $storageUrl.$quoteDocuments->filter(function ($document) {
+                    return in_array($document['document_type_code'], [DocumentTypeCode::GH_EC, DocumentTypeCode::ECARD_HLTH]);
+                })->first()['doc_url'] ?? '';
+
+                $emailData->eCardExt = ! empty($emailData->eCard) ? pathinfo($emailData->eCard, PATHINFO_EXTENSION) : '';
+            }
+
+            // Network List
+            if (
+                $quoteTypeId == QuoteTypeId::Business &&
+                $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)
+            ) {
+                $emailData->networkList = $storageUrl.$quoteDocuments->filter(function ($document) {
+                    return $document['document_type_code'] == DocumentTypeCode::GH_NL;
+                })->first()['doc_url'] ?? '';
+
+                $emailData->networkListExt = ! empty($emailData->networkList) ? pathinfo($emailData->networkList, PATHINFO_EXTENSION) : '';
+            }
+
+            if ($quoteTypeId == QuoteTypeId::Life) {
+                $emailData->applicationCopy = $storageUrl.$quoteDocuments->filter(function ($document) {
+                    return $document['document_type_code'] == DocumentTypeCode::AC_LIFE;
+                })->first()['doc_url'] ?? '';
+
+                $emailData->appCopyExt = ! empty($emailData->applicationCopy) ? pathinfo($emailData->applicationCopy, PATHINFO_EXTENSION) : '';
+            }
+
+            $emailData->policySchedule = $storageUrl.$quoteDocuments->filter(function ($document) {
+                return in_array($document['document_type_code'], [DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS]);
+            })->first()['doc_url'] ?? '';
+
+            $emailData->scheduleExt = ! empty($emailData->policySchedule) ? pathinfo($emailData->policySchedule, PATHINFO_EXTENSION) : '';
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Business) {
+            $emailData->companyName = $quote->company_name;
+            $emailData->corplineDetails = $quote->brief_details;
+            if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                $emailData->tpa = '-'; // need to confirm.
+            } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::proIndemnity)) {
+                $emailData->insuranceType = '-'; // need to confirm.
+            }
+        }
+    }
+
+    public function sendInslyEmailToCustomer($lead, $emailData, $quoteTypeId, $emailType = '')
+    {
+        $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
+
+        try {
+            info("Sending {$quoteType} followups email for {$emailType} uuid: ".$lead->uuid.' | Time: '.now());
+            $birdUrlKey = ApplicationStorageEnums::BIRD_INSLY_WORKFLOW;
+
+            $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
+            if ($birdUrl) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdUrl?->value, $emailData);
+                LoggerService::info("{$quoteType} response: ".json_encode($response)." | {$emailType} uuid: {$lead->uuid} |Time: ".now());
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, strtoupper($emailData->workflowType));
+                }
+            }
+
+            return $response?->status_code ?? null;
+        } catch (\Exception $ex) {
+            $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for {$emailType}: uuid: {$lead->uuid} | Time: ".now();
+            LoggerService::info($errorMessage);
+            LoggerService::info("{$birdUrlKey}-Error: {$ex->getMessage()} | uuid: {$lead->uuid} | Time: ".now());
+        }
+    }
+
+    /**
+     * Send automation email to Bird
+     *
+     * @param  $emailData  | should be object
+     * @return int|null
+     */
+    public function sendAutomationEmail($lead, $emailData, $quoteTypeId, $emailType)
+    {
+        LoggerService::startQuoteLogging($lead);
+        $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
+
+        try {
+            LoggerService::info("Sending {$quoteType} followups email for {$emailType} uuid: ".$lead->uuid.' | Time: '.now());
+            $birdUrlKey = ApplicationStorageEnums::BIRD_AUTOMATION_WORKFLOW_URL;
+
+            $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
+            if ($birdUrl) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdUrl?->value, $emailData);
+                LoggerService::info("{$quoteType} response: ".json_encode($response)." | {$emailType} uuid: {$lead->uuid} |Time: ".now());
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, strtoupper($emailData->workflowType));
+                }
+            } else {
+                LoggerService::info("{$birdUrlKey} key not found for {$emailType} uuid: {$lead->uuid} |Time: ".now());
+            }
+
+            return $response?->status_code ?? null;
+        } catch (\Exception $ex) {
+            $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for {$emailType}: uuid: {$lead->uuid} | Time: ".now();
+            LoggerService::info($errorMessage);
+            LoggerService::info("{$birdUrlKey}-Error: {$ex->getMessage()} | uuid: {$lead->uuid} | Time: ".now());
+        }
+    }
+
+    public function createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, $workflowType)
+    {
+        try {
+            $flowType = constant("App\Enums\QuoteFlowType::{$workflowType}");
+
+            $runId = collect($response->headers['Run-Id'])->first();
+            if (! empty($runId)) {
+                QuoteFlowDetails::create([
+                    'quote_uuid' => $lead->uuid,
+                    'quote_type_id' => $quoteTypeId,
+                    'flow_type' => $flowType,
+                    'flow_id' => $runId,
+                ]);
+                LoggerService::info("{$emailType} run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            } else {
+                LoggerService::info("{$emailType} run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            }
+        } catch (\Exception $ex) {
+            $errorMessage = "{$emailType}-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            LoggerService::info($errorMessage);
+            LoggerService::info("{$emailType}-Error: {$ex->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+        }
+    }
+
     public function removeInsurerPaymentLink($request)
     {
         $quote = $this->getQuoteObject($request->quoteType, $request->quoteId);
@@ -1391,31 +1847,68 @@ class CentralService extends BaseService
     }
 
     // Todo: This method will remove in future if Business confirm we will enable capture of all providers
+    /**
+     * Check if the capture button is enabled for a given quote type and insurance provider.
+     *
+     * @return bool
+     */
     private function isCaptureButtonEnabledForProvider($insuranceProviderCode, $quoteTypeId)
     {
         // Capture are enabled for the all LOB's against specific providers
         $enabledProviders = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::RAK_INSURANCE,
-            InsurerProviderEnum::TOKIO_MARINE,
-            InsurerProviderEnum::QATAR_INSURANCE,
-            InsurerProviderEnum::ALLIANCE_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+            InsuranceProviderEnum::AXA->value,    // GIG_INSURANCE
+            InsuranceProviderEnum::RAK->value,    // RAK_INSURANCE
+            InsuranceProviderEnum::TM->value,     // TOKIO_MARINE
+            InsuranceProviderEnum::QIC->value,    // QATAR_INSURANCE
+            InsuranceProviderEnum::ALNC->value,   // ALLIANCE_INSURANCE
+            InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 
         if ($quoteTypeId == QuoteTypeId::Health) {
-            $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
+            $enabledProviders[] = InsuranceProviderEnum::ADNIC->value;   // ABU_DHABI_NATIONAL_INSURANCE
         }
 
         // if ($quoteTypeId == QuoteTypeId::Car) {
-        //     $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
+        //     $enabledProviders[] = InsuranceProviderEnum::NT->value;   // WATANIA_TAKAFUL
         // }
 
         if ($quoteTypeId == QuoteTypeId::Travel) {
-            $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
+            $enabledProviders[] = InsuranceProviderEnum::OI2->value;   // ORIENT_INSURANCE
         }
 
         return in_array($insuranceProviderCode, $enabledProviders);
+    }
+
+    public function sendPolicyIssuedWhatsappMessage($quote, $quoteTypeId)
+    {
+        $lobName = QuoteTypes::getName($quoteTypeId);
+        if ($quote?->businessTypeOfInsurance) {
+            $lobName = $quote?->businessTypeOfInsurance?->text;
+        }
+        $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER ?? null;
+
+        $messageData = [
+            'customerName' => "{$quote->first_name} {$quote->last_name}",
+            'policyNumber' => $quote->policy_number,
+            'lob' => $lobName,
+            'whatsAppNumber' => formatMobileNo($quote->mobile_no),
+            'workflowType' => $workFlowType,
+            'quoteUUID' => $quote->uuid,
+            'refId' => $quote->code,
+        ];
+        LoggerService::info(self::class.'fn:'.__FUNCTION__.' trigger workflow to Send Whatsapp Message : Ref-ID: '.$quote->code.' | Time: '.now());
+        $workFlowEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL)->first();
+        if ($workFlowEvent) {
+            $response = app(BirdService::class)->triggerWebHookRequest($workFlowEvent->value, $messageData);
+            LoggerService::info(self::class.'fn:'.__FUNCTION__.'sendPolicyIssuedWhatsappMessage workflow event triggered for lead  Ref-ID: '.$quote->code.' | Time: '.now());
+
+            return $response->status_code;
+        } else {
+            LoggerService::info(self::class.'fn:'.__FUNCTION__.' workflow key not found for lead : Ref-ID: '.$quote->code.' | Time: '.now());
+        }
+
+        return null;
+
     }
 
     public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode)
@@ -1428,7 +1921,6 @@ class CentralService extends BaseService
             ];
 
             return Ken::request('/capture-payment-validation', 'put', $data);
-
         } catch (\Throwable $th) {
             LoggerService::error('capturePaymentValidation failed',
                 context: [
@@ -1542,6 +2034,171 @@ class CentralService extends BaseService
         return $paymentGatewayIds;
     }
 
+    public function updateBookingDetails($validatedData, $bookPolicyRequest)
+    {
+        $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
+        $paymentInformation = [
+            'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
+            'transaction_payment_status' => $validatedData['transaction_payment_status'],
+            'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
+            'broker_invoice_number' => $validatedData['broker_invoice_number'],
+            'insurer_invoice_date' => $validatedData['invoice_date'],
+            'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
+            'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
+            'commmission_percentage' => $validatedData['commission_percentage'],
+            'commission_vat' => $validatedData['vat_on_commission'],
+            'commission' => $validatedData['total_commission'],
+            'invoice_description' => $validatedData['invoice_description'],
+
+            // for life only
+            'commission_based_on_currency' => $bookPolicyRequest?->commission_based_on_currency ?? null,
+            'exchange_rate' => $bookPolicyRequest?->exchange_rate ?? null,
+            'currency' => $bookPolicyRequest?->currency ?? null,
+        ];
+
+        $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->first();
+
+        if ($isDuplicateOrCIRLead && empty($payment)) {
+            $payment = Payment::where([
+                'paymentable_id' => $quote->id,
+                'paymentable_type' => $quote->getMorphClass(),
+            ])->mainLeadPayment()->first();
+        }
+
+        $payment->update($paymentInformation);
+        LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
+
+        $response = (new SplitPaymentService)->updateCommissionSchedule($payment);
+
+        if (! $response['status']) {
+            return ['status' => false, 'message' => $response['message']];
+        }
+
+        LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
+
+        return ['status' => true, 'message' => 'Book policy details update successfully'];
+    }
+
+    public function autoCapturePaymentProcess($quoteTypeId, $quote, $premiumCheckEnabled = true)
+    {
+        $quoteType = QuoteType::where('id', $quoteTypeId)->first();
+        $payment = $quote->payments()->mainLeadPayment()->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
+
+        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+
+        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
+            LoggerService::info('fn:autoCaptureAMLValidationCheck failed - Going to dispatch AutomationFailedJob', extra: [
+                'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                'statusAPIFailed' => 'Quote Referred To Insurer UW',
+                'processInvolved' => 'Payment Capture',
+            ]);
+            AutomationFailedJob::dispatch(
+                $quote->id,
+                QuoteTypeId::Car,
+                'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                'Quote Referred To Insurer UW',
+                'Payment Capture',
+                WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+            )->onQueue('policy-issuance-automation');
+
+            return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
+        }
+
+        if ($premiumCheckEnabled) {
+            $captureAmount = $payment->total_amount;
+            if (
+                $quoteType->code == QuoteTypes::CAR->value &&
+                in_array($insuranceProvider?->code, [InsuranceProviderEnum::AXA->value, InsuranceProviderEnum::RSA->value]) &&
+                $payment->total_amount != $payment->premium_authorized
+            ) {
+                $captureAmount = $payment->premium_authorized;
+            }
+
+            $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $captureAmount, $quote->code);
+            $responsePremiumAmount = isset($capturePaymentResponse['premiumAmount']) ? $capturePaymentResponse['premiumAmount'] : null;
+
+            $logExtra = [
+                'paymentCode' => $payment->code,
+                'quoteTypeId' => $quoteType->id,
+                'responseStatus' => isset($capturePaymentResponse['status']) ? $capturePaymentResponse['status'] : null,
+                'responseMessage' => isset($capturePaymentResponse['message']) ? $capturePaymentResponse['message'] : null,
+                'responsePremiumAmount' => $responsePremiumAmount,
+            ];
+
+            if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
+                LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
+
+                if ($responsePremiumAmount > $captureAmount) {
+                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
+                        'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                        'statusAPIFailed' => 'Premium Not Matched With Insurer',
+                        'processInvolved' => 'Payment Capture',
+                    ]);
+                    AutomationFailedJob::dispatch(
+                        $quote->id,
+                        QuoteTypeId::Car,
+                        'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                        'Premium Not Matched With Insurer',
+                        'Payment Capture',
+                        WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+                    )->onQueue('policy-issuance-automation');
+                } elseif ($responsePremiumAmount != $captureAmount) {
+                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
+                        'actionRequired' => 'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
+                        'statusAPIFailed' => 'Quote Referred To Insurer UW',
+                        'processInvolved' => 'Payment Capture',
+                    ]);
+                    AutomationFailedJob::dispatch(
+                        $quote->id,
+                        QuoteTypeId::Car,
+                        'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
+                        'Quote Referred To Insurer UW',
+                        'Payment Capture',
+                        WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+                    )->onQueue('policy-issuance-automation');
+                }
+
+                $message = $capturePaymentResponse['message'] ?? 'Premium mismatch on Insurer portal';
+
+                return ['status' => false, 'message' => $message, 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to '.$message];
+            }
+
+            LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' success', extra: $logExtra);
+        }
+
+        $paymentSplits = $payment->paymentSplits;
+        $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
+
+        $splitPaymentApprovalRequest = new SplitPaymentApproveRequest([
+            'modelType' => $quoteType->code,
+            'quote_id' => $quote->id,
+            'plan_id' => $payment->plan_id,
+            'payment_code' => $payment->code,
+            'customer_id' => $quote->customer_id,
+            'collection_amount' => $collectionAmount,
+            'is_declined' => 0,
+            'is_capture' => 1,
+            'is_approved' => 0,
+            'declined_reason' => $payment->declined_reason,
+            'send_update_id' => null,
+            'collection_type' => $payment->collection_type,
+        ]);
+
+        $response = app(PaymentRepository::class)->handlePaymentApprove($splitPaymentApprovalRequest);
+        LoggerService::info(__FUNCTION__.' - Split payment approval process completed', extra: ['paymentCode' => $payment->code]);
+
+        if (is_string($response)) {
+            return ['message' => $response, 'autoCaptureStatus' => GenericRequestEnum::SUCCESS, 'autoCaptureMessage' => 'Auto capture payment process started'];
+        }
+
+        $response['autoCaptureStatus'] = GenericRequestEnum::SUCCESS;
+        $response['autoCaptureMessage'] = 'Auto capture payment process started';
+
+        return $response;
+    }
+
     public function checkInsurerReceiptNumber($quoteType, $receiptNumber)
     {
         $count = PaymentSplits::where('insurer_receipt_number', $receiptNumber)->count();
@@ -1554,5 +2211,126 @@ class CentralService extends BaseService
         LoggerService::info('fn:checkInsurerReceiptNumber - Receipt number does not exist: '.$receiptNumber);
 
         return ['status' => true, 'message' => 'Receipt number does not exist'];
+    }
+
+    public function syncLatestCarQuoteInfoToQuote($quote): array
+    {
+        $return = ['status' => true, 'message' => 'Latest Car Quote Info API response synced to the quote.'];
+
+        LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Sync latest Car Quote Info to Quote started');
+        $latestCarQuoteInfo = InsurerRequestResponse::where([
+            'quote_uuid' => $quote->uuid,
+            'call_type' => GenericRequestEnum::CALL_TYPE_QUOTE_INFO,
+            'status' => GenericRequestEnum::PASSED,
+        ])->latest()->first();
+
+        if (! $latestCarQuoteInfo) {
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Latest Car Quote Info API response not found');
+            $return = [
+                'status' => false,
+                'message' => 'Latest Car Quote Info API response not found for the given quote.',
+            ];
+        }
+
+        $responseData = json_decode($latestCarQuoteInfo->response, true);
+        $payment = $quote->payments()->mainLeadPayment()->first();
+
+        DB::beginTransaction();
+
+        try {
+            $payment->update([
+                'policy_expiry_date' => $responseData['policySchedule']['expirationDate'],
+                'commission_vat_applicable' => $responseData['selectedPlan']['premium']['commission']['amount'],
+            ]);
+
+            $quote->update([
+                'policy_issuance_date' => $responseData['policySchedule']['creationDate'],
+                'policy_start_date' => $responseData['policySchedule']['effectiveDate'],
+                'policy_expiry_date' => $responseData['policySchedule']['expirationDate'],
+                'price_vat_applicable' => $responseData['selectedPlan']['premium']['premium']['amount'],
+                'vat' => $responseData['selectedPlan']['premium']['vatOnPremium']['amount'],
+                'price_with_vat' => $responseData['selectedPlan']['premium']['grossPremium']['amount'],
+            ]);
+
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Sync latest Car Quote Info to Quote completed');
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'.$quote->code.' - Transaction failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            $return = [
+                'status' => false,
+                'message' => 'Latest Car Quote Info API response synced to the quote failed',
+            ];
+        }
+
+        return $return;
+    }
+
+    public function updateLastYearPolicy($request)
+    {
+        $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+
+        if (! $quote) {
+            return redirect()->back()->with('error', 'Error Updating Policy Details.');
+        }
+
+        // Map of request fields to database columns
+        $fieldMapping = [
+            'renewal_batch' => 'renewal_batch',
+            'previous_policy_expiry_date' => 'previous_policy_expiry_date',
+            'previous_policy_start_date' => 'previous_policy_start_date',
+            'previous_quote_policy_number' => 'previous_quote_policy_number',
+            'previous_quote_policy_premium' => 'previous_quote_policy_premium',
+            'previous_advisor_id' => 'previous_advisor_id',
+        ];
+
+        // Filter only filled fields from the request
+        $updateData = collect($fieldMapping)
+            ->filter(fn ($column, $field) => $request->filled($field))
+            ->mapWithKeys(fn ($column, $field) => [$column => $request->input($field)])
+            ->toArray();
+
+        // Auto-update renewal batch for non-motor LOBs based on expiry date
+        if ($request->filled('previous_policy_expiry_date') && $this->isNonMotorQuoteType($request->model_type)) {
+            $renewalBatch = $this->findRenewalBatchByExpiryDate($request->previous_policy_expiry_date);
+            if ($renewalBatch) {
+                $updateData['renewal_batch_id'] = $renewalBatch->id;
+                $updateData['renewal_batch'] = $renewalBatch->name;
+            }
+        }
+
+        // Update the quote with all provided fields
+        if (! empty($updateData)) {
+            $quote->update($updateData);
+        }
+
+        return ['status' => true, 'message' => 'Last Year Policy Details have been updated successfully.'];
+    }
+
+    /**
+     * Check if the quote type is non-motor
+     */
+    private function isNonMotorQuoteType(string $quoteType): bool
+    {
+        $nonMotorTypes = ['health', 'travel', 'life', 'home', 'pet', 'bike', 'yacht', 'cycle', 'jetski', 'business', 'savings'];
+
+        return in_array(strtolower($quoteType), $nonMotorTypes);
+    }
+
+    /**
+     * Find renewal batch by expiry date for non-motor LOBs
+     */
+    private function findRenewalBatchByExpiryDate(string $expiryDate): ?\App\Models\RenewalBatch
+    {
+        $expiryDate = \Carbon\Carbon::parse($expiryDate);
+
+        return \App\Models\RenewalBatch::whereNull('quote_type_id') // Non-motor batches
+            ->where('start_date', '<=', $expiryDate)
+            ->where('end_date', '>=', $expiryDate)
+            ->first();
     }
 }

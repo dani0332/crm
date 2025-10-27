@@ -14,6 +14,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\DepartmentService;
 use App\Services\LeadAllocationService;
+use App\Services\LookupService;
 use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -52,6 +53,7 @@ class UserController extends Controller
                 'u1.id',
                 'u1.name',
                 'u1.email',
+                'u1.employee_code',
                 DB::raw('(SELECT GROUP_CONCAT(roles.name) FROM users INNER JOIN model_has_roles ON model_has_roles.model_id = users.id INNER JOIN roles ON roles.id = model_has_roles.role_id WHERE users.id = u1.id GROUP BY users.name) as roles'),
                 'teams.name as teamName',
                 DB::raw('DATE_FORMAT(u1.updated_at, "%Y-%m-%d %H:%i") as updated_at'),
@@ -121,6 +123,12 @@ class UserController extends Controller
         $departments = $this->userService->getDepartmentsList();
         $businessTypes = BusinessTypeOfInsurance::select('id as value', 'text as label')->get();
 
+        $rmCategories = app(LookupService::class)->getRmCategories()->push((object) [
+            'id' => -1,
+            'code' => 'na',
+            'text' => 'N/A',
+        ]);
+
         return inertia('Admin/Users/Form', [
             'roles' => $roles,
             'products' => $products,
@@ -129,6 +137,7 @@ class UserController extends Controller
             'subTeams' => $subTeams,
             'permissions' => $permissions,
             'businessTypes' => $businessTypes,
+            'rmCategories' => $rmCategories,
         ]);
     }
 
@@ -162,6 +171,7 @@ class UserController extends Controller
             'password' => 'required',
             'products' => 'required',
             'teams' => 'required',
+            'rm_category_id' => ['required', 'integer', 'regex:/^(-1|[1-9]\d*)$/'],
         ]);
 
         $user = $this->userService->createUserRecord($request);
@@ -186,7 +196,7 @@ class UserController extends Controller
             }
         }
 
-        $user->assignRole($request->input('roles'));
+        $user->syncRoles($request->input('roles'));
 
         // if Corpline Advisor exists, then set Business Types otherwise set it as empty
         $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ? request('businessTypes', []) : []);
@@ -228,12 +238,14 @@ class UserController extends Controller
             'advisors' => function ($advisor) {
                 $advisor->select('user_id', 'name');
             },
+            'rmCategory',
         ]);
 
         return inertia('Admin/Users/Show', [
             'user' => $user,
             'teamName' => $teamName,
             'subTeamName' => $subTeamName,
+            'rmCategoryText' => optional($user->rmCategory)->text,
             'departments' => $departments,
             'additionalTeamNames' => $additionalTeamNames,
             'managerName' => $managerName,
@@ -273,6 +285,12 @@ class UserController extends Controller
         $departments = $this->userService->getDepartmentsList();
         $businessTypes = BusinessTypeOfInsurance::select('id as value', 'text as label')->get();
 
+        $rmCategories = app(LookupService::class)->getRmCategories()->push((object) [
+            'id' => -1,
+            'code' => 'na',
+            'text' => 'N/A',
+        ]);
+
         return inertia('Admin/Users/Form', [
             'user' => $user,
             'roles' => $roles,
@@ -291,6 +309,7 @@ class UserController extends Controller
             'userPermissions' => $userPermissions,
             'businessTypes' => $businessTypes,
             'userBusinessTypeIds' => $userBusinessTypeIds,
+            'rmCategories' => $rmCategories,
         ]);
     }
 
@@ -312,6 +331,7 @@ class UserController extends Controller
             'roles' => 'required',
             'teams' => 'required',
             'permissions' => 'nullable|array',
+            'rm_category_id' => ['required', 'integer', 'regex:/^(-1|[1-9]\d*)$/'],
         ]);
 
         // Updating user
@@ -322,6 +342,7 @@ class UserController extends Controller
         $user->calendar_link = $request->calendar_link;
         $user->phone_calendar_link = $request->phone_calendar_link;
         $user->department_id = $request->department_id ?? null;
+        $user->rm_category_id = (! empty($request->rm_category_id) && $request->rm_category_id > 0) ? $request->rm_category_id : null;
         if (isset($request->password)) {
             $user->password = bcrypt($request->password);
         }
@@ -406,8 +427,7 @@ class UserController extends Controller
         $user->syncPermissions($permissions);
 
         // Updating user roles
-        DB::table('model_has_roles')->where('model_id', $user->id)->delete();
-        $user->assignRole($request->input('roles'));
+        $user->syncRoles($request->input('roles'));
 
         // if Corpline Advisor exists, then set Business Types otherwise set it as empty
         $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ? request('businessTypes', []) : []);
@@ -536,5 +556,68 @@ class UserController extends Controller
 
         // Redirect back with a success message
         return redirect()->back()->with('success', 'Advisors added successfully');
+    }
+
+    /**
+     * Get the first manager of an advisor.
+     *
+     * @param  string  $email
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getFirstManager($email)
+    {
+        try {
+            // Validate that the advisor exists and is active
+            $advisor = User::where('email', $email)
+                ->where('is_active', 1)
+                ->first();
+
+            if (! $advisor) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Advisor not found or inactive',
+                    'data' => null,
+                ], 404);
+            }
+
+            // Get the first manager using the existing getUserManagers method from TeamHierarchyTrait
+            $managers = $this->getUserManagers($advisor->id);
+
+            if ($managers->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'No manager found for this advisor',
+                    'data' => null,
+                ], 200);
+            }
+
+            // Get the first manager
+            $firstManager = $managers->first();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'First manager retrieved successfully',
+                'data' => [
+                    'advisor' => [
+                        'id' => $advisor->id,
+                        'name' => $advisor->name,
+                        'email' => $advisor->email,
+                    ],
+                    'first_manager' => [
+                        'id' => $firstManager->id,
+                        'name' => $firstManager->name,
+                        'email' => $firstManager->email,
+                        'is_active' => $firstManager->is_active,
+                    ],
+                ],
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving the manager',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

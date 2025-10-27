@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\InsurerProviderEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
@@ -43,6 +43,8 @@ class QuoteDocumentRequest extends FormRequest
             'quote_uuid' => 'required',
             'member_detail_id' => 'nullable',
             'is_base_64' => 'nullable',
+            'document_category' => 'nullable',
+            'file_name' => 'nullable|string|max:100', // only for base 64 file name to be used as original name
         ];
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->first())) {
@@ -58,7 +60,6 @@ class QuoteDocumentRequest extends FormRequest
         }
 
         return $rules;
-
     }
 
     /**
@@ -67,27 +68,50 @@ class QuoteDocumentRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            $quoteType = ucfirst(request()->quoteType);
+            $memberDetailId = request()->member_detail_id;
+            $documentTypeCode = request()->document_type_code;
+            $quoteTypes = [quoteTypeCode::Health, quoteTypeCode::Travel];
+
             // check for quote records if exists
             if (! $quote = $this->getQuoteObject(request()->quoteType, request()->quote_uuid)) {
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
+
+                return;
+            }
+
+            // check for maximum number of files uploaded against selected quote and document type
+            if ($this->documentType && $quote->documents->where('document_type_code', $documentTypeCode)->count() >= $this->documentType->max_files) {
+                $validator->errors()->add('file', 'You can only upload a maximum of '.$this->documentType->max_files.' files');
+
+                return; // Stop validation if max files exceeded
             }
 
             /**
-             * documents can be attached to a member for health quote type
+             * documents can be attached to a member for health & travel
              */
-            if (in_array(ucfirst(request()->quoteType), [quoteTypeCode::Health, quoteTypeCode::Travel]) && isset($quote->id) && ! empty(request()->member_detail_id)) {
+            if (in_array($quoteType, $quoteTypes) && ! empty($memberDetailId)) {
                 // check for quote records if exists
-                if (! $quote->customerMembers()->where('id', request()->member_detail_id)->first()) {
+                if (! $quote->customerMembers()->where('id', $memberDetailId)->first()) {
                     $validator->errors()->add('member_detail_id', 'Invalid member detail id provided');
                 }
             }
 
-            if (! in_array(ucfirst(request()->quoteType), [quoteTypeCode::Health, quoteTypeCode::Travel]) && ! empty(request()->member_detail_id)) {
+            if (! in_array($quoteType, $quoteTypes) && ! empty($memberDetailId)) {
                 $validator->errors()->add('member_detail_id', 'Member can be attached only for Health Insurance type');
             }
 
-            $quote_source = data_get($quote, 'source', '');
-            if ($quote_source == LeadSourceEnum::DUBAI_NOW) {
+            // For health LOB we can bypass the payment validation
+            if ($quoteType == quoteTypeCode::Health) {
+                if (empty($quote->plan_id)) {
+                    $validator->errors()->add('type', 'Documents can be uploaded once plan is selected.');
+                }
+
+                return; // Skip payment validation for health quotes with plan
+            }
+
+            $leadSource = data_get($quote, 'source', '');
+            if ($leadSource == LeadSourceEnum::DUBAI_NOW) {
                 // validate if payment is authorized capture or partial capture
                 if (isset($quote->payment_status_id) && ! in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
                     $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized, captured or partial captured.');
@@ -96,16 +120,14 @@ class QuoteDocumentRequest extends FormRequest
                 // validate if payment is authorized
                 if (request()->quoteType != strtolower(quoteTypeCode::Travel) && isset($quote->insurance_provider_id)) {
                     if (! $this->isPlanBProviderSelected($quote)) {
-                        if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
+                        if (empty($quote->payment) ||
+                            ($quote->payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
+                             $quote->payment->payment_gateway_id != PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK)
+                        ) {
                             $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
                         }
                     }
                 }
-            }
-
-            // check for maximum number of files uploaded against selected quote and document type
-            if ($this->documentType && $quote && $quote->documents->where('document_type_code', request()->document_type_code)->count() >= $this->documentType->max_files) {
-                $validator->errors()->add('file', 'You can only upload a maximum of '.$this->documentType->max_files.' files');
             }
         });
     }
@@ -115,10 +137,10 @@ class QuoteDocumentRequest extends FormRequest
         $insuranceProvider = InsuranceProvider::find($quote->insurance_provider_id);
 
         $insurersWithoutCCRenewal = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::EMIRATES_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+            InsuranceProviderEnum::AXA->value,    // GIG_INSURANCE
+            InsuranceProviderEnum::EI->value,     // EMIRATES_INSURANCE
+            InsuranceProviderEnum::RSA->value,    // LIVANA_INSURANCE
+            InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 
         if (! $insuranceProvider) {

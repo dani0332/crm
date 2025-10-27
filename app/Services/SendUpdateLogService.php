@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarVehicleUse;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EmirateEnum;
 use App\Enums\LeadSourceEnum;
@@ -13,7 +14,6 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteJourneyEnum;
-use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
@@ -27,15 +27,15 @@ use App\Models\BrokerInvoiceNumber;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteType;
 use App\Models\CarAddOn;
-use App\Models\CarAddOnOption;
 use App\Models\CarQuote;
-use App\Models\CarQuoteRequestAddOn;
+use App\Models\CustomerAddress;
 use App\Models\CycleQuote;
 use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
 use App\Models\LifeQuote;
+use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
@@ -124,6 +124,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => CarQuote::class,
@@ -142,6 +144,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => HomeQuote::class,
@@ -160,6 +164,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => array_merge($parentSkipColumns, ['health_plan_type_id', 'price_starting_from', 'health_plan_co_payment_id']),
                     'parentClass' => HealthQuote::class,
@@ -178,6 +184,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => LifeQuote::class,
@@ -196,6 +204,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => BusinessQuote::class,
@@ -214,6 +224,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                         'travelDestinations' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
@@ -304,6 +316,8 @@ class SendUpdateLogService
                             'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'customerInsured' => [],
+                        'amlLogs' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => PersonalQuote::class,
@@ -1168,24 +1182,8 @@ class SendUpdateLogService
                 }
 
                 if ($request->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
-                    // Addons for Car move to main lead
-                    if (! empty($sendUpdateLog->car_addons) && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
-                        foreach ($sendUpdateLog->car_addons as $addonId) {
-                            $plansAddons = CarAddOnOption::where('addon_id', $addonId)->get();
-                            foreach ($plansAddons as $planAddon) {
-                                CarQuoteRequestAddOn::updateOrCreate([
-                                    'quote_request_id' => $quote->id,
-                                    'addon_option_id' => $planAddon->id,
-                                ], [
-                                    'quote_request_id' => $quote->id,
-                                    'addon_option_id' => $planAddon->id,
-                                    'price' => 0,
-                                ]);
-                            }
-                        }
-                    }
                     // Emirate of Registration for Car move to main lead
-                    elseif (! empty($sendUpdateLog->emirates_id) && $optionCode == SendUpdateLogStatusEnum::COE) {
+                    if (! empty($sendUpdateLog->emirates_id) && $optionCode == SendUpdateLogStatusEnum::COE) {
                         $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
                         info('emirate id : '.$sendUpdateLog->emirates_id);
                     }
@@ -1287,30 +1285,20 @@ class SendUpdateLogService
         };
     }
 
-    public function getAdditionalOptionsForCar($sendUpdateLog): array
+    public function getAdditionalOptionsForCar(): array
     {
-        LoggerService::info('fn:getAdditionalOptionsForCar - Start - SendUpdateLogService');
+        return Emirate::where('is_active', true)->get()->toArray();
+    }
 
-        $data = [];
-        switch ($sendUpdateLog->category->code) {
-            case SendUpdateLogStatusEnum::EF:
-                switch ($sendUpdateLog->option->code) {
-                    case SendUpdateLogStatusEnum::AOCOV:
-                        $data = $this->getCarAddons($sendUpdateLog->quote_uuid);
-                        break;
-                    case SendUpdateLogStatusEnum::COE:
-                        $data = Emirate::where('is_active', true)->get()->toArray();
-                        break;
-                }
-                break;
-            case SendUpdateLogStatusEnum::EN:
-                if ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::COE_NFI) {
-                    $data = Emirate::where('is_active', true)->get()->toArray();
-                }
-                break;
+    public function getSendUpdateLogNotes($quoteType): array
+    {
+        if ($quoteType == quoteTypeCode::Car) {
+            return Lookup::where('key', 'car-su-notes')->get()->toArray();
+        } elseif ($quoteType == quoteTypeCode::Bike) {
+            return Lookup::where('key', 'bike-su-notes')->get()->toArray();
         }
 
-        return $data;
+        return [];
     }
 
     public function getCarAddons($quoteUuid, $addonsIds = null): array
@@ -1324,23 +1312,15 @@ class SendUpdateLogService
         return (isset($carQuote->plan->carAddons)) ? $carQuote?->plan?->carAddons->toArray() : [];
     }
 
-    public function sendUpdateToCustomerEmailData($sendUpdateLog): array
+    public function sendUpdateToCustomerEmailData($sendUpdateLog, $quote): array
     {
         LoggerService::info('fn:sendUpdateToCustomerEmailData - SendUpdateLogService');
 
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
-        $quoteModel = $this->getModelObject($quoteType);
-        $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
-        $insuranceProviderText = $sendUpdateLog?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
+
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
-
-        if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::EN]) && $optionCode != SendUpdateLogStatusEnum::MPC) {
-            $update = $sendUpdateLog?->option->text;
-        } elseif (in_array($categoryCode, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
-            $update = quoteStatusCode::POLICY_CANCELLED;
-        }
 
         if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings])) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
@@ -1357,13 +1337,26 @@ class SendUpdateLogService
             ])->toArray();
         }
 
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+            $lookupNoteKey = strtolower($quoteType).'-su-notes';
+            $notes = Lookup::where('key', $lookupNoteKey)->whereIn('code', json_decode($sendUpdateLog->notes, true))->get() ?? [];
+            if (! empty($notes)) {
+                $notes = implode(', ', $notes->pluck('description')->toArray());
+            }
+        } else {
+            $notes = $sendUpdateLog?->notes ?? '';
+        }
+
         $emailData = (object) [
-            'clientFirstName' => $quote->first_name,
-            'clientFullName' => $quote->first_name.' '.$quote->last_name,
+            'customerName' => $quote->first_name.' '.$quote->last_name,
+            'reason' => $notes ?? '',
+            'insuredName' => $quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name,
+            'insuranceCompany' => $quote?->insuranceProvider?->text ?? '',
+            'planName' => $quote?->insuranceProviderPlan?->text ?? $quote?->plan?->text ?? $quote?->carPlan?->text ?? '-',
             'policyNumber' => $quote->policy_number ?? $quote?->previous_quote_policy_number ?? '',
-            'carQuoteId' => $sendUpdateLog->code,
-            'currentInsurer' => $insuranceProviderText,
-            'policyUpdate' => $update ?? '',
+            'policyPeriodStart' => Carbon::parse($sendUpdateLog->start_date ?? $quote->policy_start_date)->format('d/m/Y'),
+            'policyPeriodEnd' => Carbon::parse($sendUpdateLog->expiry_date ?? $quote->policy_expiry_date)->format('d/m/Y'),
+            'assistanceNumber' => $quote?->plan?->insuranceProvider?->roadside_phone_number ?? $quote?->insuranceProvider?->roadside_phone_number ?? '',
             'customerEmail' => $quote->email,
             'advisor' => (object) [
                 'landLine' => $quote->advisor->landline_no ?? '',
@@ -1376,27 +1369,81 @@ class SendUpdateLogService
             'documents' => $documents,
             'quoteTypeId' => $quoteTypeId,
             'code' => $sendUpdateLog->code,
-            'quote' => $sendUpdateLog->code,
             'quoteId' => $sendUpdateLog->personal_quote_id, // for email status save
             'refID' => $sendUpdateLog->code,
+            'product' => $quoteType,
         ];
 
-        if ($quoteTypeId == QuoteTypeId::Health) {
-            $emailData->isHealthAUH = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI;
+        if ($quoteTypeId == QuoteTypeId::Car) {
+            $emailData->carDetails = $quote?->carMake?->text.' '.$quote?->carModel?->text.' '.$quote?->carModelDetail?->text;
+        } elseif ($quoteTypeId == QuoteTypeId::Bike) {
+            $emailData->bikeDetails = $quote?->bikeQuote?->bikeMake?->text.' '.$quote?->bikeQuote?->bikeModel?->text.' '.$quote?->bikeQuote?->cubic_capacity;
+        } elseif ($quoteTypeId == QuoteTypeId::Cycle) {
+            $emailData->cycleDetails = $quote?->cycleQuote?->cycle_make.' '.$quote?->cycleQuote?->cycle_model.' '.$quote?->cycleQuote?->yearOfManufacture?->text;
+        } elseif ($quoteTypeId == QuoteTypeId::Yacht) {
+            $emailData->yachtDetails = $quote->yachtQuote->boat_details;
+        } elseif ($quoteTypeId == QuoteTypeId::Home) {
+            $customerAddress = CustomerAddress::where('customer_id', $quote->customer->id)
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('quote_uuid', $quote->uuid)
+                ->first();
+
+            if ($customerAddress) {
+                $emailData->homeDetails = "$customerAddress->office_number, $customerAddress->floor_number, $customerAddress->building_name, $customerAddress->street, $customerAddress->area, $customerAddress->city, $customerAddress->landmark";
+            } else {
+                $emailData->homeDetails = '-';
+            }
+        } elseif ($quoteTypeId == QuoteTypeId::Life) {
+            $emailData->planType = is_null($quote?->coverage_code) ? '' : ucwords(convertFromCamelCase($quote?->coverage_code));
+            $emailData->policyTerm = $quote?->lifeQuote?->numberOfYears?->text ?? '';
+        } elseif ($quoteTypeId == QuoteTypeId::Travel) {
+            $emailData->planType = is_null($quote?->coverage_code) ? '' : ucwords(convertFromCamelCase($quote?->coverage_code));
+            $emailData->primaryTraveler = $quote?->primaryMember?->first_name.' '.$quote?->primaryMember?->last_name;
+        } elseif ($quoteTypeId == QuoteTypeId::Business) {
+            $emailData->companyName = $quote?->company_name ?? '-';
+        } elseif ($quoteTypeId == QuoteTypeId::Health) {
+            $emailData->policyHolderName = implode(', ', array_map(function ($member) {
+                return $member['first_name'];
+            }, $quote->members->toArray()));
+            $emailData->tpa = $quote?->plan?->healthNetwork->text;
+            $emailData->numberOfMembersCovered = (string) count($quote->members);
+
+            $emailData->isHealthAUH = $quote?->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI;
+            $emailData->emirateOfYourVisaId = $quote?->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
+        } elseif ($quoteTypeId == QuoteTypeId::Pet) {
+            $emailData->typeOfPet = $quote?->petQuote?->petType?->text.' - '.$quote?->gender; // Cat - Female
+            $emailData->breedOfPet = $quote?->petQuote?->breed_of_pet1 ?? ''; // Persian
+            $emailData->microchipNumber = $quote->petQuote->microchip_no ?? '';
         }
 
         if ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->lobType = BusinessQuoteType::where('id', $quote->business_type_of_insurance_id)->where('is_active', true)->first()->text;
-            if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+            if ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $emailData->isGroupMedical = true;
                 $templateId = getAppStorageValueByKey(ApplicationStorageEnums::GROUP_MEDICAL_SEND_POLICY_TEMPLATE);
             } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit)) {
                 $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CORPLINE_TRADE_SEND_POLICY_TEMPLATE);
-            } else {
+            } elseif ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::proIndemnity)) {
+                $emailData->corplineDetails = $quote?->brief_details ?? '';
+                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::PROFESSIONAL_SEND_POLICY_TEMPLATE);
+            } elseif ($quote?->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet)) {
+                $emailData->carDetails = $quote?->carMake?->text.' '.$quote?->carModel?->text.' '.$quote?->carModelDetail?->text;
                 $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CORPLINE_CAR_SEND_POLICY_TEMPLATE);
+            } else {
+                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::BUSINESS_SEND_POLICY_TEMPLATE);
             }
         } else {
-            $templateCode = strtoupper(QuoteTypeId::getOptions()[$quoteTypeId]).'_SEND_POLICY_TEMPLATE';
+            $templateCode = strtoupper($quoteType).'_SEND_POLICY_TEMPLATE';
+            if (
+                $quoteTypeId == QuoteTypeId::Car &&
+                (
+                    app(LeadAllocationService::class)->isCommercialVehicles($quote) ||
+                    $quote->vehicle_use == CarVehicleUse::COMMERCIAL
+                )
+            ) {
+                $emailData->companyName = $quote?->company_name ?? '-';
+                $templateCode = 'COMMERCIAL_'.$templateCode;
+            }
             $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
             $templateId = getAppStorageValueByKey(constant($constantName));
         }
@@ -1406,7 +1453,8 @@ class SendUpdateLogService
 
         if ($quoteTypeId == QuoteTypeId::Car) {
             if ($optionCode == SendUpdateLogStatusEnum::AOCOV) {
-                $emailData->policyNewExpiry = ! empty($sendUpdateLog->car_addons) ? implode(', ', $this->getCarAddons($sendUpdateLog->quote_uuid, $sendUpdateLog->car_addons)) : '';
+                // $emailData->policyNewExpiry = ! empty($sendUpdateLog->car_addons) ? implode(', ', $this->getCarAddons($sendUpdateLog->quote_uuid, $sendUpdateLog->car_addons)) : '';
+                $emailData->policyNewExpiry = '';
             } elseif (in_array($optionCode, [SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
                 $emailData->policyNewExpiry = $sendUpdateLog->emirates->text ?? '';
             } elseif (in_array($optionCode, [SendUpdateLogStatusEnum::CISC, SendUpdateLogStatusEnum::CISC_NFI])) {

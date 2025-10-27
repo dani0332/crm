@@ -5,7 +5,6 @@ namespace App\Services\EmailServices;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
@@ -23,7 +22,6 @@ use App\Services\HomeQuoteService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class HomeEmailService extends BaseService
@@ -122,10 +120,6 @@ class HomeEmailService extends BaseService
                 RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                 RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
 
-                // update lead status to quoted
-                $lead->quote_status_id = QuoteStatusEnum::Quoted;
-                $lead->save();
-
             } else {
                 LoggerService::error('Home Renewals OCB Email failed', extra: [
                     'email' => $lead->email,
@@ -222,6 +216,7 @@ class HomeEmailService extends BaseService
             'customerMobile' => $customerMobile,
             'triggerDate' => $triggerDate,
             'whatsappConsent' => $whatsappConsent,
+            'hasClaimedLosses' => $lead->has_claimed_losses ? 'Yes' : 'No',
         ];
 
         $tempUrlPDF = $this->attachHomeOCBPDFToEmail($lead->uuid, 64800);
@@ -365,5 +360,215 @@ class HomeEmailService extends BaseService
 
         // Return timestamp for the OCB date
         return (string) $ocbDate->timestamp;
+    }
+
+    /**
+     * Get current plan data by calling the API with plan details from PersonalQuote relation
+     */
+    private function getCurrentPlanData($personalQuote)
+    {
+        try {
+            LoggerService::info('getCurrentPlanData - Getting current plan data for quote: '.$personalQuote->uuid);
+
+            // Get plan_id from the PersonalQuote model
+            $planId = $personalQuote->plan_id;
+
+            if (! $planId) {
+                LoggerService::info('getCurrentPlanData - No plan_id found in PersonalQuote: '.$personalQuote->uuid);
+
+                return [];
+            }
+
+            // Get insurance provider name using the relation
+            $insuranceProviderCode = $personalQuote->insuranceProvider?->code ?? '';
+
+            if (! $insuranceProviderCode) {
+                LoggerService::info('getCurrentPlanData - No insurance provider found for quote: '.$personalQuote->uuid);
+
+                return [];
+            }
+
+            LoggerService::info('getCurrentPlanData - Found plan_id: '.$planId.' and provider: '.$insuranceProviderCode);
+
+            // Call your API here with the required parameters
+            $currentPlan = $this->callCurrentPlanApi($planId, $personalQuote->uuid, $insuranceProviderCode);
+
+            return [
+                'planId' => $planId,
+                'insuranceCompany' => $insuranceProviderCode,
+                'currentPlanData' => $currentPlan,
+            ];
+
+        } catch (\Exception $e) {
+            LoggerService::error('getCurrentPlanData - Error getting current plan data', exception: $e);
+
+            return [];
+        }
+    }
+
+    /**
+     * Call the KEN API to get current plan data using fetch-home-provider-plan endpoint
+     */
+    private function callCurrentPlanApi($planId, $quoteUuid, $insuranceProviderCode)
+    {
+        try {
+            LoggerService::info('callCurrentPlanApi - Calling KEN API with plan_id: '.$planId.', quote_uuid: '.$quoteUuid.', insuranceProvider: '.$insuranceProviderCode);
+
+            // Get KEN API configuration
+            $kenApiEndpoint = config('constants.KEN_API_ENDPOINT');
+            $kenApiToken = config('constants.KEN_API_TOKEN');
+            $kenApiTimeout = config('constants.KEN_API_TIMEOUT');
+            $kenApiUser = config('constants.KEN_API_USER');
+            $kenApiPassword = config('constants.KEN_API_PWD');
+
+            // Create basic auth header
+            $authBasic = base64_encode($kenApiUser.':'.$kenApiPassword);
+
+            // Build the full endpoint URL
+            $apiUrl = $kenApiEndpoint.'/fetch-home-provider-plan';
+
+            // Prepare request data
+            $requestData = [
+                'planId' => $planId,
+                'quoteUID' => $quoteUuid,
+                'providerCode' => $insuranceProviderCode,
+                'lang' => 'en',
+            ];
+
+            LoggerService::info('callCurrentPlanApi - Making request to: '.$apiUrl, $requestData);
+
+            $client = new \GuzzleHttp\Client;
+            $response = $client->post($apiUrl, [
+                'json' => $requestData,
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'x-api-token' => $kenApiToken,
+                    'Authorization' => 'Basic '.$authBasic,
+                ],
+                'timeout' => $kenApiTimeout,
+            ]);
+
+            $statusCode = $response->getStatusCode();
+
+            if ($statusCode === 200) {
+                $responseBody = $response->getBody()->getContents();
+                $responseData = json_decode($responseBody, true);
+
+                LoggerService::info('callCurrentPlanApi - API call successful', [
+                    'status_code' => $statusCode,
+                    'response_data' => $responseData,
+                ]);
+
+                return $responseData;
+            } else {
+                LoggerService::error('callCurrentPlanApi - API call failed with status: '.$statusCode);
+
+                return [];
+            }
+
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+            $responseBody = $response ? $response->getBody()->getContents() : '';
+            $statusCode = $response ? $response->getStatusCode() : 'unknown';
+
+            LoggerService::error('callCurrentPlanApi - Bad response from KEN API', [
+                'status_code' => $statusCode,
+                'response_body' => $responseBody,
+                'exception_message' => $e->getMessage(),
+            ]);
+
+            return [];
+        } catch (\Exception $e) {
+            LoggerService::error('callCurrentPlanApi - Error calling KEN API', [
+                'exception_message' => $e->getMessage(),
+                'exception_line' => $e->getLine(),
+                'exception_file' => $e->getFile(),
+            ]);
+
+            return [];
+        }
+    }
+
+    /**
+     * Build email data specifically for Home renewal follow-ups
+     * This ensures fresh premium data and renewal-specific information
+     */
+    public function buildRenewalEmailData($personalQuote, $advisor, $workflowType, $homeQuote)
+    {
+        LoggerService::info('buildRenewalEmailData - Building renewal-specific email data');
+
+        // Get current plan data from API using PersonalQuote relation
+        $currentPlanData = $this->getCurrentPlanData($personalQuote);
+
+        $data = [
+            // Base quote data
+            'id' => $personalQuote->id,
+            'quoteUID' => $personalQuote->uuid,
+            'quoteUUID' => $personalQuote->uuid,
+            'refID' => $personalQuote->code,
+            'uuid' => $personalQuote->uuid,
+            'customerEmail' => $personalQuote->email,
+            'customerFullName' => trim("{$personalQuote->first_name} {$personalQuote->last_name}"),
+            'customerName' => trim("{$personalQuote->first_name} {$personalQuote->last_name}"),
+            'customerMobile' => $personalQuote->mobile_no ?? '',
+            'isPolicyExpired' => $personalQuote->previous_policy_expiry_date ? Carbon::parse($personalQuote->previous_policy_expiry_date)->isPast() : false,
+
+            // Advisor-related data
+            'advisor' => $advisor ?? null,
+            'advisorId' => $advisor?->id,
+            'advisorName' => $advisor?->name ?? '',
+            'advisorEmail' => $advisor?->email ?? '',
+            'advisorLandLine' => $advisor?->landline_no ?? '',
+            'advisorMobilePhone' => $advisor?->mobile_no ?? '',
+            'advisorWhatsAppNumber' => $advisor?->mobile_no ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => $advisor?->mobile_no ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : '',
+
+            // Current plan data from API
+            'insuranceCompany' => $currentPlanData['currentPlanData']['providerName'] ?? '',
+            'planName' => $currentPlanData['currentPlanData']['name'] ?? '',
+            'planType' => $currentPlanData['currentPlanData']['planType'] ?? '',
+            'currentPlan' => $currentPlanData,
+
+            // Workflow-related data
+            'workflowType' => $workflowType,
+        ];
+
+        LoggerService::info('buildRenewalEmailData - Renewal email data built successfully with fresh premium data');
+
+        return (object) $data;
+    }
+
+    public function sendAutomatedHomeRenewalFollowup(PersonalQuote $personalQuote)
+    {
+        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_RENEWAL_AUTOMATED_FOLLOWUPS)->first();
+
+        LoggerService::info('| sendAutomatedHomeRenewalFollowup - Initiating process for Home renewal quote');
+
+        if ($workflowUrl && ! empty($workflowUrl->value)) {
+            // Fetch the advisor
+            $advisor = User::find($personalQuote->advisor_id);
+            if (! $advisor) {
+                LoggerService::info("sendAutomatedHomeRenewalFollowup - Advisor not found for renewal quote: {$personalQuote->uuid}");
+            }
+            // ✅ Use NEW renewal-specific data builder
+            $emailData = $this->buildRenewalEmailData(
+                $personalQuote,
+                $advisor,
+                WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS,
+                $personalQuote->homeQuote
+            );
+
+            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
+
+            if ($response && $response->status_code === 200) {
+                LoggerService::info("sendAutomatedHomeRenewalFollowup - Successfully triggered event for Home renewal quote: {$personalQuote->uuid}");
+                app(BirdService::class)->createQuoteWorkFlowDetails($personalQuote, $response, QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::HOME->id());
+            } else {
+                LoggerService::info("sendAutomatedHomeRenewalFollowup - Error triggering event having response status code: {$response?->status_code}");
+            }
+        } else {
+            LoggerService::info(self::class." - Automated Home Renewal Followup is not set workflow url not found for quote: {$personalQuote->uuid}");
+        }
     }
 }

@@ -83,10 +83,13 @@ const tableHeader = [
   { text: 'ECOMMERCE', value: 'is_ecommerce' },
   { text: 'TIER NAME', value: 'tier.name' },
   { text: 'VISIT COUNT', value: 'quote_view_count.visit_count' },
+  { text: 'INSURER', value: 'insurance_provider.text' },
   {
     text: 'FOLLOW UP DATE',
     value: 'car_quote_request_detail.next_followup_date_formatted',
   },
+  { text: 'API ISSUANCE STATUS', value: 'api_issuance_status_id' },
+  { text: 'INSURER API STATUS', value: 'insurer_api_status_id' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'UPDATED BY', value: 'updated_by' },
   { text: 'ADDITIONAL NOTES', value: 'additional_notes' },
@@ -256,6 +259,24 @@ const paymentStatusOptions = computed(() => {
   }
 });
 
+const issuanceStatuses = computed(() => {
+  return Object.entries(page.props.issuanceStatuses).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
+    };
+  });
+});
+
+const insurerApiStatus = computed(() => {
+  return Object.entries(page.props.insurerApiStatus).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
+    };
+  });
+});
+
 const filters = reactive({
   code: '',
   first_name: '',
@@ -295,6 +316,10 @@ const filters = reactive({
   vehicle_use: '',
   company_name: '',
   private_client: 'all',
+  authorize_date: '',
+  captured_date: '',
+  api_issuance_status_id: [],
+  insurer_api_status_id: [],
 });
 
 const teamUsers =
@@ -317,13 +342,21 @@ const quotesSelected = ref([]);
 const canExport = ref(false);
 const canExportLeadsAndPlan = ref(false);
 
+// PUA Export Modal state
+const puaExportModal = reactive({
+  show: false,
+  exportType: 'all',
+  payment_date: '',
+});
+
 watch(
   () => filters,
   () => {
     if (
       (filters.created_at_start && filters.created_at_end) ||
       filters.payment_due_date ||
-      filters.booking_date
+      filters.booking_date ||
+      filters.renewal_batch
     ) {
       canExport.value = true;
       // Export buttons will be visible when date filters are set
@@ -437,6 +470,8 @@ function setQueryStringFilters() {
     'teams',
     'payment_status_id',
     'page',
+    'api_issuance_status_id',
+    'insurer_api_status_id',
   ];
 
   // Group array parameters
@@ -735,6 +770,37 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
+
+const yesterday = computed(() => {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  return date;
+});
+
+const canExportPUA = computed(() => {
+  return puaExportModal.payment_date;
+});
+
+const onPUAExport = () => {
+  // Open the PUA export modal
+  puaExportModal.show = true;
+};
+
+const onConfirmPUAExport = () => {
+  // Use the single date for both authorize and capture date filters
+  const filtersForExport = {
+    authorize_date: useFormatDateToYMD(puaExportModal.payment_date),
+    captured_date: useFormatDateToYMD(puaExportModal.payment_date),
+  };
+
+  const data = objToUrl(filtersForExport);
+  const url = `/Car/pua-leads-export?${data}`;
+
+  puaExportModal.show = false; // Close modal
+
+  // Reuse the existing onExport function
+  onExport(url, true);
+};
 </script>
 
 <template>
@@ -1130,6 +1196,55 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           filterable
         />
+
+        <x-select
+          v-model="filters.api_issuance_status_id"
+          name="api_issuance_status_id"
+          placeholder="Search by API Issuance Status"
+          :options="issuanceStatuses"
+          class="w-full"
+          label="API Issuance Status"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.api_issuance_status_id = issuanceStatuses.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.api_issuance_status_id = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
+          v-model="filters.insurer_api_status_id"
+          name="insurer_api_status_id"
+          placeholder="Search by Insurer API Status"
+          :options="insurerApiStatus"
+          class="w-full"
+          label="Insurer API Status"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_api_status_id = insurerApiStatus.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.insurer_api_status_id = []"
+            />
+          </template>
+        </x-select>
+
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -1158,6 +1273,22 @@ const insurerAMLStatusOption = computed(() => {
           ]"
           class="w-full"
           :single="true"
+        />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
@@ -1230,8 +1361,8 @@ const insurerAMLStatusOption = computed(() => {
             >
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required
-                to export data.
+                Created dates, payment due date, booking date, or renewal batch
+                are required to export data.
               </span>
             </template>
           </x-tooltip>
@@ -1287,7 +1418,7 @@ const insurerAMLStatusOption = computed(() => {
             size="sm"
             color="emerald"
             :loading="exportLoader"
-            @click="onExport('/pua-leads-export', true)"
+            @click="onPUAExport"
             class="justify-self-start mr-3"
           >
             Export PUA Updates
@@ -1369,6 +1500,31 @@ const insurerAMLStatusOption = computed(() => {
           <x-tag size="sm" :color="is_gcc_standard ? 'success' : 'error'">
             {{ is_gcc_standard ? 'Yes' : 'No' }}
           </x-tag>
+        </div>
+      </template>
+      <template #item-api_issuance_status_id="{ api_issuance_status_id }">
+        <div class="text-center">
+          <x-tag
+            v-if="api_issuance_status_id"
+            size="sm"
+            :color="api_issuance_status_id == 1 ? 'success' : 'error'"
+          >
+            {{
+              issuanceStatuses.find(s => s.value == api_issuance_status_id)
+                ?.label
+            }}
+          </x-tag>
+          <span v-else>N/A</span>
+        </div>
+      </template>
+      <template #item-insurer_api_status_id="{ insurer_api_status_id }">
+        <div class="text-center">
+          {{
+            insurer_api_status_id
+              ? insurerApiStatus.find(s => s.value == insurer_api_status_id)
+                  ?.label
+              : 'N/A'
+          }}
         </div>
       </template>
       <template #item-is_modified="{ is_modified }">
@@ -1457,6 +1613,47 @@ const insurerAMLStatusOption = computed(() => {
           @click.prevent="onConfirmCreateLead"
         >
           Confirm
+        </x-button>
+      </template>
+    </x-modal>
+
+    <!-- PUA Export Modal -->
+    <x-modal
+      v-model="puaExportModal.show"
+      size="lg"
+      title="Export Car PUA Updates"
+      show-close
+      backdrop
+      persistent
+    >
+      <div class="grid grid-cols-1 gap-4">
+        <DatePicker
+          v-model="puaExportModal.payment_date"
+          label="Payment Date"
+          class="w-full"
+          :max-date="new Date()"
+        />
+      </div>
+
+      <template #secondary-action>
+        <x-button
+          ghost
+          tabindex="-1"
+          size="sm"
+          @click.prevent="puaExportModal.show = false"
+        >
+          Cancel
+        </x-button>
+      </template>
+      <template #primary-action>
+        <x-button
+          v-if="canExportPUA"
+          size="sm"
+          color="emerald"
+          :loading="exportLoader"
+          @click="onConfirmPUAExport"
+        >
+          Export Data
         </x-button>
       </template>
     </x-modal>

@@ -364,6 +364,7 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
         splitPaymentId: splitPaymentId,
         isInertia: true,
         new_payment_structure: true,
+        isPlanDetailEnabled: props.isPlanDetailEnabled,
       });
 
       if (response.data.success) {
@@ -1016,6 +1017,7 @@ const fetchInsurerAMLStatus = async () => {
         quoteRequestId: props.quoteRequest.id,
         quoteType: page.props.quoteTypeId,
         insurerAMLStatus: props.quoteRequest.insurer_aml_status,
+        insuranceProviderId: props.quoteRequest?.insurance_provider_id,
       },
     });
     NProgress.done();
@@ -1169,6 +1171,9 @@ watch(
                       :paymentMethodsForm="paymentMethodsFormReplicated"
                       :sendUpdateStatusEnum="sendUpdateStatusEnum"
                       :quoteType="quoteType"
+                      :isHealthAUHLead="
+                        page.props?.bookPolicyDetails?.isHealthAUHLead
+                      "
                       @view-payment="
                         (payment, splitId, splitNo, action) =>
                           editPaymentModal(payment, splitId, splitNo, action)
