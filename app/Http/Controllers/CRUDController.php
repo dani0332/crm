@@ -106,6 +106,7 @@ use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
 use App\Services\NotificationService;
+use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteJourneyService;
@@ -854,12 +855,15 @@ class CRUDController extends Controller
                 $previousQuote = $this->carQuoteService->getPreviousQuote($record->previous_quote_id);
                 $isAddionalFieldsEnabled = app(AMLService::class)->isAdditionalVehicleAndDriverDetailsEnabled($this->genericModel->modelType, $record?->insurance_provider_id, $record?->registration_type, true);
                 $lookups = $rtaConfigurationData = [];
+                $LIVAEnums ?? [];
+                
                 if ($isAddionalFieldsEnabled) {
                     $lookups = app(AMLService::class)->getAdditionaVehicleDriverLookups($this->genericModel->modelType, $record?->insurance_provider_id, $record?->source);
                     $lookups['issuance_place'] = LookupRepository::where('key', LookupsEnum::ISSUANCE_PLACE)->get()->toArray();
 
                     $record->vehicle_driver_detail = CarQuote::find($record->id)->vehicleDriverDetail;
                     $rtaConfigurationData = app(AMLService::class)->getRTATransactionConfigurations($this->genericModel->modelType);
+                    $LIVAEnums = app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum();
                 }
 
                 $isEpEcbPaymentPaid = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB, true);
@@ -965,6 +969,7 @@ class CRUDController extends Controller
                     'isAddionalFieldsEnabled',
                     'lookups',
                     'rtaConfigurationData',
+                    'LIVAEnums',
                 ]));
             }
 
