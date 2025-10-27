@@ -1268,15 +1268,6 @@ if (! function_exists('transformKeys')) {
     }
 }
 
-if (! function_exists('isValidDate')) {
-    function isValidDate($date): bool
-    {
-        return ! empty($date)
-            && $date != '0000-00-00 00:00:00'
-            && $date != '0000-00-00';
-    }
-}
-
 if (! function_exists('getAssignmentTypeText')) {
     function getAssignmentTypeText($assignmentType)
     {
