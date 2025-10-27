@@ -31,7 +31,17 @@ class NonApiInsurerVehicleColorSeeder extends Seeder
 
                 // To add all rows at once rather than in loop
                 DB::table('lookups')->insertUsing(
-                    ['quote_type_id', 'insurance_provider_id', 'key', 'code', 'text', 'parent_id', 'is_active', 'created_at', 'updated_at'],
+                    [
+                        'quote_type_id',
+                        'insurance_provider_id',
+                        'key',
+                        'code',
+                        'text',
+                        'parent_id',
+                        'is_active',
+                        'created_at',
+                        'updated_at',
+                    ],
                     DB::table('lookups')
                         ->selectRaw(
                             'quote_type_id, ? as insurance_provider_id, `key`, `code`, `text`, `parent_id`, `is_active`, NOW(), NOW()',
