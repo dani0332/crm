@@ -64,6 +64,23 @@ class CyberQuoteController extends Controller
         return redirect(route('cyber-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
 
+    public function edit($uuid)
+    {
+        $data = $this->cyberQuoteService->getFormOptions();
+        $quote = $this->cyberQuoteService->getOne($uuid);
+
+        return inertia('CyberQuote/Form', array_merge($data, [
+            'quote' => $quote,
+        ]));
+    }
+
+    public function update(CyberQuoteRequest $request, $uuid)
+    {
+        $this->cyberQuoteService->update($uuid, $request->validated());
+
+        return redirect(route('cyber-quotes-show', $uuid))->with('message', 'Quote is updated successfully.');
+    }
+
     public function show($uuid)
     {
         $data = $this->cyberQuoteService->getShowData($uuid);
