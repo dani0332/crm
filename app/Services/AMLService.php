@@ -2462,7 +2462,7 @@ class AMLService
             InsuranceProvidersEnum::NT,
             InsuranceProvidersEnum::AFNIC,
             InsuranceProvidersEnum::AWNI,
-            ])) {
+        ])) {
             return $this->getAMLLookups($insuranceProviderId, [
                 LookupsEnum::RTA_TRANSACTION_TYPE,
                 LookupsEnum::RTA_PLATE_CATEGORY,
