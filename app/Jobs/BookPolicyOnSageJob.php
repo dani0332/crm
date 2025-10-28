@@ -23,11 +23,11 @@ class BookPolicyOnSageJob implements ShouldQueue
 
     public $tries = 1;
     public $timeout = 80;
-    private $sageRequest;
+    public $sageRequest;
     public $quote;
-    private $request;
-    private $sageProcess;
-    private $lockPostfix;
+    public $request;
+    public $sageProcess;
+    public $lockPostfix;
 
     /**
      * Create a new job instance.

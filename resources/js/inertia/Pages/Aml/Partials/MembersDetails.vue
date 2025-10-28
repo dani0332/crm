@@ -19,6 +19,8 @@ const isLoading = ref(false);
 const memberFormEnableToggle = () => {
   isMemberFormEnabled.value = !isMemberFormEnabled.value;
   memberForm.reset();
+  memberForm.clearErrors();
+  isMemberEditEnabled.value = false;
 };
 const rules = {
   nameCheck: v => {
@@ -101,8 +103,8 @@ const memberForm = useForm({
   quote_id: page.props.quoteRequest.id,
   customer_id: page.props.quoteRequest.customer_id,
   id: null,
-  first_name: null,
-  last_name: null,
+  first_name: '',
+  last_name: '',
   dob: null,
   relation_code: null,
   nationality_id: null,
@@ -113,10 +115,60 @@ const memberForm = useForm({
   ...(props.isPayerDetails && {
     first_name: page.props.cardHolderName
       ? page.props.cardHolderName.card_holder_name
-      : null,
+      : '',
     is_third_party_payer: true,
   }),
 });
+
+// Computed property to determine whether to use full name or first name only
+const memberNameField = computed({
+  get() {
+    // Use full name for Travel quotes with Individual customer type
+    if (
+      props.customerType == page.props.customerTypeEnum.Individual &&
+      page.props.quoteTypeCodeEnum.Travel == page.props.quoteType.code
+    ) {
+      // Return concatenated first and last name
+      const firstName = memberForm.first_name || '';
+      const lastName = memberForm.last_name || '';
+      if (firstName && lastName) {
+        return `${firstName} ${lastName}`;
+      }
+      return firstName || lastName || '';
+    }
+    return memberForm.first_name || '';
+  },
+  set(value) {
+    // Use full name for Travel quotes with Individual customer type
+    if (
+      props.customerType == page.props.customerTypeEnum.Individual &&
+      page.props.quoteTypeCodeEnum.Travel == page.props.quoteType.code
+    ) {
+      // Split the value into first and last name
+      if (!value || value.trim() === '') {
+        memberForm.first_name = '';
+        memberForm.last_name = '';
+        return;
+      }
+
+      const trimmedValue = value.trim();
+      const spaceIndex = trimmedValue.indexOf(' ');
+
+      if (spaceIndex === -1) {
+        // No space found, entire value is first name
+        memberForm.first_name = trimmedValue;
+        memberForm.last_name = '';
+      } else {
+        // Split: first word is first_name, rest is last_name
+        memberForm.first_name = trimmedValue.substring(0, spaceIndex);
+        memberForm.last_name = trimmedValue.substring(spaceIndex + 1).trim();
+      }
+    } else {
+      memberForm.first_name = value || '';
+    }
+  },
+});
+
 const createOrUpdateMember = async (memberForm, isMemberEditEnabled) => {
   let sectionName = props.isPayerDetails
     ? 'Payer'
@@ -156,7 +208,9 @@ const createOrUpdateMember = async (memberForm, isMemberEditEnabled) => {
         position: 'top',
       });
       memberForm.reset();
+      memberForm.clearErrors();
       isMemberFormEnabled.value = false;
+      isMemberEditEnabled.value = false;
     }
   } catch (err) {
     notification.error({
@@ -179,10 +233,11 @@ function onEditMember(member) {
     props.customerType == page.props.customerTypeEnum.Individual &&
     !props.isPayerDetails
   ) {
-    (memberForm.last_name == page.props.quoteType.code) ==
-    page.props.quoteTypeCodeEnum.Health
-      ? member.last_name
-      : null;
+    memberForm.last_name =
+      page.props.quoteType.code == page.props.quoteTypeCodeEnum.Health ||
+      page.props.quoteType.code == page.props.quoteTypeCodeEnum.Travel
+        ? member.last_name
+        : '';
   }
   memberForm.dob = member.dob;
   memberForm.relation_code = member.relation_code;
@@ -233,13 +288,16 @@ const [AddMemberUBOPayerBtnTemplate, AddMemberUBOPayerBtnReuseTemplate] =
                 ? page.props.quoteTypeCodeEnum.Health ==
                   page.props.quoteType.code
                   ? 'Member First Name'
-                  : 'Member Name'
+                  : page.props.quoteTypeCodeEnum.Travel ==
+                      page.props.quoteType.code
+                    ? 'First & Last Name'
+                    : 'Member Name'
                 : 'Full Name'
           "
           required
         >
           <x-input
-            v-model="memberForm.first_name"
+            v-model="memberNameField"
             :placeholder="
               props.isPayerDetails
                 ? 'Payer Name'
@@ -247,7 +305,10 @@ const [AddMemberUBOPayerBtnTemplate, AddMemberUBOPayerBtnReuseTemplate] =
                   ? page.props.quoteTypeCodeEnum.Health ==
                     page.props.quoteType.code
                     ? 'Member First Name'
-                    : 'Member Name'
+                    : page.props.quoteTypeCodeEnum.Travel ==
+                        page.props.quoteType.code
+                      ? 'First & Last Name'
+                      : 'Member Name'
                   : 'Full Name'
             "
             class="w-full"

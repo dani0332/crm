@@ -75,7 +75,11 @@ const userForm = useForm({
   businessTypes: props?.userBusinessTypeIds ?? [],
   department_ids: props.department_ids?.length > 0 ? props.department_ids : [],
   // rm_category_id: props.user?.rm_category_id,
-  rm_category_id: props.user ? (props.user.rm_category_id === null ? -1 : props.user.rm_category_id) : null,
+  rm_category_id: props.user
+    ? props.user.rm_category_id === null
+      ? -1
+      : props.user.rm_category_id
+    : null,
 });
 
 const isAdvisor = computed(() => {
@@ -488,7 +492,9 @@ watch(
       <x-select
         label="RM CATEGORY"
         v-model="userForm.rm_category_id"
-        :options="props.rmCategories?.map(x => ({ value: x.id, label: x.text }))"
+        :options="
+          props.rmCategories?.map(x => ({ value: x.id, label: x.text }))
+        "
         :rules="[isRequired]"
         placeholder="Select RM Category"
         filterPlaceholder="Filter RM categories...."

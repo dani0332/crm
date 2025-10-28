@@ -371,7 +371,7 @@ onUnmounted(() => {
               v-else
               :href="storageUrl + (item.watermarked_doc_url || item.doc_url)"
               target="_blank"
-              class="text-primary-600"
+              class="text-primary-600 cursor-pointer"
             >
               {{ item.original_name }}
             </a>
