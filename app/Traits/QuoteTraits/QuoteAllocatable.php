@@ -10,6 +10,8 @@ use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\QuoteTag;
+use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -233,6 +235,41 @@ trait QuoteAllocatable
         return QuoteTag::where('quote_uuid', $this->uuid)
             ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
             ->where('quote_tags.quote_type_id', $quoteType->id())->exists();
+    }
+
+    public function isAIAdviserRequired(): bool
+    {
+        return (bool) $this->ai_advisor_required;
+    }
+
+    public function assignToAIAdvisor()
+    {
+        if ($this->isAIAdvisorAssigned()) {
+            return;
+        }
+
+        $aiAdvisor = User::getAiAdvisor();
+
+        if (! $aiAdvisor) {
+            LoggerService::warning('AI Advisor Not Found');
+
+            return;
+        }
+
+        $this->update([
+            'ai_advisor_assigned_at' => now(),
+            'advisor_id' => $aiAdvisor->id,
+        ]);
+    }
+
+    public function isAIAdvisorAssigned(): bool
+    {
+        return ! empty($this->advisor) && $this->advisor->isAi() && ! empty($this->ai_advisor_assigned_at);
+    }
+
+    public function isAIAdvisorEverAssigned(): bool
+    {
+        return ! empty($this->ai_advisor_assigned_at);
     }
 
     public function isReAssignment()
