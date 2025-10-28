@@ -10,6 +10,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Services\LookupService;
 use Illuminate\Support\Facades\Auth;
 
 class CyberQuoteService extends BaseQuoteService
@@ -213,6 +214,15 @@ class CyberQuoteService extends BaseQuoteService
         }
 
         return 'Failed to fetch quote plans.';
+    }
+
+    public function getFormOptions()
+    {
+        $lookUpData = app(LookupService::class)->getCyberQuoteLookUpData();
+
+        return [
+            'lookUpData' => $lookUpData,
+        ];
     }
 }
 

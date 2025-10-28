@@ -45,6 +45,13 @@ class CyberQuoteController extends Controller
         ]);
     }
 
+    public function create()
+    {
+        $data = $this->cyberQuoteService->getFormOptions();
+
+        return inertia('CyberQuote/Form', $data);
+    }
+
     public function show($uuid)
     {
         $data = $this->cyberQuoteService->getShowData($uuid);
