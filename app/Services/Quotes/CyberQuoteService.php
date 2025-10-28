@@ -10,6 +10,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Facades\Capi;
 use App\Services\LookupService;
 use Illuminate\Support\Facades\Auth;
 
@@ -223,6 +224,37 @@ class CyberQuoteService extends BaseQuoteService
         return [
             'lookUpData' => $lookUpData,
         ];
+    }
+
+    public function create(array $data)
+    {
+        $sourceName = config('constants.SOURCE_NAME');
+        $appUrl = config('constants.APP_URL');
+
+        $data = [
+            'firstName' => $data['first_name'],
+            'lastName' => $data['last_name'],
+            'email' => $data['email'],
+            'mobileNo' => $data['mobile_no'],
+            'dob' => $data['dob'],
+            'nationalityId' => (int) $data['nationality_id'],
+            'emirateOfRegistrationId' => (int) $data['emirate_of_registration_id'],
+            'quoteTypeId' => (int) $this->quoteType->id(),
+            'lang' => 'EN',
+            'device' => 'DESKTOP',
+            'source' => $sourceName,
+            'referenceUrl' => $appUrl,
+            'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
+        ];
+
+        // Make API request to save the savings quote
+        $response = Capi::request('/api/cyber/create', 'post', $data);
+
+        if (isset($response->quoteUID)) {
+            $this->selfAssign(QuoteTypes::CYBER, $response->quoteUID, true);
+        }
+
+        return $response;
     }
 }
 
