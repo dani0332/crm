@@ -2127,9 +2127,9 @@ const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
               >
                 <template #item-totalPrice="item">
                   <span class="copay-max">{{
-                    item.isManualPlan
-                      ? numberFormat(item.totalPrice)
-                      : numberFormat(item.actualPremium)
+                      (item.isApi && !item.instantPolicy)
+                      ? numberFormat(item.actualPremium)
+                      : numberFormat(item.totalPrice)
                   }}</span>
                 </template>
 
