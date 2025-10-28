@@ -907,8 +907,6 @@ class AMLService
 
         try {
             $insuredDetails = $insuredPersonDetails?->insured;
-            // $insuredKycDetails = $insuredDetails?->insuredKyc;
-
             $insurerScreeningPayload = [
                 'quoteUID' => $quoteDetails->uuid,
                 'quoteTypeId' => (int) $quoteTypeId,
@@ -917,7 +915,7 @@ class AMLService
                     'expiryDate' => ($request['id_expiry_date'] ?? $insuredPersonDetails?->customer?->emirates_id_expiry_date) ?? null,
                 ],
                 'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
-                'chassisNumber' => $request['chassis_number'] ?? '', // TODO: need to remove this.
+                'chassisNumber' => $request['chassis_number'] ?? '',
                 'gender' => $this->formatGender($insuredDetails?->gender),
                 'dateOfBirth' => $insuredDetails?->dob,
                 'getQuoteEmail' => $request['get_quote_email_gig'],
