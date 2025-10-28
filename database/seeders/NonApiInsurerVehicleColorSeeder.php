@@ -23,6 +23,7 @@ class NonApiInsurerVehicleColorSeeder extends Seeder
             InsuranceProvidersEnum::FID,
             InsuranceProvidersEnum::NT,
             InsuranceProvidersEnum::AFNIC,
+            InsuranceProvidersEnum::AWNI,
         ];
 
         // Source insurer is LIVA
