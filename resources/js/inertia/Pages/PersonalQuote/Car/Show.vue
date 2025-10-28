@@ -593,7 +593,11 @@ const assumptionsForm = useForm({
 
 const onUpdateAssumption = () => {
   // Check if customer has an active ECB transaction that requires confirmation
-  if (page.props.isEpEcbPaymentPaid && !modals.isConfirmed) {
+  if (
+    page.props.isEpEcbPaymentPaid &&
+    !modals.isConfirmed &&
+    assumptionsForm.is_modified == 1
+  ) {
     modals.confirmationMessage = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
     modals.showConfirmationModal = true;
     return;

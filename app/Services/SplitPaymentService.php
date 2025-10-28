@@ -1100,6 +1100,9 @@ class SplitPaymentService
     {
         $commission = $payment->commission_vat_applicable ?: $payment->commission_vat_not_applicable;
         $totalPriceVatApplicable = $payment->paymentSplits()->sum('price_vat_applicable');
+        if ($totalPriceVatApplicable == 0) {
+            $totalPriceVatApplicable = 1;
+        }
         LoggerService::info('fn: calculateCommissionSplit - Payment Code: '.$payment->code.' - Total Price Vat Applicable: '.$totalPriceVatApplicable);
 
         return roundNumber(($paymentSplit->price_vat_applicable / $totalPriceVatApplicable) * $commission);
