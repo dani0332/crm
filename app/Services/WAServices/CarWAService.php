@@ -35,9 +35,9 @@ class CarWAService extends BaseService
         $carMissingDocReminderWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_MISSING_DOC_REMINDER_WORKFLOW);
         if (! empty($carMissingDocReminderWorkflow)) {
             app(BirdService::class)->triggerWebHookRequest($carMissingDocReminderWorkflow, (object) $payload);
-            LoggerService::info('sendWhatsappNotificationToCustomer - Webhook request sent to: '.$carMissingDocReminderWorkflow.' with Ref-ID: '.$carQuote->uuid.' | Time:'.now());
+            LoggerService::info('sendWhatsappNotificationToCustomer - Webhook request sent to: '.$carMissingDocReminderWorkflow.' with Ref-ID: '.$carQuote->uuid);
         } else {
-            LoggerService::info('sendWhatsappNotificationToCustomer - Webhook URL not found in storage with Ref-ID:'.$carQuote->uuid.' | Time:'.now());
+            LoggerService::info('sendWhatsappNotificationToCustomer - Webhook URL not found in storage with Ref-ID:'.$carQuote->uuid);
         }
     }
 

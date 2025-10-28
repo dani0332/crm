@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Route;
 use App\Enums\PaymentStatusEnum;
 use App\Services\WAServices\CarWAService;
 use App\Enums\DocumentTypeCode;
+use App\Jobs\CarMissingDocReminderJob;
 
 class CarQuoteObserver
 {
@@ -168,27 +169,11 @@ class CarQuoteObserver
         }
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PaymentPending) {
 
-            if ($payment->payment_status_id === PaymentStatusEnum::AUTHORISED) {
-            // Check for missing or incomplete required documents: Emirates ID, Mulkiya, and Driving Licence
-            $requiredDocuments = [DocumentTypeCode::EMIRATES_ID, DocumentTypeCode::REGISTRATION_CARD_MULKIYA, DocumentTypeCode::DRIVING_LICENSE];
-            $leadDocuments = $lead->documents()
-            ->whereIn('document_type_code', $requiredDocuments)
-            ->get()
-            ->keyBy('document_type_code');
-     
-            $missingOrIncomplete = collect($requiredDocuments)->filter(function ($docType) use ($leadDocuments) {
-                // Document is missing or not marked as complete/verified
-                $doc = $leadDocuments->get($docType);
-                return !$doc || !$doc->is_complete;
-            });
-            // Only send reminder if at least one required document is missing or incomplete
-            if ($missingOrIncomplete->isNotEmpty()) {
-                app(CarWAService::class)->sendCarMissingDocReminder($lead);
+            if ($lead->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+                CarMissingDocReminderJob::dispatch($lead->uuid)->delay(now()->addSeconds(15));
+                LoggerService::info(self::class.' - dispatching CarMissingDocReminderJob', ['uuid' => $lead->uuid]);
             }
-            else {
-                LoggerService::info('CarQuoteObserver - all required documents are present and complete', ['uuid' => $lead->uuid]);
-            }
-            }
+          
         }
 
 
