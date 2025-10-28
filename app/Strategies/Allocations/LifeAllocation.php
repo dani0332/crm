@@ -52,6 +52,7 @@ class LifeAllocation extends BaseAllocation
         $vivian = 'vivian.sandel@insurancemarket.ae';
         $sourabh = 'sourabh.yadav@insurancemarket.ae';
         $nitin = 'nitin.goverdhan@insurancemarket.ae';
+        $dhamodharan = 'dhamodharan.pandiyan@insurancemarket.ae';
 
         $emails = [];
 
@@ -69,9 +70,9 @@ class LifeAllocation extends BaseAllocation
         } elseif ($amount >= 1000000 && $amount <= 2000000 && in_array($category, [self::CAT_A])) {
             $emails = [$vivian];
         } elseif ($amount <= 2000000 && in_array($category, [self::CAT_B])) {
-            $emails = [$gaurav, $sourabh, $nitin];
+            $emails = [$gaurav, $sourabh, $nitin, $dhamodharan];
         } elseif ($amount > 2000000 && in_array($category, [self::CAT_A, self::CAT_B])) {
-            $emails = [$santosh, $karuna, $christy, $katrina, $larry];
+            $emails = [$santosh, $karuna, $christy, $katrina, $larry, $dhamodharan];
         }
 
         return $emails;
