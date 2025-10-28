@@ -1993,8 +1993,22 @@ class SendEmailCustomerService extends BaseService
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
             'createdAt' => $lead->created_at,
-
         ];
+    }
+
+    public function sendCarIntroEmailWithAIAdvisor($quote)
+    {
+        $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
+        if (! empty($carIntroEmailWorkflowUrl)) {
+            $aiAdvisor = $quote->aiAdvisor;
+            $emailData = $this->buildEmailDataForBirdFlow($quote, $aiAdvisor, WorkflowTypeEnum::CAR_INTRO_EMAIL);
+            app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
+            LoggerService::info("sendCarIntroEmailWithAIAdvisor - Webhook request sent to: {$carIntroEmailWorkflowUrl} with Ref-ID: {$quote->uuid}");
+        } else {
+            LoggerService::info("sendCarIntroEmailWithAIAdvisor - Webhook URL not found in storage with Ref-ID: {$quote->uuid}");
+        }
+
+        return true;
     }
 
 }

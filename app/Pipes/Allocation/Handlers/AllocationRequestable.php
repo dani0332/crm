@@ -25,7 +25,7 @@ trait AllocationRequestable
         $this->set('advisor', $advisor);
     }
 
-    public function getAdvisor()
+    public function getAdvisor(): ?User
     {
         return $this->get('advisor');
     }
