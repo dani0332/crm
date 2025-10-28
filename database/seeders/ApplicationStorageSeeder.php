@@ -67,6 +67,8 @@ class ApplicationStorageSeeder extends Seeder
         $this->rtaPortalLink();
         $this->seedOCRCustomerJourneyFlag();
         $this->seedEpEcbConfigurations();
+        $this->seedUnavailableTimeThreshold();
+        $this->sendUpdateEmailBirdFlow();
     }
 
     private function livaCarAutomationSeed()
@@ -241,9 +243,6 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
-        $this->seedUnavailableTimeThreshold();
-        $this->sendUpdateEmailBirdFlow();
     }
 
     private function seedHomeAdvisors()
@@ -952,9 +951,9 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
-            ]
+            ]);
     }
-            
+
     private function seedEpEcbConfigurations()
     {
         ApplicationStorage::firstOrCreate(
