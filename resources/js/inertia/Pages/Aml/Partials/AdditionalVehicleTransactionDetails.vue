@@ -1373,6 +1373,7 @@ watch(
             "
             label="First Registration Date"
             :tooltip="`Date the vehicle was first registered with the traffic department`"
+            :teleport="false"
           />
 
           <!-- Policy Effective Date -->
@@ -1395,6 +1396,7 @@ watch(
             :readonly="fieldConfig.policy_effective_date?.readonly"
             label="Policy Effective Date"
             :tooltip="`Start date of the insurance policy coverage`"
+            :teleport="false"
           />
 
           <!-- Policy Expiry Date -->
@@ -1411,6 +1413,7 @@ watch(
             :readonly="fieldConfig.policy_expiry_date?.readonly"
             label="Policy Expiry Date"
             :tooltip="`Expiry date of the insurance policy coverage`"
+            :teleport="false"
           />
 
           <!-- Certificate Start Date -->
@@ -1433,6 +1436,7 @@ watch(
             :readonly="fieldConfig.certificate_start_date?.readonly"
             label="Certificate Start Date"
             :tooltip="`Start date for the insurance certificate validity period`"
+            :teleport="false"
           />
 
           <!-- Certificate End Date -->
@@ -1451,6 +1455,7 @@ watch(
             :readonly="fieldConfig.certificate_end_date?.readonly"
             label="Certificate End Date"
             :tooltip="`End date for the insurance certificate validity period`"
+            :teleport="false"
           />
 
           <!-- Annual Mileage Estimate -->
