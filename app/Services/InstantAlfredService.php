@@ -129,8 +129,7 @@ class InstantAlfredService extends BaseService
                         ->addSelect(['qb.name as quote_batch_id_text']);
                 })
                 ->when($this->needsRenewalBatchData($request), function ($query) {
-                    $query->leftJoin('renewal_batches as rb', 'rb.id', '=', 'pqr.renewal_batch_id')
-                        ->addSelect(['rb.name as renewal_batch_id_text']);
+                    $query->addSelect(['pqr.renewal_batch as renewal_batch_text']);
                 })
                 ->when($this->needsQuoteTypeSpecificJoins($quoteTypeId, $request), function ($query) use ($quoteTypeId) {
                     $this->addQuoteTypeSpecificJoins($query, $quoteTypeId);
@@ -160,7 +159,7 @@ class InstantAlfredService extends BaseService
         $complexFilters = [
             'transaction_type_id',
             'quote_batch_id',
-            'renewal_batch_id',
+            'renewal_batch',
             'quote_status_id',
             'payment_status_id',
             'sale_leads',
@@ -206,8 +205,14 @@ class InstantAlfredService extends BaseService
             $partialQuery->whereIn('pqr.quote_batch_id', $request->quote_batch_id);
         }
 
-        if (isset($request->renewal_batch_id) && ! empty($request->renewal_batch_id)) {
-            $partialQuery->whereIn('pqr.renewal_batch_id', $request->renewal_batch_id);
+        if (isset($request->renewal_batch) && ! empty($request->renewal_batch)) {
+            if (is_array($request->renewal_batch)) {
+                // For non-motor LOBs (dropdown with multiple selection)
+                $partialQuery->whereIn('pqr.renewal_batch', $request->renewal_batch);
+            } else {
+                // For Car (input field)
+                $partialQuery->where('pqr.renewal_batch', $request->renewal_batch);
+            }
         }
 
         if (isset($request->quote_status_id) && is_array($request->quote_status_id) && count($request->quote_status_id) > 0) {
@@ -433,7 +438,7 @@ class InstantAlfredService extends BaseService
                     $record['segment'] = $sqlData[$quoteId]->segment ?? 'N/A';
 
                     // Add renewal batch information
-                    $record['renewal_batch_id_text'] = $sqlData[$quoteId]->renewal_batch_id_text ?? 'N/A';
+                    $record['renewal_batch_text'] = $sqlData[$quoteId]->renewal_batch_text ?? 'N/A';
 
                     // Add lead_assignment_trigger and its text representation
                     $record['lead_assignment_trigger'] = $sqlData[$quoteId]->lead_assignment_trigger ?? null;
@@ -494,7 +499,7 @@ class InstantAlfredService extends BaseService
                 $record['lead_created_at'] = $sqlData[$quoteId]->lead_created_at ?? 'N/A';
 
                 // Add renewal batch information
-                $record['renewal_batch_id_text'] = $sqlData[$quoteId]->renewal_batch_id_text ?? 'N/A';
+                $record['renewal_batch_text'] = $sqlData[$quoteId]->renewal_batch_text ?? 'N/A';
 
                 // Add lead_assignment_trigger and its text representation
                 $record['lead_assignment_trigger'] = $sqlData[$quoteId]->lead_assignment_trigger ?? null;
@@ -739,7 +744,7 @@ class InstantAlfredService extends BaseService
      */
     private function needsRenewalBatchData($request): bool
     {
-        return ! empty($request->renewal_batch_id) || ! empty($request->report);
+        return ! empty($request->renewal_batch) || ! empty($request->report);
     }
 
     /**
