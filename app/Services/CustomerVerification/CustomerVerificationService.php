@@ -21,6 +21,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class CustomerVerificationService
 {
@@ -229,7 +230,7 @@ class CustomerVerificationService
             if ($yearsDifference < 1) {
                 $yearsDifference = (int) $driverLicenseIssueDate->diffInMonths(Carbon::now()).' months';
             } else {
-                $yearsDifference = "{$yearsDifference} years";
+                $yearsDifference = $yearsDifference.' '.Str::plural('year', $yearsDifference);
             }
 
             // Format date for display
@@ -317,6 +318,7 @@ class CustomerVerificationService
 
     private function verifyWithWebForm(string|int|null $ocrValue, string|int|null $webFormValue): bool
     {
+        // Convert to lower case for case insensitive comparison
         return strtolower((string) $ocrValue) !== strtolower((string) $webFormValue);
     }
 
@@ -325,8 +327,13 @@ class CustomerVerificationService
         $ocrLicenseHeldForData = explode(' ', $ocrLicenseHeldFor);  // 2 years or 4 months
         $webFormLicenseHeldForData = explode(' ', $webFormLicenseHeldFor); // 3 years or 0 to 6 months
 
-        // Check for years
+        // Check for years, if index 1 is years for both
         if ($ocrLicenseHeldForData[1] === $webFormLicenseHeldForData[1]) {
+            // Cover edge case (max year is 5)
+            if ((int) $ocrLicenseHeldForData[0] > 5) {
+                $ocrLicenseHeldForData[0] = '5';
+            }
+
             return $ocrLicenseHeldForData[0] !== $webFormLicenseHeldForData[0];
         }
 
