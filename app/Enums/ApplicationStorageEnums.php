@@ -127,6 +127,7 @@ final class ApplicationStorageEnums extends Enum
     public const SUKOON_TEMPLATE_TAX_INVOICE_BUYER = 'SUKOON_TEMPLATE_TAX_INVOICE_BUYER';
     public const LEAD_SOURCE_ECOMMERCE = 'LEAD_SOURCE_ECOMMERCE';
     public const FAKE_LEAD_DOMAINS = 'FAKE_LEAD_DOMAINS';
+    public const ENABLE_VOICE_AI_INTEGRATION = 'ENABLE_VOICE_AI_INTEGRATION';
 
     // Travel SIC 2.0
     public const SIC_TRAVEL_WORKFLOW_ENABLE = 'SIC_TRAVEL_WORKFLOW_ENABLE';
@@ -261,6 +262,7 @@ final class ApplicationStorageEnums extends Enum
     /* Cut Off Dates */
     public const HOME_CUT_OFF_DATE = 'HOME_CUT_OFF_DATE';
     public const LIFE_CUT_OFF_DATE = 'LIFE_CUT_OFF_DATE';
+    public const BIRD_AI_ADVISOR_OCB = 'BIRD_AI_ADVISOR_OCB';
     public const BIRD_AUTOMATION_WORKFLOW_URL = 'BIRD_AUTOMATION_WORKFLOW_URL';
     public const TRAVEL_ENQUIRIES_EMAIL = 'TRAVEL_ENQUIRIES_EMAIL';
 
