@@ -371,6 +371,7 @@ watch(
           :disabled="hasNotEditPermission"
           label="Driver DOB"
           :tooltip="'Date of birth of the driver'"
+          :teleport="false"
         />
 
         <x-select
@@ -415,6 +416,7 @@ watch(
           :disabled="hasNotEditPermission"
           label="License Issue Date"
           :tooltip="`Date of issuance of the current driver's license`"
+          :teleport="false"
         />
 
         <DatePicker
@@ -425,6 +427,7 @@ watch(
           :disabled="hasNotEditPermission"
           label="License Expiry Date"
           :tooltip="`Expiry date of the current driver's license`"
+          :teleport="false"
         />
 
         <!-- TODO: Required only if 'Driver same as Client?' is NO -->
