@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue';
 import { router, usePage, Head, Link } from '@inertiajs/vue3';
+const { copy, copied } = useClipboard();
 
 const props = defineProps({
   failedProcesses: Object,
@@ -43,27 +44,24 @@ const serverOptions = ref({
 
 // Table headers
 const tableHeader = computed(() => [
-  { text: 'Sage Process ID', value: 'id', width: 120, sortable: true },
-  { text: 'Quote Code', value: 'quote_code', width: 150, sortable: true },
-  { text: 'Quote Type', value: 'quote_type_name', width: 120, sortable: true },
-  { text: 'Quote Status', value: 'quote_status', width: 180, sortable: true },
-  {
-    text: 'Insurance Provider',
-    value: 'insurance_provider_name',
-    width: 180,
-    sortable: true,
-  },
-  { text: 'User', value: 'user_name', width: 150, sortable: true },
-  {
-    text: 'Sage Request Type',
-    value: 'sage_request_type',
-    width: 180,
-    sortable: true,
-  },
-  { text: 'Sage Status', value: 'sage_api_status', width: 120, sortable: true },
-  { text: 'Process Message', value: 'message', width: 250, sortable: false },
+  { text: 'Sage Pro. ID', value: 'id', width: 40, sortable: true },
+  { text: 'Quote Code', value: 'model.code', width: 150, sortable: true },
+  { text: 'Provider', value: 'insurance_provider.text', width: 180, sortable: true },
+  { text: 'Sage Proc. Status', value: 'status', width: 60, sortable: true },
+  { text: 'Sage API Response', value: 'model', width: 330, sortable: false },
   { text: 'Updated At', value: 'updated_at', width: 160, sortable: true },
 ]);
+
+
+const copyToClipboard = item => { 
+  console.log(item);
+  copy(item);
+  if (copied)
+    notification.success({
+      title: 'Copied to clipboard!',
+      position: 'top',
+    });
+};
 
 // Table data
 const tableData = computed(() => {
@@ -261,50 +259,31 @@ function onSort(column, sortType) {
       :table-height="600"
     >
       <!-- Quote Code Column -->
-      <template #item-quote_code="{ quote_code, quote_uuid, quote_type_id }">
-        <Link
-          v-if="quote_uuid && quote_type_id"
-          :href="getDetailPageRoute(quote_uuid, quote_type_id, null)"
-          class="text-primary-600 hover:text-primary-700 font-medium underline"
-        >
-          {{ quote_code || 'N/A' }}
-        </Link>
-        <span v-else>{{ quote_code || 'N/A' }}</span>
-      </template>
-
-      <!-- Quote Type Column -->
-      <template #item-quote_type_name="{ quote_type_name }">
-        <x-badge :color="quote_type_name ? 'primary' : 'gray'" size="sm">
-          {{ quote_type_name || 'N/A' }}
-        </x-badge>
-      </template>
-
-      <!-- Quote Status Column -->
-      <template #item-quote_status="{ quote_status }">
-        <x-badge color="danger" size="sm">
-          {{ quote_status || 'N/A' }}
-        </x-badge>
+      <template #item-quote_code="{ quote_code }"> 
+        <span>{{ quote_code || 'N/A' }}</span>
       </template>
 
       <!-- Sage Status Column -->
-      <template #item-sage_api_status="{ sage_api_status }">
-        <x-badge
-          :color="sage_api_status === 'fail' ? 'danger' : 'gray'"
-          size="sm"
-        >
-          {{ sage_api_status ? sage_api_status.toUpperCase() : 'N/A' }}
-        </x-badge>
+      <template #item-status="{ status }">
+        <span>{{ status ? status.toUpperCase() : 'N/A' }}</span>
       </template>
 
       <!-- Process Message Column -->
-      <template #item-message="{ message }">
-        <x-tooltip v-if="message && message.length > 50" placement="top">
-          <span>{{ truncate(message, 50) }}</span>
-          <template #tooltip>
-            <div class="max-w-md whitespace-pre-wrap">{{ message }}</div>
-          </template>
-        </x-tooltip>
-        <span v-else>{{ message || 'N/A' }}</span>
+      <template #item-model="{  model }"> 
+        <div v-if="model?.sage_api_logs[0]?.response">
+          {{ model?.sage_api_logs[0]?.response?.substr(0, 80) }}
+          <x-icon
+            @click.prevent="copyToClipboard(model?.sage_api_logs[0]?.response)"
+            icon="copy"
+            class="text-primary"
+            size="md"
+          />
+        </div>
+        <div v-else>
+          <span>{{ model?.sage_api_logs[0]?.response || 'N/A' }}</span>
+        </div>
+      
+       
       </template>
 
       <!-- Updated At Column -->

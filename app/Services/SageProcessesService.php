@@ -9,9 +9,11 @@ use App\Enums\SageEnum;
 use App\Models\EmbeddedTransaction;
 use App\Models\PaymentSplits;
 use App\Models\SageProcess;
+use App\Models\SendUpdateLog;
 use App\Services\Logger\LoggerService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Service class to handle failed sage processes and their related data
@@ -35,16 +37,68 @@ class SageProcessesService extends BaseService
         try {
             LoggerService::info(self::CLASS_NAME.' fn: '.__FUNCTION__.' - Start - Fetching failed sage processes');
 
-            $failedLeads = SageProcess::with('model.sageApiLogs')
+            /* // Get all distinct model types and categorize them
+            $modelTypes = SageProcess::whereNotIn('model_type', [PaymentSplits::class, EmbeddedTransaction::class])
+                ->where('status', SageEnum::SAGE_PROCESS_FAILED_STATUS)
+                ->distinct()
+                ->pluck('model_type')
+                ->filter();
+
+            // Categorize model types based on whether they have quote_status_id column
+            $modelsWithQuoteStatus = [];
+            $modelsWithoutQuoteStatus = [];
+            
+            foreach ($modelTypes as $modelType) {
+                if (class_exists($modelType)) {
+                    $modelInstance = new $modelType();
+                    $tableName = $modelInstance->getTable();
+                    
+                    if (Schema::hasColumn($tableName, 'quote_status_id')) {
+                        $modelsWithQuoteStatus[] = $modelType;
+                    } else {
+                        $modelsWithoutQuoteStatus[] = $modelType;
+                    }
+                }
+            } */
+
+            $query = SageProcess::with([
+                'model:id,code' => [
+                    'sageApiLogs' => function ($query) {
+                        $query->where('status', SageEnum::STATUS_FAIL);
+                    },
+                ],
+                'insuranceProvider:id,text'
+                ])
                 ->whereNotIn('model_type', [PaymentSplits::class, EmbeddedTransaction::class])
                 ->where('status', SageEnum::SAGE_PROCESS_FAILED_STATUS)
                 ->whereHas('model', function ($query) {
                     $query->whereHas('sageApiLogs', function ($subQuery) {
                         $subQuery->where('status', SageEnum::STATUS_FAIL);
                     });
-                    // $query->where('quote_status_id', QuoteStatusEnum::POLICY_BOOKING_FAILED);
-                })
-                ->simplePaginate(10);
+                });
+
+
+            /* // Add quote_status_id filter conditionally based on model type
+            if (!empty($modelsWithQuoteStatus) || !empty($modelsWithoutQuoteStatus)) {
+                $query->where(function ($q) use ($modelsWithQuoteStatus, $modelsWithoutQuoteStatus) {
+                    // For models with quote_status_id, check the status
+                    if (!empty($modelsWithQuoteStatus)) {
+                        $q->orWhere(function ($subQuery) use ($modelsWithQuoteStatus) {
+                            $subQuery->whereIn('model_type', $modelsWithQuoteStatus)
+                                ->whereHas('model', function ($modelQuery) {
+                                    $modelQuery->where('quote_status_id', QuoteStatusEnum::POLICY_BOOKING_FAILED);
+                                });
+                        });
+                    }
+                    
+                    // For models without quote_status_id, include them without status check
+                    if (!empty($modelsWithoutQuoteStatus)) {
+                        $q->orWhereIn('model_type', $modelsWithoutQuoteStatus);
+                    }
+                });
+            } */
+
+            $failedLeads = $query->simplePaginate(10);
 
             return $failedLeads;
         } catch (\Exception $e) {
