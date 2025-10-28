@@ -1452,7 +1452,6 @@ const copyLink = () => {
     />
     <PaymentTableNew
       v-if="isNewPaymentStructure"
-      :quoteType="quoteType"
       :payments="quote.payments"
       :paymentDocument="paymentDocument"
       :proformaPayment="
@@ -1473,6 +1472,7 @@ const copyLink = () => {
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :quoteType="'Cyber'"
     />
 
     <QuotePayments
