@@ -87,30 +87,6 @@ class SendUpdateLogRepository extends BaseRepository
                 LoggerService::info('Insurance Provider ID: '.$insuranceProviderId.' selected for Send Update (Legacy) - uuid: '.$uuid.' quote_uuid: '.$data['quote_uuid']);
             }
 
-            // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with
-            // subtype 'Midterm policy cancellation, then it will update the quote status to 'Cancellation Pending'.
-            if (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::MPC)) {
-                if (! checkPersonalQuotes($quoteType)) {
-                    $model = 'App\\Models\\'.$quoteType.'Quote';
-                    $personalQuote = $model::where('uuid', $data['quote_uuid'])->first();
-                }
-                $this->fetchUpdateQuoteStatusLog($data['quote_type_id'], $data['quote_uuid'], QuoteStatusEnum::CancellationPending);
-                $personalQuote->quote_status_id = QuoteStatusEnum::CancellationPending;
-                QuoteStatusLog::create([
-                    'quote_type_id' => $data['quote_type_id'],
-                    'quote_request_id' => $data['personal_quote_id'],
-                    'current_quote_status_id' => QuoteStatusEnum::CancellationPending,
-                ]);
-
-                LoggerService::info('Quote status changed', extra: [
-                    'code' => $code,
-                    'uuid' => $uuid,
-                    'current_quote_status_id' => QuoteStatusEnum::CancellationPending,
-                ]);
-
-                $personalQuote->save();
-            }
-
             $sendUpdate = $this->create(array_merge([
                 'personal_quote_id' => $data['personal_quote_id'],
                 'quote_uuid' => $data['quote_uuid'],
