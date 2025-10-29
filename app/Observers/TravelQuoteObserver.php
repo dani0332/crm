@@ -18,6 +18,7 @@ use App\Jobs\SendFailedPaymentEmailJob;
 use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\EmailServices\TravelEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -77,7 +78,7 @@ class TravelQuoteObserver
                 } else {
                     $oldAdvisorId = $changes['advisor_id']['old'];
                     TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
-                    // Automated follow-up is already dispatched from sendTravelOCBIntroEmail() method
+                    app(TravelEmailService::class)->handleAutomatedFollowup($travelQuote);
                 }
             } catch (Exception $e) {
                 Log::error('TravelQuoteObserver - travel quote advisor updated failed', [
