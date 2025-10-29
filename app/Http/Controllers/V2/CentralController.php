@@ -85,6 +85,7 @@ use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SLA\SLAService;
 use App\Services\SplitPaymentService;
+use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
@@ -375,6 +376,7 @@ class CentralController extends Controller
         }
 
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
+        app(TravelQuoteService::class)->updateCustomerProfileDetails($quoteType, $uuid);
 
         return response()->json(['plan' => $response]);
     }

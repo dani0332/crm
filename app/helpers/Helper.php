@@ -1135,7 +1135,9 @@ if (! function_exists('isValidDate')) {
     {
         return ! empty($date)
             && $date != '0000-00-00 00:00:00'
-            && $date != '0000-00-00';
+            && $date != '0000-00-00'
+            && strtolower($date) != 'nan'
+            && strtolower($date) != 'null';
     }
 }
 
@@ -1263,15 +1265,6 @@ if (! function_exists('transformKeys')) {
         }
 
         return $result;
-    }
-}
-
-if (! function_exists('isValidDate')) {
-    function isValidDate($date): bool
-    {
-        return ! empty($date)
-            && $date != '0000-00-00 00:00:00'
-            && $date != '0000-00-00';
     }
 }
 

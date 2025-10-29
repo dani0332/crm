@@ -16,6 +16,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmirateEnum;
+use App\Enums\EpEcbExcludeVehicleEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
@@ -53,6 +54,7 @@ use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
@@ -91,6 +93,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
+use App\Services\CustomerVerification\CustomerVerificationService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
 use App\Services\EmailServices\CarEmailService;
@@ -104,6 +107,7 @@ use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
 use App\Services\NotificationService;
+use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteJourneyService;
@@ -618,6 +622,8 @@ class CRUDController extends Controller
 
             $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
 
+            $isCustomerVerificationEnabled = getAppStorageValueByKey(ApplicationStorageEnums::CUSTOMER_VERIFICATION_ENABLED, useCache: true) == '1';
+
             $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
             if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
                 abort(403, 'Unauthorized action.');
@@ -755,6 +761,10 @@ class CRUDController extends Controller
                 $carMakeText = $record->car_make_id_text ?? '';
                 $carModelText = $record->car_model_id_text ?? '';
 
+                $customerVerificationData = $isCustomerVerificationEnabled
+                    ? app(CustomerVerificationService::class)->getVerificationData($record, QuoteTypes::CAR)
+                    : ['webForm' => [], 'customerVerified' => [], 'registrationCertificate' => [], 'vehicleDriverDetails' => []];
+
                 $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Car);
                 $record->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_id_text);
 
@@ -844,6 +854,17 @@ class CRUDController extends Controller
                 $apiIssuanceStatus = $record->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id) : null;
                 $insurerApiStatus = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
                 $previousQuote = $this->carQuoteService->getPreviousQuote($record->previous_quote_id);
+                $isAddionalFieldsEnabled = app(AMLService::class)->isAdditionalVehicleAndDriverDetailsEnabled($this->genericModel->modelType, $record?->insurance_provider_id, $record?->registration_type, true);
+                $lookups = $rtaConfigurationData = $LIVAEnums = [];
+
+                if ($isAddionalFieldsEnabled) {
+                    $lookups = app(AMLService::class)->getAdditionaVehicleDriverLookups($this->genericModel->modelType, $record?->insurance_provider_id, $record?->source);
+                    $lookups['issuance_place'] = LookupRepository::where('key', LookupsEnum::ISSUANCE_PLACE)->get()->toArray();
+
+                    $record->vehicle_driver_detail = CarQuote::find($record->id)->vehicleDriverDetail;
+                    $rtaConfigurationData = app(AMLService::class)->getRTATransactionConfigurations($this->genericModel->modelType);
+                    $LIVAEnums = app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum();
+                }
 
                 $isEpEcbPaymentPaid = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB, true);
 
@@ -877,6 +898,8 @@ class CRUDController extends Controller
                     'activities',
                     'advisors',
                     'isRenewalUser',
+                    'customerVerificationData',
+                    'isCustomerVerificationEnabled',
                     'isNewBusinessUser',
                     'emailStatuses',
                     'carPlanAddonsCodeEnum',
@@ -943,6 +966,10 @@ class CRUDController extends Controller
                     'apiIssuanceStatus',
                     'insurerApiStatus',
                     'previousQuote',
+                    'isAddionalFieldsEnabled',
+                    'lookups',
+                    'rtaConfigurationData',
+                    'LIVAEnums',
                 ]));
             }
 
@@ -1392,6 +1419,8 @@ class CRUDController extends Controller
                 'courierQuoteStatus' => $courierQuoteStatus,
                 'quoteStatusEnums' => QuoteStatusEnum::asArray(),
                 'isEpEcbPaymentPaid' => $isEpEcbPaymentPaid,
+                'ecbExcludedCarMakeCodes' => EpEcbExcludeVehicleEnum::CAR_MAKE_CODES,
+                'ecbExcludedCarModelCodes' => EpEcbExcludeVehicleEnum::CAR_MODEL_CODES,
             ]);
         }
 
@@ -1442,6 +1471,21 @@ class CRUDController extends Controller
                     ['car_quote_request_id' => $carQuoteRequest->id],
                     ['chassis_number' => $request->chassis_number]
                 );
+
+                // Add/update chassis number details
+                $carMake = CarMake::find($request->car_make_id);
+                $carModel = CarModel::find($request->car_model_id);
+                $carMakeAndModel = trim(($carMake ? $carMake->text : '').' '.($carModel ? $carModel->text : ''));
+
+                $data = [
+                    'chassis_number' => $request->chassis_number,
+                    'vehicle_make_model' => $carMakeAndModel,
+                    'cylinder' => $request->cylinder,
+                    'seating_capacity' => $request->seat_capacity,
+                    'vehicle_trim' => $request->trim,
+                ];
+
+                $this->carQuoteService->saveVehicleChassisDetails($carQuoteRequest->uuid, $data);
             }
         }
 

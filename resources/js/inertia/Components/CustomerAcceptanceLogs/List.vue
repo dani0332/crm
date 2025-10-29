@@ -58,7 +58,6 @@ const tableItems = computed(() => {
 
 const handleDownloadDocument = async doc => {
   try {
-    debugger;
     downloadLoader.value = true;
 
     const fullUrl = doc.document_link;

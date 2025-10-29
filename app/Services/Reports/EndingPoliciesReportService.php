@@ -27,9 +27,9 @@ class EndingPoliciesReportService extends ManagementReport
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::EXPIRING_POLICIES;
 
         if ($request['policyExpiredDate'] && ! empty($request['policyExpiredDate']) && is_array($request['policyExpiredDate'])) {
-            $this->reportDateRange = (isset($request['policyExpiredDate'][0]) && $request['policyExpiredDate'][0] != null && $request['policyExpiredDate'][0] != 'null' ? Carbon::parse($request['policyExpiredDate'][0])->toDateString() : today()->toDateString())
+            $this->reportDateRange = (isset($request['policyExpiredDate'][0]) && isValidDate($request['policyExpiredDate'][0]) ? Carbon::parse($request['policyExpiredDate'][0])->toDateString() : today()->toDateString())
                 .' - '.
-                (isset($request['policyExpiredDate'][1]) && $request['policyExpiredDate'][1] != null && $request['policyExpiredDate'][1] != 'null' ? Carbon::parse($request['policyExpiredDate'][1])->toDateString() : today()->toDateString());
+                (isset($request['policyExpiredDate'][1]) && isValidDate($request['policyExpiredDate'][1]) ? Carbon::parse($request['policyExpiredDate'][1])->toDateString() : today()->toDateString());
         }
 
         $query = PersonalQuote::query()
