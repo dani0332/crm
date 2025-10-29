@@ -134,4 +134,18 @@ class DocumentTypeRepository extends BaseRepository
 
         return false;
     }
+
+
+    public function fetchAreSendPolicyDocsUploaded($quoteDocuments, $quoteType, $record)
+    {
+        $documentTypeCodes = $this->fetchSendPolicyDocumentCodes($quoteType, $record);
+        $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
+        $requiredDocuments = DocumentType::whereIn('code', $documentTypeCodes)->pluck('text')->toArray();
+
+        return [
+            'disabled' => $quoteDocumentsCount != count($documentTypeCodes),
+            'documentTypeCodes' => $documentTypeCodes,
+            'requiredDocuments' => $requiredDocuments
+        ];
+    }
 }
