@@ -250,6 +250,26 @@ class LookupService extends BaseService
             ->get(['id', 'code', 'text']);
     }
 
+    public function getVehicleColors($quoteTypeId, $providerId)
+    {
+        return Lookup::where('key', LookupsEnum::VEHICLE_COLOR)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('insurance_provider_id', $providerId)
+            ->where('is_active', true)
+            ->select('id', 'code', 'text')
+            ->get();
+    }
+
+    public function getBankNames($quoteTypeId, $providerId)
+    {
+        return Lookup::where('key', LookupsEnum::BANK_NAME)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('insurance_provider_id', $providerId)
+            ->where('is_active', true)
+            ->select('id', 'code', 'text')
+            ->get();
+    }
+
     public function getCyberQuoteLookUpData()
     {
         return CacheManager::remember(CacheKeyEnum::CYBER_QUOTE_LOOKUPS, function () {

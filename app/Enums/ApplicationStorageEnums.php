@@ -278,6 +278,9 @@ final class ApplicationStorageEnums extends Enum
     public const PRODUCTION_APPROVAL_EMAIL = 'PRODUCTION_APPROVAL_EMAIL';
     public const APPROVAL_PRODUCTION_EMAIL = 'APPROVAL_PRODUCTION_EMAIL';
     public const BULK_POLICY_DOCUMENT_SEND_CODES = 'BULK_POLICY_DOCUMENT_SEND_CODES';
+
+    // Customer Verification Feature Toggle
+    public const CUSTOMER_VERIFICATION_ENABLED = 'CUSTOMER_VERIFICATION_ENABLED';
     public const ENABLE_AUTO_CAPTURE_EP_PAYMENTS = 'ENABLE_AUTO_CAPTURE_EP_PAYMENTS';
     public const AUTO_CAPTURE_EP_PAYMENTS_BOOKING_DAYS = 'AUTO_CAPTURE_EP_PAYMENTS_BOOKING_DAYS';
 
@@ -285,6 +288,9 @@ final class ApplicationStorageEnums extends Enum
     public const SLA_CALLBACK_HOURS = 'SLA_CALLBACK_HOURS';
     public const SLA_REMINDER_MINUTES = 'SLA_REMINDER_MINUTES';
     public const RTA_PORTAL_LINK = 'RTA_PORTAL_LINK';
+
+    /* OCR Customer Journey Flag */
+    public const OCR_CUSTOMER_JOURNEY_ENABLED = 'OCR_CUSTOMER_JOURNEY_ENABLED';
 
     /* EP ECB Policy Configuration */
     public const BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL = 'BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL';
