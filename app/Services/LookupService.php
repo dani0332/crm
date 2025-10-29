@@ -249,4 +249,11 @@ class LookupService extends BaseService
             ->orderBy('text')
             ->get(['id', 'code', 'text']);
     }
+
+    public function getCyberQuoteLookUpData()
+    {
+        return CacheManager::remember(CacheKeyEnum::CYBER_QUOTE_LOOKUPS, function () {
+            return Capi::request('/api/cyber/lookup', 'get');
+        });
+    }
 }

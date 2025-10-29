@@ -261,7 +261,7 @@ class ApiService
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
         $message = $responsePayload['message'];
         if ((isset($rest['advisorId']) && $rest['advisorId'] == 0) || (isset($rest['tierId']) && $rest['tierId'] == 0)) {
-            $message = (isset($rest['tierId']) && $rest['tierId'] == 0) ? 'Tier failed: '.$responsePayload['message'] : 'Allocation failed: '.$responsePayload['message'];
+            $message = (isset($rest['tierId']) && $rest['tierId'] == 0) ? 'Tier failed: '.$responsePayload['message'] : $responsePayload['message'];
         }
 
         return [
@@ -269,6 +269,11 @@ class ApiService
                 'tierId' => $responsePayload['tierId'] ?? 0,
                 'tierName' => $responsePayload['tierName'] ?? null,
                 'assignedAdvisorId' => $responsePayload['advisorId'] ?? 0,
+                'isAIAdvisor' => $responsePayload['isAIAdvisor'] ?? false,
+                'advisorName' => $responsePayload['advisorName'] ?? null,
+                'advisorEmail' => $responsePayload['advisorEmail'] ?? null,
+                'advisorPhone' => $responsePayload['advisorPhone'] ?? null,
+                'advisorLandLine' => $responsePayload['advisorLandLine'] ?? null,
                 'status' => $status,
             ],
             'message' => $message,

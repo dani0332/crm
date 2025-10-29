@@ -5,6 +5,7 @@ import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const props = defineProps({
   quote: Object,
@@ -21,6 +22,7 @@ const props = defineProps({
   teams: Object,
   quoteDocuments: Object,
   documentTypes: Object,
+  cdnPath: String,
   documentType: Object,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
@@ -39,6 +41,7 @@ const props = defineProps({
   quoteRequest: Object,
   can: Object,
   paymentMethods: Object,
+  storageUrl: String,
   sendPolicy: Boolean,
   insuranceProviders: Array,
   planTypes: Array,
@@ -527,12 +530,6 @@ function onEditMember(data) {
   modals.member = true;
 
   updateMemberForm(data);
-
-  // set initialEditCategoryId to member_category_id when any member is edited
-  initialEditCategoryId.value = data.member_category_id;
-
-  // set previouslySelectedCategoryId for the refernece of initialEditCategoryId
-  previouslySelectedCategoryId.value = initialEditCategoryId.value;
 }
 
 function updateMemberForm(data) {
@@ -549,6 +546,12 @@ function updateMemberForm(data) {
   memberForm.update_lead_against_member = data.index === 1;
   memberForm.pec = data.is_pec_marked ? 1 : 2;
   memberForm.is_principal = data.is_principal;
+
+  // set initialEditCategoryId to member_category_id when any member is edited
+  initialEditCategoryId.value = data.member_category_id;
+
+  // set previouslySelectedCategoryId for the refernece of initialEditCategoryId
+  previouslySelectedCategoryId.value = initialEditCategoryId.value;
 }
 
 const onAddMemberModal = () => {
@@ -1984,6 +1987,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           :notes="quoteNotes"
           :modelType="modelType"
           :quote="quote"
+          :cdn="cdnPath"
         />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
@@ -2197,66 +2201,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <div>
-                  <x-tooltip placement="bottom">
-                    <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                    >
-                      SUB SOURCE
-                    </label>
-                    <template #tooltip>{{
-                      quote?.sub_source_description || 'N/A'
-                    }}</template>
-                  </x-tooltip>
-                </div>
-                <div>
-                  {{
-                    quote?.sub_source?.text ||
-                    quote.sub_source_text ||
-                    quote.sub_source_id ||
-                    'N/A'
-                  }}
-                </div>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <div>
-                  <x-tooltip placement="bottom">
-                    <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                    >
-                      SUB SOURCE OPTION
-                    </label>
-                    <template #tooltip>{{
-                      quote?.sub_source_option_description || 'N/A'
-                    }}</template>
-                  </x-tooltip>
-                </div>
-                <div>
-                  {{
-                    quote?.sub_source_option?.text ||
-                    quote.sub_source_option_text ||
-                    quote.sub_source_options_id ||
-                    'N/A'
-                  }}
-                </div>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <div>
-                  <x-tooltip placement="bottom">
-                    <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                    >
-                      PRIMARY REF ID
-                    </label>
-                    <template #tooltip> ID of the original ECOM lead </template>
-                  </x-tooltip>
-                </div>
-                <div>{{ quote.primary_ref_id || 'N/A' }}</div>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -4049,6 +3993,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
+      :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
       :eCommercePriceWithLP="
         ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
@@ -4108,6 +4053,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
+      :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
@@ -4131,6 +4077,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :insuranceProviders="insuranceProviders"
       :expanded="sectionExpanded"
       :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy

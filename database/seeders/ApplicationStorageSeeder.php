@@ -61,6 +61,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedOcrSendUpdateLogFlag();
         $this->seedProductionApprovalEmails();
         $this->seedAutoCaptureEPPayments();
+        $this->seedEnableVoiceAIIntegration();
         $this->seedSla();
         $this->rtaPortalLink();
         $this->seedEpEcbConfigurations();
@@ -203,6 +204,16 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::HOME_RENEWAL_OCB],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/114f64e5-5a67-4110-bb66-7038f3f34c04/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_AI_ADVISOR_OCB],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/c66ef6c5-966c-43d4-a6d2-8402d53f79bf/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -891,7 +902,19 @@ class ApplicationStorageSeeder extends Seeder
             ]
         );
     }
+    private function seedEnableVoiceAIIntegration()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_VOICE_AI_INTEGRATION],
+            [
+                'value' => 0,
+                'created_at' => now(),
 
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+    }
     private function rtaPortalLink()
     {
         ApplicationStorage::firstOrCreate(
@@ -908,9 +931,27 @@ class ApplicationStorageSeeder extends Seeder
     private function seedEpEcbConfigurations()
     {
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_SUPPORT_USER],
+            ['key_name' => ApplicationStorageEnums::EP_FAILURE_EMAIL_TO],
             [
-                'value' => 'sandeep.sharma@insurancemarket.ae',
+                'value' => 'production.approval.team@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO],
+            [
+                'value' => 'instant@alfred.insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::EP_FAILURE_EMAIL_CC],
+            [
+                'value' => 'dt.system.notifications@insurancemarket.ae,sic.car.team@insurancemarket.ae,diya.lekhwani@myalfred.com,rucha.keluskar@myalfred.com,sandeep.sharma@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -920,15 +961,6 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC],
             [
                 'value' => 'diya.lekhwani@myalfred.com',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_BCC],
-            [
-                'value' => 'newleadpool@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

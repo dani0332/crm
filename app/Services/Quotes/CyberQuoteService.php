@@ -10,7 +10,11 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Facades\Capi;
+use App\Services\LookupService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class CyberQuoteService extends BaseQuoteService
 {
@@ -213,6 +217,63 @@ class CyberQuoteService extends BaseQuoteService
         }
 
         return 'Failed to fetch quote plans.';
+    }
+
+    public function getFormOptions()
+    {
+        $lookUpData = app(LookupService::class)->getCyberQuoteLookUpData();
+
+        return [
+            'lookUpData' => $lookUpData,
+        ];
+    }
+
+    public function create(array $data)
+    {
+        $sourceName = config('constants.SOURCE_NAME');
+        $appUrl = config('constants.APP_URL');
+
+        $data = [
+            'firstName' => $data['first_name'],
+            'lastName' => $data['last_name'],
+            'email' => $data['email'],
+            'mobileNo' => $data['mobile_no'],
+            'dob' => $data['dob'],
+            'nationalityId' => (int) $data['nationality_id'],
+            'emirateOfRegistrationId' => (int) $data['emirate_of_registration_id'],
+            'quoteTypeId' => (int) $this->quoteType->id(),
+            'lang' => 'EN',
+            'device' => 'DESKTOP',
+            'source' => $sourceName,
+            'referenceUrl' => $appUrl,
+            'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
+        ];
+
+        // Make API request to save the savings quote
+        $response = Capi::request('/api/cyber/create', 'post', $data);
+
+        if (isset($response->quoteUID)) {
+            $this->selfAssign(QuoteTypes::CYBER, $response->quoteUID, true);
+        }
+
+        return $response;
+    }
+
+    public function update(string $uuid, array $data)
+    {
+        return DB::transaction(function () use ($uuid, $data) {
+            $quote = $this->baseQuery()->where('uuid', $uuid)->firstOrFail();
+
+            $quoteData = Arr::only($data, [
+                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'emirate_of_registration_id',
+            ]);
+
+            $quoteData['updated_by_id'] = Auth::id();
+
+            $quote->update($quoteData);
+
+            return $quote;
+        });
     }
 }
 
