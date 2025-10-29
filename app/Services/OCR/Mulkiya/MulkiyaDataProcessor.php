@@ -56,7 +56,7 @@ class MulkiyaDataProcessor
 
             // Update CarQuote fields
             $carQuoteUpdated = false;
-            if (! empty($processedData['car_quote_fields'])) { 
+            if (! empty($processedData['car_quote_fields'])) {
                 LoggerService::info('Processing car quote fields');
                 $carQuoteUpdated = $this->updateCarQuote($this->quote, $processedData['car_quote_fields']);
             }
