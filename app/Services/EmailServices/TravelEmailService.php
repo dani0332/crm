@@ -286,11 +286,18 @@ class TravelEmailService extends BaseService
 
         if ($lead->advisor_id) {
             info(self::class." - Going to Send Intro Email for uuid: {$lead->uuid}");
-
-            // Dispatch automated travel follow-up (has built-in duplicate check)
-            $this->handleAutomatedFollowup($lead);
-
-            return $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email', QuoteTypes::TRAVEL);
+            
+            // Send intro email first
+            $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email', QuoteTypes::TRAVEL);
+            
+            // Then dispatch automated travel follow-up (has built-in duplicate check)
+            if (in_array($responseCode, [200, 201])) {
+                $this->handleAutomatedFollowup($lead);
+            } else {
+                LoggerService::info(self::class." - Intro email failed with code {$responseCode}, skipping automated followup for uuid: {$lead->uuid}");
+            }
+            
+            return $responseCode;
         }
 
         info(self::class." - sendNonAdvisorIntroEmail - Ref ID: {$lead->uuid} Time: ".now());
