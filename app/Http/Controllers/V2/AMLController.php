@@ -208,8 +208,10 @@ class AMLController extends Controller
      */
     public function show(AML $aml, $insuredId = null, $customerId = null)
     {
-        $amlResults = collect(json_decode($aml->results))->first() ?? [];
+        $amlScreeningData = json_decode($aml->results);
+        $amlResults = collect($amlScreeningData)->first() ?? (object) [];
         $manualStatusUpdateIM = collect($amlResults->ManualStatusUpdateIM ?? []);
+
         $aml->quote_type_text = $aml->quotetype->text;
         $quoteType = QuoteType::where('id', $aml->quote_type_id)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $aml->quote_request_id);
@@ -225,8 +227,8 @@ class AMLController extends Controller
             })->values();
         } else {
             $amlResults = [];
-            $aml->status = json_decode($aml->results)?->status ?? '';
-            $aml->message = json_decode($aml->results)?->message ?? '';
+            $aml->status = AMLStatusCode::getName($amlScreeningData?->status ?? AMLStatusCode::AMLScreeningFailed) ?? '';
+            $aml->message = $amlScreeningData?->message ?? '';
         }
 
         return inertia('Aml/Show', [
