@@ -195,10 +195,14 @@ class SageApiEmbeddedProductService
 
         $sageLogArray = $embeddedProductTransaction->sageApiLogs->keyBy('step')->toArray();
 
+        $tagName = QuoteTagEnums::EMBEDDED_PRODUCT_BOOKED_ON_SAGE;
+        if (! in_array($epShortCode, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
+            $tagName = QuoteTagEnums::EMBEDDED_PRODUCT_BOOKED_ON_SAGE.'_'.$epShortCode;
+        }
         $isEmbeddedProductBookedOnSage = QuoteTag::where([
             'quote_type_id' => $quoteTypeId,
             'quote_uuid' => $quote->uuid,
-            'name' => QuoteTagEnums::EMBEDDED_PRODUCT_BOOKED_ON_SAGE,
+            'name' => $tagName,
             'value' => 1,
         ])->first();
 

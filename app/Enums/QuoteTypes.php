@@ -445,4 +445,23 @@ enum QuoteTypes: string
         return $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
     }
 
+    public function modelClass(): string
+    {
+        return match ($this) {
+            self::CAR => CarQuote::class,
+            self::HOME => HomeQuote::class,
+            self::HEALTH => HealthQuote::class,
+            self::LIFE => LifeQuote::class,
+            self::BUSINESS, self::CORPLINE, self::GROUP_MEDICAL => BusinessQuote::class,
+            self::BIKE => BikeQuote::class,
+            self::YACHT => YachtQuote::class,
+            self::TRAVEL => TravelQuote::class,
+            self::PET => PetQuote::class,
+            self::CYCLE => CycleQuote::class,
+            self::JETSKI => JetskiQuote::class,
+            self::SAVINGS => SavingsQuote::class,
+            default => PersonalQuote::class,
+        };
+    }
+
 }
