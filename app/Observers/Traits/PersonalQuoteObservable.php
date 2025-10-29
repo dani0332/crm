@@ -108,6 +108,10 @@ trait PersonalQuoteObservable
             }
         }
 
+        if($personalQuote->isCyber()) {
+          
+        }
+
         $this->handleIntroEmails($personalQuote, $oldAdvisorId);
     }
 

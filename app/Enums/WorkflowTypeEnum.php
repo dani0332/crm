@@ -68,4 +68,5 @@ final class WorkflowTypeEnum extends Enum
     public const OE_ASSIGNMENT = 'oe_assignment';
     public const CAR_CQF_RENEWAL_FOLLOWUPS = 'car_cqf_renewal_followups';
     public const SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL = 'send_ep_ecb_policy_documents_email';
+    public const CYBER_OCB_INTRO_EMAIL = 'cyber_ocb_intro_email';
 }
