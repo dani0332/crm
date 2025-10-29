@@ -382,9 +382,9 @@ const onLoadAvailablePlansData = async () => {
           isDisabled: plan.isDisabled ?? false,
           coverageUpTo: plan.coverage ?? '-',
           quoteNumber: plan.insurerQuoteNo ?? '-',
-          priceWithoutVat: plan.actualPremium ?? '0',
+          priceWithoutVat: plan.discountPremium ?? '0',
           vat: plan.vat ?? '0',
-          priceWithVat: plan.discountPremium ?? '0',
+          priceWithVat: (parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)).toFixed(2),
         }));
       } else if (Array.isArray(res.data) && res.data.length > 0) {
         availablePlansTable.data = res.data.map(plan => ({
@@ -393,9 +393,9 @@ const onLoadAvailablePlansData = async () => {
           isDisabled: plan.isDisabled ?? false,
           coverageUpTo: plan.coverage ?? '-',
           quoteNumber: plan.insurerQuoteNo ?? '-',
-          priceWithoutVat: plan.actualPremium ?? '0',
+          priceWithoutVat: plan.discountPremium ?? '0',
           vat: plan.vat ?? '0',
-          priceWithVat: plan.discountPremium ?? '0',
+          priceWithVat: (parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)).toFixed(2),
         }));
       } else {
         availablePlansTable.data = [];
@@ -1200,13 +1200,25 @@ const copyLink = () => {
                 <span>{{ item.quoteNumber || '-' }}</span>
               </template>
               <template #item-priceWithoutVat="item">
-                <span>{{ item.priceWithoutVat || '0' }}</span>
+                <span>{{ 
+                  item.priceWithoutVat 
+                    ? parseFloat(item.priceWithoutVat).toFixed(2) 
+                    : '0.00' 
+                }}</span>
               </template>
               <template #item-vat="item">
-                <span>{{ item.vat || '0' }}</span>
+                <span>{{ 
+                  item.vat 
+                    ? parseFloat(item.vat).toFixed(2) 
+                    : '0.00' 
+                }}</span>
               </template>
               <template #item-priceWithVat="item">
-                <span>{{ item.priceWithVat || '0' }}</span>
+                <span>{{ 
+                  item.priceWithVat 
+                    ? parseFloat(item.priceWithVat).toFixed(2) 
+                    : '0.00' 
+                }}</span>
               </template>
               <template #item-action="item">
                 <div class="flex gap-3">
