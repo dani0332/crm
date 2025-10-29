@@ -38,7 +38,7 @@ const formatDate = date => {
   if (!date) return '';
 
   let dateObj;
-  
+
   // Check if date is in DD-MM-YYYY format
   if (typeof date === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(date)) {
     const [day, month, year] = date.split('-');
@@ -46,7 +46,7 @@ const formatDate = date => {
   } else {
     dateObj = new Date(date);
   }
-  
+
   // Validate the date
   if (isNaN(dateObj.getTime())) return '';
 
