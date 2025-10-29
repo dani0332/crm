@@ -14,12 +14,10 @@ use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
-use App\Jobs\SendAutomatedTravelFollowup;
 use App\Jobs\SendFailedPaymentEmailJob;
 use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
-use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -79,10 +77,8 @@ class TravelQuoteObserver
                 } else {
                     $oldAdvisorId = $changes['advisor_id']['old'];
                     TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
-                    $this->handleAutomatedFollowup($travelQuote);
+                    // Automated follow-up is already dispatched from sendTravelOCBIntroEmail() method
                 }
-
-                // Trigger automated follow-up when advisor is assigned
             } catch (Exception $e) {
                 Log::error('TravelQuoteObserver - travel quote advisor updated failed', [
                     'error' => $e->getMessage(),
@@ -167,29 +163,5 @@ class TravelQuoteObserver
         ];
 
         return (isset($dirty['quote_status_id']) && in_array($travelQuote->quote_status_id, $stopSICStatuses, true)) || (isset($dirty['payment_status_id']) && in_array($travelQuote->payment_status_id, $stopSICPaymentStatuses, true));
-    }
-
-    /**
-     * Handle automated follow-up when advisor is assigned
-     */
-    protected function handleAutomatedFollowup(TravelQuote $travelQuote): void
-    {
-        try {
-            // Check if automated follow-up is already executed to prevent duplicates
-            $isFollowupExecuted = app(BirdService::class)
-                ->isFollowupExecuted($travelQuote->uuid, QuoteTypes::TRAVEL->id(), QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->value);
-
-            if ($isFollowupExecuted) {
-                LoggerService::info(self::class." - TRAVEL_AUTOMATED_FOLLOWUPS - Followup already executed {$travelQuote->uuid}");
-                return;
-            }
-
-            // Dispatch automated travel follow-up job with a short delay
-            SendAutomatedTravelFollowup::dispatch($travelQuote->uuid)->delay(now()->addSeconds(10));
-            
-            LoggerService::info(self::class." - TRAVEL_AUTOMATED_FOLLOWUPS - Dispatched for travel quote: {$travelQuote->uuid}");
-        } catch (Exception $e) {
-            LoggerService::error(self::class." - Error dispatching automated travel follow-up", [], $e, ['ref_id' => $travelQuote->uuid]);
-        }
     }
 }

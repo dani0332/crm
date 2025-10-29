@@ -12,6 +12,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\DeleteTempOCBPDFFileJob;
+use App\Jobs\SendAutomatedTravelFollowup;
 use App\Jobs\SICFollowupEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\QuoteFlowDetails;
@@ -286,6 +287,9 @@ class TravelEmailService extends BaseService
         if ($lead->advisor_id) {
             info(self::class." - Going to Send Intro Email for uuid: {$lead->uuid}");
 
+            // Dispatch automated travel follow-up (has built-in duplicate check)
+            $this->handleAutomatedFollowup($lead);
+
             return $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email', QuoteTypes::TRAVEL);
         }
 
@@ -488,7 +492,32 @@ class TravelEmailService extends BaseService
             LoggerService::info(self::class." - Automated Travel Followup workflow url not found for quote: {$travelQuote->uuid}");
         }
     }
-      /**
+
+    /**
+     * Handle automated follow-up when advisor is assigned
+     */
+    public function handleAutomatedFollowup(TravelQuote $travelQuote): void
+    {
+        try {
+            // Check if automated follow-up is already executed to prevent duplicates
+            $isFollowupExecuted = app(BirdService::class)
+                ->isFollowupExecuted($travelQuote->uuid, QuoteTypes::TRAVEL->id(), QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->value);
+
+            if ($isFollowupExecuted) {
+                LoggerService::info(self::class." - TRAVEL_AUTOMATED_FOLLOWUPS - Followup already executed {$travelQuote->uuid}");
+                return;
+            }
+
+            // Dispatch automated travel follow-up job with a short delay
+            SendAutomatedTravelFollowup::dispatch($travelQuote->uuid)->delay(now()->addSeconds(10));
+            
+            LoggerService::info(self::class." - TRAVEL_AUTOMATED_FOLLOWUPS - Dispatched for travel quote: {$travelQuote->uuid}");
+        } catch (Exception $e) {
+            LoggerService::error(self::class." - Error dispatching automated travel follow-up", [], $e, ['ref_id' => $travelQuote->uuid]);
+        }
+    }
+
+    /**
      * Generate PDF and create temporary URL for Bird workflow
      * Uses already fetched plans data to avoid duplicate API calls
      */
