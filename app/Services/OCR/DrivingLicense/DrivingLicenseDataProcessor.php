@@ -9,6 +9,7 @@ use App\Models\Nationality;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use Exception;
+use Illuminate\Log\Logger;
 use Illuminate\Support\Facades\DB;
 
 class DrivingLicenseDataProcessor
@@ -79,6 +80,7 @@ class DrivingLicenseDataProcessor
                 }
             }
 
+            LoggerService::info('VehicleDriverDetail fields to update for quote: '.$quote->id.' is: '.json_encode($fieldsToUpdate));
             $vehicleDriverDetail = $quote->vehicleDriverDetail()->firstOrCreate(
                 ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
                 $fieldsToUpdate
