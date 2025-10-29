@@ -1389,9 +1389,9 @@ class CentralService extends BaseService
             $insuranceProvider = InsuranceProvider::find($insuranceProviderId);
         } else {
             $insuranceProvider = getInsuranceProvider($payment, $quoteType, $quote);
-            $insuranceProviderId = $insuranceProvider ? $insuranceProvider->id : null; 
+            $insuranceProviderId = $insuranceProvider ? $insuranceProvider->id : null;
         }
-        
+
         // Get broker commission details
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId, $quote, $sendUpdateLog);
 
