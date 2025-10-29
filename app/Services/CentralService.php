@@ -1681,7 +1681,7 @@ class CentralService extends BaseService
                 })->first()?->doc_url ?? '';
 
                 if (empty($emailData->policyCertificate)) {
-                    LoggerService::info("Policy Certificate not found.");
+                    LoggerService::info('Policy Certificate not found.');
                 } else {
                     $emailData->policyCertificate = $storageUrl.$emailData->policyCertificate;
                     $emailData->certificateExt = ! empty($emailData->policyCertificate) ? pathinfo($emailData->policyCertificate, PATHINFO_EXTENSION) : '';
@@ -1695,7 +1695,7 @@ class CentralService extends BaseService
                 })->first()?->doc_url ?? '';
 
                 if (empty($emailData->signedMedicalApplicationForm)) {
-                    LoggerService::info("Signed Medical Application Form not found.");
+                    LoggerService::info('Signed Medical Application Form not found.');
                 } else {
                     $emailData->signedMedicalApplicationForm = $storageUrl.$emailData->signedMedicalApplicationForm;
                     $emailData->medAppExt = ! empty($emailData->signedMedicalApplicationForm) ? pathinfo($emailData->signedMedicalApplicationForm, PATHINFO_EXTENSION) : '';
@@ -1715,7 +1715,7 @@ class CentralService extends BaseService
                 })->first()?->doc_url ?? '';
 
                 if (empty($emailData->eCard)) {
-                    LoggerService::info("E-Card not found.");
+                    LoggerService::info('E-Card not found.');
                 } else {
                     $emailData->eCard = $storageUrl.$emailData->eCard;
                     $emailData->eCardExt = ! empty($emailData->eCard) ? pathinfo($emailData->eCard, PATHINFO_EXTENSION) : '';
@@ -1732,7 +1732,7 @@ class CentralService extends BaseService
                 })->first()?->doc_url ?? '';
 
                 if (empty($emailData->networkList)) {
-                    LoggerService::info("Network List not found.");
+                    LoggerService::info('Network List not found.');
                 } else {
                     $emailData->networkList = $storageUrl.$emailData->networkList;
                     $emailData->networkListExt = ! empty($emailData->networkList) ? pathinfo($emailData->networkList, PATHINFO_EXTENSION) : '';
@@ -1745,7 +1745,7 @@ class CentralService extends BaseService
                 })->first()?->doc_url ?? '';
 
                 if (empty($emailData->applicationCopy)) {
-                    LoggerService::info("Application Copy not found.");
+                    LoggerService::info('Application Copy not found.');
                 } else {
                     $emailData->applicationCopy = $storageUrl.$emailData->applicationCopy;
                     $emailData->appCopyExt = ! empty($emailData->applicationCopy) ? pathinfo($emailData->applicationCopy, PATHINFO_EXTENSION) : '';
@@ -1761,7 +1761,7 @@ class CentralService extends BaseService
             })->first()?->doc_url ?? '';
 
             if (empty($emailData->policySchedule)) {
-                LoggerService::info("Policy Schedule not found.");
+                LoggerService::info('Policy Schedule not found.');
             } else {
                 $emailData->policySchedule = $storageUrl.$emailData->policySchedule;
                 $emailData->scheduleExt = ! empty($emailData->policySchedule) ? pathinfo($emailData->policySchedule, PATHINFO_EXTENSION) : '';
