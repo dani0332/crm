@@ -1055,7 +1055,6 @@ class SageApiService
         }
 
         $response['sageCustomerNumber'] = $sageCustomerNumberResponse['sageCustomerNumber'];
-
         $sageRequest->sage_customer_number = $sageCustomerNumberResponse['sageCustomerNumber'];
 
         $payLoadOptions = SagePayloadFactory::createPrepaymentReceiptPayload($sageRequest);
@@ -1084,7 +1083,13 @@ class SageApiService
 
             $isLiveApiCallStep3 = true;
             $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
-            $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+            
+            if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == SageEnum::STATUS_SUCCESS) {
+                $isLiveApiCallStep3 = false;
+                $readyToPostResponse = $sageLogArray[3]['response'];
+            } else {
+                $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+            }
 
             if ($readyToPostResponse !== '') {
                 $readyToPostArray = json_decode($readyToPostResponse, true);
@@ -1113,7 +1118,9 @@ class SageApiService
                         return $response;
                     }
                 } else {
-                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $paymentSplit, $quoteDetails, 3, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
+                    if ($isLiveApiCallStep3) {
+                        $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $paymentSplit, $quoteDetails, 3, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
+                    }
                 }
             } else {
                 if ($isLiveApiCallStep3) {

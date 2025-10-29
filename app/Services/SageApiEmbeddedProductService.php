@@ -308,10 +308,17 @@ class SageApiEmbeddedProductService
             if ($isLiveApiCallStep1) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
+            
             $currentStep = 2;
             $isLiveApiCallStep2 = true;
             $readyToPostReceiptAr = self::readyToPostARPaymentReceiptPayload($sageResponse['BatchNumber']);
-            $readyToPostResponse = $this->sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+            
+            if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == SageEnum::STATUS_SUCCESS) {
+                $isLiveApiCallStep2 = false;
+                $readyToPostResponse = $sageLogArray[2]['response'];
+            } else {
+                $readyToPostResponse = $this->sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+            }
 
             if ($readyToPostResponse !== '') {
                 $readyToPostArray = json_decode($readyToPostResponse, true);
@@ -340,7 +347,9 @@ class SageApiEmbeddedProductService
                         return $response;
                     }
                 } else {
-                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    if ($isLiveApiCallStep2) {
+                        $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    }
                 }
             } else {
                 if ($isLiveApiCallStep2) {
@@ -380,7 +389,6 @@ class SageApiEmbeddedProductService
                         $this->logSageApiCall($aRPostReceipts, $postedResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                     }
                 }
-
             }
 
             LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code.' SAGE API Payments: Successfully created receipt');
