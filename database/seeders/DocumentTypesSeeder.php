@@ -17,7 +17,7 @@ class DocumentTypesSeeder extends Seeder
      */
     public function run()
     {
-
+        $this->cyberDocumentTypes();
     }
 
     private function cyberDocumentTypes(){
