@@ -63,7 +63,35 @@ class CyberEmailService extends BaseService
             'customerMobile' => $lead->mobile_no ?? '',
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::CYBER, $lead->uuid),
             'workflowType' => $workflowType,
-            
+
         ];
     }
+
+    public function sendCyberAutomatedFollowups($lead)
+    {
+        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CYBER_AUTOMATED_FOLLOWUPS)->first();
+
+        LoggerService::info('| sendCyberAutomatedFollowups - Initiating process');
+
+        if ($workflowUrl && ! empty($workflowUrl->value)) {
+            // Fetch the advisor
+            $advisor = User::find($lead->advisor_id);
+        }
+
+        if (! $advisor) {
+            LoggerService::info('sendCyberAutomatedFollowups - Advisor not found');
+        }
+
+        $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::CYBER_AUTOMATED_FOLLOWUPS);
+
+        $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
+        
+        if ($response && $response->status_code === 200) {
+            LoggerService::info('sendCyberAutomatedFollowups - Successfully triggered event');
+        } else {
+            LoggerService::info("sendCyberAutomatedFollowups - Error triggering event having response status code: {$response?->status_code}");
+        }
+    }
+
+
 }

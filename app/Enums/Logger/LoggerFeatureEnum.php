@@ -45,4 +45,5 @@ enum LoggerFeatureEnum: string
     case SLA_TRACKING = 'sla-tracking';
     case MA_WELCOME_JOB = 'ma-welcome-job';
     case CYBER_OCB_INTRO_EMAIL = 'cyber-ocb-intro-email';
+    case CYBER_AUTOMATED_FOLLOWUPS = 'cyber-automated-followups';
 }
