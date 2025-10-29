@@ -775,6 +775,9 @@ const providerName = computed(() => {
   if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
     return props.quoteRequest.insurance_provider?.text || 'Not Available';
   }
+  if (props.quoteType == quoteTypeCodeEnum.Cyber) {
+    return props.quoteRequest.insurance_provider?.text || 'Not Available';
+  }
   const ecomQuoteType = [...props.quoteTypesToCheck, quoteTypeCodeEnum.Bike];
   if (props.sendUpdate) {
     let provider = props?.insuranceProviders?.find(
