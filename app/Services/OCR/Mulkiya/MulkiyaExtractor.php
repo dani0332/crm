@@ -176,7 +176,7 @@ class MulkiyaExtractor
         return [
             'vehicle_driver_detail_fields' => $this->getVehicleDriverDetailFields(),
             'car_quote_detail_fields' => $this->getCarQuoteDetailFields(),
-            'car_quote_fields' => $this->getCarQuoteFields(),
+            'car_quote_fields' => $this->getCarQuoteFields(), 
             'registration_certificate_fields' => $this->getRegistrationCertificateFields(),
         ];
     }
