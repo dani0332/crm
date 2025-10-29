@@ -308,11 +308,11 @@ class SageApiEmbeddedProductService
             if ($isLiveApiCallStep1) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
-            
+
             $currentStep = 2;
             $isLiveApiCallStep2 = true;
             $readyToPostReceiptAr = self::readyToPostARPaymentReceiptPayload($sageResponse['BatchNumber']);
-            
+
             if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep2 = false;
                 $readyToPostResponse = $sageLogArray[2]['response'];

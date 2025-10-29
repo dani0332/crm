@@ -1083,7 +1083,7 @@ class SageApiService
 
             $isLiveApiCallStep3 = true;
             $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
-            
+
             if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep3 = false;
                 $readyToPostResponse = $sageLogArray[3]['response'];
