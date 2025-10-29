@@ -1673,20 +1673,33 @@ class CentralService extends BaseService
             $quoteDocuments = collect($quoteDocuments);
 
             if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business])) {
-                $emailData->policyCertificate = $storageUrl.$quoteDocuments->filter(function ($document) {
-                    return in_array($document['document_type_code'], [DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL, DocumentTypeCode::PC_YTCH, DocumentTypeCode::COMP_PC]);
-                })->first()['doc_url'] ?? '';
+                $emailData->policyCertificate = $quoteDocuments->filter(function ($document) {
+                    return in_array($document['document_type_code'], [
+                        DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL,
+                        DocumentTypeCode::PC_YTCH, DocumentTypeCode::COMP_PC, DocumentTypeCode::IND_PC, DocumentTypeCode::COMP_POLIC, DocumentTypeCode::FIDEL_POC,
+                    ]);
+                })->first()?->doc_url ?? '';
 
-                $emailData->certificateExt = ! empty($emailData->policyCertificate) ? pathinfo($emailData->policyCertificate, PATHINFO_EXTENSION) : '';
+                if (empty($emailData->policyCertificate)) {
+                    LoggerService::info('Policy Certificate not found.');
+                } else {
+                    $emailData->policyCertificate = $storageUrl.$emailData->policyCertificate;
+                    $emailData->certificateExt = ! empty($emailData->policyCertificate) ? pathinfo($emailData->policyCertificate, PATHINFO_EXTENSION) : '';
+                }
             }
 
             // Signed Medical Application form
             if ($quoteTypeId == QuoteTypeId::Health) {
-                $emailData->signedMedicalApplicationForm = $storageUrl.$quoteDocuments->filter(function ($document) {
+                $emailData->signedMedicalApplicationForm = $quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::SMAF_HLTH;
-                })->first()['doc_url'] ?? '';
+                })->first()?->doc_url ?? '';
 
-                $emailData->medAppExt = ! empty($emailData->signedMedicalApplicationForm) ? pathinfo($emailData->signedMedicalApplicationForm, PATHINFO_EXTENSION) : '';
+                if (empty($emailData->signedMedicalApplicationForm)) {
+                    LoggerService::info('Signed Medical Application Form not found.');
+                } else {
+                    $emailData->signedMedicalApplicationForm = $storageUrl.$emailData->signedMedicalApplicationForm;
+                    $emailData->medAppExt = ! empty($emailData->signedMedicalApplicationForm) ? pathinfo($emailData->signedMedicalApplicationForm, PATHINFO_EXTENSION) : '';
+                }
             }
 
             // E-Card
@@ -1697,11 +1710,16 @@ class CentralService extends BaseService
                     $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)
                 )
             ) {
-                $emailData->eCard = $storageUrl.$quoteDocuments->filter(function ($document) {
+                $emailData->eCard = $quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [DocumentTypeCode::GH_EC, DocumentTypeCode::ECARD_HLTH]);
-                })->first()['doc_url'] ?? '';
+                })->first()?->doc_url ?? '';
 
-                $emailData->eCardExt = ! empty($emailData->eCard) ? pathinfo($emailData->eCard, PATHINFO_EXTENSION) : '';
+                if (empty($emailData->eCard)) {
+                    LoggerService::info('E-Card not found.');
+                } else {
+                    $emailData->eCard = $storageUrl.$emailData->eCard;
+                    $emailData->eCardExt = ! empty($emailData->eCard) ? pathinfo($emailData->eCard, PATHINFO_EXTENSION) : '';
+                }
             }
 
             // Network List
@@ -1709,26 +1727,45 @@ class CentralService extends BaseService
                 $quoteTypeId == QuoteTypeId::Business &&
                 $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)
             ) {
-                $emailData->networkList = $storageUrl.$quoteDocuments->filter(function ($document) {
+                $emailData->networkList = $quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::GH_NL;
-                })->first()['doc_url'] ?? '';
+                })->first()?->doc_url ?? '';
 
-                $emailData->networkListExt = ! empty($emailData->networkList) ? pathinfo($emailData->networkList, PATHINFO_EXTENSION) : '';
+                if (empty($emailData->networkList)) {
+                    LoggerService::info('Network List not found.');
+                } else {
+                    $emailData->networkList = $storageUrl.$emailData->networkList;
+                    $emailData->networkListExt = ! empty($emailData->networkList) ? pathinfo($emailData->networkList, PATHINFO_EXTENSION) : '';
+                }
             }
 
             if ($quoteTypeId == QuoteTypeId::Life) {
-                $emailData->applicationCopy = $storageUrl.$quoteDocuments->filter(function ($document) {
+                $emailData->applicationCopy = $quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::AC_LIFE;
-                })->first()['doc_url'] ?? '';
+                })->first()?->doc_url ?? '';
 
-                $emailData->appCopyExt = ! empty($emailData->applicationCopy) ? pathinfo($emailData->applicationCopy, PATHINFO_EXTENSION) : '';
+                if (empty($emailData->applicationCopy)) {
+                    LoggerService::info('Application Copy not found.');
+                } else {
+                    $emailData->applicationCopy = $storageUrl.$emailData->applicationCopy;
+                    $emailData->appCopyExt = ! empty($emailData->applicationCopy) ? pathinfo($emailData->applicationCopy, PATHINFO_EXTENSION) : '';
+                }
             }
 
-            $emailData->policySchedule = $storageUrl.$quoteDocuments->filter(function ($document) {
-                return in_array($document['document_type_code'], [DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS]);
-            })->first()['doc_url'] ?? '';
+            $emailData->policySchedule = $quoteDocuments->filter(function ($document) {
+                return in_array($document['document_type_code'], [
+                    DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS,
+                    DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY,
+                    DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS,
+                ]);
+            })->first()?->doc_url ?? '';
 
-            $emailData->scheduleExt = ! empty($emailData->policySchedule) ? pathinfo($emailData->policySchedule, PATHINFO_EXTENSION) : '';
+            if (empty($emailData->policySchedule)) {
+                LoggerService::info('Policy Schedule not found.');
+            } else {
+                $emailData->policySchedule = $storageUrl.$emailData->policySchedule;
+                $emailData->scheduleExt = ! empty($emailData->policySchedule) ? pathinfo($emailData->policySchedule, PATHINFO_EXTENSION) : '';
+            }
         }
 
         if ($quoteTypeId == QuoteTypeId::Business) {
