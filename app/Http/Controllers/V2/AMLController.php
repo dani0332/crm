@@ -223,6 +223,10 @@ class AMLController extends Controller
 
                 return $value->FalsePositive == false;
             })->values();
+        } else {
+            $amlResults = [];
+            $aml->status = json_decode($aml->results)?->status ?? '';
+            $aml->message = json_decode($aml->results)?->message ?? '';
         }
 
         return inertia('Aml/Show', [
