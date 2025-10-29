@@ -69,7 +69,7 @@ class DrivingLicenseDataProcessor
                 if ($nationalityId) {
                     LoggerService::info('Driver nationality ID for quote: '.$quote->id.' is: '.$nationalityId);
                     $fieldsToUpdate['nationality_id'] = $nationalityId;
-                    
+
                     // Remove the nationality string since we only want to store the ID
                     unset($fieldsToUpdate['nationality_string']);
                 } else {
