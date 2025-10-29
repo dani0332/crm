@@ -300,7 +300,7 @@ function fieldValidationsperson() {
 }
 
 onMounted(() => {
-  if (! amlResults.value.length && props.aml.status) {
+  if (!amlResults.value.length && props.aml.status) {
     notification.error({
       title: props.aml.status,
       message: props.aml.message,
