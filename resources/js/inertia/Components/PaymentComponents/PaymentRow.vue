@@ -121,7 +121,6 @@ const getCaptureOption = computed(() => {
 const getCaptureValidation = computed(() => {
   const payment = props.payment;
   if (shouldProcessUpdate()) {
-    const isTravelQuote = props.quoteType == quoteTypeCodeEnum.Travel;
     const isInsurerApiStatus = props.quoteRequest.insurer_api_status;
 
     if (payment.is_approved === 1) return false;
@@ -158,20 +157,23 @@ const shouldProcessUpdate = () => {
     props.quoteRequest.quote_status_id ===
     page.props.quoteStatusEnum.TransactionApproved;
   const isKycComplete = props.quoteRequest.kyc_decision === 'Complete';
-  const isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
+
+  const kycAmlBypassEligibleQuotes = [quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.Cyber];
+  const isKycAmlBypassEligibleQuote = kycAmlBypassEligibleQuotes.includes(props.quoteType);
+
   const shouldSendUpdate = props.sendUpdate;
   const isAmlOrTransactionApproved =
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
   let isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
-  if (isTravelQuote && !props.sendUpdate) {
+  if (isKycAmlBypassEligibleQuote && !props.sendUpdate) {
     isGIGProvider = payment.isGIGProvider;
   }
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
   let isAMlAndKycTravelComplete =
-    isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
+    isAmlAndKycComplete || isKycAmlBypassEligibleQuote || shouldSendUpdate;
   let enabledQuoteTypesForInsurer = [
     quoteTypeCodeEnum.Car,
     quoteTypeCodeEnum.Home,
@@ -197,7 +199,7 @@ const shouldProcessUpdate = () => {
         insurerAMLStatus ===
         page.props.amlStatusEnum.InsurerAMLScreeningCleared;
     }
-    if (isTravelQuote) {
+    if (isKycAmlBypassEligibleQuote) {
       isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
     } else {
       isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
