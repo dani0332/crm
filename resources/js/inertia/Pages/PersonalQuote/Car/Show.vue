@@ -1,9 +1,10 @@
 <script setup>
 import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import CustomerVerificationNotification from '@/inertia/Components/CustomerVerificationNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
-import { usePage } from '@inertiajs/vue3';
+import { usePage, router } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
@@ -11,6 +12,9 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerVerificationDetails from './Partials/CustomerVerificationDetails.vue';
+import AdditionalVehicleTransactionDetails from '../../Aml/Partials/AdditionalVehicleTransactionDetails.vue';
+import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 defineProps({
@@ -32,6 +36,8 @@ defineProps({
   lostReasons: Array,
   tiers: Array,
   carPlanFeaturesCodeEnum: Object,
+  customerVerificationData: Object,
+  isCustomerVerificationEnabled: [Boolean, Number],
   carPlanExclusionsCodeEnum: Object,
   carPlanAddonsCodeEnum: Object,
   modelType: String,
@@ -110,6 +116,8 @@ defineProps({
   borLogs: Array,
   apiIssuanceStatus: String,
   insurerApiStatus: String,
+  isAddionalFieldsEnabled: Boolean,
+  rtaConfigurationData: Object,
 });
 
 const page = usePage();
@@ -675,6 +683,8 @@ const modals = reactive({
   createPlan: false,
   sendConfirm: false,
   showEmailEventsModal: false,
+  additionalVehicleDriverDetails: false,
+  customerVerification: false,
   confirmationMessage: '',
   showConfirmationModal: false,
   isConfirmed: false,
@@ -1322,10 +1332,18 @@ onMounted(() => {
   }
   window.addEventListener('ocr-notification', handleOcrNotification);
   window.addEventListener('lead-status-updated', handleLeadStatusUpdated);
+  window.addEventListener(
+    'customer-verification-updated',
+    handleCustomerVerificationUpdated,
+  );
 });
 onUnmounted(() => {
   window.removeEventListener('ocr-notification', handleOcrNotification);
   window.removeEventListener('lead-status-updated', handleLeadStatusUpdated);
+  window.removeEventListener(
+    'customer-verification-updated',
+    handleCustomerVerificationUpdated,
+  );
 });
 //activities
 const emailEventsTable = [
@@ -1780,6 +1798,56 @@ function handleOcrNotification(event) {
   }
 }
 
+function handleCustomerVerificationUpdated(event) {
+  const { quoteUuid, verificationSuccess } = event.detail || {};
+  const currentRecord = usePage().props.record;
+
+  // Only process notifications for the current quote
+  if (!currentRecord || quoteUuid !== currentRecord.uuid) {
+    return;
+  }
+
+  // Reload quote data first, then show toast when UI is updated
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['quote'],
+    onSuccess: () => {
+      console.log('Customer verification data reloaded successfully', {
+        quoteUuid,
+        verificationSuccess,
+      });
+
+      // Show appropriate toast notification based on verification result
+      if (verificationSuccess) {
+        notification.success({
+          title: 'Document Details Verified',
+          text: 'Document data verified successfully!',
+          position: 'top',
+        });
+      } else {
+        notification.warning({
+          title: 'Verification Mismatch',
+          text: 'Document data could not be verified.',
+          position: 'top',
+        });
+      }
+    },
+    onError: error => {
+      console.error('Failed to reload customer verification data:', {
+        quoteUuid,
+        verificationSuccess,
+        error,
+      });
+
+      notification.error({
+        title: 'Update Failed',
+        text: 'Failed to refresh customer verification data',
+        position: 'top',
+      });
+    },
+  });
+}
 /**
  * Handle modal confirmation and trigger form submission
  */
@@ -1798,6 +1866,7 @@ const handleCancelConfirmationModal = () => {
 <template>
   <OcrNotification />
   <LeadStatusUpdatedNotification />
+  <CustomerVerificationNotification />
   <div>
     <Head title="Car Detail" />
     <StickyHeader>
@@ -2009,6 +2078,29 @@ const handleCancelConfirmationModal = () => {
         </template>
         <template #body>
           <x-divider class="my-4 mb-3" />
+          <div class="flex gap-2 mb-4 justify-end">
+            <!-- Dynamic Customer Verification Button -->
+            <x-button
+              v-if="
+                isCustomerVerificationEnabled &&
+                customerVerificationData?.buttonData?.shouldShow
+              "
+              size="sm"
+              :color="customerVerificationData.buttonData.color"
+              :class="customerVerificationData.buttonData.class"
+              @click.prevent="modals.customerVerification = true"
+            >
+              {{ customerVerificationData.buttonData.text }}
+            </x-button>
+            <x-button
+              v-if="isAddionalFieldsEnabled"
+              size="sm"
+              color="orange"
+              @click.prevent="modals.additionalVehicleDriverDetails = true"
+            >
+              Additional Vehicle / Driver Details
+            </x-button>
+          </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
@@ -2345,6 +2437,42 @@ const handleCancelConfirmationModal = () => {
         </template>
       </Collapsible>
     </div>
+
+    <x-modal
+      v-model="modals.additionalVehicleDriverDetails"
+      size="lg"
+      title="Additional Vehicle / Driver Details"
+      show-close
+      backdrop
+    >
+      <AdditionalVehicleTransactionDetails
+        :insurerPortalSyncData="insurerPortalSyncData"
+        :rta_transaction_types="rtaConfigurationData.rta_transaction_types"
+        :rta_field_configurations="
+          rtaConfigurationData.rta_field_configurations
+        "
+        :rta_validation_summaries="
+          rtaConfigurationData.rta_validation_summaries
+        "
+        :quote_type_id="$page.props.quoteTypeId"
+      />
+      <x-divider class="mb-4 mt-4" />
+      <AdditionalDriverDetails
+        :insurerPortalSyncData="insurerPortalSyncData"
+        :quote_type_id="$page.props.quoteTypeId"
+      />
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.additionalVehicleDriverDetails = false"
+          >
+            Close
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
 
     <x-modal
       v-model="modals.duplicate"
@@ -4499,4 +4627,11 @@ const handleCancelConfirmationModal = () => {
   />
 
   <lead-raw-data :modelType="'Car'"></lead-raw-data>
+
+  <CustomerVerificationDetails
+    v-if="isCustomerVerificationEnabled"
+    :quote="quote"
+    :modals="modals"
+    :customerVerificationData="customerVerificationData"
+  />
 </template>

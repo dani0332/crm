@@ -1196,7 +1196,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    public function getLIVALookups($quoteRequest)
+    public function getLIVALookups($leadSource)
     {
         $insuranceProviderId = InsuranceProvider::where('code', InsuranceProvidersEnum::RSA)->first()->id;
         $additionalLookups = app(AMLService::class)->getAMLLookups($insuranceProviderId, [
@@ -1208,7 +1208,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         ])->toArray();
         $additionalLookups['driving_experience'] = UAELicenseHeldFor::select('id', 'rsa_driving_experience', 'text')->get()->toArray();
 
-        if ($quoteRequest?->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+        if ($leadSource == LeadSourceEnum::RENEWAL_UPLOAD) {
             $rtaTransactionType = array_filter($additionalLookups['rta_transaction_type'], function ($item) {
                 return in_array($item['code'], app(LivaInsurancePayloadMapping::class)->renewalRtaTransactionType());
             });

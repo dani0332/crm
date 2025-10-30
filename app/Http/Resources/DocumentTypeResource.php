@@ -28,6 +28,7 @@ class DocumentTypeResource extends JsonResource
             'is_active' => $this->is_active,
             'send_to_customer' => $this->send_to_customer,
             'category' => $this->category,
+            'tool_tip' => $this->tool_tip,
         ];
     }
 }

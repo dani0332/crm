@@ -63,9 +63,7 @@ use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
-use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\QuoteDocumentService;
-use App\Services\RtaTransactionTypeService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -264,20 +262,11 @@ class AMLController extends Controller
         $isLIVA = $providerCode == InsuranceProvidersEnum::RSA;
         $isGIG = $providerCode == InsuranceProvidersEnum::AXA;
         $lookups = app(AMLService::class)->getAMLLookups();
-
-        if ($quoteType->code == quoteTypeCode::Car && ($isLIVA || $isGIG)) {
-            if ($isGIG) {
-                $additionalLookups = app(AMLService::class)->getAMLLookups($quoteRequest?->plan?->provider_id, [
-                    LookupsEnum::RTA_TRANSACTION_TYPE,
-                    LookupsEnum::RTA_PLATE_CATEGORY,
-                    LookupsEnum::VEHICLE_COLOR,
-                    LookupsEnum::BANK_NAME,
-                ]);
-
-                $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
-            } else {
-                $lookups = array_merge($lookups->toArray(), app(LivaInsuranceService::class)->getLIVALookups($quoteRequest));
-            }
+        $insuranceProvider = $quoteRequest?->plan?->insuranceProvider;
+        $isAddionalFieldsEnabled = app(AMLService::class)->isAdditionalVehicleAndDriverDetailsEnabled($quoteType?->code, $insuranceProvider?->code, $quoteRequest?->registration_type);
+        if ($isAddionalFieldsEnabled) {
+            $additionalLookups = app(AMLService::class)->getAdditionaVehicleDriverLookups($quoteType->code, $insuranceProvider?->id, $quoteRequest?->source);
+            $lookups = array_merge($lookups->toArray(), $additionalLookups);
         }
 
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);
@@ -303,33 +292,7 @@ class AMLController extends Controller
         }
 
         // Add RTA configuration data for Car quotes
-        $rtaConfigurationData = [];
-        if ($quoteType->code == quoteTypeCode::Car) {
-            $rtaService = app(RtaTransactionTypeService::class);
-
-            // Get all RTA transaction types with their configurations
-            $rtaTransactionTypes = [
-                'RTT01' => 'New Vehicle Registration',
-                'RTT03' => 'Change Vehicle Ownership',
-                'RTT04' => 'Vehicle Renewal',
-            ];
-
-            $rtaConfigurationData = [
-                'rta_transaction_types' => $rtaTransactionTypes,
-                'rta_field_configurations' => [],
-                'rta_validation_summaries' => [],
-            ];
-
-            // Pre-generate configurations for all RTA types and both GIG/Non-GIG scenarios
-            foreach (array_keys($rtaTransactionTypes) as $rtaType) {
-                foreach ([false, true] as $isGigRenewal) {
-                    $configKey = $rtaType.($isGigRenewal ? '_GIG' : '');
-
-                    $rtaConfigurationData['rta_field_configurations'][$configKey] = $rtaService->getFrontendFieldConfig($rtaType, $isGigRenewal);
-                    $rtaConfigurationData['rta_validation_summaries'][$configKey] = $rtaService->getValidationSummary($rtaType, $isGigRenewal);
-                }
-            }
-        }
+        $rtaConfigurationData = app(AMLService::class)->getRTATransactionConfigurations($quoteType->code);
 
         if ($isLIVA) {
             $gigInsurerDefaultEmail = GenericModelTypeEnum::LIVA_INSURER_SCREENIN_DEFAULT_EMAIL;
@@ -364,6 +327,7 @@ class AMLController extends Controller
             'isAnyEscalated' => $isAnyEscalated,
             'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType, $quoteRequest),
             'permissionsEnum' => PermissionsEnum::asArray(),
+            'isAddionalFieldsEnabled' => $isAddionalFieldsEnabled,
             'isPrivateCar' => $quoteRequest?->registration_type === CarRegistrationType::PERSONAL,
             'LIVAEnums' => app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
             'insurerName' => InsuranceProvidersEnum::getTextByCode($quoteRequest?->plan?->insuranceProvider?->code),
