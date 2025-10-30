@@ -60,11 +60,15 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedSendUpdateEmailTemplate();
         $this->seedOcrSendUpdateLogFlag();
         $this->seedProductionApprovalEmails();
+        $this->seedCustomerVerificationEnabled();
         $this->seedAutoCaptureEPPayments();
         $this->seedEnableVoiceAIIntegration();
         $this->seedSla();
         $this->rtaPortalLink();
+        $this->seedOCRCustomerJourneyFlag();
         $this->seedEpEcbConfigurations();
+        $this->seedUnavailableTimeThreshold();
+        $this->sendUpdateEmailBirdFlow();
     }
 
     private function livaCarAutomationSeed()
@@ -239,9 +243,6 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
-        $this->seedUnavailableTimeThreshold();
-        $this->sendUpdateEmailBirdFlow();
     }
 
     private function seedHomeAdvisors()
@@ -909,12 +910,25 @@ class ApplicationStorageSeeder extends Seeder
             [
                 'value' => 0,
                 'created_at' => now(),
-
                 'updated_at' => now(),
                 'is_active' => 1,
             ]
         );
     }
+
+    private function seedCustomerVerificationEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CUSTOMER_VERIFICATION_ENABLED],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function rtaPortalLink()
     {
         ApplicationStorage::firstOrCreate(
@@ -926,6 +940,18 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+    }
+
+    private function seedOCRCustomerJourneyFlag()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
     }
 
     private function seedEpEcbConfigurations()
