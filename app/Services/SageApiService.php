@@ -91,6 +91,9 @@ class SageApiService
             $this->logSageApiCall([
                 'endPoint' => SageEnum::END_POINT_AR_CUSTOMER,
                 'payload' => $sageCustomerFromDB ? [] : $payLoadOptions,
+                'customerNumber' => $sageCustomerNumber,
+                'sage_request_type' => SageEnum::SRT_GET_CUSTOMER,
+                'entry_type' => SageEnum::SCT_STRAIGHT,
             ], '', $logModal, $logModal, 1, $totalSteps, SageEnum::STATUS_SUCCESS, $authUserId);
         }
 
@@ -783,7 +786,9 @@ class SageApiService
 
         $this->createSageProcess($quote, $sageRequest, $request);
 
-        $this->updateAndLogQuoteStatus($quote, $sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $sageRequest->userId);
+        if ($quote->quote_status_id != QuoteStatusEnum::POLICY_BOOKING_QUEUED) {
+            $this->updateAndLogQuoteStatus($quote, $sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $sageRequest->userId);
+        }
 
         $this->scheduleSageProcesses($sageRequest->insurerID);
         LoggerService::info(self::class.' fn: '.__FUNCTION__.' - scheduleSageProcesses triggered for Insurer: '.$sageRequest->insurerID);
@@ -869,25 +874,29 @@ class SageApiService
             $paymentSplits = $payment->paymentSplits;
 
             // Create AR Commission and Premium Invoice
-            $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            $extraDetails = ['sage_request_type' => ($payment->frequency == PaymentFrequency::UPFRONT) ? SageEnum::SRT_CREATE_AR_PREM_COMM_INV : SageEnum::SRT_CREATE_AR_SPPAY_INV];
+            $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
             if (! $createARInvoicePremAndComm['status']) {
                 return $createARInvoicePremAndComm;
             }
 
             // Create AP Premium Invoice
-            $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            $extraDetails['sage_request_type'] = ($payment->frequency == PaymentFrequency::UPFRONT) ? SageEnum::SRT_CREATE_AP_PREM_INV : SageEnum::SRT_CREATE_AP_SPPAY_INV;
+            $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
             if (! $createAPInvoicePrem['status']) {
                 return $createAPInvoicePrem;
             }
 
             // Create AR Discount Invoice
-            $createARInvoiceDis = $this->createARInvoiceDis([$sageRequest, $quote, $sageLogArray]);
+            $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
+            $createARInvoiceDis = $this->createARInvoiceDis([$sageRequest, $quote, $sageLogArray, $extraDetails]);
             if (! $createARInvoiceDis['status']) {
                 return $createARInvoiceDis;
             }
 
             // Apply Prepayments for AR Invoice
-            $applyPaymentARInvoices = $this->applyPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_PAY_REC_ONE_INV;
+            $applyPaymentARInvoices = $this->applyPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
             if (! $applyPaymentARInvoices['status']) {
                 return $applyPaymentARInvoices;
             }
@@ -2154,7 +2163,7 @@ class SageApiService
     public function applyPaymentARInvoices($sageRequestDataArray)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $isTotalPriceZero = $payment->total_price == 0;
 
         /* Start: Temporary code for historic data to allow book policy after m2 launch */
@@ -2168,7 +2177,7 @@ class SageApiService
         $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
 
         if ($isTransactionPaidAndFrequencyUpfront && ! $isTotalPriceZero) {
-            return $this->applyUpfrontPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            return $this->applyUpfrontPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
         } elseif ($isTotalPriceZero) {
             LoggerService::info('########## applyUpfrontPaymentARInvoices skipped  for : '.$quote->code.' due to zero price ########## ');
         }
@@ -2176,13 +2185,13 @@ class SageApiService
         $isFrequencySplitAndFirstChildPaymentPaid = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
 
         if ($isFrequencySplitAndFirstChildPaymentPaid) {
-            return $this->applySplitPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            return $this->applySplitPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
         }
 
         $isFrequencyUpfrontOrSplit = in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
         $isFirstPaymentPaidOrCaptured = in_array($paymentSplits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
         if (! $isFrequencyUpfrontOrSplit && $isFirstPaymentPaidOrCaptured) {
-            return $this->applyNonSplitNonUpfrontPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            return $this->applyNonSplitNonUpfrontPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
         }
 
         $returnMessage['status'] = true;
@@ -2194,13 +2203,15 @@ class SageApiService
 
     private function applyUpfrontPaymentARInvoices($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         LoggerService::info('########## Start applyPaymentARInvoices for : '.$quote->code.' ##########');
         $totalSteps = 15;
         // 13
         $currentStep = 13;
         $isLiveApiCallStep13 = true;
+        $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
+
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             LoggerService::info('SAGE API : createPaymentReceiptOneInvoice  Sent Already for '.$quote->code);
             $isLiveApiCallStep13 = false;
@@ -2229,7 +2240,7 @@ class SageApiService
         // 14
         $currentStep = 14;
         $isLiveApiCallStep14 = true;
-        $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($batchNumber);
+        $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr(batchNumber: $batchNumber, type: $sageEntryType, extras: $extraDetails);
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             LoggerService::info('SAGE API :  readyToPostReceiptAr  Sent Already for '.$quote->code);
             $isLiveApiCallStep14 = false;
@@ -2254,7 +2265,7 @@ class SageApiService
         // 15
         $currentStep = 15;
         $isLiveApiCallStep15 = true;
-        $aRPostReceipts = SagePayloadFactory::aRPostReceipts($batchNumber);
+        $aRPostReceipts = SagePayloadFactory::aRPostReceipts(batchNumber: $batchNumber, type: $sageEntryType, extras: $extraDetails);
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             LoggerService::info('SAGE API :  aRPostReceipts  Sent Already for '.$quote->code);
             $isLiveApiCallStep15 = false;
@@ -2307,7 +2318,7 @@ class SageApiService
 
     private function applySplitPaymentARInvoices($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
 
         LoggerService::info('########## Start arSplitPrepaymentPayload for : '.$quote->code.' ##########');
@@ -2316,6 +2327,7 @@ class SageApiService
         // 12
         $currentStep = 13;
         $isLiveApiCallStep13 = true;
+        
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             LoggerService::info('SAGE API :  arSplitPrepaymentPayload  Sent Already for '.$quote->code);
             $isLiveApiCallStep13 = false;
@@ -2369,7 +2381,7 @@ class SageApiService
         // 15
         $currentStep = 15;
         $isLiveApiCallStep15 = true;
-        $aRPostReceipts = SagePayloadFactory::aRPostReceipts($batchNumber);
+        $aRPostReceipts = SagePayloadFactory::aRPostReceipts(batchNumber: $batchNumber, extras: $extraDetails);
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             LoggerService::info('SAGE API : aRPostReceipts  Sent Already for '.$quote->code);
             $isLiveApiCallStep15 = false;
@@ -2425,7 +2437,7 @@ class SageApiService
 
     private function applyNonSplitNonUpfrontPaymentARInvoices($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
 
         LoggerService::info('########## Start arSplitPrepaymentPayload for : '.$quote->code.' ##########');
@@ -2434,6 +2446,7 @@ class SageApiService
         // 15
         $currentStep = 16;
         $isLiveApiCallStep16 = true;
+
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             LoggerService::info('SAGE API : arSplitPrepaymentPayload  Sent Already for '.$quote->code);
             $isLiveApiCallStep16 = false;
@@ -2460,7 +2473,7 @@ class SageApiService
         // 16
         $currentStep = 17;
         $isLiveApiCallStep17 = true;
-        $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($batchNumber);
+        $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr(batchNumber: $batchNumber, extras: $extraDetails);
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             LoggerService::info('SAGE API :  readyToPostReceiptAr  Sent Already for '.$quote->code);
             $isLiveApiCallStep17 = false;
@@ -2485,7 +2498,7 @@ class SageApiService
         // 17
         $currentStep = 18;
         $isLiveApiCallStep18 = true;
-        $aRPostReceipts = SagePayloadFactory::aRPostReceipts($batchNumber);
+        $aRPostReceipts = SagePayloadFactory::aRPostReceipts(batchNumber: $batchNumber, extras: $extraDetails);
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             LoggerService::info('SAGE API :  aRPostReceipts  Sent Already for '.$quote->code);
             $isLiveApiCallStep18 = false;
