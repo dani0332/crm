@@ -540,4 +540,38 @@ class ApiController extends Controller
         }
 
     }
+
+    public function missingDocsReminder(Request $request)
+    {
+        try {
+            LoggerService::info(self::class.': Missing docs reminder has been initiated');
+            $response = app(ApiService::class)->missingDocsReminder($request->quoteUuid);
+            if($response['success']) {
+                LoggerService::info(self::class.': Missing docs reminder has been completed');
+                return response()->json([
+                    'success' => true,
+                    'message' => $response['message'],
+                ], Response::HTTP_OK);
+            } else {
+                LoggerService::error(self::class.': Missing docs reminder failed', extra: [
+                    'quote_uuid' => $request->quoteUuid,
+                    'message' => $response['message'],
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => $response['message'],
+                ], Response::HTTP_OK);
+            }
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': Missing docs reminder failed', extra: [
+                'quote_uuid' => $request->quoteUuid,
+                'message' => $e->getMessage(),
+                'exception' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

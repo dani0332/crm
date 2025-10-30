@@ -47,7 +47,7 @@ class BirdService extends BaseService
 
             // Log the response details
             LoggerService::info("Bird Webhook Response: Ref-ID: {$uuid} | Status: {$response->status()} | Time: ".now());
-
+            LoggerService::info("Bird Webhook Response: Ref-ID: {$uuid} | Headers: ".json_encode($response->headers()));
             return (object) ['headers' => $response->headers() ?? '', 'body' => $response->body(), 'status_code' => $response->status()];
         } catch (\Exception $e) {
             // Log the error with full context and rethrow the exception

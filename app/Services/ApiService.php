@@ -30,6 +30,9 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use App\Models\CarQuote;
+use App\Services\WAServices\CarWAService;
+use App\Jobs\CarMissingDocReminderJob;
 
 class ApiService
 {
@@ -505,4 +508,25 @@ class ApiService
         }
     }
 
+    public function missingDocsReminder($quoteUuid)
+    {
+        try {
+            LoggerService::info(self::class.': Missing docs reminder has been initiated');
+            if(!app(BirdService::class)->isFollowupExecuted($quoteUuid, QuoteTypes::CAR->id(), QuoteFlowType::CAR_MISSING_DOC_REMINDER->value)) {
+                LoggerService::info(self::class.': Missing docs reminder already executed');
+                return ['success' => false, 'message' => 'Missing docs reminder already executed'];
+            }
+            $quote = CarQuote::where('uuid', $quoteUuid)->first();
+            LoggerService::startQuoteLogging($quoteUuid);
+            if (! $quote) {
+                LoggerService::info(self::class.': Quote not found');
+                return ['success' => false, 'message' => 'Quote not found'];
+            }
+            CarMissingDocReminderJob::dispatch($quoteUuid)->delay(now()->addSeconds(50));
+            return ['success' => true, 'message' => 'Missing docs reminder has been sent to the customer'];
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': Missing docs reminder failed', exception: $e);
+            return ['success' => false, 'message' => 'Missing docs reminder failed: '.$e->getMessage()];
+        }
+    }
 }

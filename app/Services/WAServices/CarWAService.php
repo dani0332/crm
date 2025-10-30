@@ -9,6 +9,9 @@ use App\Services\Logger\LoggerService;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\User;
+use App\Enums\QuoteFlowType;
+use App\Enums\QuoteTypeId;
+use PgSql\Lob;
 
 class CarWAService extends BaseService
 {
@@ -34,8 +37,24 @@ class CarWAService extends BaseService
         ];
         $carMissingDocReminderWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_MISSING_DOC_REMINDER_WORKFLOW);
         if (! empty($carMissingDocReminderWorkflow)) {
-            app(BirdService::class)->triggerWebHookRequest($carMissingDocReminderWorkflow, (object) $payload);
+            $response = app(BirdService::class)->triggerWebHookRequest($carMissingDocReminderWorkflow, (object) $payload);
             LoggerService::info('sendWhatsappNotificationToCustomer - Webhook request sent to: '.$carMissingDocReminderWorkflow.' with Ref-ID: '.$carQuote->uuid);
+            
+            $runId = "";
+            if (isset($response->headers['Run-Id'])) {
+                $runId = is_array($response->headers['Run-Id']) 
+                    ? collect($response->headers['Run-Id'])->first() 
+                    : $response->headers['Run-Id'];
+            } elseif (isset($response->headers['run-id'])) {
+                $runId = is_array($response->headers['run-id'])
+                    ? collect($response->headers['run-id'])->first()
+                    : $response->headers['run-id'];
+            }
+            LoggerService::info(self::class." - runId found: {$runId} for quote: {$carQuote->uuid}");
+            if (! empty($runId)) {
+                app(BirdService::class)->createQuoteWorkFlowDetails($carQuote, $response, QuoteFlowType::CAR_MISSING_DOC_REMINDER, QuoteTypeId::Car);
+                LoggerService::info('Car Missing Doc Reminder WA Run-Id found and created quote flow details');
+            }
         } else {
             LoggerService::info('sendWhatsappNotificationToCustomer - Webhook URL not found in storage with Ref-ID:'.$carQuote->uuid);
         }
