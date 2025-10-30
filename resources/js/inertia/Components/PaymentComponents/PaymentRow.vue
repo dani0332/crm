@@ -158,7 +158,7 @@ const shouldProcessUpdate = () => {
     page.props.quoteStatusEnum.TransactionApproved;
   const isKycComplete = props.quoteRequest.kyc_decision === 'Complete';
 
-  const kycAmlBypassEligibleQuotes = [quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.Cyber];
+  const kycAmlBypassEligibleQuotes = [quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.CYBER];
   const isKycAmlBypassEligibleQuote = kycAmlBypassEligibleQuotes.includes(props.quoteType);
 
   const shouldSendUpdate = props.sendUpdate;

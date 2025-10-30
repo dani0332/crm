@@ -13,7 +13,7 @@ export const useAMLKYC = () => {
    */
   const isAmlVerified = (quoteRequest, quoteType, payments) => {
     const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
-    const amlBypassEligibleQuoteTypes = [quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.Cyber];
+    const amlBypassEligibleQuoteTypes = [quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.CYBER];
     let isAmlBypassEligibleQuote = amlBypassEligibleQuoteTypes.includes(quoteType);
     let isGIGInsuranceProvider =
       page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
@@ -49,7 +49,7 @@ export const useAMLKYC = () => {
    */
   const isKycVerified = (quoteRequest, quoteType, payments) => {
     const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
-    const kycBypassEligibleQuoteTypes = [quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.Cyber];
+    const kycBypassEligibleQuoteTypes = [quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.CYBER];
     let isKycBypassEligibleQuote = kycBypassEligibleQuoteTypes.includes(quoteType);
     let isGIGInsuranceProvider =
       page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||

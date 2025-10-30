@@ -159,7 +159,7 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
   quoteTypeCodeEnum.SAVINGS,
-  quoteTypeCodeEnum.Cyber,
+  quoteTypeCodeEnum.CYBER,
 ]; //Ecommerce LOBs
 
 if (
@@ -280,7 +280,7 @@ if (
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
-} else if (props.quoteType == quoteTypeCodeEnum.Cyber) {
+} else if (props.quoteType == quoteTypeCodeEnum.CYBER) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
@@ -863,7 +863,7 @@ const setPlanDetail = () => {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
-  } else if (props.quoteType == quoteTypeCodeEnum.Cyber) {
+  } else if (props.quoteType == quoteTypeCodeEnum.CYBER) {
     initalPlanDetails = props.quoteRequest.insurance_provider_plan
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
