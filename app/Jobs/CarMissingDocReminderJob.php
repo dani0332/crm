@@ -12,6 +12,9 @@ use App\Enums\DocumentTypeCode;
 use App\Services\WAServices\CarWAService;
 use Exception;
 use App\Models\CarQuote;
+use App\Enums\QuoteFlowType;
+use App\Enums\QuoteTypes;
+use App\Services\BirdService;
 
 class CarMissingDocReminderJob implements ShouldQueue
 {
@@ -37,12 +40,16 @@ class CarMissingDocReminderJob implements ShouldQueue
     public function handle(): void
     {
         try {
+            if(!app(BirdService::class)->isFollowupExecuted($this->quoteUuid, QuoteTypes::CAR->id(), QuoteFlowType::CAR_MISSING_DOC_REMINDER->value)) {
+                LoggerService::info(self::class." - Missing docs reminder already executed for quote {$this->quoteUuid}");
+               return;
+            }
             $lead = CarQuote::where('uuid', $this->quoteUuid)->first();
             if (! $lead) {
-                LoggerService::info('CarMissingDocReminderJob - lead not found', ['uuid' => $this->quoteUuid]);
+                LoggerService::info(self::class." - Quote not found for quote {$this->quoteUuid}");
                 return;
             }
-        LoggerService::startQuoteLogging($this->quoteUuid);
+            LoggerService::startQuoteLogging(QuoteTypes::CAR->refId($this->quoteUuid));
             // Check for missing or incomplete required documents: Emirates ID, Mulkiya, and Driving Licence
          $requiredDocuments = [DocumentTypeCode::EMIRATES_ID, DocumentTypeCode::REGISTRATION_CARD_MULKIYA, DocumentTypeCode::DRIVING_LICENSE];
          $leadDocuments = $lead->documents()
