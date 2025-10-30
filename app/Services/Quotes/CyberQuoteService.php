@@ -41,7 +41,32 @@ class CyberQuoteService extends BaseQuoteService
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
             ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
             ->filterByPaymentDueDates('payment_due_date')
-            ->filterByDateRange('booking_date', 'policy_booking_date');
+            ->filterByDateRange('booking_date', 'policy_booking_date')
+            ->filterBy('payment_status_id')
+            ->filterBy('is_ecommerce', isBool: true)
+            ->filterBy('sic_advisor_requested', ignoreAll: true)
+            ->filterIn('insurer_aml_status')
+            ->filterIn('insurer_api_status_id')
+            ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
+            ->when(request()->filled('api_issuance_status_id'), function ($q) {
+                if (request('api_issuance_status_id') === 'blank') {
+                    $q->whereNull('api_issuance_status_id');
+                } else {
+                    $q->where('api_issuance_status_id', request('api_issuance_status_id'));
+                }
+            })
+            ->when(request()->filled('insurer_tax_invoice_number'), function ($q) {
+                $q->whereHas('payments', function ($subQuery) {
+                    $subQuery->where('insurer_tax_number', request('insurer_tax_invoice_number'));
+                });
+            })
+            ->when(request()->filled('insurer_commission_tax_invoice_number'), function ($q) {
+                $q->whereHas('payments', function ($subQuery) {
+                    $subQuery->where('insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
+                });
+            });
+
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
         if (request()->has('debug') && request()->debug == 'true') {
             echo $query->toRawSql();

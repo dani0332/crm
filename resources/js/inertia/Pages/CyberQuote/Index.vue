@@ -33,18 +33,26 @@ let availableFilters = {
   last_name: '',
   email: '',
   mobile_no: '',
+  payment_status_id: '',
+  is_ecommerce: '',
   created_at_start: new Date() || '',
   created_at_end: new Date() || '',
-  previous_quote_policy_number: '',
   quote_status_id: '',
-  renewal_batch_id: [],
-  page: 1,
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
+  sic_advisor_requested: 'All',
+  advisor_id: [],
   previous_quote_policy_number_text: '',
   payment_due_date: '',
   booking_date: '',
-  policy_expiry_date: '',
-  policy_expiry_date_end: '',
   last_modified_date: '',
+  insurer_tax_invoice_number: '',
+  insurer_commission_tax_invoice_number: '',
+  transaction_approved_dates: '',
+  api_issuance_status_id: '',
+  insurer_api_status_id: [],
+  insurer_aml_status: [],
+  page: 1,
 };
 
 const filters = reactive(availableFilters);
@@ -208,17 +216,45 @@ const advisorOptionsFilter = computed(() => {
   }));
 });
 
-const renewalBatchOptions = computed(() => {
-  return page.props.renewalBatches.map(batch => ({
-    value: batch.id,
-    label: batch.name,
+const advisorOptions = computed(() => {
+  const advisors = page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+  return [
+    ...advisors,
+    {
+      value: -1,
+      label: 'UnAssigned',
+    },
+  ];
+});
+
+const paymentStatusOptions = computed(() => {
+  return page.props.paymentStatuses.map(item => ({
+    value: item.id,
+    label: item.text,
   }));
 });
 
-const advisorOptions = computed(() => {
-  return page.props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
+const insurerApiStatusOptions = computed(() => {
+  return Object.entries(page.props.insurerApiStatus).map(([index, value]) => ({
+    value: index,
+    label: value,
+  }));
+});
+
+const issuanceStatusOptions = computed(() => {
+  return Object.entries(page.props.issuanceStatuses).map(([index, value]) => ({
+    value: index,
+    label: value,
+  }));
+});
+
+const insurerAMLStatusOptions = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
   }));
 });
 
@@ -227,11 +263,54 @@ const onLeadAssigned = () => {
 };
 
 function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+  const integerFields = [
+    'quote_status_id',
+    'advisor_id',
+    'payment_status_id',
+    'insurer_aml_status',
+    'insurer_api_status_id',
+    'page',
+  ];
+
+  const arrayParams = {};
+  const singleParams = {};
+
+  for (const [key, value] of Object.entries(params)) {
+    const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+
+    if (arrayMatch) {
+      const [, fieldName, index] = arrayMatch;
+      if (!arrayParams[fieldName]) {
+        arrayParams[fieldName] = [];
+      }
+      arrayParams[fieldName][parseInt(index)] = value;
+    } else if (key.includes('[]')) {
+      const fieldName = key.substring(0, key.length - 2);
+      arrayParams[fieldName] = Array.isArray(value) ? value : [value];
     } else {
-      filters[key] = params[key];
+      singleParams[key] = value;
+    }
+  }
+
+  for (const [fieldName, values] of Object.entries(arrayParams)) {
+    const cleanValues = values.filter(v => v !== undefined);
+
+    if (integerFields.includes(fieldName)) {
+      filters[fieldName] = cleanValues
+        .map(v => parseInt(v))
+        .filter(v => !isNaN(v));
+    } else {
+      filters[fieldName] = cleanValues;
+    }
+  }
+
+  for (const [key, value] of Object.entries(singleParams)) {
+    if (integerFields.includes(key) && !isNaN(parseInt(value))) {
+      filters[key] = parseInt(value);
+    } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
+      filters[key] = parseInt(value);
+    } else {
+      filters[key] = value;
     }
   }
 }
@@ -452,6 +531,28 @@ const validateDateRange = () => {
             placeholder="Search by Mobile Number"
           />
         </x-field>
+        <x-field label="Payment Status">
+          <x-select
+            v-model="filters.payment_status_id"
+            name="payment_status_id"
+            placeholder="Search by Payment Status"
+            :options="paymentStatusOptions"
+            class="w-full"
+            filterable
+          />
+        </x-field>
+        <x-field label="Ecommerce">
+          <x-select
+            v-model="filters.is_ecommerce"
+            placeholder="Search by Ecommerce"
+            :options="[
+              { value: '', label: 'All' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
+            ]"
+            class="w-full"
+          />
+        </x-field>
         <DatePicker
           v-model="filters.created_at_start"
           type="date"
@@ -483,38 +584,31 @@ const validateDateRange = () => {
           v-model="filters.policy_expiry_date"
           name="policy_expiry_date"
           class="w-full"
-          label="Policy Expiry Start Date"
+          label="Policy Start Date"
         />
         <DatePicker
           v-model="filters.policy_expiry_date_end"
           name="policy_expiry_date_end"
           class="w-full"
-          label="Policy Expiry End Date"
+          label="Policy End Date"
         />
+        <x-field label="Advisor Requested">
+          <x-select
+            v-model="filters.sic_advisor_requested"
+            placeholder="Search by Advisor Requested"
+            :options="[
+              { value: 'All', label: 'All' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
+            ]"
+            class="w-full"
+          />
+        </x-field>
         <x-field label="Advisor" v-if="!hasAnyRole([rolesEnum.CyberAdvisor])">
           <ComboBox
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
             :options="advisorOptions"
-          />
-        </x-field>
-        <x-field label="Renewal Batch">
-          <ComboBox
-            v-model="filters.renewal_batch_id"
-            placeholder="Search by Renewal Batch"
-            :options="renewalBatchOptions"
-          />
-        </x-field>
-        <x-field label="Renewal">
-          <x-select
-            v-model="filters.previous_quote_policy_number"
-            placeholder="Search by Renewal"
-            :options="[
-              { value: '', label: 'All' },
-              { value: 0, label: 'Yes' },
-              { value: 1, label: 'No' },
-            ]"
-            class="w-full"
           />
         </x-field>
         <x-input
@@ -548,6 +642,89 @@ const validateDateRange = () => {
           range
           format="dd-MM-yyyy"
         />
+        <x-field label="Insurer Tax Invoice No">
+          <x-input
+            v-model="filters.insurer_tax_invoice_number"
+            type="text"
+            name="insurer_tax_invoice_number"
+            class="w-full"
+            placeholder="Insurer Tax Invoice No"
+          />
+        </x-field>
+        <x-field label="Insurer Commission Tax Invoice No">
+          <x-input
+            v-model="filters.insurer_commission_tax_invoice_number"
+            type="text"
+            name="insurer_commission_tax_invoice_number"
+            class="w-full"
+            placeholder="Insurer Commission Tax Invoice No"
+          />
+        </x-field>
+        <DatePicker
+          v-model="filters.transaction_approved_dates"
+          label="Transaction Approved Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+          max-range="30"
+        />
+        <x-field label="API Issuance Status">
+          <x-select
+            v-model="filters.api_issuance_status_id"
+            name="api_issuance_status_id"
+            placeholder="Search by API Issuance Status"
+            :options="issuanceStatusOptions"
+            class="w-full"
+            filterable
+          />
+        </x-field>
+        <x-field label="Insurer API Status">
+          <x-select
+            v-model="filters.insurer_api_status_id"
+            name="insurer_api_status_id"
+            placeholder="Search by Insurer API Status"
+            :options="insurerApiStatusOptions"
+            class="w-full"
+            filterable
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.insurer_api_status_id = insurerApiStatusOptions.map(
+                    item => item.value,
+                  )
+                "
+                @clear="filters.insurer_api_status_id = []"
+              />
+            </template>
+          </x-select>
+        </x-field>
+        <x-field label="IM AML Status">
+          <x-select
+            v-model="filters.insurer_aml_status"
+            name="insurer_aml_status"
+            placeholder="Search by IM AML Status"
+            :options="insurerAMLStatusOptions"
+            class="w-full"
+            filterable
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.insurer_aml_status = insurerAMLStatusOptions.map(
+                    item => item.value,
+                  )
+                "
+                @clear="filters.insurer_aml_status = []"
+              />
+            </template>
+          </x-select>
+        </x-field>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
