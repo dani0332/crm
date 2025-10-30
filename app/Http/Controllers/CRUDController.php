@@ -855,8 +855,7 @@ class CRUDController extends Controller
                 $insurerApiStatus = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
                 $previousQuote = $this->carQuoteService->getPreviousQuote($record->previous_quote_id);
                 $isAddionalFieldsEnabled = app(AMLService::class)->isAdditionalVehicleAndDriverDetailsEnabled($this->genericModel->modelType, $record?->insurance_provider_id, $record?->registration_type, true);
-                $lookups = $rtaConfigurationData = [];
-                $LIVAEnums = [];
+                $lookups = $rtaConfigurationData = $LIVAEnums = [];
 
                 if ($isAddionalFieldsEnabled) {
                     $lookups = app(AMLService::class)->getAdditionaVehicleDriverLookups($this->genericModel->modelType, $record?->insurance_provider_id, $record?->source);

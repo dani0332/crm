@@ -42,8 +42,10 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Name
                 </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150">
-                  {{  customerVerificationData.webForm?.name || '-' }}
+                <div
+                  class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150"
+                >
+                  {{ customerVerificationData.webForm?.name || '-' }}
                 </div>
               </div>
 
@@ -51,7 +53,9 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Nationality
                 </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150">
+                <div
+                  class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150"
+                >
                   {{ customerVerificationData.webForm?.nationality || '-' }}
                 </div>
               </div>
@@ -60,7 +64,9 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Car Make and Model
                 </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150">
+                <div
+                  class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150"
+                >
                   {{ customerVerificationData.webForm?.carMakeAndModel || '-' }}
                 </div>
               </div>
@@ -69,7 +75,9 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Car Model Year
                 </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150">
+                <div
+                  class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150"
+                >
                   {{ customerVerificationData.webForm?.carModelYear || '-' }}
                 </div>
               </div>
@@ -78,7 +86,9 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   DOB
                 </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150">
+                <div
+                  class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150"
+                >
                   {{ customerVerificationData.webForm?.dob || '-' }}
                 </div>
               </div>
@@ -87,8 +97,13 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Emirate Of Registration
                 </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150">
-                  {{ customerVerificationData.webForm?.emirateOfRegistration || '-' }}
+                <div
+                  class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150"
+                >
+                  {{
+                    customerVerificationData.webForm?.emirateOfRegistration ||
+                    '-'
+                  }}
                 </div>
               </div>
 
@@ -96,10 +111,13 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   UAE Licensed Held For
                 </label>
-                <div class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150">
-                  {{ customerVerificationData.webForm?.uaeLicenseHeldFor || '-' }}
+                <div
+                  class="p-3 bg-white border border-blue-100 rounded-md text-gray-800 font-medium hover:border-blue-200 transition-colors duration-150"
+                >
+                  {{
+                    customerVerificationData.webForm?.uaeLicenseHeldFor || '-'
+                  }}
                 </div>
-
               </div>
             </div>
           </div>
@@ -121,11 +139,19 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Name
                 </label>
-                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
-                 :class="customerVerificationData.customerVerified?.name.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
-                  {{  customerVerificationData.customerVerified?.name.value || '-' }}
+                <div
+                  class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                  :class="
+                    customerVerificationData.customerVerified?.name.error
+                      ? 'border-2 border-red-600'
+                      : 'border border-green-100 hover:border-green-200'
+                  "
+                >
+                  {{
+                    customerVerificationData.customerVerified?.name.value || '-'
+                  }}
                 </div>
-                <span 
+                <span
                   class="text-red-600 text-sm"
                   v-if="customerVerificationData.customerVerified?.name?.error"
                 >
@@ -136,13 +162,25 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Nationality
                 </label>
-                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
-                :class="customerVerificationData.customerVerified?.nationality.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
-                  {{ customerVerificationData.customerVerified?.nationality.value || '-' }}
+                <div
+                  class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                  :class="
+                    customerVerificationData.customerVerified?.nationality.error
+                      ? 'border-2 border-red-600'
+                      : 'border border-green-100 hover:border-green-200'
+                  "
+                >
+                  {{
+                    customerVerificationData.customerVerified?.nationality
+                      .value || '-'
+                  }}
                 </div>
-                <span 
+                <span
                   class="text-red-600 text-sm"
-                  v-if="customerVerificationData.customerVerified?.nationality?.error"
+                  v-if="
+                    customerVerificationData.customerVerified?.nationality
+                      ?.error
+                  "
                 >
                   Nationality mismatch found
                 </span>
@@ -152,13 +190,26 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Car Make and Model
                 </label>
-                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
-                :class="customerVerificationData.customerVerified?.carMakeAndModel.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
-                  {{ customerVerificationData.customerVerified?.carMakeAndModel.value || '-' }}
+                <div
+                  class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                  :class="
+                    customerVerificationData.customerVerified?.carMakeAndModel
+                      .error
+                      ? 'border-2 border-red-600'
+                      : 'border border-green-100 hover:border-green-200'
+                  "
+                >
+                  {{
+                    customerVerificationData.customerVerified?.carMakeAndModel
+                      .value || '-'
+                  }}
                 </div>
-                <span 
+                <span
                   class="text-red-600 text-sm"
-                  v-if="customerVerificationData.customerVerified?.carMakeAndModel?.error"
+                  v-if="
+                    customerVerificationData.customerVerified?.carMakeAndModel
+                      ?.error
+                  "
                 >
                   Make and model mismatch found
                 </span>
@@ -168,13 +219,26 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Car Model Year
                 </label>
-                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
-                :class="customerVerificationData.customerVerified?.carModelYear.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
-                  {{ customerVerificationData.customerVerified?.carModelYear.value || '-' }}
+                <div
+                  class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                  :class="
+                    customerVerificationData.customerVerified?.carModelYear
+                      .error
+                      ? 'border-2 border-red-600'
+                      : 'border border-green-100 hover:border-green-200'
+                  "
+                >
+                  {{
+                    customerVerificationData.customerVerified?.carModelYear
+                      .value || '-'
+                  }}
                 </div>
-                <span 
+                <span
                   class="text-red-600 text-sm"
-                  v-if="customerVerificationData.customerVerified?.carModelYear?.error"
+                  v-if="
+                    customerVerificationData.customerVerified?.carModelYear
+                      ?.error
+                  "
                 >
                   Car model year mismatch found
                 </span>
@@ -184,11 +248,19 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   DOB
                 </label>
-                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
-                :class="customerVerificationData.customerVerified?.dob.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
-                  {{ customerVerificationData.customerVerified?.dob.value || '-' }}
+                <div
+                  class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                  :class="
+                    customerVerificationData.customerVerified?.dob.error
+                      ? 'border-2 border-red-600'
+                      : 'border border-green-100 hover:border-green-200'
+                  "
+                >
+                  {{
+                    customerVerificationData.customerVerified?.dob.value || '-'
+                  }}
                 </div>
-                <span 
+                <span
                   class="text-red-600 text-sm"
                   v-if="customerVerificationData.customerVerified?.dob?.error"
                 >
@@ -200,13 +272,26 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   Emirate Of Registration
                 </label>
-                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
-                :class="customerVerificationData.registrationCertificate?.placeOfIssue.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
-                  {{ customerVerificationData.registrationCertificate?.placeOfIssue.value || '-' }}
+                <div
+                  class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                  :class="
+                    customerVerificationData.registrationCertificate
+                      ?.placeOfIssue.error
+                      ? 'border-2 border-red-600'
+                      : 'border border-green-100 hover:border-green-200'
+                  "
+                >
+                  {{
+                    customerVerificationData.registrationCertificate
+                      ?.placeOfIssue.value || '-'
+                  }}
                 </div>
                 <span
                   class="text-red-600 text-sm"
-                  v-if="customerVerificationData.registrationCertificate?.placeOfIssue?.error"
+                  v-if="
+                    customerVerificationData.registrationCertificate
+                      ?.placeOfIssue?.error
+                  "
                 >
                   Emirate of registration mismatch found
                 </span>
@@ -216,13 +301,26 @@ const { modals, customerVerificationData } = defineProps({
                 <label class="block text-sm font-medium text-gray-600 mb-2">
                   UAE License Held For
                 </label>
-                <div class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
-                :class="customerVerificationData.vehicleDriverDetails?.driverLicenseIssueDate.error ? 'border-2 border-red-600' : 'border border-green-100 hover:border-green-200'">
-                  {{ customerVerificationData.vehicleDriverDetails?.driverLicenseIssueDate.value || '-' }}
+                <div
+                  class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
+                  :class="
+                    customerVerificationData.vehicleDriverDetails
+                      ?.driverLicenseIssueDate.error
+                      ? 'border-2 border-red-600'
+                      : 'border border-green-100 hover:border-green-200'
+                  "
+                >
+                  {{
+                    customerVerificationData.vehicleDriverDetails
+                      ?.driverLicenseIssueDate.value || '-'
+                  }}
                 </div>
                 <span
                   class="text-red-600 text-sm"
-                  v-if="customerVerificationData.vehicleDriverDetails?.driverLicenseIssueDate?.error"
+                  v-if="
+                    customerVerificationData.vehicleDriverDetails
+                      ?.driverLicenseIssueDate?.error
+                  "
                 >
                   UAE License Held For mismatch found
                 </span>

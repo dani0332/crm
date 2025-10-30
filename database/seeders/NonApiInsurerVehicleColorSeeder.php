@@ -35,9 +35,9 @@ class NonApiInsurerVehicleColorSeeder extends Seeder
 
                 // Fetch provider records
                 $providerRecords = DB::table('lookups')
-                ->where('insurance_provider_id', $targetProvider->id)
-                ->whereIn('key', [LookupsEnum::VEHICLE_COLOR, LookupsEnum::PLATE_CODE, LookupsEnum::RTA_TRANSACTION_TYPE])
-                ->exists();
+                    ->where('insurance_provider_id', $targetProvider->id)
+                    ->whereIn('key', [LookupsEnum::VEHICLE_COLOR, LookupsEnum::PLATE_CODE, LookupsEnum::RTA_TRANSACTION_TYPE])
+                    ->exists();
 
                 // If provider records already exist, skip
                 if ($providerRecords) {

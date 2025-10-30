@@ -9,7 +9,6 @@ use App\Models\Nationality;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use Exception;
-use Illuminate\Log\Logger;
 use Illuminate\Support\Facades\DB;
 
 class DrivingLicenseDataProcessor
