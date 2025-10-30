@@ -86,18 +86,26 @@ class BirdService extends BaseService
     public function createQuoteWorkFlowDetails($lead, $response, $flowType = null, $quoteTypeId = null)
     {
         try {
-            if (! empty($response->headers['Run-Id'])) {
-                $runId = collect($response->headers['Run-Id'])->first();
+            $runId = "";
+            if (isset($response->headers['Run-Id'])) {
+                $runId = is_array($response->headers['Run-Id']) 
+                    ? collect($response->headers['Run-Id'])->first() 
+                    : $response->headers['Run-Id'];
+            } elseif (isset($response->headers['run-id'])) {
+                $runId = is_array($response->headers['run-id'])
+                    ? collect($response->headers['run-id'])->first()
+                    : $response->headers['run-id'];
+            }
+            if (! empty($runId)) {
                 QuoteFlowDetails::create([
                     'quote_uuid' => $lead->uuid,
                     'quote_type_id' => $quoteTypeId,
                     'flow_type' => $flowType,
                     'flow_id' => $runId,
-                    'started_at' => now(),
                 ]);
-                LoggerService::info('- createQuoteWorkFlowDetails  run id created');
+                LoggerService::info('- createQuoteWorkFlowDetails  run id created for quote: '.$lead->uuid);
             } else {
-                LoggerService::info(' - createQuoteWorkFlowDetails  run id not found ');
+                LoggerService::info(' - createQuoteWorkFlowDetails  run id not found for quote: '.$lead->uuid);
             }
         } catch (\Throwable $th) {
 

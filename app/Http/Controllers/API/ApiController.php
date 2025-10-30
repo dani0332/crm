@@ -546,6 +546,7 @@ class ApiController extends Controller
         try {
             LoggerService::info(self::class.': Missing docs reminder has been initiated');
             $response = app(ApiService::class)->missingDocsReminder($request->quoteUuid);
+        
             if($response['success']) {
                 LoggerService::info(self::class.': Missing docs reminder has been completed');
                 return response()->json([

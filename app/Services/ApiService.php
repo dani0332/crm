@@ -512,7 +512,7 @@ class ApiService
     {
         try {
             LoggerService::info(self::class.': Missing docs reminder has been initiated');
-            if(!app(BirdService::class)->isFollowupExecuted($quoteUuid, QuoteTypes::CAR->id(), QuoteFlowType::CAR_MISSING_DOC_REMINDER->value)) {
+            if(app(BirdService::class)->isFollowupExecuted($quoteUuid, QuoteTypes::CAR->id(), QuoteFlowType::CAR_MISSING_DOC_REMINDER->value)) {
                 LoggerService::info(self::class.': Missing docs reminder already executed');
                 return ['success' => false, 'message' => 'Missing docs reminder already executed'];
             }

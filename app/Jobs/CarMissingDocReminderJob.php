@@ -40,8 +40,8 @@ class CarMissingDocReminderJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            if(!app(BirdService::class)->isFollowupExecuted($this->quoteUuid, QuoteTypes::CAR->id(), QuoteFlowType::CAR_MISSING_DOC_REMINDER->value)) {
-                LoggerService::info(self::class." - Missing docs reminder already executed for quote {$this->quoteUuid}");
+            if(app(BirdService::class)->isFollowupExecuted($this->quoteUuid, QuoteTypes::CAR->id(), QuoteFlowType::CAR_MISSING_DOC_REMINDER->value)) {
+                LoggerService::info(self::class." - Car Missing Docs Reminder already executed for quote {$this->quoteUuid}");
                return;
             }
             $lead = CarQuote::where('uuid', $this->quoteUuid)->first();
