@@ -5,24 +5,47 @@ const { copy, copied } = useClipboard();
 
 const props = defineProps({
   failedProcesses: Object,
-  insuranceProviders: Array,
-  quoteTypes: Array,
-  users: Array,
   filters: Object,
   error: String,
+  dropdowns: Object,
 });
 
 const page = usePage();
 const notification = useToast();
 const can = permission => useCan(permission);
-const permissionsEnum = page.props.permissionsEnum;
-const filterModal = ref(false);
-const cleanObj = obj => useCleanObj(obj);
+const permissionsEnum = page.props.permissionsEnum; 
 
 const loader = reactive({
   table: false,
   export: false,
 });
+
+
+// Table headers
+const tableHeader = computed(() => [
+  { text: 'Sage Pro. ID', value: 'id', width: 40, sortable: true },
+  { text: 'Quote Code', value: 'quote_code', width: 150, sortable: true },
+  { text: 'Policy Number', value: 'policy_number', width: 150, sortable: true },
+  { text: 'Price Vat Applicable', value: 'price_vat_applicable', width: 150, sortable: true },
+  { text: 'Price Vat', value: 'price_vat', width: 150, sortable: true },
+  { text: 'Discount', value: 'discount_value', width: 150, sortable: true },
+  { text: 'Total Price', value: 'total_price', width: 150, sortable: true },
+  { text: 'Commission (VAT applicable)', value: 'commission_vat_applicable', width: 150, sortable: true },
+  { text: 'Commission Vat', value: 'commission_vat', width: 150, sortable: true },
+  { text: 'Total Commission', value: 'total_commission', width: 150, sortable: true },
+  { text: 'Payment Date', value: 'payment_date', width: 150, sortable: true },
+  { text: 'Payment Status', value: 'payment_status', width: 150, sortable: true },
+  { text: 'Provider', value: 'provider', width: 180, sortable: true },
+  { text: 'Invoice Description', value: 'invoice_description', width: 180, sortable: true },
+  { text: 'Insurer Tax Invoice No.', value: 'insurer_tax_invoice', width: 180, sortable: true },
+  { text: 'Insurer Commission Tax Invoice No.', value: 'insurer_commission_tax_invoice', width: 180, sortable: true },
+  { text: 'Lead Status', value: 'lead_status', width: 180, sortable: true },
+  { text: 'Sage Receipt ID', value: 'sage_receipt_id', width: 180, sortable: true },
+  { text: 'Sage Proc. Status', value: 'status', width: 60, sortable: true },
+  { text: 'Failed Sage API', value: 'failed_api', width: 120, sortable: false },
+  { text: 'Failed API Error', value: 'failed_error', width: 330, sortable: false },
+  { text: 'Updated At', value: 'updated_at', width: 160, sortable: true },
+]);
 
 // Available filters
 const availableFilters = reactive({
@@ -30,8 +53,6 @@ const availableFilters = reactive({
   quote_type_id: props.filters?.quote_type_id || [],
   date_from: props.filters?.date_from || '',
   date_to: props.filters?.date_to || '',
-  quote_code: props.filters?.quote_code || '',
-  user_id: props.filters?.user_id || [],
 });
 
 // Server options for pagination
@@ -42,18 +63,7 @@ const serverOptions = ref({
   sortType: 'desc',
 });
 
-// Table headers
-const tableHeader = computed(() => [
-  { text: 'Sage Pro. ID', value: 'id', width: 40, sortable: true },
-  { text: 'Quote Code', value: 'model.code', width: 150, sortable: true },
-  { text: 'Provider', value: 'insurance_provider.text', width: 180, sortable: true },
-  { text: 'Sage Proc. Status', value: 'status', width: 60, sortable: true },
-  { text: 'Sage API Response', value: 'model', width: 330, sortable: false },
-  { text: 'Updated At', value: 'updated_at', width: 160, sortable: true },
-]);
-
-
-const copyToClipboard = item => { 
+const copyToClipboard = item => {
   console.log(item);
   copy(item);
   if (copied)
@@ -68,14 +78,24 @@ const tableData = computed(() => {
   return props.failedProcesses?.data || [];
 });
 
-// Pagination info
-const paginationInfo = computed(() => ({
-  from: props.failedProcesses?.from || 0,
-  to: props.failedProcesses?.to || 0,
-  total: props.failedProcesses?.total || 0,
-  current_page: props.failedProcesses?.current_page || 1,
-  last_page: props.failedProcesses?.last_page || 1,
-}));
+const lineOfBusinessOptions = computed(() => {
+  return (
+    props.dropdowns?.quoteTypes?.map(qt => ({
+      value: qt.id,
+      label: qt.text,
+    })) || []
+  );
+});
+
+const insuranceProvidersOptions = computed(() => {
+  return (
+    props.dropdowns?.insuranceProviders?.map(ip => ({
+      value: ip.id,
+      label: ip.text,
+    })) || []
+  );
+});
+
 
 // Filters count
 const filtersCount = ref(0);
@@ -100,9 +120,8 @@ const truncate = (text, length = 50) => {
 };
 
 // Calculate filters count and show errors on mount
-onMounted(() => {
-  const filtersCleaned = cleanObj(availableFilters);
-  filtersCount.value = Object.keys(filtersCleaned).length;
+onMounted(() => { 
+  filtersCount.value = Object.keys(availableFilters).length;
 
   // Show error notification if any
   if (props.error) {
@@ -114,16 +133,14 @@ onMounted(() => {
 });
 
 // Submit filter
-function onSubmit() {
-  const filtersCleaned = cleanObj(availableFilters);
-  filtersCount.value = Object.keys(filtersCleaned).length;
-  serverOptions.value.page = 1;
-  filterModal.value = false;
+function onSubmit() { 
+  filtersCount.value = Object.keys(availableFilters).length;
+  serverOptions.value.page = 1; 
 
   router.visit(route('sage-failed-processes.index'), {
     method: 'get',
     data: {
-      ...filtersCleaned,
+      ...availableFilters,
       ...serverOptions.value,
     },
     preserveState: true,
@@ -137,112 +154,89 @@ function onSubmit() {
 function clearFilters() {
   availableFilters.insurance_provider_id = [];
   availableFilters.quote_type_id = [];
-  availableFilters.date_from = '';
-  availableFilters.date_to = '';
-  availableFilters.quote_code = '';
-  availableFilters.user_id = [];
+  availableFilters.date_from = null;
+  availableFilters.date_to = null; 
   filtersCount.value = 0;
+  router.visit(route('sage-failed-processes.index'));
 }
 
 // Export to Excel
-function exportExcel() {
-  const url = new URL(window.location.href);
-  const exportFilters = url.search;
-  const exportURL = '/sage-processes/failed/export' + exportFilters;
+function exportExcel() { 
+  console.log(availableFilters);
+  const exportURL = route('sage-failed-processes.export');
 
-  window.open(exportURL, '_blank');
-}
-
-// Update server options
-function updateServerOptions(newOptions) {
-  serverOptions.value = { ...serverOptions.value, ...newOptions };
-
-  router.visit(route('sage-failed-processes.index'), {
+  router.visit(exportURL, {
     method: 'get',
     data: {
-      ...cleanObj(availableFilters),
-      ...serverOptions.value,
+      exportFilters: availableFilters,
     },
-    preserveState: true,
-    preserveScroll: true,
-    onBefore: () => (loader.table = true),
-    onFinish: () => (loader.table = false),
   });
 }
 
-// Handle pagination change
-function onPageChange(page) {
-  updateServerOptions({ page });
-}
-
-// Handle sorting
-function onSort(column, sortType) {
-  updateServerOptions({ sortBy: column, sortType });
-}
 </script>
 
 <template>
   <div>
     <Head :title="'Failed Sage Processes'" />
     <div class="flex justify-between items-center">
-      <x-tooltip placement="bottom">
-        <h2
-          class="font-semibold text-gray-800 text-xl underline decoration-dotted decoration-primary-600"
-        >
-          Failed Sage Processes
-        </h2>
-        <template #tooltip>
-          Displays failed sage processes along with related quote/send update
-          entries and sage api logs
-        </template>
-      </x-tooltip>
-      <div class="space-x-3">
-        <x-tooltip
-          v-if="
-            can(permissionsEnum.VIEW_SAGE_API_LOGS) && tableData.length === 0
-          "
-          placement="bottom"
-        >
-          <x-button disabled size="sm" color="emerald" :loading="loader.export">
-            Export to Excel
-          </x-button>
-          <template #tooltip>
-            No data available to export. Apply filters to see results.
-          </template>
-        </x-tooltip>
-
-        <x-button
-          v-if="can(permissionsEnum.VIEW_SAGE_API_LOGS) && tableData.length > 0"
-          size="sm"
-          color="emerald"
-          :loading="loader.export"
-          @click="exportExcel()"
-        >
-          Export to Excel
-        </x-button>
-
-        <x-button
-          size="sm"
-          color="orange"
-          @click.prevent="filterModal = true"
-          :loading="loader.table"
-        >
-          <x-icon
-            icon="magnifyingGlass"
-            size="sm"
-            class="transition transform duration-300"
+      <x-form @submit="onSubmit" :auto-focus="false" class="w-full mt-4 py-4">
+        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <x-select
+            v-model="availableFilters.insurance_provider_id"
+            label="Insurance Provider"
+            placeholder="Select Provider"
+            :options="insuranceProvidersOptions"
+            filterable
+            filterPlaceholder="Filter Provider...."
+            clearable
           />
-          Search Filters
-          <x-badge
-            v-if="filtersCount > 0"
-            color="danger"
-            size="sm"
-            class="ml-2"
-          >
-            {{ filtersCount }}
-          </x-badge>
-        </x-button>
-      </div>
+          <x-select
+            v-model="availableFilters.quote_type_id"
+            label="Line of Business"
+            placeholder="Select Line of Business"
+            :options="lineOfBusinessOptions"
+            filterable
+            filterPlaceholder="Filter Line of Business...."
+            clearable
+          />
+
+
+          <DatePicker
+            v-model="availableFilters.date_from"
+            name="created_at_start"
+            label="Created Date Start"
+          />
+
+          <DatePicker
+            v-model="availableFilters.date_to"
+            name="created_at_end"
+            label="Created Date End"
+          />
+  
+
+        </div>
+
+        <div class="flex justify-between gap-3 mb-4 mt-1">
+          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+            <x-button 
+              size="sm"
+              color="emerald"
+              class="justify-self-start mr-3"
+              @click.prevent="exportExcel"
+              :loading="loader.export"
+            >
+              Export
+            </x-button> 
+            
+          </div> 
+          <div class="flex gap-3 justify-self-end">
+            <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+            <x-button size="sm" color="primary" @click.prevent="clearFilters">
+              Reset
+            </x-button>
+          </div>
+        </div>
+      </x-form> 
     </div>
     <x-divider class="my-4" />
 
@@ -259,8 +253,88 @@ function onSort(column, sortType) {
       :table-height="600"
     >
       <!-- Quote Code Column -->
-      <template #item-quote_code="{ quote_code }"> 
-        <span>{{ quote_code || 'N/A' }}</span>
+      <template #item-quote_code="item">
+        <span>{{ item.model?.code || 'N/A' }}</span>
+      </template>
+
+      <!-- Policy Number Column -->
+      <template #item-policy_number="item">
+        <span>{{ item.model?.policy_number || 'N/A' }}</span>
+      </template>
+
+      <!-- Price Vat Applicable -->
+      <template #item-price_vat_applicable="item">
+        <span>{{ item.model?.payments?.[0]?.price_vat_applicable || 'N/A' }}</span>
+      </template>
+
+      <!-- Price Vat -->
+      <template #item-price_vat="item">
+        <span>{{ item.model?.payments?.[0]?.price_vat || 'N/A' }}</span>
+      </template>
+
+      <!-- Discount -->
+      <template #item-discount_value="item">
+        <span>{{ item.model?.payments?.[0]?.discount_value || 'N/A' }}</span>
+      </template>
+
+      <!-- Total Price -->
+      <template #item-total_price="item">
+        <span>{{ item.model?.payments?.[0]?.total_price || 'N/A' }}</span>
+      </template>
+
+      <!-- Commission Vat Applicable -->
+      <template #item-commission_vat_applicable="item">
+        <span>{{ item.model?.payments?.[0]?.commission_vat_applicable ||  item.model?.payments?.[0]?.commission_vat_not_applicable || 'N/A' }}</span>
+      </template>
+
+      <!-- Commission Vat -->
+      <template #item-commission_vat="item">
+        <span>{{ item.model?.payments?.[0]?.commission_vat || 'N/A' }}</span>
+      </template>
+
+      <!-- Total Commission -->
+      <template #item-total_commission="item">
+        <span>{{ item.model?.payments?.[0]?.commission || 'N/A' }}</span>
+      </template>
+
+      <!-- Payment Date -->
+      <template #item-payment_date="item">
+        <span>{{ dateFormat(item.model?.payments?.[0]?.captured_at) }}</span>
+      </template>
+
+      <!-- Payment Status -->
+      <template #item-payment_status="item">
+        <span>{{ item.model?.payments?.[0]?.payment_status?.text || 'N/A' }}</span>
+      </template>
+
+      <!-- Provider -->
+      <template #item-provider="item">
+        <span>{{ item.insurance_provider?.text || 'N/A' }}</span>
+      </template>
+
+      <!-- Invoice Description -->
+      <template #item-invoice_description="item">
+        <span>{{ item.model?.payments?.[0]?.invoice_description || 'N/A' }}</span>
+      </template>
+
+      <!-- Insurer Tax Invoice -->
+      <template #item-insurer_tax_invoice="item">
+        <span>{{ item.model?.payments?.[0]?.insurer_tax_number || 'N/A' }}</span>
+      </template>
+
+      <!-- Insurer Commission Tax Invoice -->
+      <template #item-insurer_commission_tax_invoice="item">
+        <span>{{ item.model?.payments?.[0]?.insurer_commmission_invoice_number || 'N/A' }}</span>
+      </template>
+
+      <!-- Lead Status -->
+      <template #item-lead_status="item">
+        <span>{{ item.model?.quote_status?.text || item.model?.status || 'N/A' }}</span>
+      </template>
+
+      <!-- Sage Receipt ID -->
+      <template #item-sage_receipt_id="item">
+        <span>{{ item.collected_sage_receipt_ids || 'N/A' }}</span>
       </template>
 
       <!-- Sage Status Column -->
@@ -268,22 +342,26 @@ function onSort(column, sortType) {
         <span>{{ status ? status.toUpperCase() : 'N/A' }}</span>
       </template>
 
-      <!-- Process Message Column -->
-      <template #item-model="{  model }"> 
-        <div v-if="model?.sage_api_logs[0]?.response">
-          {{ model?.sage_api_logs[0]?.response?.substr(0, 80) }}
-          <x-icon
-            @click.prevent="copyToClipboard(model?.sage_api_logs[0]?.response)"
-            icon="copy"
-            class="text-primary"
-            size="md"
-          />
+      <!-- Failed Sage API Endpoint -->
+      <template #item-failed_api="item">
+        <div v-if="item.model?.sage_api_logs?.[0]?.sage_end_point">
+          {{ truncate(item.model?.sage_api_logs[0]?.sage_end_point, 50) }}
+          <x-icon @click.prevent="copyToClipboard(item.model?.sage_api_logs[0]?.sage_end_point)" icon="copy"  class="text-primary cursor-pointer" size="md" />
         </div>
         <div v-else>
-          <span>{{ model?.sage_api_logs[0]?.response || 'N/A' }}</span>
+          <span>N/A</span>
         </div>
-      
-       
+      </template>
+
+      <!-- Failed API Error -->
+      <template #item-failed_error="item">
+        <div v-if="item.model?.sage_api_logs?.[0]?.response">
+          {{ truncate(item.model?.sage_api_logs[0]?.response, 80) }}
+          <x-icon @click.prevent="copyToClipboard(item.model?.sage_api_logs[0]?.response)" icon="copy"  class="text-primary cursor-pointer" size="md" />
+        </div>
+        <div v-else>
+          <span>N/A</span>
+        </div>
       </template>
 
       <!-- Updated At Column -->
@@ -293,36 +371,15 @@ function onSort(column, sortType) {
     </DataTable>
 
     <!-- Pagination -->
-    <div
-      v-if="tableData.length > 0"
-      class="mt-4 flex justify-between items-center"
-    >
-      <div class="text-sm text-gray-600">
-        Showing {{ paginationInfo.from }} to {{ paginationInfo.to }} of
-        {{ paginationInfo.total }} entries
-      </div>
-      <x-pagination
-        :current-page="paginationInfo.current_page"
-        :total-pages="paginationInfo.last_page"
-        @page-change="onPageChange"
-      />
-    </div>
-
-    <!-- Empty State -->
-    <div
-      v-if="tableData.length === 0 && !loader.table"
-      class="text-center py-12"
-    >
-      <x-icon
-        icon="documentMagnifyingGlass"
-        size="xl"
-        class="text-gray-400 mb-4"
-      />
-      <p class="text-gray-600 text-lg">No failed sage processes found</p>
-      <p class="text-gray-500 text-sm mt-2">
-        Try adjusting your search filters
-      </p>
-    </div>
+    <Pagination
+      :links="{
+        next: failedProcesses.next_page_url,
+        prev: failedProcesses.prev_page_url,
+        current: failedProcesses.current_page,
+        from: failedProcesses.from,
+        to: failedProcesses.to,
+      }"
+    />
   </div>
 </template>
 

@@ -6,9 +6,10 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
-use App\Services\Logger\LoggerService;
+use Illuminate\Http\Request;
+use App\Services\Logger\LoggerService; 
 use App\Services\SageProcessesService;
-
+use App\Exports\SageProcessesExport;
 /**
  * Controller for managing failed sage processes
  *
@@ -33,15 +34,18 @@ class SageProcessesController extends Controller
     /**
      * Display a listing of failed sage processes
      */
-    public function index(): \Inertia\Response|\Inertia\ResponseFactory
+    public function index(Request $request): \Inertia\Response|\Inertia\ResponseFactory
     {
         try {
             // Get failed sage processes data
-            $failedProcesses = $this->sageProcessesService->getFailedSageProcesses();
- 
+            $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request);
+           // dd($failedProcesses->toArray());
+            $dropdownData = $this->sageProcessesService->drowpdownData();
+
             return inertia('SageProcesses/Index', [
                 'failedProcesses' => $failedProcesses,
-                'filters' => request()->all(),
+                'filters' => request()->all(), 
+                'dropdowns' => $dropdownData,
             ]);
         } catch (\Exception $e) {
             LoggerService::error('SageProcessesController - index - Error: '.$e->getMessage(), extra: [
@@ -56,6 +60,19 @@ class SageProcessesController extends Controller
                 'filters' => request()->all(),
                 'error' => 'Failed to fetch data. Please try again.',
             ]);
+        }
+    }
+
+    public function export(Request $request)
+    {
+        try {
+            $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request, true);
+            return (new SageProcessesExport($failedProcesses))->download('sage-failed-processes.csv');
+        } catch (\Exception $e) {
+            LoggerService::error('SageProcessesController - export - Error: '.$e->getMessage(), extra: [
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 }
