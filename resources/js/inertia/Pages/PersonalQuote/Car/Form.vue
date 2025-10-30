@@ -864,7 +864,10 @@ const gender = computed(() => {
               v-model="quoteForm.chassis_number"
               class="w-full"
               type="text"
-              placeholder="Enter Chassis Number"
+              placeholder="Enter Chassis Numbers"
+              required
+              :rules="[isRequired]"
+              :error="quoteForm.errors.chassis_number"
             />
           </template>
           <template v-else>
@@ -874,10 +877,13 @@ const gender = computed(() => {
               type="text"
               label="CHASSIS NUMBER"
               placeholder="Enter Chassis Number"
-              :rules="quoteForm.chassis_number ? [chassisNumberRule] : []"
+              :rules="
+                quoteForm.chassis_number ? [chassisNumberRule] : [isRequired]
+              "
               @keypress="chassisNumberValidate('keypress')"
               @blur="chassisNumberValidate('blur')"
               :error="quoteForm.errors.chassis_number"
+              required
             />
           </template>
         </div>

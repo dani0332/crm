@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Enums\EnvEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -102,7 +101,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->uniqueKey.'-'.Carbon::now()->format('YmdHi')))->dontRelease()];
+        return [(new WithoutOverlapping($this->uniqueKey))->dontRelease()];
     }
 
     public function uniqueId(): string

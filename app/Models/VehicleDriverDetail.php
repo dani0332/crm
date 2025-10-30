@@ -36,7 +36,7 @@ class VehicleDriverDetail extends Model
         'driver_uae_driving_experience',
         'driver_home_country_license_issuance',
         'driver_home_country_driving_experience',
-        'nationality_id', 
+        'nationality_id',
     ];
     protected $casts = [
         'driver_dob' => 'date',
