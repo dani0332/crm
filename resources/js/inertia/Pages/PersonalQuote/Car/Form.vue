@@ -877,7 +877,9 @@ const gender = computed(() => {
               type="text"
               label="CHASSIS NUMBER"
               placeholder="Enter Chassis Number"
-              :rules="quoteForm.chassis_number ? [chassisNumberRule] : [isRequired]"
+              :rules="
+                quoteForm.chassis_number ? [chassisNumberRule] : [isRequired]
+              "
               @keypress="chassisNumberValidate('keypress')"
               @blur="chassisNumberValidate('blur')"
               :error="quoteForm.errors.chassis_number"
