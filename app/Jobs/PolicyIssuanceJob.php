@@ -102,7 +102,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->uniqueKey.'-'.Carbon::now()->format('YmdHi')))->dontRelease()];
+        return [(new WithoutOverlapping($this->uniqueKey))->dontRelease()];
     }
 
     public function uniqueId(): string
