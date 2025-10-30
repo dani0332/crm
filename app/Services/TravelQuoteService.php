@@ -6,6 +6,7 @@ use App\Builders\TravelQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -352,7 +353,9 @@ class TravelQuoteService extends BaseService
 
             $this->selfAssign(QuoteTypes::TRAVEL, $response->quoteUID);
 
-            SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
+            if($request->source != LeadSourceEnum::IMCRM) {
+                SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
+            }
             LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
 
             $customerId = app(CustomerService::class)->getCustomerIdByEmail($request->email);
