@@ -2348,13 +2348,6 @@ class AMLService
             $insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
             auth()->user()->can(PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
         ) {
-            if (
-                app(LeadAllocationService::class)->isCommercialVehicles($quote) ||
-                $quote->vehicle_use == CarVehicleUse::COMMERCIAL
-            ) {
-                return false;
-            }
-
             return true;
         }
 
