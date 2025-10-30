@@ -139,18 +139,17 @@ class DocumentTypeRepository extends BaseRepository
         return false;
     }
 
-
     public function fetchAreSendPolicyDocsUploaded($quoteDocuments, $quoteType, $record)
     {
         $documentTypeCodes = $this->fetchSendPolicyDocumentCodes($quoteType, $record, false);
         $docCodes = collect($documentTypeCodes)->where('is_required_for_send_policy', 1)->pluck('code')->toArray();
         $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $docCodes)->groupBy('document_type_code')->count();
         $requiredDocuments = collect($documentTypeCodes)->where('is_required_for_send_policy', 1)->pluck('text')->toArray();
-        
+
         return [
             'disabled' => $quoteDocumentsCount != count($documentTypeCodes),
             'documentTypeCodes' => $documentTypeCodes,
-            'requiredDocuments' => $requiredDocuments
+            'requiredDocuments' => $requiredDocuments,
         ];
     }
 }
