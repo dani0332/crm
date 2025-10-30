@@ -2327,7 +2327,7 @@ class SageApiService
         // 12
         $currentStep = 13;
         $isLiveApiCallStep13 = true;
-        
+
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             LoggerService::info('SAGE API :  arSplitPrepaymentPayload  Sent Already for '.$quote->code);
             $isLiveApiCallStep13 = false;
