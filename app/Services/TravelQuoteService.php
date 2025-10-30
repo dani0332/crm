@@ -353,8 +353,10 @@ class TravelQuoteService extends BaseService
 
             $this->selfAssign(QuoteTypes::TRAVEL, $response->quoteUID);
 
-            if($request->source != LeadSourceEnum::IMCRM) {
+            if($travelQuote['source'] != LeadSourceEnum::IMCRM) {
                 SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
+            }else {
+                LoggerService::info(self::class."Lead source is IMCRM so skipping SendTravelOCBIntroEmailJob");
             }
             LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
 
