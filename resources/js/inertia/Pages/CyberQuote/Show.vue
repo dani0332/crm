@@ -1508,7 +1508,6 @@ const copyLink = () => {
     />
 
     <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
       :quote="quote"
       :quoteStatusEnum="quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
