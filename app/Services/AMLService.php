@@ -6,7 +6,6 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
