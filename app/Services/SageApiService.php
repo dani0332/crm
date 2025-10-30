@@ -1131,14 +1131,14 @@ class SageApiService
                 } else {
                     LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: AR Prepayment Ready To Post batch '.$sageResponse['BatchNumber'].' :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no. ' without error');
                     if ($isLiveApiCallStep3) {
-                        LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: Logging AR Prepayment Ready To Post batch '.$sageResponse['BatchNumber'].' :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no. 'without error');
+                        LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: Logging AR Prepayment Ready To Post batch '.$sageResponse['BatchNumber'].' :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no. ' without error');
                         $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $paymentSplit, $quoteDetails, 3, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
                     }
                 }
             } else {
-                LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: AR Prepayment Ready To Post batch '.$sageResponse['BatchNumber'].' :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no. 'with empty response');
+                LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: AR Prepayment Ready To Post batch '.$sageResponse['BatchNumber'].' :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no. ' with empty response');
                 if ($isLiveApiCallStep3) {
-                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: Logging AR Prepayment Ready To Post batch '.$sageResponse['BatchNumber'].' :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no. 'with empty response');
+                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: Logging AR Prepayment Ready To Post batch '.$sageResponse['BatchNumber'].' :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no. ' with empty response');
                     $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $paymentSplit, $quoteDetails, 3, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
                 }
             }
@@ -1158,7 +1158,7 @@ class SageApiService
                 if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == SageEnum::STATUS_SUCCESS) {
                     $isLiveApiCallStep4 = false;
                     $postedResponse = json_decode($sageLogArray[4]['response'], true);
-                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  already posted :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no. 'sent already');
+                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  already posted :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no. ' sent already');
                 } else {
                     $postedResponse = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
                     $postedResponse = json_decode($postedResponse, true);
@@ -1166,7 +1166,7 @@ class SageApiService
                 }
 
                 if ($isAlreadyPosted && isset($aRPostReceipts)) {
-                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  already posted :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no. 'sent already');
+                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  already posted :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no. ' sent already');
                     $this->logSageApiCall($aRPostReceipts, $postedResponse, $paymentSplit, $quote, 4, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
                 } else {
                     if (isset($postedResponse['error'])) {
