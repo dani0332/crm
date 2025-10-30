@@ -59,6 +59,7 @@ final class InsuranceProvidersEnum extends Enum
     public const AAIC = 'AAIC';
     public const OALLIANZ = 'OALLIANZ';
     public const NHICD = 'NHICD';
+    public const AWNI = 'AWNI';
 
     public static function getTextByCode($value)
     {

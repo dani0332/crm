@@ -7,6 +7,10 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  quote_type_id: {
+    type: Number,
+    default: null,
+  },
 });
 
 const page = usePage();
@@ -15,8 +19,10 @@ const lookups = page.props.lookups;
 const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const isSyncFromInsurer = ref(false);
-const insurerName = page.props.insurerName;
-const quoteRequest = page.props.quoteRequest;
+const quote = page.props?.quoteRequest ?? page.props?.record;
+const insuranceProviderCode =
+  quote?.plan?.insurance_provider?.code ?? quote?.plan_provider_code;
+const providerCodeEnum = page.props.insuranceProviderCodeEnum;
 
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [
@@ -25,13 +31,25 @@ const driverGenderOptions = computed(() => [
 ]);
 
 const vehicleDriverDetail = computed(() => {
-  return page.props.quoteRequest?.vehicle_driver_detail;
+  return quote?.vehicle_driver_detail;
 });
 
 const formatDate = date => {
   if (!date) return '';
 
-  const dateObj = new Date(date);
+  let dateObj;
+
+  // Check if date is in DD-MM-YYYY format
+  if (typeof date === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(date)) {
+    const [day, month, year] = date.split('-');
+    dateObj = new Date(`${year}-${month}-${day}`);
+  } else {
+    dateObj = new Date(date);
+  }
+
+  // Validate the date
+  if (isNaN(dateObj.getTime())) return '';
+
   // Use local timezone to avoid date shifting
   const year = dateObj.getFullYear();
   const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -51,10 +69,9 @@ const normalizeGender = gender => {
 };
 
 const additionalDriverDetailsForm = useForm({
-  quote_type_id: page.props.quoteType.id,
-  quote_uuid: quoteRequest?.uuid,
-  source: quoteRequest?.source,
-  insurance_provider_code: quoteRequest?.plan?.insurance_provider.code ?? '',
+  quote_type_id: page.props.quoteType.id ?? props.quote_type_id,
+  quote_uuid: quote?.uuid,
+  insurance_provider_code: insuranceProviderCode ?? '',
   is_insured_and_driver_same:
     vehicleDriverDetail.value?.is_insured_and_driver_same?.toString() ?? '',
   driver_first_name: vehicleDriverDetail.value?.driver_first_name ?? '',
@@ -104,7 +121,7 @@ const submitAdditionalDriverDetailsForm = async isValid => {
           response.data.is_insured_driver_same == '0'
         ) {
           notification.success({
-            title: `Please Update Additional Drivers on ${insurerName} Portal`,
+            title: `Please Update Additional Drivers on ${insuranceProviderCode} Portal`,
             position: 'top',
             timeout: 5000,
           });
@@ -148,22 +165,22 @@ const submitAdditionalDriverDetailsForm = async isValid => {
 
 const isGIG = computed(() => {
   return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.AXA
+    quote?.plan?.insurance_provider.code === providerCodeEnum.AXA ||
+    quote?.plan_provider_code === providerCodeEnum.AXA
   );
 });
 
 const isLIVA = computed(() => {
   return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.RSA
+    quote?.plan?.insurance_provider.code === providerCodeEnum.RSA ||
+    quote?.plan_provider_code === providerCodeEnum.RSA
   );
 });
 
 const isSUKOON = computed(() => {
   return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.OIC
+    quote?.plan?.insurance_provider.code === providerCodeEnum.OIC ||
+    quote?.plan_provider_code === providerCodeEnum.OIC
   );
 });
 
@@ -227,14 +244,26 @@ watch(
   newValue => {
     // If insured and driver are the same (1 or '1'), clear the driver name fields
     if ((newValue === 1 || newValue === '1') && !isSyncFromInsurer.value) {
-      additionalDriverDetailsForm.driver_first_name = quoteRequest?.first_name;
-      additionalDriverDetailsForm.driver_last_name = quoteRequest?.last_name;
-      additionalDriverDetailsForm.driver_dob = quoteRequest?.dob;
+      additionalDriverDetailsForm.driver_first_name = quote?.first_name;
+      additionalDriverDetailsForm.driver_last_name = quote?.last_name;
+      additionalDriverDetailsForm.driver_dob = formatDate(quote?.dob);
       additionalDriverDetailsForm.driver_gender = normalizeGender(
-        quoteRequest?.gender,
+        quote?.gender,
       );
       additionalDriverDetailsForm.uae_driving_experience =
-        quoteRequest?.uae_license_held_for?.rsa_driving_experience;
+        quote?.uae_license_held_for?.rsa_driving_experience;
+    } else if (newValue === 0 || newValue === '0') {
+      additionalDriverDetailsForm.driver_first_name = '';
+      additionalDriverDetailsForm.driver_last_name = '';
+      additionalDriverDetailsForm.driver_dob = '';
+      additionalDriverDetailsForm.driver_gender = null;
+      additionalDriverDetailsForm.driver_license_number = null;
+      additionalDriverDetailsForm.license_issue_place = null;
+      additionalDriverDetailsForm.license_issue_date = null;
+      additionalDriverDetailsForm.license_expiry_date = null;
+      additionalDriverDetailsForm.uae_driving_experience = null;
+      additionalDriverDetailsForm.home_country_license_issuance = null;
+      additionalDriverDetailsForm.home_country_driving_experience = null;
     }
   },
 );
@@ -342,6 +371,7 @@ watch(
           :disabled="hasNotEditPermission"
           label="Driver DOB"
           :tooltip="'Date of birth of the driver'"
+          :teleport="false"
         />
 
         <x-select
@@ -386,6 +416,7 @@ watch(
           :disabled="hasNotEditPermission"
           label="License Issue Date"
           :tooltip="`Date of issuance of the current driver's license`"
+          :teleport="false"
         />
 
         <DatePicker
@@ -396,6 +427,7 @@ watch(
           :disabled="hasNotEditPermission"
           label="License Expiry Date"
           :tooltip="`Expiry date of the current driver's license`"
+          :teleport="false"
         />
 
         <!-- TODO: Required only if 'Driver same as Client?' is NO -->

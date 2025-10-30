@@ -37,7 +37,12 @@ class DatabaseSeeder extends Seeder
             BorDocumentSeeder::class,
             AutomationSeeder::class,
             TravelLeadAllocationDashboardSeeder::class,
+            VehicleColorSeeder::class,
             SendUpdateNotesSeeder::class,
+            NonApiInsurerVehicleColorSeeder::class,
+            NonApiInsurerMortgageBySeeder::class,
+            UpdateTooltipCarDocuments::class,
+            CarAdditionalDetailsForSukoonSeeder::class,
         ]);
     }
 }
