@@ -958,14 +958,24 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             if (isset($response['data'])) {
                 $responseData = $response['data'];
 
-                // Extract driver name parts for first and last name
-                $driverName = $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverName'] ?? '';
+                $additionalDriverDetails = $responseData['DriverDetails'][0]['AdditionalDriverDetails'] ?? [];
+                $isMultipleDriver = ! empty($additionalDriverDetails) && is_array(reset($additionalDriverDetails));
+
+                if ($isMultipleDriver) {
+                    $mainDriver = array_values(array_filter($additionalDriverDetails, function ($driver) {
+                        return ($driver['MainDriverInd'] ?? '') === 'Y';
+                    }))[0] ?? [];
+                } else {
+                    $mainDriver = $additionalDriverDetails;
+                }
+
+                $driverName = $mainDriver['DriverName'] ?? '';
                 $nameParts = explode(' ', $driverName, 2);
                 $driverFirstName = $nameParts[0] ?? '';
                 $driverLastName = $nameParts[1] ?? '';
 
                 $vehicleDriverDetailsData = [
-                    'is_insured_and_driver_same' => ($responseData['DriverDetails'][0]['AdditionalDriverDetails']['MainDriverInd'] ?? '') === 'Y' ? '1' : '0',
+                    'is_insured_and_driver_same' => $isMultipleDriver ? '0' : '1',
                     'rta_transaction_type' => (string) ($responseData['VehicleDetails']['RtaTransactionType'] ?? ''),
                     'vehicle_plate_code' => $responseData['VehicleDetails']['RegnNoText'] ?? '', // optional
                     'vehicle_plate_number' => $responseData['VehicleDetails']['RegnNoNumber'] ?? '', // optional
@@ -979,13 +989,13 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     'first_registration_date' => $responseData['VehicleDetails']['DateOfRegn'] ?? '',
                     'driver_first_name' => $driverFirstName, // optional
                     'driver_last_name' => $driverLastName, // optional
-                    'driver_dob' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverDOB'] ?? '', // optional
-                    'driver_gender' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverGender'] === 'M' ? 'male' : 'female',
-                    'driver_license_number' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['LicenseNo'] ?? '',
-                    'driver_license_issue_place' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
-                    'driver_uae_driving_experience' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['LocalLicense'] ?? 0, // optional
-                    'driver_home_country_license_issuance' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
-                    'driver_home_country_driving_experience' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['OtherLicense'] ?? 0, // optional
+                    'driver_dob' => $mainDriver['DriverDOB'] ?? '', // optional
+                    'driver_gender' => ($mainDriver['DriverGender'] ?? '') === 'M' ? 'male' : 'female',
+                    'driver_license_number' => $mainDriver['LicenseNo'] ?? '',
+                    'driver_license_issue_place' => (string) ($mainDriver['FirstDrvLicCountry'] ?? ''), // optional
+                    'driver_uae_driving_experience' => (string) ($mainDriver['LocalLicense'] ?? 0), // optional
+                    'driver_home_country_license_issuance' => (string) ($mainDriver['FirstDrvLicCountry'] ?? ''), // optional
+                    'driver_home_country_driving_experience' => (string) ($mainDriver['OtherLicense'] ?? 0), // optional
                 ];
 
                 $quoteDetailsData = [
