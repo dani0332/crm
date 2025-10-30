@@ -351,16 +351,16 @@ class SageApiEmbeddedProductService
                         return $response;
                     }
                 } else {
-                    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code. ' without error');
+                    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code.' without error');
                     if ($isLiveApiCallStep2) {
-                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: Logging AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code. ' without error');
+                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: Logging AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code.' without error');
                         $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                     }
                 }
             } else {
-                LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code. ' with empty response');
+                LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code.' with empty response');
                 if ($isLiveApiCallStep2) {
-                    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: Logging AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code. ' with empty response');
+                    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: Logging AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code.' with empty response');
                     $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                 }
             }
@@ -372,7 +372,7 @@ class SageApiEmbeddedProductService
             if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep3 = false;
                 $postedResponse = json_decode($sageLogArray[3]['response'], true);
-                LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  already posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code. ' sent already');
+                LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  already posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code.' sent already');
             } else {
                 $postedResponse = $this->sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
                 $postedResponse = json_decode($postedResponse, true);
@@ -396,9 +396,9 @@ class SageApiEmbeddedProductService
 
                     return $response;
                 } else {
-                    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: Logging AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code. ' without error');
+                    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: Logging AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code.' without error');
                     if ($isLiveApiCallStep3) {
-                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: Logging AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code. ' without error');
+                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: Logging AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code.' without error');
                         $this->logSageApiCall($aRPostReceipts, $postedResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                     }
                 }
