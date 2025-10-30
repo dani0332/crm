@@ -599,7 +599,11 @@ if (! function_exists('getQueryForLogWithBindings')) {
 if (! function_exists('formatMobileNo')) {
     function formatMobileNo($mobile)
     {
-        return preg_replace('/^(?:\+?971|0)?/', '+971', str_replace(' ', '', $mobile));
+        // Sanitize mobile number: remove all non-digit characters
+        $mobile = preg_replace('/[^0-9]/', '', trim($mobile));
+
+        // Remove leading 971 or 0, then add +971 prefix
+        return preg_replace('/^(?:971|0)?/', '+971', $mobile);
     }
 }
 
@@ -1131,7 +1135,9 @@ if (! function_exists('isValidDate')) {
     {
         return ! empty($date)
             && $date != '0000-00-00 00:00:00'
-            && $date != '0000-00-00';
+            && $date != '0000-00-00'
+            && strtolower($date) != 'nan'
+            && strtolower($date) != 'null';
     }
 }
 
@@ -1259,15 +1265,6 @@ if (! function_exists('transformKeys')) {
         }
 
         return $result;
-    }
-}
-
-if (! function_exists('isValidDate')) {
-    function isValidDate($date): bool
-    {
-        return ! empty($date)
-            && $date != '0000-00-00 00:00:00'
-            && $date != '0000-00-00';
     }
 }
 
