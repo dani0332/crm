@@ -262,7 +262,7 @@ class SageApiEmbeddedProductService
             QuoteTag::create([
                 'quote_type_id' => $quoteTypeId,
                 'quote_uuid' => $quote->uuid,
-                'name' => QuoteTagEnums::EMBEDDED_PRODUCT_BOOKED_ON_SAGE,
+                'name' => $tagName,
                 'value' => 1,
             ]);
 
