@@ -1384,12 +1384,16 @@ class CentralService extends BaseService
         }
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
 
-        // Get insurance provider details
-        $insuranceProvider = getInsuranceProvider($payment, $quoteType, $quote);
-        $insuranceProviderId = $insuranceProvider ? $insuranceProvider->id : null;
+        if ($sendUpdateLog) {
+            [$insuranceProviderId, $planId] = app(SendUpdateLogService::class)->getProviderDetails($quote, $quoteTypeId, true);
+            $insuranceProvider = InsuranceProvider::find($insuranceProviderId);
+        } else {
+            $insuranceProvider = getInsuranceProvider($payment, $quoteType, $quote);
+            $insuranceProviderId = $insuranceProvider ? $insuranceProvider->id : null;
+        }
 
         // Get broker commission details
-        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId, $quote);
+        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId, $quote, $sendUpdateLog);
 
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsuranceProviderEnum::AXA->value;    // GIG_INSURANCE
         $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsuranceProviderEnum::ADNIC->value && $quoteTypeId == QuoteTypeId::Health;    // ABU_DHABI_NATIONAL_INSURANCE
