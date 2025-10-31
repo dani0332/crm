@@ -41,8 +41,10 @@ class DatabaseSeeder extends Seeder
             SendUpdateNotesSeeder::class,
             NonApiInsurerVehicleColorSeeder::class,
             NonApiInsurerMortgageBySeeder::class,
+            InsurancePlateCodeSeeder::class,
             UpdateTooltipCarDocuments::class,
             CarAdditionalDetailsForSukoonSeeder::class,
+            QICTokioLookupSeeder::class
         ]);
     }
 }
