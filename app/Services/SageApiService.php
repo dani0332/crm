@@ -2464,7 +2464,7 @@ class SageApiService
         }
 
         $batchNumber = $postedResponse['BatchNumber'];
-            LoggerService::info('Apply Payment Receipt batch number - '.$batchNumber);
+        LoggerService::info('Apply Payment Receipt batch number - '.$batchNumber);
         // 14
         $currentStep = 14;
         $isLiveApiCallStep14 = true;
