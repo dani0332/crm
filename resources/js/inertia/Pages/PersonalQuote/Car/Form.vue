@@ -10,6 +10,8 @@ const props = defineProps({
   },
   quoteStatusEnums: Array,
   isEpEcbPaymentPaid: Boolean,
+  ecbExcludedCarMakeCodes: Array,
+  ecbExcludedCarModelCodes: Array,
 });
 
 const { isRequired, isEmail, maxValue } = useRules();
@@ -257,6 +259,29 @@ const handleModalCancel = () => {
 };
 
 function onSubmit(isValid) {
+  // Check if customer has an active ECB transaction that requires confirmation
+  if (props.isEpEcbPaymentPaid && !modals.isConfirmed) {
+    let selectedCarMakeInfo = findCarMakeInfo(quoteForm.car_make_id);
+    let selectedCarModelInfo = findCarModelInfo(quoteForm.car_model_id);
+
+    if (
+      (quoteForm.registration_type === carRegistrationTypeEnum.COMPANY &&
+        quoteForm.vehicle_use === carVehicleUseEnum.COMMERCIAL) ||
+      (selectedCarMakeInfo &&
+        props.ecbExcludedCarMakeCodes.includes(
+          parseInt(selectedCarMakeInfo?.code),
+        )) ||
+      (selectedCarModelInfo &&
+        props.ecbExcludedCarModelCodes.includes(
+          parseInt(selectedCarModelInfo?.code),
+        ))
+    ) {
+      modals.confirmationMessage = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
+      modals.showConfirmationModal = true;
+      return;
+    }
+  }
+
   // Validate required fields
   if (
     quoteForm.nationality_id == null ||
@@ -269,14 +294,13 @@ function onSubmit(isValid) {
 
   if (!isValid) return;
 
-  // Check if customer has an active ECB transaction that requires confirmation
-  if (props.isEpEcbPaymentPaid && !modals.isConfirmed) {
-    modals.confirmationMessage = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
-    modals.showConfirmationModal = true;
-    return;
-  }
-
   proceedWithSubmission();
+}
+function findCarMakeInfo(id) {
+  return props.dropdownSource.car_make_id.find(item => item.id === id);
+}
+function findCarModelInfo(id) {
+  return props.dropdownSource.car_model_id.find(item => item.id === id);
 }
 
 const clearFormValues = () => {
@@ -840,7 +864,10 @@ const gender = computed(() => {
               v-model="quoteForm.chassis_number"
               class="w-full"
               type="text"
-              placeholder="Enter Chassis Number"
+              placeholder="Enter Chassis Numbers"
+              required
+              :rules="[isRequired]"
+              :error="quoteForm.errors.chassis_number"
             />
           </template>
           <template v-else>
@@ -850,10 +877,13 @@ const gender = computed(() => {
               type="text"
               label="CHASSIS NUMBER"
               placeholder="Enter Chassis Number"
-              :rules="quoteForm.chassis_number ? [chassisNumberRule] : []"
+              :rules="
+                quoteForm.chassis_number ? [chassisNumberRule] : [isRequired]
+              "
               @keypress="chassisNumberValidate('keypress')"
               @blur="chassisNumberValidate('blur')"
               :error="quoteForm.errors.chassis_number"
+              required
             />
           </template>
         </div>

@@ -6,7 +6,6 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
@@ -22,6 +21,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -42,6 +42,7 @@ use App\Models\CycleQuote;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\InsuranceProvider;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\JetskiQuote;
@@ -907,8 +908,6 @@ class AMLService
 
         try {
             $insuredDetails = $insuredPersonDetails?->insured;
-            // $insuredKycDetails = $insuredDetails?->insuredKyc;
-
             $insurerScreeningPayload = [
                 'quoteUID' => $quoteDetails->uuid,
                 'quoteTypeId' => (int) $quoteTypeId,
@@ -917,7 +916,7 @@ class AMLService
                     'expiryDate' => ($request['id_expiry_date'] ?? $insuredPersonDetails?->customer?->emirates_id_expiry_date) ?? null,
                 ],
                 'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
-                'chassisNumber' => $request['chassis_number'] ?? '', // TODO: need to remove this.
+                'chassisNumber' => $request['chassis_number'] ?? '',
                 'gender' => $this->formatGender($insuredDetails?->gender),
                 'dateOfBirth' => $insuredDetails?->dob,
                 'getQuoteEmail' => $request['get_quote_email_gig'],
@@ -2350,13 +2349,6 @@ class AMLService
             $insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
             auth()->user()->can(PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
         ) {
-            if (
-                app(LeadAllocationService::class)->isCommercialVehicles($quote) ||
-                $quote->vehicle_use == CarVehicleUse::COMMERCIAL
-            ) {
-                return false;
-            }
-
             return true;
         }
 
@@ -2414,7 +2406,25 @@ class AMLService
         }
     }
 
-    public function getAdditionaVehicleDriverLookups($quoteTypeCode, $insuranceProviderId)
+    public function isAdditionalVehicleAndDriverDetailsEnabled($quoteTypeCode, $insuranceProviderId, $vehicleRegistrationType, $detailPage = false)
+    {
+        if (! ($quoteTypeCode == quoteTypeCode::Car && $vehicleRegistrationType == CarRegistrationType::PERSONAL)) {
+            return false;
+        }
+
+        if ($detailPage) {
+            return true;
+        }
+
+        if (is_numeric($insuranceProviderId)) {
+            $insuranceProviderId = InsuranceProvider::where('id', $insuranceProviderId)->first()->code;
+        }
+
+        // Remove LIVA before STAGE.
+        return in_array($insuranceProviderId, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA]);
+    }
+
+    public function getAdditionaVehicleDriverLookups($quoteTypeCode, $insuranceProviderId, $leadSource)
     {
         if ($quoteTypeCode != quoteTypeCode::Car || is_null($insuranceProviderId)) {
             return [];
@@ -2426,14 +2436,66 @@ class AMLService
             $insuranceProviderCode = $insuranceProviderId;
         }
 
-        // for GIG
-        if (in_array($insuranceProviderCode, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA])) {
+        // for LIVA
+        if ($insuranceProviderCode == InsuranceProvidersEnum::RSA) {
+            return app(LivaInsuranceService::class)->getLIVALookups($leadSource);
+        }
+
+        // for GIG and other insurers
+        if (in_array($insuranceProviderCode, [
+            InsuranceProvidersEnum::AXA,
+            InsuranceProvidersEnum::QIC,
+            InsuranceProvidersEnum::OIC,
+            InsuranceProvidersEnum::TM,
+            InsuranceProvidersEnum::RAK,
+            InsuranceProvidersEnum::DNIRC,
+            InsuranceProvidersEnum::AMJ,
+            InsuranceProvidersEnum::FID,
+            InsuranceProvidersEnum::NT,
+            InsuranceProvidersEnum::AFNIC,
+            InsuranceProvidersEnum::AWNI,
+        ])) {
             return $this->getAMLLookups($insuranceProviderId, [
                 LookupsEnum::RTA_TRANSACTION_TYPE,
                 LookupsEnum::RTA_PLATE_CATEGORY,
                 LookupsEnum::VEHICLE_COLOR,
                 LookupsEnum::BANK_NAME,
+                LookupsEnum::PLATE_CODE,
             ])->toArray();
+        }
+
+        return [];
+    }
+
+    public function getRTATransactionConfigurations($quoteTypeCode)
+    {
+        if ($quoteTypeCode == quoteTypeCode::Car) {
+            $rtaService = app(RtaTransactionTypeService::class);
+
+            // Get all RTA transaction types with their configurations
+            $rtaTransactionTypes = [
+                'RTT01' => 'New Vehicle Registration',
+                'RTT03' => 'Change Vehicle Ownership',
+                'RTT04' => 'Vehicle Renewal',
+            ];
+
+            $rtaConfigurationData = [
+                'rta_transaction_types' => $rtaTransactionTypes,
+                'rta_field_configurations' => [],
+                'rta_validation_summaries' => [],
+            ];
+
+            // Pre-generate configurations for all RTA types and both GIG/Non-GIG scenarios
+            foreach (array_keys($rtaTransactionTypes) as $rtaType) {
+                foreach ([false, true] as $isGigRenewal) {
+                    $configKey = $rtaType.($isGigRenewal ? '_GIG' : '');
+
+                    $rtaConfigurationData['rta_field_configurations'][$configKey] = $rtaService->getFrontendFieldConfig($rtaType, $isGigRenewal);
+                    $rtaConfigurationData['rta_validation_summaries'][$configKey] = $rtaService->getValidationSummary($rtaType, $isGigRenewal);
+                }
+            }
+
+            return $rtaConfigurationData;
         }
 
         return [];

@@ -1143,7 +1143,9 @@ class SendUpdateLogService
             $sageProcessData['model_type'] = $quote::class;
             $sageProcessData['model_id'] = $quote->id;
             $response = $sageScheduleResponse = SageProcess::create($sageProcessData);
-            $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
+            if ($quote->status != SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
+                $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
+            }
             info('fn:updateSageProcessForDispatching - Sage process scheduled Successfully');
         }
 

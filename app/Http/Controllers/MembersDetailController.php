@@ -11,6 +11,7 @@ use App\Models\CustomerMembers;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Services\LookupService;
+use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 
@@ -50,7 +51,7 @@ class MembersDetailController extends Controller
             unset($quoteMemberDetails['quote_request_id']);
             unset($quoteMemberDetails['pec']);
 
-            if ($quoteMemberDetails['first_name'] == null && $quoteMemberDetails['last_name'] == null) {
+            if (empty($quoteMemberDetails['first_name']) && empty($quoteMemberDetails['last_name'])) {
                 $quoteMemberCount = CustomerMembers::where([
                     'customer_type' => $request->customer_type,
                     'customer_entity_id' => $customerEntityId,
@@ -144,6 +145,7 @@ class MembersDetailController extends Controller
             $quoteObject->save();
 
             $memberDetail = $memberDetail->load(['relation', 'nationality']);
+            app(TravelQuoteService::class)->updateCustomerProfileDetails($request->quote_type, $quoteObject->uuid);
 
             if (isset($request->from_aml_model)) {
                 return response()->json(['status' => true, 'message' => 'Updated', 'data' => $memberDetail]);
