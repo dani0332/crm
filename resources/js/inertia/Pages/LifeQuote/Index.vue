@@ -17,6 +17,7 @@ defineProps({
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 let params = useUrlSearchParams('history');
 
 const hasRole = role => useHasRole(role);
@@ -781,7 +782,7 @@ const onLeadConfirmed = () => {
           </template>
         </x-select>
 
-        
+
 
         <DatePicker
           v-model="filters.policy_expiry_date"
@@ -1172,6 +1173,7 @@ const onLeadConfirmed = () => {
       v-model="createLeadModal"
       :sub-sources="subSources"
       route-name="life-quotes-create"
+      :team-names-enum="teamNamesEnum"
       @confirmed="onLeadConfirmed"
     />
   </div>

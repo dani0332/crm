@@ -21,6 +21,7 @@ defineProps({
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const hasAnyRole = role => useHasAnyRole(role);
 const canAny = permissions => useCanAny(permissions);
 const rolesEnum = page.props.rolesEnum;
@@ -574,7 +575,7 @@ const validateDateRange = () => {
           multi-calendars
           multi-calendars-solo
         />
-        
+
         <DatePicker
           v-model="filters.last_modified_date"
           name="created_at_start"
@@ -735,6 +736,7 @@ const validateDateRange = () => {
       v-model="createLeadModal"
       :sub-sources="subSources"
       route-name="savings-quotes-create"
+      :team-names-enum="teamNamesEnum"
       @confirmed="onLeadConfirmed"
     />
   </div>

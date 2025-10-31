@@ -32,6 +32,10 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
+
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPCPTeam = useHasAnyTeam([{ name: teamNamesEnum.PCP }]);
+
 const carRegistrationTypeEnum = page.props.carRegistrationType;
 const carVehicleUseEnum = page.props.carVehicleUse;
 const amlStatusEnum = page.props.amlStatusEnum;
@@ -493,10 +497,12 @@ const subSourceOptionOptions = computed(() => {
   );
   if (!selectedSubSource || !selectedSubSource.childs) return [];
 
+  const pcpOnlyOptions = ['pcp-cross-sell', 'pcp-customer-referral'];
   return selectedSubSource.childs.map(child => ({
     value: child.id, // Keep as integer to match form data type
     label: child.text,
     suffix: child.description || null,
+    disabled: !isPCPTeam.value && pcpOnlyOptions.includes(String(child.code)),
   }));
 });
 

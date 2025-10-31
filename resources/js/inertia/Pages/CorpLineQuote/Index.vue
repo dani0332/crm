@@ -16,6 +16,7 @@ defineProps({
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -801,7 +802,7 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
 
-        
+
 
         <DatePicker
           v-model="filters.policy_expiry_date"
@@ -1157,6 +1158,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model="createLeadModal"
       :sub-sources="subSources || []"
       route-name="business.create"
+      :team-names-enum="teamNamesEnum"
       @confirmed="onLeadConfirmed"
     />
   </div>

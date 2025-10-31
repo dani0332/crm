@@ -83,12 +83,15 @@ const subSourceOptionOptions = computed(() => {
   const selectedSubSource = props.subSources?.find(
     source => source.id == quoteForm.sub_source_id,
   );
+  const pcpOnlyOptions = ['pcp-cross-sell', 'pcp-customer-referral'];
   return (
     selectedSubSource?.childs?.map(option => ({
       value: option.id,
       label: option.text,
       code: option.code,
       suffix: option.description || null,
+      disabled:
+        !isPCPTeam.value && pcpOnlyOptions.includes(String(option.code)),
     })) || []
   );
 });
@@ -108,6 +111,8 @@ const isEcomLeadExtension = computed(() => {
 });
 
 const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPCPTeam = useHasAnyTeam([{ name: teamNamesEnum.PCP }]);
 const canEditSubSourceFields = computed(() => {
   return useHasAnyRole([
     rolesEnum.GMManager,

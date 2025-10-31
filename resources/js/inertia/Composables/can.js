@@ -41,3 +41,17 @@ export const useCanAny = permissions => {
 
   return hasPermission;
 };
+
+export const useHasAnyTeam = teams => {
+  const allTeams = usePage().props.auth?.teams || [];
+
+  if (!Array.isArray(teams) || teams.length === 0) {
+    return false;
+  }
+
+  const teamNames = allTeams.map(t => t?.name).filter(Boolean);
+
+  return teams.some(team => {
+    return team && typeof team === 'object' && typeof team.name === 'string' && teamNames.includes(team.name);
+  });
+};

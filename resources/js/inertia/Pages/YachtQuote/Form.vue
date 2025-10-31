@@ -60,12 +60,15 @@ const subSourceOptionOptions = computed(() => {
   const selectedSubSource = props.subSources?.find(
     source => source.id == quoteForm.sub_source_id,
   );
+  const pcpOnlyOptions = ['pcp-cross-sell', 'pcp-customer-referral'];
   return (
     selectedSubSource?.childs?.map(option => ({
       value: option.id,
       label: option.text,
       code: option.code, // Include the code property for showPartnerNameField
       suffix: option.description || null,
+      disabled:
+        !isPCPTeam.value && pcpOnlyOptions.includes(String(option.code)),
     })) || []
   );
 });
@@ -85,6 +88,8 @@ const canEditSubSourceFields = computed(() => {
 });
 
 const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPCPTeam = useHasAnyTeam([{ name: teamNamesEnum.PCP }]);
 
 // Watchers for field resets and partner name handling
 watch(
@@ -192,7 +197,7 @@ const gender = computed(() => {
           </template>
         </x-select>
 
-        
+
         <x-input
           v-model="quoteForm.first_name"
           type="text"

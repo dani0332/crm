@@ -30,6 +30,9 @@ const notification = useNotifications('toast');
 const params = useUrlSearchParams('history');
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+
+const teamNamesEnum = page.props.teamNamesEnum;
+
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const carRegistrationTypeEnum = page.props.carRegistrationType;
@@ -1078,7 +1081,7 @@ const onConfirmPUAExport = () => {
           class="w-full"
           filterable
         />
-        
+
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
@@ -1583,6 +1586,7 @@ const onConfirmPUAExport = () => {
       v-model="createLeadModal"
       route-name="car.create"
       :sub-sources="subSources"
+      :team-names-enum="teamNamesEnum"
       @confirmed="onLeadConfirmed"
     />
 

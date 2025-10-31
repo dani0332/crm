@@ -18,6 +18,7 @@ defineProps({
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const loader = reactive({
   table: false,
   export: false,
@@ -854,6 +855,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model="createLeadModal"
       route-name="bike-quotes-create"
       :sub-sources="subSources"
+      :team-names-enum="teamNamesEnum"
       @confirmed="onLeadConfirmed"
     />
   </div>

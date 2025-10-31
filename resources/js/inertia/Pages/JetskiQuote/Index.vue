@@ -19,6 +19,7 @@ defineProps({
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const loader = reactive({
   table: false,
   export: false,
@@ -559,7 +560,7 @@ const onLeadConfirmed = () => {
           </template>
         </x-select>
 
-        
+
 
         <DatePicker
           v-model="filters.policy_expiry_date"
@@ -815,6 +816,7 @@ const onLeadConfirmed = () => {
       v-model="createLeadModal"
       :sub-sources="subSources"
       route-name="jetski-quotes-create"
+      :team-names-enum="teamNamesEnum"
       @confirmed="onLeadConfirmed"
     />
   </div>

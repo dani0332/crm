@@ -76,11 +76,13 @@ const subSourceOptionOptions = computed(() => {
   );
   if (!selectedSource || !selectedSource.childs) return [];
 
+  const pcpOnlyOptions = ['pcp-cross-sell', 'pcp-customer-referral'];
   return selectedSource.childs.map(child => ({
     value: child.id,
     label: child.text,
     code: child.code,
     suffix: child.description || null,
+    disabled: !isPCPTeam.value && pcpOnlyOptions.includes(String(child.code)),
   }));
 });
 
@@ -103,6 +105,9 @@ const canEditSubSourceFields = computed(() => {
     rolesEnum.LeadPool,
   ]);
 });
+
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPCPTeam = useHasAnyTeam([{ name: teamNamesEnum.PCP }]);
 
 const quoteForm = useForm({
   first_name: props.quote?.first_name || '',

@@ -21,6 +21,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 
 const hasRole = role => useHasRole(role);
 
@@ -815,7 +816,7 @@ const insurerAMLStatusOption = computed(() => {
           format="dd-MM-yyyy"
         />
 
-        
+
 
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
@@ -1057,6 +1058,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model="createLeadModal"
       route-name="pet-quotes-create"
       :sub-sources="subSources"
+      :team-names-enum="teamNamesEnum"
       @confirmed="onLeadConfirmed"
     />
   </div>

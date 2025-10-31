@@ -19,6 +19,7 @@ defineProps({
 
 const canExport = ref(false);
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
 const { isRequired } = useRules();
@@ -705,7 +706,7 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
 
-        
+
 
         <x-input
           v-model="filters.previous_quote_policy_number"
@@ -829,6 +830,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model="createLeadModal"
       :sub-sources="subSources || []"
       route-name="amt.create"
+      :team-names-enum="teamNamesEnum"
       @confirmed="onLeadConfirmed"
     />
 

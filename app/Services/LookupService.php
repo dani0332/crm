@@ -253,14 +253,7 @@ class LookupService extends BaseService
 
     public function getSubSource()
     {
-        $isPCP = auth()->user()->hasTeam(TeamNameEnum::PCP);
-        $lookups = Lookup::with(['childs' => function ($q) use ($isPCP) {
-            if (! $isPCP) {
-                $q->whereNotIn('code', ['pcp-cross-sell', 'pcp-customer-referral']);
-            }
-
-            return $q;
-        }])->where([
+        $lookups = Lookup::with(['childs'])->where([
             'key' => LookupsEnum::SUB_SOURCE,
             'is_active' => 1,
         ])->get();

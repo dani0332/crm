@@ -5,6 +5,8 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPCPTeam = useHasAnyTeam([{ name: teamNamesEnum.PCP }]);
 
 const props = defineProps({
   genderOptions: Object,
@@ -79,11 +81,13 @@ const subSourceOptionOptions = computed(() => {
   const selectedSubSource = props.subSources?.find(
     source => source.id == quoteForm.sub_source_id,
   );
+  const pcpOnlyOptions = ['pcp-cross-sell', 'pcp-customer-referral'];
   return (
     selectedSubSource?.childs?.map(child => ({
       value: child.id,
       label: child.text,
       suffix: child.description || null,
+      disabled: !isPCPTeam.value && pcpOnlyOptions.includes(String(child.code)),
     })) || []
   );
 });
@@ -402,7 +406,7 @@ const chassisNumberRule = v => {
           </template>
         </x-select>
 
-        
+
 
         <x-input
           label="FIRST NAME"

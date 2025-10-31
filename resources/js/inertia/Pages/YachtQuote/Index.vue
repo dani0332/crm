@@ -21,6 +21,7 @@ defineProps({
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
@@ -823,7 +824,7 @@ const onLeadConfirmed = () => {
           class="w-full"
           :single="true"
         />
-        
+
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -989,6 +990,7 @@ const onLeadConfirmed = () => {
       v-model="createLeadModal"
       :sub-sources="subSources"
       route-name="yacht-quotes-create"
+      :team-names-enum="teamNamesEnum"
       @confirmed="onLeadConfirmed"
     />
   </div>

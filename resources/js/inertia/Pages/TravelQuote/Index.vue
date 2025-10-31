@@ -38,6 +38,7 @@ const rules = {
 const quotesSelected = ref([]);
 const canExport = ref(false);
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const createLeadModal = ref(false);
 
 const onLeadConfirmed = () => {
@@ -98,7 +99,7 @@ const filters = reactive({
   age_group: 'all',
   authorize_date: '',
   captured_date: '',
-  
+
 });
 
 const loader = reactive({
@@ -1051,7 +1052,7 @@ const calculateAge = dateOfBirth => {
           placeholder="Insurer Commission Tax Invoice No"
         />
 
-        
+
 
         <x-select
           v-model="filters.api_issuance_status_id"
@@ -1417,6 +1418,7 @@ const calculateAge = dateOfBirth => {
       v-model="createLeadModal"
       route-name="travel.create"
       :sub-sources="subSources"
+      :team-names-enum="teamNamesEnum"
       @confirmed="onLeadConfirmed"
     />
   </div>

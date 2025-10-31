@@ -26,6 +26,7 @@ defineProps({
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const notification = useToast();
 
 const hasRole = role => useHasRole(role);
@@ -215,7 +216,7 @@ const filters = reactive({
   pec_flag: 'all',
   authorize_date: '',
   captured_date: '',
-  
+
 });
 
 const canExport = ref(false);
@@ -1002,7 +1003,7 @@ const onLeadConfirmed = leadData => {
           class="w-full"
         />
 
-        
+
 
         <x-select
           v-if="
@@ -1388,6 +1389,7 @@ const onLeadConfirmed = leadData => {
       v-model="createLeadModal"
       route-name="health.create"
       :sub-sources="subSources"
+      :team-names-enum="teamNamesEnum"
       @confirmed="onLeadConfirmed"
     />
   </div>

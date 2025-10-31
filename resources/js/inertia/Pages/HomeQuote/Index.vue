@@ -16,6 +16,7 @@ defineProps({
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -773,7 +774,7 @@ const formatDate = dateString =>
             />
           </template>
         </x-select>
-        
+
         <DatePicker
           v-model="filters.policy_expiry_date"
           name="policy_expiry_date"
@@ -1134,6 +1135,7 @@ const formatDate = dateString =>
       v-model="createLeadModal"
       route-name="home-quotes-create"
       :sub-sources="subSources"
+      :team-names-enum="teamNamesEnum"
       @confirmed="onLeadConfirmed"
     />
   </div>

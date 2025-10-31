@@ -12,6 +12,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  teamNamesEnum: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 
 const emit = defineEmits(['update:modelValue', 'confirmed']);
@@ -28,6 +32,9 @@ const isModalOpen = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
 });
+
+// Team checks
+const isPCPTeam = useHasAnyTeam([{ name: props.teamNamesEnum?.PCP }]);
 
 const onConfirmCreateLead = isValid => {
   if (!isValid) return;
@@ -78,12 +85,14 @@ const subSourceChildOptions = computed(() => {
   );
   if (!selectedSource || !selectedSource.childs) return [];
 
+  const pcpOnlyOptions = ['pcp-cross-sell', 'pcp-customer-referral'];
   return selectedSource.childs.map(child => ({
     value: child.id,
     label: child.text,
     code: child.code,
     suffix:
       child.description || null , // Add tooltip support
+    disabled: !isPCPTeam.value && pcpOnlyOptions.includes(String(child.code)),
   }));
 });
 

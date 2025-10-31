@@ -39,6 +39,7 @@ use App\Enums\RolesEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Enums\TeamNameEnum;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
@@ -99,10 +100,14 @@ class HandleInertiaRequests extends Middleware
                 : null,
             'auth.permissions' => fn () => $permissions,
             'auth.roles' => fn () => $roles,
+            'auth.teams' => fn () => $request->user()
+                ? $request->user()->teams()->get()->select('id', 'name')
+                : [],
             'sidebar' => fn () => $this->buildNavigation()->tree(),
             'location' => fn () => $request->url(),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
+            'teamNamesEnum' => TeamNameEnum::asArray(),
             'insuranceProviderCodeEnum' => InsuranceProviderEnum::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'documentTypeEnum' => DocumentTypeEnum::asArray(),

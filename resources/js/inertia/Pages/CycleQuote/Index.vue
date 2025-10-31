@@ -21,6 +21,7 @@ defineProps({
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const notification = useNotifications('toast');
 const loader = reactive({
   table: false,
@@ -840,7 +841,7 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           :single="true"
         />
-        
+
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -997,6 +998,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model="createLeadModal"
       route-name="cycle-quotes-create"
       :sub-sources="subSources"
+      :team-names-enum="teamNamesEnum"
       @confirmed="onLeadConfirmed"
     />
   </div>
