@@ -96,6 +96,7 @@ class InstallmentReportExport implements CsvExportableInterface
             'Travel Coverage',
             'Traveling Where',
             'IMCRM SUB-SOURCE',
+            'SUB SOURCE OPTIONS',
         ];
     }
 
@@ -154,6 +155,7 @@ class InstallmentReportExport implements CsvExportableInterface
             $quote->travel_coverage ?? 'N/A',
             $quote->traveling_where ?? 'N/A',
             $quote->sub_source ?? 'N/A',
+            $quote->sub_source_option ?? 'N/A',
         ]);
 
         foreach ($this->columnTotals as $index => $field) {
