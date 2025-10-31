@@ -38,7 +38,7 @@ class SageProcessesController extends Controller
         try {
             // Get failed sage processes data
             $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request);
-            $dropdownData = $this->sageProcessesService->drowpdownData();
+            $dropdownData = $this->sageProcessesService->dropdownData();
 
             return inertia('SageProcesses/Index', [
                 'failedProcesses' => $failedProcesses,

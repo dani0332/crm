@@ -5,21 +5,22 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\EmbeddedTransaction;
+use App\Models\InsuranceProvider;
 use App\Models\PaymentSplits;
+use App\Models\QuoteType;
 use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
-use Illuminate\Http\Request;
 use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
-use App\Models\InsuranceProvider;
-use App\Models\QuoteType;
-use Carbon\Carbon;
-use App\Enums\QuoteTypes;
+
 /**
  * Service class to handle failed sage processes and their related data
  *
@@ -32,6 +33,7 @@ class SageProcessesService extends BaseService
     const CLASS_NAME = 'SageProcessesService';
 
     protected $sendUpdateModelClass = SendUpdateLog::class;
+
     const SEND_UPDATE_MODEL_NAME = 'Send Update';
 
     /**
@@ -44,7 +46,6 @@ class SageProcessesService extends BaseService
     {
         try {
             LoggerService::info(self::CLASS_NAME.' fn: '.__FUNCTION__.' - Start - Fetching failed sage processes');
- 
 
             $query = SageProcess::select('id', 'model_type', 'model_id', 'insurance_provider_id', 'request', 'status', 'created_at', 'updated_at')
                 ->where('status', SageEnum::SAGE_PROCESS_FAILED_STATUS)
@@ -53,15 +54,15 @@ class SageProcessesService extends BaseService
                     $query->whereIn('insurance_provider_id', $request->insurance_provider_id);
                 })->when($request->quote_type_id, function ($query) use ($request) {
                     $quoteModelClasses = [];
-                    foreach($request->quote_type_id as $quote_type_id){
-                        if($request->quote_type_id == self::SEND_UPDATE_MODEL_NAME){
+                    foreach ($request->quote_type_id as $quote_type_id) {
+                        if ($request->quote_type_id == self::SEND_UPDATE_MODEL_NAME) {
                             $quoteModelClasses[] = $this->sendUpdateModelClass;
                         } else {
-                            $quoteModelClasses[] = QuoteTypes::getQuoteTypeIdToClass(QuoteTypes::getName($quote_type_id)); 
+                            $quoteModelClasses[] = QuoteTypes::getQuoteTypeIdToClass(QuoteTypes::getName($quote_type_id));
                         }
                     }
                     $query->whereIn('model_type', $quoteModelClasses);
-                    
+
                 })->when($request->date_from, function ($query) use ($request) {
                     $query->where('created_at', '>=', Carbon::parse($request->date_from)->startOfDay()->format('Y-m-d H:i:s'));
                 })->when($request->date_to, function ($query) use ($request) {
@@ -74,36 +75,36 @@ class SageProcessesService extends BaseService
                                     ->select('id', 'section_type', 'section_id', 'sage_end_point', 'response', 'status', 'created_at');
                             },
                             'payments' => function ($query) {
-                                $query->select('id', 'code', 'paymentable_type', 'paymentable_id', 'price_vat_applicable', 'price_vat', 
-                                    'discount_value', 'total_price', 'commission_vat_applicable', 'commission_vat', 
-                                    'commission', 'captured_at', 'invoice_description' , 'insurer_tax_number', 'insurer_commmission_invoice_number',
-                                     'payment_status_id')
-                                    ->with([ 
-                                        'paymentSplits' => function ($query) {
-                                            $query->select('id', 'code', 'sage_reciept_id');
-                                        },
-                                        'paymentStatus:id,text'
+                                $query->select('id', 'code', 'paymentable_type', 'paymentable_id', 'price_vat_applicable', 'price_vat',
+                                    'discount_value', 'total_price', 'commission_vat_applicable', 'commission_vat',
+                                    'commission', 'captured_at', 'invoice_description', 'insurer_tax_number', 'insurer_commmission_invoice_number',
+                                    'payment_status_id')
+                                    ->with([
+                                       'paymentSplits' => function ($query) {
+                                           $query->select('id', 'code', 'sage_reciept_id');
+                                       },
+                                       'paymentStatus:id,text',
                                     ]);
-                            }
-                        ]); 
+                            },
+                        ]);
                     },
-                    'insuranceProvider:id,text'
+                    'insuranceProvider:id,text',
                 ])
                 ->whereHas('model', function ($query) {
                     $query->whereHas('sageApiLogs', function ($subQuery) {
                         $subQuery->where('status', SageEnum::STATUS_FAIL);
                     });
                     // Check if the model's table has quote_status_id column
-                    $modelInstance = $query->getModel(); 
+                    $modelInstance = $query->getModel();
                     if ($modelInstance && Schema::hasColumn($modelInstance->getTable(), 'quote_status_id')) {
                         $query->where('quote_status_id', QuoteStatusEnum::POLICY_BOOKING_FAILED);
-                    } else if ($modelInstance && Schema::hasColumn($modelInstance->getTable(), 'status')) {
+                    } elseif ($modelInstance && Schema::hasColumn($modelInstance->getTable(), 'status')) {
                         $query->where('status', SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED);
                     }
                 })->orderBy('id', 'desc');
 
             if ($isExport) {
-                $results = $query->get(); 
+                $results = $query->get();
             } else {
                 $results = $query->simplePaginate(10);
             }
@@ -118,32 +119,33 @@ class SageProcessesService extends BaseService
         } catch (\Exception $e) {
             LoggerService::error(self::CLASS_NAME.' fn: '.__FUNCTION__.' - Error fetching failed sage processes: '.$e->getMessage(), extra: [
                 'trace' => $e->getTraceAsString(),
-            ]); 
+            ]);
             throw $e;
         }
     }
 
-    public function drowpdownData(){
+    public function dropdownData()
+    {
         return [
             'insuranceProviders' => $this->getInsuranceProviders(),
             'quoteTypes' => $this->getQuoteTypes(),
         ];
     }
 
-
     public function getInsuranceProviders()
     {
-        return InsuranceProvider::select('id', 'text')->where('is_active', 1)->orderBy('text')->get()->toArray();
+        return InsuranceProvider::select('id', 'text')->withActive()->orderBy('text')->get()->toArray();
     }
 
     public function getQuoteTypes()
     {
-        $quoteTypes = QuoteType::select('id', 'text')->where('is_active', 1)->orderBy('text')->get()->toArray();
-         // Push Send Update to the last index
-         $quoteTypes[] = [
+        $quoteTypes = QuoteType::select('id', 'text')->withActive()->orderBy('text')->get()->toArray();
+        // Push Send Update to the last index
+        $quoteTypes[] = [
             'id' => self::SEND_UPDATE_MODEL_NAME,
             'text' => self::SEND_UPDATE_MODEL_NAME,
-        ]; 
+        ];
+
         return $quoteTypes;
     }
 
@@ -151,7 +153,6 @@ class SageProcessesService extends BaseService
      * Add collected sage receipt IDs from payment splits to each process
      *
      * @param  mixed  $results
-     * @return void
      */
     protected function addCollectedSageReceiptIds($results): void
     {
@@ -159,31 +160,30 @@ class SageProcessesService extends BaseService
 
         foreach ($items as $item) {
             $sageReceiptIds = [];
-            
+
             if ($item->model && $item->model->payments) {
                 foreach ($item->model->payments as $payment) {
                     if ($payment->paymentSplits) {
                         foreach ($payment->paymentSplits as $split) {
-                            if (!empty($split->sage_reciept_id)) {
+                            if (! empty($split->sage_reciept_id)) {
                                 $sageReceiptIds[] = $split->sage_reciept_id;
                             }
                         }
                     }
                 }
             }
-            
+
             // Add as a formatted string (comma-separated) and as an array
-            $item->collected_sage_receipt_ids = !empty($sageReceiptIds) ? implode(', ', $sageReceiptIds) : null;
+            $item->collected_sage_receipt_ids = ! empty($sageReceiptIds) ? implode(', ', $sageReceiptIds) : null;
             $item->collected_sage_receipt_ids_array = $sageReceiptIds;
         }
     }
 
-    		/**
+    /**
      * Load quoteStatus relation conditionally for models that have it
      * This is done after fetching results because we need to check the actual polymorphic model type
      *
      * @param  mixed  $results
-     * @return void
      */
     protected function loadQuoteStatusConditionally($results): void
     {
@@ -194,11 +194,11 @@ class SageProcessesService extends BaseService
                 // Check if the actual polymorphic model has quote_status_id column
                 if (Schema::hasColumn($item->model->getTable(), 'quote_status_id')) {
                     try {
-                        $item->model->load('quoteStatus:id,text'); 
-                    } catch (\Exception $e) { 
+                        $item->model->load('quoteStatus:id,text');
+                    } catch (\Exception $e) {
                         LoggerService::warning(self::CLASS_NAME.' fn: '.__FUNCTION__.' - Could not load quoteStatus for model: '.get_class($item->model));
                     }
-                }  
+                }
             }
         }
     }

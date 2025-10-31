@@ -6,6 +6,7 @@ namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
 use App\Traits\ModernCsvExportable;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -53,7 +54,7 @@ class SageProcessesExport implements CsvExportableInterface
      */
     public function headings(): array
     {
-        return [ 
+        return [
             'Sage Pro. ID',
             'Quote UUID',
             'Quote Code',
@@ -75,7 +76,7 @@ class SageProcessesExport implements CsvExportableInterface
             'Sage Receipt ID',
             'Sage Proc. Status',
             'Failed Sage API',
-            'Failed API Error', 
+            'Failed API Error',
         ];
     }
 
@@ -88,14 +89,14 @@ class SageProcessesExport implements CsvExportableInterface
     {
         // Extract payment information (first payment if exists)
         $payment = $row->model?->payments[0] ?? null;
-        
+
         // Extract sage API log information (first failed log)
-        $sageApiLog = $row->model?->sage_api_logs[0] ?? null;  
+        $sageApiLog = $row->model?->sage_api_logs[0] ?? null;
         // Parse sage response to extract error message if available
         $sageResponse = $sageApiLog?->response ?? $this->notAvailable;
 
         // Format dates
-        $paymentDate = $payment && $payment->captured_at ? date('d-m-Y H:i:s', strtotime($payment->captured_at)) : $this->notAvailable; 
+        $paymentDate = $payment && $payment->captured_at ? Carbon::parse($payment->captured_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : $this->notAvailable;
 
         // Get lead status
         $leadStatus = $this->notAvailable;
@@ -129,7 +130,7 @@ class SageProcessesExport implements CsvExportableInterface
             $row->collected_sage_receipt_ids ?? $this->notAvailable,
             $row->status ?? $this->notAvailable,
             $sageApiLog?->sage_end_point ?? $this->notAvailable,
-            $sageResponse, 
+            $sageResponse,
         ];
     }
 

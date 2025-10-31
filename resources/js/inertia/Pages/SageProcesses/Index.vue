@@ -107,7 +107,6 @@ const availableFilters = reactive({
 });
 
 const copyToClipboard = item => {
-  console.log(item);
   copy(item);
   if (copied)
     notification.success({
@@ -196,7 +195,6 @@ function clearFilters() {
 
 function getDetailPageRoute(item) {
   const sageRequest = JSON.parse(item.request);
-  console.log(sageRequest.sagePayload.quoteTypeId);
   let quoteTypeId = sageRequest.sagePayload.quoteTypeId;
   if (item.model?.status) {
     return route('send-update.show', item.model?.uuid);
@@ -248,7 +246,6 @@ async function exportExcel() {
       position: 'top',
     });
   } catch (error) {
-    console.error('Export error:', error);
     notification.error({
       title:
         error.response?.data?.message || 'Export failed. Please try again.',
