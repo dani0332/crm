@@ -153,6 +153,7 @@ watch(
             filterable
             :rules="[isRequired]"
             :required="true"
+            tooltip="Manually created lead in IMCRM"
           >
             <template #suffix="{ item }">
               <x-tooltip v-if="item.suffix" placement="right">
@@ -167,7 +168,7 @@ watch(
           <x-select
             v-if="leadForm.sub_source_id && subSourceChildOptions.length > 0"
             v-model="leadForm.sub_source_options_id"
-            label="Sub Source Option"
+            label="SUB SOURCE OPTIONS"
             name="subSourceOption"
             :options="subSourceChildOptions"
             placeholder="Please select sub source option"
@@ -175,6 +176,7 @@ watch(
             filterable
             :rules="subSourceChildOptions.length > 0 ? [isRequired] : []"
             :required="subSourceChildOptions.length > 0"
+            tooltip="Type of referral lead"
           >
             <template #suffix="{ item }">
               <x-tooltip v-if="item.suffix" placement="right">

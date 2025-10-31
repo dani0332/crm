@@ -164,6 +164,7 @@ function onSubmit(isValid) {
           :rules="[isRequired]"
           required
           :error="quoteForm.errors.sub_source_id"
+          tooltip="Manually created lead in IMCRM"
         >
           <template #suffix="{ item }">
             <x-tooltip v-if="item.suffix" placement="right">
@@ -177,7 +178,7 @@ function onSubmit(isValid) {
 
         <x-select
           v-if="isReferralType && quoteForm.sub_source_id"
-          label="SUB SOURCE OPTION"
+          label="SUB SOURCE OPTIONS"
           v-model="quoteForm.sub_source_options_id"
           :options="subSourceOptionOptions"
           class="w-full"
@@ -188,6 +189,7 @@ function onSubmit(isValid) {
           :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
           :required="subSourceOptionOptions.length > 0"
           :error="quoteForm.errors.sub_source_options_id"
+          tooltip="Type of referral lead"
         >
           <template #suffix="{ item }">
             <x-tooltip v-if="item.suffix" placement="right">
