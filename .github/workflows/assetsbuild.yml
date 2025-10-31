@@ -47,16 +47,16 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.SERVICE_ACCOUNT_PAT }}
-          commit-message: "chore: build JS/CSS assets"
-          branch: "auto/build-assets-${{ github.event.pull_request.number }}"
+          commit-message: 'chore: build JS/CSS assets'
+          branch: 'auto/build-assets-${{ github.event.pull_request.number }}'
           base: ${{ github.event.pull_request.head.ref }}
-          title: "Auto build JS and CSS assets"
+          title: 'Auto build JS and CSS assets'
           body: |
             This PR was automatically created by the Build JS/CSS Assets workflow.
             It includes lint fixes and production build outputs.
           delete-branch: true
           draft: false
-      
+
       # ✅ Auto-approve & Merge the generated PR
       - name: Auto-approve PR
         if: steps.cpr.outputs.pull-request-number != ''

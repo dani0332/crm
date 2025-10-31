@@ -57,7 +57,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
-          fetch-depth: 0   # Required to push back to the PR branch
+          fetch-depth: 0 # Required to push back to the PR branch
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -75,8 +75,8 @@ jobs:
       - name: Commit and Push Pint Fix
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: apply pint fix"
-          branch: ${{ github.head_ref }}    # Push only to the PR branch
-          push_options: "--force-with-lease"
-          skip_fetch: true                  # Don’t fetch all branches
+          commit_message: 'chore: apply pint fix'
+          branch: ${{ github.head_ref }} # Push only to the PR branch
+          push_options: '--force-with-lease'
+          skip_fetch: true # Don’t fetch all branches
 
