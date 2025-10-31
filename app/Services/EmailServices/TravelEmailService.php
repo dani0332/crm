@@ -453,6 +453,7 @@ class TravelEmailService extends BaseService
 
     /**
      * Send automated travel follow-up emails
+     * Note: PDF generation is handled via API endpoint /quotes/{quoteType}/get-plans-pdf-url called from Bird
      */
     public function sendAutomatedTravelFollowup(TravelQuote $travelQuote)
     {
@@ -467,16 +468,8 @@ class TravelEmailService extends BaseService
                 LoggerService::info("sendAutomatedTravelFollowup - Advisor not found for travel quote: {$travelQuote->uuid}");
             }
 
-            // Build email data for automated follow-ups
+            // Build email data for automated follow-ups (Bird will fetch PDF via API when needed)
             $emailData = $this->buildCommonEmailData($travelQuote, $advisor, null, 'travel_automated_followups');
-            
-            // Add travel-specific data for follow-ups
-            $plans = $this->getPlans($travelQuote, false);
-            $emailData->hasPlansGroups = count($plans->adultPlans) > 0 && count($plans->seniorPlans) > 0;
-            $members = $travelQuote->customerMembers;
-            $emailData->totalTravelers = $members->count();
-            $emailData->allPlansCount = count($plans->all);
-            $emailData->plans = $this->buildPlansData($emailData->hasPlansGroups, $travelQuote, $plans, $members) ?? [];
 
             $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
 
@@ -528,7 +521,7 @@ class TravelEmailService extends BaseService
      * Generate PDF and create temporary URL for Bird workflow
      * Uses already fetched plans data to avoid duplicate API calls
      */
-    private function attachTravelOCBPDFToEmail($quoteUID, $plans, int $pdfExpiry = 120)
+    private function attachTravelOCBPDFToEmail($quoteUID, $plans, int $pdfExpiry = 20)
     {
         try {
             LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - Generating PDF for uuid: '.$quoteUID);
@@ -593,8 +586,8 @@ class TravelEmailService extends BaseService
                 return '';
             }
 
-            // Schedule deletion after expiry time (24 hours)
-            $this->scheduleFileDeletion($tempFilePath);
+            // Schedule deletion after expiry time
+            $this->scheduleFileDeletion($tempFilePath, $pdfExpiry);
 
             LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - Final URL for Bird workflow: '.$publicUrl.' for uuid: '.$quoteUID);
 
@@ -609,10 +602,10 @@ class TravelEmailService extends BaseService
     /**
      * Schedule file deletion job (similar to Home service)
      */
-    protected function scheduleFileDeletion($filePath)
+    protected function scheduleFileDeletion($filePath, int $expiryMinutes = 20)
     {
-        // Use the existing job to handle file deletion (24 hours)
-        DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(120));
+        // Use the existing job to handle file deletion matching the URL expiry time
+        DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes($expiryMinutes));
     }
 
     public function attachTravelOCBPDF($quoteUID, $code = null)
@@ -621,6 +614,12 @@ class TravelEmailService extends BaseService
             LoggerService::info(self::class.' - attachTravelOCBPDF - Generating PDF Ref-ID: '.$quoteUID);
 
             $quotePlans = app(TravelQuoteService::class)->getQuotePlans($quoteUID);
+
+            // Validate the response before passing to attachTravelOCBPDFToEmail
+            if (!is_object($quotePlans) || !isset($quotePlans->quotes->plans)) {
+                LoggerService::error(self::class.' - attachTravelOCBPDF - Invalid quote plans structure for uuid: '.$quoteUID, context: ['ref_id' => $code]);
+                return '';
+            }
 
             // Use the existing private method with the fetched plans
             return $this->attachTravelOCBPDFToEmail($quoteUID, $quotePlans);
