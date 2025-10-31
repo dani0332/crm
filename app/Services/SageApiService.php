@@ -933,9 +933,9 @@ class SageApiService
                 'value' => 1,
             ]);
 
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Sage Policy Booked for : '.$quote->code.' ##################################');
+            LoggerService::info('--------------------------------Sage Policy Booking process completed-------------------------------');
         } else {
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Sage Policy Booked Already for : '.$quote->code.' ##################################');
+            LoggerService::info('--------------------------------Sage Policy Already Booked-------------------------------');
         }
 
         $isTapPaymentGateway = $payment->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
