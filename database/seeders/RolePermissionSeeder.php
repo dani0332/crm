@@ -472,8 +472,7 @@ class RolePermissionSeeder extends Seeder
     private function sageProcessTrackerPermissions(): void
     {
         $permissions = [
-            PermissionsEnum::SAGE_PROCESS_VIEW_LIST,
-            PermissionsEnum::SAGE_PROCESS_EXPORT,
+            PermissionsEnum::SAGE_PROCESS_ISSUE_MANAGEMENT,
         ];
 
         foreach ($permissions as $permission) {

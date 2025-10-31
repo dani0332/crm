@@ -7,7 +7,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Services\Logger\LoggerService; 
+use App\Services\Logger\LoggerService;
 use App\Services\SageProcessesService;
 use App\Exports\SageProcessesExport;
 /**
@@ -26,9 +26,8 @@ class SageProcessesController extends Controller
     public function __construct(SageProcessesService $sageProcessesService)
     {
         $this->sageProcessesService = $sageProcessesService;
- 
-        $this->middleware('permission:'.PermissionsEnum::SAGE_PROCESS_VIEW_LIST, ['only' => ['index']]);
-        $this->middleware('permission:'.PermissionsEnum::SAGE_PROCESS_EXPORT, ['only' => ['export']]);
+
+        $this->middleware('permission:'.PermissionsEnum::SAGE_PROCESS_ISSUE_MANAGEMENT, ['only' => ['index', 'export']]);
     }
 
     /**
@@ -38,18 +37,18 @@ class SageProcessesController extends Controller
     {
         try {
             // Get failed sage processes data
-            $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request); 
+            $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request);
             $dropdownData = $this->sageProcessesService->drowpdownData();
 
             return inertia('SageProcesses/Index', [
                 'failedProcesses' => $failedProcesses,
-                'filters' => request()->all(), 
+                'filters' => request()->all(),
                 'dropdowns' => $dropdownData,
             ]);
         } catch (\Exception $e) {
             LoggerService::error('SageProcessesController - index - Error: '.$e->getMessage(), extra: [
                 'trace' => $e->getTraceAsString(),
-            ]); 
+            ]);
             return inertia('SageProcesses/Index', [
                 'failedProcesses' => [],
                 'insuranceProviders' => [],
@@ -67,23 +66,23 @@ class SageProcessesController extends Controller
         try {
             // Get failed sage processes with applied filters
             $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request, true);
-            
+
             // Check if there's any data to export
             if (empty($failedProcesses) || (is_countable($failedProcesses) && count($failedProcesses) === 0)) {
                 return response()->json([
                     'message' => 'No data available to export.'
                 ], 404);
             }
-            
+
             // Generate filename with timestamp
             $filename = 'sage-failed-processes-' . date('Y-m-d-His');
-            
+
             return (new SageProcessesExport($failedProcesses))->download($filename);
         } catch (\Exception $e) {
             LoggerService::error('SageProcessesController - export - Error: '.$e->getMessage(), extra: [
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'message' => 'Export failed: ' . $e->getMessage()
             ], 500);

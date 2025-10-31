@@ -357,7 +357,7 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('Search', route('search-leads'));
         }
 
-        if (auth()->user()->can(PermissionsEnum::SAGE_PROCESS_VIEW_LIST)) {
+        if (auth()->user()->can(PermissionsEnum::SAGE_PROCESS_ISSUE_MANAGEMENT)) {
             $nav = $nav->add('Sage Failed Leads', route('sage-failed-processes.index'));
         }
 
