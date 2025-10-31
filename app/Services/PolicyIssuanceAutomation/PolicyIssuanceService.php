@@ -163,7 +163,7 @@ class PolicyIssuanceService
 
         /* Fetch Policy Issuance Records against statuses by each LOB and Insurer */
         $policyIssuanceQuery = PolicyIssuance::where(['quote_type' => $quoteType, 'insurance_provider_id' => $insuranceProvider->id])
-        ->whereIn('status', [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::BOOKING_PENDING_STATUS]);
+            ->whereIn('status', [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::BOOKING_PENDING_STATUS]);
         $policyIssuanceCount = $policyIssuanceQuery->count();
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Process Records for Quote Type: '.$quoteType.', Insurer : '.$insuranceProvider?->code.' - Count : '.$policyIssuanceCount.' - Statuses : '.json_encode($statuses));
         if ($policyIssuanceCount > 0) {

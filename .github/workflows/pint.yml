@@ -1,11 +1,48 @@
-name: Run Pint Fix
+# name: Run Pint Fix
 
-#on:
+# on:
 #  pull_request:
 #    branches:
 #      - develop
 #      - main
 #    types: [opened, reopened, edited, synchronize]
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     strategy:
+#       fail-fast: true
+#       matrix:
+#         php: [8.2]
+#     steps:
+#       - name: Clone repository
+#         uses: actions/checkout@v4
+#       - name: Install PHP
+#         uses: shivammathur/setup-php@v2
+#         with:
+#           php-version: ${{ matrix.php }}
+#           extensions: json, dom, curl, libxml, mbstring
+#           coverage: none
+
+#       - name: Install Composer dependencies
+#         run: composer install
+
+#       - name: Run Pint
+#         run: composer pint:fix
+
+#       - name: Push changes
+#         uses: stefanzweifel/git-auto-commit-action@v5
+#         with:
+#           commit_message: pint fix
+
+name: Run Pint Fix
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+    types: [opened, reopened, edited, synchronize]
 
 jobs:
   build:
@@ -14,10 +51,15 @@ jobs:
       fail-fast: true
       matrix:
         php: [8.2]
+
     steps:
-      - name: Clone repository
+      - name: Checkout PR branch
         uses: actions/checkout@v4
-      - name: Install PHP
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0   # Required to push back to the PR branch
+
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -25,12 +67,16 @@ jobs:
           coverage: none
 
       - name: Install Composer dependencies
-        run: composer install
+        run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Run Pint
+      - name: Run Pint Fix
         run: composer pint:fix
 
-      - name: Push changes
+      - name: Commit and Push Pint Fix
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: pint fix
+          commit_message: "chore: apply pint fix"
+          branch: ${{ github.head_ref }}    # Push only to the PR branch
+          push_options: "--force-with-lease"
+          skip_fetch: true                  # Don’t fetch all branches
+
