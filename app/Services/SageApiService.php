@@ -1250,6 +1250,7 @@ class SageApiService
                                 'PaymentCode' => $paymentSplit->code,
                                 'SerialNumber' => $paymentSplit->sr_no
                             ]);
+
                             $aRReceiptBatch = $sageApiService->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
                             $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
@@ -1260,6 +1261,7 @@ class SageApiService
                                     'SerialNumber' => $paymentSplit->sr_no
                                 ]);
                                 $response['message'] = 'Failed to get status of AR Prepayment Receipts batch - Ref:'.$quote->code;
+
                                 return $response;
                             }
 
@@ -1278,6 +1280,7 @@ class SageApiService
                             'PaymentCode' => $paymentSplit->code,
                             'SerialNumber' => $paymentSplit->sr_no
                         ]);
+
                     }
                 }
 
@@ -1287,6 +1290,7 @@ class SageApiService
                         'PaymentCode' => $paymentSplit->code,
                         'SerialNumber' => $paymentSplit->sr_no,
                         'Error' => $postedResponse['error']
+
                     ]);
                     $response['message'] = 'Error while posting to sage - Ref:'.$quote->code;
                     $sageErrorMessage = $postedResponse['error']['message']['value'] ?? $postedResponse['error'] ?? null;
@@ -1298,6 +1302,7 @@ class SageApiService
                         'PaymentCode' => $paymentSplit->code,
                         'SerialNumber' => $paymentSplit->sr_no
                     ]);
+
                     $this->logSageApiCall($aRPostReceipts, $postedResponse, $paymentSplit, $quoteDetails, 4, 4, SageEnum::STATUS_FAIL, $sageRequest->advisor_id);
 
                     return $response;
@@ -1308,6 +1313,7 @@ class SageApiService
                             'PaymentCode' => $paymentSplit->code,
                             'SerialNumber' => $paymentSplit->sr_no
                         ]);
+
                         $this->logSageApiCall($aRPostReceipts, $postedResponse, $paymentSplit, $quoteDetails, 4, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
                     }
                 }
