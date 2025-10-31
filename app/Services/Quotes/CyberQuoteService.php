@@ -34,6 +34,7 @@ class CyberQuoteService extends BaseQuoteService
             'quoteDetail',
             'renewalBatchModel',
             'nationality',
+            'insuranceProviderPlan',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)

@@ -85,6 +85,7 @@ const serverOptions = ref({
 
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'uuid', is_active: true },
+  { text: 'Plan Name', value: 'insurance_provider_plan.text', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
@@ -774,6 +775,9 @@ const computedCyberPlans = computed(() => {
           <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
         <span v-else>{{ code }}</span>
+      </template>
+      <template #item-insurance_provider_plan="{ insurance_provider_plan }">
+        {{ insurance_provider_plan?.text ?? '' }}
       </template>
       <template #item-authorized_at="item">
         <p v-if="item?.payment_status?.text === 'AUTHORISED'">
