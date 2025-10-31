@@ -21,13 +21,14 @@ use App\Services\CRUDService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 
 class SendUpdateLogRepository extends BaseRepository
 {
-    use PersonalQuoteSyncTrait;
+    use PersonalQuoteSyncTrait, GenericQueriesAllLobs;
 
     public function model()
     {
@@ -563,13 +564,18 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchUpdateQuoteStatusLog($quoteTypeId, $quoteUuid, $quoteStatusId)
     {
-        info('function fetchUpdateQuoteStatusLog started - quote UUID: '.$quoteUuid);
+        LoggerService::info('fn:fetchUpdateQuoteStatusLog - SendUpdateLogRepository');
 
         try {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
-            $modelClass = 'App\\Models\\'.$quoteType.'Quote';
-            $quote = $modelClass::where('uuid', $quoteUuid)->firstOrFail();
+            $quote = $this->getQuoteObjectBy($quoteType, $quoteUuid, 'uuid');
+
             $previousStatusId = $quote->quote_status_id;
+
+            $quote->update([
+                'quote_status_id' => $quoteStatusId,
+                'quote_status_date' => now(),
+            ]);
 
             QuoteStatusLog::create([
                 'quote_type_id' => $quoteTypeId,
@@ -577,15 +583,15 @@ class SendUpdateLogRepository extends BaseRepository
                 'current_quote_status_id' => $quoteStatusId,
                 'previous_quote_status_id' => $previousStatusId,
                 'created_by' => auth()->user()->id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
             ]);
 
-            info('Quote status updated successfully - quote UUID: '.$quoteUuid.', Status changed from '.$previousStatusId.' to '.$quoteStatusId);
+            LoggerService::info('Quote status updated successfully', extra: [
+                'previousStatusId' => $previousStatusId,
+                'newStatusId' => $quoteStatusId,
+            ]);
         } catch (\Exception $ex) {
-            info('Error while updating Quote status - quote UUID: '.$quoteUuid.' - Exception: '.$ex->getMessage());
+            LoggerService::error('Error while updating Quote status', exception: $ex);
         }
-        info('function fetchUpdateQuoteStatusLog ended - quote UUID: '.$quoteUuid);
     }
 
     public function fetchGetQuoteFromSendUpdateLog($sendUpdateLog)
@@ -595,29 +601,5 @@ class SendUpdateLogRepository extends BaseRepository
         $modelClass = 'App\\Models\\'.$quoteType.'Quote';
 
         return $modelClass::where('uuid', $sendUpdateLog->quote_uuid)->first();
-    }
-
-    public function fetchUpdateQuoteToCanPending($quote, $quoteTypeId)
-    {
-        if ($quote->policy_booking_date) {
-            $oldLeadStatus = $quote->quote_status_id;
-
-            $quote->update([
-                'quote_status_id' => QuoteStatusEnum::CancellationPending,
-                'quote_status_date' => now(),
-            ]);
-
-            QuoteStatusLog::create([
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quote->id,
-                'current_quote_status_id' => QuoteStatusEnum::CancellationPending,
-                'previous_quote_status_id' => $oldLeadStatus,
-                'created_by' => auth()->id(),
-            ]);
-
-            LoggerService::info('Quote status updated to CancellationPending', extra: [
-                'previousStatusId' => $oldLeadStatus,
-            ]);
-        }
     }
 }
