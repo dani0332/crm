@@ -80,6 +80,7 @@ class GenericLobController extends Controller
                 return response()->json(['pdf_url' => $pdfUrl]);
             case QuoteTypes::TRAVEL:
                 $pdfUrl = app(TravelEmailService::class)->attachTravelOCBPDF($request->quote_uuid);
+
                 return response()->json(['pdf_url' => $pdfUrl]);
             default:
                 return response()->json(['error' => 'Invalid quote type'], 400);

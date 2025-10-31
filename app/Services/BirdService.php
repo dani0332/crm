@@ -102,7 +102,7 @@ class BirdService extends BaseService
                     'flow_id' => $runId,
                     'started_at' => now(),
                 ]);
-                LoggerService::info('- createQuoteWorkFlowDetails run id created: ' . $runId);
+                LoggerService::info('- createQuoteWorkFlowDetails run id created: '.$runId);
             } else {
                 LoggerService::warning(' - createQuoteWorkFlowDetails run id not found in response headers');
             }
