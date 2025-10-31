@@ -12,6 +12,7 @@ const emailStatusTable = reactive({
     { text: 'Reason', value: 'reason' },
     { text: 'Template Id', value: 'template_id' },
     { text: 'Customer Id', value: 'customer_id' },
+    { text: 'Client Replied', value: 'customer_replied' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Updated At', value: 'updated_at' },
   ],
@@ -32,7 +33,13 @@ const emailStatusTable = reactive({
         border-cell
         hide-rows-per-page
         hide-footer
-      />
+      >
+        <template #item-customer_replied="{ customer_replied }">
+          <span class="text-primary-600 uppercase">{{
+            customer_replied ? 'Yes' : 'No'
+          }}</span>
+        </template>
+      </DataTable>
     </div>
   </div>
 </template>
