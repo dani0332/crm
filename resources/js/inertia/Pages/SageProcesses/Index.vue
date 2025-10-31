@@ -14,37 +14,86 @@ const props = defineProps({
 const page = usePage();
 const notification = useToast();
 const can = permission => useCan(permission);
-const permissionsEnum = page.props.permissionsEnum; 
+const permissionsEnum = page.props.permissionsEnum;
 
 const loader = reactive({
   table: false,
   export: false,
 });
 
-
 // Table headers
 const tableHeader = computed(() => [
   { text: 'Sage Pro. ID', value: 'id', width: 40, sortable: true },
   { text: 'Quote Code', value: 'quote_code', width: 150, sortable: true },
   { text: 'Policy Number', value: 'policy_number', width: 150, sortable: true },
-  { text: 'Price Vat Applicable', value: 'price_vat_applicable', width: 150, sortable: true },
+  {
+    text: 'Price Vat Applicable',
+    value: 'price_vat_applicable',
+    width: 150,
+    sortable: true,
+  },
   { text: 'Price Vat', value: 'price_vat', width: 150, sortable: true },
   { text: 'Discount', value: 'discount_value', width: 150, sortable: true },
   { text: 'Total Price', value: 'total_price', width: 150, sortable: true },
-  { text: 'Commission (VAT applicable)', value: 'commission_vat_applicable', width: 150, sortable: true },
-  { text: 'Commission Vat', value: 'commission_vat', width: 150, sortable: true },
-  { text: 'Total Commission', value: 'total_commission', width: 150, sortable: true },
+  {
+    text: 'Commission (VAT applicable)',
+    value: 'commission_vat_applicable',
+    width: 150,
+    sortable: true,
+  },
+  {
+    text: 'Commission Vat',
+    value: 'commission_vat',
+    width: 150,
+    sortable: true,
+  },
+  {
+    text: 'Total Commission',
+    value: 'total_commission',
+    width: 150,
+    sortable: true,
+  },
   { text: 'Payment Date', value: 'payment_date', width: 150, sortable: true },
-  { text: 'Payment Status', value: 'payment_status', width: 150, sortable: true },
+  {
+    text: 'Payment Status',
+    value: 'payment_status',
+    width: 150,
+    sortable: true,
+  },
   { text: 'Provider', value: 'provider', width: 180, sortable: true },
-  { text: 'Invoice Description', value: 'invoice_description', width: 180, sortable: true },
-  { text: 'Insurer Tax Invoice No.', value: 'insurer_tax_invoice', width: 180, sortable: true },
-  { text: 'Insurer Commission Tax Invoice No.', value: 'insurer_commission_tax_invoice', width: 180, sortable: true },
+  {
+    text: 'Invoice Description',
+    value: 'invoice_description',
+    width: 180,
+    sortable: true,
+  },
+  {
+    text: 'Insurer Tax Invoice No.',
+    value: 'insurer_tax_invoice',
+    width: 180,
+    sortable: true,
+  },
+  {
+    text: 'Insurer Commission Tax Invoice No.',
+    value: 'insurer_commission_tax_invoice',
+    width: 180,
+    sortable: true,
+  },
   { text: 'Lead Status', value: 'lead_status', width: 180, sortable: true },
-  { text: 'Sage Receipt ID', value: 'sage_receipt_id', width: 180, sortable: true },
+  {
+    text: 'Sage Receipt ID',
+    value: 'sage_receipt_id',
+    width: 180,
+    sortable: true,
+  },
   { text: 'Sage Proc. Status', value: 'status', width: 60, sortable: true },
   { text: 'Failed Sage API', value: 'failed_api', width: 120, sortable: false },
-  { text: 'Failed API Error', value: 'failed_error', width: 330, sortable: false },
+  {
+    text: 'Failed API Error',
+    value: 'failed_error',
+    width: 330,
+    sortable: false,
+  },
   { text: 'Updated At', value: 'updated_at', width: 160, sortable: true },
 ]);
 
@@ -54,9 +103,8 @@ const availableFilters = reactive({
   quote_type_id: props.filters?.quote_type_id || [],
   date_from: props.filters?.date_from || '',
   date_to: props.filters?.date_to || '',
-  page: props.failedProcesses?.current_page || 1, 
+  page: props.failedProcesses?.current_page || 1,
 });
- 
 
 const copyToClipboard = item => {
   console.log(item);
@@ -91,7 +139,6 @@ const insuranceProvidersOptions = computed(() => {
   );
 });
 
-
 // Filters count
 const filtersCount = ref(0);
 
@@ -108,7 +155,7 @@ const truncate = (text, length = 50) => {
 };
 
 // Calculate filters count and show errors on mount
-onMounted(() => { 
+onMounted(() => {
   filtersCount.value = Object.keys(availableFilters).length;
 
   // Show error notification if any
@@ -121,14 +168,14 @@ onMounted(() => {
 });
 
 // Submit filter
-function onSubmit() { 
+function onSubmit() {
   filtersCount.value = Object.keys(availableFilters).length;
-  availableFilters.page = 1; 
+  availableFilters.page = 1;
 
   router.visit(route('sage-failed-processes.index'), {
     method: 'get',
     data: {
-      ...availableFilters, 
+      ...availableFilters,
     },
     preserveState: true,
     preserveScroll: true,
@@ -142,30 +189,33 @@ function clearFilters() {
   availableFilters.insurance_provider_id = [];
   availableFilters.quote_type_id = [];
   availableFilters.date_from = null;
-  availableFilters.date_to = null; 
+  availableFilters.date_to = null;
   filtersCount.value = 0;
   router.visit(route('sage-failed-processes.index'));
 }
 
 function getDetailPageRoute(item) {
-  const sageRequest = JSON.parse(item.request); 
+  const sageRequest = JSON.parse(item.request);
   console.log(sageRequest.sagePayload.quoteTypeId);
   let quoteTypeId = sageRequest.sagePayload.quoteTypeId;
-  if(item.model?.status){
+  if (item.model?.status) {
     return route('send-update.show', item.model?.uuid);
-  }else{
-    return useGetShowPageRoute(item.model?.uuid, quoteTypeId , item.model?.business_type_of_insurance_id);
+  } else {
+    return useGetShowPageRoute(
+      item.model?.uuid,
+      quoteTypeId,
+      item.model?.business_type_of_insurance_id,
+    );
   }
-  
 }
 
 // Export to Excel
-async function exportExcel() { 
+async function exportExcel() {
   try {
     loader.export = true;
-    
+
     const exportURL = route('sage-failed-processes.export');
-    
+
     // Make axios request with blob response type
     const response = await axios.get(exportURL, {
       params: {
@@ -173,26 +223,26 @@ async function exportExcel() {
       },
       responseType: 'blob',
     });
-    
+
     // Create a blob from the response
     const blob = new Blob([response.data], { type: 'text/csv' });
-    
+
     // Create download link
     const link = document.createElement('a');
     link.href = window.URL.createObjectURL(blob);
-    
+
     // Generate filename with timestamp
     const filename = `sage-failed-processes-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
     link.download = filename;
-    
+
     // Trigger download
     document.body.appendChild(link);
     link.click();
-    
+
     // Cleanup
     document.body.removeChild(link);
     window.URL.revokeObjectURL(link.href);
-    
+
     notification.success({
       title: 'Export completed successfully!',
       position: 'top',
@@ -200,14 +250,14 @@ async function exportExcel() {
   } catch (error) {
     console.error('Export error:', error);
     notification.error({
-      title: error.response?.data?.message || 'Export failed. Please try again.',
+      title:
+        error.response?.data?.message || 'Export failed. Please try again.',
       position: 'top',
     });
   } finally {
     loader.export = false;
   }
 }
-
 </script>
 
 <template>
@@ -237,7 +287,6 @@ async function exportExcel() {
             multiple
           />
 
-
           <DatePicker
             v-model="availableFilters.date_from"
             name="created_at_start"
@@ -249,13 +298,11 @@ async function exportExcel() {
             name="created_at_end"
             label="Created Date End"
           />
-  
-
         </div>
 
         <div class="flex justify-between gap-3 mb-4 mt-1">
           <div>
-            <x-button 
+            <x-button
               v-if="can(permissionsEnum.SAGE_PROCESS_EXPORT)"
               size="sm"
               color="emerald"
@@ -264,9 +311,8 @@ async function exportExcel() {
               :loading="loader.export"
             >
               Export
-            </x-button> 
-            
-          </div> 
+            </x-button>
+          </div>
           <div class="flex gap-3 justify-self-end">
             <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
             <x-button size="sm" color="primary" @click.prevent="clearFilters">
@@ -274,7 +320,7 @@ async function exportExcel() {
             </x-button>
           </div>
         </div>
-      </x-form> 
+      </x-form>
     </div>
     <x-divider class="my-4" />
 
@@ -307,7 +353,9 @@ async function exportExcel() {
 
       <!-- Price Vat Applicable -->
       <template #item-price_vat_applicable="item">
-        <span>{{ item.model?.payments?.[0]?.price_vat_applicable || 'N/A' }}</span>
+        <span>{{
+          item.model?.payments?.[0]?.price_vat_applicable || 'N/A'
+        }}</span>
       </template>
 
       <!-- Price Vat -->
@@ -327,7 +375,11 @@ async function exportExcel() {
 
       <!-- Commission Vat Applicable -->
       <template #item-commission_vat_applicable="item">
-        <span>{{ item.model?.payments?.[0]?.commission_vat_applicable ||  item.model?.payments?.[0]?.commission_vat_not_applicable || 'N/A' }}</span>
+        <span>{{
+          item.model?.payments?.[0]?.commission_vat_applicable ||
+          item.model?.payments?.[0]?.commission_vat_not_applicable ||
+          'N/A'
+        }}</span>
       </template>
 
       <!-- Commission Vat -->
@@ -347,7 +399,9 @@ async function exportExcel() {
 
       <!-- Payment Status -->
       <template #item-payment_status="item">
-        <span>{{ item.model?.payments?.[0]?.payment_status?.text || 'N/A' }}</span>
+        <span>{{
+          item.model?.payments?.[0]?.payment_status?.text || 'N/A'
+        }}</span>
       </template>
 
       <!-- Provider -->
@@ -357,22 +411,30 @@ async function exportExcel() {
 
       <!-- Invoice Description -->
       <template #item-invoice_description="item">
-        <span>{{ item.model?.payments?.[0]?.invoice_description || 'N/A' }}</span>
+        <span>{{
+          item.model?.payments?.[0]?.invoice_description || 'N/A'
+        }}</span>
       </template>
 
       <!-- Insurer Tax Invoice -->
       <template #item-insurer_tax_invoice="item">
-        <span>{{ item.model?.payments?.[0]?.insurer_tax_number || 'N/A' }}</span>
+        <span>{{
+          item.model?.payments?.[0]?.insurer_tax_number || 'N/A'
+        }}</span>
       </template>
 
       <!-- Insurer Commission Tax Invoice -->
       <template #item-insurer_commission_tax_invoice="item">
-        <span>{{ item.model?.payments?.[0]?.insurer_commmission_invoice_number || 'N/A' }}</span>
+        <span>{{
+          item.model?.payments?.[0]?.insurer_commmission_invoice_number || 'N/A'
+        }}</span>
       </template>
 
       <!-- Lead Status -->
       <template #item-lead_status="item">
-        <span>{{ item.model?.quote_status?.text || item.model?.status || 'N/A' }}</span>
+        <span>{{
+          item.model?.quote_status?.text || item.model?.status || 'N/A'
+        }}</span>
       </template>
 
       <!-- Sage Receipt ID -->
@@ -389,7 +451,14 @@ async function exportExcel() {
       <template #item-failed_api="item">
         <div v-if="item.model?.sage_api_logs?.[0]?.sage_end_point">
           {{ truncate(item.model?.sage_api_logs[0]?.sage_end_point, 50) }}
-          <x-icon @click.prevent="copyToClipboard(item.model?.sage_api_logs[0]?.sage_end_point)" icon="copy"  class="text-primary cursor-pointer" size="md" />
+          <x-icon
+            @click.prevent="
+              copyToClipboard(item.model?.sage_api_logs[0]?.sage_end_point)
+            "
+            icon="copy"
+            class="text-primary cursor-pointer"
+            size="md"
+          />
         </div>
         <div v-else>
           <span>N/A</span>
@@ -400,7 +469,14 @@ async function exportExcel() {
       <template #item-failed_error="item">
         <div v-if="item.model?.sage_api_logs?.[0]?.response">
           {{ truncate(item.model?.sage_api_logs[0]?.response, 80) }}
-          <x-icon @click.prevent="copyToClipboard(item.model?.sage_api_logs[0]?.response)" icon="copy"  class="text-primary cursor-pointer" size="md" />
+          <x-icon
+            @click.prevent="
+              copyToClipboard(item.model?.sage_api_logs[0]?.response)
+            "
+            icon="copy"
+            class="text-primary cursor-pointer"
+            size="md"
+          />
         </div>
         <div v-else>
           <span>N/A</span>
