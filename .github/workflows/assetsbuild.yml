@@ -37,7 +37,37 @@ jobs:
 
       - run: yarn && yarn lint --fix && yarn vite build && yarn vite build --config vite-worker.config.js
 
-      - name: Push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+      # - name: Push changes
+      #   uses: stefanzweifel/git-auto-commit-action@v5
+      #   with:
+      #     commit_message: yarn prod
+
+      - name: Create Pull Request for built assets
+        id: cpr
+        uses: peter-evans/create-pull-request@v6
         with:
-          commit_message: yarn prod
+          token: ${{ secrets.SERVICE_ACCOUNT_PAT }}
+          commit-message: "chore: build JS/CSS assets"
+          branch: "auto/build-assets-${{ github.event.pull_request.number }}"
+          base: ${{ github.event.pull_request.head.ref }}
+          title: "Auto build JS and CSS assets"
+          body: |
+            This PR was automatically created by the Build JS/CSS Assets workflow.
+            It includes lint fixes and production build outputs.
+          delete-branch: true
+          draft: false
+      
+      # ✅ Auto-approve & Merge the generated PR
+      - name: Auto-approve PR
+        if: steps.cpr.outputs.pull-request-number != ''
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.SERVICE_ACCOUNT_PAT }}
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+      - name: Auto-merge the PR
+        if: steps.cpr.outputs.pull-request-number != ''
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.SERVICE_ACCOUNT_PAT }}
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+          merge-method: squash
