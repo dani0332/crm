@@ -47,8 +47,12 @@ class SendUpdateSageJob implements ShouldQueue
      */
     public function handle(SageApiService $sageApiService): void
     {
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::SAGE_ENDORSEMENT_BOOKING);
-        info('job:SendUpdateSageJob - Process Start - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid);
+        LoggerService::startQuoteLogging($this->sendUpdateLog, LoggerFeatureEnum::SAGE_ENDORSEMENT_BOOKING);
+        LoggerService::info('--------------------------------Sage Endorsement Booking Job execution started--------------------------------', extra: [
+            'QuoteType' => $this->requestPayload->quoteType,
+            'QuoteUUID' => $this->requestPayload->quoteUuid,
+            'SendUpdateUUID' => $this->sendUpdateLog->uuid
+        ]);
 
         $this->sageProcess = SageProcess::find($this->sageProcess->id);
 
@@ -69,30 +73,41 @@ class SendUpdateSageJob implements ShouldQueue
             if (! $response['status']) {
                 $message = $response['message'];
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
-                    info('job:SendUpdateSageJob - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' sage conflict - updating status to pending');
+                    LoggerService::info('Sage conflict detected while booking endorsement on Sage - updating status to pending', extra: [
+                        'QuoteType' => $this->requestPayload->quoteType,
+                        'QuoteUUID' => $this->requestPayload->quoteUuid,
+                        'SendUpdateUUID' => $this->sendUpdateLog->uuid
+                    ]);
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, 'SendUpdateUUID: '.$this->sendUpdateLog->uuid);
                 } else {
-                    info('job:SendUpdateSageJob - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' booking failed - updating status to failed');
+                    LoggerService::info('Booking endorsement on Sage failed - updating status to failed', extra: [
+                        'QuoteType' => $this->requestPayload->quoteType,
+                        'QuoteUUID' => $this->requestPayload->quoteUuid,
+                        'SendUpdateUUID' => $this->sendUpdateLog->uuid
+                    ]);
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'SendUpdateUUID: '.$this->sendUpdateLog->uuid);
                     app(CentralService::class)->updateSendUpdateStatusLogs($this->sendUpdateLog->id, $this->sendUpdateLog->status, SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED);
                     $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
                 }
 
             } else {
-                info('job:SendUpdateSageJob - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' booking completed - updating status to completed');
+                LoggerService::info('Endorsement booked on Sage - updating status to completed');
                 (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, 'SendUpdateUUID: '.$this->sendUpdateLog->uuid);
             }
 
-            info('job:SendUpdateSageJob - Response: '.json_encode($response).' - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid);
-            info('job:SendUpdateSageJob - Process Completed - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid);
-
+            LoggerService::info('Booking endorsement on Sage completed', extra: [
+                'Response' => json_encode($response),
+                'QuoteType' => $this->requestPayload->quoteType,
+                'QuoteUUID' => $this->requestPayload->quoteUuid,
+                'SendUpdateUUID' => $this->sendUpdateLog->uuid
+            ]);
         } else {
-            info('job:SendUpdateSageJob - Sage Process Skipped - Process ID: '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
+            LoggerService::info('Booking endorsement on Sage process skipped', extra: ['SageProcessID' => $this->sageProcess->id, 'Status' => $this->sageProcess->status]);
         }
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequestPayload->insurerID);
-        info('job:SendUpdateSageJob - fn:ScheduleSageProcesses triggered for Insurer: '.$this->sageRequestPayload->insurerID);
-
+        LoggerService::info('Schedule Sage processes triggered for insurer - '.$this->sageRequestPayload->insurerID);
+        LoggerService::info('--------------------------------Sage Endorsement Booking Job execution completed--------------------------------');
     }
 
     public function failed(Throwable $exception): void
@@ -104,14 +119,15 @@ class SendUpdateSageJob implements ShouldQueue
         } else {
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
         }
+        LoggerService::info('Updating Sage Process status to failed', extra: ['SageProcessID' => $this->sageProcess->id, 'QuoteType' => $this->requestPayload->quoteType, 'QuoteUUID' => $this->requestPayload->quoteUuid, 'SendUpdateUUID' => $this->sendUpdateLog->uuid]);
         info('job:SendUpdateSageJob - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' fn:failed - updating status to failed');
 
         app(CentralService::class)->updateSendUpdateStatusLogs($this->sendUpdateLog->id, $this->sendUpdateLog->status, SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED);
         $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
-        info('job:SendUpdateSageJob - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' - Error : '.$message);
+        LoggerService::info('Updating SendUpdate status to UPDATE_BOOKING_FAILED', extra: ['SendUpdateUUID' => $this->sendUpdateLog->uuid, 'Error' => $message]);
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequestPayload->insurerID);
-        info('job:SendUpdateSageJob - fn:ScheduleSageProcesses triggered for Insurer:'.$this->sageRequestPayload->insurerID);
+        LoggerService::info('Schedule Sage processes triggered for insurer - '.$this->sageRequestPayload->insurerID);
     }
 
     public function middleware(): array
