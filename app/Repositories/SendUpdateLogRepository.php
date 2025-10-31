@@ -596,4 +596,28 @@ class SendUpdateLogRepository extends BaseRepository
 
         return $modelClass::where('uuid', $sendUpdateLog->quote_uuid)->first();
     }
+
+    public function fetchUpdateQuoteToCanPending($quote, $quoteTypeId)
+    {
+        if ($quote->policy_booking_date) {
+            $oldLeadStatus = $quote->quote_status_id;
+
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::CancellationPending,
+                'quote_status_date' => now(),
+            ]);
+
+            QuoteStatusLog::create([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quote->id,
+                'current_quote_status_id' => QuoteStatusEnum::CancellationPending,
+                'previous_quote_status_id' => $oldLeadStatus,
+                'created_by' => auth()->id(),
+            ]);
+
+            LoggerService::info('Quote status updated to CancellationPending', extra: [
+                'previousStatusId' => $oldLeadStatus,
+            ]);
+        }
+    }
 }
