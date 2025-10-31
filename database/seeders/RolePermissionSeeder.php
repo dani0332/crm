@@ -42,6 +42,7 @@ class RolePermissionSeeder extends Seeder
         $this->addExportHomePuaUpdatesPermission();
         $this->addUtmReportExportPermission();
         $this->addEditLastYearDetailsPermission();
+        $this->sageProcessTrackerPermissions();
     }
 
     private function addReceiveNotificationsPermission()
@@ -467,5 +468,31 @@ class RolePermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+    private function sageProcessTrackerPermissions(): void
+    {
+        $permissions = [
+            PermissionsEnum::SAGE_PROCESS_VIEW_LIST,
+            PermissionsEnum::SAGE_PROCESS_EXPORT,
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web',
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $engineeringRole = Role::where('name', RolesEnum::Engineering)->first();
+        if ($engineeringRole) {
+            foreach ($permissions as $permission) {
+                if (! $engineeringRole->hasPermissionTo($permission)) {
+                    $engineeringRole->givePermissionTo($permission);
+                }
+            }
+        }
     }
 }

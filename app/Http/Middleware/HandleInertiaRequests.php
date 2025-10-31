@@ -357,9 +357,9 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('Search', route('search-leads'));
         }
 
-        // if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {
-        $nav = $nav->add('Sage Failed Leads', route('sage-failed-processes.index'));
-        // }
+        if (auth()->user()->can(PermissionsEnum::SAGE_PROCESS_VIEW_LIST)) {
+            $nav = $nav->add('Sage Failed Leads', route('sage-failed-processes.index'));
+        }
 
         /* personal quotes section */
         $nav = $nav->add('Personal Quotes', '', function (Section $section) {

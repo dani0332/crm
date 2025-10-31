@@ -26,9 +26,9 @@ class SageProcessesController extends Controller
     public function __construct(SageProcessesService $sageProcessesService)
     {
         $this->sageProcessesService = $sageProcessesService;
-
-        // Apply permission middleware
-        // $this->middleware('permission:' . PermissionsEnum::VIEW_SAGE_API_LOGS);
+ 
+        $this->middleware('permission:'.PermissionsEnum::SAGE_PROCESS_VIEW_LIST, ['only' => ['index']]);
+        $this->middleware('permission:'.PermissionsEnum::SAGE_PROCESS_EXPORT, ['only' => ['export']]);
     }
 
     /**
@@ -39,7 +39,7 @@ class SageProcessesController extends Controller
         try {
             // Get failed sage processes data
             $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request);
-           // dd($failedProcesses->toArray());
+            dd($failedProcesses->toArray());
             $dropdownData = $this->sageProcessesService->drowpdownData();
 
             return inertia('SageProcesses/Index', [
@@ -50,8 +50,7 @@ class SageProcessesController extends Controller
         } catch (\Exception $e) {
             LoggerService::error('SageProcessesController - index - Error: '.$e->getMessage(), extra: [
                 'trace' => $e->getTraceAsString(),
-            ]);
-
+            ]); 
             return inertia('SageProcesses/Index', [
                 'failedProcesses' => [],
                 'insuranceProviders' => [],
@@ -59,6 +58,7 @@ class SageProcessesController extends Controller
                 'users' => [],
                 'filters' => request()->all(),
                 'error' => 'Failed to fetch data. Please try again.',
+                'exception' => $e->getMessage(),
             ]);
         }
     }
@@ -66,13 +66,28 @@ class SageProcessesController extends Controller
     public function export(Request $request)
     {
         try {
+            // Get failed sage processes with applied filters
             $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request, true);
-            return (new SageProcessesExport($failedProcesses))->download('sage-failed-processes.csv');
+            
+            // Check if there's any data to export
+            if (empty($failedProcesses) || (is_countable($failedProcesses) && count($failedProcesses) === 0)) {
+                return response()->json([
+                    'message' => 'No data available to export.'
+                ], 404);
+            }
+            
+            // Generate filename with timestamp
+            $filename = 'sage-failed-processes-' . date('Y-m-d-His');
+            
+            return (new SageProcessesExport($failedProcesses))->download($filename);
         } catch (\Exception $e) {
             LoggerService::error('SageProcessesController - export - Error: '.$e->getMessage(), extra: [
                 'trace' => $e->getTraceAsString(),
             ]);
-            return response()->json(['error' => $e->getMessage()], 500);
+            
+            return response()->json([
+                'message' => 'Export failed: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

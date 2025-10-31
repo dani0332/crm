@@ -6,13 +6,14 @@ namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
 use App\Traits\ModernCsvExportable;
+use Illuminate\Support\Collection;
 
 /**
  * Export class for failed sage processes
  *
  * This class handles the export of failed sage processes data to Excel format.
  */
-class SageProcessesExport extends CsvExportableInterface
+class SageProcessesExport implements CsvExportableInterface
 {
     use ModernCsvExportable;
 
@@ -22,12 +23,14 @@ class SageProcessesExport extends CsvExportableInterface
     private string $notAvailable = 'N/A';
 
     /**
-     * @var \Illuminate\Support\Collection
+     * @var \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection
      */
     private $failedProcesses;
 
     /**
      * Constructor
+     *
+     * @param  \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection  $failedProcesses
      */
     public function __construct($failedProcesses)
     {
@@ -36,19 +39,23 @@ class SageProcessesExport extends CsvExportableInterface
 
     /**
      * Get the collection of failed processes
+     *
+     * @param  array  $requestParams
+     * @return Collection
      */
-    public function collection()
+    public function collection(array $requestParams = []): Collection
     {
         return $this->failedProcesses;
     }
 
     /**
-     * Define the headings for the Excel export
+     * Define the headings for the Excel export - matching frontend table columns
      */
     public function headings(): array
     {
         return [ 
-            'Sage Process ID',
+            'Sage Pro. ID',
+            'Quote UUID',
             'Quote Code',
             'Policy Number',
             'Price Vat Applicable',
@@ -66,10 +73,9 @@ class SageProcessesExport extends CsvExportableInterface
             'Insurer Commission Tax Invoice No.',
             'Lead Status',
             'Sage Receipt ID',
-            'Sage Process Status',
+            'Sage Proc. Status',
             'Failed Sage API',
-            'Failed API Error',
-            'Updated At',
+            'Failed API Error', 
         ];
     }
 
@@ -81,61 +87,49 @@ class SageProcessesExport extends CsvExportableInterface
     public function map($row): array
     {
         // Extract payment information (first payment if exists)
-        $payment = $row->model->payments[0] ?? null;
+        $payment = $row->model?->payments[0] ?? null;
         
         // Extract sage API log information (first failed log)
-        $sageApiLog = $row->model->sage_api_logs[0] ?? null;
-        
+        $sageApiLog = $row->model?->sage_api_logs[0] ?? null;  
         // Parse sage response to extract error message if available
-        $sageResponse = $this->notAvailable;
-        if ($sageApiLog && !empty($sageApiLog->response)) {
-            $responseData = json_decode($sageApiLog->response, true);
-            if (is_array($responseData)) {
-                // Try to extract error message from common response formats
-                $sageResponse = $responseData['error']['message']['value'] ??
-                               $responseData['message'] ??
-                               $responseData['error'] ??
-                               substr($sageApiLog->response, 0, 200); // Limit to 200 chars
-            } else {
-                $sageResponse = substr($sageApiLog->response, 0, 200);
-            }
-        }
+        $sageResponse = $sageApiLog?->response ?? $this->notAvailable;
 
         // Format dates
-        $paymentDate = $payment && $payment->payment_due_date ? date('d-m-Y H:i:s', strtotime($payment->payment_due_date)) : $this->notAvailable;
-        $updatedAt = $row->updated_at ? date('d-m-Y H:i:s', strtotime($row->updated_at)) : $this->notAvailable;
+        $paymentDate = $payment && $payment->captured_at ? date('d-m-Y H:i:s', strtotime($payment->captured_at)) : $this->notAvailable; 
 
         // Get lead status
         $leadStatus = $this->notAvailable;
-        if ($row->model && isset($row->model->quote_status)) {
-            $leadStatus = $row->model->quote_status->text ?? $this->notAvailable;
-        } elseif ($row->model && isset($row->model->status)) {
-            $leadStatus = $row->model->status;
+        if ($row->model) {
+            if (isset($row->model->quoteStatus)) {
+                $leadStatus = $row->model->quoteStatus->text ?? $this->notAvailable;
+            } elseif (isset($row->model->status)) {
+                $leadStatus = $row->model->status;
+            }
         }
 
         return [
             $row->id ?? $this->notAvailable,
-            $row->model->code ?? $this->notAvailable,
-            $row->model->policy_number ?? $this->notAvailable,
-            $payment->price_vat_applicable ?? $this->notAvailable,
-            $payment->price_vat ?? $this->notAvailable,
-            $payment->discount_value ?? $this->notAvailable,
-            $payment->total_price ?? $this->notAvailable,
-            $payment->commission_vat_applicable ?? $payment->commission_vat_not_applicable ?? $this->notAvailable,
-            $payment->commission_vat ?? $this->notAvailable,
-            $payment->commission ?? $this->notAvailable,
+            $row->model?->uuid ?? $this->notAvailable,
+            $row->model?->code ?? $this->notAvailable,
+            $row->model?->policy_number ?? $this->notAvailable,
+            $payment?->price_vat_applicable ?? $this->notAvailable,
+            $payment?->price_vat ?? $this->notAvailable,
+            $payment?->discount_value ?? $this->notAvailable,
+            $payment?->total_price ?? $this->notAvailable,
+            $payment?->commission_vat_applicable ?? $payment?->commission_vat_not_applicable ?? $this->notAvailable,
+            $payment?->commission_vat ?? $this->notAvailable,
+            $payment?->commission ?? $this->notAvailable,
             $paymentDate,
-            $payment->paymentStatus->text ?? $payment->payment_status ?? $this->notAvailable,
-            $row->insurance_provider->text ?? $this->notAvailable,
-            $payment->invoice_description ?? $this->notAvailable,
-            $payment->insurer_tax_number ?? $this->notAvailable,
-            $payment->insurer_commmission_invoice_number ?? $this->notAvailable,
+            $payment?->paymentStatus?->text ?? $payment?->payment_status ?? $this->notAvailable,
+            $row->insurance_provider?->text ?? $this->notAvailable,
+            $payment?->invoice_description ?? $this->notAvailable,
+            $payment?->insurer_tax_number ?? $this->notAvailable,
+            $payment?->insurer_commmission_invoice_number ?? $this->notAvailable,
             $leadStatus,
             $row->collected_sage_receipt_ids ?? $this->notAvailable,
             $row->status ?? $this->notAvailable,
-            $sageApiLog->sage_end_point ?? $this->notAvailable,
-            $sageResponse,
-            $updatedAt,
+            $sageApiLog?->sage_end_point ?? $this->notAvailable,
+            $sageResponse, 
         ];
     }
 
@@ -145,5 +139,23 @@ class SageProcessesExport extends CsvExportableInterface
     public function title(): string
     {
         return 'Failed Sage Processes';
+    }
+
+    /**
+     * Get export metadata with sage process specific information
+     *
+     * @param  array  $requestParams
+     * @return array
+     */
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'sourceTable' => 'sage_processes',
+            'exportType' => 'sage_failed_processes',
+            'recordCount' => $this->failedProcesses->count(),
+        ];
     }
 }

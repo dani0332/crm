@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue';
 import { router, usePage, Head, Link } from '@inertiajs/vue3';
+import axios from 'axios';
 const { copy, copied } = useClipboard();
 
 const props = defineProps({
@@ -53,15 +54,9 @@ const availableFilters = reactive({
   quote_type_id: props.filters?.quote_type_id || [],
   date_from: props.filters?.date_from || '',
   date_to: props.filters?.date_to || '',
+  page: props.failedProcesses?.current_page || 1, 
 });
-
-// Server options for pagination
-const serverOptions = ref({
-  page: props.failedProcesses?.current_page || 1,
-  per_page: props.failedProcesses?.per_page || 15,
-  sortBy: 'updated_at',
-  sortType: 'desc',
-});
+ 
 
 const copyToClipboard = item => {
   console.log(item);
@@ -106,13 +101,6 @@ const dateFormat = dateString =>
     ? useDateFormat(useConvertDate(dateString), 'DD-MM-YYYY HH:mm:ss').value
     : '';
 
-// Get detail page route
-const getDetailPageRoute = (
-  uuid,
-  quote_type_id,
-  business_type_of_insurance_id,
-) => useGetShowPageRoute(uuid, quote_type_id, business_type_of_insurance_id);
-
 // Truncate text
 const truncate = (text, length = 50) => {
   if (!text) return 'N/A';
@@ -135,13 +123,12 @@ onMounted(() => {
 // Submit filter
 function onSubmit() { 
   filtersCount.value = Object.keys(availableFilters).length;
-  serverOptions.value.page = 1; 
+  availableFilters.page = 1; 
 
   router.visit(route('sage-failed-processes.index'), {
     method: 'get',
     data: {
-      ...availableFilters,
-      ...serverOptions.value,
+      ...availableFilters, 
     },
     preserveState: true,
     preserveScroll: true,
@@ -160,17 +147,65 @@ function clearFilters() {
   router.visit(route('sage-failed-processes.index'));
 }
 
-// Export to Excel
-function exportExcel() { 
-  console.log(availableFilters);
-  const exportURL = route('sage-failed-processes.export');
+function getDetailPageRoute(item) {
+  const sageRequest = JSON.parse(item.request); 
+  console.log(sageRequest.sagePayload.quoteTypeId);
+  let quoteTypeId = sageRequest.sagePayload.quoteTypeId;
+  if(item.model?.status){
+    return route('send-update.show', item.model?.uuid);
+  }else{
+    return useGetShowPageRoute(item.model?.uuid, quoteTypeId , item.model?.business_type_of_insurance_id);
+  }
+  
+}
 
-  router.visit(exportURL, {
-    method: 'get',
-    data: {
-      exportFilters: availableFilters,
-    },
-  });
+// Export to Excel
+async function exportExcel() { 
+  try {
+    loader.export = true;
+    
+    const exportURL = route('sage-failed-processes.export');
+    
+    // Make axios request with blob response type
+    const response = await axios.get(exportURL, {
+      params: {
+        ...availableFilters,
+      },
+      responseType: 'blob',
+    });
+    
+    // Create a blob from the response
+    const blob = new Blob([response.data], { type: 'text/csv' });
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    
+    // Generate filename with timestamp
+    const filename = `sage-failed-processes-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+    link.download = filename;
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(link.href);
+    
+    notification.success({
+      title: 'Export completed successfully!',
+      position: 'top',
+    });
+  } catch (error) {
+    console.error('Export error:', error);
+    notification.error({
+      title: error.response?.data?.message || 'Export failed. Please try again.',
+      position: 'top',
+    });
+  } finally {
+    loader.export = false;
+  }
 }
 
 </script>
@@ -189,6 +224,7 @@ function exportExcel() {
             filterable
             filterPlaceholder="Filter Provider...."
             clearable
+            multiple
           />
           <x-select
             v-model="availableFilters.quote_type_id"
@@ -198,6 +234,7 @@ function exportExcel() {
             filterable
             filterPlaceholder="Filter Line of Business...."
             clearable
+            multiple
           />
 
 
@@ -217,8 +254,9 @@ function exportExcel() {
         </div>
 
         <div class="flex justify-between gap-3 mb-4 mt-1">
-          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+          <div>
             <x-button 
+              v-if="can(permissionsEnum.SAGE_PROCESS_EXPORT)"
               size="sm"
               color="emerald"
               class="justify-self-start mr-3"
@@ -254,7 +292,12 @@ function exportExcel() {
     >
       <!-- Quote Code Column -->
       <template #item-quote_code="item">
-        <span>{{ item.model?.code || 'N/A' }}</span>
+        <Link
+          :href="getDetailPageRoute(item)"
+          class="text-primary-500 hover:underline"
+        >
+          <span>{{ item.model?.code }}</span>
+        </Link>
       </template>
 
       <!-- Policy Number Column -->

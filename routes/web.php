@@ -845,8 +845,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
 
         // Sage Failed Processes Routes
-        Route::get('sage-processes/failed', [SageProcessesController::class, 'index'])->name('sage-failed-processes.index');
-        Route::get('sage-processes/failed/export', [SageProcessesController::class, 'export'])->name('sage-failed-processes.export');
+        Route::get('sage-processes/failed', [SageProcessesController::class, 'index'])->middleware(SetReadDbConnection::class)->name('sage-failed-processes.index');
+        Route::get('sage-processes/failed/export', [SageProcessesController::class, 'export'])->middleware(SetReadDbConnection::class)->name('sage-failed-processes.export');
     });
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
