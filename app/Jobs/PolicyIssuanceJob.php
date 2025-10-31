@@ -19,7 +19,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 90;
+    public $timeout = 120;
     public $tries = 1;
 
     private const TIMEOUT_MESSAGE = 'cURL error 28';
