@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers\V2;
 
 use App\Enums\PermissionsEnum;
-use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Cyber\CyberQuoteRequest;
@@ -29,8 +28,6 @@ class CyberQuoteController extends Controller
         $advisors = $this->cyberQuoteService->getAdvisors();
         $quoteStatuses = $this->cyberQuoteService->getQuoteStatuses([QuoteStatusEnum::Lost]);
         $authorizedDays = $this->cyberQuoteService->getPaymentAuthorizedDays();
-        $insurerApiStatus = PolicyIssuanceEnum::getInsurerAPIStatuses();
-        $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
         $paymentStatuses = PaymentStatus::where('is_active', 1)
             ->orderBy('text')
@@ -50,8 +47,6 @@ class CyberQuoteController extends Controller
             'advisors' => $advisors,
             'totalCount' => $count,
             'authorizedDays' => intval($authorizedDays->value),
-            'insurerApiStatus' => $insurerApiStatus,
-            'issuanceStatuses' => $issuanceStatuses,
             'insurerAMLStatus' => $insurerAMLStatus,
             'paymentStatuses' => $paymentStatuses,
         ]);

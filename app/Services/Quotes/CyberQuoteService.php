@@ -44,17 +44,8 @@ class CyberQuoteService extends BaseQuoteService
             ->filterByDateRange('booking_date', 'policy_booking_date')
             ->filterBy('payment_status_id')
             ->filterBy('is_ecommerce', isBool: true)
-            ->filterBy('sic_advisor_requested', ignoreAll: true)
             ->filterIn('insurer_aml_status')
-            ->filterIn('insurer_api_status_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
-            ->when(request()->filled('api_issuance_status_id'), function ($q) {
-                if (request('api_issuance_status_id') === 'blank') {
-                    $q->whereNull('api_issuance_status_id');
-                } else {
-                    $q->where('api_issuance_status_id', request('api_issuance_status_id'));
-                }
-            })
             ->when(request()->filled('insurer_tax_invoice_number'), function ($q) {
                 $q->whereHas('payments', function ($subQuery) {
                     $subQuery->where('insurer_tax_number', request('insurer_tax_invoice_number'));

@@ -40,7 +40,6 @@ let availableFilters = {
   quote_status_id: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
-  sic_advisor_requested: 'All',
   advisor_id: [],
   previous_quote_policy_number_text: '',
   payment_due_date: '',
@@ -49,8 +48,6 @@ let availableFilters = {
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   transaction_approved_dates: '',
-  api_issuance_status_id: '',
-  insurer_api_status_id: [],
   insurer_aml_status: [],
   page: 1,
 };
@@ -237,20 +234,6 @@ const paymentStatusOptions = computed(() => {
   }));
 });
 
-const insurerApiStatusOptions = computed(() => {
-  return Object.entries(page.props.insurerApiStatus).map(([index, value]) => ({
-    value: index,
-    label: value,
-  }));
-});
-
-const issuanceStatusOptions = computed(() => {
-  return Object.entries(page.props.issuanceStatuses).map(([index, value]) => ({
-    value: index,
-    label: value,
-  }));
-});
-
 const insurerAMLStatusOptions = computed(() => {
   return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
     value: key,
@@ -268,7 +251,6 @@ function setQueryStringFilters() {
     'advisor_id',
     'payment_status_id',
     'insurer_aml_status',
-    'insurer_api_status_id',
     'page',
   ];
 
@@ -592,18 +574,6 @@ const validateDateRange = () => {
           class="w-full"
           label="Policy End Date"
         />
-        <x-field label="Advisor Requested">
-          <x-select
-            v-model="filters.sic_advisor_requested"
-            placeholder="Search by Advisor Requested"
-            :options="[
-              { value: 'All', label: 'All' },
-              { value: 'Yes', label: 'Yes' },
-              { value: 'No', label: 'No' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
         <x-field label="Advisor" v-if="!hasAnyRole([rolesEnum.CyberAdvisor])">
           <ComboBox
             v-model="filters.advisor_id"
@@ -669,39 +639,6 @@ const validateDateRange = () => {
           multi-calendars-solo
           max-range="30"
         />
-        <x-field label="API Issuance Status">
-          <x-select
-            v-model="filters.api_issuance_status_id"
-            name="api_issuance_status_id"
-            placeholder="Search by API Issuance Status"
-            :options="issuanceStatusOptions"
-            class="w-full"
-            filterable
-          />
-        </x-field>
-        <x-field label="Insurer API Status">
-          <x-select
-            v-model="filters.insurer_api_status_id"
-            name="insurer_api_status_id"
-            placeholder="Search by Insurer API Status"
-            :options="insurerApiStatusOptions"
-            class="w-full"
-            filterable
-            multiple
-            truncate
-          >
-            <template #content-footer>
-              <ui-select-actions
-                @select-all="
-                  filters.insurer_api_status_id = insurerApiStatusOptions.map(
-                    item => item.value,
-                  )
-                "
-                @clear="filters.insurer_api_status_id = []"
-              />
-            </template>
-          </x-select>
-        </x-field>
         <x-field label="IM AML Status">
           <x-select
             v-model="filters.insurer_aml_status"
