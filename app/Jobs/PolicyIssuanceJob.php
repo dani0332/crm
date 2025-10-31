@@ -6,7 +6,6 @@ use App\Enums\EnvEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -15,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
+class PolicyIssuanceJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -28,8 +27,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     // 28 is the cURL error code for timeout
     private $className = 'policyIssuanceJob';
     public mixed $process;
-    public $uniqueFor = 60 * 15; // 15 minutes
-    public $uniqueKey = null; // 15 minutes
+    public $uniqueKey = null;
 
     /**
      * Create a new job instance.
@@ -131,11 +129,6 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public function middleware()
     {
         return [(new WithoutOverlapping($this->uniqueKey))->dontRelease()];
-    }
-
-    public function uniqueId(): string
-    {
-        return $this->uniqueKey;
     }
 
     private function isProcessable($process)
