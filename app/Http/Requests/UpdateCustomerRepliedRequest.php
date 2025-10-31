@@ -25,7 +25,6 @@ class UpdateCustomerRepliedRequest extends FormRequest
             'quote_uuid' => 'required|string',
             'message_id' => 'required|string',
             'quote_type_id' => 'required|integer',
-            'customer_replied' => 'required|boolean',
         ];
     }
 
