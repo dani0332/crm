@@ -62,12 +62,12 @@ jobs:
         if: steps.cpr.outputs.pull-request-number != ''
         uses: hmarr/auto-approve-action@v3
         with:
-          github-token: ${{ secrets.SERVICE_ACCOUNT_PAT }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
       - name: Auto-merge the PR
         if: steps.cpr.outputs.pull-request-number != ''
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
-          token: ${{ secrets.SERVICE_ACCOUNT_PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
           merge-method: squash
