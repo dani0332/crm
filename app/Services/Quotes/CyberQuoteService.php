@@ -45,6 +45,7 @@ class CyberQuoteService extends BaseQuoteService
             ->filterBy('payment_status_id')
             ->filterBy('is_ecommerce', isBool: true)
             ->filterIn('insurer_aml_status')
+            ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
             ->when(request()->filled('insurer_tax_invoice_number'), function ($q) {
                 $q->whereHas('payments', function ($subQuery) {

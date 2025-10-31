@@ -15,6 +15,7 @@ defineProps({
     default: 0,
   },
   authorizedDays: Number,
+  cyberPlans: Array,
 });
 
 const page = usePage();
@@ -49,6 +50,7 @@ let availableFilters = {
   insurer_commission_tax_invoice_number: '',
   transaction_approved_dates: '',
   insurer_aml_status: [],
+  plan_name: [],
   page: 1,
 };
 
@@ -251,6 +253,7 @@ function setQueryStringFilters() {
     'advisor_id',
     'payment_status_id',
     'insurer_aml_status',
+    'plan_name',
     'page',
   ];
 
@@ -417,6 +420,13 @@ const validateDateRange = () => {
   }
   return false;
 };
+
+const computedCyberPlans = computed(() => {
+  return page.props.cyberPlans.map(item => ({
+    value: item.id,
+    label: item.text,
+  }));
+});
 </script>
 
 <template>
@@ -658,6 +668,27 @@ const validateDateRange = () => {
                   )
                 "
                 @clear="filters.insurer_aml_status = []"
+              />
+            </template>
+          </x-select>
+        </x-field>
+        <x-field label="Plan Name">
+          <x-select
+            v-model="filters.plan_name"
+            name="plan_name"
+            placeholder="Search by Plan Name"
+            :options="computedCyberPlans"
+            class="w-full"
+            filterable
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.plan_name = computedCyberPlans.map(item => item.value)
+                "
+                @clear="filters.plan_name = []"
               />
             </template>
           </x-select>

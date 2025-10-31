@@ -6,8 +6,10 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Cyber\CyberQuoteRequest;
+use App\Models\InsuranceProviderPlan;
 use App\Models\PaymentStatus;
 use App\Services\AMLService;
 use App\Services\Quotes\CyberQuoteService;
@@ -49,6 +51,7 @@ class CyberQuoteController extends Controller
             'authorizedDays' => intval($authorizedDays->value),
             'insurerAMLStatus' => $insurerAMLStatus,
             'paymentStatuses' => $paymentStatuses,
+            'cyberPlans' => InsuranceProviderPlan::where('quote_type_id', (int) QuoteTypes::CYBER->id())->select(['id', 'code' ,'text'])->get(),
         ]);
     }
 
