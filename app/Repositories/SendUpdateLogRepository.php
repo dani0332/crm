@@ -568,26 +568,27 @@ class SendUpdateLogRepository extends BaseRepository
         try {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quote = $this->getQuoteObjectBy($quoteType, $quoteUuid, 'uuid');
+            if ($quote->policy_booking_date) {
+                $previousStatusId = $quote->quote_status_id;
 
-            $previousStatusId = $quote->quote_status_id;
+                $quote->update([
+                    'quote_status_id' => $quoteStatusId,
+                    'quote_status_date' => now(),
+                ]);
 
-            $quote->update([
-                'quote_status_id' => $quoteStatusId,
-                'quote_status_date' => now(),
-            ]);
+                QuoteStatusLog::create([
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                    'current_quote_status_id' => $quoteStatusId,
+                    'previous_quote_status_id' => $previousStatusId,
+                    'created_by' => auth()->user()->id,
+                ]);
 
-            QuoteStatusLog::create([
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quote->id,
-                'current_quote_status_id' => $quoteStatusId,
-                'previous_quote_status_id' => $previousStatusId,
-                'created_by' => auth()->user()->id,
-            ]);
-
-            LoggerService::info('Quote status updated successfully', extra: [
-                'previousStatusId' => $previousStatusId,
-                'newStatusId' => $quoteStatusId,
-            ]);
+                LoggerService::info('Quote status updated successfully', extra: [
+                    'previousStatusId' => $previousStatusId,
+                    'newStatusId' => $quoteStatusId,
+                ]);
+            }
         } catch (\Exception $ex) {
             LoggerService::error('Error while updating Quote status', exception: $ex);
         }
