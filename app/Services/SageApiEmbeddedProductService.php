@@ -396,7 +396,7 @@ class SageApiEmbeddedProductService
                         }
                     }
                 }
-                
+
                 if (! $isAlreadyPosted) {
                     LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: posting AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].' :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code);
                     $postedResponse = $this->sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);

@@ -1161,7 +1161,7 @@ class SageApiService
                     LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  already posted :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' sent already');
                 } else {
                     if ($isAlreadyPosted && isset($aRPostReceipts) || isset($sageLogArray[4]) && $sageLogArray[4]['status'] == SageEnum::STATUS_FAIL) {
-                        if($isAlreadyPosted) {
+                        if ($isAlreadyPosted) {
                             LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  already posted :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
                             $postedResponse = $aRPostReceipts['payload'];
                         } else {
@@ -1172,6 +1172,7 @@ class SageApiService
                             if (! isset($aRReceiptBatch['BatchStatus'])) {
                                 LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  failed to get status :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
                                 $response['message'] = 'Failed to get status of AR Prepayment Receipts batch - Ref:'.$quote->code;
+
                                 return $response;
                             }
 
@@ -1452,7 +1453,7 @@ class SageApiService
                     LoggerService::info('SAGE API :  Check status of  AR invoice batch '.$sageResponse['BatchNumber'].'  for '.$quote->code);
                     $arInvoiceBatch = $this->postToSage300('AR/ARInvoiceBatches('.$sageResponse['BatchNumber'].')', [], 'GET');
                     $arInvoiceBatch = json_decode($arInvoiceBatch, true);
-                    
+
                     LoggerService::info('SAGE API :  Status of  AR invoice batch '.$sageResponse['BatchNumber'].'  for '.$quote->code, extra: $arInvoiceBatch);
                     if (! isset($arInvoiceBatch['BatchStatus'])) {
                         $message = 'Upfront - AR Invoice, Unable to get Batch Status from Sage.';

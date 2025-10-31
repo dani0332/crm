@@ -44,7 +44,7 @@ class DatabaseSeeder extends Seeder
             InsurancePlateCodeSeeder::class,
             UpdateTooltipCarDocuments::class,
             CarAdditionalDetailsForSukoonSeeder::class,
-            QICTokioLookupSeeder::class
+            QICTokioLookupSeeder::class,
         ]);
     }
 }
