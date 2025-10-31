@@ -99,4 +99,106 @@ class EmailStatusService extends BaseService
         info('EmailStatusService - EmailStatus updated for msg_id: '.$emailData->message_id.' email_status: '.$emailStatus->email_status.' | Time:'.now());
     }
 
+    /**
+     * Update customer replied status in email_status table
+     *
+     * @param string $quoteUuid
+     * @param string $messageId
+     * @param int $quoteTypeId
+     * @param string|null $customerReplied
+     * @return object
+     */
+    public function updateCustomerRepliedStatus(string $quoteUuid, string $messageId, int $quoteTypeId,): object
+    {
+        try {
+            // Get the quote based on quote type
+            $quote = $this->getQuoteByUuidAndType($quoteUuid, $quoteTypeId);
+
+            if (! $quote) {
+                LoggerService::warning(self::class.' - updateCustomerRepliedStatus - Quote not found', [
+                    'uuid' => $quoteUuid,
+                    'quote_type_id' => $quoteTypeId,
+                    'time' => now(),
+                ]);
+
+                return (object) [
+                    'success' => false,
+                    'message' => 'Quote not found',
+                ];
+            }
+
+            // Find the email status record
+            $emailStatus = EmailStatus::where('quote_id', $quote->id)
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('msg_id', $messageId)
+                ->first();
+
+            if (! $emailStatus) {
+                LoggerService::warning(self::class.' - updateCustomerRepliedStatus - Email status not found', [
+                    'uuid' => $quoteUuid,
+                    'quote_id' => $quote->id,
+                    'quote_type_id' => $quoteTypeId,
+                    'message_id' => $messageId,
+                    'time' => now(),
+                ]);
+
+                return (object) [
+                    'success' => false,
+                    'message' => 'Email status record not found',
+                ];
+            }
+
+            // Update the customer_replied field
+            $emailStatus->customer_replied = true;
+            $emailStatus->save();
+
+            LoggerService::info(self::class.' - updateCustomerRepliedStatus - Customer replied status updated successfully', [
+                'uuid' => $quoteUuid,
+                'quote_id' => $quote->id,
+                'message_id' => $messageId,
+                'time' => now(),
+            ]);
+
+            return (object) [
+                'success' => true,
+                'message' => 'Customer replied status updated successfully',
+                'data' => [
+                    'email_status_id' => $emailStatus->id,
+                    'customer_replied' => $emailStatus->customer_replied,
+                ],
+            ];
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.' - updateCustomerRepliedStatus - Error updating customer replied status', [
+                'uuid' => $quoteUuid,
+                'message_id' => $messageId,
+                'quote_type_id' => $quoteTypeId,
+                'error' => $e->getMessage(),
+                'time' => now(),
+            ], $e);
+
+            return (object) [
+                'success' => false,
+                'message' => 'Error updating customer replied status: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Get quote by UUID and type
+     *
+     * @param string $uuid
+     * @param int $quoteTypeId
+     * @return mixed
+     */
+    private function getQuoteByUuidAndType(string $uuid, int $quoteTypeId)
+    {
+        return match ($quoteTypeId) {
+            QuoteTypeId::Car => CarQuote::where('uuid', $uuid)->first(),
+            QuoteTypeId::Health => HealthQuote::where('uuid', $uuid)->first(),
+            QuoteTypeId::Home, QuoteTypeId::Savings, QuoteTypeId::Life => PersonalQuote::where('uuid', $uuid)->first(),
+            QuoteTypeId::Travel => TravelQuote::where('uuid', $uuid)->first(),
+            default => null,
+        };
+    }
+
 }

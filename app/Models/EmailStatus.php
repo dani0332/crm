@@ -21,6 +21,7 @@ class EmailStatus extends Model
         'email_subject',
         'template_id',
         'customer_id',
+        'customer_replied',
     ];
 
     public function getCreatedAtAttribute($date)

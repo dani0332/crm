@@ -29,6 +29,7 @@ use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
+use App\Http\Requests\UpdateCustomerRepliedRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\RunCQFJobs;
@@ -55,6 +56,7 @@ use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
@@ -539,5 +541,66 @@ class ApiController extends Controller
             return apiResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, 'Failed to run CQF jobs');
         }
 
+    }
+
+    /**
+     * Update customer replied status in email_status table
+     *
+     * @param UpdateCustomerRepliedRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateCustomerRepliedStatus(UpdateCustomerRepliedRequest $request)
+    {
+        try {
+            LoggerService::info(self::class.': Updating customer replied status', [
+                'quote_uuid' => $request->quote_uuid,
+                'message_id' => $request->message_id,
+                'quote_type_id' => $request->quote_type_id,
+            ]);
+
+            $emailStatusService = app(EmailStatusService::class);
+            $result = $emailStatusService->updateCustomerRepliedStatus(
+                $request->quote_uuid,
+                $request->message_id,
+                $request->quote_type_id,
+            );
+
+            if ($result->success) {
+                LoggerService::info(self::class.': Customer replied status updated successfully', [
+                    'quote_uuid' => $request->quote_uuid,
+                    'message_id' => $request->message_id,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => $result->message,
+                    'data' => $result->data ?? null,
+                ], Response::HTTP_OK);
+            }
+
+            LoggerService::warning(self::class.': Failed to update customer replied status', [
+                'quote_uuid' => $request->quote_uuid,
+                'message_id' => $request->message_id,
+                'error' => $result->message,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $result->message,
+            ], Response::HTTP_BAD_REQUEST);
+
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': Error updating customer replied status', [
+                'quote_uuid' => $request->quote_uuid ?? null,
+                'message_id' => $request->message_id ?? null,
+                'error' => $e->getMessage(),
+            ], $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating customer replied status',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }
