@@ -5,7 +5,6 @@ defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
-  renewalBatches: Array,
   quoteType: {
     type: String,
     default: 'cyber',
@@ -14,7 +13,6 @@ defineProps({
     type: Number,
     default: 0,
   },
-  authorizedDays: Number,
   cyberPlans: Array,
 });
 
@@ -84,21 +82,23 @@ const serverOptions = ref({
 });
 
 const tableHeader = ref([
-  { text: 'Ref-ID', value: 'uuid', is_active: true },
-  { text: 'Plan Name', value: 'insurance_provider_plan.text', is_active: true },
+  { text: 'REF ID', value: 'uuid', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
-  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
-  { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
+  { text: 'LEAD SOURCE', value: 'source', is_active: true },
+  { text: 'PLAN NAME', value: 'insurance_provider_plan.text', is_active: true },
+  { text: 'COVERAGE UP TO', value: 'coverage_up_to', is_active: true },
+  { text: 'TOTAL PRICE', value: 'premium', is_active: true },
+  { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
-  { text: 'POLICY NO', value: 'policy_number', is_active: true },
   {
     text: 'CREATED DATE',
     value: 'created_at',
     is_active: true,
     sortable: true,
   },
+  { text: 'PAYMENT AUTHORIZED DATE', value: 'authorized_at', is_active: true },
   {
     text: 'LAST MODIFIED DATE',
     value: 'updated_at',
@@ -111,17 +111,6 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Nationality', value: 'nationality.text', is_active: true },
-  { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
-  { text: 'SOURCE', value: 'source', is_active: true },
-  { text: 'LOST REASON', value: 'lost_reason', is_active: true },
-  { text: 'PRICE', value: 'premium', is_active: true },
-  {
-    text: 'Previous Policy Number',
-    value: 'previous_quote_policy_number',
-    is_active: true,
-  },
-  { text: 'Renewal Batch', value: 'renewal_batch_model', is_active: true },
 ]);
 
 const quotesSelected = ref([]);
@@ -206,15 +195,6 @@ const onDataExport = () => {
       }, 1000);
   });
 };
-
-const advisorOptionsFilter = computed(() => {
-  return page.props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.roles[0].name
-      ? advisor.name + ' - ' + advisor.roles[0]?.name
-      : advisor.name,
-  }));
-});
 
 const advisorOptions = computed(() => {
   const advisors = page.props.advisors.map(advisor => ({
@@ -338,40 +318,6 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
-function daysAgoFromAuthorizedDate(authorizedDate) {
-  if (!authorizedDate) {
-    return;
-  }
-
-  const [day, month, year] = authorizedDate.split('-').map(Number);
-  const parsedDate = new Date(year, month - 1, day);
-
-  if (isNaN(parsedDate.getTime())) {
-    return 'Invalid date';
-  }
-
-  parsedDate.setHours(0, 0, 0, 0);
-
-  const authorizedDays = page.props.authorizedDays || 8;
-  const newDate = new Date(parsedDate);
-  newDate.setDate(parsedDate.getDate() + authorizedDays);
-
-  newDate.setHours(0, 0, 0, 0);
-
-  const currentDate = new Date();
-  currentDate.setHours(0, 0, 0, 0);
-
-  const differenceInTime = newDate.getTime() - currentDate.getTime();
-  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
-
-  if (differenceInDays <= 0) {
-    return 'Expired';
-  }
-
-  return differenceInDays === 1
-    ? `${differenceInDays} day`
-    : `${differenceInDays} days`;
-}
 const resetDateFilters = filterName => {
   const filterMappings = {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
@@ -779,17 +725,14 @@ const computedCyberPlans = computed(() => {
       <template #item-insurance_provider_plan="{ insurance_provider_plan }">
         {{ insurance_provider_plan?.text ?? '' }}
       </template>
+      <template #item-coverage_up_to>
+        {{ null }}
+      </template>
       <template #item-authorized_at="item">
         <p v-if="item?.payment_status?.text === 'AUTHORISED'">
           {{ item?.payments[0]?.authorized_at }}
         </p>
       </template>
-      <template #item-expiry_date="item">
-        <p v-if="item?.payment_status?.text === 'AUTHORISED'">
-          {{ daysAgoFromAuthorizedDate(item?.payments[0]?.authorized_at) }}
-        </p>
-      </template>
-
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}
       </template>
@@ -807,23 +750,6 @@ const computedCyberPlans = computed(() => {
       </template>
       <template #item-quote_status="{ quote_status }">
         {{ quote_status?.text }}
-      </template>
-
-      <template #item-currently_insured_with="{ currently_insured_with }">
-        {{ currently_insured_with?.text }}
-      </template>
-
-      <template #item-is_ecommerce="{ is_ecommerce }">
-        <div class="text-center">
-          <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
-            {{ is_ecommerce ? 'Yes' : 'No' }}
-          </x-tag>
-        </div>
-      </template>
-      <template #item-renewal_batch_model="item">
-        <p>
-          {{ item?.renewal_batch_model?.name ?? '' }}
-        </p>
       </template>
     </DataTable>
 
