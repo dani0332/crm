@@ -62,4 +62,5 @@ enum LookupsEnum: string
     case NATIONALITY_LIST = 'nationality-list';
     case DRIVING_EXPERIENCE = 'driving-experience';
     case RM_CATEGORY = 'rm-category';
+    case CYBER_COVERAGE = 'cyber-coverage';
 }

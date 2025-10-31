@@ -293,5 +293,10 @@ class CyberQuoteService extends BaseQuoteService
             return $quote;
         });
     }
+
+    public function getCyberCoverages()
+    {
+        return app(LookupService::class)->getCyberCoverages();
+    }
 }
 

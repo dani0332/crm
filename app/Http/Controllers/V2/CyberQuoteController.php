@@ -43,6 +43,8 @@ class CyberQuoteController extends Controller
 
         $data = $query->simplePaginate(10)->withQueryString();
 
+        $cyberCoverages = $this->cyberQuoteService->getCyberCoverages();
+
         return inertia('CyberQuote/Index', [
             'quotes' => $data,
             'quoteStatuses' => $quoteStatuses,
@@ -52,6 +54,7 @@ class CyberQuoteController extends Controller
             'insurerAMLStatus' => $insurerAMLStatus,
             'paymentStatuses' => $paymentStatuses,
             'cyberPlans' => InsuranceProviderPlan::where('quote_type_id', (int) QuoteTypes::CYBER->id())->select(['id', 'code' ,'text'])->get(),
+            'cyberCoverages' => $cyberCoverages,
         ]);
     }
 

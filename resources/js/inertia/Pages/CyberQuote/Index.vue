@@ -14,6 +14,7 @@ defineProps({
     default: 0,
   },
   cyberPlans: Array,
+  cyberCoverages: Array,
 });
 
 const page = usePage();
@@ -40,15 +41,16 @@ let availableFilters = {
   policy_expiry_date: '',
   policy_expiry_date_end: '',
   advisor_id: [],
-  previous_quote_policy_number_text: '',
   payment_due_date: '',
   booking_date: '',
   last_modified_date: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  previous_quote_policy_number_text: '',
+  coverage_up_to: '',
   transaction_approved_dates: '',
-  insurer_aml_status: [],
   plan_name: [],
+  insurer_aml_status: [],
   page: 1,
 };
 
@@ -235,6 +237,7 @@ function setQueryStringFilters() {
     'payment_status_id',
     'insurer_aml_status',
     'plan_name',
+    'coverage_up_to',
     'page',
   ];
 
@@ -370,6 +373,13 @@ const validateDateRange = () => {
 
 const computedCyberPlans = computed(() => {
   return page.props.cyberPlans.map(item => ({
+    value: item.id,
+    label: item.text,
+  }));
+});
+
+const computedCyberCoverages = computed(() => {
+  return page.props.cyberCoverages.map(item => ({
     value: item.id,
     label: item.text,
   }));
@@ -538,14 +548,6 @@ const computedCyberPlans = computed(() => {
             :options="advisorOptions"
           />
         </x-field>
-        <x-input
-          v-model="filters.previous_quote_policy_number_text"
-          type="text"
-          name="previous_quote_policy_number"
-          label="Policy Number"
-          class="w-full"
-          placeholder="Policy Number"
-        />
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -587,6 +589,24 @@ const computedCyberPlans = computed(() => {
             placeholder="Insurer Commission Tax Invoice No"
           />
         </x-field>
+        <x-input
+          v-model="filters.previous_quote_policy_number_text"
+          type="text"
+          name="previous_quote_policy_number"
+          label="Policy Number"
+          class="w-full"
+          placeholder="Policy Number"
+        />
+        <x-field label="Coverage Up to">
+          <x-select
+            v-model="filters.coverage_up_to"
+            name="coverage_up_to"
+            placeholder="Search by Coverage Up to"
+            :options="computedCyberCoverages"
+            class="w-full"
+            filterable
+          />
+        </x-field>
         <DatePicker
           v-model="filters.transaction_approved_dates"
           label="Transaction Approved Date"
@@ -596,6 +616,27 @@ const computedCyberPlans = computed(() => {
           multi-calendars-solo
           max-range="30"
         />
+        <x-field label="Plan Name">
+          <x-select
+            v-model="filters.plan_name"
+            name="plan_name"
+            placeholder="Search by Plan Name"
+            :options="computedCyberPlans"
+            class="w-full"
+            filterable
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.plan_name = computedCyberPlans.map(item => item.value)
+                "
+                @clear="filters.plan_name = []"
+              />
+            </template>
+          </x-select>
+        </x-field>
         <x-field label="IM AML Status">
           <x-select
             v-model="filters.insurer_aml_status"
@@ -615,27 +656,6 @@ const computedCyberPlans = computed(() => {
                   )
                 "
                 @clear="filters.insurer_aml_status = []"
-              />
-            </template>
-          </x-select>
-        </x-field>
-        <x-field label="Plan Name">
-          <x-select
-            v-model="filters.plan_name"
-            name="plan_name"
-            placeholder="Search by Plan Name"
-            :options="computedCyberPlans"
-            class="w-full"
-            filterable
-            multiple
-            truncate
-          >
-            <template #content-footer>
-              <ui-select-actions
-                @select-all="
-                  filters.plan_name = computedCyberPlans.map(item => item.value)
-                "
-                @clear="filters.plan_name = []"
               />
             </template>
           </x-select>

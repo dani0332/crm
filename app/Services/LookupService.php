@@ -276,4 +276,9 @@ class LookupService extends BaseService
             return Capi::request('/api/cyber/lookup', 'get');
         });
     }
+
+    public function getCyberCoverages()
+    {
+        return Lookup::where('key', LookupsEnum::CYBER_COVERAGE)->select('id', 'code', 'text')->orderBy('sort_order')->get();
+    }
 }
