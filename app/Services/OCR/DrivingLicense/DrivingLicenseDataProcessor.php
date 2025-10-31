@@ -67,7 +67,9 @@ class DrivingLicenseDataProcessor
             if (! empty($fieldsToUpdate['nationality_string'])) {
                 $nationalityId = $this->getNationalityId($fieldsToUpdate['nationality_string']);
                 if ($nationalityId) {
+                    LoggerService::info('Driver nationality ID for quote: '.$quote->id.' is: '.$nationalityId);
                     $fieldsToUpdate['nationality_id'] = $nationalityId;
+
                     // Remove the nationality string since we only want to store the ID
                     unset($fieldsToUpdate['nationality_string']);
                 } else {
@@ -77,6 +79,7 @@ class DrivingLicenseDataProcessor
                 }
             }
 
+            LoggerService::info('VehicleDriverDetail fields to update for quote: '.$quote->id.' is: '.json_encode($fieldsToUpdate));
             $vehicleDriverDetail = $quote->vehicleDriverDetail()->firstOrCreate(
                 ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
                 $fieldsToUpdate

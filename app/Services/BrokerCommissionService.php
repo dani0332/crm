@@ -20,8 +20,9 @@ class BrokerCommissionService
      * @param  int|null  $businessTypeId
      * @return BrokerCommission|null
      */
-    public function fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId = null, $planId = null, $quote = null)
+    public function fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId = null, $planId = null, $quote = null, $sendUpdateLog = null)
     {
+
         // Retrieve the insurance provider entity
         $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
 
