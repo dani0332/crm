@@ -351,6 +351,10 @@ trait PrivateClient
     private function handleSubAreaIdCondition($outerQuery, $config)
     {
         $operator = strtolower(trim($config->operator));
+        if (empty($operator)) {
+            return;
+        }
+
         $value = trim($config->value);
         $values = array_map('trim', explode(',', $value));
 
