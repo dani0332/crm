@@ -286,17 +286,17 @@ class TravelEmailService extends BaseService
 
         if ($lead->advisor_id) {
             info(self::class." - Going to Send Intro Email for uuid: {$lead->uuid}");
-            
+
             // Send intro email first
             $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email', QuoteTypes::TRAVEL);
-            
+
             // Then dispatch automated travel follow-up (has built-in duplicate check)
             if (in_array($responseCode, [200, 201])) {
                 $this->handleAutomatedFollowup($lead);
             } else {
                 LoggerService::info(self::class." - Intro email failed with code {$responseCode}, skipping automated followup for uuid: {$lead->uuid}");
             }
-            
+
             return $responseCode;
         }
 
@@ -305,7 +305,7 @@ class TravelEmailService extends BaseService
         $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId, QuoteTypes::TRAVEL);
 
         if ($responseCode) {
-           
+
             // Dispatch the job with a 24 hours delay
             if (isLeadSic($lead->uuid)) {
                 SICFollowupEmailJob::dispatch($lead->uuid, QuoteTypes::TRAVEL)->delay(now()->addminutes(1));
@@ -469,7 +469,7 @@ class TravelEmailService extends BaseService
 
             // Build email data for automated follow-ups
             $emailData = $this->buildCommonEmailData($travelQuote, $advisor, null, 'travel_automated_followups');
-            
+
             // Add travel-specific data for follow-ups
             $plans = $this->getPlans($travelQuote, false);
             $emailData->hasPlansGroups = count($plans->adultPlans) > 0 && count($plans->seniorPlans) > 0;
@@ -489,7 +489,7 @@ class TravelEmailService extends BaseService
                     $travelQuote->save();
                     LoggerService::info('sendAutomatedTravelFollowup - Automated flow timestamp updated for TravelQuote');
                 }
-                
+
                 app(BirdService::class)->createQuoteWorkFlowDetails($travelQuote, $response, QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::TRAVEL->id());
                 LoggerService::info('sendAutomatedTravelFollowup - Successfully triggered automated follow-up workflow');
             } else {
@@ -512,15 +512,16 @@ class TravelEmailService extends BaseService
 
             if ($isFollowupExecuted) {
                 LoggerService::info(self::class." - TRAVEL_AUTOMATED_FOLLOWUPS - Followup already executed {$travelQuote->uuid}");
+
                 return;
             }
 
             // Dispatch automated travel follow-up job with a short delay
             SendAutomatedTravelFollowup::dispatch($travelQuote->uuid)->delay(now()->addSeconds(10));
-            
+
             LoggerService::info(self::class." - TRAVEL_AUTOMATED_FOLLOWUPS - Dispatched for travel quote: {$travelQuote->uuid}");
         } catch (Exception $e) {
-            LoggerService::error(self::class." - Error dispatching automated travel follow-up", [], $e, ['ref_id' => $travelQuote->uuid]);
+            LoggerService::error(self::class.' - Error dispatching automated travel follow-up', [], $e, ['ref_id' => $travelQuote->uuid]);
         }
     }
 
@@ -590,6 +591,7 @@ class TravelEmailService extends BaseService
                 );
             } catch (\Exception $urlException) {
                 LoggerService::error(self::class.' - attachTravelOCBPDFToEmail - Failed to generate temporary URL: '.$urlException->getMessage().' for uuid: '.$quoteUID, exception: $urlException);
+
                 return '';
             }
 
