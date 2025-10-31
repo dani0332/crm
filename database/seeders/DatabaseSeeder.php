@@ -29,12 +29,22 @@ class DatabaseSeeder extends Seeder
             // BusinessActivitiesSeeder::class,
             // PaymentMethodsAddSeeder::class,
             PermissionSeeder::class,
+            AiAdvisorSeeder::class,
+            // CarAdditionalDetailsForLivaSeeder::class,
             CarAdditionalDetailsForLivaSeeder::class,
             CarGIGVehicleTransactionDriverDetailsForAMLSeeder::class,
             CPARulesSeeder::class,
             BorDocumentSeeder::class,
             AutomationSeeder::class,
             TravelLeadAllocationDashboardSeeder::class,
+            VehicleColorSeeder::class,
+            SendUpdateNotesSeeder::class,
+            NonApiInsurerVehicleColorSeeder::class,
+            NonApiInsurerMortgageBySeeder::class,
+            InsurancePlateCodeSeeder::class,
+            UpdateTooltipCarDocuments::class,
+            CarAdditionalDetailsForSukoonSeeder::class,
+            QICTokioLookupSeeder::class
         ]);
     }
 }

@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\EmiratesId;
 
+use App\Enums\KycSourceOfIncomeEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exceptions\OCR\OcrProcessingException;
+use App\Models\CarQuote;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
+use App\Models\Lookup;
 use App\Models\Nationality;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
@@ -47,17 +51,44 @@ class EmiratesIdDataProcessor
 
             $insuredUpdated = $this->updateInsuredTable($insured);
             $kycUpdated = $this->updateInsuredKycTable($insured);
+            $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
 
             DB::commit();
 
             LoggerService::info('Emirates ID data processing completed successfully');
 
-            return $insuredUpdated || $kycUpdated;
+            return $insuredUpdated || $kycUpdated || $vehicleDriverDetailUpdated;
 
         } catch (Exception $e) {
             DB::rollBack();
 
             LoggerService::error('Emirates ID data processing failed', exception: $e);
+
+            return false;
+        }
+    }
+
+    private function updateVehicleDriverDetail($quote): bool
+    {
+        try {
+
+            $fieldsToUpdate = $this->getCleanData([
+                'driver_gender' => $this->extractedData['sex'],
+            ]);
+
+            if (! empty($fieldsToUpdate)) {
+                $quote->vehicleDriverDetail()->updateOrCreate(
+                    ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
+                    $fieldsToUpdate
+                );
+
+                LoggerService::info('VehicleDriverDetail updated successfully');
+            }
+
+            return true;
+
+        } catch (Exception $e) {
+            LoggerService::error('VehicleDriverDetail update failed', exception: $e);
 
             return false;
         }
@@ -119,17 +150,6 @@ class EmiratesIdDataProcessor
             if (! empty($this->extractedData['name'])) {
                 $updateData['first_name'] = $this->extractFirstName($this->extractedData['name']);
                 $updateData['last_name'] = $this->extractLastName($this->extractedData['name']);
-            }
-
-            if (! empty($this->extractedData['date_of_birth'])) {
-                $updateData['dob'] = $this->extractedData['date_of_birth'];
-            }
-
-            if (! empty($this->extractedData['nationality'])) {
-                $nationalityId = $this->getNationalityId($this->extractedData['nationality']);
-                if ($nationalityId) {
-                    $updateData['nationality_id'] = $nationalityId;
-                }
             }
 
             if (! empty($this->extractedData['sex'])) {
@@ -197,6 +217,22 @@ class EmiratesIdDataProcessor
                 $kycData['residential_address'] = $this->extractedData['issuing_place'].', UAE';
             }
 
+            // Map employment fields from Emirates ID OCR data
+            if (! empty($this->extractedData['sponsor'])) {
+                $kycData['employer_company_name'] = $this->extractedData['sponsor'];
+                $kycData['source_of_income'] = KycSourceOfIncomeEnum::EMPLOYED->value;
+                LoggerService::info('Emirates ID OCR: Auto-populated employer company name', [
+                    'employer_company_name' => $this->extractedData['sponsor'],
+                ]);
+            }
+
+            if (! empty($this->extractedData['occupation'])) {
+                $mappedJobTitle = $this->mapOccupationToJobTitle($this->extractedData['occupation']);
+                if ($mappedJobTitle) {
+                    $kycData['job_title'] = $mappedJobTitle;
+                }
+            }
+
             // Sync insured table data to insured_kyc table
             $kycData['id_type'] = $insured->id_type;
             $kycData['id_number'] = $insured->id_number;
@@ -242,9 +278,9 @@ class EmiratesIdDataProcessor
             return null;
         }
 
-        $nationalityRecord = Nationality::where('text', 'LIKE', '%'.$nationality.'%')
+        $nationalityRecord = Nationality::where('text', $nationality)
             ->orWhere('code', $nationality)
-            ->orWhere('country_name', 'LIKE', '%'.$nationality.'%')
+            ->orWhere('country_name', $nationality)
             ->first();
 
         return $nationalityRecord?->id;
@@ -357,8 +393,8 @@ class EmiratesIdDataProcessor
                 'has_kyc_data' => ! is_null($insuredKyc),
                 'insured_data' => [
                     'name' => trim(($insured->first_name ?? '').' '.($insured->last_name ?? '')),
-                    'dob' => $insured->dob,
-                    'nationality_id' => $insured->nationality_id,
+                    // 'dob' => $insured->dob,
+                    // 'nationality_id' => $insured->nationality_id,
                     'gender' => $insured->gender,
                     'id_number' => $insured->id_number,
                     'id_type' => $insured->id_type,
@@ -376,6 +412,9 @@ class EmiratesIdDataProcessor
                     'id_number' => $insuredKyc->id_number,
                     'first_name' => $insuredKyc->first_name,
                     'last_name' => $insuredKyc->last_name,
+                    'employer_company_name' => $insuredKyc->employer_company_name,
+                    'job_title' => $insuredKyc->job_title,
+                    'source_of_income' => $insuredKyc->source_of_income,
                 ] : null,
             ];
 
@@ -387,5 +426,30 @@ class EmiratesIdDataProcessor
                 'message' => 'Failed to retrieve processing summary',
             ];
         }
+    }
+
+    private function mapOccupationToJobTitle(string $occupation): ?string
+    {
+        $occupation = trim($occupation);
+
+        $professionalTitle = Lookup::where('key', LookupsEnum::PROFESSIONAL_TITLE)
+            ->where('code', $occupation)
+            ->first();
+
+        if ($professionalTitle) {
+            LoggerService::info('Emirates ID OCR: Professional title matched', [
+                'original_occupation' => $occupation,
+                'matched_title' => $professionalTitle->text,
+                'lookup_code' => $professionalTitle->code,
+            ]);
+
+            return $professionalTitle->code;
+        }
+
+        LoggerService::info('Emirates ID OCR: No professional title match found', [
+            'original_occupation' => $occupation,
+        ]);
+
+        return null;
     }
 }

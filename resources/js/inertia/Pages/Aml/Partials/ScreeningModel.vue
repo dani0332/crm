@@ -20,6 +20,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  isAddionalFieldsEnabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 const page = usePage();
 const { isRequired } = useRules();
@@ -188,31 +192,6 @@ const customerTypeOptions = computed(() => {
     { value: customerTypeEnum.Individual, label: 'Individual' },
     { value: customerTypeEnum.Entity, label: 'Entity' },
   ];
-});
-
-const showVehicleAndDrvicerDetails = computed(() => {
-  console.log(
-    'page.props.quoteType.id',
-    page.props.quoteType.id,
-    page.props.quoteTypeIdEnum.Car,
-    page.props.quoteType.id === page.props.quoteTypeIdEnum.Car,
-  );
-  console.log(
-    'page.props.insuranceProviderCodeEnum.AXA',
-    page.props.quoteRequest?.plan?.insurance_provider.code,
-    page.props.insuranceProviderCodeEnum.AXA,
-  );
-  console.log('page.props.isPrivateCar', page.props.isPrivateCar);
-
-  return (
-    page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
-    [
-      page.props.insuranceProviderCodeEnum.RSA, // LIVA
-      page.props.insuranceProviderCodeEnum.AXA, // GIG
-      // page.props.insuranceProviderCodeEnum.OIC, // SUKOON
-    ].includes(page.props.quoteRequest?.plan?.insurance_provider.code) &&
-    (page.props.isPrivateCar ?? false)
-  );
 });
 
 const screeningFormDetails = useForm({
@@ -670,7 +649,7 @@ function screeningFormValidate() {
     (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
       page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
     !chassisNumberDisabled.value &&
-    !showVehicleAndDrvicerDetails.value
+    !props.isAddionalFieldsEnabled
   ) {
     if (!screeningFormDetails.chassis_number) {
       screeningFormDetails.setError('chassis_number', 'This field is required');
@@ -791,7 +770,7 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
     persistent
     @submit="submitScreeningForm"
   >
-    <template v-if="showVehicleAndDrvicerDetails">
+    <template v-if="props.isAddionalFieldsEnabled">
       <AdditionalVehicleTransactionDetails
         :insurerPortalSyncData="insurerPortalSyncData"
         :rta_transaction_types="rta_transaction_types"
@@ -1050,7 +1029,7 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
         v-if="
           (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
             page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
-          !showVehicleAndDrvicerDetails
+          !props.isAddionalFieldsEnabled
         "
       >
         <div class="flex flex-wrap gap-3 justify-between items-center mb-4">

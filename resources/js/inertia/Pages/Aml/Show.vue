@@ -298,6 +298,17 @@ function fieldValidationsperson() {
   fieldRequiredperson.value = false;
   return true;
 }
+
+onMounted(() => {
+  if (!amlResults.value.length && props.aml.status) {
+    notification.error({
+      title: props.aml.status,
+      message: props.aml.message,
+      position: 'top',
+      duration: 10000,
+    });
+  }
+});
 </script>
 
 <template>

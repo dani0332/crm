@@ -241,4 +241,32 @@ class LookupService extends BaseService
             return Capi::request('/api/v1-get-all-savings-lookups', 'post');
         });
     }
+
+    public function getRmCategories()
+    {
+        return Lookup::where('key', LookupsEnum::RM_CATEGORY)
+            ->where('is_active', true)
+            ->orderBy('text')
+            ->get(['id', 'code', 'text']);
+    }
+
+    public function getVehicleColors($quoteTypeId, $providerId)
+    {
+        return Lookup::where('key', LookupsEnum::VEHICLE_COLOR)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('insurance_provider_id', $providerId)
+            ->where('is_active', true)
+            ->select('id', 'code', 'text')
+            ->get();
+    }
+
+    public function getBankNames($quoteTypeId, $providerId)
+    {
+        return Lookup::where('key', LookupsEnum::BANK_NAME)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('insurance_provider_id', $providerId)
+            ->where('is_active', true)
+            ->select('id', 'code', 'text')
+            ->get();
+    }
 }

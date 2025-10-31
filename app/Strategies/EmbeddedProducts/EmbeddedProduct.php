@@ -78,12 +78,7 @@ class EmbeddedProduct
                 ->where('quote_type_id', $item->quote_type_id)
                 ->latest('updated_at')
                 ->first() ?? null;
-            $advisorName = $quoteObject->advisor->name ?? '';
-            $nationality = $quoteObject->customer->nationality->text ?? '';
 
-            $age = isset($quoteObject->dob) ?
-                floor(Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now())).' Years'
-                : '';
             $planStartDate = (! empty($quoteObject->policy_start_date) && $quoteObject->policy_start_date != '0000-00-00 00:00:00') ? Carbon::parse($quoteObject->policy_start_date)->format($dateFormat) : '';
             $planEndDate = '';
             if (! empty($planStartDate)) {
@@ -102,20 +97,15 @@ class EmbeddedProduct
 
             $item->id = $item->id;
             $item->ref_id = $item->code;
-            $item->advisor_name = $advisorName;
             $item->payment_date = isset($item->captured_at) ? Carbon::parse($item->captured_at)->format($dateFormat) : '';
             $item->plan_start_date = $planStartDate;
             $item->plan_end_date = $planEndDate;
             $item->certificate_number = $item->certificate_number ?? '';
             $item->name = $firstName.' '.$lastName;
-            $item->dob = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format($dateFormat) : '';
-            $item->age = $age;
             $item->contact_number = $quoteObject->mobile_no ?? '';
-            $item->nationality = $nationality ?? '';
             $item->email = $quoteObject->email ?? '';
             $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
             $item->status = $status;
-            $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
             $item->emirates_id_number = $emiratesIdNumber;
 
             if ($item?->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER) {
@@ -146,6 +136,15 @@ class EmbeddedProduct
         $carMake = $quoteObject->carMake->text ?? '';
         $carModel = $quoteObject->carModel->text ?? '';
         $item->vehicle = $carMake.' '.$carModel;
+
+        $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+        $item->advisor_name = $quoteObject?->advisor?->name ?? '';
+        $item->dob = isset($quoteObject?->dob) ? Carbon::parse($quoteObject?->dob)->format($dateFormat) : '';
+        $item->nationality = $quoteObject?->customer?->nationality?->text ?? '';
+        $item->policy_issuance_date = $quoteObject?->policy_issuance_date ?? '';
+        $item->age = isset($quoteObject?->dob) ?
+            floor(Carbon::parse($quoteObject?->dob)->diffInYears(Carbon::now())).' Years'
+            : '';
 
         return $item;
     }
@@ -215,6 +214,8 @@ class EmbeddedProduct
                 $query->filterBySyncStatus(CourierSyncStatusEnum::tryFrom($filters['sync_status']));
             });
 
+        $dataset = $this->updateQuery($dataset, $filters);
+
         $sortBy = 'embedded_transactions.id';
         $sortOrder = 'desc';
         if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
@@ -244,6 +245,11 @@ class EmbeddedProduct
         return $dataset;
     }
 
+    protected function updateQuery($query, $filters)
+    {
+        return $query;
+    }
+
     public static function checkAlfredProtect($product)
     {
         $product = strtoupper(trim($product));
@@ -261,7 +267,7 @@ class EmbeddedProduct
     public function getDocumentList($ep, $transaction)
     {
         $isSalama = false;
-        if (! $transaction->isEmpty()) {
+        if (! $transaction->isEmpty() && in_array($ep->short_code, EmbeddedProductEnum::getSukoonMedexCodes())) {
             $paidAt = $transaction->first()->paid_at ?? null;
             $isSalama = $paidAt && Carbon::parse($paidAt)->lt(Carbon::parse(EmbeddedProductRepository::SALAMA_DATE));
         }
@@ -320,8 +326,10 @@ class EmbeddedProduct
 
         $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $documentNumbers = [
+            QuoteDocumentsEnum::POLICY_SCHEDULE => $transaction['certificate_number'] ?? '',
             QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER => $transaction['tax_invoice_buyer_no'] ?? '',
             QuoteDocumentsEnum::CAR_TAX_INVOICE => $transaction['tax_invoice_no'] ?? '',
+            QuoteDocumentsEnum::CAR_EP_TAX_INVOICE => $transaction['tax_invoice_no'] ?? '',
             QuoteDocumentsEnum::CAR_TAX_CREDIT_RAISE_BY_BUYER => $transaction['credit_note_buyer_no'] ?? '',
             QuoteDocumentsEnum::CAR_TAX_CREDIT => $transaction['credit_note_no'] ?? '',
             QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE => $transaction['certificate_number'] ?? '',

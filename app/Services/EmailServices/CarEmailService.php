@@ -17,6 +17,7 @@ use App\Jobs\CompanyCarFollowupJob;
 use App\Jobs\CompanyCarOCBJob;
 use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Jobs\NBMotorFollowupEmailJob;
+use App\Jobs\OCB\SendAIAdvisorOCBJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -41,7 +42,7 @@ class CarEmailService extends BaseService
         $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
-    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService, $triggerSICWorkFlow = false, $triggerOnlyWorkflow = false, bool $forceSicWorkflow = false)
+    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisor, $carQuoteService, $triggerSICWorkFlow = false, $triggerOnlyWorkflow = false, bool $forceSicWorkflow = false)
     {
         $plans = $this->executePlansSelectionLogic($plans);
 
@@ -49,7 +50,7 @@ class CarEmailService extends BaseService
         $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow);
 
         // Build email data
-        $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
+        $emailData = $this->buildEmailData($lead, $plans, $previousAdvisor, $tierR->id);
         $quotePlansCount = is_countable($plans) ? count($plans) : 0;
         if ($quotePlansCount > 0) {
             LoggerService::info('Inside plans of count: ');
@@ -101,14 +102,19 @@ class CarEmailService extends BaseService
                 return $this->sendCarCompanyOCBIntroEmail($lead);
             }
             if ($lead->advisor_id) {
-                $response = $this->sendEmailCustomerService->sendCarIntroEmailWithAdvisor($lead);
+                $isPreviousAdvisorAi = ! empty($previousAdvisor) && $previousAdvisor->isAi();
+                if ($lead->isAIAdvisorAssigned() || $isPreviousAdvisorAi) {
+                    // Send AI Advisor Email
+                    SendAIAdvisorOCBJob::dispatch(QuoteTypes::CAR, $lead->uuid, $isPreviousAdvisorAi)->delay(Carbon::now()->addMinute());
+                } else {
+                    $responseCode = $this->sendEmailCustomerService->sendCarIntroEmailWithAdvisor($lead);
 
-                $nbFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION)->first();
-                $nbFollowupDelayDuration = ! empty($nbFollowupDelayDuration->value) ? $nbFollowupDelayDuration->value : 24;
-                NBMotorFollowupEmailJob::dispatch(arguments: $lead->uuid)->delay(Carbon::now()->addHours((int) $nbFollowupDelayDuration));
+                    $nbFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION)->first();
+                    $nbFollowupDelayDuration = ! empty($nbFollowupDelayDuration->value) ? $nbFollowupDelayDuration->value : 24;
+                    NBMotorFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addHours((int) $nbFollowupDelayDuration));
+                    info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
 
-                LoggerService::info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
-
+                }
             } else {
                 LoggerService::info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
 
@@ -775,6 +781,59 @@ class CarEmailService extends BaseService
         }
     }
 
+    public function sendCarAIAdvisorOCB($lead, bool $isReAssignment = false)
+    {
+        try {
+            LoggerService::info(self::class.' - Sending Car AI Advisor OCB email');
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->buildCarAIAdvisorOCBData($lead, $advisor, $isReAssignment);
+
+            $AIWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_AI_ADVISOR_OCB, useCache: true);
+            if ($AIWorkflow) {
+                $response = app(BirdService::class)->triggerWebHookRequest($AIWorkflow, $emailData);
+                LoggerService::info(self::class.' - sendCarAIAdvisorOCB - Event triggered ', ['response_status_code' => $response->status_code, 'lead_status_id' => $lead->quote_status_id]);
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response);
+                }
+            }
+
+            return $response ?? null;
+        } catch (\Exception  $exception) {
+            LoggerService::error(self::class.' - sendCarAIAdvisorOCB - Error while sending quote workflow for lead ', exception: $exception);
+        }
+    }
+
+    private function buildCarAIAdvisorOCBData($lead, User $advisor, bool $isReAssignment = false)
+    {
+        $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypeId::Car, QuoteFlowType::CAR_AI_ADVISOR_OCB);
+
+        return (object) [
+            'CarMake' => $lead->carMake?->text,
+            'CarModel' => $lead->carModel?->text,
+            'advisorId' => $advisor->id,
+            'advisorDetails' => $advisor,
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'advisorLandLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'advisorMobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'advisorProfilePhotoPath' => (! empty($advisor->profile_photo_path) ? $advisor->profile_photo_path : ''),
+            'advisorWhatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'createdAt' => $lead->created_at,
+            'customerEmail' => $lead->email,
+            'customerFullName' => "{$lead->first_name} {$lead->last_name}",
+            'customerMobile' => ! empty($lead->mobile_no) ? formatMobileNo($lead->mobile_no) : '', (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'quoteUID' => $lead->uuid,
+            'refID' => $lead->code,
+            'whatsappConsent' => getWhatsappConsent(QuoteTypes::CAR, $lead->uuid),
+            'isFollowupExecuted' => $isFollowupExecuted,
+            'isAIAdvisor' => $advisor->isAi(),
+            'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
+            'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
+            'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'workflowType' => $isReAssignment ? 'ReAssigned' : 'Assigned',
+        ];
+    }
     public function sendFailedCarRenewals($failedQuotes, $renewalsUploadLeadsId)
     {
 
