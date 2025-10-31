@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -28,7 +27,7 @@ use Illuminate\Support\Str;
 
 class SendUpdateLogRepository extends BaseRepository
 {
-    use PersonalQuoteSyncTrait, GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
 
     public function model()
     {
