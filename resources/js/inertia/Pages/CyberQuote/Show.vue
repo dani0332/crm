@@ -744,6 +744,47 @@ const copyLink = () => {
       </Collapsible>
     </div>
 
+    <div class="p-4 rounded shadow mb-6 bg-white" v-if="quote.is_ecommerce">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center flex-wrap gap-2">
+            <h3 class="text-lg font-semibold text-primary-800">E-COM Detail</h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRICE</dt>
+                <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AUTHORISED AT</dt>
+                <dd>{{ quote.paid_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT STATUS</dt>
+                <dd>{{ quote.payment_status_id_text ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ selectedProviderPlan.planName ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAID AT</dt>
+                <dd>{{ quote.payment_paid_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PROVIDER NAME</dt>
+                <dd>Al Wathba National Insurance Company</dd>
+              </div>
+            </dl>
+          </div>
+        </template>
+      </Collapsible>
+    </div>
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
