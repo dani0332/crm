@@ -49,23 +49,23 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         try {
             $this->process = $this->process->refresh();
             $quote = $this->process->model;
-    
+
             info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
-    
+
             if ($this->isProcessable($this->process)) {
                 $processingStatus = $this->process->status === PolicyIssuanceEnum::PENDING_STATUS ? PolicyIssuanceEnum::PROCESSING_STATUS : PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS;
                 $this->process->update(['status' => $processingStatus]);
                 info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
-    
+
                 $quoteType = $this->process?->quote_type;
                 $insuranceProvider = $this->process?->insuranceProvider;
-    
+
                 if (! $insuranceProvider) {
                     info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Insurance Provider not found');
-    
+
                     return;
                 }
-    
+
                 $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
                 if ($insuranceProviderAutomation) {
                     $response = $insuranceProviderAutomation->executeSteps($this->process);
@@ -77,15 +77,15 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                         $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
                         info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
                     }
-    
+
                 } else {
                     info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - '.$insuranceProvider->text.' Automation not found');
                 }
-    
+
             } else {
                 info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Status : '.$this->process->status.' is skipped.');
             }
-    
+
             info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' completed');
 
         } catch (\Throwable $e) {
@@ -99,16 +99,16 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'exception_line' => $e->getLine(),
                 'stack_trace' => $e->getTraceAsString(),
             ]);
-            
+
             throw $e;
         }
-        
+
     }
 
     public function failed(Throwable $exception)
     {
         $message = $exception->getMessage();
-        
+
         // Log full exception details including stack trace for debugging
         Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' EXCEPTION DETAILS', [
             'exception_class' => get_class($exception),
@@ -119,7 +119,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             'stack_trace' => $exception->getTraceAsString(),
             'current_status' => $this->process->status ?? 'unknown',
         ]);
-        
+
         if (str_contains($message, self::TIMEOUT_MESSAGE) || str_contains($message, self::LARAVEL_TIMEOUT_MESSAGE)) {
             $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
         } else {
