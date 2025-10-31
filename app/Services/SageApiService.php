@@ -942,15 +942,15 @@ class SageApiService
         $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
         $ePTransactions = $this->getEPTransactions($quote, $quoteTypeId) ?? [];
         foreach ($ePTransactions as $ePTransaction) {
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - EP Booking checks - Quote Code: '.$quote->code, extra : [
+            LoggerService::info('Embedded Product booking checks', extra : [
                 'isLobAllowedForEmbeddedProductBooking' => $isLobAllowedForEmbeddedProductBooking,
                 'epPTransaction' => $ePTransaction?->code,
                 'isTapPaymentGateway' => $isTapPaymentGateway,
             ]);
             if ($isLobAllowedForEmbeddedProductBooking && $ePTransaction && $isTapPaymentGateway) {
-                LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## EP Booking : Start Sage booking Process for : '.$quote->code.' ##################################');
+                LoggerService::info('--------------------------------Embedded Product Sage booking process started-------------------------------');
                 $embeddedProductSageBookingResponse = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $sageRequest, $ePTransaction], $ePTransaction?->product?->embeddedProduct?->short_code);
-                LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## EP Booking : End Sage booking Process for : '.$quote->code.' ##################################', extra : $embeddedProductSageBookingResponse);
+                LoggerService::info('--------------------------------Embedded Product Sage booking process completed-------------------------------', extra : $embeddedProductSageBookingResponse);
                 if (! $embeddedProductSageBookingResponse['status']) {
                     return $embeddedProductSageBookingResponse;
                 }
@@ -965,28 +965,31 @@ class SageApiService
             }
         }
 
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote code: '.$quote->code.' - Skip book policy document job: '.($skipBookPolicyDocumentJob ? 'Yes' : 'No'));
+        LoggerService::info('Skipping book policy document job', extra: [
+            'skipBookPolicyDocumentJob' => $skipBookPolicyDocumentJob ? 'Yes' : 'No'
+        ]);
         if (! $skipBookPolicyDocumentJob && ! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
+            LoggerService::info('Dispatching job to send customer documents after policy booking');
             // dispath job to send email
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
         }
 
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : mark status as policy booked for : '.$quote->code.' ##################################');
-
+        LoggerService::info('Marking quote status as Policy Booked');
         $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked, $userId);
 
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : Status updated to: '.$quote->quote_status_id.' for '.$quote->code.' ##################################');
+        LoggerService::info('Quote status updated successfully', extra: [
+            'QuoteStatusId' => $quote->quote_status_id
+        ]);
 
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : straightforwardPayments for : '.$quote->code.' ##################################');
+        LoggerService::info('--------------------------------Straightforward payments process started-------------------------------');
         (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : straightforwardPayments for : '.$quote->code.' done ##################################');
+        LoggerService::info('--------------------------------Straightforward payments process completed-------------------------------');
 
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : updatePaymentAllocationStatus for : '.$quote->code.' ##################################');
+        LoggerService::info('--------------------------------Payment allocation status update started-------------------------------');
         $this->updatePaymentAllocationStatus($quote);
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : updatePaymentAllocationStatus for : '.$quote->code.' done ##################################');
+        LoggerService::info('--------------------------------Payment allocation status update completed-------------------------------');
 
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ########## End of Policy Booked for : '.$quote->code.' ##########');
+        LoggerService::info('--------------------------------Sage Policy Booking process completed-------------------------------');
 
         return ['status' => true, 'message' => 'Policy is Booked'];
     }

@@ -52,7 +52,7 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
     {
         $this->logFor = 'BookEmbeddedProductOnSageJob : '.$this->epTransaction->code;
         LoggerService::startQuoteLogging($this->epTransaction, LoggerFeatureEnum::SAGE_EP_BOOKING_REVERSAL);
-        LoggerService::info('EP Book : BookEmbeddedProductOnSageJob - '.$this->epTransaction->code.' - Started');
+        LoggerService::info('--------------------------------Sage Embedded Product Booking Job execution started--------------------------------');
 
         $this->sageProcess = SageProcess::find($this->sageProcess->id);
         $quote = $this->getQuoteObjectBy($this->request->modelType, $this->request->quoteId);
@@ -62,8 +62,8 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
         $isEPTransactionFound = $ePTransaction ? count($ePTransaction) > 0 : false;
 
         if (! $isEPTransactionFound) {
-            $message = 'Policy Book : BookEmbeddedProductOnSageJob - '.$this->epTransaction->code.' - can not proceed as transaction is not found';
-            LoggerService::info($message, extra : ['quote' => $quote->code]);
+            $message = 'Cannot proceed as embedded product transaction is not found';
+            LoggerService::info($message, extra: ['QuoteCode' => $quote->code]);
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, $this->logFor);
 
             return;
@@ -77,23 +77,24 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
             if (! $response['status']) {
                 $message = $response['message'];
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
-                    LoggerService::info('Policy Book : BookEmbeddedProductOnSageJob - '.$this->epTransaction->code.' - sage conflict - updating status to pending');
+                    LoggerService::info('Sage conflict detected while booking embedded product on Sage - updating status to pending');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, $this->logFor);
                 } else {
-                    LoggerService::info('Policy Book : BookEmbeddedProductOnSageJob - '.$this->epTransaction->code.' - booking failed - updating status to failed');
+                    LoggerService::info('Booking embedded product on Sage failed - updating status to failed');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, $this->logFor);
                 }
             } else {
-                LoggerService::info('EP Booking : BookEmbeddedProductOnSageJob - '.$this->epTransaction->code.' - EP Booked - updating status to completed');
+                LoggerService::info('Embedded product booked on Sage - updating status to completed');
                 (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, $this->logFor);
             }
-            LoggerService::info('EP Booking : BookEmbeddedProductOnSageJob - '.$this->epTransaction->code.' - Finished', extra : ['Response' => json_encode($response)]);
+            LoggerService::info('Booking embedded product on Sage completed', extra: ['Response' => json_encode($response)]);
         } else {
-            LoggerService::info('job:BookEmbeddedProductOnSageJob - Process Skipped - Sage Process ID : '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
+            LoggerService::info('Booking embedded product on Sage process skipped', extra: ['SageProcessID' => $this->sageProcess->id, 'Status' => $this->sageProcess->status]);
         }
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
-        LoggerService::info('EP Booking : BookEmbeddedProductOnSageJob : scheduleSageProcesses triggered for  code -'.$this->epTransaction->code.'Insurer - '.$this->sageRequest->insurerID);
+        LoggerService::info('Schedule Sage processes triggered for insurer - '.$this->sageRequest->insurerID);
+        LoggerService::info('--------------------------------Sage Embedded Product Booking Job execution completed--------------------------------');
     }
 
     public function failed(Throwable $exception)
@@ -112,17 +113,19 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
                 'errorTraceMessage' => $exception->getTraceAsString(),
             ]);
         } else {
-            LoggerService::error('EP Booking : BookEmbeddedProductOnSageJob failed: '.$this->epTransaction->code.' - Code : '.$code.' - Error : '.$message, extra: [
+            LoggerService::warning('Booking embedded product on Sage failed', extra: [
+                'ErrorCode' => $code,
+                'ErrorMessage' => $message,
                 'errorTraceMessage' => $exception->getTraceAsString(),
             ]);
         }
 
-        LoggerService::info('EP Booking : BookEmbeddedProductOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->epTransaction->code.' updating status to failed');
+
+        LoggerService::info('Updating Embedded Product booking status to BOOKING_FAILED');
         (new SageApiEmbeddedProductService)->updateAndLogEPBookingStatus($this->epTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), $this->logFor);
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
-        LoggerService::info('EP Booking : BookEmbeddedProductOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->epTransaction->code.' Insurer - '.$this->sageRequest->insurerID);
-
+        LoggerService::info('Schedule Sage processes triggered for insurer - '.$this->sageRequest->insurerID);
     }
 
     public function middleware()
