@@ -122,7 +122,7 @@ class PolicyIssuanceJob implements ShouldQueue
 
     public function middleware()
     {
-        return new WithoutOverlapping($this->uniqueKey);
+        return [new WithoutOverlapping($this->uniqueKey)];
     }
 
     private function isProcessable($process)
