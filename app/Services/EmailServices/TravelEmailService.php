@@ -618,8 +618,9 @@ class TravelEmailService extends BaseService
             $quotePlans = app(TravelQuoteService::class)->getQuotePlans($quoteUID);
 
             // Validate the response before passing to attachTravelOCBPDFToEmail
-            if (!is_object($quotePlans) || !isset($quotePlans->quotes->plans)) {
+            if (! is_object($quotePlans) || ! isset($quotePlans->quotes->plans)) {
                 LoggerService::error(self::class.' - attachTravelOCBPDF - Invalid quote plans structure for uuid: '.$quoteUID, context: ['ref_id' => $code]);
+
                 return '';
             }
 
