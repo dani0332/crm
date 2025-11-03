@@ -23,9 +23,8 @@ class UpdateCustomerRepliedRequest extends FormRequest
     {
         return [
             'quote_uuid' => 'required|string',
-            'message_id' => 'nullable|string',
             'quote_type_id' => 'required|integer',
-            'email_subject' => 'nullable|string',
+            'email_subject' => 'required|string',
         ];
     }
 
@@ -39,6 +38,7 @@ class UpdateCustomerRepliedRequest extends FormRequest
         return [
             'quote_uuid.required' => 'Quote UUID is required',
             'quote_type_id.required' => 'Quote Type ID is required',
+            'email_subject.required' => 'Email subject is required',
         ];
     }
 }

@@ -551,39 +551,20 @@ class ApiController extends Controller
     public function updateCustomerRepliedStatus(UpdateCustomerRepliedRequest $request)
     {
         try {
-            LoggerService::info(self::class.': Updating customer replied status', [
-                'quote_uuid' => $request->quote_uuid,
-                'message_id' => $request->message_id,
-                'quote_type_id' => $request->quote_type_id,
-                'email_subject' => $request->email_subject ?? null,
-            ]);
-
             $emailStatusService = app(EmailStatusService::class);
             $result = $emailStatusService->updateCustomerRepliedStatus(
                 $request->quote_uuid,
-                $request->message_id,
                 $request->quote_type_id,
                 $request->email_subject
             );
 
             if ($result->success) {
-                LoggerService::info(self::class.': Customer replied status updated successfully', [
-                    'quote_uuid' => $request->quote_uuid,
-                    'message_id' => $request->message_id,
-                ]);
-
                 return response()->json([
                     'success' => true,
                     'message' => $result->message,
                     'data' => $result->data ?? null,
                 ], Response::HTTP_OK);
             }
-
-            LoggerService::warning(self::class.': Failed to update customer replied status', [
-                'quote_uuid' => $request->quote_uuid,
-                'message_id' => $request->message_id,
-                'error' => $result->message,
-            ]);
 
             return response()->json([
                 'success' => false,
@@ -593,7 +574,6 @@ class ApiController extends Controller
         } catch (\Exception $e) {
             LoggerService::error(self::class.': Error updating customer replied status', [
                 'quote_uuid' => $request->quote_uuid ?? null,
-                'message_id' => $request->message_id ?? null,
                 'error' => $e->getMessage(),
             ], $e);
 

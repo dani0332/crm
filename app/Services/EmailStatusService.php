@@ -102,17 +102,16 @@ class EmailStatusService extends BaseService
     /**
      * Update customer replied status in email_status table
      */
-    public function updateCustomerRepliedStatus(string $quoteUuid, ?string $messageId, int $quoteTypeId, ?string $emailSubject = null): object
+    public function updateCustomerRepliedStatus(string $quoteUuid, int $quoteTypeId, string $emailSubject): object
     {
         try {
             // Get the quote based on quote type
             $quote = $this->getQuoteByUuidAndType($quoteUuid, $quoteTypeId);
 
             if (! $quote) {
-                LoggerService::warning(self::class.' - updateCustomerRepliedStatus - Quote not found', [
+                LoggerService::warning(self::class.' - Quote not found', [
                     'uuid' => $quoteUuid,
                     'quote_type_id' => $quoteTypeId,
-                    'time' => now(),
                 ]);
 
                 return (object) [
@@ -121,50 +120,36 @@ class EmailStatusService extends BaseService
                 ];
             }
 
-            // Find the email status record
-            $query = EmailStatus::where('quote_id', $quote->id)
-                ->where('quote_type_id', $quoteTypeId);
+        // Strip reply/forward prefixes (Re:, RE:, Fwd:, FW:, Fw:, etc.)
+        $cleanSubject = preg_replace('/^(Re:|RE:|Fwd:|FW:|Fw:)\s*/i', '', trim($emailSubject));
 
-            // Add message_id condition if provided (original email)
-            if (! empty($messageId)) {
-                $query->where('msg_id', $messageId);
-            }
+        // Match by quote_id, quote_type_id, and cleaned subject
+        $emailStatus = EmailStatus::where('quote_id', $quote->id)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('email_subject', 'LIKE', "%{$cleanSubject}%")
+            ->latest()
+            ->first();
 
-            // Add email subject LIKE condition if provided (for replies)
-            if (! empty($emailSubject)) {
-                $query->where('email_subject', 'LIKE', "%{$emailSubject}%");
-            }
-
-            $emailStatus = $query->latest()->first();
-
-            if (! $emailStatus) {
-                LoggerService::warning(self::class.' - updateCustomerRepliedStatus - Email status not found', [
-                    'uuid' => $quoteUuid,
-                    'quote_id' => $quote->id,
-                    'quote_type_id' => $quoteTypeId,
-                    'message_id' => $messageId ?? 'not provided',
-                    'email_subject' => $emailSubject ?? 'not provided',
-                    'time' => now(),
-                ]);
-
-                return (object) [
-                    'success' => false,
-                    'message' => 'Email status record not found',
-                ];
-            }
-
-            // Update the customer_replied field
-            $emailStatus->customer_replied = true;
-            $emailStatus->save();
-
-            LoggerService::info(self::class.' - updateCustomerRepliedStatus - Customer replied status updated successfully', [
+        if (! $emailStatus) {
+            LoggerService::warning(self::class.' - Email status not found', [
                 'uuid' => $quoteUuid,
-                'quote_id' => $quote->id,
-                'message_id' => $messageId ?? 'not provided',
-                'email_subject' => $emailSubject ?? 'not provided',
-                'email_status_id' => $emailStatus->id,
-                'time' => now(),
+                'quote_type_id' => $quoteTypeId,
             ]);
+
+            return (object) [
+                'success' => false,
+                'message' => 'Email status record not found',
+            ];
+        }
+
+        // Update the customer_replied field
+        $emailStatus->customer_replied = true;
+        $emailStatus->save();
+
+        LoggerService::info(self::class.' - Customer replied status updated', [
+            'uuid' => $quoteUuid,
+            'email_status_id' => $emailStatus->id,
+        ]);
 
             return (object) [
                 'success' => true,
@@ -175,13 +160,9 @@ class EmailStatusService extends BaseService
                 ],
             ];
         } catch (\Exception $e) {
-            LoggerService::error(self::class.' - updateCustomerRepliedStatus - Error updating customer replied status', [
+            LoggerService::error(self::class.' - Error updating customer replied status', [
                 'uuid' => $quoteUuid,
-                'message_id' => $messageId,
-                'quote_type_id' => $quoteTypeId,
-                'email_subject' => $emailSubject ?? 'not provided',
                 'error' => $e->getMessage(),
-                'time' => now(),
             ], $e);
 
             return (object) [
