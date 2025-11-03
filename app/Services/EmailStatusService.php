@@ -101,12 +101,6 @@ class EmailStatusService extends BaseService
 
     /**
      * Update customer replied status in email_status table
-     *
-     * @param string $quoteUuid
-     * @param string|null $messageId
-     * @param int $quoteTypeId
-     * @param string|null $emailSubject
-     * @return object
      */
     public function updateCustomerRepliedStatus(string $quoteUuid, ?string $messageId, int $quoteTypeId, ?string $emailSubject = null): object
     {
@@ -200,8 +194,6 @@ class EmailStatusService extends BaseService
     /**
      * Get quote by UUID and type
      *
-     * @param string $uuid
-     * @param int $quoteTypeId
      * @return mixed
      */
     private function getQuoteByUuidAndType(string $uuid, int $quoteTypeId)

@@ -546,7 +546,6 @@ class ApiController extends Controller
     /**
      * Update customer replied status in email_status table
      *
-     * @param UpdateCustomerRepliedRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function updateCustomerRepliedStatus(UpdateCustomerRepliedRequest $request)
