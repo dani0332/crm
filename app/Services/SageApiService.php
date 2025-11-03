@@ -1988,6 +1988,7 @@ class SageApiService
         $totalSteps = 13;
         $stepsMapping = ['step_1' => 5, 'step_2' => 6, 'step_3' => 7];
         $isReversalPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
+        $isAlreadyPosted = false;
 
         LoggerService::info('Starting Upfront AP Invoice Premium creation', extra: [
             'entry_type' => $sageEntryType,
@@ -2030,25 +2031,71 @@ class SageApiService
 
                 $isLiveApiCallStep6 = true;
                 $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP(batchNumber: $postedResponse['BatchNumber'], type: $sageEntryType);
+                
                 if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
-                    LoggerService::info('AP Invoice Premium ready to post already sent');
                     $isLiveApiCallStep6 = false;
-                    $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
+                    $readyToPostResponse = $sageLogArray[$stepsMapping['step_2']]['response'];
+                    LoggerService::info('AP Invoice Premium ready to post already sent', extra: [
+                        'BatchNumber' => $postedResponse['BatchNumber']
+                    ]);
                 } else {
-                    LoggerService::info('Sending AP Invoice Premium ready to post to Sage');
+                    LoggerService::info('Sending AP Invoice Premium ready to post to Sage', extra: [
+                        'BatchNumber' => $postedResponse['BatchNumber']
+                    ]);
                     $readyToPostResponse = $this->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
                 }
 
                 if ($readyToPostResponse !== '') {
                     $errorMessage = 'Error while making AP invoice ready to post to sage';
-                    $message = 'readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' failed';
+                    $readyToPostArray = json_decode($readyToPostResponse, true);
 
-                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
+                    if (isset($readyToPostArray['error']['message']['value'])) {
+                        LoggerService::info('Failed to post AP Invoice Premium Ready To Post batch', extra: [
+                            'BatchNumber' => $postedResponse['BatchNumber'],
+                            'Error' => $readyToPostArray['error']['message']['value']
+                        ]);
+
+                        $aPInvoiceBatch = $this->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
+                        $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
+
+                        LoggerService::info('Checking status of AP Invoice Premium batch', extra: [
+                            'BatchNumber' => $postedResponse['BatchNumber'],
+                            'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found'
+                        ]);
+
+                        if (isset($aPInvoiceBatch['BatchStatus']) && $aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                            $this->logSageApiCall($readyToPostInvoiceAP, "", $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
+                            $isAlreadyPosted = true;
+                        } elseif (! isset($aPInvoiceBatch['BatchStatus'])) {
+                            LoggerService::info('Failed to get AP Invoice Premium batch status', extra: [
+                                'BatchNumber' => $postedResponse['BatchNumber']
+                            ]);
+                            $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId);
+                            $message = 'Failed to get status of AP Invoice Premium batch - '.$postedResponse['BatchNumber'].' failed';
+
+                            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
+                        } else {
+                            LoggerService::info('Error while making AP Invoice Premium ready to post to sage', extra: [
+                                'BatchNumber' => $postedResponse['BatchNumber']
+                            ]);
+                            $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId);
+                            $message = 'Failed to post AP Invoice Premium Ready To Post batch - '.$postedResponse['BatchNumber'].' failed';
+
+                            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
+                        }
+                    } else {
+                        if ($isLiveApiCallStep6) {
+                            LoggerService::info('Logging AP Invoice Premium Ready To Post batch successfully', extra: [
+                                'BatchNumber' => $postedResponse['BatchNumber']
+                            ]);
+                            $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
+                        }
+                    }
                 } else {
-                    LoggerService::info('AP Invoice Premium ready to post completed successfully', extra : [
-                        'BatchNumber' => $postedResponse['BatchNumber'],
-                    ]);
                     if ($isLiveApiCallStep6) {
+                        LoggerService::info('Logging AP Invoice Premium Ready To Post batch successfully with empty response', extra: [
+                            'BatchNumber' => $postedResponse['BatchNumber']
+                        ]);
                         $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                     }
                 }
@@ -2060,32 +2107,39 @@ class SageApiService
                     $isLiveApiCallStep7 = false;
                     $postedResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
                 } else {
-                    $isAlreadyPosted = false;
-                    if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL) {
-                        LoggerService::info('Checking status of AP Invoice Premium batch', extra : [
-                            'BatchNumber' => $postedResponse['BatchNumber'],
-                        ]);
-                        $aPInvoiceBatch = $this->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
-                        $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
-
-                        LoggerService::info('Status of AP Invoice Premium batch', extra: [
-                            'BatchNumber' => $postedResponse['BatchNumber'],
-                            'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found',
-                        ]);
-                        if (! isset($aPInvoiceBatch['BatchStatus'])) {
-                            $message = 'Upfront - AP Invoice, Unable to get Batch Status from Sage.';
-                            $returnMessage['message'] = $message;
-                            $returnMessage['error'] = $message;
-
-                            return $returnMessage;
-                        }
-
-                        if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                    if (($isAlreadyPosted && isset($aPPostInvoices)) || (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL)) {
+                        if ($isAlreadyPosted) {
                             LoggerService::info('AP Invoice Premium batch already posted', extra : [
                                 'BatchNumber' => $postedResponse['BatchNumber'],
                             ]);
                             $postedResponse = $aPPostInvoices['payload'];
-                            $isAlreadyPosted = true;
+                        } else {
+                            LoggerService::info('Checking status of AP Invoice Premium batch', extra : [
+                                'BatchNumber' => $postedResponse['BatchNumber'],
+                            ]);
+                            $aPInvoiceBatch = $this->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
+                            $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
+
+                            LoggerService::info('Status of AP Invoice Premium batch', extra: [
+                                'BatchNumber' => $postedResponse['BatchNumber'],
+                                'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found',
+                            ]);
+
+                            if (! isset($aPInvoiceBatch['BatchStatus'])) {
+                                $message = 'Upfront - AP Invoice, Unable to get Batch Status from Sage.';
+                                $returnMessage['message'] = $message;
+                                $returnMessage['error'] = $message;
+
+                                return $returnMessage;
+                            }
+
+                            if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                                LoggerService::info('AP Invoice Premium batch already posted', extra : [
+                                    'BatchNumber' => $postedResponse['BatchNumber'],
+                                ]);
+                                $postedResponse = $aPPostInvoices['payload'];
+                                $isAlreadyPosted = true;
+                            }
                         }
                     }
 
@@ -2137,6 +2191,7 @@ class SageApiService
 
         $totalSteps = 15;
         $stepsMapping = ['step_1' => 6, 'step_2' => 7, 'step_3' => 8, 'step_4' => 9];
+        $isAlreadyPosted = false;
 
         LoggerService::info('Starting Non-Upfront AP Invoice Premium creation', extra: [
             'entry_type' => $sageEntryType,
@@ -2237,25 +2292,71 @@ class SageApiService
 
             $isLiveApiCallStep8 = true;
             $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP(batchNumber: $apBatchNumber, type: $sageEntryType);
+            
             if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
-                LoggerService::info('AP Invoice Premium non upfront ready to post already sent');
                 $isLiveApiCallStep8 = false;
-                $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
+                $readyToPostResponse = $sageLogArray[$stepsMapping['step_3']]['response'];
+                LoggerService::info('AP Invoice Premium non upfront ready to post already sent', extra: [
+                    'BatchNumber' => $apBatchNumber
+                ]);
             } else {
-                LoggerService::info('Sending AP Invoice Premium non upfront ready to post to Sage');
+                LoggerService::info('Sending AP Invoice Premium non upfront ready to post to Sage', extra: [
+                    'BatchNumber' => $apBatchNumber
+                ]);
                 $readyToPostResponse = $this->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
             }
 
             if ($readyToPostResponse !== '') {
                 $errorMessage = 'Error while making AP invoice ready to post to sage';
-                $message = 'readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' failed';
+                $readyToPostArray = json_decode($readyToPostResponse, true);
 
-                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
+                if (isset($readyToPostArray['error']['message']['value'])) {
+                    LoggerService::info('Failed to post AP Invoice Premium non upfront Ready To Post batch', extra: [
+                        'BatchNumber' => $apBatchNumber,
+                        'Error' => $readyToPostArray['error']['message']['value']
+                    ]);
+
+                    $aPInvoiceBatch = $this->postToSage300('AP/APInvoiceBatches('.$apBatchNumber.')', [], 'GET');
+                    $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
+
+                    LoggerService::info('Checking status of AP Invoice Premium non upfront batch', extra: [
+                        'BatchNumber' => $apBatchNumber,
+                        'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found'
+                    ]);
+
+                    if (isset($aPInvoiceBatch['BatchStatus']) && $aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                        $this->logSageApiCall($readyToPostInvoiceAP, "", $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
+                        $isAlreadyPosted = true;
+                    } elseif (! isset($aPInvoiceBatch['BatchStatus'])) {
+                        LoggerService::info('Failed to get AP Invoice Premium non upfront batch status', extra: [
+                            'BatchNumber' => $apBatchNumber
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId);
+                        $message = 'Failed to get status of AP Invoice Premium non upfront batch - '.$apBatchNumber.' failed';
+
+                        return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
+                    } else {
+                        LoggerService::info('Error while making AP Invoice Premium non upfront ready to post to sage', extra: [
+                            'BatchNumber' => $apBatchNumber
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId);
+                        $message = 'Failed to post AP Invoice Premium non upfront Ready To Post batch - '.$apBatchNumber.' failed';
+
+                        return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
+                    }
+                } else {
+                    if ($isLiveApiCallStep8) {
+                        LoggerService::info('Logging AP Invoice Premium non upfront Ready To Post batch successfully', extra: [
+                            'BatchNumber' => $apBatchNumber
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
+                    }
+                }
             } else {
-                LoggerService::info('AP Invoice Premium non upfront ready to post completed successfully', extra : [
-                    'BatchNumber' => $postedResponse['BatchNumber'],
-                ]);
                 if ($isLiveApiCallStep8) {
+                    LoggerService::info('Logging AP Invoice Premium non upfront Ready To Post batch successfully with empty response', extra: [
+                        'BatchNumber' => $apBatchNumber
+                    ]);
                     $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                 }
             }
@@ -2267,31 +2368,39 @@ class SageApiService
                 $isLiveApiCallStep9 = false;
                 $postedResponse = json_decode($sageLogArray[$stepsMapping['step_4']]['response'], true);
             } else {
-                $isAlreadyPosted = false;
-                if (isset($sageLogArray[$stepsMapping['step_4']]) && $sageLogArray[$stepsMapping['step_4']]['status'] == SageEnum::STATUS_FAIL) {
-                    LoggerService::info('Checking status of AP Invoice Premium non upfront batch', extra : [
-                        'BatchNumber' => $postedResponse['BatchNumber'],
-                    ]);
-                    $aPInvoiceBatch = $this->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
-                    $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
-
-                    LoggerService::info('Status of AP Invoice Split Payments batch', extra: [
-                        'BatchNumber' => $postedResponse['BatchNumber'],
-                        'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found',
-                    ]);
-                    if (! isset($aPInvoiceBatch['BatchStatus'])) {
-                        $message = 'NON Upfront - AP Invoice, Unable to get Batch Status from Sage.';
-                        $returnMessage['message'] = $message;
-                        $returnMessage['error'] = $message;
-
-                        return $returnMessage;
-                    }
-                    if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                if (($isAlreadyPosted && isset($aPPostInvoices)) || (isset($sageLogArray[$stepsMapping['step_4']]) && $sageLogArray[$stepsMapping['step_4']]['status'] == SageEnum::STATUS_FAIL)) {
+                    if ($isAlreadyPosted) {
                         LoggerService::info('AP Invoice Premium non upfront batch already posted', extra : [
                             'BatchNumber' => $postedResponse['BatchNumber'],
                         ]);
                         $postedResponse = $aPPostInvoices['payload'];
-                        $isAlreadyPosted = true;
+                    } else {
+                        LoggerService::info('Checking status of AP Invoice Premium non upfront batch', extra : [
+                            'BatchNumber' => $postedResponse['BatchNumber'],
+                        ]);
+                        $aPInvoiceBatch = $this->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
+                        $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
+
+                        LoggerService::info('Status of AP Invoice Split Payments batch', extra: [
+                            'BatchNumber' => $postedResponse['BatchNumber'],
+                            'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found',
+                        ]);
+
+                        if (! isset($aPInvoiceBatch['BatchStatus'])) {
+                            $message = 'NON Upfront - AP Invoice, Unable to get Batch Status from Sage.';
+                            $returnMessage['message'] = $message;
+                            $returnMessage['error'] = $message;
+
+                            return $returnMessage;
+                        }
+
+                        if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                            LoggerService::info('AP Invoice Premium non upfront batch already posted', extra : [
+                                'BatchNumber' => $postedResponse['BatchNumber'],
+                            ]);
+                            $postedResponse = $aPPostInvoices['payload'];
+                            $isAlreadyPosted = true;
+                        }
                     }
                 }
 
