@@ -437,8 +437,13 @@ class AllocationService extends BaseService
         return ! $isAdvisorAvailable;
     }
 
-    public function getValidAdvisorStatuses(): array
+    public function getValidAdvisorStatuses(bool $addUnavailable = false): array
     {
+        // specifically for Cyber Allocation, we need to add UNAVAILABLE status
+        if ($addUnavailable) {
+            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE];
+        }
+
         $isBusinessHours = $this->isBusinessHours();
 
         LoggerService::info(self::class.' - getValidAdvisorStatuses: Business hours check', extra: [
@@ -450,5 +455,27 @@ class AllocationService extends BaseService
         } else {
             return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE, UserStatusEnum::MANUAL_OFFLINE];
         }
+    }
+
+    public function isUserOnLeave(string $email, bool $addUnavailable = false): bool
+    {
+        $user = User::where('email', $email)->activeUser()->first();
+
+        if (! $user) {
+            LoggerService::error(self::class.' - isUserOnLeave: User not found', extra: [
+                'email' => $email,
+            ]);
+            return false;
+        }
+
+        $isOnLeave = ! in_array($user->status, $this->getValidAdvisorStatuses($addUnavailable));
+
+        LoggerService::info(self::class.' - isUserOnLeave: User is on leave', extra: [
+            'email' => $email,
+            'is_on_leave' => $isOnLeave,
+            'status' => $user->status,
+        ]);
+
+        return $isOnLeave;
     }
 }
