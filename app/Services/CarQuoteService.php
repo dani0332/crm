@@ -1692,7 +1692,7 @@ class CarQuoteService extends BaseService
             $validationArray['sub_source_id'] = 'required|integer|exists:lookups,id';
 
             // If sub_source_id is provided, validate sub_source_options_id based on available options
-            if ($request->sub_source_id) {
+            if (!empty($request->sub_source_id) && is_int($request->sub_source_id)) {
                 // Check if the selected sub-source has child options
                 $subSource = \App\Models\Lookup::with('childs')->find($request->sub_source_id);
                 if ($subSource && $subSource->childs && $subSource->childs->count() > 0) {

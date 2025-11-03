@@ -260,8 +260,16 @@ const proceedWithSubmission = () => {
     onFinish: () => (modals.isConfirmed = false),
   };
 
+  const additionalParams = {
+    type: (props.leadSourceParams?.type ? props.leadSourceParams?.type : null),
+    source: (props.quote?.source? props.quote?.source : null)
+  };
   quoteForm
-    .transform(data => ({ ...data, isDisbaled }))
+    .transform(data => ({
+      ...data,
+      isDisbaled,
+      ...additionalParams
+    }))
     .submit(method, url, options);
 };
 
