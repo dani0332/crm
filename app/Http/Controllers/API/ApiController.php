@@ -556,6 +556,7 @@ class ApiController extends Controller
                 'quote_uuid' => $request->quote_uuid,
                 'message_id' => $request->message_id,
                 'quote_type_id' => $request->quote_type_id,
+                'email_subject' => $request->email_subject ?? null,
             ]);
 
             $emailStatusService = app(EmailStatusService::class);
@@ -563,6 +564,7 @@ class ApiController extends Controller
                 $request->quote_uuid,
                 $request->message_id,
                 $request->quote_type_id,
+                $request->email_subject
             );
 
             if ($result->success) {
