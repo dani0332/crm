@@ -838,7 +838,7 @@ class SendUpdateLogService
 
     public function updatePaymentDetails($payment, $sendUpdateLog, $ignoreDiscount = false, $insurerDetails = null)
     {
-        LoggerService::info('fn:updatePaymentDetails - SendUpdateLogService');
+        LoggerService::info('Book Update - Update Payment Details');
         try {
             if ($insurerDetails !== null) {
                 $sendUpdatePaymentDetails = [
@@ -865,10 +865,10 @@ class SendUpdateLogService
 
             $payment->update($sendUpdatePaymentDetails);
 
-            info('Book Update - Payment Details Updated - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('Book Update - Payment Details Updated');
 
         } catch (\Exception $exception) {
-            logger()->error('Book Update - Error while updating details in Payment - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
+            logger()->warning('Book Update - Error while updating details in Payment - Exception: '.$exception->getMessage());
 
             return false;
         }
@@ -1073,6 +1073,7 @@ class SendUpdateLogService
             ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD ? 21 : 13)
         );
         $sageRequestPayload->quoteTypeId = $sendUpdateLog->quote_type_id;
+        $sageRequestPayload->quoteType = $sendUpdateRequest->quoteType;
         $sageRequestPayload->customer_id = $quoteDetails->customer_id;
         $commissionChargeIds = $preparedDetailsForEndorsement['splitPayments']->flatMap(function ($paymentSplit) {
             return $paymentSplit->paymentCharges()?->where('action_type', PaymentChargesEnum::ACTION_TYPE_CHARGE->value)
