@@ -120,36 +120,36 @@ class EmailStatusService extends BaseService
                 ];
             }
 
-        // Strip reply/forward prefixes (Re:, RE:, Fwd:, FW:, Fw:, etc.)
-        $cleanSubject = preg_replace('/^(Re:|RE:|Fwd:|FW:|Fw:)\s*/i', '', trim($emailSubject));
+            // Strip reply/forward prefixes (Re:, RE:, Fwd:, FW:, Fw:, etc.)
+            $cleanSubject = preg_replace('/^(Re:|RE:|Fwd:|FW:|Fw:)\s*/i', '', trim($emailSubject));
 
-        // Match by quote_id, quote_type_id, and cleaned subject
-        $emailStatus = EmailStatus::where('quote_id', $quote->id)
-            ->where('quote_type_id', $quoteTypeId)
-            ->where('email_subject', 'LIKE', "%{$cleanSubject}%")
-            ->latest()
-            ->first();
+            // Match by quote_id, quote_type_id, and cleaned subject
+            $emailStatus = EmailStatus::where('quote_id', $quote->id)
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('email_subject', 'LIKE', "%{$cleanSubject}%")
+                ->latest()
+                ->first();
 
-        if (! $emailStatus) {
-            LoggerService::warning(self::class.' - Email status not found', [
+            if (! $emailStatus) {
+                LoggerService::warning(self::class.' - Email status not found', [
+                    'uuid' => $quoteUuid,
+                    'quote_type_id' => $quoteTypeId,
+                ]);
+
+                return (object) [
+                    'success' => false,
+                    'message' => 'Email status record not found',
+                ];
+            }
+
+            // Update the customer_replied field
+            $emailStatus->customer_replied = true;
+            $emailStatus->save();
+
+            LoggerService::info(self::class.' - Customer replied status updated', [
                 'uuid' => $quoteUuid,
-                'quote_type_id' => $quoteTypeId,
+                'email_status_id' => $emailStatus->id,
             ]);
-
-            return (object) [
-                'success' => false,
-                'message' => 'Email status record not found',
-            ];
-        }
-
-        // Update the customer_replied field
-        $emailStatus->customer_replied = true;
-        $emailStatus->save();
-
-        LoggerService::info(self::class.' - Customer replied status updated', [
-            'uuid' => $quoteUuid,
-            'email_status_id' => $emailStatus->id,
-        ]);
 
             return (object) [
                 'success' => true,
