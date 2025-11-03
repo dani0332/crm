@@ -1377,7 +1377,7 @@ class SageApiService
 
             $isLiveApiCallStep6 = true;
             $readyToPostReceiptAp = SagePayloadFactory::readyToPostAPPaymentReceiptPayload($sageResponse['BatchNumber']);
-            
+
             if (isset($sageLogArray[6]) && $sageLogArray[6]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep6 = false;
                 $readyToPostResponse = $sageLogArray[6]['response'];
@@ -2450,7 +2450,7 @@ class SageApiService
                         LoggerService::info('AP Invoice Premium non upfront batch already posted', extra: [
                             'BatchNumber' => $apBatchNumber,
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAP, "", $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
+                        $this->logSageApiCall($readyToPostInvoiceAP, '', $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                         $isAlreadyPosted = true;
                     } elseif (! isset($aPInvoiceBatch['BatchStatus'])) {
                         LoggerService::info('Failed to get AP Invoice Premium non upfront batch status', extra: [
@@ -2675,7 +2675,7 @@ class SageApiService
                             LoggerService::info('AR Invoice Discount batch already posted', extra: [
                                 'BatchNumber' => $postedResponse['BatchNumber'],
                             ]);
-                            $this->logSageApiCall($readyToPostInvoiceAr, "", $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
+                            $this->logSageApiCall($readyToPostInvoiceAr, '', $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
 
                             $isAlreadyPosted = true;
                         } elseif (! isset($arInvoiceBatch['BatchStatus'])) {
@@ -2875,7 +2875,7 @@ class SageApiService
         $isLiveApiCallStep14 = true;
         $isAlreadyPosted = false;
         $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr(batchNumber: $batchNumber, type: $sageEntryType, extras: $extraDetails);
-        
+
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             $isLiveApiCallStep14 = false;
             $readyToPostResponse = json_decode($sageLogArray[$currentStep]['response'], true);
@@ -3062,7 +3062,7 @@ class SageApiService
         $isLiveApiCallStep14 = true;
         $isAlreadyPosted = false;
         $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($batchNumber);
-        
+
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             $isLiveApiCallStep14 = false;
             $readyToPostResponse = json_decode($sageLogArray[$currentStep]['response'], true);
@@ -3248,7 +3248,7 @@ class SageApiService
         $isLiveApiCallStep17 = true;
         $isAlreadyPosted = false;
         $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr(batchNumber: $batchNumber, extras: $extraDetails);
-        
+
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             $isLiveApiCallStep17 = false;
             $readyToPostResponse = json_decode($sageLogArray[$currentStep]['response'], true);
