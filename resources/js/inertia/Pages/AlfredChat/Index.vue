@@ -94,7 +94,7 @@ const paymentStatus = computed(() => {
 
 const renewalBatches = computed(() => {
   return props.renewalBatches.map(batch => ({
-    value: batch.name,
+    value: batch.id,
     label: batch.name,
   }));
 });
@@ -496,7 +496,7 @@ const exportReport = async (exportType = 'download') => {
         <template #content-footer>
           <ui-select-actions
             @select-all="
-              filters.renewal_batch = renewalBatches.map(item => item.value)
+              filters.renewal_batch = renewalBatches.map(item => item.id)
             "
             @clear="filters.renewal_batch = []"
           />
