@@ -1,11 +1,11 @@
 <script setup>
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
-import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const page = usePage();
 defineProps({
@@ -964,6 +964,10 @@ const emailStatusesTable = reactive({
     {
       text: 'Customer Id',
       value: 'customer_id',
+    },
+    {
+      text: 'Client Replied',
+      value: 'customer_replied',
     },
     {
       text: 'Created At',
@@ -3087,6 +3091,11 @@ const fullAddress = computed(() => {
             </template>
             <template #item-reason="item">
               <span class="text-primary-600 uppercase">{{ item.reason }}</span>
+            </template>
+            <template #item-customer_replied="item">
+              <span class="text-sm">{{
+                item.customer_replied ? 'Yes' : 'No'
+              }}</span>
             </template>
           </DataTable>
         </template>
