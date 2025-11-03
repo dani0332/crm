@@ -138,7 +138,9 @@ function onSubmit(isValid) {
       : route('cycle-quotes-store');
 
     quoteForm.submit(method, url, {
-      onError: errors => {},
+      onError: errors => {
+        console.log(quoteForm.setError(errors));
+      },
     });
   }
 }
