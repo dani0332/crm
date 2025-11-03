@@ -267,7 +267,7 @@ class EmbeddedProductRepository extends BaseRepository
                 $canSendDocuments = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction)
                     || $this->canSendSukoonMedexDocumentsWithPolicyIssued($item->product_category, $quoteObject->quote_status_id, $transaction);
                 $item->sync_document_button = (! $isSukoonEpReadyForSage && $canSendDocuments) ||
-                (auth()->user()->can(PermissionsEnum::EMBEDDED_PRODUCT_MANUAL_OVERRIDE) && $transaction[0]->payment_status_id == PaymentStatusEnum::CAPTURED) ;
+                (auth()->user()->can(PermissionsEnum::EMBEDDED_PRODUCT_MANUAL_OVERRIDE) && $transaction[0]->payment_status_id == PaymentStatusEnum::CAPTURED);
             }
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
