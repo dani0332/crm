@@ -44,7 +44,6 @@ class PolicyIssuanceJob implements ShouldQueue
     {
         try {
             $this->process = $this->process->refresh();
-            $quote = $this->process->model;
 
             info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
 
@@ -77,13 +76,11 @@ class PolicyIssuanceJob implements ShouldQueue
                 } else {
                     info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - '.$insuranceProvider->text.' Automation not found');
                 }
-
             } else {
                 info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Status : '.$this->process->status.' is skipped.');
             }
 
             info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' completed');
-
         } catch (\Throwable $e) {
             // Catch any exception that occurs during job execution
             // This will capture the ORIGINAL exception before it becomes "attempted too many times"
@@ -98,7 +95,6 @@ class PolicyIssuanceJob implements ShouldQueue
 
             throw $e;
         }
-
     }
 
     public function failed(Throwable $exception)
