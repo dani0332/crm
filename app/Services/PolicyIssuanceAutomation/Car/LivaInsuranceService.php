@@ -422,6 +422,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'errorCode' => $e->getCode(),
                 'errorFile' => $e->getFile(),
                 'errorLine' => $e->getLine(),
+                'errorMessage' => $e->getMessage(),
             ]);
         }
 
