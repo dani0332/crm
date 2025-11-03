@@ -38,7 +38,7 @@ class LeadAssignRequest extends FormRequest
 
         $validator->after(function ($validator) {
             $leadsIds = array_map('intval', explode(',', request()->assigned_lead_id));
-            $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::SAVINGS, quoteTypeCode::Home];
+            $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::SAVINGS, quoteTypeCode::Home, quoteTypeCode::Cyber];
 
             $model = (in_array(ucfirst(request()->modelType), $personalQuotes)) ?
                 PersonalQuote::class : (ucfirst(request()->modelType).'Quote');
