@@ -27,14 +27,11 @@ trait OcrValidator
         'quote.start_date', // For send update logs for CPD
         'quote.expiry_date', // For send update logs for CPD
     ];
-
     private const PROVIDERS_WITHOUT_COMMISSION_VAT = [
         InsuranceProviderEnum::AXA->value,  // GIG_INSURANCE
         InsuranceProviderEnum::MTL->value,   // METLIFE_INSURANCE
         InsuranceProviderEnum::CIG->value,   // CIGNA_INSURANCE
     ];
-
- 
     private const PROVIDER_QUOTE_TYPE_MAPPING = [
         // Multi-LOB: CAR, HOME, GROUP_MEDICAL
         InsuranceProviderEnum::AXA->value => [QuoteTypes::CAR, QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL],
@@ -71,7 +68,7 @@ trait OcrValidator
         try {
             $fields = [...self::COMMON_OCR_FIELDS];
 
-            if (!in_array($provider, self::PROVIDERS_WITHOUT_COMMISSION_VAT, true)) {
+            if (! in_array($provider, self::PROVIDERS_WITHOUT_COMMISSION_VAT, true)) {
                 $fields[] = 'quote.commission_vat_applicable'; // For send update logs for tax invoice raised by buyer
             }
 
@@ -90,7 +87,7 @@ trait OcrValidator
     {
         $providerCode = $this->extractProviderCode($quote);
 
-        if (!$providerCode) {
+        if (! $providerCode) {
             LoggerService::info(
                 'OCR Provider Eligibility - No provider code found',
                 [
