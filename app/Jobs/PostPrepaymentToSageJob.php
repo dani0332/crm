@@ -58,7 +58,7 @@ class PostPrepaymentToSageJob implements ShouldQueue
         LoggerService::info('Fetched payment split', extra: ['PaymentSplitID' => $this->paymentSplit?->id]);
 
         if ($this->sageProcess->status === SageEnum::SAGE_PROCESS_PENDING_STATUS) {
-            $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS, null, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
+            $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS, null, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit?->id);
 
             $response = $this->sageApiService->postPrepaymentToSage([$this->paymentSplit, $this->sageRequest,  $this->request]);
 
@@ -68,19 +68,19 @@ class PostPrepaymentToSageJob implements ShouldQueue
                     LoggerService::info('Sage conflict detected while posting prepayment to Sage - updating status to pending', extra: [
                         'PaymentSplitID' => $this->paymentSplit?->id,
                     ]);
-                    $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
+                    $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit?->id);
                 } else {
                     LoggerService::info('Posting prepayment to Sage failed - updating status to failed', extra: [
                         'PaymentSplitID' => $this->paymentSplit?->id,
                     ]);
-                    $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
+                    $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit?->id);
                 }
 
             } else {
                 LoggerService::info('Prepayment posted to Sage - updating status to completed', extra: [
                     'PaymentSplitID' => $this->paymentSplit?->id,
                 ]);
-                $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
+                $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit?->id);
             }
 
             LoggerService::info('Posting prepayment to Sage completed', extra: ['Response' => json_encode($response), 'PaymentSplitID' => $this->paymentSplit?->id]);
