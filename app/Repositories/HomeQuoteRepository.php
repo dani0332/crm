@@ -230,6 +230,7 @@ class HomeQuoteRepository extends BaseRepository
                 ]);
             },
             'customer',
+            'renewalBatchModel',
         ];
     }
 
