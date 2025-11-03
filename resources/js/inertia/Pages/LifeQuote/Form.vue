@@ -106,7 +106,7 @@ const showPartnerNameField = computed(() => false);
 
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
-const isPCPTeam = useHasAnyTeam([{ name: teamNamesEnum.PCP }]);
+const isPCPTeam = ref(useHasAnyTeam([{ name: teamNamesEnum.PCP }]));
 
 // Watchers for field resets and partner name handling
 watch(

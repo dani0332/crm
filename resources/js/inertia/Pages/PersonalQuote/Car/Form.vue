@@ -34,7 +34,7 @@ const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 
 const teamNamesEnum = page.props.teamNamesEnum;
-const isPCPTeam = useHasAnyTeam([{ name: teamNamesEnum.PCP }]);
+const isPCPTeam = ref(useHasAnyTeam([{ name: teamNamesEnum.PCP }]));
 
 const carRegistrationTypeEnum = page.props.carRegistrationType;
 const carVehicleUseEnum = page.props.carVehicleUse;

@@ -100,7 +100,7 @@ const canEditSubSourceFields = computed(() => {
 });
 
 const teamNamesEnum = page.props.teamNamesEnum;
-const isPCPTeam = useHasAnyTeam([{ name: teamNamesEnum.PCP }]);
+const isPCPTeam = ref(useHasAnyTeam([{ name: teamNamesEnum.PCP }]));
 
 
 // Watchers for sub-source fields

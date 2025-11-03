@@ -34,7 +34,7 @@ const isModalOpen = computed({
 });
 
 // Team checks
-const isPCPTeam = useHasAnyTeam([{ name: props.teamNamesEnum?.PCP }]);
+const isPCPTeam = ref(useHasAnyTeam([{ name: props.teamNamesEnum?.PCP }]));
 
 const onConfirmCreateLead = isValid => {
   if (!isValid) return;

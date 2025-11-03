@@ -93,7 +93,7 @@ const isReferralType = computed(() => {
 
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
-const isPCPTeam = useHasAnyTeam([{ name: teamNamesEnum.PCP }]);
+const isPCPTeam = ref(useHasAnyTeam([{ name: teamNamesEnum.PCP }]));
 const canEditSubSourceFields = computed(() => {
   return useHasAnyRole([
     rolesEnum.CorplineManager,

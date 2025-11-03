@@ -23,7 +23,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
-const isPCPTeam = useHasAnyTeam([{ name: teamNamesEnum.PCP }]);
+const isPCPTeam = ref(useHasAnyTeam([{ name: teamNamesEnum.PCP }]));
 
 const isEdit = computed(() => {
   return route().current().includes('edit');
