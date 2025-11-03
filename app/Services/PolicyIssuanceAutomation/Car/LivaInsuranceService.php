@@ -223,50 +223,65 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
         $response = ['status' => false, 'completed_step' => self::BOOK_POLICY, 'error' => null, 'message' => null];
 
-        $updateBookingDetailsResponse = $this->updateBookingDetails($quote);
-        if (! $updateBookingDetailsResponse['status']) {
-            $response['error'] = $updateBookingDetailsResponse['error'];
-            $response['message'] = $updateBookingDetailsResponse['message'];
+        try {
+            $updateBookingDetailsResponse = $this->updateBookingDetails($quote);
+            if (! $updateBookingDetailsResponse['status']) {
+                $response['error'] = $updateBookingDetailsResponse['error'];
+                $response['message'] = $updateBookingDetailsResponse['message'];
+
+                return $response;
+            }
+
+            $quote->refresh();
+            $preCheckResult = $this->validateBookPolicy($quote);
+            if (! $preCheckResult['status']) {
+                $response['error'] = $preCheckResult['error'];
+                $response['message'] = $preCheckResult['message'];
+
+                return $response;
+            }
+
+            $request = new \stdClass;
+            $request->quote_id = $quote->id;
+            $request->modelType = self::TYPE;
+            $request->model_type = self::TYPE;
+            $request->is_send_policy = false;
+            $request->send_policy_type = SendPolicyTypeEnum::SAGE;
+            $request->transaction_payment_status = null;
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Book Policy execution initiated, creating Sage process');
+            $createSageProcessResponse = (new SageApiService)->postBookPolicyToSage($request, $quote);
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, [], $createSageProcessResponse, '', self::BOOK_POLICY, $createSageProcessResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
+
+            if (! $createSageProcessResponse['status']) {
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Book Policy execution failed, Error: '.$createSageProcessResponse['message']);
+                $response['error'] = $createSageProcessResponse['message'];
+
+                return $response;
+            }
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Sage Process Created : '.$createSageProcessResponse['message']);
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+
+            $response['status'] = true;
+            $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
+
+            return $response;
+
+        } catch (Exception $e) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Exception occurred', extra: [
+                'errorTraceMessage' => $e->getTraceAsString(),
+                'errorCode' => $e->getCode(),
+                'errorFile' => $e->getFile(),
+                'errorLine' => $e->getLine(),
+                'errorMessage' => $e->getMessage(),
+            ]);
+            $response['error'] = 'Book policy failed: '.$e->getMessage();
+            $response['message'] = 'An error occurred during book policy: '.$e->getMessage();
 
             return $response;
         }
-
-        $quote->refresh();
-        $preCheckResult = $this->validateBookPolicy($quote);
-        if (! $preCheckResult['status']) {
-            $response['error'] = $preCheckResult['error'];
-            $response['message'] = $preCheckResult['message'];
-
-            return $response;
-        }
-
-        $request = new \stdClass;
-        $request->quote_id = $quote->id;
-        $request->modelType = self::TYPE;
-        $request->model_type = self::TYPE;
-        $request->is_send_policy = false;
-        $request->send_policy_type = SendPolicyTypeEnum::SAGE;
-        $request->transaction_payment_status = null;
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Book Policy execution initiated, creating Sage process');
-        $createSageProcessResponse = (new SageApiService)->postBookPolicyToSage($request, $quote);
-        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, [], $createSageProcessResponse, '', self::BOOK_POLICY, $createSageProcessResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
-
-        if (! $createSageProcessResponse['status']) {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Book Policy execution failed, Error: '.$createSageProcessResponse['message']);
-            $response['error'] = $createSageProcessResponse['message'];
-
-            return $response;
-        }
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Sage Process Created : '.$createSageProcessResponse['message']);
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
-
-        $response['status'] = true;
-        $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
-
-        return $response;
     }
 
     private function validateBookPolicy($quote): array
@@ -318,39 +333,49 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Update booking details process started');
         $response = ['status' => true, 'error' => null, 'message' => null];
 
-        $payment = $quote->payments()->mainLeadPayment()->first();
-        $bookPolicyPayload = $this->bookPolicyPayload($quote, QuoteTypes::CAR->value, $quote->payments, $quote->quoteDocuments);
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Booking Details before exeuting validation', extra: [
-            'invoice_date' => $payment->insurer_invoice_date,
-            'insurer_tax_invoice_number' => $payment->insurer_tax_number,
-            'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
-            'discount' => $payment->discount_value,
-            'transaction_payment_status' => $bookPolicyPayload['transactionPaymentStatus'],
-            'broker_invoice_number' => $bookPolicyPayload['brokerInvoiceNo'],
-            'commission_vat_not_applicable' => $payment->commission_vat_not_applicable,
-            'commission_vat_applicable' => $payment->commission_vat_applicable,
-            'total_commission' => $payment->commission,
-            'invoice_description' => $bookPolicyPayload['invoiceDescription'],
-            'vat_on_commission' => $payment->commission_vat,
-            'commission_percentage' => $payment->commmission_percentage,
-            'payment_code' => $payment->code,
-            'model_type' => self::TYPE,
-            'quote_id' => $quote->id,
-        ]);
-
         try {
+            $payment = $quote->payments()->mainLeadPayment()->first();
+            
+            if (! $payment) {
+                $response['status'] = false;
+                $response['error'] = 'Payment not found for quote';
+                $response['message'] = 'Main lead payment not found for quote: '.$quote->code;
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Payment not found');
+
+                return $response;
+            }
+
+            $bookPolicyPayload = $this->bookPolicyPayload($quote, QuoteTypes::CAR->value, $quote->payments, $quote->quoteDocuments);
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Booking Details before exeuting validation', extra: [
+                'invoice_date' => $payment->insurer_invoice_date,
+                'insurer_tax_invoice_number' => $payment->insurer_tax_number,
+                'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
+                'discount' => $payment->discount_value,
+                'transaction_payment_status' => $bookPolicyPayload['transactionPaymentStatus'] ?? null,
+                'broker_invoice_number' => $bookPolicyPayload['brokerInvoiceNo'] ?? null,
+                'commission_vat_not_applicable' => $payment->commission_vat_not_applicable,
+                'commission_vat_applicable' => $payment->commission_vat_applicable,
+                'total_commission' => $payment->commission,
+                'invoice_description' => $bookPolicyPayload['invoiceDescription'] ?? null,
+                'vat_on_commission' => $payment->commission_vat,
+                'commission_percentage' => $payment->commmission_percentage,
+                'payment_code' => $payment->code,
+                'model_type' => self::TYPE,
+                'quote_id' => $quote->id,
+            ]);
+
             $updateBookingRequest = [
                 'invoice_date' => $payment->insurer_invoice_date,
                 'insurer_tax_invoice_number' => $payment->insurer_tax_number,
                 'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
                 'discount' => $payment->discount_value,
-                'transaction_payment_status' => $bookPolicyPayload['transactionPaymentStatus'],
-                'broker_invoice_number' => $bookPolicyPayload['brokerInvoiceNo'],
+                'transaction_payment_status' => $bookPolicyPayload['transactionPaymentStatus'] ?? null,
+                'broker_invoice_number' => $bookPolicyPayload['brokerInvoiceNo'] ?? null,
                 'commission_vat_not_applicable' => $payment->commission_vat_not_applicable,
                 'commission_vat_applicable' => $payment->commission_vat_applicable,
                 'total_commission' => $payment->commission,
-                'invoice_description' => $bookPolicyPayload['invoiceDescription'],
+                'invoice_description' => $bookPolicyPayload['invoiceDescription'] ?? null,
                 'vat_on_commission' => $payment->commission_vat,
                 'commission_percentage' => $payment->commmission_percentage,
                 'payment_code' => $payment->code,
@@ -392,7 +417,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $response['error'] = 'Booking update error: '.$e->getMessage();
             $response['message'] = 'An error occurred while updating booking details: '.$e->getMessage();
 
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Booking update process failed, Exception: '.$e->getMessage());
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Booking update process failed', extra: [
+                'errorTraceMessage' => $e->getTraceAsString(),
+                'errorCode' => $e->getCode(),
+                'errorFile' => $e->getFile(),
+                'errorLine' => $e->getLine(),
+            ]);
         }
 
         return $response;

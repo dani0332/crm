@@ -19,7 +19,7 @@ class PolicyIssuanceJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 120;
-    public $tries = 1;
+    public $tries = 3;
 
     private const TIMEOUT_MESSAGE = 'cURL error 28';
     private const LARAVEL_TIMEOUT_MESSAGE = 'has timed out';
@@ -34,7 +34,6 @@ class PolicyIssuanceJob implements ShouldQueue
      */
     public function __construct($process)
     {
-        $this->timeout = config('constants.APP_ENV') == EnvEnum::PRODUCTION ? 90 : 120;
         $this->process = $process;
         $this->uniqueKey = 'policy-issuance-automation-id-'.$this->process->id;
     }
