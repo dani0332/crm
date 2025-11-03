@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\EnvEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Bus\Queueable;
@@ -19,7 +18,7 @@ class PolicyIssuanceJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 120;
-    public $tries = 1;
+    public $tries = 3;
 
     private const TIMEOUT_MESSAGE = 'cURL error 28';
     private const LARAVEL_TIMEOUT_MESSAGE = 'has timed out';
@@ -34,7 +33,6 @@ class PolicyIssuanceJob implements ShouldQueue
      */
     public function __construct($process)
     {
-        $this->timeout = config('constants.APP_ENV') == EnvEnum::PRODUCTION ? 90 : 120;
         $this->process = $process;
         $this->uniqueKey = 'policy-issuance-automation-id-'.$this->process->id;
     }
@@ -46,7 +44,6 @@ class PolicyIssuanceJob implements ShouldQueue
     {
         try {
             $this->process = $this->process->refresh();
-            $quote = $this->process->model;
 
             info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
 
@@ -79,13 +76,11 @@ class PolicyIssuanceJob implements ShouldQueue
                 } else {
                     info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - '.$insuranceProvider->text.' Automation not found');
                 }
-
             } else {
                 info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Status : '.$this->process->status.' is skipped.');
             }
 
             info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' completed');
-
         } catch (\Throwable $e) {
             // Catch any exception that occurs during job execution
             // This will capture the ORIGINAL exception before it becomes "attempted too many times"
@@ -100,7 +95,6 @@ class PolicyIssuanceJob implements ShouldQueue
 
             throw $e;
         }
-
     }
 
     public function failed(Throwable $exception)
@@ -128,7 +122,7 @@ class PolicyIssuanceJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->uniqueKey))->dontRelease()];
+        return new WithoutOverlapping($this->uniqueKey);
     }
 
     private function isProcessable($process)
