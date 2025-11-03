@@ -335,7 +335,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         try {
             $payment = $quote->payments()->mainLeadPayment()->first();
-            
+
             if (! $payment) {
                 $response['status'] = false;
                 $response['error'] = 'Payment not found for quote';
