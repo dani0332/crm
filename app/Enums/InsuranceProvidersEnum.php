@@ -83,7 +83,6 @@ final class InsuranceProvidersEnum extends Enum
     public const APR_HYH = 'APR_HYH';
     public const MTI = 'MTI';
 
-
     public static function getTextByCode($value)
     {
         return match ($value) {

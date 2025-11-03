@@ -54,6 +54,7 @@ enum InsuranceProviderEnum: string
     case AAIC = 'AAIC';
     case OALLIANZ = 'OALLIANZ';
     case NHICD = 'NHICD';
+
     public const AWNI = 'AWNI';
     public const ASNIC = 'ASNIC';
     public const AHAC = 'AHAC';
