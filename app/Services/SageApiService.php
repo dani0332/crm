@@ -1659,7 +1659,7 @@ class SageApiService
 
             if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep3 = false;
-                $readyToPostResponse = $sageLogArray[$stepsMapping['step_2']]['response'];
+                $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
                 LoggerService::info('AR Invoice Premium and Commission ready to post already sent', extra: [
                     'BatchNumber' => $sageResponse['BatchNumber'],
                 ]);
@@ -1944,7 +1944,7 @@ class SageApiService
 
         if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
             $isLiveApiCallStep4 = false;
-            $readyToPostResponse = $sageLogArray[$stepsMapping['step_3']]['response'];
+            $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
             LoggerService::info('AR Invoice Premium and Commission non upfront ready to post already sent', extra: [
                 'BatchNumber' => $batchNumber,
             ]);
@@ -2155,7 +2155,7 @@ class SageApiService
 
                 if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                     $isLiveApiCallStep6 = false;
-                    $readyToPostResponse = $sageLogArray[$stepsMapping['step_2']]['response'];
+                    $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
                     LoggerService::info('AP Invoice Premium ready to post already sent', extra: [
                         'BatchNumber' => $postedResponse['BatchNumber'],
                     ]);
@@ -2417,7 +2417,7 @@ class SageApiService
 
             if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep8 = false;
-                $readyToPostResponse = $sageLogArray[$stepsMapping['step_3']]['response'];
+                $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
                 LoggerService::info('AP Invoice Premium non upfront ready to post already sent', extra: [
                     'BatchNumber' => $apBatchNumber,
                 ]);
@@ -2642,7 +2642,7 @@ class SageApiService
 
                 if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                     $isLiveApiCallStep11 = false;
-                    $readyToPostResponse = $sageLogArray[$stepsMapping['step_2']]['response'];
+                    $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
                     LoggerService::info('AR Invoice Discount ready to post already sent', extra: [
                         'BatchNumber' => $postedResponse['BatchNumber'],
                     ]);
@@ -2878,7 +2878,7 @@ class SageApiService
         
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             $isLiveApiCallStep14 = false;
-            $readyToPostResponse = $sageLogArray[$currentStep]['response'];
+            $readyToPostResponse = json_decode($sageLogArray[$currentStep]['response'], true);
             LoggerService::info('Payment Receipt ready to post already sent', extra: [
                 'BatchNumber' => $batchNumber,
             ]);
@@ -3065,7 +3065,7 @@ class SageApiService
         
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             $isLiveApiCallStep14 = false;
-            $readyToPostResponse = $sageLogArray[$currentStep]['response'];
+            $readyToPostResponse = json_decode($sageLogArray[$currentStep]['response'], true);
             LoggerService::info('Apply Non Upfront Payment AR Invoice ready to post already sent', extra: [
                 'BatchNumber' => $batchNumber,
             ]);
@@ -3251,7 +3251,7 @@ class SageApiService
         
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             $isLiveApiCallStep17 = false;
-            $readyToPostResponse = $sageLogArray[$currentStep]['response'];
+            $readyToPostResponse = json_decode($sageLogArray[$currentStep]['response'], true);
             LoggerService::info('Apply Non Split Non Upfront Payment AR Invoice ready to post already sent', extra: [
                 'BatchNumber' => $batchNumber,
             ]);
@@ -3577,19 +3577,17 @@ class SageApiService
             $status[] = SageEnum::SAGE_PROCESS_TIMEOUT_STATUS;
         }
         $sageProcessCommandLock = Cache::lock($processLockKey, 20);
-        // if ($sageProcessCommandLock->get()) {
-        if (true) {
-            // $sageProcesses = SageProcess::whereIn('status', $status)
-            //     ->whereNotIn('insurance_provider_id', function ($query) {
-            //         $query->select('insurance_provider_id')
-            //             ->from('sage_processes')
-            //             ->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
-            //     })->when($insurerId, function ($query) use ($insurerId) {
-            //         $query->where('insurance_provider_id', $insurerId);
-            //     })->orderBy('created_at')
-            //     ->groupBy('insurance_provider_id')
-            //     ->get();
-            $sageProcesses = SageProcess::where('id', 3758)->get();
+        if ($sageProcessCommandLock->get()) {
+            $sageProcesses = SageProcess::whereIn('status', $status)
+                ->whereNotIn('insurance_provider_id', function ($query) {
+                    $query->select('insurance_provider_id')
+                        ->from('sage_processes')
+                        ->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
+                })->when($insurerId, function ($query) use ($insurerId) {
+                    $query->where('insurance_provider_id', $insurerId);
+                })->orderBy('created_at')
+                ->groupBy('insurance_provider_id')
+                ->get();
 
             if (count($sageProcesses) > 0) {
                 foreach ($sageProcesses as $sageProcess) {
@@ -3602,14 +3600,6 @@ class SageApiService
                     $sageProcessRequest = json_decode($sageProcess->request);
                     $sageRequest = $sageProcessRequest->sagePayload;
                     $request = $sageProcessRequest->requestPayload;
-
-                    $response = (new SageApiService)->bookEndorsementOnSage([
-                        $request,
-                        $sageProcess->model,
-                        $sageRequest,
-                    ]);
-
-                    dd($response);
 
                     if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
                         $quote = $this->getQuoteObject($request->model_type, $sageProcess->model_id);

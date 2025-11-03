@@ -635,7 +635,7 @@ class SageApiEmbeddedProductService
 
             if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep2 = false;
-                $readyToPostResponse = $sageLogArray[$stepsMapping['step_2']]['response'];
+                $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
                 LoggerService::info('EP AR Invoice Premium and Commission ready to post already sent', extra: [
                     'BatchNumber' => $sageResponse['BatchNumber'],
                 ]);
@@ -815,7 +815,7 @@ class SageApiEmbeddedProductService
             
             if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep6 = false;
-                $readyToPostResponse = $sageLogArray[$stepsMapping['step_2']]['response'];
+                $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
                 LoggerService::info('EP AP Invoice Premium ready to post already sent', extra: [
                     'BatchNumber' => $postedResponse['BatchNumber']
                 ]);
@@ -994,7 +994,7 @@ class SageApiEmbeddedProductService
 
             if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep2 = false;
-                $readyToPostResponse = $sageLogArray[$stepsMapping['step_2']]['response'];
+                $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
                 LoggerService::info('Reversal of EP AR Invoice Premium and Commission ready to post already sent', extra: [
                     'BatchNumber' => $sageResponse['BatchNumber'],
                 ]);
@@ -1182,7 +1182,7 @@ class SageApiEmbeddedProductService
             
             if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep29 = false;
-                $readyToPostResponse = $sageLogArray[$stepsMapping['step_2']]['response'];
+                $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
                 LoggerService::info('Reversal of EP AP Invoice Premium ready to post already sent', extra: [
                     'SendUpdateCode' => $sendUpdateLog->code,
                     'BatchNumber' => $postedResponse['BatchNumber']
