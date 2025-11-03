@@ -912,7 +912,7 @@ const getIncludedBenefitsTooltip = fieldText =>
                 </div>
                 <div>{{ quote?.sub_source_option?.text || 'N/A' }}</div>
               </div>
-              
+
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
@@ -985,7 +985,7 @@ const getIncludedBenefitsTooltip = fieldText =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADDITIONAL INFORMATION</dt>
-                <dd>{{ quote?.notes || 'N/A' }}</dd>
+                <dd>{{ quote?.savings_quote?.additional_notes || 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INVESTMENT FREQUENCY</dt>
