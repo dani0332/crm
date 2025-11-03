@@ -95,13 +95,13 @@ class BookPolicyOnSageJob implements ShouldQueue
                 $sageProcessStatus = SageEnum::SAGE_PROCESS_PENDING_STATUS;
             }
             LoggerService::info('Booking policy on Sage failed', extra: [
-                'ErrorCode' => $code, 
+                'ErrorCode' => $code,
                 'ErrorMessage' => $message,
                 'errorTraceMessage' => $exception->getTraceAsString(),
             ]);
         } else {
             LoggerService::warning('Booking policy on Sage failed', extra: [
-                'ErrorCode' => $code, 
+                'ErrorCode' => $code,
                 'ErrorMessage' => $message,
                 'errorTraceMessage' => $exception->getTraceAsString(),
             ]);

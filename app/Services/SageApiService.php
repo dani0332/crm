@@ -18,7 +18,6 @@ use App\Enums\QuoteTagEnums;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Http\Requests\SplitPaymentApproveRequest;
@@ -77,10 +76,10 @@ class SageApiService
     public function verifySageCustomer($customerId, $data = null, $logModal = null, $totalSteps = 4, $authUserId = null)
     {
         LoggerService::info('Starting Sage customer verification', extra: [
-            'QuoteType' => $data['quoteTypeId'], 
-            'RefId' => $data['id']
+            'QuoteType' => $data['quoteTypeId'],
+            'RefId' => $data['id'],
         ]);
-        
+
         $customer = Customer::find($customerId);
         $quoteEntityMapping = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $data['quoteTypeId'], 'quote_request_id' => $data['id']])->first();
         $quoteEntity = $quoteEntityMapping?->entity;
@@ -90,10 +89,10 @@ class SageApiService
         $customerNumber = $sageCustomerFromDB ?? $payLoadOptions['customerNumber'];
         $urlGetCustomer = SageEnum::END_POINT_AR_CUSTOMER."('".$customerNumber."')";
         $customerResponse = json_decode($this->postToSage300($urlGetCustomer, [], 'GET'), true);
-        
+
         if ($customerResponse && isset($customerResponse['CustomerNumber'])) {
             LoggerService::info('Customer already exists in Sage', extra: [
-                'SageCustomerNumber' => $customerResponse['CustomerNumber']
+                'SageCustomerNumber' => $customerResponse['CustomerNumber'],
             ]);
 
             $sageCustomerNumber = $customerResponse['CustomerNumber'];
@@ -113,14 +112,14 @@ class SageApiService
 
             if ($customerResponse && isset($customerResponse['CustomerNumber'])) {
                 LoggerService::info('Customer successfully created in Sage', extra : [
-                    'SageCustomerNumber' => $customerResponse['CustomerNumber']
+                    'SageCustomerNumber' => $customerResponse['CustomerNumber'],
                 ]);
                 $sageCustomerNumber = $customerResponse['CustomerNumber'];
                 $this->logSageApiCall($payLoadOptions, $customerResponse, $logModal, $logModal, 1, $totalSteps, SageEnum::STATUS_SUCCESS, $authUserId);
             } else {
                 LoggerService::info('Error creating customer in Sage', extra : [
                     'Payload' => json_encode($payLoadOptions['payload']),
-                    'Response' => json_encode($customerResponse)
+                    'Response' => json_encode($customerResponse),
                 ]);
                 $this->logSageApiCall($payLoadOptions, $customerResponse, $logModal, $logModal, 1, $totalSteps, SageEnum::STATUS_FAIL, $authUserId);
             }
@@ -131,13 +130,13 @@ class SageApiService
                 $quoteEntity->sage_customer_number = $sageCustomerNumber;
                 $quoteEntity->save();
                 LoggerService::info('Sage customer code updated in entities table', extra : [
-                    'SageCustomerNumber' => $sageCustomerNumber
+                    'SageCustomerNumber' => $sageCustomerNumber,
                 ]);
             } elseif ($customer) {
                 $customer->sage_customer_number = $sageCustomerNumber;
                 $customer->save();
                 LoggerService::info('Sage customer code updated in customers table', extra : [
-                    'SageCustomerNumber' => $sageCustomerNumber
+                    'SageCustomerNumber' => $sageCustomerNumber,
                 ]);
             }
         }
@@ -966,7 +965,7 @@ class SageApiService
         }
 
         LoggerService::info('Skipping book policy document job', extra: [
-            'skipBookPolicyDocumentJob' => $skipBookPolicyDocumentJob ? 'Yes' : 'No'
+            'skipBookPolicyDocumentJob' => $skipBookPolicyDocumentJob ? 'Yes' : 'No',
         ]);
         if (! $skipBookPolicyDocumentJob && ! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
             LoggerService::info('Dispatching job to send customer documents after policy booking');
@@ -978,7 +977,7 @@ class SageApiService
         $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked, $userId);
 
         LoggerService::info('Quote status updated successfully', extra: [
-            'QuoteStatusId' => $quote->quote_status_id
+            'QuoteStatusId' => $quote->quote_status_id,
         ]);
 
         LoggerService::info('--------------------------------Straightforward payments process started-------------------------------');
@@ -1092,7 +1091,7 @@ class SageApiService
             LoggerService::info('AR Prepayment Receipts batch already sent', extra : [
                 'BatchNumber' => $sageResponse['BatchNumber'],
                 'PaymentCode' => $paymentSplit->code,
-                'SerialNumber' => $paymentSplit->sr_no
+                'SerialNumber' => $paymentSplit->sr_no,
             ]);
         } else {
             $createPremiumPrepaymentResponse = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
@@ -1100,7 +1099,7 @@ class SageApiService
             LoggerService::info('AR Prepayment Receipts batch created', extra : [
                 'BatchNumber' => $sageResponse['BatchNumber'],
                 'PaymentCode' => $paymentSplit->code,
-                'SerialNumber' => $paymentSplit->sr_no
+                'SerialNumber' => $paymentSplit->sr_no,
             ]);
         }
 
@@ -1124,7 +1123,7 @@ class SageApiService
                 LoggerService::info('AR Prepayment Ready To Post batch already sent', extra : [
                     'BatchNumber' => $sageResponse['BatchNumber'],
                     'PaymentCode' => $paymentSplit->code,
-                    'SerialNumber' => $paymentSplit->sr_no
+                    'SerialNumber' => $paymentSplit->sr_no,
                 ]);
             } else {
                 $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
@@ -1132,7 +1131,7 @@ class SageApiService
                     'BatchNumber' => $sageResponse['BatchNumber'],
                     'PaymentCode' => $paymentSplit->code,
                     'SerialNumber' => $paymentSplit->sr_no,
-                    'ReadyToPostResponse' => $readyToPostResponse
+                    'ReadyToPostResponse' => $readyToPostResponse,
                 ]);
             }
 
@@ -1144,14 +1143,14 @@ class SageApiService
                         'BatchNumber' => $sageResponse['BatchNumber'],
                         'PaymentCode' => $paymentSplit->code,
                         'SerialNumber' => $paymentSplit->sr_no,
-                        'Error' => $readyToPostArray['error']['message']['value']
+                        'Error' => $readyToPostArray['error']['message']['value'],
                     ]);
 
                     $aRReceiptBatch = $sageApiService->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
                     LoggerService::info('Checking status of AR Prepayment Receipts batch', extra : [
                         'PaymentCode' => $paymentSplit->code,
                         'SerialNumber' => $paymentSplit->sr_no,
-                        'aRReceiptBatch' => $aRReceiptBatch
+                        'aRReceiptBatch' => $aRReceiptBatch,
                     ]);
                     $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
@@ -1162,7 +1161,7 @@ class SageApiService
                         LoggerService::info('Failed to get AR Prepayment Receipts batch status', extra : [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                             'PaymentCode' => $paymentSplit->code,
-                            'SerialNumber' => $paymentSplit->sr_no
+                            'SerialNumber' => $paymentSplit->sr_no,
                         ]);
                         $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $paymentSplit, $quoteDetails, 3, 4, SageEnum::STATUS_FAIL, $sageRequest->advisor_id);
                         $response['message'] = 'Failed to get Prepayment Batch Status - Ref:'.$quoteDetails->code;
@@ -1172,7 +1171,7 @@ class SageApiService
                         LoggerService::info('Error while making ready to post to sage', extra : [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                             'PaymentCode' => $paymentSplit->code,
-                            'SerialNumber' => $paymentSplit->sr_no
+                            'SerialNumber' => $paymentSplit->sr_no,
                         ]);
                         $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $paymentSplit, $quoteDetails, 3, 4, SageEnum::STATUS_FAIL, $sageRequest->advisor_id);
                         $response['message'] = 'Error while making ready to post to sage - Ref:'.$quoteDetails->code;
@@ -1184,7 +1183,7 @@ class SageApiService
                         LoggerService::info('Logging AR Prepayment Ready To Post batch successfully', extra : [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                             'PaymentCode' => $paymentSplit->code,
-                            'SerialNumber' => $paymentSplit->sr_no
+                            'SerialNumber' => $paymentSplit->sr_no,
                         ]);
                         $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $paymentSplit, $quoteDetails, 3, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
                     }
@@ -1194,7 +1193,7 @@ class SageApiService
                     LoggerService::info('Logging AR Prepayment Ready To Post batch successfully with empty response', extra : [
                         'BatchNumber' => $sageResponse['BatchNumber'],
                         'PaymentCode' => $paymentSplit->code,
-                        'SerialNumber' => $paymentSplit->sr_no
+                        'SerialNumber' => $paymentSplit->sr_no,
                     ]);
                     $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $paymentSplit, $quoteDetails, 3, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
                 }
@@ -1203,27 +1202,27 @@ class SageApiService
             if ($this->shouldCreateAndSchedulePostPrepayment($quote, $paymentSplit, $sendUpdateLog)) { /* Handle NRA case where payment is approved after policy/send update is booked */
                 LoggerService::info('Scheduling post prepayment process for Payment Split', extra : [
                     'PaymentSplitID' => $paymentSplit?->id,
-                    'PaymentSplitCode' => $paymentSplit?->code
+                    'PaymentSplitCode' => $paymentSplit?->code,
                 ]);
                 $postPrepayment = $sageApiService->schedulePostPrepaymentToSageProcess([$quote, $sageRequest->quoteType, $paymentSplit, $sendUpdateLog]);
                 if (! $postPrepayment['status']) {
                     LoggerService::info('Failed to schedule post prepayment for Payment Split', extra : [
                         'PaymentSplitID' => $paymentSplit?->id,
                         'PaymentSplitCode' => $paymentSplit?->code,
-                        'Data' => json_encode($postPrepayment)
+                        'Data' => json_encode($postPrepayment),
                     ]);
                 } else {
                     LoggerService::info('Post prepayment scheduled for Payment Split', extra : [
                         'PaymentSplitID' => $paymentSplit?->id,
                         'PaymentSplitCode' => $paymentSplit?->code,
-                        'Data' => json_encode($postPrepayment)
+                        'Data' => json_encode($postPrepayment),
                     ]);
                 }
             } else {
                 LoggerService::info('Post prepayment for Payment Split', extra : [
                     'PaymentSplitID' => $paymentSplit?->id,
                     'PaymentSplitCode' => $paymentSplit?->code,
-                    'BatchNumber' => $sageResponse['BatchNumber']
+                    'BatchNumber' => $sageResponse['BatchNumber'],
                 ]);
                 $isLiveApiCallStep4 = true;
                 $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
@@ -1233,22 +1232,22 @@ class SageApiService
                     LoggerService::info('AR Prepayment Receipts batch already posted', extra : [
                         'BatchNumber' => $sageResponse['BatchNumber'],
                         'PaymentCode' => $paymentSplit->code,
-                        'SerialNumber' => $paymentSplit->sr_no
+                        'SerialNumber' => $paymentSplit->sr_no,
                     ]);
                 } else {
                     if ($isAlreadyPosted && isset($aRPostReceipts) || isset($sageLogArray[4]) && $sageLogArray[4]['status'] == SageEnum::STATUS_FAIL) {
-                        if($isAlreadyPosted) {
+                        if ($isAlreadyPosted) {
                             LoggerService::info('AR Prepayment Receipts batch already posted', extra : [
                                 'BatchNumber' => $sageResponse['BatchNumber'],
                                 'PaymentCode' => $paymentSplit->code,
-                                'SerialNumber' => $paymentSplit->sr_no
+                                'SerialNumber' => $paymentSplit->sr_no,
                             ]);
                             $postedResponse = $aRPostReceipts['payload'];
                         } else {
                             LoggerService::info('Checking status of AR Prepayment Receipts batch', extra : [
                                 'BatchNumber' => $sageResponse['BatchNumber'],
                                 'PaymentCode' => $paymentSplit->code,
-                                'SerialNumber' => $paymentSplit->sr_no
+                                'SerialNumber' => $paymentSplit->sr_no,
                             ]);
 
                             $aRReceiptBatch = $sageApiService->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
@@ -1258,7 +1257,7 @@ class SageApiService
                                 LoggerService::info('Failed to get status of AR Prepayment Receipts batch', extra : [
                                     'BatchNumber' => $sageResponse['BatchNumber'],
                                     'PaymentCode' => $paymentSplit->code,
-                                    'SerialNumber' => $paymentSplit->sr_no
+                                    'SerialNumber' => $paymentSplit->sr_no,
                                 ]);
                                 $response['message'] = 'Failed to get status of AR Prepayment Receipts batch - Ref:'.$quote->code;
 
@@ -1278,7 +1277,7 @@ class SageApiService
                         LoggerService::info('AR Prepayment Receipts batch posted', extra : [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                             'PaymentCode' => $paymentSplit->code,
-                            'SerialNumber' => $paymentSplit->sr_no
+                            'SerialNumber' => $paymentSplit->sr_no,
                         ]);
 
                     }
@@ -1289,7 +1288,7 @@ class SageApiService
                         'BatchNumber' => $sageResponse['BatchNumber'],
                         'PaymentCode' => $paymentSplit->code,
                         'SerialNumber' => $paymentSplit->sr_no,
-                        'Error' => $postedResponse['error']
+                        'Error' => $postedResponse['error'],
 
                     ]);
                     $response['message'] = 'Error while posting to sage - Ref:'.$quote->code;
@@ -1300,7 +1299,7 @@ class SageApiService
                     LoggerService::info('Logging error while posting to sage', extra : [
                         'BatchNumber' => $sageResponse['BatchNumber'],
                         'PaymentCode' => $paymentSplit->code,
-                        'SerialNumber' => $paymentSplit->sr_no
+                        'SerialNumber' => $paymentSplit->sr_no,
                     ]);
 
                     $this->logSageApiCall($aRPostReceipts, $postedResponse, $paymentSplit, $quoteDetails, 4, 4, SageEnum::STATUS_FAIL, $sageRequest->advisor_id);
@@ -1311,7 +1310,7 @@ class SageApiService
                         LoggerService::info('Logging AR Prepayment Receipts batch successfully', extra : [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                             'PaymentCode' => $paymentSplit->code,
-                            'SerialNumber' => $paymentSplit->sr_no
+                            'SerialNumber' => $paymentSplit->sr_no,
                         ]);
 
                         $this->logSageApiCall($aRPostReceipts, $postedResponse, $paymentSplit, $quoteDetails, 4, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
@@ -1321,7 +1320,7 @@ class SageApiService
 
             LoggerService::info('Successfully created AR Prepayment Receipt', extra : [
                 'PaymentCode' => $paymentSplit->code,
-                'SerialNumber' => $paymentSplit->sr_no
+                'SerialNumber' => $paymentSplit->sr_no,
             ]);
             $response['status'] = true;
             $response['message'] = 'Prepayment created';
@@ -1329,7 +1328,7 @@ class SageApiService
             LoggerService::info('Error: Document number not generated from Sage', extra : [
                 'PaymentCode' => $paymentSplit->code,
                 'SerialNumber' => $paymentSplit->sr_no,
-                'CreateReceiptResponse' => $sageResponse
+                'CreateReceiptResponse' => $sageResponse,
             ]);
             $this->logSageApiCall($payLoadOptions, $sageResponse, $paymentSplit, $quoteDetails, 2, 4, SageEnum::STATUS_FAIL, $sageRequest->advisor_id);
             $response['message'] = 'Document number not generated from sage - Ref:'.$quoteDetails->code;
@@ -1370,7 +1369,7 @@ class SageApiService
             LoggerService::info('Created AP Prepayment Receipts batch', extra : [
                 'BatchNumber' => $sageResponse['BatchNumber'],
                 'PaymentCode' => $paymentSplit->code,
-                'SerialNumber' => $paymentSplit->sr_no
+                'SerialNumber' => $paymentSplit->sr_no,
             ]);
             if ($isLiveApiCallStep5) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $paymentSplit, $quoteDetails, 5, 7, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
@@ -1508,7 +1507,7 @@ class SageApiService
         $isAlreadyPosted = false;
 
         LoggerService::info('Starting Upfront AR Invoice Premium and Commission creation', extra: [
-            'entry_type' => $sageEntryType
+            'entry_type' => $sageEntryType,
         ]);
 
         switch ($sageEntryType) {
@@ -1621,7 +1620,7 @@ class SageApiService
                 if (($isAlreadyPosted && isset($aRPostInvoices)) || (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL)) {
                     if ($isAlreadyPosted) {
                         LoggerService::info('AR Invoice Premium and Commission batch already posted', extra : [
-                            'BatchNumber' => $sageResponse['BatchNumber']
+                            'BatchNumber' => $sageResponse['BatchNumber'],
                         ]);
                         $postedResponse = $aRPostInvoices['payload'];
                     } else {
@@ -1668,7 +1667,7 @@ class SageApiService
                 return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
             }
             LoggerService::info('AR Invoice Premium and Commission AR Post completed successfully', extra : [
-                'BatchNumber' => $sageResponse['BatchNumber']
+                'BatchNumber' => $sageResponse['BatchNumber'],
             ]);
             if ($isLiveApiCallStep4) {
                 // TODO:: This need to be improve, posted response undefined if status not posted
@@ -1680,7 +1679,7 @@ class SageApiService
 
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $payLoadOptions, $sageResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
         }
-        
+
         LoggerService::info('Completed Upfront AR Invoice Premium and Commission creation successfully');
         $returnMessage['status'] = true;
         $returnMessage['message'] = 'AR Premium and Commission invoice created on sage';
@@ -1702,7 +1701,7 @@ class SageApiService
         $isAlreadyPosted = false;
 
         LoggerService::info('Starting Non-Upfront AR Invoice Premium and Commission creation', extra: [
-            'entry_type' => $sageEntryType
+            'entry_type' => $sageEntryType,
         ]);
 
         if ($sageEntryType == SageEnum::SCT_CORRECTION) {
@@ -1904,7 +1903,7 @@ class SageApiService
             if (($isAlreadyPosted && isset($aRPostInvoices)) || (isset($sageLogArray[$stepsMapping['step_4']]) && $sageLogArray[$stepsMapping['step_4']]['status'] == SageEnum::STATUS_FAIL)) {
                 if ($isAlreadyPosted) {
                     LoggerService::info('AR Invoice Premium and Commission non upfront batch already posted', extra : [
-                        'BatchNumber' => $batchNumber
+                        'BatchNumber' => $batchNumber,
                     ]);
                     $postedResponse = $aRPostInvoices['payload'];
                 } else {
@@ -1951,13 +1950,13 @@ class SageApiService
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_4'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
         } else {
             LoggerService::info('AR Invoice Premium and Commission non upfront AR Post completed successfully', extra : [
-                'BatchNumber' => $batchNumber
+                'BatchNumber' => $batchNumber,
             ]);
             if ($isLiveApiCallStep5) {
                 $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, $quote, $stepsMapping['step_4'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
             }
         }
-        
+
         LoggerService::info('Completed Non-Upfront AR Invoice Premium and Commission creation successfully');
         $returnMessage['status'] = true;
         $returnMessage['message'] = 'AR Premium and Commission invoice created on sage';
@@ -1991,7 +1990,7 @@ class SageApiService
         $isReversalPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
 
         LoggerService::info('Starting Upfront AP Invoice Premium creation', extra: [
-            'entry_type' => $sageEntryType
+            'entry_type' => $sageEntryType,
         ]);
 
         switch ($sageEntryType) {
@@ -2047,7 +2046,7 @@ class SageApiService
                     return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
                 } else {
                     LoggerService::info('AP Invoice Premium ready to post completed successfully', extra : [
-                        'BatchNumber' => $postedResponse['BatchNumber']
+                        'BatchNumber' => $postedResponse['BatchNumber'],
                     ]);
                     if ($isLiveApiCallStep6) {
                         $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
@@ -2064,14 +2063,14 @@ class SageApiService
                     $isAlreadyPosted = false;
                     if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL) {
                         LoggerService::info('Checking status of AP Invoice Premium batch', extra : [
-                            'BatchNumber' => $postedResponse['BatchNumber']
+                            'BatchNumber' => $postedResponse['BatchNumber'],
                         ]);
                         $aPInvoiceBatch = $this->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
                         $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
 
                         LoggerService::info('Status of AP Invoice Premium batch', extra: [
                             'BatchNumber' => $postedResponse['BatchNumber'],
-                            'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found'
+                            'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found',
                         ]);
                         if (! isset($aPInvoiceBatch['BatchStatus'])) {
                             $message = 'Upfront - AP Invoice, Unable to get Batch Status from Sage.';
@@ -2083,7 +2082,7 @@ class SageApiService
 
                         if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                             LoggerService::info('AP Invoice Premium batch already posted', extra : [
-                                'BatchNumber' => $postedResponse['BatchNumber']
+                                'BatchNumber' => $postedResponse['BatchNumber'],
                             ]);
                             $postedResponse = $aPPostInvoices['payload'];
                             $isAlreadyPosted = true;
@@ -2104,7 +2103,7 @@ class SageApiService
                     return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
                 } else {
                     LoggerService::info('AP Invoice Premium AP Post completed successfully', extra : [
-                        'BatchNumber' => $postedResponse['BatchNumber']
+                        'BatchNumber' => $postedResponse['BatchNumber'],
                     ]);
                     if ($isLiveApiCallStep7) {
                         $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
@@ -2140,7 +2139,7 @@ class SageApiService
         $stepsMapping = ['step_1' => 6, 'step_2' => 7, 'step_3' => 8, 'step_4' => 9];
 
         LoggerService::info('Starting Non-Upfront AP Invoice Premium creation', extra: [
-            'entry_type' => $sageEntryType
+            'entry_type' => $sageEntryType,
         ]);
 
         if ($sageEntryType == SageEnum::SCT_CORRECTION) {
@@ -2254,7 +2253,7 @@ class SageApiService
                 return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
             } else {
                 LoggerService::info('AP Invoice Premium non upfront ready to post completed successfully', extra : [
-                    'BatchNumber' => $postedResponse['BatchNumber']
+                    'BatchNumber' => $postedResponse['BatchNumber'],
                 ]);
                 if ($isLiveApiCallStep8) {
                     $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
@@ -2271,14 +2270,14 @@ class SageApiService
                 $isAlreadyPosted = false;
                 if (isset($sageLogArray[$stepsMapping['step_4']]) && $sageLogArray[$stepsMapping['step_4']]['status'] == SageEnum::STATUS_FAIL) {
                     LoggerService::info('Checking status of AP Invoice Premium non upfront batch', extra : [
-                        'BatchNumber' => $postedResponse['BatchNumber']
+                        'BatchNumber' => $postedResponse['BatchNumber'],
                     ]);
                     $aPInvoiceBatch = $this->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
                     $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
 
                     LoggerService::info('Status of AP Invoice Split Payments batch', extra: [
                         'BatchNumber' => $postedResponse['BatchNumber'],
-                        'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found'
+                        'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found',
                     ]);
                     if (! isset($aPInvoiceBatch['BatchStatus'])) {
                         $message = 'NON Upfront - AP Invoice, Unable to get Batch Status from Sage.';
@@ -2289,7 +2288,7 @@ class SageApiService
                     }
                     if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                         LoggerService::info('AP Invoice Premium non upfront batch already posted', extra : [
-                            'BatchNumber' => $postedResponse['BatchNumber']
+                            'BatchNumber' => $postedResponse['BatchNumber'],
                         ]);
                         $postedResponse = $aPPostInvoices['payload'];
                         $isAlreadyPosted = true;
@@ -2310,7 +2309,7 @@ class SageApiService
                 return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostInvoices, $postedResponse, $stepsMapping['step_4'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
             } else {
                 LoggerService::info('AP Invoice Premium non upfront AP Post completed successfully', extra : [
-                    'BatchNumber' => $postedResponse['BatchNumber']
+                    'BatchNumber' => $postedResponse['BatchNumber'],
                 ]);
                 if ($isLiveApiCallStep9) {
                     $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, $quote, $stepsMapping['step_4'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
@@ -2351,7 +2350,7 @@ class SageApiService
         LoggerService::info('Starting AR Invoice Discount creation', extra: [
             'entry_type' => $sageEntryType,
             'is_reversal_discount' => $isReversalDiscount,
-            'discount_applied' => $isDiscountApplied
+            'discount_applied' => $isDiscountApplied,
         ]);
 
         switch ($sageEntryType) {
@@ -2420,7 +2419,7 @@ class SageApiService
                     return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
                 } else {
                     LoggerService::info('AR Invoice Discount ready to post completed successfully', extra : [
-                        'BatchNumber' => $postedResponse['BatchNumber']
+                        'BatchNumber' => $postedResponse['BatchNumber'],
                     ]);
                     if ($isLiveApiCallStep11) {
                         $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
@@ -2437,14 +2436,14 @@ class SageApiService
                     $isAlreadyPosted = false;
                     if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL) {
                         LoggerService::info('Checking status of AR Invoice Discount batch', extra : [
-                            'BatchNumber' => $postedResponse['BatchNumber']
+                            'BatchNumber' => $postedResponse['BatchNumber'],
                         ]);
                         $arInvoiceBatch = $this->postToSage300('AR/ARInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
                         $arInvoiceBatch = json_decode($arInvoiceBatch, true);
 
                         LoggerService::info('Status of AR Invoice Discount batch', extra: [
                             'BatchNumber' => $postedResponse['BatchNumber'],
-                            'BatchStatus' => $arInvoiceBatch['BatchStatus'] ?? 'Not found'
+                            'BatchStatus' => $arInvoiceBatch['BatchStatus'] ?? 'Not found',
                         ]);
                         if (! isset($arInvoiceBatch['BatchStatus'])) {
                             $message = 'AR Discount Invoice, Unable to get Batch Status from Sage.';
@@ -2455,7 +2454,7 @@ class SageApiService
                         }
                         if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                             LoggerService::info('AR Invoice Discount AR Post already posted', extra : [
-                                'BatchNumber' => $postedResponse['BatchNumber']
+                                'BatchNumber' => $postedResponse['BatchNumber'],
                             ]);
                             $postedResponse = $aRPostInvoices['payload'];
                             $isAlreadyPosted = true;
@@ -2476,7 +2475,7 @@ class SageApiService
                     return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
                 } else {
                     LoggerService::info('AR Invoice Discount AR Post completed successfully', extra : [
-                        'BatchNumber' => $postedResponse['BatchNumber']
+                        'BatchNumber' => $postedResponse['BatchNumber'],
                     ]);
                     if ($isLiveApiCallStep12) {
                         $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
@@ -2549,7 +2548,7 @@ class SageApiService
         $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
 
         LoggerService::info('Starting Apply Upfront Payment AR Invoice', extra: [
-            'entry_type' => $sageEntryType
+            'entry_type' => $sageEntryType,
         ]);
 
         if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
@@ -2597,7 +2596,7 @@ class SageApiService
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         } else {
             LoggerService::info('Payment Receipt ready to post completed successfully', extra : [
-                'BatchNumber' => $batchNumber
+                'BatchNumber' => $batchNumber,
             ]);
             if ($isLiveApiCallStep14) {
                 $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $quote, $quote, $currentStep, $totalSteps);
@@ -2616,14 +2615,14 @@ class SageApiService
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 LoggerService::info('Checking status of Payment Receipt batch', extra : [
-                    'BatchNumber' => $batchNumber
+                    'BatchNumber' => $batchNumber,
                 ]);
                 $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
                 LoggerService::info('Status of Payment Receipt batch', extra: [
                     'BatchNumber' => $batchNumber,
-                    'BatchStatus' => $aRReceiptBatch['BatchStatus'] ?? 'Not found'
+                    'BatchStatus' => $aRReceiptBatch['BatchStatus'] ?? 'Not found',
                 ]);
                 if (! isset($aRReceiptBatch['BatchStatus'])) {
                     $message = 'Apply Upfront PrePayment, Unable to get Batch Status from Sage.';
@@ -2634,7 +2633,7 @@ class SageApiService
                 }
                 if ($aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     LoggerService::info('Payment Receipt AR post already posted', extra : [
-                        'BatchNumber' => $batchNumber
+                        'BatchNumber' => $batchNumber,
                     ]);
                     $postedResponse = $aRPostReceipts['payload'];
                     $isAlreadyPosted = true;
@@ -2655,7 +2654,7 @@ class SageApiService
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         }
         LoggerService::info('Payment Receipt AR post completed successfully', extra : [
-            'BatchNumber' => $batchNumber
+            'BatchNumber' => $batchNumber,
         ]);
         if ($isLiveApiCallStep15) {
             $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $quote, $currentStep, $totalSteps);
@@ -2726,7 +2725,7 @@ class SageApiService
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         } else {
             LoggerService::info('Apply Non Upfront Payment AR Invoice ready to post completed successfully', extra : [
-                'BatchNumber' => $batchNumber
+                'BatchNumber' => $batchNumber,
             ]);
             if ($isLiveApiCallStep14) {
                 $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $quote, $quote, $currentStep, $totalSteps);
@@ -2746,14 +2745,14 @@ class SageApiService
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 LoggerService::info('Checking status of Apply Non Upfront Payment AR Invoice batch', extra : [
-                    'BatchNumber' => $batchNumber
+                    'BatchNumber' => $batchNumber,
                 ]);
                 $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
                 LoggerService::info('Status of Apply Non Upfront Payment AR Invoice batch', extra: [
                     'BatchNumber' => $batchNumber,
-                    'BatchStatus' => $aRReceiptBatch['BatchStatus'] ?? 'Not found'
+                    'BatchStatus' => $aRReceiptBatch['BatchStatus'] ?? 'Not found',
                 ]);
                 if (! isset($aRReceiptBatch['BatchStatus'])) {
                     $message = 'Apply Split PrePayment, Unable to get Batch Status from Sage.';
@@ -2764,7 +2763,7 @@ class SageApiService
                 }
                 if ($aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     LoggerService::info('Apply Non Upfront Payment AR Invoice batch already posted', extra : [
-                        'BatchNumber' => $batchNumber
+                        'BatchNumber' => $batchNumber,
                     ]);
                     $postedResponse = $aRPostReceipts['payload'];
                     $isAlreadyPosted = true;
@@ -2785,7 +2784,7 @@ class SageApiService
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         }
         LoggerService::info('Apply Non Upfront Payment AR Invoice post completed successfully', extra : [
-            'BatchNumber' => $batchNumber
+            'BatchNumber' => $batchNumber,
         ]);
         //            TODO:: This undefined variable need to defined properly
         if ($isLiveApiCallStep15) {
@@ -2855,7 +2854,7 @@ class SageApiService
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         } else {
             LoggerService::info('Apply Non Split Non Upfront Payment AR Invoice ready to post completed successfully', extra : [
-                'BatchNumber' => $batchNumber
+                'BatchNumber' => $batchNumber,
             ]);
             if ($isLiveApiCallStep17) {
                 $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $quote, $quote, $currentStep, $totalSteps);
@@ -2874,14 +2873,14 @@ class SageApiService
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 LoggerService::info('Checking status of Apply Non Split Non Upfront Payment AR Invoice batch', extra : [
-                    'BatchNumber' => $batchNumber
+                    'BatchNumber' => $batchNumber,
                 ]);
                 $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
                 LoggerService::info('Status of Apply Non Split Non Upfront Payment AR Invoice batch', extra: [
                     'BatchNumber' => $batchNumber,
-                    'BatchStatus' => $aRReceiptBatch['BatchStatus'] ?? 'Not found'
+                    'BatchStatus' => $aRReceiptBatch['BatchStatus'] ?? 'Not found',
                 ]);
                 if (! isset($aRReceiptBatch['BatchStatus'])) {
                     $message = 'Apply Non Split Non Upfront Payment , Unable to get Batch Status from Sage.';
@@ -2892,7 +2891,7 @@ class SageApiService
                 }
                 if ($aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     LoggerService::info('Apply Non Split Non Upfront Payment AR Invoice batch already posted', extra : [
-                        'BatchNumber' => $batchNumber
+                        'BatchNumber' => $batchNumber,
                     ]);
                     $postedResponse = $aRPostReceipts['payload'];
                     $isAlreadyPosted = true;
@@ -2918,7 +2917,7 @@ class SageApiService
             $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $quote, $currentStep, $totalSteps);
         }
         LoggerService::info('Apply Non Split Non Upfront Payment AR Invoice post completed successfully', extra : [
-            'BatchNumber' => $batchNumber
+            'BatchNumber' => $batchNumber,
         ]);
 
         LoggerService::info('Completed Apply Non Split Non Upfront Payment AR Invoice successfully');
@@ -3128,7 +3127,7 @@ class SageApiService
 
                     LoggerService::info('Processing sage process for Insurance Provider', extra: [
                         'SageProcessID' => $sageProcess?->id,
-                        'InsuranceProviderID' => $sageProcess?->insurance_provider_id
+                        'InsuranceProviderID' => $sageProcess?->insurance_provider_id,
                     ]);
 
                     $sageProcessRequest = json_decode($sageProcess->request);
@@ -3236,7 +3235,7 @@ class SageApiService
 
     public function schedulePostPrepaymentToSageProcess($data)
     {
-        
+
         $response = ['status' => false, 'message' => null, 'errors' => [], 'data' => null];
         [$quote, $quoteType, $paymentSplit, $sendUpdateLog] = $data;
         $paymentSplit = $paymentSplit->refresh();
@@ -3245,7 +3244,7 @@ class SageApiService
 
         LoggerService::info('Scheduling sage process for prepayment posting for Payment Split', extra: [
             'PaymentSplitID' => $paymentSplit?->id,
-            'PaymentSplitCode' => $paymentSplit?->code
+            'PaymentSplitCode' => $paymentSplit?->code,
         ]);
 
         $preChecksForPostingPrepaymentOnSage = (new SageApiService)->preChecksForPostPrepaymentSchedule($quote, $sendUpdateLog, $paymentSplit);
@@ -3254,7 +3253,7 @@ class SageApiService
             $response['errors'] = $preChecksForPostingPrepaymentOnSage['errors'];
             LoggerService::info('Error while scheduling sage process for prepayment posting for Payment Split', extra: [
                 'errors' => $response['errors'],
-                'PaymentSplitCode' => $paymentSplit?->code
+                'PaymentSplitCode' => $paymentSplit?->code,
             ]);
 
             return $response;
@@ -3304,7 +3303,7 @@ class SageApiService
         LoggerService::info('Sage process scheduled for prepayment posting for Payment split successfully.', extra : [
             'data' => json_encode(['sageProcessId' => $sageProcess->id,  'sageProcessStatus' => $sageProcess->status]),
             'PaymentSplitID' => $paymentSplit?->id,
-            'PaymentSplitCode' => $paymentSplit?->code
+            'PaymentSplitCode' => $paymentSplit?->code,
         ]);
 
         $this->scheduleSageProcesses($insurer?->id);

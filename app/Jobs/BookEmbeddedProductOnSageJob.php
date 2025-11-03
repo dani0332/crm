@@ -120,7 +120,6 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
             ]);
         }
 
-
         LoggerService::info('Updating Embedded Product booking status to BOOKING_FAILED');
         (new SageApiEmbeddedProductService)->updateAndLogEPBookingStatus($this->epTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), $this->logFor);
 
