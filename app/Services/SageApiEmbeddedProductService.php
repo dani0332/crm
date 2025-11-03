@@ -608,6 +608,7 @@ class SageApiEmbeddedProductService
 
         $totalSteps = 6;
         $stepsMapping = ['step_1' => 4, 'step_2' => 5, 'step_3' => 6];
+        $isAlreadyPosted = false;
 
         LoggerService::info('Starting EP AR Invoice Premium and Commission creation');
 
@@ -628,28 +629,79 @@ class SageApiEmbeddedProductService
             if ($isLiveApiCallStep1) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $embeddedTransaction, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
+
             $isLiveApiCallStep2 = true;
             $readyToPostInvoiceAr = self::readyToPostARPremAndCommInvoicePayload($sageResponse['BatchNumber']);
+
             if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
-                LoggerService::info('EP AR Invoice Premium and Commission ready to post already sent');
                 $isLiveApiCallStep2 = false;
-                $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
+                $readyToPostResponse = $sageLogArray[$stepsMapping['step_2']]['response'];
+                LoggerService::info('EP AR Invoice Premium and Commission ready to post already sent', extra: [
+                    'BatchNumber' => $sageResponse['BatchNumber'],
+                ]);
             } else {
-                LoggerService::info('Sending EP AR Invoice Premium and Commission ready to post to Sage');
+                LoggerService::info('Sending EP AR Invoice Premium and Commission ready to post to Sage', extra: [
+                    'BatchNumber' => $sageResponse['BatchNumber'],
+                ]);
                 $readyToPostResponse = $this->sageApiService->postToSage300($readyToPostInvoiceAr['endPoint'], $readyToPostInvoiceAr['payload'], 'PATCH');
             }
 
             if ($readyToPostResponse !== '') {
-                $errorMessage = ' EP code: '.$embeddedTransaction->code.' : Error while making Ar invoice & prem ready to post to sage';
-                $message = ' EP code: '.$embeddedTransaction->code.' : readyToPostInvoiceAr - '.$sageResponse['BatchNumber'].' failed';
+                $errorMessage = 'Error while making EP Ar invoice & prem ready to post to sage';
+                $readyToPostArray = json_decode($readyToPostResponse, true);
 
-                return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
-            }
-            LoggerService::info('EP AR Invoice Premium and Commission ready to post completed successfully', extra: [
-                'BatchNumber' => $sageResponse['BatchNumber'],
-            ]);
-            if ($isLiveApiCallStep2) {
-                $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                if (isset($readyToPostArray['error']['message']['value'])) {
+                    LoggerService::info('Failed to post EP AR Invoice Premium and Commission Ready To Post batch', extra: [
+                        'BatchNumber' => $sageResponse['BatchNumber'],
+                        'Error' => $readyToPostArray['error']['message']['value'],
+                    ]);
+
+                    $arInvoiceBatch = $this->sageApiService->postToSage300('AR/ARInvoiceBatches('.$sageResponse['BatchNumber'].')', [], 'GET');
+                    $arInvoiceBatch = json_decode($arInvoiceBatch, true);
+
+                    LoggerService::info('Checking status of EP AR Invoice Premium and Commission batch', extra: [
+                        'BatchNumber' => $sageResponse['BatchNumber'],
+                        'BatchStatus' => $arInvoiceBatch['BatchStatus'] ?? 'Not found',
+                    ]);
+
+                    if (isset($arInvoiceBatch['BatchStatus']) && $arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                        LoggerService::info('EP AR Invoice Premium and Commission batch already posted', extra: [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAr, '', $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                        $isAlreadyPosted = true;
+                    } elseif (! isset($arInvoiceBatch['BatchStatus'])) {
+                        LoggerService::info('Failed to get EP AR Invoice Premium and Commission batch status', extra: [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $message = ' EP code: '.$embeddedTransaction->code.' : Failed to get status of AR Invoice Premium and Commission batch - '.$sageResponse['BatchNumber'].' failed';
+
+                        return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                    } else {
+                        LoggerService::info('Error while making EP AR Invoice Premium and Commission ready to post to sage', extra: [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $message = ' EP code: '.$embeddedTransaction->code.' : Failed to post AR Invoice Premium and Commission Ready To Post batch - '.$sageResponse['BatchNumber'].' failed';
+
+                        return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                    }
+                } else {
+                    if ($isLiveApiCallStep2) {
+                        LoggerService::info('Logging EP AR Invoice Premium and Commission Ready To Post batch successfully', extra: [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    }
+                }
+            } else {
+                if ($isLiveApiCallStep2) {
+                    LoggerService::info('Logging EP AR Invoice Premium and Commission Ready To Post batch successfully with empty response', extra: [
+                        'BatchNumber' => $sageResponse['BatchNumber'],
+                    ]);
+                    $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                }
             }
 
             $isLiveApiCallStep3 = true;
@@ -659,31 +711,39 @@ class SageApiEmbeddedProductService
                 $isLiveApiCallStep3 = false;
                 $postedResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
             } else {
-                $isAlreadyPosted = false;
-                if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL) {
-                    LoggerService::info('Checking status of EP AR Invoice Premium and Commission batch', extra: [
-                        'BatchNumber' => $sageResponse['BatchNumber'],
-                    ]);
-                    $arInvoiceBatch = $this->sageApiService->postToSage300('AR/ARInvoiceBatches('.$sageResponse['BatchNumber'].')', [], 'GET');
-                    $arInvoiceBatch = json_decode($arInvoiceBatch, true);
-
-                    LoggerService::info('Status of EP AR Invoice Premium and Commission batch', extra: [
-                        'BatchNumber' => $sageResponse['BatchNumber'],
-                        'BatchStatus' => $arInvoiceBatch['BatchStatus'] ?? 'Not found',
-                    ]);
-                    if (! isset($arInvoiceBatch['BatchStatus'])) {
-                        $message = ' EP code: '.$embeddedTransaction->code.' : Upfront - AR Invoice batch status key not defined';
-                        $returnMessage['message'] = $message;
-                        $returnMessage['error'] = $message;
-
-                        return $returnMessage;
-                    }
-                    if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
-                        LoggerService::info('EP AR Invoice Premium and Commission batch already posted', extra: [
+                if (($isAlreadyPosted && isset($aRPostInvoices)) || (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL)) {
+                    if ($isAlreadyPosted) {
+                        LoggerService::info('EP AR Invoice Premium and Commission batch already posted', extra : [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                         ]);
                         $postedResponse = $aRPostInvoices['payload'];
-                        $isAlreadyPosted = true;
+                    } else {
+                        LoggerService::info('Checking status of EP AR Invoice Premium and Commission batch', extra : [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                        ]);
+                        $arInvoiceBatch = $this->sageApiService->postToSage300('AR/ARInvoiceBatches('.$sageResponse['BatchNumber'].')', [], 'GET');
+                        $arInvoiceBatch = json_decode($arInvoiceBatch, true);
+
+                        LoggerService::info('Status of EP AR Invoice Premium and Commission batch', extra: [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                            'BatchStatus' => $arInvoiceBatch['BatchStatus'] ?? 'Not found',
+                        ]);
+
+                        if (! isset($arInvoiceBatch['BatchStatus'])) {
+                            $message = ' EP code: '.$embeddedTransaction->code.' : Upfront - AR Invoice, Unable to get Batch Status from Sage.';
+                            $returnMessage['message'] = $message;
+                            $returnMessage['error'] = $message;
+
+                            return $returnMessage;
+                        }
+
+                        if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                            LoggerService::info('EP AR Invoice Premium and Commission batch already posted', extra : [
+                                'BatchNumber' => $sageResponse['BatchNumber'],
+                            ]);
+                            $postedResponse = $aRPostInvoices['payload'];
+                            $isAlreadyPosted = true;
+                        }
                     }
                 }
 
@@ -700,7 +760,7 @@ class SageApiEmbeddedProductService
 
                 return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
             }
-            LoggerService::info('EP AR Invoice Premium and Commission AR Post completed successfully', extra: [
+            LoggerService::info('EP AR Invoice Premium and Commission AR Post completed successfully', extra : [
                 'BatchNumber' => $sageResponse['BatchNumber'],
             ]);
             if ($isLiveApiCallStep3) {
@@ -728,6 +788,7 @@ class SageApiEmbeddedProductService
 
         $totalSteps = 9;
         $stepsMapping = ['step_1' => 7, 'step_2' => 8, 'step_3' => 9];
+        $isAlreadyPosted = false;
 
         LoggerService::info('Starting EP AP Invoice Premium creation');
 
@@ -751,62 +812,116 @@ class SageApiEmbeddedProductService
 
             $isLiveApiCallStep6 = true;
             $readyToPostInvoiceAP = self::readyToPostAPPremInvoicePayload($postedResponse['BatchNumber']);
+            
             if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
-                LoggerService::info('EP AP Invoice Premium ready to post already sent');
                 $isLiveApiCallStep6 = false;
-                $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
+                $readyToPostResponse = $sageLogArray[$stepsMapping['step_2']]['response'];
+                LoggerService::info('EP AP Invoice Premium ready to post already sent', extra: [
+                    'BatchNumber' => $postedResponse['BatchNumber']
+                ]);
             } else {
-                LoggerService::info('Sending EP AP Invoice Premium ready to post to Sage');
+                LoggerService::info('Sending EP AP Invoice Premium ready to post to Sage', extra: [
+                    'BatchNumber' => $postedResponse['BatchNumber']
+                ]);
                 $readyToPostResponse = $this->sageApiService->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
             }
 
             if ($readyToPostResponse !== '') {
-                $errorMessage = ' EP code: '.$embeddedTransaction->code.' : Error while making AP invoice ready to post to sage';
-                $message = ' EP code: '.$embeddedTransaction->code.' : readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' failed';
+                $errorMessage = 'Error while making EP AP invoice ready to post to sage';
+                $readyToPostArray = json_decode($readyToPostResponse, true);
 
-                return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                if (isset($readyToPostArray['error']['message']['value'])) {
+                    LoggerService::info('Failed to post EP AP Invoice Premium Ready To Post batch', extra: [
+                        'BatchNumber' => $postedResponse['BatchNumber'],
+                        'Error' => $readyToPostArray['error']['message']['value']
+                    ]);
+
+                    $aPInvoiceBatch = $this->sageApiService->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
+                    $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
+
+                    LoggerService::info('Checking status of EP AP Invoice Premium batch', extra: [
+                        'BatchNumber' => $postedResponse['BatchNumber'],
+                        'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found'
+                    ]);
+
+                    if (isset($aPInvoiceBatch['BatchStatus']) && $aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                        $this->logSageApiCall($readyToPostInvoiceAP, '', $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                        $isAlreadyPosted = true;
+                    } elseif (! isset($aPInvoiceBatch['BatchStatus'])) {
+                        LoggerService::info('Failed to get EP AP Invoice Premium batch status', extra: [
+                            'BatchNumber' => $postedResponse['BatchNumber']
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $message = ' EP code: '.$embeddedTransaction->code.' : Failed to get status of AP Invoice Premium batch - '.$postedResponse['BatchNumber'].' failed';
+
+                        return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                    } else {
+                        LoggerService::info('Error while making EP AP Invoice Premium ready to post to sage', extra: [
+                            'BatchNumber' => $postedResponse['BatchNumber']
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $message = ' EP code: '.$embeddedTransaction->code.' : Failed to post AP Invoice Premium Ready To Post batch - '.$postedResponse['BatchNumber'].' failed';
+
+                        return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                    }
+                } else {
+                    if ($isLiveApiCallStep6) {
+                        LoggerService::info('Logging EP AP Invoice Premium Ready To Post batch successfully', extra: [
+                            'BatchNumber' => $postedResponse['BatchNumber']
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    }
+                }
             } else {
-                LoggerService::info('EP AP Invoice Premium ready to post completed successfully', extra: [
-                    'BatchNumber' => $postedResponse['BatchNumber'],
-                ]);
                 if ($isLiveApiCallStep6) {
+                    LoggerService::info('Logging EP AP Invoice Premium Ready To Post batch successfully with empty response', extra: [
+                        'BatchNumber' => $postedResponse['BatchNumber']
+                    ]);
                     $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                 }
             }
 
+            $apBatchNumber = $postedResponse['BatchNumber'];
             $isLiveApiCallStep7 = true;
-            $aPPostInvoices = self::postAPPremInvoicePayload($postedResponse['BatchNumber']);
+            $aPPostInvoices = self::postAPPremInvoicePayload($apBatchNumber);
             if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
                 LoggerService::info('EP AP Invoice Premium AP Post already sent');
                 $isLiveApiCallStep7 = false;
                 $postedResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
             } else {
-                $isAlreadyPosted = false;
-                if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL) {
-                    LoggerService::info('Checking status of EP AP Invoice Premium batch', extra: [
-                        'BatchNumber' => $postedResponse['BatchNumber'],
-                    ]);
-                    $aPInvoiceBatch = $this->sageApiService->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
-                    $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
-
-                    LoggerService::info('Status of EP AP Invoice Premium batch', extra: [
-                        'BatchNumber' => $postedResponse['BatchNumber'],
-                        'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found',
-                    ]);
-                    if (! isset($aPInvoiceBatch['BatchStatus'])) {
-                        $message = 'Upfront - AP Invoice batch status key not defined';
-                        $returnMessage['message'] = $message;
-                        $returnMessage['error'] = $message;
-
-                        return $returnMessage;
-                    }
-
-                    if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
-                        LoggerService::info('EP AP Invoice Premium batch already posted', extra: [
-                            'BatchNumber' => $postedResponse['BatchNumber'],
+                if (($isAlreadyPosted && isset($aPPostInvoices)) || (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL)) {
+                    if ($isAlreadyPosted) {
+                        LoggerService::info('EP AP Invoice Premium batch already posted', extra : [
+                            'BatchNumber' => $apBatchNumber,
                         ]);
                         $postedResponse = $aPPostInvoices['payload'];
-                        $isAlreadyPosted = true;
+                    } else {
+                        LoggerService::info('Checking status of EP AP Invoice Premium batch', extra : [
+                            'BatchNumber' => $apBatchNumber,
+                        ]);
+                        $aPInvoiceBatch = $this->sageApiService->postToSage300('AP/APInvoiceBatches('.$apBatchNumber.')', [], 'GET');
+                        $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
+
+                        LoggerService::info('Status of EP AP Invoice Premium batch', extra: [
+                            'BatchNumber' => $apBatchNumber,
+                            'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found',
+                        ]);
+
+                        if (! isset($aPInvoiceBatch['BatchStatus'])) {
+                            $message = ' EP code: '.$embeddedTransaction->code.' : Upfront - AP Invoice, Unable to get Batch Status from Sage.';
+                            $returnMessage['message'] = $message;
+                            $returnMessage['error'] = $message;
+
+                            return $returnMessage;
+                        }
+
+                        if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                            LoggerService::info('EP AP Invoice Premium batch already posted', extra : [
+                                'BatchNumber' => $apBatchNumber,
+                            ]);
+                            $postedResponse = $aPPostInvoices['payload'];
+                            $isAlreadyPosted = true;
+                        }
                     }
                 }
 
@@ -818,13 +933,13 @@ class SageApiEmbeddedProductService
             }
 
             if (isset($postedResponse['error'])) {
-                $errorMessage = 'Error while making AP invoices Posted to sage';
+                $errorMessage = 'Error while making EP AP invoices Posted to sage';
                 $message = 'aPPostInvoices failed';
 
                 return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $aPPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
             } else {
-                LoggerService::info('EP AP Invoice Premium AP Post completed successfully', extra: [
-                    'BatchNumber' => $postedResponse['BatchNumber'],
+                LoggerService::info('EP AP Invoice Premium AP Post completed successfully', extra : [
+                    'BatchNumber' => $apBatchNumber,
                 ]);
                 if ($isLiveApiCallStep7) {
                     $this->logSageApiCall($aPPostInvoices, $postedResponse, $embeddedTransaction, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
@@ -838,7 +953,6 @@ class SageApiEmbeddedProductService
         }
 
         LoggerService::info('Completed EP AP Invoice Premium creation successfully');
-
         $returnMessage['status'] = true;
         $returnMessage['message'] = 'AP Premium invoice created on sage for EP Code '.$embeddedTransaction->code;
 
@@ -853,6 +967,7 @@ class SageApiEmbeddedProductService
 
         $totalSteps = 27;
         $stepsMapping = ['step_1' => 25, 'step_2' => 26, 'step_3' => 27];
+        $isAlreadyPosted = false;
 
         LoggerService::info('Starting Reversal of EP AR Invoice Premium and Commission creation');
 
@@ -873,28 +988,79 @@ class SageApiEmbeddedProductService
             if ($isLiveApiCallStep1) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
+
             $isLiveApiCallStep2 = true;
             $readyToPostInvoiceAr = self::readyToPostARPremAndCommInvoicePayload($sageResponse['BatchNumber'], $isReversal);
+
             if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
-                LoggerService::info('Reversal of EP AR Invoice Premium and Commission ready to post already sent');
                 $isLiveApiCallStep2 = false;
-                $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
+                $readyToPostResponse = $sageLogArray[$stepsMapping['step_2']]['response'];
+                LoggerService::info('Reversal of EP AR Invoice Premium and Commission ready to post already sent', extra: [
+                    'BatchNumber' => $sageResponse['BatchNumber'],
+                ]);
             } else {
-                LoggerService::info('Sending Reversal of EP AR Invoice Premium and Commission ready to post to Sage');
+                LoggerService::info('Sending Reversal of EP AR Invoice Premium and Commission ready to post to Sage', extra: [
+                    'BatchNumber' => $sageResponse['BatchNumber'],
+                ]);
                 $readyToPostResponse = $this->sageApiService->postToSage300($readyToPostInvoiceAr['endPoint'], $readyToPostInvoiceAr['payload'], 'PATCH');
             }
 
             if ($readyToPostResponse !== '') {
-                $errorMessage = ' EP code: '.$embeddedTransaction->code.' : Error while making Ar invoice & prem ready to post to sage';
-                $message = ' EP code: '.$embeddedTransaction->code.' : readyToPostInvoiceAr - '.$sageResponse['BatchNumber'].' failed';
+                $errorMessage = 'Error while making Reversal EP Ar invoice & prem ready to post to sage';
+                $readyToPostArray = json_decode($readyToPostResponse, true);
 
-                return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
-            }
-            LoggerService::info('Reversal of EP AR Invoice Premium and Commission ready to post completed successfully', extra: [
-                'BatchNumber' => $sageResponse['BatchNumber'],
-            ]);
-            if ($isLiveApiCallStep2) {
-                $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                if (isset($readyToPostArray['error']['message']['value'])) {
+                    LoggerService::info('Failed to post Reversal EP AR Invoice Premium and Commission Ready To Post batch', extra: [
+                        'BatchNumber' => $sageResponse['BatchNumber'],
+                        'Error' => $readyToPostArray['error']['message']['value'],
+                    ]);
+
+                    $arInvoiceBatch = $this->sageApiService->postToSage300('AR/ARInvoiceBatches('.$sageResponse['BatchNumber'].')', [], 'GET');
+                    $arInvoiceBatch = json_decode($arInvoiceBatch, true);
+
+                    LoggerService::info('Checking status of Reversal EP AR Invoice Premium and Commission batch', extra: [
+                        'BatchNumber' => $sageResponse['BatchNumber'],
+                        'BatchStatus' => $arInvoiceBatch['BatchStatus'] ?? 'Not found',
+                    ]);
+
+                    if (isset($arInvoiceBatch['BatchStatus']) && $arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                        LoggerService::info('Reversal of EP AR Invoice Premium and Commission batch already posted', extra: [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAr, '', $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                        $isAlreadyPosted = true;
+                    } elseif (! isset($arInvoiceBatch['BatchStatus'])) {
+                        LoggerService::info('Failed to get Reversal EP AR Invoice Premium and Commission batch status', extra: [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $message = ' EP code: '.$embeddedTransaction->code.' : Failed to get status of Reversal AR Invoice Premium and Commission batch - '.$sageResponse['BatchNumber'].' failed';
+
+                        return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                    } else {
+                        LoggerService::info('Error while making Reversal EP AR Invoice Premium and Commission ready to post to sage', extra: [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $message = ' EP code: '.$embeddedTransaction->code.' : Failed to post Reversal AR Invoice Premium and Commission Ready To Post batch - '.$sageResponse['BatchNumber'].' failed';
+
+                        return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                    }
+                } else {
+                    if ($isLiveApiCallStep2) {
+                        LoggerService::info('Logging Reversal EP AR Invoice Premium and Commission Ready To Post batch successfully', extra: [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    }
+                }
+            } else {
+                if ($isLiveApiCallStep2) {
+                    LoggerService::info('Logging Reversal EP AR Invoice Premium and Commission Ready To Post batch successfully with empty response', extra: [
+                        'BatchNumber' => $sageResponse['BatchNumber'],
+                    ]);
+                    $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                }
             }
 
             $isLiveApiCallStep3 = true;
@@ -904,31 +1070,39 @@ class SageApiEmbeddedProductService
                 $isLiveApiCallStep3 = false;
                 $postedResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
             } else {
-                $isAlreadyPosted = false;
-                if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL) {
-                    LoggerService::info('Checking status of Reversal EP AR Invoice Premium and Commission batch', extra: [
-                        'BatchNumber' => $sageResponse['BatchNumber'],
-                    ]);
-                    $arInvoiceBatch = $this->sageApiService->postToSage300('AR/ARInvoiceBatches('.$sageResponse['BatchNumber'].')', [], 'GET');
-                    $arInvoiceBatch = json_decode($arInvoiceBatch, true);
-
-                    LoggerService::info('Status of Reversal EP AR Invoice Premium and Commission batch', extra: [
-                        'BatchNumber' => $sageResponse['BatchNumber'],
-                        'BatchStatus' => $arInvoiceBatch['BatchStatus'] ?? 'Not found',
-                    ]);
-                    if (! isset($arInvoiceBatch['BatchStatus'])) {
-                        $message = ' EP code: '.$embeddedTransaction->code.' : Upfront - AR Invoice batch status key not defined';
-                        $returnMessage['message'] = $message;
-                        $returnMessage['error'] = $message;
-
-                        return $returnMessage;
-                    }
-                    if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
-                        LoggerService::info('Reversal of EP AR Invoice Premium and Commission batch already posted', extra: [
+                if (($isAlreadyPosted && isset($aRPostInvoices)) || (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL)) {
+                    if ($isAlreadyPosted) {
+                        LoggerService::info('Reversal of EP AR Invoice Premium and Commission batch already posted', extra : [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                         ]);
                         $postedResponse = $aRPostInvoices['payload'];
-                        $isAlreadyPosted = true;
+                    } else {
+                        LoggerService::info('Checking status of Reversal EP AR Invoice Premium and Commission batch', extra : [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                        ]);
+                        $arInvoiceBatch = $this->sageApiService->postToSage300('AR/ARInvoiceBatches('.$sageResponse['BatchNumber'].')', [], 'GET');
+                        $arInvoiceBatch = json_decode($arInvoiceBatch, true);
+
+                        LoggerService::info('Status of Reversal EP AR Invoice Premium and Commission batch', extra: [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                            'BatchStatus' => $arInvoiceBatch['BatchStatus'] ?? 'Not found',
+                        ]);
+
+                        if (! isset($arInvoiceBatch['BatchStatus'])) {
+                            $message = ' EP code: '.$embeddedTransaction->code.' : Reversal - AR Invoice, Unable to get Batch Status from Sage.';
+                            $returnMessage['message'] = $message;
+                            $returnMessage['error'] = $message;
+
+                            return $returnMessage;
+                        }
+
+                        if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                            LoggerService::info('Reversal of EP AR Invoice Premium and Commission batch already posted', extra : [
+                                'BatchNumber' => $sageResponse['BatchNumber'],
+                            ]);
+                            $postedResponse = $aRPostInvoices['payload'];
+                            $isAlreadyPosted = true;
+                        }
                     }
                 }
 
@@ -945,7 +1119,7 @@ class SageApiEmbeddedProductService
 
                 return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
             }
-            LoggerService::info('Reversal of EP AR Invoice Premium and Commission AR Post completed successfully', extra: [
+            LoggerService::info('Reversal of EP AR Invoice Premium and Commission AR Post completed successfully', extra : [
                 'BatchNumber' => $sageResponse['BatchNumber'],
             ]);
             if ($isLiveApiCallStep3) {
@@ -973,6 +1147,7 @@ class SageApiEmbeddedProductService
 
         $totalSteps = 30;
         $stepsMapping = ['step_1' => 28, 'step_2' => 29, 'step_3' => 30];
+        $isAlreadyPosted = false;
 
         LoggerService::info('Starting Reversal of EP AP Invoice Premium creation', extra: [
             'SendUpdateCode' => $sendUpdateLog->code,
@@ -1004,72 +1179,130 @@ class SageApiEmbeddedProductService
 
             $isLiveApiCallStep29 = true;
             $readyToPostInvoiceAP = self::readyToPostAPPremInvoicePayload($postedResponse['BatchNumber'], $isReversal);
+            
             if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
+                $isLiveApiCallStep29 = false;
+                $readyToPostResponse = $sageLogArray[$stepsMapping['step_2']]['response'];
                 LoggerService::info('Reversal of EP AP Invoice Premium ready to post already sent', extra: [
                     'SendUpdateCode' => $sendUpdateLog->code,
+                    'BatchNumber' => $postedResponse['BatchNumber']
                 ]);
-                $isLiveApiCallStep29 = false;
-                $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
             } else {
                 LoggerService::info('Sending Reversal of EP AP Invoice Premium ready to post to Sage', extra: [
                     'SendUpdateCode' => $sendUpdateLog->code,
+                    'BatchNumber' => $postedResponse['BatchNumber']
                 ]);
                 $readyToPostResponse = $this->sageApiService->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
             }
 
             if ($readyToPostResponse !== '') {
-                $errorMessage = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' : Error while making AP invoice ready to post to sage';
-                $message = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' : readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' failed';
+                $errorMessage = 'Error while making Reversal EP AP invoice ready to post to sage';
+                $readyToPostArray = json_decode($readyToPostResponse, true);
 
-                return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                if (isset($readyToPostArray['error']['message']['value'])) {
+                    LoggerService::info('Failed to post Reversal EP AP Invoice Premium Ready To Post batch', extra: [
+                        'BatchNumber' => $postedResponse['BatchNumber'],
+                        'Error' => $readyToPostArray['error']['message']['value'],
+                        'SendUpdateCode' => $sendUpdateLog->code
+                    ]);
+
+                    $aPInvoiceBatch = $this->sageApiService->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
+                    $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
+
+                    LoggerService::info('Checking status of Reversal EP AP Invoice Premium batch', extra: [
+                        'BatchNumber' => $postedResponse['BatchNumber'],
+                        'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found',
+                        'SendUpdateCode' => $sendUpdateLog->code
+                    ]);
+
+                    if (isset($aPInvoiceBatch['BatchStatus']) && $aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                        $this->logSageApiCall($readyToPostInvoiceAP, '', $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                        $isAlreadyPosted = true;
+                    } elseif (! isset($aPInvoiceBatch['BatchStatus'])) {
+                        LoggerService::info('Failed to get Reversal EP AP Invoice Premium batch status', extra: [
+                            'BatchNumber' => $postedResponse['BatchNumber'],
+                            'SendUpdateCode' => $sendUpdateLog->code
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $message = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' : Failed to get status of AP Invoice Premium batch - '.$postedResponse['BatchNumber'].' failed';
+
+                        return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                    } else {
+                        LoggerService::info('Error while making Reversal EP AP Invoice Premium ready to post to sage', extra: [
+                            'BatchNumber' => $postedResponse['BatchNumber'],
+                            'SendUpdateCode' => $sendUpdateLog->code
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $message = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' : Failed to post AP Invoice Premium Ready To Post batch - '.$postedResponse['BatchNumber'].' failed';
+
+                        return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                    }
+                } else {
+                    if ($isLiveApiCallStep29) {
+                        LoggerService::info('Logging Reversal EP AP Invoice Premium Ready To Post batch successfully', extra: [
+                            'BatchNumber' => $postedResponse['BatchNumber'],
+                            'SendUpdateCode' => $sendUpdateLog->code
+                        ]);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    }
+                }
             } else {
-                LoggerService::info('Reversal of EP AP Invoice Premium ready to post completed successfully', extra: [
-                    'BatchNumber' => $postedResponse['BatchNumber'],
-                    'SendUpdateCode' => $sendUpdateLog->code,
-                ]);
                 if ($isLiveApiCallStep29) {
+                    LoggerService::info('Logging Reversal EP AP Invoice Premium Ready To Post batch successfully with empty response', extra: [
+                        'BatchNumber' => $postedResponse['BatchNumber'],
+                        'SendUpdateCode' => $sendUpdateLog->code
+                    ]);
                     $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                 }
             }
 
+            $apBatchNumber = $postedResponse['BatchNumber'];
             $isLiveApiCallStep30 = true;
-            $aPPostInvoices = self::postAPPremInvoicePayload($postedResponse['BatchNumber'], $isReversal);
+            $aPPostInvoices = self::postAPPremInvoicePayload($apBatchNumber, $isReversal);
             if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
-                LoggerService::info('Reversal of EP AP Invoice Premium AP Post already sent', extra: [
+                LoggerService::info('Reversal of EP AP Invoice Premium already posted', extra: [
                     'SendUpdateCode' => $sendUpdateLog->code,
                 ]);
                 $isLiveApiCallStep30 = false;
                 $postedResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
             } else {
-                $isAlreadyPosted = false;
-                if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL) {
-                    LoggerService::info('Checking status of Reversal EP AP Invoice Premium batch', extra: [
-                        'BatchNumber' => $postedResponse['BatchNumber'],
-                        'SendUpdateCode' => $sendUpdateLog->code,
-                    ]);
-                    $aPInvoiceBatch = $this->sageApiService->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
-                    $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
-
-                    LoggerService::info('Status of Reversal EP AP Invoice Premium batch', extra: [
-                        'BatchNumber' => $postedResponse['BatchNumber'],
-                        'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found',
-                        'SendUpdateCode' => $sendUpdateLog->code,
-                    ]);
-                    if (! isset($aPInvoiceBatch['BatchStatus'])) {
-                        $message = 'Upfront - AP Invoice batch status key not defined';
-                        $returnMessage['message'] = $message;
-                        $returnMessage['error'] = $message;
-
-                        return $returnMessage;
-                    }
-
-                    if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
-                        LoggerService::info('Reversal of EP AP Invoice Premium batch already posted', extra: [
-                            'BatchNumber' => $postedResponse['BatchNumber'],
+                if (($isAlreadyPosted && isset($aPPostInvoices)) || (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL)) {
+                    if ($isAlreadyPosted) {
+                        LoggerService::info('Reversal of EP AP Invoice Premium batch already posted', extra : [
+                            'BatchNumber' => $apBatchNumber,
                             'SendUpdateCode' => $sendUpdateLog->code,
                         ]);
                         $postedResponse = $aPPostInvoices['payload'];
-                        $isAlreadyPosted = true;
+                    } else {
+                        LoggerService::info('Checking status of Reversal EP AP Invoice Premium batch', extra : [
+                            'BatchNumber' => $apBatchNumber,
+                            'SendUpdateCode' => $sendUpdateLog->code,
+                        ]);
+                        $aPInvoiceBatch = $this->sageApiService->postToSage300('AP/APInvoiceBatches('.$apBatchNumber.')', [], 'GET');
+                        $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
+
+                        LoggerService::info('Status of Reversal EP AP Invoice Premium batch', extra: [
+                            'BatchNumber' => $apBatchNumber,
+                            'BatchStatus' => $aPInvoiceBatch['BatchStatus'] ?? 'Not found',
+                            'SendUpdateCode' => $sendUpdateLog->code,
+                        ]);
+
+                        if (! isset($aPInvoiceBatch['BatchStatus'])) {
+                            $message = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' : Reversal - AP Invoice, Unable to get Batch Status from Sage.';
+                            $returnMessage['message'] = $message;
+                            $returnMessage['error'] = $message;
+
+                            return $returnMessage;
+                        }
+
+                        if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                            LoggerService::info('Reversal of EP AP Invoice Premium batch already posted', extra : [
+                                'BatchNumber' => $apBatchNumber,
+                                'SendUpdateCode' => $sendUpdateLog->code,
+                            ]);
+                            $postedResponse = $aPPostInvoices['payload'];
+                            $isAlreadyPosted = true;
+                        }
                     }
                 }
 
@@ -1088,8 +1321,8 @@ class SageApiEmbeddedProductService
 
                 return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $aPPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
             } else {
-                LoggerService::info('Reversal of EP AP Invoice Premium AP Post completed successfully', extra: [
-                    'BatchNumber' => $postedResponse['BatchNumber'],
+                LoggerService::info('Reversal of EP AP Invoice Premium AP Post completed successfully', extra : [
+                    'BatchNumber' => $apBatchNumber,
                     'SendUpdateCode' => $sendUpdateLog->code,
                 ]);
                 if ($isLiveApiCallStep30) {
@@ -1104,7 +1337,6 @@ class SageApiEmbeddedProductService
         }
 
         LoggerService::info('Completed Reversal of EP AP Invoice Premium creation successfully');
-
         $returnMessage['status'] = true;
         $returnMessage['message'] = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' AP Premium invoice created on sage';
 

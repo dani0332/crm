@@ -1859,6 +1859,9 @@ class SageApiService
                 ]);
 
                 if (isset($arInvoiceBatch['BatchStatus']) && $arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                    LoggerService::info('AR Invoice Premium and Commission non upfront batch already posted', extra: [
+                        'BatchNumber' => $batchNumber,
+                    ]);
                     $this->logSageApiCall($readyToPostInvoiceAr, '', $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                     $isAlreadyPosted = true;
                 } elseif (! isset($arInvoiceBatch['BatchStatus'])) {
@@ -2329,6 +2332,9 @@ class SageApiService
                     ]);
 
                     if (isset($aPInvoiceBatch['BatchStatus']) && $aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                        LoggerService::info('AP Invoice Premium non upfront batch already posted', extra: [
+                            'BatchNumber' => $apBatchNumber,
+                        ]);
                         $this->logSageApiCall($readyToPostInvoiceAP, "", $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                         $isAlreadyPosted = true;
                     } elseif (! isset($aPInvoiceBatch['BatchStatus'])) {
@@ -2551,6 +2557,9 @@ class SageApiService
                         ]);
 
                         if (isset($arInvoiceBatch['BatchStatus']) && $arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                            LoggerService::info('AR Invoice Discount batch already posted', extra: [
+                                'BatchNumber' => $postedResponse['BatchNumber'],
+                            ]);
                             $this->logSageApiCall($readyToPostInvoiceAr, "", $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                             $isAlreadyPosted = true;
                         } elseif (! isset($arInvoiceBatch['BatchStatus'])) {
@@ -3279,17 +3288,19 @@ class SageApiService
             $status[] = SageEnum::SAGE_PROCESS_TIMEOUT_STATUS;
         }
         $sageProcessCommandLock = Cache::lock($processLockKey, 20);
-        if ($sageProcessCommandLock->get()) {
-            $sageProcesses = SageProcess::whereIn('status', $status)
-                ->whereNotIn('insurance_provider_id', function ($query) {
-                    $query->select('insurance_provider_id')
-                        ->from('sage_processes')
-                        ->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
-                })->when($insurerId, function ($query) use ($insurerId) {
-                    $query->where('insurance_provider_id', $insurerId);
-                })->orderBy('created_at')
-                ->groupBy('insurance_provider_id')
-                ->get();
+        // if ($sageProcessCommandLock->get()) {
+        if (true) {
+            // $sageProcesses = SageProcess::whereIn('status', $status)
+            //     ->whereNotIn('insurance_provider_id', function ($query) {
+            //         $query->select('insurance_provider_id')
+            //             ->from('sage_processes')
+            //             ->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
+            //     })->when($insurerId, function ($query) use ($insurerId) {
+            //         $query->where('insurance_provider_id', $insurerId);
+            //     })->orderBy('created_at')
+            //     ->groupBy('insurance_provider_id')
+            //     ->get();
+            $sageProcesses = SageProcess::where('id', 3758)->get();
 
             if (count($sageProcesses) > 0) {
                 foreach ($sageProcesses as $sageProcess) {
@@ -3302,6 +3313,14 @@ class SageApiService
                     $sageProcessRequest = json_decode($sageProcess->request);
                     $sageRequest = $sageProcessRequest->sagePayload;
                     $request = $sageProcessRequest->requestPayload;
+
+                    $response = (new SageApiService)->bookEndorsementOnSage([
+                        $request,
+                        $sageProcess->model,
+                        $sageRequest,
+                    ]);
+
+                    dd($response);
 
                     if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
                         $quote = $this->getQuoteObject($request->model_type, $sageProcess->model_id);
