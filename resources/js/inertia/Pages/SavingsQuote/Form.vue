@@ -125,7 +125,7 @@ const quoteForm = useForm({
   investment_amount: props.quote?.savings_quote?.investment_amount || '',
   investment_frequency:
     props.quote?.savings_quote?.investment_criteria_id || '',
-  notes: props.quote?.notes || '',
+  additional_notes: props.quote?.savings_quote?.additional_notes || '',
 
   // Sub-source fields
   sub_source_id:
@@ -410,11 +410,11 @@ watch(
 
         <x-field label="Additional Notes" required>
           <x-input
-            v-model="quoteForm.notes"
+            v-model="quoteForm.additional_notes"
             type="text"
             :rules="[isRequired]"
             class="w-full"
-            :error="quoteForm.errors.notes"
+            :error="quoteForm.errors.additional_notes"
           />
         </x-field>
       </div>
