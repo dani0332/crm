@@ -27,7 +27,7 @@ class LeadAllocationDashboardService extends BaseService
         try {
             $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
 
-            $teamName = $this->getTeamNameForQuoteType($quoteType);
+            $teamName = $this->getTeamName($quoteType);
             $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $teamName)->first();
             $advisorRoles = $quoteType->advisorRoles();
 
@@ -134,7 +134,7 @@ class LeadAllocationDashboardService extends BaseService
             ->count();
     }
 
-    private function getTeamNameForQuoteType(QuoteTypes $quoteType): string
+    private function getTeamName(QuoteTypes $quoteType): string
     {
         return match ($quoteType) {
             QuoteTypes::CYBER => TeamNameEnum::CYBER,
