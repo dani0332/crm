@@ -155,7 +155,7 @@ class PolicyIssuanceJob implements ShouldQueue
     {
         $errorMessage = strtolower($errorMessage);
 
-        return str_contains($errorMessage, strtolower(self::MAX_ATTEMPTS_MESSAGE)) || 
+        return str_contains($errorMessage, strtolower(self::MAX_ATTEMPTS_MESSAGE)) ||
                str_contains($errorMessage, strtolower(self::LARAVEL_TIMEOUT_MESSAGE)) ||
                str_contains($errorMessage, strtolower(self::TIMEOUT_MESSAGE));
     }
