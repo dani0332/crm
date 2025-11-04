@@ -20,6 +20,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  quote_type_id: {
+    type: Number,
+    default: null,
+  },
 });
 
 const emit = defineEmits(['update:chassisNumber']);
@@ -29,6 +33,10 @@ const notification = useToast();
 const lookups = page.props.lookups;
 const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const quote = page.props?.quoteRequest ?? page.props?.record;
+const insuranceProviderCode =
+  quote?.plan?.insurance_provider?.code ?? quote?.plan_provider_code;
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 
 // RTA Transaction Type Constants
 const RTA_CONSTANTS = {
@@ -45,6 +53,7 @@ const RTA_CONSTANTS = {
 
 // Field configuration state
 const fieldConfig = ref({});
+const livaConfig = ref({});
 const calculatedDates = ref({});
 
 // Track user manual modifications to prevent auto-calculation override
@@ -176,11 +185,11 @@ const plateCodeOptions = computed(() => {
 });
 
 const carDetail = computed(() => {
-  return page.props.quoteRequest?.car_quote_request_detail;
+  return quote?.car_quote_request_detail ?? quote;
 });
 
 const vehicleDriverDetail = computed(() => {
-  return page.props.quoteRequest?.vehicle_driver_detail;
+  return quote?.vehicle_driver_detail;
 });
 
 const dateToYMD = date => {
@@ -197,10 +206,9 @@ const dateToYMD = date => {
 };
 
 const additionalVehicleTransactionDetailsForm = useForm({
-  quote_type_id: page.props.quoteType.id,
-  quote_uuid: page.props.quoteRequest?.uuid,
-  insurance_provider_code:
-    page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
+  quote_type_id: page.props.quoteType.id ?? props.quote_type_id,
+  quote_uuid: quote?.uuid,
+  insurance_provider_code: insuranceProviderCode ?? '',
   additional_vehicle_transaction_details: true,
   rta_transaction_type:
     vehicleDriverDetail.value?.rta_transaction_type?.toString() ?? '',
@@ -210,23 +218,20 @@ const additionalVehicleTransactionDetailsForm = useForm({
   chassis_number: carDetail.value?.chassis_number ?? '',
   engine_number: vehicleDriverDetail.value?.vehicle_engine_number ?? '',
   rta_plate_category: vehicleDriverDetail.value?.rta_plate_category ?? '',
-  vehicle_color: vehicleDriverDetail.value?.vehicle_color ?? '',
+  vehicle_color: vehicleDriverDetail.value?.vehicle_color?.toString() ?? '',
   plate_color: vehicleDriverDetail.value?.vehicle_plate_color ?? '',
   bank_loan: vehicleDriverDetail.value?.bank_loan?.toString() ?? '',
   bank_name: vehicleDriverDetail.value?.bank_name ?? '',
   first_registration_date:
     vehicleDriverDetail.value?.first_registration_date ?? '',
-  policy_effective_date:
-    dateToYMD(page.props.quoteRequest?.policy_start_date) ?? '',
-  policy_expiry_date:
-    dateToYMD(page.props.quoteRequest?.policy_expiry_date) ?? '',
-  certificate_start_date: page.props.quoteRequest?.certificate_start_date ?? '',
-  certificate_end_date: page.props.quoteRequest?.certificate_end_date ?? '',
+  policy_effective_date: dateToYMD(quote?.policy_start_date) ?? '',
+  policy_expiry_date: dateToYMD(quote?.policy_expiry_date) ?? '',
+  certificate_start_date: quote?.certificate_start_date ?? '',
+  certificate_end_date: quote?.certificate_end_date ?? '',
   annual_mileage_estimate:
     vehicleDriverDetail.value?.annual_mileage_estimate?.toString() ?? '',
-  previous_policy_provider:
-    page.props.quoteRequest?.currently_insured_with?.toString() ?? '',
-  lead_source: page.props.quoteRequest?.source?.toString() ?? '',
+  previous_policy_provider: quote?.currently_insured_with?.toString() ?? '',
+  lead_source: quote?.source?.toString() ?? '',
 });
 
 // Initialize user modification flags based on existing saved values
@@ -249,10 +254,13 @@ const hasNotEditPermission = computed(() => {
   );
 });
 
+const isSync = ref(false);
+
 watch(
   () => props.insurerPortalSyncData,
   vehicleTransactionDetails => {
     if (vehicleTransactionDetails) {
+      isSync.value = true;
       const fieldMappings = {
         vehicleTransactionDetails: {
           rta_transaction_type: 'rta_transaction_type',
@@ -288,25 +296,53 @@ watch(
   { deep: true },
 );
 
+const chassisNumberValidate = eventType => {
+  const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
+  if (eventType == 'keypress') {
+    const event = window.event || event;
+    const key = event.key;
+    if (
+      !regex.test(key) &&
+      key !== 'Backspace' &&
+      key !== 'Delete' &&
+      key !== 'ArrowLeft' &&
+      key !== 'ArrowRight'
+    ) {
+      event.preventDefault();
+    }
+  }
+  if (eventType == 'blur') {
+    const lengthValid =
+      additionalVehicleTransactionDetailsForm.chassis_number?.length >= 8 &&
+      additionalVehicleTransactionDetailsForm.chassis_number?.length <= 17;
+    const isAlphanumeric = regex.test(
+      additionalVehicleTransactionDetailsForm.chassis_number,
+    );
+    if (
+      additionalVehicleTransactionDetailsForm.chassis_number &&
+      (!lengthValid || !isAlphanumeric)
+    ) {
+      additionalVehicleTransactionDetailsForm.errors.chassis_number =
+        'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+      event.preventDefault();
+      return true;
+    } else {
+      additionalVehicleTransactionDetailsForm.clearErrors('chassis_number');
+      return false;
+    }
+  }
+};
+
 const isGIG = computed(() => {
-  return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.AXA
-  );
+  return insuranceProviderCode === insuranceProviderCodeEnum.AXA;
 });
 
 const isLIVA = computed(() => {
-  return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.RSA
-  );
+  return insuranceProviderCode === insuranceProviderCodeEnum.RSA;
 });
 
 const isSUKOON = computed(() => {
-  return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.OIC
-  );
+  return insuranceProviderCode === insuranceProviderCodeEnum.OIC;
 });
 
 // RTA Transaction Type specific computed properties
@@ -323,7 +359,7 @@ const isGigRenewal = computed(() => {
 
 // Check if current quote source is NOT renewals_uploads
 const isNonRenewalsUploadSource = computed(() => {
-  return page.props.quoteRequest?.source !== RTA_CONSTANTS.RENEWALS_UPLOADS;
+  return quote?.source !== RTA_CONSTANTS.RENEWALS_UPLOADS;
 });
 
 // Check if this is Vehicle Renewal with non-renewals_uploads source
@@ -332,6 +368,16 @@ const isVehicleRenewalNonUpload = computed(() => {
     additionalVehicleTransactionDetailsForm.rta_transaction_type ===
       RTA_CONSTANTS.VEHICLE_RENEWAL && isNonRenewalsUploadSource.value
   );
+});
+
+const isRenewal = computed(() => {
+  return (
+    page.props.quoteRequest?.source === page.props.leadSource.RENEWAL_UPLOAD
+  );
+});
+
+const isLivaRenewal = computed(() => {
+  return isRenewal.value && isLIVA.value;
 });
 
 // Field configuration computed properties
@@ -368,28 +414,45 @@ const isFieldRequired = fieldName => {
     case 'plate_code':
     case 'plate_number':
       return !isGIG.value;
+    case 'chassis_number':
+      return isLIVA.value;
     case 'engine_number':
-      return !isSUKOON.value;
-    case 'rta_plate_category':
+      return !isSUKOON.value && !isLivaRenewal.value;
     case 'plate_color':
       return isGIG.value;
+    case 'rta_plate_category':
+      return isGIG.value || isLIVA.value;
+    case 'vehicle_color':
+      return !isLivaRenewal.value;
     case 'bank_name':
       return !isGIG.value;
     case 'first_registration_date':
+      return !isSUKOON.value && !isLivaRenewal.value;
     case 'certificate_start_date':
-      return !isSUKOON.value;
+      return !isSUKOON.value || isLIVA.value;
     case 'policy_expiry_date':
     case 'certificate_end_date':
     case 'annual_mileage_estimate':
+      return isLIVA.value;
+    case 'policy_effective_date':
       return isLIVA.value;
     default:
       return false;
   }
 };
 
-// Format date to YYYY-MM-DD
 const formatDate = date => {
-  return date.toISOString().split('T')[0];
+  if (!date) return '';
+
+  if (typeof date === 'string') {
+    return date.split(' ')[0];
+  }
+
+  if (date instanceof Date) {
+    return date.toISOString().split('T')[0];
+  }
+
+  return '';
 };
 
 // Parse date string in dd/MM/yyyy or dd/MM/yyyy format consistently
@@ -617,11 +680,39 @@ const applyAutoCalculations = (forceCalculation = false) => {
   }
 };
 
+const LIVAEnums = page.props.LIVAEnums;
+
+const livaValidations = rtaTransactionType => {
+  if (
+    [
+      LIVAEnums.REGISTRATION_OF_NEW_VEHICLE,
+      LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_VALID,
+      LIVAEnums.CHANGING_VEHICLE_OWNERSHIP_CURRENT_REGISTRATION_TO_EXPIRE,
+    ].includes(rtaTransactionType)
+  ) {
+    livaConfig.value.policy_effective_date = false;
+    livaConfig.value.policy_expiry_date = true;
+    livaConfig.value.certificate_start_date = true;
+    livaConfig.value.certificate_end_date = true;
+  } else {
+    livaConfig.value.policy_effective_date = false;
+    livaConfig.value.policy_expiry_date = false;
+    livaConfig.value.certificate_start_date = false;
+    livaConfig.value.certificate_end_date = true;
+  }
+};
+
 // Get field configuration from props (no API call needed)
 const loadFieldConfigurationFromProps = (shouldAutoCalculate = false) => {
   if (!additionalVehicleTransactionDetailsForm.rta_transaction_type) {
     fieldConfig.value = {};
     return;
+  }
+
+  if (isLIVA.value) {
+    livaValidations(
+      additionalVehicleTransactionDetailsForm.rta_transaction_type,
+    );
   }
 
   const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
@@ -914,83 +1005,6 @@ const submitAdditionalVehicleTransactionDetailsForm = async isValid => {
   }
 };
 
-// Watch for insurer portal sync data changes
-watch(
-  () => props.insurerPortalSyncData,
-  vehicleTransactionDetails => {
-    if (vehicleTransactionDetails) {
-      const fieldMappings = {
-        vehicleTransactionDetails: {
-          rtaTransactionType: 'rta_transaction_type',
-          plateCode: 'plate_code',
-          plateNumber: 'plate_number',
-          trafficCodeNumber: 'traffic_code_number',
-          chassisNumber: 'chassis_number',
-          engineNumber: 'engine_number',
-          rtaPlateCategory: 'rta_plate_category',
-          vehicleColor: 'vehicle_color',
-          plateColor: 'plate_color',
-          bankLoan: 'bank_loan',
-          bankName: 'bank_name',
-          firstRegistrationDate: 'first_registration_date',
-          policyEffectiveDate: 'policy_effective_date',
-          policyExpiryDate: 'policy_expiry_date',
-          certificateStartDate: 'certificate_start_date',
-          certificateEndDate: 'certificate_end_date',
-          annualMileageEstimate: 'annual_mileage_estimate',
-        },
-      };
-
-      Object.entries(fieldMappings.vehicleTransactionDetails).forEach(
-        ([sourceKey, targetKey]) => {
-          if (vehicleTransactionDetails?.[sourceKey]) {
-            additionalVehicleTransactionDetailsForm[targetKey] =
-              vehicleTransactionDetails[sourceKey];
-          }
-        },
-      );
-    }
-  },
-  { deep: true },
-);
-
-const chassisNumberValidate = eventType => {
-  const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
-  if (eventType == 'keypress') {
-    const event = window.event || event;
-    const key = event.key;
-    if (
-      !regex.test(key) &&
-      key !== 'Backspace' &&
-      key !== 'Delete' &&
-      key !== 'ArrowLeft' &&
-      key !== 'ArrowRight'
-    ) {
-      event.preventDefault();
-    }
-  }
-  if (eventType == 'blur') {
-    const lengthValid =
-      additionalVehicleTransactionDetailsForm.chassis_number?.length >= 8 &&
-      additionalVehicleTransactionDetailsForm.chassis_number?.length <= 17;
-    const isAlphanumeric = regex.test(
-      additionalVehicleTransactionDetailsForm.chassis_number,
-    );
-    if (
-      additionalVehicleTransactionDetailsForm.chassis_number &&
-      (!lengthValid || !isAlphanumeric)
-    ) {
-      additionalVehicleTransactionDetailsForm.errors.chassis_number =
-        'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
-      event.preventDefault();
-      return true;
-    } else {
-      additionalVehicleTransactionDetailsForm.clearErrors('chassis_number');
-      return false;
-    }
-  }
-};
-
 // Initialize field configuration on component mount
 onMounted(() => {
   if (additionalVehicleTransactionDetailsForm.rta_transaction_type) {
@@ -1007,7 +1021,8 @@ onMounted(() => {
 const calculateDatesForLiva = (forceCalculation = false) => {
   if (
     isLIVA.value &&
-    additionalVehicleTransactionDetailsForm.policy_effective_date
+    additionalVehicleTransactionDetailsForm.policy_effective_date &&
+    !isSync.value
   ) {
     const effectiveDate = parseDateString(
       additionalVehicleTransactionDetailsForm.policy_effective_date,
@@ -1061,9 +1076,49 @@ watch(
 );
 
 watch(
+  () => additionalVehicleTransactionDetailsForm.certificate_start_date,
+  newVal => {
+    if (isLIVA.value && newVal && !isSync.value) {
+      // Add 13 months to policy_effective_date for policy_expiry_date
+      const effectiveDate = new Date(newVal);
+      const expiryDate = new Date(effectiveDate);
+      expiryDate.setMonth(expiryDate.getMonth() + 13);
+      expiryDate.setDate(expiryDate.getDate() - 1);
+
+      // Format date as YYYY-MM-DD for the form
+      const formattedExpiryDate = expiryDate.toISOString().split('T')[0];
+      additionalVehicleTransactionDetailsForm.certificate_end_date =
+        formattedExpiryDate;
+      additionalVehicleTransactionDetailsForm.policy_expiry_date =
+        formattedExpiryDate;
+    }
+  },
+);
+
+watch(
   () => additionalVehicleTransactionDetailsForm.chassis_number,
   newChassisNumber => {
     emit('update:chassisNumber', newChassisNumber);
+  },
+);
+
+watch(
+  () => additionalVehicleTransactionDetailsForm.policy_effective_date,
+  newValue => {
+    if (newValue) {
+      additionalVehicleTransactionDetailsForm.policy_effective_date =
+        formatDate(newValue);
+    }
+  },
+);
+
+watch(
+  () => additionalVehicleTransactionDetailsForm.first_registration_date,
+  newValue => {
+    if (newValue) {
+      additionalVehicleTransactionDetailsForm.first_registration_date =
+        formatDate(newValue);
+    }
   },
 );
 </script>
@@ -1100,10 +1155,18 @@ watch(
 
           <!-- Plate Code -->
           <x-input
-            v-if="isGIG"
+            v-if="isGIG || isLIVA"
             v-model="additionalVehicleTransactionDetailsForm.plate_code"
-            :rules="getFieldRules('plate_code')"
-            :required="isFieldRequired('plate_code')"
+            :rules="
+              isLIVA
+                ? registrationNoValidation
+                  ? [isRequired]
+                  : []
+                : getFieldRules('plate_code')
+            "
+            :required="
+              isLIVA ? registrationNoValidation : isFieldRequired('plate_code')
+            "
             placeholder="Plate Code"
             type="text"
             :disabled="isFieldDisabled('plate_code') || hasNotEditPermission"
@@ -1170,7 +1233,11 @@ watch(
           <!-- Chassis Number -->
           <x-input
             v-model="additionalVehicleTransactionDetailsForm.chassis_number"
-            :rules="[isRequired, rules.chassisNumberCheck]"
+            :rules="
+              isFieldRequired('chassis_number')
+                ? [isRequired, rules.chassisNumberCheck]
+                : []
+            "
             @keypress="chassisNumberValidate('keypress')"
             @blur="chassisNumberValidate('blur')"
             placeholder="Chassis Number"
@@ -1181,7 +1248,7 @@ watch(
             :disabled="
               isFieldDisabled('chassis_number') || hasNotEditPermission
             "
-            required
+            :required="isFieldRequired('chassis_number')"
             label="Chassis Number"
             :tooltip="`Vehicle chassis number`"
           />
@@ -1218,8 +1285,8 @@ watch(
             filterable
             v-model="additionalVehicleTransactionDetailsForm.vehicle_color"
             :options="vehicleColorOptions"
-            :rules="[isRequired]"
-            required
+            :rules="getFieldRules('vehicle_color')"
+            :required="isFieldRequired('vehicle_color')"
             placeholder="Select Vehicle Color"
             :disabled="isFieldDisabled('vehicle_color') || hasNotEditPermission"
             class="w-full"
@@ -1228,6 +1295,7 @@ watch(
           />
 
           <x-select
+            v-if="isGIG"
             filterable
             v-model="additionalVehicleTransactionDetailsForm.plate_color"
             :options="plateColorOptions"
@@ -1309,6 +1377,7 @@ watch(
             "
             label="First Registration Date"
             :tooltip="`Date the vehicle was first registered with the traffic department`"
+            :teleport="false"
           />
 
           <!-- Policy Effective Date -->
@@ -1324,11 +1393,14 @@ watch(
             "
             placeholder="Policy Effective Date"
             :disabled="
-              isFieldDisabled('policy_effective_date') || hasNotEditPermission
+              isFieldDisabled('policy_effective_date') ||
+              hasNotEditPermission ||
+              livaConfig.policy_effective_date
             "
             :readonly="fieldConfig.policy_effective_date?.readonly"
             label="Policy Effective Date"
             :tooltip="`Start date of the insurance policy coverage`"
+            :teleport="false"
           />
 
           <!-- Policy Expiry Date -->
@@ -1338,11 +1410,14 @@ watch(
             :required="isFieldRequired('policy_expiry_date')"
             placeholder="Policy Expiry Date"
             :disabled="
-              isFieldDisabled('policy_expiry_date') || hasNotEditPermission
+              isFieldDisabled('policy_expiry_date') ||
+              hasNotEditPermission ||
+              livaConfig.policy_expiry_date
             "
             :readonly="fieldConfig.policy_expiry_date?.readonly"
             label="Policy Expiry Date"
             :tooltip="`Expiry date of the insurance policy coverage`"
+            :teleport="false"
           />
 
           <!-- Certificate Start Date -->
@@ -1358,11 +1433,14 @@ watch(
             "
             placeholder="Certificate Start Date"
             :disabled="
-              isFieldDisabled('certificate_start_date') || hasNotEditPermission
+              isFieldDisabled('certificate_start_date') ||
+              hasNotEditPermission ||
+              livaConfig.certificate_start_date
             "
             :readonly="fieldConfig.certificate_start_date?.readonly"
             label="Certificate Start Date"
             :tooltip="`Start date for the insurance certificate validity period`"
+            :teleport="false"
           />
 
           <!-- Certificate End Date -->
@@ -1374,11 +1452,14 @@ watch(
             :required="isFieldRequired('certificate_end_date')"
             placeholder="Certificate End Date"
             :disabled="
-              isFieldDisabled('certificate_end_date') || hasNotEditPermission
+              isFieldDisabled('certificate_end_date') ||
+              hasNotEditPermission ||
+              livaConfig.certificate_end_date
             "
             :readonly="fieldConfig.certificate_end_date?.readonly"
             label="Certificate End Date"
             :tooltip="`End date for the insurance certificate validity period`"
+            :teleport="false"
           />
 
           <!-- Annual Mileage Estimate -->
@@ -1452,3 +1533,20 @@ watch(
     </div>
   </div>
 </template>
+<style>
+/* .x-popover-container .min-w-\[280px\] {
+    overflow-x: auto;
+  }
+
+  .x-popover-container .x-menu-item {
+    display: block !important;
+  }
+
+  .x-popover-container .x-menu-item:hover {
+    width: max-content;
+  } */
+
+.v-popper__wrapper {
+  width: fit-content !important;
+}
+</style>

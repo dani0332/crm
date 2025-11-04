@@ -29,6 +29,7 @@ class MemberDetailRequest extends FormRequest
             'dob' => 'sometimes',
             'nationality_id' => 'nullable',
             'first_name' => 'nullable',
+            'last_name' => 'nullable',
             'relation_code' => 'nullable',
             'quote_request_id' => 'sometimes|required',
             'customer_id' => 'required',
@@ -42,7 +43,7 @@ class MemberDetailRequest extends FormRequest
             $rules['salary_band_id'] = 'nullable';
             $rules['modelType'] = '';
             $rules['first_name'] = 'sometimes|required';
-            $rules['last_name'] = 'nullable';
+            $rules['pec'] = 'required';
         }
 
         return $rules;

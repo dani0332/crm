@@ -14,7 +14,9 @@ use App\Enums\CarRegistrationType;
 use App\Enums\CarTeamType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmirateEnum;
+use App\Enums\EpEcbExcludeVehicleEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
@@ -52,6 +54,7 @@ use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
@@ -90,6 +93,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
+use App\Services\CustomerVerification\CustomerVerificationService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
 use App\Services\EmailServices\CarEmailService;
@@ -103,6 +107,7 @@ use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
 use App\Services\NotificationService;
+use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteJourneyService;
@@ -290,6 +295,15 @@ class CRUDController extends Controller
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
+            $pecFlag = request('pec_flag');
+            $gridData->when(request()->has('pec_flag') && $pecFlag != 'all', function ($q) use ($pecFlag) {
+                if ($pecFlag == 1) {
+                    $q->hasPecTag();
+                } else {
+                    $q->whereNull('pec_marked_at');
+                }
+            });
+
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $quote_status = $dropdownSource['quote_status_id'];
@@ -371,6 +385,8 @@ class CRUDController extends Controller
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
             $productTeam = $this->getProductByName(quoteTypeCode::Car);
             $teams = $this->getTeamsByProductId($productTeam->id);
+            $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
+            $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses();
 
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
@@ -391,6 +407,8 @@ class CRUDController extends Controller
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
                 'insurerAMLStatus' => $insurerAMLStatus,
+                'issuanceStatuses' => $issuanceStatuses,
+                'insurerApiStatus' => $insurerApiStatus,
             ]);
         }
 
@@ -439,6 +457,7 @@ class CRUDController extends Controller
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'branchOptions' => EmirateEnum::getBranchMapping(),
+                'emirateEnum' => EmirateEnum::asArray(),
             ]);
         }
 
@@ -603,6 +622,8 @@ class CRUDController extends Controller
 
             $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
 
+            $isCustomerVerificationEnabled = getAppStorageValueByKey(ApplicationStorageEnums::CUSTOMER_VERIFICATION_ENABLED, useCache: true) == '1';
+
             $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
             if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
                 abort(403, 'Unauthorized action.');
@@ -740,6 +761,10 @@ class CRUDController extends Controller
                 $carMakeText = $record->car_make_id_text ?? '';
                 $carModelText = $record->car_model_id_text ?? '';
 
+                $customerVerificationData = $isCustomerVerificationEnabled
+                    ? app(CustomerVerificationService::class)->getVerificationData($record, QuoteTypes::CAR)
+                    : ['webForm' => [], 'customerVerified' => [], 'registrationCertificate' => [], 'vehicleDriverDetails' => []];
+
                 $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Car);
                 $record->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_id_text);
 
@@ -826,9 +851,22 @@ class CRUDController extends Controller
                 $customerAddressData = $this->customerService->getCustomerAddressData($record);
                 $amlStatusName = AMLStatusCode::getName($record->aml_status);
                 $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
-                $apiIssuanceStatus = PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id);
-                $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record, QuoteTypes::CAR->value)[$record->insurer_api_status_id] ?? null;
+                $apiIssuanceStatus = $record->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id) : null;
+                $insurerApiStatus = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
                 $previousQuote = $this->carQuoteService->getPreviousQuote($record->previous_quote_id);
+                $isAddionalFieldsEnabled = app(AMLService::class)->isAdditionalVehicleAndDriverDetailsEnabled($this->genericModel->modelType, $record?->insurance_provider_id, $record?->registration_type, true);
+                $lookups = $rtaConfigurationData = $LIVAEnums = [];
+
+                if ($isAddionalFieldsEnabled) {
+                    $lookups = app(AMLService::class)->getAdditionaVehicleDriverLookups($this->genericModel->modelType, $record?->insurance_provider_id, $record?->source);
+                    $lookups['issuance_place'] = LookupRepository::where('key', LookupsEnum::ISSUANCE_PLACE)->get()->toArray();
+
+                    $record->vehicle_driver_detail = CarQuote::find($record->id)->vehicleDriverDetail;
+                    $rtaConfigurationData = app(AMLService::class)->getRTATransactionConfigurations($this->genericModel->modelType);
+                    $LIVAEnums = app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum();
+                }
+
+                $isEpEcbPaymentPaid = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB, true);
 
                 return inertia('PersonalQuote/Car/Show', compact([
                     'record',
@@ -860,6 +898,8 @@ class CRUDController extends Controller
                     'activities',
                     'advisors',
                     'isRenewalUser',
+                    'customerVerificationData',
+                    'isCustomerVerificationEnabled',
                     'isNewBusinessUser',
                     'emailStatuses',
                     'carPlanAddonsCodeEnum',
@@ -872,6 +912,7 @@ class CRUDController extends Controller
                     'trimList',
                     'autoAllocationDisabled',
                     'embeddedProducts',
+                    'isEpEcbPaymentPaid',
                     'genericRequestEnum',
                     'paymentEntityModel',
                     'payments',
@@ -925,6 +966,10 @@ class CRUDController extends Controller
                     'apiIssuanceStatus',
                     'insurerApiStatus',
                     'previousQuote',
+                    'isAddionalFieldsEnabled',
+                    'lookups',
+                    'rtaConfigurationData',
+                    'LIVAEnums',
                 ]));
             }
 
@@ -1165,13 +1210,16 @@ class CRUDController extends Controller
 
                 $record->payment_status_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_text);
                 $amlStatusName = AMLStatusCode::getName($record->aml_status);
-                $isAUHLead = $this->healthQuoteService->isAUHLead($record->id);
+                $lead = $this->healthQuoteService->getLead($record->id);
+                $isAUHLead = $lead->isAUHLead(false);
+                $hasPecTag = $lead->has_pec_tag;
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
                     'emailStatuses' => $emailStatuses,
                     'quote' => $record,
                     'isAUHLead' => $isAUHLead,
+                    'hasPecTag' => $hasPecTag,
                     'amlStatusName' => $amlStatusName,
                     'sendUpdateOptions' => $sendUpdateOptions,
                     'sendUpdateLogs' => $sendUpdateLogs,
@@ -1332,6 +1380,7 @@ class CRUDController extends Controller
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
                 'branchOptions' => EmirateEnum::getBranchMapping(),
+                'emirateEnum' => EmirateEnum::asArray(),
             ]);
         }
 
@@ -1350,6 +1399,7 @@ class CRUDController extends Controller
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
             $dropdownSource['business_activities'] = $this->dropdownSourceService->getDropdownSource('business_activity');
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
+            $isEpEcbPaymentPaid = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB, true);
             $courierQuoteResponse = app(MACRMService::class)->getCourierQuoteStatus($record->uuid, QuoteTypeId::Car);
             $courierQuoteStatus = isset($courierQuoteResponse['data']['status'])
                 ? $courierQuoteResponse['data']['status']
@@ -1368,6 +1418,9 @@ class CRUDController extends Controller
                 'customerAddressData' => $customerAddressData,
                 'courierQuoteStatus' => $courierQuoteStatus,
                 'quoteStatusEnums' => QuoteStatusEnum::asArray(),
+                'isEpEcbPaymentPaid' => $isEpEcbPaymentPaid,
+                'ecbExcludedCarMakeCodes' => EpEcbExcludeVehicleEnum::CAR_MAKE_CODES,
+                'ecbExcludedCarModelCodes' => EpEcbExcludeVehicleEnum::CAR_MODEL_CODES,
             ]);
         }
 
@@ -1418,6 +1471,21 @@ class CRUDController extends Controller
                     ['car_quote_request_id' => $carQuoteRequest->id],
                     ['chassis_number' => $request->chassis_number]
                 );
+
+                // Add/update chassis number details
+                $carMake = CarMake::find($request->car_make_id);
+                $carModel = CarModel::find($request->car_model_id);
+                $carMakeAndModel = trim(($carMake ? $carMake->text : '').' '.($carModel ? $carModel->text : ''));
+
+                $data = [
+                    'chassis_number' => $request->chassis_number,
+                    'vehicle_make_model' => $carMakeAndModel,
+                    'cylinder' => $request->cylinder,
+                    'seating_capacity' => $request->seat_capacity,
+                    'vehicle_trim' => $request->trim,
+                ];
+
+                $this->carQuoteService->saveVehicleChassisDetails($carQuoteRequest->uuid, $data);
             }
         }
 
@@ -2300,6 +2368,12 @@ class CRUDController extends Controller
         LoggerService::info(self::class.' - PCP Team Advisor: '.$isPCPTeamAdvisor.' | Lead source: '.$carQuote->source.' | Ref-ID: '.$carQuote->uuid.' | time: '.now());
         if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD && $isPCPTeamAdvisor) {
             app(CarEmailService::class)->sendPCPOCBIntroEmail($carQuote);
+
+            return response()->json(['success' => 'OCB email sent to customer']);
+        }
+
+        if ($carQuote->source != LeadSourceEnum::RENEWAL_UPLOAD && $carQuote->advisor_id) {
+            app(SendEmailCustomerService::class)->sendCarIntroEmailWithAdvisor($carQuote);
 
             return response()->json(['success' => 'OCB email sent to customer']);
         }

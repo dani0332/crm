@@ -20,12 +20,17 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  isAddionalFieldsEnabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 const page = usePage();
 const { isRequired } = useRules();
 const notification = useToast();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const insurerName = page.props.insurerName;
 const generateOptions = (items, valueKey, labelKey) =>
   useGenerateOptions(items, valueKey, labelKey);
 const rules = {
@@ -189,31 +194,6 @@ const customerTypeOptions = computed(() => {
   ];
 });
 
-const showVehicleAndDrvicerDetails = computed(() => {
-  console.log(
-    'page.props.quoteType.id',
-    page.props.quoteType.id,
-    page.props.quoteTypeIdEnum.Car,
-    page.props.quoteType.id === page.props.quoteTypeIdEnum.Car,
-  );
-  console.log(
-    'page.props.insuranceProviderCodeEnum.AXA',
-    page.props.quoteRequest?.plan?.insurance_provider.code,
-    page.props.insuranceProviderCodeEnum.AXA,
-  );
-  console.log('page.props.isPrivateCar', page.props.isPrivateCar);
-
-  return (
-    page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
-    [
-      // page.props.insuranceProviderCodeEnum.RSA, // LIVA
-      page.props.insuranceProviderCodeEnum.AXA, // GIG
-      // page.props.insuranceProviderCodeEnum.OIC, // SUKOON
-    ].includes(page.props.quoteRequest?.plan?.insurance_provider.code) &&
-    (page.props.isPrivateCar ?? false)
-  );
-});
-
 const screeningFormDetails = useForm({
   customer_type: page.props.insuredDetails?.insured?.customer_type ?? null,
   customer_id: quoteRequest.customer_id,
@@ -237,7 +217,7 @@ const screeningFormDetails = useForm({
   get_quote_email_gig:
     (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
       ? quoteRequest?.car_quote_request_detail?.insurer_quote_email
-      : quoteRequest?.quote_detail?.insurer_quote_email) ??
+      : quoteRequest?.quote_detail?.insurer_quote_email) ||
     page.props.gigInsurerDefaultEmail,
   chassis_number:
     (page.props.quoteType.code === props.quoteTypeCodeEnum.Car
@@ -669,7 +649,7 @@ function screeningFormValidate() {
     (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
       page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
     !chassisNumberDisabled.value &&
-    !showVehicleAndDrvicerDetails.value
+    !props.isAddionalFieldsEnabled
   ) {
     if (!screeningFormDetails.chassis_number) {
       screeningFormDetails.setError('chassis_number', 'This field is required');
@@ -790,7 +770,7 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
     persistent
     @submit="submitScreeningForm"
   >
-    <template v-if="showVehicleAndDrvicerDetails">
+    <template v-if="props.isAddionalFieldsEnabled">
       <AdditionalVehicleTransactionDetails
         :insurerPortalSyncData="insurerPortalSyncData"
         :rta_transaction_types="rta_transaction_types"
@@ -910,15 +890,13 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             :hasError="validateNationality"
           />
         </x-field>
-        <x-field label="Date of Birth" required>
-          <DatePicker
-            v-model="screeningFormDetails.dob"
-            :rules="[isRequired]"
-            placeholder="Date of Birth"
-            class="w-full"
-            :error="screeningFormDetails.errors.dob"
-          />
-        </x-field>
+        <DatePicker
+          v-model="screeningFormDetails.dob"
+          :rules="[isRequired]"
+          :required="true"
+          placeholder="Date of Birth"
+          label="Date of Birth"
+        />
         <x-field label="Gender" required>
           <x-select
             v-model="screeningFormDetails.screening_gender"
@@ -941,11 +919,11 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike ||
             page.props.quoteType.id === page.props.quoteTypeIdEnum.Home
           "
-          label="Email in GIG Portal"
+          :label="`Email in ${insurerName} Portal`"
         >
           <x-input
             v-model="screeningFormDetails.get_quote_email_gig"
-            placeholder="Email in GIG Portal"
+            :placeholder="`Email in ${insurerName} Portal`"
             type="text"
             class="w-full"
           />
@@ -1051,7 +1029,7 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
         v-if="
           (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
             page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
-          !showVehicleAndDrvicerDetails
+          !props.isAddionalFieldsEnabled
         "
       >
         <div class="flex flex-wrap gap-3 justify-between items-center mb-4">

@@ -68,27 +68,50 @@ class QuoteDocumentRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            $quoteType = ucfirst(request()->quoteType);
+            $memberDetailId = request()->member_detail_id;
+            $documentTypeCode = request()->document_type_code;
+            $quoteTypes = [quoteTypeCode::Health, quoteTypeCode::Travel];
+
             // check for quote records if exists
             if (! $quote = $this->getQuoteObject(request()->quoteType, request()->quote_uuid)) {
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
+
+                return;
+            }
+
+            // check for maximum number of files uploaded against selected quote and document type
+            if ($this->documentType && $quote->documents->where('document_type_code', $documentTypeCode)->count() >= $this->documentType->max_files) {
+                $validator->errors()->add('file', 'You can only upload a maximum of '.$this->documentType->max_files.' files');
+
+                return; // Stop validation if max files exceeded
             }
 
             /**
-             * documents can be attached to a member for health quote type
+             * documents can be attached to a member for health & travel
              */
-            if (in_array(ucfirst(request()->quoteType), [quoteTypeCode::Health, quoteTypeCode::Travel]) && isset($quote->id) && ! empty(request()->member_detail_id)) {
+            if (in_array($quoteType, $quoteTypes) && ! empty($memberDetailId)) {
                 // check for quote records if exists
-                if (! $quote->customerMembers()->where('id', request()->member_detail_id)->first()) {
+                if (! $quote->customerMembers()->where('id', $memberDetailId)->first()) {
                     $validator->errors()->add('member_detail_id', 'Invalid member detail id provided');
                 }
             }
 
-            if (! in_array(ucfirst(request()->quoteType), [quoteTypeCode::Health, quoteTypeCode::Travel]) && ! empty(request()->member_detail_id)) {
+            if (! in_array($quoteType, $quoteTypes) && ! empty($memberDetailId)) {
                 $validator->errors()->add('member_detail_id', 'Member can be attached only for Health Insurance type');
             }
 
-            $quote_source = data_get($quote, 'source', '');
-            if ($quote_source == LeadSourceEnum::DUBAI_NOW) {
+            // For health LOB we can bypass the payment validation
+            if ($quoteType == quoteTypeCode::Health) {
+                if (empty($quote->plan_id)) {
+                    $validator->errors()->add('type', 'Documents can be uploaded once plan is selected.');
+                }
+
+                return; // Skip payment validation for health quotes with plan
+            }
+
+            $leadSource = data_get($quote, 'source', '');
+            if ($leadSource == LeadSourceEnum::DUBAI_NOW) {
                 // validate if payment is authorized capture or partial capture
                 if (isset($quote->payment_status_id) && ! in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
                     $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized, captured or partial captured.');
@@ -105,11 +128,6 @@ class QuoteDocumentRequest extends FormRequest
                         }
                     }
                 }
-            }
-
-            // check for maximum number of files uploaded against selected quote and document type
-            if ($this->documentType && $quote && $quote->documents->where('document_type_code', request()->document_type_code)->count() >= $this->documentType->max_files) {
-                $validator->errors()->add('file', 'You can only upload a maximum of '.$this->documentType->max_files.' files');
             }
         });
     }

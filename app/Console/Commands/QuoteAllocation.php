@@ -16,6 +16,7 @@ use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
+use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
@@ -103,7 +104,13 @@ class QuoteAllocation extends Command
         }
 
         $leads = CarQuote::query()
-            ->whereNull('advisor_id')
+            ->where(function ($q) {
+                $q->whereNull('advisor_id');
+                $q->orWhere(function ($sq) {
+                    $sq->where('advisor_id', User::getAiAdvisor()->id);
+                    $sq->where('ai_advisor_required', false);
+                });
+            })
             ->select([
                 'uuid',
                 'payment_status_id',
@@ -118,7 +125,12 @@ class QuoteAllocation extends Command
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
             ->orderByDesc('created_at')
-            ->eligibleForAllocation(QuoteTypes::CAR)
+            ->where(function ($q) {
+                $q->eligibleForAllocation(QuoteTypes::CAR);
+                $q->orWhere(function ($sq) {
+                    $sq->whereNull('advisor_id')->where('ai_advisor_required', true);
+                });
+            })
             ->take($chunkSize);
 
         $leads->logRawSql();
@@ -168,6 +180,7 @@ class QuoteAllocation extends Command
             ->where(function ($q) {
                 $q->leadAllocationFailed()
                     ->orWhere->sicFlowDisabled()
+                    ->orWhere->hasPecTag()
                     ->orWhere(function ($subQuery) {
                         $subQuery->sicFlowEnabled()->advisorRequestedOrPaymentAuthorizedOrDeclined();
                     });

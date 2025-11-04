@@ -197,6 +197,26 @@ class ManagementReport
             }, fn ($q) => $q->whereIn('pcp_tag', $pcpTag));
         });
 
+        if ($request['lob'] && in_array(quoteTypeCode::Health, $request['lob']) && isset($request['pec_flag']) && $request['pec_flag'] !== 'all') {
+            if ($request['pec_flag'] == '1') {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('health_quote_request')
+                        ->whereColumn('health_quote_request.id', 'personal_quotes.quote_id')
+                        ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health)
+                        ->whereNotNull('health_quote_request.pec_marked_at');
+                });
+            } else {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('health_quote_request')
+                        ->whereColumn('health_quote_request.id', 'personal_quotes.quote_id')
+                        ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health)
+                        ->whereNull('health_quote_request.pec_marked_at');
+                });
+            }
+        }
+
         $query->whereIn('personal_quotes.quote_type_id', $lobsIds);
     }
 
@@ -206,8 +226,8 @@ class ManagementReport
             if (is_array($request[$filterKey])) {
                 $dates = [];
                 foreach ($request[$filterKey] as $key => $dateString) {
-                    // Add null check before parsing (including string 'null')
-                    if ($dateString != null && $dateString != '' && $dateString != 'null') {
+                    // Validate date before parsing
+                    if (isValidDate($dateString)) {
                         $carbonDate = Carbon::parse($dateString);
                         if ($key == 0) {
                             $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
@@ -225,8 +245,8 @@ class ManagementReport
                 }
                 $request[$filterKey] = $dates;
             } else {
-                // Add null check for single date value (including string 'null')
-                if ($request[$filterKey] != null && $request[$filterKey] != '' && $request[$filterKey] != 'null') {
+                // Validate date before parsing
+                if (isValidDate($request[$filterKey])) {
                     $carbonDate = Carbon::parse($request[$filterKey]);
                     $dates = $carbonDate->startOfDay();
                     $request[$filterKey] = $dates;
@@ -306,7 +326,7 @@ class ManagementReport
                 if ($this->isReportType($request, ManagementReportTypeEnum::ACTIVE_POLICIES)) {
                     $dateFilter = $request['createdAt'] ?? now()->startOfDay()->format(config('constants.DATE_FORMAT_ONLY'));
                     $query->where(function ($query) use ($dateFilter) {
-                        $query->where('policy_start_date', '>=', $dateFilter)
+                        $query->where('personal_quotes.policy_start_date', '>=', $dateFilter)
                             ->orWhere('p.policy_expiry_date', '<=', $dateFilter);
                     });
                 }

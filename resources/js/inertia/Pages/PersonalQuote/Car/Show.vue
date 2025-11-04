@@ -1,9 +1,10 @@
 <script setup>
 import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import CustomerVerificationNotification from '@/inertia/Components/CustomerVerificationNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
-import { usePage } from '@inertiajs/vue3';
+import { usePage, router } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
@@ -11,6 +12,9 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerVerificationDetails from './Partials/CustomerVerificationDetails.vue';
+import AdditionalVehicleTransactionDetails from '../../Aml/Partials/AdditionalVehicleTransactionDetails.vue';
+import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 defineProps({
@@ -32,6 +36,8 @@ defineProps({
   lostReasons: Array,
   tiers: Array,
   carPlanFeaturesCodeEnum: Object,
+  customerVerificationData: Object,
+  isCustomerVerificationEnabled: [Boolean, Number],
   carPlanExclusionsCodeEnum: Object,
   carPlanAddonsCodeEnum: Object,
   modelType: String,
@@ -110,6 +116,8 @@ defineProps({
   borLogs: Array,
   apiIssuanceStatus: String,
   insurerApiStatus: String,
+  isAddionalFieldsEnabled: Boolean,
+  rtaConfigurationData: Object,
 });
 
 const page = usePage();
@@ -127,6 +135,7 @@ const selectedProviderPlan = ref({
 const modelClass = 'App\\Models\\CarQuote';
 
 const processingOCBEmailNB = ref(false);
+const processingOCBEmail = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
@@ -408,7 +417,9 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       availablePlansTable.data = res.data;
-      loadEmbeddedProducts();
+      if (!isPlanDetailEnabled.value) {
+        loadEmbeddedProducts();
+      }
     })
     .catch(err => {
       console.log(err);
@@ -589,11 +600,25 @@ const assumptionsForm = useForm({
 });
 
 const onUpdateAssumption = () => {
+  // Check if customer has an active ECB transaction that requires confirmation
+  if (
+    page.props.isEpEcbPaymentPaid &&
+    !modals.isConfirmed &&
+    assumptionsForm.is_modified == 1
+  ) {
+    modals.confirmationMessage = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
+    modals.showConfirmationModal = true;
+    return;
+  }
+
   assumptionsForm.post('/quotes/car/carAssumptionsUpdate', {
     preserveScroll: true,
     onSuccess: () => {
       assumptionState.isEditing = false;
+      loadEmbeddedProducts();
     },
+    // Reset confirmation flag after form submission completes
+    onFinish: () => (modals.isConfirmed = false),
   });
 };
 
@@ -658,6 +683,11 @@ const modals = reactive({
   createPlan: false,
   sendConfirm: false,
   showEmailEventsModal: false,
+  additionalVehicleDriverDetails: false,
+  customerVerification: false,
+  confirmationMessage: '',
+  showConfirmationModal: false,
+  isConfirmed: false,
 });
 
 const confirmData = reactive({
@@ -1159,6 +1189,7 @@ const onExportPlans = () => {
 const confirmSendEmail = () => {
   const first_name = page.props.record.first_name || '';
   const last_name = page.props.record.last_name || '';
+  processingOCBEmail.value = true;
   axios
     .post(
       `/quotes/car/${page.props.record.uuid}/send-email-one-click-buy`,
@@ -1192,15 +1223,18 @@ const confirmSendEmail = () => {
     )
 
     .then(response => {
+      processingOCBEmail.value = false;
       notification.success({
         title: response.data.success,
         position: 'top',
       });
     })
     .catch(error => {
+      processingOCBEmail.value = false;
       console.log(error);
     })
     .finally(() => {
+      processingOCBEmail.value = false;
       modals.sendConfirm = false;
     });
 };
@@ -1298,10 +1332,18 @@ onMounted(() => {
   }
   window.addEventListener('ocr-notification', handleOcrNotification);
   window.addEventListener('lead-status-updated', handleLeadStatusUpdated);
+  window.addEventListener(
+    'customer-verification-updated',
+    handleCustomerVerificationUpdated,
+  );
 });
 onUnmounted(() => {
   window.removeEventListener('ocr-notification', handleOcrNotification);
   window.removeEventListener('lead-status-updated', handleLeadStatusUpdated);
+  window.removeEventListener(
+    'customer-verification-updated',
+    handleCustomerVerificationUpdated,
+  );
 });
 //activities
 const emailEventsTable = [
@@ -1498,6 +1540,9 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
+
+  loadEmbeddedProducts();
+
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -1752,11 +1797,76 @@ function handleOcrNotification(event) {
     });
   }
 }
+
+function handleCustomerVerificationUpdated(event) {
+  const { quoteUuid, verificationSuccess } = event.detail || {};
+  const currentRecord = usePage().props.record;
+
+  // Only process notifications for the current quote
+  if (!currentRecord || quoteUuid !== currentRecord.uuid) {
+    return;
+  }
+
+  // Reload quote data first, then show toast when UI is updated
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['quote'],
+    onSuccess: () => {
+      console.log('Customer verification data reloaded successfully', {
+        quoteUuid,
+        verificationSuccess,
+      });
+
+      // Show appropriate toast notification based on verification result
+      if (verificationSuccess) {
+        notification.success({
+          title: 'Document Details Verified',
+          text: 'Document data verified successfully!',
+          position: 'top',
+        });
+      } else {
+        notification.warning({
+          title: 'Verification Mismatch',
+          text: 'Document data could not be verified.',
+          position: 'top',
+        });
+      }
+    },
+    onError: error => {
+      console.error('Failed to reload customer verification data:', {
+        quoteUuid,
+        verificationSuccess,
+        error,
+      });
+
+      notification.error({
+        title: 'Update Failed',
+        text: 'Failed to refresh customer verification data',
+        position: 'top',
+      });
+    },
+  });
+}
+/**
+ * Handle modal confirmation and trigger form submission
+ */
+const handleConfirmConfirmationModal = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = true;
+  onUpdateAssumption();
+};
+
+const handleCancelConfirmationModal = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = false; // Reset confirmation flag when user cancels
+};
 </script>
 
 <template>
   <OcrNotification />
   <LeadStatusUpdatedNotification />
+  <CustomerVerificationNotification />
   <div>
     <Head title="Car Detail" />
     <StickyHeader>
@@ -1968,6 +2078,29 @@ function handleOcrNotification(event) {
         </template>
         <template #body>
           <x-divider class="my-4 mb-3" />
+          <div class="flex gap-2 mb-4 justify-end">
+            <!-- Dynamic Customer Verification Button -->
+            <x-button
+              v-if="
+                isCustomerVerificationEnabled &&
+                customerVerificationData?.buttonData?.shouldShow
+              "
+              size="sm"
+              :color="customerVerificationData.buttonData.color"
+              :class="customerVerificationData.buttonData.class"
+              @click.prevent="modals.customerVerification = true"
+            >
+              {{ customerVerificationData.buttonData.text }}
+            </x-button>
+            <x-button
+              v-if="isAddionalFieldsEnabled"
+              size="sm"
+              color="orange"
+              @click.prevent="modals.additionalVehicleDriverDetails = true"
+            >
+              Additional Vehicle / Driver Details
+            </x-button>
+          </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
@@ -2304,6 +2437,42 @@ function handleOcrNotification(event) {
         </template>
       </Collapsible>
     </div>
+
+    <x-modal
+      v-model="modals.additionalVehicleDriverDetails"
+      size="lg"
+      title="Additional Vehicle / Driver Details"
+      show-close
+      backdrop
+    >
+      <AdditionalVehicleTransactionDetails
+        :insurerPortalSyncData="insurerPortalSyncData"
+        :rta_transaction_types="rtaConfigurationData.rta_transaction_types"
+        :rta_field_configurations="
+          rtaConfigurationData.rta_field_configurations
+        "
+        :rta_validation_summaries="
+          rtaConfigurationData.rta_validation_summaries
+        "
+        :quote_type_id="$page.props.quoteTypeId"
+      />
+      <x-divider class="mb-4 mt-4" />
+      <AdditionalDriverDetails
+        :insurerPortalSyncData="insurerPortalSyncData"
+        :quote_type_id="$page.props.quoteTypeId"
+      />
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.additionalVehicleDriverDetails = false"
+          >
+            Close
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
 
     <x-modal
       v-model="modals.duplicate"
@@ -3262,6 +3431,15 @@ function handleOcrNotification(event) {
           </div>
         </template>
       </Collapsible>
+
+      <ConfirmationModal
+        v-model="modals.showConfirmationModal"
+        title="Are you sure?"
+        :message="modals.confirmationMessage"
+        :loading="isLoading"
+        @confirm="handleConfirmConfirmationModal"
+        @cancel="handleCancelConfirmationModal"
+      />
     </div>
 
     <PlanDetails
@@ -3770,7 +3948,12 @@ function handleOcrNotification(event) {
             >
               Cancel
             </x-button>
-            <x-button size="sm" color="error" @click.prevent="confirmSendEmail">
+            <x-button
+              size="sm"
+              color="error"
+              :loading="processingOCBEmail"
+              @click.prevent="confirmSendEmail"
+            >
               Send
             </x-button>
           </div>
@@ -3958,6 +4141,7 @@ function handleOcrNotification(event) {
       :expanded="sectionExpanded"
       :isEpLoading="lazyEmbeddedProductsLoading"
       :key="lazyEmbeddedProductsLoading"
+      :isPlanDetailEnabled="isPlanDetailEnabled"
     />
 
     <PolicyDetail
@@ -4443,4 +4627,11 @@ function handleOcrNotification(event) {
   />
 
   <lead-raw-data :modelType="'Car'"></lead-raw-data>
+
+  <CustomerVerificationDetails
+    v-if="isCustomerVerificationEnabled"
+    :quote="quote"
+    :modals="modals"
+    :customerVerificationData="customerVerificationData"
+  />
 </template>

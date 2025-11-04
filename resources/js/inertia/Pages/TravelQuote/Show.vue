@@ -374,6 +374,37 @@ const travelerForm = useForm({
   customer_type: page.props.quote.customer_type,
 });
 
+// Computed property for full name (first + last name)
+const travelerFullName = computed({
+  get() {
+    const firstName = travelerForm.first_name || '';
+    const lastName = travelerForm.last_name || '';
+    return firstName && lastName
+      ? `${firstName} ${lastName}`
+      : firstName || lastName;
+  },
+  set(value) {
+    if (!value || value.trim() === '') {
+      travelerForm.first_name = '';
+      travelerForm.last_name = '';
+      return;
+    }
+
+    const trimmedValue = value.trim();
+    const spaceIndex = trimmedValue.indexOf(' ');
+
+    if (spaceIndex === -1) {
+      // No space found, entire value is first name
+      travelerForm.first_name = trimmedValue;
+      travelerForm.last_name = '';
+    } else {
+      // Split: first word is first_name, rest is last_name
+      travelerForm.first_name = trimmedValue.substring(0, spaceIndex);
+      travelerForm.last_name = trimmedValue.substring(spaceIndex + 1).trim();
+    }
+  },
+});
+
 const travelerFieldReq = reactive({
   nationality: false,
   dob: false,
@@ -448,7 +479,11 @@ const showErrors = errors => {
 const addTravelMember = isValid => {
   if (!isValid) return;
 
-  travelerForm.name = travelerForm.first_name;
+  // Set name as concatenation of first_name and last_name
+  travelerForm.name = travelerForm.last_name
+    ? `${travelerForm.first_name} ${travelerForm.last_name}`.trim()
+    : travelerForm.first_name;
+
   travelerForm.post(route('travelers.store'), {
     preserveScroll: true,
     onBefore: () => {
@@ -519,7 +554,12 @@ const onEditTraveler = traveler => {
 
 const editTraveler = isValid => {
   if (!isValid) return;
-  travelerForm.name = travelerForm.first_name;
+
+  // Set name as concatenation of first_name and last_name
+  travelerForm.name = travelerForm.last_name
+    ? `${travelerForm.first_name} ${travelerForm.last_name}`.trim()
+    : travelerForm.first_name;
+
   travelerForm.put(route('travelers.update', travelerForm.id), {
     preserveScroll: true,
     onBefore: () => {
@@ -2745,9 +2785,9 @@ const fullAddress = computed(() => {
       >
         <div class="grid md:grid-cols-2 gap-4">
           <x-input
-            v-model="travelerForm.first_name"
-            label="Member Name*"
-            placeholder="Member Name"
+            v-model="travelerFullName"
+            label="First & Last Name*"
+            placeholder="First & Last Name"
             :rules="[isRequired, maxCharacters(40)]"
             :hasError="travelerForm.errors.first_name"
           />

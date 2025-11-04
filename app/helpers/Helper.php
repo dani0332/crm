@@ -599,7 +599,11 @@ if (! function_exists('getQueryForLogWithBindings')) {
 if (! function_exists('formatMobileNo')) {
     function formatMobileNo($mobile)
     {
-        return preg_replace('/^(?:\+?971|0)?/', '+971', str_replace(' ', '', $mobile));
+        // Sanitize mobile number: remove all non-digit characters
+        $mobile = preg_replace('/[^0-9]/', '', trim($mobile));
+
+        // Remove leading 971 or 0, then add +971 prefix
+        return preg_replace('/^(?:971|0)?/', '+971', $mobile);
     }
 }
 
@@ -1009,6 +1013,14 @@ if (! function_exists('getCardViewRequestFilters')) {
         if ($request->has('private_client') && $request->filled('private_client')) {
             $partialQuery->filterByPrivateClient($request->private_client);
         }
+
+        if ($modelType == HealthQuote::class && $request->has('pec_flag') && $request->pec_flag != 'all') {
+            if ($request->pec_flag == 1) {
+                $partialQuery->hasPecTag();
+            } else {
+                $partialQuery->whereNull('pec_marked_at');
+            }
+        }
     }
 }
 
@@ -1123,7 +1135,9 @@ if (! function_exists('isValidDate')) {
     {
         return ! empty($date)
             && $date != '0000-00-00 00:00:00'
-            && $date != '0000-00-00';
+            && $date != '0000-00-00'
+            && strtolower($date) != 'nan'
+            && strtolower($date) != 'null';
     }
 }
 
@@ -1251,15 +1265,6 @@ if (! function_exists('transformKeys')) {
         }
 
         return $result;
-    }
-}
-
-if (! function_exists('isValidDate')) {
-    function isValidDate($date): bool
-    {
-        return ! empty($date)
-            && $date != '0000-00-00 00:00:00'
-            && $date != '0000-00-00';
     }
 }
 
@@ -1722,6 +1727,14 @@ if (! function_exists('userHasProduct')) {
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }
+
+if (! function_exists('convertFromCamelCase')) {
+    function convertFromCamelCase($string): string
+    {
+        return preg_replace('/(?<!^)([A-Z])/', ' $1', $string);
+    }
+}
+
 /**
  * Get the user's IP address with proper handling of proxies and load balancers
  *

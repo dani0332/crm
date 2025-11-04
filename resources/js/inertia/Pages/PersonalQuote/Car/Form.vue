@@ -9,6 +9,9 @@ const props = defineProps({
     default: {},
   },
   quoteStatusEnums: Array,
+  isEpEcbPaymentPaid: Boolean,
+  ecbExcludedCarMakeCodes: Array,
+  ecbExcludedCarModelCodes: Array,
 });
 
 const { isRequired, isEmail, maxValue } = useRules();
@@ -28,6 +31,13 @@ const kycStatusEnum = page.props.kycEnums;
 
 const isEdit = computed(() => {
   return route().current().includes('edit');
+});
+
+const isLoading = ref(false);
+const modals = reactive({
+  confirmationMessage: '',
+  showConfirmationModal: false,
+  isConfirmed: false,
 });
 
 const carMakeOptions = computed(() => {
@@ -204,18 +214,11 @@ const validateDecimal = event => {
   }
 };
 
-function onSubmit(isValid) {
-  if (
-    quoteForm.nationality_id == null ||
-    quoteForm.currently_insured_with == null
-  ) {
-    isEmptyField.value = true;
-  } else {
-    isEmptyField.value = false;
-  }
-
-  if (!isValid) return;
-
+/**
+ * Proceed with actual form submission
+ * This is called after validation and confirmation checks pass
+ */
+const proceedWithSubmission = () => {
   clearFormValues();
   quoteForm.clearErrors();
 
@@ -230,11 +233,74 @@ function onSubmit(isValid) {
       setCarMakeAndModalValues();
       quoteForm.setError(errors);
     },
+    // Reset confirmation flag after form submission completes
+    onFinish: () => (modals.isConfirmed = false),
   };
 
   quoteForm
     .transform(data => ({ ...data, isDisbaled }))
     .submit(method, url, options);
+};
+
+/**
+ * Handle modal confirmation and trigger form submission
+ */
+const handleConfirmUpdateCarDetails = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = true;
+
+  // Proceed with form submission after confirmation
+  proceedWithSubmission();
+};
+
+const handleModalCancel = () => {
+  modals.showConfirmationModal = false;
+  modals.isConfirmed = false; // Reset confirmation flag when user cancels
+};
+
+function onSubmit(isValid) {
+  // Check if customer has an active ECB transaction that requires confirmation
+  if (props.isEpEcbPaymentPaid && !modals.isConfirmed) {
+    let selectedCarMakeInfo = findCarMakeInfo(quoteForm.car_make_id);
+    let selectedCarModelInfo = findCarModelInfo(quoteForm.car_model_id);
+
+    if (
+      (quoteForm.registration_type === carRegistrationTypeEnum.COMPANY &&
+        quoteForm.vehicle_use === carVehicleUseEnum.COMMERCIAL) ||
+      (selectedCarMakeInfo &&
+        props.ecbExcludedCarMakeCodes.includes(
+          parseInt(selectedCarMakeInfo?.code),
+        )) ||
+      (selectedCarModelInfo &&
+        props.ecbExcludedCarModelCodes.includes(
+          parseInt(selectedCarModelInfo?.code),
+        ))
+    ) {
+      modals.confirmationMessage = `If you proceed with the change, the Excess Cashback amount will be refunded to the customer, as the update does not meet the eligibility criteria for the product.`;
+      modals.showConfirmationModal = true;
+      return;
+    }
+  }
+
+  // Validate required fields
+  if (
+    quoteForm.nationality_id == null ||
+    quoteForm.currently_insured_with == null
+  ) {
+    isEmptyField.value = true;
+  } else {
+    isEmptyField.value = false;
+  }
+
+  if (!isValid) return;
+
+  proceedWithSubmission();
+}
+function findCarMakeInfo(id) {
+  return props.dropdownSource.car_make_id.find(item => item.id === id);
+}
+function findCarModelInfo(id) {
+  return props.dropdownSource.car_model_id.find(item => item.id === id);
 }
 
 const clearFormValues = () => {
@@ -798,7 +864,10 @@ const gender = computed(() => {
               v-model="quoteForm.chassis_number"
               class="w-full"
               type="text"
-              placeholder="Enter Chassis Number"
+              placeholder="Enter Chassis Numbers"
+              required
+              :rules="[isRequired]"
+              :error="quoteForm.errors.chassis_number"
             />
           </template>
           <template v-else>
@@ -808,10 +877,13 @@ const gender = computed(() => {
               type="text"
               label="CHASSIS NUMBER"
               placeholder="Enter Chassis Number"
-              :rules="quoteForm.chassis_number ? [chassisNumberRule] : []"
+              :rules="
+                quoteForm.chassis_number ? [chassisNumberRule] : [isRequired]
+              "
               @keypress="chassisNumberValidate('keypress')"
               @blur="chassisNumberValidate('blur')"
               :error="quoteForm.errors.chassis_number"
+              required
             />
           </template>
         </div>
@@ -993,5 +1065,14 @@ const gender = computed(() => {
         </x-button>
       </div>
     </x-form>
+
+    <ConfirmationModal
+      v-model="modals.showConfirmationModal"
+      title="Are you sure?"
+      :message="modals.confirmationMessage"
+      :loading="isLoading"
+      @confirm="handleConfirmUpdateCarDetails"
+      @cancel="handleModalCancel"
+    />
   </div>
 </template>

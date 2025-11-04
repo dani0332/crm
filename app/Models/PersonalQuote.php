@@ -145,7 +145,7 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function cycleQuote()
     {
-        return $this->hasOne(CycleQuote::class);
+        return $this->hasOne(CycleQuote::class, 'personal_quote_id', 'id');
     }
 
     /**

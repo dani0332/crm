@@ -1,10 +1,14 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 const { isRequired } = useRules();
 
 const props = defineProps({
   insurerPortalSyncData: {
     type: Object,
+    default: null,
+  },
+  quote_type_id: {
+    type: Number,
     default: null,
   },
 });
@@ -15,6 +19,10 @@ const lookups = page.props.lookups;
 const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const isSyncFromInsurer = ref(false);
+const quote = page.props?.quoteRequest ?? page.props?.record;
+const insuranceProviderCode =
+  quote?.plan?.insurance_provider?.code ?? quote?.plan_provider_code;
+const providerCodeEnum = page.props.insuranceProviderCodeEnum;
 
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [
@@ -22,41 +30,53 @@ const driverGenderOptions = computed(() => [
   { value: 'female', label: 'Female' },
 ]);
 
-const licenseIssuePlaceOptions = computed(() => {
-  return useGenerateOptions(lookups?.issuance_place ?? [], 'code', 'text');
+const vehicleDriverDetail = computed(() => {
+  return quote?.vehicle_driver_detail;
 });
 
-const nationalitiesOptions = computed(() => {
-  return useGenerateOptions(page.props.nationalities ?? [], 'code', 'text');
-});
+const formatDate = date => {
+  if (!date) return '';
 
-const drivingExperienceOptions = computed(() => {
-  const options = [{ value: '0', label: 'No Experience' }];
+  let dateObj;
 
-  for (let i = 1; i <= 50; i++) {
-    options.push({
-      value: i.toString(),
-      label: i === 1 ? '1 Year' : `${i} Years`,
-    });
+  // Check if date is in DD-MM-YYYY format
+  if (typeof date === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(date)) {
+    const [day, month, year] = date.split('-');
+    dateObj = new Date(`${year}-${month}-${day}`);
+  } else {
+    dateObj = new Date(date);
   }
 
-  return options;
-});
+  // Validate the date
+  if (isNaN(dateObj.getTime())) return '';
 
-const vehicleDriverDetail = computed(() => {
-  return page.props.quoteRequest?.vehicle_driver_detail;
-});
+  // Use local timezone to avoid date shifting
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
+/**
+ * Normalize gender value
+ * If starts with 'M' or 'm', returns 'male', otherwise returns 'female'
+ */
+const normalizeGender = gender => {
+  if (!gender) return '';
+  const genderStr = String(gender).trim();
+  return genderStr.toLowerCase().startsWith('m') ? 'male' : 'female';
+};
 
 const additionalDriverDetailsForm = useForm({
-  quote_type_id: page.props.quoteType.id,
-  quote_uuid: page.props.quoteRequest?.uuid,
-  insurance_provider_code:
-    page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
+  quote_type_id: page.props.quoteType.id ?? props.quote_type_id,
+  quote_uuid: quote?.uuid,
+  insurance_provider_code: insuranceProviderCode ?? '',
   is_insured_and_driver_same:
     vehicleDriverDetail.value?.is_insured_and_driver_same?.toString() ?? '',
   driver_first_name: vehicleDriverDetail.value?.driver_first_name ?? '',
   driver_last_name: vehicleDriverDetail.value?.driver_last_name ?? '',
-  driver_dob: vehicleDriverDetail.value?.driver_dob ?? '',
+  driver_dob: formatDate(vehicleDriverDetail.value?.driver_dob) ?? '',
   driver_gender: vehicleDriverDetail.value?.driver_gender ?? '',
   driver_license_number: vehicleDriverDetail.value?.driver_license_number ?? '',
   license_issue_place:
@@ -101,7 +121,7 @@ const submitAdditionalDriverDetailsForm = async isValid => {
           response.data.is_insured_driver_same == '0'
         ) {
           notification.success({
-            title: 'Please Update Additional Drivers on GIG Portal',
+            title: `Please Update Additional Drivers on ${insuranceProviderCode} Portal`,
             position: 'top',
             timeout: 5000,
           });
@@ -145,23 +165,61 @@ const submitAdditionalDriverDetailsForm = async isValid => {
 
 const isGIG = computed(() => {
   return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.AXA
+    quote?.plan?.insurance_provider.code === providerCodeEnum.AXA ||
+    quote?.plan_provider_code === providerCodeEnum.AXA
   );
 });
 
 const isLIVA = computed(() => {
   return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.RSA
+    quote?.plan?.insurance_provider.code === providerCodeEnum.RSA ||
+    quote?.plan_provider_code === providerCodeEnum.RSA
   );
 });
 
 const isSUKOON = computed(() => {
   return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.OIC
+    quote?.plan?.insurance_provider.code === providerCodeEnum.OIC ||
+    quote?.plan_provider_code === providerCodeEnum.OIC
   );
+});
+
+const licenseIssuePlaceOptions = computed(() => {
+  if (isLIVA.value) {
+    return useGenerateOptions(
+      page.props.nationalities ?? [],
+      'rsa_country_code',
+      'text',
+    );
+  } else {
+    return useGenerateOptions(lookups?.issuance_place ?? [], 'code', 'text');
+  }
+});
+
+const nationalitiesOptions = computed(() => {
+  let code = isLIVA.value ? 'rsa_country_code' : 'code';
+
+  return useGenerateOptions(page.props.nationalities ?? [], code, 'text');
+});
+
+const drivingExperienceOptions = computed(() => {
+  if (isLIVA.value) {
+    return useGenerateOptions(
+      lookups?.driving_experience ?? [],
+      'rsa_driving_experience',
+      'text',
+    );
+  }
+  const options = [{ value: '0', label: 'No Experience' }];
+
+  for (let i = 1; i <= 50; i++) {
+    options.push({
+      value: i.toString(),
+      label: i === 1 ? '1 Year' : `${i} Years`,
+    });
+  }
+
+  return options;
 });
 
 // Computed property to check if driver name fields should be disabled
@@ -186,8 +244,26 @@ watch(
   newValue => {
     // If insured and driver are the same (1 or '1'), clear the driver name fields
     if ((newValue === 1 || newValue === '1') && !isSyncFromInsurer.value) {
+      additionalDriverDetailsForm.driver_first_name = quote?.first_name;
+      additionalDriverDetailsForm.driver_last_name = quote?.last_name;
+      additionalDriverDetailsForm.driver_dob = formatDate(quote?.dob);
+      additionalDriverDetailsForm.driver_gender = normalizeGender(
+        quote?.gender,
+      );
+      additionalDriverDetailsForm.uae_driving_experience =
+        quote?.uae_license_held_for?.rsa_driving_experience;
+    } else if (newValue === 0 || newValue === '0') {
       additionalDriverDetailsForm.driver_first_name = '';
       additionalDriverDetailsForm.driver_last_name = '';
+      additionalDriverDetailsForm.driver_dob = '';
+      additionalDriverDetailsForm.driver_gender = null;
+      additionalDriverDetailsForm.driver_license_number = null;
+      additionalDriverDetailsForm.license_issue_place = null;
+      additionalDriverDetailsForm.license_issue_date = null;
+      additionalDriverDetailsForm.license_expiry_date = null;
+      additionalDriverDetailsForm.uae_driving_experience = null;
+      additionalDriverDetailsForm.home_country_license_issuance = null;
+      additionalDriverDetailsForm.home_country_driving_experience = null;
     }
   },
 );
@@ -204,8 +280,13 @@ watch(
           driver_dob: 'driver_dob',
           driver_gender: 'driver_gender',
           driver_license_number: 'driver_license_number',
-          driver_license_expiry_date: 'license_expiry_date',
+          driver_license_issue_place: 'license_issue_place',
+          // driver_license_issue_date: 'license_issue_date',
+          // driver_license_expiry_date: 'license_expiry_date',
           driver_uae_driving_experience: 'uae_driving_experience',
+          driver_home_country_license_issuance: 'home_country_license_issuance',
+          driver_home_country_driving_experience:
+            'home_country_driving_experience',
         },
       };
 
@@ -222,6 +303,15 @@ watch(
     }
   },
   { deep: true },
+);
+
+watch(
+  () => additionalDriverDetailsForm.driver_dob,
+  newValue => {
+    if (newValue) {
+      additionalDriverDetailsForm.driver_dob = formatDate(newValue);
+    }
+  },
 );
 </script>
 
@@ -276,11 +366,12 @@ watch(
         <DatePicker
           v-model="additionalDriverDetailsForm.driver_dob"
           :rules="isSUKOON ? [isRequired] : []"
-          :required="isSUKOON"
+          :required="isSUKOON || isLIVA"
           placeholder="Driver DOB"
           :disabled="hasNotEditPermission"
           label="Driver DOB"
           :tooltip="'Date of birth of the driver'"
+          :teleport="false"
         />
 
         <x-select
@@ -306,6 +397,7 @@ watch(
         />
 
         <x-select
+          filterable
           v-model="additionalDriverDetailsForm.license_issue_place"
           :rules="isSUKOON ? [isRequired] : []"
           :required="isSUKOON"
@@ -324,6 +416,7 @@ watch(
           :disabled="hasNotEditPermission"
           label="License Issue Date"
           :tooltip="`Date of issuance of the current driver's license`"
+          :teleport="false"
         />
 
         <DatePicker
@@ -334,6 +427,7 @@ watch(
           :disabled="hasNotEditPermission"
           label="License Expiry Date"
           :tooltip="`Expiry date of the current driver's license`"
+          :teleport="false"
         />
 
         <!-- TODO: Required only if 'Driver same as Client?' is NO -->
