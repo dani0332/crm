@@ -31,7 +31,7 @@ const params = useUrlSearchParams('history');
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 
-const teamNamesEnum = page.props.teamNamesEnum;
+const isPCPSourceAllowed = ref(!useHasRole(rolesEnum.CarAdvisor));
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -1586,7 +1586,7 @@ const onConfirmPUAExport = () => {
       v-model="createLeadModal"
       route-name="car.create"
       :sub-sources="subSources"
-      :team-names-enum="teamNamesEnum"
+      :is-pcp-allowed="isPCPSourceAllowed"
       @confirmed="onLeadConfirmed"
     />
 
