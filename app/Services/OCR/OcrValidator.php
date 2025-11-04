@@ -81,15 +81,35 @@ trait OcrValidator
         }
     }
 
+  
     public function isProviderEligibleForOcr(QuoteTypes $quoteType, Model $quote): bool
     {
         $providerCode = $this->extractProviderCode($quote);
 
         if (! $providerCode) {
+            LoggerService::info(
+                'OCR Provider Eligibility - No provider code found',
+                [
+                    'quote_uuid' => $quote->uuid ?? 'N/A',
+                    'quote_type' => $quoteType->value,
+                ]
+            );
+
             return false;
         }
 
-        // return $this->isSupportedProvider($quoteType, $providerCode);
-        return true;
+        $isSupported = $this->isSupportedProvider($quoteType, $providerCode);
+
+        LoggerService::info(
+            'OCR Provider Eligibility Check',
+            [
+                'quote_uuid' => $quote->uuid ?? 'N/A',
+                'quote_type' => $quoteType->value,
+                'provider_code' => $providerCode,
+                'is_eligible' => $isSupported,
+            ]
+        );
+
+        return $isSupported;
     }
 }
