@@ -81,7 +81,6 @@ trait OcrValidator
         }
     }
 
-  
     public function isProviderEligibleForOcr(QuoteTypes $quoteType, Model $quote): bool
     {
         $providerCode = $this->extractProviderCode($quote);
