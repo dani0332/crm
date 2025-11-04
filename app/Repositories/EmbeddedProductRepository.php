@@ -324,11 +324,16 @@ class EmbeddedProductRepository extends BaseRepository
         $isPaymentPaid = in_array($transaction?->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
 
         $isTPLPlanSelected = false;
+        $isPolicyBookedDateInvalid = false;
         if ($quoteTypeId == QuoteTypeId::Car && $shortCode == EmbeddedProductEnum::ECB) {
             $isTPLPlanSelected = $quote->plan?->repair_type == CarPlanType::TPL;
+
+            if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+                $isPolicyBookedDateInvalid = Carbon::parse($quote->policy_booking_date)->diffInDays(Carbon::now()) > 30;
+            }
         }
 
-        return $transaction?->is_active === 0 || $isTPLPlanSelected || $isPaymentPaid;
+        return $transaction?->is_active === 0 || $isTPLPlanSelected || $isPaymentPaid || $isPolicyBookedDateInvalid;
     }
 
     private function canBookEmbeddedProduct($transaction, $quote, $ep)
@@ -505,12 +510,13 @@ class EmbeddedProductRepository extends BaseRepository
                         $response = ['success' => true];
 
                     } else {
+                        $watermarkableDocTypeCodes = QuoteDocumentsEnum::getWatermarkableDocTypeCodes($epShortCode);
                         $watermarkedDocuments = $item->documents()
-                            ->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get()
+                            ->whereIn('document_type_code', $watermarkableDocTypeCodes)->get()
                             ->where('is_watermarked', true);
 
                         $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
-                        $missingReqWatermarkedDocTypes = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $watermarkedDocumentTypes);
+                        $missingReqWatermarkedDocTypes = array_diff($watermarkableDocTypeCodes, $watermarkedDocumentTypes);
 
                         // make sure email required watermarked documents is not missing
                         if (empty($missingReqWatermarkedDocTypes)) {
@@ -656,7 +662,7 @@ class EmbeddedProductRepository extends BaseRepository
         } elseif ($isSukoonMedex) {
             return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep, $modelType, $isSalama);
         } elseif ($isECB) {
-            return $this->sendECBEmail($transaction->first(), $quoteObject->id, $modelType);
+            return $this->sendECBEmail($transaction->first(), $quoteObject->id, $modelType, $short_code);
         }
     }
 
@@ -793,10 +799,23 @@ class EmbeddedProductRepository extends BaseRepository
         }
     }
 
-    private function sendECBEmail($transaction, $quoteId, $modelType)
+    private function sendECBEmail($transaction, $quoteId, $modelType, $short_code)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $quote = $this->getQuoteObject($modelType, $quoteId);
+
+        $watermarkableDocTypeCodes = QuoteDocumentsEnum::getWatermarkableDocTypeCodes($short_code);
+        $watermarkedDocuments = $transaction->documents()
+            ->whereIn('document_type_code', $watermarkableDocTypeCodes)->get()
+            ->where('is_watermarked', true);
+
+        $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
+        $missingReqWatermarkedDocTypes = array_diff($watermarkableDocTypeCodes, $watermarkedDocumentTypes);
+
+        // make sure watermarked documents is not missing
+        if (! empty($missingReqWatermarkedDocTypes)) {
+            return ['success' => false, 'message' => 'Required watermarked document is not found'];
+        }
 
         $context = EpEcbService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quote->code);
         dispatch(new EpSendDocumentJob($context));
@@ -1506,10 +1525,8 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             if ($epTransactionDetails->is_active == 1) {
-                if ($isTPLPlanSelected) {
-                    $epTransactionDetails->update(['is_selected' => 0]);
-                } else {
-                    $epTransactionDetails->update(['is_selected' => 0, 'is_active' => 0]);
+                if (! $isTPLPlanSelected) {
+                    $epTransactionDetails->update(['is_active' => 0]);
                 }
             }
 

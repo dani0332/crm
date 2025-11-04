@@ -31,7 +31,7 @@ class DrivingLicenseDataProcessor
 
             LoggerService::info('Driving License data processor started');
 
-            if (empty($processedData['driving_license_detail_fields'])) {
+            if (empty($processedData['vehicle_driver_detail_fields'])) {
                 LoggerService::warning('Driving License data processor - No valid data to process');
 
                 return false;
@@ -39,17 +39,17 @@ class DrivingLicenseDataProcessor
 
             DB::beginTransaction();
 
-            // Update DrivingLicenseDetail fields
-            $drivingLicenseDetailUpdated = false;
-            if (! empty($processedData['driving_license_detail_fields'])) {
-                $drivingLicenseDetailUpdated = $this->updateDrivingLicenseDetail($this->quote, $processedData['driving_license_detail_fields']);
+            // Update VehicleDriverDetail fields
+            $vehicleDriverDetailUpdated = false;
+            if (! empty($processedData['vehicle_driver_detail_fields'])) {
+                $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote, $processedData['vehicle_driver_detail_fields']);
             }
 
             DB::commit();
 
             LoggerService::info('Driving License data processing completed successfully');
 
-            return $drivingLicenseDetailUpdated;
+            return $vehicleDriverDetailUpdated;
 
         } catch (Exception $e) {
             DB::rollback();
@@ -60,14 +60,16 @@ class DrivingLicenseDataProcessor
         }
     }
 
-    private function updateDrivingLicenseDetail(CarQuote $quote, array $fieldsToUpdate): bool
+    private function updateVehicleDriverDetail(CarQuote $quote, array $fieldsToUpdate): bool
     {
         try {
             // Convert nationality string to nationality_id if nationality is provided
             if (! empty($fieldsToUpdate['nationality_string'])) {
                 $nationalityId = $this->getNationalityId($fieldsToUpdate['nationality_string']);
                 if ($nationalityId) {
+                    LoggerService::info('Driver nationality ID for quote: '.$quote->id.' is: '.$nationalityId);
                     $fieldsToUpdate['nationality_id'] = $nationalityId;
+
                     // Remove the nationality string since we only want to store the ID
                     unset($fieldsToUpdate['nationality_string']);
                 } else {
@@ -77,30 +79,31 @@ class DrivingLicenseDataProcessor
                 }
             }
 
-            $drivingLicenseDetail = $quote->drivingLicenseDetail()->firstOrCreate(
-                ['licensable_type' => CarQuote::class, 'licensable_id' => $quote->id],
+            LoggerService::info('VehicleDriverDetail fields to update for quote: '.$quote->id.' is: '.json_encode($fieldsToUpdate));
+            $vehicleDriverDetail = $quote->vehicleDriverDetail()->firstOrCreate(
+                ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
                 $fieldsToUpdate
             );
 
             // If record already existed, update with OCR data
-            if (! $drivingLicenseDetail->wasRecentlyCreated) {
+            if (! $vehicleDriverDetail->wasRecentlyCreated) {
                 $dataToUpdate = $this->getFieldsToUpdate($fieldsToUpdate);
 
                 if (! empty($dataToUpdate)) {
-                    $drivingLicenseDetail->update($dataToUpdate);
+                    $vehicleDriverDetail->update($dataToUpdate);
 
-                    LoggerService::info('DrivingLicenseDetail updated successfully');
+                    LoggerService::info('VehicleDriverDetail updated successfully');
                 } else {
-                    LoggerService::info('DrivingLicenseDetail - No OCR data to update');
+                    LoggerService::info('VehicleDriverDetail - No OCR data to update');
                 }
             } else {
-                LoggerService::info('DrivingLicenseDetail created successfully');
+                LoggerService::info('VehicleDriverDetail created successfully');
             }
 
             return true;
 
         } catch (Exception $e) {
-            LoggerService::error('DrivingLicenseDetail update failed', exception: $e);
+            LoggerService::error('VehicleDriverDetail update failed', exception: $e);
 
             return false;
         }
@@ -108,35 +111,38 @@ class DrivingLicenseDataProcessor
 
     private function getNationalityId(?string $nationality): ?int
     {
+        LoggerService::info('Getting nationality ID for nationality: '.$nationality);
         if (empty($nationality)) {
             return null;
         }
 
-        return Nationality::where('text', 'LIKE', '%'.$nationality.'%')
-            ->orWhere('code', $nationality)
-            ->value('id');
+        $query = Nationality::where('text', $nationality)
+            ->orWhere('country_name', $nationality)
+            ->orWhere('code', $nationality);
+
+        return $query->value('id');
     }
 
     public function getProcessingSummary(): array
     {
-        $drivingLicenseDetail = $this->quote->drivingLicenseDetail;
+        $vehicleDriverDetail = $this->quote->vehicleDriverDetail;
 
         return [
             'status' => 'success',
             'quote_uuid' => $this->quote->uuid,
-            'has_driving_license_detail' => $drivingLicenseDetail !== null,
-            'driving_license_detail_data' => $drivingLicenseDetail ? [
-                'license_number' => $drivingLicenseDetail->license_number,
-                'license_issue_date' => $drivingLicenseDetail->license_issue_date,
-                'license_expiry_date' => $drivingLicenseDetail->license_expiry_date,
-                'license_issue_place' => $drivingLicenseDetail->license_issue_place,
-                'traffic_code_number' => $drivingLicenseDetail->traffic_code_number,
-                'first_name' => $drivingLicenseDetail->first_name,
-                'last_name' => $drivingLicenseDetail->last_name,
-                'dob' => $drivingLicenseDetail->dob,
-                'gender' => $drivingLicenseDetail->gender,
-                'nationality_id' => $drivingLicenseDetail->nationality_id,
-                'nationality' => $drivingLicenseDetail->nationality?->text, // Get nationality name via relationship
+            'has_vehicle_driver_detail' => $vehicleDriverDetail !== null,
+            'vehicle_driver_detail_data' => $vehicleDriverDetail ? [
+                'driver_license_number' => $vehicleDriverDetail->driver_license_number,
+                'driver_license_issue_date' => $vehicleDriverDetail->driver_license_issue_date,
+                'driver_license_expiry_date' => $vehicleDriverDetail->driver_license_expiry_date,
+                'driver_license_issue_place' => $vehicleDriverDetail->driver_license_issue_place,
+                'traffic_code_number' => $vehicleDriverDetail->traffic_code_number,
+                'driver_first_name' => $vehicleDriverDetail->driver_first_name,
+                'driver_last_name' => $vehicleDriverDetail->driver_last_name,
+                'driver_dob' => $vehicleDriverDetail->driver_dob,
+                'driver_gender' => $vehicleDriverDetail->driver_gender,
+                'nationality_id' => $vehicleDriverDetail->nationality_id,
+                'nationality' => $vehicleDriverDetail->nationality?->text, // Get nationality name via relationship
             ] : null,
         ];
     }

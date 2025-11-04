@@ -1143,7 +1143,9 @@ class SendUpdateLogService
             $sageProcessData['model_type'] = $quote::class;
             $sageProcessData['model_id'] = $quote->id;
             $response = $sageScheduleResponse = SageProcess::create($sageProcessData);
-            $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
+            if ($quote->status != SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
+                $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
+            }
             info('fn:updateSageProcessForDispatching - Sage process scheduled Successfully');
         }
 
@@ -1400,7 +1402,7 @@ class SendUpdateLogService
             $emailData->planType = is_null($quote?->coverage_code) ? '' : ucwords(convertFromCamelCase($quote?->coverage_code));
             $emailData->primaryTraveler = $quote?->primaryMember?->first_name.' '.$quote?->primaryMember?->last_name;
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
-            $emailData->companyName = $quote?->company_name ?? '';
+            $emailData->companyName = $quote?->company_name ?? '-';
         } elseif ($quoteTypeId == QuoteTypeId::Health) {
             $emailData->policyHolderName = implode(', ', array_map(function ($member) {
                 return $member['first_name'];
@@ -1441,6 +1443,7 @@ class SendUpdateLogService
                     $quote->vehicle_use == CarVehicleUse::COMMERCIAL
                 )
             ) {
+                $emailData->companyName = $quote?->company_name ?? '-';
                 $templateCode = 'COMMERCIAL_'.$templateCode;
             }
             $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;

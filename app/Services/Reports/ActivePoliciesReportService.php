@@ -24,7 +24,7 @@ class ActivePoliciesReportService extends ManagementReport
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ACTIVE_POLICIES;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ACTIVE_POLICIES;
 
-        if (isset($request['createdAt']) && $request['createdAt'] != null && $request['createdAt'] != '' && $request['createdAt'] != 'null') {
+        if (isset($request['createdAt']) && isValidDate($request['createdAt'])) {
             $this->reportDateRange = Carbon::parse($request['createdAt'])->toDateString();
         } else {
             $this->reportDateRange = today()->toDateString();

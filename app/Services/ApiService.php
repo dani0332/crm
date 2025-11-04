@@ -261,7 +261,7 @@ class ApiService
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
         $message = $responsePayload['message'];
         if ((isset($rest['advisorId']) && $rest['advisorId'] == 0) || (isset($rest['tierId']) && $rest['tierId'] == 0)) {
-            $message = (isset($rest['tierId']) && $rest['tierId'] == 0) ? 'Tier failed: '.$responsePayload['message'] : 'Allocation failed: '.$responsePayload['message'];
+            $message = (isset($rest['tierId']) && $rest['tierId'] == 0) ? 'Tier failed: '.$responsePayload['message'] : $responsePayload['message'];
         }
 
         return [
@@ -269,6 +269,11 @@ class ApiService
                 'tierId' => $responsePayload['tierId'] ?? 0,
                 'tierName' => $responsePayload['tierName'] ?? null,
                 'assignedAdvisorId' => $responsePayload['advisorId'] ?? 0,
+                'isAIAdvisor' => $responsePayload['isAIAdvisor'] ?? false,
+                'advisorName' => $responsePayload['advisorName'] ?? null,
+                'advisorEmail' => $responsePayload['advisorEmail'] ?? null,
+                'advisorPhone' => $responsePayload['advisorPhone'] ?? null,
+                'advisorLandLine' => $responsePayload['advisorLandLine'] ?? null,
                 'status' => $status,
             ],
             'message' => $message,
@@ -309,6 +314,8 @@ class ApiService
 
     public function sendHealthApplyNowEmail(SendHealthApplyNowEmailRequest $request)
     {
+        LoggerService::startQuoteLogging($request->quoteUuid);
+        LoggerService::info('------ Request received to send Apply Now email for lead ------');
         $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
 
         if (! $lead) {
@@ -316,7 +323,7 @@ class ApiService
         }
 
         if ($lead->isAUHLead() || ($lead->isAUHLead(false) && $lead->isLeadSourceRevivalOrInsuranceWallet())) {
-            return apiResponse(null, Response::HTTP_OK, 'AUH or AUH and Revival/Insurance Wallet Leads are not allowed to send OCA Email!');
+            return apiResponse(null, Response::HTTP_OK, 'AUH and Revival/Insurance Wallet Leads are not allowed to send OCA Email!');
         }
 
         if (! $lead->isApplyNowEmailSent()) {
@@ -324,6 +331,8 @@ class ApiService
 
             return apiResponse(null, Response::HTTP_OK, 'Email Sent');
         }
+
+        LoggerService::info('------ Apply Now email already sent for lead ------');
 
         return apiResponse(null, Response::HTTP_OK, 'Email Already Sent!');
     }

@@ -11,6 +11,8 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -354,6 +356,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'payment_code' => $payment->code,
                 'model_type' => self::TYPE,
                 'quote_id' => $quote->id,
+                'through_automation' => true,
             ];
 
             request()->merge($updateBookingRequest);
@@ -573,6 +576,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
             return $policyIssuanceResponse;
         }
+
+        $quote->update([
+            'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+            'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
+            'quote_status_date' => now(),
+        ]);
 
         $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
         $process = $process->refresh();
@@ -816,6 +825,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     private function httpCall($endPoint, $payload, $keyAPI)
     {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' calling API: '.$keyAPI);
         $response = ['status' => false, 'error' => null, 'message' => null, 'data' => null, 'completed_step' => null];
         $url = $this->baseUrl.$endPoint;
         $timeOut = $this->apiTimeout;
@@ -948,14 +958,24 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             if (isset($response['data'])) {
                 $responseData = $response['data'];
 
-                // Extract driver name parts for first and last name
-                $driverName = $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverName'] ?? '';
+                $additionalDriverDetails = $responseData['DriverDetails'][0]['AdditionalDriverDetails'] ?? [];
+                $isMultipleDriver = ! empty($additionalDriverDetails) && is_array(reset($additionalDriverDetails));
+
+                if ($isMultipleDriver) {
+                    $mainDriver = array_values(array_filter($additionalDriverDetails, function ($driver) {
+                        return ($driver['MainDriverInd'] ?? '') === 'Y';
+                    }))[0] ?? [];
+                } else {
+                    $mainDriver = $additionalDriverDetails;
+                }
+
+                $driverName = $mainDriver['DriverName'] ?? '';
                 $nameParts = explode(' ', $driverName, 2);
                 $driverFirstName = $nameParts[0] ?? '';
                 $driverLastName = $nameParts[1] ?? '';
 
                 $vehicleDriverDetailsData = [
-                    'is_insured_and_driver_same' => ($responseData['DriverDetails'][0]['AdditionalDriverDetails']['MainDriverInd'] ?? '') === 'Y' ? '1' : '0',
+                    'is_insured_and_driver_same' => $isMultipleDriver ? '0' : '1',
                     'rta_transaction_type' => (string) ($responseData['VehicleDetails']['RtaTransactionType'] ?? ''),
                     'vehicle_plate_code' => $responseData['VehicleDetails']['RegnNoText'] ?? '', // optional
                     'vehicle_plate_number' => $responseData['VehicleDetails']['RegnNoNumber'] ?? '', // optional
@@ -969,20 +989,20 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     'first_registration_date' => $responseData['VehicleDetails']['DateOfRegn'] ?? '',
                     'driver_first_name' => $driverFirstName, // optional
                     'driver_last_name' => $driverLastName, // optional
-                    'driver_dob' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverDOB'] ?? '', // optional
-                    'driver_gender' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverGender'] === 'M' ? 'male' : 'female',
-                    'driver_license_number' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['LicenseNo'] ?? '',
-                    'driver_license_issue_place' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
-                    'driver_uae_driving_experience' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['LocalLicense'] ?? 0, // optional
-                    'driver_home_country_license_issuance' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
-                    'driver_home_country_driving_experience' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['OtherLicense'] ?? 0, // optional
+                    'driver_dob' => $mainDriver['DriverDOB'] ?? '', // optional
+                    'driver_gender' => ($mainDriver['DriverGender'] ?? '') === 'M' ? 'male' : 'female',
+                    'driver_license_number' => $mainDriver['LicenseNo'] ?? '',
+                    'driver_license_issue_place' => (string) ($mainDriver['FirstDrvLicCountry'] ?? ''), // optional
+                    'driver_uae_driving_experience' => (string) ($mainDriver['LocalLicense'] ?? 0), // optional
+                    'driver_home_country_license_issuance' => (string) ($mainDriver['FirstDrvLicCountry'] ?? ''), // optional
+                    'driver_home_country_driving_experience' => (string) ($mainDriver['OtherLicense'] ?? 0), // optional
                 ];
 
                 $quoteDetailsData = [
-                    'policy_start_date' => $responseData['PolicyEffectiveDate'] ?? '',
-                    'policy_expiry_date' => $responseData['PolicyExpiryDate'] ?? '', // optional
-                    'certificate_start_date' => $responseData['VehicleDetails']['CertificateStartDate'] ?? '',
-                    'certificate_end_date' => $responseData['VehicleDetails']['CertificateEndDate'] ?? '', // optional
+                    'policy_start_date' => $this->formatDateToYmd($responseData['PolicyEffectiveDate'] ?? ''),
+                    'policy_expiry_date' => $this->formatDateToYmd($responseData['PolicyExpiryDate'] ?? ''), // optional
+                    'certificate_start_date' => $this->formatDateToYmd($responseData['VehicleDetails']['CertificateStartDate'] ?? ''),
+                    'certificate_end_date' => $this->formatDateToYmd($responseData['VehicleDetails']['CertificateEndDate'] ?? ''), // optional
                 ];
 
                 $getQuoteResponseMapping = [
@@ -1111,10 +1131,9 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
     }
 
-    public function getStepsLockingStatus($quote): array
+    public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {
         LoggerService::info('class: '.$this->className.' fn: '.__FUNCTION__.' Quote : '.$quote->code);
-        $isAutomationInitiated = app(PolicyIssuanceService::class)->isAutomationInitiated(QuoteTypes::CAR->value, $quote);
         $policyIssuance = $quote->policyIssuance;
 
         $response = [
@@ -1125,7 +1144,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'insurer_api_status' => $quote->insurer_api_status,
         ];
 
-        if (! $isAutomationInitiated) {
+        if ($throughAutomation) {
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All steps are editable';
@@ -1141,30 +1160,25 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             return $response;
         }
 
-        if ($isAutomationInitiated && (! $policyIssuance || $policyIssuance?->status !== PolicyIssuanceEnum::FAILED_STATUS)) {
-
-            return $response;
-        }
-
         if (
             $policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS ||
-            ($policyIssuance->completed_step && $policyIssuance?->status == '')
+            ($policyIssuance?->completed_step && $policyIssuance?->status == '')
         ) {
-            if (! $policyIssuance->completed_step || $policyIssuance->completed_step === self::UPLOAD_DOCUMENTS) {
+            if (! $policyIssuance?->completed_step || $policyIssuance?->completed_step === self::UPLOAD_DOCUMENTS) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'All Steps are editable';
 
                 return $response;
             }
-            if ($policyIssuance->completed_step === self::ISSUE_POLICY) {
+            if ($policyIssuance?->completed_step === self::ISSUE_POLICY) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Upload Documents and Update Booking Details are editable';
 
                 return $response;
             }
-            if ($policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
+            if ($policyIssuance?->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Booking Details is editable';
@@ -1181,7 +1195,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         if (
             $policyIssuance?->status === PolicyIssuanceEnum::PROCESSING_STATUS &&
-            $policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
+            $policyIssuance?->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
         ) {
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';
@@ -1192,7 +1206,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    public function getLIVALookups($quoteRequest)
+    public function getLIVALookups($leadSource)
     {
         $insuranceProviderId = InsuranceProvider::where('code', InsuranceProvidersEnum::RSA)->first()->id;
         $additionalLookups = app(AMLService::class)->getAMLLookups($insuranceProviderId, [
@@ -1204,7 +1218,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         ])->toArray();
         $additionalLookups['driving_experience'] = UAELicenseHeldFor::select('id', 'rsa_driving_experience', 'text')->get()->toArray();
 
-        if ($quoteRequest?->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+        if ($leadSource == LeadSourceEnum::RENEWAL_UPLOAD) {
             $rtaTransactionType = array_filter($additionalLookups['rta_transaction_type'], function ($item) {
                 return in_array($item['code'], app(LivaInsurancePayloadMapping::class)->renewalRtaTransactionType());
             });
@@ -1235,7 +1249,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'reason' => $policyIssuance->message,
             ]);
 
-            return true;
+            return false;
         } else {
             $policyIssuanceLogs = $policyIssuance->policyIssuanceLogs;
             if (
@@ -1305,6 +1319,27 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
                 'errorMessage' => $ex->getMessage(),
             ]);
+        }
+    }
+
+    /**
+     * Format LIVA date to Y-m-d format
+     */
+    private function formatDateToYmd(string $date): string
+    {
+        if (empty($date)) {
+            return '';
+        }
+
+        try {
+            return Carbon::parse($date)->format('Y-m-d');
+        } catch (Exception $ex) {
+            LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Failed to parse date: '.$date, extra: [
+                'error' => $ex->getMessage(),
+                'line' => $ex->getLine(),
+            ]);
+
+            return '';
         }
     }
 }

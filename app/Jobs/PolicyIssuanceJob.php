@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Enums\EnvEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -20,7 +19,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 90;
+    public $timeout = 120;
     public $tries = 1;
 
     private const TIMEOUT_MESSAGE = 'cURL error 28';
@@ -102,7 +101,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->uniqueKey.'-'.Carbon::now()->format('YmdHi')))->dontRelease()];
+        return [(new WithoutOverlapping($this->uniqueKey))->dontRelease()];
     }
 
     public function uniqueId(): string
