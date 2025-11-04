@@ -38,7 +38,6 @@ const rules = {
 const quotesSelected = ref([]);
 const canExport = ref(false);
 const page = usePage();
-const teamNamesEnum = page.props.teamNamesEnum;
 const createLeadModal = ref(false);
 
 const onLeadConfirmed = () => {
@@ -47,6 +46,7 @@ const onLeadConfirmed = () => {
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const isPcpAllowed = ref(!useHasRole(rolesEnum.TravelAdvisor));
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
 const quoteSegments = page.props.quoteSegments?.filter(
@@ -1418,7 +1418,7 @@ const calculateAge = dateOfBirth => {
       v-model="createLeadModal"
       route-name="travel.create"
       :sub-sources="subSources"
-      :team-names-enum="teamNamesEnum"
+      :is-pcp-allowed="isPcpAllowed"
       @confirmed="onLeadConfirmed"
     />
   </div>

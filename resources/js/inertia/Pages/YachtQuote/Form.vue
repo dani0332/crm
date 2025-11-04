@@ -68,7 +68,7 @@ const subSourceOptionOptions = computed(() => {
       code: option.code, // Include the code property for showPartnerNameField
       suffix: option.description || null,
       disabled:
-        !isPCPTeam.value && pcpOnlyOptions.includes(String(option.code)),
+        !isPCPSourceAllowed.value && pcpOnlyOptions.includes(String(option.code)),
     })) || []
   );
 });
@@ -88,8 +88,7 @@ const canEditSubSourceFields = computed(() => {
 });
 
 const rolesEnum = page.props.rolesEnum;
-const teamNamesEnum = page.props.teamNamesEnum;
-const isPCPTeam = ref(useHasAnyTeam([{ name: teamNamesEnum.PCP }]));
+const isPCPSourceAllowed = ref(!useHasRole(rolesEnum.YachtAdvisor));
 
 // Watchers for field resets and partner name handling
 watch(

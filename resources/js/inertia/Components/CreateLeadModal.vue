@@ -12,9 +12,9 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  teamNamesEnum: {
-    type: Object,
-    default: () => ({}),
+  isPcpAllowed: {
+    type: Boolean,
+    default: true,
   },
 });
 
@@ -32,9 +32,6 @@ const isModalOpen = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
 });
-
-// Team checks
-const isPCPTeam = ref(useHasAnyTeam([{ name: props.teamNamesEnum?.PCP }]));
 
 const onConfirmCreateLead = isValid => {
   if (!isValid) return;
@@ -92,7 +89,7 @@ const subSourceChildOptions = computed(() => {
     code: child.code,
     suffix:
       child.description || null , // Add tooltip support
-    disabled: !isPCPTeam.value && pcpOnlyOptions.includes(String(child.code)),
+    disabled: !props.isPcpAllowed && pcpOnlyOptions.includes(String(child.code)),
   }));
 });
 

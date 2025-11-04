@@ -58,7 +58,7 @@ const subSourceOptionOptions = computed(() => {
       value: child.id,
       label: child.text,
       suffix: child.description || null,
-      disabled: !isPCPTeam.value && pcpOnlyOptions.includes(String(child.code)),
+      disabled: !isPCPSourceAllowed.value && pcpOnlyOptions.includes(String(child.code)),
     })) || []
   );
 });
@@ -79,8 +79,7 @@ const canEditSubSourceFields = computed(() => {
   ]);
 });
 
-const teamNamesEnum = page.props.teamNamesEnum;
-const isPCPTeam = ref(useHasAnyTeam([{ name: teamNamesEnum.PCP }]));
+const isPCPSourceAllowed = ref(!useHasRole(rolesEnum.TravelAdvisor));
 
 
 const quoteForm = useForm({
