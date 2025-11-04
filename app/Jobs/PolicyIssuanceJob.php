@@ -22,6 +22,7 @@ class PolicyIssuanceJob implements ShouldQueue
 
     private const TIMEOUT_MESSAGE = 'cURL error 28';
     private const LARAVEL_TIMEOUT_MESSAGE = 'has timed out';
+    private const MAX_ATTEMPTS_MESSAGE = 'has been attempted too many times';
 
     // 28 is the cURL error code for timeout
     private $className = 'policyIssuanceJob';
@@ -100,24 +101,44 @@ class PolicyIssuanceJob implements ShouldQueue
     public function failed(Throwable $exception)
     {
         $message = $exception->getMessage();
+        $isAttemptsOrTimeout = $this->isFailedDueToAttemptsOrTimeout($message);
 
         // Log full exception details including stack trace for debugging
-        Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' EXCEPTION DETAILS', [
-            'exception_class' => get_class($exception),
-            'exception_message' => $message,
-            'exception_code' => $exception->getCode(),
-            'exception_file' => $exception->getFile(),
-            'exception_line' => $exception->getLine(),
-            'stack_trace' => $exception->getTraceAsString(),
-            'current_status' => $this->process->status ?? 'unknown',
-        ]);
+        // Use info level for max attempts/timeout errors to avoid noise in error logs
+        if ($isAttemptsOrTimeout) {
+            Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' MAX ATTEMPTS/TIMEOUT', [
+                'exception_class' => get_class($exception),
+                'exception_message' => $message,
+                'exception_code' => $exception->getCode(),
+                'current_status' => $this->process->status ?? 'unknown',
+                'attempts' => $this->attempts(),
+                'max_tries' => $this->tries,
+            ]);
+        } else {
+            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' EXCEPTION DETAILS', [
+                'exception_class' => get_class($exception),
+                'exception_message' => $message,
+                'exception_code' => $exception->getCode(),
+                'exception_file' => $exception->getFile(),
+                'exception_line' => $exception->getLine(),
+                'stack_trace' => $exception->getTraceAsString(),
+                'current_status' => $this->process->status ?? 'unknown',
+            ]);
+        }
 
-        if (str_contains($message, self::TIMEOUT_MESSAGE) || str_contains($message, self::LARAVEL_TIMEOUT_MESSAGE)) {
+        $messageLower = strtolower($message);
+        if (str_contains($messageLower, strtolower(self::TIMEOUT_MESSAGE)) || str_contains($messageLower, strtolower(self::LARAVEL_TIMEOUT_MESSAGE))) {
             $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
         } else {
             $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
         }
-        Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
+
+        // Log status update with appropriate log level
+        if ($isAttemptsOrTimeout) {
+            Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Reason : '.$message);
+        } else {
+            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
+        }
     }
 
     public function middleware()
@@ -128,6 +149,15 @@ class PolicyIssuanceJob implements ShouldQueue
     private function isProcessable($process)
     {
         return in_array($process->status, [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::BOOKING_PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS]);
+    }
+
+    private function isFailedDueToAttemptsOrTimeout(string $errorMessage): bool
+    {
+        $errorMessage = strtolower($errorMessage);
+
+        return str_contains($errorMessage, strtolower(self::MAX_ATTEMPTS_MESSAGE)) ||
+               str_contains($errorMessage, strtolower(self::LARAVEL_TIMEOUT_MESSAGE)) ||
+               str_contains($errorMessage, strtolower(self::TIMEOUT_MESSAGE));
     }
 
 }
