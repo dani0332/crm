@@ -1218,7 +1218,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             }
 
             return $response;
-        }  elseif (
+        } elseif (
             $policyIssuance?->status === PolicyIssuanceEnum::TIMEOUT_STATUS &&
             ! app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE)
         ) {
