@@ -1569,25 +1569,30 @@ class SageApiService
                 $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
             }
 
-            LoggerService::info('SAGE API :  Prepare Patch payload for Commission Splits  for '.$quote->code);
+            if (isset($createARInvoiceSplitPayments['sage_request_type']) && $createARInvoiceSplitPayments['sage_request_type'] == SageEnum::SRT_CREATE_AR_SPPAY_PREM_INV) {
+                LoggerService::info('SAGE API :  Skip Patch payload for Commission Splits  for '.$quote->code);
+            } else {
+                LoggerService::info('SAGE API :  Prepare Patch payload for Commission Splits  for '.$quote->code);
 
-            foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
-                $paymentSplit = $paymentSplits[$key];
-                $commissionSplit = $paymentSplit['commission_vat_applicable'];
-                $vatOnCommission = $paymentSplit['commission_vat'];
+                foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
+                    $paymentSplit = $paymentSplits[$key];
+                    $commissionSplit = $paymentSplit['commission_vat_applicable'];
+                    $vatOnCommission = $paymentSplit['commission_vat'];
 
-                $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
+                    $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
 
-                $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplit['due_date'])), $sageRequest->insurerInvoiceDate);
-                // for upfront and split, due date should always be insurer invoice date for all child payment, for other frequencies, it should be the due date of the first child payment
-                if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                    $dueDate = $invoicePaymentSchedulesDueDate;
-                } else {
-                    $dueDate = $paymentSplit['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplit['due_date']));
+                    $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplit['due_date'])), $sageRequest->insurerInvoiceDate);
+                    // for upfront and split, due date should always be insurer invoice date for all child payment, for other frequencies, it should be the due date of the first child payment
+                    if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                        $dueDate = $invoicePaymentSchedulesDueDate;
+                    } else {
+                        $dueDate = $paymentSplit['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplit['due_date']));
+                    }
+                    $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
+                    $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
                 }
-                $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
-                $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
             }
+            
             $patchPayload = $postedResponse;
             // 3
             $isLiveApiCallStep3 = true;
