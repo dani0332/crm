@@ -1119,7 +1119,7 @@ class SageApiService
 
             if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep3 = false;
-                $readyToPostResponse = $sageLogArray[3]['response'];
+                $readyToPostResponse = json_decode($sageLogArray[3]['response'], true);
                 LoggerService::info('AR Prepayment Ready To Post batch already sent', extra : [
                     'BatchNumber' => $sageResponse['BatchNumber'],
                     'PaymentCode' => $paymentSplit->code,
@@ -1380,7 +1380,7 @@ class SageApiService
 
             if (isset($sageLogArray[6]) && $sageLogArray[6]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep6 = false;
-                $readyToPostResponse = $sageLogArray[6]['response'];
+                $readyToPostResponse = json_decode($sageLogArray[6]['response'], true);
                 LoggerService::info('AP Prepayment Receipt ready to post already sent', extra: [
                     'BatchNumber' => $sageResponse['BatchNumber'],
                     'PaymentCode' => $paymentSplit->code,

@@ -327,7 +327,7 @@ class SageApiEmbeddedProductService
 
             if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep2 = false;
-                $readyToPostResponse = $sageLogArray[2]['response'];
+                $readyToPostResponse = json_decode($sageLogArray[2]['response'], true);
                 LoggerService::info('EP AR Prepayment Ready To Post already sent', extra: [
                     'BatchNumber' => $sageResponse['BatchNumber'],
                 ]);
@@ -489,7 +489,11 @@ class SageApiEmbeddedProductService
         if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == SageEnum::STATUS_SUCCESS) {
             $isLiveApiCallStep4 = false;
             $sageResponse = json_decode($sageLogArray[4]['response'], true);
+            LoggerService::info('EP AP Prepayment Receipts already sent', extra: [
+                'BatchNumber' => $sageResponse['BatchNumber'] ?? null,
+            ]);
         } else {
+            LoggerService::info('Sending EP AP Prepayment Receipts to Sage');
             $createAPPrepaymentResponse = $this->sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($createAPPrepaymentResponse, true);
         }
@@ -508,7 +512,19 @@ class SageApiEmbeddedProductService
             $currentStep = 5;
             $isLiveApiCallStep5 = true;
             $readyToPostReceiptAP = self::readyToPostAPPaymentReceiptPayload($sageResponse['BatchNumber']);
-            $readyToPostResponse = $this->sageApiService->postToSage300($readyToPostReceiptAP['endPoint'], $readyToPostReceiptAP['payload'], 'PATCH');
+
+            if (isset($sageLogArray[5]) && $sageLogArray[5]['status'] == SageEnum::STATUS_SUCCESS) {
+                $isLiveApiCallStep5 = false;
+                $readyToPostResponse = json_decode($sageLogArray[5]['response'], true);
+                LoggerService::info('EP AP Prepayment Ready To Post already sent', extra: [
+                    'BatchNumber' => $sageResponse['BatchNumber'],
+                ]);
+            } else {
+                LoggerService::info('Sending EP AP Prepayment Ready To Post to Sage', extra: [
+                    'BatchNumber' => $sageResponse['BatchNumber'],
+                ]);
+                $readyToPostResponse = $this->sageApiService->postToSage300($readyToPostReceiptAP['endPoint'], $readyToPostReceiptAP['payload'], 'PATCH');
+            }
 
             if ($readyToPostResponse !== '') {
                 $readyToPostArray = json_decode($readyToPostResponse, true);
@@ -520,13 +536,17 @@ class SageApiEmbeddedProductService
                     ]);
 
                     $aPReceiptBatch = $this->sageApiService->postToSage300("AP/APPaymentAndAdjustmentBatches(BatchSelector='PY',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
-                    LoggerService::info('Checking status of EP AP Prepayment Receipts batch', extra: [
-                        'BatchNumber' => $sageResponse['BatchNumber'],
-                        'aPReceiptBatch' => $aPReceiptBatch,
-                    ]);
                     $aPReceiptBatch = json_decode($aPReceiptBatch, true);
 
+                    LoggerService::info('Checking status of EP AP Prepayment Receipts batch', extra: [
+                        'BatchNumber' => $sageResponse['BatchNumber'],
+                        'BatchStatus' => $aPReceiptBatch['BatchStatus'] ?? 'Not found',
+                    ]);
+
                     if (isset($aPReceiptBatch['BatchStatus']) && $aPReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                        LoggerService::info('EP AP Prepayment Receipts batch already posted', extra: [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                        ]);
                         $this->logSageApiCall($readyToPostReceiptAP, $readyToPostResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                         $isAlreadyPosted = true;
                     } elseif (! isset($aPReceiptBatch['BatchStatus'])) {
@@ -547,10 +567,18 @@ class SageApiEmbeddedProductService
                         return $response;
                     }
                 } else {
-                    $this->logSageApiCall($readyToPostReceiptAP, $readyToPostResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    if ($isLiveApiCallStep5) {
+                        LoggerService::info('Logging EP AP Prepayment Ready To Post batch successfully', extra: [
+                            'BatchNumber' => $sageResponse['BatchNumber'],
+                        ]);
+                        $this->logSageApiCall($readyToPostReceiptAP, $readyToPostResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    }
                 }
             } else {
                 if ($isLiveApiCallStep5) {
+                    LoggerService::info('Logging EP AP Prepayment Ready To Post batch successfully with empty response', extra: [
+                        'BatchNumber' => $sageResponse['BatchNumber'],
+                    ]);
                     $this->logSageApiCall($readyToPostReceiptAP, $readyToPostResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                 }
             }
@@ -564,28 +592,59 @@ class SageApiEmbeddedProductService
             if (isset($sageLogArray[6]) && $sageLogArray[6]['status'] == SageEnum::STATUS_SUCCESS) {
                 $isLiveApiCallStep6 = false;
                 $postedResponse = json_decode($sageLogArray[6]['response'], true);
+                LoggerService::info('EP AP Prepayment Receipts batch already sent', extra: [
+                    'BatchNumber' => $sageResponse['BatchNumber'],
+                ]);
             } else {
-                $postedResponse = $this->sageApiService->postToSage300($aPPostReceipts['endPoint'], $aPPostReceipts['payload']);
-                $postedResponse = json_decode($postedResponse, true);
-            }
+                if (($isAlreadyPosted && isset($aPPostReceipts)) || (isset($sageLogArray[6]) && $sageLogArray[6]['status'] == SageEnum::STATUS_FAIL)) {
+                    if ($isAlreadyPosted) {
+                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: AP Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  already posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code);
+                        $postedResponse = $aPPostReceipts['payload'];
+                    } else {
+                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: check status of AP Prepayment Receipts batch '.$sageResponse['BatchNumber'].' :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code);
+                        $aPReceiptBatch = $this->sageApiService->postToSage300("AP/APPaymentAndAdjustmentBatches(BatchSelector='PY',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
+                        $aPReceiptBatch = json_decode($aPReceiptBatch, true);
 
-            if ($isAlreadyPosted && isset($aPPostReceipts)) {
-                $this->logSageApiCall($aPPostReceipts, $postedResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
-            } else {
-                if (isset($postedResponse['error'])) {
-                    LoggerService::info('Error while posting EP AP Prepayment to Sage', extra: [
-                        'BatchNumber' => $sageResponse['BatchNumber'],
-                    ]);
-                    $response['message'] = ' EP code: '.$embeddedTransaction->code.' :  Error while posting AP to sage';
-                    $this->logSageApiCall($aPPostReceipts, $postedResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        if (! isset($aPReceiptBatch['BatchStatus'])) {
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: AP Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  failed to get status :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code);
+                            $response['message'] = 'EP  Ref:'.$embeddedTransaction->code.' Failed to get status of AP Prepayment Receipts batch';
 
-                    return $response;
-                } else {
-                    if ($isLiveApiCallStep6) {
-                        $this->logSageApiCall($aPPostReceipts, $postedResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                            return $response;
+                        }
+
+                        if (isset($aPReceiptBatch['BatchStatus']) && $aPReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                            $postedResponse = $aPPostReceipts['payload'];
+                            $isAlreadyPosted = true;
+                        }
                     }
                 }
 
+                if (! $isAlreadyPosted) {
+                    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: posting AP Prepayment Receipts batch '.$sageResponse['BatchNumber'].' :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code);
+                    $postedResponse = $this->sageApiService->postToSage300($aPPostReceipts['endPoint'], $aPPostReceipts['payload']);
+                    $postedResponse = json_decode($postedResponse, true);
+                    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: AP Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code);
+                }
+            }
+
+            if (isset($postedResponse['error'])) {
+                LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code.' SAGE API Payments Error: Failed to post AP Receipts for batch '.$sageResponse['BatchNumber'], extra: [
+                    'error' => $postedResponse['error'],
+                ]);
+                $response['message'] = ' EP code: '.$embeddedTransaction->code.' :  Error while posting AP to sage';
+                $sageErrorMessage = $postedResponse['error']['message']['value'] ?? $postedResponse['error'] ?? null;
+                if ($this->sageApiService->sageHasProcessingConflict($sageErrorMessage)) {
+                    $response['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
+                }
+                $this->logSageApiCall($aPPostReceipts, $postedResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+
+                return $response;
+            } else {
+                LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: AP Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code);
+                if ($isLiveApiCallStep6) {
+                    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API Payments: Logging AP Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  posted :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code);
+                    $this->logSageApiCall($aPPostReceipts, $postedResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                }
             }
 
             LoggerService::info('Successfully created EP AP Prepayment Receipt');
