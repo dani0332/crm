@@ -37,6 +37,7 @@ use App\Models\VehicleChassisDetail;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
+use App\Traits\CarQuoteTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -60,8 +61,10 @@ class CarQuoteService extends BaseService
     private const STRING = 'string';
     private const REQUIRED_STRING = self::REQUIRED.'|'.self::STRING;
 
+    // Traits
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
+    use CarQuoteTrait;
 
     public function __construct(
         HttpRequestService $httpService,
@@ -322,9 +325,12 @@ class CarQuoteService extends BaseService
         if ($deleteValuationResponse) {
             $carQuote->save();
 
-            // Check if OCR is enabled
+            // Get OCR enabled status
             $isOCREnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_ENABLED, useCache: true) == '1';
-            if ($isOCREnabled) {
+
+            // Check if OCR is enabled and has OCR data
+            if ($isOCREnabled && $this->hasOCRData($carQuote->id)) {
+
                 // Send request to Capi to verify documents
                 $requestData = [
                     'quoteUuid' => $carQuote->uuid,
