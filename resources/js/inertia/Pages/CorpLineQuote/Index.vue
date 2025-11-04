@@ -16,10 +16,10 @@ defineProps({
 });
 
 const page = usePage();
-const teamNamesEnum = page.props.teamNamesEnum;
 const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const isPcpAllowed = ref(!useHasRole(rolesEnum.CorpLineAdvisor));
 const canExport = ref(false);
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
@@ -1158,7 +1158,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model="createLeadModal"
       :sub-sources="subSources || []"
       route-name="business.create"
-      :team-names-enum="teamNamesEnum"
+      :is-pcp-allowed="isPcpAllowed"
       @confirmed="onLeadConfirmed"
     />
   </div>

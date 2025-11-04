@@ -19,7 +19,8 @@ defineProps({
 
 const canExport = ref(false);
 const page = usePage();
-const teamNamesEnum = page.props.teamNamesEnum;
+const rolesEnum = page.props.rolesEnum;
+const isPcpAllowed = ref(!useHasRole(rolesEnum.GMAdvisor));
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
 const { isRequired } = useRules();
@@ -830,7 +831,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model="createLeadModal"
       :sub-sources="subSources || []"
       route-name="amt.create"
-      :team-names-enum="teamNamesEnum"
+      :is-pcp-allowed="isPcpAllowed"
       @confirmed="onLeadConfirmed"
     />
 

@@ -16,10 +16,10 @@ defineProps({
 });
 
 const page = usePage();
-const teamNamesEnum = page.props.teamNamesEnum;
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
+const isPcpAllowed = ref(!useHasRole(rolesEnum.HomeAdvisor));
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const notification = useNotifications('toast');
@@ -1135,7 +1135,7 @@ const formatDate = dateString =>
       v-model="createLeadModal"
       route-name="home-quotes-create"
       :sub-sources="subSources"
-      :team-names-enum="teamNamesEnum"
+      :is-pcp-allowed="isPcpAllowed"
       @confirmed="onLeadConfirmed"
     />
   </div>

@@ -15,8 +15,7 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
-const teamNamesEnum = page.props.teamNamesEnum;
-const isPCPTeam = ref(useHasAnyTeam([{ name: teamNamesEnum.PCP }]));
+const isPCPSourceAllowed = ref(!useHasRole(rolesEnum.HomeAdvisor));
 const hasContentOrBuilding = ref(true);
 const typeOfOwnerOccupancyField = ref(false);
 const showBuildingField = ref(false);
@@ -55,7 +54,8 @@ const subSourceOptionOptions = computed(() => {
       value: child.id,
       label: child.text,
       suffix: child.description || null,
-      disabled: !isPCPTeam.value && pcpOnlyOptions.includes(String(child.code)),
+      disabled:
+        !isPCPSourceAllowed.value && pcpOnlyOptions.includes(String(child.code)),
     })) || []
   );
 });
