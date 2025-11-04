@@ -563,7 +563,11 @@ class AMLService
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
         $matchResultsForUpdate = [];
-        $decisionValues = (array) json_decode($request->decisonsForUpdatePortal)[0] ?? [];
+        $decisionValues = [];
+        if (!empty($request->decisonsForUpdatePortal)) {
+            $decoded = json_decode($request->decisonsForUpdatePortal);
+            $decisionValues = is_array($decoded) && !empty($decoded) ? (array) $decoded[0] : [];
+        }
         foreach ($decisionValues as $matchKey => $matchValue) {
             $matchResultsForUpdate[] = [
                 'MatchID' => $matchKey,
@@ -2356,7 +2360,7 @@ class AMLService
             'quote_type_id' => $quoteType->id,
         ])->where('screening_type', $insurerScreenType[$insuranceProvider->code])->latest()->first();
 
-        if (! $kycLogs) {
+        if (! $kycLogs || is_null($kycLogs->results)) {
             return false;
         }
 
