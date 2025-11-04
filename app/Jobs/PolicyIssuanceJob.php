@@ -126,7 +126,8 @@ class PolicyIssuanceJob implements ShouldQueue
             ]);
         }
 
-        if (str_contains($message, self::TIMEOUT_MESSAGE) || str_contains($message, self::LARAVEL_TIMEOUT_MESSAGE)) {
+        $messageLower = strtolower($message);
+        if (str_contains($messageLower, strtolower(self::TIMEOUT_MESSAGE)) || str_contains($messageLower, strtolower(self::LARAVEL_TIMEOUT_MESSAGE))) {
             $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
         } else {
             $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
