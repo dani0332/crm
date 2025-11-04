@@ -36,8 +36,8 @@ use App\Models\UserTeams;
 use App\Models\VehicleChassisDetail;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
-use App\Traits\TeamHierarchyTrait;
 use App\Traits\OCRTrait;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -63,8 +63,8 @@ class CarQuoteService extends BaseService
 
     // Traits
     use GenericQueriesAllLobs;
-    use TeamHierarchyTrait;
     use OCRTrait;
+    use TeamHierarchyTrait;
 
     public function __construct(
         HttpRequestService $httpService,
