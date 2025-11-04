@@ -951,7 +951,7 @@ const emailStatusesTable = reactive({
     },
     {
       text: 'Status',
-      value: 'status',
+      value: 'email_status',
     },
     {
       text: 'Reason',
@@ -3084,11 +3084,6 @@ const fullAddress = computed(() => {
             :rows-per-page="15"
             :hide-footer="emailStatuses.length < 15"
           >
-            <template #item-email_status="item">
-              <span class="text-primary-600 uppercase">{{
-                item.email_status
-              }}</span>
-            </template>
             <template #item-reason="item">
               <span class="text-primary-600 uppercase">{{ item.reason }}</span>
             </template>
