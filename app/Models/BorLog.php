@@ -137,7 +137,7 @@ class BorLog extends Model
             DocumentTypeCode::BAL_HOME,
             DocumentTypeCode::BAL_HLTH,
             DocumentTypeCode::BAL_PET,
-            DocumentTypeCode::BAL_YACHT,
+            DocumentTypeCode::BAL_YCHT,
             DocumentTypeCode::BAL_CYCLE,
             DocumentTypeCode::BAL_LIFE,
         ]);
@@ -199,52 +199,6 @@ class BorLog extends Model
     public function allowsMarkingDone(): bool
     {
         return BorStatusEnum::allowsMarkingDone($this->status);
-    }
-
-    /**
-     * Check if documents can be viewed.
-     */
-    public function allowsViewDocument(): bool
-    {
-        return BorStatusEnum::allowsViewDocument($this->status);
-    }
-
-    /**
-     * Check if the customer portal link can be copied.
-     */
-    public function allowsCopyLink(): bool
-    {
-        return BorStatusEnum::allowsCopyLink($this->status);
-    }
-
-    /**
-     * Transition the BOR to "Document Signed" status.
-     */
-    public function markAsSigned(): bool
-    {
-        if ($this->isPending()) {
-            $this->status = BorStatusEnum::DOCUMENT_SIGNED;
-            $this->date_signed = now();
-
-            return $this->save();
-        }
-
-        return false;
-    }
-
-    /**
-     * Transition the BOR to "Document Uploaded" status.
-     */
-    public function markAsUploaded(): bool
-    {
-        if ($this->isSigned()) {
-            $this->status = BorStatusEnum::DOCUMENT_UPLOADED;
-            $this->date_uploaded = now();
-
-            return $this->save();
-        }
-
-        return false;
     }
 
     /**
