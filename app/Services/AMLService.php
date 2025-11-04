@@ -564,9 +564,9 @@ class AMLService
 
         $matchResultsForUpdate = [];
         $decisionValues = [];
-        if (!empty($request->decisonsForUpdatePortal)) {
+        if (! empty($request->decisonsForUpdatePortal)) {
             $decoded = json_decode($request->decisonsForUpdatePortal);
-            $decisionValues = is_array($decoded) && !empty($decoded) ? (array) $decoded[0] : [];
+            $decisionValues = is_array($decoded) && ! empty($decoded) ? (array) $decoded[0] : [];
         }
         foreach ($decisionValues as $matchKey => $matchValue) {
             $matchResultsForUpdate[] = [

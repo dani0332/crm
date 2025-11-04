@@ -206,7 +206,7 @@ class AMLController extends Controller
      */
     public function show(AML $aml, $insuredId = null, $customerId = null)
     {
-        $amlResults = collect(!empty($aml->results) ? json_decode($aml->results) : null)->first() ?? [];
+        $amlResults = collect(! empty($aml->results) ? json_decode($aml->results) : null)->first() ?? [];
         $manualStatusUpdateIM = collect($amlResults->ManualStatusUpdateIM ?? []);
         $aml->quote_type_text = $aml->quotetype->text;
         $quoteType = QuoteType::where('id', $aml->quote_type_id)->first();
@@ -804,11 +804,11 @@ class AMLController extends Controller
         ]);
         $response = [];
         $kycLog = KycLog::withTrashed()->where('id', $request->aml_id)->first();
-        
-        if (!$kycLog) {
+
+        if (! $kycLog) {
             return response()->json(['status' => 'error', 'message' => 'KYC log not found']);
         }
-        
+
         $oldDecision = $kycLog->decision;
 
         if (checkModifiedRecord($kycLog->updated_at, $request->last_updated_at)) {
