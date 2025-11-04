@@ -5,118 +5,80 @@ namespace App\Services\OCR;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteTypes;
 use Illuminate\Database\Eloquent\Model;
-
+use Exception;
+use App\Services\Logger\LoggerService;
 trait OcrValidator
 {
+    private const COMMON_OCR_FIELDS = [
+        'quote.price_with_vat',
+        'quote.vat',
+        'quote.price_vat_applicable',
+        'payment.insurer_invoice_date',
+        'payment.insurer_tax_number',
+        'payment.tax_invoice_number',
+        'quote.insurer_commmission_invoice_number',
+        'quote.insurer_commission_invoice_number', // For send update logs for tax invoice raised by buyer
+        'quote.policy_number',
+        'quote.policy_start_date',
+        'quote.policy_expiry_date',
+        'quote.start_date', // For send update logs for CPD
+        'quote.expiry_date', // For send update logs for CPD
+    ];
+    private const PROVIDERS_WITHOUT_COMMISSION_VAT = [
+        InsuranceProviderEnum::AXA->value,  // GIG_INSURANCE
+        InsuranceProviderEnum::MTL->value,   // METLIFE_INSURANCE
+        InsuranceProviderEnum::CIG->value,   // CIGNA_INSURANCE
+    ];
+    private const PROVIDER_QUOTE_TYPE_MAPPING = [
+        // Multi-LOB: CAR, HOME, GROUP_MEDICAL
+        InsuranceProviderEnum::AXA->value => [QuoteTypes::CAR, QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL],
+        InsuranceProviderEnum::OIC->value => [QuoteTypes::CAR, QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL],
+        // Car-only
+        InsuranceProviderEnum::QIC->value => [QuoteTypes::CAR],
+        InsuranceProviderEnum::RSA->value => [QuoteTypes::CAR],
+        InsuranceProviderEnum::TM->value => [QuoteTypes::CAR],
+        // Group Medical-only
+        InsuranceProviderEnum::TE->value => [QuoteTypes::GROUP_MEDICAL],
+        InsuranceProviderEnum::OI2->value => [QuoteTypes::GROUP_MEDICAL],
+        InsuranceProviderEnum::NGI->value => [QuoteTypes::GROUP_MEDICAL],
+        InsuranceProviderEnum::MTL->value => [QuoteTypes::GROUP_MEDICAL],
+        InsuranceProviderEnum::DNIRC->value => [QuoteTypes::GROUP_MEDICAL],
+        InsuranceProviderEnum::DIC->value => [QuoteTypes::GROUP_MEDICAL],
+        InsuranceProviderEnum::CIG->value => [QuoteTypes::GROUP_MEDICAL],
+        InsuranceProviderEnum::SI->value => [QuoteTypes::GROUP_MEDICAL],
+    ];
+
     public function isSupportedProvider(QuoteTypes $quoteType, string $provider): bool
     {
-        return match ($provider) {
-            // Car & Home & Group Medical
-            InsuranceProviderEnum::AXA->value => in_array($quoteType, [    // GIG_INSURANCE
-                QuoteTypes::CAR,
-                QuoteTypes::HOME,
-                QuoteTypes::GROUP_MEDICAL,
-            ]),
-            // Car & Home & Group Medical
-            InsuranceProviderEnum::OIC->value => in_array($quoteType, [    // SUKOON_OMAN_INSURANCE
-                QuoteTypes::CAR,
-                QuoteTypes::HOME,
-                QuoteTypes::GROUP_MEDICAL,
-            ]),
-            InsuranceProviderEnum::QIC->value => $quoteType == QuoteTypes::CAR,    // QATAR_INSURANCE
-            InsuranceProviderEnum::RSA->value => $quoteType == QuoteTypes::CAR,    // LIVANA_INSURANCE
-            InsuranceProviderEnum::TM->value => $quoteType == QuoteTypes::CAR,     // TOKIO_MARINE
-
-            // Group Medical
-            InsuranceProviderEnum::TE->value => $quoteType == QuoteTypes::GROUP_MEDICAL,    // TAKAFUL_EMARAT_INSURANCE
-            InsuranceProviderEnum::OI2->value => $quoteType == QuoteTypes::GROUP_MEDICAL,   // ORIENT_INSURANCE
-            InsuranceProviderEnum::NGI->value => $quoteType == QuoteTypes::GROUP_MEDICAL,   // NATIONAL_GENERAL_INSURANCE
-            InsuranceProviderEnum::MTL->value => $quoteType == QuoteTypes::GROUP_MEDICAL,   // METLIFE_INSURANCE
-            InsuranceProviderEnum::DNIRC->value => $quoteType == QuoteTypes::GROUP_MEDICAL, // DUBAI_NATIONAL_INSURANCE
-            InsuranceProviderEnum::DIC->value => $quoteType == QuoteTypes::GROUP_MEDICAL,   // DUBAI_INSURANCE_COMPANY
-            InsuranceProviderEnum::CIG->value => $quoteType == QuoteTypes::GROUP_MEDICAL,   // CIGNA_INSURANCE
-            InsuranceProviderEnum::SI->value => $quoteType == QuoteTypes::GROUP_MEDICAL,    // SALAMA_INSURANCE
-            default => false,
-        };
+        return in_array($quoteType, self::PROVIDER_QUOTE_TYPE_MAPPING[$provider] ?? [], true);
     }
 
-    private function isFieldEnabled(string $provider, string $field)
+    private function isFieldEnabled(string $provider, string $field): bool
     {
         $supportedFields = $this->getSupportedFields($provider);
 
-        return in_array($field, $supportedFields);
+        return in_array($field, $supportedFields, true);
     }
 
-    private function getSupportedFields(string $provider)
-    {
-        $commonFields = [
-            'quote.price_with_vat',
-            'quote.vat',
-            'quote.price_vat_applicable',
-            'payment.insurer_invoice_date',
-            'payment.insurer_tax_number',
-            'payment.tax_invoice_number',
-            'quote.insurer_commmission_invoice_number',
-            'quote.insurer_commission_invoice_number', // this is for send update logs for tax invoice raised by buyer
-            'quote.commission_vat_applicable', // this is for send update logs for tax invoice raised by buyer
-            'quote.policy_number',
-            'quote.policy_start_date',
-            'quote.policy_expiry_date',
-            'quote.start_date', // this is for send update logs for CPD
-            'quote.expiry_date', // this is for send update logs for CPD
-        ];
 
-        return match ($provider) {
-            InsuranceProviderEnum::AXA->value => [    // GIG_INSURANCE
-                ...$commonFields,
-            ],
-            InsuranceProviderEnum::OIC->value => [    // SUKOON_OMAN_INSURANCE
-                ...$commonFields,
-                'quote.commission_vat_applicable',
-            ],
-            InsuranceProviderEnum::QIC->value => [    // QATAR_INSURANCE
-                ...$commonFields,
-                'quote.commission_vat_applicable',
-            ],
-            InsuranceProviderEnum::RSA->value => [    // LIVANA_INSURANCE
-                ...$commonFields,
-                'quote.commission_vat_applicable',
-            ],
-            InsuranceProviderEnum::TM->value => [     // TOKIO_MARINE
-                ...$commonFields,
-                'quote.commission_vat_applicable',
-            ],
-            InsuranceProviderEnum::TE->value => [     // TAKAFUL_EMARAT_INSURANCE
-                ...$commonFields,
-                'quote.commission_vat_applicable',
-            ],
-            InsuranceProviderEnum::NGI->value => [    // NATIONAL_GENERAL_INSURANCE
-                ...$commonFields,
-                'quote.commission_vat_applicable',
-            ],
-            InsuranceProviderEnum::MTL->value => [    // METLIFE_INSURANCE
-                ...$commonFields,
-            ],
-            InsuranceProviderEnum::DNIRC->value => [  // DUBAI_NATIONAL_INSURANCE
-                ...$commonFields,
-                'quote.commission_vat_applicable',
-            ],
-            InsuranceProviderEnum::DIC->value => [    // DUBAI_INSURANCE_COMPANY
-                ...$commonFields,
-                'quote.commission_vat_applicable',
-            ],
-            InsuranceProviderEnum::CIG->value => [    // CIGNA_INSURANCE
-                ...$commonFields,
-            ],
-            InsuranceProviderEnum::SI->value => [     // SALAMA_INSURANCE
-                ...$commonFields,
-                'quote.commission_vat_applicable',
-            ],
-            InsuranceProviderEnum::OI2->value => [    // ORIENT_INSURANCE
-                ...$commonFields,
-                'quote.commission_vat_applicable',
-            ],
-        };
+    private function getSupportedFields(string $provider): array
+    {
+        try {
+            $fields = [...self::COMMON_OCR_FIELDS];
+
+            if (! in_array($provider, self::PROVIDERS_WITHOUT_COMMISSION_VAT, true)) {
+                $fields[] = 'quote.commission_vat_applicable'; // For send update logs for tax invoice raised by buyer
+            }
+
+            return $fields;
+        } catch (Exception $e) {
+            LoggerService::error(
+                self::class.' - Exception occurred during getting supported fields - Provider: '.$provider,
+                exception: $e
+            );
+
+            return [];
+        }
     }
 
     public function isProviderEligibleForOcr(QuoteTypes $quoteType, Model $quote): bool
