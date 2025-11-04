@@ -78,7 +78,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
-// const rolesEnum = page.props.rolesEnum;
+const isPcpAllowed = ref(!useHasRole(rolesEnum.CycleAdvisor));
 
 const isAllowed = computed(() => {
   return !hasAnyRole([
@@ -998,7 +998,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model="createLeadModal"
       route-name="cycle-quotes-create"
       :sub-sources="subSources"
-      :team-names-enum="teamNamesEnum"
+      :is-pcp-allowed="isPcpAllowed"
       @confirmed="onLeadConfirmed"
     />
   </div>

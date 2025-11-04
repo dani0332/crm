@@ -32,6 +32,7 @@ const notification = useToast();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
+const isPcpAllowed = ref(!useHasRole(rolesEnum.HealthAdvisor));
 const quoteSegments = page.props.quoteSegments;
 
 const loader = reactive({
@@ -1389,7 +1390,7 @@ const onLeadConfirmed = leadData => {
       v-model="createLeadModal"
       route-name="health.create"
       :sub-sources="subSources"
-      :team-names-enum="teamNamesEnum"
+      :is-pcp-allowed="isPcpAllowed"
       @confirmed="onLeadConfirmed"
     />
   </div>
