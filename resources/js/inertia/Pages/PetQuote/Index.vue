@@ -234,6 +234,7 @@ const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const isPcpAllowed = ref(!useHasRole(rolesEnum.PetAdvisor));
 
 const role = [rolesEnum.Admin, rolesEnum.PetManager];
 const petManagerRole = [rolesEnum.PetManager];
@@ -1058,7 +1059,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model="createLeadModal"
       route-name="pet-quotes-create"
       :sub-sources="subSources"
-      :team-names-enum="teamNamesEnum"
+      :is-pcp-allowed="isPcpAllowed"
       @confirmed="onLeadConfirmed"
     />
   </div>

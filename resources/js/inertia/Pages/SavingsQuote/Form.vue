@@ -82,7 +82,8 @@ const subSourceOptionOptions = computed(() => {
     label: child.text,
     code: child.code,
     suffix: child.description || null,
-    disabled: !isPCPTeam.value && pcpOnlyOptions.includes(String(child.code)),
+    disabled:
+      !isPCPSourceAllowed.value && pcpOnlyOptions.includes(String(child.code)),
   }));
 });
 
@@ -98,6 +99,7 @@ const isReferralType = computed(() => {
 
 // Role-based control like Life LOB
 const rolesEnum = page.props.rolesEnum;
+const isPCPSourceAllowed = ref(!useHasRole(rolesEnum.SavingsAdvisor));
 const canEditSubSourceFields = computed(() => {
   return useHasAnyRole([
     rolesEnum.SavingsManager,
@@ -105,9 +107,6 @@ const canEditSubSourceFields = computed(() => {
     rolesEnum.LeadPool,
   ]);
 });
-
-const teamNamesEnum = page.props.teamNamesEnum;
-const isPCPTeam = ref(useHasAnyTeam([{ name: teamNamesEnum.PCP }]));
 
 const quoteForm = useForm({
   first_name: props.quote?.first_name || '',

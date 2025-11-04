@@ -79,7 +79,7 @@ const subSourceOptionOptions = computed(() => {
       code: option.code,
       suffix: option.description || null,
       disabled:
-        !isPCPTeam.value && ['pcp-cross-sell', 'pcp-customer-referral'].includes(String(option.code)),
+        !isPCPSourceAllowed.value && ['pcp-cross-sell', 'pcp-customer-referral'].includes(String(option.code)),
     })) || []
   );
 });
@@ -99,8 +99,7 @@ const canEditSubSourceFields = computed(() => {
   ]);
 });
 
-const teamNamesEnum = page.props.teamNamesEnum;
-const isPCPTeam = ref(useHasAnyTeam([{ name: teamNamesEnum.PCP }]));
+const isPCPSourceAllowed = ref(!useHasRole(rolesEnum.PetAdvisor));
 
 
 // Watchers for sub-source fields
