@@ -1592,7 +1592,7 @@ class SageApiService
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
                 }
             }
-            
+
             $patchPayload = $postedResponse;
             // 3
             $isLiveApiCallStep3 = true;
