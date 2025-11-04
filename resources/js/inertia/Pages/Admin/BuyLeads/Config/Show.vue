@@ -3,6 +3,7 @@ const props = defineProps({
   departments: Array,
   lobs: Array,
   segments: Array,
+  nationalities: Array,
 });
 
 const notification = useToast();

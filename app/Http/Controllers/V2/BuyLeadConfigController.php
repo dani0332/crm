@@ -11,6 +11,7 @@ use App\Http\Requests\BuyLeads\BuyLeadsConfigFetchRequest;
 use App\Models\BuyLeadConfiguration;
 use App\Models\Department;
 use Illuminate\Support\Arr;
+use App\Repositories\NationalityRepository;
 
 class BuyLeadConfigController extends Controller
 {
@@ -22,6 +23,12 @@ class BuyLeadConfigController extends Controller
     public function show()
     {
         $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
+        $data['nationalities'] =NationalityRepository::withActive()->get()->map(function ($nationality) {
+            return [
+                'value' => $nationality->id,
+                'label' => $nationality->name,
+            ];
+        })->toArray();
         $data['segments'] = BuyLeadSegment::withLabels();
         $data['departments'] = Department::where('is_active', true)->get()
             ->map(function ($department) {
