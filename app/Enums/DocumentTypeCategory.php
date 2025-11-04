@@ -9,4 +9,5 @@ final class DocumentTypeCategory extends Enum
     public const QUOTE = 'QUOTE';
     public const MEMBER = 'MEMBER';
     public const QUOTE_AND_ENDORSEMENT = 'QUOTE_AND_ENDORSEMENT';
+    public const ISSUING_DOCUMENTS = 'ISSUING_DOCUMENTS';
 }

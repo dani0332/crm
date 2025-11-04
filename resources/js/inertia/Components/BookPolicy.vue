@@ -1789,7 +1789,7 @@ const isDocTypeLoading = docType => {
                     </template>
                   </x-tooltip>
                 </template>
-                <template v-else>
+                <template v-else-if="props.bookPolicyDetails.disabled">
                   <x-tooltip>
                     <x-button
                       size="sm"
@@ -1807,12 +1807,29 @@ const isDocTypeLoading = docType => {
                       {{ props.bookPolicyDetails?.text }}
                     </x-button>
                     <template #tooltip>
-                      <span class="custom-tooltip-content">
-                        {{ props.bookPolicyDetails.disabled ? 'Please upload the required documents to send policy to customer: ' + props.bookPolicyDetails.requiredDocuments.join(', ') ?? '' : 'Please update the booking details.' }}
+                      <span class="custom-tooltip-content" :class="{'hidden': !props.bookPolicyDetails.disabled}">
+                        {{ props.bookPolicyDetails.disabled ? 'Please upload the required documents to send policy to customer: ' + props.bookPolicyDetails.requiredDocuments.join(', ') ?? '' : '' }}
                       </span>
                     </template>
                   </x-tooltip>
                   
+                </template>
+                <template v-else>
+                  <x-button
+                      size="sm"
+                      color="orange"
+                      class="mt-4"
+                      @click.prevent="confirmSendPolicy"
+                      :disabled="
+                        bp.isEditing ||
+                        is_lacking_payment ||
+                        isAMLNotClearedForTravelQuote ||
+                        disableIfPolicyFailedAndNoBookingFailedEditPermission
+                      || props.bookPolicyDetails.disabled"
+                      v-if="showSendAndBookPolicyButton"
+                    >
+                      {{ props.bookPolicyDetails?.text }}
+                    </x-button>
                 </template>
               </template>
 
