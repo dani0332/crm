@@ -6,7 +6,6 @@ use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\DocumentType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class PolicyDocumentUpdateSeeder extends Seeder
@@ -60,7 +59,7 @@ class PolicyDocumentUpdateSeeder extends Seeder
                 DocumentTypeCode::PHB,
                 DocumentTypeCode::COMP_PH,
                 DocumentTypeCode::COMP_PS,
-                DocumentTypeCode::COMP_PC
+                DocumentTypeCode::COMP_PC,
 
             ],
             'category' => DocumentTypeCategory::ISSUING_DOCUMENTS,
@@ -141,7 +140,7 @@ class PolicyDocumentUpdateSeeder extends Seeder
             ],
             'category' => DocumentTypeCategory::ISSUING_DOCUMENTS,
             'is_required_for_send_policy' => 1,
-        ]
+        ],
     ];
     /**
      * Run the database seeds.
@@ -155,7 +154,7 @@ class PolicyDocumentUpdateSeeder extends Seeder
                     ->where('code', $documentCode)
                     ->where('is_active', 1)
                     ->get();
-                if($documentType->count() > 0) {
+                if ($documentType->count() > 0) {
                     foreach ($documentType as $documentType) {
                         $documentType->update([
                             'is_required_for_send_policy' => $document['is_required_for_send_policy'],
