@@ -1218,6 +1218,15 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             }
 
             return $response;
+        }  elseif (
+            $policyIssuance?->status === PolicyIssuanceEnum::TIMEOUT_STATUS &&
+            ! app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE)
+        ) {
+            $response['isEditPolicyDetailsDisabled'] = false;
+            $response['isEditBookingDetailsDisabled'] = false;
+            $response['message'] = 'All Steps are editable';
+
+            return $response;
         } elseif (! $policyIssuance) {
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
