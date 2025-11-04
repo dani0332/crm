@@ -4,9 +4,10 @@ namespace App\Services\OCR;
 
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteTypes;
-use Illuminate\Database\Eloquent\Model;
-use Exception;
 use App\Services\Logger\LoggerService;
+use Exception;
+use Illuminate\Database\Eloquent\Model;
+
 trait OcrValidator
 {
     private const COMMON_OCR_FIELDS = [
@@ -59,7 +60,6 @@ trait OcrValidator
 
         return in_array($field, $supportedFields, true);
     }
-
 
     private function getSupportedFields(string $provider): array
     {
