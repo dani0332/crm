@@ -541,23 +541,32 @@ class ApiService
                         LoggerService::info(self::class.': Quote not found');
                         return ['success' => false, 'message' => 'Quote not found','isDocumentMissing' => null];
                     }
-                    $requiredDocuments = [DocumentTypeCode::EMIRATES_ID, DocumentTypeCode::REGISTRATION_CARD_MULKIYA, DocumentTypeCode::DRIVING_LICENSE];
+                    $requiredDocuments = [
+                        DocumentTypeCode::EMIRATES_ID,
+                        DocumentTypeCode::REGISTRATION_CARD_MULKIYA,
+                        DocumentTypeCode::DRIVING_LICENSE
+                    ];
                     $leadDocuments = $quote->documents()
-                    ->whereIn('document_type_code', $requiredDocuments)
-                    ->get()
-                    ->keyBy('document_type_code');
-                    $missingOrIncomplete = collect($requiredDocuments)->filter(function ($docType) use ($leadDocuments) {
+                        ->whereIn('document_type_code', $requiredDocuments)
+                        ->get()
+                        ->keyBy('document_type_code');
+           
+                    // Check if all required documents are present and complete
+                    $missingOrIncomplete = collect($requiredDocuments)->map(function ($docType) use ($leadDocuments) {
                         $doc = $leadDocuments->get($docType);
-                        return !$doc || !$doc->is_complete;
-                    });
-                    if ($missingOrIncomplete->isNotEmpty()) {
-                        return ['success' => false, 'message' => 'Missing documents: '.$missingOrIncomplete->implode(', '),'isDocumentMissing' => true];
+                        return ['document_type_code' => $docType, 'is_complete' => $doc ? true : false];
+                    })->values();
+              
+                    if ($missingOrIncomplete->every(function ($item) {
+                        return $item['is_complete'];
+                    })) {
+                        return ['success' => true, 'message' => 'All documents are present and complete','isDocumentMissing' => false,'missingDocuments' => $missingOrIncomplete];
                     } else {
-                        return ['success' => true, 'message' => 'All documents are present and complete','isDocumentMissing' => false];
+                        return ['success' => false, 'message' => 'Missing documents ','isDocumentMissing' => true,'missingDocuments' => $missingOrIncomplete];
                     }
+
                     break;
             }
-            return ['success' => true, 'message' => 'Verify missing docs has been completed'];
         } catch (\Exception $e) {
             LoggerService::error(self::class.': Verify missing docs failed', exception: $e);
             return ['success' => false, 'message' => 'Verify missing docs failed: '.$e->getMessage()];

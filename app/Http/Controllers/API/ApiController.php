@@ -583,12 +583,14 @@ class ApiController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => $response['message'],
+                'missingDocuments' => $response['missingDocuments'] ?? null,
                 'isDocumentMissing' => $response['isDocumentMissing'] ?? null, 
             ], Response::HTTP_OK);
         } else {
             return response()->json([
                 'success' => false,
                 'message' => $response['message'],
+                'missingDocuments' => $response['missingDocuments'] ?? null,
                 'isDocumentMissing' => $response['isDocumentMissing'] ?? null,
             ], Response::HTTP_OK);
         }

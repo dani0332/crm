@@ -56,20 +56,20 @@ class CarMissingDocReminderJob implements ShouldQueue
          ->whereIn('document_type_code', $requiredDocuments)
          ->get()
          ->keyBy('document_type_code');
-  
-         $missingOrIncomplete = collect($requiredDocuments)->filter(function ($docType) use ($leadDocuments) {
-             // Document is missing or not marked as complete/verified
-             $doc = $leadDocuments->get($docType);
-             return !$doc || !$doc->is_complete;
-         });
-         // Only send reminder if at least one required document is missing or incomplete
-         if ($missingOrIncomplete->isNotEmpty()) {
-             app(CarWAService::class)->sendCarMissingDocReminder($lead);
-             LoggerService::info(self::class.' - sending reminder for missing documents');
-         }
-         else {
-             LoggerService::info(self::class.' - all required documents are present and complete');
-         }
+        // Check if all required documents are present and complete
+        $missingOrIncomplete = collect($requiredDocuments)->map(function ($docType) use ($leadDocuments) {
+            $doc = $leadDocuments->get($docType);
+            return ['document_type_code' => $docType, 'is_complete' => $doc ? true : false];
+        })->values();
+
+        if ($missingOrIncomplete->every(function ($item) {
+            return $item['is_complete'];})) {
+            LoggerService::info(self::class.' - all required documents are present and complete');
+            return;
+        } else {
+            app(CarWAService::class)->sendCarMissingDocReminder($lead); 
+            LoggerService::info(self::class.' - sending reminder for missing documents');
+        }
          
         } catch (Exception $e) {
             LoggerService::error(self::class.' - error sending reminder for missing documents', ['uuid' => $this->quoteUuid, 'error' => $e->getMessage()]);
