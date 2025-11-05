@@ -73,7 +73,7 @@ class HomeQuoteRepository extends BaseRepository
             'email',
             'mobile_no',
             'code',
-            'renewal_batch',
+            'renewal_batches',
             'previous_quote_policy_number',
             'payment_due_date',
             'booking_date',
@@ -230,6 +230,7 @@ class HomeQuoteRepository extends BaseRepository
                 ]);
             },
             'customer',
+            'renewalBatchModel',
         ];
     }
 
@@ -672,7 +673,7 @@ class HomeQuoteRepository extends BaseRepository
             'policy_expiry_date' => fn ($query, $value) => $query->whereDate('personal_quotes.policy_expiry_date', '>=', $value),
             'policy_expiry_date_end' => fn ($query, $value) => $query->whereDate('personal_quotes.policy_expiry_date', '<=', $value),
             'previous_quote_policy_number' => fn ($query, $value) => $query->where('personal_quotes.previous_quote_policy_number', $value),
-            'renewal_batches' => fn ($query, $value) => $query->whereIn('personal_quotes.renewal_batch', (array) $value),
+            'renewal_batches' => fn ($query, $value) => $query->whereIn('personal_quotes.renewal_batch_id', (array) $value),
             'advisor_assigned_date' => fn ($query, $value) => $query->whereDate('personal_quotes.advisor_assigned_date', $value),
             'insurer_tax_invoice_number' => fn ($query, $value) => $query->whereHas('payments', function ($query) use ($value) {
                 $query->where('insurer_tax_number', $value);
