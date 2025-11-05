@@ -777,7 +777,7 @@ class BusinessQuoteService extends BaseService
             $id = explode('|', $leadId)[0];
 
             // Get the quote object using the trait method
-            $quote = $this->getQuoteObject('business', $id);
+            $quote = $this->getQuoteObject(QuoteTypes::BUSINESS->value, $id);
             if ($quote) {
                 $quote->support_user_id = $supportUserId;
                 $quote->save();
