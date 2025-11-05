@@ -46,4 +46,9 @@ class BuyLeadConfiguration extends Model
     {
         return $this->belongsTo(QuoteType::class);
     }
+
+    public function nationalities()
+    {
+        return $this->belongsToMany(Nationality::class, 'buy_lead_config_nationalities', 'buy_lead_configuration_id', 'nationality_id');
+    }
 }

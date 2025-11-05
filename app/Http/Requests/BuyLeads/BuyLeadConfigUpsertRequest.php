@@ -30,6 +30,7 @@ class BuyLeadConfigUpsertRequest extends FormRequest
             'department_id' => 'required|exists:departments,id',
             'value' => 'required|numeric|min:0',
             'volume' => 'required|numeric|min:0',
+            'nationalities' => 'sometimes|array',
             'segment' => ['required', Rule::enum(BuyLeadSegment::class)],
         ];
     }

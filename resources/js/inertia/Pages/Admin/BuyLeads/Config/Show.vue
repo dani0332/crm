@@ -15,6 +15,7 @@ const buyForm = useForm({
   segment: '',
   value: '',
   volume: '',
+  nationalities: [],
 });
 
 const loader = ref(false);
@@ -66,6 +67,7 @@ const fetchValues = () => {
         buyForm.value = config.value;
         buyForm.volume = config.volume;
         buyForm.segment = config.segment;
+        buyForm.nationalities = config?.nationalities?.map(item => item.id) ?? [];
       } else {
         // TODO: For Now Setting Default Segment as SIC but need to remove this later
         buyForm.segment = 'sic';
@@ -184,7 +186,7 @@ watch(
       </div>
     </div>
     
-    <div class="grid sm:grid-cols-2 gap-4">
+    <div class="grid sm:grid-cols-2 gap-4" v-if="buyForm.quote_type == 'CarRevival'">
       <div class="grid sm:grid-cols-1 gap-4">
 
         <p class="font-medium">CAT A - Nationalities</p>
