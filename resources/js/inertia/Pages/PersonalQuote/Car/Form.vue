@@ -34,7 +34,7 @@ const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 
 const teamNamesEnum = page.props.teamNamesEnum;
-const isPCPSourceAllowed = ref(!useHasRole(rolesEnum.CarAdvisor));
+const isPCPTeam = ref(useHasAnyTeam([{ name: teamNamesEnum.PCP }]));
 
 const carRegistrationTypeEnum = page.props.carRegistrationType;
 const carVehicleUseEnum = page.props.carVehicleUse;
@@ -510,7 +510,7 @@ const subSourceOptionOptions = computed(() => {
     value: child.id, // Keep as integer to match form data type
     label: child.text,
     suffix: child.description || null,
-    disabled: !isPCPSourceAllowed.value && pcpOnlyOptions.includes(String(child.code)),
+    disabled: !isPCPTeam.value && pcpOnlyOptions.includes(String(child.code)),
   }));
 });
 
