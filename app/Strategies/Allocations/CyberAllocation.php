@@ -2,44 +2,63 @@
 
 namespace App\Strategies\Allocations;
 
-use App\Enums\RolesEnum;
+use App\Enums\QuoteTypes;
+use App\Pipes\Allocation\Common\FetchLeadPipe;
+use App\Pipes\Allocation\Common\MakeResponsePipe;
+use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
+use App\Pipes\Allocation\Cyber\AssignLeadPipe;
+use App\Pipes\Allocation\Cyber\FetchAvailableAdvisorPipe;
+use App\Pipes\Allocation\Cyber\VerifyLeadPreChecksPipe;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Services\AllocationService;
+use App\Services\Logger\LoggerService;
+use Exception;
+use Illuminate\Support\Facades\Pipeline;
 
-class CyberAllocation extends BaseAllocation
+class CyberAllocation implements Allocation
 {
-    protected function fetchAdvisor(int $onlineStatus)
+    public function __construct(
+        protected $uuid,
+        protected $teamId = false,
+        protected bool $overrideAdvisorId = false
+    ) {}
+
+    public function execute()
     {
-        $emails = $this->getAdvisorEmails();
+        LoggerService::info(self::class.' - Starting Cyber lead allocation', extra: [
+            'uuid' => $this->uuid,
+            'teamId' => $this->teamId,
+            'overrideAdvisorId' => $this->overrideAdvisorId,
+        ]);
 
-        return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::CyberAdvisor], $skipMaxCapCheck = true)
-            ->whereIn('users.email', $emails)
-            ->logRawSql()
-            ->first();
-    }
+        $allocationRequest = new AllocationRequest(
+            quoteType: QuoteTypes::CYBER,
+            quoteUUID: $this->uuid,
+            teamId: $this->teamId,
+            overrideAdvisorId: $this->overrideAdvisorId
+        );
 
-    protected function getAdvisorEmails($storageKey = null)
-    {
+        try {
+            LoggerService::info(self::class.' - Sending allocation request through pipeline');
 
-        $Smitha = 'smitha.chandran@insurancemarket.ae';
-        $Neil = 'neil.rama@insurancemarket.ae';
-        $fahad = 'fahadhussain2020@gmail.com';
+            return Pipeline::send($allocationRequest)->through([
+                FetchLeadPipe::class,
+                VerifyLeadPreChecksPipe::class,
+                VerifyAlreadyInProgressAllocationPipe::class,
+                FetchAvailableAdvisorPipe::class,
+                AssignLeadPipe::class,
+                MakeResponsePipe::class,
+            ])->thenReturn();
 
-        $emails = [];
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred in Cyber allocation pipeline', extra: [
+                'uuid' => $this->uuid,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
-        // $isOnLeave = $this->isUserOnLeave($fahad, addUnavailable: true);
-
-        // if ($isOnLeave) {
-        //     // if Smitha is on leave, then assign lead to Neil
-        //     $emails = [$Neil];
-        // } else {
-        //     // by default, every cyber lead will be assigned to Smitha
-        //     $emails = [$Smitha];
-        // }
-
-        $emails = [$fahad];
-
-        $this->skipRuleUsers = true;
-
-        return $emails;
+            return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, $e);
+        }
     }
 }
 
