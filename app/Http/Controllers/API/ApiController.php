@@ -575,4 +575,22 @@ class ApiController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    public function verifyMissingDocs($quoteUuid, $quoteType)
+    {
+        $response = app(ApiService::class)->verifyMissingDocs($quoteUuid, $quoteType);
+        if($response['success']) {
+            return response()->json([
+                'success' => true,
+                'message' => $response['message'],
+                'isDocumentMissing' => $response['isDocumentMissing'] ?? null, 
+            ], Response::HTTP_OK);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => $response['message'],
+                'isDocumentMissing' => $response['isDocumentMissing'] ?? null,
+            ], Response::HTTP_OK);
+        }
+    }
 }

@@ -33,6 +33,7 @@ use InvalidArgumentException;
 use App\Models\CarQuote;
 use App\Services\WAServices\CarWAService;
 use App\Jobs\CarMissingDocReminderJob;
+use App\Enums\DocumentTypeCode;
 
 class ApiService
 {
@@ -527,6 +528,39 @@ class ApiService
         } catch (\Exception $e) {
             LoggerService::error(self::class.': Missing docs reminder failed', exception: $e);
             return ['success' => false, 'message' => 'Missing docs reminder failed: '.$e->getMessage()];
+        }
+    }
+    public function verifyMissingDocs($quoteUuid, $quoteType)
+    {
+        try {
+            LoggerService::info(self::class.': Verify missing docs has been initiated');
+            switch ($quoteType) {
+                case QuoteTypes::CAR->value:
+                    $quote = CarQuote::where('uuid', $quoteUuid)->first();
+                    if (! $quote) {
+                        LoggerService::info(self::class.': Quote not found');
+                        return ['success' => false, 'message' => 'Quote not found','isDocumentMissing' => null];
+                    }
+                    $requiredDocuments = [DocumentTypeCode::EMIRATES_ID, DocumentTypeCode::REGISTRATION_CARD_MULKIYA, DocumentTypeCode::DRIVING_LICENSE];
+                    $leadDocuments = $quote->documents()
+                    ->whereIn('document_type_code', $requiredDocuments)
+                    ->get()
+                    ->keyBy('document_type_code');
+                    $missingOrIncomplete = collect($requiredDocuments)->filter(function ($docType) use ($leadDocuments) {
+                        $doc = $leadDocuments->get($docType);
+                        return !$doc || !$doc->is_complete;
+                    });
+                    if ($missingOrIncomplete->isNotEmpty()) {
+                        return ['success' => false, 'message' => 'Missing documents: '.$missingOrIncomplete->implode(', '),'isDocumentMissing' => true];
+                    } else {
+                        return ['success' => true, 'message' => 'All documents are present and complete','isDocumentMissing' => false];
+                    }
+                    break;
+            }
+            return ['success' => true, 'message' => 'Verify missing docs has been completed'];
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': Verify missing docs failed', exception: $e);
+            return ['success' => false, 'message' => 'Verify missing docs failed: '.$e->getMessage()];
         }
     }
 }
