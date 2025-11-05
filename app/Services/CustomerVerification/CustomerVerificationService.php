@@ -322,8 +322,13 @@ class CustomerVerificationService
         return strtolower((string) $ocrValue) !== strtolower((string) $webFormValue);
     }
 
-    private function verifyLicenseHeldFor(string $ocrLicenseHeldFor, string $webFormLicenseHeldFor): bool
+    private function verifyLicenseHeldFor($ocrLicenseHeldFor, $webFormLicenseHeldFor): bool
     {
+        // If any of them is null, return false -> no error
+        if (! $ocrLicenseHeldFor || ! $webFormLicenseHeldFor) {
+            return false;
+        }
+
         $ocrLicenseHeldForData = explode(' ', $ocrLicenseHeldFor);  // 2 years or 4 months
         $webFormLicenseHeldForData = explode(' ', $webFormLicenseHeldFor); // 3 years or 0 to 6 months
 
