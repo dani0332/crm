@@ -119,9 +119,9 @@ const tableHeader = reactive([
     tooltip: 'Tax Invoice Number (DN) in Booking Details of the lead',
   },
   {
-    text: 'Tax Invoice Date',
+    text: 'Insurer Invoice Date',
     value: 'insurer_tax_invoice_date',
-    tooltip: 'Invoice Date of  Tax Invoice',
+    tooltip: 'The insurer’s tax invoice document date for each lead',
   },
   {
     text: 'Payment Status',
