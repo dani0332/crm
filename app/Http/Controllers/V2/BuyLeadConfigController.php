@@ -22,11 +22,11 @@ class BuyLeadConfigController extends Controller
 
     public function show()
     {
-        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
+        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CAR_REVIVAL->value]))->values()->toArray();
         $data['nationalities'] =NationalityRepository::withActive()->get()->map(function ($nationality) {
             return [
                 'value' => $nationality->id,
-                'label' => $nationality->name,
+                'label' => $nationality->text,
             ];
         })->toArray();
         $data['segments'] = BuyLeadSegment::withLabels();

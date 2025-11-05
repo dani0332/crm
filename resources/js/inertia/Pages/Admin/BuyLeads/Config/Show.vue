@@ -183,6 +183,28 @@ watch(
         </div>
       </div>
     </div>
+    
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="grid sm:grid-cols-1 gap-4">
+
+        <p class="font-medium">CAT A - Nationalities</p>
+        <x-select
+          placeholder="Select Nationalities"
+          :options="props.nationalities"
+          filterable
+          multiple
+          v-model="buyForm.nationalities"
+          :rules="[isRequired]"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="buyForm.nationalities = props.nationalities.map(item => item.value)"
+              @clear="buyForm.nationalities = []"
+            />
+          </template>
+        </x-select>
+      </div>
+    </div>
 
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">
