@@ -14,7 +14,7 @@ const props = defineProps({
   },
   isPcpAllowed: {
     type: Boolean,
-    default: true,
+    default: false,
   },
 });
 

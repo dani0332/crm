@@ -125,6 +125,10 @@ const ecommerceOptions = [
 
 const filteredTableHeader = ref([]);
 
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
+
 const filterTableHeaders = () => {
   let filtered = [...tableHeader];
 
@@ -1586,7 +1590,7 @@ const onConfirmPUAExport = () => {
       v-model="createLeadModal"
       route-name="car.create"
       :sub-sources="subSources"
-      :team-names-enum="teamNamesEnum"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
       @confirmed="onLeadConfirmed"
     />
 
