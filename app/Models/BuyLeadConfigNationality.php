@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class BuyLeadConfigNationality extends Model
 {
     protected $table = 'buy_lead_config_nationalities';
-
     protected $fillable = [
         'nationality_id',
         'buy_lead_configuration_id',
@@ -22,4 +21,4 @@ class BuyLeadConfigNationality extends Model
     {
         return $this->belongsTo(BuyLeadConfiguration::class);
     }
-}   
+}

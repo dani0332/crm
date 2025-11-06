@@ -34,4 +34,3 @@ class BuyLeadsRevivalPermissionSeeder extends Seeder
         }
     }
 }
-

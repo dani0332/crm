@@ -28,7 +28,6 @@ class BuyLeadController extends Controller
 
     public function fetchRate(BuyLeadsRateFetchRequest $request)
     {
-       
 
         $data['maxCapacity'] = $this->buyLeadService->getBlLeadRemainingLimit($request->getQuoteType());
         $data['isMaxCapReached'] = $data['maxCapacity'] === 0;
@@ -65,7 +64,7 @@ class BuyLeadController extends Controller
     public function tracking()
     {
         $quoteType = request()->get('quote_type');
-        if($quoteType == QuoteTypes::CAR_REVIVAL->value) {
+        if ($quoteType == QuoteTypes::CAR_REVIVAL->value) {
             $quoteType = QuoteTypes::CAR->value;
         }
         $quoteType = QuoteTypes::tryFrom($quoteType);
@@ -99,7 +98,6 @@ class BuyLeadController extends Controller
             getTeamId(TeamNameEnum::CAR),
             getTeamId(TeamNameEnum::HEALTH),
         ];
-
 
         // Step 3: Run queries
         $summaryResults = $this->getSummaryResults($startDate, $endDate, $eligibleParentTeamIds);

@@ -69,7 +69,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedEpEcbConfigurations();
         $this->seedUnavailableTimeThreshold();
         $this->sendUpdateEmailBirdFlow();
-        
+
     }
 
     private function livaCarAutomationSeed()

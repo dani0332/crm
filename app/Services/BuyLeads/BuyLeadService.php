@@ -22,9 +22,9 @@ class BuyLeadService
 
     public function getBlLeadRemainingLimit(QuoteTypes $quoteType)
     {
-     
+
         // if the quote type is car revival, then set the quote type to car
-        if($quoteType->value == QuoteTypes::CAR_REVIVAL->value) {
+        if ($quoteType->value == QuoteTypes::CAR_REVIVAL->value) {
             $quoteType = QuoteTypes::CAR;
             // check if the user has the car revival advisor role
         }
@@ -54,7 +54,7 @@ class BuyLeadService
         if ($this->isRequestAlreadySubmitted($quoteType)) {
             return 'You can initiate a new Buy Lead request once the existing requested leads are assigned.';
         }
-        if($quoteType == QuoteTypes::CAR_REVIVAL->value) {
+        if ($quoteType == QuoteTypes::CAR_REVIVAL->value) {
             $quoteType = QuoteTypes::CAR->value;
         }
         $remainingLimit = $this->getBlLeadRemainingLimit($quoteType);
@@ -88,7 +88,6 @@ class BuyLeadService
 
         return $query->first();
 
-      
     }
 
     public function findConfigCost(QuoteTypes $quoteType)
@@ -136,7 +135,7 @@ class BuyLeadService
 
         [$cost, $requestType, $segment] = $configCost;
         $isCarRevival = $request->quote_type == QuoteTypes::CAR_REVIVAL->value;
-        $baseQuoteTypeId  = $isCarRevival ? QuoteTypes::CAR->id() : $request->getQuoteTypeId();
+        $baseQuoteTypeId = $isCarRevival ? QuoteTypes::CAR->id() : $request->getQuoteTypeId();
         BuyLeadRequest::create([
             'quote_type_id' => $baseQuoteTypeId,
             'user_id' => Auth::id(),

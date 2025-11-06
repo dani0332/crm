@@ -10,8 +10,8 @@ use App\Http\Requests\BuyLeads\BuyLeadConfigUpsertRequest;
 use App\Http\Requests\BuyLeads\BuyLeadsConfigFetchRequest;
 use App\Models\BuyLeadConfiguration;
 use App\Models\Department;
-use Illuminate\Support\Arr;
 use App\Repositories\NationalityRepository;
+use Illuminate\Support\Arr;
 
 class BuyLeadConfigController extends Controller
 {
@@ -23,7 +23,7 @@ class BuyLeadConfigController extends Controller
     public function show()
     {
         $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CAR_REVIVAL->value]))->values()->toArray();
-        $data['nationalities'] =NationalityRepository::withActive()->get()->map(function ($nationality) {
+        $data['nationalities'] = NationalityRepository::withActive()->get()->map(function ($nationality) {
             return [
                 'value' => $nationality->id,
                 'label' => $nationality->text,
@@ -44,11 +44,11 @@ class BuyLeadConfigController extends Controller
     public function fetch(BuyLeadsConfigFetchRequest $request)
     {
         $isCarRevival = false;
-        if($request->quote_type == QuoteTypes::CAR_REVIVAL->value) {
+        if ($request->quote_type == QuoteTypes::CAR_REVIVAL->value) {
             $request->merge(['quote_type' => QuoteTypes::CAR->value]);
-            $isCarRevival =true;    
+            $isCarRevival = true;
         }
-        if($isCarRevival) {
+        if ($isCarRevival) {
             $config = BuyLeadConfiguration::with('nationalities')
                 ->where([
                     'quote_type_id' => $request->getQuoteTypeId(),
@@ -70,20 +70,20 @@ class BuyLeadConfigController extends Controller
     {
         $data = $request->validated();
         $isCarRevival = false;
-        if($data['quote_type'] == QuoteTypes::CAR_REVIVAL->value) {
+        if ($data['quote_type'] == QuoteTypes::CAR_REVIVAL->value) {
             $data['quote_type'] = QuoteTypes::CAR->value;
             $request->merge(['quote_type' => QuoteTypes::CAR->value]);
-            $isCarRevival =true;
+            $isCarRevival = true;
         }
-        if(! $isCarRevival) {
-        $buyLeadConfiguration = BuyLeadConfiguration::updateOrCreate(
-            [
-                'quote_type_id' => $request->getQuoteTypeId(),
-                'department_id' => $data['department_id'],
-            ],
-            $data
-        );
-    } else {
+        if (! $isCarRevival) {
+            $buyLeadConfiguration = BuyLeadConfiguration::updateOrCreate(
+                [
+                    'quote_type_id' => $request->getQuoteTypeId(),
+                    'department_id' => $data['department_id'],
+                ],
+                $data
+            );
+        } else {
 
             // If there is an existing BuyLeadConfiguration with any nationalities, update it; otherwise, create new
             $buyLeadConfiguration = BuyLeadConfiguration::with('nationalities')
@@ -106,13 +106,13 @@ class BuyLeadConfigController extends Controller
                     $data
                 );
             }
-            if(isset($data['nationalities']) && count($data['nationalities']) > 0   ) {
+            if (isset($data['nationalities']) && count($data['nationalities']) > 0) {
                 $this->syncNationalities($buyLeadConfiguration, $data['nationalities']);
             }
-            dd("jj");
-               
-     }
-      
+            dd('jj');
+
+        }
+
         return to_route('admin.buy-leads.config.show');
     }
 
