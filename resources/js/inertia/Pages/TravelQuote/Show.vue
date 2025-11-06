@@ -82,6 +82,8 @@ const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const travelQuoteEnum = page.props.travelQuoteEnum;
+
 const checkedItems = ref([]);
 const { hasAuthorizedSplit } = usePayment();
 const checkCheckedPlans = computed(() => {
@@ -2632,7 +2634,7 @@ const fullAddress = computed(() => {
                 Add Member
               </x-button>
               <template #tooltip>
-                Member details cannot be edited because the payment is already Authorized/Paid (based on the payment status)
+                {{ travelQuoteEnum.LOCK_MEMBER_DETAILS }}
               </template>
             </x-tooltip>
             <!-- Show existing button when payment is not authorized -->
@@ -2677,7 +2679,7 @@ const fullAddress = computed(() => {
                 Edit
               </x-button>
               <template #tooltip>
-                Member details cannot be edited because the payment is already Authorized/Paid (based on the payment status)
+                {{ travelQuoteEnum.LOCK_MEMBER_DETAILS }}
               </template>
             </x-tooltip>
             <!-- Show existing button when payment is not authorized -->
@@ -2709,7 +2711,7 @@ const fullAddress = computed(() => {
                 Delete
               </x-button>
               <template #tooltip>
-                Member details cannot be edited because the payment is already Authorized/Paid (based on the payment status)
+                {{ travelQuoteEnum.LOCK_MEMBER_DETAILS }}
               </template>
             </x-tooltip>
             <!-- Show existing button when payment is not authorized -->

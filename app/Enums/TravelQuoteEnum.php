@@ -24,4 +24,5 @@ final class TravelQuoteEnum extends Enum
     // Alliance Travel Direction code
     const ALLIANCE_IN_BOUND = 'inbound';
     const ALLIANCE_OUT_BOUND = 'outbound';
+    const LOCK_MEMBER_DETAILS = 'Member details cannot be edited because the payment is already Authorized/Paid (based on the payment status)';
 }
