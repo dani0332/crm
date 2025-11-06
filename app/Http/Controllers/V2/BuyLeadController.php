@@ -28,6 +28,8 @@ class BuyLeadController extends Controller
 
     public function fetchRate(BuyLeadsRateFetchRequest $request)
     {
+       
+
         $data['maxCapacity'] = $this->buyLeadService->getBlLeadRemainingLimit($request->getQuoteType());
         $data['isMaxCapReached'] = $data['maxCapacity'] === 0;
         $data['requestAlreadySubmitted'] = ! $data['isMaxCapReached'] && $this->buyLeadService->isRequestAlreadySubmitted($request->getQuoteType());
@@ -45,7 +47,7 @@ class BuyLeadController extends Controller
 
     public function show()
     {
-        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
+        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CAR_REVIVAL->value]))->values()->toArray();
         $data['requests'] = $this->buyLeadService->getActiveRequests();
 
         return inertia('BuyLeads/BuyLeadsRequest', $data);
@@ -62,8 +64,12 @@ class BuyLeadController extends Controller
 
     public function tracking()
     {
-        $quoteType = QuoteTypes::tryFrom(request()->get('quote_type'));
-        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
+        $quoteType = request()->get('quote_type');
+        if($quoteType == QuoteTypes::CAR_REVIVAL->value) {
+            $quoteType = QuoteTypes::CAR->value;
+        }
+        $quoteType = QuoteTypes::tryFrom($quoteType);
+        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CAR_REVIVAL->value]))->values()->toArray();
         [$startDate, $endDate] = request('date');
 
         if ($quoteType && $startDate && $endDate) {
@@ -93,6 +99,7 @@ class BuyLeadController extends Controller
             getTeamId(TeamNameEnum::CAR),
             getTeamId(TeamNameEnum::HEALTH),
         ];
+
 
         // Step 3: Run queries
         $summaryResults = $this->getSummaryResults($startDate, $endDate, $eligibleParentTeamIds);

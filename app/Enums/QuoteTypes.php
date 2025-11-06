@@ -314,6 +314,7 @@ enum QuoteTypes: string
             self::HOME => [RolesEnum::HomeAdvisor],
             self::SAVINGS => [RolesEnum::SavingsAdvisor],
             self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
+            self::CAR_REVIVAL => [RolesEnum::CarRevivalAdvisor],
             self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
             default => [],
         };
