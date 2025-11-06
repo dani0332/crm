@@ -8,6 +8,7 @@ use App\Enums\InsuranceProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\OCRSourceEnum;
 use App\Events\OcrNotifications;
 use App\Jobs\OCR\PopulateDocumentData;
 use App\Models\BusinessQuote;
@@ -35,14 +36,20 @@ class OCRService
         protected OcrLogService $ocrLogService
     ) {}
 
-    private function sendRequest(string $endpoint, array $data = [], string $method = 'POST')
+    private function sendRequest(string $endpoint, array $data = [], bool $isEcom, string $method = 'POST')
     {
         try {
             $response = Http::baseUrl(config('constants.OCR_API_ENDPOINT'))
                 ->withHeader('Referer', trim(config('constants.APP_URL'), '/'))
                 ->withHeader('x-api-key', config('constants.OCR_API_KEY'))
+                ->withHeader('source', $isEcom ? OCRSourceEnum::ECOM->value : OCRSourceEnum::IMCRM->value)
                 ->timeout(config('constants.OCR_API_TIMEOUT'))
-                ->beforeSending(fn () => LoggerService::info(self::class."::sendRequest - Calling OCR API via {$method} request to {$endpoint}"))
+                ->beforeSending(function ($request) use ($method, $endpoint) {
+                    $headers = $request->headers();
+
+                    LoggerService::info('OCR API request headers:', $headers);
+                    LoggerService::info(self::class."::sendRequest - Calling OCR API via {$method} request to {$endpoint}");
+                })
                 ->when(
                     $method === 'GET',
                     fn (PendingRequest $http) => $http->get($endpoint, $data),
@@ -74,7 +81,8 @@ class OCRService
         QuoteTypes $quoteType,
         Model $quote,
         string $docUrl,
-        OCRDocumentTypeEnum $docType
+        OCRDocumentTypeEnum $docType,
+        bool $isEcom
     ) {
         $providerCode = $this->extractProviderCode($quote);
 
@@ -97,7 +105,7 @@ class OCRService
             'request_data' => $requestData,
         ]);
 
-        $response = $this->sendRequest('/process-document', $requestData);
+        $response = $this->sendRequest('/process-document', $requestData, $isEcom);
 
         if ($response['ok']) {
             LoggerService::info('OCR API Response Success - Quote UUID: '.$quote->uuid);
@@ -437,7 +445,7 @@ class OCRService
             $apiCallStartTime = microtime(true);
             LoggerService::info('Starting OCR API call - Quote UUID: '.$quote->uuid);
 
-            $data = $this->getData($quoteType, $quote, $url, $docType);
+            $data = $this->getData($quoteType, $quote, $url, $docType, $isEcom);
             LoggerService::info('OCR API call data: '.json_encode($data));
 
             if ($data) {
@@ -491,7 +499,7 @@ class OCRService
         string $filePathAzure,
         string $fileMimeType,
         ?string $quoteTypeParam = null,
-        bool $isSendUpdateEligibleForOCR = false
+        bool $isSendUpdateEligibleForOCR = false,
     ): void {
 
         // early return if Customer OCR Journey is not supported on prod
