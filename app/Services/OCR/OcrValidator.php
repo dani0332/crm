@@ -32,6 +32,8 @@ trait OcrValidator
         InsuranceProviderEnum::MTL->value,   // METLIFE_INSURANCE
         InsuranceProviderEnum::CIG->value,   // CIGNA_INSURANCE
     ];
+
+    // We might consider this to move to database
     private const PROVIDER_QUOTE_TYPE_MAPPING = [
         // Multi-LOB: CAR, HOME, GROUP_MEDICAL
         InsuranceProviderEnum::AXA->value => [QuoteTypes::CAR, QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL],
