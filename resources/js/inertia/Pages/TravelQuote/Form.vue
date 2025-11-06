@@ -17,6 +17,7 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
 const hasZeroValueForUAEResident = ref(false);
 const editMode = computed(() =>
   props.quote && props.quote.uuid ? true : false,
@@ -58,7 +59,7 @@ const subSourceOptionOptions = computed(() => {
       value: child.id,
       label: child.text,
       suffix: child.description || null,
-      disabled: !isPCPSourceAllowed.value && pcpOnlyOptions.includes(String(child.code)),
+      disabled: !isPcpSubSourceOptionAllowed.value && pcpOnlyOptions.includes(String(child.code)),
     })) || []
   );
 });
@@ -79,7 +80,9 @@ const canEditSubSourceFields = computed(() => {
   ]);
 });
 
-const isPCPSourceAllowed = ref(!useHasRole(rolesEnum.TravelAdvisor));
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
 
 
 const quoteForm = useForm({

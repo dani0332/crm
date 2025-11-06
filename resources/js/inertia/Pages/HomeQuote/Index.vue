@@ -19,7 +19,10 @@ const page = usePage();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
-const isPcpAllowed = ref(!useHasRole(rolesEnum.HomeAdvisor));
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const notification = useNotifications('toast');
@@ -1135,7 +1138,7 @@ const formatDate = dateString =>
       v-model="createLeadModal"
       route-name="home-quotes-create"
       :sub-sources="subSources"
-      :is-pcp-allowed="isPcpAllowed"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
       @confirmed="onLeadConfirmed"
     />
   </div>

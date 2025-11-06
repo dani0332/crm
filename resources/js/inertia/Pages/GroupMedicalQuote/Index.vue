@@ -20,7 +20,10 @@ defineProps({
 const canExport = ref(false);
 const page = usePage();
 const rolesEnum = page.props.rolesEnum;
-const isPcpAllowed = ref(!useHasRole(rolesEnum.GMAdvisor));
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
 const { isRequired } = useRules();
@@ -831,7 +834,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model="createLeadModal"
       :sub-sources="subSources || []"
       route-name="amt.create"
-      :is-pcp-allowed="isPcpAllowed"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
       @confirmed="onLeadConfirmed"
     />
 

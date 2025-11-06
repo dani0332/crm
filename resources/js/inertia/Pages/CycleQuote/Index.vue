@@ -78,7 +78,9 @@ const permissionsEnum = page.props.permissionsEnum;
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
-const isPcpAllowed = ref(!useHasRole(rolesEnum.CycleAdvisor));
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
 
 const isAllowed = computed(() => {
   return !hasAnyRole([

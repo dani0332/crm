@@ -46,7 +46,10 @@ const onLeadConfirmed = () => {
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
-const isPcpAllowed = ref(!useHasRole(rolesEnum.TravelAdvisor));
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
 const quoteSegments = page.props.quoteSegments?.filter(
@@ -1418,7 +1421,7 @@ const calculateAge = dateOfBirth => {
       v-model="createLeadModal"
       route-name="travel.create"
       :sub-sources="subSources"
-      :is-pcp-allowed="isPcpAllowed"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
       @confirmed="onLeadConfirmed"
     />
   </div>

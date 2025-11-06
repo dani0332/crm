@@ -68,7 +68,9 @@ const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
-const isPcpAllowed = ref(!useHasRole(rolesEnum.JetskiAdvisor));
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -817,7 +819,7 @@ const onLeadConfirmed = () => {
       v-model="createLeadModal"
       :sub-sources="subSources"
       route-name="jetski-quotes-create"
-      :is-pcp-allowed="isPcpAllowed"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
       @confirmed="onLeadConfirmed"
     />
   </div>

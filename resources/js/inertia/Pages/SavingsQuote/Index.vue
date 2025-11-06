@@ -25,7 +25,9 @@ const teamNamesEnum = page.props.teamNamesEnum;
 const hasAnyRole = role => useHasAnyRole(role);
 const canAny = permissions => useCanAny(permissions);
 const rolesEnum = page.props.rolesEnum;
-const isPcpAllowed = ref(!useHasRole(rolesEnum.SavingsAdvisor));
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
 const notification = useNotifications('toast');
 const loader = reactive({
   table: false,
@@ -737,7 +739,7 @@ const validateDateRange = () => {
       v-model="createLeadModal"
       :sub-sources="subSources"
       route-name="savings-quotes-create"
-      :is-pcp-allowed="isPcpAllowed"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
       @confirmed="onLeadConfirmed"
     />
   </div>

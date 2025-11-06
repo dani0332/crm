@@ -199,7 +199,9 @@ const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
-const isPcpAllowed = ref(!useHasRole(rolesEnum.BikeAdvisor));
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
 
 const advisorOptionsFilter = computed(() => {
   return page.props.advisors.map(advisor => ({
@@ -856,7 +858,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model="createLeadModal"
       route-name="bike-quotes-create"
       :sub-sources="subSources"
-      :is-pcp-allowed="isPcpAllowed"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
       @confirmed="onLeadConfirmed"
     />
   </div>

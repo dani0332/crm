@@ -23,7 +23,10 @@ defineProps({
 const page = usePage();
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
-const isPcpAllowed = ref(!useHasRole(rolesEnum.YachtAdvisor));
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
 const notification = useNotifications('toast');
 const loader = reactive({
   table: false,
@@ -990,7 +993,7 @@ const onLeadConfirmed = () => {
       v-model="createLeadModal"
       :sub-sources="subSources"
       route-name="yacht-quotes-create"
-      :is-pcp-allowed="isPcpAllowed"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
       @confirmed="onLeadConfirmed"
     />
   </div>

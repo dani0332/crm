@@ -72,7 +72,7 @@ const subSourceOptionOptions = computed(() => {
       label: option.text,
       suffix: option.description || null,
       disabled:
-        !isPCPSourceAllowed.value && pcpOnlyOptions.includes(String(option.code)),
+        !isPcpSubSourceOptionAllowed.value && pcpOnlyOptions.includes(String(option.code)),
     })) || []
   );
 });
@@ -92,7 +92,10 @@ const canEditSubSourceFields = computed(() => {
 });
 
 const rolesEnum = page.props.rolesEnum;
-const isPCPSourceAllowed = ref(!useHasRole(rolesEnum.JetskiAdvisor));
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
 
 // Watchers for field resets and partner name handling
 watch(

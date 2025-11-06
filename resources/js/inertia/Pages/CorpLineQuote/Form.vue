@@ -78,7 +78,7 @@ const subSourceOptionOptions = computed(() => {
       code: option.code,
       suffix: option.description || null,
       disabled:
-        !isPCPSourceAllowed.value && pcpOnlyOptions.includes(String(option.code)),
+        !isPcpSubSourceOptionAllowed.value && pcpOnlyOptions.includes(String(option.code)),
     })) || []
   );
 });
@@ -92,7 +92,10 @@ const isReferralType = computed(() => {
 
 
 const rolesEnum = page.props.rolesEnum;
-const isPCPSourceAllowed = ref(!useHasRole(rolesEnum.CorpLineAdvisor));
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
 const canEditSubSourceFields = computed(() => {
   return useHasAnyRole([
     rolesEnum.CorplineManager,

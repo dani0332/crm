@@ -79,7 +79,7 @@ const subSourceOptionOptions = computed(() => {
       code: option.code,
       suffix: option.description || null,
       disabled:
-        !isPCPSourceAllowed.value && ['pcp-cross-sell', 'pcp-customer-referral'].includes(String(option.code)),
+        !isPcpSubSourceOptionAllowed.value && ['pcp-cross-sell', 'pcp-customer-referral'].includes(String(option.code)),
     })) || []
   );
 });
@@ -99,7 +99,10 @@ const canEditSubSourceFields = computed(() => {
   ]);
 });
 
-const isPCPSourceAllowed = ref(!useHasRole(rolesEnum.PetAdvisor));
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
 
 
 // Watchers for sub-source fields

@@ -21,7 +21,10 @@ let params = useUrlSearchParams('history');
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
-const isPcpAllowed = ref(!useHasRole(rolesEnum.LifeAdvisor));
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+);
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(true);
 const filtersCount = ref(0);
@@ -1173,7 +1176,7 @@ const onLeadConfirmed = () => {
       v-model="createLeadModal"
       :sub-sources="subSources"
       route-name="life-quotes-create"
-      :is-pcp-allowed="isPcpAllowed"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
       @confirmed="onLeadConfirmed"
     />
   </div>
