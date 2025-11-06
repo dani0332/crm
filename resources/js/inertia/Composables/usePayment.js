@@ -120,10 +120,10 @@ export const usePayment = () => {
   };
 
   /**
-   * Checks if any payment split in the given payments array has an authorized status.
-   * Returns true if any payment split matches authorized statuses, false otherwise.
+   * Checks if any payment split in the given payments array has an authorized/settled status.
+   * Returns true if any payment split matches authorized statuses (AUTHORISED, PAID, CAPTURED, etc.), false otherwise.
    */
-  const hasAnyAuthorizedPaymentSplit = (payments) => {
+  const hasAuthorizedSplit = (payments) => {
     const authorizedStatuses = [
       paymentStatusEnum.AUTHORISED,
       paymentStatusEnum.PAID,
@@ -152,6 +152,6 @@ export const usePayment = () => {
     verifyCreditApproved,
     hasAnyCCSplitPayment,
     paymentAllocationStatusTooltip,
-    hasAnyAuthorizedPaymentSplit,
+    hasAuthorizedSplit,
   };
 };

@@ -83,7 +83,7 @@ const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const checkedItems = ref([]);
-const { hasAnyAuthorizedPaymentSplit } = usePayment();
+const { hasAuthorizedSplit } = usePayment();
 const checkCheckedPlans = computed(() => {
   return true;
 });
@@ -1391,7 +1391,7 @@ const isEmbeddedProduct = code => {
 };
 
 const isAuthorizedPayment = computed(() => {
-  return hasAnyAuthorizedPaymentSplit(page.props.payments);
+  return hasAuthorizedSplit(page.props.payments);
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -2618,18 +2618,30 @@ const fullAddress = computed(() => {
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <p
-          class="font-semibold text-primary-600 text-ms mb-1"
-            v-if="isAuthorizedPayment"
-          >
-            Member actions have been disabled because a payment has already been authorized for this lead.
-          </p>
           <AddMemberButtonTemplate v-slot="{ isDisabled }">
+            <!-- Show button with tooltip when payment is authorized -->
+            <x-tooltip
+              v-if="isAuthorizedPayment"
+              position="bottom"
+            >
+              <x-button
+                size="sm"
+                color="orange"
+                :disabled="true"
+              >
+                Add Member
+              </x-button>
+              <template #tooltip>
+                Member details cannot be edited because the payment is already Authorized/Paid (based on the payment status)
+              </template>
+            </x-tooltip>
+            <!-- Show existing button when payment is not authorized -->
             <x-button
+              v-else
               size="sm"
               color="orange"
               @click.prevent="onAddTraveler"
-              :disabled="isDisabled || isAuthorizedPayment"
+              :disabled="isDisabled"
               v-if="readOnlyMode.isDisable === true"
             >
               Add Member
@@ -2650,13 +2662,32 @@ const fullAddress = computed(() => {
             <AddMemButtonReuseTemplate v-else />
           </div>
 
-          <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
+            <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
+            <!-- Show button with tooltip when payment is authorized -->
+            <x-tooltip
+              v-if="isAuthorizedPayment"
+              position="bottom"
+            >
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                :disabled="true"
+              >
+                Edit
+              </x-button>
+              <template #tooltip>
+                Member details cannot be edited because the payment is already Authorized/Paid (based on the payment status)
+              </template>
+            </x-tooltip>
+            <!-- Show existing button when payment is not authorized -->
             <x-button
+              v-else
               size="xs"
               color="primary"
               @click.prevent="onEditTraveler(item)"
               outlined
-              :disabled="isDisabled || isAuthorizedPayment"
+              :disabled="isDisabled"
               v-if="readOnlyMode.isDisable === true"
             >
               Edit
@@ -2664,7 +2695,26 @@ const fullAddress = computed(() => {
           </EditMemberButtonTemplate>
 
           <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
+            <!-- Show button with tooltip when payment is authorized -->
+            <x-tooltip
+              v-if="isAuthorizedPayment"
+              position="bottom"
+            >
+              <x-button
+                size="xs"
+                color="error"
+                outlined
+                :disabled="true"
+              >
+                Delete
+              </x-button>
+              <template #tooltip>
+                Member details cannot be edited because the payment is already Authorized/Paid (based on the payment status)
+              </template>
+            </x-tooltip>
+            <!-- Show existing button when payment is not authorized -->
             <x-button
+              v-else
               size="xs"
               color="error"
               @click.prevent="
@@ -2672,7 +2722,7 @@ const fullAddress = computed(() => {
                 confirmModal.show = true;
               "
               outlined
-              :disabled="isDisabled || isAuthorizedPayment"
+              :disabled="isDisabled"
               v-if="readOnlyMode.isDisable === true"
             >
               Delete
