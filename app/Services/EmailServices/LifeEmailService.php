@@ -26,6 +26,12 @@ class LifeEmailService extends BaseService
 
         LoggerService::info('| sendFICEmail - Initiating process');
 
+        if ($personalQuote->isSuppressIntroEmail()) {
+            LoggerService::info('sendFICEmail - Suppressing OCB Email because for');
+
+            return;
+        }
+
         if ($workflowUrl && ! empty($workflowUrl->value)) {
             // Fetch the advisor
             $advisor = User::find($personalQuote->advisor_id);

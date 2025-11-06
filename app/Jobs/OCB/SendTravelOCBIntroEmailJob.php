@@ -4,6 +4,7 @@ namespace App\Jobs\OCB;
 
 use App\Models\TravelQuote;
 use App\Services\EmailServices\TravelEmailService;
+use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -11,7 +12,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SendTravelOCBIntroEmailJob implements ShouldQueue
@@ -78,15 +78,20 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
             if (! $this->verifyPreChecks($lead)) {
                 return;
             }
+            if ($lead->isSuppressIntroEmail()) {
+                LoggerService::info(self::class." - Suppressing OCB Email because for UUID: {$this->quoteUuid}");
+
+                return;
+            }
 
             $responseCode = $travelEmailService->sendTravelOCBIntroEmail($lead, $this->previousAdvisor, $this->triggerSICWorkflow, $this->handleZeroPlans, $this->forceSicWorkflow);
             if (in_array($responseCode, [200, 201])) {
-                info(self::class." - OCB INTRO Email Sent: {$responseCode} Customer Email Address: {$lead->email} Quote UuId: {$this->quoteUuid}");
+                LoggerService::info(self::class." - OCB INTRO Email Sent: {$responseCode} Customer Email Address: {$lead->email} Quote UuId: {$this->quoteUuid}");
             } elseif ($this->attempts() == $this->tries) {
-                Log::error(self::class." - OCB INTRO Email Not Sent: {$responseCode} Customer EmailAddress: {$lead->email} Quote UuId: {$this->quoteUuid}");
+                LoggerService::error(self::class." - OCB INTRO Email Not Sent: {$responseCode} Customer EmailAddress: {$lead->email} Quote UuId: {$this->quoteUuid}");
             }
         } catch (Exception $e) {
-            Log::error(self::class." - Error: {$e->getMessage()} for uuid {$this->quoteUuid} with stack trace {$e->getTraceAsString()}");
+            LoggerService::error(self::class." - Error: {$e->getMessage()} for uuid {$this->quoteUuid} with stack trace {$e->getTraceAsString()}");
         }
     }
 

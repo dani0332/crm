@@ -38,7 +38,7 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
 
             $this->allocationRequest->markAsFailed();
 
-            $this->throw('Advisor not found', self::OK);
+            $this->throw('Advisor assignment is in progress and will be assigned shortly', self::OK);
         }
 
         $this->allocationRequest->setAdvisor($advisor);

@@ -3,6 +3,7 @@
 namespace App\Services\PolicyIssuanceAutomation\Car;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
@@ -10,6 +11,8 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -23,6 +26,7 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
+use App\Models\UAELicenseHeldFor;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
@@ -219,50 +223,65 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
         $response = ['status' => false, 'completed_step' => self::BOOK_POLICY, 'error' => null, 'message' => null];
 
-        $updateBookingDetailsResponse = $this->updateBookingDetails($quote);
-        if (! $updateBookingDetailsResponse['status']) {
-            $response['error'] = $updateBookingDetailsResponse['error'];
-            $response['message'] = $updateBookingDetailsResponse['message'];
+        try {
+            $updateBookingDetailsResponse = $this->updateBookingDetails($quote);
+            if (! $updateBookingDetailsResponse['status']) {
+                $response['error'] = $updateBookingDetailsResponse['error'];
+                $response['message'] = $updateBookingDetailsResponse['message'];
+
+                return $response;
+            }
+
+            $quote->refresh();
+            $preCheckResult = $this->validateBookPolicy($quote);
+            if (! $preCheckResult['status']) {
+                $response['error'] = $preCheckResult['error'];
+                $response['message'] = $preCheckResult['message'];
+
+                return $response;
+            }
+
+            $request = new \stdClass;
+            $request->quote_id = $quote->id;
+            $request->modelType = self::TYPE;
+            $request->model_type = self::TYPE;
+            $request->is_send_policy = false;
+            $request->send_policy_type = SendPolicyTypeEnum::SAGE;
+            $request->transaction_payment_status = null;
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Book Policy execution initiated, creating Sage process');
+            $createSageProcessResponse = (new SageApiService)->postBookPolicyToSage($request, $quote);
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, [], $createSageProcessResponse, '', self::BOOK_POLICY, $createSageProcessResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
+
+            if (! $createSageProcessResponse['status']) {
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Book Policy execution failed, Error: '.$createSageProcessResponse['message']);
+                $response['error'] = $createSageProcessResponse['message'];
+
+                return $response;
+            }
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Sage Process Created : '.$createSageProcessResponse['message']);
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+
+            $response['status'] = true;
+            $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
+
+            return $response;
+
+        } catch (Exception $e) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Exception occurred', extra: [
+                'errorTraceMessage' => $e->getTraceAsString(),
+                'errorCode' => $e->getCode(),
+                'errorFile' => $e->getFile(),
+                'errorLine' => $e->getLine(),
+                'errorMessage' => $e->getMessage(),
+            ]);
+            $response['error'] = 'Book policy failed: '.$e->getMessage();
+            $response['message'] = 'An error occurred during book policy: '.$e->getMessage();
 
             return $response;
         }
-
-        $quote->refresh();
-        $preCheckResult = $this->validateBookPolicy($quote);
-        if (! $preCheckResult['status']) {
-            $response['error'] = $preCheckResult['error'];
-            $response['message'] = $preCheckResult['message'];
-
-            return $response;
-        }
-
-        $request = new \stdClass;
-        $request->quote_id = $quote->id;
-        $request->modelType = self::TYPE;
-        $request->model_type = self::TYPE;
-        $request->is_send_policy = false;
-        $request->send_policy_type = SendPolicyTypeEnum::SAGE;
-        $request->transaction_payment_status = null;
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Book Policy execution initiated, creating Sage process');
-        $createSageProcessResponse = (new SageApiService)->postBookPolicyToSage($request, $quote);
-        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, [], $createSageProcessResponse, '', self::BOOK_POLICY, $createSageProcessResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
-
-        if (! $createSageProcessResponse['status']) {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Book Policy execution failed, Error: '.$createSageProcessResponse['message']);
-            $response['error'] = $createSageProcessResponse['message'];
-
-            return $response;
-        }
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Sage Process Created : '.$createSageProcessResponse['message']);
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
-
-        $response['status'] = true;
-        $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
-
-        return $response;
     }
 
     private function validateBookPolicy($quote): array
@@ -314,44 +333,55 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Update booking details process started');
         $response = ['status' => true, 'error' => null, 'message' => null];
 
-        $payment = $quote->payments()->mainLeadPayment()->first();
-        $bookPolicyPayload = $this->bookPolicyPayload($quote, QuoteTypes::CAR->value, $quote->payments, $quote->quoteDocuments);
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Booking Details before exeuting validation', extra: [
-            'invoice_date' => $payment->insurer_invoice_date,
-            'insurer_tax_invoice_number' => $payment->insurer_tax_number,
-            'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
-            'discount' => $payment->discount_value,
-            'transaction_payment_status' => $bookPolicyPayload['transactionPaymentStatus'],
-            'broker_invoice_number' => $bookPolicyPayload['brokerInvoiceNo'],
-            'commission_vat_not_applicable' => $payment->commission_vat_not_applicable,
-            'commission_vat_applicable' => $payment->commission_vat_applicable,
-            'total_commission' => $payment->commission,
-            'invoice_description' => $bookPolicyPayload['invoiceDescription'],
-            'vat_on_commission' => $payment->commission_vat,
-            'commission_percentage' => $payment->commmission_percentage,
-            'payment_code' => $payment->code,
-            'model_type' => self::TYPE,
-            'quote_id' => $quote->id,
-        ]);
-
         try {
-            $updateBookingRequest = [
+            $payment = $quote->payments()->mainLeadPayment()->first();
+
+            if (! $payment) {
+                $response['status'] = false;
+                $response['error'] = 'Payment not found for quote';
+                $response['message'] = 'Main lead payment not found for quote: '.$quote->code;
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Payment not found');
+
+                return $response;
+            }
+
+            $bookPolicyPayload = $this->bookPolicyPayload($quote, QuoteTypes::CAR->value, $quote->payments, $quote->quoteDocuments);
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Booking Details before exeuting validation', extra: [
                 'invoice_date' => $payment->insurer_invoice_date,
                 'insurer_tax_invoice_number' => $payment->insurer_tax_number,
                 'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
                 'discount' => $payment->discount_value,
-                'transaction_payment_status' => $bookPolicyPayload['transactionPaymentStatus'],
-                'broker_invoice_number' => $bookPolicyPayload['brokerInvoiceNo'],
+                'transaction_payment_status' => $bookPolicyPayload['transactionPaymentStatus'] ?? null,
+                'broker_invoice_number' => $bookPolicyPayload['brokerInvoiceNo'] ?? null,
                 'commission_vat_not_applicable' => $payment->commission_vat_not_applicable,
                 'commission_vat_applicable' => $payment->commission_vat_applicable,
                 'total_commission' => $payment->commission,
-                'invoice_description' => $bookPolicyPayload['invoiceDescription'],
+                'invoice_description' => $bookPolicyPayload['invoiceDescription'] ?? null,
                 'vat_on_commission' => $payment->commission_vat,
                 'commission_percentage' => $payment->commmission_percentage,
                 'payment_code' => $payment->code,
                 'model_type' => self::TYPE,
                 'quote_id' => $quote->id,
+            ]);
+
+            $updateBookingRequest = [
+                'invoice_date' => $payment->insurer_invoice_date,
+                'insurer_tax_invoice_number' => $payment->insurer_tax_number,
+                'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
+                'discount' => $payment->discount_value,
+                'transaction_payment_status' => $bookPolicyPayload['transactionPaymentStatus'] ?? null,
+                'broker_invoice_number' => $bookPolicyPayload['brokerInvoiceNo'] ?? null,
+                'commission_vat_not_applicable' => $payment->commission_vat_not_applicable,
+                'commission_vat_applicable' => $payment->commission_vat_applicable,
+                'total_commission' => $payment->commission,
+                'invoice_description' => $bookPolicyPayload['invoiceDescription'] ?? null,
+                'vat_on_commission' => $payment->commission_vat,
+                'commission_percentage' => $payment->commmission_percentage,
+                'payment_code' => $payment->code,
+                'model_type' => self::TYPE,
+                'quote_id' => $quote->id,
+                'through_automation' => true,
             ];
 
             request()->merge($updateBookingRequest);
@@ -387,7 +417,13 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $response['error'] = 'Booking update error: '.$e->getMessage();
             $response['message'] = 'An error occurred while updating booking details: '.$e->getMessage();
 
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Booking update process failed, Exception: '.$e->getMessage());
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Booking update process failed', extra: [
+                'errorTraceMessage' => $e->getTraceAsString(),
+                'errorCode' => $e->getCode(),
+                'errorFile' => $e->getFile(),
+                'errorLine' => $e->getLine(),
+                'errorMessage' => $e->getMessage(),
+            ]);
         }
 
         return $response;
@@ -418,7 +454,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$process->id.' - Step : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
         $response = ['status' => false, 'completed_step' => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, 'error' => null, 'message' => null];
-        $endPoint = 'motor/transactions/retrieve/v1';
+        $endPoint = 'motor/transactions/retrieve/v2';
 
         $uploadedDocumentsToIMCRM = collect();
 
@@ -571,6 +607,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
             return $policyIssuanceResponse;
         }
+
+        $quote->update([
+            'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+            'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
+            'quote_status_date' => now(),
+        ]);
 
         $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
         $process = $process->refresh();
@@ -814,6 +856,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     private function httpCall($endPoint, $payload, $keyAPI)
     {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' calling API: '.$keyAPI);
         $response = ['status' => false, 'error' => null, 'message' => null, 'data' => null, 'completed_step' => null];
         $url = $this->baseUrl.$endPoint;
         $timeOut = $this->apiTimeout;
@@ -832,13 +875,11 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             if (in_array($httpResponse->status(), [JsonResponse::HTTP_OK, JsonResponse::HTTP_CREATED])) {
                 if (
                     isset($responseObject?->$keyAPI?->errors) ||
-                    (isset($responseObject?->$keyAPI?->Status) && $responseObject?->$keyAPI?->Status == false) ||
-                    (isset($responseObject?->statusCode) && $responseObject?->statusCode == 404) ||
-                    (isset($responseObject?->string) && str_contains($responseObject?->string, 'Exception'))
+                    (isset($responseObject?->$keyAPI?->Status) && $responseObject?->$keyAPI?->Status == false)
                 ) {
                     $response['error'] = $responseObject?->$keyAPI?->Status ?? $keyAPI.' API Failed';
                     $response['status'] = false;
-                    $response['message'] = json_encode($responseObject?->$keyAPI?->errors) ?? $responseObject?->message ?? $responseObject;
+                    $response['message'] = $this->extractErrorMessage($responseObject, $keyAPI);
                 } else {
                     $response['status'] = true;
                     $response['data'] = $responseObject;
@@ -849,9 +890,9 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 $response['status'] = false;
                 $response['message'] = '404 Not Found';
             } else {
-                $response['error'] = $responseObject?->$keyAPI?->Status ?? $keyAPI.' API Failed';
+                $response['error'] = $keyAPI.' API Failed';
                 $response['status'] = false;
-                $response['message'] = json_encode($responseObject?->$keyAPI?->errors) ?? $responseObject?->message ?? $responseObject;
+                $response['message'] = 'There is an Exception on LIVA API call.';
             }
         } catch (Exception $ex) {
             LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__, [
@@ -866,6 +907,27 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
 
         return $response;
+    }
+
+    /**
+     * Extract error message from API response object
+     *
+     * @param  \stdClass|null  $responseObject  The API response object
+     * @param  string  $keyAPI  The API key to access nested error details
+     * @return string|mixed The extracted error message
+     */
+    private function extractErrorMessage($responseObject, string $keyAPI)
+    {
+        if (isset($responseObject?->$keyAPI?->errors)) {
+            return json_encode($responseObject->$keyAPI->errors);
+        }
+
+        if (isset($responseObject?->message)) {
+            return $responseObject->message;
+        }
+
+        // Return entire response object as fallback
+        return $responseObject ?? $keyAPI.' API Failed';
     }
 
     /**
@@ -927,14 +989,24 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             if (isset($response['data'])) {
                 $responseData = $response['data'];
 
-                // Extract driver name parts for first and last name
-                $driverName = $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverName'] ?? '';
+                $additionalDriverDetails = $responseData['DriverDetails'][0]['AdditionalDriverDetails'] ?? [];
+                $isMultipleDriver = ! empty($additionalDriverDetails) && is_array(reset($additionalDriverDetails));
+
+                if ($isMultipleDriver) {
+                    $mainDriver = array_values(array_filter($additionalDriverDetails, function ($driver) {
+                        return ($driver['MainDriverInd'] ?? '') === 'Y';
+                    }))[0] ?? [];
+                } else {
+                    $mainDriver = $additionalDriverDetails;
+                }
+
+                $driverName = $mainDriver['DriverName'] ?? '';
                 $nameParts = explode(' ', $driverName, 2);
                 $driverFirstName = $nameParts[0] ?? '';
                 $driverLastName = $nameParts[1] ?? '';
 
                 $vehicleDriverDetailsData = [
-                    'is_insured_and_driver_same' => ($responseData['DriverDetails'][0]['AdditionalDriverDetails']['MainDriverInd'] ?? '') === 'Y' ? '1' : '0',
+                    'is_insured_and_driver_same' => $isMultipleDriver ? '0' : '1',
                     'rta_transaction_type' => (string) ($responseData['VehicleDetails']['RtaTransactionType'] ?? ''),
                     'vehicle_plate_code' => $responseData['VehicleDetails']['RegnNoText'] ?? '', // optional
                     'vehicle_plate_number' => $responseData['VehicleDetails']['RegnNoNumber'] ?? '', // optional
@@ -946,23 +1018,22 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     'bank_loan' => ! empty($responseData['VehicleDetails']['CarFinanceCode']) ? '1' : '0',
                     'bank_name' => $responseData['VehicleDetails']['CarFinanceCode'] ?? '', // optional
                     'first_registration_date' => $responseData['VehicleDetails']['DateOfRegn'] ?? '',
-                    // 'annual_mileage_estimate' => '', // Not available in response
                     'driver_first_name' => $driverFirstName, // optional
                     'driver_last_name' => $driverLastName, // optional
-                    'driver_dob' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverDOB'] ?? '', // optional
-                    'driver_gender' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverGender'] === 'M' ? 'male' : 'female',
-                    'driver_license_number' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['LicenseNo'] ?? '',
-                    'driver_license_issue_place' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
-                    'driver_uae_driving_experience' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['LocalLicense'] ?? 0, // optional
-                    'driver_home_country_license_issuance' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
-                    'driver_home_country_driving_experience' => (string) $responseData['DriverDetails'][0]['AdditionalDriverDetails']['OtherLicense'] ?? 0, // optional
+                    'driver_dob' => $mainDriver['DriverDOB'] ?? '', // optional
+                    'driver_gender' => ($mainDriver['DriverGender'] ?? '') === 'M' ? 'male' : 'female',
+                    'driver_license_number' => $mainDriver['LicenseNo'] ?? '',
+                    'driver_license_issue_place' => (string) ($mainDriver['FirstDrvLicCountry'] ?? ''), // optional
+                    'driver_uae_driving_experience' => (string) ($mainDriver['LocalLicense'] ?? 0), // optional
+                    'driver_home_country_license_issuance' => (string) ($mainDriver['FirstDrvLicCountry'] ?? ''), // optional
+                    'driver_home_country_driving_experience' => (string) ($mainDriver['OtherLicense'] ?? 0), // optional
                 ];
 
                 $quoteDetailsData = [
-                    'policy_start_date' => $responseData['PolicyEffectiveDate'] ?? '',
-                    'policy_expiry_date' => $responseData['PolicyExpiryDate'] ?? '', // optional
-                    'certificate_start_date' => $responseData['VehicleDetails']['CertificateStartDate'] ?? '',
-                    'certificate_end_date' => $responseData['VehicleDetails']['CertificateEndDate'] ?? '', // optional
+                    'policy_start_date' => $this->formatDateToYmd($responseData['PolicyEffectiveDate'] ?? ''),
+                    'policy_expiry_date' => $this->formatDateToYmd($responseData['PolicyExpiryDate'] ?? ''), // optional
+                    'certificate_start_date' => $this->formatDateToYmd($responseData['VehicleDetails']['CertificateStartDate'] ?? ''),
+                    'certificate_end_date' => $this->formatDateToYmd($responseData['VehicleDetails']['CertificateEndDate'] ?? ''), // optional
                 ];
 
                 $getQuoteResponseMapping = [
@@ -1091,9 +1162,11 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
     }
 
-    public function getStepsLockingStatus($quote): array
+    public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {
+        LoggerService::info('class: '.$this->className.' fn: '.__FUNCTION__.' Quote : '.$quote->code);
         $policyIssuance = $quote->policyIssuance;
+
         $response = [
             'policyIssuance' => $policyIssuance,
             'isEditPolicyDetailsDisabled' => true,
@@ -1102,39 +1175,56 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'insurer_api_status' => $quote->insurer_api_status,
         ];
 
-        if ($policyIssuance?->status === PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS) {
+        if ($throughAutomation) {
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
-            $response['message'] = 'All Steps are editable';
+            $response['message'] = 'All steps are editable';
+
+            return $response;
+        }
+
+        if ($quote?->registration_type !== CarRegistrationType::PERSONAL) {
+            $response['isEditPolicyDetailsDisabled'] = false;
+            $response['isEditBookingDetailsDisabled'] = false;
+            $response['message'] = 'All steps are editable';
 
             return $response;
         }
 
         if (
             $policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS ||
-            ($policyIssuance->completed_step && $policyIssuance?->status == '')
+            ($policyIssuance?->completed_step && $policyIssuance?->status == '')
         ) {
-            if (! $policyIssuance->completed_step || $policyIssuance->completed_step === self::UPLOAD_DOCUMENTS) {
+            if (! $policyIssuance?->completed_step || $policyIssuance?->completed_step === self::UPLOAD_DOCUMENTS) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'All Steps are editable';
 
                 return $response;
             }
-            if ($policyIssuance->completed_step === self::ISSUE_POLICY) {
+            if ($policyIssuance?->completed_step === self::ISSUE_POLICY) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Upload Documents and Update Booking Details are editable';
 
                 return $response;
             }
-            if ($policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
+            if ($policyIssuance?->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Booking Details is editable';
 
                 return $response;
             }
+
+            return $response;
+        } elseif (
+            $policyIssuance?->status === PolicyIssuanceEnum::TIMEOUT_STATUS &&
+            ! app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE)
+        ) {
+            $response['isEditPolicyDetailsDisabled'] = false;
+            $response['isEditBookingDetailsDisabled'] = false;
+            $response['message'] = 'All Steps are editable';
 
             return $response;
         } elseif (! $policyIssuance) {
@@ -1145,7 +1235,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         if (
             $policyIssuance?->status === PolicyIssuanceEnum::PROCESSING_STATUS &&
-            $policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
+            $policyIssuance?->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
         ) {
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';
@@ -1156,7 +1246,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    public function getLIVALookups($quoteRequest)
+    public function getLIVALookups($leadSource)
     {
         $insuranceProviderId = InsuranceProvider::where('code', InsuranceProvidersEnum::RSA)->first()->id;
         $additionalLookups = app(AMLService::class)->getAMLLookups($insuranceProviderId, [
@@ -1165,11 +1255,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             LookupsEnum::VEHICLE_COLOR,
             LookupsEnum::BANK_NAME,
             LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
-            LookupsEnum::NATIONALITY_LIST,
-            LookupsEnum::DRIVING_EXPERIENCE,
         ])->toArray();
+        $additionalLookups['driving_experience'] = UAELicenseHeldFor::select('id', 'rsa_driving_experience', 'text')->get()->toArray();
 
-        if ($quoteRequest?->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+        if ($leadSource == LeadSourceEnum::RENEWAL_UPLOAD) {
             $rtaTransactionType = array_filter($additionalLookups['rta_transaction_type'], function ($item) {
                 return in_array($item['code'], app(LivaInsurancePayloadMapping::class)->renewalRtaTransactionType());
             });
@@ -1200,7 +1289,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'reason' => $policyIssuance->message,
             ]);
 
-            return true;
+            return false;
         } else {
             $policyIssuanceLogs = $policyIssuance->policyIssuanceLogs;
             if (
@@ -1215,7 +1304,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
                 LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Failed logs count : '.$failedLogsCount);
 
-                if ($failedNullLogFound->isNotEmpty() && $failedLogsCount < 3) {
+                if ($failedNullLogFound->isNotEmpty() && $failedLogsCount < 2) {
                     LoggerService::info($this->className.' fn:'.__FUNCTION__.' - PolicyIssuanceJob was failed due to timeout', extra: [
                         'error' => $failedNullLogFound->first()?->response,
                     ]);
@@ -1242,5 +1331,55 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
 
         return false;
+    }
+
+    /**
+     * Check if policy issuance timed out and update status accordingly
+     *
+     * @param  \App\Models\PolicyIssuance  $policyIssuance
+     */
+    public function handleTimeoutStatusUpdate($policyIssuance): void
+    {
+        LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
+            'status' => $policyIssuance->status,
+            'completed_step' => $policyIssuance->completed_step,
+        ]);
+
+        try {
+            $isTimeout = $this->livaPortalTimeoutResponse($policyIssuance);
+
+            if ($isTimeout) {
+                $policyIssuance->update([
+                    'status' => PolicyIssuanceEnum::TIMEOUT_STATUS,
+                ]);
+
+                LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updated Policy Issuance ID : '.$policyIssuance->id.' to TIMEOUT_STATUS');
+            }
+        } catch (\Exception $ex) {
+            LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
+                'errorMessage' => $ex->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Format LIVA date to Y-m-d format
+     */
+    private function formatDateToYmd(string $date): string
+    {
+        if (empty($date)) {
+            return '';
+        }
+
+        try {
+            return Carbon::parse($date)->format('Y-m-d');
+        } catch (Exception $ex) {
+            LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Failed to parse date: '.$date, extra: [
+                'error' => $ex->getMessage(),
+                'line' => $ex->getLine(),
+            ]);
+
+            return '';
+        }
     }
 }

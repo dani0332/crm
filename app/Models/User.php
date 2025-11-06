@@ -38,6 +38,8 @@ class User extends Authenticatable implements AuditableContract
         'email',
         'password',
         'profile_photo_path',
+        'is_ai_user',
+        'rm_category_id',
     ];
 
     /**
@@ -402,6 +404,11 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsTo(Department::class)->select('id', 'name');
     }
 
+    public function rmCategory()
+    {
+        return $this->belongsTo(Lookup::class, 'rm_category_id', 'id');
+    }
+
     public function advisors()
     {
         return $this->hasMany(InslyAdvisor::class);
@@ -474,5 +481,20 @@ class User extends Authenticatable implements AuditableContract
     public function getFirstFromLeadAllocation($quoteTypeId)
     {
         return $this->hasOne(LeadAllocation::class, 'user_id', 'id')->where('quote_type_id', $quoteTypeId)->first();
+    }
+
+    public function scopeAi($query)
+    {
+        $query->where('is_ai_user', true);
+    }
+
+    public static function getAiAdvisor()
+    {
+        return self::ai()->first();
+    }
+
+    public function isAi(): bool
+    {
+        return $this->is_ai_user ?? false;
     }
 }
