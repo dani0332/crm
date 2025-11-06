@@ -40,8 +40,9 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     {
         LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$processId.' inside constructor');
         $this->process = PolicyIssuance::find($processId);
-        if (!$this->process) {
+        if (! $this->process) {
             LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$processId.' not found');
+
             return;
         }
         $this->uniqueKey = 'policy-issuance-automation-id-'.$this->process->id;
