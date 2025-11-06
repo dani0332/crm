@@ -326,7 +326,7 @@ class CarQuoteService extends BaseService
             $carQuote->save();
 
             // Call capi api to verify OCR data
-           $this->verifyOCRData($carQuote);
+            $this->verifyOCRData($carQuote);
 
             $carQuoteDetails = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
             $carQuoteDetails->chassis_number = $request->chassis_number;
@@ -359,24 +359,24 @@ class CarQuoteService extends BaseService
 
     private function verifyOCRData(CarQuote $carQuote): void
     {
-         // Get OCR enabled status
-         $isOCREnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_ENABLED, useCache: true) == '1';
+        // Get OCR enabled status
+        $isOCREnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_ENABLED, useCache: true) == '1';
 
-         // Check if OCR is enabled and has OCR data
-         if ($isOCREnabled && $this->hasOCRData($carQuote->id, QuoteTypes::CAR->modelClass())) {
-             // Send request to Capi to verify documents
-             $requestData = [
-                 'quoteUuid' => $carQuote->uuid,
-                 'quoteTypeId' => QuoteTypes::getId(QuoteTypes::CAR),
-                 'callSource' => LeadSourceEnum::IMCRM,
-             ];
+        // Check if OCR is enabled and has OCR data
+        if ($isOCREnabled && $this->hasOCRData($carQuote->id, QuoteTypes::CAR->modelClass())) {
+            // Send request to Capi to verify documents
+            $requestData = [
+                'quoteUuid' => $carQuote->uuid,
+                'quoteTypeId' => QuoteTypes::getId(QuoteTypes::CAR),
+                'callSource' => LeadSourceEnum::IMCRM,
+            ];
 
-             LoggerService::info('Capi service request data', extra: $requestData);
-             $response = $this->capiService->request('/api/customer/documents-verify', 'PUT', $requestData);
-             LoggerService::info('Capi service response', extra: [
-                 'response' => $response,
-             ]);
-         }
+            LoggerService::info('Capi service request data', extra: $requestData);
+            $response = $this->capiService->request('/api/customer/documents-verify', 'PUT', $requestData);
+            LoggerService::info('Capi service response', extra: [
+                'response' => $response,
+            ]);
+        }
     }
 
     public function getEntity($id)
