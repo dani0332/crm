@@ -14,6 +14,7 @@ use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -151,6 +152,11 @@ class HealthQuote extends Model implements AuditableContract
     public function wcAdvisor()
     {
         return $this->hasOne(User::class, 'id', 'wcu_id');
+    }
+
+    public function supportUser()
+    {
+        return $this->belongsTo(User::class, 'support_user_id');
     }
 
     public function getFullNameAttribute()

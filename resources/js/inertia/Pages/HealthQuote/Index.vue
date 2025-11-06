@@ -1,10 +1,12 @@
 <script setup>
 import { computed } from 'vue';
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
 defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  supportUsers: Array,
   renewalBatches: Array,
   teams: Object,
   userMaxCap: Number,
@@ -21,6 +23,8 @@ defineProps({
   assignmentTypes: Object,
   insurerAMLStatus: Array,
   emirates: Array,
+  canAssignClientSupport: Boolean,
+  canAssignLeadAdvisor: Boolean,
 });
 
 const page = usePage();
@@ -40,6 +44,10 @@ const { isRequired } = useRules();
 
 const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
+
+const manualAssignmentSuccess = () => {
+  quotesSelected.value = [];
+};
 
 let params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
@@ -81,6 +89,7 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
+  { text: 'OE/AE', value: 'support_user.name', is_active: true },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
   {
     text: 'ADVISOR REQUESTED',
@@ -185,6 +194,7 @@ const filters = reactive({
   quote_status: [],
   insurer_aml_status: [],
   advisors: [],
+  support_user_id: [],
   is_ecommerce: '',
   is_renewal: '',
   previous_quote_policy_number: '',
@@ -256,6 +266,13 @@ const advisorOptions = computed(() => {
     value: advisor.id,
     label: advisor.name,
   }));
+});
+
+const supportUserOptions = computed(() => {
+  const list = Array.isArray(page.props.supportUsers)
+    ? page.props.supportUsers
+    : [];
+  return list.map(user => ({ value: user.id, label: user.name }));
 });
 
 const renewalBatchOptions = computed(() => {
@@ -909,6 +926,28 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
         <x-select
+          v-model="filters.support_user_id"
+          name="support_user_id"
+          label="OE/AE"
+          placeholder="Search by OE/AE"
+          :options="supportUserOptions"
+          filterable
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.support_user_id = supportUserOptions.map(
+                  option => option.value,
+                )
+              "
+              @clear="filters.support_user_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.insurer_aml_status"
           label="Insurer AML Status"
           name="insurer_aml_status"
@@ -1245,42 +1284,15 @@ const insurerAMLStatusOption = computed(() => {
         class="mb-4"
       >
         <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
-          <x-form @submit="onAssignLead" :auto-focus="false">
-            <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-select
-                v-model="assignForm.assign_team"
-                label="Assign Subteam"
-                :options="subTeamsOptions"
-                placeholder="Select Subteam"
-                class="flex-1 w-auto"
-                :rules="[isRequired]"
-                filterable
-                v-if="readOnlyMode.isDisable === true"
-              />
-              <x-select
-                v-model="assignForm.assigned_to_id_new"
-                label="Assign Advisor"
-                :options="advisorOptions"
-                placeholder="Select Advisor"
-                class="flex-1 w-auto"
-                :rules="[isRequired]"
-                filterable
-                v-if="readOnlyMode.isDisable === true"
-              />
-
-              <div class="mb-3 md:pt-6">
-                <x-button
-                  color="orange"
-                  size="sm"
-                  type="submit"
-                  :loading="assignForm.processing"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Assign
-                </x-button>
-              </div>
-            </div>
-          </x-form>
+          <LeadAssignment
+            :selected="quotesSelected.map(e => e.id)"
+            :advisors="advisorOptions"
+            :supportUsers="$page.props.supportUsers?.map(u => ({ value: u.id, label: u.name })) || []"
+            :canAssignClientSupport="$page.props.canAssignClientSupport"
+            :canAssignLeadAdvisor="$page.props.canAssignLeadAdvisor"
+            quoteType="health"
+            @success="manualAssignmentSuccess"
+          />
         </div>
       </div>
     </Transition>

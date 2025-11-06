@@ -320,6 +320,19 @@ class CRUDController extends Controller
             $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
             $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
 
+            $supportUsers = app(\App\Services\UserService::class)->getSupportUsers([
+                'product_filter' => \App\Enums\QuoteTypes::HEALTH,
+                'include_role_in_name' => true,
+                'return_format' => 'collection',
+            ]);
+
+            // LeadAssignment permissions (advisor) and support-users for Health
+            $canAssignLeadAdvisor = auth()->user()->isAdmin() || auth()->user()->isManagerORDeputy() || auth()->user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
+
+            $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT)
+                && Auth::user()->hasRole(RolesEnum::CLIENTSUPPORTLEAD)
+                && Auth::user()->hasProduct(\App\Enums\QuoteTypes::HEALTH->value);
+
             return inertia('HealthQuote/Index', [
                 'quotes' => $gridData,
                 'renewalBatches' => $renewalBatches,
@@ -337,6 +350,9 @@ class CRUDController extends Controller
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
                 'insurerAMLStatus' => $insurerAMLStatus,
                 'emirates' => $emirates,
+                'canAssignLeadAdvisor' => $canAssignLeadAdvisor,
+                'canAssignClientSupport' => $canAssignClientSupport,
+                'supportUsers' => $supportUsers,
             ]);
         }
 

@@ -57,6 +57,8 @@ class BusinessQuoteService extends BaseService
                 'bti.TEXT AS business_type_of_insurance_id_text',
                 'bqr.advisor_id',
                 'u.name as advisor_id_text',
+                'bqr.support_user_id',
+                'su.name as support_user_name',
                 'bqr.previous_advisor_id',
                 'uadv.name AS previous_advisor_id_text',
                 'bqr.quote_status_id',
@@ -143,6 +145,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'bqr.transaction_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
+            ->leftJoin('users as su', 'su.id', '=', 'bqr.support_user_id')
             ->leftJoin('users as uadv', 'uadv.id', '=', 'bqr.previous_advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('customer as c', 'bqr.customer_id', 'c.id')
@@ -385,6 +388,14 @@ class BusinessQuoteService extends BaseService
                 $query->where('bqr.policy_number', $request->previous_quote_policy_number)
                     ->orWhere('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
+        }
+        // Filter by support user (OE/AE)
+        if (isset($request->support_user_id) && is_array($request->support_user_id) && count($request->support_user_id) > 0) {
+            if (count($request->support_user_id) === 1 && $request->support_user_id[0] == '-1') {
+                $this->query->whereNull('bqr.support_user_id');
+            } else {
+                $this->query->whereIn('bqr.support_user_id', $request->support_user_id);
+            }
         }
         if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
             $this->query->whereIn('bqr.renewal_batch_id', $request->renewal_batches);

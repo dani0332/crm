@@ -43,9 +43,12 @@ use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
+use App\Services\UserService;
+use Illuminate\Support\Facades\Auth;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -99,6 +102,21 @@ class BusinessQuoteController extends Controller
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
+
+        // Support users and assignment permissions for LeadAssignment component
+        $supportUsers = app(UserService::class)->getSupportUsers([
+            'product_filter' => QuoteTypes::CORPLINE,
+            'include_role_in_name' => true,
+            'return_format' => 'collection',
+        ]);
+
+        $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT)
+            && Auth::user()->hasRole(RolesEnum::CLIENTSUPPORTLEAD)
+            && Auth::user()->hasProduct(QuoteTypes::CORPLINE->value);
+
+        $canAssignLeadAdvisor = auth()->user()->isAdmin()
+            || $isManagerORDeputy
+            || Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
         // PD Revert
         // $totalCount = count(request()->all()) > 1 || $hasOtherFilters ? $count : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
         $totalCount = 0;
@@ -107,7 +125,18 @@ class BusinessQuoteController extends Controller
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
-        return inertia('CorpLineQuote/Index', compact('quotes', 'renewalBatches', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays', 'insurerAMLStatus'));
+        return inertia('CorpLineQuote/Index', compact(
+            'quotes',
+            'renewalBatches',
+            'dropdownSource',
+            'isManualAllocationAllowed',
+            'canAssignClientSupport',
+            'canAssignLeadAdvisor',
+            'supportUsers',
+            'totalCount',
+            'authorizedDays',
+            'insurerAMLStatus'
+        ));
     }
 
     private function parseDate($date, $isStartOfDay)
