@@ -330,7 +330,7 @@ class PetQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'quoteDetail']
+            ['advisor', 'nationality', 'insuranceProvider', 'quoteDetail', 'customer']
         )->orderBy('created_at', 'desc');
     }
 }

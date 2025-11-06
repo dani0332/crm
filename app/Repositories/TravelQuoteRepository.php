@@ -55,7 +55,7 @@ class TravelQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
+            ['advisor', 'nationality', 'insuranceProvider', 'customer'])->orderBy('created_at', 'desc');
     }
 
     public function fetchCreateDuplicate(array $dataArr): object

@@ -3092,6 +3092,7 @@ class RenewalsUploadService
                 $quoteType = QuoteTypes::getName($product);
                 $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
                 $quotes = $repository::getData()->withQueryString();
+                $quotes->load('customer');
             }
         } catch (\Exception $e) {
             LoggerService::error('UAC FN: getSearch Error: '.$e->getMessage());

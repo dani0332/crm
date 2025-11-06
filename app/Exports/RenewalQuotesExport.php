@@ -34,7 +34,8 @@ class RenewalQuotesExport
             'Previous Gross premium',
             'Previous advisor',
             'Previous Commission',
-            'PC Tagging',
+            'Lead Level PC Tag',
+            'Customer Level PC Tag',
             $this->exportType == 'BUSINESS' ? 'Business Type' : '',
         ];
     }
@@ -73,6 +74,7 @@ class RenewalQuotesExport
             $quote->previousAdvisor != null ? $quote->previousAdvisor->name : '',
             $payment != null ? $payment->commission : 'N/A',
             (isset($quote->pc_qualified) && $quote->pc_qualified == 1) ? 'Yes' : 'No',
+            $quote->customer?->pcp_tag == 1 ? 'Yes' : 'No',
             $this->exportType == 'BUSINESS' ? ($quote->business_type_of_insurance_id == 5 ? quoteStatusCode::GROUP_MEDICAL : quoteTypeCode::CORPLINE) : '',
         ];
     }

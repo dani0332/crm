@@ -151,6 +151,7 @@ class CarQuoteRepository extends BaseRepository
                 'insuranceProvider',
                 'carQuoteRequestDetail',
                 'car_type_insurance_id',
+                'customer',
             ])
             ->orderBy('created_at', 'desc');
     }
