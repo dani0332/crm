@@ -694,6 +694,12 @@ export const applyEmiratesNumberMasking = emiratesId =>
 
 export const applyScreeningIdNumberMasking = screeningId =>
 {
+  // Handle null, undefined, or empty values
+  if (!screeningId || typeof screeningId !== 'string')
+  {
+    return screeningId ?? null;
+  }
+
   let screeningIdNumber = screeningId.replace(
     /\D/g,
     '',
