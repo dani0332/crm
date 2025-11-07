@@ -238,12 +238,14 @@ const validateUpfrontCapture = paymentRecord => {
   if (paymentSplitRec.payment_method?.code === paymentMethodsEnum.CreditCard)
     return getCaptureValidStatuses(paymentSplitRec);
   const isIPPending =
-    paymentSplitRec.payment_method?.code === paymentMethodsEnum.InsurerPayment &&
+    paymentSplitRec.payment_method?.code ===
+      paymentMethodsEnum.InsurerPayment &&
     (paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING ||
       (paymentSplitRec.payment_status_id === paymentStatusEnum.PARTIALLY_PAID &&
         paymentRecord.collection_type === 'insurer'));
   const isCAPayment =
-    paymentSplitRec.payment_method?.code === paymentMethodsEnum.CreditApproval &&
+    paymentSplitRec.payment_method?.code ===
+      paymentMethodsEnum.CreditApproval &&
     paymentSplitRec.payment_status_id === paymentStatusEnum.CREDIT_APPROVED;
   const isPaidPayment =
     paymentSplitRec.payment_status_id === paymentStatusEnum.PAID;
