@@ -252,7 +252,7 @@ const isInsureNowPayLaterAllowed = computed(() => {
     if (props.payments.length > 0) {
       let inureNowPayLaterExists = props.payments[0].payment_splits.find(
         item =>
-          item.payment_method.code ===
+          item.payment_method?.code ===
           page.props.paymentMethodsEnum?.InsureNowPayLater,
       );
       if (inureNowPayLaterExists) {
@@ -1069,7 +1069,7 @@ const initializePaymentForm = (
     paymentMethodsForm.splitPaymentId = split_payment_id;
     paymentMethodsForm.status = 'view';
     paymentMethodsForm.collection_amount = '';
-    paymentMethodsForm.payment_method = payment.payment_method.code;
+    paymentMethodsForm.payment_method = payment.payment_method?.code;
     paymentMethodsForm.bank_reference_number = '';
     splitPaymentRecord.value = payment.payment_splits?.find(
       item => item.sr_no === sr_no,
@@ -1569,7 +1569,7 @@ const applyPermissions = () => {
     if (
       paymentMethodsForm.status === 'view' &&
       can(permissionEnum.INPL_APPROVER) &&
-      splitPaymentRecord.value.payment_method.code ===
+      splitPaymentRecord.value.payment_method?.code ===
         page.props.paymentMethodsEnum?.InsureNowPayLater
     ) {
       isVerificationAllowed.value = true;
@@ -1607,7 +1607,7 @@ const processPaymentSplits = payment => {
     authorizedPayments.value[i] =
       split.payment_status_id === paymentStatusEnum.AUTHORISED;
     fileUploadModels.value[i] = [];
-    paymentMethodsModels.value[i] = split.payment_method.code;
+    paymentMethodsModels.value[i] = split.payment_method?.code;
     splitAmountModels.value[i] = split.payment_amount;
     if (i === insurerPaymentLinkIndex.value) {
       paymentMethodsForm.insurerPaymentLink = split.insurer_payment_link;
@@ -1619,7 +1619,7 @@ const processPaymentSplits = payment => {
       ? premiumToCapture.value
       : split.collection_amount;
 
-    if (['CHQ', 'PDC'].includes(split.payment_method.code)) {
+    if (['CHQ', 'PDC'].includes(split.payment_method?.code)) {
       isCheckDetailsEnabled.value[i] = true;
       checkDetailModels.value[i] = split.check_detail;
     }
