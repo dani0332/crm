@@ -18,7 +18,6 @@ use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
-use App\Services\EmailServices\TravelEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
