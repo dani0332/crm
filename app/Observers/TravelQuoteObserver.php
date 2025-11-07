@@ -78,7 +78,6 @@ class TravelQuoteObserver
                 } else {
                     $oldAdvisorId = $changes['advisor_id']['old'];
                     TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
-                    // app(TravelEmailService::class)->handleAutomatedFollowup($travelQuote);
                 }
             } catch (Exception $e) {
                 Log::error('TravelQuoteObserver - travel quote advisor updated failed', [
