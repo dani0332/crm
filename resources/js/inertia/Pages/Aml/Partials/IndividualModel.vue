@@ -78,6 +78,10 @@ const gender = computed(() => {
   ];
 });
 
+// Wrapper function for screening ID masking utility
+const applyScreeningIdMask = screeningId =>
+  applyScreeningIdNumberMasking(screeningId);
+
 const insuredFormDetails = useForm({
   customer_id: props.quoteDetails.customer_id,
   customer_type: props.customerTypeEnum.Individual,
@@ -116,7 +120,11 @@ const insuredFormDetails = useForm({
   id_issuance_authority:
     props.entityDetails?.entity?.id_issuance_authority ?? null,
   screening_id_type: props.insuredPersonDetails?.insured?.id_type ?? null,
-  screening_id_number: props.insuredPersonDetails?.insured?.id_number ?? null,
+  screening_id_number:
+    props.insuredPersonDetails?.insured?.id_number &&
+    props.insuredPersonDetails?.insured?.id_type === 'emiratesId'
+      ? applyScreeningIdMask(props.insuredPersonDetails.insured.id_number)
+      : (props.insuredPersonDetails?.insured?.id_number ?? null),
 
   insured_first_name:
     props.insuredPersonDetails?.insured?.first_name ??
@@ -489,33 +497,9 @@ const documentIDTypeForScreening = computed(() => {
 });
 
 const applyScreeningIdNumMasking = () => {
-  let screeningIdNumber = insuredFormDetails.screening_id_number.replace(
-    /\D/g,
-    '',
+  insuredFormDetails.screening_id_number = applyScreeningIdMask(
+    insuredFormDetails.screening_id_number,
   );
-  if (screeningIdNumber?.length > 15) {
-    screeningIdNumber = screeningIdNumber.substring(0, 15); // Limit to 15 characters
-  }
-  if (screeningIdNumber?.length <= 3) {
-    screeningIdNumber = screeningIdNumber.replace(/(\d{3})(\d{0,})/, '$1-$2');
-  } else if (screeningIdNumber?.length <= 7) {
-    screeningIdNumber = screeningIdNumber.replace(
-      /(\d{3})(\d{4})(\d{0,})/,
-      '$1-$2-$3',
-    );
-  } else if (screeningIdNumber?.length <= 13) {
-    screeningIdNumber = screeningIdNumber.replace(
-      /(\d{3})(\d{4})(\d{7})(\d{0,})/,
-      '$1-$2-$3-$4',
-    );
-  } else {
-    screeningIdNumber = screeningIdNumber.replace(
-      /(\d{3})(\d{4})(\d{7})(\d{1,})/,
-      '$1-$2-$3-$4',
-    );
-  }
-
-  insuredFormDetails.screening_id_number = screeningIdNumber;
 };
 
 const validatePassportNumber = eventType => {
