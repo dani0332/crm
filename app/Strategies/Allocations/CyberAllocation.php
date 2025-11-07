@@ -7,6 +7,7 @@ use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
 use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
 use App\Pipes\Allocation\Cyber\AssignLeadPipe;
+use App\Pipes\Allocation\Cyber\EvaluateTeamPipe;
 use App\Pipes\Allocation\Cyber\FetchAvailableAdvisorPipe;
 use App\Pipes\Allocation\Cyber\VerifyLeadPreChecksPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -45,6 +46,7 @@ class CyberAllocation implements Allocation
                 FetchLeadPipe::class,
                 VerifyLeadPreChecksPipe::class,
                 VerifyAlreadyInProgressAllocationPipe::class,
+                EvaluateTeamPipe::class,
                 FetchAvailableAdvisorPipe::class,
                 AssignLeadPipe::class,
                 MakeResponsePipe::class,
@@ -52,10 +54,8 @@ class CyberAllocation implements Allocation
 
         } catch (Exception $e) {
             LoggerService::error(self::class.' - Exception occurred in Cyber allocation pipeline', extra: [
-                'uuid' => $this->uuid,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+                'uuid' => $this->uuid
+            ], exception: $e);
 
             return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, $e);
         }

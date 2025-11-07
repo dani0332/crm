@@ -72,6 +72,7 @@ class CyberQuoteService extends BaseQuoteService
     public function getOne(string $uuid, $allDetails = false)
     {
         return $this->baseQuery()
+            ->with('cyberQuoteRequest')
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
                 $individualCustomerType = CustomerTypeEnum::Individual;
@@ -283,12 +284,16 @@ class CyberQuoteService extends BaseQuoteService
             $quote = $this->baseQuery()->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'emirate_of_registration_id',
+                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id',
             ]);
 
             $quoteData['updated_by_id'] = Auth::id();
-
             $quote->update($quoteData);
+
+            $quote->cyberQuoteRequest()->updateOrCreate(
+                ['personal_quote_id' => $quote->id],
+                Arr::only($data, ['emirate_of_registration_id'])
+            );
 
             return $quote;
         });

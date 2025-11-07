@@ -3,8 +3,6 @@
 namespace App\Pipes\Allocation\Cyber;
 
 use App\Enums\RolesEnum;
-use App\Enums\UserStatusEnum;
-use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
@@ -18,7 +16,17 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         $this->setRequest($request);
 
-        $advisor = $this->fetchAvailableAdvisor();
+        $teamId = $this->allocationRequest->getTeamId();
+
+        if ($teamId) {
+            LoggerService::info(self::class.' - Fetching Cyber advisor using team-based allocation (Hapex)', extra: [
+                'teamId' => $teamId,
+            ]);
+        } else {
+            LoggerService::info(self::class.' - Fetching Cyber advisor using hardcoded email list');
+        }
+
+        $advisor = $this->findAvailableAdvisor($teamId);
 
         if (! $advisor) {
             LoggerService::info(self::class.' - No Cyber advisor available for allocation');
@@ -37,10 +45,42 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return $next($request);
     }
 
-    protected function fetchAvailableAdvisor()
+    protected function getAdvisorByStatus($onlineStatus, $teamId)
     {
-        LoggerService::info(self::class.' - Fetching Cyber advisor using hardcoded email list');
+        LoggerService::info(self::class." - Searching for Cyber advisor with status: {$onlineStatus}");
 
+        if ($teamId) {
+            return $this->getAdvisorForHapexTeam($onlineStatus, $teamId);
+        }
+
+        return $this->getAdvisorByHardcodedEmails($onlineStatus);
+    }
+
+    protected function getAdvisorForHapexTeam($onlineStatus, $teamId)
+    {
+        $advisorRecord = $this->getAdvisorBaseQuery(
+            onlineStatus: $onlineStatus,
+            teamId: $teamId,
+            roles: [RolesEnum::TravelHapex],
+            isBuyLead: false,
+            skipMaxCapCheck: false
+        )
+            ->logRawSql()
+            ->first();
+
+        if ($advisorRecord) {
+            LoggerService::info(self::class.' - Found Cyber Hapex advisor', extra: [
+                'advisorId' => $advisorRecord->user_id,
+                'status' => $onlineStatus,
+                'teamId' => $teamId,
+            ]);
+        }
+
+        return $advisorRecord;
+    }
+
+    protected function getAdvisorByHardcodedEmails($onlineStatus)
+    {
         $emails = $this->getAdvisorEmails();
 
         if (empty($emails)) {
@@ -49,46 +89,26 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             return null;
         }
 
-        LoggerService::info(self::class.' - Searching for Cyber advisors', extra: [
-            'emailCount' => count($emails),
-            'emails' => $emails,
-        ]);
+        $advisorRecord = $this->getAdvisorBaseQuery(
+            onlineStatus: $onlineStatus,
+            teamId: null,
+            roles: [RolesEnum::CyberAdvisor],
+            isBuyLead: false,
+            skipMaxCapCheck: true
+        )
+            ->whereIn('users.email', $emails)
+            ->logRawSql()
+            ->first();
 
-        $statusOrder = $this->getOnlineStatusesInOrder();
-
-        foreach ($statusOrder as $status) {
-            LoggerService::info(self::class." - Trying to find Cyber advisor with status: {$status}");
-
-            $advisorRecord = $this->getAdvisorBaseQuery(
-                onlineStatus: $status,
-                teamId: null,
-                roles: [RolesEnum::CyberAdvisor],
-                isBuyLead: false,
-                skipMaxCapCheck: true
-            )
-                ->whereIn('users.email', $emails)
-                ->logRawSql()
-                ->first();
-
-            if ($advisorRecord) {
-                $advisor = User::find($advisorRecord->user_id);
-
-                if ($advisor) {
-                    LoggerService::info(self::class." - Found Cyber advisor with status: {$status}", extra: [
-                        'advisorId' => $advisor->id,
-                        'advisorEmail' => $advisor->email,
-                        'advisorStatus' => $status,
-                        'capacityCheckSkipped' => true,
-                    ]);
-
-                    return $advisor;
-                }
-            }
+        if ($advisorRecord) {
+            LoggerService::info(self::class.' - Found Cyber advisor from hardcoded email list', extra: [
+                'advisorId' => $advisorRecord->user_id,
+                'status' => $onlineStatus,
+                'capacityCheckSkipped' => true,
+            ]);
         }
 
-        LoggerService::info(self::class.' - No Cyber advisor found across all status levels');
-
-        return null;
+        return $advisorRecord;
     }
 
     private function getAdvisorEmails(): array
