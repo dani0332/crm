@@ -6,9 +6,9 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
+use App\Enums\OCRSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\OCRSourceEnum;
 use App\Events\OcrNotifications;
 use App\Jobs\OCR\PopulateDocumentData;
 use App\Models\BusinessQuote;
@@ -36,7 +36,7 @@ class OCRService
         protected OcrLogService $ocrLogService
     ) {}
 
-    private function sendRequest(string $endpoint, array $data = [], bool $isEcom, string $method = 'POST')
+    private function sendRequest(string $endpoint, array $data, bool $isEcom, string $method = 'POST')
     {
         try {
             $response = Http::baseUrl(config('constants.OCR_API_ENDPOINT'))
