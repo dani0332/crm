@@ -1613,8 +1613,6 @@ const copyLink = () => {
 
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />
 
-    <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
-
     <AuditLogs
       :quote-type="quoteType"
       :id="$page.props.quote.id"
@@ -1622,7 +1620,14 @@ const copyLink = () => {
       :expanded="sectionExpanded"
     />
 
+    <ApiLogs
+     v-if="can(permissionsEnum.API_LOG_VIEW)"
+     :type="modelClass"
+     :id="$page.props.quote.id"
+     />
+
    <OcrLogs
+    v-if="can(permissionsEnum.API_LOG_VIEW)"
     :type="modelClass"
     :id="$page.props.quote.id"
     :expanded="sectionExpanded"
