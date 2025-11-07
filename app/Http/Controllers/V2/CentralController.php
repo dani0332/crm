@@ -222,6 +222,7 @@ class CentralController extends Controller
                 'dob' => $customer->dob,
                 'nationality_id' => $customer->nationality_id,
                 'gender' => $customer->screening_gender,
+                'customer_type' => $customerProfileRequest->customer_type,
             ]);
 
             CustomerInsured::updateOrCreate([
