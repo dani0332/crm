@@ -96,7 +96,9 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Jobs\PolicyIssuanceJob;
 use App\Models\BorLog;
+use App\Models\PolicyIssuance;
 use App\Services\AddBatchForNonMotors;
 use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;
@@ -962,5 +964,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         $pdfData = $borPdfService->preparePdfData($borLog, $borLog->personalQuote, true);
 
         return view('pdf.bor-document', $pdfData);
+    });
+
+    // Cyber Quote Policy Automation Routes for testing purposes
+    Route::get('/trigger-policy-document-update', function () {
+        $policyIssuanceProcess = PolicyIssuance::where('id', 1658)->first();
+
+        PolicyIssuanceJob::dispatch($policyIssuanceProcess);
+        echo 'Done';
     });
 });
