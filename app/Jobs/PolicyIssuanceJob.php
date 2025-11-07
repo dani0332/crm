@@ -55,9 +55,10 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public function handle(): void
     {
         try {
+            LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
+            
             $this->process = $this->process->refresh();
 
-            LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
 
             if ($this->isProcessable($this->process)) {
                 $processingStatus = $this->process->status === PolicyIssuanceEnum::PENDING_STATUS ? PolicyIssuanceEnum::PROCESSING_STATUS : PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS;
