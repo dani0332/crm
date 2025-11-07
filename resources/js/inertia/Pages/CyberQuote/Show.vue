@@ -8,6 +8,7 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import OcrLogs from '../../Components/OcrLogs.vue';
 
 const props = defineProps({
   quote: Object,
@@ -1620,6 +1621,12 @@ const copyLink = () => {
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
+
+   <OcrLogs
+    :type="modelClass"
+    :id="$page.props.quote.id"
+    :expanded="sectionExpanded"
+   />
 
     <lead-raw-data
       :modelType="'Cyber'"
