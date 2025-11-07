@@ -483,12 +483,6 @@ class TravelEmailService extends BaseService
             LoggerService::info('sendAutomatedTravelFollowup - Response: '.json_encode($response));
 
             if ($response && $response->status_code === 200) {
-                // Mark the automated flow as executed
-                if (empty($travelQuote->automated_flow_executed_at)) {
-                    $travelQuote->automated_flow_executed_at = now();
-                    $travelQuote->save();
-                    LoggerService::info('sendAutomatedTravelFollowup - Automated flow timestamp updated for TravelQuote');
-                }
 
                 app(BirdService::class)->createQuoteWorkFlowDetails($travelQuote, $response, QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::TRAVEL->id());
                 LoggerService::info('sendAutomatedTravelFollowup - Successfully triggered automated follow-up workflow');
