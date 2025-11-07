@@ -781,12 +781,12 @@ const providerName = computed(() => {
       provider => provider.id === providerId.value,
     );
 
-    return provider.text || 'Not Available';
+    return provider?.text || 'Not Available';
   } else if (
     ecomQuoteType.includes(props.quoteType) &&
-    plan.insurance_provider
+    plan?.insurance_provider
   ) {
-    return plan ? plan.insurance_provider.text : 'Not Available';
+    return plan ? plan.insurance_provider?.text : 'Not Available';
   } else {
     return plan ? plan.text : 'Not Available';
   }
@@ -1071,14 +1071,14 @@ const initializePaymentForm = (
     paymentMethodsForm.collection_amount = '';
     paymentMethodsForm.payment_method = payment.payment_method?.code;
     paymentMethodsForm.bank_reference_number = '';
-    splitPaymentRecord.value = payment.payment_splits.find(
+    splitPaymentRecord.value = payment.payment_splits?.find(
       item => item.sr_no === sr_no,
     );
     paymentMethodsForm.system_adjusted_discount =
       payment.system_adjusted_discount;
   }
 
-  masterPaymentStatus.value = payment.payment_status?.text;
+  masterPaymentStatus.value = payment.payment_status?.text || 'NEW';
   paymentMethodsForm.paymentCode = payment.code;
   paymentMethodsForm.insurance_provider_id = payment.insurance_provider_id;
   paymentMethodsForm.collection_type = payment.collection_type;
@@ -1624,7 +1624,7 @@ const processPaymentSplits = payment => {
       checkDetailModels.value[i] = split.check_detail;
     }
 
-    if (split.documents.length > 0) {
+    if (split.documents && split.documents.length > 0) {
       split.documents.forEach(doc => {
         if (doc.payment_split_type === 'discount') {
           if (!discountDocumentModel.value[0]) {
@@ -2342,7 +2342,7 @@ const resetTotalPayments = () => {
 const getPlanName = computed(() => {
   const plan = props.planDetail;
   if (props.quoteType === quoteTypeCodeEnum.Bike) {
-    return plan ? props.quoteRequest.car_plan.text : 'Not Available';
+    return plan ? props.quoteRequest.car_plan?.text : 'Not Available';
   }
   if (props.sendUpdate) {
     return props.planText || 'Not Available';
