@@ -22,6 +22,7 @@ use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Cyber\AwniInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -45,6 +46,10 @@ class PolicyIssuanceService
                 InsuranceProvidersEnum::RSA => new LivaInsuranceService,
                 InsuranceProvidersEnum::AXA => new GIGInsuranceService,
 
+                default => null,
+            },
+            QuoteTypes::CYBER->value => match ($insurerCode) {
+                InsuranceProvidersEnum::AWNI => new AwniInsuranceService,
                 default => null,
             },
             default => null,

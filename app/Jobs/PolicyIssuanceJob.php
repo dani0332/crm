@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\EnvEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Models\PolicyIssuance;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -34,10 +35,10 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($process)
+    public function __construct($processId)
     {
         $this->timeout = config('constants.APP_ENV') == EnvEnum::PRODUCTION ? 90 : 120;
-        $this->process = $process;
+        $this->process = PolicyIssuance::find($processId);
         $this->uniqueKey = 'policy-issuance-automation-id-'.$this->process->id;
     }
 
