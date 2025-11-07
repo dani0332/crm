@@ -24,13 +24,13 @@ class CyberEmailService extends BaseService
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CYBER_OCB_INTRO_EMAIL)->first();
 
         LoggerService::info('| sendCyberOCBIntroEmail - Initiating process');
-
+        $advisor = null;
         if ($workflowUrl && ! empty($workflowUrl->value)) {
             // Fetch the advisor
             $advisor = User::find($lead->advisor_id);
         }
 
-        if (! $advisor) {
+        if (empty($advisor)) {
             LoggerService::info('sendCyberOCBIntroEmail - Advisor not found');
         }
 
@@ -48,7 +48,6 @@ class CyberEmailService extends BaseService
     private function buildEmailData($lead, $advisor, $workflowType)
     {
         return [
-            'advisorDetails' => $advisor,
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorLandLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
             'advisorMobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),

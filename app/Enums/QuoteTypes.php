@@ -49,6 +49,7 @@ use App\Strategies\Allocations\TravelAllocation;
 use App\Strategies\Allocations\YachtAllocation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
+use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 
 enum QuoteTypes: string
 {
@@ -195,6 +196,7 @@ enum QuoteTypes: string
             self::CAR => SendCarOCBIntroEmailJob::class,
             self::TRAVEL => SendTravelOCBIntroEmailJob::class,
             self::HOME => SendHomeOCBIntroEmailJob::class,
+            self::CYBER => SendCyberOCBIntroEmailJob::class,
             // self::HEALTH => SendHealthOCBIntroEmailJob::class,
             default => null,
         };
@@ -205,6 +207,7 @@ enum QuoteTypes: string
         return match ($this) {
             self::CAR => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL'),
             self::TRAVEL => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
+            self::CYBER => config('constants.ECOM_CYBER_INSURANCE_QUOTE_URL'),
             default => null,
         };
     }
