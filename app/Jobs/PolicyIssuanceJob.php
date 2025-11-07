@@ -3,8 +3,11 @@
 namespace App\Jobs;
 
 use App\Enums\PolicyIssuanceEnum;
+use App\Models\PolicyIssuance;
+use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -13,11 +16,12 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class PolicyIssuanceJob implements ShouldQueue
+class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 120;
+    public $timeout = 180; // 3 minutes - increased for policy issuance dispatch
+    public $uniqueFor = 185;
     public $tries = 3;
 
     private const TIMEOUT_MESSAGE = 'cURL error 28';
@@ -32,10 +36,16 @@ class PolicyIssuanceJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($process)
+    public function __construct($processId)
     {
-        $this->process = $process;
-        $this->uniqueKey = 'policy-issuance-automation-id-'.$this->process->id;
+        LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$processId.' inside constructor');
+        $this->uniqueKey = 'policy-issuance-automation-id-'.$processId;
+        $this->process = PolicyIssuance::find($processId);
+        if (! $this->process) {
+            LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$processId.' not found');
+
+            return;
+        }
     }
 
     /**
@@ -44,20 +54,20 @@ class PolicyIssuanceJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            $this->process = $this->process->refresh();
+            LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
 
-            info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
+            $this->process = $this->process->refresh();
 
             if ($this->isProcessable($this->process)) {
                 $processingStatus = $this->process->status === PolicyIssuanceEnum::PENDING_STATUS ? PolicyIssuanceEnum::PROCESSING_STATUS : PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS;
                 $this->process->update(['status' => $processingStatus]);
-                info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
+                LoggerService:info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
 
                 $quoteType = $this->process?->quote_type;
                 $insuranceProvider = $this->process?->insuranceProvider;
 
                 if (! $insuranceProvider) {
-                    info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Insurance Provider not found');
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Insurance Provider not found');
 
                     return;
                 }
@@ -65,23 +75,23 @@ class PolicyIssuanceJob implements ShouldQueue
                 $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
                 if ($insuranceProviderAutomation) {
                     $response = $insuranceProviderAutomation->executeSteps($this->process);
-                    info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Response : '.json_encode($response));
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Response : ', $response);
                     if (! $response['status']) {
                         $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $response['error']])]);
-                        info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.json_encode($response['error']));
+                        LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : ', extra: ['error' => $response['error']]);
                     } else {
                         $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
-                        info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
+                        LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
                     }
 
                 } else {
-                    info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - '.$insuranceProvider->text.' Automation not found');
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - '.$insuranceProvider->text.' Automation not found');
                 }
             } else {
-                info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Status : '.$this->process->status.' is skipped.');
+                LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Status : '.$this->process->status.' is skipped.');
             }
 
-            info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' completed');
+            LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' completed');
         } catch (\Throwable $e) {
             // Catch any exception that occurs during job execution
             // This will capture the ORIGINAL exception before it becomes "attempted too many times"
