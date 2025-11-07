@@ -283,7 +283,6 @@ class TravelEmailService extends BaseService
                 $emailData->pdfAttachment = (object) $pdf;
                 info(self::class." - attaching pdf: {$lead->uuid}");
             }
-            $this->updateTravelQuoteStatus($lead->uuid);
         }
 
         // trigger SIC workflow
@@ -296,10 +295,13 @@ class TravelEmailService extends BaseService
 
             // Send intro email first
             $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email', QuoteTypes::TRAVEL);
+            $this->handleAutomatedFollowup($lead);
 
-            // Then dispatch automated travel follow-up (has built-in duplicate check)
+            // Only update status if email was successfully sent
             if (in_array($responseCode, [200, 201])) {
-                $this->handleAutomatedFollowup($lead);
+                if ($quotePlansCount > 0) {
+                    $this->updateTravelQuoteStatus($lead->uuid);
+                }
             } else {
                 LoggerService::info(self::class." - Intro email failed with code {$responseCode}, skipping automated followup for uuid: {$lead->uuid}");
             }
@@ -312,6 +314,10 @@ class TravelEmailService extends BaseService
         $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId, QuoteTypes::TRAVEL);
 
         if ($responseCode) {
+            // Only update status if email was successfully sent and there are plans
+            if ($quotePlansCount > 0) {
+                $this->updateTravelQuoteStatus($lead->uuid);
+            }
 
             // Dispatch the job with a 24 hours delay
             if (isLeadSic($lead->uuid)) {
