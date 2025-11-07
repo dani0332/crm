@@ -295,8 +295,6 @@ class TravelEmailService extends BaseService
 
             // Send intro email first
             $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email', QuoteTypes::TRAVEL);
-            $this->handleAutomatedFollowup($lead);
-
             // Only update status if email was successfully sent
             if (in_array($responseCode, [200, 201])) {
                 if ($quotePlansCount > 0) {
@@ -305,6 +303,8 @@ class TravelEmailService extends BaseService
             } else {
                 LoggerService::info(self::class." - Intro email failed with code {$responseCode}, skipping automated followup for uuid: {$lead->uuid}");
             }
+
+            $this->handleAutomatedFollowup($lead);
 
             return $responseCode;
         }
