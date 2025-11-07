@@ -6,14 +6,13 @@ namespace App\Services\OCR\EmiratesId;
 
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Exceptions\OCR\OcrProcessingException;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Lookup;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use Exception;
@@ -370,8 +369,12 @@ class EmiratesIdDataProcessor
 
     private function getQuoteTypeId(): int
     {
-        // Currently only supporting Car quotes for Emirates ID OCR
-        return QuoteTypes::getId(QuoteTypes::CAR) ?? QuoteTypeId::Car;
+        // Using this approach to get quote type id in all lobs
+        $personalQuote = PersonalQuote::where('uuid', $this->quote->uuid)
+            ->select('quote_type_id')
+            ->first();
+
+        return $personalQuote->quote_type_id;
     }
 
     public function getProcessingSummary(): array
