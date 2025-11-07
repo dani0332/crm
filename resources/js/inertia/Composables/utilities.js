@@ -1,5 +1,4 @@
-export const useRoundIt = (num, decimalPlaces = 2) =>
-{
+export const useRoundIt = (num, decimalPlaces = 2) => {
   const p = Math.pow(10, decimalPlaces);
   const n = num * p * (1 + Number.EPSILON);
   return Math.round(n) / p;
@@ -11,8 +10,7 @@ export const useRoundIt = (num, decimalPlaces = 2) =>
  * @param {Date|string} date - Date object or date string to format
  * @returns {string} - Date in YYYY-MM-DD format, empty string if invalid
  */
-export const useFormatDateToYMD = date =>
-{
+export const useFormatDateToYMD = date => {
   if (!date) return '';
   const d = new Date(date);
   if (isNaN(d.getTime())) return '';
@@ -27,10 +25,8 @@ export const useFormatDateToYMD = date =>
   );
 };
 
-export const useCleanObj = reactive =>
-{
-  Object.keys(reactive).forEach(key =>
-  {
+export const useCleanObj = reactive => {
+  Object.keys(reactive).forEach(key => {
     if (
       reactive[key] === null ||
       reactive[key] === undefined ||
@@ -38,24 +34,20 @@ export const useCleanObj = reactive =>
       reactive[key] === false ||
       reactive[key].length === 0 ||
       (typeof reactive[key] === 'string' && reactive[key].trim() === '')
-    )
-    {
+    ) {
       delete reactive[key];
     }
   });
   return reactive;
 };
 
-export const useObjToUrl = obj =>
-{
+export const useObjToUrl = obj => {
   Object.keys(obj).forEach(
     key => (obj[key] === '' || obj[key]?.length === 0) && delete obj[key],
   );
   return Object.keys(obj)
-    .map(key =>
-    {
-      if (Array.isArray(obj[key]))
-      {
+    .map(key => {
+      if (Array.isArray(obj[key])) {
         return obj[key].map(value => `${key}[]=${value}`).join('&');
       }
       return `${key}=${obj[key]}`;
@@ -67,8 +59,7 @@ export const useGetShowPageRoute = (
   uuid,
   quoteTypeId,
   business_type_of_insurance_id,
-) =>
-{
+) => {
   let business_route =
     business_type_of_insurance_id == 5
       ? route('amt.show', uuid)
@@ -92,47 +83,37 @@ export const useGetShowPageRoute = (
 };
 
 // Function to format the date
-export const formatDate = dateObject =>
-{
-  if (dateObject && dateObject.$date && dateObject.$date.$numberLong)
-  {
+export const formatDate = dateObject => {
+  if (dateObject && dateObject.$date && dateObject.$date.$numberLong) {
     const timestamp = parseInt(dateObject.$date.$numberLong);
     const formattedDate = new Date(timestamp);
     const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
     return formattedDate.toLocaleDateString('en-US', options);
-  } else if (dateObject && dateObject.includes('-'))
-  {
+  } else if (dateObject && dateObject.includes('-')) {
     return dateObject;
   }
   return null;
 };
 
-export const useGenerateQueryString = filters =>
-{
+export const useGenerateQueryString = filters => {
   const query = {};
-  Object.keys(filters).forEach(key =>
-  {
-    if (Array.isArray(filters[key]) && filters[key].length > 0)
-    {
+  Object.keys(filters).forEach(key => {
+    if (Array.isArray(filters[key]) && filters[key].length > 0) {
       query[key] = filters[key];
-    } else if (filters[key] !== '' && filters[key] != null)
-    {
+    } else if (filters[key] !== '' && filters[key] != null) {
       query[key] = filters[key];
     }
   });
   return query;
 };
 
-export const useConvertDate = date =>
-{
-  if (date == null)
-  {
+export const useConvertDate = date => {
+  if (date == null) {
     return null;
   }
 
   const splitedDate = date.split('-');
-  if (splitedDate[0].length === 4)
-  {
+  if (splitedDate[0].length === 4) {
     return date;
   }
 
@@ -140,49 +121,40 @@ export const useConvertDate = date =>
   return `${year}-${month}-${day}`;
 };
 
-export const useDaysSinceStale = payload =>
-{
+export const useDaysSinceStale = payload => {
   const quoteRequest = payload;
   let stale_days = quoteRequest
     ? Math.round((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
     : false;
 
-  if (typeof stale_days === 'number' && stale_days <= 90)
-  {
+  if (typeof stale_days === 'number' && stale_days <= 90) {
     stale_days += 1;
-    if (stale_days == 1)
-    {
+    if (stale_days == 1) {
       return stale_days + ' day';
     } else return stale_days + ' days';
-  } else
-  {
+  } else {
     return false;
   }
 };
 
-export const useFormatPrice = (price, thousandSeparator = false) =>
-{
+export const useFormatPrice = (price, thousandSeparator = false) => {
   return thousandSeparator
     ? parseFloat(price).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
     : parseFloat(price).toFixed(2);
 };
 
-export const useFileUploadErrorMessage = (doc, rejectReason) =>
-{
+export const useFileUploadErrorMessage = (doc, rejectReason) => {
   let errorMessage = '';
-  if (rejectReason.code == 'file-too-large')
-  {
+  if (rejectReason.code == 'file-too-large') {
     errorMessage =
       'File size must be less than ' + doc.max_size + ' MB for ' + doc.text;
-  } else if (rejectReason.code == 'file-invalid-type')
-  {
+  } else if (rejectReason.code == 'file-invalid-type') {
     errorMessage =
       'You can only upload a ' + doc.accepted_files + ' for ' + doc.text;
-  } else
-  {
+  } else {
     errorMessage =
       'You can only upload a ' +
       doc.accepted_files +
@@ -209,8 +181,7 @@ export const useFileUploadErrorMessage = (doc, rejectReason) =>
 //   return errorMessage;
 // };
 
-export const useCompareDueDate = dueDateString =>
-{
+export const useCompareDueDate = dueDateString => {
   // reminder needs to be changed after testing
   const currentDate = new Date();
 
@@ -224,13 +195,10 @@ export const useCompareDueDate = dueDateString =>
   return currentDate > dueDate;
 };
 
-export const useCalculateTotalSum = (data, key) =>
-{
-  const totalSum = data.reduce((accumulator, currentItem) =>
-  {
+export const useCalculateTotalSum = (data, key) => {
+  const totalSum = data.reduce((accumulator, currentItem) => {
     // Ensure the current item has the specified key
-    if (key in currentItem)
-    {
+    if (key in currentItem) {
       // Parse the value to a number and add it to the accumulator
       let value = currentItem[key] != null ? currentItem[key] : 0;
       accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
@@ -241,8 +209,7 @@ export const useCalculateTotalSum = (data, key) =>
   return totalSum.toFixed(2);
 };
 
-export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') =>
-{
+export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') => {
   // Get the current date
   let currentDate = new Date();
 
@@ -252,22 +219,17 @@ export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') =>
   return useDateFormat(previousDate, format).value;
 };
 
-export const setQueryStringFilters = (params, filters) =>
-{
-  for (const [key] of Object.entries(params))
-  {
-    if (key.includes('[]'))
-    {
+export const setQueryStringFilters = (params, filters) => {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key];
-    } else
-    {
+    } else {
       filters[key] = params[key];
     }
   }
 };
 
-export const saveQueryParams = () =>
-{
+export const saveQueryParams = () => {
   const page = usePage();
   let { component, url } = page;
   let routes = [
@@ -280,35 +242,30 @@ export const saveQueryParams = () =>
     'SavingsQuote/Index',
   ];
 
-  if (routes.includes(component))
-  {
+  if (routes.includes(component)) {
     const urlWithParams = { url: component, params: url };
     // Serialize the object to JSON
     localStorage.setItem(component, JSON.stringify(urlWithParams));
   }
 };
 
-export const removedSavedParams = () =>
-{
+export const removedSavedParams = () => {
   const page = usePage();
   let { component } = page;
   localStorage.removeItem(component);
 };
 
-export const getSavedQueryParams = () =>
-{
+export const getSavedQueryParams = () => {
   const page = usePage();
   let { component } = page;
   const savedParams = localStorage.getItem(component);
-  if (savedParams)
-  {
+  if (savedParams) {
     let routerInfo = JSON.parse(savedParams);
     const params = new URLSearchParams(routerInfo.params.split('?')[1]);
 
     // Convert the URLSearchParams object into an object
     const queryParams = {};
-    for (const [key, value] of params.entries())
-    {
+    for (const [key, value] of params.entries()) {
       queryParams[key] = value;
     }
 
@@ -318,12 +275,10 @@ export const getSavedQueryParams = () =>
   return false;
 };
 
-export const parseDate = dateString =>
-{
+export const parseDate = dateString => {
   // Preliminary check for the DD-MM-YYYY format
   const ddMmYyyyRegex = /^\d{2}-\d{2}-\d{4}$/;
-  if (ddMmYyyyRegex.test(dateString))
-  {
+  if (ddMmYyyyRegex.test(dateString)) {
     return dateString;
   }
 
@@ -363,13 +318,10 @@ export const parseDate = dateString =>
     'dec',
   ];
 
-  for (const { regex, parts } of patterns)
-  {
+  for (const { regex, parts } of patterns) {
     const match = dateString.match(regex);
-    if (match)
-    {
-      const dateParts = parts.reduce((acc, part, index) =>
-      {
+    if (match) {
+      const dateParts = parts.reduce((acc, part, index) => {
         acc[part] =
           part === 'month' && isNaN(match[index + 1])
             ? months.indexOf(match[index + 1].substring(0, 3).toLowerCase()) + 1
@@ -395,43 +347,36 @@ export const parseDate = dateString =>
 };
 
 // Helper function to format date for input
-export const formatDateForInput = date =>
-{
+export const formatDateForInput = date => {
   if (!date || date === '' || date === 'null' || date === 'undefined')
     return null;
 
-  try
-  {
+  try {
     // If date is already in YYYY-MM-DD format, return as is
-    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date))
-    {
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return date;
     }
 
     // Handle DD-MM-YYYY format (common in the system)
-    if (typeof date === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(date))
-    {
+    if (typeof date === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(date)) {
       const [day, month, year] = date.split('-');
       return `${year}-${month}-${day}`;
     }
 
     // Handle DD/MM/YYYY format
-    if (typeof date === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(date))
-    {
+    if (typeof date === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
       const [day, month, year] = date.split('/');
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
 
     // Handle YYYY/MM/DD format
-    if (typeof date === 'string' && /^\d{4}\/\d{2}\/\d{2}$/.test(date))
-    {
+    if (typeof date === 'string' && /^\d{4}\/\d{2}\/\d{2}$/.test(date)) {
       return date.replace(/\//g, '-');
     }
 
     // Try to parse as Date object for other formats
     const dateObj = new Date(date);
-    if (isNaN(dateObj.getTime()))
-    {
+    if (isNaN(dateObj.getTime())) {
       return null;
     }
 
@@ -441,14 +386,12 @@ export const formatDateForInput = date =>
     const day = String(dateObj.getDate()).padStart(2, '0');
 
     return `${year}-${month}-${day}`;
-  } catch (error)
-  {
+  } catch (error) {
     return null;
   }
 };
 
-export function getQuoteType(id, returnType = 'code')
-{
+export function getQuoteType(id, returnType = 'code') {
   const types = {
     1: { code: 'CAR', id: 'car', link: '/quotes' },
     2: { code: 'HOM', id: 'home', link: '/personal-quotes' },
@@ -467,28 +410,22 @@ export function getQuoteType(id, returnType = 'code')
   return types[id] ? types[id][returnType] : '';
 }
 
-export function buildCdbidLink(quote_uuid, quote_type_id, customLabel = null)
-{
-  if (quote_uuid)
-  {
+export function buildCdbidLink(quote_uuid, quote_type_id, customLabel = null) {
+  if (quote_uuid) {
     const url = `${getQuoteType(quote_type_id, 'link')}/${getQuoteType(quote_type_id, 'id')}/${quote_uuid}`;
     const CDBID = `${getQuoteType(quote_type_id, 'code')}-${quote_uuid.toUpperCase()}`;
     return `<a target="_blank" class="text-primary-500 hover:underline flex items-center space-x-1" href="${url}">${customLabel || CDBID}</a>`;
-  } else
-  {
+  } else {
     return '';
   }
 }
 
-export const userHasRequiredTeams = (givenTeams, userTeams) =>
-{
+export const userHasRequiredTeams = (givenTeams, userTeams) => {
   return givenTeams.every(team => userTeams.includes(team));
 };
 
-export const calculateDaysDifference = (start_date, end_date) =>
-{
-  if (start_date && end_date)
-  {
+export const calculateDaysDifference = (start_date, end_date) => {
+  if (start_date && end_date) {
     const start = new Date(start_date);
     const end = new Date(end_date);
     const diffTime = Math.abs(end - start);
@@ -499,10 +436,8 @@ export const calculateDaysDifference = (start_date, end_date) =>
   return 0;
 };
 
-export const calculateMonthsDifference = (start_date, end_date) =>
-{
-  if (start_date && end_date)
-  {
+export const calculateMonthsDifference = (start_date, end_date) => {
+  if (start_date && end_date) {
     const start = new Date(start_date);
     const end = new Date(end_date);
 
@@ -521,68 +456,56 @@ export const calculateMonthsDifference = (start_date, end_date) =>
 };
 
 // Function to get the quote type ID based on quote type name
-export const getQuoteTypeId = (quoteTypes, quoteType) =>
-{
+export const getQuoteTypeId = (quoteTypes, quoteType) => {
   return quoteTypes.filter(item => item.name === quoteType)[0]?.id;
 };
 
 // Function to log quote export and open the URL
-export const logAndExportQuotes = async payload =>
-{
+export const logAndExportQuotes = async payload => {
   payload.ip_address = await getIp();
   let isSuccess = false;
 
   return axios
     .post('/quotes/export-logs/create', payload)
-    .then(async res =>
-    {
+    .then(async res => {
       const exportResponse = await axios({
         method: payload.method || 'get',
         url: payload.url,
         data: payload.data || null,
       })
-        .then(resp =>
-        {
+        .then(resp => {
           isSuccess = true;
           return resp.data;
         })
-        .catch(err =>
-        {
+        .catch(err => {
           throw err;
         });
       res.data.message = exportResponse.message;
       return res;
     })
-    .catch(err =>
-    {
+    .catch(err => {
       throw err;
     })
-    .finally(() =>
-    {
+    .finally(() => {
       // Only redirect if the export was successful and it's not an email export
-      if (isSuccess && payload.exportType !== 'email')
-      {
+      if (isSuccess && payload.exportType !== 'email') {
         window.open(payload.url);
       }
     });
 };
 
 // Function to get the IP address
-export const getIp = async () =>
-{
-  try
-  {
+export const getIp = async () => {
+  try {
     const res = await axios.get('https://api.ipify.org?format=json');
     return res.data.ip;
-  } catch (err)
-  {
+  } catch (err) {
     return null;
   }
 };
 
 // Function to calculate age
-export const calculateAge = birthDateString =>
-{
+export const calculateAge = birthDateString => {
   const birthDate = new Date(birthDateString);
 
   const today = new Date();
@@ -592,8 +515,7 @@ export const calculateAge = birthDateString =>
   const monthDifference = today.getMonth() - birthDate.getMonth();
   const dayDifference = today.getDate() - birthDate.getDate();
 
-  if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0))
-  {
+  if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
     age--;
   }
 
@@ -601,10 +523,8 @@ export const calculateAge = birthDateString =>
 };
 
 // Function to calculate BMI
-export const calculateBMI = (heightInCm, weightInKg) =>
-{
-  if (!heightInCm || !weightInKg)
-  {
+export const calculateBMI = (heightInCm, weightInKg) => {
+  if (!heightInCm || !weightInKg) {
     return 0;
   }
 
@@ -614,10 +534,8 @@ export const calculateBMI = (heightInCm, weightInKg) =>
   return parseFloat(bmi.toFixed(2));
 };
 
-export const resolveUserStatusText = statusId =>
-{
-  switch (parseInt(statusId))
-  {
+export const resolveUserStatusText = statusId => {
+  switch (parseInt(statusId)) {
     case 1:
       return 'Online';
     case 2:
@@ -645,44 +563,35 @@ export const getStatusModal = () =>
     },
   });
 //Function to validate single field in form before submit
-export const validateField = (form, fieldValue, errorField, validationRule) =>
-{
+export const validateField = (form, fieldValue, errorField, validationRule) => {
   const validationError = validationRule(fieldValue);
-  if (validationError !== true)
-  {
+  if (validationError !== true) {
     form.errors[errorField] = validationError;
     return false;
-  } else
-  {
+  } else {
     form.errors[errorField] = '';
     return true;
   }
 };
 
-export const applyEmiratesNumberMasking = emiratesId =>
-{
+export const applyEmiratesNumberMasking = emiratesId => {
   let emiratesIDNumber = emiratesId.replace(/\D/g, '');
-  if (emiratesIDNumber?.length > 15)
-  {
+  if (emiratesIDNumber?.length > 15) {
     emiratesIDNumber = emiratesIDNumber.substring(0, 15); // Limit to 15 characters
   }
-  if (emiratesIDNumber?.length <= 3)
-  {
+  if (emiratesIDNumber?.length <= 3) {
     emiratesIDNumber = emiratesIDNumber.replace(/(\d{3})(\d{0,})/, '$1-$2');
-  } else if (emiratesIDNumber?.length <= 7)
-  {
+  } else if (emiratesIDNumber?.length <= 7) {
     emiratesIDNumber = emiratesIDNumber.replace(
       /(\d{3})(\d{4})(\d{0,})/,
       '$1-$2-$3',
     );
-  } else if (emiratesIDNumber?.length <= 13)
-  {
+  } else if (emiratesIDNumber?.length <= 13) {
     emiratesIDNumber = emiratesIDNumber.replace(
       /(\d{3})(\d{4})(\d{7})(\d{0,})/,
       '$1-$2-$3-$4',
     );
-  } else
-  {
+  } else {
     emiratesIDNumber = emiratesIDNumber.replace(
       /(\d{3})(\d{4})(\d{7})(\d{1,})/,
       '$1-$2-$3-$4',
@@ -692,39 +601,29 @@ export const applyEmiratesNumberMasking = emiratesId =>
   return emiratesIDNumber;
 };
 
-export const applyScreeningIdNumberMasking = screeningId =>
-{
+export const applyScreeningIdNumberMasking = screeningId => {
   // Handle null, undefined, or empty values
-  if (!screeningId || typeof screeningId !== 'string')
-  {
+  if (!screeningId || typeof screeningId !== 'string') {
     return screeningId ?? null;
   }
 
-  let screeningIdNumber = screeningId.replace(
-    /\D/g,
-    '',
-  );
-  if (screeningIdNumber?.length > 15)
-  {
+  let screeningIdNumber = screeningId.replace(/\D/g, '');
+  if (screeningIdNumber?.length > 15) {
     screeningIdNumber = screeningIdNumber.substring(0, 15); // Limit to 15 characters
   }
-  if (screeningIdNumber?.length <= 3)
-  {
+  if (screeningIdNumber?.length <= 3) {
     screeningIdNumber = screeningIdNumber.replace(/(\d{3})(\d{0,})/, '$1-$2');
-  } else if (screeningIdNumber?.length <= 7)
-  {
+  } else if (screeningIdNumber?.length <= 7) {
     screeningIdNumber = screeningIdNumber.replace(
       /(\d{3})(\d{4})(\d{0,})/,
       '$1-$2-$3',
     );
-  } else if (screeningIdNumber?.length <= 13)
-  {
+  } else if (screeningIdNumber?.length <= 13) {
     screeningIdNumber = screeningIdNumber.replace(
       /(\d{3})(\d{4})(\d{7})(\d{0,})/,
       '$1-$2-$3-$4',
     );
-  } else
-  {
+  } else {
     screeningIdNumber = screeningIdNumber.replace(
       /(\d{3})(\d{4})(\d{7})(\d{1,})/,
       '$1-$2-$3-$4',
@@ -734,16 +633,14 @@ export const applyScreeningIdNumberMasking = screeningId =>
   return screeningIdNumber;
 };
 
-export const useGenerateOptions = (items, valueKey, labelKey) =>
-{
+export const useGenerateOptions = (items, valueKey, labelKey) => {
   return items.map(item => ({
     value: item[valueKey],
     label: item[labelKey],
   }));
 };
 
-export const useformatDateTimeForPicker = dateTimeString =>
-{
+export const useformatDateTimeForPicker = dateTimeString => {
   if (!dateTimeString) return null;
 
   // Handle format: DD-MM-YYYY HH:mm:ss from server
@@ -778,8 +675,7 @@ export const preventInvalidInputs = (
   event,
   allowComma = false,
   allowDecimal = false,
-) =>
-{
+) => {
   const key = event.key;
 
   const controlKeys = [
@@ -807,23 +703,19 @@ export const preventInvalidInputs = (
   event.preventDefault();
 };
 
-export const numberFormat = (price, decimals = 2) =>
-{
+export const numberFormat = (price, decimals = 2) => {
   price = parseFloat(price);
   return price.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
 // life lob specific function
-export const useFormattedNumberField = (source, fieldName) =>
-{
+export const useFormattedNumberField = (source, fieldName) => {
   return computed({
-    get()
-    {
+    get() {
       const val = source[fieldName];
       return val != null ? Number(val).toLocaleString('en-US') : '';
     },
-    set(newVal)
-    {
+    set(newVal) {
       const cleaned = cleanFormattedValueToFloat(newVal);
       const num = parseFloat(cleaned);
       source[fieldName] = isNaN(num) || cleaned === '' ? 0 : num;
@@ -832,18 +724,15 @@ export const useFormattedNumberField = (source, fieldName) =>
 };
 
 // Helper function to create formatted fields for rider arrays
-export const useFormattedRiderField = (ridersArray, index, fieldName) =>
-{
+export const useFormattedRiderField = (ridersArray, index, fieldName) => {
   return computed({
-    get()
-    {
+    get() {
       const rider = ridersArray.value[index];
       if (!rider) return '';
       const val = rider[fieldName];
       return val != null ? Number(val).toLocaleString('en-US') : '';
     },
-    set(newVal)
-    {
+    set(newVal) {
       const rider = ridersArray.value[index];
       if (!rider) return;
       const cleaned = cleanFormattedValueToFloat(newVal);
@@ -853,8 +742,7 @@ export const useFormattedRiderField = (ridersArray, index, fieldName) =>
   });
 };
 
-export const cleanFormattedValueToFloat = value =>
-{
+export const cleanFormattedValueToFloat = value => {
   if (typeof value !== 'string') return 0;
 
   // Remove commas
@@ -867,8 +755,7 @@ export const cleanFormattedValueToFloat = value =>
   return isNaN(num) ? 0 : num;
 };
 
-export const useIsQuoteCreatedAfterCutoff = (createdAtString, cutoffDate) =>
-{
+export const useIsQuoteCreatedAfterCutoff = (createdAtString, cutoffDate) => {
   if (!createdAtString || !cutoffDate) return false;
 
   const match = createdAtString.match(
