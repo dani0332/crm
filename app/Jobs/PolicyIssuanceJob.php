@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Models\PolicyIssuance;
 use App\Services\Logger\LoggerService;
@@ -31,9 +32,10 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     public function __construct(int $processId)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::POLICY_ISSUANCE_JOB);
         $this->processId = $processId;
-        $this->uniqueKey = "policy-issuance-automation-id-{$processId}";
-        
+        $this->uniqueKey = "policy-issuance-job-id-{$processId}";
+
         $this->process = PolicyIssuance::find($processId);
         
         if (!$this->process) {
