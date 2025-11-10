@@ -13,261 +13,286 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 180; // 3 minutes - increased for policy issuance dispatch
+    public $timeout = 180;
     public $uniqueFor = 185;
-    public $tries = 3;
+    public $tries = 1;
 
-    private const TIMEOUT_MESSAGE = 'cURL error 28';
-    private const LARAVEL_TIMEOUT_MESSAGE = 'has timed out';
-    private const MAX_ATTEMPTS_MESSAGE = 'has been attempted too many times';
+    private const TIMEOUT_INDICATORS = ['cURL error 28', 'has timed out'];
 
-    // 28 is the cURL error code for timeout
-    private $className = 'policyIssuanceJob';
-    public mixed $process;
-    public $uniqueKey = null;
-    private $processId;
+    private int $processId;
+    private ?PolicyIssuance $process = null;
+    private string $uniqueKey;
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct($processId)
+    public function __construct(int $processId)
     {
-        LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$processId.' inside constructor');
         $this->processId = $processId;
-        $this->uniqueKey = 'policy-issuance-automation-id-'.$processId;
-        $this->process = PolicyIssuance::find($processId);
-        if (! $this->process) {
-            LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$processId.' not found');
+        $this->uniqueKey = "policy-issuance-automation-id-{$processId}";
 
-            return;
+        $this->process = PolicyIssuance::find($processId);
+
+        if (! $this->process) {
+            LoggerService::info('Policy issuance process not found during job initialization', [
+                'process_id' => $processId,
+            ]);
         }
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
         try {
-            // Reload process if it wasn't found in constructor or if it's null
-            if (! $this->process) {
-                $this->process = PolicyIssuance::find($this->processId);
-                if (! $this->process) {
-                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->processId.' not found, skipping job execution');
+            $this->loadProcess();
+            $this->loadProcessModel();
 
-                    return;
-                }
-            }
+            $quoteCode = $this->process->model->code;
 
-            // Ensure model relationship is loaded
-            if (! $this->process->relationLoaded('model') || ! $this->process->model) {
-                $this->process->load('model');
-                if (! $this->process->model) {
-                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->process->id.' - Model not found, skipping job execution');
-                    // Mark as failed since this is a non-retryable error
-                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'Model not found'])]);
-
-                    return;
-                }
-            }
-
-            LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
-
-            $this->process = $this->process->refresh();
-            // Reload model relationship after refresh since refresh() clears all loaded relationships
-            $this->process->load('model');
-
-            if ($this->isProcessable($this->process)) {
-                $processingStatus = $this->process->status === PolicyIssuanceEnum::PENDING_STATUS ? PolicyIssuanceEnum::PROCESSING_STATUS : PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS;
-                $this->process->update(['status' => $processingStatus]);
-                LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
-
-                $quoteType = $this->process?->quote_type;
-                $insuranceProvider = $this->process?->insuranceProvider;
-
-                if (! $insuranceProvider) {
-                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Insurance Provider not found');
-                    // Mark as failed since this is a non-retryable error
-                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'Insurance Provider not found'])]);
-
-                    return;
-                }
-
-                $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
-                if ($insuranceProviderAutomation) {
-                    $response = $insuranceProviderAutomation->executeSteps($this->process);
-                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Response : ', $response);
-                    if (! $response['status']) {
-                        $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $response['error']])]);
-                        LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : ', extra: ['error' => $response['error']]);
-                    } else {
-                        $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
-                        LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
-                    }
-
-                } else {
-                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - '.$insuranceProvider->text.' Automation not found');
-                    // Mark as failed since automation not found is a non-retryable error
-                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'Automation not found for '.$insuranceProvider->text])]);
-                }
-            } else {
-                LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Status : '.$this->process->status.' is skipped.');
-            }
-
-            LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' completed');
-        } catch (\Throwable $e) {
-            // Catch any exception that occurs during job execution
-            // This will capture the ORIGINAL exception before it becomes "attempted too many times"
-            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' exception caught', [
-                'process_id' => $this->process->id ?? 'unknown',
-                'exception_class' => get_class($e),
-                'exception_message' => $e->getMessage(),
-                'exception_file' => $e->getFile(),
-                'exception_line' => $e->getLine(),
-                'stack_trace' => $e->getTraceAsString(),
-                'attempts' => $this->attempts(),
-                'max_tries' => $this->tries,
+            LoggerService::info('Starting policy issuance automation', [
+                'process_id' => $this->process->id,
+                'quote_code' => $quoteCode,
+                'current_status' => $this->process->status,
             ]);
 
-            // Check if this is a non-retryable error
-            if ($this->isNonRetryableError($e)) {
-                // Mark as failed immediately without retrying
-                if ($this->process) {
-                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $e->getMessage()])]);
-                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.$this->process->id.' marked as failed (non-retryable error)');
-                }
+            if (! $this->isProcessable()) {
+                LoggerService::info('Process skipped - status not processable', [
+                    'process_id' => $this->process->id,
+                    'quote_code' => $quoteCode,
+                    'status' => $this->process->status,
+                ]);
 
-                // Don't re-throw, let the job complete successfully to prevent retries
                 return;
             }
 
-            // For retryable errors, check if we're on the last attempt
-            // If we're on the last attempt and it fails, mark as failed and don't retry
-            // Otherwise, re-throw to allow Laravel to retry
-            if ($this->attempts() >= $this->tries) {
-                // We're at or past max attempts, mark as failed and don't retry
-                if ($this->process) {
-                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $e->getMessage()])]);
-                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.$this->process->id.' marked as failed (max attempts reached)');
-                }
+            $this->updateProcessingStatus();
+            $this->executeAutomation();
 
-                // Don't re-throw, let the job complete successfully to prevent further retries
-                return;
-            }
+            LoggerService::info('Policy issuance automation completed', [
+                'process_id' => $this->process->id,
+                'quote_code' => $quoteCode,
+                'final_status' => $this->process->fresh()->status,
+            ]);
 
-            // Re-throw for retryable errors that haven't reached max attempts yet
-            // Laravel will automatically retry the job
-            throw $e;
+        } catch (Throwable $e) {
+            $this->handleException($e);
         }
     }
 
-    public function failed(Throwable $exception)
+    public function failed(Throwable $exception): void
     {
-        // Reload process if it's null
+        // Safely load process without throwing exceptions
+        // The failed() callback should never throw exceptions as it prevents proper failure handling
         if (! $this->process) {
             $this->process = PolicyIssuance::find($this->processId);
         }
 
-        $message = $exception->getMessage();
-        $isAttemptsOrTimeout = $this->isFailedDueToAttemptsOrTimeout($message);
+        LoggerService::error('Policy issuance job failed callback triggered', [
+            'process_id' => $this->processId,
+            'quote_code' => $this->process?->model?->code ?? 'unknown',
+            'exception' => $exception->getMessage(),
+            'exception_class' => get_class($exception),
+        ]);
 
-        // Log full exception details including stack trace for debugging
-        // Use info level for max attempts/timeout errors to avoid noise in error logs
-        if ($isAttemptsOrTimeout) {
-            Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process?->model?->code ?? 'unknown').' - Process ID : '.($this->process->id ?? $this->processId).' MAX ATTEMPTS/TIMEOUT', [
-                'exception_class' => get_class($exception),
-                'exception_message' => $message,
-                'exception_code' => $exception->getCode(),
-                'current_status' => $this->process->status ?? 'unknown',
-                'attempts' => $this->attempts(),
-                'max_tries' => $this->tries,
-            ]);
-        } else {
-            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process?->model?->code ?? 'unknown').' - Process ID : '.($this->process->id ?? $this->processId).' EXCEPTION DETAILS', [
-                'exception_class' => get_class($exception),
-                'exception_message' => $message,
-                'exception_code' => $exception->getCode(),
-                'exception_file' => $exception->getFile(),
-                'exception_line' => $exception->getLine(),
-                'stack_trace' => $exception->getTraceAsString(),
-                'current_status' => $this->process->status ?? 'unknown',
-            ]);
-        }
-
-        // Only update process status if process exists
         if ($this->process) {
-            $messageLower = strtolower($message);
-            if (str_contains($messageLower, strtolower(self::TIMEOUT_MESSAGE)) || str_contains($messageLower, strtolower(self::LARAVEL_TIMEOUT_MESSAGE))) {
-                $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
-            } else {
-                $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
-            }
+            $status = $this->isTimeoutError($exception->getMessage())
+                ? PolicyIssuanceEnum::TIMEOUT_STATUS
+                : PolicyIssuanceEnum::FAILED_STATUS;
 
-            // Log status update with appropriate log level
-            if ($isAttemptsOrTimeout) {
-                Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process?->model?->code ?? 'unknown').' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Reason : '.$message);
-            } else {
-                Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process?->model?->code ?? 'unknown').' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
-            }
+            $this->process->update([
+                'status' => $status,
+                'message' => json_encode(['error' => $exception->getMessage()]),
+            ]);
         } else {
-            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->processId.' not found, cannot update status');
+            LoggerService::error('Process not found in failed callback - cannot update status', [
+                'process_id' => $this->processId,
+            ]);
         }
     }
 
     public function uniqueId(): string
     {
-        return $this->uniqueKey ?? 'policy-issuance-automation-id-'.$this->processId;
+        return $this->uniqueKey;
     }
 
-    public function middleware()
+    public function middleware(): array
     {
         return [new WithoutOverlapping($this->uniqueKey)];
     }
 
-    private function isProcessable($process)
+    private function loadProcess(): void
     {
-        return in_array($process->status, [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::BOOKING_PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS]);
+        if (! $this->process) {
+            $this->process = PolicyIssuance::find($this->processId);
+
+            if (! $this->process) {
+                LoggerService::error('Process not found - cannot proceed with automation', [
+                    'process_id' => $this->processId,
+                ]);
+                throw new \RuntimeException("Process {$this->processId} not found");
+            }
+        }
     }
 
-    private function isFailedDueToAttemptsOrTimeout(string $errorMessage): bool
+    private function loadProcessModel(): void
     {
-        $errorMessage = strtolower($errorMessage);
-
-        return str_contains($errorMessage, strtolower(self::MAX_ATTEMPTS_MESSAGE)) ||
-               str_contains($errorMessage, strtolower(self::LARAVEL_TIMEOUT_MESSAGE)) ||
-               str_contains($errorMessage, strtolower(self::TIMEOUT_MESSAGE));
-    }
-
-    /**
-     * Check if an exception is non-retryable (e.g., data not found, validation errors)
-     */
-    private function isNonRetryableError(\Throwable $e): bool
-    {
-        $message = strtolower($e->getMessage());
-        $className = get_class($e);
-
-        // Model not found errors are non-retryable
-        if (str_contains($message, 'model not found') ||
-            str_contains($message, 'not found') ||
-            str_contains($message, 'does not exist')) {
-            return true;
+        if (! $this->process->relationLoaded('model') || ! $this->process->model) {
+            $this->process->load('model');
         }
 
-        // Database connection errors might be retryable, but let's be conservative
-        // Validation errors are non-retryable
-        if (str_contains($className, 'ValidationException') ||
-            str_contains($className, 'ModelNotFoundException')) {
-            return true;
+        if (! $this->process->model) {
+            LoggerService::error('Quote model not found for process', [
+                'process_id' => $this->process->id,
+            ]);
+
+            $this->process->update([
+                'status' => PolicyIssuanceEnum::FAILED_STATUS,
+                'message' => json_encode(['error' => 'Quote model not found']),
+            ]);
+
+            throw new \RuntimeException("Model not found for process {$this->process->id}");
+        }
+
+        // Refresh to get latest data
+        $this->process->refresh()->load('model');
+    }
+
+    private function isProcessable(): bool
+    {
+        return in_array($this->process->status, [
+            PolicyIssuanceEnum::PENDING_STATUS,
+            PolicyIssuanceEnum::BOOKING_PENDING_STATUS,
+            PolicyIssuanceEnum::TIMEOUT_STATUS,
+        ]);
+    }
+
+    private function updateProcessingStatus(): void
+    {
+        $status = $this->process->status === PolicyIssuanceEnum::PENDING_STATUS
+            ? PolicyIssuanceEnum::PROCESSING_STATUS
+            : PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS;
+
+        $this->process->update(['status' => $status]);
+
+        LoggerService::info('Process status updated to processing', [
+            'process_id' => $this->process->id,
+            'quote_code' => $this->process->model->code,
+            'new_status' => $status,
+        ]);
+    }
+
+    private function executeAutomation(): void
+    {
+        $quoteType = $this->process?->quote_type;
+        $insuranceProvider = $this->process?->insuranceProvider;
+        $quoteCode = $this->process?->model?->code;
+
+        if (! $insuranceProvider) {
+            LoggerService::error('Insurance provider not found for process', [
+                'process_id' => $this->process?->id,
+                'quote_code' => $this->process?->model?->code,
+            ]);
+
+            $this->process->update([
+                'status' => PolicyIssuanceEnum::FAILED_STATUS,
+                'message' => json_encode(['error' => 'Insurance provider not found']),
+            ]);
+
+            return;
+        }
+
+        $automation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
+
+        if (! $automation) {
+            LoggerService::error('Automation not available for insurance provider', [
+                'process_id' => $this->process->id,
+                'quote_code' => $quoteCode,
+                'provider' => $insuranceProvider->text,
+                'quote_type' => $quoteType,
+            ]);
+
+            $this->process->update([
+                'status' => PolicyIssuanceEnum::FAILED_STATUS,
+                'message' => json_encode(['error' => "Automation not found for {$insuranceProvider->text}"]),
+            ]);
+
+            return;
+        }
+
+        LoggerService::info('Executing automation steps', [
+            'process_id' => $this->process->id,
+            'quote_code' => $quoteCode,
+            'provider' => $insuranceProvider->text,
+        ]);
+
+        $response = $automation->executeSteps($this->process);
+
+        if (! $response['status']) {
+            $errorMessage = $response['error'] ?? 'Unknown error';
+
+            LoggerService::error('Automation execution failed', [
+                'process_id' => $this->process->id,
+                'quote_code' => $quoteCode,
+                'error' => $errorMessage,
+                'provider' => $insuranceProvider->text,
+            ]);
+
+            $this->process->update([
+                'status' => PolicyIssuanceEnum::FAILED_STATUS,
+                'message' => json_encode(['error' => $errorMessage]),
+            ]);
+        } else {
+            LoggerService::info('Automation executed successfully', [
+                'process_id' => $this->process->id,
+                'quote_code' => $quoteCode,
+                'provider' => $insuranceProvider->text,
+            ]);
+
+            $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
+        }
+    }
+
+    private function handleException(Throwable $e): void
+    {
+        $quoteCode = $this->process?->model?->code ?? 'unknown';
+
+        LoggerService::error('Exception occurred during policy issuance automation', [
+            'process_id' => $this->process->id ?? $this->processId,
+            'quote_code' => $quoteCode,
+        ], exception: $e);
+
+        if (! $this->process) {
+            return;
+        }
+
+        $status = $this->isTimeoutError($e->getMessage())
+            ? PolicyIssuanceEnum::TIMEOUT_STATUS
+            : PolicyIssuanceEnum::FAILED_STATUS;
+
+        $this->process->update([
+            'status' => $status,
+            'message' => json_encode(['error' => $e->getMessage()]),
+        ]);
+
+        LoggerService::info("Process marked as {$status} due to exception", [
+            'process_id' => $this->process->id,
+            'quote_code' => $quoteCode,
+            'status' => $status,
+        ]);
+    }
+
+    private function isTimeoutError(string $message): bool
+    {
+        $messageLower = strtolower($message);
+
+        foreach (self::TIMEOUT_INDICATORS as $indicator) {
+            if (str_contains($messageLower, strtolower($indicator))) {
+                return true;
+            }
         }
 
         return false;
     }
-
 }
