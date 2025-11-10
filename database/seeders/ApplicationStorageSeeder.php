@@ -64,6 +64,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAutoCaptureEPPayments();
         $this->seedEnableVoiceAIIntegration();
         $this->seedSla();
+        $this->seedTravelAutomatedFollowUps();
         $this->rtaPortalLink();
         $this->seedOCRCustomerJourneyFlag();
         $this->seedEpEcbConfigurations();
@@ -397,7 +398,6 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
     }
 
     private function seedUnavailableTimeThreshold()
@@ -466,7 +466,6 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
     }
 
     public function seedStopDeduplicateScript()
@@ -702,6 +701,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'travel-enquiries@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
     }
@@ -865,6 +865,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'production.approval@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
         ApplicationStorage::firstOrCreate(
@@ -873,6 +874,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'approval.production@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
     }
@@ -885,6 +887,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 2,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
 
@@ -908,7 +911,7 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
-            ]
+            ],
         );
 
         ApplicationStorage::firstOrCreate(
@@ -918,9 +921,23 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
-            ]
+            ],
         );
     }
+
+    private function seedTravelAutomatedFollowUps()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_AUTOMATED_FOLLOWUPS],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/968e6273-9965-473b-a258-2a069c8fb7da/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function seedEnableVoiceAIIntegration()
     {
         ApplicationStorage::firstOrCreate(
@@ -930,7 +947,7 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
-            ]
+            ],
         );
     }
 
@@ -969,7 +986,8 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
-            ]);
+            ]
+        );
     }
 
     private function seedEpEcbConfigurations()
