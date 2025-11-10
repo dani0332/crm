@@ -87,7 +87,11 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        $this->loadProcess();
+        // Safely load process without throwing exceptions
+        // The failed() callback should never throw exceptions as it prevents proper failure handling
+        if (!$this->process) {
+            $this->process = PolicyIssuance::find($this->processId);
+        }
         
         LoggerService::error("Policy issuance job failed callback triggered", [
             'process_id' => $this->processId,
@@ -104,6 +108,10 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             $this->process->update([
                 'status' => $status,
                 'message' => json_encode(['error' => $exception->getMessage()])
+            ]);
+        } else {
+            LoggerService::error("Process not found in failed callback - cannot update status", [
+                'process_id' => $this->processId
             ]);
         }
     }
@@ -133,7 +141,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
         LoggerService::startQuoteLogging(
             QuoteTypes::getName($this->process->quote_type)->refId($this->process->model?->code),
-            LoggerFeatureEnum::POLICY_ISSUANANCE_JOB
+            LoggerFeatureEnum::POLICY_ISSUANCE_JOB
         );
     }
 
