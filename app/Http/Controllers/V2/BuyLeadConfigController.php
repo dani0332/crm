@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\BuyLeadSegment;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -12,7 +13,6 @@ use App\Models\BuyLeadConfiguration;
 use App\Models\Department;
 use App\Repositories\NationalityRepository;
 use Illuminate\Support\Arr;
-use App\Enums\LeadSourceEnum;
 
 class BuyLeadConfigController extends Controller
 {
@@ -51,11 +51,10 @@ class BuyLeadConfigController extends Controller
 
         if ($isCarRevival) {
             $baseQuery->where('source', LeadSourceEnum::REVIVAL)
-                  ->with('nationalities'); 
+                ->with('nationalities');
             $quoteTypeId = QuoteTypes::CAR->id();
         }
         $config = $baseQuery->where('quote_type_id', $quoteTypeId)->first();
-
 
         return response()->json(['config' => $config]);
     }
@@ -73,11 +72,10 @@ class BuyLeadConfigController extends Controller
                     'department_id' => $data['department_id'],
                     'source' => LeadSourceEnum::REVIVAL,
                 ],
-                $data 
+                $data
             );
             $this->syncNationalities($buyLeadConfiguration, $data['nationalities']);
-        }
-        else {
+        } else {
             $buyLeadConfiguration = BuyLeadConfiguration::updateOrCreate(
                 [
                     'quote_type_id' => $request->getQuoteTypeId(),
@@ -86,7 +84,6 @@ class BuyLeadConfigController extends Controller
                 $data
             );
         }
-        
 
         return to_route('admin.buy-leads.config.show');
     }

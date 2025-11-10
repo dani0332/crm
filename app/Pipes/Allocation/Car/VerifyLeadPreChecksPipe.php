@@ -2,12 +2,12 @@
 
 namespace App\Pipes\Allocation\Car;
 
+use App\Enums\LeadSourceEnum;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Services\BuyLeads\BuyLeadService;
 use App\Services\Logger\LoggerService;
 use Closure;
-use App\Services\BuyLeads\BuyLeadService;
-use App\Enums\LeadSourceEnum;
 
 class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 {
@@ -26,7 +26,6 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         }
 
         $isVerified = $this->verifyPreChecks();
- 
 
         if (! $isVerified) {
             $this->throw('Lead does not meet pre-check criteria', self::NOT_FOUND);
@@ -51,11 +50,11 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             LoggerService::info(self::class."::verifyPreChecks - Lead is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
         } elseif ($lead->hasExemptedSource()) {
             LoggerService::info(self::class."::verifyPreChecks - Lead has exempted source {$lead->source}, skipping assignment");
-            if($lead->source == LeadSourceEnum::REVIVAL && in_array($lead->nationality_id, app(BuyLeadService::class)->getCarCatANationalitiesIds())) {
-                LoggerService::info(self::class."::verifyPreChecks - Lead is a Revival lead and is a CAT A nationality, continuing assignment");    
+            if ($lead->source == LeadSourceEnum::REVIVAL && in_array($lead->nationality_id, app(BuyLeadService::class)->getCarCatANationalitiesIds())) {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead is a Revival lead and is a CAT A nationality, continuing assignment');
                 $continueAssignment = true;
             }
-            
+
         } elseif (($isSICFlowEnabled || $isAIG) && $lead->isAdvisorRequestedOrAuthorizedOrRequestedLinkOrDeclined()) {
             if ($isSICFlowEnabled) {
                 LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow enabled and either requested for an advisor or payment authorized or link requested or declined or failed, continuing assignment');

@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use App\Enums\BuyLeadSegment;
+use App\Enums\LeadSourceEnum;
 use App\Observers\BuyLeadConfigurationObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
-use App\Enums\LeadSourceEnum;
 
 #[ObservedBy(BuyLeadConfigurationObserver::class)]
 class BuyLeadConfiguration extends Model

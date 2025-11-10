@@ -2,6 +2,7 @@
 
 namespace App\Services\BuyLeads;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\BuyLeads\RequestBuyLeadsRequest;
 use App\Models\BuyLeadConfiguration;
@@ -12,8 +13,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use PDF;
-use App\Enums\LeadSourceEnum;
-use App\Models\BuyLeadConfigNationality;
 
 class BuyLeadService
 {
@@ -40,32 +39,33 @@ class BuyLeadService
         return $buyLeadMaxCap - $this->activeRequestsCount($quoteType);
     }
 
-    public function isRequestAlreadySubmitted(QuoteTypes $quoteType, bool $isCarRevival=false): bool
+    public function isRequestAlreadySubmitted(QuoteTypes $quoteType, bool $isCarRevival = false): bool
     {
         $buyLeadRequest = BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->notExpired()->unfulfilled();
         if ($isCarRevival) {
             $buyLeadRequest->where('source', LeadSourceEnum::REVIVAL);
         }
+
         return $buyLeadRequest->exists();
     }
 
     private function verifyPreChecks(RequestBuyLeadsRequest $request): ?string
     {
-       
+
         $quoteType = $request->getQuoteType();
         $isCarRevival = $request->getQuoteType()->value == QuoteTypes::CAR_CAT_A->value ? true : false;
         if ($quoteType->value == QuoteTypes::CAR_CAT_A->value) {
             $quoteType = QuoteTypes::CAR;
         }
-      
+
         if (! auth()->user()->hasAnyRole($quoteType->advisorRoles())) {
             return 'You are not allowed to request buy leads for this quote type';
         }
-    
-        if ($this->isRequestAlreadySubmitted($quoteType ,$isCarRevival)) {
+
+        if ($this->isRequestAlreadySubmitted($quoteType, $isCarRevival)) {
             return 'You can initiate a new Buy Lead request once the existing requested leads are assigned.';
         }
-       
+
         $remainingLimit = $this->getBlLeadRemainingLimit($quoteType);
         if ($remainingLimit === 'DISABLED' || $remainingLimit <= 0) {
             $message = 'You have reached your maximum buy leads allocation for today';
@@ -75,7 +75,6 @@ class BuyLeadService
 
             $message = "You have exceeded your remaining buy leads allocation. Your remaining Buy {$leadStr} {$isAre} {$remainingLimit}";
         }
-       
 
         return $message ?? null;
     }
@@ -162,7 +161,7 @@ class BuyLeadService
 
     public function getActiveRequests()
     {
-        return BuyLeadRequest::select('id', 'quote_type_id', 'requested_count', 'allocated_count', 'cost_per_lead','source', 'created_at')
+        return BuyLeadRequest::select('id', 'quote_type_id', 'requested_count', 'allocated_count', 'cost_per_lead', 'source', 'created_at')
             ->selectRaw('CONCAT(ROUND(requested_count * cost_per_lead, 0), " AED") as total_cost')
             ->with('quoteType:id,code')
             ->where('user_id', Auth::id())
@@ -213,6 +212,7 @@ class BuyLeadService
         if (! $buyLeadConfiguration) {
             return [];
         }
+
         return $buyLeadConfiguration->nationalities->pluck('id')->toArray() ?? [];
     }
 

@@ -9,6 +9,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
+use App\Services\BuyLeads\BuyLeadService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
@@ -17,7 +18,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Auditable;
-use App\Services\BuyLeads\BuyLeadService;
 
 class CarQuote extends BaseModel
 {
@@ -503,7 +503,7 @@ class CarQuote extends BaseModel
         $shouldIncludeDubaiNow = getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
 
         // Check if the lead is a CAT A nationality
-        $isCATANationality = $this->source == LeadSourceEnum::REVIVAL && !in_array($this->nationality_id, app(BuyLeadService::class)->getCarCatANationalitiesIds());    
+        $isCATANationality = $this->source == LeadSourceEnum::REVIVAL && ! in_array($this->nationality_id, app(BuyLeadService::class)->getCarCatANationalitiesIds());
         // List of exempted lead sources
         $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY];
         if ($isCATANationality) {

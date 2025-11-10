@@ -18,8 +18,8 @@ use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
-use Illuminate\Support\Facades\DB;
 use App\Services\BuyLeads\BuyLeadService;
+use Illuminate\Support\Facades\DB;
 
 class CarRevivalQuoteRepository extends BaseRepository
 {

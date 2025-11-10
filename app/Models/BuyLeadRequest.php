@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use App\Enums\BuyLeadSegment;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Traits\Filterable;
 use Illuminate\Database\Eloquent\Model;
-use App\Enums\LeadSourceEnum;
 
 class BuyLeadRequest extends Model
 {
@@ -156,7 +156,7 @@ class BuyLeadRequest extends Model
     }
     public static function getRevivalSourceUserIds(bool $isSIC, bool $isValue)
     {
-         return self::byValueOrVolume(QuoteTypes::CAR, $isValue)->bySegment($isSIC)->where('source', LeadSourceEnum::REVIVAL)->active()->unfulfilled()->pluck('user_id')->toArray();
+        return self::byValueOrVolume(QuoteTypes::CAR, $isValue)->bySegment($isSIC)->where('source', LeadSourceEnum::REVIVAL)->active()->unfulfilled()->pluck('user_id')->toArray();
     }
-   
+
 }
