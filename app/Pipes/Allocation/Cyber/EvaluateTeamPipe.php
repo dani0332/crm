@@ -36,6 +36,7 @@ class EvaluateTeamPipe extends BaseAllocationPipe
         $defaultTeamId = false;
         
         $isPaymentAuthorizedOrDeclined = $lead->isPaymentAuthorizedOrDeclined();
+        $hasRetryFlag = $lead->isAllocationFailed();
         
         $cyberQuoteRequest = $lead->cyberQuoteRequest;
         $sicAdvisorRequested = false;
@@ -48,8 +49,10 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             'isPaymentAuthorizedOrDeclined' => $isPaymentAuthorizedOrDeclined,
             'sicAdvisorRequested' => $sicAdvisorRequested,
             'cyberQuoteRequestExists' => $cyberQuoteRequest ? true : false,
+            'hasRetryFlag' => $hasRetryFlag,
         ]);
 
+        // If cyberr lead is paid, assign to Happiness Support User
         if ($isPaymentAuthorizedOrDeclined) {
             $this->allocationRequest->setAssignToHappinessUser(true);
             
@@ -61,18 +64,27 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             return false;
         }
 
-        if (! $sicAdvisorRequested) {
-            LoggerService::info(self::class.' - sic advisor requested is false for cyber lead - Stopping allocation', extra: [
-                'reason' => 'Unpaid lead without SIC advisor request',
+        // SIC advisor requested or has retry flag, assign to hardcoded advisors
+        if ($sicAdvisorRequested || $hasRetryFlag) {
+            $reason = $sicAdvisorRequested 
+                ? 'SIC advisor explicitly requested' 
+                : 'Lead has retry flag (lead_allocation_failed_at)';
+            
+            LoggerService::info(self::class.' - Cyber lead will be assigned to hardcoded advisors', extra: [
+                'teamId' => $defaultTeamId,
+                'reason' => $reason,
+                'sicAdvisorRequested' => $sicAdvisorRequested,
+                'hasRetryFlag' => $hasRetryFlag,
             ]);
 
-            $this->stop('sic advisor requested is false for cyber lead', self::OK);
+            return $defaultTeamId;
         }
 
-        LoggerService::info(self::class.' - sic advisor requested is true for cyber lead - Will be assigned using hardcoded emails', extra: [
-            'teamId' => $defaultTeamId,
+        // Lead doesn't meet allocation criteria - stop allocation
+        LoggerService::info(self::class.' - sic advisor requested is false and no retry flag - Stopping allocation', extra: [
+            'reason' => 'Unpaid lead without SIC advisor request or retry flag',
         ]);
 
-        return $defaultTeamId;
+        $this->stop('sic advisor requested is false for cyber lead', self::OK);
     }
 }
