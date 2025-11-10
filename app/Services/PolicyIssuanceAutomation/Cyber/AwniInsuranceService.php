@@ -48,6 +48,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     public const UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'UploadPolicyDocumentsToIMCRM';
     public const BOOK_POLICY = 'BookPolicy';
     public const POLICY_ISSUANCE_RESPONSE = 'PolicyResponse';
+    public const UPLOAD_DOCUMENTS_RESPONSE = 'UploadDocumentsResponse';
     public const RETRIEVE_RESPONSE = 'RetrieveResponse';
 
 
@@ -409,7 +410,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
         $documents = $quote->documents;
         $requiredDocuments = array_filter($documents->toArray(), function ($document) {
-            return in_array($document['document_type_code'], [DocumentTypeCode::EMIRATES_ID]);
+            return in_array($document['document_type_code'], [DocumentTypeCode::CYBER_EMIRATES_ID]);
         });
 
         if (empty($requiredDocuments)) {
@@ -423,47 +424,58 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         }
 
         $attachments = [];
+        $requiredDocuments = collect($requiredDocuments)->where('document_type_code', DocumentTypeCode::CYBER_EMIRATES_ID)->first();
 
-        foreach ($requiredDocuments as $document) {
-            try {
-                // Get the file path (assuming documents are stored in storage)
-                $filePath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/' . $document['doc_url']; // Adjust path as needed
+        if($requiredDocuments === null) {
+            LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' - Required Documents not found');
 
-                // Read file content and convert to base64
-                $fileContent = file_get_contents($filePath);
-                $base64Content = base64_encode($fileContent);
+            $response['message'] =
+                $response['error'] = 'Required Documents not found';
+            $response['status'] = false;
 
-                // Get file extension
-                $extension = pathinfo($filePath, PATHINFO_EXTENSION);
-
-                // Map document type based on your business logic
-                $documentType = $this->getDocTypeCodeForCyber($document['document_type_code'] ?? 'other');
-
-                $attachments[] = [
-                    'DocumentType' => $documentType,
-                    'Content' => $base64Content,
-                    'Extension' => $extension,
-                ];
-
-                LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Document processed: ' . $document['document_type_text']);
-            } catch (\Exception $ex) {
-                LoggerService::error('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Error processing document', exception: $ex);
-
-                continue;
-            }
+            return $response;
         }
 
-        if (empty($attachments)) {
-            return ['status' => false, 'message' => 'No valid documents could be processed'];
+        $documentName = $requiredDocuments['doc_name'];
+        $documentType = $this->getDocTypeCodeForCyber($requiredDocuments['document_type_code']);
+        $filePath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/' . $requiredDocuments['doc_url'];
+        $fileContent = file_get_contents($filePath);
+        // Ensure the file exists and is a valid document before encoding
+        if ($fileContent === false || empty($fileContent)) {
+            LoggerService::error('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' - Invalid or empty document content at ' . $filePath);
+            $response['message'] =
+                $response['error'] = 'Invalid or empty document content';
+            $response['status'] = false;
+            return $response;
         }
 
-        $payload['UploadDocumentsRequest'] = [
-            'TransactionType' => $quote->source == LeadSourceEnum::RENEWAL_UPLOAD ? '6' : '5',
-            'TransactionNumber' => $quote?->carQuotePlanDetail?->insurer_quote_no,
-            'Attachments' => $attachments,
+        // Optionally, perform a MIME type check to ensure valid PDF/JPEG/etc
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_buffer($finfo, $fileContent);
+        finfo_close($finfo);
+
+        $allowedMimeTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+        if (!in_array($mimeType, $allowedMimeTypes)) {
+            LoggerService::error('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' - Unsupported document type: ' . $mimeType);
+            $response['message'] =
+                $response['error'] = 'Unsupported document type: ' . $mimeType;
+            $response['status'] = false;
+            return $response;
+        }
+
+        // API expects only the Base64 encoded content itself, not data URI format
+        $base64Content = base64_encode($fileContent);
+        // TODO: Document upload is a problem need to confirm from 
+        // dd($base64Content);
+
+        LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Payload created with Document Type: ' . $documentType . ' and Document Name: ' . $documentName);
+
+        $payload = [
+            "QuoteRefNo" => $quote->insurer_quote_number,
+            "DocCategory" => $documentType,
+            "DocName" => $documentName,
+            "DocContent" => $base64Content,
         ];
-
-        LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Payload created with ' . count($attachments) . ' attachments');
 
         $response = $this->httpCall($endPoint, $payload, self::UPLOAD_DOCUMENTS_RESPONSE);
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Response', extra: ['response' => $response]);
@@ -613,7 +625,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     public function getDocTypeCodeForCyber($documentType): string
     {
         return match ($documentType) {
-            'CEID' => '16', // Emirates ID (Front side & Back side)
+            DocumentTypeCode::CYBER_EMIRATES_ID => '4', // Emirates ID (Front side & Back side)
             default => null
         };
     }
