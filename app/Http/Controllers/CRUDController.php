@@ -307,9 +307,6 @@ class CRUDController extends Controller
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $quote_status = $dropdownSource['quote_status_id'];
-            $quote_status = collect($quote_status)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::Lost;
-            })->values();
             $emirates = Emirate::getOptions();
 
             $todaysAllocationData = $this->allocationService->getHealthTodaysCount(auth()->user()->id);
