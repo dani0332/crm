@@ -71,7 +71,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 $this->process->load('model');
                 if (! $this->process->model) {
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->process->id.' - Model not found, skipping job execution');
-
+                    // Mark as failed since this is a non-retryable error
+                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'Model not found'])]);
                     return;
                 }
             }
@@ -92,7 +93,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
                 if (! $insuranceProvider) {
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Insurance Provider not found');
-
+                    // Mark as failed since this is a non-retryable error
+                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'Insurance Provider not found'])]);
                     return;
                 }
 
@@ -110,6 +112,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
                 } else {
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - '.$insuranceProvider->text.' Automation not found');
+                    // Mark as failed since automation not found is a non-retryable error
+                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'Automation not found for '.$insuranceProvider->text])]);
                 }
             } else {
                 LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Status : '.$this->process->status.' is skipped.');
@@ -126,8 +130,36 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'exception_file' => $e->getFile(),
                 'exception_line' => $e->getLine(),
                 'stack_trace' => $e->getTraceAsString(),
+                'attempts' => $this->attempts(),
+                'max_tries' => $this->tries,
             ]);
 
+            // Check if this is a non-retryable error
+            if ($this->isNonRetryableError($e)) {
+                // Mark as failed immediately without retrying
+                if ($this->process) {
+                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $e->getMessage()])]);
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.$this->process->id.' marked as failed (non-retryable error)');
+                }
+                // Don't re-throw, let the job complete successfully to prevent retries
+                return;
+            }
+
+            // For retryable errors, check if we're on the last attempt
+            // If we're on the last attempt and it fails, mark as failed and don't retry
+            // Otherwise, re-throw to allow Laravel to retry
+            if ($this->attempts() >= $this->tries) {
+                // We're at or past max attempts, mark as failed and don't retry
+                if ($this->process) {
+                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $e->getMessage()])]);
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.$this->process->id.' marked as failed (max attempts reached)');
+                }
+                // Don't re-throw, let the job complete successfully to prevent further retries
+                return;
+            }
+
+            // Re-throw for retryable errors that haven't reached max attempts yet
+            // Laravel will automatically retry the job
             throw $e;
         }
     }
@@ -207,6 +239,31 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         return str_contains($errorMessage, strtolower(self::MAX_ATTEMPTS_MESSAGE)) ||
                str_contains($errorMessage, strtolower(self::LARAVEL_TIMEOUT_MESSAGE)) ||
                str_contains($errorMessage, strtolower(self::TIMEOUT_MESSAGE));
+    }
+
+    /**
+     * Check if an exception is non-retryable (e.g., data not found, validation errors)
+     */
+    private function isNonRetryableError(\Throwable $e): bool
+    {
+        $message = strtolower($e->getMessage());
+        $className = get_class($e);
+
+        // Model not found errors are non-retryable
+        if (str_contains($message, 'model not found') ||
+            str_contains($message, 'not found') ||
+            str_contains($message, 'does not exist')) {
+            return true;
+        }
+
+        // Database connection errors might be retryable, but let's be conservative
+        // Validation errors are non-retryable
+        if (str_contains($className, 'ValidationException') ||
+            str_contains($className, 'ModelNotFoundException')) {
+            return true;
+        }
+
+        return false;
     }
 
 }
