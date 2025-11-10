@@ -2,11 +2,11 @@
 
 namespace App\Pipes\Allocation\Cyber;
 
-use App\Enums\TeamNameEnum;
 use App\Models\PersonalQuote;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
+use App\Strategies\Allocations\CyberAllocation;
 use Closure;
 
 class EvaluateTeamPipe extends BaseAllocationPipe
@@ -51,15 +51,14 @@ class EvaluateTeamPipe extends BaseAllocationPipe
         ]);
 
         if ($isPaymentAuthorizedOrDeclined) {
-            $teamId = getTeamId(TeamNameEnum::TRAVEL_TEAM);
+            $this->allocationRequest->setAssignToHappinessUser(true);
             
-            LoggerService::info(self::class.' - Cyber lead is paid - Assigning to HAPEX team', extra: [
-                'teamId' => $teamId,
-                'teamName' => TeamNameEnum::TRAVEL_TEAM,
+            LoggerService::info(self::class.' - Cyber lead is paid - Will assign to Happiness Support User', extra: [
+                'targetUserEmail' => CyberAllocation::HAPPINESS_SUPPORT_USER_EMAIL,
                 'reason' => 'Payment authorized or declined',
             ]);
 
-            return $teamId;
+            return false;
         }
 
         if (! $sicAdvisorRequested) {

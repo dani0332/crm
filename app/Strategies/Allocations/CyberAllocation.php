@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Pipeline;
 
 class CyberAllocation implements Allocation
 {
+    public const HAPPINESS_SUPPORT_USER_EMAIL = 'happiness@support.insurancemarket.ae';
+
     public function __construct(
         protected $uuid,
         protected $teamId = false,

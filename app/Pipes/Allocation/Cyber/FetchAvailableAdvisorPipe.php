@@ -3,9 +3,11 @@
 namespace App\Pipes\Allocation\Cyber;
 
 use App\Enums\RolesEnum;
+use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
+use App\Strategies\Allocations\CyberAllocation;
 use Closure;
 
 class FetchAvailableAdvisorPipe extends BaseAllocationPipe
@@ -16,17 +18,31 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         $this->setRequest($request);
 
-        $teamId = $this->allocationRequest->getTeamId();
+        if ($this->allocationRequest->shouldAssignToHappinessUser()) {
+            LoggerService::info(self::class.' - Paid Cyber lead - Fetching Happiness Support User');
+            
+            $advisor = $this->getHappinessUser();
 
-        if ($teamId) {
-            LoggerService::info(self::class.' - Fetching Cyber advisor using team-based allocation (Hapex)', extra: [
-                'teamId' => $teamId,
+            if (! $advisor) {
+                LoggerService::warning(self::class.' - Happiness Support User not found');
+                $this->allocationRequest->markAsFailed();
+                $this->throw('Happiness Support User not found', self::NOT_FOUND);
+            }
+
+            LoggerService::info(self::class.' - Happiness Support User found successfully', extra: [
+                'advisorId' => $advisor->id,
+                'advisorName' => $advisor->name,
+                'advisorEmail' => $advisor->email,
             ]);
-        } else {
-            LoggerService::info(self::class.' - Fetching Cyber advisor using hardcoded email list');
+
+            $this->allocationRequest->setAdvisor($advisor);
+
+            return $next($request);
         }
 
-        $advisor = $this->findAvailableAdvisor($teamId);
+        LoggerService::info(self::class.' - Unpaid Cyber lead with SIC request - Fetching advisor using hardcoded email list');
+
+        $advisor = $this->findAvailableAdvisor(teamId: null);
 
         if (! $advisor) {
             LoggerService::info(self::class.' - No Cyber advisor available for allocation');
@@ -49,33 +65,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         LoggerService::info(self::class." - Searching for Cyber advisor with status: {$onlineStatus}");
 
-        if ($teamId) {
-            return $this->getAdvisorForHapexTeam($onlineStatus, $teamId);
-        }
-
         return $this->getAdvisorByHardcodedEmails($onlineStatus);
-    }
-
-    protected function getAdvisorForHapexTeam($onlineStatus, $teamId)
-    {
-        $advisorRecord = $this->getAdvisorBaseQuery(
-            onlineStatus: $onlineStatus,
-            teamId: $teamId,
-            roles: [RolesEnum::TravelHapex],
-            isBuyLead: false
-        )
-            ->logRawSql()
-            ->first();
-
-        if ($advisorRecord) {
-            LoggerService::info(self::class.' - Found Cyber Hapex advisor', extra: [
-                'advisorId' => $advisorRecord->user_id,
-                'status' => $onlineStatus,
-                'teamId' => $teamId,
-            ]);
-        }
-
-        return $advisorRecord;
     }
 
     protected function getAdvisorByHardcodedEmails($onlineStatus)
@@ -137,6 +127,25 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         ]);
 
         return $emails;
+    }
+
+    private function getHappinessUser(): ?User
+    {
+        $email = CyberAllocation::HAPPINESS_SUPPORT_USER_EMAIL;
+
+        LoggerService::info(self::class.' - Fetching Happiness Support User by email', extra: [
+            'email' => $email,
+        ]);
+
+        $user = User::where('email', $email)->first();
+
+        if (! $user) {
+            LoggerService::warning(self::class.' - Happiness Support User not found in database', extra: [
+                'email' => $email,
+            ]);
+        }
+
+        return $user;
     }
 }
 

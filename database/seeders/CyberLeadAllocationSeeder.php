@@ -7,12 +7,12 @@ use App\Enums\RolesEnum;
 use App\Models\LeadAllocation;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
+use App\Strategies\Allocations\CyberAllocation;
 use Illuminate\Database\Seeder;
 
 class CyberLeadAllocationSeeder extends Seeder
 {
     private const CYBER_ADVISOR_MAX_CAPACITY = 200;
-    private const HAPPINESS_SUPPORT_USER_EMAIL = 'happiness@support.insurancemarket.ae';
 
     public function run(): void
     {
@@ -86,7 +86,7 @@ class CyberLeadAllocationSeeder extends Seeder
 
     private function setupSystemUserAllocation(): void
     {
-        $systemUser = User::where('email', self::HAPPINESS_SUPPORT_USER_EMAIL)->first();
+        $systemUser = User::where('email', CyberAllocation::HAPPINESS_SUPPORT_USER_EMAIL)->first();
 
         if (! $systemUser) {
             LoggerService::warning('CyberLeadAllocationSeeder: Customer Happiness Centre system user not found');
