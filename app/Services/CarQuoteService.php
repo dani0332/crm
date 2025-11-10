@@ -36,6 +36,7 @@ use App\Models\UserTeams;
 use App\Models\VehicleChassisDetail;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\OCRTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -60,7 +61,9 @@ class CarQuoteService extends BaseService
     private const STRING = 'string';
     private const REQUIRED_STRING = self::REQUIRED.'|'.self::STRING;
 
+    // Traits
     use GenericQueriesAllLobs;
+    use OCRTrait;
     use TeamHierarchyTrait;
 
     public function __construct(
@@ -322,22 +325,8 @@ class CarQuoteService extends BaseService
         if ($deleteValuationResponse) {
             $carQuote->save();
 
-            // Check if OCR is enabled
-            $isOCREnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_ENABLED, useCache: true) == '1';
-            if ($isOCREnabled) {
-                // Send request to Capi to verify documents
-                $requestData = [
-                    'quoteUuid' => $carQuote->uuid,
-                    'quoteTypeId' => QuoteTypes::getId(QuoteTypes::CAR),
-                    'callSource' => LeadSourceEnum::IMCRM,
-                ];
-
-                LoggerService::info('Capi service request data', extra: $requestData);
-                $response = $this->capiService->request('/api/customer/documents-verify', 'PUT', $requestData);
-                LoggerService::info('Capi service response', extra: [
-                    'response' => $response,
-                ]);
-            }
+            // Call capi api to verify OCR data
+            $this->verifyOCRData($carQuote);
 
             $carQuoteDetails = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
             $carQuoteDetails->chassis_number = $request->chassis_number;
@@ -365,6 +354,28 @@ class CarQuoteService extends BaseService
             }
         } else {
             return false;
+        }
+    }
+
+    private function verifyOCRData(CarQuote $carQuote): void
+    {
+        // Get OCR enabled status
+        $isOCREnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_ENABLED, useCache: true) == '1';
+
+        // Check if OCR is enabled and has OCR data
+        if ($isOCREnabled && $this->hasOCRData($carQuote->id, QuoteTypes::CAR->modelClass())) {
+            // Send request to Capi to verify documents
+            $requestData = [
+                'quoteUuid' => $carQuote->uuid,
+                'quoteTypeId' => QuoteTypes::getId(QuoteTypes::CAR),
+                'callSource' => LeadSourceEnum::IMCRM,
+            ];
+
+            LoggerService::info('Capi service request data', extra: $requestData);
+            $response = $this->capiService->request('/api/customer/documents-verify', 'PUT', $requestData);
+            LoggerService::info('Capi service response', extra: [
+                'response' => $response,
+            ]);
         }
     }
 

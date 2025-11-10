@@ -307,9 +307,6 @@ class CRUDController extends Controller
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $quote_status = $dropdownSource['quote_status_id'];
-            $quote_status = collect($quote_status)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::Lost;
-            })->values();
             $emirates = Emirate::getOptions();
 
             $todaysAllocationData = $this->allocationService->getHealthTodaysCount(auth()->user()->id);
@@ -2392,7 +2389,11 @@ class CRUDController extends Controller
         $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
         info('sendEmailOneClickBuy OCB email data built for quote uuid: '.$request->quote_uuid);
+        if ($carQuote->isSuppressIntroEmail() && $carQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
+            LoggerService::info(self::class." -Skipping OCB Email because for UUID: {$carQuote->uuid}");
 
+            return;
+        }
         $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
 
         if ($responseCode == 201) {
