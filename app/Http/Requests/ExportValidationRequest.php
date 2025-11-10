@@ -163,11 +163,11 @@ class ExportValidationRequest extends FormRequest
                             }
                         } else {
                             // For download exports, use days-based validation
-                            $diff = $start->diffInDays($end);
-                            if ($diff >= $diffInDays) {
-                                $message = "Maximum of {$diffInDays} days ({$error_fields}) are allowed to be exported.";
-                                $validator->errors()->add('flash', $message);
-                            }
+//                            $diff = $start->diffInDays($end);
+//                            if ($diff >= $diffInDays) {
+//                                $message = "Maximum of {$diffInDays} days ({$error_fields}) are allowed to be exported.";
+//                                $validator->errors()->add('flash', $message);
+//                            }
                         }
                     }
 
