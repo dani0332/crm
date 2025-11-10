@@ -186,7 +186,7 @@ watch(
       </div>
     </div>
     
-    <div class="grid sm:grid-cols-2 gap-4" v-if="buyForm.quote_type == 'CarRevival'">
+    <div class="grid sm:grid-cols-2 gap-4" v-if="buyForm.quote_type == 'CAR_CAT_A'">
       <div class="grid sm:grid-cols-1 gap-4">
 
         <p class="font-medium">CAT A - Nationalities</p>

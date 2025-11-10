@@ -6,6 +6,7 @@ use App\Enums\BuyLeadSegment;
 use App\Enums\QuoteTypes;
 use App\Traits\Filterable;
 use Illuminate\Database\Eloquent\Model;
+use App\Enums\LeadSourceEnum;
 
 class BuyLeadRequest extends Model
 {
@@ -22,6 +23,7 @@ class BuyLeadRequest extends Model
         'expires_at',
         'status',
         'segment',
+        'source',
     ];
     protected $casts = [
         'requested_count' => 'integer',
@@ -29,6 +31,7 @@ class BuyLeadRequest extends Model
         'cost_per_lead' => 'float',
         'expires_at' => 'datetime',
         'segment' => BuyLeadSegment::class,
+        'source' => LeadSourceEnum::class,
     ];
 
     public function scopeIsSIC($query)
@@ -151,4 +154,9 @@ class BuyLeadRequest extends Model
             $this->update(['status' => 'active']);
         }
     }
+    public static function getRevivalSourceUserIds(bool $isSIC, bool $isValue)
+    {
+         return self::byValueOrVolume(QuoteTypes::CAR, $isValue)->bySegment($isSIC)->where('source', LeadSourceEnum::REVIVAL)->active()->unfulfilled()->pluck('user_id')->toArray();
+    }
+   
 }

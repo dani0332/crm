@@ -19,6 +19,7 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use Illuminate\Support\Facades\DB;
+use App\Services\BuyLeads\BuyLeadService;
 
 class CarRevivalQuoteRepository extends BaseRepository
 {
@@ -60,6 +61,13 @@ class CarRevivalQuoteRepository extends BaseRepository
         ])
             ->where('source', LeadSourceEnum::REVIVAL)
             ->filter();
+
+        if (request()->get('is_cat_a_nationalities') == 1) {
+            $query->whereIn('nationality_id', app(BuyLeadService::class)->getCarCatANationalitiesIds());
+        }
+        if (request()->get('is_cat_a_nationalities') == 0) {
+            $query->whereNotIn('nationality_id', app(BuyLeadService::class)->getCarCatANationalitiesIds());
+        }
         // Custom Filters
         $query->when(request()->get('quote_batch_id'), function ($query) {
             $query->whereHas('batch', function ($batch) {

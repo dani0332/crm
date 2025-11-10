@@ -6,6 +6,7 @@ use App\Enums\BuyLeadSegment;
 use App\Observers\BuyLeadConfigurationObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
+use App\Enums\LeadSourceEnum;
 
 #[ObservedBy(BuyLeadConfigurationObserver::class)]
 class BuyLeadConfiguration extends Model
@@ -16,6 +17,7 @@ class BuyLeadConfiguration extends Model
         'value',
         'volume',
         'segment',
+        'source',
     ];
 
     public function casts()
@@ -24,6 +26,7 @@ class BuyLeadConfiguration extends Model
             'value' => 'float',
             'volume' => 'float',
             'segment' => BuyLeadSegment::class,
+            'source' => LeadSourceEnum::class,
         ];
     }
 

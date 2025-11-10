@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Auditable;
+use App\Services\BuyLeads\BuyLeadService;
 
 class CarQuote extends BaseModel
 {
@@ -501,9 +502,13 @@ class CarQuote extends BaseModel
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
 
+        // Check if the lead is a CAT A nationality
+        $isCATANationality = $this->source == LeadSourceEnum::REVIVAL && !in_array($this->nationality_id, app(BuyLeadService::class)->getCarCatANationalitiesIds());    
         // List of exempted lead sources
-        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
-
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY];
+        if ($isCATANationality) {
+            $exemptedLeadSources[] = LeadSourceEnum::REVIVAL;
+        }
         // Add Dubai Now to exempted lead sources if $shouldIncludeDubaiNow is true
         if ($shouldIncludeDubaiNow) {
             $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
