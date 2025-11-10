@@ -8,6 +8,7 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import OcrLogs from '../../Components/OcrLogs.vue';
 
 const props = defineProps({
   quote: Object,
@@ -1612,14 +1613,25 @@ const copyLink = () => {
 
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />
 
-    <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
-
     <AuditLogs
       :quote-type="quoteType"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
+
+    <ApiLogs
+     v-if="can(permissionsEnum.API_LOG_VIEW)"
+     :type="modelClass"
+     :id="$page.props.quote.id"
+     />
+
+   <OcrLogs
+    v-if="can(permissionsEnum.API_LOG_VIEW)"
+    :type="modelClass"
+    :id="$page.props.quote.id"
+    :expanded="sectionExpanded"
+   />
 
     <lead-raw-data
       :modelType="'Cyber'"
