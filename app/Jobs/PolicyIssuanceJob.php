@@ -77,11 +77,9 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'quote_code' => $quoteCode,
                 'final_status' => $this->process->fresh()->status
             ]);
-            LoggerService::endLogging();
 
         } catch (Throwable $e) {
             $this->handleException($e);
-            LoggerService::endLogging();
         }
     }
 
@@ -138,11 +136,6 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 throw new \RuntimeException("Process {$this->processId} not found");
             }
         }
-
-        LoggerService::startQuoteLogging(
-            QuoteTypes::getName($this->process->quote_type)->refId($this->process->model?->code),
-            LoggerFeatureEnum::POLICY_ISSUANCE_JOB
-        );
     }
 
     private function loadProcessModel(): void
@@ -237,16 +230,18 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         $response = $automation->executeSteps($this->process);
 
         if (!$response['status']) {
+            $errorMessage = $response['error'] ?? 'Unknown error';
+            
             LoggerService::error("Automation execution failed", [
                 'process_id' => $this->process->id,
                 'quote_code' => $quoteCode,
-                'error' => $response['error'] ?? 'Unknown error',
+                'error' => $errorMessage,
                 'provider' => $insuranceProvider->text
             ]);
 
             $this->process->update([
                 'status' => PolicyIssuanceEnum::FAILED_STATUS,
-                'message' => json_encode(['error' => $response['error']])
+                'message' => json_encode(['error' => $errorMessage])
             ]);
         } else {
             LoggerService::info("Automation executed successfully", [
