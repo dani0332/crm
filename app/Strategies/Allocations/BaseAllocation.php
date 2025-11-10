@@ -119,14 +119,13 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         $this->lead = $this->getLeadBaseQuery()->first();
     }
 
-    protected function getAdvisorBaseQuery(int $onlineStatus, array $roles, bool $skipMaxCapCheck = false)
+    protected function getAdvisorBaseQuery(int $onlineStatus, array $roles)
     {
         LoggerService::info('BaseAllocation: Starting getAdvisorBaseQuery', extra: [
             'onlineStatus' => $onlineStatus,
             'roles' => $roles,
             'quoteTypeId' => $this->getQuoteTypeId(),
             'teamId' => $this->teamId,
-            'skipMaxCapCheck' => $skipMaxCapCheck,
         ]);
 
         $query = User::select('users.id as user_id')
@@ -134,7 +133,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
             ->where('users.status', $onlineStatus)
-            ->when(! $skipMaxCapCheck, function ($query) {
+            ->where(function ($query) {
                 $query->whereRaw('la.allocation_count < la.max_capacity')->orWhere('la.max_capacity', -1);
             })
             ->when($this->teamId, function ($q) {

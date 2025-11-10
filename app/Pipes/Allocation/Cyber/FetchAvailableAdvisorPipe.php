@@ -62,8 +62,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             onlineStatus: $onlineStatus,
             teamId: $teamId,
             roles: [RolesEnum::TravelHapex],
-            isBuyLead: false,
-            skipMaxCapCheck: false
+            isBuyLead: false
         )
             ->logRawSql()
             ->first();
@@ -93,8 +92,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             onlineStatus: $onlineStatus,
             teamId: null,
             roles: [RolesEnum::CyberAdvisor],
-            isBuyLead: false,
-            skipMaxCapCheck: true
+            isBuyLead: false
         )
             ->whereIn('users.email', $emails)
             ->logRawSql()
@@ -104,7 +102,11 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             LoggerService::info(self::class.' - Found Cyber advisor from hardcoded email list', extra: [
                 'advisorId' => $advisorRecord->user_id,
                 'status' => $onlineStatus,
-                'capacityCheckSkipped' => true,
+            ]);
+        } else {
+            LoggerService::info(self::class.' - No available Cyber advisor found', extra: [
+                'status' => $onlineStatus,
+                'hardcodedEmails' => $emails,
             ]);
         }
 

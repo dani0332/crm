@@ -146,7 +146,7 @@ abstract class BaseAllocationPipe extends AllocationService
         return QuoteBatches::latest()->first();
     }
 
-    protected function getAdvisorBaseQuery($onlineStatus, $teamId, $roles, bool $isBuyLead = false, bool $skipMaxCapCheck = false)
+    protected function getAdvisorBaseQuery($onlineStatus, $teamId, $roles, bool $isBuyLead = false)
     {
         return User::select('users.id as user_id')
             ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
@@ -154,22 +154,17 @@ abstract class BaseAllocationPipe extends AllocationService
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
             ->where('users.status', $onlineStatus)
             ->when(
-                ! $skipMaxCapCheck,
-                function ($q) use ($isBuyLead) {
-                    $q->when(
-                        $isBuyLead,
-                        function ($query) {
-                            $query->where(function ($subQuery) {
-                                $subQuery->whereRaw('la.buy_lead_allocation_count < la.buy_lead_max_capacity')->orWhere('la.buy_lead_max_capacity', -1);
-                            });
-                        },
-                        function ($query) {
-                            $query->where(function ($subQuery) {
-                                $subQuery->whereRaw('la.allocation_count < la.max_capacity')->orWhere('la.max_capacity', -1);
-                            });
-                        }
-                    );
-                }
+                $isBuyLead,
+                function ($q) {
+                    $q->where(function ($query) {
+                        $query->whereRaw('la.buy_lead_allocation_count < la.buy_lead_max_capacity')->orWhere('la.buy_lead_max_capacity', -1);
+                    });
+                },
+                function ($q) {
+                    $q->where(function ($query) {
+                        $query->whereRaw('la.allocation_count < la.max_capacity')->orWhere('la.max_capacity', -1);
+                    });
+                },
             )
             ->when($teamId, function ($q) use ($teamId) {
                 $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $teamId));
