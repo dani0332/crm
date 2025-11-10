@@ -73,6 +73,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->process->id.' - Model not found, skipping job execution');
                     // Mark as failed since this is a non-retryable error
                     $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'Model not found'])]);
+
                     return;
                 }
             }
@@ -95,6 +96,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Insurance Provider not found');
                     // Mark as failed since this is a non-retryable error
                     $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'Insurance Provider not found'])]);
+
                     return;
                 }
 
@@ -141,6 +143,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                     $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $e->getMessage()])]);
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.$this->process->id.' marked as failed (non-retryable error)');
                 }
+
                 // Don't re-throw, let the job complete successfully to prevent retries
                 return;
             }
@@ -154,6 +157,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                     $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $e->getMessage()])]);
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.$this->process->id.' marked as failed (max attempts reached)');
                 }
+
                 // Don't re-throw, let the job complete successfully to prevent further retries
                 return;
             }
