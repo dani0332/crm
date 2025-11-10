@@ -31,11 +31,6 @@ class QueryBenchmarkerService
             throw new Exception('Only SELECT queries are allowed.');
         }
 
-        // Ensure query contains a WHERE clause
-        if (! preg_match('/\bwhere\b/i', $query)) {
-            throw new Exception('Query must contain a WHERE clause for performance reasons.');
-        }
-
         // Check for sensitive data patterns in SELECT clause only, not in WHERE clause
         $sensitiveDataPatterns = [
             '/\b(email|e_mail|e-mail|mail|user_email|customer_email)\b/i',
@@ -141,20 +136,7 @@ class QueryBenchmarkerService
             return $results;
         }
 
-        $sensitiveFields = [
-            // Email patterns
-            'email', 'e_mail', 'e-mail', 'mail', 'user_email', 'customer_email',
-            // Phone patterns
-            'phone', 'telephone', 'mobile', 'phone_number', 'mobile_number', 'contact_number', 'cell', 'cellphone',
-            // Password patterns
-            'password', 'passwd', 'pwd', 'user_password', 'hash', 'secret',
-            // ID patterns
-            'ssn', 'social_security', 'tax_id', 'national_id', 'id_number',
-            // Payment patterns
-            'credit_card', 'card_number', 'cc_number', 'payment_card',
-            // Address patterns
-            'address', 'street', 'city', 'postal_code', 'zip_code', 'zip',
-        ];
+        $sensitiveFields = ['email'];
 
         $filteredResults = [];
         foreach ($results as $row) {
