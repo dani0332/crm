@@ -49,8 +49,6 @@ const tableHeader = [
   { text: 'Sync Status', value: 'sync_status', sortable: true },
   { text: 'NATIONALITY', value: 'nationality' },
   { text: 'Vehicle', value: 'vehicle' },
-  { text: 'Contact Number', value: 'contact_number' },
-  { text: 'Email ID', value: 'email' },
   { text: 'Contribution Amount', value: 'contribution_amount', sortable: true },
   { text: 'Policy Issue Status', value: 'status' },
   { text: 'Certificate Number', value: 'certificate_number' },
