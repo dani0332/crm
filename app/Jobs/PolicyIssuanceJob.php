@@ -77,6 +77,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
 
             $this->process = $this->process->refresh();
+            // Reload model relationship after refresh since refresh() clears all loaded relationships
+            $this->process->load('model');
 
             if ($this->isProcessable($this->process)) {
                 $processingStatus = $this->process->status === PolicyIssuanceEnum::PENDING_STATUS ? PolicyIssuanceEnum::PROCESSING_STATUS : PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS;
