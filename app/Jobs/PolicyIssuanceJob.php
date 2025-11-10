@@ -145,7 +145,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         // Log full exception details including stack trace for debugging
         // Use info level for max attempts/timeout errors to avoid noise in error logs
         if ($isAttemptsOrTimeout) {
-            Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.($this->process->id ?? $this->processId).' MAX ATTEMPTS/TIMEOUT', [
+            Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process?->model?->code ?? 'unknown').' - Process ID : '.($this->process->id ?? $this->processId).' MAX ATTEMPTS/TIMEOUT', [
                 'exception_class' => get_class($exception),
                 'exception_message' => $message,
                 'exception_code' => $exception->getCode(),
@@ -154,7 +154,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'max_tries' => $this->tries,
             ]);
         } else {
-            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.($this->process->id ?? $this->processId).' EXCEPTION DETAILS', [
+            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process?->model?->code ?? 'unknown').' - Process ID : '.($this->process->id ?? $this->processId).' EXCEPTION DETAILS', [
                 'exception_class' => get_class($exception),
                 'exception_message' => $message,
                 'exception_code' => $exception->getCode(),
@@ -176,9 +176,9 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
             // Log status update with appropriate log level
             if ($isAttemptsOrTimeout) {
-                Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Reason : '.$message);
+                Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process?->model?->code ?? 'unknown').' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Reason : '.$message);
             } else {
-                Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
+                Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process?->model?->code ?? 'unknown').' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
             }
         } else {
             Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->processId.' not found, cannot update status');
