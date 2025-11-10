@@ -65,6 +65,15 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 }
             }
 
+            // Ensure model relationship is loaded
+            if (! $this->process->relationLoaded('model') || ! $this->process->model) {
+                $this->process->load('model');
+                if (! $this->process->model) {
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->process->id.' - Model not found, skipping job execution');
+                    return;
+                }
+            }
+
             LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
 
             $this->process = $this->process->refresh();
