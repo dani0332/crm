@@ -14,7 +14,6 @@ use BenSampo\Enum\Enum;
 final class BorStatusEnum extends Enum
 {
     const SIGNATURE_REQUESTED = 'Signature Requested';
-    const SENT_TO_INSURER = 'Sent to Insurer';
     const DOCUMENT_SIGNED = 'Document Signed';
     const DOCUMENT_UPLOADED = 'Document Uploaded';
     const COMPLETED = 'Completed';

@@ -231,7 +231,7 @@
     @else
         <div class="letter-content">
             <p>
-                This letter serves as a formal appointment of InsuranceMarket.ae (a registered trademark of AFIA Insurance Brokerage Services L.L.C.) as my exclusive period.
+                This letter serves as a formal appointment of InsuranceMarket.ae (a registered trademark of AFIA Insurance Brokerage Services L.L.C.) as my exclusive broker.
             </p>
             
             <p>
