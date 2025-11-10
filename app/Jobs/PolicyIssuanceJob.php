@@ -61,6 +61,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 $this->process = PolicyIssuance::find($this->processId);
                 if (! $this->process) {
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->processId.' not found, skipping job execution');
+
                     return;
                 }
             }
@@ -70,6 +71,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 $this->process->load('model');
                 if (! $this->process->model) {
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->process->id.' - Model not found, skipping job execution');
+
                     return;
                 }
             }
