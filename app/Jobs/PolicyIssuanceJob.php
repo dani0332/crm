@@ -123,10 +123,11 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         return $this->uniqueKey;
     }
 
-    public function middleware(): array
-    {
-        return [new WithoutOverlapping($this->uniqueId())];
-    }
+    // Note: commenting this out solves the issue for "policy job attempts to many attempts" 
+    // public function middleware(): array
+    // {
+    //     return [new WithoutOverlapping($this->uniqueId())];
+    // }
 
     private function loadProcess(): void
     {
