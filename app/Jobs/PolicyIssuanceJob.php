@@ -172,9 +172,9 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
             // Log status update with appropriate log level
             if ($isAttemptsOrTimeout) {
-                Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Reason : '.$message);
+                Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Reason : '.$message);
             } else {
-                Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
+                Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
             }
         } else {
             Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->processId.' not found, cannot update status');
