@@ -32,6 +32,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     private $className = 'policyIssuanceJob';
     public mixed $process;
     public $uniqueKey = null;
+    private $processId;
 
     /**
      * Create a new job instance.
@@ -39,6 +40,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public function __construct($processId)
     {
         LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$processId.' inside constructor');
+        $this->processId = $processId;
         $this->uniqueKey = 'policy-issuance-automation-id-'.$processId;
         $this->process = PolicyIssuance::find($processId);
         if (! $this->process) {
@@ -54,6 +56,15 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public function handle(): void
     {
         try {
+            // Reload process if it wasn't found in constructor or if it's null
+            if (! $this->process) {
+                $this->process = PolicyIssuance::find($this->processId);
+                if (! $this->process) {
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->processId.' not found, skipping job execution');
+                    return;
+                }
+            }
+
             LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
 
             $this->process = $this->process->refresh();
@@ -61,7 +72,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             if ($this->isProcessable($this->process)) {
                 $processingStatus = $this->process->status === PolicyIssuanceEnum::PENDING_STATUS ? PolicyIssuanceEnum::PROCESSING_STATUS : PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS;
                 $this->process->update(['status' => $processingStatus]);
-                LoggerService:info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
+                LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
 
                 $quoteType = $this->process?->quote_type;
                 $insuranceProvider = $this->process?->insuranceProvider;
@@ -110,13 +121,18 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     public function failed(Throwable $exception)
     {
+        // Reload process if it's null
+        if (! $this->process) {
+            $this->process = PolicyIssuance::find($this->processId);
+        }
+
         $message = $exception->getMessage();
         $isAttemptsOrTimeout = $this->isFailedDueToAttemptsOrTimeout($message);
 
         // Log full exception details including stack trace for debugging
         // Use info level for max attempts/timeout errors to avoid noise in error logs
         if ($isAttemptsOrTimeout) {
-            Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' MAX ATTEMPTS/TIMEOUT', [
+            Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.($this->process->id ?? $this->processId).' MAX ATTEMPTS/TIMEOUT', [
                 'exception_class' => get_class($exception),
                 'exception_message' => $message,
                 'exception_code' => $exception->getCode(),
@@ -125,7 +141,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'max_tries' => $this->tries,
             ]);
         } else {
-            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' EXCEPTION DETAILS', [
+            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.($this->process->id ?? $this->processId).' EXCEPTION DETAILS', [
                 'exception_class' => get_class($exception),
                 'exception_message' => $message,
                 'exception_code' => $exception->getCode(),
@@ -136,19 +152,29 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             ]);
         }
 
-        $messageLower = strtolower($message);
-        if (str_contains($messageLower, strtolower(self::TIMEOUT_MESSAGE)) || str_contains($messageLower, strtolower(self::LARAVEL_TIMEOUT_MESSAGE))) {
-            $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
-        } else {
-            $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
-        }
+        // Only update process status if process exists
+        if ($this->process) {
+            $messageLower = strtolower($message);
+            if (str_contains($messageLower, strtolower(self::TIMEOUT_MESSAGE)) || str_contains($messageLower, strtolower(self::LARAVEL_TIMEOUT_MESSAGE))) {
+                $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
+            } else {
+                $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
+            }
 
-        // Log status update with appropriate log level
-        if ($isAttemptsOrTimeout) {
-            Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Reason : '.$message);
+            // Log status update with appropriate log level
+            if ($isAttemptsOrTimeout) {
+                Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Reason : '.$message);
+            } else {
+                Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
+            }
         } else {
-            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
+            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->processId.' not found, cannot update status');
         }
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->uniqueKey ?? 'policy-issuance-automation-id-'.$this->processId;
     }
 
     public function middleware()
