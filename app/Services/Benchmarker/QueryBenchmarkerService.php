@@ -33,7 +33,7 @@ class QueryBenchmarkerService
 
         // Check for sensitive data patterns in SELECT clause only, not in WHERE clause
         $sensitiveDataPatterns = [
-            '/\b(email)\b/i'
+            '/\b(email)\b/i',
         ];
 
         // Extract SELECT clause from the query
