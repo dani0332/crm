@@ -43,6 +43,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         $this->process = PolicyIssuance::find($processId);
         if (! $this->process) {
             LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$processId.' not found');
+
             return;
         }
     }
@@ -58,6 +59,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 $this->process = PolicyIssuance::find($this->processId);
                 if (! $this->process) {
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->processId.' not found, skipping job execution');
+
                     return;
                 }
             }
@@ -68,6 +70,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 if (! $this->process->model) {
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->process->id.' - Model not found, skipping job execution');
                     $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'Model not found'])]);
+
                     return;
                 }
             }
@@ -88,6 +91,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 if (! $insuranceProvider) {
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Insurance Provider not found');
                     $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'Insurance Provider not found'])]);
+
                     return;
                 }
 
@@ -125,9 +129,9 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             // Mark as failed and handle accordingly
             if ($this->process) {
                 $messageLower = strtolower($e->getMessage());
-                
+
                 // Check if it's a timeout error
-                if (str_contains($messageLower, strtolower(self::TIMEOUT_MESSAGE)) || 
+                if (str_contains($messageLower, strtolower(self::TIMEOUT_MESSAGE)) ||
                     str_contains($messageLower, strtolower(self::LARAVEL_TIMEOUT_MESSAGE))) {
                     $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $e->getMessage()])]);
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.$this->process->id.' marked as timeout');
@@ -147,7 +151,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     {
         // This should rarely be called now since we catch everything in handle()
         // But keep it as a safety net
-        
+
         if (! $this->process) {
             $this->process = PolicyIssuance::find($this->processId);
         }
@@ -163,7 +167,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
         if ($this->process) {
             $messageLower = strtolower($message);
-            if (str_contains($messageLower, strtolower(self::TIMEOUT_MESSAGE)) || 
+            if (str_contains($messageLower, strtolower(self::TIMEOUT_MESSAGE)) ||
                 str_contains($messageLower, strtolower(self::LARAVEL_TIMEOUT_MESSAGE))) {
                 $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $message])]);
             } else {
@@ -185,9 +189,9 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     private function isProcessable($process)
     {
         return in_array($process->status, [
-            PolicyIssuanceEnum::PENDING_STATUS, 
-            PolicyIssuanceEnum::BOOKING_PENDING_STATUS, 
-            PolicyIssuanceEnum::TIMEOUT_STATUS
+            PolicyIssuanceEnum::PENDING_STATUS,
+            PolicyIssuanceEnum::BOOKING_PENDING_STATUS,
+            PolicyIssuanceEnum::TIMEOUT_STATUS,
         ]);
     }
 }
