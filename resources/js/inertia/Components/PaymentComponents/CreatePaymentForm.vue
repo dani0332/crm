@@ -252,7 +252,7 @@ const isInsureNowPayLaterAllowed = computed(() => {
     if (props.payments.length > 0) {
       let inureNowPayLaterExists = props.payments[0].payment_splits.find(
         item =>
-          item.payment_method.code ===
+          item.payment_method?.code ===
           page.props.paymentMethodsEnum?.InsureNowPayLater,
       );
       if (inureNowPayLaterExists) {
@@ -784,12 +784,12 @@ const providerName = computed(() => {
       provider => provider.id === providerId.value,
     );
 
-    return provider.text || 'Not Available';
+    return provider?.text || 'Not Available';
   } else if (
     ecomQuoteType.includes(props.quoteType) &&
-    plan.insurance_provider
+    plan?.insurance_provider
   ) {
-    return plan ? plan.insurance_provider.text : 'Not Available';
+    return plan ? plan.insurance_provider?.text : 'Not Available';
   } else {
     return plan ? plan.text : 'Not Available';
   }
@@ -1072,16 +1072,16 @@ const initializePaymentForm = (
     paymentMethodsForm.splitPaymentId = split_payment_id;
     paymentMethodsForm.status = 'view';
     paymentMethodsForm.collection_amount = '';
-    paymentMethodsForm.payment_method = payment.payment_method.code;
+    paymentMethodsForm.payment_method = payment.payment_method?.code;
     paymentMethodsForm.bank_reference_number = '';
-    splitPaymentRecord.value = payment.payment_splits.find(
+    splitPaymentRecord.value = payment.payment_splits?.find(
       item => item.sr_no === sr_no,
     );
     paymentMethodsForm.system_adjusted_discount =
       payment.system_adjusted_discount;
   }
 
-  masterPaymentStatus.value = payment.payment_status.text;
+  masterPaymentStatus.value = payment.payment_status?.text || 'NEW';
   paymentMethodsForm.paymentCode = payment.code;
   paymentMethodsForm.insurance_provider_id = payment.insurance_provider_id;
   paymentMethodsForm.collection_type = payment.collection_type;
@@ -1572,7 +1572,7 @@ const applyPermissions = () => {
     if (
       paymentMethodsForm.status === 'view' &&
       can(permissionEnum.INPL_APPROVER) &&
-      splitPaymentRecord.value.payment_method.code ===
+      splitPaymentRecord.value.payment_method?.code ===
         page.props.paymentMethodsEnum?.InsureNowPayLater
     ) {
       isVerificationAllowed.value = true;
@@ -1610,7 +1610,7 @@ const processPaymentSplits = payment => {
     authorizedPayments.value[i] =
       split.payment_status_id === paymentStatusEnum.AUTHORISED;
     fileUploadModels.value[i] = [];
-    paymentMethodsModels.value[i] = split.payment_method.code;
+    paymentMethodsModels.value[i] = split.payment_method?.code;
     splitAmountModels.value[i] = split.payment_amount;
     if (i === insurerPaymentLinkIndex.value) {
       paymentMethodsForm.insurerPaymentLink = split.insurer_payment_link;
@@ -1622,12 +1622,12 @@ const processPaymentSplits = payment => {
       ? premiumToCapture.value
       : split.collection_amount;
 
-    if (['CHQ', 'PDC'].includes(split.payment_method.code)) {
+    if (['CHQ', 'PDC'].includes(split.payment_method?.code)) {
       isCheckDetailsEnabled.value[i] = true;
       checkDetailModels.value[i] = split.check_detail;
     }
 
-    if (split.documents.length > 0) {
+    if (split.documents && split.documents.length > 0) {
       split.documents.forEach(doc => {
         if (doc.payment_split_type === 'discount') {
           if (!discountDocumentModel.value[0]) {
@@ -2345,7 +2345,7 @@ const resetTotalPayments = () => {
 const getPlanName = computed(() => {
   const plan = props.planDetail;
   if (props.quoteType === quoteTypeCodeEnum.Bike) {
-    return plan ? props.quoteRequest.car_plan.text : 'Not Available';
+    return plan ? props.quoteRequest.car_plan?.text : 'Not Available';
   }
   if (props.sendUpdate) {
     return props.planText || 'Not Available';

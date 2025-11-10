@@ -602,6 +602,38 @@ export const applyEmiratesNumberMasking = emiratesId => {
   return emiratesIDNumber;
 };
 
+export const applyScreeningIdNumberMasking = screeningId => {
+  // Handle null, undefined, or empty values
+  if (!screeningId || typeof screeningId !== 'string') {
+    return screeningId ?? null;
+  }
+
+  let screeningIdNumber = screeningId.replace(/\D/g, '');
+  if (screeningIdNumber?.length > 15) {
+    screeningIdNumber = screeningIdNumber.substring(0, 15); // Limit to 15 characters
+  }
+  if (screeningIdNumber?.length <= 3) {
+    screeningIdNumber = screeningIdNumber.replace(/(\d{3})(\d{0,})/, '$1-$2');
+  } else if (screeningIdNumber?.length <= 7) {
+    screeningIdNumber = screeningIdNumber.replace(
+      /(\d{3})(\d{4})(\d{0,})/,
+      '$1-$2-$3',
+    );
+  } else if (screeningIdNumber?.length <= 13) {
+    screeningIdNumber = screeningIdNumber.replace(
+      /(\d{3})(\d{4})(\d{7})(\d{0,})/,
+      '$1-$2-$3-$4',
+    );
+  } else {
+    screeningIdNumber = screeningIdNumber.replace(
+      /(\d{3})(\d{4})(\d{7})(\d{1,})/,
+      '$1-$2-$3-$4',
+    );
+  }
+
+  return screeningIdNumber;
+};
+
 export const useGenerateOptions = (items, valueKey, labelKey) => {
   return items.map(item => ({
     value: item[valueKey],
