@@ -295,6 +295,10 @@ abstract class BaseAllocationPipe extends AllocationService
             $this->lead->sic_flow_enabled = 0;
         }
 
+        if ($this->lead instanceof PersonalQuote && $this->lead->isCyber()) {
+            $this->lead->sic_flow_enabled = 0;
+        }
+
         if (empty($this->lead->lead_assignment_trigger)) {
             LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
             $this->lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;

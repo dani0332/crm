@@ -6,6 +6,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -275,5 +276,28 @@ trait QuoteAllocatable
     public function isReAssignment()
     {
         return in_array($this->assignment_type, [AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD]);
+    }
+
+    // similar to eligibleForAllocation but checks sic_advisor_requested via cyberQuoteRequest relation.
+    public function scopeEligibleForAllocationCyber(Builder $query): Builder
+    {
+        return $query->where(function ($mainQuery) {
+            $mainQuery
+                // AIG Cyber leads with advisor requested or payment authorized/declined
+                ->where(function ($aigQuery) {
+                    $aigQuery->isAIG(QuoteTypes::CYBER)
+                        ->advisorRequestedOrPaymentAuthorizedOrDeclinedCyber();
+                })
+                // OR Non-AIG Cyber leads
+                ->orWhere(function ($otherLeads) {
+                    $otherLeads->isNotAIG(QuoteTypes::CYBER);
+                    $otherLeads->where(function ($sq) {
+                        $sq
+                            ->where(fn ($x) => $x->sicFlowDisabled())
+                            // SIC flow enabled with advisor requested or payment
+                            ->orWhere(fn ($x) => $x->sicFlowEnabled()->advisorRequestedOrPaymentAuthorizedOrDeclinedCyber());
+                    });
+                });
+        })->orWhere->leadAllocationFailed();
     }
 }
