@@ -344,26 +344,34 @@ class PolicyIssuanceService
         if ($quoteType === QuoteTypes::CAR->value) {
             $statusAPIFailed = $this->getInsurerAPIStatuses($newInsurerApiStatus);
         }
-        $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
-        $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus);
+        $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus, $quoteType);
+        $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus, $quoteType);
         $this->allocateLead($quoteType, $quote, $isInsurerApiStatusAlreadyFailed, $statusAPIFailed, $processInvolved);
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
     }
 
-    private function updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus)
+    private function updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus, $quoteType)
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote Insurer API  Status : '.$newInsurerApiStatus);
         if ($newInsurerApiStatus) {
-            $quote->update(['insurer_api_status_id' => $newInsurerApiStatus]);
+            if ($quoteType === QuoteTypes::CYBER->value) {
+                $quote->cyberQuote->update(['insurer_api_status_id' => $newInsurerApiStatus]);
+            } else {
+                $quote->update(['insurer_api_status_id' => $newInsurerApiStatus]);
+            }
         }
     }
 
-    private function updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus)
+    private function updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus, $quoteType)
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote API Issuance Status : '.$newApiIssuanceStatus);
         if ($newApiIssuanceStatus) {
-            $quote->update(['api_issuance_status_id' => $newApiIssuanceStatus]);
+            if ($quoteType === QuoteTypes::CYBER->value) {
+                $quote->cyberQuote->update(['api_issuance_status_id' => $newApiIssuanceStatus]);
+            } else {
+                $quote->update(['api_issuance_status_id' => $newApiIssuanceStatus]);
+            }
         }
     }
 

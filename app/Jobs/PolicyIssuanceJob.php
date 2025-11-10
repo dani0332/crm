@@ -84,7 +84,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 $response = $insuranceProviderAutomation->executeSteps($this->process);
                 LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Response : '.json_encode($response));
                 if (! $response['status']) {
-                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $response['error']])]);
+                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['message' => $response['message'], 'error' => $response['error']])]);
                     LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.json_encode($response['error']));
                 } else {
                     $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
@@ -112,7 +112,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         if (!$this->process) {
             Log::error('PolicyIssuanceJob failed - Process not found with ID: ' . $this->processId . ' Error: ' . $exception->getMessage());
             return;
-        }
+  
+     }
 
         $message = $exception->getMessage();
         if (str_contains($message, self::TIMEOUT_MESSAGE) || str_contains($message, self::LARAVEL_TIMEOUT_MESSAGE)) {

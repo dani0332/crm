@@ -158,6 +158,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
             $response['status'] = $executeStepSequence['status'];
             $response['message'] = $executeStepSequence['message'];
+            $response['error'] = $executeStepSequence['error'];
         } catch (Exception $e) {
             $response['error'] = $e->getMessage();
             LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - Exception : ' . $e->getMessage());
@@ -172,15 +173,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
     private function executeStepSequence($quote, $process, $nextStepToBeExecuted)
     {
-        if ($nextStepToBeExecuted === self::UPLOAD_DOCUMENTS) {
-            $uploadDocumentsResponse = $this->executeUploadDocumentsStep($quote, $process);
-            if (isset($uploadDocumentsResponse['status']) && ! $uploadDocumentsResponse['status']) {
-                return $uploadDocumentsResponse;
-            }
-
-            $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-        }
-
         if ($nextStepToBeExecuted === self::ISSUE_POLICY) {
             $issuePolicyResponse = $this->executeIssuePolicyStep($quote, $process);
             if (isset($issuePolicyResponse['status']) && ! $issuePolicyResponse['status']) {
@@ -189,6 +181,15 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
+
+        if ($nextStepToBeExecuted === self::UPLOAD_DOCUMENTS) {
+            $uploadDocumentsResponse = $this->executeUploadDocumentsStep($quote, $process);
+            if (isset($uploadDocumentsResponse['status']) && ! $uploadDocumentsResponse['status']) {
+                return $uploadDocumentsResponse;
+            }
+
+            $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
+        }        
 
         if ($nextStepToBeExecuted === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
             $uploadPolicyDocumentsToIMCRMResponse = $this->executeUploadPolicyDocumentsStep($quote, $process);
@@ -218,6 +219,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
     public function getNextStep($completedStep = null): ?string
     {
+        LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . '- Completed Step : ' . $completedStep);
         $allSteps = $this->getAPISteps();
 
         if (! $completedStep) {
@@ -376,14 +378,14 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             'price_vat_applicable' => $issuePolicyResult?->policyInfo?->premiumAmount,
             'vat' => $issuePolicyResult?->policyInfo?->prmVatAmt,
             'price_with_vat' => $issuePolicyResult?->policyInfo?->prmPayableAmt,
-            'insurer_quote_no' => $issuePolicyResult?->QuoteRefNo ?? null,
+            'insurer_quote_number' => $issuePolicyResult?->QuoteRefNo ?? null,
         ]);
 
         Payment::where('code', $quote->code)->update([
             'commission_vat_applicable' => $issuePolicyResult?->policyInfo?->commissionPayableAmt,
             'commission' => $issuePolicyResult?->policyInfo?->commissionAmt,
             'commission_vat' => $issuePolicyResult?->policyInfo?->commissionVatAmt,
-            'commmission_percentage' => $issuePolicyResult?->policyInfo?->CommissionPercentage,
+            'commmission_percentage' => $issuePolicyResult?->policyInfo?->CommissionPercentage ?? 0, // TODO: need to verify commission percentage is not coming in response
             'insurer_commmission_invoice_number' => $issuePolicyResult?->policyInfo?->creditNoteNo ?? null,
             'insurer_invoice_date' => $issuePolicyResult?->policyInfo?->policyIssuedDate ?? null,
             'insurer_tax_number' => $issuePolicyResult?->policyInfo?->invoiceNo ?? null,
@@ -399,7 +401,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
     public function uploadDocuments($quote)
     {
-        $endPoint = 'motor/documents/upload/v2';
+        $endPoint = 'cyber/uploadDocument';
         $response = ['status' => false, 'completed_step' => self::UPLOAD_DOCUMENTS, 'error' => null, 'message' => null];
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' started', extra: [
             'endPoint' => $endPoint,

@@ -7,12 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class CyberQuote extends Model
 {
     //
-    protected $table = 'cyber_quotes';
-    protected $fillable = [
-        'quote_id',
-        'quote_detail_id',
-        'quote_detail_id',
-    ];
+    protected $table = 'cyber_quote_request';
+    protected $fillable = [];
+    protected $guarded = [];
 
     public function personalQuote()
     {
