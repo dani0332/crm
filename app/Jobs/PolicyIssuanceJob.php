@@ -248,13 +248,25 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'message' => json_encode(['error' => $errorMessage])
             ]);
         } else {
-            LoggerService::info("Automation executed successfully", [
-                'process_id' => $this->process->id,
-                'quote_code' => $quoteCode,
-                'provider' => $insuranceProvider->text
-            ]);
 
-            $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
+            if (isset($response['booking_pending']) && $response['booking_pending']) {
+                LoggerService::info("Automation: Booking pending", [
+                    'process_id' => $this->process->id,
+                    'quote_code' => $quoteCode,
+                    'provider' => $insuranceProvider->text
+                ]);
+                $this->process->update([
+                    'status' => PolicyIssuanceEnum::BOOKING_PENDING_STATUS,
+                    'message' => json_encode(['message' => 'Booking pending'])
+                ]);
+            } else {
+                LoggerService::info("Automation executed successfully", [
+                    'process_id' => $this->process->id,
+                    'quote_code' => $quoteCode,
+                    'provider' => $insuranceProvider->text
+                ]);
+                $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
+            }
         }
     }
 
