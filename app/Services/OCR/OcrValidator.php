@@ -32,14 +32,18 @@ trait OcrValidator
         InsuranceProviderEnum::MTL->value,   // METLIFE_INSURANCE
         InsuranceProviderEnum::CIG->value,   // CIGNA_INSURANCE
     ];
+
+    // We might consider this to move to database
     private const PROVIDER_QUOTE_TYPE_MAPPING = [
         // Multi-LOB: CAR, HOME, GROUP_MEDICAL
         InsuranceProviderEnum::AXA->value => [QuoteTypes::CAR, QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::OIC->value => [QuoteTypes::CAR, QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL],
+
         // Car-only
         InsuranceProviderEnum::QIC->value => [QuoteTypes::CAR],
         InsuranceProviderEnum::RSA->value => [QuoteTypes::CAR],
         InsuranceProviderEnum::TM->value => [QuoteTypes::CAR],
+
         // Group Medical-only
         InsuranceProviderEnum::TE->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::OI2->value => [QuoteTypes::GROUP_MEDICAL],
@@ -49,6 +53,9 @@ trait OcrValidator
         InsuranceProviderEnum::DIC->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::CIG->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::SI->value => [QuoteTypes::GROUP_MEDICAL],
+
+        // Cyber-only
+        InsuranceProviderEnum::AWNI->value => [QuoteTypes::CYBER],
     ];
 
     public function isSupportedProvider(QuoteTypes $quoteType, string $provider): bool
