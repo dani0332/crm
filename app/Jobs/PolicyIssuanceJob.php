@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\MaxAttemptsExceededException;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
 
@@ -24,7 +25,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public $uniqueFor = 185;
     public $tries = 1;
 
-    private const TIMEOUT_INDICATORS = ['cURL error 28', 'has timed out'];
+    private const TIMEOUT_INDICATORS = ['cURL error 28', 'has timed out', 'has been attempted too many times'];
 
     private int $processId;
     private ?PolicyIssuance $process = null;
@@ -91,21 +92,52 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             $this->process = PolicyIssuance::find($this->processId);
         }
         
-        LoggerService::error("Policy issuance job failed callback triggered", [
+        $exceptionMessage = $exception->getMessage();
+        $isMaxAttemptsExceeded = $exception instanceof MaxAttemptsExceededException;
+        
+        // For MaxAttemptsExceededException, treat it as timeout if it's likely timeout-related
+        // This prevents the error from being logged as a critical failure
+        $isTimeoutRelated = $this->isTimeoutError($exceptionMessage) || 
+                           ($isMaxAttemptsExceeded && $this->isTimeoutRelatedFailure());
+        
+        // Use info level for timeout-related failures instead of error to reduce noise
+        $logMessage = $isMaxAttemptsExceeded 
+            ? "Policy issuance job exceeded max attempts (likely timeout)" 
+            : "Policy issuance job failed callback triggered";
+        
+        $logData = [
             'process_id' => $this->processId,
             'quote_code' => $this->process?->model?->code ?? 'unknown',
-            'exception' => $exception->getMessage(),
-            'exception_class' => get_class($exception)
-        ]);
+            'exception' => $exceptionMessage,
+            'exception_class' => get_class($exception),
+            'is_max_attempts_exceeded' => $isMaxAttemptsExceeded,
+            'is_timeout_related' => $isTimeoutRelated,
+            'attempts' => $this->attempts()
+        ];
+        
+        if ($isTimeoutRelated) {
+            LoggerService::info($logMessage, $logData);
+        } else {
+            LoggerService::error($logMessage, $logData);
+        }
 
         if ($this->process) {
-            $status = $this->isTimeoutError($exception->getMessage()) 
+            // If MaxAttemptsExceededException and it's timeout-related, set status to TIMEOUT
+            // This prevents the error from being treated as a critical failure
+            $status = $isTimeoutRelated
                 ? PolicyIssuanceEnum::TIMEOUT_STATUS 
                 : PolicyIssuanceEnum::FAILED_STATUS;
 
             $this->process->update([
                 'status' => $status,
-                'message' => json_encode(['error' => $exception->getMessage()])
+                'message' => json_encode(['error' => $exceptionMessage])
+            ]);
+            
+            LoggerService::info("Policy issuance job status updated", [
+                'process_id' => $this->processId,
+                'quote_code' => $this->process->model?->code ?? 'unknown',
+                'status' => $status,
+                'reason' => $isTimeoutRelated ? 'timeout' : 'failure'
             ]);
         } else {
             LoggerService::error("Process not found in failed callback - cannot update status", [
@@ -296,6 +328,31 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             if (str_contains($messageLower, strtolower($indicator))) {
                 return true;
             }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if the failure is timeout-related by examining the job's execution context
+     * This helps identify when MaxAttemptsExceededException is due to timeout
+     */
+    private function isTimeoutRelatedFailure(): bool
+    {
+        // Check if the process status was already set to TIMEOUT_STATUS during execution
+        if ($this->process) {
+            $currentStatus = $this->process->fresh()->status;
+            if ($currentStatus === PolicyIssuanceEnum::TIMEOUT_STATUS) {
+                return true;
+            }
+        }
+        
+        // For MaxAttemptsExceededException with $tries = 1, if we've reached max attempts,
+        // it's likely due to a timeout (since timeout counts as an attempt)
+        // This is especially true if the job has a timeout set and we're at max attempts
+        if ($this->attempts() >= $this->tries && $this->tries === 1) {
+            // With single attempt, MaxAttemptsExceededException is likely timeout-related
+            return true;
         }
         
         return false;
