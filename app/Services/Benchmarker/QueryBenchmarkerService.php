@@ -33,12 +33,7 @@ class QueryBenchmarkerService
 
         // Check for sensitive data patterns in SELECT clause only, not in WHERE clause
         $sensitiveDataPatterns = [
-            '/\b(email|e_mail|e-mail|mail|user_email|customer_email)\b/i',
-            '/\b(phone|telephone|mobile|phone_number|mobile_number|contact_number|cell|cellphone)\b/i',
-            '/\b(password|passwd|pwd|user_password|hash|secret)\b/i',
-            '/\b(ssn|social_security|tax_id|national_id|id_number)\b/i',
-            '/\b(credit_card|card_number|cc_number|payment_card)\b/i',
-            '/\b(address|street|postal_code|zip_code|zip)\b/i',
+            '/\b(email)\b/i'
         ];
 
         // Extract SELECT clause from the query
