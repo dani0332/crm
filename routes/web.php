@@ -2,6 +2,7 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Http\Controllers\AccuracyMatrixController;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
@@ -967,10 +968,17 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Cyber Quote Policy Automation Routes for testing purposes
-    Route::get('/trigger-policy-document-update', function () {
-        $policyIssuanceProcess = PolicyIssuance::where('id', 1658)->first();
+    Route::get('/trigger-policy-document-update', function () { 
 
-        PolicyIssuanceJob::dispatch($policyIssuanceProcess);
+        // without plan id and payments
+        // $policyIssuanceProcess = PolicyIssuance::where('id', 1682)->first();
+        // with plan id and payments
+        $policyIssuanceProcess = PolicyIssuance::where('id', 1689)->first();
+
+        $policyIssuanceProcess->status = PolicyIssuanceEnum::PENDING_STATUS;
+        $policyIssuanceProcess->save();
+
+        PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation'); // ✅ Pass only the ID
         echo 'Done';
     });
 });

@@ -1567,11 +1567,18 @@ const copyLink = () => {
       :advisors="advisors"
       :quote-type="quoteType"
       :expanded="sectionExpanded"
-    />
+    />    
 
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />
 
     <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
+
+    <PolicyIssuanceApiLogs
+      :type="modelClass"
+      :quoteTypeId="$page.props.quoteTypeId"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
 
     <AuditLogs
       :quote-type="quoteType"

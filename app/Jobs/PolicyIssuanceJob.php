@@ -22,16 +22,16 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 120;
-    public $tries = 1;
+    public $tries = 1; // Back to 1 since we fixed the constructor issue
 
     private const TIMEOUT_MESSAGE = 'cURL error 28';
     private const LARAVEL_TIMEOUT_MESSAGE = 'has timed out';
 
     // 28 is the cURL error code for timeout
     private $className = 'policyIssuanceJob';
-    public mixed $process;
-    public $uniqueFor = 60 * 15; // 15 minutes
-    public $uniqueKey = null; // 15 minutes
+    public mixed $process = null;
+    public $uniqueFor = 120; // Reduced to 2 minutes (should be enough for processing)
+    private int $processId;
 
     /**
      * Create a new job instance.
@@ -39,8 +39,12 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public function __construct($processId)
     {
         $this->timeout = config('constants.APP_ENV') == EnvEnum::PRODUCTION ? 90 : 120;
-        $this->process = PolicyIssuance::find($processId);
-        $this->uniqueKey = 'policy-issuance-automation-id-'.$this->process->id;
+        
+        // Store the ID for later use
+        $this->processId = is_object($processId) ? $processId->id : $processId;
+        
+        // Log constructor start
+        Log::info('PolicyIssuanceJob Constructor - ProcessID: ' . $this->processId);
     }
 
     /**
@@ -48,6 +52,14 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(): void
     {
+        // Load the process fresh from database
+        $this->process = PolicyIssuance::find($this->processId);
+        
+        if (!$this->process) {
+            Log::error('PolicyIssuanceJob - Process not found with ID: ' . $this->processId);
+            return;
+        }
+        
         LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
         $this->process = $this->process->refresh();
         $quote = $this->process->model;
@@ -92,6 +104,16 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     public function failed(Throwable $exception)
     {
+        // Load process if not already loaded
+        if (!$this->process) {
+            $this->process = PolicyIssuance::find($this->processId);
+        }
+
+        if (!$this->process) {
+            Log::error('PolicyIssuanceJob failed - Process not found with ID: ' . $this->processId . ' Error: ' . $exception->getMessage());
+            return;
+        }
+
         $message = $exception->getMessage();
         if (str_contains($message, self::TIMEOUT_MESSAGE) || str_contains($message, self::LARAVEL_TIMEOUT_MESSAGE)) {
             $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
@@ -101,14 +123,22 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
     }
 
-    public function middleware()
-    {
-        return [(new WithoutOverlapping($this->uniqueKey))->dontRelease()];
-    }
-
+    /**
+     * Get the unique ID for the job.
+     */
     public function uniqueId(): string
     {
-        return $this->uniqueKey;
+        $timestamp = now()->timestamp;
+        return 'policy-issuance-' . $this->processId . '-' . $timestamp;
+    }
+
+    /**
+     * Get the middleware the job should pass through.
+     */
+    public function middleware(): array
+    {
+        // Use expireAfter instead of dontRelease to ensure locks are automatically cleared
+        return [(new WithoutOverlapping($this->uniqueId()))->releaseAfter(120)];
     }
 
     private function isProcessable($process)

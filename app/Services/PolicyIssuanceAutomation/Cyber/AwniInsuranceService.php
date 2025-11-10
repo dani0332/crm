@@ -13,11 +13,13 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Interfaces\PolicyIssuanceInterface;
+use App\Models\CyberPlan;
 use App\Models\Payment;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
@@ -54,13 +56,13 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         $this->baseUrl = config('constants.AWNI_API_BASE_URL');
         $this->className = 'awniInsuranceService';
         $this->apiTimeout = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AWNI_CYBER_AUTOMATION_API_TIMEOUT);
-        // $this->headers = [
-        //     'Partner-Id' => config('constants.AWNI_API_PARTNER_ID'),
-        //     'Api-Key' => config('constants.AWNI_API_SECRET_KEY'),
-        //     'Content-Type' => 'application/json',
-        //     'Accept' => 'application/json',
-        //     'TP-Payment-Key' => 'TP_PAYMENT',
-        // ];
+        $this->headers = [
+            'Partner-Id' => config('constants.AWNI_API_PARTNER_ID'),
+            'Api-Key' => config('constants.AWNI_API_SECRET_KEY'),
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'TP-Payment-Key' => 'TP_PAYMENT',
+        ];
     }
 
     /**
@@ -138,6 +140,14 @@ class AwniInsuranceService implements PolicyIssuanceInterface
                 LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - AWNI Cyber Automation is disabled');
                 $response['error'] = 'AWNI Cyber Automation is disabled';
                 $response['message'] = 'AWNI Cyber Automation is disabled';
+
+                return $response;
+            }
+
+            if (!$quote->payments || !$quote->cyberPlanDetail) {
+                LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - Payments or cyber plan detail not found');
+                $response['error'] = 'Payments or cyber plan detail not found';
+                $response['message'] = 'Payments or cyber plan detail not found';
 
                 return $response;
             }
@@ -247,10 +257,10 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     {
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - Step Executing : ' . self::ISSUE_POLICY);
         $policyIssuanceResponse = $this->issuePolicy($quote, $process);
-
+        // dd($policyIssuanceResponse);
         if (! $policyIssuanceResponse['status']) {
             LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - Policy issuance failed', extra: ['response' => $policyIssuanceResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Policy Creation');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Policy Creation');
 
             return $policyIssuanceResponse;
         }
@@ -276,7 +286,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
         if (! $uploadPolicyDocumentsToIMCRMResponse['status']) {
             LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - Policy issuance failed', extra: ['response' => $uploadPolicyDocumentsToIMCRMResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Retrieve Document');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Retrieve Document');
 
             return $uploadPolicyDocumentsToIMCRMResponse;
         }
@@ -296,7 +306,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
         if (! $triggerBookPolicyResponse['status']) {
             LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - Policy issuance failed', extra: ['response' => $triggerBookPolicyResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Send And Book Policy');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Send And Book Policy');
 
             return $triggerBookPolicyResponse;
         }
@@ -314,47 +324,33 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' started - Policy Issuance ID : ' . $process->id . ' - Step : ' . self::ISSUE_POLICY);
         $response = ['status' => false, 'completed_step' => self::ISSUE_POLICY, 'error' => null, 'message' => null];
 
-        $endPoint = '/generatePolicy';
+        $endPoint = '/cyber/generatePolicy';
+        $quote->load('customer', 'nationality','cyberPlanDetail');
+        $customer = $quote->customer;
+        $nationality = $quote->nationality;
+        $planDetail = $quote->cyberPlanDetail;
 
-        // $payment = $quote->payments()->mainLeadPayment()->first();
-        // $splitPayment = $payment?->paymentSplits()->where('payment_method', PaymentMethodsEnum::CreditCard)->first();
+        $payment = $quote->payments()->mainLeadPayment()->first();
+        $splitPayment = $payment?->paymentSplits()->where('payment_method', PaymentMethodsEnum::CreditCard)->first();
 
-        // $payload = [
-        //     'PolicyRequest' => [
-        //         'QuotationNo' => $quote?->carQuotePlanDetail?->insurer_quote_no,
-        //         'PremiumPayable' => $payment->total_amount,
-        //         'IsPaymentProcessed' => 'Success',
-        //         'PartnerTrnReferenceNumber' => $quote->uuid,
-        //         'PaymtMode' => 7,
-        //         'PaymtTransactionDate' => $payment?->authorized_at ? Carbon::parse($payment?->authorized_at)->format('Y-m-d H:i:s') : '',
-        //         'PaymtTransactionNumber' => $splitPayment?->payment_receipt_id,
-        //         'Amount' => $payment?->price_vat_applicable,
-        //         'AuthCode' => $splitPayment?->payment_auth_code,
-        //         'Documents' => [
-        //             'DocsInResponse' => false,
-        //             'DocsDetails' => [
-        //                 'PolicySchedule' => false,
-        //                 'HirePurchaseLetter' => false,
-        //                 'ProposalForm' => false,
-        //                 'LetterToBank' => false,
-        //                 'MotorArabicCertificate' => false,
-        //                 'Receipt' => false,
-        //                 'BreakDownRecovery' => false,
-        //                 'UPRInvoice' => false,
-        //             ],
-        //         ],
-        //         'PolicyConfirmationSMS' => false,
-        //         'PolicyConfirmationEmail' => false,
-        //     ],
-        // ];
+        // TODO: will remove cmpany address and emirates id number after testing
+        // CustCode is hardcoded, i have tried different values but it is not working
         $payload = [
-            'CustName' => $quote->customer_name,
-            'CustMobile' => $quote->customer_mobile,
-            'CustEmail' => $quote->customer_email,
-            'CustEID' => $quote->customer_eid,
-            'CustDOB' => $quote->customer_dob,
-            'CustAddress' => $quote->customer_address,
-            'CustCountryCode' => $quote->customer_country_code,
+            'CustName' => trim(($quote->first_name ?? '') . ' ' . ($quote->last_name ?? '')),
+            'CustMobile' => $quote->mobile_no,
+            'CustEmail' => $quote->email,
+            'CustEID' => $customer->emirates_id_number ?? "784200012345671",
+            'CustDOB' => $customer->dob ? strtoupper(Carbon::parse($customer->dob)->format('d-M-Y')) : null,
+            'CustAddress' => $quote->company_address ?? "abc address",
+            'CustCountryCode' => $nationality?->awni_country_code ?? null,
+            'LimitOfLiability' => $planDetail->coverage ?? null,
+            'PlanName' => $planDetail->planName ?? null,
+            // 'PolStartDate' => $quote->policy_start_date ? strtoupper(Carbon::parse($quote->policy_start_date)->format('d-M-Y')) : strtoupper(\Carbon\Carbon::parse($payment->collection_date)->format('d-M-Y')),
+            'PolStartDate' => strtoupper(Carbon::now()->format('d-M-Y')),
+            'CustCode' => 150214,
+            'BrokerCode' => config('constants.AWNI_API_PARTNER_ID'),
+            'PaymentRefNo' => $splitPayment?->payment_receipt_id,
+            'PartnerRefNo' => $quote->code,
         ];
 
         $issuePolicy = $this->httpCall($endPoint, $payload, self::POLICY_ISSUANCE_RESPONSE);
@@ -369,33 +365,34 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             return $response;
         }
 
-        $issuePolicyResult = $issuePolicy['data']?->PolicyResponse;
-        LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ', updating quote and payment information from Liva createPolicyRequest response');
+        $issuePolicyResult = $issuePolicy['data'];
+        LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ', updating quote and payment information from AWNI createPolicyRequest response');
 
         $quote->update([
-            'policy_number' => $issuePolicyResult?->PolicyNumber,
-            'policy_issuance_date' => $issuePolicyResult?->PolicyCreationDate,
-            'policy_start_date' => $issuePolicyResult?->PolicyEffectiveDate,
-            'policy_expiry_date' => $issuePolicyResult?->PolicyExpiryDate,
-            'price_vat_applicable' => $issuePolicyResult?->PremiumWithoutVAT,
-            'vat' => $issuePolicyResult?->VatAmount,
-            'price_with_vat' => $issuePolicyResult?->PaidAmount,
+            'policy_number' => $issuePolicyResult?->policyInfo?->policyNo,
+            'policy_issuance_date' => $issuePolicyResult?->policyInfo?->policyIssuedDate,
+            'policy_start_date' => $issuePolicyResult?->policyInfo?->policyStartDate,
+            'policy_expiry_date' => $issuePolicyResult?->policyInfo?->policyEndDate,
+            'price_vat_applicable' => $issuePolicyResult?->policyInfo?->premiumAmount,
+            'vat' => $issuePolicyResult?->policyInfo?->prmVatAmt,
+            'price_with_vat' => $issuePolicyResult?->policyInfo?->prmPayableAmt,
+            'insurer_quote_no' => $issuePolicyResult?->QuoteRefNo ?? null,
         ]);
 
         Payment::where('code', $quote->code)->update([
-            'commission_vat_applicable' => $issuePolicyResult?->Commission,
-            'commission' => $issuePolicyResult?->Commissionincldvat,
-            'commission_vat' => $issuePolicyResult?->VatonCommission,
-            'commmission_percentage' => $issuePolicyResult?->CommissionPercentage,
-            'insurer_commmission_invoice_number' => $issuePolicyResult?->InsurerCommissionTaxInvoice ?? null,
-            'insurer_tax_number' => $issuePolicyResult?->InsurerPremiumTaxInvoice ?? null,
-            'insurer_invoice_date' => $issuePolicyResult?->InsurerInvoicedate ?? null,
+            'commission_vat_applicable' => $issuePolicyResult?->policyInfo?->commissionPayableAmt,
+            'commission' => $issuePolicyResult?->policyInfo?->commissionAmt,
+            'commission_vat' => $issuePolicyResult?->policyInfo?->commissionVatAmt,
+            'commmission_percentage' => $issuePolicyResult?->policyInfo?->CommissionPercentage,
+            'insurer_commmission_invoice_number' => $issuePolicyResult?->policyInfo?->creditNoteNo ?? null,
+            'insurer_invoice_date' => $issuePolicyResult?->policyInfo?->policyIssuedDate ?? null,
+            'insurer_tax_number' => $issuePolicyResult?->policyInfo?->invoiceNo ?? null,
         ]);
 
         $response['status'] = true;
         $response['message'] = 'Policy issued successfully';
         $response['completed_step'] = self::ISSUE_POLICY;
-        $response['data'] = $issuePolicy['data']; // verify this
+        $response['data'] = $issuePolicyResult;
 
         return $response;
     }
@@ -621,11 +618,15 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
     private function httpCall($endPoint, $payload, $keyAPI)
     {
-        LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' calling API: ' . $keyAPI);
+        LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' calling API: ' . $keyAPI, extra: [
+            'headers' => $this->headers,
+            'url' => $this->baseUrl . $endPoint,
+            'payload' => $payload,
+            'keyAPI' => $keyAPI,
+        ]);
         $response = ['status' => false, 'error' => null, 'message' => null, 'data' => null, 'completed_step' => null];
         $url = $this->baseUrl . $endPoint;
         $timeOut = $this->apiTimeout;
-        // dd($this->headers);
 
         try {
             $httpResponse = Http::timeout($timeOut)->withHeaders($this->headers)->post($url, $payload);
@@ -638,12 +639,13 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             ]);
 
             $responseObject = $httpResponse->object();
+            // dd($responseObject);
             if (in_array($httpResponse->status(), [JsonResponse::HTTP_OK, JsonResponse::HTTP_CREATED])) {
                 if (
-                    isset($responseObject?->$keyAPI?->errors) ||
-                    (isset($responseObject?->$keyAPI?->Status) && $responseObject?->$keyAPI?->Status == false)
+                    isset($responseObject?->errorList) ||
+                    (isset($responseObject?->isSuccess) && $responseObject?->isSuccess == 'N')
                 ) {
-                    $response['error'] = $responseObject?->$keyAPI?->Status ?? $keyAPI . ' API Failed';
+                    $response['error'] = $responseObject?->errorList ?? $keyAPI . ' API Failed';
                     $response['status'] = false;
                     $response['message'] = $this->extractErrorMessage($responseObject, $keyAPI);
                 } else {
@@ -684,8 +686,8 @@ class AwniInsuranceService implements PolicyIssuanceInterface
      */
     private function extractErrorMessage($responseObject, string $keyAPI)
     {
-        if (isset($responseObject?->$keyAPI?->errors)) {
-            return json_encode($responseObject->$keyAPI->errors);
+        if (isset($responseObject?->errorList)) {
+            return json_encode($responseObject->errorList);
         }
 
         if (isset($responseObject?->message)) {

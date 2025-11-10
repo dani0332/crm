@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { useHasRole } from '../Composables/can';
 
 const props = defineProps({
   type: {
@@ -23,6 +24,8 @@ const props = defineProps({
 
 const page = usePage();
 const insuranceProviderId = ref(null);
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 const modals = reactive({
   apiLog: false,
@@ -40,6 +43,10 @@ const selectedLog = ref({});
 const selectLog = item => {
   selectedLog.value = item;
   modals.apiLog = true;
+};
+
+const togglePolicyIssuance = () => {
+  console.log('togglePolicyIssuance');
 };
 
 const apiLogs = reactive({
@@ -113,10 +120,24 @@ const onLoadAuditLogData = async () => {
   <div class="p-4 rounded shadow mb-6 bg-white">
     <Collapsible :expanded="expanded">
       <template #header>
-        <div>
+        <div class="flex justify-between gap-4 items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
             Policy Issuance API Logs
           </h3>
+          <div
+            v-if="hasRole(rolesEnum.Engineering)"
+            class="flex gap-2"
+            @click.stop
+          >
+            <x-button
+              @click.stop="togglePolicyIssuance"
+              size="sm"
+              color="primary"
+              variant="outline"
+            >
+              Manual Trigger Policy Issuance
+            </x-button>
+          </div>
         </div>
       </template>
       <template #body>

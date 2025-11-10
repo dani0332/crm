@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Enums\GenderEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -582,5 +583,58 @@ class PersonalQuote extends Model implements AuditableContract
     public function ftcEmailLogs(): MorphMany
     {
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
+    }
+
+    // *********************** Cyber Quote ***********************
+
+    public function cyberQuote()
+    {
+        return $this->hasOne(CyberQuote::class, 'personal_quote_id', 'id');
+    }
+
+    public function cyberPlan()
+    {
+        return $this->belongsTo(InsuranceProviderPlan::class, 'quoteUuid', 'uuid');
+    }
+
+    public function cyberPlanDetail()
+    {
+        return $this->hasOne(CyberPlan::class, 'quoteUuid', 'uuid');
+    }
+
+    /**
+     * Check if booking has failed
+     *
+     * @return bool
+     */
+    public function isBookingFailed()
+    {
+        if($this->quote_type_id === QuoteTypes::CYBER->id()) {
+            return $this->cyberQuote?->isBookingFailed();
+        }
+        return $this->insurer_api_status_id === \App\Enums\PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
+    }
+
+    /**
+     * Get the policy issuance for this quote
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
+     */
+    public function policyIssuance()
+    {
+        return $this->morphOne(PolicyIssuance::class, 'model');
+    }
+
+    /**
+     * Check if policy issuance has failed
+     *
+     * @return bool
+     */
+    public function isPolicyIssuanceFailed()
+    {
+        if($this->quote_type_id === QuoteTypes::CYBER->id()) {
+            return $this->cyberQuote?->isPolicyIssuanceFailed();
+        }
+        return in_array($this->insurer_api_status_id, app(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
     }
 }
