@@ -21,15 +21,19 @@ class EmailStatus extends Model
         'email_subject',
         'template_id',
         'customer_id',
+        'customer_replied',
+    ];
+    protected $casts = [
+        'customer_replied' => 'boolean',
     ];
 
     public function getCreatedAtAttribute($date)
     {
-        return (! empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
+        return (! empty($date)) ? Carbon::parse($date)->timezone(config('app.timezone'))->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
     }
 
     public function getUpdatedAtAttribute($date)
     {
-        return (! empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
+        return (! empty($date)) ? Carbon::parse($date)->timezone(config('app.timezone'))->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
     }
 }
