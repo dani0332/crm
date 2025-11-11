@@ -12,7 +12,7 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\MaxAttemptsExceededException;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
 
@@ -24,7 +24,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public $uniqueFor = 185;
     public $tries = 1;
 
-    private const TIMEOUT_INDICATORS = ['cURL error 28', 'has timed out'];
+    private const TIMEOUT_INDICATORS = ['cURL error 28', 'has timed out', 'has been attempted too many times'];
 
     private int $processId;
     private ?PolicyIssuance $process = null;
@@ -275,16 +275,25 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     private function handleException(Throwable $e): void
     {
-        $quoteCode = $this->process?->model?->code ?? 'unknown';
-
-        LoggerService::error('Exception occurred during policy issuance automation', [
-            'process_id' => $this->process->id ?? $this->processId,
-            'quote_code' => $quoteCode,
-        ], exception: $e);
-
         if (! $this->process) {
             return;
         }
+
+        $quoteCode = $this->process?->model?->code ?? 'unknown';
+
+        if( $e instanceof MaxAttemptsExceededException) {
+            $status = PolicyIssuanceEnum::TIMEOUT_STATUS;
+            $this->process->update([
+                'status' => $status,
+                'message' => json_encode(['error' => 'Policy issuance job exceeded max attempts']),
+            ]);
+            LoggerService::info("Process marked as {$status} due to exception", [
+                'process_id' => $this->process->id,
+                'quote_code' => $quoteCode,
+                'status' => $status,
+            ]);
+            return;
+        }        
 
         $status = $this->isTimeoutError($e->getMessage())
             ? PolicyIssuanceEnum::TIMEOUT_STATUS
@@ -295,11 +304,10 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             'message' => json_encode(['error' => $e->getMessage()]),
         ]);
 
-        LoggerService::info("Process marked as {$status} due to exception", [
-            'process_id' => $this->process->id,
+        LoggerService::error('Exception occurred during policy issuance automation', [
+            'process_id' => $this->process->id ?? $this->processId,
             'quote_code' => $quoteCode,
-            'status' => $status,
-        ]);
+        ], exception: $e);
     }
 
     private function isTimeoutError(string $message): bool
