@@ -92,10 +92,12 @@ class RenewalQuoteProcess extends Model
      */
     public static function prepareForBulkInsert(array $attributes): array
     {
+        // Double json_encode for 'data' to match setDataAttribute mutator
         if (isset($attributes['data']) && is_array($attributes['data'])) {
-            $attributes['data'] = json_encode($attributes['data']);
+            $attributes['data'] = json_encode(json_encode($attributes['data']));
         }
 
+        // Single json_encode for 'validation_errors' to match setValidationErrorsAttribute mutator
         if (isset($attributes['validation_errors']) && is_array($attributes['validation_errors'])) {
             $attributes['validation_errors'] = json_encode($attributes['validation_errors']);
         }
