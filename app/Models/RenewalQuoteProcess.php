@@ -83,4 +83,24 @@ class RenewalQuoteProcess extends Model
         $this->attributes['validation_errors'] = json_encode($value);
     }
 
+    /**
+     * Prepare data for bulk insert (bypasses mutators).
+     * Applies the same encoding logic as mutators for consistency.
+     *
+     * @param  array  $attributes
+     * @return array
+     */
+    public static function prepareForBulkInsert(array $attributes): array
+    {
+        if (isset($attributes['data']) && is_array($attributes['data'])) {
+            $attributes['data'] = json_encode($attributes['data']);
+        }
+
+        if (isset($attributes['validation_errors']) && is_array($attributes['validation_errors'])) {
+            $attributes['validation_errors'] = json_encode($attributes['validation_errors']);
+        }
+
+        return $attributes;
+    }
+
 }
