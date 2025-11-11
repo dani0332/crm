@@ -23,7 +23,7 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(true);
@@ -784,8 +784,6 @@ const onLeadConfirmed = () => {
             />
           </template>
         </x-select>
-
-
 
         <DatePicker
           v-model="filters.policy_expiry_date"

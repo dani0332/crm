@@ -38,7 +38,7 @@ const permissionEnum = page.props.permissionsEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
 
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 
 const carRegistrationTypeEnum = page.props.carRegistrationType;
@@ -266,14 +266,14 @@ const proceedWithSubmission = () => {
   };
 
   const additionalParams = {
-    type: (props.leadSourceParams?.type ? props.leadSourceParams?.type : null),
-    source: (props.quote?.source? props.quote?.source : null)
+    type: props.leadSourceParams?.type ? props.leadSourceParams?.type : null,
+    source: props.quote?.source ? props.quote?.source : null,
   };
   quoteForm
     .transform(data => ({
       ...data,
       isDisbaled,
-      ...additionalParams
+      ...additionalParams,
     }))
     .submit(method, url, options);
 };
@@ -537,7 +537,9 @@ const subSourceOptionOptions = computed(() => {
     value: child.id, // Keep as integer to match form data type
     label: child.text,
     suffix: child.description || null,
-    disabled: !isPcpSubSourceOptionAllowed.value && pcpOnlyOptions.includes(String(child.code)),
+    disabled:
+      !isPcpSubSourceOptionAllowed.value &&
+      pcpOnlyOptions.includes(String(child.code)),
   }));
 });
 
@@ -549,8 +551,6 @@ const isReferralType = computed(() => {
   );
 });
 
-
-
 // Role-based permissions for sub-source fields
 const canEditSubSourceFields = computed(() => {
   return hasAnyRole([
@@ -560,8 +560,6 @@ const canEditSubSourceFields = computed(() => {
   ]);
 });
 
-
-
 // Watch for sub-source changes to reset sub-source option
 watch(
   () => quoteForm.sub_source_id,
@@ -569,8 +567,6 @@ watch(
     quoteForm.sub_source_options_id = null;
   },
 );
-
-
 </script>
 
 <template>
@@ -652,8 +648,6 @@ watch(
             </x-tooltip>
           </template>
         </x-select>
-
-
 
         <x-select
           label="REGISTRATION TYPE"

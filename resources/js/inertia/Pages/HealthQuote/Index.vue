@@ -33,7 +33,7 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 const quoteSegments = page.props.quoteSegments;
 
@@ -219,7 +219,6 @@ const filters = reactive({
   pec_flag: 'all',
   authorize_date: '',
   captured_date: '',
-
 });
 
 const canExport = ref(false);
@@ -756,8 +755,7 @@ const insurerAMLStatusOption = computed(() => {
 });
 
 // Handle lead creation from modal
-const onLeadConfirmed = leadData => {
-};
+const onLeadConfirmed = leadData => {};
 </script>
 
 <template>
@@ -1005,8 +1003,6 @@ const onLeadConfirmed = leadData => {
           ]"
           class="w-full"
         />
-
-
 
         <x-select
           v-if="

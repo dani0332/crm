@@ -68,8 +68,7 @@ const subSourceOptions = computed(() => {
   const options = props.subSources?.map(source => ({
     value: source.id,
     label: source.text,
-    suffix:
-      source.description || null, // Use suffix for tooltip data
+    suffix: source.description || null, // Use suffix for tooltip data
   }));
   return options;
 });
@@ -87,9 +86,9 @@ const subSourceChildOptions = computed(() => {
     value: child.id,
     label: child.text,
     code: child.code,
-    suffix:
-      child.description || null , // Add tooltip support
-    disabled: !props.isPcpAllowed && pcpOnlyOptions.includes(String(child.code)),
+    suffix: child.description || null, // Add tooltip support
+    disabled:
+      !props.isPcpAllowed && pcpOnlyOptions.includes(String(child.code)),
   }));
 });
 
@@ -118,7 +117,6 @@ watch(
     leadForm.sub_source_options_id = null;
   },
 );
-
 </script>
 
 <template>

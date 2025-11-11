@@ -181,7 +181,9 @@ const subSourceOptionOptions = computed(() => {
     }
   });
   const seen = new Set();
-  return options.filter(o => (seen.has(o.value) ? false : (seen.add(o.value), true)));
+  return options.filter(o =>
+    seen.has(o.value) ? false : (seen.add(o.value), true),
+  );
 });
 
 const disabledGroupBy = computed(() => {
@@ -759,7 +761,9 @@ watch(
           <template #content-footer>
             <ui-select-actions
               @select-all="
-                filters.sub_source_options_id = subSourceOptionOptions.map(o => o.value)
+                filters.sub_source_options_id = subSourceOptionOptions.map(
+                  o => o.value,
+                )
               "
               @clear="filters.sub_source_options_id = []"
             />

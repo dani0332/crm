@@ -21,7 +21,7 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 const canExport = ref(false);
 const notification = useNotifications('toast');
@@ -144,7 +144,6 @@ const insuranceTypeOptions = computed(() => {
     }),
   );
 });
-
 
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
@@ -804,8 +803,6 @@ const insurerAMLStatusOption = computed(() => {
             />
           </template>
         </x-select>
-
-
 
         <DatePicker
           v-model="filters.policy_expiry_date"

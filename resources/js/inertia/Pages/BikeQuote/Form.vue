@@ -7,7 +7,7 @@ const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 
 const props = defineProps({
@@ -89,7 +89,9 @@ const subSourceOptionOptions = computed(() => {
       value: child.id,
       label: child.text,
       suffix: child.description || null,
-      disabled: !isPcpSubSourceOptionAllowed.value && pcpOnlyOptions.includes(String(child.code)),
+      disabled:
+        !isPcpSubSourceOptionAllowed.value &&
+        pcpOnlyOptions.includes(String(child.code)),
     })) || []
   );
 });
@@ -101,8 +103,6 @@ const isReferralType = computed(() => {
   );
 });
 
-
-
 // Role-based permissions for sub-source fields
 const canEditSubSourceFields = computed(() => {
   return hasAnyRole([
@@ -111,8 +111,6 @@ const canEditSubSourceFields = computed(() => {
     rolesEnum.LeadPool,
   ]);
 });
-
-
 
 const quoteForm = useForm({
   model: props.model,
@@ -407,8 +405,6 @@ const chassisNumberRule = v => {
             </x-tooltip>
           </template>
         </x-select>
-
-
 
         <x-input
           label="FIRST NAME"

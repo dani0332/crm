@@ -22,7 +22,7 @@ const page = usePage();
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
@@ -108,7 +108,6 @@ const supportUserOptions = computed(() => {
     label: advisor.name,
   }));
 });
-
 
 const assignableSupportUserOptions = computed(() => {
   // Check if user has only OE_AE_CLIENT_SUPPORT role and not OE_AE_CLIENT_SUPPORT_LEAD
@@ -709,8 +708,6 @@ const insurerAMLStatusOption = computed(() => {
             />
           </template>
         </x-select>
-
-
 
         <x-input
           v-model="filters.previous_quote_policy_number"

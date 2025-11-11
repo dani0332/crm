@@ -763,7 +763,7 @@ function handleOcrNotification(event) {
                 </div>
                 <div>{{ quote?.sub_source_option?.text || 'N/A' }}</div>
               </div>
-              
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADDITIONAL NOTES</dt>
                 <dd>{{ quote?.additional_notes || 'N/A' }}</dd>

@@ -126,7 +126,7 @@ const ecommerceOptions = [
 const filteredTableHeader = ref([]);
 
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 
 const filterTableHeaders = () => {
@@ -220,7 +220,6 @@ const providers = computed(() => {
     label: provider.text,
   }));
 });
-
 
 const batchOptions = computed(() => {
   return page.props.dropdownSource.quote_batch_id.map(batch => ({

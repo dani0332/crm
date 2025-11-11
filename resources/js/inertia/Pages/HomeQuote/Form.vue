@@ -17,7 +17,7 @@ const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 const hasContentOrBuilding = ref(true);
 const typeOfOwnerOccupancyField = ref(false);
@@ -58,7 +58,8 @@ const subSourceOptionOptions = computed(() => {
       label: child.text,
       suffix: child.description || null,
       disabled:
-        !isPcpSubSourceOptionAllowed.value && pcpOnlyOptions.includes(String(child.code)),
+        !isPcpSubSourceOptionAllowed.value &&
+        pcpOnlyOptions.includes(String(child.code)),
     })) || []
   );
 });
@@ -70,7 +71,6 @@ const isReferralType = computed(() => {
   );
 });
 
-
 // Role-based permissions for sub-source fields
 const canEditSubSourceFields = computed(() => {
   return hasAnyRole([
@@ -79,7 +79,6 @@ const canEditSubSourceFields = computed(() => {
     rolesEnum.LeadPool,
   ]);
 });
-
 
 const quoteForm = useForm({
   modelType: '"Home"',
@@ -515,8 +514,6 @@ watch(
   },
 );
 
-
-
 const locationAreaOptions = computed(() => {
   return page.props?.lookUpData?.subAreas?.length
     ? page.props.lookUpData.subAreas.map(item => ({
@@ -681,8 +678,6 @@ const onLoadAvailablePlansData = async () => {
             </x-tooltip>
           </template>
         </x-select>
-
-
 
         <x-input
           v-model="quoteForm.first_name"

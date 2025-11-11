@@ -981,7 +981,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   }}
                 </div>
               </div>
-              
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">POLICY NUMBER</dt>

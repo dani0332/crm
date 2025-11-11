@@ -52,6 +52,11 @@ export const useHasAnyTeam = teams => {
   const teamNames = allTeams.map(t => t?.name).filter(Boolean);
 
   return teams.some(team => {
-    return team && typeof team === 'object' && typeof team.name === 'string' && teamNames.includes(team.name);
+    return (
+      team &&
+      typeof team === 'object' &&
+      typeof team.name === 'string' &&
+      teamNames.includes(team.name)
+    );
   });
 };

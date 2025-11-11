@@ -2185,7 +2185,6 @@ const handleCancelConfirmationModal = () => {
                 <dd>{{ record.sub_source_option_text || 'N/A' }}</dd>
               </div>
 
-              
               <div v-if="isCompanyCar" class="grid sm:grid-cols-2">
                 <dt class="font-medium">Vehicle use</dt>
                 <dd>

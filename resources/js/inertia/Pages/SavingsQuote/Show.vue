@@ -913,7 +913,6 @@ const getIncludedBenefitsTooltip = fieldText =>
                 <div>{{ quote?.sub_source_option?.text || 'N/A' }}</div>
               </div>
 
-
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
