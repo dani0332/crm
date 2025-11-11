@@ -554,7 +554,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </div>
                 <div>{{ quote?.sub_source_option?.text || 'N/A' }}</div>
               </div>
-              
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADDITIONAL NOTES</dt>
                 <dd>{{ quote?.notes || 'N/A' }}</dd>

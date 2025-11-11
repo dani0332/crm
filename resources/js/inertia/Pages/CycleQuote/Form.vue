@@ -8,7 +8,7 @@ const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 
 const props = defineProps({
@@ -46,7 +46,9 @@ const subSourceOptionOptions = computed(() => {
       value: child.id,
       label: child.text,
       suffix: child.description || null,
-      disabled: !isPcpSubSourceOptionAllowed.value && pcpOnlyOptions.includes(String(child.code)),
+      disabled:
+        !isPcpSubSourceOptionAllowed.value &&
+        pcpOnlyOptions.includes(String(child.code)),
     })) || []
   );
 });
@@ -118,8 +120,6 @@ watch(
     }
   },
 );
-
-
 
 const YearOfManufacture = computed(() => {
   if (props.yearOfManufacture.length > 0)
@@ -202,9 +202,7 @@ const gender = computed(() => {
         </x-select>
 
         <x-select
-          v-if="
-            isReferralType && quoteForm.sub_source_id
-          "
+          v-if="isReferralType && quoteForm.sub_source_id"
           label="SUB SOURCE OPTIONS"
           v-model="quoteForm.sub_source_options_id"
           :options="subSourceOptionOptions"
@@ -227,7 +225,6 @@ const gender = computed(() => {
             </x-tooltip>
           </template>
         </x-select>
-
 
         <x-input
           v-model="quoteForm.first_name"

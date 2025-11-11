@@ -79,7 +79,10 @@ const subSourceOptionOptions = computed(() => {
       code: option.code,
       suffix: option.description || null,
       disabled:
-        !isPcpSubSourceOptionAllowed.value && ['pcp-cross-sell', 'pcp-customer-referral'].includes(String(option.code)),
+        !isPcpSubSourceOptionAllowed.value &&
+        ['pcp-cross-sell', 'pcp-customer-referral'].includes(
+          String(option.code),
+        ),
     })) || []
   );
 });
@@ -89,7 +92,6 @@ const isReferralType = computed(() => {
     props.leadSourceParams?.type === 'referral' || quoteForm.source === 'IMCRM'
   );
 });
-
 
 const canEditSubSourceFields = computed(() => {
   return useHasAnyRole([
@@ -101,9 +103,8 @@ const canEditSubSourceFields = computed(() => {
 
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
-
 
 // Watchers for sub-source fields
 watch(
@@ -207,8 +208,6 @@ function onSubmit(isValid) {
             </x-tooltip>
           </template>
         </x-select>
-
-
 
         <x-input
           v-model="quoteForm.first_name"

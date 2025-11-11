@@ -200,7 +200,7 @@ const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 
 const advisorOptionsFilter = computed(() => {

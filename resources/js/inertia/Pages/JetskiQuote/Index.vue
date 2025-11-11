@@ -69,7 +69,7 @@ const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 
 function onSubmit(isValid) {
@@ -377,7 +377,6 @@ const insurerAMLStatusOption = computed(() => {
   }));
 });
 
-
 // CreateLeadModal setup
 const createLeadModal = ref(false);
 
@@ -562,8 +561,6 @@ const onLeadConfirmed = () => {
             />
           </template>
         </x-select>
-
-
 
         <DatePicker
           v-model="filters.policy_expiry_date"

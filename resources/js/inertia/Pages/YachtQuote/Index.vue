@@ -25,7 +25,7 @@ const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 const notification = useNotifications('toast');
 const loader = reactive({
@@ -318,7 +318,6 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
-
 
 const onLeadAssigned = () => {
   quotesSelected.value = [];
@@ -827,7 +826,6 @@ const onLeadConfirmed = () => {
           class="w-full"
           :single="true"
         />
-
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">

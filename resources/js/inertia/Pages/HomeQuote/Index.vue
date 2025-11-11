@@ -21,7 +21,7 @@ const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -191,7 +191,6 @@ const renewalBatchOptions = computed(() => {
     label: batch.name,
   }));
 });
-
 
 const exportLoader = ref(false);
 const onDataExport = (exportType = 'download') => {

@@ -1431,7 +1431,6 @@ function handleOcrNotification(event) {
                 <div>{{ quote?.sub_source_option?.text || 'N/A' }}</div>
               </div>
 
-              
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>

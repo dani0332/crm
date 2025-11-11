@@ -24,7 +24,7 @@ const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 
 const isEdit = computed(() => {
@@ -80,7 +80,9 @@ const subSourceOptionOptions = computed(() => {
       value: child.id,
       label: child.text,
       suffix: child.description || null,
-      disabled: !isPcpSubSourceOptionAllowed.value && pcpOnlyOptions.includes(String(child.code)),
+      disabled:
+        !isPcpSubSourceOptionAllowed.value &&
+        pcpOnlyOptions.includes(String(child.code)),
     })) || []
   );
 });
@@ -91,8 +93,6 @@ const isReferralType = computed(() => {
     props.quote?.source === 'IMCRM'
   );
 });
-
-
 
 // Role-based permissions for sub-source fields
 const canEditSubSourceFields = computed(() => {

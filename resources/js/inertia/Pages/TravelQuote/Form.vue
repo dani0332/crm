@@ -59,7 +59,9 @@ const subSourceOptionOptions = computed(() => {
       value: child.id,
       label: child.text,
       suffix: child.description || null,
-      disabled: !isPcpSubSourceOptionAllowed.value && pcpOnlyOptions.includes(String(child.code)),
+      disabled:
+        !isPcpSubSourceOptionAllowed.value &&
+        pcpOnlyOptions.includes(String(child.code)),
     })) || []
   );
 });
@@ -81,9 +83,8 @@ const canEditSubSourceFields = computed(() => {
 });
 
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
-
 
 const quoteForm = useForm({
   first_name: props.quote?.first_name || null,

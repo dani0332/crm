@@ -48,7 +48,7 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
@@ -102,7 +102,6 @@ const filters = reactive({
   age_group: 'all',
   authorize_date: '',
   captured_date: '',
-
 });
 
 const loader = reactive({
@@ -265,7 +264,6 @@ const leadsStatusOptions = computed(() => {
     };
   });
 });
-
 
 const subTeamOptions = [
   { value: 'travelUaeInbound', label: 'To the UAE (Inbound)' },
@@ -1054,8 +1052,6 @@ const calculateAge = dateOfBirth => {
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
-
-
 
         <x-select
           v-model="filters.api_issuance_status_id"

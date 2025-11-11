@@ -83,11 +83,10 @@ const subSourceOptionOptions = computed(() => {
     code: child.code,
     suffix: child.description || null,
     disabled:
-      !isPcpSubSourceOptionAllowed.value && pcpOnlyOptions.includes(String(child.code)),
+      !isPcpSubSourceOptionAllowed.value &&
+      pcpOnlyOptions.includes(String(child.code)),
   }));
 });
-
-
 
 // Check if it's referral type
 const isReferralType = computed(() => {
@@ -96,12 +95,11 @@ const isReferralType = computed(() => {
   );
 });
 
-
 // Role-based control like Life LOB
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 const canEditSubSourceFields = computed(() => {
   return useHasAnyRole([
@@ -174,8 +172,6 @@ watch(
     }
   },
 );
-
-
 </script>
 
 <template>
@@ -248,8 +244,6 @@ watch(
             </x-tooltip>
           </template>
         </x-select>
-
-
 
         <!-- Personal Details -->
         <x-input

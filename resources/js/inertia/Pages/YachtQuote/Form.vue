@@ -68,7 +68,8 @@ const subSourceOptionOptions = computed(() => {
       code: option.code, // Include the code property for showPartnerNameField
       suffix: option.description || null,
       disabled:
-        !isPcpSubSourceOptionAllowed.value && pcpOnlyOptions.includes(String(option.code)),
+        !isPcpSubSourceOptionAllowed.value &&
+        pcpOnlyOptions.includes(String(option.code)),
     })) || []
   );
 });
@@ -90,7 +91,7 @@ const canEditSubSourceFields = computed(() => {
 const rolesEnum = page.props.rolesEnum;
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 
 // Watchers for field resets and partner name handling
@@ -198,7 +199,6 @@ const gender = computed(() => {
             </x-tooltip>
           </template>
         </x-select>
-
 
         <x-input
           v-model="quoteForm.first_name"

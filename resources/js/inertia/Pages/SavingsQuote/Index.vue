@@ -26,7 +26,7 @@ const hasAnyRole = role => useHasAnyRole(role);
 const canAny = permissions => useCanAny(permissions);
 const rolesEnum = page.props.rolesEnum;
 const isPcpSubSourceOptionAllowed = ref(
-  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }])
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
 );
 const notification = useNotifications('toast');
 const loader = reactive({
@@ -246,7 +246,6 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
-
 
 const onLeadAssigned = () => {
   quotesSelected.value = [];
