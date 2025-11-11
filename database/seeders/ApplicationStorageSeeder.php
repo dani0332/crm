@@ -908,7 +908,7 @@ class ApplicationStorageSeeder extends Seeder
 
     private function seedTravelAutomatedFollowUps()
     {
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::TRAVEL_AUTOMATED_FOLLOWUPS],
             [
                 'value' => 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/6ac637e8-4bf6-418b-8f65-7485ce47687f/invoke-sync',
