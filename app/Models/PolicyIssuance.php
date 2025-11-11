@@ -11,7 +11,6 @@ class PolicyIssuance extends Model
 
     protected $table = 'policy_issuance';
     protected $fillable = ['insurance_provider_id', 'model_type', 'model_id', 'quote_type', 'completed_step', 'message', 'status'];
-    protected $guarded = [];
 
     public function model()
     {
