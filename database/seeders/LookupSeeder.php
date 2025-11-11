@@ -324,7 +324,6 @@ class LookupSeeder extends Seeder
         ]);
     }
 
-
     /**
      * Create referral sources lookup data for all quote types
      */

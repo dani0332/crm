@@ -161,7 +161,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
             ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
-            ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')            
+            ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
             ->leftJoin('car_quote_request as cqr', function ($join) {
                 $join->on('personal_quotes.quote_id', '=', 'cqr.id')
                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
