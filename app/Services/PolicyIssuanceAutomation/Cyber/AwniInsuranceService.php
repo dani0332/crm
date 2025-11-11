@@ -872,7 +872,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     /**
      * Map document types to AWNI document type codes
      */
-    public function getDocTypeCodeForCyber($documentType): string
+    public function getDocTypeCodeForCyber($documentType): string | null
     {
         return match ($documentType) {
             DocumentTypeCode::CYBER_EMIRATES_ID => '4', // Emirates ID (Front side & Back side)
