@@ -273,11 +273,11 @@ class LookupService extends BaseService
 
     public function getSubSource()
     {
-        $lookups = Lookup::with(['childs'])->where([
-            'key' => LookupsEnum::SUB_SOURCE,
-            'is_active' => 1,
-        ])->get();
-
-        return $lookups;
+        return CacheManager::remember(CacheKeyEnum::SUB_SOURCES, function () {
+            return Lookup::with(['childs'])->where([
+                'key' => LookupsEnum::SUB_SOURCE,
+                'is_active' => 1,
+            ])->get();
+        });
     }
 }
