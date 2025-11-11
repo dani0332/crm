@@ -677,7 +677,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.', updating quote and payment information from Liva createPolicyRequest response');
 
         $quote->update([
-            'policy_number' => $issuePolicyResult?->PolicyNumber,
+            'policy_number' => $issuePolicyResult?->ConcatPolNumberWithRenCnt,
             'policy_issuance_date' => $issuePolicyResult?->PolicyCreationDate,
             'policy_start_date' => $issuePolicyResult?->PolicyEffectiveDate,
             'policy_expiry_date' => $issuePolicyResult?->PolicyExpiryDate,
