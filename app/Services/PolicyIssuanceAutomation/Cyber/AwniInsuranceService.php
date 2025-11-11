@@ -104,7 +104,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
      */
     public function isPolicyIssuanceAutomationRetryEnabledForTimeout(): bool
     {
-        return (bool) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_AWNI_CAR_POLICY_ISSUANCE);
+        return (bool) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_AWNI_CYBER_POLICY_ISSUANCE);
     }
 
     /**
@@ -122,7 +122,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         if ($this->isPolicyIssuanceAutomationEnabled()) {
             $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
         } else {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - AXA Car Automation is disabled');
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - AWNI Cyber Automation is disabled');
         }
     }
 
