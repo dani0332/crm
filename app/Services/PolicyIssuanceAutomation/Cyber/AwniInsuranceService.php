@@ -81,8 +81,8 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     {
         return [
             self::ISSUE_POLICY,
-            // self::UPLOAD_DOCUMENTS,
-            // self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+            self::UPLOAD_DOCUMENTS,
+            self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             self::BOOK_POLICY,
         ];
     }
