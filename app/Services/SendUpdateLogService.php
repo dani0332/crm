@@ -862,7 +862,7 @@ class SendUpdateLogService
                 $sendUpdatePaymentDetails['discount_value'] = $sendUpdateLog->discount;
             }
 
-            LoggerService::info('fn:updatePaymentDetails - Updating Payment Details - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Payment Details: '.json_encode($sendUpdatePaymentDetails));
+            LoggerService::info('fn:updatePaymentDetails - Updating Payment Details - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid, extra: ['Payment Details' => json_encode($sendUpdatePaymentDetails)]);
             $payment->update($sendUpdatePaymentDetails);
 
             info('Book Update - Payment Details Updated - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
