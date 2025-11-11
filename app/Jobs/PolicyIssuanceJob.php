@@ -34,7 +34,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::POLICY_ISSUANCE_JOB);
         $this->processId = $processId;
-        $this->uniqueKey = "policy-issuance-job-id-{$processId}-".now()->timestamp;
+        $this->uniqueKey = "policy-issuance-job-id-{$processId}";
 
         $this->process = PolicyIssuance::find($processId);
 
@@ -281,7 +281,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
         $quoteCode = $this->process?->model?->code ?? 'unknown';
 
-        if ($e instanceof MaxAttemptsExceededException) {
+        if( $e instanceof MaxAttemptsExceededException) {
             $status = PolicyIssuanceEnum::TIMEOUT_STATUS;
             $this->process->update([
                 'status' => $status,
@@ -292,9 +292,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'quote_code' => $quoteCode,
                 'status' => $status,
             ]);
-
             return;
-        }
+        }        
 
         $status = $this->isTimeoutError($e->getMessage())
             ? PolicyIssuanceEnum::TIMEOUT_STATUS
