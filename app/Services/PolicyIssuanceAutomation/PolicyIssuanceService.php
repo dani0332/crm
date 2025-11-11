@@ -355,11 +355,7 @@ class PolicyIssuanceService
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote Insurer API  Status : '.$newInsurerApiStatus);
         if ($newInsurerApiStatus) {
-            if ($quoteType === QuoteTypes::CYBER->value) {
-                $quote->cyberQuote->update(['insurer_api_status_id' => $newInsurerApiStatus]);
-            } else {
-                $quote->update(['insurer_api_status_id' => $newInsurerApiStatus]);
-            }
+            $quote->update(['insurer_api_status_id' => $newInsurerApiStatus]);
         }
     }
 
@@ -367,11 +363,7 @@ class PolicyIssuanceService
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote API Issuance Status : '.$newApiIssuanceStatus);
         if ($newApiIssuanceStatus) {
-            if ($quoteType === QuoteTypes::CYBER->value) {
-                $quote->cyberQuote->update(['api_issuance_status_id' => $newApiIssuanceStatus]);
-            } else {
-                $quote->update(['api_issuance_status_id' => $newApiIssuanceStatus]);
-            }
+            $quote->update(['api_issuance_status_id' => $newApiIssuanceStatus]);
         }
     }
 
