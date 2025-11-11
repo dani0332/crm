@@ -57,7 +57,7 @@ class YachtQuoteRepository extends BaseRepository
             'assetValue' => $data['asset_value'],
             'subSourceId' => $data['sub_source_id'],
             'subSourceOptionsId' => $data['sub_source_options_id'],
-            'notes' => $data['notes'],
+            'additionalNotes' => $data['notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
