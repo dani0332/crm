@@ -3,6 +3,7 @@
 namespace App\Pipes\Allocation\Car;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
@@ -12,14 +13,13 @@ use App\Models\CarQuote;
 use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\Tier;
+use App\Models\User;
 use App\Models\UserTeams;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\BuyLeads\BuyLeadService;
 use App\Services\Logger\LoggerService;
 use Closure;
-use App\Enums\PermissionsEnum;
-use App\Models\User;
 
 class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
 {
@@ -181,13 +181,13 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         LoggerService::info(self::class."::getCATANationalitiesAdvisorsByStatus - CAT A Nationality allocation for tier: {$tier->name} and status: {$status}");
         $buyLeadRequestedUserIds = BuyLeadRequest::getRevivalSourceUserIds($this->allocationRequest->isSIC(), $tier->isValue());
         // $userIdsWithPermission = User::permission(PermissionsEnum::BUY_LEADS_REVIVAL)->active()->pluck('id')->toArray();
-       
+
         LoggerService::info(self::class.'::getCATANationalitiesAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
         $userIds = array_values(array_intersect(
             $buyLeadRequestedUserIds,
             $tierUserIds
         ));
-        
+
         $advisors = $this->getBaseQuery($status, $userIds)
             ->where('buy_lead_status', true)
             ->where(function ($query) {

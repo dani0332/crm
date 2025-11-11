@@ -18,9 +18,9 @@ use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
+use App\Services\BuyLeads\BuyLeadService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
-use App\Services\BuyLeads\BuyLeadService;
 
 class QuoteAllocation extends Command
 {
@@ -345,7 +345,7 @@ class QuoteAllocation extends Command
     public function executeCarRevivalAllocation($quoteType, $to, $chunkSize, $allocationStartDate, $applicationStorageService)
     {
         $processedRecords = 0;
-       LoggerService::info(self::class.': Executing car revival quote allocation for cat A nationalities');
+        LoggerService::info(self::class.': Executing car revival quote allocation for cat A nationalities');
         $nationalityIds = app(BuyLeadService::class)->getCarCatANationalitiesIds();
 
         $leads = CarQuote::query()
