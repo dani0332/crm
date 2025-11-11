@@ -239,7 +239,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         if (! $response['status']) {
             $errorMessage = $response['error'] ?? 'Unknown error';
 
-            LoggerService::error('Automation execution failed', [
+            LoggerService::info('Automation execution failed', [
                 'process_id' => $this->process->id,
                 'quote_code' => $quoteCode,
                 'error' => $errorMessage,
@@ -251,7 +251,6 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'message' => json_encode(['error' => $errorMessage]),
             ]);
         } else {
-
             if (isset($response['booking_pending']) && $response['booking_pending']) {
                 LoggerService::info('Automation: Booking pending', [
                     'process_id' => $this->process->id,

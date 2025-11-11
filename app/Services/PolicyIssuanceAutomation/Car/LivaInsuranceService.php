@@ -138,7 +138,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted);
 
             $response['status'] = $executeStepSequence['status'];
+            $response['error'] = $executeStepSequence['error'] ?? null;
             $response['message'] = $executeStepSequence['message'];
+
+            if (isset($executeStepSequence['booking_pending']) && $executeStepSequence['booking_pending']) {
+                $response['booking_pending'] = true;
+            }
 
         } catch (Exception $e) {
             $response['error'] = $e->getMessage();
