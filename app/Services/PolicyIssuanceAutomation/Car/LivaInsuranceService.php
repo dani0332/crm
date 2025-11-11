@@ -138,7 +138,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted);
 
             $response['status'] = $executeStepSequence['status'];
+            $response['error'] = $executeStepSequence['error'] ?? 'Unknown error';
             $response['message'] = $executeStepSequence['message'];
+
+            if (isset($executeStepSequence['booking_pending']) && $executeStepSequence['booking_pending']) {
+                $response['booking_pending'] = true;
+            }
 
         } catch (Exception $e) {
             $response['error'] = $e->getMessage();
@@ -175,6 +180,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         if ($nextStepToBeExecuted === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
             $uploadPolicyDocumentsToIMCRMResponse = $this->executeUploadPolicyDocumentsStep($quote, $process);
             if (isset($uploadPolicyDocumentsToIMCRMResponse['status']) && ! $uploadPolicyDocumentsToIMCRMResponse['status']) {
+                return $uploadPolicyDocumentsToIMCRMResponse;
+            }
+
+            if (isset($uploadPolicyDocumentsToIMCRMResponse['booking_pending']) && $uploadPolicyDocumentsToIMCRMResponse['booking_pending']) {
                 return $uploadPolicyDocumentsToIMCRMResponse;
             }
 
@@ -537,6 +546,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $response['status'] = true;
         $response['message'] = 'Fetched all documents from insurer and Uploaded to IMCRM';
         $response['completed_step'] = self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM;
+        $response['booking_pending'] = true;
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Process completed step updated to : '.$response['completed_step']);
 

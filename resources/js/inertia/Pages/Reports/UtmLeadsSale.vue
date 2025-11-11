@@ -29,6 +29,10 @@ const quoteTypesOptions = computed(() => {
 const params = useUrlSearchParams('history');
 const tableHeader = [
   {
+    text: 'UTM ID',
+    value: 'utm_id',
+  },
+  {
     text: 'UTM Source',
     value: 'utm_source',
   },
@@ -39,6 +43,14 @@ const tableHeader = [
   {
     text: 'UTM Campaigns',
     value: 'utm_campaign',
+  },
+  {
+    text: 'UTM Term',
+    value: 'utm_term',
+  },
+  {
+    text: 'UTM Content',
+    value: 'utm_content',
   },
   {
     text: 'Leads',
@@ -169,6 +181,9 @@ function exportToExcel() {
             { value: 'utm_source', label: 'UTM Sources' },
             { value: 'utm_medium', label: 'UTM Medium' },
             { value: 'utm_campaign', label: 'UTM Campaign' },
+            { value: 'utm_id', label: 'UTM ID' },
+            { value: 'utm_term', label: 'UTM Term' },
+            { value: 'utm_content', label: 'UTM Content' },
           ]"
         >
           <template #content-footer>
@@ -194,6 +209,9 @@ function exportToExcel() {
             { value: 'utm_source', label: 'UTM Sources' },
             { value: 'utm_medium', label: 'UTM Medium' },
             { value: 'utm_campaign', label: 'UTM Campaign' },
+            { value: 'utm_id', label: 'UTM ID' },
+            { value: 'utm_term', label: 'UTM Term' },
+            { value: 'utm_content', label: 'UTM Content' },
           ]"
         >
           <template #content-footer>
