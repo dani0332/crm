@@ -18,6 +18,8 @@ use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\BuyLeads\BuyLeadService;
 use App\Services\Logger\LoggerService;
 use Closure;
+use App\Enums\PermissionsEnum;
+use App\Models\User;
 
 class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
 {
@@ -178,11 +180,14 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         $advisors = [];
         LoggerService::info(self::class."::getCATANationalitiesAdvisorsByStatus - CAT A Nationality allocation for tier: {$tier->name} and status: {$status}");
         $buyLeadRequestedUserIds = BuyLeadRequest::getRevivalSourceUserIds($this->allocationRequest->isSIC(), $tier->isValue());
+        // $userIdsWithPermission = User::permission(PermissionsEnum::BUY_LEADS_REVIVAL)->active()->pluck('id')->toArray();
+       
         LoggerService::info(self::class.'::getCATANationalitiesAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
         $userIds = array_values(array_intersect(
             $buyLeadRequestedUserIds,
             $tierUserIds
         ));
+        
         $advisors = $this->getBaseQuery($status, $userIds)
             ->where('buy_lead_status', true)
             ->where(function ($query) {

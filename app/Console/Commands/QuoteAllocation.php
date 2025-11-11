@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
+use App\Services\BuyLeads\BuyLeadService;
 
 class QuoteAllocation extends Command
 {
@@ -83,6 +84,7 @@ class QuoteAllocation extends Command
             $this->executeAllocation(QuoteTypes::PET, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::SAVINGS, $to, $chunkSize, $allocationStartDate);
+            $this->executeCarRevivalAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             LoggerService::endLogging();
         } else {
             LoggerService::info(self::class.': Quote Allocation Command is turned Off');
@@ -335,6 +337,76 @@ class QuoteAllocation extends Command
             LoggerService::info(self::class.': Processed quote allocation', extra: [
                 'quote_type' => $quoteType->value,
             ]);
+        }
+
+        $this->logProcessedRecords($processedRecords, $quoteType);
+    }
+
+    public function executeCarRevivalAllocation($quoteType, $to, $chunkSize, $allocationStartDate, $applicationStorageService)
+    {
+        $processedRecords = 0;
+       LoggerService::info(self::class.': Executing car revival quote allocation for cat A nationalities');
+        $nationalityIds = app(BuyLeadService::class)->getCarCatANationalitiesIds();
+
+        $leads = CarQuote::query()
+            ->whereIn('nationality_id', $nationalityIds)
+            ->where('source', LeadSourceEnum::REVIVAL)
+            ->where(function ($q) {
+                $q->whereNull('advisor_id');
+                $q->orWhere(function ($sq) {
+                    $sq->where('advisor_id', User::getAiAdvisor()->id);
+                    $sq->where('ai_advisor_required', false);
+                });
+            })
+            ->select([
+                'uuid',
+                'payment_status_id',
+                'source',
+                'is_renewal_tier_email_sent',
+                'lead_allocation_failed_at',
+                'sic_flow_enabled',
+                'sic_advisor_requested',
+                'quote_status_id',
+            ])
+            ->where('created_at', '<=', $to)
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->orderByDesc('created_at')
+            ->where(function ($q) {
+                $q->eligibleForAllocation(QuoteTypes::CAR);
+                $q->orWhere(function ($sq) {
+                    $sq->whereNull('advisor_id')->where('ai_advisor_required', true);
+                });
+            })
+            ->take($chunkSize);
+
+        $leads->logRawSql();
+
+        // Get the teamId once before the loop
+        $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+
+        foreach ($leads->get() as $lead) {
+            if ($lead->tier_id == TiersIdEnum::TIER_R) {
+                continue;
+            }
+
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
+
+            LoggerService::info(self::class.': Processing car quote allocation', extra: [
+                'payment_status_id' => $lead->payment_status_id,
+                'source' => $lead->source,
+                'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
+                'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+                'sic_flow_enabled' => $lead->sic_flow_enabled,
+                'sic_advisor_requested' => $lead->sic_advisor_requested,
+                'quote_status_id' => $lead->quote_status_id,
+            ]);
+
+            // Only apply teamId if the payment status is AUTHORIZED
+            $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
+
+            QuoteTypes::CAR->allocate(uuid: $lead->uuid, teamId: $currentTeamId);
+            $processedRecords++;
+            LoggerService::info(self::class.': Processed car quote allocation');
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);
