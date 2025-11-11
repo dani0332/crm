@@ -3,8 +3,11 @@
 namespace App\Jobs;
 
 use App\Enums\PolicyIssuanceEnum;
+use App\Models\PolicyIssuance;
+use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -13,11 +16,12 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class PolicyIssuanceJob implements ShouldQueue
+class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 120;
+    public $timeout = 180; // 3 minutes - increased for policy issuance dispatch
+    public $uniqueFor = 185;
     public $tries = 3;
 
     private const TIMEOUT_MESSAGE = 'cURL error 28';
@@ -28,14 +32,22 @@ class PolicyIssuanceJob implements ShouldQueue
     private $className = 'policyIssuanceJob';
     public mixed $process;
     public $uniqueKey = null;
+    private $processId;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($process)
+    public function __construct($processId)
     {
-        $this->process = $process;
-        $this->uniqueKey = 'policy-issuance-automation-id-'.$this->process->id;
+        LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$processId.' inside constructor');
+        $this->processId = $processId;
+        $this->uniqueKey = 'policy-issuance-automation-id-'.$processId;
+        $this->process = PolicyIssuance::find($processId);
+        if (! $this->process) {
+            LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$processId.' not found');
+
+            return;
+        }
     }
 
     /**
@@ -44,20 +56,46 @@ class PolicyIssuanceJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            $this->process = $this->process->refresh();
+            // Reload process if it wasn't found in constructor or if it's null
+            if (! $this->process) {
+                $this->process = PolicyIssuance::find($this->processId);
+                if (! $this->process) {
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->processId.' not found, skipping job execution');
 
-            info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
+                    return;
+                }
+            }
+
+            // Ensure model relationship is loaded
+            if (! $this->process->relationLoaded('model') || ! $this->process->model) {
+                $this->process->load('model');
+                if (! $this->process->model) {
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->process->id.' - Model not found, skipping job execution');
+                    // Mark as failed since this is a non-retryable error
+                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'Model not found'])]);
+
+                    return;
+                }
+            }
+
+            LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
+
+            $this->process = $this->process->refresh();
+            // Reload model relationship after refresh since refresh() clears all loaded relationships
+            $this->process->load('model');
 
             if ($this->isProcessable($this->process)) {
                 $processingStatus = $this->process->status === PolicyIssuanceEnum::PENDING_STATUS ? PolicyIssuanceEnum::PROCESSING_STATUS : PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS;
                 $this->process->update(['status' => $processingStatus]);
-                info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
+                LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
 
                 $quoteType = $this->process?->quote_type;
                 $insuranceProvider = $this->process?->insuranceProvider;
 
                 if (! $insuranceProvider) {
-                    info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Insurance Provider not found');
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Insurance Provider not found');
+                    // Mark as failed since this is a non-retryable error
+                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'Insurance Provider not found'])]);
 
                     return;
                 }
@@ -65,23 +103,25 @@ class PolicyIssuanceJob implements ShouldQueue
                 $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
                 if ($insuranceProviderAutomation) {
                     $response = $insuranceProviderAutomation->executeSteps($this->process);
-                    info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Response : '.json_encode($response));
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Response : ', $response);
                     if (! $response['status']) {
                         $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $response['error']])]);
-                        info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.json_encode($response['error']));
+                        LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : ', extra: ['error' => $response['error']]);
                     } else {
                         $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
-                        info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
+                        LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
                     }
 
                 } else {
-                    info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - '.$insuranceProvider->text.' Automation not found');
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - '.$insuranceProvider->text.' Automation not found');
+                    // Mark as failed since automation not found is a non-retryable error
+                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => 'Automation not found for '.$insuranceProvider->text])]);
                 }
             } else {
-                info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Status : '.$this->process->status.' is skipped.');
+                LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Status : '.$this->process->status.' is skipped.');
             }
 
-            info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' completed');
+            LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' completed');
         } catch (\Throwable $e) {
             // Catch any exception that occurs during job execution
             // This will capture the ORIGINAL exception before it becomes "attempted too many times"
@@ -92,21 +132,56 @@ class PolicyIssuanceJob implements ShouldQueue
                 'exception_file' => $e->getFile(),
                 'exception_line' => $e->getLine(),
                 'stack_trace' => $e->getTraceAsString(),
+                'attempts' => $this->attempts(),
+                'max_tries' => $this->tries,
             ]);
 
+            // Check if this is a non-retryable error
+            if ($this->isNonRetryableError($e)) {
+                // Mark as failed immediately without retrying
+                if ($this->process) {
+                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $e->getMessage()])]);
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.$this->process->id.' marked as failed (non-retryable error)');
+                }
+
+                // Don't re-throw, let the job complete successfully to prevent retries
+                return;
+            }
+
+            // For retryable errors, check if we're on the last attempt
+            // If we're on the last attempt and it fails, mark as failed and don't retry
+            // Otherwise, re-throw to allow Laravel to retry
+            if ($this->attempts() >= $this->tries) {
+                // We're at or past max attempts, mark as failed and don't retry
+                if ($this->process) {
+                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $e->getMessage()])]);
+                    LoggerService::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process->model->code ?? 'unknown').' - Process ID : '.$this->process->id.' marked as failed (max attempts reached)');
+                }
+
+                // Don't re-throw, let the job complete successfully to prevent further retries
+                return;
+            }
+
+            // Re-throw for retryable errors that haven't reached max attempts yet
+            // Laravel will automatically retry the job
             throw $e;
         }
     }
 
     public function failed(Throwable $exception)
     {
+        // Reload process if it's null
+        if (! $this->process) {
+            $this->process = PolicyIssuance::find($this->processId);
+        }
+
         $message = $exception->getMessage();
         $isAttemptsOrTimeout = $this->isFailedDueToAttemptsOrTimeout($message);
 
         // Log full exception details including stack trace for debugging
         // Use info level for max attempts/timeout errors to avoid noise in error logs
         if ($isAttemptsOrTimeout) {
-            Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' MAX ATTEMPTS/TIMEOUT', [
+            Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process?->model?->code ?? 'unknown').' - Process ID : '.($this->process->id ?? $this->processId).' MAX ATTEMPTS/TIMEOUT', [
                 'exception_class' => get_class($exception),
                 'exception_message' => $message,
                 'exception_code' => $exception->getCode(),
@@ -115,7 +190,7 @@ class PolicyIssuanceJob implements ShouldQueue
                 'max_tries' => $this->tries,
             ]);
         } else {
-            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' EXCEPTION DETAILS', [
+            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process?->model?->code ?? 'unknown').' - Process ID : '.($this->process->id ?? $this->processId).' EXCEPTION DETAILS', [
                 'exception_class' => get_class($exception),
                 'exception_message' => $message,
                 'exception_code' => $exception->getCode(),
@@ -126,19 +201,29 @@ class PolicyIssuanceJob implements ShouldQueue
             ]);
         }
 
-        $messageLower = strtolower($message);
-        if (str_contains($messageLower, strtolower(self::TIMEOUT_MESSAGE)) || str_contains($messageLower, strtolower(self::LARAVEL_TIMEOUT_MESSAGE))) {
-            $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
-        } else {
-            $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
-        }
+        // Only update process status if process exists
+        if ($this->process) {
+            $messageLower = strtolower($message);
+            if (str_contains($messageLower, strtolower(self::TIMEOUT_MESSAGE)) || str_contains($messageLower, strtolower(self::LARAVEL_TIMEOUT_MESSAGE))) {
+                $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
+            } else {
+                $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
+            }
 
-        // Log status update with appropriate log level
-        if ($isAttemptsOrTimeout) {
-            Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Reason : '.$message);
+            // Log status update with appropriate log level
+            if ($isAttemptsOrTimeout) {
+                Log::info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process?->model?->code ?? 'unknown').' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Reason : '.$message);
+            } else {
+                Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.($this->process?->model?->code ?? 'unknown').' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
+            }
         } else {
-            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
+            Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Process ID : '.$this->processId.' not found, cannot update status');
         }
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->uniqueKey ?? 'policy-issuance-automation-id-'.$this->processId;
     }
 
     public function middleware()
@@ -158,6 +243,31 @@ class PolicyIssuanceJob implements ShouldQueue
         return str_contains($errorMessage, strtolower(self::MAX_ATTEMPTS_MESSAGE)) ||
                str_contains($errorMessage, strtolower(self::LARAVEL_TIMEOUT_MESSAGE)) ||
                str_contains($errorMessage, strtolower(self::TIMEOUT_MESSAGE));
+    }
+
+    /**
+     * Check if an exception is non-retryable (e.g., data not found, validation errors)
+     */
+    private function isNonRetryableError(\Throwable $e): bool
+    {
+        $message = strtolower($e->getMessage());
+        $className = get_class($e);
+
+        // Model not found errors are non-retryable
+        if (str_contains($message, 'model not found') ||
+            str_contains($message, 'not found') ||
+            str_contains($message, 'does not exist')) {
+            return true;
+        }
+
+        // Database connection errors might be retryable, but let's be conservative
+        // Validation errors are non-retryable
+        if (str_contains($className, 'ValidationException') ||
+            str_contains($className, 'ModelNotFoundException')) {
+            return true;
+        }
+
+        return false;
     }
 
 }
