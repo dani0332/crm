@@ -10,7 +10,6 @@ use App\Enums\RenewalsUploadType;
 use App\Enums\SkipPlansEnum;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
-use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use App\Traits\RenewalsImportTrait;
 use Maatwebsite\Excel\Concerns\Importable;
@@ -227,7 +226,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
                         $failed[$failure->row()]['validation_errors'][] = $error;
                     }
                 }
-                
+
                 $failed = array_map([RenewalQuoteProcess::class, 'prepareForBulkInsert'], $failed);
 
                 // Bulk insert failed records to reduce memory and improve performance

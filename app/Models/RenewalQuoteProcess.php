@@ -87,9 +87,6 @@ class RenewalQuoteProcess extends Model
      * Prepare data for bulk insert (bypasses mutators).
      * Applies the same encoding logic as mutators for consistency,
      * and ensures created_at/updated_at timestamps are set.
-     *
-     * @param  array  $attributes
-     * @return array
      */
     public static function prepareForBulkInsert(array $attributes): array
     {
@@ -105,10 +102,10 @@ class RenewalQuoteProcess extends Model
 
         // Set timestamps if not already set (Model::insert() does not do this automatically)
         $now = now();
-        if (!isset($attributes['created_at'])) {
+        if (! isset($attributes['created_at'])) {
             $attributes['created_at'] = $now;
         }
-        if (!isset($attributes['updated_at'])) {
+        if (! isset($attributes['updated_at'])) {
             $attributes['updated_at'] = $now;
         }
 
