@@ -202,12 +202,6 @@ class SavingsQuoteService extends BaseQuoteService
 
     public function update(string $uuid, array $data)
     {
-        // Log sub-source parameters for update
-        LoggerService::info('SavingsQuoteService update - Sub-source parameters', [
-            'uuid' => $uuid,
-            'sub_source_id' => $data['sub_source_id'] ?? null,
-            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
-        ]);
 
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->baseQuery()->where('uuid', $uuid)->firstOrFail();
@@ -219,11 +213,6 @@ class SavingsQuoteService extends BaseQuoteService
 
             $quoteData['updated_by_id'] = Auth::id();
 
-            // Log sub-source parameters for update
-            LoggerService::info('SavingsQuoteService update - Sub-source parameters', [
-                '$data' => $data,
-                '$quoteData' => $quoteData,
-            ]);
             $quote->update($quoteData);
 
             $quote->savingsQuote()->updateOrCreate(
