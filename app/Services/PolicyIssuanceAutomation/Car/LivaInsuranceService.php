@@ -1094,6 +1094,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             '30' => '2',
             '40' => '1',
             '50' => '1',
+            default => null,
         };
     }
 
