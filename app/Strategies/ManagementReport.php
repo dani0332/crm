@@ -16,6 +16,7 @@ use App\Models\LeadSource;
 use App\Models\Lookup;
 use App\Models\Team;
 use App\Services\ApplicationStorageService;
+use App\Services\LookupService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -87,11 +88,8 @@ class ManagementReport
             ->map(fn ($users) => $users->name)
             ->toArray();
 
-        $subSources = Lookup::where('key', LookupsEnum::SUB_SOURCE)
-            ->with('childs')
-            ->where('is_active', 1)
-            ->orderBy('id')
-            ->get(['id', 'text', 'code', 'description', 'parent_id'])
+        $subSources = app(LookupService::class)->getSubSource()
+            ->sortBy('id')
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
