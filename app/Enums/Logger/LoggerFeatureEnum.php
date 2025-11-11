@@ -44,6 +44,8 @@ enum LoggerFeatureEnum: string
     case EP_PROCESS_SEND_DOCUMENT = 'ep-process-send-document';
     case SLA_TRACKING = 'sla-tracking';
     case MA_WELCOME_JOB = 'ma-welcome-job';
+    case POLICY_ISSUANCE_JOB = 'policy-issuance-job';
+    
     case CYBER_OCB_INTRO_EMAIL = 'cyber-ocb-intro-email';
     case CYBER_AUTOMATED_FOLLOWUPS = 'cyber-automated-followups';
 }
