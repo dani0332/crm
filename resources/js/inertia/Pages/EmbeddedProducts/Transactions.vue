@@ -22,7 +22,6 @@ const loader = reactive({
 
 const filters = reactive({
   ref_id: '',
-  email: '',
   name: '',
   date_of_purchase: '',
   chassis_number: '',
@@ -315,16 +314,6 @@ const filteredHeaders = computed(() => {
             name="chassis_number"
             class="w-full"
             placeholder="Chassis Number"
-          />
-        </div>
-        <div>
-          <x-input
-            v-model="filters.email"
-            type="search"
-            name="first_name"
-            class="w-full"
-            placeholder="Type here"
-            label="Email"
           />
         </div>
         <div>
