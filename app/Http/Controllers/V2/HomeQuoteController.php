@@ -30,7 +30,7 @@ class HomeQuoteController extends Controller
 {
     public function index()
     {
-        $homeQuotes = HomeQuoteRepository::getData();
+        $homeQuotes = HomeQuoteRepository::getData(requestParams: request()->all());
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::HOME->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::HOME->id())->get();
 

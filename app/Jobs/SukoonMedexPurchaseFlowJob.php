@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Mail\SukoonMedexEPFailureNotification;
 use App\Services\Logger\LoggerService;
 use App\Services\SukoonMedexService;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -50,27 +51,27 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
     public function handle(): void
     {
         LoggerService::startQuoteLogging($this->quoteObject);
-        LoggerService::info($this->logPrefix, extra: $this->logExtra);
+        try {
 
-        $sukoonMedexService = app(SukoonMedexService::class);
-        $sukoonMedexService->initiatePurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction);
-        $sukoonMedexService->processPurchaseFlow($this->isSendEmail);
+            LoggerService::info($this->logPrefix, extra: $this->logExtra);
+
+            $sukoonMedexService = app(SukoonMedexService::class);
+            $sukoonMedexService->initiatePurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction);
+            $sukoonMedexService->processPurchaseFlow($this->isSendEmail);
+        } catch (Exception $exception) {
+
+            LoggerService::info("{$this->logPrefix} Failed", extra: [...$this->logExtra, 'exception' => $exception->getMessage()]);
+            $this->sendFailureEmail();
+        }
     }
 
-    /**
-     * @return void
-     */
-    public function failed(Throwable $exception)
+    private function sendFailureEmail()
     {
-        LoggerService::info("{$this->logPrefix} Failed", extra: [...$this->logExtra, 'exception' => $exception->getMessage()]);
-
-        // Send failure email notification
         try {
             Mail::send(new SukoonMedexEPFailureNotification($this->quoteObject, $this->quoteTypeId));
-            LoggerService::info("{$this->logPrefix} - Send EP failure notification email successfully");
-
+            LoggerService::info("{$this->logPrefix} Send EP failure notification email successfully");
         } catch (Throwable $emailException) {
-            LoggerService::error("{$this->logPrefix} - Send EP failure notification email Failed", extra: [
+            LoggerService::error("{$this->logPrefix} Send EP failure notification email Failed", extra: [
                 'exception' => $emailException->getMessage(),
             ]);
         }

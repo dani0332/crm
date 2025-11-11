@@ -20,6 +20,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  quote_type_id: {
+    type: Number,
+    default: null,
+  },
 });
 
 const emit = defineEmits(['update:chassisNumber']);
@@ -29,6 +33,10 @@ const notification = useToast();
 const lookups = page.props.lookups;
 const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const quote = page.props?.quoteRequest ?? page.props?.record;
+const insuranceProviderCode =
+  quote?.plan?.insurance_provider?.code ?? quote?.plan_provider_code;
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 
 // RTA Transaction Type Constants
 const RTA_CONSTANTS = {
@@ -177,11 +185,11 @@ const plateCodeOptions = computed(() => {
 });
 
 const carDetail = computed(() => {
-  return page.props.quoteRequest?.car_quote_request_detail;
+  return quote?.car_quote_request_detail ?? quote;
 });
 
 const vehicleDriverDetail = computed(() => {
-  return page.props.quoteRequest?.vehicle_driver_detail;
+  return quote?.vehicle_driver_detail;
 });
 
 const dateToYMD = date => {
@@ -198,11 +206,9 @@ const dateToYMD = date => {
 };
 
 const additionalVehicleTransactionDetailsForm = useForm({
-  quote_type_id: page.props.quoteType.id,
-  quote_uuid: page.props.quoteRequest?.uuid,
-  source: page.props.quoteRequest?.source,
-  insurance_provider_code:
-    page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
+  quote_type_id: page.props.quoteType.id ?? props.quote_type_id,
+  quote_uuid: quote?.uuid,
+  insurance_provider_code: insuranceProviderCode ?? '',
   additional_vehicle_transaction_details: true,
   rta_transaction_type:
     vehicleDriverDetail.value?.rta_transaction_type?.toString() ?? '',
@@ -218,17 +224,14 @@ const additionalVehicleTransactionDetailsForm = useForm({
   bank_name: vehicleDriverDetail.value?.bank_name ?? '',
   first_registration_date:
     vehicleDriverDetail.value?.first_registration_date ?? '',
-  policy_effective_date:
-    dateToYMD(page.props.quoteRequest?.policy_start_date) ?? '',
-  policy_expiry_date:
-    dateToYMD(page.props.quoteRequest?.policy_expiry_date) ?? '',
-  certificate_start_date: page.props.quoteRequest?.certificate_start_date ?? '',
-  certificate_end_date: page.props.quoteRequest?.certificate_end_date ?? '',
+  policy_effective_date: dateToYMD(quote?.policy_start_date) ?? '',
+  policy_expiry_date: dateToYMD(quote?.policy_expiry_date) ?? '',
+  certificate_start_date: quote?.certificate_start_date ?? '',
+  certificate_end_date: quote?.certificate_end_date ?? '',
   annual_mileage_estimate:
     vehicleDriverDetail.value?.annual_mileage_estimate?.toString() ?? '',
-  previous_policy_provider:
-    page.props.quoteRequest?.currently_insured_with?.toString() ?? '',
-  lead_source: page.props.quoteRequest?.source?.toString() ?? '',
+  previous_policy_provider: quote?.currently_insured_with?.toString() ?? '',
+  lead_source: quote?.source?.toString() ?? '',
 });
 
 // Initialize user modification flags based on existing saved values
@@ -251,10 +254,13 @@ const hasNotEditPermission = computed(() => {
   );
 });
 
+const isSync = ref(false);
+
 watch(
   () => props.insurerPortalSyncData,
   vehicleTransactionDetails => {
     if (vehicleTransactionDetails) {
+      isSync.value = true;
       const fieldMappings = {
         vehicleTransactionDetails: {
           rta_transaction_type: 'rta_transaction_type',
@@ -328,24 +334,15 @@ const chassisNumberValidate = eventType => {
 };
 
 const isGIG = computed(() => {
-  return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.AXA
-  );
+  return insuranceProviderCode === insuranceProviderCodeEnum.AXA;
 });
 
 const isLIVA = computed(() => {
-  return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.RSA
-  );
+  return insuranceProviderCode === insuranceProviderCodeEnum.RSA;
 });
 
 const isSUKOON = computed(() => {
-  return (
-    page.props.quoteRequest?.plan?.insurance_provider.code ===
-    page.props.insuranceProviderCodeEnum.OIC
-  );
+  return insuranceProviderCode === insuranceProviderCodeEnum.OIC;
 });
 
 // RTA Transaction Type specific computed properties
@@ -362,7 +359,7 @@ const isGigRenewal = computed(() => {
 
 // Check if current quote source is NOT renewals_uploads
 const isNonRenewalsUploadSource = computed(() => {
-  return page.props.quoteRequest?.source !== RTA_CONSTANTS.RENEWALS_UPLOADS;
+  return quote?.source !== RTA_CONSTANTS.RENEWALS_UPLOADS;
 });
 
 // Check if this is Vehicle Renewal with non-renewals_uploads source
@@ -1024,7 +1021,8 @@ onMounted(() => {
 const calculateDatesForLiva = (forceCalculation = false) => {
   if (
     isLIVA.value &&
-    additionalVehicleTransactionDetailsForm.policy_effective_date
+    additionalVehicleTransactionDetailsForm.policy_effective_date &&
+    !isSync.value
   ) {
     const effectiveDate = parseDateString(
       additionalVehicleTransactionDetailsForm.policy_effective_date,
@@ -1080,7 +1078,7 @@ watch(
 watch(
   () => additionalVehicleTransactionDetailsForm.certificate_start_date,
   newVal => {
-    if (isLIVA.value && newVal && true) {
+    if (isLIVA.value && newVal && !isSync.value) {
       // Add 13 months to policy_effective_date for policy_expiry_date
       const effectiveDate = new Date(newVal);
       const expiryDate = new Date(effectiveDate);
@@ -1379,6 +1377,7 @@ watch(
             "
             label="First Registration Date"
             :tooltip="`Date the vehicle was first registered with the traffic department`"
+            :teleport="false"
           />
 
           <!-- Policy Effective Date -->
@@ -1401,6 +1400,7 @@ watch(
             :readonly="fieldConfig.policy_effective_date?.readonly"
             label="Policy Effective Date"
             :tooltip="`Start date of the insurance policy coverage`"
+            :teleport="false"
           />
 
           <!-- Policy Expiry Date -->
@@ -1417,6 +1417,7 @@ watch(
             :readonly="fieldConfig.policy_expiry_date?.readonly"
             label="Policy Expiry Date"
             :tooltip="`Expiry date of the insurance policy coverage`"
+            :teleport="false"
           />
 
           <!-- Certificate Start Date -->
@@ -1439,6 +1440,7 @@ watch(
             :readonly="fieldConfig.certificate_start_date?.readonly"
             label="Certificate Start Date"
             :tooltip="`Start date for the insurance certificate validity period`"
+            :teleport="false"
           />
 
           <!-- Certificate End Date -->
@@ -1457,6 +1459,7 @@ watch(
             :readonly="fieldConfig.certificate_end_date?.readonly"
             label="Certificate End Date"
             :tooltip="`End date for the insurance certificate validity period`"
+            :teleport="false"
           />
 
           <!-- Annual Mileage Estimate -->

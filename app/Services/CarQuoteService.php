@@ -22,6 +22,8 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
+use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
@@ -31,8 +33,10 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\UserTeams;
+use App\Models\VehicleChassisDetail;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\OCRTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -51,12 +55,15 @@ class CarQuoteService extends BaseService
     protected $sendEmailCustomerService;
     protected $applicationStorageService;
     protected $activityService;
+    protected $capiService;
 
     private const REQUIRED = 'required';
     private const STRING = 'string';
     private const REQUIRED_STRING = self::REQUIRED.'|'.self::STRING;
 
+    // Traits
     use GenericQueriesAllLobs;
+    use OCRTrait;
     use TeamHierarchyTrait;
 
     public function __construct(
@@ -65,13 +72,15 @@ class CarQuoteService extends BaseService
         SendEmailCustomerService $sendEmailCustomerService,
         ApplicationStorageService $applicationStorageService,
         ActivitiesService $activityService,
-        protected CarQuoteQueryBuilder $carQuoteQueryBuilder
+        protected CarQuoteQueryBuilder $carQuoteQueryBuilder,
+        CapiService $capiService
     ) {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
         $this->applicationStorageService = $applicationStorageService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->activityService = $activityService;
+        $this->capiService = $capiService;
     }
 
     public function saveCarQuote(Request $request)
@@ -146,9 +155,34 @@ class CarQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->selfAssign(QuoteTypes::CAR, $response->quoteUID);
+
+            // Add chassis number details
+            $carMake = CarMake::find($request->car_make_id);
+            $carModel = CarModel::find($request->car_model_id);
+            $carMakeAndModel = trim(($carMake ? $carMake->text : '').' '.($carModel ? $carModel->text : ''));
+
+            $data = [
+                'chassis_number' => $request->chassis_number,
+                'vehicle_make_model' => $carMakeAndModel,
+                'cylinder' => $request->cylinder,
+                'seating_capacity' => $request->seat_capacity,
+                'vehicle_trim' => $request->trim,
+            ];
+
+            $this->saveVehicleChassisDetails($response->quoteUID, $data);
         }
 
         return $response;
+    }
+
+    public function saveVehicleChassisDetails($uuid, $data): void
+    {
+        LoggerService::info('Saving vehicle chassis details', ['uuid' => $uuid, 'data' => $data]);
+
+        VehicleChassisDetail::updateOrCreate(
+            ['chassis_number' => $data['chassis_number']],
+            array_merge($data, ['uuid' => $uuid, 'quote_type_id' => QuoteTypes::CAR->id()]),
+        );
     }
 
     public function updateCarQuote(Request $request, $id)
@@ -310,8 +344,12 @@ class CarQuoteService extends BaseService
         if ($deleteValuationResponse) {
             $carQuote->save();
 
+            // Call capi api to verify OCR data
+            $this->verifyOCRData($carQuote);
+
             $carQuoteDetails = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
             $carQuoteDetails->chassis_number = $request->chassis_number;
+
             if ($carQuoteDetails->isDirty()) {
                 $carQuoteDetails->chassis_number = $request->chassis_number;
                 $carQuoteDetails->save();
@@ -335,6 +373,28 @@ class CarQuoteService extends BaseService
             }
         } else {
             return false;
+        }
+    }
+
+    private function verifyOCRData(CarQuote $carQuote): void
+    {
+        // Get OCR enabled status
+        $isOCREnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_ENABLED, useCache: true) == '1';
+
+        // Check if OCR is enabled and has OCR data
+        if ($isOCREnabled && $this->hasOCRData($carQuote->id, QuoteTypes::CAR->modelClass())) {
+            // Send request to Capi to verify documents
+            $requestData = [
+                'quoteUuid' => $carQuote->uuid,
+                'quoteTypeId' => QuoteTypes::getId(QuoteTypes::CAR),
+                'callSource' => LeadSourceEnum::IMCRM,
+            ];
+
+            LoggerService::info('Capi service request data', extra: $requestData);
+            $response = $this->capiService->request('/api/customer/documents-verify', 'PUT', $requestData);
+            LoggerService::info('Capi service response', extra: [
+                'response' => $response,
+            ]);
         }
     }
 
@@ -469,7 +529,7 @@ class CarQuoteService extends BaseService
                 'insured.last_name as insured_last_name',
                 'insured_kyc.id as insured_kyc_id',
                 DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
-                'c.emirates_id_expiry_date',
+                DB::raw('insured_kyc.id_expiry_date as emirates_id_expiry_date'),
                 'c.receive_marketing_updates',
                 'qrem.entity_id',
                 'ent.code as entity_code',
@@ -514,6 +574,9 @@ class CarQuoteService extends BaseService
                 'cqr.insurer_api_status_id',
                 'cqr.rta_upload_status',
                 'cqr.documents_verified',
+                'cqr.is_customer_data_valid',
+                'cqr.certificate_start_date',
+                'cqr.certificate_end_date',
                 'cqr.sub_source_id',
                 'cqr.sub_source_options_id',
                 // 'cqr.primary_ref_id',

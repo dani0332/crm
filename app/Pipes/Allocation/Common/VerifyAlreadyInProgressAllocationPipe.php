@@ -18,13 +18,17 @@ class VerifyAlreadyInProgressAllocationPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        if ($this->lead->isAllocationInProgress()) {
+        // Allow evaluate-tier-only requests to proceed even if allocation is marked in progress
+        if (! $this->allocationRequest->isEvaluateTierOnlyRequest() && $this->lead->isAllocationInProgress()) {
             LoggerService::info("Allocation is already started at {$this->lead->lead_allocation_started_at}");
 
             $this->throw('Allocation is in progress', self::OK);
         }
 
-        $this->lead->startAllocation();
+        // For evaluate-tier-only, do not flip allocation-in-progress flag
+        if (! $this->allocationRequest->isEvaluateTierOnlyRequest()) {
+            $this->lead->startAllocation();
+        }
 
         return $next($request);
     }

@@ -6,6 +6,8 @@ use App\Builders\TravelQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\InsuranceProviderEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -374,7 +376,11 @@ class TravelQuoteService extends BaseService
 
             $this->selfAssign(QuoteTypes::TRAVEL, $response->quoteUID);
 
-            SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
+            if ($travelQuote['source'] != LeadSourceEnum::IMCRM) {
+                SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
+            } else {
+                LoggerService::info(self::class.'Lead source is IMCRM so skipping SendTravelOCBIntroEmailJob');
+            }
             LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
 
             $customerId = app(CustomerService::class)->getCustomerIdByEmail($request->email);
@@ -1293,4 +1299,74 @@ class TravelQuoteService extends BaseService
 
         return false;
     }
+
+    /**
+     * Update customer profile details (lead level) if provider is AXA
+     * Gets the first member and updates the quote's first_name and last_name
+     *
+     * @param  string  $quoteType
+     * @param  string  $uuid
+     * @return void
+     */
+    public function updateCustomerProfileDetails($quoteType, $uuid)
+    {
+        try {
+            if (strtolower($quoteType) !== strtolower(QuoteTypes::TRAVEL->value)) {
+                LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - Not a Travel quote, skipping update customer profile details', [
+                    'quote_type' => $quoteType,
+                ]);
+
+                return;
+            }
+
+            $quoteObject = $this->getQuoteObject(strtolower($quoteType), $uuid, 'uuid');
+
+            LoggerService::startQuoteLogging($quoteObject);
+            LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - Update customer profile details');
+
+            $payment = $quoteObject->payments()->mainLeadPayment()->first();
+            $insuranceProvider = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
+
+            if ($insuranceProvider?->code !== InsuranceProviderEnum::AXA->value) {
+                LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - Provider is not AXA, skipping update', [
+                    'provider_code' => $insuranceProvider?->code ?? 'null',
+                ]);
+
+                return;
+            }
+
+            // Get the primary member using primary_member_id
+            if (! $quoteObject->primary_member_id) {
+                LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - No primary member set for this lead');
+
+                return;
+            }
+
+            $customerMember = CustomerMembers::find($quoteObject->primary_member_id);
+
+            if (! $customerMember) {
+                LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - Primary member not found', [
+                    'primary_member_id' => $quoteObject->primary_member_id,
+                ]);
+
+                return;
+            }
+
+            $quoteObject->first_name = $customerMember->first_name;
+            $quoteObject->last_name = $customerMember->last_name;
+            $quoteObject->save();
+
+            LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - Successfully updated customer profile details', [
+                'first_name' => $customerMember->first_name,
+                'last_name' => $customerMember->last_name,
+            ]);
+
+        } catch (\Exception $e) {
+            LoggerService::error(__CLASS__.'::'.__FUNCTION__.' - Error updating customer profile', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
+
 }
