@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use App\DTO\EpBookingContext;
-use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
