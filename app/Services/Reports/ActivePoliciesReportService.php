@@ -38,12 +38,10 @@ class ActivePoliciesReportService extends ManagementReport
                 'ip.text as insurer',
                 'quote_type.code as line_of_business',
                 DB::raw('SUM(CASE WHEN hqr.pec_marked_at IS NOT NULL THEN 1 ELSE 0 END) as pec_count'),
-                'ss.text as sub_source',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
-            ->leftJoin('lookups as ss', 'personal_quotes.sub_source_id', '=', 'ss.id')
             ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
             ->leftJoin('health_quote_request as hqr', function ($join) {
                 $join->on('personal_quotes.quote_id', '=', 'hqr.id')
