@@ -78,6 +78,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
 use PDF;
+use App\Models\CyberQuoteRequest;
 
 class AMLService
 {
@@ -104,6 +105,7 @@ class AMLService
             (int) QuoteTypes::LIFE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::SAVINGS->id() => Carbon::createFromFormat('Y-m-d', '2025-02-14'),
             (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
+            (int) QuoteTypes::CYBER->id() => Carbon::createFromFormat('Y-m-d', '2025-11-01'),
         };
 
         return Carbon::createFromFormat(
@@ -123,6 +125,7 @@ class AMLService
             QuoteTypes::LIFE->id() => $quoteRequestId,
             QuoteTypes::SAVINGS->id() => $quoteRequestId,
             QuoteTypes::HOME->id() => $quoteRequestId,
+            QuoteTypes::CYBER->id() => $quoteRequestId,
         };
     }
 
@@ -142,6 +145,7 @@ class AMLService
             QuoteTypes::LIFE->id() => LifeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::SAVINGS->id() => SavingsQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::CYBER->id() => CyberQuoteRequest::where($filterColumn, $quoteRequestId)->touch(),
         };
     }
 
@@ -283,6 +287,15 @@ class AMLService
         } elseif ($quoteTypeId == QuoteTypes::SAVINGS->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::SAVINGS->id())->with([
                 'savingsQuote',
+                'customer.detail',
+                'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
+                'paymentStatus',
+            ])->where('id', $quoteRequestId)->firstOrFail();
+        } elseif ($quoteTypeId == QuoteTypes::CYBER->id()) {
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::CYBER->id())->with([
+                'cyberQuoteRequest',
                 'customer.detail',
                 'quoteStatus',
                 'payments.paymentMethod',
@@ -490,7 +503,7 @@ class AMLService
             $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
             $ryuFilter->orWhereNull('decision');
         })->where(function ($aml) {
-            $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+            $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
             $aml->orWhereNull('screening_type');
         })->where(function ($query) {
             $query->whereNull('screenshot');
@@ -563,7 +576,11 @@ class AMLService
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
         $matchResultsForUpdate = [];
-        $decisionValues = (array) json_decode($request->decisonsForUpdatePortal)[0] ?? [];
+        $decisionValues = [];
+        if (! empty($request->decisonsForUpdatePortal)) {
+            $decoded = json_decode($request->decisonsForUpdatePortal);
+            $decisionValues = is_array($decoded) && ! empty($decoded) ? (array) $decoded[0] : [];
+        }
         foreach ($decisionValues as $matchKey => $matchValue) {
             $matchResultsForUpdate[] = [
                 'MatchID' => $matchKey,
@@ -583,7 +600,7 @@ class AMLService
                 $ryuFilter->orWhereNull('decision');
             })
             ->where(function ($aml) {
-                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
                 $aml->orWhereNull('screening_type');
             })
             ->where(function ($query) {
@@ -629,7 +646,7 @@ class AMLService
             $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
             $ryuFilter->orWhereNull('decision');
         })->where(function ($aml) {
-            $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+            $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
             $aml->orWhereNull('screening_type');
         })->where(function ($query) {
             $query->whereNull('screenshot');
@@ -1212,7 +1229,7 @@ class AMLService
             })->where(function ($query) {
                 $query->whereNull('screenshot');
                 $query->orWhere('screenshot', '');
-            })->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA])
+            })->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA])
             ->orderBy('created_at', 'asc')->get();
     }
 
@@ -2145,8 +2162,7 @@ class AMLService
             ])
             ->whereIn('kl.quote_request_id', $quoteIds)
             ->where('kl.quote_type_id', $quoteTypeId)
-            ->where('kl.decision', '!=', AMLDecisionStatusEnum::RYU)
-            ->where('kl.decision', '!=', AMLDecisionStatusEnum::INSURER_AXA)
+            ->whereNotIn('kl.decision', [AMLDecisionStatusEnum::RYU, AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA])
             ->orderBy('kl.created_at', 'desc')
             ->get()
             ->groupBy('quote_request_id')
@@ -2357,7 +2373,7 @@ class AMLService
             'quote_type_id' => $quoteType->id,
         ])->where('screening_type', $insurerScreenType[$insuranceProvider->code])->latest()->first();
 
-        if (! $kycLogs) {
+        if (! $kycLogs || is_null($kycLogs->results)) {
             return false;
         }
 

@@ -54,6 +54,29 @@ enum InsuranceProviderEnum: string
     case AAIC = 'AAIC';
     case OALLIANZ = 'OALLIANZ';
     case NHICD = 'NHICD';
+    case AWNI = 'AWNI';
+    case ASNIC = 'ASNIC';
+    case AHAC = 'AHAC';
+    case ABNIC = 'ABNIC';
+    case DATPJSC = 'DATPJSC';
+    case DICPSC = 'DICPSC';
+    case DICORI = 'DICORI';
+    case AMAN = 'AMAN';
+    case MAXMED = 'MAXMED';
+    case NLAGICSAOC = 'NLAGICSAOC';
+    case NTCWATANIA = 'NTCWATANIA';
+    case NIADB = 'NIADB';
+    case NTFPJSC = 'NTFPJSC';
+    case EECIC = 'EECIC';
+    case VIV = 'VIV';
+    case NOW = 'NOW';
+    case HYH = 'HYH';
+    case YAS = 'YAS';
+    case ISON = 'ISON';
+    case MAXHEALTH = 'MAXHEALTH';
+    case ORITAK = 'ORITAK';
+    case APR_HYH = 'APR_HYH';
+    case MTI = 'MTI';
 
     public function isEligibleForAccuracyMatrix(): bool
     {

@@ -172,6 +172,16 @@ class CentralController extends Controller
                     return app(CarQuoteExport::class)->emailCSV('Car-List', $request->all());
                 }
 
+                LoggerService::info(self::class.' - exportLeads Car download start', extra: [
+                    'exportType' => $request['exportType'] ?? 'download',
+                    'created_at_start' => $request->get('created_at_start'),
+                    'created_at_end' => $request->get('created_at_end'),
+                    'segment_filter' => $request->get('segment_filter'),
+                    'registration_type' => $request->get('registration_type'),
+                    'sic_advisor_requested' => $request->get('sic_advisor_requested'),
+                    'private_client' => $request->get('private_client'),
+                ]);
+
                 return app(CarQuoteExport::class)->download('Car-List');
 
             case QuoteTypes::HEALTH->value:
@@ -222,6 +232,7 @@ class CentralController extends Controller
                 'dob' => $customer->dob,
                 'nationality_id' => $customer->nationality_id,
                 'gender' => $customer->screening_gender,
+                'customer_type' => $customerProfileRequest->customer_type,
             ]);
 
             CustomerInsured::updateOrCreate([

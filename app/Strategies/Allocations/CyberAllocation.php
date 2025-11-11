@@ -2,34 +2,65 @@
 
 namespace App\Strategies\Allocations;
 
-use App\Enums\InvestmentFrequencyEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
-use App\Services\AllocationConfigurationService;
+use App\Pipes\Allocation\Common\FetchLeadPipe;
+use App\Pipes\Allocation\Common\MakeResponsePipe;
+use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
+use App\Pipes\Allocation\Cyber\AssignLeadPipe;
+use App\Pipes\Allocation\Cyber\EvaluateTeamPipe;
+use App\Pipes\Allocation\Cyber\FetchAvailableAdvisorPipe;
+use App\Pipes\Allocation\Cyber\VerifyLeadPreChecksPipe;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
-use App\Services\RuleService;
+use Exception;
+use Illuminate\Support\Facades\Pipeline;
 
-class CyberAllocation extends BaseAllocation
+class CyberAllocation implements Allocation
 {
-    protected function fetchAdvisor(int $onlineStatus)
+    public const HAPPINESS_SUPPORT_USER_EMAIL = 'happiness@support.insurancemarket.ae';
+
+    public function __construct(
+        protected $uuid,
+        protected $teamId = false,
+        protected bool $overrideAdvisorId = false
+    ) {}
+
+    public function execute()
     {
-        $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, QuoteTypeId::Cyber);
+        LoggerService::info(self::class.' - Starting Cyber lead allocation', extra: [
+            'uuid' => $this->uuid,
+            'teamId' => $this->teamId,
+            'overrideAdvisorId' => $this->overrideAdvisorId,
+        ]);
 
-        if (count($emails) > 0) {
-            LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", ['emails' => $emails]);
+        $allocationRequest = new AllocationRequest(
+            quoteType: QuoteTypes::CYBER,
+            quoteUUID: $this->uuid,
+            teamId: $this->teamId,
+            overrideAdvisorId: $this->overrideAdvisorId
+        );
 
-            return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::CyberAdvisor, RolesEnum::CyberManager])
-                ->whereIn('users.email', $emails)
-                ->logRawSql()
-                ->first();
+        try {
+            LoggerService::info(self::class.' - Sending allocation request through pipeline');
+
+            return Pipeline::send($allocationRequest)->through([
+                FetchLeadPipe::class,
+                VerifyLeadPreChecksPipe::class,
+                VerifyAlreadyInProgressAllocationPipe::class,
+                EvaluateTeamPipe::class,
+                FetchAvailableAdvisorPipe::class,
+                AssignLeadPipe::class,
+                MakeResponsePipe::class,
+            ])->thenReturn();
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred in Cyber allocation pipeline', extra: [
+                'uuid' => $this->uuid
+            ], exception: $e);
+
+            return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, $e);
         }
-
-        $this->skipRuleUsers = true;
-
-        return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::CyberAdvisor, RolesEnum::CyberManager])
-            ->logRawSql()
-            ->first();
     }
 }
 

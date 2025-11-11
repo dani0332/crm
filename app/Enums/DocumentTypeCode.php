@@ -99,14 +99,14 @@ class DocumentTypeCode extends Enum
 
     // BAL
     const BAL = 'BAL';
-    const BAL_BIKE = 'BAL_Bike';
+    const BAL_BIKE = 'BAL_BIKE';
     const GM_BOL = 'GM_BOL';
     const BAL_TRVL = 'BAL_TRVL';
     const BAL_HOME = 'BAL_HOME';
     const BAL_HLTH = 'BAL_HLTH';
-    const BAL_YACHT = 'BAL_YCHT';
+    const BAL_YCHT = 'BAL_YCHT';
     const BAL_CYCLE = 'BAL_CYCLE';
-    const BAL_LIFE = 'BAL_Life';
+    const BAL_LIFE = 'BAL_LIFE';
     const BAL_PET = 'BAL_PET';
     const BOR_SIGN = 'BOR_SIGN';
     const BAL_BS = 'BAL_BS';

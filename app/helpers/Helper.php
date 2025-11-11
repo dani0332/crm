@@ -32,6 +32,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -42,7 +43,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -1050,7 +1050,7 @@ if (! function_exists('getMyAlfredCampaign')) {
                     }
                 }
             } catch (Exception $e) {
-                Log::error('getMyAlfredCampaign Error: '.$e->getMessage().$e->getTraceAsString());
+                LoggerService::error('getMyAlfredCampaign Error', exception: $e);
             }
 
             return null;
@@ -1117,7 +1117,7 @@ if (! function_exists('getAlfredEligibleCustomers')) {
                 }
             }
         } catch (Exception $e) {
-            Log::error('getAlfredEligibleCustomers Error: '.$e->getMessage().$e->getTraceAsString());
+            LoggerService::error('getAlfredEligibleCustomers Error', exception: $e);
         }
 
         return null;
@@ -1552,7 +1552,7 @@ if (! function_exists('getCourierQuote')) {
 
             return null;
         } catch (Exception $e) {
-            Log::error('getCourierQuote: Error retrieving quote: '.$e->getMessage());
+            LoggerService::error('getCourierQuote: Error retrieving quote', exception: $e);
 
             return null;
         }
@@ -1585,11 +1585,9 @@ if (! function_exists('getTeamId')) {
     {
         try {
             $team = Team::where('name', $teamName)->first();
-
             return optional($team)->id ?? 0;
         } catch (Exception $e) {
-            Log::error("Error retrieving team ID for team name: {$teamName}", ['exception' => $e]);
-
+            LoggerService::error("Error retrieving team ID for team name: {$teamName}", exception: $e);
             return 0;
         }
     }
@@ -1603,7 +1601,7 @@ if (! function_exists('isLeadSic')) {
 
             return $isSic;
         } catch (Exception $e) {
-            Log::error("Failed to check SIC status for quote_uuid: {$uuid}. Error: ".$e->getMessage());
+            LoggerService::error('Failed to check SIC status for quote_uuid', extra: ['quote_uuid' => $uuid], exception: $e);
 
             return false;
         }
@@ -1617,13 +1615,11 @@ if (! function_exists('getCarQuoteByUuid')) {
             // Fetch the CarQuote model using the provided UUID
             return CarQuote::where('uuid', $uuid)->firstOrFail();
         } catch (ModelNotFoundException $e) {
-            // Log if the CarQuote was not found
-            Log::warning("CarQuote not found for UUID: {$uuid}");
+            LoggerService::warning('CarQuote not found for UUID', extra: ['uuid' => $uuid]);
 
             return null;
         } catch (Exception $e) {
-            // Log any other unexpected errors
-            Log::error("Error retrieving CarQuote for UUID: {$uuid}. Error: {$e->getMessage()}");
+            LoggerService::error('Error retrieving CarQuote for UUID', extra: ['uuid' => $uuid], exception: $e);
 
             return null;
         }

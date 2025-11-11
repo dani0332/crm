@@ -88,4 +88,13 @@ trait QuotePaymentable
             $sq->where('sic_advisor_requested', 1)->orWhere->hasPaidOrDeclinedStatus()->orWhere->paymentLinkRequested();
         });
     }
+
+    public function scopeAdvisorRequestedOrPaymentAuthorizedOrDeclinedCyber($q)
+    {
+        $q->where(function ($sq) {
+            $sq->whereHas('cyberQuoteRequest', function ($cyber) {
+                $cyber->where('sic_advisor_requested', 1);
+            })->orWhere->hasPaidOrDeclinedStatus()->orWhere->paymentLinkRequested();
+        });
+    }
 }

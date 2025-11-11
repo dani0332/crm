@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\Config;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -171,6 +172,11 @@ class PersonalQuote extends Model implements AuditableContract
     public function lifeQuote()
     {
         return $this->hasOne(LifeQuote::class);
+    }
+
+    public function vehicleDriverDetail(): MorphOne
+    {
+        return $this->morphOne(VehicleDriverDetail::class, 'quoteable');
     }
 
     /**
@@ -587,11 +593,6 @@ class PersonalQuote extends Model implements AuditableContract
 
     // *********************** Cyber Quote ***********************
 
-    public function cyberQuote()
-    {
-        return $this->hasOne(CyberQuote::class, 'personal_quote_id', 'id');
-    }
-
     public function cyberPlan()
     {
         return $this->belongsTo(InsuranceProviderPlan::class, 'quoteUuid', 'uuid');
@@ -609,9 +610,6 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function isBookingFailed()
     {
-        if($this->quote_type_id === QuoteTypes::CYBER->id()) {
-            return $this->cyberQuote?->isBookingFailed();
-        }
         return $this->insurer_api_status_id === \App\Enums\PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
     }
 
@@ -632,9 +630,11 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function isPolicyIssuanceFailed()
     {
-        if($this->quote_type_id === QuoteTypes::CYBER->id()) {
-            return $this->cyberQuote?->isPolicyIssuanceFailed();
-        }
         return in_array($this->insurer_api_status_id, app(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
+    }
+
+    public function cyberQuoteRequest()
+    {
+        return $this->hasOne(CyberQuoteRequest::class, 'personal_quote_id', 'id');
     }
 }

@@ -15,7 +15,6 @@ class ApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
-
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL],
             [
@@ -64,6 +63,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAutoCaptureEPPayments();
         $this->seedEnableVoiceAIIntegration();
         $this->seedSla();
+        $this->seedTravelAutomatedFollowUps();
         $this->rtaPortalLink();
         $this->seedOCRCustomerJourneyFlag();
         $this->seedEpEcbConfigurations();
@@ -397,7 +397,6 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
     }
 
     private function seedUnavailableTimeThreshold()
@@ -466,7 +465,6 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
     }
 
     public function seedStopDeduplicateScript()
@@ -702,6 +700,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'travel-enquiries@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
     }
@@ -865,6 +864,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'production.approval@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
         ApplicationStorage::firstOrCreate(
@@ -873,6 +873,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'approval.production@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
     }
@@ -885,6 +886,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 2,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
 
@@ -908,7 +910,7 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
-            ]
+            ],
         );
 
         ApplicationStorage::firstOrCreate(
@@ -918,9 +920,33 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
-            ]
+            ],
         );
     }
+
+    private function seedTravelAutomatedFollowUps()
+    {
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_AUTOMATED_FOLLOWUPS],
+            [
+                'value' => 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/6ac637e8-4bf6-418b-8f65-7485ce47687f/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AUTOMATED_TRAVEL_FOLLOWUP_SWITCH],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function seedEnableVoiceAIIntegration()
     {
         ApplicationStorage::firstOrCreate(
@@ -930,7 +956,7 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
-            ]
+            ],
         );
     }
 
@@ -969,7 +995,8 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
-            ]);
+            ]
+        );
     }
 
     private function seedEpEcbConfigurations()

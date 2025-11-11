@@ -83,6 +83,7 @@ class QuoteAllocation extends Command
             $this->executeAllocation(QuoteTypes::PET, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::SAVINGS, $to, $chunkSize, $allocationStartDate);
+            $this->executeCyberAllocation(QuoteTypeId::Cyber, $to, $chunkSize, $allocationStartDate);
             LoggerService::endLogging();
         } else {
             LoggerService::info(self::class.': Quote Allocation Command is turned Off');
@@ -335,6 +336,51 @@ class QuoteAllocation extends Command
             LoggerService::info(self::class.': Processed quote allocation', extra: [
                 'quote_type' => $quoteType->value,
             ]);
+        }
+
+        $this->logProcessedRecords($processedRecords, $quoteType);
+    }
+
+    public function executeCyberAllocation($quoteType, $to, $chunkSize, $allocationStartDate)
+    {
+        $processedRecords = 0;
+        $leads = PersonalQuote::whereNull('advisor_id')
+            ->select([
+                'uuid',
+                'payment_status_id',
+                'quote_status_id',
+                'lead_allocation_failed_at',
+                'sic_flow_enabled',
+                'quote_type_id',
+            ])
+            ->with('cyberQuoteRequest:id,personal_quote_id,sic_advisor_requested')
+            ->whereBetween('created_at', [$allocationStartDate, $to])
+            ->where('quote_type_id', QuoteTypeId::Cyber)
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->orderBy('created_at', 'desc')
+            ->eligibleForAllocationCyber()
+            ->take($chunkSize);
+
+        $leads->logRawSql();
+
+        foreach ($leads->get() as $lead) {
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
+
+            $isPaid = $lead->isPaymentAuthorizedOrDeclined();
+            $sicRequested = $lead->cyberQuoteRequest?->sic_advisor_requested ?? false;
+
+            LoggerService::info(self::class.': Processing cyber quote allocation', extra: [
+                'payment_status_id' => $lead->payment_status_id,
+                'quote_status_id' => $lead->quote_status_id,
+                'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+                'sic_flow_enabled' => $lead->sic_flow_enabled,
+                'isPaid' => $isPaid,
+                'sicAdvisorRequested' => $sicRequested,
+            ]);
+
+            QuoteTypes::CYBER->allocate(uuid: $lead->uuid);
+            $processedRecords++;
+            LoggerService::info(self::class.': Processed cyber quote allocation');
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);

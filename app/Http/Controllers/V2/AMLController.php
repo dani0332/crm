@@ -114,6 +114,7 @@ class AMLController extends Controller
                     QuoteTypes::LIFE->id(),
                     QuoteTypes::SAVINGS->id(),
                     QuoteTypes::HOME->id(),
+                    QuoteTypes::CYBER->id(),
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
@@ -206,10 +207,8 @@ class AMLController extends Controller
      */
     public function show(AML $aml, $insuredId = null, $customerId = null)
     {
-        $amlScreeningData = json_decode($aml->results);
-        $amlResults = collect($amlScreeningData)->first() ?? (object) [];
+        $amlResults = collect(! empty($aml->results) ? json_decode($aml->results) : null)->first() ?? [];
         $manualStatusUpdateIM = collect($amlResults->ManualStatusUpdateIM ?? []);
-
         $aml->quote_type_text = $aml->quotetype->text;
         $quoteType = QuoteType::where('id', $aml->quote_type_id)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $aml->quote_request_id);
@@ -223,10 +222,6 @@ class AMLController extends Controller
 
                 return $value->FalsePositive == false;
             })->values();
-        } else {
-            $amlResults = [];
-            $aml->status = AMLStatusCode::getName($amlScreeningData?->status ?? AMLStatusCode::AMLScreeningFailed) ?? '';
-            $aml->message = $amlScreeningData?->message ?? '';
         }
 
         return inertia('Aml/Show', [
@@ -810,10 +805,19 @@ class AMLController extends Controller
         ]);
         $response = [];
         $kycLog = KycLog::withTrashed()->where('id', $request->aml_id)->first();
+
+        if (! $kycLog) {
+            return response()->json(['status' => 'error', 'message' => 'KYC log not found']);
+        }
+
         $oldDecision = $kycLog->decision;
 
         if (checkModifiedRecord($kycLog->updated_at, $request->last_updated_at)) {
             return response()->json(['status' => 'error', 'message' => 'Record already modified please refresh the page']);
+        }
+
+        if (empty($kycLog->results)) {
+            return response()->json(['status' => 'error', 'message' => 'KYC log results are empty']);
         }
 
         $bridgerResponse = json_decode($kycLog->results);

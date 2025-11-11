@@ -34,6 +34,7 @@ class CyberQuoteService extends BaseQuoteService
             'quoteDetail',
             'renewalBatchModel',
             'nationality',
+            'insuranceProviderPlan',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -45,6 +46,7 @@ class CyberQuoteService extends BaseQuoteService
             ->filterBy('payment_status_id')
             ->filterBy('is_ecommerce', isBool: true)
             ->filterIn('insurer_aml_status')
+            ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
             ->when(request()->filled('insurer_tax_invoice_number'), function ($q) {
                 $q->whereHas('payments', function ($subQuery) {
@@ -70,6 +72,7 @@ class CyberQuoteService extends BaseQuoteService
     public function getOne(string $uuid, $allDetails = false)
     {
         return $this->baseQuery()
+            ->with('cyberQuoteRequest')
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
                 $individualCustomerType = CustomerTypeEnum::Individual;
@@ -281,15 +284,24 @@ class CyberQuoteService extends BaseQuoteService
             $quote = $this->baseQuery()->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'emirate_of_registration_id',
+                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id',
             ]);
 
             $quoteData['updated_by_id'] = Auth::id();
-
             $quote->update($quoteData);
+
+            $quote->cyberQuoteRequest()->updateOrCreate(
+                ['personal_quote_id' => $quote->id],
+                Arr::only($data, ['emirate_of_registration_id'])
+            );
 
             return $quote;
         });
+    }
+
+    public function getCyberCoverages()
+    {
+        return app(LookupService::class)->getCyberCoverages();
     }
 }
 

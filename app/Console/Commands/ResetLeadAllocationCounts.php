@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Models\LeadAllocation;
 use App\Models\User;
@@ -81,9 +82,25 @@ class ResetLeadAllocationCounts extends Command
 
     private function resetNormalLeadAllocationCapacity()
     {
-        LeadAllocation::query()->where('reset_cap', 1)->update([
-            'max_capacity' => 20,
-        ]);
+        $cyberQuoteTypeId = QuoteTypes::getId(QuoteTypes::CYBER);
+
+        $nonCyberCount = LeadAllocation::query()
+            ->where('reset_cap', 1)
+            ->where('quote_type_id', '!=', $cyberQuoteTypeId)
+            ->update([
+                'max_capacity' => 20,
+            ]);
+
+        info('Reset max capacity to 20 for '.$nonCyberCount.' non-Cyber advisors');
+
+        $cyberCount = LeadAllocation::query()
+            ->where('reset_cap', 1)
+            ->where('quote_type_id', $cyberQuoteTypeId)
+            ->update([
+                'max_capacity' => 200,
+            ]);
+
+        info('Reset max capacity to 200 for '.$cyberCount.' Cyber advisors');
     }
 
     private function resetBuyLeadAllocationCapacity(string $resetColumn)
