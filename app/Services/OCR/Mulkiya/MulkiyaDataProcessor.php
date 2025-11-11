@@ -72,6 +72,8 @@ class MulkiyaDataProcessor
 
             LoggerService::info('Mulkiya data processing completed successfully');
 
+            // Trigger OCR success validation
+
             return $vehicleDriverDetailUpdated || $carQuoteDetailUpdated || $carQuoteUpdated || $registrationCertificateUpdated;
 
         } catch (Exception $e) {

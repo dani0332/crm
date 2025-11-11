@@ -100,6 +100,9 @@ class DrivingLicenseDataProcessor
                 LoggerService::info('VehicleDriverDetail created successfully');
             }
 
+            // Trigger OCR success validation
+         
+
             return true;
 
         } catch (Exception $e) {

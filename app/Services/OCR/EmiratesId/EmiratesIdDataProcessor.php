@@ -57,6 +57,8 @@ class EmiratesIdDataProcessor
 
             LoggerService::info('Emirates ID data processing completed successfully');
 
+            // Trigger OCR success validation
+
             return $insuredUpdated || $kycUpdated || $vehicleDriverDetailUpdated;
 
         } catch (Exception $e) {
