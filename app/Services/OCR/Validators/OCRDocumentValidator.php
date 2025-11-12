@@ -3,6 +3,7 @@
 namespace App\Services\OCR\Validators;
 
 use App\Enums\DocumentTypeCode;
+use App\Models\QuoteDocument;
 
 class OCRDocumentValidator
 {
@@ -16,7 +17,6 @@ class OCRDocumentValidator
             'driver_first_name',
             'driver_last_name',
             'driver_dob',
-            'driver_gender',
             'nationality_string',
         ],
         DocumentTypeCode::EMIRATES_ID => [
@@ -25,14 +25,14 @@ class OCRDocumentValidator
         ],
     ];
 
-    public function validate(array $ocrData, string $documentType): bool
+    public function validate(array $ocrData, string $documentType, int $quoteDocumentId): bool
     {
-        foreach (self::FIELDS_TO_VERIFY[$documentType] as $field) {
-            if (empty($ocrData[$field])) {
-                return false;
-            }
-        }
+        $result = ! array_filter(self::FIELDS_TO_VERIFY[$documentType], fn ($field) => empty($ocrData[$field]));
 
-        return true;
+        QuoteDocument::where('id', $quoteDocumentId)->update([
+            'is_ocr_processed' => $result,
+        ]);
+
+        return $result;
     }
 }
