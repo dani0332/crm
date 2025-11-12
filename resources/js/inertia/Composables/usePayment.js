@@ -120,9 +120,9 @@ export const usePayment = () => {
   };
 
   /**
-   * Checks if any payment split in the given payments array has an authorized/settled status.
+   * Checks if any master payment in the given payments array has an authorized/settled status.
    * Returns an object with hasAuthorized (boolean) and statusText (string or null).
-   * Breaks on first matching payment split.
+   * Breaks on first matching master payment.
    */
   const hasAuthorizedSplit = (payments) => {
     const authorizedStatuses = [
@@ -141,15 +141,11 @@ export const usePayment = () => {
     }
     
     for (const payment of payments) {
-      if (Array.isArray(payment.payment_splits)) {
-        for (const split of payment.payment_splits) {
-          if (authorizedStatuses.includes(split.payment_status_id)) {
-            return {
-              hasAuthorized: true,
-              statusText: formatString(split.payment_status?.text)
-            };
-          }
-        }
+      if (authorizedStatuses.includes(payment.payment_status_id)) {
+        return {
+          hasAuthorized: true,
+          statusText: formatString(payment.payment_status?.text)
+        };
       }
     }
     
