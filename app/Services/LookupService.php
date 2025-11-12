@@ -269,4 +269,10 @@ class LookupService extends BaseService
             ->select('id', 'code', 'text')
             ->get();
     }
+    public function getSmartPhoneQuoteLookUpData()
+    {
+        return CacheManager::remember(CacheKeyEnum::SMART_PHONE_QUOTE_LOOKUPS, function () {
+            return Capi::request('/api/v1-get-all-smart-phone-lookups', 'post');
+        });
+    }
 }
