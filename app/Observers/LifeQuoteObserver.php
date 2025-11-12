@@ -48,18 +48,18 @@ class LifeQuoteObserver
         if (isset($dirty['advisor_id'])) {
             LogAllocation::dispatch($lifeQuote, QuoteTypes::LIFE);
 
-            if ($lifeQuote->source != LeadSourceEnum::IMCRM) {
+            if (! $lifeQuote->isSuppressIntroEmail() && $lifeQuote->source != LeadSourceEnum::IMCRM) {
 
                 $oldAdvisorId = $lifeQuote->getOriginal('advisor_id');
-                info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$lifeQuote->advisor_id} | Time: ".now());
+                LoggerService::info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$lifeQuote->advisor_id} ");
 
                 $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
-                info(self::class." Sending {$emailType} email to customer for life quote {$lifeQuote->uuid} | Time: ".now());
+                LoggerService::info(self::class." Sending {$emailType} email to customer for life quote {$lifeQuote->uuid} ");
                 app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($lifeQuote, QuoteTypes::LIFE->value, $oldAdvisorId);
-                info(self::class." | {$emailType} email sent to customer for life quote {$lifeQuote->uuid} | Time: ".now());
+                LoggerService::info(self::class." | {$emailType} email sent to customer for life quote {$lifeQuote->uuid} ");
 
             } else {
-                info("LifeQuoteObserver - lead source: {$lifeQuote->source} |  Advisor ID: {$lifeQuote->advisor_id} | Time: ".now());
+                LoggerService::info("LifeQuoteObserver - lead source: {$lifeQuote->source} |  Advisor ID: {$lifeQuote->advisor_id}  Quote Status: {$lifeQuote->quote_status_id} ");
             }
         }
         // $this->syncQuote($lifeQuote, $dirty);

@@ -2,6 +2,8 @@
 import { calculateBMI, calculateAge } from '../../Composables/utilities';
 
 const notification = useNotifications('toast');
+const page = usePage();
+const { isRequired, isEmail, isMobileNo, maxCharacters } = useRules();
 
 const props = defineProps({
   quote: { type: Object, default: null },
@@ -11,6 +13,8 @@ const props = defineProps({
   maritalStatus: Object,
   typeOfInsurance: Object,
   numberOfYears: Object,
+  subSources: Array,
+  leadSourceParams: Object,
 });
 
 const quoteForm = useForm({
@@ -37,12 +41,85 @@ const quoteForm = useForm({
   weight: props.quote?.life_quote?.weight || '',
   bmi: props.quote?.life_quote?.bmi || '',
   age: props.quote?.life_quote?.age || '',
+  source: props.quote?.source || '',
+  // Sub-source fields
+  sub_source_id:
+    parseInt(
+      props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0,
+    ) || null,
+  sub_source_options_id:
+    parseInt(
+      props.quote?.sub_source_options_id ||
+        props.leadSourceParams?.subSourceOption ||
+        0,
+    ) || null,
+  notes: props.quote?.notes || props.quote?.life_quote?.notes || '',
 });
 
 const editMode = computed(() => {
   return props.quote ? true : false;
 });
-const { isRequired, isEmail, isMobileNo } = useRules();
+
+// Sub-source computed properties
+const subSourceOptions = computed(() => {
+  return (props.subSources || []).map(item => ({
+    value: item.id,
+    label: item.text,
+    suffix: item.description || null,
+  }));
+});
+
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+  const selectedSubSource = props.subSources?.find(
+    source => source.id == quoteForm.sub_source_id,
+  );
+  const pcpOnlyOptions = ['pcp-cross-sell', 'pcp-customer-referral'];
+  return (
+    selectedSubSource?.childs?.map(option => ({
+      value: option.id,
+      label: option.text,
+      suffix: option.description || null,
+      disabled:
+        !isPcpSubSourceOptionAllowed.value &&
+        pcpOnlyOptions.includes(String(option.code)),
+    })) || []
+  );
+});
+
+const isReferralType = computed(() => {
+  return (
+    props.leadSourceParams?.type === 'referral' || quoteForm.source === 'IMCRM'
+  );
+});
+
+const isEcomLeadExtension = computed(() => false);
+
+const canEditSubSourceFields = computed(() => {
+  return useHasAnyRole([
+    rolesEnum.LifeManager,
+    rolesEnum.Admin,
+    rolesEnum.LeadPool,
+  ]);
+});
+
+const showPartnerNameField = computed(() => false);
+
+const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
+
+// Watchers for field resets and partner name handling
+watch(
+  () => quoteForm.sub_source_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      quoteForm.sub_source_options_id = null;
+    }
+  },
+);
 
 const validateHeight = value => {
   if (!value) return true;
@@ -131,7 +208,7 @@ watch(
       </h2>
       <div>
         <Link :href="route('life-quotes-list')">
-          <x-button size="sm" color="#ff5e00"> Life Quotes List </x-button>
+          <x-button size="sm" color="#ff5e00"> Life Quotes List</x-button>
         </Link>
       </div>
     </div>
@@ -142,6 +219,58 @@ watch(
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Lead Source Fields - Only show when type is referral  isReferralType && !isEcomLeadExtension -->
+
+        <x-select
+          v-if="isReferralType"
+          label="IMCRM SUB-SOURCE"
+          v-model="quoteForm.sub_source_id"
+          :options="subSourceOptions"
+          class="w-full"
+          placeholder="Select IMCRM SUB-SOURCE"
+          filterable
+          filterPlaceholder="Filter IMCRM SUB-SOURCE...."
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          required
+          :error="quoteForm.errors.sub_source_id"
+          tooltip="Manually created lead in IMCRM"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-select
+          v-if="isReferralType && quoteForm.sub_source_id"
+          label="SUB SOURCE OPTIONS"
+          v-model="quoteForm.sub_source_options_id"
+          :options="subSourceOptionOptions"
+          class="w-full"
+          placeholder="Select Sub Source Option"
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+          tooltip="Type of referral lead"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
         <x-field label="Purpose of Insurance" required>
           <x-select
             v-model="quoteForm.purpose_of_insurance_id"
@@ -380,6 +509,15 @@ watch(
             :error="quoteForm.errors.others_info"
           />
         </x-field>
+
+        <x-textarea
+          label="NOTES"
+          v-model="quoteForm.notes"
+          type="textarea"
+          rows="5"
+          class="w-full"
+          :error="quoteForm.errors.notes"
+        />
       </div>
 
       <x-divider class="my-4" />

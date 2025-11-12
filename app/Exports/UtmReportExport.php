@@ -23,9 +23,12 @@ class UtmReportExport implements FromCollection, ShouldAutoSize, WithHeadings, W
     {
         return collect($this->data)->map(function ($item) {
             return [
+                'utm_id' => $item['utm_id'] ?? '',
                 'utm_source' => $item['utm_source'] ?? '',
                 'utm_medium' => $item['utm_medium'] ?? '',
                 'utm_campaign' => $item['utm_campaign'] ?? '',
+                'utm_term' => $item['utm_term'] ?? '',
+                'utm_content' => $item['utm_content'] ?? '',
                 'leads_count' => $item['leads_count'] ?? 0,
                 'authorized' => $item['authorized'] ?? 0,
                 'captured' => $item['captured'] ?? 0,
@@ -40,9 +43,12 @@ class UtmReportExport implements FromCollection, ShouldAutoSize, WithHeadings, W
     public function headings(): array
     {
         return [
+            'UTM ID',
             'UTM Source',
             'UTM Medium',
             'UTM Campaign',
+            'UTM Term',
+            'UTM Content',
             'Leads',
             'Authorized',
             'Captured',
@@ -63,9 +69,12 @@ class UtmReportExport implements FromCollection, ShouldAutoSize, WithHeadings, W
     public function map($row): array
     {
         return [
+            $row['utm_id'],
             $row['utm_source'],
             $row['utm_medium'],
             $row['utm_campaign'],
+            $row['utm_term'],
+            $row['utm_content'],
             $row['leads_count'],
             $row['authorized'],
             $row['captured'],

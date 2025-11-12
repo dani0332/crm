@@ -1,6 +1,16 @@
 <script setup>
 import { XInput } from '@indielayer/ui';
 
+const page = usePage();
+const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
+const can = permission => useCan(permission);
+const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
+
 const props = defineProps({
   genderOptions: Object,
   nationalities: Object,
@@ -10,6 +20,53 @@ const props = defineProps({
   dropdownSource: Object,
   model: String,
   quote: { type: Object, default: null },
+  subSources: { type: Array, default: () => [] },
+  leadSourceParams: { type: Object, default: () => ({}) },
+});
+
+// Sub-source computed properties
+const subSourceOptions = computed(() => {
+  return (
+    props.subSources?.map(source => ({
+      value: source.id,
+      label: source.text,
+      suffix: source.description || null,
+    })) || []
+  );
+});
+
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+  const selectedSubSource = props.subSources?.find(
+    source => source.id == quoteForm.sub_source_id,
+  );
+  const pcpOnlyOptions = ['pcp-cross-sell', 'pcp-customer-referral'];
+  return (
+    selectedSubSource?.childs?.map(child => ({
+      value: child.id,
+      label: child.text,
+      suffix: child.description || null,
+      disabled:
+        !isPcpSubSourceOptionAllowed.value &&
+        pcpOnlyOptions.includes(String(child.code)),
+    })) || []
+  );
+});
+
+const isReferralType = computed(() => {
+  return (
+    props.leadSourceParams?.type === 'referral' ||
+    props.quote?.source === 'IMCRM'
+  );
+});
+
+// Role-based permissions for sub-source fields
+const canEditSubSourceFields = computed(() => {
+  return hasAnyRole([
+    rolesEnum.CycleManager,
+    rolesEnum.Admin,
+    rolesEnum.LeadPool,
+  ]);
 });
 
 const quoteForm = useForm({
@@ -18,6 +75,7 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
+  source: props.quote?.source || '',
   cycle_make: props.quote?.cycle_quote?.cycle_make || '',
   cycle_model: props.quote?.cycle_quote?.cycle_model || '',
   accessories: props.quote?.cycle_quote?.accessories || '',
@@ -31,13 +89,37 @@ const quoteForm = useForm({
   dob: props.quote?.unformatted_dob || null,
   nationality_id: props.quote?.nationality_id || null,
   gender: props.quote?.customer?.gender || null,
+  // Sub-source fields from CreateLeadModal
+  sub_source_id:
+    parseInt(
+      props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0,
+    ) || null,
+  sub_source_options_id:
+    parseInt(
+      props.quote?.sub_source_options_id ||
+        props.leadSourceParams?.subSourceOption ||
+        0,
+    ) || null,
+  notes: (() => {
+    return props.quote?.notes || '';
+  })(),
 });
 
-const { isRequired, isEmail, isMobileNo } = useRules();
+const { isRequired, isEmail, isMobileNo, maxCharacters } = useRules();
 
 const editMode = computed(() => {
   return props.quote ? true : false;
 });
+
+// Watchers for sub-source fields
+watch(
+  () => quoteForm.sub_source_id,
+  newValue => {
+    if (newValue) {
+      quoteForm.sub_source_options_id = null;
+    }
+  },
+);
 
 const YearOfManufacture = computed(() => {
   if (props.yearOfManufacture.length > 0)
@@ -93,6 +175,57 @@ const gender = computed(() => {
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Lead Source Fields - Only show when type is referral -->
+        <x-select
+          v-if="isReferralType"
+          label="IMCRM SUB-SOURCE"
+          v-model="quoteForm.sub_source_id"
+          :options="subSourceOptions"
+          class="w-full"
+          placeholder="Select IMCRM SUB-SOURCE"
+          filterable
+          filterPlaceholder="Filter IMCRM SUB-SOURCE...."
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          required
+          :error="quoteForm.errors.sub_source_id"
+          tooltip="Manually created lead in IMCRM"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-select
+          v-if="isReferralType && quoteForm.sub_source_id"
+          label="SUB SOURCE OPTIONS"
+          v-model="quoteForm.sub_source_options_id"
+          :options="subSourceOptionOptions"
+          class="w-full"
+          placeholder="Select Sub Source Option"
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+          tooltip="Type of referral lead"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
         <x-input
           v-model="quoteForm.first_name"
           type="text"
@@ -241,6 +374,18 @@ const gender = computed(() => {
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Additional Notes field -->
+      <div class="grid sm:grid-cols-1 gap-4">
+        <x-textarea
+          label="ADDITIONAL NOTES"
+          v-model="quoteForm.notes"
+          :error="quoteForm.errors.notes"
+          class="w-full"
+          placeholder="Enter any additional notes..."
+          rows="3"
+        />
       </div>
 
       <x-divider class="my-4" />

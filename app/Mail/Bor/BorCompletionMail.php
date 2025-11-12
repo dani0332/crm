@@ -3,7 +3,6 @@
 namespace App\Mail\Bor;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
@@ -17,7 +16,7 @@ use Illuminate\Queue\SerializesModels;
 
 class BorCompletionMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use BorMailTrait, Queueable, SerializesModels;
 
     protected $borLog;
     protected $customerData;
@@ -100,7 +99,7 @@ class BorCompletionMail extends Mailable
             'workflow_type' => WorkflowTypeEnum::BOR_UPLOAD ?? '',
             'quote_link' => $quoteLink ?? '',
             'customer_name' => $this->getCustomerName(true) ?? '',
-            'subject_line' => $this->getSubjectLine($personalQuote, $quoteType) ?? '',
+            'subject_line' => $this->getSubjectLine($personalQuote) ?? '',
             'customer' => [
                 'email' => $this->customerData['email'],
                 'first_name' => $this->customerData['first_name'] ?? '',
@@ -123,36 +122,6 @@ class BorCompletionMail extends Mailable
             ],
             'attachPdf' => app(BorPdfService::class)->generateTemporaryBorPdf($this->borLog),
         ];
-    }
-
-    private function getSubjectLine($personalQuote, $quoteType)
-    {
-        $provider = \App\Models\InsuranceProvider::find($this->borLog->insurance_provider_id);
-        $name = $this->getCustomerName();
-        if ($personalQuote->quote_type_id === QuoteTypeId::Car && $provider && (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
-            $subjectLine = 'BOR '.$this->borLog->chassis_number.' - '.$name;
-
-            return $subjectLine;
-        }
-        $subjectLine = $name.' For signature - Broker Appointment Letter '.$personalQuote->code;
-
-        return $subjectLine;
-    }
-
-    /**
-     * Get customer display name based on customer type
-     */
-    private function getCustomerName($isFirstName = false)
-    {
-        $firstName = $this->customerData['first_name'] ?? '';
-        $lastName = $this->customerData['last_name'] ?? '';
-        $name = trim($firstName.' '.$lastName);
-
-        if ($isFirstName) {
-            return $firstName;
-        }
-
-        return $name ?? $this->borLog->insurer_name ?: 'Valued Customer';
     }
 
     /**

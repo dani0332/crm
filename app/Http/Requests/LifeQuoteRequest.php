@@ -45,6 +45,10 @@ class LifeQuoteRequest extends FormRequest
             'is_smoker' => 'required',
             'gender' => 'required|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
             'others_info' => 'nullable',
+            // Sub-source validation rules
+            'sub_source_id' => 'nullable|exists:lookups,id',
+            'sub_source_options_id' => 'nullable|exists:lookups,id',
+            'notes' => 'nullable|string',
         ];
     }
 }
