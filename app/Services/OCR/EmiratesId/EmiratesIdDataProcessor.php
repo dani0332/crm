@@ -20,6 +20,8 @@ use App\Services\OCR\OcrUtils;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use App\Services\OCR\Validators\OCRDocumentValidator;
+use App\Enums\DocumentTypeCode;
 
 class EmiratesIdDataProcessor
 {
@@ -31,6 +33,8 @@ class EmiratesIdDataProcessor
     public function __construct(
         private Model $quote,
         private object $data,
+        private string $documentTypeCode,
+        private int $quoteDocumentId,
     ) {
         $this->emiratesIdExtractor = new EmiratesIdExtractor($this->data);
     }
@@ -57,7 +61,15 @@ class EmiratesIdDataProcessor
 
             LoggerService::info('Emirates ID data processing completed successfully');
 
+            
             // Trigger OCR success validation
+            $isOCRSuccess = app(OCRDocumentValidator::class)->validate(
+                $this->extractedData,
+                DocumentTypeCode::EMIRATES_ID,
+                $this->quoteDocumentId
+            );
+            LoggerService::info('Driving License data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($this->extractedData));
+
 
             return $insuredUpdated || $kycUpdated || $vehicleDriverDetailUpdated;
 

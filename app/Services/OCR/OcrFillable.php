@@ -142,11 +142,11 @@ trait OcrFillable
         return true;
     }
 
-    private function fillEmiratesId(Model $quote, object $data)
+    private function fillEmiratesId(Model $quote, object $data, int $quoteDocumentId)
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new EmiratesIdDataProcessor($quote, $data);
+            $processor = new EmiratesIdDataProcessor($quote, $data, $this->documentTypeCode, $quoteDocumentId);
 
             $success = $processor->processEmiratesIdData();
 
@@ -204,11 +204,11 @@ trait OcrFillable
         }
     }
 
-    private function fillDrivingLicense(Model $quote, object $data, string $documentTypeCode, int $quoteDocumentId)
+    private function fillDrivingLicense(Model $quote, object $data, int $quoteDocumentId)
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new DrivingLicenseDataProcessor($quote, $data, $documentTypeCode, $quoteDocumentId);
+            $processor = new DrivingLicenseDataProcessor($quote, $data, $this->documentTypeCode, $quoteDocumentId);
 
             $success = $processor->processDrivingLicenseData();
 
@@ -293,9 +293,9 @@ trait OcrFillable
                 OCRDocumentTypeEnum::TAX_INVOICE => $this->fillTaxInvoice($quote, $data),
                 OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER => $this->fillTaxInvoiceRaisedByBuyer($quote, $data),
                 OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE => $this->fillCertificateOfIssuance($quote, $data),
-                OCRDocumentTypeEnum::ID_CARD => $this->fillEmiratesId($quote, $data),
+                OCRDocumentTypeEnum::ID_CARD => $this->fillEmiratesId($quote, $data, $quoteDocumentId),
                 OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data),
-                OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data, $this->documentTypeCode, $quoteDocumentId),
+                OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data, $quoteDocumentId),
                 OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE => in_array($quoteType, [QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL], true)
                     ? $this->fillPolicySchedule($quote, $data)
                     : $this->fillMotorInsurancePolicySchedule($quote, $data),
