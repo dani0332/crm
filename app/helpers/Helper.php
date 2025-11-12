@@ -727,9 +727,9 @@ if (! function_exists('addDaysExcludeWeekend')) {
 if (! function_exists('getIMLogo')) {
     /**
      * Get Insurance Market logo URL
-     * 
-     * @param bool $isPDF Whether to return local path for PDF generation
-     * @param bool $latest Whether to use the high-resolution logo version
+     *
+     * @param  bool  $isPDF  Whether to return local path for PDF generation
+     * @param  bool  $latest  Whether to use the high-resolution logo version
      * @return string Logo URL or local path
      */
     function getIMLogo($isPDF = false, $latest = false)
@@ -748,7 +748,7 @@ if (! function_exists('getIMLogo')) {
 if (! function_exists('getFavicon')) {
     /**
      * Get Insurance Market favicon URL
-     * 
+     *
      * @return string Local asset URL of the favicon
      */
     function getFavicon()
