@@ -40,6 +40,9 @@ class YachtQuoteRequest extends FormRequest
             'dob' => 'nullable|before:today',
             'gender' => 'nullable|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
             'nationality_id' => 'nullable|exists:nationality,id',
+            'sub_source_id' => 'nullable|exists:lookups,id',
+            'sub_source_options_id' => 'nullable|exists:lookups,id',
+            'notes' => 'nullable|string',
         ];
     }
 }

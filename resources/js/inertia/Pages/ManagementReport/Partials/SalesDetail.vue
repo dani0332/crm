@@ -237,6 +237,16 @@ const tableHeader = reactive([
     value: 'traveling_where',
     tooltip: 'Traveling Where',
   },
+  {
+    text: 'IMCRM SUB-SOURCE',
+    value: 'sub_source',
+    tooltip: 'The IMCRM SUB-SOURCE of the lead',
+  },
+  {
+    text: 'SUB SOURCE OPTIONS',
+    value: 'sub_source_option',
+    tooltip: 'The SUB SOURCE OPTION of the lead',
+  },
 ]);
 
 const calculateTotalSum = useCalculateTotalSum;
