@@ -736,6 +736,18 @@ if (! function_exists('getIMLogo')) {
         return $isPDF ? public_path($imLogo) : asset($imLogo);
     }
 }
+
+if (! function_exists('getFavicon')) {
+    /**
+     * Get Insurance Market favicon URL
+     * 
+     * @return string Local asset URL of the favicon
+     */
+    function getFavicon()
+    {
+        return asset('favicon.ico');
+    }
+}
 if (! function_exists('mimeContentType')) {
     function mimeContentType($ext = null, $mimeType = null)
     {
