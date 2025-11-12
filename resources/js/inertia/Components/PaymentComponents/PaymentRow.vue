@@ -40,8 +40,8 @@ const props = defineProps({
   capturePaymentValidationInProcess: Boolean,
   quoteType: String,
   isFuncsEnabled: {
-    type: Array,
-    default: [],
+    type: Object,
+    default: () => ({}),
   },
   bookPolicyDetails: {
     type: Array,

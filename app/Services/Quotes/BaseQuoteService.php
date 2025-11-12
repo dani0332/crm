@@ -198,6 +198,7 @@ abstract class BaseQuoteService extends BaseService
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'emailStatuses' => $emailStatuses,
             'planURL' => $planURL,
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ];
     }
 

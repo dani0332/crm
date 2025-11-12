@@ -53,6 +53,7 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   emailStatuses: Array,
+  isFuncsEnabled: Object,
 });
 
 const page = usePage();
@@ -1527,6 +1528,7 @@ const copyLink = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
       :quoteType="'Cyber'"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <QuotePayments

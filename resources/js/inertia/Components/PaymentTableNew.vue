@@ -99,8 +99,8 @@ const props = defineProps({
     default: [],
   },
   isFuncsEnabled: {
-    type: Array,
-    default: [],
+    type: Object,
+    default: () => ({}),
   },
   realQuote: Object,
   // For car commercial vehicles
@@ -1086,6 +1086,8 @@ watch(
     isCreditCardViewReplicated.value = newVal;
   },
 );
+
+
 </script>
 
 <template>
