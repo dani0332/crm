@@ -37,6 +37,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'sic_advisor_requested',
             'premium',
             'source',
+            'sub_source_id',
             'paid_at',
             'payment_gateway',
             'uae_license_held_for_id',
@@ -98,6 +99,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'customer:id,pcp_tag',
             'quoteTags:quote_uuid,name',
             'insuranceProvider:id,text',
+            'subSource:id,text',
         ]);
     }
 

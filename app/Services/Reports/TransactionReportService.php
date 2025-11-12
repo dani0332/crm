@@ -87,6 +87,8 @@ class TransactionReportService extends ManagementReport
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'p.broker_invoice_number',
                 'btoi.text as sub_type_line_of_business',
+                'ls.text as sub_source',
+                'sso.text as sub_source_option',
                 'p.insurer_commmission_invoice_number',
                 'l.text as transaction_type',
                 'qs.text as quote_status',
@@ -118,6 +120,8 @@ class TransactionReportService extends ManagementReport
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id')
+            ->leftJoin('lookups as ls', 'personal_quotes.sub_source_id', '=', 'ls.id')
+            ->leftJoin('lookups as sso', 'personal_quotes.sub_source_options_id', '=', 'sso.id')
             ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
             ->join('quote_status as qs', 'qs.id', '=', 'personal_quotes.quote_status_id')
             ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')

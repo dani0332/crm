@@ -1,5 +1,6 @@
 <script setup>
 const notification = useNotifications('toast');
+const page = usePage();
 const dateFormat = date =>
   date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
 
@@ -7,6 +8,8 @@ const props = defineProps({
   quote: { type: Object, default: null },
   genders: { type: Object, required: true },
   lookUpData: { type: Object, required: true },
+  subSources: { type: Array, default: () => [] },
+  leadSourceParams: { type: Object, default: () => ({}) },
 });
 
 // Format API data for dropdowns and selects
@@ -54,11 +57,64 @@ const investmentFrequencies = computed(() => {
   }));
 });
 
+// Sub-source related computed properties
+const subSourceOptions = computed(() => {
+  return (
+    props.subSources?.map(source => ({
+      value: source.id,
+      label: source.text,
+      suffix: source.description || null,
+    })) || []
+  );
+});
+
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+
+  const selectedSource = props.subSources.find(
+    source => source.id == quoteForm.sub_source_id,
+  );
+  if (!selectedSource || !selectedSource.childs) return [];
+
+  const pcpOnlyOptions = ['pcp-cross-sell', 'pcp-customer-referral'];
+  return selectedSource.childs.map(child => ({
+    value: child.id,
+    label: child.text,
+    code: child.code,
+    suffix: child.description || null,
+    disabled:
+      !isPcpSubSourceOptionAllowed.value &&
+      pcpOnlyOptions.includes(String(child.code)),
+  }));
+});
+
+// Check if it's referral type
+const isReferralType = computed(() => {
+  return (
+    props.leadSourceParams?.type === 'referral' || quoteForm.source === 'IMCRM'
+  );
+});
+
+// Role-based control like Life LOB
+const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
+const canEditSubSourceFields = computed(() => {
+  return useHasAnyRole([
+    rolesEnum.SavingsManager,
+    rolesEnum.Admin,
+    rolesEnum.LeadPool,
+  ]);
+});
+
 const quoteForm = useForm({
   first_name: props.quote?.first_name || '',
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
+  source: props.quote?.source || '',
   dob: props.quote?.dob ? dateFormat(props.quote?.dob) : '',
   nationality_id: props.quote?.nationality_id || '',
   gender: props.quote?.gender || '',
@@ -70,9 +126,20 @@ const quoteForm = useForm({
   investment_frequency:
     props.quote?.savings_quote?.investment_criteria_id || '',
   additional_notes: props.quote?.savings_quote?.additional_notes || '',
+
+  // Sub-source fields
+  sub_source_id:
+    parseInt(props.quote?.sub_source_id, 10) ||
+    parseInt(props.leadSourceParams?.subSource, 10) ||
+    null,
+  sub_source_options_id:
+    parseInt(props.quote?.sub_source_options_id, 10) ||
+    parseInt(props.leadSourceParams?.subSourceOption, 10) ||
+    null,
 });
 
-const { isRequired, isEmail, isMobileNo, isValidName } = useRules();
+const { isRequired, isEmail, isMobileNo, isValidName, maxCharacters } =
+  useRules();
 
 const editMode = computed(() => {
   return props.quote && props.quote.uuid ? true : false;
@@ -95,6 +162,16 @@ function onSubmit(isValid) {
     });
   }
 }
+
+// Watchers for field resets
+watch(
+  () => quoteForm.sub_source_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      quoteForm.sub_source_options_id = null;
+    }
+  },
+);
 </script>
 
 <template>
@@ -117,6 +194,57 @@ function onSubmit(isValid) {
       </x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Lead Source Fields - Only show when type is referral -->
+        <x-select
+          v-if="isReferralType"
+          label="IMCRM SUB-SOURCE"
+          v-model="quoteForm.sub_source_id"
+          :options="subSourceOptions"
+          class="w-full"
+          placeholder="Select IMCRM SUB-SOURCE"
+          filterable
+          filterPlaceholder="Filter IMCRM SUB-SOURCE...."
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          required
+          :error="quoteForm.errors.sub_source_id"
+          tooltip="Manually created lead in IMCRM"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-select
+          v-if="isReferralType && quoteForm.sub_source_id"
+          label="SUB SOURCE OPTIONS"
+          v-model="quoteForm.sub_source_options_id"
+          :options="subSourceOptionOptions"
+          class="w-full"
+          placeholder="Select Sub Source Option"
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+          tooltip="Type of referral lead"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
         <!-- Personal Details -->
         <x-input
           v-model="quoteForm.first_name"

@@ -270,6 +270,16 @@ class LookupService extends BaseService
             ->get();
     }
 
+    public function getSubSource()
+    {
+        return CacheManager::remember(CacheKeyEnum::SUB_SOURCES, function () {
+            return Lookup::with(['childs'])->where([
+                'key' => LookupsEnum::SUB_SOURCE,
+                'is_active' => 1,
+            ])->get();
+        });
+    }
+
     public function getCyberQuoteLookUpData()
     {
         return CacheManager::remember(CacheKeyEnum::CYBER_QUOTE_LOOKUPS, function () {
