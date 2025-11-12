@@ -150,7 +150,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
                 return $response;
             }
-
             if (!$quote->payments || !$quote->cyberPlanDetail) {
                 LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - Payments or cyber plan detail not found');
                 $response['error'] = 'Payments or cyber plan detail not found';
