@@ -8,17 +8,20 @@ class OCRDocumentValidator
 {
     private const FIELDS_TO_VERIFY = [
         DocumentTypeCode::DRIVING_LICENSE => [
+            'driver_license_number',
+            'driver_license_issue_date',
             'driver_license_expiry_date',
-            'driver_license_expiry_place',
+            'driver_license_issue_place',
+            'traffic_code_number',
+            'driver_first_name',
+            'driver_last_name',
+            'driver_dob',
+            'driver_gender',
+            'nationality_string',
         ],
         DocumentTypeCode::EMIRATES_ID => [
-            'date_of_birth',
-            'nationality',
-            'name',
-
         ],
         DocumentTypeCode::REGISTRATION_CARD_MULKIYA => [
-
         ],
     ];
 
