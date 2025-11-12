@@ -191,7 +191,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $isSendUpdateEligibleForOCR = $this->isSendUpdateEligibleForOCR($quote, $isSendUpdate);
 
                 LoggerService::info(self::class.' - fn: populateDocumentData called - Quote UUID: '.$data['quote_uuid']);
-                $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR);
+                $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR, $quoteDocument->id);
 
                 if ($isWaterMarkQualifyDoc && $quoteDocument) {
                     LoggerService::info(self::class.' - Dispatching WatermarkDocumentsJob - Quote UUID: '.$data['quote_uuid']);
@@ -219,7 +219,7 @@ class PersonalQuoteRepository extends BaseRepository
         }
     }
 
-    private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR)
+    private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR, $quoteDocumentId)
     {
         $isOcrSendUpdateLogFlagEnabled = getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_SENDUPDATE_OCR, useCache: true) == '1';
         // For SendUpdateLog, get the quote type from the quote_type_id
@@ -245,6 +245,7 @@ class PersonalQuoteRepository extends BaseRepository
             $quote,
             $filePathAzure,
             $fileMimeType,
+            $quoteDocumentId,
             $quoteTypeParam, // Pass the determined quote type for send update log flow
             $isSendUpdateEligibleForOCR
         );
