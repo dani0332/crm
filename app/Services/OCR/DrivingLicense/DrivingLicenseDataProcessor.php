@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\DrivingLicense;
 
+use App\Enums\DocumentTypeCode;
 use App\Models\CarQuote;
 use App\Models\Nationality;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
+use App\Services\OCR\Validators\OCRDocumentValidator;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class DrivingLicenseDataProcessor
@@ -18,8 +21,10 @@ class DrivingLicenseDataProcessor
     private DrivingLicenseExtractor $drivingLicenseExtractor;
 
     public function __construct(
-        private CarQuote $quote,
+        private Model $quote,
         private object $data,
+        private string $documentTypeCode,
+        private int $quoteDocumentId,
     ) {
         $this->drivingLicenseExtractor = new DrivingLicenseExtractor($this->data);
     }
@@ -49,6 +54,14 @@ class DrivingLicenseDataProcessor
 
             LoggerService::info('Driving License data processing completed successfully');
 
+            // Trigger OCR success validation
+            $isOCRSuccess = app(OCRDocumentValidator::class)->validate(
+                $processedData['vehicle_driver_detail_fields'],
+                DocumentTypeCode::DRIVING_LICENSE,
+                $this->quoteDocumentId
+            );
+            LoggerService::info('Driving License data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($processedData));
+
             return $vehicleDriverDetailUpdated;
 
         } catch (Exception $e) {
@@ -60,7 +73,7 @@ class DrivingLicenseDataProcessor
         }
     }
 
-    private function updateVehicleDriverDetail(CarQuote $quote, array $fieldsToUpdate): bool
+    private function updateVehicleDriverDetail(Model $quote, array $fieldsToUpdate): bool
     {
         try {
             // Convert nationality string to nationality_id if nationality is provided
@@ -101,7 +114,6 @@ class DrivingLicenseDataProcessor
             }
 
             // Trigger OCR success validation
-         
 
             return true;
 
