@@ -71,6 +71,7 @@ enum QuoteTypes: string
     case CAR_REVIVAL = 'CarRevival';
     case CAR_BIKE = 'Car_Bike';
     case SAVINGS = 'Savings';
+    case SMART_PHONE = 'SmartPhone';
 
     public function id(): string
     {
@@ -94,6 +95,7 @@ enum QuoteTypes: string
             QuoteTypes::CORPLINE => 101,
             QuoteTypes::GROUP_MEDICAL => 102,
             QuoteTypes::SAVINGS => 18,
+            QuoteTypes::SMART_PHONE => 20,
             default => null,
         };
     }
@@ -115,6 +117,7 @@ enum QuoteTypes: string
             101 => QuoteTypes::CORPLINE,
             102 => QuoteTypes::GROUP_MEDICAL,
             18 => QuoteTypes::SAVINGS,
+            20 => QuoteTypes::SMART_PHONE,
         ];
 
         return isset($types[$value]) ? $types[$value] : null;
@@ -137,6 +140,7 @@ enum QuoteTypes: string
             'CorpLine' => QuoteTypes::CORPLINE,
             'Group Medical' => QuoteTypes::GROUP_MEDICAL,
             'Savings' => QuoteTypes::SAVINGS,
+            'SmartPhone' => QuoteTypes::SMART_PHONE,
             default => null,
         };
 
@@ -158,6 +162,7 @@ enum QuoteTypes: string
             self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote : new CycleQuote,
             self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote : new JetskiQuote,
             self::SAVINGS => checkPersonalQuotes($this->value) ? new PersonalQuote : new SavingsQuote,
+            self::SMART_PHONE => checkPersonalQuotes($this->value) ? new PersonalQuote : new SmartPhoneQuote,
             default => new PersonalQuote,
         };
     }
@@ -218,6 +223,7 @@ enum QuoteTypes: string
             self::CYCLE => 'CYC-',
             self::JETSKI => 'JSK-',
             self::SAVINGS => 'SAV-',
+            self::SMART_PHONE => 'SP-',
         };
     }
 
@@ -236,6 +242,7 @@ enum QuoteTypes: string
             'CYC' => self::CYCLE,
             'JSK' => self::JETSKI,
             'SAV' => self::SAVINGS,
+            'SP' => self::SMART_PHONE,
         ];
 
         return $codes[$code] ?? null;
@@ -260,6 +267,7 @@ enum QuoteTypes: string
             self::CORPLINE => $isPersonalQuote ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
             self::GROUP_MEDICAL => $isPersonalQuote ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
             self::SAVINGS => route('savings-quotes-show', $uuid),
+            self::SMART_PHONE => route('smart-phone-quotes-show', $uuid),
         };
     }
 
