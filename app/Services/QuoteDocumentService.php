@@ -406,7 +406,7 @@ class QuoteDocumentService extends BaseService
     {
         $borPermission = PermissionsEnum::BOR_DOCUMENT_UPLOAD;
         $havePermission = Auth::user()->hasPermissionTo($borPermission);
-        $borDocCodes = [DocumentTypeCode::BAL, DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YACHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_PET, DocumentTypeCode::BAL_BS, DocumentTypeCode::BUS_BAL, DocumentTypeCode::GM_BOL];
+        $borDocCodes = [DocumentTypeCode::BAL, DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YCHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_PET, DocumentTypeCode::BAL_BS, DocumentTypeCode::BUS_BAL, DocumentTypeCode::GM_BOL];
         // Fetch active document types, excluding 'SEND_UPDATE' and 'ENDORSEMENT_DOCUMENTS' categories, and filter by quote type ID.
         $documentTypes = DocumentType::active()
             ->whereNotIn('category', ['SEND_UPDATE', 'ENDORSEMENT_DOCUMENTS'])

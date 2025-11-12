@@ -73,7 +73,7 @@ class HomeQuoteRepository extends BaseRepository
             'email',
             'mobile_no',
             'code',
-            'renewal_batch',
+            'renewal_batches',
             'previous_quote_policy_number',
             'payment_due_date',
             'booking_date',
@@ -211,6 +211,8 @@ class HomeQuoteRepository extends BaseRepository
             'homeQuote',
             'homeQuote.homeQuoteRequestDetail',
             'homeQuote.homeQuoteRequestDetail.lostReason',
+            'subSource',
+            'subSourceOption',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypeId::Home);
             },
@@ -230,6 +232,7 @@ class HomeQuoteRepository extends BaseRepository
                 ]);
             },
             'customer',
+            'renewalBatchModel',
         ];
     }
 
@@ -261,6 +264,13 @@ class HomeQuoteRepository extends BaseRepository
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->id() : null,
         ];
 
+        // Log the sub-source parameters for Home quotes
+        LoggerService::info('Home fetchCreate - Sub-source parameters:', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         // only add keys in payload if they are set and not empty
         $optionalFields = [
             'hasContents' => 'has_contents',
@@ -284,6 +294,10 @@ class HomeQuoteRepository extends BaseRepository
             'gender' => 'gender',
             'companyName' => 'company_name',
             'companyAddress' => 'company_address',
+            // Sub-source fields from CreateLeadModal
+            'subSourceId' => 'sub_source_id',
+            'subSourceOptionsId' => 'sub_source_options_id',
+            'additionalNotes' => 'notes',
         ];
 
         foreach ($optionalFields as $key => $field) {
@@ -446,6 +460,14 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchUpdate($uuid, $data)
     {
+        // Log the sub-source parameters for Home quote update
+        LoggerService::info('Home fetchUpdate - Sub-source parameters:', [
+            'uuid' => $uuid,
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'additional_notes' => $data['additional_notes'] ?? null,
+        ]);
+
         // Initialize variables to be used outside the transaction
         $fieldsChanged = false;
         $quoteResult = null;
@@ -672,7 +694,7 @@ class HomeQuoteRepository extends BaseRepository
             'policy_expiry_date' => fn ($query, $value) => $query->whereDate('personal_quotes.policy_expiry_date', '>=', $value),
             'policy_expiry_date_end' => fn ($query, $value) => $query->whereDate('personal_quotes.policy_expiry_date', '<=', $value),
             'previous_quote_policy_number' => fn ($query, $value) => $query->where('personal_quotes.previous_quote_policy_number', $value),
-            'renewal_batches' => fn ($query, $value) => $query->whereIn('personal_quotes.renewal_batch', (array) $value),
+            'renewal_batches' => fn ($query, $value) => $query->whereIn('personal_quotes.renewal_batch_id', (array) $value),
             'advisor_assigned_date' => fn ($query, $value) => $query->whereDate('personal_quotes.advisor_assigned_date', $value),
             'insurer_tax_invoice_number' => fn ($query, $value) => $query->whereHas('payments', function ($query) use ($value) {
                 $query->where('insurer_tax_number', $value);
@@ -816,6 +838,8 @@ class HomeQuoteRepository extends BaseRepository
                     ]);
                 },
                 'transactionType',
+                'subSource',
+                'subSourceOption',
             ])
             ->select([
                 $this->getTable().'.*',

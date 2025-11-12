@@ -30,6 +30,7 @@ use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
+use App\Http\Requests\UpdateCustomerRepliedRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
@@ -58,6 +59,7 @@ use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
@@ -542,6 +544,48 @@ class ApiController extends Controller
             return apiResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, 'Failed to run CQF jobs');
         }
 
+    }
+
+    /**
+     * Update customer replied status in email_status table
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateCustomerRepliedStatus(UpdateCustomerRepliedRequest $request)
+    {
+        try {
+            $emailStatusService = app(EmailStatusService::class);
+            $result = $emailStatusService->updateCustomerRepliedStatus(
+                $request->quote_uuid,
+                $request->quote_type_id,
+                $request->email_subject
+            );
+
+            if ($result->success) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $result->message,
+                    'data' => $result->data ?? null,
+                ], Response::HTTP_OK);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $result->message,
+            ], Response::HTTP_BAD_REQUEST);
+
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': Error updating customer replied status', [
+                'quote_uuid' => $request->quote_uuid ?? null,
+                'error' => $e->getMessage(),
+            ], $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating customer replied status',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     public function lifeSyncHealthQuestionnaire(LifeSyncHealthQuestionnaireRequest $request)

@@ -249,4 +249,34 @@ class LookupService extends BaseService
             ->orderBy('text')
             ->get(['id', 'code', 'text']);
     }
+
+    public function getVehicleColors($quoteTypeId, $providerId)
+    {
+        return Lookup::where('key', LookupsEnum::VEHICLE_COLOR)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('insurance_provider_id', $providerId)
+            ->where('is_active', true)
+            ->select('id', 'code', 'text')
+            ->get();
+    }
+
+    public function getBankNames($quoteTypeId, $providerId)
+    {
+        return Lookup::where('key', LookupsEnum::BANK_NAME)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('insurance_provider_id', $providerId)
+            ->where('is_active', true)
+            ->select('id', 'code', 'text')
+            ->get();
+    }
+
+    public function getSubSource()
+    {
+        return CacheManager::remember(CacheKeyEnum::SUB_SOURCES, function () {
+            return Lookup::with(['childs'])->where([
+                'key' => LookupsEnum::SUB_SOURCE,
+                'is_active' => 1,
+            ])->get();
+        });
+    }
 }

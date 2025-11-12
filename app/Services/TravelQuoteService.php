@@ -6,6 +6,8 @@ use App\Builders\TravelQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\InsuranceProviderEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -190,6 +192,14 @@ class TravelQuoteService extends BaseService
             'tqr.pc_qualified',
             DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
             DB::raw(TravelQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
+            // Sub-source fields
+            'tqr.sub_source_id',
+            'tqr.sub_source_options_id',
+            'tqr.additional_notes',
+            'ss.text as sub_source_text',
+            'ss.description as sub_source_description',
+            'sso.text as sub_source_option_text',
+            'sso.description as sub_source_option_description',
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -220,7 +230,9 @@ class TravelQuoteService extends BaseService
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
-            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
+            ->leftJoin('lookups as ss', 'ss.id', '=', 'tqr.sub_source_id')
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'tqr.sub_source_options_id');
     }
 
     public function getCustomerTravelInfo(int $quoteRequestId, string $quoteType)
@@ -285,9 +297,21 @@ class TravelQuoteService extends BaseService
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'departureCountryId' => $request->departure_country_id ?? null,
+            // Sub-source fields from CreateLeadModal
+            'subSourceId' => $request->sub_source_id ?? null,
+            'subSourceOptionsId' => $request->sub_source_options_id ?? null,
+            'additionalNotes' => $request->additional_notes ?? null,
         ];
 
         LoggerService::info(self::class.' - saveTravelQuote', ['data' => $travelQuote]);
+
+        // Log lead source parameters for Travel quotes
+        LoggerService::info('Travel saveTravelQuote - Lead source parameters:', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->sub_source_id,
+            'subSourceOptionsId' => $request->sub_source_options_id,
+            'additionalNotes' => $request->additional_notes,
+        ]);
         if ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0') {
 
             foreach ($request->members as $member) {
@@ -352,7 +376,11 @@ class TravelQuoteService extends BaseService
 
             $this->selfAssign(QuoteTypes::TRAVEL, $response->quoteUID);
 
-            SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
+            if ($travelQuote['source'] != LeadSourceEnum::IMCRM) {
+                SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
+            } else {
+                LoggerService::info(self::class.'Lead source is IMCRM so skipping SendTravelOCBIntroEmailJob');
+            }
             LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
 
             $customerId = app(CustomerService::class)->getCustomerIdByEmail($request->email);
@@ -542,6 +570,18 @@ class TravelQuoteService extends BaseService
         $travelQuote->departure_country_id = $request->departure_country_id ?? null;
 
         $travelQuote->details = $request->details;
+
+        // Update lead source fields from CreateLeadModal
+        if ($request->has('sub_source_id')) {
+            $travelQuote->sub_source_id = $request->sub_source_id;
+        }
+        if ($request->has('sub_source_options_id')) {
+            $travelQuote->sub_source_options_id = $request->sub_source_options_id;
+        }
+        if ($request->has('additional_notes')) {
+            $travelQuote->additional_notes = $request->additional_notes;
+        }
+
         $travelQuote->save();
 
         $customerId = app(CustomerService::class)->getCustomerIdByEmail($travelQuote->email);
@@ -1259,4 +1299,74 @@ class TravelQuoteService extends BaseService
 
         return false;
     }
+
+    /**
+     * Update customer profile details (lead level) if provider is AXA
+     * Gets the first member and updates the quote's first_name and last_name
+     *
+     * @param  string  $quoteType
+     * @param  string  $uuid
+     * @return void
+     */
+    public function updateCustomerProfileDetails($quoteType, $uuid)
+    {
+        try {
+            if (strtolower($quoteType) !== strtolower(QuoteTypes::TRAVEL->value)) {
+                LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - Not a Travel quote, skipping update customer profile details', [
+                    'quote_type' => $quoteType,
+                ]);
+
+                return;
+            }
+
+            $quoteObject = $this->getQuoteObject(strtolower($quoteType), $uuid, 'uuid');
+
+            LoggerService::startQuoteLogging($quoteObject);
+            LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - Update customer profile details');
+
+            $payment = $quoteObject->payments()->mainLeadPayment()->first();
+            $insuranceProvider = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
+
+            if ($insuranceProvider?->code !== InsuranceProviderEnum::AXA->value) {
+                LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - Provider is not AXA, skipping update', [
+                    'provider_code' => $insuranceProvider?->code ?? 'null',
+                ]);
+
+                return;
+            }
+
+            // Get the primary member using primary_member_id
+            if (! $quoteObject->primary_member_id) {
+                LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - No primary member set for this lead');
+
+                return;
+            }
+
+            $customerMember = CustomerMembers::find($quoteObject->primary_member_id);
+
+            if (! $customerMember) {
+                LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - Primary member not found', [
+                    'primary_member_id' => $quoteObject->primary_member_id,
+                ]);
+
+                return;
+            }
+
+            $quoteObject->first_name = $customerMember->first_name;
+            $quoteObject->last_name = $customerMember->last_name;
+            $quoteObject->save();
+
+            LoggerService::info(__CLASS__.'::'.__FUNCTION__.' - Successfully updated customer profile details', [
+                'first_name' => $customerMember->first_name,
+                'last_name' => $customerMember->last_name,
+            ]);
+
+        } catch (\Exception $e) {
+            LoggerService::error(__CLASS__.'::'.__FUNCTION__.' - Error updating customer profile', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
+
 }

@@ -29,9 +29,9 @@ class InstallmentReportService extends ManagementReport
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::APPROVED_TRANSACTIONS;
 
         if ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
-            $this->reportDateRange = (isset($request['paymentDueDate'][0]) && $request['paymentDueDate'][0] != null && $request['paymentDueDate'][0] != 'null' ? Carbon::parse($request['paymentDueDate'][0])->toDateString() : today()->toDateString())
+            $this->reportDateRange = (isset($request['paymentDueDate'][0]) && isValidDate($request['paymentDueDate'][0]) ? Carbon::parse($request['paymentDueDate'][0])->toDateString() : today()->toDateString())
                 .' - '.
-                (isset($request['paymentDueDate'][1]) && $request['paymentDueDate'][1] != null && $request['paymentDueDate'][1] != 'null' ? Carbon::parse($request['paymentDueDate'][1])->toDateString() : today()->toDateString());
+                (isset($request['paymentDueDate'][1]) && isValidDate($request['paymentDueDate'][1]) ? Carbon::parse($request['paymentDueDate'][1])->toDateString() : today()->toDateString());
         }
 
         $query = PersonalQuote::query()
@@ -74,6 +74,8 @@ class InstallmentReportService extends ManagementReport
                 'q.text as lead_status',
                 'p.insurer_commmission_invoice_number',
                 'l.text as transaction_type',
+                'ls.text as sub_source',
+                'sso.text as sub_source_option',
                 'ps.sr_no as split_sr_no',
                 DB::raw('CASE WHEN ps.sr_no=1 THEN p.commmission_percentage ELSE 0 END as commmission_percentage'),
                 'personal_quotes.source',
@@ -105,6 +107,8 @@ class InstallmentReportService extends ManagementReport
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id')
+            ->leftJoin('lookups as ls', 'personal_quotes.sub_source_id', '=', 'ls.id')
+            ->leftJoin('lookups as sso', 'personal_quotes.sub_source_options_id', '=', 'sso.id')
             ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
             ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
             ->leftJoin('car_quote_request as cqr', function ($join) {

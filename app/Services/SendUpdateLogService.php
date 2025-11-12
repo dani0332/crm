@@ -802,7 +802,6 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
             SendUpdateLogStatusEnum::ACB,
-            SendUpdateLogStatusEnum::ATIB,
             SendUpdateLogStatusEnum::DTSI,
             SendUpdateLogStatusEnum::DOV,
             SendUpdateLogStatusEnum::ATCRNB,
@@ -863,6 +862,7 @@ class SendUpdateLogService
                 $sendUpdatePaymentDetails['discount_value'] = $sendUpdateLog->discount;
             }
 
+            LoggerService::info('fn:updatePaymentDetails - Updating Payment Details - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid, extra: ['Payment Details' => json_encode($sendUpdatePaymentDetails)]);
             $payment->update($sendUpdatePaymentDetails);
 
             info('Book Update - Payment Details Updated - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
@@ -1143,7 +1143,9 @@ class SendUpdateLogService
             $sageProcessData['model_type'] = $quote::class;
             $sageProcessData['model_id'] = $quote->id;
             $response = $sageScheduleResponse = SageProcess::create($sageProcessData);
-            $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
+            if ($quote->status != SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
+                $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
+            }
             info('fn:updateSageProcessForDispatching - Sage process scheduled Successfully');
         }
 
@@ -1503,7 +1505,6 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::DM,
                 SendUpdateLogStatusEnum::DOV,
                 SendUpdateLogStatusEnum::ACB,
-                SendUpdateLogStatusEnum::ATIB,
                 SendUpdateLogStatusEnum::DTSI,
                 SendUpdateLogStatusEnum::ATCRNB,
                 SendUpdateLogStatusEnum::ATCRNB_RBB,

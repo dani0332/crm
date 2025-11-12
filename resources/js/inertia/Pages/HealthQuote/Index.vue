@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 defineProps({
   quotes: Object,
@@ -21,14 +22,19 @@ defineProps({
   assignmentTypes: Object,
   insurerAMLStatus: Array,
   emirates: Array,
+  subSources: { type: Array, default: () => [] },
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const notification = useToast();
 
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 const quoteSegments = page.props.quoteSegments;
 
 const loader = reactive({
@@ -40,6 +46,7 @@ const { isRequired } = useRules();
 
 const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
+const createLeadModal = ref(false);
 
 let params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
@@ -159,6 +166,7 @@ const tableHeader = ref([
     value: 'customer.pcp_tag_formatted',
     is_active: true,
   },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -393,6 +401,7 @@ function setQueryStringFilters() {
     'renewal_batches',
     'payment_status',
     'emirate_of_your_visa_id',
+    'sub_source_id',
     'page',
   ];
 
@@ -744,6 +753,9 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
+
+// Handle lead creation from modal
+const onLeadConfirmed = leadData => {};
 </script>
 
 <template>
@@ -782,16 +794,14 @@ const insurerAMLStatusOption = computed(() => {
           </x-button>
         </Link>
 
-        <Link :href="route('health.create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead
-          </x-button>
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          v-if="readOnlyMode.isDisable === true"
+          @click="createLeadModal = true"
+        >
+          Create Lead
+        </x-button>
       </template>
     </StickyHeader>
 
@@ -1371,6 +1381,15 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <!-- Create Lead Modal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="health.create"
+      :sub-sources="subSources"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

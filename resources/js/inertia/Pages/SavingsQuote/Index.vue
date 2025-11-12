@@ -1,5 +1,6 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 defineProps({
   quotes: Object,
@@ -16,12 +17,17 @@ defineProps({
   },
   authorizedDays: Number,
   investmentFrequencies: Array,
+  subSources: Array,
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const hasAnyRole = role => useHasAnyRole(role);
 const canAny = permissions => useCanAny(permissions);
 const rolesEnum = page.props.rolesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 const notification = useNotifications('toast');
 const loader = reactive({
   table: false,
@@ -131,10 +137,12 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch_model', is_active: true },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text', is_active: true },
 ]);
 
 const quotesSelected = ref([]);
 const permissionAssignLeads = ref(false);
+const createLeadModal = ref(false);
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -241,6 +249,10 @@ const advisorOptions = computed(() => {
 
 const onLeadAssigned = () => {
   quotesSelected.value = [];
+};
+
+const onLeadConfirmed = leadData => {
+  createLeadModal.value = false;
 };
 
 function setQueryStringFilters() {
@@ -407,16 +419,14 @@ const validateDateRange = () => {
         />
 
         <div v-if="readOnlyMode.isDisable === true">
-          <Link :href="route('savings-quotes-create')">
-            <x-button
-              v-if="can(permissionsEnum.SAVINGS_QUOTES_CREATE)"
-              size="sm"
-              color="#ff5e00"
-              :href="route('savings-quotes-create')"
-            >
-              Create Lead
-            </x-button>
-          </Link>
+          <x-button
+            v-if="can(permissionsEnum.SAVINGS_QUOTES_CREATE)"
+            size="sm"
+            color="#ff5e00"
+            @click="createLeadModal = true"
+          >
+            Create Lead
+          </x-button>
         </div>
       </template>
     </StickyHeader>
@@ -567,6 +577,7 @@ const validateDateRange = () => {
           multi-calendars
           multi-calendars-solo
         />
+
         <DatePicker
           v-model="filters.last_modified_date"
           name="created_at_start"
@@ -720,6 +731,15 @@ const validateDateRange = () => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <!-- CreateLeadModal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      :sub-sources="subSources"
+      route-name="savings-quotes-create"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

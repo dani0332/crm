@@ -12,6 +12,7 @@ use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Services\AccuracyMatrixService;
 use App\Services\Logger\LoggerService;
+use App\Services\LookupService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -46,6 +47,8 @@ trait OcrUtils
         try {
             return Carbon::parse($date)->format('Y-m-d');
         } catch (\Exception $e) {
+            LoggerService::error('Failed to format date', exception: $e);
+
             return null;
         }
     }
@@ -83,8 +86,8 @@ trait OcrUtils
         }
 
         return match (strtoupper(trim($gender))) {
-            'M', 'MALE' => 'Male',
-            'F', 'FEMALE' => 'Female',
+            'M', 'MALE' => 'male',
+            'F', 'FEMALE' => 'female',
             default => $gender
         };
     }
@@ -383,5 +386,105 @@ trait OcrUtils
         }
 
         return $quote->code;
+    }
+
+    public function extractPlateCodeNumber(?string $plateNumber): ?array
+    {
+        if (empty($plateNumber)) {
+            return null;
+        }
+
+        $cleaned = trim($plateNumber);
+
+        // $parts = explode('/', $cleaned, 2);
+        if (preg_match('/^([A-Z0-9]+)[\/:\-\s\']*(\d+)$/i', $cleaned, $matches)) {
+            LoggerService::info('OCR Utils - extractPlateCodeNumber - Plate code and number extracted', extra: [
+                'plate_number' => $plateNumber,
+                'matches' => $matches,
+            ]);
+
+            return [
+                'plate_code' => $matches[1],
+                'plate_number' => $matches[2],
+            ];
+        }
+
+        return [
+            'plate_code' => null,
+            'plate_number' => null,
+        ];
+    }
+
+    public function getVehicleColorCode(?string $vehicleColor, int $quoteTypeId, ?int $providerId): ?string
+    {
+        LoggerService::info('OCR Utils - getVehicleColorCode called', extra: [
+            'vehicleColor' => $vehicleColor,
+            'quoteTypeId' => $quoteTypeId,
+            'providerId' => $providerId,
+        ]);
+
+        if (empty($vehicleColor)) {
+            LoggerService::info('OCR Utils - Vehicle color is empty, returning null');
+
+            return null;
+        }
+
+        if (! $providerId) {
+            LoggerService::warning('OCR Utils - No valid provider id for vehicle color code', extra: [
+                'vehicleColor' => $vehicleColor,
+                'quoteTypeId' => $quoteTypeId,
+                'providerId' => $providerId,
+            ]);
+
+            return null;
+        }
+
+        $vehicleColors = app(LookupService::class)->getVehicleColors($quoteTypeId, $providerId);
+
+        $matchedColor = $vehicleColors->first(function ($color) use ($vehicleColor) {
+            return strtolower($color->text) === strtolower($vehicleColor);
+        });
+
+        LoggerService::info('OCR Utils - Vehicle color lookup result', extra: [
+            'vehicleColor' => $vehicleColor,
+            'providerId' => $providerId,
+            'availableColors' => $vehicleColors->pluck('text')->toArray(),
+            'matchedColor' => $matchedColor?->code,
+            'matchedColorText' => $matchedColor?->text,
+        ]);
+
+        return $matchedColor?->code ?? null;
+    }
+
+    public function getBankCode(?string $bankName, int $quoteTypeId, ?int $providerId): ?string
+    {
+        if (empty($bankName)) {
+            return null;
+        }
+
+        if (! $providerId) {
+            LoggerService::warning('OCR Utils - No valid provider id for bank code');
+
+            return null;
+        }
+
+        $banks = app(LookupService::class)->getBankNames($quoteTypeId, $providerId);
+
+        return $banks->first(function ($bank) use ($bankName) {
+            return strtolower($bank->text) === strtolower($bankName);
+        })?->code ?? null;
+    }
+
+    public function getIssuancePlaceCode(?string $issuancePlace): ?string
+    {
+        if (empty($issuancePlace)) {
+            return null;
+        }
+
+        $issuancePlaces = app(LookupService::class)->getIssuancePlaces();
+
+        return $issuancePlaces->first(function ($place) use ($issuancePlace) {
+            return strtolower($place->text) === strtolower($issuancePlace);
+        })?->code ?? null;
     }
 }
