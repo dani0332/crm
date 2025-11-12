@@ -58,6 +58,7 @@ class SageProcessesExport implements CsvExportableInterface
             'Sage Pro. ID',
             'Quote UUID',
             'Quote Code',
+            'Lead Create Date',
             'Policy Number',
             'Price Vat Applicable',
             'Price Vat',
@@ -77,6 +78,7 @@ class SageProcessesExport implements CsvExportableInterface
             'Sage Proc. Status',
             'Failed Sage API',
             'Failed API Error',
+            'Error displayed in IMCRM',
         ];
     }
 
@@ -97,6 +99,9 @@ class SageProcessesExport implements CsvExportableInterface
 
         // Format dates
         $paymentDate = $payment && $payment->captured_at ? Carbon::parse($payment->captured_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : $this->notAvailable;
+        
+        // Format lead create date - handle custom formats like "02-Jul-2025 01:09pm"
+        $leadCreateDate = $this->formatLeadCreateDate($row->model?->created_at);
 
         // Get lead status
         $leadStatus = $this->notAvailable;
@@ -112,6 +117,7 @@ class SageProcessesExport implements CsvExportableInterface
             $row->id ?? $this->notAvailable,
             $row->model?->uuid ?? $this->notAvailable,
             $row->model?->code ?? $this->notAvailable,
+            $leadCreateDate,
             $row->model?->policy_number ?? $this->notAvailable,
             $payment?->price_vat_applicable ?? $this->notAvailable,
             $payment?->price_vat ?? $this->notAvailable,
@@ -131,6 +137,7 @@ class SageProcessesExport implements CsvExportableInterface
             $row->status ?? $this->notAvailable,
             $sageApiLog?->sage_end_point ?? $this->notAvailable,
             $sageResponse,
+            $row->imcrm_error ?? $this->notAvailable,
         ];
     }
 
@@ -140,6 +147,34 @@ class SageProcessesExport implements CsvExportableInterface
     public function title(): string
     {
         return 'Failed Sage Processes';
+    }
+
+    /**
+     * Format lead create date - handles custom date formats
+     *
+     * @param  mixed  $createdAt
+     * @return string
+     */
+    private function formatLeadCreateDate($createdAt): string
+    {
+        if (! $createdAt) {
+            return $this->notAvailable;
+        }
+
+        try {
+            // Check if date is in custom format like "02-Jul-2025 01:09pm"
+            if (is_string($createdAt) && preg_match('/^\d{2}-[A-Za-z]{3}-\d{4}\s+\d{1,2}:\d{2}(am|pm)$/i', $createdAt)) {
+                // Parse custom format: "02-Jul-2025 01:09pm"
+                $createdAt = Carbon::createFromFormat('d-M-Y h:ia', $createdAt);
+            } elseif (! $createdAt instanceof Carbon) {
+                // Parse other formats
+                $createdAt = Carbon::parse($createdAt);
+            }
+
+            return $createdAt->format(config('constants.DATETIME_DISPLAY_FORMAT'));
+        } catch (\Exception $e) {
+            return $this->notAvailable;
+        }
     }
 
     /**

@@ -40,16 +40,18 @@ class SageProcessesController extends Controller
             $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request);
             $dropdownData = $this->sageProcessesService->dropdownData();
 
-            return inertia('SageProcesses/Index', [
+            $response = [
                 'failedProcesses' => $failedProcesses,
                 'filters' => request()->all(),
                 'dropdowns' => $dropdownData,
-            ]);
+            ];
+
         } catch (\Exception $e) {
-            LoggerService::error('SageProcessesController - index - Error: '.$e->getMessage(), extra: [
+            LoggerService::error('Error fetching failed Sage processes: '.$e->getMessage(), extra: [
                 'trace' => $e->getTraceAsString(),
             ]);
-            return inertia('SageProcesses/Index', [
+
+            $response = [
                 'failedProcesses' => [],
                 'insuranceProviders' => [],
                 'quoteTypes' => [],
@@ -57,8 +59,10 @@ class SageProcessesController extends Controller
                 'filters' => request()->all(),
                 'error' => 'Failed to fetch data. Please try again.',
                 'exception' => $e->getMessage(),
-            ]);
+            ];
         }
+
+        return inertia('SageProcesses/Index', $response);
     }
 
     public function export(Request $request)

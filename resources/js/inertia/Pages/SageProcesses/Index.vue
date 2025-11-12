@@ -2,6 +2,7 @@
 import { ref, computed, reactive, onMounted } from 'vue';
 import { router, usePage, Head, Link } from '@inertiajs/vue3';
 import axios from 'axios';
+import { useDateTimeFormat } from '@/inertia/Composables/utilities';
 const { copy, copied } = useClipboard();
 
 const props = defineProps({
@@ -25,6 +26,7 @@ const loader = reactive({
 const tableHeader = computed(() => [
   { text: 'Sage Pro. ID', value: 'id', width: 40, sortable: true },
   { text: 'Quote Code', value: 'quote_code', width: 150, sortable: true },
+  { text: 'Lead Create Date', value: 'lead_create_date', width: 160, sortable: true },
   { text: 'Policy Number', value: 'policy_number', width: 150, sortable: true },
   {
     text: 'Price Vat Applicable',
@@ -94,6 +96,12 @@ const tableHeader = computed(() => [
     width: 330,
     sortable: false,
   },
+  {
+    text: 'Error displayed in IMCRM',
+    value: 'imcrm_error',
+    width: 330,
+    sortable: false,
+  },
   { text: 'Updated At', value: 'updated_at', width: 160, sortable: true },
 ]);
 
@@ -140,12 +148,6 @@ const insuranceProvidersOptions = computed(() => {
 
 // Filters count
 const filtersCount = ref(0);
-
-// Format date
-const dateFormat = dateString =>
-  dateString
-    ? useDateFormat(useConvertDate(dateString), 'DD-MM-YYYY HH:mm:ss').value
-    : '';
 
 // Truncate text
 const truncate = (text, length = 50) => {
@@ -343,6 +345,11 @@ async function exportExcel() {
         </Link>
       </template>
 
+      <!-- Lead Create Date Column -->
+      <template #item-lead_create_date="item">
+        <span>{{ useDateTimeFormat(item.model?.created_at) || 'N/A' }}</span>
+      </template>
+
       <!-- Policy Number Column -->
       <template #item-policy_number="item">
         <span>{{ item.model?.policy_number || 'N/A' }}</span>
@@ -391,7 +398,7 @@ async function exportExcel() {
 
       <!-- Payment Date -->
       <template #item-payment_date="item">
-        <span>{{ dateFormat(item.model?.payments?.[0]?.captured_at) }}</span>
+        <span>{{ useDateTimeFormat(item.model?.payments?.[0]?.captured_at) }}</span>
       </template>
 
       <!-- Payment Status -->
@@ -480,9 +487,25 @@ async function exportExcel() {
         </div>
       </template>
 
+      <!-- Error displayed in IMCRM Column -->
+      <template #item-imcrm_error="item">
+        <div v-if="item.imcrm_error">
+          {{ truncate(item.imcrm_error, 80) }}
+          <x-icon
+            @click.prevent="copyToClipboard(item.imcrm_error)"
+            icon="copy"
+            class="text-primary cursor-pointer"
+            size="md"
+          />
+        </div>
+        <div v-else>
+          <span>N/A</span>
+        </div>
+      </template>
+
       <!-- Updated At Column -->
       <template #item-updated_at="{ updated_at }">
-        {{ dateFormat(updated_at) }}
+        {{ useDateTimeFormat(updated_at) || 'N/A' }}
       </template>
     </DataTable>
 

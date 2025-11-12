@@ -30,10 +30,7 @@ use Illuminate\Support\Facades\Schema;
  */
 class SageProcessesService extends BaseService
 {
-    const CLASS_NAME = 'SageProcessesService';
-
     protected $sendUpdateModelClass = SendUpdateLog::class;
-
     const SEND_UPDATE_MODEL_NAME = 'Send Update';
 
     /**
@@ -45,7 +42,7 @@ class SageProcessesService extends BaseService
     public function getFailedSageProcesses(Request $request, bool $isExport = false)
     {
         try {
-            LoggerService::info(self::CLASS_NAME.' fn: '.__FUNCTION__.' - Start - Fetching failed sage processes');
+            LoggerService::info('Initiating retrieval of failed Sage processes');
 
             $query = SageProcess::select('id', 'model_type', 'model_id', 'insurance_provider_id', 'request', 'status', 'created_at', 'updated_at')
                 ->where('status', SageEnum::SAGE_PROCESS_FAILED_STATUS)
@@ -61,6 +58,7 @@ class SageProcessesService extends BaseService
                             $quoteModelClasses[] = QuoteTypes::getQuoteTypeIdToClass($quote_type_id);
                         }
                     }
+
                     $query->whereIn('model_type', $quoteModelClasses);
 
                 })->when($request->date_from, function ($query) use ($request) {
@@ -117,7 +115,7 @@ class SageProcessesService extends BaseService
 
             return $results;
         } catch (\Exception $e) {
-            LoggerService::error(self::CLASS_NAME.' fn: '.__FUNCTION__.' - Error fetching failed sage processes: '.$e->getMessage(), extra: [
+            LoggerService::error('Error fetching failed Sage processes: '.$e->getMessage(), extra: [
                 'trace' => $e->getTraceAsString(),
             ]);
             throw $e;
@@ -176,7 +174,65 @@ class SageProcessesService extends BaseService
             // Add as a formatted string (comma-separated) and as an array
             $item->collected_sage_receipt_ids = ! empty($sageReceiptIds) ? implode(', ', $sageReceiptIds) : null;
             $item->collected_sage_receipt_ids_array = $sageReceiptIds;
+            
+            // Add IMCRM error message extracted from sage API log response
+            $item->imcrm_error = $this->extractImcrmError($item);
         }
+    }
+
+    /**
+     * Extract the IMCRM error message from the Sage API log response
+     * This extracts the error.message.value from the JSON response
+     *
+     * @param  mixed  $item
+     * @return string|null
+     */
+    protected function extractImcrmError($item): ?string
+    {
+        if ($item->model && $item->model->sageApiLogs && $item->model->sageApiLogs->isNotEmpty()) {
+            $firstFailedLog = $item->model->sageApiLogs->first();
+            if ($firstFailedLog && $firstFailedLog->response) {
+                try {
+                    $responseData = json_decode($firstFailedLog->response, true);
+                    return $responseData['error']['message']['value'] ?? null;
+                } catch (\Exception $e) {
+                    LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not parse sage API response: '.$e->getMessage());
+                    return null;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Format the lead create date consistently across all models
+     * This handles different date formats that may come from different models
+     *
+     * @param  mixed  $item
+     * @return string|null
+     */
+    protected function formatLeadCreateDate($item): ?string
+    {
+        if ($item->model && $item->model->created_at) {
+            try {
+                // Parse the date using Carbon to handle various formats
+                $createdAt = $item->model->created_at;
+                
+                // If it's already a Carbon instance, format it
+                if ($createdAt instanceof Carbon) {
+                    return $createdAt->format(config('constants.DATETIME_DISPLAY_FORMAT'));
+                }
+                
+                // If it's a string, try to parse it
+                return Carbon::parse($createdAt)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
+            } catch (\Exception $e) {
+                LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not parse date: '.$e->getMessage());
+                return $item->model->created_at; // Return original if parsing fails
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -196,7 +252,7 @@ class SageProcessesService extends BaseService
                     try {
                         $item->model->load('quoteStatus:id,text');
                     } catch (\Exception $e) {
-                        LoggerService::warning(self::CLASS_NAME.' fn: '.__FUNCTION__.' - Could not load quoteStatus for model: '.get_class($item->model));
+                        LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not load quoteStatus for model: '.get_class($item->model));
                     }
                 }
             }

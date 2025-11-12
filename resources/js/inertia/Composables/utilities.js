@@ -792,3 +792,57 @@ export const useIsQuoteCreatedAfterCutoff = (createdAtString, cutoffDate) => {
 
   return createdDate >= cutoffDate;
 };
+
+/**
+ * Format date/datetime string to DD-MM-YYYY HH:mm:ss format
+ * Handles custom formats like "02-Jul-2025 01:09pm" from SavingsQuote
+ * 
+ * @param {string} dateString - Date string to format
+ * @returns {string} - Formatted date string or empty string if invalid
+ */
+export const useDateTimeFormat = dateString => {
+  if (!dateString) return '';
+  
+  try {
+    // Check if date is in the format "02-Jul-2025 01:09pm" (from SavingsQuote)
+    const customFormatPattern = /^\d{2}-[A-Za-z]{3}-\d{4}\s+\d{1,2}:\d{2}(am|pm)$/i;
+    
+    if (customFormatPattern.test(dateString.trim())) {
+      // Parse the custom format manually
+      const parts = dateString.trim().match(/^(\d{2})-([A-Za-z]{3})-(\d{4})\s+(\d{1,2}):(\d{2})(am|pm)$/i);
+      
+      if (parts) {
+        const day = parts[1];
+        const monthStr = parts[2];
+        const year = parts[3];
+        let hours = parseInt(parts[4]);
+        const minutes = parts[5];
+        const ampm = parts[6].toLowerCase();
+        
+        // Convert month name to number
+        const monthMap = {
+          jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+          jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+        };
+        const month = monthMap[monthStr.toLowerCase()];
+        
+        // Convert 12-hour to 24-hour format
+        if (ampm === 'pm' && hours !== 12) {
+          hours += 12;
+        } else if (ampm === 'am' && hours === 12) {
+          hours = 0;
+        }
+        
+        // Format as DD-MM-YYYY HH:mm:ss
+        const formattedHours = hours.toString().padStart(2, '0');
+        return `${day}-${month}-${year} ${formattedHours}:${minutes}:00`;
+      }
+    }
+    
+    // Use standard date formatting for normal dates
+    return useDateFormat(useConvertDate(dateString), 'DD-MM-YYYY HH:mm:ss').value;
+  } catch (error) {
+    console.error('Date formatting error:', error, dateString);
+    return dateString; // Return original if parsing fails
+  }
+};
