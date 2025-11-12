@@ -11,6 +11,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use App\Services\OCR\Validators\OCRDocumentValidator;
 
 class MulkiyaDataProcessor
 {
@@ -21,6 +22,7 @@ class MulkiyaDataProcessor
     public function __construct(
         private CarQuote $quote,
         private object $data,
+        private string $documentTypeCode,
     ) {
         $this->mulkiyaExtractor = new MulkiyaExtractor($this->data, $quote?->plan?->provider_id);
     }
@@ -73,6 +75,8 @@ class MulkiyaDataProcessor
             LoggerService::info('Mulkiya data processing completed successfully');
 
             // Trigger OCR success validation
+            $isOCRSuccess = app(OCRDocumentValidator::class)->validateMulkiyaFields($this->quote->id);
+            LoggerService::info('Mulkiya data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($processedData));
 
             return $vehicleDriverDetailUpdated || $carQuoteDetailUpdated || $carQuoteUpdated || $registrationCertificateUpdated;
 

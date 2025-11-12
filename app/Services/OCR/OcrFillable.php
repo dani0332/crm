@@ -177,7 +177,7 @@ trait OcrFillable
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new MulkiyaDataProcessor($quote, $data);
+            $processor = new MulkiyaDataProcessor($quote, $data, $this->documentTypeCode);
 
             $success = $processor->processMulkiyaData();
 
