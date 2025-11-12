@@ -68,7 +68,7 @@ class EmiratesIdDataProcessor
                 DocumentTypeCode::EMIRATES_ID,
                 $this->quoteDocumentId
             );
-            LoggerService::info('Driving License data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($this->extractedData));
+            LoggerService::info('EmiratesId data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($this->extractedData));
 
 
             return $insuredUpdated || $kycUpdated || $vehicleDriverDetailUpdated;
