@@ -1249,7 +1249,7 @@ const canSelectMetLifePlan = computed(() => {
   const quote = page.props.quote;
   if (!quote) return false;
 
-  const isApplicationPending = quote.quote_status_id === quoteStatusEnum?.ApplicationPending;
+  const isApplicationPending = quote.quote_status_id === page.props.quoteStatusEnum?.ApplicationPending;
   const hasHealthQuestionnaire = quote.documents?.some(
     doc => doc.document_type_code === documentTypeCodeEnum?.LIFE_HEALTH_QUESTIONNAIRE
   ) ?? false;
