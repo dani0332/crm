@@ -121,7 +121,8 @@ export const usePayment = () => {
 
   /**
    * Checks if any payment split in the given payments array has an authorized/settled status.
-   * Returns true if any payment split matches authorized statuses (AUTHORISED, PAID, CAPTURED, etc.), false otherwise.
+   * Returns an object with hasAuthorized (boolean) and statusText (string or null).
+   * Breaks on first matching payment split.
    */
   const hasAuthorizedSplit = (payments) => {
     const authorizedStatuses = [
@@ -132,14 +133,30 @@ export const usePayment = () => {
       paymentStatusEnum.PARTIALLY_PAID
     ];
     
-    if (!Array.isArray(payments)) return false;
+    if (!Array.isArray(payments)) {
+      return {
+        hasAuthorized: false,
+        statusText: null
+      };
+    }
     
-    return payments.some(payment => 
-      Array.isArray(payment.payment_splits) &&
-      payment.payment_splits.some(split => 
-        authorizedStatuses.includes(split.payment_status_id)
-      )
-    );
+    for (const payment of payments) {
+      if (Array.isArray(payment.payment_splits)) {
+        for (const split of payment.payment_splits) {
+          if (authorizedStatuses.includes(split.payment_status_id)) {
+            return {
+              hasAuthorized: true,
+              statusText: formatString(split.payment_status?.text)
+            };
+          }
+        }
+      }
+    }
+    
+    return {
+      hasAuthorized: false,
+      statusText: null
+    };
   };
 
   return {

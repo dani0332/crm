@@ -2663,7 +2663,7 @@ const fullAddress = computed(() => {
           <AddMemberButtonTemplate v-slot="{ isDisabled }">
             <!-- Show button with tooltip when payment is authorized -->
             <x-tooltip
-              v-if="isAuthorizedPayment"
+              v-if="isAuthorizedPayment.hasAuthorized"
               position="bottom"
             >
               <x-button
@@ -2674,7 +2674,7 @@ const fullAddress = computed(() => {
                 Add Member
               </x-button>
               <template #tooltip>
-                {{ travelQuoteEnum.LOCK_MEMBER_DETAILS }}
+                {{ `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}` }}
               </template>
             </x-tooltip>
             <!-- Show existing button when payment is not authorized -->
@@ -2707,7 +2707,7 @@ const fullAddress = computed(() => {
             <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
             <!-- Show button with tooltip when payment is authorized -->
             <x-tooltip
-              v-if="isAuthorizedPayment"
+              v-if="isAuthorizedPayment.hasAuthorized"
               position="bottom"
             >
               <x-button
@@ -2719,7 +2719,7 @@ const fullAddress = computed(() => {
                 Edit
               </x-button>
               <template #tooltip>
-                {{ travelQuoteEnum.LOCK_MEMBER_DETAILS }}
+                {{ `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}` }}
               </template>
             </x-tooltip>
             <!-- Show existing button when payment is not authorized -->
@@ -2739,7 +2739,7 @@ const fullAddress = computed(() => {
           <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
             <!-- Show button with tooltip when payment is authorized -->
             <x-tooltip
-              v-if="isAuthorizedPayment"
+              v-if="isAuthorizedPayment.hasAuthorized"
               position="bottom"
             >
               <x-button
@@ -2751,7 +2751,7 @@ const fullAddress = computed(() => {
                 Delete
               </x-button>
               <template #tooltip>
-                {{ travelQuoteEnum.LOCK_MEMBER_DETAILS }}
+                {{ `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}` }}
               </template>
             </x-tooltip>
             <!-- Show existing button when payment is not authorized -->
