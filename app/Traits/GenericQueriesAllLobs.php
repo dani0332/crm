@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CarRegistrationType;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
@@ -315,6 +316,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails = array_merge($bookPolicyDetails, $tapPaymentConfiguration);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
+            $quoteType = strtolower(QuoteTypes::CAR->value) == strtolower($quoteType) && $record->registration_type == CarRegistrationType::COMPANY ? quoteTypeCode::CompanyCar : $quoteType;
             $areSendPolicyDocsUploaded = app(DocumentTypeRepository::class)->fetchAreSendPolicyDocsUploaded($quoteDocuments, $quoteType, $record);
             $bookPolicyDetails['disabled'] = $areSendPolicyDocsUploaded['disabled'];
             $bookPolicyDetails['sendButton'] = true;
