@@ -8,7 +8,6 @@ const props = defineProps({
   lookUpData: { type: Object, required: true },
 });
 
-
 // Format API data for dropdowns and selects
 const nationalities = computed(() => {
   return props.lookUpData.nationality.map(item => ({
@@ -24,7 +23,6 @@ const emiratesOfRegistration = computed(() => {
   }));
 });
 
-
 const quoteForm = useForm({
   first_name: props.quote?.first_name || '',
   last_name: props.quote?.last_name || '',
@@ -32,7 +30,8 @@ const quoteForm = useForm({
   mobile_no: props.quote?.mobile_no || '',
   dob: props.quote?.dob ? dateFormat(props.quote?.dob) : '',
   nationality_id: props.quote?.nationality_id || '',
-  emirate_of_registration_id: props.quote?.cyber_quote_request?.emirate_of_registration_id || '',
+  emirate_of_registration_id:
+    props.quote?.cyber_quote_request?.emirate_of_registration_id || '',
 });
 
 const { isRequired, isEmail, isMobileNo, isValidName } = useRules();
@@ -155,9 +154,8 @@ function onSubmit(isValid) {
           placeholder="Search by Emirate of Registration"
           required
         />
-
-    </div>
-    <x-divider class="my-4" />
+      </div>
+      <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">
         <x-button
           size="md"
