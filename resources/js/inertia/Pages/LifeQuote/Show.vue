@@ -5,7 +5,8 @@ import {
   preventInvalidInputs,
   useIsQuoteCreatedAfterCutoff,
 } from '@/inertia/Composables/utilities.js';
-import { watch } from 'vue';
+import { watch, onMounted, onUnmounted } from 'vue';
+import { router } from '@inertiajs/vue3';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
@@ -924,11 +925,33 @@ const shouldShowPlanDetailsSection = computed(() => {
   return true;
 });
 
+const handleDocumentNotification = event => {
+  const { quoteUID, status } = event.detail;
+
+  if (quoteUID === page.props.quote.uuid && status === 'success') {
+    router.reload({
+      preserveState: true,
+      preserveScroll: true,
+      only: ['quote'],
+      onSuccess: () => {
+        if (!shouldShowPlanDetailsSection.value) {
+          onLoadAvailablePlansData();
+        }
+      },
+    });
+  }
+};
+
 onMounted(() => {
   if (!shouldShowPlanDetailsSection.value) {
     onLoadAvailablePlansData();
   }
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  window.addEventListener('document-notification', handleDocumentNotification);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('document-notification', handleDocumentNotification);
 });
 
 const onLoadAvailablePlansData = async () => {
@@ -1214,6 +1237,25 @@ const showSelectedButton = item => {
 };
 
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
+const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
+
+const isMetLife = item => {
+  if (!item) return false;
+  
+  return item.providerCode === insuranceProviderCodeEnum?.MTL;
+};
+
+const canSelectMetLifePlan = computed(() => {
+  const quote = page.props.quote;
+  if (!quote) return false;
+
+  const isApplicationPending = quote.quote_status_id === quoteStatusEnum?.ApplicationPending;
+  const hasHealthQuestionnaire = quote.documents?.some(
+    doc => doc.document_type_code === documentTypeCodeEnum?.LIFE_HEALTH_QUESTIONNAIRE
+  ) ?? false;
+
+  return isApplicationPending && hasHealthQuestionnaire;
+});
 </script>
 <template>
   <div>
@@ -2356,6 +2398,7 @@ const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
                       View
                     </x-button>
                     <x-button
+                      v-if="!isMetLife(item)"
                       size="xs"
                       color="emerald"
                       outlined
@@ -2379,8 +2422,25 @@ const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
                         >Selected</x-button
                       >
 
+                      <x-tooltip
+                        v-else-if="!item.isDisabled && isMetLife(item) && !canSelectMetLifePlan"
+                        placement="top"
+                      >
+                        <x-button
+                          size="xs"
+                          color="emerald"
+                          outlined
+                          :disabled="true"
+                        >
+                          Select
+                        </x-button>
+                        <template #tooltip>
+                          This plan cannot be manually selected. To proceed, you can guide the client to click 'Buy Now'.
+                        </template>
+                      </x-tooltip>
+
                       <x-button
-                        v-else-if="!item.isDisabled && item.providerCode !== insuranceProviderCodeEnum?.MTL"
+                        v-else-if="!item.isDisabled && (!isMetLife(item) || canSelectMetLifePlan)"
                         size="xs"
                         color="emerald"
                         outlined

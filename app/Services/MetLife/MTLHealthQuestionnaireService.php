@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Services\MetLife;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Events\DocumentNotificationEvent;
 use App\Exceptions\MetLife\MetLifeException;
 use App\Models\DocumentType;
 use App\Models\PersonalQuote;
+use App\Models\QuoteStatusLog;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 
@@ -79,6 +82,13 @@ class MTLHealthQuestionnaireService
                 ['quote_uuid' => $quote->uuid, 'pdf_filename' => $data['pdf_filename'] ?? null]
             );
         }
+
+        $this->updateQuoteStatusToApplicationPending($quote);
+
+        event(new DocumentNotificationEvent([
+            'quoteUID' => $quote->uuid,
+            'status' => 'success',
+        ]));
 
         LoggerService::info('DEBUG: Health questionnaire sync completed successfully', [
             'document_id' => $document->id ?? 'N/A',
@@ -258,5 +268,40 @@ class MTLHealthQuestionnaireService
             ])
             ->setPaper('A4')
             ->output();
+    }
+
+    private function updateQuoteStatusToApplicationPending(PersonalQuote $quote): void
+    {
+        if ($quote->quote_status_id === QuoteStatusEnum::ApplicationPending) {
+            LoggerService::info('Quote status is already Application Pending', [
+                'quote_uuid' => $quote->uuid,
+                'quote_code' => $quote->code,
+            ]);
+
+            return;
+        }
+
+        $previousStatusId = $quote->quote_status_id;
+
+        $quote->update([
+            'quote_status_id' => QuoteStatusEnum::ApplicationPending,
+            'quote_status_date' => now(),
+        ]);
+
+        QuoteStatusLog::create([
+            'quote_type_id' => $quote->quote_type_id,
+            'quote_request_id' => $quote->id,
+            'current_quote_status_id' => QuoteStatusEnum::ApplicationPending,
+            'previous_quote_status_id' => $previousStatusId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        LoggerService::info('Quote status updated to Application Pending after health questionnaire upload', [
+            'quote_uuid' => $quote->uuid,
+            'quote_code' => $quote->code,
+            'previous_status_id' => $previousStatusId,
+            'new_status_id' => QuoteStatusEnum::ApplicationPending,
+        ]);
     }
 }
