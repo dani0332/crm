@@ -5,6 +5,7 @@ const props = defineProps({
   batches: Array,
   pagination: Object,
   transactionTypes: Array,
+  renewalBatches: Array,
 });
 
 const page = usePage();
@@ -29,6 +30,7 @@ const filters = reactive({
   page: 1,
   transaction_type_id: [],
   quote_batch_id: [],
+  renewal_batch: null,
   quote_status_id: [],
   payment_status_id: [],
   sale_leads: null,
@@ -89,6 +91,27 @@ const paymentStatus = computed(() => {
     }),
   );
 });
+
+const renewalBatches = computed(() => {
+  return props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
+});
+
+// Determine if the current quote type is non-motor
+const isNonMotor = computed(() => {
+  const nonMotorTypes = ['Bike', 'Home', 'Health', 'Travel'];
+  return nonMotorTypes.includes(filters.quoteType);
+});
+
+// Reset renewal_batch when quote type changes
+watch(
+  () => filters.quoteType,
+  () => {
+    filters.renewal_batch = isNonMotor.value ? [] : null;
+  },
+);
 
 const quoteSegments = page.props.quoteSegments;
 
@@ -454,6 +477,41 @@ const exportReport = async (exportType = 'download') => {
           />
         </template>
       </x-select>
+
+      <!-- Renewal Batch - Dropdown for Non-Motor (Bike, Home, Health, Travel) -->
+      <x-select
+        v-if="isNonMotor"
+        v-model="filters.renewal_batch"
+        :options="renewalBatches"
+        placeholder="Search by Renewal Batch"
+        class="w-full"
+        label="Renewal Batch"
+        filterable
+        filterPlaceholder="Filter Renewal Batch...."
+        multiple
+        truncate
+        virtual-list
+        :virtual-list-item-height="34"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.renewal_batch = renewalBatches.map(item => item.id)
+            "
+            @clear="filters.renewal_batch = []"
+          />
+        </template>
+      </x-select>
+
+      <!-- Renewal Batch - Input field for Car -->
+      <x-input
+        v-else
+        v-model="filters.renewal_batch"
+        placeholder="Search by Renewal Batch"
+        type="text"
+        class="w-full"
+        label="Renewal Batch"
+      />
 
       <x-select
         v-model="filters.quote_status_id"

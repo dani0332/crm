@@ -610,6 +610,13 @@ class SagePayloadFactory
             $payLoad = ($type == SageEnum::SCT_REVERSAL) ? $reversePayLoad : $payLoad;
         }
 
+        // Additional commission and Tax invoice booking Case
+        if (isset($extras['extras']['option_id']) && $extras['extras']['option_id'] == SendUpdateLogStatusEnum::ATIB) {
+            $payLoadInvoice = collect($payLoad['Invoices']);
+            $payLoad['Invoices'] = $payLoadInvoice->forget(1)->toArray();
+            $sageRequestType = SageEnum::SRT_CREATE_AR_SPPAY_PREM_INV;
+        }
+
         return [
             'endPoint' => 'AR/ARInvoiceBatches',
             'payload' => $payLoad,

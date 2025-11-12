@@ -24,7 +24,7 @@ class BusinessQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance']
+            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance', 'subSource']
         )->orderBy('created_at', 'desc');
     }
 
@@ -47,6 +47,7 @@ class BusinessQuoteRepository extends BaseRepository
             'advisor',
             'supportUser',
             'businessTypeOfInsurance',
+            'subSource',
         ])->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
             $businessTypeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
                 $groupMedical->where('text', quoteStatusCode::GROUP_MEDICAL);
@@ -72,6 +73,12 @@ class BusinessQuoteRepository extends BaseRepository
             ->withFakeLeadCriteria($forTotalLeadsCount);
         $this->adjustQueryByDateFilters($query, 'business_quote_request', $requestParams);
         $query->orderBy('business_quote_request.created_at', 'desc');
+
+        // Apply sub_source_id filter when present
+        if (! empty($requestParams['sub_source_id'])) {
+            $values = (array) $requestParams['sub_source_id'];
+            $query->whereIn('business_quote_request.sub_source_id', $values);
+        }
 
         if ($forTotalLeadsCount) {
             return $query->count();

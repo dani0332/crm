@@ -124,6 +124,9 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
+// Define record as computed property for template access
+const record = computed(() => page.props.record);
+
 const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
   id: page.props.record.plan_id,
@@ -2149,6 +2152,39 @@ const handleCancelConfirmationModal = () => {
                 <dt class="font-medium">LEAD SOURCE</dt>
                 <dd>{{ record.source }}</dd>
               </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      IMCRM SUB-SOURCE
+                    </label>
+                    <template #tooltip>{{
+                      record.sub_source_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ record.sub_source_text || 'N/A' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{
+                      record.sub_source_option_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ record.sub_source_option_text || 'N/A' }}</dd>
+              </div>
+
               <div v-if="isCompanyCar" class="grid sm:grid-cols-2">
                 <dt class="font-medium">Vehicle use</dt>
                 <dd>

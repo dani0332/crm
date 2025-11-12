@@ -1,4 +1,6 @@
 <script setup>
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
+
 defineProps({
   quotes: Object,
   leadStatuses: Array,
@@ -11,6 +13,7 @@ defineProps({
   insurerAMLStatus: Array,
   planSubTypes: Array,
   quoteSegments: Object,
+  subSources: Array,
 });
 
 const page = usePage();
@@ -18,6 +21,10 @@ let params = useUrlSearchParams('history');
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(true);
 const filtersCount = ref(0);
@@ -192,6 +199,7 @@ const tableHeader = ref([
     value: 'customer.pcp_tag_formatted',
     is_active: true,
   },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source_text', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -606,6 +614,13 @@ const insurerAMLStatusOption = computed(() =>
     label: item.text || item.label,
   })),
 );
+
+// CreateLeadModal setup
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = () => {
+  createLeadModal.value = false;
+};
 </script>
 
 <template>
@@ -636,16 +651,14 @@ const insurerAMLStatusOption = computed(() =>
             Cards View
           </x-button>
         </Link>
-        <Link :href="route('life-quotes-create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead
-          </x-button>
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          @click="createLeadModal = true"
+          v-if="readOnlyMode.isDisable === true"
+        >
+          Create Lead
+        </x-button>
       </div>
     </div>
     <x-divider class="my-4" />
@@ -1109,6 +1122,9 @@ const insurerAMLStatusOption = computed(() =>
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}
       </template>
+      <template #item-sub_source_text="item">
+        {{ item?.sub_source?.text || '' }}
+      </template>
       <template #item-quote_status="{ quote_status }">
         {{ quote_status?.code }}
       </template>
@@ -1151,6 +1167,15 @@ const insurerAMLStatusOption = computed(() =>
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <!-- CreateLeadModal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      :sub-sources="subSources"
+      route-name="life-quotes-create"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

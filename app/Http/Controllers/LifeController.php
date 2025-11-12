@@ -9,6 +9,7 @@ use App\Http\Requests\LifeSendOCAEmailRequest;
 use App\Jobs\SendOCAEmailJob;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\LookupService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Inertia\ResponseFactory;
@@ -37,6 +38,9 @@ class LifeController extends Controller
     public function index()
     {
         $data = $this->lifeQuoteService->getLifeQuoteData();
+        $subSources = app(LookupService::class)->getSubSource();
+
+        $data['subSources'] = $subSources;
 
         return inertia('LifeQuote/Index', $data);
     }
@@ -46,9 +50,24 @@ class LifeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
+        // Log parameters from CreateLeadModal
+        LoggerService::info('Life create method called with parameters', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->input('subSourceId'),
+            'subSourceOptionsId' => $request->input('subSourceOptionsId'),
+        ]);
+
         $data = $this->lifeQuoteService->getFormOptions();
+        $subSources = app(LookupService::class)->getSubSource();
+
+        $data['subSources'] = $subSources;
+        $data['leadSourceParams'] = [
+            'type' => $request->input('type'),
+            'subSource' => $request->input('subSourceId'),
+            'subSourceOption' => $request->input('subSourceOptionsId'),
+        ];
 
         return inertia('LifeQuote/Form', $data);
     }
@@ -91,6 +110,10 @@ class LifeController extends Controller
     public function edit($uuid)
     {
         $data = $this->lifeQuoteService->getEditData($uuid);
+        $subSources = app(LookupService::class)->getSubSource();
+
+        $data['subSources'] = $subSources;
+        $data['leadSourceParams'] = [];
 
         return inertia('LifeQuote/Form', $data);
     }
