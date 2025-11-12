@@ -11,6 +11,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\EmbeddedTransaction;
 use App\Models\InsuranceProvider;
 use App\Models\PaymentSplits;
+use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
@@ -19,6 +20,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -32,6 +34,8 @@ class SageProcessesService extends BaseService
 {
     protected $sendUpdateModelClass = SendUpdateLog::class;
     const SEND_UPDATE_MODEL_NAME = 'Send Update';
+    const OPTION_SEND_UPDATE = 'Send Update';
+    const OPTION_MAIN_LEAD = 'Main Lead';
 
     /**
      * Get failed sage processes with related quote/send_update and sage api logs
@@ -50,27 +54,50 @@ class SageProcessesService extends BaseService
                 ->when($request->insurance_provider_id && count($request->insurance_provider_id) > 0, function ($query) use ($request) {
                     $query->whereIn('insurance_provider_id', $request->insurance_provider_id);
                 })->when($request->quote_type_id, function ($query) use ($request) {
-                    $quoteModelClasses = [];
+                    $directModelClasses = [];
+                    $personalQuoteTypeIds = [];
+                    
                     foreach ($request->quote_type_id as $quote_type_id) {
                         if ($quote_type_id == self::SEND_UPDATE_MODEL_NAME) {
-                            $quoteModelClasses[] = $this->sendUpdateModelClass;
+                            $directModelClasses[] = $this->sendUpdateModelClass;
                         } else {
-                            $quoteModelClasses[] = QuoteTypes::getQuoteTypeIdToClass($quote_type_id);
+                            $quoteTypeEnum = QuoteTypes::getName($quote_type_id);
+                            
+                            if ($quoteTypeEnum) {
+                                if (checkPersonalQuotes($quoteTypeEnum->value)) {
+                                    $personalQuoteTypeIds[] = $quote_type_id;
+                                } else {
+                                    $modelClass = QuoteTypes::getQuoteTypeIdToClass($quote_type_id);
+                                    $directModelClasses[] = $modelClass;
+                                }
+                            }
                         }
                     }
 
-                    $query->whereIn('model_type', $quoteModelClasses);
+                    $query->where(function ($subQuery) use ($directModelClasses, $personalQuoteTypeIds) {
+                        if (!empty($directModelClasses)) {
+                            $subQuery->whereIn('model_type', $directModelClasses);
+                        }
+
+                        if (!empty($personalQuoteTypeIds)) {
+                            $subQuery->orWhere(function ($personalQuery) use ($personalQuoteTypeIds) {
+                                $personalQuery->where('model_type', PersonalQuote::class)
+                                    ->whereExists(function ($existsQuery) use ($personalQuoteTypeIds) {
+                                        $existsQuery->select(DB::raw(1))
+                                            ->from('personal_quotes')
+                                            ->whereColumn('personal_quotes.id', 'sage_processes.model_id')
+                                            ->whereIn('personal_quotes.quote_type_id', $personalQuoteTypeIds);
+                                    });
+                            });
+                        }
+                    });
 
                 })->when($request->option, function ($query) use ($request) {
-                    // Filter by option: "Send Update" or "Main Lead"
-                    if ($request->option === 'Send Update') {
-                        // Show only SendUpdateLog records
+                    if ($request->option === self::OPTION_SEND_UPDATE) {
                         $query->where('model_type', $this->sendUpdateModelClass);
-                    } elseif ($request->option === 'Main Lead') {
-                        // Show only Quote models (exclude SendUpdateLog)
+                    } elseif ($request->option === self::OPTION_MAIN_LEAD) {
                         $query->where('model_type', '!=', $this->sendUpdateModelClass);
                     }
-                    // If no filter or "All", show everything (no additional where clause)
                 })->when($request->date_from, function ($query) use ($request) {
                     $query->where('created_at', '>=', Carbon::parse($request->date_from)->startOfDay()->format('Y-m-d H:i:s'));
                 })->when($request->date_to, function ($query) use ($request) {
@@ -102,7 +129,6 @@ class SageProcessesService extends BaseService
                     $query->whereHas('sageApiLogs', function ($subQuery) {
                         $subQuery->where('status', SageEnum::STATUS_FAIL);
                     });
-                    // Check if the model's table has quote_status_id column
                     $modelInstance = $query->getModel();
                     if ($modelInstance && Schema::hasColumn($modelInstance->getTable(), 'quote_status_id')) {
                         $query->where('quote_status_id', QuoteStatusEnum::POLICY_BOOKING_FAILED);
@@ -144,8 +170,8 @@ class SageProcessesService extends BaseService
     public function getOptions()
     {
         return [
-            ['id' => 'Main Lead', 'text' => 'Main Lead'],
-            ['id' => 'Send Update', 'text' => 'Send Update'],
+            ['id' => self::OPTION_MAIN_LEAD, 'text' => self::OPTION_MAIN_LEAD],
+            ['id' => self::OPTION_SEND_UPDATE, 'text' => self::OPTION_SEND_UPDATE],
         ];
     }
 

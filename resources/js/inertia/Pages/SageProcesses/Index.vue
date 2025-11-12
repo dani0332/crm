@@ -17,6 +17,8 @@ const notification = useToast();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+const SEND_UPDATE_LOG_MODEL_TYPE = 'App\\Models\\SendUpdateLog';
+
 const loader = reactive({
   table: false,
   export: false,
@@ -200,6 +202,7 @@ function onSubmit() {
 function clearFilters() {
   availableFilters.insurance_provider_id = [];
   availableFilters.quote_type_id = [];
+  availableFilters.option = '';
   availableFilters.date_from = null;
   availableFilters.date_to = null;
   filtersCount.value = 0;
@@ -359,7 +362,7 @@ async function exportExcel() {
       <!-- REF ID Column - Main Lead -->
       <template #item-ref_id="item">
         <Link
-          v-if="item.model_type !== 'App\\Models\\SendUpdateLog'"
+          v-if="item.model_type !== SEND_UPDATE_LOG_MODEL_TYPE"
           :href="getDetailPageRoute(item)"
           class="text-primary-500 hover:underline"
         >
@@ -371,7 +374,7 @@ async function exportExcel() {
       <!-- SU Ref ID Column - Send Update -->
       <template #item-su_ref_id="item">
         <Link
-          v-if="item.model_type === 'App\\Models\\SendUpdateLog'"
+          v-if="item.model_type === SEND_UPDATE_LOG_MODEL_TYPE"
           :href="getDetailPageRoute(item)"
           class="text-primary-500 hover:underline"
         >
