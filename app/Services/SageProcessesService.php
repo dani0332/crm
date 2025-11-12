@@ -55,10 +55,10 @@ class SageProcessesService extends BaseService
                 })->when($request->quote_type_id, function ($query) use ($request) {
                     $quoteModelClasses = [];
                     foreach ($request->quote_type_id as $quote_type_id) {
-                        if ($request->quote_type_id == self::SEND_UPDATE_MODEL_NAME) {
+                        if ($quote_type_id == self::SEND_UPDATE_MODEL_NAME) {
                             $quoteModelClasses[] = $this->sendUpdateModelClass;
                         } else {
-                            $quoteModelClasses[] = QuoteTypes::getQuoteTypeIdToClass(QuoteTypes::getName($quote_type_id));
+                            $quoteModelClasses[] = QuoteTypes::getQuoteTypeIdToClass($quote_type_id);
                         }
                     }
                     $query->whereIn('model_type', $quoteModelClasses);
@@ -78,7 +78,7 @@ class SageProcessesService extends BaseService
                                 $query->select('id', 'code', 'paymentable_type', 'paymentable_id', 'price_vat_applicable', 'price_vat',
                                     'discount_value', 'total_price', 'commission_vat_applicable', 'commission_vat',
                                     'commission', 'captured_at', 'invoice_description', 'insurer_tax_number', 'insurer_commmission_invoice_number',
-                                    'payment_status_id')
+                                    'payment_status_id', 'send_update_log_id')
                                     ->with([
                                        'paymentSplits' => function ($query) {
                                            $query->select('id', 'code', 'sage_reciept_id');

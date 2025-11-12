@@ -91,7 +91,7 @@ class SageProcessesExport implements CsvExportableInterface
         $payment = $row->model?->payments[0] ?? null;
 
         // Extract sage API log information (first failed log)
-        $sageApiLog = $row->model?->sage_api_logs[0] ?? null;
+        $sageApiLog = $row->model?->sageApiLogs[0] ?? null;
         // Parse sage response to extract error message if available
         $sageResponse = $sageApiLog?->response ?? $this->notAvailable;
 
