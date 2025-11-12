@@ -46,7 +46,12 @@ class BuyLeadController extends Controller
 
     public function show()
     {
-        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CAR_CAT_A->value]))->values()->toArray();
+        
+        if (auth()->user()->hasPermissionTo(PermissionsEnum::BUY_LEADS_REVIVAL)) {
+            $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CAR_CAT_A->value]))->values()->toArray();
+        } else {
+            $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
+        }
         $data['requests'] = $this->buyLeadService->getActiveRequests();
 
         return inertia('BuyLeads/BuyLeadsRequest', $data);
@@ -67,8 +72,12 @@ class BuyLeadController extends Controller
         if ($quoteType == QuoteTypes::CAR_CAT_A->value) {
             $quoteType = QuoteTypes::CAR->value;
         }
+        if (auth()->user()->hasPermissionTo(PermissionsEnum::BUY_LEADS_REVIVAL)) {
+            $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CAR_CAT_A->value]))->values()->toArray();
+        } else {
+            $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
+        }
         $quoteType = QuoteTypes::tryFrom($quoteType);
-        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CAR_CAT_A->value]))->values()->toArray();
         [$startDate, $endDate] = request('date');
 
         if ($quoteType && $startDate && $endDate) {
