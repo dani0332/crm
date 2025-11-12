@@ -426,10 +426,7 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
       :loading="isLoading"
       :disabled="isDisabled || isPlanSelectionDisable"
       @click.prevent="checkAndUpdateSelectedPlan()"
-      :class="[
-        buttonSize === 'sm' ? 'min-w-[100px]' : '',
-        buttonClass
-      ]"
+      :class="[buttonSize === 'sm' ? 'min-w-[100px]' : '', buttonClass]"
     >
       Select
     </x-button>
