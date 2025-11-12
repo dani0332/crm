@@ -57,7 +57,8 @@ class SageProcessesExport implements CsvExportableInterface
         return [
             'Sage Pro. ID',
             'Quote UUID',
-            'Quote Code',
+            'REF ID',
+            'SU Ref ID',
             'Lead Create Date',
             'Policy Number',
             'Price Vat Applicable',
@@ -113,10 +114,16 @@ class SageProcessesExport implements CsvExportableInterface
             }
         }
 
+        // Determine if this is SendUpdateLog or Main Lead
+        $isSendUpdate = $row->model_type === \App\Models\SendUpdateLog::class;
+        $refId = $isSendUpdate ? $this->notAvailable : ($row->model?->code ?? $this->notAvailable);
+        $suRefId = $isSendUpdate ? ($row->model?->code ?? $this->notAvailable) : $this->notAvailable;
+
         return [
             $row->id ?? $this->notAvailable,
             $row->model?->uuid ?? $this->notAvailable,
-            $row->model?->code ?? $this->notAvailable,
+            $refId,
+            $suRefId,
             $leadCreateDate,
             $row->model?->policy_number ?? $this->notAvailable,
             $payment?->price_vat_applicable ?? $this->notAvailable,

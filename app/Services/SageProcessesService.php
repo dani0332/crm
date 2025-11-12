@@ -61,6 +61,16 @@ class SageProcessesService extends BaseService
 
                     $query->whereIn('model_type', $quoteModelClasses);
 
+                })->when($request->option, function ($query) use ($request) {
+                    // Filter by option: "Send Update" or "Main Lead"
+                    if ($request->option === 'Send Update') {
+                        // Show only SendUpdateLog records
+                        $query->where('model_type', $this->sendUpdateModelClass);
+                    } elseif ($request->option === 'Main Lead') {
+                        // Show only Quote models (exclude SendUpdateLog)
+                        $query->where('model_type', '!=', $this->sendUpdateModelClass);
+                    }
+                    // If no filter or "All", show everything (no additional where clause)
                 })->when($request->date_from, function ($query) use ($request) {
                     $query->where('created_at', '>=', Carbon::parse($request->date_from)->startOfDay()->format('Y-m-d H:i:s'));
                 })->when($request->date_to, function ($query) use ($request) {
@@ -127,6 +137,15 @@ class SageProcessesService extends BaseService
         return [
             'insuranceProviders' => $this->getInsuranceProviders(),
             'quoteTypes' => $this->getQuoteTypes(),
+            'options' => $this->getOptions(),
+        ];
+    }
+
+    public function getOptions()
+    {
+        return [
+            ['id' => 'Main Lead', 'text' => 'Main Lead'],
+            ['id' => 'Send Update', 'text' => 'Send Update'],
         ];
     }
 

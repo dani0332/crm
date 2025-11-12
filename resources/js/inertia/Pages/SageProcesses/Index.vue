@@ -25,7 +25,8 @@ const loader = reactive({
 // Table headers
 const tableHeader = computed(() => [
   { text: 'Sage Pro. ID', value: 'id', width: 40, sortable: true },
-  { text: 'Quote Code', value: 'quote_code', width: 150, sortable: true },
+  { text: 'REF ID', value: 'ref_id', width: 150, sortable: true },
+  { text: 'SU Ref ID', value: 'su_ref_id', width: 150, sortable: true },
   { text: 'Lead Create Date', value: 'lead_create_date', width: 160, sortable: true },
   { text: 'Policy Number', value: 'policy_number', width: 150, sortable: true },
   {
@@ -109,6 +110,7 @@ const tableHeader = computed(() => [
 const availableFilters = reactive({
   insurance_provider_id: props.filters?.insurance_provider_id || [],
   quote_type_id: props.filters?.quote_type_id || [],
+  option: props.filters?.option || '',
   date_from: props.filters?.date_from || '',
   date_to: props.filters?.date_to || '',
   page: props.failedProcesses?.current_page || 1,
@@ -142,6 +144,15 @@ const insuranceProvidersOptions = computed(() => {
     props.dropdowns?.insuranceProviders?.map(ip => ({
       value: ip.id,
       label: ip.text,
+    })) || []
+  );
+});
+
+const optionsOptions = computed(() => {
+  return (
+    props.dropdowns?.options?.map(opt => ({
+      value: opt.id,
+      label: opt.text,
     })) || []
   );
 });
@@ -264,7 +275,7 @@ async function exportExcel() {
     <Head :title="'Failed Sage Processes'" />
     <div class="flex justify-between items-center">
       <x-form @submit="onSubmit" :auto-focus="false" class="w-full mt-4 py-4">
-        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <x-select
             v-model="availableFilters.insurance_provider_id"
             label="Insurance Provider"
@@ -284,6 +295,16 @@ async function exportExcel() {
             filterPlaceholder="Filter Line of Business...."
             clearable
             multiple
+          />
+
+          <x-select
+            v-model="availableFilters.option"
+            label="Option"
+            placeholder="Select Option"
+            :options="optionsOptions"
+            filterable
+            filterPlaceholder="Filter Option...."
+            clearable
           />
 
           <DatePicker
@@ -335,14 +356,28 @@ async function exportExcel() {
       fixed-header
       :table-height="600"
     >
-      <!-- Quote Code Column -->
-      <template #item-quote_code="item">
+      <!-- REF ID Column - Main Lead -->
+      <template #item-ref_id="item">
         <Link
+          v-if="item.model_type !== 'App\\Models\\SendUpdateLog'"
           :href="getDetailPageRoute(item)"
           class="text-primary-500 hover:underline"
         >
           <span>{{ item.model?.code }}</span>
         </Link>
+        <span v-else>N/A</span>
+      </template>
+
+      <!-- SU Ref ID Column - Send Update -->
+      <template #item-su_ref_id="item">
+        <Link
+          v-if="item.model_type === 'App\\Models\\SendUpdateLog'"
+          :href="getDetailPageRoute(item)"
+          class="text-primary-500 hover:underline"
+        >
+          <span>{{ item.model?.code }}</span>
+        </Link>
+        <span v-else>N/A</span>
       </template>
 
       <!-- Lead Create Date Column -->
