@@ -7,6 +7,7 @@ namespace App\Traits;
 use App\Contracts\CsvExportableInterface;
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -25,12 +26,15 @@ trait ModernCsvExportable
         $fileName = $fileName.'-'.Carbon::now()->format('Y-m-d');
 
         return new StreamedResponse(function () {
+            $downloadStart = microtime(true);
             $handle = fopen('php://output', 'w');
             fputcsv($handle, $this->headings());
 
             $data = $this->collection([]);
+            $rowsWritten = 0;
             foreach ($data as $record) {
                 fputcsv($handle, $this->map($record));
+                $rowsWritten++;
             }
 
             if (method_exists($this, 'postDataRows')) {
@@ -38,6 +42,12 @@ trait ModernCsvExportable
             }
 
             fclose($handle);
+
+            LoggerService::info('CSV download stream completed', extra: [
+                'export_class' => static::class,
+                'rows' => $rowsWritten,
+                'stream_duration_seconds' => round(microtime(true) - $downloadStart, 3),
+            ]);
         }, 200, [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="'.$fileName.'.csv"',

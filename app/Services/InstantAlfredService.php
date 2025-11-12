@@ -128,6 +128,9 @@ class InstantAlfredService extends BaseService
                     $query->leftJoin('quote_batches as qb', 'qb.id', '=', 'pqr.quote_batch_id')
                         ->addSelect(['qb.name as quote_batch_id_text']);
                 })
+                ->when($this->needsRenewalBatchData($request), function ($query) {
+                    $query->addSelect(['pqr.renewal_batch as renewal_batch_text']);
+                })
                 ->when($this->needsQuoteTypeSpecificJoins($quoteTypeId, $request), function ($query) use ($quoteTypeId) {
                     $this->addQuoteTypeSpecificJoins($query, $quoteTypeId);
                     $query->addSelect([DB::raw($this->getLeadAssignmentTriggerSelect($quoteTypeId))]);
@@ -156,6 +159,7 @@ class InstantAlfredService extends BaseService
         $complexFilters = [
             'transaction_type_id',
             'quote_batch_id',
+            'renewal_batch',
             'quote_status_id',
             'payment_status_id',
             'sale_leads',
@@ -185,7 +189,9 @@ class InstantAlfredService extends BaseService
 
         $partialQuery->whereNotNull('chat_initiated_at');
 
-        if ($request->email == null && $request->mobile_no == null && $request->quoteId == null && empty($request->chat_initiated_at) && empty($request->lead_created_at)) {
+        if ($request->email == null && $request->mobile_no == null && $request->quoteId == null 
+        && empty($request->chat_initiated_at) && empty($request->lead_created_at) 
+        && (is_null($request->renewal_batch) || (is_array($request->renewal_batch) && empty($request->renewal_batch)))) {
             // Default to current day if no dates are provided
             $dateFrom = now()->startOfDay();
             $dateTo = now()->endOfDay();
@@ -199,6 +205,16 @@ class InstantAlfredService extends BaseService
 
         if (isset($request->quote_batch_id) && ! empty($request->quote_batch_id)) {
             $partialQuery->whereIn('pqr.quote_batch_id', $request->quote_batch_id);
+        }
+
+        if (isset($request->renewal_batch) && ! empty($request->renewal_batch)) {
+            if (is_array($request->renewal_batch)) {
+                // For non-motor LOBs (dropdown with multiple selection)
+                $partialQuery->whereIn('pqr.renewal_batch', $request->renewal_batch);
+            } else {
+                // For Car (input field)
+                $partialQuery->where('pqr.renewal_batch', $request->renewal_batch);
+            }
         }
 
         if (isset($request->quote_status_id) && is_array($request->quote_status_id) && count($request->quote_status_id) > 0) {
@@ -423,6 +439,9 @@ class InstantAlfredService extends BaseService
                     // Add segment from SQL data
                     $record['segment'] = $sqlData[$quoteId]->segment ?? 'N/A';
 
+                    // Add renewal batch information
+                    $record['renewal_batch_text'] = $sqlData[$quoteId]->renewal_batch_text ?? 'N/A';
+
                     // Add lead_assignment_trigger and its text representation
                     $record['lead_assignment_trigger'] = $sqlData[$quoteId]->lead_assignment_trigger ?? null;
                     $record['lead_assignment_trigger_text'] = $sqlData[$quoteId]->lead_assignment_trigger
@@ -480,6 +499,9 @@ class InstantAlfredService extends BaseService
                 $record['segment'] = $sqlData[$quoteId]->segment ?? 'N/A';
 
                 $record['lead_created_at'] = $sqlData[$quoteId]->lead_created_at ?? 'N/A';
+
+                // Add renewal batch information
+                $record['renewal_batch_text'] = $sqlData[$quoteId]->renewal_batch_text ?? 'N/A';
 
                 // Add lead_assignment_trigger and its text representation
                 $record['lead_assignment_trigger'] = $sqlData[$quoteId]->lead_assignment_trigger ?? null;
@@ -717,6 +739,14 @@ class InstantAlfredService extends BaseService
     private function needsQuoteBatchData($request): bool
     {
         return ! empty($request->quote_batch_id) || ! empty($request->report);
+    }
+
+    /**
+     * Determine if renewal batch data is needed
+     */
+    private function needsRenewalBatchData($request): bool
+    {
+        return ! empty($request->renewal_batch) || ! empty($request->report);
     }
 
     /**

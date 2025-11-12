@@ -7,6 +7,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\InsuranceProviderEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -191,6 +192,14 @@ class TravelQuoteService extends BaseService
             'tqr.pc_qualified',
             DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
             DB::raw(TravelQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
+            // Sub-source fields
+            'tqr.sub_source_id',
+            'tqr.sub_source_options_id',
+            'tqr.additional_notes',
+            'ss.text as sub_source_text',
+            'ss.description as sub_source_description',
+            'sso.text as sub_source_option_text',
+            'sso.description as sub_source_option_description',
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -221,7 +230,9 @@ class TravelQuoteService extends BaseService
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
-            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
+            ->leftJoin('lookups as ss', 'ss.id', '=', 'tqr.sub_source_id')
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'tqr.sub_source_options_id');
     }
 
     public function getCustomerTravelInfo(int $quoteRequestId, string $quoteType)
@@ -286,9 +297,21 @@ class TravelQuoteService extends BaseService
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'departureCountryId' => $request->departure_country_id ?? null,
+            // Sub-source fields from CreateLeadModal
+            'subSourceId' => $request->sub_source_id ?? null,
+            'subSourceOptionsId' => $request->sub_source_options_id ?? null,
+            'additionalNotes' => $request->additional_notes ?? null,
         ];
 
         LoggerService::info(self::class.' - saveTravelQuote', ['data' => $travelQuote]);
+
+        // Log lead source parameters for Travel quotes
+        LoggerService::info('Travel saveTravelQuote - Lead source parameters:', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->sub_source_id,
+            'subSourceOptionsId' => $request->sub_source_options_id,
+            'additionalNotes' => $request->additional_notes,
+        ]);
         if ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0') {
 
             foreach ($request->members as $member) {
@@ -353,7 +376,11 @@ class TravelQuoteService extends BaseService
 
             $this->selfAssign(QuoteTypes::TRAVEL, $response->quoteUID);
 
-            SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
+            if ($travelQuote['source'] != LeadSourceEnum::IMCRM) {
+                SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
+            } else {
+                LoggerService::info(self::class.'Lead source is IMCRM so skipping SendTravelOCBIntroEmailJob');
+            }
             LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
 
             $customerId = app(CustomerService::class)->getCustomerIdByEmail($request->email);
@@ -543,6 +570,18 @@ class TravelQuoteService extends BaseService
         $travelQuote->departure_country_id = $request->departure_country_id ?? null;
 
         $travelQuote->details = $request->details;
+
+        // Update lead source fields from CreateLeadModal
+        if ($request->has('sub_source_id')) {
+            $travelQuote->sub_source_id = $request->sub_source_id;
+        }
+        if ($request->has('sub_source_options_id')) {
+            $travelQuote->sub_source_options_id = $request->sub_source_options_id;
+        }
+        if ($request->has('additional_notes')) {
+            $travelQuote->additional_notes = $request->additional_notes;
+        }
+
         $travelQuote->save();
 
         $customerId = app(CustomerService::class)->getCustomerIdByEmail($travelQuote->email);

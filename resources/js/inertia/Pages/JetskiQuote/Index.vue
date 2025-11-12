@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
 defineProps({
@@ -13,10 +14,12 @@ defineProps({
   },
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  subSources: Array,
 });
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const loader = reactive({
   table: false,
   export: false,
@@ -65,6 +68,9 @@ const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -211,6 +217,7 @@ const tableHeader = [
     value: 'customer.pcp_tag_formatted',
     is_active: true,
   },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text' },
 ];
 
 const exportLoader = ref(false);
@@ -369,6 +376,13 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
+
+// CreateLeadModal setup
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = () => {
+  createLeadModal.value = false;
+};
 </script>
 
 <template>
@@ -381,7 +395,7 @@ const insurerAMLStatusOption = computed(() => {
           v-if="can(permissionsEnum.JetskiQuotesCreate)"
           size="sm"
           color="#ff5e00"
-          :href="route('jetski-quotes-create')"
+          @click="createLeadModal = true"
         >
           Create Lead
         </x-button>
@@ -782,6 +796,9 @@ const insurerAMLStatusOption = computed(() => {
           {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
       </template>
+      <template #item-sub_source.text="{ sub_source }">
+        {{ sub_source?.text }}
+      </template>
     </DataTable>
 
     <Pagination
@@ -792,6 +809,15 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <!-- CreateLeadModal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      :sub-sources="subSources"
+      route-name="jetski-quotes-create"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

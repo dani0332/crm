@@ -44,6 +44,7 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -72,6 +73,7 @@ class CycleQuoteController extends Controller
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('CycleQuote/Index', [
             'quotes' => $personalQuotes,
@@ -81,15 +83,31 @@ class CycleQuoteController extends Controller
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : CycleQuoteRepository::getData(true, true),
             'authorizedDays' => intval($authorizedDays->value),
             'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
+            'subSources' => $subSources,
         ]);
     }
 
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
-    public function create()
+    public function create(Request $request)
     {
+        // Log parameters from CreateLeadModal
+        LoggerService::info('Cycle create method called with parameters', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->input('subSourceId'),
+            'subSourceOptionsId' => $request->input('subSourceOptionsId'),
+        ]);
+
         $data = CycleQuoteRepository::getFormOptions();
+        $subSources = app(LookupService::class)->getSubSource();
+
+        $data['subSources'] = $subSources;
+        $data['leadSourceParams'] = [
+            'type' => $request->input('type'),
+            'subSource' => $request->input('subSourceId'),
+            'subSourceOption' => $request->input('subSourceOptionsId'),
+        ];
 
         return inertia('CycleQuote/Form', $data);
     }
@@ -120,11 +138,14 @@ class CycleQuoteController extends Controller
 
         $quote = CycleQuoteRepository::getBy('uuid', $uuid);
 
+        $subSources = app(LookupService::class)->getSubSource();
+
         return inertia(
             'CycleQuote/Form',
             array_merge($data, [
                 'quote' => $quote,
-            ])
+                'subSources' => $subSources,
+            ]),
         );
     }
 
@@ -163,7 +184,7 @@ class CycleQuoteController extends Controller
                 return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
             })->values();
         }
-        $quote->load('documents.createdBy:id,name,email');
+        $quote->load(['documents.createdBy:id,name,email', 'subSource', 'subSourceOption']);
 
         @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Cycle);
 

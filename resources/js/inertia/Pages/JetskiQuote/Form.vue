@@ -1,4 +1,6 @@
 <script setup>
+const page = usePage();
+
 const props = defineProps({
   genderOptions: Object,
   nationalities: Object,
@@ -10,6 +12,8 @@ const props = defineProps({
   dropdownSource: Object,
   model: String,
   quote: { type: Object, default: null },
+  subSources: Array,
+  leadSourceParams: Object,
 });
 
 const quoteForm = useForm({
@@ -18,6 +22,7 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
+  source: props.quote?.source || '',
   jetski_make: props.quote?.jetski_quote?.jetski_make,
   jetski_model: props.quote?.jetski_quote?.jetski_model,
   year_of_manufacture_id: props.quote?.jetski_quote?.year_of_manufacture_id,
@@ -27,12 +32,82 @@ const quoteForm = useForm({
   jetski_material_id: props.quote?.jetski_quote?.jetski_material_id,
   jetski_use_id: props.quote?.jetski_quote?.jetski_use_id,
   claim_history: props.quote?.jetski_quote?.claim_history,
+  // Sub-source fields
+  sub_source_id:
+    parseInt(props.quote?.sub_source_id, 10) ||
+    parseInt(props.leadSourceParams?.subSource, 10) ||
+    null,
+  sub_source_options_id:
+    parseInt(props.quote?.sub_source_options_id, 10) ||
+    parseInt(props.leadSourceParams?.subSourceOption, 10) ||
+    null,
+  notes: (() => {
+    return props.quote?.notes || '';
+  })(),
 });
 
-const { isRequired, isEmail, isMobileNo } = useRules();
+const { isRequired, isEmail, isMobileNo, maxCharacters } = useRules();
 
 const isEmptyField = ref(false);
 const editMode = computed(() => (props.quote ? true : false));
+
+// Sub-source computed properties
+const subSourceOptions = computed(() => {
+  return (props.subSources || []).map(item => ({
+    value: item.id,
+    label: item.text,
+    suffix: item.description || null,
+  }));
+});
+
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+  const selectedSubSource = props.subSources?.find(
+    source => source.id == quoteForm.sub_source_id,
+  );
+  const pcpOnlyOptions = ['pcp-cross-sell', 'pcp-customer-referral'];
+  return (
+    selectedSubSource?.childs?.map(option => ({
+      value: option.id,
+      label: option.text,
+      suffix: option.description || null,
+      disabled:
+        !isPcpSubSourceOptionAllowed.value &&
+        pcpOnlyOptions.includes(String(option.code)),
+    })) || []
+  );
+});
+
+const isReferralType = computed(() => {
+  return (
+    props.leadSourceParams?.type === 'referral' || quoteForm.source === 'IMCRM'
+  );
+});
+
+const canEditSubSourceFields = computed(() => {
+  return useHasAnyRole([
+    rolesEnum.JetskiManager,
+    rolesEnum.Admin,
+    rolesEnum.LeadPool,
+  ]);
+});
+
+const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
+
+// Watchers for field resets and partner name handling
+watch(
+  () => quoteForm.sub_source_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      quoteForm.sub_source_options_id = null;
+    }
+  },
+);
+
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {
     isEmptyField.value = true;
@@ -76,6 +151,57 @@ function onSubmit(isValid) {
       </x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Lead Source Fields - Only show when type is referral -->
+        <x-select
+          v-if="isReferralType"
+          label="IMCRM SUB-SOURCE"
+          v-model="quoteForm.sub_source_id"
+          :options="subSourceOptions"
+          class="w-full"
+          placeholder="Select IMCRM SUB-SOURCE"
+          filterable
+          filterPlaceholder="Filter IMCRM SUB-SOURCE...."
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          required
+          :error="quoteForm.errors.sub_source_id"
+          tooltip="Manually created lead in IMCRM"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-select
+          v-if="isReferralType && quoteForm.sub_source_id"
+          label="SUB SOURCE OPTIONS"
+          v-model="quoteForm.sub_source_options_id"
+          :options="subSourceOptionOptions"
+          class="w-full"
+          placeholder="Select Sub Source Option"
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+          tooltip="Type of referral lead"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
         <x-input
           v-model="quoteForm.first_name"
           type="text"
@@ -225,6 +351,14 @@ function onSubmit(isValid) {
           required
         />
       </div>
+
+      <x-textarea
+        v-model="quoteForm.notes"
+        class="w-full"
+        :error="quoteForm.errors.notes"
+        label="ADDITIONAL NOTES"
+        placeholder="Enter additional notes"
+      />
 
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">

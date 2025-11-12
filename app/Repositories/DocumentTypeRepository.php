@@ -36,7 +36,7 @@ class DocumentTypeRepository extends BaseRepository
                 ->where('quote_request_id', $quote->id)
                 ->where('quote_type_id', QuoteTypes::BUSINESS->id())
                 ->where(function ($aml) {
-                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
                     $aml->orWhereNull('screening_type');
                 })->latest()->first();
             $businessTypeOfInsurance = $quote->business_type_of_insurance_id;
@@ -66,7 +66,7 @@ class DocumentTypeRepository extends BaseRepository
                 ->where('quote_request_id', $quote->id)
                 ->where('quote_type_id', QuoteTypes::BUSINESS->id())
                 ->where(function ($aml) {
-                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
                     $aml->orWhereNull('screening_type');
                 })->latest()->first();
 
@@ -104,7 +104,7 @@ class DocumentTypeRepository extends BaseRepository
                 ->where('quote_request_id', $quote->id)
                 ->where('quote_type_id', QuoteTypes::BUSINESS->id())
                 ->where(function ($aml) {
-                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
                     $aml->orWhereNull('screening_type');
                 })->latest()->first();
             $documentTypes->when($quote->business_type_of_insurance_id, function ($query) use ($quote) {
