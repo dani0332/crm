@@ -46,7 +46,7 @@ class BuyLeadController extends Controller
 
     public function show()
     {
-        
+
         if (auth()->user()->hasPermissionTo(PermissionsEnum::BUY_LEADS_REVIVAL)) {
             $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CAR_CAT_A->value]))->values()->toArray();
         } else {
