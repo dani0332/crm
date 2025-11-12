@@ -62,7 +62,7 @@ class AlfredChatController extends Controller
         $transactionTypes = Lookup::select('id', 'text')->whereIn('text', [TransactionTypeEnum::EXISTING_CUSTOMER_NEW_BUSINESS, TransactionTypeEnum::NEW_BUSINESS, TransactionTypeEnum::EXISTING_CUSTOMER_RENEWAL])->get();
 
         return inertia('AlfredChat/Index', ['logs' => $data->simplePaginate(15)->withQueryString(),  'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all(), 'transactionTypes' => $transactionTypes,
-         'renewalBatches' => RenewalBatch::getAllBatches(true)]);
+            'renewalBatches' => RenewalBatch::getAllBatches(true)]);
 
     }
 
