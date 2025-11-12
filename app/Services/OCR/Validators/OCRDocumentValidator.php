@@ -20,6 +20,16 @@ class OCRDocumentValidator
             'nationality_string',
         ],
         DocumentTypeCode::EMIRATES_ID => [
+            'eid_number',
+            'name',
+            'date_of_birth',
+            'nationality',
+            'sex',
+            'issuing_date',
+            'expiry_date',
+            'issuing_place',
+            'occupation',
+            'sponsor',
         ],
         DocumentTypeCode::REGISTRATION_CARD_MULKIYA => [
         ],
