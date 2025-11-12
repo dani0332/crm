@@ -6,12 +6,15 @@ use App\Enums\DocumentTypeCode;
 
 class CarValidator
 {
-    private $fieldsToVerify = [
+    private const FIELDS_TO_VERIFY = [
         DocumentTypeCode::DRIVING_LICENSE => [
             'driver_license_expiry_date',
             'driver_license_expiry_place',
         ],
         DocumentTypeCode::EMIRATES_ID => [
+            'date_of_birth',
+            'nationality',
+            'name',
 
         ],
         DocumentTypeCode::REGISTRATION_CARD_MULKIYA => [
@@ -21,7 +24,7 @@ class CarValidator
 
     public function validate(array $ocrData, string $documentType): bool
     {
-        foreach ($this->fieldsToVerify[$documentType] as $field) {
+        foreach (self::FIELDS_TO_VERIFY[$documentType] as $field) {
             if (empty($ocrData[$field])) {
                 return false;
             }
