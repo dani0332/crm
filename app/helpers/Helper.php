@@ -748,7 +748,7 @@ if (! function_exists('getIMLogo')) {
 if (! function_exists('getFavicon')) {
     /**
      * Get Insurance Market favicon URL
-     * 
+     *
      * @return string CDN URL of the favicon
      */
     function getFavicon()
