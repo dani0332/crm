@@ -70,13 +70,13 @@ class MulkiyaDataProcessor
                 $registrationCertificateUpdated = $this->updateRegistrationCertificate($this->quote, $processedData['registration_certificate_fields']);
             }
 
-            DB::commit();
-
-            LoggerService::info('Mulkiya data processing completed successfully');
-
             // Trigger OCR success validation
             $isOCRSuccess = app(OCRDocumentValidator::class)->validateMulkiyaFields($this->quote->id);
             LoggerService::info('Mulkiya data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($processedData));
+
+            DB::commit();
+
+            LoggerService::info('Mulkiya data processing completed successfully');
 
             return $vehicleDriverDetailUpdated || $carQuoteDetailUpdated || $carQuoteUpdated || $registrationCertificateUpdated;
 
