@@ -33,8 +33,7 @@ class EmiratesIdDataProcessor
     public function __construct(
         private Model $quote,
         private object $data,
-        private string $documentTypeCode,
-        private int $quoteDocumentId,
+        private string $documentTypeCode
     ) {
         $this->emiratesIdExtractor = new EmiratesIdExtractor($this->data);
     }

@@ -37,7 +37,6 @@ class PopulateDocumentData implements ShouldQueue
         protected int $userId,
         bool $isEcom = false,
         protected bool $isSendUpdateEligibleForOCR = false,
-        protected int $quoteDocumentId,
     ) {
         $this->isEcom = $isEcom;
         $this->onQueue('shared');
@@ -75,7 +74,6 @@ class PopulateDocumentData implements ShouldQueue
                 $this->userId,
                 $this->isEcom,
                 $this->isSendUpdateEligibleForOCR,
-                $this->quoteDocumentId
             );
 
             if ($isSuccess === null) {

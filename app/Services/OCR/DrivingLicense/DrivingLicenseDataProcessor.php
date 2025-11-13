@@ -23,8 +23,7 @@ class DrivingLicenseDataProcessor
     public function __construct(
         private Model $quote,
         private object $data,
-        private string $documentTypeCode,
-        private int $quoteDocumentId,
+        private string $documentTypeCode
     ) {
         $this->drivingLicenseExtractor = new DrivingLicenseExtractor($this->data);
     }

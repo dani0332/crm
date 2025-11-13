@@ -228,8 +228,7 @@ class OCRService
         float $startTime,
         float $apiCallStartTime,
         object $data,
-        bool $isSendUpdateEligibleForOCR = false,
-        int $quoteDocumentId
+        bool $isSendUpdateEligibleForOCR = false
     ): ?bool {
         $apiCallEndTime = microtime(true);
         $apiCallExecutionTime = round(($apiCallEndTime - $apiCallStartTime) * 1000, 2);
@@ -245,8 +244,7 @@ class OCRService
             $data,
             $documentCategory,
             $isSendUpdateEligibleForOCR,
-            $quoteType,
-            $quoteDocumentId
+            $quoteType
         );
 
         $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
@@ -372,8 +370,7 @@ class OCRService
         string $fileMimeType,
         int $userId,
         bool $isEcom,
-        bool $isSendUpdateEligibleForOCR,
-        int $quoteDocumentId
+        bool $isSendUpdateEligibleForOCR
     ): ?bool {
         // Record start time for OCR processing
         $startTime = microtime(true);
@@ -472,8 +469,7 @@ class OCRService
                     $startTime,
                     $apiCallStartTime,
                     $data,
-                    $isSendUpdateEligibleForOCR,
-                    $quoteDocumentId
+                    $isSendUpdateEligibleForOCR
                 );
             } else {
                 $result = $this->handleProcessingFailure(
@@ -509,7 +505,6 @@ class OCRService
         $quote,
         string $filePathAzure,
         string $fileMimeType,
-        int $quoteDocumentId,
         ?string $quoteTypeParam = null,
         bool $isSendUpdateEligibleForOCR = false,
     ): void {
@@ -599,8 +594,7 @@ class OCRService
                 $fileMimeType,
                 $userId ?? 0,
                 $isEcom,
-                $isSendUpdateEligibleForOCR,
-                $quoteDocumentId
+                $isSendUpdateEligibleForOCR
             );
         } else {
             LoggerService::warning('OCR Dispatch - Missing required parameters - Quote UUID: '.$quote->uuid);
