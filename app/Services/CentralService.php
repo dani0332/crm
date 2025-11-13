@@ -1648,10 +1648,9 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Cyber) {
-            $emailData->planName = $quote?->cyberPlan?->text ?? '-';
             $emailData->coverage = $quote?->cyberPlanDetail?->coverage ?? '-';
-            $emailData->planName = $quote?->cyberPlanDetail?->text ?? '-';
-            $emailData->providerName = $quote?->cyberPlanDetail?->provider_name ?? '-';
+            $emailData->planName = $quote?->cyberPlanDetail?->planName ?? '-';
+            $emailData->providerName = $quote?->cyberPlanDetail?->providerName ?? '-';
         }
 
         $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
