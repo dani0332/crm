@@ -907,6 +907,7 @@ class RenewalsUploadService
                         $quoteData['cylinder'] = $carModelDetail->cylinder;
                         $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
                         $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
+                        $quoteData['car_model_detail_id'] = $carModelDetail->id;
                     }
                 }
 
@@ -1189,6 +1190,7 @@ class RenewalsUploadService
                     ->first())) {
                     $quoteData['cylinder'] = $carModelDetail->cylinder;
                     $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
+                    $quoteData['car_model_detail_id'] = $carModelDetail->id;
                 }
 
                 if ($renewalUploadLead->skip_plans == 2 && $data['make'] == GenericRequestEnum::MOTOR_BIKE) {
