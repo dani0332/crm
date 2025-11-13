@@ -17,8 +17,6 @@ class CcPaymentProcess extends Model
         'quoteable_id',
         'amount_captured',
         'status',
-        'environment',
-        'ip_address',
     ];
 
     // Define a scope to filter by status

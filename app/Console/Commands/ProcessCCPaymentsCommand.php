@@ -66,7 +66,7 @@ class ProcessCCPaymentsCommand extends Command
                     $splitPaymentCode = $splitPayment->code;
 
                     LoggerService::info("Queueing CC payment for split code: {$splitPaymentCode} ({$environment})");
-                    $pendingCCRecord->update(['status' => PaymentProcessJobEnum::QUEUED, 'environment' => $environment, 'ip_address' => request()->ip()]);
+                    $pendingCCRecord->update(['status' => PaymentProcessJobEnum::QUEUED]);
                     LoggerService::info("CC payment queued for split: {$splitPaymentCode} ({$environment})");
 
                     ProcessCCPaymentJob::dispatch($pendingCCRecord->id, $splitPayment->code);
