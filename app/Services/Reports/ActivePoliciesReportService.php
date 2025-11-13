@@ -37,7 +37,7 @@ class ActivePoliciesReportService extends ManagementReport
                 DB::raw('FORMAT(SUM(personal_quotes.price_vat_not_applicable), 2) as price_without_vat'),
                 'ip.text as insurer',
                 'quote_type.code as line_of_business',
-                DB::raw('SUM(CASE WHEN hqr.pec_marked_at IS NOT NULL THEN 1 ELSE 0 END) as pec_count')
+                DB::raw('SUM(CASE WHEN hqr.pec_marked_at IS NOT NULL THEN 1 ELSE 0 END) as pec_count'),
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')

@@ -269,4 +269,14 @@ class LookupService extends BaseService
             ->select('id', 'code', 'text')
             ->get();
     }
+
+    public function getSubSource()
+    {
+        return CacheManager::remember(CacheKeyEnum::SUB_SOURCES, function () {
+            return Lookup::with(['childs'])->where([
+                'key' => LookupsEnum::SUB_SOURCE,
+                'is_active' => 1,
+            ])->get();
+        });
+    }
 }

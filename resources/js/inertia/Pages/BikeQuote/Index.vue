@@ -1,5 +1,6 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 defineProps({
   quotes: Object,
@@ -12,14 +13,22 @@ defineProps({
   },
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  subSources: { type: Array, default: () => [] },
 });
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const loader = reactive({
   table: false,
   export: false,
 });
+
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = () => {
+  createLeadModal.value = false;
+};
 
 const serverOptions = ref({
   page: 1,
@@ -183,12 +192,16 @@ const tableHeader = [
   },
   { text: 'Renewal Batch', value: 'renewal_batch_model' },
   { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source' },
 ];
 
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 
 const advisorOptionsFilter = computed(() => {
   return page.props.advisors.map(advisor => ({
@@ -413,7 +426,7 @@ const insurerAMLStatusOption = computed(() => {
           v-if="can(permissionsEnum.BikeQuotesCreate)"
           size="sm"
           color="#ff5e00"
-          :href="route('bike-quotes-create')"
+          @click="createLeadModal = true"
         >
           <!-- href="/personal-quotes/bike/create" -->
           Create Lead
@@ -620,6 +633,7 @@ const insurerAMLStatusOption = computed(() => {
             />
           </template>
         </x-select>
+
         <x-select
           v-model="filters.previous_quote_policy_number"
           placeholder="Search by Renewal"
@@ -823,6 +837,11 @@ const insurerAMLStatusOption = computed(() => {
           {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
       </template>
+      <template #item-sub_source="item">
+        <p>
+          {{ item?.sub_source?.text ?? '' }}
+        </p>
+      </template>
     </DataTable>
 
     <Pagination
@@ -833,6 +852,14 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="bike-quotes-create"
+      :sub-sources="subSources"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>
