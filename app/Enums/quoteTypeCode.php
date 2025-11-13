@@ -15,6 +15,7 @@ use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use BenSampo\Enum\Enum;
+use App\Models\DeviceQuote;
 
 class quoteTypeCode extends Enum
 {

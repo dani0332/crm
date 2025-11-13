@@ -254,7 +254,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::prefix('personal-quotes')->group(function () {
             Route::resource('/savings', SavingsQuoteController::class)->names(generateRouteNames('savings-quotes'));
 
-            Route::resource('/smart-phone', DeviceQuoteController::class)->names(generateRouteNames('smart-phone-quotes'));
+            Route::resource('/device', DeviceQuoteController::class)->names(generateRouteNames('device-quotes'));
         });
         Route::resource('personal-quotes/home', HomeQuoteController::class)->names(generateRouteNames('home-quotes'));
 

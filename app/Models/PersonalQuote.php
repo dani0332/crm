@@ -583,4 +583,9 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
     }
+
+    public function deviceQuote()
+    {
+        return $this->hasOne(DeviceQuote::class, 'personal_quote_id', 'id');
+    }
 }

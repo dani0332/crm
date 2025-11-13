@@ -7,14 +7,14 @@ defineProps({
   advisors: Array,
   quoteType: {
     type: String,
-    default: 'SmartPhone',
+    default: 'Device',
   },
   totalCount: {
     type: Number,
     default: 0,
   },
-  smartPhonePlans: Array,
-  smartPhoneCoverages: Array,
+  devicePlans: Array,
+  deviceCoverages: Array,
 });
 
 const page = usePage();
@@ -137,7 +137,7 @@ function onSubmit(isValid) {
 
     filtersCount.value = Object.keys(filtersCleaned).length;
 
-    router.visit(route('cyber-quotes-list'), {
+    router.visit(route('device-quotes-list'), {
       method: 'get',
       data: {
         ...filtersCleaned,
@@ -158,7 +158,7 @@ function onSubmit(isValid) {
 
 function onReset() {
   removedSavedParams();
-  router.visit(route('cyber-quotes-list'), {
+  router.visit(route('device-quotes-list'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -183,9 +183,9 @@ const handleSelectedFilters = selectedFilters => {
 const exportLoader = ref(false);
 const onDataExport = () => {
   const data = useObjToUrl(filters);
-  const url = route('data-extraction', 'cyber');
+  const url = route('data-extraction', 'device');
   const payload = {
-    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Cyber'),
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'device'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
 
@@ -290,7 +290,7 @@ onMounted(() => {
   params = getSavedQueryParams() || params;
   setQueryStringFilters();
 
-  if (hasRole(rolesEnum.CyberManager) || hasRole(rolesEnum.Admin)) {
+  if (hasRole(rolesEnum.deviceManager) || hasRole(rolesEnum.Admin)) {
     permissionAssignLeads.value = true;
   }
 
@@ -371,15 +371,15 @@ const validateDateRange = () => {
   return false;
 };
 
-const computedCyberPlans = computed(() => {
-  return page.props.cyberPlans.map(item => ({
+const computedDevicePlans = computed(() => {
+  return page.props.devicePlans?.map(item => ({
     value: item.id,
     label: item.text,
   }));
 });
 
-const computedCyberCoverages = computed(() => {
-  return page.props.cyberCoverages.map(item => ({
+const computeddeviceCoverages = computed(() => {
+  return page.props.deviceCoverages?.map(item => ({
     value: item.id,
     label: "$ " + item.text,
   }));
@@ -388,16 +388,16 @@ const computedCyberCoverages = computed(() => {
 
 <template>
   <div>
-    <Head title="Cyber Quotes" />
+    <Head title="Device Quotes" />
 
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Cyber Quotes List</h2>
+        <h2 class="text-xl font-semibold">Device Quotes List</h2>
       </template>
       <template #default>
         <ColumnSelection
           v-model:columns="tableHeader"
-          storage-key="cyber-list"
+          storage-key="device-list"
         />
 
         <FiltersButton
@@ -409,12 +409,12 @@ const computedCyberCoverages = computed(() => {
         />
 
         <div v-if="readOnlyMode.isDisable === true">
-          <Link :href="route('cyber-quotes-create')">
+          <Link :href="route('device-quotes-create')">
             <x-button
-              v-if="can(permissionsEnum.CYBER_QUOTES_CREATE)"
+              v-if="can(permissionsEnum.device_QUOTES_CREATE)"
               size="sm"
               color="#ff5e00"
-              :href="route('cyber-quotes-create')"
+              :href="route('device-quotes-create')"
             >
               Create Lead
             </x-button>
@@ -541,7 +541,7 @@ const computedCyberCoverages = computed(() => {
           class="w-full"
           label="Policy End Date"
         />
-        <x-field label="Advisor" v-if="!hasAnyRole([rolesEnum.CyberAdvisor])">
+        <x-field label="Advisor" v-if="!hasAnyRole([rolesEnum.deviceAdvisor])">
           <ComboBox
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
@@ -602,7 +602,7 @@ const computedCyberCoverages = computed(() => {
             v-model="filters.coverage_up_to"
             name="coverage_up_to"
             placeholder="Search by Coverage Up to"
-            :options="computedCyberCoverages"
+            :options="computeddeviceCoverages"
             class="w-full"
             filterable
           />
@@ -621,7 +621,7 @@ const computedCyberCoverages = computed(() => {
             v-model="filters.plan_name"
             name="plan_name"
             placeholder="Search by Plan Name"
-            :options="computedCyberPlans"
+            :options="computeddevicePlans"
             class="w-full"
             filterable
             multiple
@@ -630,7 +630,7 @@ const computedCyberCoverages = computed(() => {
             <template #content-footer>
               <ui-select-actions
                 @select-all="
-                  filters.plan_name = computedCyberPlans.map(item => item.value)
+                  filters.plan_name = computeddevicePlans.map(item => item.value)
                 "
                 @clear="filters.plan_name = []"
               />
@@ -730,11 +730,11 @@ const computedCyberCoverages = computed(() => {
         <Link
           v-if="
             canAny([
-              permissionsEnum.CYBER_QUOTES_SHOW,
+              permissionsEnum.device_QUOTES_SHOW,
               permissionsEnum.VIEW_ALL_LEADS,
             ])
           "
-          :href="route('cyber-quotes-show', uuid)"
+          :href="route('device-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
           <span>{{ code }}</span>

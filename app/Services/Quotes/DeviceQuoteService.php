@@ -24,7 +24,6 @@ class DeviceQuoteService extends BaseQuoteService
     {
         $query = $this->baseQuery()->with([
             'quoteStatus',
-            'currentlyInsuredWith',
             'advisor',
             'paymentStatus',
             'payments',
@@ -69,14 +68,13 @@ class DeviceQuoteService extends BaseQuoteService
     public function getOne(string $uuid, $allDetails = false)
     {
         return $this->baseQuery()
-            ->with('smartPhoneQuoteRequest')
+            ->with('deviceQuote')
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
                 $individualCustomerType = CustomerTypeEnum::Individual;
 
                 $q->with([
                     'quoteStatus',
-                    'currentlyInsuredWith',
                     'advisor',
                     'paymentStatus',
                     'quoteDetail',
@@ -165,7 +163,7 @@ class DeviceQuoteService extends BaseQuoteService
 
     public function getQuotePlans($id, bool $getLatestRating = false)
     {
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/smart-phone/get-quote-plans';
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/device/get-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
@@ -287,7 +285,7 @@ class DeviceQuoteService extends BaseQuoteService
             $quoteData['updated_by_id'] = Auth::id();
             $quote->update($quoteData);
 
-            $quote->cyberQuoteRequest()->updateOrCreate(
+            $quote->deviceQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
                 Arr::only($data, ['emirate_of_registration_id'])
             );
@@ -299,5 +297,8 @@ class DeviceQuoteService extends BaseQuoteService
     public function getDeviceCoverages()
     {
         return app(LookupService::class)->getDeviceCoverages();
+    }
+    public function hasOtherFilters(){
+        
     }
 }

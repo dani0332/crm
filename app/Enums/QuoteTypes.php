@@ -224,7 +224,7 @@ enum QuoteTypes: string
             self::CYCLE => 'CYC-',
             self::JETSKI => 'JSK-',
             self::SAVINGS => 'SAV-',
-            self::SMART_PHONE => 'SP-',
+            self::Device => 'DEV-',
         };
     }
 
@@ -243,7 +243,7 @@ enum QuoteTypes: string
             'CYC' => self::CYCLE,
             'JSK' => self::JETSKI,
             'SAV' => self::SAVINGS,
-            'SP' => self::SMART_PHONE,
+            'SP' => self::Device,
         ];
 
         return $codes[$code] ?? null;
@@ -268,7 +268,7 @@ enum QuoteTypes: string
             self::CORPLINE => $isPersonalQuote ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
             self::GROUP_MEDICAL => $isPersonalQuote ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
             self::SAVINGS => route('savings-quotes-show', $uuid),
-            self::SMART_PHONE => route('smart-phone-quotes-show', $uuid),
+            self::Device => route('device-quotes-show', $uuid),
         };
     }
 
