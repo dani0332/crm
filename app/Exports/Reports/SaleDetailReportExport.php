@@ -73,7 +73,7 @@ class SaleDetailReportExport implements CsvExportableInterface
             'Total Commission',
             'Collects',
             'Tax Invoice Number',
-            'Tax Invoice Date',
+            'Insurer Invoice Date',
             'Lead Status',
             'Transaction Payment Status',
             'Date Paid',
@@ -96,6 +96,8 @@ class SaleDetailReportExport implements CsvExportableInterface
             'Policy PEC Flag',
             'Travel Coverage',
             'Traveling Where',
+            'IMCRM SUB-SOURCE',
+            'SUB SOURCE OPTIONS',
         ];
     }
 
@@ -144,6 +146,8 @@ class SaleDetailReportExport implements CsvExportableInterface
             $quote->pec_flag ?? 'N/A',
             $quote->travel_coverage ?? 'N/A',
             $quote->traveling_where ?? 'N/A',
+            $quote->sub_source ?? 'N/A',
+            $quote->sub_source_option ?? 'N/A',
         ]);
 
         foreach ($this->columnTotals as $index => $field) {
