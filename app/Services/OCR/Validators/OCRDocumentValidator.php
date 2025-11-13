@@ -10,14 +10,8 @@ use App\Models\VehicleDriverDetail;
 
 class OCRDocumentValidator
 {
-    // If we segregate the fields by front/back, we will not know the uploaded
-    // document is front or back.
-    // Document can be full document or front or back.
-    // One appraoch is to check all fields value in database on document uploading --OKKKKAYYY--
-    // Another challenge is Jerin asked to delete only back document if any field in
-    // back doc is null. We do not have identifier to identify front or back document.
     private const FIELDS_TO_VERIFY = [
-        DocumentTypeCode::DRIVING_LICENSE => [
+        'DRIVING_LICENSE_FIELDS' => [
             'driver_license_number',
             'driver_license_issue_date',
             'driver_license_expiry_date',
@@ -67,7 +61,7 @@ class OCRDocumentValidator
 
     public function validateDLFields(int $quoteId): bool
     {
-        $fieldsToVerify = self::FIELDS_TO_VERIFY[DocumentTypeCode::DRIVING_LICENSE];
+        $fieldsToVerify = self::FIELDS_TO_VERIFY['DRIVING_LICENSE_FIELDS'];
         $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $quoteId)
             ->select($fieldsToVerify)
             ->first();
@@ -77,6 +71,7 @@ class OCRDocumentValidator
             fn ($field) => empty($vehicleDriverDetails->$field)
         ));
 
+        // Update ocr flag in quote document
         $this->updateQuoteDocument($quoteId, DocumentTypeCode::DRIVING_LICENSE, $result);
 
         return $result;
@@ -102,6 +97,7 @@ class OCRDocumentValidator
             fn ($field) => empty($insuredKycDetails->$field)
         ));
 
+        // Update ocr flag in quote document
         $this->updateQuoteDocument($quoteId, DocumentTypeCode::EMIRATES_ID, $result);
 
         return $result;
@@ -124,6 +120,7 @@ class OCRDocumentValidator
         $result = $result && $registrationCertificate && empty(array_filter(self::FIELDS_TO_VERIFY['REGISTRATION_CERTIFICATE_FIELDS'],
             fn ($field) => empty($registrationCertificate->$field)));
 
+        // Update ocr flag in quote document
         $this->updateQuoteDocument($quoteId, DocumentTypeCode::REGISTRATION_CARD_MULKIYA, $result);
 
         return $result;
