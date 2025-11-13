@@ -47,12 +47,9 @@ class OCRDocumentValidator
         ],
         'VEHICLE_DRIVER_DETAIL_FIELDS' => [
             'vehicle_plate_number',
-            'vehicle_plate_code',
             'first_registration_date',
             'vehicle_color',
             'vehicle_engine_number',
-            'bank_name',
-            'bank_loan',
             'traffic_code_number',
         ],
         'REGISTRATION_CERTIFICATE_FIELDS' => [
@@ -61,30 +58,12 @@ class OCRDocumentValidator
             'owner',
             'nationality_id',
             'mortgage_by',
-            'notes',
-            'insured_with',
-            'insurance_type',
             'model',
-            'vehicle_class',
             'vehicle_type',
             'origin',
-            'number_of_passengers',
-            'gross_vehicle_weight',
-            'empty_weight',
             'traffic_code_number',
         ],
     ];
-
-    /*public function validate(array $ocrData, string $documentType, int $quoteDocumentId): bool
-    {
-        $result = ! array_filter(self::FIELDS_TO_VERIFY[$documentType], fn ($field) => empty($ocrData[$field]));
-
-        QuoteDocument::where('id', $quoteDocumentId)->update([
-            'is_ocr_processed' => $result,
-        ]);
-
-        return $result;
-    }*/
 
     public function validateDLFields(int $quoteId): bool
     {
