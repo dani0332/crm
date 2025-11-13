@@ -211,6 +211,8 @@ class HomeQuoteRepository extends BaseRepository
             'homeQuote',
             'homeQuote.homeQuoteRequestDetail',
             'homeQuote.homeQuoteRequestDetail.lostReason',
+            'subSource',
+            'subSourceOption',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypeId::Home);
             },
@@ -262,6 +264,13 @@ class HomeQuoteRepository extends BaseRepository
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->id() : null,
         ];
 
+        // Log the sub-source parameters for Home quotes
+        LoggerService::info('Home fetchCreate - Sub-source parameters:', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         // only add keys in payload if they are set and not empty
         $optionalFields = [
             'hasContents' => 'has_contents',
@@ -285,6 +294,10 @@ class HomeQuoteRepository extends BaseRepository
             'gender' => 'gender',
             'companyName' => 'company_name',
             'companyAddress' => 'company_address',
+            // Sub-source fields from CreateLeadModal
+            'subSourceId' => 'sub_source_id',
+            'subSourceOptionsId' => 'sub_source_options_id',
+            'additionalNotes' => 'notes',
         ];
 
         foreach ($optionalFields as $key => $field) {
@@ -447,6 +460,14 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchUpdate($uuid, $data)
     {
+        // Log the sub-source parameters for Home quote update
+        LoggerService::info('Home fetchUpdate - Sub-source parameters:', [
+            'uuid' => $uuid,
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'additional_notes' => $data['additional_notes'] ?? null,
+        ]);
+
         // Initialize variables to be used outside the transaction
         $fieldsChanged = false;
         $quoteResult = null;
@@ -817,6 +838,8 @@ class HomeQuoteRepository extends BaseRepository
                     ]);
                 },
                 'transactionType',
+                'subSource',
+                'subSourceOption',
             ])
             ->select([
                 $this->getTable().'.*',

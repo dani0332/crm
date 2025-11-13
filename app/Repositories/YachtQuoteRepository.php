@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\YachtQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -33,6 +34,13 @@ class YachtQuoteRepository extends BaseRepository
      */
     public function fetchCreate($data)
     {
+        // Log sub-source parameters
+        LoggerService::info('YachtQuoteRepository fetchCreate - Sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         $quoteData = [
             'quoteTypeId' => intval(QuoteTypes::YACHT->id()),
             'mobileNo' => $data['mobile_no'],
@@ -47,6 +55,9 @@ class YachtQuoteRepository extends BaseRepository
             'use' => $data['use'],
             'operatorExperience' => $data['operator_experience'],
             'assetValue' => $data['asset_value'],
+            'subSourceId' => $data['sub_source_id'],
+            'subSourceOptionsId' => $data['sub_source_options_id'],
+            'additionalNotes' => $data['notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
@@ -68,10 +79,19 @@ class YachtQuoteRepository extends BaseRepository
      */
     public function fetchUpdate($uuid, $data)
     {
+        // Log sub-source parameters for updates
+        LoggerService::info('YachtQuoteRepository fetchUpdate - Sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::YACHT->id())->where('uuid', $uuid)->firstOrFail();
 
-            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'company_name', 'company_address', 'asset_value', 'gender', 'dob', 'nationality_id']);
+            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'company_name', 'company_address',
+                'asset_value', 'gender', 'dob', 'nationality_id', 'sub_source_id', 'sub_source_options_id',
+                'notes']);
             $quoteData['updated_by_id'] = Auth::user()->id;
 
             $quote->update($quoteData);
@@ -187,6 +207,7 @@ class YachtQuoteRepository extends BaseRepository
                 $q->where('customer_insured.quote_type_id', QuoteTypes::YACHT->id());
             },
             'customer',
+            'subSource',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());

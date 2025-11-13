@@ -13,6 +13,7 @@ use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Config;
@@ -31,6 +32,13 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchCreate($request)
     {
+        // Log sub-source parameters for Pet quotes
+        LoggerService::info('Pet fetchCreate called with sub-source parameters', [
+            'sub_source_id' => $request['sub_source_id'] ?? null,
+            'sub_source_options_id' => $request['sub_source_options_id'] ?? null,
+            'notes' => $request['notes'] ?? null,
+        ]);
+
         $sourceName = Config::get('constants.SOURCE_NAME');
         $appUrl = Config::get('constants.APP_URL');
         $dataArr = [
@@ -59,6 +67,10 @@ class PetQuoteRepository extends BaseRepository
             'gender' => $request['customer_gender'], // Reminder:: this is customer gender
             'dob' => $request['dob'],
             'nationalityId' => $request['nationality_id'],
+            // Sub-source fields
+            'subSourceId' => $request['sub_source_id'] ?? null,
+            'subSourceOptionsId' => $request['sub_source_options_id'] ?? null,
+            'additionalNotes' => $request['notes'] ?? null,
         ];
 
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
@@ -72,11 +84,19 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchUpdate($uuid, $data)
     {
+        // Log sub-source parameters for Pet quote updates
+        LoggerService::info('Pet fetchUpdate called with sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
                 'first_name', 'last_name', 'email', 'mobile_no', 'gender', 'dob', 'nationality_id',
+                'sub_source_id', 'sub_source_options_id', 'notes',
             ]);
 
             $quoteData['updated_by_id'] = Auth::user()->id;
@@ -120,6 +140,7 @@ class PetQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'renewalBatchModel',
+            'subSource',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypes::PET->id());
             },
@@ -280,6 +301,7 @@ class PetQuoteRepository extends BaseRepository
                     $entityMapping->with('entity');
                 },
                 'quoteDetail',
+                'subSource', 'subSourceOption',
             ])
             ->select([
                 $this->getTable().'.*',

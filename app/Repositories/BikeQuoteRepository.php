@@ -12,6 +12,7 @@ use App\Models\BikeQuote;
 use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -36,6 +37,13 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchCreate($data)
     {
+        // Log sub-source parameters for Bike quotes
+        LoggerService::info('Bike fetchCreate called with sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         $quoteData = [
             'quoteTypeId' => intval(QuoteTypes::BIKE->id()),
             'nationalityId' => strval($data['nationality_id']),
@@ -63,14 +71,15 @@ class BikeQuoteRepository extends BaseRepository
             'claimHistoryId' => $data['claim_history_id'],
             'hasNcdSupportingDocuments' => $data['has_ncd_supporting_documents'],
             'backHomeLicenseHeldForId' => $data['back_home_license_held_for_id'],
-            'additionalNotes' => $data['additional_notes'],
             'currentlyInsuredWithId' => $data['currently_insured_with'],
             'cubicCapacity' => $data['cubic_capacity'],
             'gender' => $data['gender'] ?? null,
             'chassisNumber' => $data['chassis_number'] ?? null,
+            // Sub-source fields
+            'subSourceId' => $data['sub_source_id'] ?? null,
+            'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
+            'additionalNotes' => $data['notes'] ?? null,
         ];
-
-        info('bikeQuote:'.json_encode($quoteData));
 
         return Capi::request('/api/v1-save-bike-quote', 'post', $quoteData);
     }
@@ -80,11 +89,19 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchUpdate($uuid, $data)
     {
+        // Log sub-source parameters for Bike quote updates
+        LoggerService::info('Bike fetchUpdate called with sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::BIKE->id())->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
                 'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'gender',
+                'sub_source_id', 'sub_source_options_id', 'notes',
             ]);
 
             $quoteData['currently_insured_with_id'] = $data['currently_insured_with'];
@@ -229,6 +246,7 @@ class BikeQuoteRepository extends BaseRepository
                 $q->where('customer_insured.quote_type_id', QuoteTypes::BIKE->id());
             },
             'customer',
+            'subSource',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());

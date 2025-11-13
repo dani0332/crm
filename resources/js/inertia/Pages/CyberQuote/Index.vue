@@ -381,7 +381,7 @@ const computedCyberPlans = computed(() => {
 const computedCyberCoverages = computed(() => {
   return page.props.cyberCoverages.map(item => ({
     value: item.id,
-    label: "$ " + item.text,
+    label: '$ ' + item.text,
   }));
 });
 </script>
@@ -784,4 +784,3 @@ const computedCyberCoverages = computed(() => {
     />
   </div>
 </template>
-

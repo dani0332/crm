@@ -15,7 +15,6 @@ class ApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
-
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL],
             [
@@ -70,6 +69,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedEpEcbConfigurations();
         $this->seedUnavailableTimeThreshold();
         $this->sendUpdateEmailBirdFlow();
+        $this->seedCyberAdvisors();
     }
 
     private function livaCarAutomationSeed()
@@ -927,10 +927,20 @@ class ApplicationStorageSeeder extends Seeder
 
     private function seedTravelAutomatedFollowUps()
     {
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::TRAVEL_AUTOMATED_FOLLOWUPS],
             [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/968e6273-9965-473b-a258-2a069c8fb7da/invoke-sync',
+                'value' => 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/6ac637e8-4bf6-418b-8f65-7485ce47687f/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AUTOMATED_TRAVEL_FOLLOWUP_SWITCH],
+            [
+                'value' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1050,6 +1060,39 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::EP_ECB_POLICY_DURATION],
             [
                 'value' => 'Your coverage lasts for 13 months or until the expiry of your motor insurance policy, whichever comes first.',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedCyberAdvisors()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_ADVISORS],
+            [
+                'value' => 'smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_ADVISORS_TEST],
+            [
+                'value' => 'fahadhussain2020@gmail.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE],
+            [
+                'value' => '0',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

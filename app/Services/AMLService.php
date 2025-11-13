@@ -78,6 +78,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
 use PDF;
+use App\Models\CyberQuoteRequest;
 
 class AMLService
 {
@@ -104,6 +105,7 @@ class AMLService
             (int) QuoteTypes::LIFE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::SAVINGS->id() => Carbon::createFromFormat('Y-m-d', '2025-02-14'),
             (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
+            (int) QuoteTypes::CYBER->id() => Carbon::createFromFormat('Y-m-d', '2025-11-01'),
         };
 
         return Carbon::createFromFormat(
@@ -123,6 +125,7 @@ class AMLService
             QuoteTypes::LIFE->id() => $quoteRequestId,
             QuoteTypes::SAVINGS->id() => $quoteRequestId,
             QuoteTypes::HOME->id() => $quoteRequestId,
+            QuoteTypes::CYBER->id() => $quoteRequestId,
         };
     }
 
@@ -142,6 +145,7 @@ class AMLService
             QuoteTypes::LIFE->id() => LifeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::SAVINGS->id() => SavingsQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::CYBER->id() => CyberQuoteRequest::where($filterColumn, $quoteRequestId)->touch(),
         };
     }
 
@@ -283,6 +287,15 @@ class AMLService
         } elseif ($quoteTypeId == QuoteTypes::SAVINGS->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::SAVINGS->id())->with([
                 'savingsQuote',
+                'customer.detail',
+                'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
+                'paymentStatus',
+            ])->where('id', $quoteRequestId)->firstOrFail();
+        } elseif ($quoteTypeId == QuoteTypes::CYBER->id()) {
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::CYBER->id())->with([
+                'cyberQuoteRequest',
                 'customer.detail',
                 'quoteStatus',
                 'payments.paymentMethod',

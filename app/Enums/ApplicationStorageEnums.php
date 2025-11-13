@@ -251,6 +251,9 @@ final class ApplicationStorageEnums extends Enum
     public const FIC_LIFE_EMAIL = 'FIC_LIFE_EMAIL';
     public const FIC_LIFE_EMAIL_SWITCH = 'FIC_LIFE_EMAIL_SWITCH';
     public const AUTOMATED_LIFE_FOLLOWUP_SWITCH = 'AUTOMATED_LIFE_FOLLOWUP_SWITCH';
+    public const CYBER_ADVISORS = 'CYBER_ADVISORS';
+    public const CYBER_ADVISORS_TEST = 'CYBER_ADVISORS_TEST';
+    public const CYBER_ALLOCATION_TEST_MODE = 'CYBER_ALLOCATION_TEST_MODE';
 
     /* Savings Book Policy Template */
     public const SAVINGS_BOOK_POLICY_TEMPLATE = 'SAVINGS_BOOK_POLICY_TEMPLATE';
