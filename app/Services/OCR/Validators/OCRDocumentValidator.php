@@ -85,18 +85,18 @@ class OCRDocumentValidator
 
         $customerInsured = CustomerInsured::where('quote_request_id', $quoteId)
             ->first();
-        
-        if (!$customerInsured) {
+
+        if (! $customerInsured) {
             return false;
         }
-        
+
         // Retrieve insured details
         $insuredDetails = $customerInsured->insured;
 
-        if (!$insuredDetails) {
+        if (! $insuredDetails) {
             return false;
         }
-        
+
         // Retrieve insured KYC details
         $insuredKycDetails = $insuredDetails->insuredKyc;
 
