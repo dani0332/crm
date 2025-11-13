@@ -29,7 +29,12 @@ const tableHeader = computed(() => [
   { text: 'Sage Pro. ID', value: 'id', width: 40, sortable: true },
   { text: 'REF ID', value: 'ref_id', width: 150, sortable: true },
   { text: 'SU Ref ID', value: 'su_ref_id', width: 150, sortable: true },
-  { text: 'Lead Create Date', value: 'lead_create_date', width: 160, sortable: true },
+  {
+    text: 'Lead Create Date',
+    value: 'lead_create_date',
+    width: 160,
+    sortable: true,
+  },
   { text: 'Policy Number', value: 'policy_number', width: 150, sortable: true },
   {
     text: 'Price Vat Applicable',
@@ -436,7 +441,9 @@ async function exportExcel() {
 
       <!-- Payment Date -->
       <template #item-payment_date="item">
-        <span>{{ useDateTimeFormat(item.model?.payments?.[0]?.captured_at) }}</span>
+        <span>{{
+          useDateTimeFormat(item.model?.payments?.[0]?.captured_at)
+        }}</span>
       </template>
 
       <!-- Payment Status -->
