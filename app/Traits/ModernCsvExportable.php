@@ -8,7 +8,6 @@ use App\Contracts\CsvExportableInterface;
 use App\Services\Logger\LoggerService;
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Models\User;
-use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
