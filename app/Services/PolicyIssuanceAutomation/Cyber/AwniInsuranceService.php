@@ -73,7 +73,8 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     }
 
     /**
-     * Api Steps for Awni Insurance Service
+     * Api Steps for Awni Insurance Service to execute the policy issuance automation
+     * for AWNI issue policy is the first step while other insurer automation steps are different
      *
      * @return array
      */
@@ -88,7 +89,8 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     }
 
     /**
-     * 
+     * Policy Issuance Automation Enabled
+     * Check if the policy issuance automation is enabled in the application storage
      *
      * @return boolean
      */
@@ -98,7 +100,8 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     }
 
     /**
-     * 
+     * Policy Issuance Automation Retry Enabled for Timeout
+     * Check if the policy issuance automation retry is enabled for timeout in the application storage
      *
      * @return boolean
      */
@@ -108,7 +111,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     }
 
     /**
-     * Create Policy Issuance Schedule
+     * Schedule the policy issuance automation for AWNI Cyber Insurance
      *
      * @param Model $quote
      * @param Insurer $insurer
@@ -127,7 +130,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     }
 
     /**
-     * Execute Steps
+     * Execute Steps for Policy Issuance Automation for AWNI Cyber Insurance
      *
      * @param Process $process
      * @return array
@@ -177,6 +180,14 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
+    /**
+     * Execute Step Sequence for Policy Issuance Automation for AWNI Cyber Insurance
+     *
+     * @param Model $quote
+     * @param Model $process
+     * @param string $nextStepToBeExecuted
+     * @return array
+     */
     private function executeStepSequence($quote, $process, $nextStepToBeExecuted)
     {
         if ($nextStepToBeExecuted === self::ISSUE_POLICY) {
@@ -223,6 +234,12 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         ];
     }
 
+    /**
+     * Get Next Step for Policy Issuance Automation for AWNI Cyber Insurance
+     *
+     * @param string $completedStep
+     * @return string|null
+     */
     public function getNextStep($completedStep = null): ?string
     {
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . '- Completed Step : ' . $completedStep);
@@ -240,6 +257,13 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         return $allSteps[$completedStepIndex + 1];
     }
 
+    /**
+     * Execute Upload Documents Step for Policy Issuance Automation for AWNI Cyber Insurance
+     *
+     * @param Model $quote
+     * @param Model $process
+     * @return array
+     */
     private function executeUploadDocumentsStep($quote, $process)
     {
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - Step Executing : ' . self::UPLOAD_DOCUMENTS);
@@ -902,14 +926,16 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             ]);
 
             $responseObject = $httpResponse->object();
-            // dd($responseObject);
             if (in_array($httpResponse->status(), [JsonResponse::HTTP_OK, JsonResponse::HTTP_CREATED])) {
                 if (
+                    $responseObject == null ||
                     isset($responseObject?->errorList) ||
                     (isset($responseObject?->isSuccess) && $responseObject?->isSuccess == 'N')
                 ) {
                     $response['error'] = $responseObject?->errorList ?? $keyAPI . ' API Failed';
                     $response['status'] = false;
+                    // if response object is null, set data to null so we can identify if the API call failed and response object is null its means api not sending any response or response is null while http call is successful
+                    $response['data'] = $responseObject == null ? null : '';
                     $response['message'] = $this->extractErrorMessage($responseObject, $keyAPI);
                 } else {
                     $response['status'] = true;
