@@ -6,7 +6,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="{{ getFavicon() }}">
+  <link rel="icon" type="image/png" href="{{ getFavicon() }}" sizes="48x48">
   <title inertia>{{ config('constants.APP_NAME', 'IMCRM') }}</title>
   @routes()
   @vite(['resources/js/inertia/inertia.js'])

@@ -7,7 +7,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/x-icon" href="{{ getFavicon() }}">
+    <link rel="icon" type="image/png" href="{{ getFavicon() }}" sizes="48x48">
     <title>@yield('title') | {{config('constants.APP_NAME')}}</title>
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <!-- Bootstrap -->

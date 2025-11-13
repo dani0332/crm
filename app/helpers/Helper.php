@@ -749,11 +749,11 @@ if (! function_exists('getFavicon')) {
     /**
      * Get Insurance Market favicon URL
      * 
-     * @return string Local asset URL of the favicon
+     * @return string CDN URL of the favicon
      */
     function getFavicon()
     {
-        return asset('favicon.ico');
+        return 'https://cdn.alfred.ae/media/assets/im-favicon-48x48.png';
     }
 }
 if (! function_exists('mimeContentType')) {
