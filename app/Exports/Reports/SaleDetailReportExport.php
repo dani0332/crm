@@ -73,7 +73,7 @@ class SaleDetailReportExport implements CsvExportableInterface
             'Total Commission',
             'Collects',
             'Tax Invoice Number',
-            'Tax Invoice Date',
+            'Insurer Invoice Date',
             'Lead Status',
             'Transaction Payment Status',
             'Date Paid',
