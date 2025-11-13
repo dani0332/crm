@@ -128,6 +128,7 @@ class OCRDocumentValidator
 
     private function updateQuoteDocument(int $quoteId, string $documentTypeCode, bool $result): void
     {
+        // Update ocr process flag against all documents (of same type i.e. CEID/CAR_MULKIY)
         QuoteDocument::where('quote_documentable_id', $quoteId)
             ->where('document_type_code', $documentTypeCode)->update([
                 'is_ocr_processed' => $result,
