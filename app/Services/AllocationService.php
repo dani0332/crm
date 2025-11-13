@@ -465,6 +465,7 @@ class AllocationService extends BaseService
             LoggerService::error(self::class.' - isUserOnLeave: User not found', extra: [
                 'email' => $email,
             ]);
+
             return false;
         }
 

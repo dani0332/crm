@@ -3,22 +3,16 @@
 namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteFlowType;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
-use App\Models\PersonalQuote;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
-use Carbon\Carbon;
 
 class CyberEmailService extends BaseService
 {
-
-
     public function sendCyberOCBIntroEmail($lead)
     {
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CYBER_OCB_INTRO_EMAIL)->first();
@@ -37,7 +31,7 @@ class CyberEmailService extends BaseService
         $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::CYBER_OCB_INTRO_EMAIL);
 
         $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-        
+
         if ($response && $response->status_code === 200) {
             LoggerService::info('sendCyberOCBIntroEmail - Successfully triggered event');
         } else {
@@ -84,13 +78,12 @@ class CyberEmailService extends BaseService
         $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::CYBER_AUTOMATED_FOLLOWUPS);
 
         $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-        
+
         if ($response && $response->status_code === 200) {
             LoggerService::info('sendCyberAutomatedFollowups - Successfully triggered event');
         } else {
             LoggerService::info("sendCyberAutomatedFollowups - Error triggering event having response status code: {$response?->status_code}");
         }
     }
-
 
 }

@@ -56,4 +56,3 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         return $lead;
     }
 }
-

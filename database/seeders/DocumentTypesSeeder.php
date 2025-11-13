@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\DocumentType;
@@ -20,7 +19,8 @@ class DocumentTypesSeeder extends Seeder
         $this->cyberDocumentTypes();
     }
 
-    private function cyberDocumentTypes(){
+    private function cyberDocumentTypes()
+    {
         $quoteDocuments = [
             [
                 'code' => 'CYPDR',

@@ -127,4 +127,3 @@ class CyberLeadAllocationSeeder extends Seeder
         ]);
     }
 }
-

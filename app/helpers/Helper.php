@@ -1585,9 +1585,11 @@ if (! function_exists('getTeamId')) {
     {
         try {
             $team = Team::where('name', $teamName)->first();
+
             return optional($team)->id ?? 0;
         } catch (Exception $e) {
             LoggerService::error("Error retrieving team ID for team name: {$teamName}", exception: $e);
+
             return 0;
         }
     }

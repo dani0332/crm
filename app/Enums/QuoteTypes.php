@@ -6,6 +6,7 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
 use App\Enums\Traits\QuoteTypable;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
+use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Jobs\SendHomeOCBIntroEmailJob;
@@ -37,6 +38,7 @@ use App\Services\Logger\LoggerService;
 use App\Strategies\Allocations\BikeAllocation;
 use App\Strategies\Allocations\CarAllocation;
 use App\Strategies\Allocations\CorplineAllocation;
+use App\Strategies\Allocations\CyberAllocation;
 use App\Strategies\Allocations\CycleAllocation;
 use App\Strategies\Allocations\GroupMedicalAllocation;
 use App\Strategies\Allocations\HealthAllocation;
@@ -44,12 +46,10 @@ use App\Strategies\Allocations\HomeAllocation;
 use App\Strategies\Allocations\LifeAllocation;
 use App\Strategies\Allocations\PetAllocation;
 use App\Strategies\Allocations\SavingsAllocation;
-use App\Strategies\Allocations\CyberAllocation;
 use App\Strategies\Allocations\TravelAllocation;
 use App\Strategies\Allocations\YachtAllocation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
-use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 
 enum QuoteTypes: string
 {

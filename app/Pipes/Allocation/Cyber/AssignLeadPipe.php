@@ -47,4 +47,3 @@ class AssignLeadPipe extends BaseAllocationPipe
         return $oldAdvisorAssignedDate;
     }
 }
-

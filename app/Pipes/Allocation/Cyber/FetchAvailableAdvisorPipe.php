@@ -21,7 +21,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         if ($this->allocationRequest->shouldAssignToHappinessUser()) {
             LoggerService::info(self::class.' - Paid Cyber lead - Fetching Happiness Support User');
-            
+
             $advisor = $this->getHappinessUser();
 
             if (! $advisor) {
@@ -107,77 +107,77 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     private function getAdvisorEmails(): array
     {
         $testMode = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE);
-        
+
         if ($testMode == 1) {
             return $this->getTestModeAdvisorEmails();
         }
-        
+
         return $this->getProductionModeAdvisorEmails();
     }
 
     private function getTestModeAdvisorEmails(): array
     {
         $emails = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ADVISORS_TEST, useCache: true);
-        
+
         if (empty($emails)) {
             LoggerService::warning(self::class.' - No test Cyber advisors found in app storage');
-            
+
             return [];
         }
-        
+
         $emails = explode(',', $emails);
         $emails = array_map('trim', $emails);
         $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
         $emails = array_values($emails);
-        
+
         LoggerService::info(self::class.' - TEST MODE: Cyber advisors fetched', extra: [
             'emailCount' => count($emails),
             'emails' => $emails,
         ]);
-        
+
         return $emails;
     }
 
     private function getProductionModeAdvisorEmails(): array
     {
         $emails = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ADVISORS, useCache: true);
-        
+
         if (empty($emails)) {
             LoggerService::warning(self::class.' - No production Cyber advisors found in app storage');
-            
+
             return [];
         }
-        
+
         $emails = explode(',', $emails);
         $emails = array_map('trim', $emails);
         $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
         $emails = array_values($emails);
-        
+
         if (empty($emails)) {
             LoggerService::warning(self::class.' - No valid Cyber advisor emails found in app storage');
-            
+
             return [];
         }
-        
+
         $primaryEmail = $emails[0];
         $backupEmails = array_slice($emails, 1);
-        
+
         $isOnLeave = $this->isUserOnLeave($primaryEmail, addUnavailable: true);
-        
+
         if ($isOnLeave) {
             LoggerService::info(self::class.' - PRODUCTION: Primary advisor is on SICK or LEAVE, assigning to backups', extra: [
                 'primaryEmail' => $primaryEmail,
                 'backupCount' => count($backupEmails),
                 'backupEmails' => $backupEmails,
             ]);
-            
+
             return $backupEmails;
         }
-        
+
         LoggerService::info(self::class.' - PRODUCTION: Assigning to primary advisor', extra: [
             'primaryEmail' => $primaryEmail,
         ]);
-        
+
         return [$primaryEmail];
     }
 
@@ -200,4 +200,3 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return $user;
     }
 }
-

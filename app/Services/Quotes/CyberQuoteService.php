@@ -12,8 +12,8 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Services\LookupService;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CyberQuoteService extends BaseQuoteService
@@ -152,7 +152,7 @@ class CyberQuoteService extends BaseQuoteService
     {
         $listQuotePlans = '';
         $quotePlans = $this->getQuotePlans($id);
-        
+
         if (isset($quotePlans->message) && $quotePlans->message != '') {
             $listQuotePlans = $quotePlans->message;
         } else {
@@ -304,4 +304,3 @@ class CyberQuoteService extends BaseQuoteService
         return app(LookupService::class)->getCyberCoverages();
     }
 }
-

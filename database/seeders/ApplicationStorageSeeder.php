@@ -261,7 +261,7 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
                 'is_active' => 1,
             ],
-    );
+        );
     }
 
     private function seedHomeAdvisors()

@@ -13,7 +13,6 @@ class CyberQuoteRequest extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $table = 'cyber_quote_request';
-    
     protected $guarded = [];
 
     public function personalQuote(): BelongsTo
@@ -32,4 +31,3 @@ class CyberQuoteRequest extends Model implements AuditableContract
         ];
     }
 }
-

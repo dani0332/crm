@@ -38,6 +38,7 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
+use App\Models\CyberQuoteRequest;
 use App\Models\CycleQuote;
 use App\Models\Entity;
 use App\Models\HealthQuote;
@@ -78,7 +79,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
 use PDF;
-use App\Models\CyberQuoteRequest;
 
 class AMLService
 {

@@ -53,7 +53,7 @@ class CyberQuoteController extends Controller
             'authorizedDays' => intval($authorizedDays->value),
             'insurerAMLStatus' => $insurerAMLStatus,
             'paymentStatuses' => $paymentStatuses,
-            'cyberPlans' => InsuranceProviderPlan::where('quote_type_id', (int) QuoteTypes::CYBER->id())->select(['id', 'code' ,'text'])->get(),
+            'cyberPlans' => InsuranceProviderPlan::where('quote_type_id', (int) QuoteTypes::CYBER->id())->select(['id', 'code', 'text'])->get(),
             'cyberCoverages' => $cyberCoverages,
         ]);
     }
@@ -100,4 +100,3 @@ class CyberQuoteController extends Controller
         return inertia('CyberQuote/Show', $data);
     }
 }
-

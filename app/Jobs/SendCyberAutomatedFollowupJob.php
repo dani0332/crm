@@ -2,15 +2,15 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
+use App\Models\PersonalQuote;
+use App\Services\EmailServices\CyberEmailService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Models\PersonalQuote;
-use App\Services\Logger\LoggerService;
-use App\Enums\Logger\LoggerFeatureEnum;
-use App\Services\EmailServices\CyberEmailService;
 
 class SendCyberAutomatedFollowupJob implements ShouldQueue
 {
@@ -23,7 +23,7 @@ class SendCyberAutomatedFollowupJob implements ShouldQueue
 
     public function __construct($quoteUuid)
     {
-       
+
         $this->quoteUuid = $quoteUuid;
         $this->afterCommit();
     }
@@ -36,14 +36,12 @@ class SendCyberAutomatedFollowupJob implements ShouldQueue
         $lead = PersonalQuote::where('uuid', $this->quoteUuid)->first();
         LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::CYBER_AUTOMATED_FOLLOWUPS);
         if (! $lead) {
-            LoggerService::info(self::class." - Cyber Lead not found");
+            LoggerService::info(self::class.' - Cyber Lead not found');
 
             return;
         }
         app(CyberEmailService::class)->sendCyberAutomatedFollowups($lead);
-        LoggerService::info(self::class." - Cyber Automated Followups sent");
+        LoggerService::info(self::class.' - Cyber Automated Followups sent');
 
-
-        
     }
 }
