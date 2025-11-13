@@ -48,18 +48,21 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
 ## Technology Stack
 
 ### Backend
+
 - **Framework**: Laravel 10+
 - **PHP Version**: 8.2+
 - **Database**: MySQL
 - **Architecture Pattern**: MVC with Service Layer
 
 ### Frontend
+
 - **Framework**: Vue.js 3.5+
 - **UI Framework**: Inertia.js
 - **Styling**: TailwindCSS
 - **Components**: @indielayer/ui
 
 ### Key Libraries
+
 - **Validation**: Laravel Form Requests
 - **Logging**: Custom LoggerService
 - **Caching**: Laravel Cache
@@ -117,28 +120,33 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
 ## Key Components
 
 ### Controllers
+
 - **CyberQuoteController**: Main controller handling CRUD operations
   - Location: `app/Http/Controllers/V2/CyberQuoteController.php`
   - Methods: `index`, `create`, `store`, `edit`, `update`, `show`
 
 ### Services
+
 - **CyberQuoteService**: Core business logic
   - Location: `app/Services/Quotes/CyberQuoteService.php`
   - Extends: `BaseQuoteService`
   - Handles: Quote creation, updates, data retrieval
 
 ### Allocation Pipes
+
 - **FetchAvailableAdvisorPipe**: Advisor allocation logic
   - Location: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php`
   - Extends: `BaseAllocationPipe`
   - Handles: Advisor selection, leave checking, test/production modes
 
 ### Models
+
 - **PersonalQuote**: Main quote model (polymorphic)
 - **CyberQuoteRequest**: Cyber-specific quote request data
 - **User**: Advisor/user model for allocation
 
 ### Request Validation
+
 - **CyberQuoteRequest**: Form request validation
   - Location: `app/Http/Requests/Cyber/CyberQuoteRequest.php`
   - Validates: Customer information, nationality, emirate
@@ -146,6 +154,7 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
 ## Database Schema
 
 ### Core Tables
+
 - `personal_quotes`: Main quote table (polymorphic)
 - `cyber_quote_requests`: Cyber-specific quote data
 - `users`: Advisor/user information
@@ -153,6 +162,7 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
 - `lead_allocation`: Advisor allocation tracking
 
 ### Key Relationships
+
 - `PersonalQuote` → `CyberQuoteRequest` (hasOne)
 - `PersonalQuote` → `User` (belongsTo - advisor)
 - `PersonalQuote` → `Nationality` (belongsTo)
@@ -161,11 +171,13 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
 ## Configuration
 
 ### Application Storage Keys
+
 - `CYBER_ADVISORS`: Production advisor emails (comma-separated)
 - `CYBER_ADVISORS_TEST`: Test advisor emails
 - `CYBER_ALLOCATION_TEST_MODE`: Test mode flag (0 = production, 1 = test)
 
 ### Environment Variables
+
 - Standard Laravel environment variables
 - Database configuration
 - Cache configuration
@@ -173,6 +185,7 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
 ## Security
 
 ### Permissions
+
 - `CYBER_QUOTES_CREATE`: Create quotes
 - `CYBER_QUOTES_EDIT`: Edit quotes
 - `CYBER_QUOTES_SHOW`: View quotes
@@ -180,6 +193,7 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
 - `VIEW_ALL_LEADS`: View all leads (admin)
 
 ### Validation
+
 - Server-side validation via Form Requests
 - Client-side validation via Vue.js rules
 - Input sanitization
@@ -188,6 +202,7 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
 ## Logging
 
 All operations are logged using `LoggerService`:
+
 - Quote creation/updates
 - Advisor allocation
 - Errors and warnings
@@ -215,4 +230,3 @@ Log location: `storage/logs/laravel-YYYY-MM-DD.log`
 - Automated follow-up emails
 - Payment integration improvements
 - Advanced reporting
-

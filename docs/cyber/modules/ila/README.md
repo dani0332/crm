@@ -7,6 +7,7 @@ The Instant Lead Allocation (ILA) module for Cyber Insurance automatically assig
 ## Purpose
 
 The ILA system for Cyber handles:
+
 - **Automatic Advisor Assignment**: Assigns leads to advisors without manual intervention
 - **Leave Management**: Automatically routes leads to backup advisors when primary advisor is on leave
 - **Test Mode Support**: Allows testing with specific advisors before production deployment
@@ -28,10 +29,12 @@ The ILA system for Cyber handles:
 ## Components
 
 ### Allocation Strategy
+
 - **File**: `app/Strategies/Allocations/CyberAllocation.php`
 - **Purpose**: Main allocation orchestrator using Laravel Pipeline pattern
 
 ### Allocation Pipes
+
 1. **FetchLeadPipe**: Retrieves the Cyber quote/lead
 2. **VerifyLeadPreChecksPipe**: Validates lead eligibility
 3. **VerifyAlreadyInProgressAllocationPipe**: Prevents duplicate allocations
@@ -71,11 +74,13 @@ MakeResponsePipe → Return response
 The ILA system uses three app storage keys:
 
 1. **CYBER_ADVISORS**: Production advisor emails (comma-separated)
+
    - First email = Primary advisor
    - Remaining emails = Backup advisors
    - Example: `smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae`
 
 2. **CYBER_ADVISORS_TEST**: Test advisor emails (comma-separated)
+
    - Used when test mode is enabled
    - Example: `fahadhussain2020@gmail.com`
 
@@ -84,12 +89,14 @@ The ILA system uses three app storage keys:
    - `1` = Test mode
 
 ### Seeder Location
+
 - **File**: `database/seeders/ApplicationStorageSeeder.php`
 - **Method**: `seedCyberAdvisors()`
 
 ## Related Files
 
 ### Backend
+
 - `app/Strategies/Allocations/CyberAllocation.php` - Main allocation strategy
 - `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php` - Advisor fetching logic
 - `app/Pipes/Allocation/Cyber/EvaluateTeamPipe.php` - Team evaluation logic
@@ -98,20 +105,22 @@ The ILA system uses three app storage keys:
 - `app/Services/AllocationService.php` - Base allocation service with `isUserOnLeave()` method
 
 ### Configuration
+
 - `app/Enums/ApplicationStorageEnums.php` - Storage key constants
 - `database/seeders/ApplicationStorageSeeder.php` - Seeder for app storage keys
 
 ## Business Requirements
 
 For complete business requirements and functional specifications:
+
 - [Business Requirements](./business-requirements.md) - Complete FR documentation
 
 ## Next Steps
 
 For detailed information about each component:
+
 - [Allocation Logic](./allocation-logic.md) - How advisors are selected
 - [Test Mode](./test-mode.md) - Test mode configuration and usage
 - [Production Mode](./production-mode.md) - Production allocation rules
 - [Daily Capacity](./daily-capacity.md) - Daily capacity cap management (200 leads/day)
 - [App Storage Keys](./app-storage-keys.md) - Storage key documentation
-

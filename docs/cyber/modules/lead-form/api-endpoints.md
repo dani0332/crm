@@ -13,12 +13,14 @@ All endpoints are prefixed with `/personal-quotes/cyber` and require authenticat
 ## Authentication
 
 All endpoints require:
+
 - User authentication (logged in)
 - Appropriate permissions (see Permissions section)
 
 ## Permissions
 
 ### Required Permissions
+
 - `CYBER_QUOTES_CREATE`: Create new quotes
 - `CYBER_QUOTES_EDIT`: Edit existing quotes
 - `CYBER_QUOTES_SHOW`: View quote details
@@ -39,6 +41,7 @@ All endpoints require:
 **Response**: Inertia.js response with form component and data
 
 **Response Data**:
+
 ```json
 {
   "lookUpData": {
@@ -73,6 +76,7 @@ All endpoints require:
 **Description**: Creates a new Cyber Insurance quote with customer information.
 
 **Request Body**:
+
 ```json
 {
   "first_name": "John",
@@ -86,6 +90,7 @@ All endpoints require:
 ```
 
 **Request Validation Rules**:
+
 - `first_name`: required|between:1,20|regex:/^[a-zA-Z\s\-]+$/
 - `last_name`: required|between:1,50|regex:/^[a-zA-Z\s\-]+$/
 - `email`: required|email
@@ -95,13 +100,16 @@ All endpoints require:
 - `emirate_of_registration_id`: required|exists:emirates,id
 
 **Success Response**:
+
 - **Status**: 302 Redirect
 - **Location**: `/personal-quotes/cyber/{uuid}` (route name: `cyber-quotes-show`)
 - **Message**: "Quote is created successfully."
 
 **Error Response**:
+
 - **Status**: 422 Unprocessable Entity
 - **Body**: Validation errors
+
 ```json
 {
   "errors": {
@@ -111,11 +119,13 @@ All endpoints require:
 }
 ```
 
-**Code Reference**: 
+**Code Reference**:
+
 - Controller: `app/Http/Controllers/V2/CyberQuoteController.php:68-77`
 - Request: `app/Http/Requests/Cyber/CyberQuoteRequest.php`
 
 **Process Flow**:
+
 1. Validate request data
 2. Call external Capi API (`/api/cyber/create`) to create quote
 3. External API creates `PersonalQuote` and `CyberQuoteRequest` records
@@ -136,11 +146,13 @@ All endpoints require:
 **Description**: Returns the edit form page with existing quote data pre-filled.
 
 **URL Parameters**:
+
 - `uuid`: Quote UUID (required)
 
 **Response**: Inertia.js response with form component and quote data
 
 **Response Data**:
+
 ```json
 {
   "quote": {
@@ -177,9 +189,11 @@ All endpoints require:
 **Description**: Updates an existing Cyber Insurance quote.
 
 **URL Parameters**:
+
 - `uuid`: Quote UUID (required)
 
 **Request Body**:
+
 ```json
 {
   "first_name": "Jane",
@@ -197,17 +211,20 @@ All endpoints require:
 **Request Validation Rules**: Same as Store endpoint
 
 **Success Response**:
+
 - **Status**: 302 Redirect
 - **Location**: `/personal-quotes/cyber/{uuid}` (route name: `cyber-quotes-show`)
 - **Message**: "Quote is updated successfully."
 
 **Error Response**:
+
 - **Status**: 422 Unprocessable Entity
 - **Body**: Validation errors (same format as Store)
 
 **Code Reference**: `app/Http/Controllers/V2/CyberQuoteController.php:89-94`
 
 **Process Flow**:
+
 1. Find quote by UUID
 2. Validate request data
 3. Update `PersonalQuote` record
@@ -226,11 +243,13 @@ All endpoints require:
 **Description**: Displays detailed information about a Cyber quote.
 
 **URL Parameters**:
+
 - `uuid`: Quote UUID (required)
 
 **Response**: Inertia.js response with quote show component and data
 
 **Response Data**: Comprehensive quote data including:
+
 - Customer information
 - Quote status
 - Assigned advisor
@@ -245,6 +264,7 @@ All endpoints require:
 ## Error Responses
 
 ### Validation Errors (422)
+
 ```json
 {
   "message": "The given data was invalid.",
@@ -255,6 +275,7 @@ All endpoints require:
 ```
 
 ### Unauthorized (403)
+
 ```json
 {
   "message": "This action is unauthorized."
@@ -262,6 +283,7 @@ All endpoints require:
 ```
 
 ### Not Found (404)
+
 ```json
 {
   "message": "Quote not found."
@@ -269,6 +291,7 @@ All endpoints require:
 ```
 
 ### Server Error (500)
+
 ```json
 {
   "message": "Server Error"
@@ -280,6 +303,7 @@ All endpoints require:
 ### Create Quote Example
 
 **Request**:
+
 ```http
 POST /personal-quotes/cyber HTTP/1.1
 Host: example.com
@@ -298,6 +322,7 @@ Authorization: Bearer {token}
 ```
 
 **Success Response**:
+
 ```http
 HTTP/1.1 302 Found
 Location: /personal-quotes/cyber/abc123-def456-ghi789
@@ -306,6 +331,7 @@ Location: /personal-quotes/cyber/abc123-def456-ghi789
 ### Update Quote Example
 
 **Request**:
+
 ```http
 PUT /personal-quotes/cyber/abc123-def456-ghi789 HTTP/1.1
 Host: example.com
@@ -324,6 +350,7 @@ Authorization: Bearer {token}
 ```
 
 **Success Response**:
+
 ```http
 HTTP/1.1 302 Found
 Location: /personal-quotes/cyber/abc123-def456-ghi789
@@ -341,6 +368,7 @@ Route::prefix('personal-quotes')->group(function () {
 ```
 
 **Generated Routes** (with `personal-quotes` prefix):
+
 - `GET /personal-quotes/cyber` → `index` → `cyber-quotes-list`
 - `GET /personal-quotes/cyber/create` → `create` → `cyber-quotes-create`
 - `POST /personal-quotes/cyber` → `store` → `cyber-quotes-store`
@@ -349,7 +377,8 @@ Route::prefix('personal-quotes')->group(function () {
 - `PUT /personal-quotes/cyber/{uuid}` → `update` → `cyber-quotes-update`
 - `DELETE /personal-quotes/cyber/{uuid}` → `destroy` → `cyber-quotes-delete`
 
-**Code Reference**: 
+**Code Reference**:
+
 - Route definition: `routes/web.php:305-307`
 - Route name generator: `app/helpers/Helper.php:479-491`
 
@@ -367,4 +396,3 @@ Route::prefix('personal-quotes')->group(function () {
 - All endpoints require authentication
 - Permission checks are performed via middleware
 - Validation errors are returned in a consistent format
-

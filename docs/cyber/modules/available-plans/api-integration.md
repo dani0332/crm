@@ -13,6 +13,7 @@ This document provides detailed information about the API integration for fetchi
 **Service**: `CyberQuoteService@getAvailablePlans`
 
 **Route Definition**: `routes/web.php:625`
+
 ```php
 Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loadAvailablePlans']);
 ```
@@ -26,6 +27,7 @@ Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loa
 **Format**: JSON
 
 **Body**:
+
 ```json
 {
   "jsonData": true
@@ -33,6 +35,7 @@ Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loa
 ```
 
 **Optional Parameters**:
+
 - `getLatestRating`: Boolean (default: false)
 
 ### Request Example
@@ -58,6 +61,7 @@ X-CSRF-TOKEN: {token}
 **Note**: The method signature is `loadAvailablePlans($type, $id)` where `$type` is the quote type string (e.g., 'cyber') and `$id` is the quote UUID.
 
 **Code**:
+
 ```php
 public function loadAvailablePlans($type, $id)
 {
@@ -72,6 +76,7 @@ public function loadAvailablePlans($type, $id)
 **Location**: `app/Services/CentralService.php:341`
 
 **Cyber Case**:
+
 ```php
 case quoteTypeCode::CYBER:
     return app(CyberQuoteService::class)->getAvailablePlans($id);
@@ -105,6 +110,7 @@ CyberQuoteService::getQuotePlans() (KEN API call)
 **Location**: `app/Services/Quotes/CyberQuoteService.php:169-199`
 
 **Request Payload**:
+
 ```json
 {
   "quoteUID": "abc123-def456-ghi789",
@@ -115,6 +121,7 @@ CyberQuoteService::getQuotePlans() (KEN API call)
 ```
 
 **Headers**:
+
 ```json
 {
   "Content-Type": "application/json",
@@ -137,6 +144,7 @@ CyberQuoteService::getQuotePlans() (KEN API call)
 ### Success Response
 
 **Structure**:
+
 ```json
 {
   "quotes": {
@@ -172,6 +180,7 @@ CyberQuoteService::getQuotePlans() (KEN API call)
 ### Error Response
 
 **Structure**:
+
 ```json
 {
   "message": "Error message here"
@@ -179,6 +188,7 @@ CyberQuoteService::getQuotePlans() (KEN API call)
 ```
 
 **Or**:
+
 ```json
 {
   "error": "Error description"
@@ -194,12 +204,13 @@ CyberQuoteService::getQuotePlans() (KEN API call)
 **Method**: `listQuotePlans($id)`
 
 **Logic**:
+
 ```php
 public function listQuotePlans($id)
 {
     $listQuotePlans = '';
     $quotePlans = $this->getQuotePlans($id);
-    
+
     // Check for error message
     if (isset($quotePlans->message) && $quotePlans->message != '') {
         $listQuotePlans = $quotePlans->message;
@@ -221,6 +232,7 @@ public function listQuotePlans($id)
 **Location**: `resources/js/inertia/Pages/CyberQuote/Show.vue:377-411`
 
 **Response Handling**:
+
 ```javascript
 if (typeof res.data === 'string') {
   // Error message
@@ -255,15 +267,18 @@ if (typeof res.data === 'string') {
 **Location**: `app/Services/Quotes/CyberQuoteService.php:210-236`
 
 1. **BadResponseException**
+
    - HTTP error responses (4xx, 5xx)
    - Extracts error message from response body
    - Returns error message string
 
 2. **ConnectException**
+
    - Network connection failures
    - Returns: `"Connection error occurred."`
 
 3. **RequestException**
+
    - Request-related errors
    - Returns: `"Request error occurred."`
 
@@ -274,6 +289,7 @@ if (typeof res.data === 'string') {
 ### Error Response Handling
 
 **Code**:
+
 ```php
 catch (\GuzzleHttp\Exception\BadResponseException $e) {
     $response = $e->getResponse();
@@ -297,6 +313,7 @@ catch (\GuzzleHttp\Exception\BadResponseException $e) {
 **Location**: `resources/js/inertia/Pages/CyberQuote/Show.vue:413-416`
 
 **Error Display**:
+
 - Error messages displayed in table if API returns string
 - Empty array if API call fails
 - Console logging for debugging
@@ -318,11 +335,13 @@ catch (\GuzzleHttp\Exception\BadResponseException $e) {
 **Method**: Basic Authentication + API Token
 
 **Basic Auth**:
+
 ```
 Authorization: Basic {base64(username:password)}
 ```
 
 **API Token**:
+
 ```
 x-api-token: {KEN_API_TOKEN}
 ```
@@ -365,4 +384,3 @@ Return to Frontend
 - **Frontend**: `resources/js/inertia/Pages/CyberQuote/Show.vue`
 - **Route**: `routes/web.php:625`
 - **Config**: `config/constants.php`
-

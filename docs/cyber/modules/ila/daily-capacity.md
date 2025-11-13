@@ -13,6 +13,7 @@ Cyber Insurance advisors have a daily capacity cap of 200 leads per day. This do
 **Location**: `database/seeders/CyberLeadAllocationSeeder.php:15`
 
 **Constant**:
+
 ```php
 private const CYBER_ADVISOR_MAX_CAPACITY = 200;
 ```
@@ -22,6 +23,7 @@ private const CYBER_ADVISOR_MAX_CAPACITY = 200;
 **Table**: `lead_allocations`
 
 **Fields**:
+
 - `max_capacity`: Maximum number of leads per day (default: 200 for Cyber)
 - `allocation_count`: Current number of leads allocated today
 - `quote_type_id`: Quote type ID for Cyber
@@ -32,11 +34,13 @@ private const CYBER_ADVISOR_MAX_CAPACITY = 200;
 **Location**: `database/seeders/CyberLeadAllocationSeeder.php`
 
 **Process**:
+
 1. Finds all users with `CyberAdvisor` role
 2. Creates/updates `LeadAllocation` records
 3. Sets `max_capacity` to 200 for Cyber quote type
 
 **Code Reference**:
+
 ```php
 LeadAllocation::updateOrCreate(
     [
@@ -60,26 +64,28 @@ LeadAllocation::updateOrCreate(
 **Method**: `isMaxCapReached(User $advisor, $quoteTypeId): bool`
 
 **Logic**:
+
 ```php
 public function isMaxCapReached(User $advisor, $quoteTypeId): bool
 {
     $leadAllocation = $advisor->getFirstFromLeadAllocation($quoteTypeId);
-    
+
     if (!$leadAllocation) {
         return true; // No allocation record = unavailable
     }
-    
+
     $allocationCount = $leadAllocation->allocation_count;
     $maxCapacity = $leadAllocation->max_capacity;
-    
+
     // Advisor available if count < max OR max = -1 (unlimited)
     $isAdvisorAvailable = $allocationCount < $maxCapacity || $maxCapacity == -1;
-    
+
     return !$isAdvisorAvailable;
 }
 ```
 
 **Behavior**:
+
 - If `allocation_count >= max_capacity` → Advisor unavailable
 - If `max_capacity == -1` → Unlimited capacity (always available)
 - If no `LeadAllocation` record → Advisor unavailable
@@ -89,6 +95,7 @@ public function isMaxCapReached(User $advisor, $quoteTypeId): bool
 **Location**: `app/Pipes/Allocation/Common/BaseAllocationPipe.php:getAdvisorBaseQuery()`
 
 **Filter Applied**:
+
 - Checks `isMaxCapReached()` before including advisor in results
 - Only advisors under capacity limit are returned
 
@@ -101,11 +108,13 @@ public function isMaxCapReached(User $advisor, $quoteTypeId): bool
 **Method**: `resetNormalLeadAllocationCapacity()`
 
 **Process**:
+
 1. Resets `allocation_count` to 0 for all Cyber advisors
 2. Updates `max_capacity` to 200 for Cyber advisors
 3. Runs daily via scheduled task
 
 **Code Reference**:
+
 ```php
 $cyberCount = LeadAllocation::query()
     ->where('reset_cap', 1)
@@ -128,6 +137,7 @@ $cyberCount = LeadAllocation::query()
 **Requirement**: Cap facility should be manually updateable by admin.
 
 **Implementation**:
+
 - Admins can update `max_capacity` via Lead Allocation management interface
 - Changes take effect immediately
 - No code deployment required
@@ -148,6 +158,7 @@ $cyberCount = LeadAllocation::query()
 **Scenario**: Advisor has reached 200 leads for the day
 
 **Behavior**:
+
 - Advisor excluded from allocation query results
 - System moves to next available advisor (backup)
 - If all advisors at capacity → Allocation fails
@@ -158,6 +169,7 @@ $cyberCount = LeadAllocation::query()
 **Special Case**: `max_capacity = -1`
 
 **Behavior**:
+
 - Advisor always available regardless of allocation count
 - Used for special cases or testing
 
@@ -168,6 +180,7 @@ $cyberCount = LeadAllocation::query()
 **Location**: `app/Pipes/Allocation/Common/BaseAllocationPipe.php:assignLeadToUserAndGetQuote()`
 
 **Process**:
+
 1. Lead assigned to advisor
 2. `allocation_count` incremented in `lead_allocations` table
 3. Count persists until daily reset
@@ -187,12 +200,11 @@ $cyberCount = LeadAllocation::query()
 
 ## Configuration Summary
 
-| Setting | Value | Location |
-|---------|-------|----------|
-| Default Capacity | 200 leads/day | `CyberLeadAllocationSeeder.php:15` |
-| Storage Table | `lead_allocations` | Database |
-| Capacity Field | `max_capacity` | `lead_allocations` table |
-| Count Field | `allocation_count` | `lead_allocations` table |
-| Reset Schedule | Daily | Scheduled command |
-| Manual Update | Yes | Admin interface |
-
+| Setting          | Value              | Location                           |
+| ---------------- | ------------------ | ---------------------------------- |
+| Default Capacity | 200 leads/day      | `CyberLeadAllocationSeeder.php:15` |
+| Storage Table    | `lead_allocations` | Database                           |
+| Capacity Field   | `max_capacity`     | `lead_allocations` table           |
+| Count Field      | `allocation_count` | `lead_allocations` table           |
+| Reset Schedule   | Daily              | Scheduled command                  |
+| Manual Update    | Yes                | Admin interface                    |

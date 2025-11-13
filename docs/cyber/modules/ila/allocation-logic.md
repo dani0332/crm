@@ -67,11 +67,13 @@ Check Test Mode Flag
 **Condition**: `$this->allocationRequest->shouldAssignToHappinessUser()`
 
 **Logic**:
+
 - Checks if lead payment is authorized or declined
 - If true, assigns to Happiness Support User
 - Email: `happiness@support.insurancemarket.ae`
 
 **Code Reference**:
+
 ```php
 if ($this->allocationRequest->shouldAssignToHappinessUser()) {
     $advisor = $this->getHappinessUser();
@@ -85,11 +87,13 @@ if ($this->allocationRequest->shouldAssignToHappinessUser()) {
 **Location**: `app/Pipes/Allocation/Cyber/EvaluateTeamPipe.php`
 
 **Conditions Checked**:
+
 1. **Payment Status**: Is payment authorized or declined?
 2. **SIC Advisor Requested**: Does `cyber_quote_request.sic_advisor_requested` = true?
 3. **Retry Flag**: Does lead have `lead_allocation_failed_at` set?
 
 **Decision Logic**:
+
 ```php
 // Paid lead → Happiness User
 if ($isPaymentAuthorizedOrDeclined) {
@@ -112,6 +116,7 @@ $this->stop('sic advisor requested is false for cyber lead');
 **Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:107-116`
 
 **Test Mode Check**:
+
 ```php
 $testMode = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE);
 
@@ -127,12 +132,14 @@ return $this->getProductionModeAdvisorEmails();
 **Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:118-139`
 
 **Process**:
+
 1. Fetch emails from `CYBER_ADVISORS_TEST` app storage
 2. Parse comma-separated string
 3. Validate email format
 4. Return array of test advisor emails
 
 **Example**:
+
 - Storage Value: `fahadhussain2020@gmail.com,test.advisor@example.com`
 - Returns: `['fahadhussain2020@gmail.com', 'test.advisor@example.com']`
 
@@ -141,6 +148,7 @@ return $this->getProductionModeAdvisorEmails();
 **Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:141-182`
 
 **Process**:
+
 1. Fetch emails from `CYBER_ADVISORS` app storage
 2. Parse comma-separated string
 3. Validate email format
@@ -149,6 +157,7 @@ return $this->getProductionModeAdvisorEmails();
 6. Return appropriate email array
 
 **Example**:
+
 - Storage Value: `smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae`
 - Primary: `smitha.chandran@insurancemarket.ae`
 - Backups: `['neil.rama@insurancemarket.ae']`
@@ -162,32 +171,35 @@ return $this->getProductionModeAdvisorEmails();
 **Parent Method**: `app/Services/AllocationService.php:460-480`
 
 **Logic**:
+
 ```php
 public function isUserOnLeave(string $email, bool $addUnavailable = false): bool
 {
     $user = User::where('email', $email)->activeUser()->first();
-    
+
     if (!$user) {
         return false;
     }
-    
+
     // Get valid advisor statuses
     $validStatuses = $this->getValidAdvisorStatuses($addUnavailable);
     // With addUnavailable=true: [ONLINE, OFFLINE, UNAVAILABLE] = [1, 2, 3]
-    
+
     // If user status is NOT in valid statuses → on leave
     $isOnLeave = !in_array($user->status, $validStatuses);
-    
+
     return $isOnLeave;
 }
 ```
 
 **Valid Statuses** (when `addUnavailable: true`):
+
 - `ONLINE` (1)
 - `OFFLINE` (2)
 - `UNAVAILABLE` (3)
 
 **Leave Statuses**:
+
 - `SICK` (4) → On leave
 - `LEAVE` (5) → On leave
 
@@ -198,6 +210,7 @@ public function isUserOnLeave(string $email, bool $addUnavailable = false): bool
 **Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:72-105`
 
 **Query Logic**:
+
 ```php
 $advisorRecord = $this->getAdvisorBaseQuery(
     onlineStatus: $onlineStatus,
@@ -211,6 +224,7 @@ $advisorRecord = $this->getAdvisorBaseQuery(
 ```
 
 **Base Query Filters**:
+
 - User status matches requested status
 - User has `CyberAdvisor` role
 - User is active
@@ -219,12 +233,14 @@ $advisorRecord = $this->getAdvisorBaseQuery(
 - Email in provided email list
 
 **Capacity Logic**:
+
 - Default capacity: 200 leads per day per Cyber advisor
 - If advisor has reached capacity → Excluded from query results
 - Capacity checked via `isMaxCapReached()` method
 - Location: `app/Services/AllocationService.php:419-438`
 
 **Status Order**:
+
 1. `ONLINE` (1) - Tried first
 2. `OFFLINE` (2) - Tried if no online advisors
 3. `UNAVAILABLE` (3) - Tried if no online/offline advisors
@@ -238,6 +254,7 @@ $advisorRecord = $this->getAdvisorBaseQuery(
 **Location**: `app/Pipes/Allocation/Cyber/AssignLeadPipe.php`
 
 **Process**:
+
 1. Get selected advisor from allocation request
 2. Update `personal_quotes.advisor_id`
 3. Update `personal_quote_details.advisor_assigned_date`
@@ -249,6 +266,7 @@ $advisorRecord = $this->getAdvisorBaseQuery(
 ## Scenarios
 
 ### Scenario 1: Paid Lead
+
 ```
 Lead Payment Status: Authorized
     ↓
@@ -262,6 +280,7 @@ Assignment Complete
 ```
 
 ### Scenario 2: Test Mode Lead
+
 ```
 CYBER_ALLOCATION_TEST_MODE = 1
     ↓
@@ -273,6 +292,7 @@ Assign first available advisor
 ```
 
 ### Scenario 3: Production - Primary Available
+
 ```
 CYBER_ALLOCATION_TEST_MODE = 0
     ↓
@@ -290,6 +310,7 @@ Assign to Smitha
 ```
 
 ### Scenario 4: Production - Primary on Leave
+
 ```
 CYBER_ALLOCATION_TEST_MODE = 0
     ↓
@@ -307,6 +328,7 @@ Assign to Neil
 ```
 
 ### Scenario 5: Multiple Backups
+
 ```
 Production emails: [smitha, neil, alex, tina]
     ↓
@@ -324,17 +346,20 @@ Round-robin distribution among backups
 ## Error Handling
 
 ### No Advisor Found
+
 - Allocation marked as failed
 - `lead_allocation_failed_at` timestamp set
 - Lead remains unassigned
 - Can be retried manually
 
 ### No Emails Configured
+
 - Warning logged
 - Empty array returned
 - Allocation fails gracefully
 
 ### User Not Found
+
 - Warning logged
 - `isUserOnLeave()` returns `false`
 - System continues with primary advisor
@@ -342,6 +367,7 @@ Round-robin distribution among backups
 ## Logging
 
 All allocation decisions are logged:
+
 - Test/Production mode detection
 - Advisor email selection
 - Leave status checks
@@ -357,4 +383,3 @@ All allocation decisions are logged:
 - **Lead Assignment**: `app/Pipes/Allocation/Cyber/AssignLeadPipe.php`
 - **Base Service**: `app/Services/AllocationService.php`
 - **Allocation Strategy**: `app/Strategies/Allocations/CyberAllocation.php`
-

@@ -36,15 +36,18 @@ The Lead List module provides Cyber Managers and Advisors with a comprehensive v
 ## Components
 
 ### Frontend Component
+
 - **File**: `resources/js/inertia/Pages/CyberQuote/Index.vue`
 - **Framework**: Vue.js 3.5 with Composition API
 - **UI Components**: DataTable, filters
 
 ### Backend Controller
+
 - **File**: `app/Http/Controllers/V2/CyberQuoteController.php`
 - **Method**: `index()`
 
 ### Service Layer
+
 - **File**: `app/Services/Quotes/CyberQuoteService.php`
 - **Method**: `getData()`
 
@@ -72,6 +75,7 @@ The Lead List module provides Cyber Managers and Advisors with a comprehensive v
 **Code Reference**: `resources/js/inertia/Pages/CyberQuote/Index.vue:30-55,427-662`
 
 ### Basic Filters
+
 - **Reference ID** (`code`): Search by lead reference ID (text input)
 - **First Name** (`first_name`): Filter by customer first name (text input)
 - **Last Name** (`last_name`): Filter by customer last name (text input)
@@ -79,11 +83,13 @@ The Lead List module provides Cyber Managers and Advisors with a comprehensive v
 - **Mobile Number** (`mobile_no`): Filter by mobile number (text input)
 
 ### Status Filters
+
 - **Lead Status** (`quote_status_id`): Filter by quote status (ComboBox dropdown)
 - **Payment Status** (`payment_status_id`): Filter by payment status (select dropdown)
 - **IM AML Status** (`insurer_aml_status`): Filter by insurer AML status (multi-select dropdown)
 
 ### Date Filters
+
 - **Created Date Start** (`created_at_start`): Start date for creation date range (date picker)
 - **Created Date End** (`created_at_end`): End date for creation date range (date picker)
 - **Policy Start Date** (`policy_expiry_date`): Policy start date filter (date picker)
@@ -94,6 +100,7 @@ The Lead List module provides Cyber Managers and Advisors with a comprehensive v
 - **Transaction Approved Date** (`transaction_approved_dates`): Filter by transaction approval dates (range date picker, max 30 days)
 
 ### Other Filters
+
 - **Advisor** (`advisor_id`): Filter by assigned advisor (multi-select ComboBox, hidden for Cyber Advisor role)
 - **Plan Name** (`plan_name`): Filter by plan name (multi-select dropdown with select all/clear actions)
 - **E-commerce** (`is_ecommerce`): Filter by E-commerce flag (dropdown: All/Yes/No)
@@ -111,11 +118,13 @@ The Lead List module provides Cyber Managers and Advisors with a comprehensive v
 **Location**: `app/Services/Quotes/CyberQuoteService.php:26-70`
 
 **Base Query**:
+
 - Table: `personal_quotes`
 - Quote Type: Cyber (`QuoteTypes::CYBER`)
 - Customer Type: Individual only (never Entity)
 
 **Relationships Loaded**:
+
 - `quoteStatus`
 - `currentlyInsuredWith`
 - `advisor`
@@ -135,11 +144,13 @@ The Lead List module provides Cyber Managers and Advisors with a comprehensive v
 ## Related Files
 
 ### Backend
+
 - **Controller**: `app/Http/Controllers/V2/CyberQuoteController.php`
 - **Service**: `app/Services/Quotes/CyberQuoteService.php`
 - **Request**: Filter parameters via query string
 
 ### Frontend
+
 - **Component**: `resources/js/inertia/Pages/CyberQuote/Index.vue`
 - **Partials**: `LeadAssignment` component for advisor assignment
 
@@ -155,7 +166,8 @@ The Lead List module provides Cyber Managers and Advisors with a comprehensive v
 
 **FR Requirement**: This LOB will always have customer type as **Individual** and never Entity profile.
 
-**Implementation**: 
+**Implementation**:
+
 - Enforced in lead creation
 - Query filters exclude entity types
 - Data display shows individual customer type only
@@ -176,4 +188,3 @@ The Lead List module provides Cyber Managers and Advisors with a comprehensive v
 - [Lead Form](./../lead-form/README.md) - Creating new leads
 - [Lead Details](./../lead-details/README.md) - Viewing lead details
 - [Permissions & Roles](./../permissions-roles.md) - Access control
-

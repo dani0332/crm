@@ -31,6 +31,7 @@ Plan Assigned to Quote
 **Location**: `resources/js/inertia/Pages/CyberQuote/Show.vue:356-367`
 
 **Code**:
+
 ```javascript
 const handlePlanSelected = plan => {
   selectedProviderPlan.value.id = plan.id;
@@ -51,6 +52,7 @@ const handlePlanSelected = plan => {
 **Location**: `resources/js/inertia/Pages/CyberQuote/Show.vue:349-354`
 
 **Structure**:
+
 ```javascript
 const selectedProviderPlan = ref({
   id: page.props?.quote?.plan_id,
@@ -61,6 +63,7 @@ const selectedProviderPlan = ref({
 ```
 
 **Properties**:
+
 - `id`: Selected plan ID
 - `planName`: Plan name
 - `providerName`: Provider name
@@ -73,11 +76,13 @@ const selectedProviderPlan = ref({
 **Purpose**: Refresh quote data after plan selection
 
 **Parameters**:
+
 - `preserveState: true` - Maintains component state
 - `preserveScroll: true` - Maintains scroll position
 - `only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails']` - Only reloads specific props
 
-**Effect**: 
+**Effect**:
+
 - Quote data refreshed from server
 - Selected plan information updated
 - Related data (payments, booking details) refreshed
@@ -89,6 +94,7 @@ const selectedProviderPlan = ref({
 **Purpose**: Reload available plans table after selection
 
 **Effect**:
+
 - Fetches latest plans from API
 - Updates table with current data
 - Reflects any plan changes
@@ -98,6 +104,7 @@ const selectedProviderPlan = ref({
 ### Backend Assignment
 
 Plan selection triggers backend update via:
+
 - Quote reload fetches updated quote data
 - `plan_id` field updated in database
 - Plan details stored in quote record
@@ -108,6 +115,7 @@ Plan selection triggers backend update via:
 **Field**: `plan_id` - References selected plan
 
 **Related Tables**:
+
 - `insurance_provider_plans` - Plan master data
 - `personal_quote_details` - Quote detail records
 
@@ -126,6 +134,7 @@ Plan selection triggers backend update via:
 **Location**: Quote show page header/summary section
 
 **Displays**:
+
 - Selected plan name
 - Provider name
 - Premium amount
@@ -135,6 +144,7 @@ Plan selection triggers backend update via:
 ### After Selection
 
 **Process**:
+
 1. Plan selected via `handlePlanSelected()`
 2. Router reloads quote data
 3. `onLoadAvailablePlansData()` refreshes plans table
@@ -147,6 +157,7 @@ Plan selection triggers backend update via:
 **Method**: `onLoadAvailablePlansData()`
 
 **Triggers**:
+
 - Initial page load
 - After plan selection
 - Manual refresh
@@ -162,6 +173,7 @@ Plan selection triggers backend update via:
 ### Selection State
 
 **Current Selection**:
+
 - Stored in `selectedProviderPlan` ref
 - Initialized from `page.props.quote.plan_id`
 - Updated on selection
@@ -172,4 +184,3 @@ Plan selection triggers backend update via:
 - **Plan State**: `resources/js/inertia/Pages/CyberQuote/Show.vue:349-354`
 - **Data Refresh**: `resources/js/inertia/Pages/CyberQuote/Show.vue:369-420`
 - **Frontend Component**: `resources/js/inertia/Pages/CyberQuote/Show.vue`
-

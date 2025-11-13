@@ -18,6 +18,7 @@ This document explains how Cyber Insurance plans are fetched from the KEN API, i
 **Location**: `app/Services/Quotes/CyberQuoteService.php:169-199`
 
 **Request Parameters**:
+
 ```php
 $plansDataArr = [
     'quoteUID' => $id,                    // Quote UUID
@@ -28,6 +29,7 @@ $plansDataArr = [
 ```
 
 **Headers**:
+
 ```php
 [
     'Content-Type' => 'application/json',
@@ -44,6 +46,7 @@ $plansDataArr = [
 **Location**: `app/Services/Quotes/CyberQuoteService.php:169-239`
 
 **Method**:
+
 ```php
 public function getQuotePlans($id, bool $getLatestRating = false)
 {
@@ -89,7 +92,7 @@ public function getQuotePlans($id, bool $getLatestRating = false)
     } catch (\GuzzleHttp\Exception\BadResponseException $e) {
         // Error handling
     }
-    
+
     return 'Failed to fetch quote plans.';
 }
 ```
@@ -103,6 +106,7 @@ public function getQuotePlans($id, bool $getLatestRating = false)
 **Purpose**: Public method to get available plans for a quote
 
 **Code**:
+
 ```php
 public function getAvailablePlans($uuid)
 {
@@ -117,12 +121,13 @@ public function getAvailablePlans($uuid)
 **Purpose**: Processes API response and extracts plan array
 
 **Code**:
+
 ```php
 public function listQuotePlans($id)
 {
     $listQuotePlans = '';
     $quotePlans = $this->getQuotePlans($id);
-    
+
     if (isset($quotePlans->message) && $quotePlans->message != '') {
         $listQuotePlans = $quotePlans->message;
     } else {
@@ -138,6 +143,7 @@ public function listQuotePlans($id)
 ```
 
 **Response Handling**:
+
 - If `message` exists → Return message string (error message)
 - If object → Extract `quotes.plans` array
 - If string → Return string directly
@@ -147,6 +153,7 @@ public function listQuotePlans($id)
 ### Success Response
 
 **Structure**:
+
 ```json
 {
   "quotes": {
@@ -182,6 +189,7 @@ public function listQuotePlans($id)
 ### Error Response
 
 **Structure**:
+
 ```json
 {
   "message": "Error message here"
@@ -195,13 +203,16 @@ public function listQuotePlans($id)
 **Location**: `app/Services/Quotes/CyberQuoteService.php:210-236`
 
 1. **BadResponseException**: API returned error response
+
    - Extracts error message from response
    - Returns error message string
 
 2. **ConnectException**: Connection error
+
    - Returns: `"Connection error occurred."`
 
 3. **RequestException**: Request error
+
    - Returns: `"Request error occurred."`
 
 4. **Exception**: General exception
@@ -210,6 +221,7 @@ public function listQuotePlans($id)
 ### Error Response Handling
 
 **Code**:
+
 ```php
 catch (\GuzzleHttp\Exception\BadResponseException $e) {
     $response = $e->getResponse();
@@ -237,6 +249,7 @@ catch (\GuzzleHttp\Exception\BadResponseException $e) {
 **Method**: `onLoadAvailablePlansData()`
 
 **Code**:
+
 ```javascript
 const onLoadAvailablePlansData = async () => {
   availablePlansTable.isLoading = true;
@@ -289,6 +302,7 @@ const onLoadAvailablePlansData = async () => {
 **Location**: `routes/web.php:625`
 
 **Route**:
+
 ```php
 Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loadAvailablePlans']);
 ```
@@ -311,6 +325,7 @@ public function loadAvailablePlans($type, $id)
 **Location**: `app/Services/CentralService.php:291-341`
 
 **Cyber Case**:
+
 ```php
 case quoteTypeCode::CYBER:
     return app(CyberQuoteService::class)->getAvailablePlans($id);
@@ -321,6 +336,7 @@ case quoteTypeCode::CYBER:
 ### Environment Variables
 
 **KEN API Configuration** (in `config/constants.php`):
+
 - `KEN_API_ENDPOINT`: Base API URL
 - `KEN_API_TOKEN`: API token for authentication
 - `KEN_API_TIMEOUT`: Request timeout in seconds
@@ -332,6 +348,7 @@ case quoteTypeCode::CYBER:
 ### Plan Data Transformation
 
 **Frontend Processing**:
+
 ```javascript
 plan => ({
   ...plan,
@@ -344,10 +361,11 @@ plan => ({
   priceWithVat: (
     parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)
   ).toFixed(2),
-})
+});
 ```
 
 **Fields Mapped**:
+
 - `coverage` → `coverageUpTo`
 - `insurerQuoteNo` → `quoteNumber`
 - `discountPremium` → `priceWithoutVat`
@@ -361,4 +379,3 @@ plan => ({
 - **Central Service**: `app/Services/CentralService.php`
 - **Frontend**: `resources/js/inertia/Pages/CyberQuote/Show.vue`
 - **Route**: `routes/web.php:625`
-
