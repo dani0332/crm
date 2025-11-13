@@ -36,7 +36,6 @@ class SageProcessesController extends Controller
     public function index(Request $request): \Inertia\Response|\Inertia\ResponseFactory
     {
         try {
-            // Get failed sage processes data
             $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request);
             $dropdownData = $this->sageProcessesService->dropdownData();
 
@@ -78,8 +77,8 @@ class SageProcessesController extends Controller
                 ], 404);
             }
 
-            // Generate filename with timestamp
-            $filename = 'sage-failed-processes-' . date('Y-m-d-His');
+            // Generate filename - ModernCsvExportable trait will append date automatically
+            $filename = 'sage-failed-processes-' . date('His');
 
             return (new SageProcessesExport($failedProcesses))->download($filename);
         } catch (\Exception $e) {

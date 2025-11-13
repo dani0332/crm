@@ -99,7 +99,8 @@ class SageProcessesExport implements CsvExportableInterface
         $sageResponse = $sageApiLog?->response ?? $this->notAvailable;
 
         // Format dates
-        $paymentDate = $payment && $payment->captured_at ? Carbon::parse($payment->captured_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : $this->notAvailable;
+        // Note: Payment model's getCapturedAtAttribute accessor already formats captured_at using DATETIME_DISPLAY_FORMAT
+        $paymentDate = $payment && $payment->captured_at ? $payment->captured_at : $this->notAvailable;
         
         // Format lead create date - handle custom formats like "02-Jul-2025 01:09pm"
         $leadCreateDate = $this->formatLeadCreateDate($row->model?->created_at);
