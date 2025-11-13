@@ -23,19 +23,23 @@ The lead form is the entry point for creating new Cyber Insurance quotes. It cap
 ## Components
 
 ### Frontend Component
+
 - **File**: `resources/js/inertia/Pages/CyberQuote/Form.vue`
 - **Framework**: Vue.js 3.5 with Composition API
 - **UI Library**: @indielayer/ui components
 
 ### Backend Controller
+
 - **File**: `app/Http/Controllers/V2/CyberQuoteController.php`
 - **Methods**: `create()`, `store()`, `edit()`, `update()`
 
 ### Validation
+
 - **File**: `app/Http/Requests/Cyber/CyberQuoteRequest.php`
 - **Type**: Laravel Form Request
 
 ### Service Layer
+
 - **File**: `app/Services/Quotes/CyberQuoteService.php`
 - **Methods**: `create()`, `update()`, `getFormOptions()`
 
@@ -51,7 +55,8 @@ The form includes the following fields (all mandatory):
 6. **Nationality** (required, dropdown from database with country name and code mapping)
 7. **Emirate of Registration** (required, dropdown with all emirates: Dubai, Ras al Khaimah, etc.)
 
-**Note**: 
+**Note**:
+
 - All fields are mandatory
 - Email and mobile are disabled in edit mode (immutable)
 - Nationality stores both country name and mapped country code
@@ -61,6 +66,7 @@ For detailed field definitions and validation rules, see [Form Fields](./form-fi
 ## Form Flow
 
 ### Create Mode
+
 1. User navigates to "Create Cyber Quote"
 2. Empty form displayed with lookup data (nationalities, emirates)
 3. User fills in customer details
@@ -70,6 +76,7 @@ For detailed field definitions and validation rules, see [Form Fields](./form-fi
 7. Redirect to quote show page
 
 ### Edit Mode
+
 1. User navigates to existing quote
 2. Form pre-filled with existing data
 3. Email and mobile disabled (immutable fields)
@@ -84,11 +91,13 @@ For detailed submission flow, see [Submission Flow](./submission-flow.md).
 ## Validation
 
 ### Client-side Validation
+
 - Uses Vue.js composable `useRules()`
 - Rules: `isRequired`, `isEmail`, `isMobileNo`, `isValidName`
 - Real-time feedback on field blur/change
 
 ### Server-side Validation
+
 - Laravel Form Request validation
 - Custom validation messages
 - Database existence checks for foreign keys
@@ -120,7 +129,8 @@ For detailed API documentation, see [API Endpoints](./api-endpoints.md).
 
 **Requirement**: Once lead status = "Policy Booked", editing is blocked
 
-**Implementation**: 
+**Implementation**:
+
 - Edit button disabled
 - Form fields disabled
 - Same behavior as other LOBs (Car, Health, etc.)
@@ -130,6 +140,7 @@ For detailed API documentation, see [API Endpoints](./api-endpoints.md).
 ### Immutable Fields
 
 **After Creation**:
+
 - Email (disabled in edit mode)
 - Mobile Number (disabled in edit mode)
 
@@ -138,6 +149,7 @@ For detailed API documentation, see [API Endpoints](./api-endpoints.md).
 ## Related Files
 
 ### Backend
+
 - `app/Http/Controllers/V2/CyberQuoteController.php`
 - `app/Http/Requests/Cyber/CyberQuoteRequest.php`
 - `app/Services/Quotes/CyberQuoteService.php`
@@ -145,6 +157,7 @@ For detailed API documentation, see [API Endpoints](./api-endpoints.md).
 - `app/Enums/QuoteTypes.php` (lead prefix configuration)
 
 ### Frontend
+
 - `resources/js/inertia/Pages/CyberQuote/Form.vue`
 - `resources/js/inertia/Pages/CyberQuote/Index.vue`
 - `resources/js/inertia/Pages/CyberQuote/Show.vue`
@@ -166,8 +179,8 @@ For detailed API documentation, see [API Endpoints](./api-endpoints.md).
 ## Next Steps
 
 After form submission:
+
 1. Quote created via external Capi API (create) or updated directly (update)
 2. Quote status set to "New Lead"
 3. User redirected to quote details page
 4. ILA (Instant Lead Allocation) runs separately to assign advisor
-

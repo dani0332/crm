@@ -40,15 +40,18 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 ## Components
 
 ### Frontend Component
+
 - **File**: `resources/js/inertia/Pages/CyberQuote/Show.vue`
 - **Framework**: Vue.js 3.5 with Composition API
 - **Sections**: Multiple sections for different lead aspects
 
 ### Backend Controller
+
 - **File**: `app/Http/Controllers/V2/CyberQuoteController.php`
 - **Method**: `show($uuid)`
 
 ### Service Layer
+
 - **File**: `app/Services/Quotes/CyberQuoteService.php`
 - **Method**: `getShowData($uuid)`
 
@@ -57,6 +60,7 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 ### 1. Lead Information
 
 **Displays**:
+
 - Customer details (name, email, mobile, DOB, nationality)
 - Emirate of registration
 - Lead reference ID (CYB-xxxxxx)
@@ -64,7 +68,8 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 - Created date
 - Last modified date
 
-**Edit Capability**: 
+**Edit Capability**:
+
 - Editable until status = "Policy Booked"
 - Email and mobile are immutable after creation
 
@@ -73,6 +78,7 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 **Purpose**: View and select available Cyber Insurance plans
 
 **Features**:
+
 - Plan table with provider, plan name, coverage, pricing
 - Plan details modal (Plan Details, Included Benefits, Policy Wordings)
 - Plan selection functionality
@@ -85,6 +91,7 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 ### 3. Payment Information
 
 **Displays**:
+
 - Payment status
 - Payment history
 - Payment methods
@@ -98,6 +105,7 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 **Purpose**: Manage customer documents
 
 **Features**:
+
 - Upload documents
 - View document list
 - Document type categorization
@@ -108,6 +116,7 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 ### 5. Policy Details
 
 **Displays**:
+
 - Policy number
 - Policy booking date
 - Policy expiry date
@@ -117,6 +126,7 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 ### 6. Booking Details
 
 **Displays**:
+
 - Booking information
 - Policy issuance status
 - Related booking data
@@ -126,13 +136,15 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 **Purpose**: Track all lead activities
 
 **Features**:
+
 - Activity timeline
 - Status change history
 - Payment history
 - Document upload history
 - Notes history
 
-**Components**: 
+**Components**:
+
 - `QuoteActivities` partial
 - `LeadHistory` partial
 
@@ -141,6 +153,7 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 **Purpose**: Add and view lead notes
 
 **Features**:
+
 - Add notes
 - View note history
 - Note timestamps
@@ -154,7 +167,8 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 
 **Condition**: Lead status = "Policy Booked"
 
-**Behavior**: 
+**Behavior**:
+
 - Edit button disabled
 - Form fields disabled
 - Same behavior as other LOBs
@@ -162,6 +176,7 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 ### Immutable Fields
 
 **After Creation**:
+
 - Email (disabled in edit mode)
 - Mobile Number (disabled in edit mode)
 
@@ -176,6 +191,7 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 **API**: KEN API endpoint `/cyber/get-quote-plans`
 
 **Process**:
+
 1. Frontend calls `/quotes/cyber/available-plans/{uuid}`
 2. Backend calls KEN API
 3. Plans displayed in table
@@ -188,6 +204,7 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 ### Initial Load
 
 **Data Fetched**:
+
 - Lead information
 - Quote request details
 - Payment information
@@ -209,13 +226,15 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 ## Related Files
 
 ### Backend
+
 - **Controller**: `app/Http/Controllers/V2/CyberQuoteController.php:96-101`
 - **Service**: `app/Services/Quotes/CyberQuoteService.php:133-144`
 - **Model**: `app/Models/PersonalQuote.php`
 
 ### Frontend
+
 - **Component**: `resources/js/inertia/Pages/CyberQuote/Show.vue`
-- **Partials**: 
+- **Partials**:
   - `SelectPlan.vue`
   - `QuotePayments.vue`
   - `QuoteActivities.vue`
@@ -254,4 +273,3 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 - [Available Plans](./../available-plans/README.md) - Plan selection
 - [ILA Module](./../ila/README.md) - Advisor allocation
 - [Permissions & Roles](./../permissions-roles.md) - Access control
-

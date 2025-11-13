@@ -47,6 +47,7 @@ Redirect to Quote Show Page
 **Location**: `resources/js/inertia/Pages/CyberQuote/Form.vue`
 
 User fills in the form fields:
+
 - First Name
 - Last Name
 - Email
@@ -56,16 +57,14 @@ User fills in the form fields:
 - Emirate of Registration (dropdown)
 
 **Code Reference**:
+
 ```vue
-const quoteForm = useForm({
-  first_name: props.quote?.first_name || '',
-  last_name: props.quote?.last_name || '',
-  email: props.quote?.email || '',
-  mobile_no: props.quote?.mobile_no || '',
-  dob: props.quote?.dob ? dateFormat(props.quote?.dob) : '',
-  nationality_id: props.quote?.nationality_id || '',
-  emirate_of_registration_id: props.quote?.cyber_quote_request?.emirate_of_registration_id || '',
-});
+const quoteForm = useForm({ first_name: props.quote?.first_name || '',
+last_name: props.quote?.last_name || '', email: props.quote?.email || '',
+mobile_no: props.quote?.mobile_no || '', dob: props.quote?.dob ?
+dateFormat(props.quote?.dob) : '', nationality_id: props.quote?.nationality_id
+|| '', emirate_of_registration_id:
+props.quote?.cyber_quote_request?.emirate_of_registration_id || '', });
 ```
 
 ### 2. Client-side Validation
@@ -73,16 +72,19 @@ const quoteForm = useForm({
 **Location**: `resources/js/inertia/Pages/CyberQuote/Form.vue:45-59`
 
 Validation occurs:
+
 - On field blur (real-time)
 - On form submission (before HTTP request)
 
 **Validation Rules**:
+
 - `isRequired`: Field must not be empty
 - `isEmail`: Valid email format
 - `isMobileNo`: Valid mobile number format (create mode only)
 - `isValidName`: Name format validation (letters, spaces, hyphens)
 
 **Code Reference**:
+
 ```javascript
 function onSubmit(isValid) {
   if (isValid) {
@@ -110,10 +112,12 @@ function onSubmit(isValid) {
 ### 3. HTTP Request
 
 **Routes**:
+
 - **Create**: `POST /personal-quotes/cyber` → `CyberQuoteController@store` (route name: `cyber-quotes-store`)
 - **Update**: `PUT /personal-quotes/cyber/{uuid}` → `CyberQuoteController@update` (route name: `cyber-quotes-update`)
 
 **Route Definition**: `routes/web.php:305-307`
+
 ```php
 Route::prefix('personal-quotes')->group(function () {
     Route::resource('/cyber', CyberQuoteController::class)
@@ -126,6 +130,7 @@ Route::prefix('personal-quotes')->group(function () {
 **Location**: `app/Http/Requests/Cyber/CyberQuoteRequest.php`
 
 **Validation Rules**:
+
 ```php
 public function rules(): array
 {
@@ -142,6 +147,7 @@ public function rules(): array
 ```
 
 **Permission Check**:
+
 ```php
 public function authorize(): bool
 {
@@ -152,6 +158,7 @@ public function authorize(): bool
 ```
 
 **If Validation Fails**:
+
 - Returns 422 Unprocessable Entity
 - Errors sent back to frontend
 - Form errors displayed inline
@@ -163,6 +170,7 @@ public function authorize(): bool
 #### Create Flow (`store` method)
 
 **Controller**:
+
 ```php
 public function store(CyberQuoteRequest $request)
 {
@@ -180,6 +188,7 @@ public function store(CyberQuoteRequest $request)
 ```
 
 **Service Method** (`create`):
+
 1. Prepares data for external API call
 2. Calls external Capi API: `Capi::request('/api/cyber/create', 'post', $data)`
 3. External API creates `PersonalQuote` and `CyberQuoteRequest` records
@@ -189,6 +198,7 @@ public function store(CyberQuoteRequest $request)
 #### Update Flow (`update` method)
 
 **Controller**:
+
 ```php
 public function update(CyberQuoteRequest $request, $uuid)
 {
@@ -202,6 +212,7 @@ public function update(CyberQuoteRequest $request, $uuid)
 ```
 
 **Service Method** (`update`):
+
 1. Finds existing quote by UUID
 2. Updates `PersonalQuote` record
 3. Updates `CyberQuoteRequest` record
@@ -214,6 +225,7 @@ public function update(CyberQuoteRequest $request, $uuid)
 **API Endpoint**: `/api/cyber/create` (External Capi API)
 
 **Request Data**:
+
 ```php
 [
     'firstName' => $data['first_name'],
@@ -251,6 +263,7 @@ public function update(CyberQuoteRequest $request, $uuid)
 **Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php`
 
 ILA is triggered separately (not automatically during quote creation). When ILA runs:
+
 1. Checks if lead is paid → Assigns to Happiness User
 2. Otherwise → Fetches available advisor based on:
    - Test mode flag
@@ -259,6 +272,7 @@ ILA is triggered separately (not automatically during quote creation). When ILA 
    - SIC advisor requested flag
 
 **Code Reference**:
+
 ```php
 public function handle(AllocationRequest $request, Closure $next)
 {
@@ -269,7 +283,7 @@ public function handle(AllocationRequest $request, Closure $next)
         $advisor = $this->findAvailableAdvisor(teamId: null);
         // Find and assign available advisor
     }
-    
+
     $this->allocationRequest->setAdvisor($advisor);
     return $next($request);
 }
@@ -278,11 +292,13 @@ public function handle(AllocationRequest $request, Closure $next)
 ### 9. Response and Redirect
 
 **Success Response**:
+
 - HTTP 302 Redirect
 - Redirects to quote show page: `/personal-quotes/cyber/{uuid}` (route name: `cyber-quotes-show`)
 - Success message: "Quote is created successfully." or "Quote is updated successfully."
 
 **Error Response**:
+
 - HTTP 422 (Validation errors)
 - Errors returned as JSON
 - Displayed inline in form
@@ -290,16 +306,19 @@ public function handle(AllocationRequest $request, Closure $next)
 ## Error Handling
 
 ### Client-side Errors
+
 - Displayed below each field
 - Real-time feedback
 - Prevents form submission if invalid
 
 ### Server-side Errors
+
 - Validation errors: Displayed inline
 - Server errors: Shown as alert message
 - Form state preserved on errors
 
 ### Allocation Errors
+
 - Logged via `LoggerService`
 - Allocation failure doesn't block quote creation
 - Quote created without advisor (can be assigned manually)
@@ -307,6 +326,7 @@ public function handle(AllocationRequest $request, Closure $next)
 ## Success Scenarios
 
 ### Create Success
+
 1. Form submitted
 2. Validation passes
 3. Quote created
@@ -315,6 +335,7 @@ public function handle(AllocationRequest $request, Closure $next)
 6. Success message displayed
 
 ### Update Success
+
 1. Form submitted
 2. Validation passes
 3. Quote updated
@@ -332,6 +353,7 @@ public function handle(AllocationRequest $request, Closure $next)
 ## Logging
 
 All operations are logged:
+
 - Quote creation/update
 - Validation failures
 - Advisor allocation
@@ -345,4 +367,3 @@ All operations are logged:
 - Eager loading for relationships
 - Caching for lookup data
 - Optimized queries
-

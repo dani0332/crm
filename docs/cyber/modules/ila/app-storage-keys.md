@@ -16,15 +16,18 @@ This document describes all application storage keys used by the Cyber Insurance
 **Format**: `primary@email.com,backup1@email.com,backup2@email.com`
 
 **Current Value**:
+
 ```
 smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae
 ```
 
 **Structure**:
+
 - **First Email**: Primary advisor (gets all leads when available)
 - **Remaining Emails**: Backup advisors (used when primary is on leave)
 
 **Usage**:
+
 - Fetched in `getProductionModeAdvisorEmails()`
 - Parsed as comma-separated string
 - Emails validated and filtered
@@ -34,9 +37,10 @@ smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae
 **Code Reference**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:143`
 
 **Update Example**:
+
 ```sql
-UPDATE application_storages 
-SET value = 'smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae,alex.smith@insurancemarket.ae' 
+UPDATE application_storages
+SET value = 'smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae,alex.smith@insurancemarket.ae'
 WHERE key_name = 'CYBER_ADVISORS';
 ```
 
@@ -52,11 +56,13 @@ WHERE key_name = 'CYBER_ADVISORS';
 **Format**: `test1@email.com,test2@email.com`
 
 **Current Value**:
+
 ```
 fahadhussain2020@gmail.com
 ```
 
 **Usage**:
+
 - Fetched in `getTestModeAdvisorEmails()`
 - Parsed as comma-separated string
 - Emails validated and filtered
@@ -65,9 +71,10 @@ fahadhussain2020@gmail.com
 **Code Reference**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:120`
 
 **Update Example**:
+
 ```sql
-UPDATE application_storages 
-SET value = 'fahadhussain2020@gmail.com,test.advisor@example.com' 
+UPDATE application_storages
+SET value = 'fahadhussain2020@gmail.com,test.advisor@example.com'
 WHERE key_name = 'CYBER_ADVISORS_TEST';
 ```
 
@@ -81,15 +88,18 @@ WHERE key_name = 'CYBER_ADVISORS_TEST';
 **Used In**: Mode selection logic
 
 **Values**:
+
 - `'0'` = Production mode (uses `CYBER_ADVISORS`)
 - `'1'` = Test mode (uses `CYBER_ADVISORS_TEST`)
 
 **Current Value**:
+
 ```
 0
 ```
 
 **Usage**:
+
 - Checked in `getAdvisorEmails()`
 - Determines which storage key to use
 - Controls allocation behavior
@@ -97,15 +107,16 @@ WHERE key_name = 'CYBER_ADVISORS_TEST';
 **Code Reference**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:109`
 
 **Update Example**:
+
 ```sql
 -- Enable test mode
-UPDATE application_storages 
-SET value = '1' 
+UPDATE application_storages
+SET value = '1'
 WHERE key_name = 'CYBER_ALLOCATION_TEST_MODE';
 
 -- Enable production mode
-UPDATE application_storages 
-SET value = '0' 
+UPDATE application_storages
+SET value = '0'
 WHERE key_name = 'CYBER_ALLOCATION_TEST_MODE';
 ```
 
@@ -116,6 +127,7 @@ WHERE key_name = 'CYBER_ALLOCATION_TEST_MODE';
 **Location**: `app/Enums/ApplicationStorageEnums.php`
 
 **Constants**:
+
 ```php
 public const CYBER_ADVISORS = 'CYBER_ADVISORS';
 public const CYBER_ADVISORS_TEST = 'CYBER_ADVISORS_TEST';
@@ -133,6 +145,7 @@ public const CYBER_ALLOCATION_TEST_MODE = 'CYBER_ALLOCATION_TEST_MODE';
 **Seeder Method**: `seedCyberAdvisors()`
 
 **Default Values**:
+
 ```php
 // Production advisors
 ApplicationStorage::firstOrCreate(
@@ -171,6 +184,7 @@ ApplicationStorage::firstOrCreate(
 **Function**: `getAppStorageValueByKey($key, $useCache = true)`
 
 **Usage**:
+
 ```php
 $emails = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ADVISORS, useCache: true);
 $testMode = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE);
@@ -183,11 +197,13 @@ $testMode = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ALLOCATION_TE
 ## Email Format Requirements
 
 ### Valid Format
+
 - Comma-separated email addresses
 - Spaces are trimmed automatically
 - Invalid emails are filtered out
 
 **Examples**:
+
 ```
 smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae
 smitha.chandran@insurancemarket.ae, neil.rama@insurancemarket.ae
@@ -199,12 +215,14 @@ smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae,alex.smith@insur
 **Code Reference**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:128-131`
 
 **Steps**:
+
 1. `explode(',', $emails)` - Split by comma
 2. `array_map('trim', $emails)` - Trim whitespace
 3. `array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL))` - Validate emails
 4. `array_values($emails)` - Re-index array
 
 **Example**:
+
 ```
 Input: 'smitha@example.com, neil@test.com ,invalid-email,alex@example.com'
 Output: ['smitha@example.com', 'neil@test.com', 'alex@example.com']
@@ -217,23 +235,26 @@ Output: ['smitha@example.com', 'neil@test.com', 'alex@example.com']
 ### Via Database
 
 **View All Cyber Storage Keys**:
+
 ```sql
-SELECT key_name, value, is_active 
-FROM application_storages 
+SELECT key_name, value, is_active
+FROM application_storages
 WHERE key_name LIKE 'CYBER%';
 ```
 
 **Update Production Advisors**:
+
 ```sql
-UPDATE application_storages 
+UPDATE application_storages
 SET value = 'smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae,alex.smith@insurancemarket.ae',
     updated_at = NOW()
 WHERE key_name = 'CYBER_ADVISORS';
 ```
 
 **Update Test Mode**:
+
 ```sql
-UPDATE application_storages 
+UPDATE application_storages
 SET value = '1',
     updated_at = NOW()
 WHERE key_name = 'CYBER_ALLOCATION_TEST_MODE';
@@ -255,6 +276,7 @@ WHERE key_name = 'CYBER_ALLOCATION_TEST_MODE';
 ### Email Validation
 
 Invalid emails are automatically filtered:
+
 - Empty strings
 - Invalid email format
 - Missing @ symbol
@@ -265,6 +287,7 @@ Invalid emails are automatically filtered:
 ### Empty Value Handling
 
 If storage key is empty or not found:
+
 - Warning logged
 - Empty array returned
 - Allocation fails gracefully
@@ -279,4 +302,3 @@ If storage key is empty or not found:
 - **Seeder**: `database/seeders/ApplicationStorageSeeder.php`
 - **Allocation Pipe**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php`
 - **Helper Function**: Global `getAppStorageValueByKey()` function
-

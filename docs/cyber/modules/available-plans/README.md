@@ -24,15 +24,18 @@ The Available Plans module displays and manages Cyber Insurance plans retrieved 
 ## Components
 
 ### Frontend Component
+
 - **File**: `resources/js/inertia/Pages/CyberQuote/Show.vue`
 - **Section**: Available Plans table and modal
 - **Framework**: Vue.js 3.5 with Composition API
 
 ### Backend Service
+
 - **File**: `app/Services/Quotes/CyberQuoteService.php`
 - **Methods**: `getAvailablePlans()`, `listQuotePlans()`, `getQuotePlans()`
 
 ### API Endpoint
+
 - **Controller**: `app/Http/Controllers/V2/CentralController.php`
 - **Method**: `loadAvailablePlans()`
 - **Route**: `POST /quotes/cyber/available-plans/{uuid}`
@@ -42,6 +45,7 @@ The Available Plans module displays and manages Cyber Insurance plans retrieved 
 ## Plan Data Structure
 
 ### Plan Object
+
 ```javascript
 {
   id: 123,
@@ -83,6 +87,7 @@ The Available Plans module displays and manages Cyber Insurance plans retrieved 
 ### Plan Details Modal
 
 Three tabs:
+
 1. **Plan Details**: Basic plan information
 2. **Included Benefits**: List of covered benefits
 3. **Policy Wordings**: Policy documents
@@ -90,22 +95,25 @@ Three tabs:
 ## Related Files
 
 ### Backend
+
 - `app/Services/Quotes/CyberQuoteService.php` - Plan fetching logic
 - `app/Http/Controllers/V2/CentralController.php` - API endpoint
 - `app/Services/CentralService.php` - Central service routing
 
 ### Frontend
+
 - `resources/js/inertia/Pages/CyberQuote/Show.vue` - Plan display component
 
 ### API Integration
+
 - KEN API endpoint: `/cyber/get-quote-plans`
 - Configuration: `config/constants.php`
 
 ## Next Steps
 
 For detailed information:
+
 - [Plan Fetching](./plan-fetching.md) - How plans are retrieved from API
 - [Plan Display](./plan-display.md) - Frontend display logic
 - [Plan Selection](./plan-selection.md) - Plan selection process
 - [API Integration](./api-integration.md) - KEN API integration details
-

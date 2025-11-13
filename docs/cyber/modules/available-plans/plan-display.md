@@ -42,6 +42,7 @@ This document explains how Cyber Insurance plans are displayed in the frontend, 
 **Location**: `resources/js/inertia/Pages/CyberQuote/Show.vue:299-336`
 
 **Columns Defined**:
+
 ```javascript
 const availablePlansTable = reactive({
   data: [],
@@ -62,29 +63,36 @@ const availablePlansTable = reactive({
 ### Column Details
 
 1. **Provider Name** (`providerName`)
+
    - Insurance provider name
    - Displayed with diamond icon indicator
 
 2. **Plans** (`name`)
+
    - Plan name/title
 
 3. **Coverage Up to** (`coverageUpTo`)
+
    - Maximum coverage amount
    - Formatted from `coverage` field
 
 4. **Quote Number** (`quoteNumber`)
+
    - Insurer quote reference number
    - Mapped from `insurerQuoteNo`
 
 5. **Price without VAT** (`priceWithoutVat`)
+
    - Base premium before VAT
    - Mapped from `discountPremium`
 
 6. **VAT** (`vat`)
+
    - VAT amount (5%)
    - Displayed as separate column
 
 7. **Price (with VAT)** (`priceWithVat`)
+
    - Total price including VAT
    - Calculated: `discountPremium + vat`
 
@@ -99,6 +107,7 @@ const availablePlansTable = reactive({
 **Source**: API response from KEN API
 
 **Properties**:
+
 ```javascript
 {
   id: 123,                              // Plan ID
@@ -132,6 +141,7 @@ const availablePlansTable = reactive({
 **Location**: `resources/js/inertia/Pages/CyberQuote/Show.vue:369-420`
 
 **Process**:
+
 1. Set `isLoading = true`
 2. Show loading spinner
 3. Make API call
@@ -139,6 +149,7 @@ const availablePlansTable = reactive({
 5. Set `isLoading = false`
 
 **Loading Indicator**:
+
 ```vue
 <div v-if="availablePlansTable.isLoading" class="flex justify-center my-8">
   <x-spinner size="lg" />
@@ -148,6 +159,7 @@ const availablePlansTable = reactive({
 ### Data Processing
 
 **Response Handling**:
+
 ```javascript
 if (typeof res.data === 'string') {
   // Error message from API
@@ -182,6 +194,7 @@ if (typeof res.data === 'string') {
 **Location**: `resources/js/inertia/Pages/CyberQuote/Show.vue:1318-1479`
 
 **Tabs**:
+
 1. **Plan Details** (index 0)
 2. **Included Benefits** (index 1)
 3. **Policy Wordings** (index 2)
@@ -189,6 +202,7 @@ if (typeof res.data === 'string') {
 ### Plan Details Tab
 
 **Displays**:
+
 - Plan Name
 - Provider Name
 - Premium
@@ -201,11 +215,12 @@ if (typeof res.data === 'string') {
 **Displays**: List of included benefits from `benefits.INCLUSION`
 
 **Structure**:
+
 ```javascript
 planDetails.benefits.INCLUSION = [
-  { code: "BEN001", text: "Data Breach Coverage" },
-  { code: "BEN002", text: "Ransomware Protection" }
-]
+  { code: 'BEN001', text: 'Data Breach Coverage' },
+  { code: 'BEN002', text: 'Ransomware Protection' },
+];
 ```
 
 **Display**: Each benefit shown with checkmark icon
@@ -217,10 +232,9 @@ planDetails.benefits.INCLUSION = [
 **Displays**: List of policy documents from `policyWordings`
 
 **Structure**:
+
 ```javascript
-planDetails.policyWordings = [
-  { id: 1, text: "Policy Document.pdf" }
-]
+planDetails.policyWordings = [{ id: 1, text: 'Policy Document.pdf' }];
 ```
 
 **Display**: Document links with PDF icon
@@ -234,6 +248,7 @@ planDetails.policyWordings = [
 **Location**: `resources/js/inertia/Pages/CyberQuote/Show.vue:422-457`
 
 **Logic**:
+
 ```javascript
 const getPlanDetails = id => {
   viewButtonLoading.value = true;
@@ -284,11 +299,15 @@ const getPlanDetails = id => {
 **VAT Rate**: 5% (standard UAE VAT)
 
 **Calculation**:
+
 ```javascript
-priceWithVat = (parseFloat(discountPremium ?? 0) + parseFloat(vat ?? 0)).toFixed(2)
+priceWithVat = (
+  parseFloat(discountPremium ?? 0) + parseFloat(vat ?? 0)
+).toFixed(2);
 ```
 
 **Example**:
+
 - Base Premium: 500.00
 - VAT: 25.00
 - Total: 525.00
@@ -296,16 +315,20 @@ priceWithVat = (parseFloat(discountPremium ?? 0) + parseFloat(vat ?? 0)).toFixed
 ### Formatting
 
 **Coverage Formatting**:
+
 ```javascript
-coverageUpTo: plan.coverage ?? '-'
+coverageUpTo: plan.coverage ?? '-';
 // Displays: "1,000,000" or "-" if not available
 ```
 
 **Price Formatting**:
+
 ```javascript
-priceWithoutVat: plan.discountPremium ?? '0'
-vat: plan.vat ?? '0'
-priceWithVat: (parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)).toFixed(2)
+priceWithoutVat: plan.discountPremium ?? '0';
+vat: plan.vat ?? '0';
+priceWithVat: (
+  parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)
+).toFixed(2);
 ```
 
 ## Table Features
@@ -331,10 +354,12 @@ priceWithVat: (parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)
 ### API Errors
 
 **Error Display**:
+
 - If API returns error message string → Displayed in table
 - If API fails → Empty array, error logged to console
 
 **User Feedback**:
+
 - Loading spinner during API call
 - Error notification if plan details not found
 - Empty state if no plans available
@@ -345,4 +370,3 @@ priceWithVat: (parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)
 - **Data Loading**: `resources/js/inertia/Pages/CyberQuote/Show.vue:369-420`
 - **Plan Details**: `resources/js/inertia/Pages/CyberQuote/Show.vue:422-457`
 - **Table Configuration**: `resources/js/inertia/Pages/CyberQuote/Show.vue:299-336`
-

@@ -19,9 +19,11 @@ Cyber Insurance protects businesses and individuals from internet-based risks an
 ## Table of Contents
 
 ### Core Documentation
+
 - [Architecture](./architecture.md) - System architecture, tech stack, and flow diagrams
 
 ### Modules
+
 - [Lead List](./modules/lead-list/README.md) - Lead list view and filtering
 - [Lead Form](./modules/lead-form/README.md) - Lead form overview and implementation
   - [Form Fields](./modules/lead-form/form-fields.md) - Field definitions and validation rules
@@ -78,4 +80,3 @@ Cyber Insurance protects businesses and individuals from internet-based risks an
 ## Support
 
 For questions or issues related to Cyber LOB, please contact the development team.
-

@@ -11,6 +11,7 @@ This document outlines the business requirements and functional specifications f
 **Requirement**: All Cyber Insurance leads are assigned to the primary advisor (Smitha Chandran).
 
 **Implementation**:
+
 - Primary advisor: `smitha.chandran@insurancemarket.ae`
 - All leads assigned to primary advisor by default
 - No category-based assignment - all leads go to primary advisor
@@ -21,6 +22,7 @@ This document outlines the business requirements and functional specifications f
 **Requirement**: In case of primary advisor absence, leads should be assigned to backup advisor.
 
 **Implementation**:
+
 - Backup advisor: `neil.rama@insurancemarket.ae`
 - Trigger: Primary advisor status is SICK (4) or LEAVE (5)
 - Note: If primary advisor is OFFLINE, leads are still assigned to primary advisor
@@ -31,6 +33,7 @@ This document outlines the business requirements and functional specifications f
 **Requirement**: Cap facility available and manually updateable: 200 leads per day (controlled by admin).
 
 **Implementation**:
+
 - Default capacity: 200 leads per day per Cyber advisor
 - Stored in: `lead_allocations` table (`max_capacity` field)
 - Reset daily via scheduled command: `ResetLeadAllocationCounts`
@@ -38,6 +41,7 @@ This document outlines the business requirements and functional specifications f
 - Code Reference: `app/Console/Commands/ResetLeadAllocationCounts.php:96-103`
 
 **Configuration**:
+
 ```php
 private const CYBER_ADVISOR_MAX_CAPACITY = 200;
 ```
@@ -47,6 +51,7 @@ private const CYBER_ADVISOR_MAX_CAPACITY = 200;
 **Requirement**: Once payment is made, the lead will always be assigned to the HAPEX team.
 
 **Implementation**:
+
 - HAPEX email: `happiness@support.insurancemarket.ae`
 - Trigger: Payment authorized or declined
 - Location: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:22-42`
@@ -57,6 +62,7 @@ private const CYBER_ADVISOR_MAX_CAPACITY = 200;
 **Requirement**: All leads are SIC (Self-Initiated Customer). Customer can request for an advisor.
 
 **Implementation**:
+
 - SIC advisor request flag: `cyber_quote_request.sic_advisor_requested`
 - If SIC advisor requested OR retry flag set → Proceed with allocation
 - Otherwise → Stop allocation (lead not eligible)
@@ -67,6 +73,7 @@ private const CYBER_ADVISOR_MAX_CAPACITY = 200;
 **Requirement**: Manual reassignment option should be available. Auto-reassignment is not required.
 
 **Implementation**:
+
 - Manual reassignment available via admin interface
 - Auto-reassignment: Not implemented (as per requirement)
 - Override advisor ID supported via allocation request
@@ -84,6 +91,7 @@ private const CYBER_ADVISOR_MAX_CAPACITY = 200;
 **Requirement**: Product and team to be assigned to the advisor as well as HAPEX during assignment logic.
 
 **Implementation**:
+
 - Product assignment handled during lead assignment
 - Team assignment handled during lead assignment
 - Location: `app/Pipes/Allocation/Common/BaseAllocationPipe.php:assignLeadToUserAndGetQuote()`
@@ -139,6 +147,7 @@ private const CYBER_ADVISOR_MAX_CAPACITY = 200;
 **Requirement**: Advisors should be mapped to Cyber Insurance LOB so that they can handle these specific leads. Should allow other LOB lead allocation to same user if team role and products are mapped.
 
 **Implementation**:
+
 - Advisors mapped via `lead_allocations` table
 - Role requirement: `CyberAdvisor` role
 - Multiple LOB support: Same user can handle multiple LOBs if roles and products mapped
@@ -151,4 +160,3 @@ private const CYBER_ADVISOR_MAX_CAPACITY = 200;
 - **Lead Allocation Seeder**: `database/seeders/CyberLeadAllocationSeeder.php`
 - **Capacity Reset**: `app/Console/Commands/ResetLeadAllocationCounts.php`
 - **Allocation Strategy**: `app/Strategies/Allocations/CyberAllocation.php`
-
