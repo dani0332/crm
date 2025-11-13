@@ -73,7 +73,7 @@ This document describes the roles and permissions system for Cyber Insurance LOB
 
 **Usage**:
 
-- Required for accessing `/cyber` (index page)
+- Required for accessing `/personal-quotes/cyber` (index page, route name: `cyber-quotes-list`)
 - Controller middleware: `CyberQuoteController@index`
 
 **Equivalent**: `car-quotes-list` for Car LOB
