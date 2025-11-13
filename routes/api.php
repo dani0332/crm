@@ -68,6 +68,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
         Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
     });
 
+    Route::post('/payments', [ApiController::class, 'checkDocumentUploadAfterPayment']);
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);

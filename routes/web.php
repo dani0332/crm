@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\EnvEnum;
+use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\AccuracyMatrixController;
 use App\Http\Controllers\ActivitesController;
@@ -97,6 +98,7 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Models\BorLog;
+use App\Models\CcPaymentProcess;
 use App\Services\AddBatchForNonMotors;
 use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;
@@ -963,4 +965,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         return view('pdf.bor-document', $pdfData);
     });
+});
+
+
+Route::get('test', function(){
+    $ccPayment = CcPaymentProcess::find(5088);
+    $ccPayment->update(['status' => PaymentProcessJobEnum::PENDING]);
+
+    echo 'Done';
 });
