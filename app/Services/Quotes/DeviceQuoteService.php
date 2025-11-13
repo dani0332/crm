@@ -13,11 +13,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
-class SmartPhoneQuoteService extends BaseQuoteService
+class DeviceQuoteService extends BaseQuoteService
 {
     public function __construct()
     {
-        parent::__construct(QuoteTypes::SMART_PHONE);
+        parent::__construct(QuoteTypes::Device);
     }
 
     public function getData(bool $paginted = false, bool $forExport = false, bool $getTotalCount = false)
@@ -132,10 +132,10 @@ class SmartPhoneQuoteService extends BaseQuoteService
         $quote = $this->getOne($uuid, true);
         $data = $this->getShowCommonData($quote);
 
-        $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::SMART_PHONE_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::SmartPhone) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));
+        $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::DEVICE_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::Device) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));
 
         return [
-            'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SmartPhoneManager),
+            'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::DeviceManager),
             ...$data,
         ];
     }
@@ -237,7 +237,7 @@ class SmartPhoneQuoteService extends BaseQuoteService
 
     public function getFormOptions()
     {
-        $lookUpData = app(LookupService::class)->getSmartPhoneQuoteLookUpData();
+        $lookUpData = app(LookupService::class)->getDeviceQuoteLookUpData();
 
         return [
             'lookUpData' => $lookUpData,
@@ -269,7 +269,7 @@ class SmartPhoneQuoteService extends BaseQuoteService
         $response = Capi::request('/api/cyber/create', 'post', $data);
 
         if (isset($response->quoteUID)) {
-            $this->selfAssign(QuoteTypes::CYBER, $response->quoteUID, true);
+            $this->selfAssign(QuoteTypes::Device, $response->quoteUID, true);
         }
 
         return $response;
@@ -296,8 +296,8 @@ class SmartPhoneQuoteService extends BaseQuoteService
         });
     }
 
-    public function getCyberCoverages()
+    public function getDeviceCoverages()
     {
-        return app(LookupService::class)->getCyberCoverages();
+        return app(LookupService::class)->getDeviceCoverages();
     }
 }

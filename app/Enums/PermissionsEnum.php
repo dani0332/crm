@@ -455,10 +455,10 @@ final class PermissionsEnum extends Enum
     public const EDIT_LAST_YEAR_DETAILS = 'edit-last-year-details';
 
     // Smart Phone Permissions
-    public const SMART_PHONE_QUOTES_LIST = 'smart-phone-quotes-list';
-    public const SMART_PHONE_QUOTES_CREATE = 'smart-phone-quotes-create';
-    public const SMART_PHONE_QUOTES_EDIT = 'smart-phone-quotes-edit';
-    public const SMART_PHONE_QUOTES_SHOW = 'smart-phone-quotes-show';
+    public const DEVICE_QUOTES_LIST = 'device-quotes-list';
+    public const DEVICE_QUOTES_CREATE = 'device-quotes-create';
+    public const DEVICE_QUOTES_EDIT = 'device-quotes-edit';
+    public const DEVICE_QUOTES_SHOW = 'device-quotes-show';
     
 
     public static function getAdvisorConversionReportPermissions()

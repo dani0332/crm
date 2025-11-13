@@ -48,6 +48,7 @@ use App\Strategies\Allocations\TravelAllocation;
 use App\Strategies\Allocations\YachtAllocation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
+use App\Models\DeviceQuote;
 
 enum QuoteTypes: string
 {
@@ -71,7 +72,7 @@ enum QuoteTypes: string
     case CAR_REVIVAL = 'CarRevival';
     case CAR_BIKE = 'Car_Bike';
     case SAVINGS = 'Savings';
-    case SMART_PHONE = 'SmartPhone';
+    case Device = 'Device';
 
     public function id(): string
     {
@@ -95,7 +96,7 @@ enum QuoteTypes: string
             QuoteTypes::CORPLINE => 101,
             QuoteTypes::GROUP_MEDICAL => 102,
             QuoteTypes::SAVINGS => 18,
-            QuoteTypes::SMART_PHONE => 20,
+            QuoteTypes::Device => 20,
             default => null,
         };
     }
@@ -117,7 +118,7 @@ enum QuoteTypes: string
             101 => QuoteTypes::CORPLINE,
             102 => QuoteTypes::GROUP_MEDICAL,
             18 => QuoteTypes::SAVINGS,
-            20 => QuoteTypes::SMART_PHONE,
+            20 => QuoteTypes::Device,
         ];
 
         return isset($types[$value]) ? $types[$value] : null;
@@ -140,7 +141,7 @@ enum QuoteTypes: string
             'CorpLine' => QuoteTypes::CORPLINE,
             'Group Medical' => QuoteTypes::GROUP_MEDICAL,
             'Savings' => QuoteTypes::SAVINGS,
-            'SmartPhone' => QuoteTypes::SMART_PHONE,
+            'Device' => QuoteTypes::Device,
             default => null,
         };
 
@@ -162,7 +163,7 @@ enum QuoteTypes: string
             self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote : new CycleQuote,
             self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote : new JetskiQuote,
             self::SAVINGS => checkPersonalQuotes($this->value) ? new PersonalQuote : new SavingsQuote,
-            self::SMART_PHONE => checkPersonalQuotes($this->value) ? new PersonalQuote : new SmartPhoneQuote,
+            self::Device => checkPersonalQuotes($this->value) ? new PersonalQuote : new DeviceQuote,
             default => new PersonalQuote,
         };
     }

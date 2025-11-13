@@ -101,7 +101,7 @@ use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\V2\SmartPhoneQuoteController;
+use App\Http\Controllers\V2\DeviceQuoteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -254,7 +254,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::prefix('personal-quotes')->group(function () {
             Route::resource('/savings', SavingsQuoteController::class)->names(generateRouteNames('savings-quotes'));
 
-            Route::resource('/smart-phone', SmartPhoneQuoteController::class)->names(generateRouteNames('smart-phone-quotes'));
+            Route::resource('/smart-phone', DeviceQuoteController::class)->names(generateRouteNames('smart-phone-quotes'));
         });
         Route::resource('personal-quotes/home', HomeQuoteController::class)->names(generateRouteNames('home-quotes'));
 

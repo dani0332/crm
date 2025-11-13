@@ -269,10 +269,17 @@ class LookupService extends BaseService
             ->select('id', 'code', 'text')
             ->get();
     }
-    public function getSmartPhoneQuoteLookUpData()
+
+    public function getDeviceCoverages()
     {
-        return CacheManager::remember(CacheKeyEnum::SMART_PHONE_QUOTE_LOOKUPS, function () {
-            return Capi::request('/api/v1-get-all-smart-phone-lookups', 'post');
+        return CacheManager::remember(CacheKeyEnum::DEVICE_QUOTE_LOOKUPS, function () {
+            return Capi::request('/api/v1-get-all-device-lookups', 'post');
+        });
+    }
+    public function getDeviceQuoteLookUpData()
+    {
+        return CacheManager::remember(CacheKeyEnum::DEVICE_QUOTE_LOOKUPS, function () {
+            return Capi::request('/api/v1-get-all-device-lookups', 'post');
         });
     }
 }
