@@ -188,6 +188,7 @@ class TransactionReportService extends ManagementReport
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->commmission_percentage = number_format(strToFloat($item->commmission_percentage), 2);
             $item->policy_booking_date = ! empty($item->policy_booking_date) ? Carbon::parse($item->policy_booking_date)->format('Y-m-d') : null;
+            $item->insurer_tax_invoice_date = ! empty($item->insurer_tax_invoice_date) ? Carbon::parse($item->insurer_tax_invoice_date)->format(config('constants.DATE_DISPLAY_SLASH_FORMAT')) : null;
             $item->currently_insured_with_text = $item->quote_type_id == QuoteTypeId::Car
                 ? ($item->currently_insured_with_text ?? $item->currently_insured_with ?? 'N/A')
                 : ($item->currently_insured_with_text ?? 'N/A');
