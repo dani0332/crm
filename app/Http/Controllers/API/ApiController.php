@@ -601,8 +601,8 @@ class ApiController extends Controller
             LoggerService::info("CheckDocumentUploadAfterPayment: Starting job execution for payment code: {$paymentCode}");
 
             // Dispatch job with 24 hours delay
-            CheckDocumentUploadAfterPaymentJob::dispatch($paymentCode);
-                // ->delay(now()->addHours(24));
+            CheckDocumentUploadAfterPaymentJob::dispatch($paymentCode)
+                ->delay(now()->addHours(24));
             
             return response()->json([
                 'success' => true,
