@@ -168,6 +168,8 @@ class MulkiyaExtractor
             'doc_type' => $this->extractedData['doc_type'] ?? null,
             'provider_id' => $this->extractedData['provider_id'] ?? null,
             'traffic_code_number' => $this->extractedData['traffic_code_number'] ?? null,
+            'policy_expiry_date' => $this->extractedData['policy_expiry_date'] ?? null,
+            'chassis_number' => $this->extractedData['chassis_number'] ?? null,
         ]);
     }
 
