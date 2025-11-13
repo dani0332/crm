@@ -32,7 +32,7 @@ class RegistrationCertificate extends Model
         'provider_id',
         'traffic_code_number',
         'policy_expiry_date',
-        'chassis_number'
+        'chassis_number',
     ];
     protected $casts = [
         'expiry_date' => 'date',

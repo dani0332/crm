@@ -3,7 +3,6 @@
 namespace App\Traits;
 
 use App\Enums\QuoteTypes;
-use App\Models\PersonalQuote;
 use App\Models\QuoteStatus;
 use App\Models\User;
 

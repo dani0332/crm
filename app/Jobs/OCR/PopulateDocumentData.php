@@ -35,8 +35,8 @@ class PopulateDocumentData implements ShouldQueue
         protected string $documentPath,
         protected string $fileMimeType,
         protected int $userId,
-        bool $isEcom = false,
-        protected bool $isSendUpdateEligibleForOCR = false,
+        bool $isEcom,
+        protected bool $isSendUpdateEligibleForOCR,
         protected int $quoteDocumentId,
     ) {
         $this->isEcom = $isEcom;

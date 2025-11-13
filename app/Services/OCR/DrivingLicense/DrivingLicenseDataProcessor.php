@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\DrivingLicense;
 
-use App\Enums\DocumentTypeCode;
 use App\Models\CarQuote;
 use App\Models\Nationality;
 use App\Services\Logger\LoggerService;

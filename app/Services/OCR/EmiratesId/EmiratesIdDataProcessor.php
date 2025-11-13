@@ -17,11 +17,10 @@ use App\Models\Lookup;
 use App\Models\Nationality;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
+use App\Services\OCR\Validators\OCRDocumentValidator;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use App\Services\OCR\Validators\OCRDocumentValidator;
-use App\Enums\DocumentTypeCode;
 
 class EmiratesIdDataProcessor
 {
@@ -60,7 +59,7 @@ class EmiratesIdDataProcessor
             DB::commit();
 
             LoggerService::info('Emirates ID data processing completed successfully');
-            
+
             // Trigger OCR success validation
             $isOCRSuccess = app(OCRDocumentValidator::class)->validateEIDFields($this->quote->id);
             LoggerService::info('EmiratesId data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($this->extractedData));

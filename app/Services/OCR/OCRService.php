@@ -228,7 +228,7 @@ class OCRService
         float $startTime,
         float $apiCallStartTime,
         object $data,
-        bool $isSendUpdateEligibleForOCR = false,
+        bool $isSendUpdateEligibleForOCR,
         int $quoteDocumentId
     ): ?bool {
         $apiCallEndTime = microtime(true);
