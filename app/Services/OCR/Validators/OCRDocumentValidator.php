@@ -85,7 +85,19 @@ class OCRDocumentValidator
 
         $customerInsured = CustomerInsured::where('quote_request_id', $quoteId)
             ->first();
+        
+        if (!$customerInsured) {
+            return false;
+        }
+        
+        // Retrieve insured details
         $insuredDetails = $customerInsured->insured;
+
+        if (!$insuredDetails) {
+            return false;
+        }
+        
+        // Retrieve insured KYC details
         $insuredKycDetails = $insuredDetails->insuredKyc;
 
         // Determine success flag
