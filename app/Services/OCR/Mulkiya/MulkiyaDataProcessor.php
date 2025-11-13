@@ -9,9 +9,9 @@ use App\Models\Nationality;
 use App\Models\RegistrationCertificate;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
+use App\Services\OCR\Validators\OCRDocumentValidator;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use App\Services\OCR\Validators\OCRDocumentValidator;
 
 class MulkiyaDataProcessor
 {
