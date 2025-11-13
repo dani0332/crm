@@ -32,7 +32,7 @@ class ProcessCCPaymentsCommand extends Command
      * Execute the console command.
      */
     public function handle()
-    {        
+    {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::CC_PAYMENT_PROCESS_COMMAND);
 
         $environment = app()->environment();
@@ -42,13 +42,15 @@ class ProcessCCPaymentsCommand extends Command
         // Only enable in non-production environments
         if (! in_array($environment, [EnvEnum::PRODUCTION, EnvEnum::TEST, EnvEnum::STAGING, EnvEnum::DEVELOPMENT])) {
             LoggerService::info("CC Payments Process Command Job Disabled in {$environment}");
+
             return 0;
         }
 
         $processCcPaymentsEnabled = ApplicationStorage::where('key_name', ApplicationStorageEnums::PROCESS_CC_PAYMENTS_ENABLED)->first();
 
-        if (!$processCcPaymentsEnabled?->value) {
+        if (! $processCcPaymentsEnabled?->value) {
             LoggerService::info("CC Payments Process Command Job Disabled in {$environment}");
+
             return 0;
         }
 
@@ -56,7 +58,7 @@ class ProcessCCPaymentsCommand extends Command
 
         CcPaymentProcess::where('status', PaymentProcessJobEnum::PENDING)
             ->chunk(100, function ($pendingCCRecords) use ($environment) {
-                
+
                 LoggerService::info("Processing {$pendingCCRecords->count()} pending CC payments in {$environment}");
 
                 foreach ($pendingCCRecords as $pendingCCRecord) {
