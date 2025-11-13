@@ -600,39 +600,19 @@ class ApiController extends Controller
 
             LoggerService::info("CheckDocumentUploadAfterPayment: Starting job execution for payment code: {$paymentCode}");
 
-            // Cache key to track if job is already dispatched
-            // $cacheKey = "document_upload_check_job_dispatched_{$paymentCode}";
-            
-            // Check if job already dispatched (cache expires after 25 hours to be safe)
-            // if (cache()->has($cacheKey)) {
-            //     LoggerService::info("CheckDocumentUploadAfterPayment: Job already dispatched for payment code: {$paymentCode}, cache_key: {$cacheKey}");
-                
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => 'Job has already been dispatched for this payment code',
-            //         'payment_code' => $paymentCode,
-            //     ], Response::HTTP_CONFLICT);
-            // }
-            
             // Dispatch job with 24 hours delay
-            CheckDocumentUploadAfterPaymentJob::dispatch($paymentCode)
-                ->delay(now()->addHours(24));
-            
-            // Set cache flag to prevent duplicate dispatch (expires after 25 hours)
-            // cache()->put($cacheKey, true, now()->addHours(25));
-            
-            $scheduledAt = now()->addHours(24)->toDateTimeString();
-            LoggerService::info("CheckDocumentUploadAfterPayment: Job dispatched successfully for payment code: {$paymentCode}, scheduled_at: {$scheduledAt}, cache_key: {$cacheKey}");
+            CheckDocumentUploadAfterPaymentJob::dispatch($paymentCode);
+                // ->delay(now()->addHours(24));
             
             return response()->json([
                 'success' => true,
                 'message' => 'Job dispatched successfully. Will check document upload after 24 hours.',
                 'payment_code' => $paymentCode,
-                'scheduled_at' => $scheduledAt,
             ], Response::HTTP_OK);
             
         } catch (\Exception $e) {
             $paymentCodeForError = $request->input('payment_code', 'unknown');
+
             LoggerService::error("CheckDocumentUploadAfterPayment: Failed to dispatch job for payment code: {$paymentCodeForError}", exception: $e);
             
             return response()->json([
