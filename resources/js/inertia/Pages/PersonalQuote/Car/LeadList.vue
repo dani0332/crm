@@ -717,11 +717,11 @@ const onExport = (url, isLoading = false, exportType = 'download') => {
     }
 
     if (diff > maxLimit) {
-      /*notification.error({
+      notification.error({
         title: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
         position: 'top',
       });
-      return;*/
+      return;
     }
   }
 
