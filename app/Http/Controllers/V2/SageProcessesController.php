@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\V2;
 
 use App\Enums\PermissionsEnum;
+use App\Exports\SageProcessesExport;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Services\Logger\LoggerService;
 use App\Services\SageProcessesService;
-use App\Exports\SageProcessesExport;
+use Illuminate\Http\Request;
+
 /**
  * Controller for managing failed sage processes
  *
@@ -73,12 +74,12 @@ class SageProcessesController extends Controller
             // Check if there's any data to export
             if (empty($failedProcesses) || (is_countable($failedProcesses) && count($failedProcesses) === 0)) {
                 return response()->json([
-                    'message' => 'No data available to export.'
+                    'message' => 'No data available to export.',
                 ], 404);
             }
 
             // Generate filename - ModernCsvExportable trait will append date automatically
-            $filename = 'sage-failed-processes-' . date('His');
+            $filename = 'sage-failed-processes-'.date('His');
 
             return (new SageProcessesExport($failedProcesses))->download($filename);
         } catch (\Exception $e) {
@@ -87,7 +88,7 @@ class SageProcessesController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Export failed: ' . $e->getMessage()
+                'message' => 'Export failed: '.$e->getMessage(),
             ], 500);
         }
     }

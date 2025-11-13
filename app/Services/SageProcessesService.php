@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Schema;
 class SageProcessesService extends BaseService
 {
     protected $sendUpdateModelClass = SendUpdateLog::class;
+
     const SEND_UPDATE_MODEL_NAME = 'Send Update';
     const OPTION_SEND_UPDATE = 'Send Update';
     const OPTION_MAIN_LEAD = 'Main Lead';
@@ -55,13 +56,13 @@ class SageProcessesService extends BaseService
             })->when($request->quote_type_id, function ($query) use ($request) {
                 $directModelClasses = [];
                 $personalQuoteTypeIds = [];
-                
+
                 foreach ($request->quote_type_id as $quote_type_id) {
                     if ($quote_type_id == self::SEND_UPDATE_MODEL_NAME) {
                         $directModelClasses[] = $this->sendUpdateModelClass;
                     } else {
                         $quoteTypeEnum = QuoteTypes::getName($quote_type_id);
-                        
+
                         if ($quoteTypeEnum) {
                             if (checkPersonalQuotes($quoteTypeEnum->value)) {
                                 $personalQuoteTypeIds[] = $quote_type_id;
@@ -74,11 +75,11 @@ class SageProcessesService extends BaseService
                 }
 
                 $query->where(function ($subQuery) use ($directModelClasses, $personalQuoteTypeIds) {
-                    if (!empty($directModelClasses)) {
+                    if (! empty($directModelClasses)) {
                         $subQuery->whereIn('model_type', $directModelClasses);
                     }
 
-                    if (!empty($personalQuoteTypeIds)) {
+                    if (! empty($personalQuoteTypeIds)) {
                         $subQuery->orWhere(function ($personalQuery) use ($personalQuoteTypeIds) {
                             $personalQuery->where('model_type', PersonalQuote::class)
                                 ->whereExists(function ($existsQuery) use ($personalQuoteTypeIds) {
@@ -212,7 +213,7 @@ class SageProcessesService extends BaseService
             // Add as a formatted string (comma-separated) and as an array
             $item->collected_sage_receipt_ids = ! empty($sageReceiptIds) ? implode(', ', $sageReceiptIds) : null;
             $item->collected_sage_receipt_ids_array = $sageReceiptIds;
-            
+
             // Add IMCRM error message extracted from sage API log response
             $item->imcrm_error = $this->extractImcrmError($item);
         }
@@ -223,7 +224,6 @@ class SageProcessesService extends BaseService
      * This extracts the error.message.value from the JSON response
      *
      * @param  mixed  $item
-     * @return string|null
      */
     protected function extractImcrmError($item): ?string
     {
@@ -232,9 +232,11 @@ class SageProcessesService extends BaseService
             if ($firstFailedLog && $firstFailedLog->response) {
                 try {
                     $responseData = json_decode($firstFailedLog->response, true);
+
                     return $responseData['error']['message']['value'] ?? null;
                 } catch (\Exception $e) {
                     LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not parse sage API response: '.$e->getMessage());
+
                     return null;
                 }
             }
@@ -248,7 +250,6 @@ class SageProcessesService extends BaseService
      * This handles different date formats that may come from different models
      *
      * @param  mixed  $item
-     * @return string|null
      */
     protected function formatLeadCreateDate($item): ?string
     {
@@ -256,16 +257,17 @@ class SageProcessesService extends BaseService
             try {
                 // Parse the date using Carbon to handle various formats
                 $createdAt = $item->model->created_at;
-                
+
                 // If it's already a Carbon instance, format it
                 if ($createdAt instanceof Carbon) {
                     return $createdAt->format(config('constants.DATETIME_DISPLAY_FORMAT'));
                 }
-                
+
                 // If it's a string, try to parse it
                 return Carbon::parse($createdAt)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
             } catch (\Exception $e) {
                 LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not parse date: '.$e->getMessage());
+
                 return $item->model->created_at; // Return original if parsing fails
             }
         }

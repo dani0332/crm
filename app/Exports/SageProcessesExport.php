@@ -40,9 +40,6 @@ class SageProcessesExport implements CsvExportableInterface
 
     /**
      * Get the collection of failed processes
-     *
-     * @param  array  $requestParams
-     * @return Collection
      */
     public function collection(array $requestParams = []): Collection
     {
@@ -101,7 +98,7 @@ class SageProcessesExport implements CsvExportableInterface
         // Format dates
         // Note: Payment model's getCapturedAtAttribute accessor already formats captured_at using DATETIME_DISPLAY_FORMAT
         $paymentDate = $payment && $payment->captured_at ? $payment->captured_at : $this->notAvailable;
-        
+
         // Format lead create date - handle custom formats like "02-Jul-2025 01:09pm"
         $leadCreateDate = $this->formatLeadCreateDate($row->model?->created_at);
 
@@ -161,7 +158,6 @@ class SageProcessesExport implements CsvExportableInterface
      * Format lead create date - handles custom date formats
      *
      * @param  mixed  $createdAt
-     * @return string
      */
     private function formatLeadCreateDate($createdAt): string
     {
@@ -187,9 +183,6 @@ class SageProcessesExport implements CsvExportableInterface
 
     /**
      * Get export metadata with sage process specific information
-     *
-     * @param  array  $requestParams
-     * @return array
      */
     public function getExportMetadata(array $requestParams = []): array
     {
