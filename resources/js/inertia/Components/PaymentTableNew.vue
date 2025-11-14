@@ -99,8 +99,8 @@ const props = defineProps({
     default: [],
   },
   isFuncsEnabled: {
-    type: Array,
-    default: [],
+    type: Object,
+    default: () => ({}),
   },
   realQuote: Object,
   // For car commercial vehicles
@@ -281,7 +281,7 @@ if (
 } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.CYBER) {
-  initalPlanDetails = props.quoteRequest.insurance_provider_plan
+  initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
@@ -864,7 +864,7 @@ const setPlanDetail = () => {
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
   } else if (props.quoteType == quoteTypeCodeEnum.CYBER) {
-    initalPlanDetails = props.quoteRequest.insurance_provider_plan
+    initalPlanDetails = props.quoteRequest.insurance_provider_plan;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {

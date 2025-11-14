@@ -40,8 +40,8 @@ const props = defineProps({
   capturePaymentValidationInProcess: Boolean,
   quoteType: String,
   isFuncsEnabled: {
-    type: Array,
-    default: [],
+    type: Object,
+    default: () => ({}),
   },
   bookPolicyDetails: {
     type: Array,
@@ -158,8 +158,13 @@ const shouldProcessUpdate = () => {
     page.props.quoteStatusEnum.TransactionApproved;
   const isKycComplete = props.quoteRequest.kyc_decision === 'Complete';
 
-  const kycAmlBypassEligibleQuotes = [quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.CYBER];
-  const isKycAmlBypassEligibleQuote = kycAmlBypassEligibleQuotes.includes(props.quoteType);
+  const kycAmlBypassEligibleQuotes = [
+    quoteTypeCodeEnum.Travel,
+    quoteTypeCodeEnum.CYBER,
+  ];
+  const isKycAmlBypassEligibleQuote = kycAmlBypassEligibleQuotes.includes(
+    props.quoteType,
+  );
 
   const shouldSendUpdate = props.sendUpdate;
   const isAmlOrTransactionApproved =

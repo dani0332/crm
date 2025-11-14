@@ -1,5 +1,6 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 const props = defineProps({
   quotes: Object,
@@ -16,9 +17,11 @@ const props = defineProps({
   },
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  subSources: { type: Array, default: () => [] },
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 
 const hasRole = role => useHasRole(role);
 
@@ -27,6 +30,12 @@ const loader = reactive({
   table: false,
   export: false,
 });
+
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = leadData => {
+  console.log('Lead confirmed:', leadData);
+};
 
 let availableFilters = {
   code: '',
@@ -155,6 +164,7 @@ const tableHeader = ref([
     value: 'customer.pcp_tag_formatted',
     is_active: true,
   },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text', is_active: true },
 ]);
 
 function onSubmit(isValid) {
@@ -224,6 +234,9 @@ const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 
 const role = [rolesEnum.Admin, rolesEnum.PetManager];
 const petManagerRole = [rolesEnum.PetManager];
@@ -505,7 +518,7 @@ const insurerAMLStatusOption = computed(() => {
             v-if="can(permissionsEnum.PetQuotesCreate)"
             size="sm"
             color="#ff5e00"
-            :href="route('pet-quotes-create')"
+            @click="createLeadModal = true"
           >
             Create Lead
           </x-button>
@@ -1039,6 +1052,14 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="pet-quotes-create"
+      :sub-sources="subSources"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

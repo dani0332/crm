@@ -2,37 +2,33 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class CyberQuote extends Model
+class CyberQuote extends Model implements AuditableContract
 {
-    //
+    use Auditable, HasFactory;
+
     protected $table = 'cyber_quote_request';
-    protected $fillable = [];
     protected $guarded = [];
 
-    public function personalQuote()
+    public function personalQuote(): BelongsTo
     {
-        return $this->belongsTo(PersonalQuote::class, 'personal_quote_id', 'id');
+        return $this->belongsTo(PersonalQuote::class, 'personal_quote_id');
     }
 
-    /**
-     * Check if booking has failed
-     *
-     * @return bool
-     */
-    public function isBookingFailed()
+    public function getAuditables()
     {
-        return $this->insurer_api_status_id === \App\Enums\PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
-    }
-
-    /**
-     * Check if policy issuance has failed
-     *
-     * @return bool
-     */
-    public function isPolicyIssuanceFailed()
-    {
-        return in_array($this->insurer_api_status_id, app(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
+        return [
+            'auditable_type' => PersonalQuote::class,
+            'relations' => [
+                ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
+                ['auditable_type' => self::class, 'key' => 'personal_quote_id'],
+            ],
+        ];
     }
 }
+

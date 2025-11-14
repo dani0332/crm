@@ -726,6 +726,13 @@ if (! function_exists('addDaysExcludeWeekend')) {
 }
 
 if (! function_exists('getIMLogo')) {
+    /**
+     * Get Insurance Market logo URL
+     *
+     * @param  bool  $isPDF  Whether to return local path for PDF generation
+     * @param  bool  $latest  Whether to use the high-resolution logo version
+     * @return string Logo URL or local path
+     */
     function getIMLogo($isPDF = false, $latest = false)
     {
         $imLogo = 'images/logo-new.png';
@@ -734,7 +741,20 @@ if (! function_exists('getIMLogo')) {
             $imLogo = 'images/im_logo_25k-hi.png';
         }
 
-        return $isPDF ? public_path($imLogo) : asset($imLogo);
+        // For PDF: use local file path, For web: use new GPTW certified CDN logo
+        return $isPDF ? public_path($imLogo) : 'https://cdn.alfred.ae/media/assets/im-logo-gptw-1.png';
+    }
+}
+
+if (! function_exists('getFavicon')) {
+    /**
+     * Get Insurance Market favicon URL
+     *
+     * @return string CDN URL of the favicon
+     */
+    function getFavicon()
+    {
+        return 'https://cdn.alfred.ae/media/assets/im-favicon-48x48.png';
     }
 }
 if (! function_exists('mimeContentType')) {
@@ -1585,9 +1605,11 @@ if (! function_exists('getTeamId')) {
     {
         try {
             $team = Team::where('name', $teamName)->first();
+
             return optional($team)->id ?? 0;
         } catch (Exception $e) {
             LoggerService::error("Error retrieving team ID for team name: {$teamName}", exception: $e);
+
             return 0;
         }
     }

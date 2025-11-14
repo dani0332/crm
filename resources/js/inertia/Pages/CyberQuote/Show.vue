@@ -53,6 +53,7 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   emailStatuses: Array,
+  isFuncsEnabled: Object,
 });
 
 const page = usePage();
@@ -376,7 +377,10 @@ const onLoadAvailablePlansData = async () => {
     .then(res => {
       if (typeof res.data === 'string') {
         availablePlansTable.data = res.data;
-      } else if (res.data?.quotes?.plans && Array.isArray(res.data.quotes.plans)) {
+      } else if (
+        res.data?.quotes?.plans &&
+        Array.isArray(res.data.quotes.plans)
+      ) {
         availablePlansTable.data = res.data.quotes.plans.map(plan => ({
           ...plan,
           isManualUpdate: plan.isManualUpdate ?? false,
@@ -385,7 +389,9 @@ const onLoadAvailablePlansData = async () => {
           quoteNumber: plan.insurerQuoteNo ?? '-',
           priceWithoutVat: plan.discountPremium ?? '0',
           vat: plan.vat ?? '0',
-          priceWithVat: (parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)).toFixed(2),
+          priceWithVat: (
+            parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)
+          ).toFixed(2),
         }));
       } else if (Array.isArray(res.data) && res.data.length > 0) {
         availablePlansTable.data = res.data.map(plan => ({
@@ -396,7 +402,9 @@ const onLoadAvailablePlansData = async () => {
           quoteNumber: plan.insurerQuoteNo ?? '-',
           priceWithoutVat: plan.discountPremium ?? '0',
           vat: plan.vat ?? '0',
-          priceWithVat: (parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)).toFixed(2),
+          priceWithVat: (
+            parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)
+          ).toFixed(2),
         }));
       } else {
         availablePlansTable.data = [];
@@ -477,8 +485,6 @@ const copyLink = () => {
       position: 'top',
     });
 };
-
-
 </script>
 
 <template>
@@ -735,10 +741,9 @@ const copyLink = () => {
           <div class="mt-6" v-if="quote?.cyber_quote">
             <h3 class="font-semibold text-primary-800">Quote Details</h3>
             <x-divider class="mb-4 mt-1" />
-            
+
             <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-              </dl>
+              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"></dl>
             </div>
           </div>
         </template>
@@ -1152,10 +1157,11 @@ const copyLink = () => {
         <template #body>
           <x-divider class="my-4" />
 
-          <div class="flex justify-end gap-3 mb-4" v-if="availablePlansTable.data.length > 0">
-            <x-button size="sm" color="orange">
-              Send OCB Email
-            </x-button>
+          <div
+            class="flex justify-end gap-3 mb-4"
+            v-if="availablePlansTable.data.length > 0"
+          >
+            <x-button size="sm" color="orange"> Send OCB Email </x-button>
             <x-button size="sm" color="orange" @click.prevent="copyLink">
               Copy Link
             </x-button>
@@ -1242,24 +1248,22 @@ const copyLink = () => {
                 <span>{{ item.quoteNumber || '-' }}</span>
               </template>
               <template #item-priceWithoutVat="item">
-                <span>{{ 
-                  item.priceWithoutVat 
-                    ? parseFloat(item.priceWithoutVat).toFixed(2) 
-                    : '0.00' 
+                <span>{{
+                  item.priceWithoutVat
+                    ? parseFloat(item.priceWithoutVat).toFixed(2)
+                    : '0.00'
                 }}</span>
               </template>
               <template #item-vat="item">
-                <span>{{ 
-                  item.vat 
-                    ? parseFloat(item.vat).toFixed(2) 
-                    : '0.00' 
+                <span>{{
+                  item.vat ? parseFloat(item.vat).toFixed(2) : '0.00'
                 }}</span>
               </template>
               <template #item-priceWithVat="item">
-                <span>{{ 
-                  item.priceWithVat 
-                    ? parseFloat(item.priceWithVat).toFixed(2) 
-                    : '0.00' 
+                <span>{{
+                  item.priceWithVat
+                    ? parseFloat(item.priceWithVat).toFixed(2)
+                    : '0.00'
                 }}</span>
               </template>
               <template #item-action="item">
@@ -1396,22 +1400,34 @@ const copyLink = () => {
                       <div
                         v-if="
                           planDetails.benefits &&
-                          planDetails.benefits.INCLUSION &&
-                          planDetails.benefits.INCLUSION.length > 0
+                          planDetails.benefits.inclusion &&
+                          planDetails.benefits.inclusion.length > 0
                         "
                         class="space-y-3 max-w-3xl"
                       >
                         <div
-                          v-for="benefit in planDetails.benefits.INCLUSION"
+                          v-for="benefit in planDetails.benefits.inclusion"
                           :key="benefit.code"
                           class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-150"
                         >
                           <div class="flex-shrink-0 mt-0.5">
-                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                            <svg
+                              class="w-5 h-5 text-emerald-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2.5"
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                           </div>
-                          <span class="text-sm text-gray-800 font-medium leading-relaxed">
+                          <span
+                            class="text-sm text-gray-800 font-medium leading-relaxed"
+                          >
                             {{ benefit.text }}
                           </span>
                         </div>
@@ -1527,6 +1543,7 @@ const copyLink = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
       :quoteType="'Cyber'"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <QuotePayments
@@ -1621,9 +1638,9 @@ const copyLink = () => {
     />
 
     <ApiLogs
-     v-if="can(permissionsEnum.API_LOG_VIEW)"
-     :type="modelClass"
-     :id="$page.props.quote.id"
+      v-if="can(permissionsEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
     />
 
     <PolicyIssuanceApiLogs
@@ -1633,12 +1650,12 @@ const copyLink = () => {
       :expanded="sectionExpanded"
     />
 
-   <OcrLogs
-    v-if="can(permissionsEnum.API_LOG_VIEW)"
-    :type="modelClass"
-    :id="$page.props.quote.id"
-    :expanded="sectionExpanded"
-   />
+    <OcrLogs
+      v-if="can(permissionsEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
 
     <lead-raw-data
       :modelType="'Cyber'"

@@ -6,7 +6,6 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -278,7 +277,7 @@ trait QuoteAllocatable
         return in_array($this->assignment_type, [AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD]);
     }
 
-    // similar to eligibleForAllocation but checks sic_advisor_requested via cyberQuoteRequest relation.
+    // similar to eligibleForAllocation but checks sic_advisor_requested via cyberQuote relation.
     public function scopeEligibleForAllocationCyber(Builder $query): Builder
     {
         return $query->where(function ($mainQuery) {

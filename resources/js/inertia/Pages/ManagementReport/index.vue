@@ -57,6 +57,8 @@ const filters = reactive({
   teams: [],
   subTeams: [],
   leadSources: [],
+  subSources: [],
+  sub_source_options_id: [],
   includeCancelledPolicies: 'Yes',
   groupBy: route().params.groupBy ?? 'advisor',
   utmGroupBy: [],
@@ -152,6 +154,36 @@ const teams = computed(() => {
     value: key,
     label: props.filterOptions?.teams[key],
   }));
+});
+
+const subSourceOptions = computed(() => {
+  const sources = props.filterOptions?.subSources || [];
+  return sources.map(source => ({
+    value: source.id,
+    label: source.text,
+    suffix: source.description || source.tooltip || '',
+  }));
+});
+
+const subSourceOptionOptions = computed(() => {
+  const parents = props.filterOptions?.subSources || [];
+  const selected = new Set(filters.subSources || []);
+  const options = [];
+  parents.forEach(p => {
+    if (selected.has(p.id) && Array.isArray(p.childs)) {
+      p.childs.forEach(c =>
+        options.push({
+          value: c.id,
+          label: c.text,
+          suffix: c.description || '',
+        }),
+      );
+    }
+  });
+  const seen = new Set();
+  return options.filter(o =>
+    seen.has(o.value) ? false : (seen.add(o.value), true),
+  );
 });
 
 const disabledGroupBy = computed(() => {
@@ -590,6 +622,7 @@ watch(
           </template>
         </x-select>
       </div>
+
       <div>
         <x-tooltip position="top">
           <label
@@ -660,6 +693,90 @@ watch(
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
+            IMCRM SUB-SOURCE
+          </label>
+          <template #tooltip>
+            Select one or more IMCRM SUB-SOURCE values
+          </template>
+        </x-tooltip>
+        <x-select
+          v-model="filters.subSources"
+          placeholder="Search by IMCRM SUB-SOURCE"
+          :options="subSourceOptions"
+          deselect-all
+          filterable
+          filterPlaceholder="Filter IMCRM SUB-SOURCE...."
+          class="w-full"
+          multiple
+          truncate
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.subSources = subSourceOptions.map(item => item.value)
+              "
+              @clear="filters.subSources = []"
+            />
+          </template>
+        </x-select>
+      </div>
+      <div v-if="subSourceOptionOptions.length > 0">
+        <x-tooltip position="top">
+          <label
+            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+          >
+            SUB SOURCE OPTION
+          </label>
+          <template #tooltip>
+            Select one or more SUB SOURCE OPTION values
+          </template>
+        </x-tooltip>
+        <x-select
+          v-model="filters.sub_source_options_id"
+          placeholder="Search by SUB SOURCE OPTION"
+          :options="subSourceOptionOptions"
+          deselect-all
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          class="w-full"
+          multiple
+          truncate
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.sub_source_options_id = subSourceOptionOptions.map(
+                  o => o.value,
+                )
+              "
+              @clear="filters.sub_source_options_id = []"
+            />
+          </template>
+        </x-select>
+      </div>
+    </div>
+    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div>
+        <x-tooltip position="top">
+          <label
+            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+          >
             Include Cancelled Policies
           </label>
           <template #tooltip>
@@ -676,8 +793,6 @@ watch(
           class="w-full"
         />
       </div>
-    </div>
-    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <div v-if="disabledGroupBy">
         <x-tooltip position="top">
           <label

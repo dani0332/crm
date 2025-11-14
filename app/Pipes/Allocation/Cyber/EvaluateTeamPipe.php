@@ -14,7 +14,7 @@ class EvaluateTeamPipe extends BaseAllocationPipe
     public function handle(AllocationRequest $request, Closure $next)
     {
         LoggerService::info(self::class.' - Starting team evaluation for Cyber lead');
-        
+
         $this->setRequest($request);
 
         $lead = $this->allocationRequest->getLead();
@@ -34,28 +34,28 @@ class EvaluateTeamPipe extends BaseAllocationPipe
     private function evaluateTeamId(PersonalQuote $lead)
     {
         $defaultTeamId = false;
-        
+
         $isPaymentAuthorizedOrDeclined = $lead->isPaymentAuthorizedOrDeclined();
         $hasRetryFlag = $lead->isAllocationFailed();
-        
-        $cyberQuoteRequest = $lead->cyberQuoteRequest;
+
+        $cyberQuote = $lead->cyberQuote;
         $sicAdvisorRequested = false;
-        
-        if ($cyberQuoteRequest && isset($cyberQuoteRequest->sic_advisor_requested)) {
-            $sicAdvisorRequested = (bool) $cyberQuoteRequest->sic_advisor_requested;
+
+        if ($cyberQuote && isset($cyberQuote->sic_advisor_requested)) {
+            $sicAdvisorRequested = (bool) $cyberQuote->sic_advisor_requested;
         }
 
         LoggerService::info(self::class.' - Cyber lead conditions evaluation', extra: [
             'isPaymentAuthorizedOrDeclined' => $isPaymentAuthorizedOrDeclined,
             'sicAdvisorRequested' => $sicAdvisorRequested,
-            'cyberQuoteRequestExists' => $cyberQuoteRequest ? true : false,
+            'cyberQuoteExists' => $cyberQuote ? true : false,
             'hasRetryFlag' => $hasRetryFlag,
         ]);
 
         // If cyberr lead is paid, assign to Happiness Support User
         if ($isPaymentAuthorizedOrDeclined) {
             $this->allocationRequest->setAssignToHappinessUser(true);
-            
+
             LoggerService::info(self::class.' - Cyber lead is paid - Will assign to Happiness Support User', extra: [
                 'targetUserEmail' => CyberAllocation::HAPPINESS_SUPPORT_USER_EMAIL,
                 'reason' => 'Payment authorized or declined',
@@ -66,10 +66,10 @@ class EvaluateTeamPipe extends BaseAllocationPipe
 
         // SIC advisor requested or has retry flag, assign to hardcoded advisors
         if ($sicAdvisorRequested || $hasRetryFlag) {
-            $reason = $sicAdvisorRequested 
-                ? 'SIC advisor explicitly requested' 
+            $reason = $sicAdvisorRequested
+                ? 'SIC advisor explicitly requested'
                 : 'Lead has retry flag (lead_allocation_failed_at)';
-            
+
             LoggerService::info(self::class.' - Cyber lead will be assigned to hardcoded advisors', extra: [
                 'teamId' => $defaultTeamId,
                 'reason' => $reason,

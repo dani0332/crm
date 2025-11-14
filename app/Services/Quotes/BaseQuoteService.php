@@ -37,14 +37,14 @@ use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
-use App\Traits\GenericQueriesAllLobs;
 use App\Traits\CentralTrait;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 abstract class BaseQuoteService extends BaseService
 {
-    use GenericQueriesAllLobs, CentralTrait;
+    use CentralTrait, GenericQueriesAllLobs;
 
     public function __construct(public QuoteTypes $quoteType) {}
 
@@ -198,6 +198,7 @@ abstract class BaseQuoteService extends BaseService
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'emailStatuses' => $emailStatuses,
             'planURL' => $planURL,
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ];
     }
 
