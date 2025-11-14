@@ -46,7 +46,7 @@ class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
     public function handle()
     {
         try {
-            $quoteType = QuoteTypes::getName($this->quoteTypeId);
+            $quoteType = QuoteTypes::getName($this->quoteTypeId)->value ?? '';
             $this->quote = $this->getQuoteObjectBy($quoteType, $this->quoteUuid, 'uuid');
             LoggerService::startQuoteLogging($this->quote, LoggerFeatureEnum::POLICY_ISSUE_WHATSAPP_MESSAGE);
 

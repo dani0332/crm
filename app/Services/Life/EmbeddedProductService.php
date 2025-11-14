@@ -12,6 +12,7 @@ use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Models\QuoteType;
 use App\Services\BaseService;
+use App\Services\Logger\LoggerService;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -116,5 +117,13 @@ class EmbeddedProductService extends BaseService
             QuoteStatusEnum::PolicyCancelled,
             QuoteStatusEnum::PolicyCancelledReissued,
         ];
+    }
+
+    public function deSelectEPTransactions($quoteId)
+    {
+        LoggerService::info("De-selecting embedded product transactions for quote id: {$quoteId}");
+        EmbeddedTransaction::where('quote_request_id', $quoteId)
+            ->where('is_selected', 1)
+            ->update(['is_selected' => 0]);
     }
 }

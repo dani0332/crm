@@ -265,11 +265,13 @@ const kycFormDetails = useForm({
       : quoteRequest?.quote_detail?.insurer_quote_email) ??
     page.props.gigInsurerDefaultEmail,
 });
+
 function insuredKycFormValidate() {
   kycFormDetails.clearErrors();
   let isValid = true;
   return isValid;
 }
+
 const syncInsurerPortalUpdates = () => {
   syncProcessLoading.value = true;
   axios

@@ -802,7 +802,6 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
             SendUpdateLogStatusEnum::ACB,
-            SendUpdateLogStatusEnum::ATIB,
             SendUpdateLogStatusEnum::DTSI,
             SendUpdateLogStatusEnum::DOV,
             SendUpdateLogStatusEnum::ATCRNB,
@@ -863,6 +862,7 @@ class SendUpdateLogService
                 $sendUpdatePaymentDetails['discount_value'] = $sendUpdateLog->discount;
             }
 
+            LoggerService::info('fn:updatePaymentDetails - Updating Payment Details - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid, extra: ['Payment Details' => json_encode($sendUpdatePaymentDetails)]);
             $payment->update($sendUpdatePaymentDetails);
 
             info('Book Update - Payment Details Updated - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
@@ -1143,7 +1143,9 @@ class SendUpdateLogService
             $sageProcessData['model_type'] = $quote::class;
             $sageProcessData['model_id'] = $quote->id;
             $response = $sageScheduleResponse = SageProcess::create($sageProcessData);
-            $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
+            if ($quote->status != SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
+                $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
+            }
             info('fn:updateSageProcessForDispatching - Sage process scheduled Successfully');
         }
 
@@ -1339,7 +1341,10 @@ class SendUpdateLogService
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             $lookupNoteKey = strtolower($quoteType).'-su-notes';
-            $notes = Lookup::where('key', $lookupNoteKey)->whereIn('code', json_decode($sendUpdateLog->notes, true))->get() ?? [];
+            $noteCodes = json_decode($sendUpdateLog?->notes, true) ?? [];
+            $notes = !empty($noteCodes) 
+                ? Lookup::where('key', $lookupNoteKey)->whereIn('code', $noteCodes)->get()
+                : [];
             if (! empty($notes)) {
                 $notes = implode(', ', $notes->pluck('description')->toArray());
             }
@@ -1400,7 +1405,7 @@ class SendUpdateLogService
             $emailData->planType = is_null($quote?->coverage_code) ? '' : ucwords(convertFromCamelCase($quote?->coverage_code));
             $emailData->primaryTraveler = $quote?->primaryMember?->first_name.' '.$quote?->primaryMember?->last_name;
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
-            $emailData->companyName = $quote?->company_name ?? '';
+            $emailData->companyName = $quote?->company_name ?? '-';
         } elseif ($quoteTypeId == QuoteTypeId::Health) {
             $emailData->policyHolderName = implode(', ', array_map(function ($member) {
                 return $member['first_name'];
@@ -1441,6 +1446,7 @@ class SendUpdateLogService
                     $quote->vehicle_use == CarVehicleUse::COMMERCIAL
                 )
             ) {
+                $emailData->companyName = $quote?->company_name ?? '-';
                 $templateCode = 'COMMERCIAL_'.$templateCode;
             }
             $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
@@ -1502,7 +1508,6 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::DM,
                 SendUpdateLogStatusEnum::DOV,
                 SendUpdateLogStatusEnum::ACB,
-                SendUpdateLogStatusEnum::ATIB,
                 SendUpdateLogStatusEnum::DTSI,
                 SendUpdateLogStatusEnum::ATCRNB,
                 SendUpdateLogStatusEnum::ATCRNB_RBB,

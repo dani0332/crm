@@ -599,7 +599,11 @@ if (! function_exists('getQueryForLogWithBindings')) {
 if (! function_exists('formatMobileNo')) {
     function formatMobileNo($mobile)
     {
-        return preg_replace('/^(?:\+?971|0)?/', '+971', str_replace(' ', '', $mobile));
+        // Sanitize mobile number: remove all non-digit characters
+        $mobile = preg_replace('/[^0-9]/', '', trim($mobile));
+
+        // Remove leading 971 or 0, then add +971 prefix
+        return preg_replace('/^(?:971|0)?/', '+971', $mobile);
     }
 }
 
@@ -721,6 +725,13 @@ if (! function_exists('addDaysExcludeWeekend')) {
 }
 
 if (! function_exists('getIMLogo')) {
+    /**
+     * Get Insurance Market logo URL
+     *
+     * @param  bool  $isPDF  Whether to return local path for PDF generation
+     * @param  bool  $latest  Whether to use the high-resolution logo version
+     * @return string Logo URL or local path
+     */
     function getIMLogo($isPDF = false, $latest = false)
     {
         $imLogo = 'images/logo-new.png';
@@ -729,7 +740,20 @@ if (! function_exists('getIMLogo')) {
             $imLogo = 'images/im_logo_25k-hi.png';
         }
 
-        return $isPDF ? public_path($imLogo) : asset($imLogo);
+        // For PDF: use local file path, For web: use new GPTW certified CDN logo
+        return $isPDF ? public_path($imLogo) : 'https://cdn.alfred.ae/media/assets/im-logo-gptw-1.png';
+    }
+}
+
+if (! function_exists('getFavicon')) {
+    /**
+     * Get Insurance Market favicon URL
+     *
+     * @return string CDN URL of the favicon
+     */
+    function getFavicon()
+    {
+        return 'https://cdn.alfred.ae/media/assets/im-favicon-48x48.png';
     }
 }
 if (! function_exists('mimeContentType')) {
@@ -1131,7 +1155,9 @@ if (! function_exists('isValidDate')) {
     {
         return ! empty($date)
             && $date != '0000-00-00 00:00:00'
-            && $date != '0000-00-00';
+            && $date != '0000-00-00'
+            && strtolower($date) != 'nan'
+            && strtolower($date) != 'null';
     }
 }
 
@@ -1259,15 +1285,6 @@ if (! function_exists('transformKeys')) {
         }
 
         return $result;
-    }
-}
-
-if (! function_exists('isValidDate')) {
-    function isValidDate($date): bool
-    {
-        return ! empty($date)
-            && $date != '0000-00-00 00:00:00'
-            && $date != '0000-00-00';
     }
 }
 

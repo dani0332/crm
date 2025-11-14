@@ -118,6 +118,10 @@ label {
   @apply whitespace-nowrap bg-white;
 }
 
+.copay-max {
+  @apply whitespace-normal break-words max-w-full;
+}
+
 .table-fixed-width {
   @apply md:overflow-visible sm:overflow-x-auto;
 }

@@ -60,12 +60,11 @@ final class WorkflowTypeEnum extends Enum
 
     // BOR workflow types
     public const BOR_REQUEST = 'bor_request';
-    public const BOR_CANCEL = 'bor_cancel';
     public const BOR_UPLOAD = 'bor_upload';
     public const BOR_INSURER_NOTIFICATION = 'bor_insurer_notification';
-    public const BOR_STATUS_UPDATE = 'bor_status_update';
     public const CAR_AUTOMATION_FAILED = 'car_automation_failed';
     public const OE_ASSIGNMENT = 'oe_assignment';
     public const CAR_CQF_RENEWAL_FOLLOWUPS = 'car_cqf_renewal_followups';
+    public const TRAVEL_AUTOMATED_FOLLOWUPS = 'travel_automated_followups';
     public const SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL = 'send_ep_ecb_policy_documents_email';
 }

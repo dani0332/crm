@@ -389,7 +389,9 @@ class SukoonMedexService
     private function callSageBookingProcess()
     {
         $sageApiService = (new SageApiService);
-        $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
+        if ($this->currentQuote->quote_status_id != QuoteStatusEnum::POLICY_BOOKING_QUEUED) {
+            $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
+        }
 
         $request = new \stdClass;
         $request->quote_id = $this->currentQuote->id;

@@ -75,6 +75,8 @@ class EndingPoliciesReportExport implements CsvExportableInterface
             'Policy PEC Flag',
             'Travel Coverage',
             'Traveling Where',
+            'IMCRM SUB-SOURCE',
+            'SUB SOURCE OPTIONS',
         ];
     }
 
@@ -105,6 +107,8 @@ class EndingPoliciesReportExport implements CsvExportableInterface
             $quote->pec_flag ?? 'N/A',
             $quote->travel_coverage ?? 'N/A',
             $quote->traveling_where ?? 'N/A',
+            $quote->sub_source ?? 'N/A',
+            $quote->sub_source_option ?? 'N/A',
         ]);
 
         foreach ($this->columnTotals as $index => $field) {

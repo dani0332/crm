@@ -2,13 +2,10 @@
 
 namespace App\Services\PolicyIssuanceAutomation;
 
-use App\Enums\AMLStatusCode;
 use App\Enums\CarRegistrationType;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\InsuranceProvidersEnum;
-use App\Enums\Kyc;
-use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -89,12 +86,12 @@ class PolicyIssuanceService
         $policyIssuance = $quote->policyIssuance;
 
         if ($policyIssuance) {
-            info('automation:'.$logFor.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Policy Issuance Schedule already exists PID : '.$policyIssuance->id);
+            LoggerService::info('automation:'.$logFor.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Policy Issuance Schedule already exists PID : '.$policyIssuance->id);
         } else {
             $policyIssuance = PolicyIssuance::create([
                 'insurance_provider_id' => $insurer->id, 'model_type' => $quote->getMorphClass(), 'model_id' => $quote->id, 'quote_type' => $quoteType, 'status' => PolicyIssuanceEnum::PENDING_STATUS,
             ]);
-            info('automation:'.$logFor.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Policy Issuance Schedule created PID : '.$policyIssuance->id);
+            LoggerService::info('automation:'.$logFor.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Policy Issuance Schedule created PID : '.$policyIssuance->id);
         }
     }
     public function executePolicyIssuanceAutomationSteps()
@@ -141,7 +138,7 @@ class PolicyIssuanceService
         return $policyIssuanceProcesses;
     }
 
-    public function getPolicyIssuanceStepsStatus($quote, $quoteType): array
+    public function getPolicyIssuanceStepsStatus($quote, $quoteType, $throughAutomation = false): array
     {
         $response = [
             'isPolicyAutomationEnabled' => true,
@@ -155,7 +152,7 @@ class PolicyIssuanceService
             return $response;
         }
 
-        return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote));
+        return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote, $throughAutomation));
     }
 
     private function processPolicyIssuanceRecords($policyIssuanceAutomationStatus)
@@ -165,14 +162,15 @@ class PolicyIssuanceService
         $statuses = $policyIssuanceAutomationStatus?->statuses;
 
         /* Fetch Policy Issuance Records against statuses by each LOB and Insurer */
-        $policyIssuanceQuery = PolicyIssuance::where(['quote_type' => $quoteType, 'insurance_provider_id' => $insuranceProvider->id])->whereIn('status', $statuses);
+        $policyIssuanceQuery = PolicyIssuance::where(['quote_type' => $quoteType, 'insurance_provider_id' => $insuranceProvider->id])
+            ->whereIn('status', [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::BOOKING_PENDING_STATUS]);
         $policyIssuanceCount = $policyIssuanceQuery->count();
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Process Records for Quote Type: '.$quoteType.', Insurer : '.$insuranceProvider?->code.' - Count : '.$policyIssuanceCount.' - Statuses : '.json_encode($statuses));
         if ($policyIssuanceCount > 0) {
             $policyIssuanceQuery->chunk(100, function ($policyIssuanceProcesses) {
                 foreach ($policyIssuanceProcesses as $policyIssuanceProcess) {
                     info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' dispatch automation job');
-                    PolicyIssuanceJob::dispatch($policyIssuanceProcess)->onQueue('policy-issuance-automation');
+                    PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation');
                     info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' automation job dispatched');
                 }
             });
@@ -250,6 +248,12 @@ class PolicyIssuanceService
         $policyIssuance->update($updatePolicyIssuanceData);
 
         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Policy issuance marked as failed for Quote: '.$quote->code.' and Policy Issuance ID : '.$policyIssuance?->id);
+
+        if (! $insurerPolicyAutomation) {
+            info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Insurer policy automation not found for Quote: '.$quote->code.' - Quote Type: '.$quoteType.' - Insurer Code: '.$insuranceProvider->code.' - Policy Issuance ID: '.$policyIssuance?->id);
+
+            return;
+        }
 
         $insurerApiStatus = $insurerPolicyAutomation->getInsurerAPIStatusByStep($policyIssuance);
 
@@ -442,36 +446,5 @@ class PolicyIssuanceService
         }
 
         return $status !== null ? ($statuses[$status] ?? null) : $statuses;
-    }
-
-    public function isAutomationInitiated($quoteType, $quote)
-    {
-        LoggerService::info('class: '.$this->className.' fn: '.__FUNCTION__.' Quote : '.$quote->code);
-        $payment = $quote->payments()->mainLeadPayment()->first();
-
-        if (! $payment) {
-            return false;
-        }
-
-        $insurer = getInsuranceProvider($payment, $quoteType);
-        $insurerAutomation = $this->init($quoteType, $insurer?->code);
-
-        if (! $insurerAutomation?->isPolicyIssuanceAutomationEnabled()) {
-            return false;
-        }
-
-        if ($quote->insurer_api_status_id == PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED_STATUS_ID) {
-            return false;
-        }
-
-        if (
-            $quote->aml_status == AMLStatusCode::AMLScreeningCleared &&
-            $quote->kyc_decision == Kyc::COMPLETE &&
-            $payment->payment_methods_code == PaymentMethodsEnum::CreditCard
-        ) {
-            return true;
-        }
-
-        return false;
     }
 }

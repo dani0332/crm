@@ -4,18 +4,18 @@ namespace App\Jobs;
 
 use App\Enums\QuoteTypeShortCode;
 use App\Services\HealthQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Sammyjo20\LaravelHaystack\Concerns\Stackable;
-use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 
-class GetQuotePlansJob implements ShouldQueue, StackableJob
+class GetQuotePlansJob implements ShouldQueue
 {
-    use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, Stackable;
+    use Batchable, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable;
 
     public $tries = 3;
     public $timeout = 30;
@@ -47,11 +47,11 @@ class GetQuotePlansJob implements ShouldQueue, StackableJob
                 case QuoteTypeShortCode::HEA:
                     $statusCode = $healthQuoteService->getQuotePlans($this->lead->uuid);
                     if (! isset($statusCode)) {
-                        info('GetQuotePlansJob - '.$this->lead->code.' - Failed - No Response from KEN');
+                        LoggerService::info('GetQuotePlansJob - '.$this->lead->code.' - Failed - No Response from KEN');
 
                         return false;
                     } elseif (is_string($statusCode)) {
-                        info('GetQuotePlansJob - '.$this->lead->code.' - Failed - '.$statusCode);
+                        LoggerService::info('GetQuotePlansJob - '.$this->lead->code.' - Failed - '.$statusCode);
 
                         return false;
                     }

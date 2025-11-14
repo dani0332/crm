@@ -1301,7 +1301,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         }
     }
 
-    public function getStepsLockingStatus($quote): array
+    public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {
         $policyIssuance = $quote->policyIssuance;
         $response = [
@@ -1344,6 +1344,14 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             }
 
             return $response;
+
+        } elseif ($policyIssuance?->status === PolicyIssuanceEnum::TIMEOUT_STATUS && ! app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_GIG_CAR_POLICY_ISSUANCE)) {
+            $response['isEditPolicyDetailsDisabled'] = false;
+            $response['isEditBookingDetailsDisabled'] = false;
+            $response['message'] = 'All Steps are editable';
+
+            return $response;
+
         } elseif (! $policyIssuance) {
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;

@@ -46,7 +46,6 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public function __construct($payload, $code, $forceEmailSend = false)
     {
-        // info('Quote Code: '.$code.' job: SendBookPolicyDocumentsJob constructor called ');
         $this->data = $payload;
         $this->code = $code;
         $this->forceEmailSend = $forceEmailSend;
@@ -58,6 +57,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
+        LoggerService::startQuoteLogging($this->code);
         LoggerService::startFeatureLogging(LoggerFeatureEnum::SEND_AND_BOOK_POLICY_EMAIL_JOB);
 
         info('Quote Code: '.$this->code.' job: SendBookPolicyDocumentsJob started');
@@ -205,7 +205,11 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public function failed(Throwable $exception)
     {
-        info('Quote Code: '.$this->code.' SendBookPolicyDocumentsJob Error: '.$exception->getMessage());
+        LoggerService::info('Quote Code: '.$this->code.' SendBookPolicyDocumentsJob Error', extra: [
+            'errorTraceMessage' => $exception->getTraceAsString(),
+            'exception' => $exception->getMessage(),
+            'line' => $exception->getLine(),
+        ]);
     }
 
     public function middleware()

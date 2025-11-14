@@ -729,7 +729,7 @@ const isTravelQuoteAndAMLNotCleared = () => {
     ];
     if (allowedQuoteStatuesForAMLAlert.includes(props.quote.quote_status_id)) {
       notification.error({
-        title: 'Kindly clear the AML.',
+        title: 'Kindly clear the AML',
         position: 'top',
         timeout: 30000,
       });
