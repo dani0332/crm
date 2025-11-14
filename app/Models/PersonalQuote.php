@@ -601,8 +601,8 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(Lookup::class, 'sub_source_options_id');
     }
 
-    public function cyberQuoteRequest()
+    public function cyberQuote()
     {
-        return $this->hasOne(CyberQuoteRequest::class, 'personal_quote_id', 'id');
+        return $this->hasOne(CyberQuote::class, 'personal_quote_id', 'id');
     }
 }

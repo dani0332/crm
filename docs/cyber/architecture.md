@@ -39,7 +39,7 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
                           ↕
 ┌─────────────────────────────────────────────────────────┐
 │                    Data Layer                           │
-│  Models: CyberQuote, CyberQuoteRequest                  │
+│  Models: CyberQuote                                     │
 │  Database: MySQL                                        │
 │  Application Storage: Configuration keys               │
 └─────────────────────────────────────────────────────────┘
@@ -76,13 +76,13 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
    ↓
 2. Form validation (Client-side + Server-side)
    ↓
-3. CyberQuoteRequest validation
+3. CyberQuoteRequest (FormRequest) validation
    ↓
 4. CyberQuoteService::create()
    ↓
 5. External Capi API call (`/api/cyber/create`)
    ↓
-6. External API creates PersonalQuote & CyberQuoteRequest records
+6. External API creates PersonalQuote & CyberQuote records
    ↓
 7. selfAssign() called (if advisorId set)
    ↓
@@ -142,7 +142,7 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
 ### Models
 
 - **PersonalQuote**: Main quote model (polymorphic)
-- **CyberQuoteRequest**: Cyber-specific quote request data
+- **CyberQuote**: Cyber-specific quote request data
 - **User**: Advisor/user model for allocation
 
 ### Request Validation
@@ -163,10 +163,10 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
 
 ### Key Relationships
 
-- `PersonalQuote` → `CyberQuoteRequest` (hasOne)
+- `PersonalQuote` → `CyberQuote` (hasOne)
 - `PersonalQuote` → `User` (belongsTo - advisor)
 - `PersonalQuote` → `Nationality` (belongsTo)
-- `PersonalQuote` → `Emirate` (belongsTo via CyberQuoteRequest)
+- `PersonalQuote` → `Emirate` (belongsTo via CyberQuote)
 
 ## Configuration
 

@@ -89,7 +89,7 @@ if ($this->allocationRequest->shouldAssignToHappinessUser()) {
 **Conditions Checked**:
 
 1. **Payment Status**: Is payment authorized or declined?
-2. **SIC Advisor Requested**: Does `cyber_quote_request.sic_advisor_requested` = true?
+2. **SIC Advisor Requested**: Does `cyber_quote.sic_advisor_requested` = true?
 3. **Retry Flag**: Does lead have `lead_allocation_failed_at` set?
 
 **Decision Logic**:
