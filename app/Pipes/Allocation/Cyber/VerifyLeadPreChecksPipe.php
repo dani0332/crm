@@ -37,7 +37,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         LoggerService::info(self::class.' - Fetching Cyber lead');
 
         $lead = $this->getLeadBaseQuery()
-            ->with('cyberQuoteRequest')
+            ->with('cyberQuote')
             ->first();
 
         if (! $lead) {
@@ -50,7 +50,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             'leadUuid' => $lead->uuid,
             'leadId' => $lead->id,
             'hasAdvisor' => $lead->advisor_id ? true : false,
-            'hasCyberQuoteRequest' => $lead->cyberQuoteRequest ? true : false,
+            'hasCyberQuote' => $lead->cyberQuote ? true : false,
         ]);
 
         return $lead;

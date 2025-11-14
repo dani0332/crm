@@ -60,7 +60,7 @@ class TestCyberAllocation extends Command
 
         $lead = PersonalQuote::where('uuid', $uuid)
             ->where('quote_type_id', QuoteTypeId::Cyber)
-            ->with('cyberQuoteRequest:id,personal_quote_id,sic_advisor_requested')
+            ->with('cyberQuote:id,personal_quote_id,sic_advisor_requested')
             ->first();
 
         if (! $lead) {
@@ -140,7 +140,7 @@ class TestCyberAllocation extends Command
                 'quote_type_id',
                 'created_at',
             ])
-            ->with('cyberQuoteRequest:id,personal_quote_id,sic_advisor_requested')
+            ->with('cyberQuote:id,personal_quote_id,sic_advisor_requested')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->where('quote_type_id', QuoteTypeId::Cyber)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -223,7 +223,7 @@ class TestCyberAllocation extends Command
     private function displayLeadInfo(PersonalQuote $lead)
     {
         $isPaid = $lead->isPaymentAuthorizedOrDeclined();
-        $sicRequested = $lead->cyberQuoteRequest?->sic_advisor_requested ?? false;
+        $sicRequested = $lead->cyberQuote?->sic_advisor_requested ?? false;
 
         $createdAt = $lead->created_at instanceof \Carbon\Carbon
             ? $lead->created_at->format('Y-m-d H:i:s')
@@ -251,7 +251,7 @@ class TestCyberAllocation extends Command
 
         foreach ($leads as $lead) {
             $isPaid = $lead->isPaymentAuthorizedOrDeclined();
-            $sicRequested = $lead->cyberQuoteRequest?->sic_advisor_requested ?? false;
+            $sicRequested = $lead->cyberQuote?->sic_advisor_requested ?? false;
 
             $createdAt = $lead->created_at instanceof \Carbon\Carbon
                 ? $lead->created_at->format('Y-m-d H:i:s')
@@ -276,7 +276,7 @@ class TestCyberAllocation extends Command
     private function checkEligibility(PersonalQuote $lead): bool
     {
         $isPaid = $lead->isPaymentAuthorizedOrDeclined();
-        $sicRequested = $lead->cyberQuoteRequest?->sic_advisor_requested ?? false;
+        $sicRequested = $lead->cyberQuote?->sic_advisor_requested ?? false;
         $hasRetryFlag = $lead->isAllocationFailed();
 
         $this->info('Checking eligibility:');
@@ -293,7 +293,7 @@ class TestCyberAllocation extends Command
         LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
         $isPaid = $lead->isPaymentAuthorizedOrDeclined();
-        $sicRequested = $lead->cyberQuoteRequest?->sic_advisor_requested ?? false;
+        $sicRequested = $lead->cyberQuote?->sic_advisor_requested ?? false;
         $hasRetryFlag = $lead->isAllocationFailed();
 
         // Display pre-allocation status

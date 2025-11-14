@@ -72,7 +72,7 @@ class CyberQuoteService extends BaseQuoteService
     public function getOne(string $uuid, $allDetails = false)
     {
         return $this->baseQuery()
-            ->with('cyberQuoteRequest')
+            ->with('cyberQuote')
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
                 $individualCustomerType = CustomerTypeEnum::Individual;
@@ -290,7 +290,7 @@ class CyberQuoteService extends BaseQuoteService
             $quoteData['updated_by_id'] = Auth::id();
             $quote->update($quoteData);
 
-            $quote->cyberQuoteRequest()->updateOrCreate(
+            $quote->cyberQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
                 Arr::only($data, ['emirate_of_registration_id'])
             );

@@ -128,7 +128,7 @@ All endpoints require:
 
 1. Validate request data
 2. Call external Capi API (`/api/cyber/create`) to create quote
-3. External API creates `PersonalQuote` and `CyberQuoteRequest` records
+3. External API creates `PersonalQuote` and `CyberQuote` records
 4. Call `selfAssign()` if `advisorId` was set (non-admin users)
 5. Redirect to quote show page
 
@@ -163,7 +163,7 @@ All endpoints require:
     "mobile_no": "+971501234567",
     "dob": "1990-01-15",
     "nationality_id": 56,
-    "cyber_quote_request": {
+    "cyber_quote": {
       "emirate_of_registration_id": 2
     }
   },
@@ -228,7 +228,7 @@ All endpoints require:
 1. Find quote by UUID
 2. Validate request data
 3. Update `PersonalQuote` record
-4. Update `CyberQuoteRequest` record
+4. Update `CyberQuote` record
 5. Redirect to quote show page
 
 ---

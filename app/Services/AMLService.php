@@ -38,7 +38,7 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
-use App\Models\CyberQuoteRequest;
+use App\Models\CyberQuote;
 use App\Models\CycleQuote;
 use App\Models\Entity;
 use App\Models\HealthQuote;
@@ -145,7 +145,7 @@ class AMLService
             QuoteTypes::LIFE->id() => LifeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::SAVINGS->id() => SavingsQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
-            QuoteTypes::CYBER->id() => CyberQuoteRequest::where($filterColumn, $quoteRequestId)->touch(),
+            QuoteTypes::CYBER->id() => CyberQuote::where($filterColumn, $quoteRequestId)->touch(),
         };
     }
 
@@ -295,7 +295,7 @@ class AMLService
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::CYBER->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::CYBER->id())->with([
-                'cyberQuoteRequest',
+                'cyberQuote',
                 'customer.detail',
                 'quoteStatus',
                 'payments.paymentMethod',

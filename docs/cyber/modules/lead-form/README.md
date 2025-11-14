@@ -153,7 +153,7 @@ For detailed API documentation, see [API Endpoints](./api-endpoints.md).
 - `app/Http/Controllers/V2/CyberQuoteController.php`
 - `app/Http/Requests/Cyber/CyberQuoteRequest.php`
 - `app/Services/Quotes/CyberQuoteService.php`
-- `app/Models/CyberQuoteRequest.php`
+- `app/Models/CyberQuote.php`
 - `app/Enums/QuoteTypes.php` (lead prefix configuration)
 
 ### Frontend

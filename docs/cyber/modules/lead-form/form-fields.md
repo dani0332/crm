@@ -431,4 +431,4 @@ const emiratesOfRegistration = computed(() => {
 - **Validation Rules**: `app/Http/Requests/Cyber/CyberQuoteRequest.php`
 - **Form Component**: `resources/js/inertia/Pages/CyberQuote/Form.vue`
 - **Service**: `app/Services/Quotes/CyberQuoteService.php`
-- **Model**: `app/Models/CyberQuoteRequest.php`
+- **Model**: `app/Models/CyberQuote.php`

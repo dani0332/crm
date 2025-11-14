@@ -145,7 +145,7 @@ class BusinessQuoteRepository extends BaseRepository
     public function fetchGetDataOfBusiness()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance'])->orderBy('created_at', 'desc')->Paginate();
+            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance', 'customer'])->orderBy('created_at', 'desc')->Paginate();
     }
 
 }

@@ -6,11 +6,17 @@ use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Traits\ExcelExportable;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class RenewalQuotesExport
+class RenewalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStrictNullComparison
 {
     use ExcelExportable;
 
+    public $query;
     public $exportType;
 
     public function __construct($query, $exportType)
@@ -34,7 +40,8 @@ class RenewalQuotesExport
             'Previous Gross premium',
             'Previous advisor',
             'Previous Commission',
-            'PC Tagging',
+            'Lead Level PC Tag',
+            'Customer Level PC Tag',
             $this->exportType == 'BUSINESS' ? 'Business Type' : '',
         ];
     }
@@ -73,6 +80,7 @@ class RenewalQuotesExport
             $quote->previousAdvisor != null ? $quote->previousAdvisor->name : '',
             $payment != null ? $payment->commission : 'N/A',
             (isset($quote->pc_qualified) && $quote->pc_qualified == 1) ? 'Yes' : 'No',
+            $quote->customer?->pcp_tag == 1 ? 'Yes' : 'No',
             $this->exportType == 'BUSINESS' ? ($quote->business_type_of_insurance_id == 5 ? quoteStatusCode::GROUP_MEDICAL : quoteTypeCode::CORPLINE) : '',
         ];
     }
