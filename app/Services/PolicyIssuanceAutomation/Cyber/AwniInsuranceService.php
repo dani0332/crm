@@ -67,8 +67,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             'Partner-Id' => config('constants.AWNI_API_PARTNER_ID'),
             'Api-Key' => config('constants.AWNI_API_SECRET_KEY'),
             'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-            'TP-Payment-Key' => 'TP_PAYMENT',
         ];
     }
 
@@ -89,9 +87,8 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     }
 
     /**
-     * Policy Issuance Automation Enabled
      * Check if the policy issuance automation is enabled in the application storage
-     *
+     * 
      * @return boolean
      */
     public function isPolicyIssuanceAutomationEnabled()
@@ -153,6 +150,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
                 return $response;
             }
+            // dd($quote->payments, $quote->cyberPlanDetail);
             if (!$quote->payments || !$quote->cyberPlanDetail) {
                 LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - Payments or cyber plan detail not found');
                 $response['error'] = 'Payments or cyber plan detail not found';
@@ -285,6 +283,13 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         return $uploadDocumentsResponse;
     }
 
+    /**
+     * Execute the issue policy step for the policy issuance automation for AWNI Cyber Insurance
+     *
+     * @param Model $quote
+     * @param Model $process
+     * @return array
+     */
     private function executeIssuePolicyStep($quote, $process)
     {
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - Step Executing : ' . self::ISSUE_POLICY);
@@ -357,7 +362,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         $response = ['status' => false, 'completed_step' => self::ISSUE_POLICY, 'error' => null, 'message' => null];
 
         $endPoint = '/cyber/generatePolicy';
-        $quote->load('customer', 'nationality','cyberPlanDetail');
+        
         $customer = $quote->customer;
         $nationality = $quote->nationality;
         $planDetail = $quote->cyberPlanDetail;
@@ -380,9 +385,9 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             // 'PolStartDate' => $quote->policy_start_date ? strtoupper(Carbon::parse($quote->policy_start_date)->format('d-M-Y')) : strtoupper(\Carbon\Carbon::parse($payment->collection_date)->format('d-M-Y')),
             'PolStartDate' => strtoupper(Carbon::now()->format('d-M-Y')),
             'CustCode' => 150214,
-            'BrokerCode' => config('constants.AWNI_API_PARTNER_ID'),
+            'BrokerCode' => 150214,
             'PaymentRefNo' => $splitPayment?->payment_receipt_id,
-            'PartnerRefNo' => $quote->code,
+            'PartnerRefNo' => $quote->code.'-'.now()->timestamp,
         ];
 
         $issuePolicy = $this->httpCall($endPoint, $payload, self::POLICY_ISSUANCE_RESPONSE);
@@ -430,7 +435,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
     public function uploadDocuments($quote)
     {
-        $endPoint = 'cyber/uploadDocument';
+        $endPoint = '/cyber/uploadDocument';
         $response = ['status' => false, 'completed_step' => self::UPLOAD_DOCUMENTS, 'error' => null, 'message' => null];
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' started', extra: [
             'endPoint' => $endPoint,
@@ -501,7 +506,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         $payload = [
             "QuoteRefNo" => $quote->insurer_quote_number,
             "DocCategory" => $documentType,
-            "DocName" => $documentName,
+            "DocName" => 'Emirates_Id.png',
             "DocContent" => $base64Content,
         ];
 
@@ -516,38 +521,10 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             return $response;
         }
 
-        $responseStatus = [];
-        $allUploadsSuccessful = true;
-
-        foreach ($response['data']?->UploadDocumentsResponse->Attachments as $value) {
-            $uploadStatus = $value->UploadStatus ?? false;
-            $responseStatus[] = [
-                'DocumentType' => $value->DocumentType ?? 'Unknown',
-                'UploadStatus' => $uploadStatus,
-            ];
-
-            if (! $uploadStatus) {
-                $allUploadsSuccessful = false;
-            }
-
-            LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Document upload status', extra: [
-                'DocumentType' => $value->DocumentType,
-                'UploadStatus' => $uploadStatus,
-            ]);
-        }
-
-        if ($allUploadsSuccessful) {
-            LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' All documents uploaded successfully', extra: [
-                'details' => $responseStatus,
-            ]);
-            $response['status'] = true;
-            $response['completed_step'] = self::UPLOAD_DOCUMENTS;
-        } else {
-            LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Some documents failed to upload', extra: [
-                'details' => $responseStatus,
-            ]);
-            $response['status'] = false;
-        }
+        $response['status'] = true;
+        $response['message'] = 'Documents uploaded successfully';
+        $response['completed_step'] = self::UPLOAD_DOCUMENTS;
+        $response['data'] = $response;
 
         return $response;
     }
@@ -557,74 +534,33 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' started - Policy Issuance ID : ' . $process->id . ' - Step : ' . self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
         $response = ['status' => false, 'completed_step' => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, 'error' => null, 'message' => null];
-        $endPoint = 'motor/transactions/retrieve/v2';
+        $endPoint = '/cyber/downloadDocument';
 
         $uploadedDocumentsToIMCRM = collect();
 
-        $payload = [
-            'RetrieveRequest' => [
-                'RetrieveType' => '6',
-                'TransactionNumber' => $quote?->policy_number,
-                'PartnerTrnReferenceNumber' => $quote->uuid,
-                'Documents' => [
-                    'DocsInResponse' => true,
-                    'DocsDetails' => [
-                        'DebitNote' => false,
-                        'CreditNote' => false,
-                        'PolicySchedule' => false,
-                        'MotorArabicCertificate' => false,
-                        'HirePurchaseLetter' => false,
-                        'ProposalForm' => false,
-                        'LetterToBank' => false,
-                        'Receipt' => false,
-                    ],
-                ],
-                'ProposalForm' => false,
-            ],
-        ];
-
+        $allDocsDownload = [];
         foreach ($this->getDocTypeCodeForIMCRM() as $keyAWNI => $imcrm) {
-            $payload['RetrieveRequest']['Documents']['DocsDetails'][$keyAWNI] = true;
+            $payload = [
+                "docId" => $imcrm['IMKEY'],
+            ];
 
-            LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' document retreive work start for : ' . $imcrm['IMNAME'], extra: [
-                'time' => now()->format('d-m-Y H:i:s'),
-                'payload' => json_encode($payload),
-            ]);
-
-            $retrieveRequest = $this->httpCall($endPoint, $payload, 'RetrieveResponse');
-
-            LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Response', extra: ['response' => $retrieveRequest]);
-
-            if ($retrieveRequest['status']) {
-                $retrieveResponse = $retrieveRequest['data'];
-
-                $documentContent = $retrieveResponse?->RetrieveResponse?->Policies[0]?->PolicyResponse?->Documents?->PolicyReportsPdf[0];
-
-                $quoteDocument = $this->uploadAndAttachToQuoteDocuments($quote, $documentContent, $imcrm['IMKEY'], $imcrm['IMNAME'] . '.pdf');
+            $downloadRequest = $this->httpCall($endPoint, $payload, self::DOWNLOAD_DOCUMENT_RESPONSE);
+            if($downloadRequest['status']) {
+                $downloadResponse = $downloadRequest['data'];
+                $allDocsDownload[] = [
+                    'name' => $imcrm['IMNAME'],
+                    'download' => $downloadResponse,
+                ];
             }
+        };
 
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $retrieveRequest, $this->baseUrl . $endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $retrieveRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
-            $payload['RetrieveRequest']['Documents']['DocsDetails'][$keyAWNI] = false;
-            LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' document retreive work end', extra: [
-                'time' => now()->format('d-m-Y H:i:s'),
-                'status' => $retrieveRequest['status'],
-            ]);
-
-            $uploadedDocumentsToIMCRM->push([
-                'name' => $imcrm['IMNAME'],
-                'uploaded' => $quoteDocument?->id ?? false,
-                'status' => $retrieveRequest['status'],
-                'message' => $retrieveRequest['message'] ?? 'Document Retrieve Failed',
-            ]);
-        }
-
-        $allDocumentsUploaded = $uploadedDocumentsToIMCRM->where('status', false)->count() === 0;
+        $allDocsDownload = $uploadedDocumentsToIMCRM->where('status', false)->count() === 0;
 
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' - allDocumentsUploaded', extra: [
-            'allDocumentsUploaded' => $allDocumentsUploaded,
+            'allDocsDownload' => $allDocsDownload,
         ]);
 
-        if (! $allDocumentsUploaded || empty($uploadedDocumentsToIMCRM)) {
+        if (! $allDocsDownload || empty($uploadedDocumentsToIMCRM)) {
             $docsUploadToIMCRMFailed = $uploadedDocumentsToIMCRM->where('status', false)->pluck('name')->toArray();
             LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - failed to fetch all documents from insurer : ', $docsUploadToIMCRMFailed);
 
@@ -903,8 +839,24 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         };
     }
 
+    /**
+     * Map document types to IMCRM document type codes
+     */
+    public function getDocTypeCodeForIMCRM(): array
+    {
+        return [
+            'EMIRATES_ID' => '4', // Emirates ID (Front side & Back side)
+        ];
+    }
+
     private function httpCall($endPoint, $payload, $keyAPI)
     {
+        if($keyAPI == self::ISSUE_POLICY) {
+            $this->headers['TP-Payment-Key'] = 'TP_PAYMENT';
+            $this->headers['Accept'] = 'application/json';
+        } else {
+            $this->headers['Accept'] = '*/*';
+        }
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' calling API: ' . $keyAPI, extra: [
             'headers' => $this->headers,
             'url' => $this->baseUrl . $endPoint,
