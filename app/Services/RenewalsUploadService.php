@@ -115,6 +115,7 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Throwable;
+use Maatwebsite\Excel\Facades\Excel;
 
 class RenewalsUploadService
 {
@@ -3094,6 +3095,7 @@ class RenewalsUploadService
                 $quoteType = QuoteTypes::getName($product);
                 $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
                 $quotes = $repository::getData()->withQueryString();
+                $quotes->load('customer');
             }
         } catch (\Exception $e) {
             LoggerService::error('UAC FN: getSearch Error: '.$e->getMessage());
@@ -3117,7 +3119,7 @@ class RenewalsUploadService
             $quotes = $repository::export();
         }
 
-        return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal');
+        return Excel::download(new RenewalQuotesExport($quotes, $quoteType->name), 'Renewal.xlsx');
     }
 
     public function getMonths(): array

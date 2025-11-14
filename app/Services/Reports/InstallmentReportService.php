@@ -174,6 +174,7 @@ class InstallmentReportService extends ManagementReport
             $item->currently_insured_with_text = $item->quote_type_id == QuoteTypeId::Car
                 ? ($item->currently_insured_with_text ?? $item->currently_insured_with ?? 'N/A')
                 : ($item->currently_insured_with_text ?? 'N/A');
+            $item->insurer_tax_invoice_date = ! empty($item->insurer_tax_invoice_date) ? Carbon::parse($item->insurer_tax_invoice_date)->format(config('constants.DATE_DISPLAY_SLASH_FORMAT')) : null;
 
             if ($item->quote_type_id == QuoteTypeId::Travel) {
                 $item->travel_coverage = $item->source == LeadSourceEnum::RENEWAL_UPLOAD
