@@ -113,9 +113,9 @@ use Illuminate\Bus\Batch;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Throwable;
-use Maatwebsite\Excel\Facades\Excel;
 
 class RenewalsUploadService
 {
