@@ -976,6 +976,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         $policyIssuanceProcess = PolicyIssuance::where('id', 1689)->first();
 
         $policyIssuanceProcess->status = PolicyIssuanceEnum::PENDING_STATUS;
+        $policyIssuanceProcess->completed_step = null;
         $policyIssuanceProcess->save();
 
         PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation'); // ✅ Pass only the ID
