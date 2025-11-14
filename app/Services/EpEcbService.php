@@ -145,7 +145,7 @@ class EpEcbService extends EpBookingService
             ]);
             throw $e;
         } catch (Exception $e) {
-            LoggerService::info($this->logPrefix.' Purchase flow failed', extra: [
+            LoggerService::error($this->logPrefix.' Purchase flow failed', extra: [
                 ...$this->logExtra,
                 'error' => $e->getMessage(),
                 'line' => $e->getLine(),
