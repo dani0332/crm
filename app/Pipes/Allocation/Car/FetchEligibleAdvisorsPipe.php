@@ -179,15 +179,10 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
     {
         $advisors = [];
         LoggerService::info(self::class."::getCATANationalitiesAdvisorsByStatus - CAT A Nationality allocation for tier: {$tier->name} and status: {$status}");
-        $buyLeadRequestedUserIds = BuyLeadRequest::getRevivalSourceUserIds($this->allocationRequest->isSIC(), $tier->isValue());
-        // $userIdsWithPermission = User::permission(PermissionsEnum::BUY_LEADS_REVIVAL)->active()->pluck('id')->toArray();
-
-        LoggerService::info(self::class.'::getCATANationalitiesAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
-        $userIds = array_values(array_intersect(
-            $buyLeadRequestedUserIds,
-            $tierUserIds
-        ));
-
+        $userIdsWithPermission = User::permission(PermissionsEnum::BUY_LEADS_REVIVAL)->active()->pluck('id')->toArray();
+        LoggerService::info(self::class.'::getCATANationalitiesAdvisorsByStatus - user ids with permission are: '.json_encode($userIdsWithPermission));
+        $userIds = $userIdsWithPermission;
+        LoggerService::info(self::class.'::getCATANationalitiesAdvisorsByStatus - user ids are: '.json_encode($userIds));
         $advisors = $this->getBaseQuery($status, $userIds)
             ->where('buy_lead_status', true)
             ->where(function ($query) {
