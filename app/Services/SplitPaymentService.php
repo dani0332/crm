@@ -1167,7 +1167,7 @@ class SplitPaymentService
         }
 
         $computedPrice = 0;
-        $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike, quoteTypeCode::Home];
+        $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike, quoteTypeCode::Home, quoteTypeCode::CYBER];
 
         if ($send_update_id > 0) {
             $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);
