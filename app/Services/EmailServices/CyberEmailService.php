@@ -34,6 +34,14 @@ class CyberEmailService extends BaseService
 
         if ($response && $response->status_code === 200) {
             LoggerService::info('sendCyberOCBIntroEmail - Successfully triggered event');
+            if(! empty($response->headers['Run-Id'])) {
+                app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, WorkflowTypeEnum::CYBER_OCB_INTRO_EMAIL);
+                LoggerService::info('sendCyberOCBIntroEmail - Successfully created quote flow details');
+                if(getWhatsappConsent(QuoteTypes::CYBER, $lead->uuid)){
+                    app(BirdService::class)->createQuoteWhatsAppFlowDetails($lead, WorkflowTypeEnum::CYBER_OCB_INTRO_WHATSAPP, QuoteTypes::CYBER->id());
+                    LoggerService::info('sendCyberOCBIntroEmail - Successfully created quote whatsapp flow details');
+                }
+            }
         } else {
             LoggerService::info("sendCyberOCBIntroEmail - Error triggering event having response status code: {$response?->status_code}");
         }
