@@ -202,7 +202,7 @@ class BuyLeadService
     public function exportTrackingReportPDF(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate, bool $isCarRevival = false)
     {
         $data['list'] = $this->getTrackingData($quoteType, $startDate, $endDate, false, $isCarRevival);
-  
+
         $data['quoteType'] = $quoteType;
         $pdf = PDF::loadView('pdf.buy-lead-requests', $data);
 
