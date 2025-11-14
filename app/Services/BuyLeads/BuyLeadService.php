@@ -171,20 +171,24 @@ class BuyLeadService
             ->withQueryString();
     }
 
-    public function getTrackingData(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate, bool $isExport = false)
+    public function getTrackingData(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate, bool $isExport = false, bool $isCarRevival = false)
     {
         return BuyLeadRequestLog::select(
             'buy_lead_request_logs.id',
             'buy_lead_request_logs.quote_type_id',
             'buy_lead_request_logs.uuid as ref_id',
             'buy_lead_requests.created_at',
-            'departments.name as department')
+            'departments.name as department','buy_lead_requests.source')
             ->selectRaw('CONCAT(ROUND(buy_lead_requests.cost_per_lead, 0), " AED") as cost')
             ->with('quoteType:id,code')
             ->join('buy_lead_requests', 'buy_lead_requests.id', '=', 'buy_lead_request_logs.buy_lead_request_id')
             ->join('users', 'users.id', '=', 'buy_lead_requests.user_id')
             ->leftJoin('departments', 'buy_lead_requests.department_id', '=', 'departments.id')
             ->where('buy_lead_requests.user_id', Auth::id())
+            ->when(
+                !is_null($isCarRevival),
+                fn($q) => $q->where('buy_lead_requests.source', $isCarRevival ? LeadSourceEnum::REVIVAL : '!=', $isCarRevival ? LeadSourceEnum::REVIVAL : LeadSourceEnum::REVIVAL)
+            )
             ->where('buy_lead_request_logs.quote_type_id', $quoteType->id())
             ->whereBetween('buy_lead_request_logs.created_at', [$startDate->startOfDay(), $endDate->endOfDay()])
             ->latest('buy_lead_request_logs.created_at')
@@ -195,9 +199,9 @@ class BuyLeadService
 
     }
 
-    public function exportTrackingReportPDF(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate)
+    public function exportTrackingReportPDF(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate, bool $isCarRevival = false)
     {
-        $data['list'] = $this->getTrackingData($quoteType, $startDate, $endDate, true);
+        $data['list'] = $this->getTrackingData($quoteType, $startDate, $endDate, $isCarRevival);
         $data['quoteType'] = $quoteType;
         $pdf = PDF::loadView('pdf.buy-lead-requests', $data);
 

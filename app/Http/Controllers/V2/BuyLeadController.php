@@ -69,8 +69,10 @@ class BuyLeadController extends Controller
     public function tracking()
     {
         $quoteType = request()->get('quote_type');
+        $isCarRevival = false;
         if ($quoteType == QuoteTypes::CAR_CAT_A->value) {
             $quoteType = QuoteTypes::CAR->value;
+            $isCarRevival = true;
         }
         if (auth()->user()->hasPermissionTo(PermissionsEnum::BUY_LEADS_REVIVAL)) {
             $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CAR_CAT_A->value]))->values()->toArray();
@@ -82,9 +84,9 @@ class BuyLeadController extends Controller
 
         if ($quoteType && $startDate && $endDate) {
             if (request()->has('export')) {
-                return $this->buyLeadService->exportTrackingReportPDF($quoteType, Carbon::parse($startDate), Carbon::parse($endDate));
+                return $this->buyLeadService->exportTrackingReportPDF($quoteType, Carbon::parse($startDate), Carbon::parse($endDate), $isCarRevival);
             } else {
-                $data['list'] = $this->buyLeadService->getTrackingData($quoteType, Carbon::parse($startDate), Carbon::parse($endDate));
+                $data['list'] = $this->buyLeadService->getTrackingData($quoteType, Carbon::parse($startDate), Carbon::parse($endDate), false, $isCarRevival);
             }
         }
 

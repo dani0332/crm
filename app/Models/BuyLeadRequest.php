@@ -154,9 +154,9 @@ class BuyLeadRequest extends Model
             $this->update(['status' => 'active']);
         }
     }
-    public static function getRevivalSourceUserIds(bool $isSIC, bool $isValue)
+    public static function getRevivalSourceUserIds(bool $isSIC)
     {
-        return self::byValueOrVolume(QuoteTypes::CAR, $isValue)->bySegment($isSIC)->where('source', LeadSourceEnum::REVIVAL)->active()->unfulfilled()->pluck('user_id')->toArray();
+        return self::bySegment($isSIC)->where('source', LeadSourceEnum::REVIVAL)->active()->unfulfilled()->pluck('user_id')->toArray();
     }
 
 }

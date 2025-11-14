@@ -260,7 +260,7 @@ const maxLeadsOptions = computed(() => {
   >
   <template #item-quote_type.code="{ quote_type, source }">
     <span v-if="source == 'REVIVAL'">
-        <x-tag color="orange">
+        <x-tag color="primary">
           Car CAT A
         </x-tag>
       </span>
