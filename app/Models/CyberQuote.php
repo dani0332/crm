@@ -31,4 +31,3 @@ class CyberQuote extends Model implements AuditableContract
         ];
     }
 }
-
