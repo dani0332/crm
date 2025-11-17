@@ -197,7 +197,7 @@ class QuoteDocumentService extends BaseService
 
                 // Set the filename for Azure storage
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                Storage::disk('azureIM')->put($filePathAzure, base64_decode($file_data));
+                Storage::disk('azureIM')->put($filePathAzure, base64_decode($fileOrBase64));
             } elseif ($isPaymentReceipt) {
                 $originalName = 'Receipt-'.$data['pdf_filename'].'.pdf';
 

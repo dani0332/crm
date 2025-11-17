@@ -373,7 +373,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         $payment = $quote->payments()->mainLeadPayment()->first();
         $splitPayment = $payment?->paymentSplits()->where('payment_method', PaymentMethodsEnum::CreditCard)->first();
 
-        // TODO: will remove cmpany address and emirates id number after testing
         // CustCode is hardcoded, i have tried different values but it is not working
         $payload = [
             'CustName' => trim(($quote->first_name ?? '') . ' ' . ($quote->last_name ?? '')),
@@ -547,7 +546,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         $uploadedDocumentsToIMCRM = collect();
 
         $cyberQuote = $quote->cyberQuote;
-        foreach ($this->getDocTypeCodeForIMCRM($cyberQuote) as $docId) {
+        foreach ($this->getDocTypeCodeForIMCRM($cyberQuote) as $i => $docId) {
             $payload = [
                 "docId" => $docId,
             ];
@@ -557,10 +556,11 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $downloadRequest, $this->baseUrl . $endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $downloadRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
             // dd($downloadRequest);
             if(isset($downloadRequest['status'])) {
+                $docCode = $i;
 
                 $documentContent = $downloadRequest['data'];
                 // TODO: need to map document according to IMCRM cyber document types
-                $quoteDocument = $this->uploadAndAttachToQuoteDocuments($quote, $documentContent->documentContent, $docId, $documentContent->documentName);
+                $quoteDocument = $this->uploadAndAttachToQuoteDocuments($quote, $documentContent->documentContent, $docCode, $documentContent->documentName);
 
                 $uploadedDocumentsToIMCRM->push([
                     'name' => $docId,
@@ -611,23 +611,13 @@ class AwniInsuranceService implements PolicyIssuanceInterface
      */
     private function uploadAndAttachToQuoteDocuments($quote, $documentContent, $documentCode, $originalName = null)
     {
-        $randomDocumentTypeCodes = [
-            DocumentTypeCode::CYBER_EMIRATES_ID,
-            DocumentTypeCode::CYBER_KYC_DOCUMENT,
-            DocumentTypeCode::CYBER_POLICY_CERTIFICATE,
-            DocumentTypeCode::CYBER_TAX_INVOICE,
-            DocumentTypeCode::CYBER_TAX_INVOICE_RAISED_BY_BUYER,
-            DocumentTypeCode::CYBER_RECEIPT,
-            DocumentTypeCode::CYBER_PAYMENT_PROOF,
-            DocumentTypeCode::CYBER_DISCOUNT_PROOF,
-        ];
         $quoteType = QuoteTypes::CYBER->value;
         // Ensure is_base_64 flag is set in data for proper handling
         $data['is_base_64'] = 1;
         $data['quote_uuid'] = $quote->uuid;
         $data['quote_type'] = $quoteType;
         $data['file_name'] = $originalName;
-        $data['document_type_code'] = $randomDocumentTypeCodes[array_rand($randomDocumentTypeCodes)];
+        $data['document_type_code'] = $documentCode;
 
         $quoteDocumentService = new QuoteDocumentService;
         $document = $quoteDocumentService->uploadQuoteDocument($documentContent, $data, $quote);
@@ -897,9 +887,9 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     public function getDocTypeCodeForIMCRM(CyberQuote $cyberQuote): array
     {
         return [
-            $cyberQuote->awni_drcr_doc_id,
-            $cyberQuote->awni_tax_invoice_doc_id,
-            $cyberQuote->awni_policy_doc_id,
+            DocumentTypeCode::CYBER_TAX_INVOICE => $cyberQuote->awni_drcr_doc_id,
+            DocumentTypeCode::CYBER_TAX_INVOICE_RAISED_BY_BUYER => $cyberQuote->awni_tax_invoice_doc_id,
+            DocumentTypeCode::CYBER_POLICY_SCHEDULE => $cyberQuote->awni_policy_doc_id,
         ];
     }
 
