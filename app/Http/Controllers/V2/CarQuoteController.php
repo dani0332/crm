@@ -9,12 +9,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CarQuoteRequest;
 use App\Http\Requests\ChangeInsurerRequest;
 use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
+use App\Http\Requests\UpdateCarOCRWebFormDataRequest;
 use App\Jobs\NBEventFollowup;
 use App\Models\QuoteBatches;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
 use App\Services\CarPlanService;
 use App\Services\CarQuoteService;
+use App\Services\CustomerVerification\CustomerVerificationService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -23,6 +25,10 @@ use Illuminate\Support\Facades\Cache;
 class CarQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
+
+    public function __construct(
+        private CustomerVerificationService $customerVerificationService
+    ) {}
 
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
@@ -228,5 +234,13 @@ class CarQuoteController extends Controller
         }
 
         return back()->with('success', 'Event Followup sending successful');
+    }
+
+    public function updateOcrWebformData(UpdateCarOCRWebFormDataRequest $request, int $quoteId)
+    {
+        $this->customerVerificationService->updateCarOcrWebformData($quoteId);
+        return response()->json([
+            'message' => 'OCR webform data updated successfully',
+        ]);
     }
 }
