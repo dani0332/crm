@@ -23,7 +23,9 @@ use App\Models\PersonalQuote;
 use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\CapiRequestService;
 use App\Services\LookupService;
+use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
@@ -84,7 +86,7 @@ class LifeQuoteRepository extends BaseRepository
             'notes' => $data['notes'] ?? null,
         ];
 
-        $response = Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
+        $response = CapiRequestService::sendCAPIRequest('/api/v2-save-life-quote', $quoteData);
 
         if (isset($response->quoteUID)) {
             $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
