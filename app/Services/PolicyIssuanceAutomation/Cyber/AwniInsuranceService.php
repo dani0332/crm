@@ -887,8 +887,8 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     public function getDocTypeCodeForIMCRM(CyberQuote $cyberQuote): array
     {
         return [
-            DocumentTypeCode::CYBER_TAX_INVOICE => $cyberQuote->awni_drcr_doc_id,
-            DocumentTypeCode::CYBER_TAX_INVOICE_RAISED_BY_BUYER => $cyberQuote->awni_tax_invoice_doc_id,
+            DocumentTypeCode::CYBER_TAX_INVOICE => $cyberQuote->awni_tax_invoice_doc_id,
+            DocumentTypeCode::CYBER_TAX_INVOICE_RAISED_BY_BUYER => $cyberQuote->awni_drcr_doc_id,
             DocumentTypeCode::CYBER_POLICY_SCHEDULE => $cyberQuote->awni_policy_doc_id,
         ];
     }
