@@ -21,11 +21,11 @@ use App\Models\Emirate;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Services\BaseService;
+use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
-use App\Services\CapiRequestService;
-use App\Services\LookupService;
 use App\Services\Logger\LoggerService;
+use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
@@ -52,7 +52,7 @@ class LifeQuoteRepository extends BaseRepository
             'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ]);
-        
+
         $lifeQuote = [
             'firstName' => $data['first_name'],
             'lastName' => $data['last_name'],
