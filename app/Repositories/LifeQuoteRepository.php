@@ -21,8 +21,10 @@ use App\Models\Emirate;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Services\BaseService;
+use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
@@ -51,7 +53,7 @@ class LifeQuoteRepository extends BaseRepository
             'notes' => $data['notes'] ?? null,
         ]);
 
-        $quoteData = [
+        $lifeQuote = [
             'firstName' => $data['first_name'],
             'lastName' => $data['last_name'],
             'email' => $data['email'],
@@ -62,7 +64,6 @@ class LifeQuoteRepository extends BaseRepository
             'sumInsuredCurrencyId' => $data['sum_insured_currency_id'],
             'maritalStatusId' => $data['marital_status_id'],
             'purposeOfInsuranceId' => $data['purpose_of_insurance_id'],
-            'tenureOfInsuranceId' => $data['tenure_of_insurance_id'],
             'numberOfYearsId' => $data['number_of_years_id'],
             'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
             'gender' => $data['gender'],
@@ -74,25 +75,32 @@ class LifeQuoteRepository extends BaseRepository
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
-            'quoteTypeId' => intval(QuoteTypes::LIFE->id()),
+            'quoteTypeId' => QuoteTypeId::Life,
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'createdById' => auth()->user()->id,
-            // Sub-source fields
+
+            // Lead source fields from CreateLeadModal
+            'subSourceId' => $data['sub_source_id'] ?? null,
+            'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
+            'additionalNotes' => $data['notes'] ?? null,
+        ];
+
+        LoggerService::info('saveLifeQuote: ', [
             'subSourceId' => $data['sub_source_id'] ?? null,
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
             'notes' => $data['notes'] ?? null,
-        ];
+        ]);
 
-        $response = Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
+        $response = CapiRequestService::sendCAPIRequest('/api/v2-save-life-quote', $lifeQuote);
 
         if (isset($response->quoteUID)) {
             $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
             $quote->lifeQuote()->update([
-                'height' => $quoteData['height'],
-                'weight' => $quoteData['weight'],
-                'bmi' => $quoteData['bmi'],
-                'age' => $quoteData['age'],
+                'height' => $lifeQuote['height'],
+                'weight' => $lifeQuote['weight'],
+                'bmi' => $lifeQuote['bmi'],
+                'age' => $lifeQuote['age'],
             ]);
         }
 
