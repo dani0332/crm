@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 
 class SyncCourierQuoteWithMacrm implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ShouldQueue;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * Create a new job instance.
