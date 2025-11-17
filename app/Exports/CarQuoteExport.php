@@ -121,6 +121,7 @@ class CarQuoteExport implements CsvExportableInterface
             'PRIVATE CLIENT',
             'INSURER',
             'IMCRM SUB-SOURCE',
+            'REPAIR TYPE',
         ];
     }
 
@@ -185,6 +186,7 @@ class CarQuoteExport implements CsvExportableInterface
             $quote->customer?->pcp_tag_formatted ?? '',
             $quote->insuranceProvider?->text ?? '',
             $quote->subSource?->text ?? '',
+            $quote->plan?->repair_type ?? '',
         ];
     }
 

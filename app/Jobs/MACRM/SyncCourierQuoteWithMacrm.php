@@ -8,12 +8,13 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
 class SyncCourierQuoteWithMacrm implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ShouldQueue;
 
     /**
      * Create a new job instance.
@@ -30,5 +31,17 @@ class SyncCourierQuoteWithMacrm implements ShouldQueue
         } catch (Exception $e) {
             Log::error(self::class." - Error: {$e->getMessage()}");
         }
+    }
+
+    public function uniqueId()
+    {
+        return $this->quote->id.now()->format('YmdHis');
+    }
+
+    public function middleware()
+    {
+        return [
+            new WithoutOverlapping($this->uniqueId()),
+        ];
     }
 }
