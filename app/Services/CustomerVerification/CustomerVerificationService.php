@@ -12,7 +12,9 @@ use App\Enums\QuoteTypes;
 use App\Events\CustomerVerificationUpdated;
 use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
+use App\Models\Emirate;
 use App\Models\RegistrationCertificate;
+use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleDriverDetail;
 use App\Services\CapiService;
 use App\Services\CarQuoteService;
@@ -29,6 +31,11 @@ class CustomerVerificationService
 
     private $isCustomerVerificationEnabled = null;
     private $documentTypeCode = null;
+
+    public const MONTHS_RULES = [
+        'less than 6 months' => 5,
+        'less than 1 year' => 12,
+    ];
 
     public function __construct(
         private CapiService $capiService,
@@ -587,5 +594,97 @@ class CustomerVerificationService
                 'document_type' => $this->documentTypeCode,
             ]);
         }
+    }
+
+    public function updateCarOcrWebformData(int $quoteId): void
+    {
+        $webFormData = [];
+        $customerVerificationDetails = $this->getCustomerVerificationData($quoteId);
+        $registrationCertificateDetails = $this->getRegistrationCertificateData($quoteId);
+        $vehicleDriverDetailData = $this->getVehicleDriverDetailData($quoteId);
+
+        // Add customer verification data if exists
+        if ($customerVerificationDetails && $customerVerificationDetails->customer_verified_data) {
+            $customerVerificationData = json_decode($customerVerificationDetails->customer_verified_data, true);
+            $name = explode(' ', $customerVerificationData['name']);
+
+            $webFormData = array_filter([
+                'first_name' => $name[0] ?? null,
+                'last_name' => isset($name[1]) ? implode(' ', array_slice($name, 1)) : null,
+                'nationality_id' => $customerVerificationData['nationality_id'] ?? null,
+                'dob' => $customerVerificationData['date_of_birth'] ?? null,
+                'year_of_manufacture' => $customerVerificationData['carModelYear'] ?? null,
+
+            ], fn ($value) => ! empty($value));
+        }
+
+        // Add registration certificate data if exists
+        if ($registrationCertificateDetails && $registrationCertificateDetails->place_of_issue) {
+            $emirate = Emirate::where('text', $registrationCertificateDetails->place_of_issue)->first();
+
+            if ($emirate) {
+                $webFormData['emirate_of_registration_id'] = $emirate->id;
+            }
+        }
+
+        // Add vehicle driver details data if exists
+        if ($vehicleDriverDetailData && $vehicleDriverDetailData->driver_license_issue_date) {
+            $driverLicenseIssueDate = Carbon::parse($vehicleDriverDetailData->driver_license_issue_date);
+            $yearsDifference = (int) $driverLicenseIssueDate->diffInYears(Carbon::now());
+
+            // If its in year
+            if ($yearsDifference >= 1) {
+                $ueaLicenseHeldFor = UAELicenseHeldFor::where('code', 'like', "{$yearsDifference} year%")
+                    ->first();
+
+                $webFormData['uae_license_held_for_id'] = $ueaLicenseHeldFor->id;
+            }
+
+            // If in months
+            if ($yearsDifference < 1) {
+                $monthsDifference = (int) $driverLicenseIssueDate->diffInMonths(Carbon::now());
+                $code = collect(self::MONTHS_RULES)
+                    ->filter(fn ($maxMonths) => $monthsDifference <= $maxMonths)
+                    ->sort()
+                    ->keys()
+                    ->first();
+
+                $ueaLicenseHeldFor = UAELicenseHeldFor::where('code', $code)
+                    ->first();
+
+                $webFormData['uae_license_held_for_id'] = $ueaLicenseHeldFor->id;
+            }
+        }
+
+        // Update webform data
+        CarQuote::where('id', $quoteId)->update($webFormData);
+    }
+
+    private function getCustomerVerificationData(int $quoteId): ?CustomerVerificationDetail
+    {
+        $data = CustomerVerificationDetail::where('quotable_type', QuoteTypes::CAR->modelClass())
+            ->where('quotable_id', $quoteId)
+            ->select('customer_verified_data')
+            ->first();
+
+        return $data;
+    }
+
+    private function getRegistrationCertificateData(int $quoteId): ?RegistrationCertificate
+    {
+        $data = RegistrationCertificate::forQuotable(QuoteTypes::CAR->modelClass(), $quoteId)
+            ->select('place_of_issue')
+            ->first();
+
+        return $data;
+    }
+
+    private function getVehicleDriverDetailData(int $quoteId): ?VehicleDriverDetail
+    {
+        $data = VehicleDriverDetail::forQuotable(QuoteTypes::CAR->modelClass(), $quoteId)
+            ->select('driver_license_issue_date')
+            ->first();
+
+        return $data;
     }
 }
