@@ -4630,7 +4630,7 @@ const handleCancelConfirmationModal = () => {
 
   <CustomerVerificationDetails
     v-if="isCustomerVerificationEnabled"
-    :quote="quote"
+    :quoteId="$page.props.record.id"
     :modals="modals"
     :customerVerificationData="customerVerificationData"
   />
