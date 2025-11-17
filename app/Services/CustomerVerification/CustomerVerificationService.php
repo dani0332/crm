@@ -634,6 +634,8 @@ class CustomerVerificationService
 
             // If its in year
             if ($yearsDifference >= 1) {
+                // Restrict to 5 years as per our policy
+                $yearsDifference = $yearsDifference > 5 ? 5 : $yearsDifference;
                 $ueaLicenseHeldFor = UAELicenseHeldFor::where('code', 'like', "{$yearsDifference} year%")
                     ->first();
 
