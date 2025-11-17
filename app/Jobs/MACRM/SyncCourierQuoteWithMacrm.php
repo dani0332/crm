@@ -35,7 +35,7 @@ class SyncCourierQuoteWithMacrm implements ShouldQueue
 
     public function uniqueId()
     {
-        return $this->quote->id . now()->format('YmdHis');
+        return $this->quote->id.now()->format('YmdHis');
     }
 
     public function middleware()
