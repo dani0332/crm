@@ -17,11 +17,13 @@ use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Models\CyberPlan;
+use App\Models\CyberQuote;
 use App\Models\Payment;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -38,7 +40,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     private readonly string $baseUrl;
     private mixed $authParam;
 
-    public const TYPE = quoteTypeCode::Cyber;
+    public const TYPE = quoteTypeCode::CYBER;
     public const TYPE_ID = QuoteTypeId::Cyber;
 
     public mixed $vat = null;
@@ -52,6 +54,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     public const UPLOAD_DOCUMENTS = 'UploadDocuments';
     public const ISSUE_POLICY = 'IssuePolicy';
     public const UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'UploadPolicyDocumentsToIMCRM';
+    public const DOWNLOAD_DOCUMENT_RESPONSE = 'DownloadDocumentResponse';
     public const BOOK_POLICY = 'BookPolicy';
     public const POLICY_ISSUANCE_RESPONSE = 'PolicyResponse';
     public const UPLOAD_DOCUMENTS_RESPONSE = 'UploadDocumentsResponse';
@@ -386,7 +389,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             'PolStartDate' => strtoupper(Carbon::now()->format('d-M-Y')),
             'CustCode' => 150214,
             'BrokerCode' => 150214,
-            'PaymentRefNo' => $splitPayment?->payment_receipt_id,
+            'PaymentRefNo' => $splitPayment?->payment_receipt_id.'-'.now()->timestamp,
             'PartnerRefNo' => $quote->code.'-'.now()->timestamp,
         ];
 
@@ -414,6 +417,12 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             'vat' => $issuePolicyResult?->policyInfo?->prmVatAmt,
             'price_with_vat' => $issuePolicyResult?->policyInfo?->prmPayableAmt,
             'insurer_quote_number' => $issuePolicyResult?->QuoteRefNo ?? null,
+        ]);
+
+        $quote->cyberQuote->update([
+            'awni_drcr_doc_id' => $issuePolicyResult?->policyInfo?->drcrDocId,
+            'awni_tax_invoice_doc_id' => $issuePolicyResult?->policyInfo?->taxInvoiceDocId,
+            'awni_policy_doc_id' => $issuePolicyResult?->policyInfo?->policyDocId,
         ]);
 
         Payment::where('code', $quote->code)->update([
@@ -499,7 +508,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         // API expects only the Base64 encoded content itself, not data URI format
         $base64Content = base64_encode($fileContent);
         // TODO: Document upload is a problem need to confirm from 
-        // dd($base64Content);
 
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Payload created with Document Type: ' . $documentType . ' and Document Name: ' . $documentName);
 
@@ -538,26 +546,36 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
         $uploadedDocumentsToIMCRM = collect();
 
-        $allDocsDownload = [];
-        foreach ($this->getDocTypeCodeForIMCRM() as $keyAWNI => $imcrm) {
+        $cyberQuote = $quote->cyberQuote;
+        foreach ($this->getDocTypeCodeForIMCRM($cyberQuote) as $docId) {
             $payload = [
-                "docId" => $imcrm['IMKEY'],
+                "docId" => $docId,
             ];
 
             $downloadRequest = $this->httpCall($endPoint, $payload, self::DOWNLOAD_DOCUMENT_RESPONSE);
-            if($downloadRequest['status']) {
-                $downloadResponse = $downloadRequest['data'];
-                $allDocsDownload[] = [
-                    'name' => $imcrm['IMNAME'],
-                    'download' => $downloadResponse,
-                ];
+
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $downloadRequest, $this->baseUrl . $endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $downloadRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+            // dd($downloadRequest);
+            if(isset($downloadRequest['status'])) {
+
+                $documentContent = $downloadRequest['data'];
+                // TODO: need to map document according to IMCRM cyber document types
+                $quoteDocument = $this->uploadAndAttachToQuoteDocuments($quote, $documentContent->documentContent, $docId, $documentContent->documentName);
+
+                $uploadedDocumentsToIMCRM->push([
+                    'name' => $docId,
+                    'uploaded' => $quoteDocument?->id ?? false,
+                    'status' => $downloadRequest['status'],
+                    'message' => $downloadRequest['message'] ?? 'Document Retrieve Failed',
+                ]);
             }
         };
 
-        $allDocsDownload = $uploadedDocumentsToIMCRM->where('status', false)->count() === 0;
+        $allDocsDownload = $uploadedDocumentsToIMCRM->where('status', true)->count() === 3;
 
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' - allDocumentsUploaded', extra: [
             'allDocsDownload' => $allDocsDownload,
+            'docCount' => $uploadedDocumentsToIMCRM->count()
         ]);
 
         if (! $allDocsDownload || empty($uploadedDocumentsToIMCRM)) {
@@ -580,6 +598,40 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - Process completed step updated to : ' . $response['completed_step']);
 
         return $response;
+    }
+
+    /**
+     * This function use upload document at IMCRM
+     *
+     * @param [type] $quote
+     * @param [type] $documentContent
+     * @param [type] $documentCode
+     * @param [type] $originalName
+     * @return void
+     */
+    private function uploadAndAttachToQuoteDocuments($quote, $documentContent, $documentCode, $originalName = null)
+    {
+        $randomDocumentTypeCodes = [
+            DocumentTypeCode::CYBER_EMIRATES_ID,
+            DocumentTypeCode::CYBER_KYC_DOCUMENT,
+            DocumentTypeCode::CYBER_POLICY_CERTIFICATE,
+            DocumentTypeCode::CYBER_TAX_INVOICE,
+            DocumentTypeCode::CYBER_TAX_INVOICE_RAISED_BY_BUYER,
+            DocumentTypeCode::CYBER_RECEIPT,
+            DocumentTypeCode::CYBER_PAYMENT_PROOF,
+            DocumentTypeCode::CYBER_DISCOUNT_PROOF,
+        ];
+        $quoteType = QuoteTypes::CYBER->value;
+        // Ensure is_base_64 flag is set in data for proper handling
+        $data['is_base_64'] = 1;
+        $data['quote_uuid'] = $quote->uuid;
+        $data['quote_type'] = $quoteType;
+        $data['file_name'] = $originalName;
+        $data['document_type_code'] = $randomDocumentTypeCodes[array_rand($randomDocumentTypeCodes)];
+
+        $quoteDocumentService = new QuoteDocumentService;
+        $document = $quoteDocumentService->uploadQuoteDocument($documentContent, $data, $quote);
+        return $document;
     }
 
     public function bookPolicy($quote): array
@@ -842,10 +894,12 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     /**
      * Map document types to IMCRM document type codes
      */
-    public function getDocTypeCodeForIMCRM(): array
+    public function getDocTypeCodeForIMCRM(CyberQuote $cyberQuote): array
     {
         return [
-            'EMIRATES_ID' => '4', // Emirates ID (Front side & Back side)
+            $cyberQuote->awni_drcr_doc_id,
+            $cyberQuote->awni_tax_invoice_doc_id,
+            $cyberQuote->awni_policy_doc_id,
         ];
     }
 

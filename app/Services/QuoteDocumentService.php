@@ -186,6 +186,11 @@ class QuoteDocumentService extends BaseService
                 $originalName = data_get($data, 'file_name', 'Base 64 file');
                 @[$extension, $fileMimeType, $file_data] = getBase64FileInfo($fileOrBase64);
 
+                if($fileMimeType == null || $extension == null ) {
+                    $fileName = $data['file_name'] ?? '';
+                    $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                    $fileMimeType = mimeContentType($extension) ?? 'application/octet-stream';
+                }
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$data['document_type_code'].'.'.$extension);
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
