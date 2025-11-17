@@ -1,9 +1,18 @@
 <script setup>
-const { modals, customerVerificationData } = defineProps({
-  quote: Object,
+const { quoteId, modals, customerVerificationData } = defineProps({
+  quoteId: Number,
   modals: Object,
   customerVerificationData: Object,
 });
+
+// Update webform data with OCR data
+const updateAndSave = () => {
+  axios.get(`/quotes/car/${quoteId}/update-ocr-webform`).then(response => {
+    console.log(response);
+  }).catch(error => {
+    console.log(error);
+  });
+}
 </script>
 
 <template>
@@ -23,7 +32,7 @@ const { modals, customerVerificationData } = defineProps({
         </div>
       </template>
 
-      <div class="px-6 pb-6 max-w-4xl mx-auto">
+      <div class="px-6 pb-4 max-w-4xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
           <div
             class="bg-blue-50 p-5 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow duration-200"
@@ -328,6 +337,11 @@ const { modals, customerVerificationData } = defineProps({
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Update and save button-->
+      <div class="px-6 pb-6 max-w-4xl mx-auto flex justify-end" v-if="customerVerificationData.buttonData.status=='requires_verification'">
+        <x-button size="sm" color="orange" @click="updateAndSave">Update & Save</x-button>
       </div>
 
       <template #actions>
