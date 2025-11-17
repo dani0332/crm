@@ -125,9 +125,7 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
-const {
-  formatString,
-} = usePayment();
+const { formatString } = usePayment();
 
 // Define record as computed property for template access
 const record = computed(() => page.props.record);
@@ -3656,7 +3654,7 @@ const handleCancelConfirmationModal = () => {
                   puaPremium,
                   puaType,
                   isSystemDiscountPrice,
-                  tags
+                  tags,
                 }"
               >
                 <p>{{ providerName }}</p>
@@ -3715,7 +3713,9 @@ const handleCancelConfirmationModal = () => {
                     </x-tooltip>
                   </x-tag>
                   <x-tag
-                    v-for="tag in (tags ? tags.split(',').filter(t => t.trim()) : [])"
+                    v-for="tag in tags
+                      ? tags.split(',').filter(t => t.trim())
+                      : []"
                     :key="tag.trim()"
                     size="xs"
                     color="primary"
