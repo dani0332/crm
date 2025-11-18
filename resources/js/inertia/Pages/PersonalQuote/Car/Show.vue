@@ -4633,5 +4633,6 @@ const handleCancelConfirmationModal = () => {
     :quoteId="$page.props.record.id"
     :modals="modals"
     :customerVerificationData="customerVerificationData"
+     @ocr-webform-updated="onLoadAvailablePlansData"
   />
 </template>

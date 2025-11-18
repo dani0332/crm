@@ -6,18 +6,22 @@ const { quoteId, modals, customerVerificationData } = defineProps({
 });
 const notification = useNotifications('toast');
 const isLoading = ref(false);
+const emit = defineEmits();
 
 // Update webform data with OCR data
-const updateAndSave = () => {
+const updateAndSave = async () => {
   isLoading.value = true;
 
   // Make api request
-  axios.get(`/quotes/car/${quoteId}/update-ocr-webform`).then(response => {
+  await axios.get(`/quotes/car/${quoteId}/update-ocr-webform`).then(response => {
     notification.success({
           title: response.data.message,
           position: 'top',
         });
   
+    // Emit event to reload updated plans
+    emit('ocr-webform-updated');
+
     // Close modal
     modals.customerVerification = false;
   }).catch(error => {
@@ -25,6 +29,7 @@ const updateAndSave = () => {
       title: 'Error occurred while updating',
       position: 'top',
     });
+    console.log(error);
   }).finally(() => {
     isLoading.value = false;
   });
@@ -167,13 +172,13 @@ const updateAndSave = () => {
                 <div
                   class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
                   :class="
-                    customerVerificationData.customerVerified?.name.error
+                    customerVerificationData.customerVerified?.name?.error
                       ? 'border-2 border-red-600'
                       : 'border border-green-100 hover:border-green-200'
                   "
                 >
                   {{
-                    customerVerificationData.customerVerified?.name.value || '-'
+                    customerVerificationData.customerVerified?.name?.value || '-'
                   }}
                 </div>
                 <span
