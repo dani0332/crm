@@ -1152,7 +1152,9 @@ class RenewalsUploadService
 
             if ($isQuoteTypeCar) {
                 $quoteData['dob'] = (! empty($data['dob'])) ? $this->formatDate($data['dob']) : null;
-                $quoteData['car_type_insurance_id'] = $carTypeOfInsurance?->id ?? null;
+                if ($carTypeOfInsurance) {
+                    $quoteData['car_type_insurance_id'] = $carTypeOfInsurance->id;
+                }
                 $quoteData['claim_history_id'] = $claimHistory->id ?? null;
                 $quoteData['nationality_id'] = $nationality->id ?? null;
                 $quoteData['emirate_of_registration_id'] = $emirate->id ?? null;
