@@ -8,8 +8,8 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CarQuoteRequest;
 use App\Http\Requests\ChangeInsurerRequest;
-use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
 use App\Http\Requests\UpdateCarOCRWebFormDataRequest;
+use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
 use App\Jobs\NBEventFollowup;
 use App\Models\QuoteBatches;
 use App\Repositories\CarQuoteRepository;
@@ -239,6 +239,7 @@ class CarQuoteController extends Controller
     public function updateOcrWebformData(UpdateCarOCRWebFormDataRequest $request, int $quoteId)
     {
         $this->customerVerificationService->updateCarOcrWebformData($quoteId);
+
         return response()->json([
             'message' => 'OCR webform data updated successfully',
         ]);
