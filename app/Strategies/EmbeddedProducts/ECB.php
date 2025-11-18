@@ -2,9 +2,6 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
-use Carbon\Carbon;
-use Illuminate\Support\Collection;
-
 class ECB extends EmbeddedProduct
 {
     public function getExcelColumns()

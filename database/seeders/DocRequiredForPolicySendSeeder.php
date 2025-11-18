@@ -5,10 +5,7 @@ namespace Database\Seeders;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\DocumentType;
-use App\Models\QuoteType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use League\CommonMark\Extension\SmartPunct\Quote;
 
 class DocRequiredForPolicySendSeeder extends Seeder
 {
@@ -88,9 +85,9 @@ class DocRequiredForPolicySendSeeder extends Seeder
         foreach ($documentTypes as $quoteTypeId => $documentTypeCodes) {
             foreach ($documentTypeCodes as $documentTypeCode) {
                 $documentType = DocumentType::Active()->where('quote_type_id', $quoteTypeId)->where('code', $documentTypeCode)->first();
-                if($documentType) {
-                        $documentType->is_required_for_send_policy = 1;
-                        $documentType->save();
+                if ($documentType) {
+                    $documentType->is_required_for_send_policy = 1;
+                    $documentType->save();
                 }
             }
         }
