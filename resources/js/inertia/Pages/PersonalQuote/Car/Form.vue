@@ -1,4 +1,6 @@
 <script setup>
+import { watch } from 'vue';
+
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -12,9 +14,17 @@ const props = defineProps({
   isEpEcbPaymentPaid: Boolean,
   ecbExcludedCarMakeCodes: Array,
   ecbExcludedCarModelCodes: Array,
+  subSources: {
+    type: Array,
+    default: () => [],
+  },
+  leadSourceParams: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 
-const { isRequired, isEmail, maxValue } = useRules();
+const { isRequired, isEmail, maxValue, maxCharacters } = useRules();
 const isEmptyField = ref(false);
 const isCommercialCar = ref(false);
 const isError = ref(false);
@@ -24,6 +34,13 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
+
+const teamNamesEnum = page.props.teamNamesEnum;
+
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
+
 const carRegistrationTypeEnum = page.props.carRegistrationType;
 const carVehicleUseEnum = page.props.carVehicleUse;
 const amlStatusEnum = page.props.amlStatusEnum;
@@ -95,6 +112,17 @@ const quoteForm = useForm({
   has_ncd_supporting_documents: props.quote?.has_ncd_supporting_documents,
   car_value_tier: props.quote?.car_value_tier || '',
   car_value: props.quote?.car_value || '',
+
+  // Lead source fields from CreateLeadModal
+  sub_source_id:
+    parseInt(props.quote?.sub_source_id, 10) ||
+    parseInt(props.leadSourceParams?.subSource, 10) ||
+    null,
+  sub_source_options_id:
+    parseInt(props.quote?.sub_source_options_id, 10) ||
+    parseInt(props.leadSourceParams?.subSourceOption, 10) ||
+    null,
+
   addressObj: {
     address_type: page.props.customerAddressData?.type || null,
     villa_apartment_office_no:
@@ -237,8 +265,16 @@ const proceedWithSubmission = () => {
     onFinish: () => (modals.isConfirmed = false),
   };
 
+  const additionalParams = {
+    type: props.leadSourceParams?.type ? props.leadSourceParams?.type : null,
+    source: props.quote?.source ? props.quote?.source : null,
+  };
   quoteForm
-    .transform(data => ({ ...data, isDisbaled }))
+    .transform(data => ({
+      ...data,
+      isDisbaled,
+      ...additionalParams,
+    }))
     .submit(method, url, options);
 };
 
@@ -471,6 +507,66 @@ const gender = computed(() => {
     { value: 'F', label: 'Female' },
   ];
 });
+
+// Sub-source dropdown options
+const subSourceOptions = computed(() => {
+  if (!props.subSources || props.subSources.length === 0) {
+    return [];
+  }
+
+  const options = props.subSources.map(item => ({
+    value: item.id, // Keep as integer to match form data type
+    label: item.text,
+    suffix: item.description || null,
+  }));
+
+  return options;
+});
+
+// Sub-source option dropdown (childs of selected sub-source)
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+
+  const selectedSubSource = props.subSources.find(
+    item => item.id == quoteForm.sub_source_id,
+  );
+  if (!selectedSubSource || !selectedSubSource.childs) return [];
+
+  const pcpOnlyOptions = ['pcp-cross-sell', 'pcp-customer-referral'];
+  return selectedSubSource.childs.map(child => ({
+    value: child.id, // Keep as integer to match form data type
+    label: child.text,
+    suffix: child.description || null,
+    disabled:
+      !isPcpSubSourceOptionAllowed.value &&
+      pcpOnlyOptions.includes(String(child.code)),
+  }));
+});
+
+// Check if this is a referral type lead
+const isReferralType = computed(() => {
+  return (
+    props.leadSourceParams?.type === 'referral' ||
+    props.quote?.source === 'IMCRM'
+  );
+});
+
+// Role-based permissions for sub-source fields
+const canEditSubSourceFields = computed(() => {
+  return hasAnyRole([
+    rolesEnum.CarManager,
+    rolesEnum.Admin,
+    rolesEnum.LeadPool,
+  ]);
+});
+
+// Watch for sub-source changes to reset sub-source option
+watch(
+  () => quoteForm.sub_source_id,
+  newValue => {
+    quoteForm.sub_source_options_id = null;
+  },
+);
 </script>
 
 <template>
@@ -501,6 +597,57 @@ const gender = computed(() => {
 						:disabled="isDisbaled"
 						/>
 				</x-field> -->
+
+        <!-- Lead Source Fields - Only show when type is referral -->
+        <x-select
+          v-if="isReferralType"
+          label="IMCRM SUB-SOURCE"
+          v-model="quoteForm.sub_source_id"
+          :options="subSourceOptions"
+          class="w-full"
+          placeholder="Select IMCRM SUB-SOURCE"
+          filterable
+          filterPlaceholder="Filter IMCRM SUB-SOURCE...."
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          required
+          :error="quoteForm.errors.sub_source_id"
+          tooltip="Manually created lead in IMCRM"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-select
+          v-if="isReferralType && quoteForm.sub_source_id"
+          label="SUB SOURCE OPTIONS"
+          v-model="quoteForm.sub_source_options_id"
+          :options="subSourceOptionOptions"
+          class="w-full"
+          placeholder="Select Sub Source Option"
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+          tooltip="Type of referral lead"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
 
         <x-select
           label="REGISTRATION TYPE"

@@ -802,7 +802,6 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
             SendUpdateLogStatusEnum::ACB,
-            SendUpdateLogStatusEnum::ATIB,
             SendUpdateLogStatusEnum::DTSI,
             SendUpdateLogStatusEnum::DOV,
             SendUpdateLogStatusEnum::ATCRNB,
@@ -863,6 +862,7 @@ class SendUpdateLogService
                 $sendUpdatePaymentDetails['discount_value'] = $sendUpdateLog->discount;
             }
 
+            LoggerService::info('fn:updatePaymentDetails - Updating Payment Details - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid, extra: ['Payment Details' => json_encode($sendUpdatePaymentDetails)]);
             $payment->update($sendUpdatePaymentDetails);
 
             info('Book Update - Payment Details Updated - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
@@ -1341,7 +1341,10 @@ class SendUpdateLogService
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             $lookupNoteKey = strtolower($quoteType).'-su-notes';
-            $notes = Lookup::where('key', $lookupNoteKey)->whereIn('code', json_decode($sendUpdateLog->notes, true))->get() ?? [];
+            $noteCodes = json_decode($sendUpdateLog?->notes, true) ?? [];
+            $notes = !empty($noteCodes) 
+                ? Lookup::where('key', $lookupNoteKey)->whereIn('code', $noteCodes)->get()
+                : [];
             if (! empty($notes)) {
                 $notes = implode(', ', $notes->pluck('description')->toArray());
             }
@@ -1505,7 +1508,6 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::DM,
                 SendUpdateLogStatusEnum::DOV,
                 SendUpdateLogStatusEnum::ACB,
-                SendUpdateLogStatusEnum::ATIB,
                 SendUpdateLogStatusEnum::DTSI,
                 SendUpdateLogStatusEnum::ATCRNB,
                 SendUpdateLogStatusEnum::ATCRNB_RBB,

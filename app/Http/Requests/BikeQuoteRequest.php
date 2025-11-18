@@ -34,7 +34,7 @@ class BikeQuoteRequest extends FormRequest
             'nationality_id' => 'required|exists:nationality,id',
             'uae_license_held_for_id' => 'required|exists:uae_license_held_for,id',
             'year_of_manufacture' => 'required|exists:year_of_manufacture,text',
-            'additional_notes' => 'nullable',
+            'notes' => 'nullable|string',
             'back_home_license_held_for_id' => 'nullable',
             'has_ncd_supporting_documents' => 'nullable',
             'claim_history_id' => 'required',
@@ -49,6 +49,9 @@ class BikeQuoteRequest extends FormRequest
             'asset_value' => 'nullable|numeric',
             'gender' => 'nullable|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE,
             'chassis_number' => 'nullable|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/',
+            // Sub-source validation rules
+            'sub_source_id' => 'nullable|exists:lookups,id',
+            'sub_source_options_id' => 'nullable|exists:lookups,id',
         ];
     }
 

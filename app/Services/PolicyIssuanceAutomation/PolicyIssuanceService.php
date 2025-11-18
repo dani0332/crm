@@ -249,6 +249,12 @@ class PolicyIssuanceService
 
         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Policy issuance marked as failed for Quote: '.$quote->code.' and Policy Issuance ID : '.$policyIssuance?->id);
 
+        if (! $insurerPolicyAutomation) {
+            info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Insurer policy automation not found for Quote: '.$quote->code.' - Quote Type: '.$quoteType.' - Insurer Code: '.$insuranceProvider->code.' - Policy Issuance ID: '.$policyIssuance?->id);
+
+            return;
+        }
+
         $insurerApiStatus = $insurerPolicyAutomation->getInsurerAPIStatusByStep($policyIssuance);
 
         if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA])) {

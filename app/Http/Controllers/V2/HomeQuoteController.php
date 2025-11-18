@@ -21,6 +21,8 @@ use App\Services\AMLService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\HomeQuoteService;
+use App\Services\Logger\LoggerService;
+use App\Services\LookupService;
 use App\Services\Reports\RenewalBatchReportService;
 use Illuminate\Http\Request;
 
@@ -35,6 +37,7 @@ class HomeQuoteController extends Controller
         $user = auth()->user();
         $isManualAllocationAllowed = $user->isAdmin() || $user->isManagerOrDeputy();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('HomeQuote/Index', [
             'quotes' => $homeQuotes,
@@ -43,12 +46,28 @@ class HomeQuoteController extends Controller
             'isManualAllocationAllowed' => $isManualAllocationAllowed,
             'renewalBatches' => $renewalBatches,
             'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
+            'subSources' => $subSources,
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        // Log parameters from CreateLeadModal
+        LoggerService::info('Home create method called with parameters', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->input('subSourceId'),
+            'subSourceOptionsId' => $request->input('subSourceOptionsId'),
+        ]);
+
         $data = HomeQuoteRepository::getFormOptions();
+        $subSources = app(LookupService::class)->getSubSource();
+
+        $data['subSources'] = $subSources;
+        $data['leadSourceParams'] = [
+            'type' => $request->input('type'),
+            'subSource' => $request->input('subSourceId'),
+            'subSourceOption' => $request->input('subSourceOptionsId'),
+        ];
 
         return inertia('HomeQuote/Form', $data);
     }
@@ -82,11 +101,14 @@ class HomeQuoteController extends Controller
     {
         $data = HomeQuoteRepository::getFormOptions();
         $quote = HomeQuoteRepository::getBy('uuid', $uuid);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia(
             'HomeQuote/Form',
             [
                 ...$data,
+                'subSources' => $subSources,
+                'leadSourceParams' => [],
                 'quote' => $quote,
             ]
         );

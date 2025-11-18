@@ -100,6 +100,9 @@ final class SageEnum extends Enum
     const SRT_RTP_AR_SPPAY_INV = 'RTP_AR_SPPAY_INV';
     const SRT_POST_AR_SPPAY_INV = 'POST_AR_SPPAY_INV';
 
+    // AR Premium Invoice - Non upfront
+    const SRT_CREATE_AR_SPPAY_PREM_INV = 'CREATE_AR_SPPAY_PREM_INV';
+
     // AP Invoices - Upfront
     const EP_SRT_CREATE_AP_PREM_INV = 'EP_SRT_CREATE_AP_PREM_INV';
     const EP_SRT_RTP_AP_PREM_INV = 'EP_RTP_AP_PREM_INV';
