@@ -57,6 +57,7 @@ use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\CarTypeInsurance;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -885,6 +886,7 @@ class CRUDController extends Controller
                 }
 
                 $isEpEcbPaymentPaid = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB, true);
+                $carTypeofInsurance = CarTypeInsurance::find($record->car_type_insurance_id)->select('id', 'text')->first();
 
                 return inertia('PersonalQuote/Car/Show', compact([
                     'record',
@@ -988,6 +990,7 @@ class CRUDController extends Controller
                     'lookups',
                     'rtaConfigurationData',
                     'LIVAEnums',
+                    'carTypeofInsurance',
                 ]));
             }
 
