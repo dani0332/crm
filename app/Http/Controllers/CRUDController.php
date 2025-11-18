@@ -287,6 +287,8 @@ class CRUDController extends Controller
         }
         $model = $this->genericModel;
 
+        $subSources = $this->lookupService->getSubSource();
+
         // inertia rendering for health quote
         // PD Revert
         // $count = $gridData->count();
@@ -307,9 +309,6 @@ class CRUDController extends Controller
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $quote_status = $dropdownSource['quote_status_id'];
-            $quote_status = collect($quote_status)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::Lost;
-            })->values();
             $emirates = Emirate::getOptions();
 
             $todaysAllocationData = $this->allocationService->getHealthTodaysCount(auth()->user()->id);
@@ -337,6 +336,7 @@ class CRUDController extends Controller
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
                 'insurerAMLStatus' => $insurerAMLStatus,
                 'emirates' => $emirates,
+                'subSources' => $subSources,
             ]);
         }
 
@@ -409,6 +409,7 @@ class CRUDController extends Controller
                 'insurerAMLStatus' => $insurerAMLStatus,
                 'issuanceStatuses' => $issuanceStatuses,
                 'insurerApiStatus' => $insurerApiStatus,
+                'subSources' => $subSources,
             ]);
         }
 
@@ -451,13 +452,24 @@ class CRUDController extends Controller
         }
         $model = $this->genericModel;
 
+        $quoteTypeId = QuoteTypes::getIdFromValue($model->modelType);
+
+        $subSources = $this->lookupService->getSubSource();
+
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
+
             return inertia('HealthQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'branchOptions' => EmirateEnum::getBranchMapping(),
                 'emirateEnum' => EmirateEnum::asArray(),
+                'subSources' => $subSources,
+                'leadSourceParams' => [
+                    'type' => $request->input('type'),
+                    'subSource' => $request->input('subSourceId'),
+                    'subSourceOption' => $request->input('subSourceOptionsId'),
+                ],
             ]);
         }
 
@@ -470,6 +482,12 @@ class CRUDController extends Controller
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'quoteStatusEnums' => QuoteStatusEnum::asArray(),
+                'subSources' => $subSources,
+                'leadSourceParams' => [
+                    'type' => $request->input('type'),
+                    'subSource' => $request->input('subSourceId'),
+                    'subSourceOption' => $request->input('subSourceOptionsId'),
+                ],
             ]);
         }
 
@@ -1372,6 +1390,8 @@ class CRUDController extends Controller
             }
         }
 
+        $subSources = $this->lookupService->getSubSource();
+
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
             return inertia('HealthQuote/Form', [
                 'quote' => $record,
@@ -1381,6 +1401,7 @@ class CRUDController extends Controller
                 'model' => json_encode($model->properties),
                 'branchOptions' => EmirateEnum::getBranchMapping(),
                 'emirateEnum' => EmirateEnum::asArray(),
+                'subSources' => $subSources,
             ]);
         }
 
@@ -1421,6 +1442,7 @@ class CRUDController extends Controller
                 'isEpEcbPaymentPaid' => $isEpEcbPaymentPaid,
                 'ecbExcludedCarMakeCodes' => EpEcbExcludeVehicleEnum::CAR_MAKE_CODES,
                 'ecbExcludedCarModelCodes' => EpEcbExcludeVehicleEnum::CAR_MODEL_CODES,
+                'subSources' => $subSources,
             ]);
         }
 

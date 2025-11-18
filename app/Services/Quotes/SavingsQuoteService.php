@@ -47,6 +47,7 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote.investmentFrequency',
             'savingsQuote.tenure',
             'nationality',
+            'subSource:id,text',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -85,6 +86,12 @@ class SavingsQuoteService extends BaseQuoteService
         $sourceName = config('constants.SOURCE_NAME');
         $appUrl = config('constants.APP_URL');
 
+        // Log sub-source parameters
+        LoggerService::info('SavingsQuoteService create - Sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+        ]);
+
         $data = [
             'firstName' => $data['first_name'],
             'lastName' => $data['last_name'],
@@ -100,7 +107,7 @@ class SavingsQuoteService extends BaseQuoteService
             'currencyId' => (int) $data['currency_id'],
             'investmentAmount' => (float) $data['investment_amount'],
             'investmentCriteriaId' => (int) $data['investment_frequency'],
-            'additionalNotes' => $data['additional_notes'],
+            'additionalNotes' => $data['notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'utmSource' => '',
@@ -109,6 +116,9 @@ class SavingsQuoteService extends BaseQuoteService
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
             'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
+            // Sub-source fields
+            'subSourceId' => $data['sub_source_id'] ?? null,
+            'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
         ];
 
         // Make API request to save the savings quote
@@ -128,6 +138,8 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote.purpose',
             'savingsQuote.investmentFrequency',
             'savingsQuote.tenure',
+            'subSource',
+            'subSourceOption',
         ])
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
@@ -190,14 +202,17 @@ class SavingsQuoteService extends BaseQuoteService
 
     public function update(string $uuid, array $data)
     {
+
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->baseQuery()->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
                 'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'gender',
+                'sub_source_id', 'sub_source_options_id', 'notes',
             ]);
 
             $quoteData['updated_by_id'] = Auth::id();
+
             $quote->update($quoteData);
 
             $quote->savingsQuote()->updateOrCreate(

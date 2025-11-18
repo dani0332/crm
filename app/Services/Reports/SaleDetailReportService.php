@@ -80,6 +80,8 @@ class SaleDetailReportService extends ManagementReport
                 'pi.name as policy_issuer',
                 'btoi.text as sub_type_line_of_business',
                 'p.insurer_commmission_invoice_number',
+                'ss.text as sub_source',
+                'sso.text as sub_source_option',
                 'l.text as transaction_type',
                 'p.commmission_percentage',
                 'personal_quotes.policy_booking_date',
@@ -110,6 +112,8 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('customer as cm', 'cm.id', '=', 'personal_quotes.customer_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id')
+            ->leftJoin('lookups as ss', 'personal_quotes.sub_source_id', '=', 'ss.id')
+            ->leftJoin('lookups as sso', 'personal_quotes.sub_source_options_id', '=', 'sso.id')
             ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
             ->leftJoin('car_quote_request as cqr', function ($join) {
                 $join->on('personal_quotes.quote_id', '=', 'cqr.id')
@@ -177,6 +181,7 @@ class SaleDetailReportService extends ManagementReport
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->commmission_percentage = is_numeric($item->commmission_percentage) ? number_format($item->commmission_percentage, 2) : 0;
             $item->policy_booking_date = ! empty($item->policy_booking_date) ? Carbon::parse($item->policy_booking_date)->format('Y-m-d') : null;
+            $item->insurer_tax_invoice_date = ! empty($item->insurer_tax_invoice_date) ? Carbon::parse($item->insurer_tax_invoice_date)->format(config('constants.DATE_DISPLAY_SLASH_FORMAT')) : null;
             $item->currently_insured_with_text = $item->quote_type_id == QuoteTypeId::Car
                 ? ($item->currently_insured_with_text ?? $item->currently_insured_with ?? 'N/A')
                 : ($item->currently_insured_with_text ?? 'N/A');

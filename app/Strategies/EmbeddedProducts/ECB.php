@@ -16,8 +16,6 @@ class ECB extends EmbeddedProduct
             'PLAN END DATE',
             'FULL NAME',
             'EMIRATES ID NUMBER',
-            'Contact Number',
-            'Email ID',
             'Contribution Amount', // Payment Amount With VAT
             'POLICY ISSUE STATUS',
             'Certificate Number',
@@ -38,8 +36,6 @@ class ECB extends EmbeddedProduct
             $certificate->plan_end_date,
             $certificate->name,
             $certificate->emirates_id_number,
-            $certificate->contact_number,
-            $certificate->email,
             $certificate->contribution_amount,
             $certificate->status,
             $certificate->certificate_number,
@@ -85,62 +81,5 @@ class ECB extends EmbeddedProduct
         $item->excess_amount = $quoteObject?->carQuoteRequestDetail?->excess.'/-';
 
         return $item;
-    }
-
-    /**
-     * Retrieves sold transaction data from a dataset.
-     *
-     * @return Collection
-     */
-    public function getTransactionData1($dataset, $isAlfredProtect = false)
-    {
-        $dataset->each(function ($item) {
-            $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
-            $quoteObject = $item->quoteRequest;
-            $status = $quoteObject->quoteStatus->text ?? '';
-            $customer = $quoteObject->customer ?? null;
-            $customerInsured = $customer?->customerInsured()
-                ->where('quote_request_id', $item->quote_request_id)
-                ->where('quote_type_id', $item->quote_type_id)
-                ->latest('updated_at')
-                ->first() ?? null;
-
-            $planStartDate = (! empty($quoteObject->policy_start_date) && $quoteObject->policy_start_date != '0000-00-00 00:00:00') ? Carbon::parse($quoteObject->policy_start_date)->format($dateFormat) : '';
-            $planEndDate = '';
-            if (! empty($planStartDate)) {
-                $planEndDate = Carbon::parse($quoteObject->policy_start_date)->addYear()->format($dateFormat);
-            }
-
-            if (! empty($quoteObject->quoteRequestEntityMapping)) {
-                $firstName = $quoteObject->first_name ?? '';
-                $lastName = $quoteObject->last_name ?? '';
-            } else {
-                $firstName = ($customerInsured?->insured?->first_name ?? $customer?->insured_first_name) ?? '';
-                $lastName = ($customerInsured?->insured?->last_name ?? $customer?->insured_last_name) ?? '';
-            }
-
-            $item->id = $item->id;
-            $item->ref_id = $item->code;
-            $item->quote_request = $item->quoteRequest;
-            $item->plan_start_date = $planStartDate;
-            $item->plan_end_date = $planEndDate;
-            $item->certificate_number = $item->certificate_number ?? '';
-            $item->name = $firstName.' '.$lastName;
-            $item->email = $quoteObject->email ?? '';
-            $item->contact_number = $quoteObject->mobile_no ?? '';
-            $item->emirates_id_number = ($customerInsured?->insured?->id_number ?? $customer?->emirates_id_number) ?? '';
-            $item->model_year = $quoteObject->year_of_manufacture ?? '';
-            $item->make = $quoteObject->carMake?->text ?? '';
-            $item->model = $quoteObject->carModel?->text ?? '';
-            $item->chassis_number = $quoteObject->carQuoteRequestDetail?->chassis_number ?? '';
-            $item->excess_amount = $quoteObject->carQuoteRequestDetail?->excess.'/-';
-            $item->payment_date = isset($item->captured_at) ? Carbon::parse($item->captured_at)->format($dateFormat) : '';
-            $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
-            $item->status = $status;
-
-            return $item;
-        });
-
-        return $dataset;
     }
 }
