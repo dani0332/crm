@@ -4,13 +4,29 @@ const { quoteId, modals, customerVerificationData } = defineProps({
   modals: Object,
   customerVerificationData: Object,
 });
+const notification = useNotifications('toast');
+const isLoading = ref(false);
 
 // Update webform data with OCR data
 const updateAndSave = () => {
+  isLoading.value = true;
+
+  // Make api request
   axios.get(`/quotes/car/${quoteId}/update-ocr-webform`).then(response => {
-    console.log(response);
+    notification.success({
+          title: response.data.message,
+          position: 'top',
+        });
+  
+    // Close modal
+    modals.customerVerification = false;
   }).catch(error => {
-    console.log(error);
+    notification.error({
+      title: 'Error occurred while updating',
+      position: 'top',
+    });
+  }).finally(() => {
+    isLoading.value = false;
   });
 }
 </script>
@@ -341,7 +357,12 @@ const updateAndSave = () => {
 
       <!-- Update and save button-->
       <div class="px-6 pb-6 max-w-4xl mx-auto flex justify-end" v-if="customerVerificationData.buttonData.status=='requires_verification'">
-        <x-button size="sm" color="orange" @click="updateAndSave">Update & Save</x-button>
+        <x-button
+        size="sm"
+        color="orange"
+        :loading="isLoading"
+        @click="updateAndSave"
+        :disabled="isLoading">Update & Save</x-button>
       </div>
 
       <template #actions>
