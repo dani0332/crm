@@ -11,6 +11,7 @@ export function useAllocationForm(props, errorHandling) {
   const teamOptions = ref([]);
   const businessTypeOptions = ref([]);
   const planTypeOptions = ref([]);
+  const locationOptions = ref([]);
   const currentConfiguration = ref(null);
   const savingsTemplateRef = ref(null);
   const homeTemplateRef = ref(null);
@@ -141,6 +142,26 @@ export function useAllocationForm(props, errorHandling) {
     }
   };
 
+  const fetchLocations = async () => {
+    locationOptions.value = [];
+    try {
+      const response = await axios.get('/api/sub-areas');
+
+      if (
+        response.data.success &&
+        response.data.data &&
+        response.data.data.length > 0
+      ) {
+        locationOptions.value = response.data.data.map(location => ({
+          value: location.id,
+          label: location.name,
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+    }
+  };
+
   const fetchConfiguration = async quoteType => {
     currentConfiguration.value = null;
     try {
@@ -176,6 +197,7 @@ export function useAllocationForm(props, errorHandling) {
     teamOptions.value = [];
     businessTypeOptions.value = [];
     planTypeOptions.value = [];
+    locationOptions.value = [];
     currentConfiguration.value = null;
     successMessage.value = '';
     clearAllErrors();
@@ -205,6 +227,11 @@ export function useAllocationForm(props, errorHandling) {
       // Fetch plan types for Group Medical
       if (quoteType.code === props.quoteTypeCodeEnum.GroupMedical) {
         fetchTasks.push(fetchPlanTypes());
+      }
+
+      // Fetch locations for Home
+      if (quoteType.code === props.quoteTypeCodeEnum.Home) {
+        fetchTasks.push(fetchLocations());
       }
 
       await Promise.all(fetchTasks);
@@ -530,6 +557,7 @@ export function useAllocationForm(props, errorHandling) {
     teamOptions,
     businessTypeOptions,
     planTypeOptions,
+    locationOptions,
     currentConfiguration,
     savingsTemplateRef,
     homeTemplateRef,

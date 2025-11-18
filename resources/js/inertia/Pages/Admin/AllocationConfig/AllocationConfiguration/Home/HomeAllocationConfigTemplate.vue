@@ -11,6 +11,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  locationOptions: {
+    type: Array,
+    default: () => [],
+  },
   viewMode: {
     type: Boolean,
     default: false,
@@ -221,6 +225,7 @@ defineExpose({
       type="Value"
       :brackets="valueBrackets"
       :advisor-options="advisorOptions"
+      :location-options="locationOptions"
       :view-mode="viewMode"
       @add-bracket="addValueBracket"
       @remove-bracket="removeValueBracket"
@@ -233,6 +238,7 @@ defineExpose({
       type="Volume"
       :brackets="volumeBrackets"
       :advisor-options="advisorOptions"
+      :location-options="locationOptions"
       :view-mode="viewMode"
       @add-bracket="addVolumeBracket"
       @remove-bracket="removeVolumeBracket"

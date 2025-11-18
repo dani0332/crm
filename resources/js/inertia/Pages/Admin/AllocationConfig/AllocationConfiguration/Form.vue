@@ -45,6 +45,7 @@ const {
   teamOptions,
   businessTypeOptions,
   planTypeOptions,
+  locationOptions,
   currentConfiguration,
   savingsTemplateRef,
   homeTemplateRef,
@@ -196,6 +197,7 @@ onMounted(() => {
           <HomeAllocationConfigTemplate
             :configuration="currentConfiguration"
             :advisor-options="advisorOptions"
+            :location-options="locationOptions"
             :nationality-options="nationalityOptions"
             :view-mode="isViewMode"
             @data-update="onTemplateDataUpdate"

@@ -145,4 +145,23 @@ class AllocationConfigurationController extends Controller
             ], 500);
         }
     }
+
+    public function getSubAreas()
+    {
+        try {
+            $subAreas = \App\Models\SubArea::orderBy('text')
+                ->get(['id', 'text as name']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $subAreas,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch sub areas.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Strategies\Validation;
 
 use App\Contracts\AllocationValidationStrategyInterface;
+use App\Models\SubArea;
 use App\Models\User;
 use App\Traits\ValidatesBracketStructure;
 use Illuminate\Validation\Rule;
@@ -26,7 +27,7 @@ class HomeAllocationValidationStrategy implements AllocationValidationStrategyIn
             'value_brackets.*.profiles.*.advisorIds' => ['required', 'array', 'min:1'],
             'value_brackets.*.profiles.*.advisorIds.*' => ['integer', Rule::exists(User::class, 'id')],
             'value_brackets.*.profiles.*.locations' => ['required', 'array', 'min:1'],
-            'value_brackets.*.profiles.*.locations.*' => ['string'],
+            'value_brackets.*.profiles.*.locations.*' => ['integer', Rule::exists(SubArea::class, 'id')],
 
             'volume_brackets' => ['required', 'array'],
             'volume_brackets.*.contents_min' => ['required_with:volume_brackets', 'numeric', 'min:1'],
@@ -37,7 +38,7 @@ class HomeAllocationValidationStrategy implements AllocationValidationStrategyIn
             'volume_brackets.*.profiles.*.advisorIds' => ['required', 'array', 'min:1'],
             'volume_brackets.*.profiles.*.advisorIds.*' => ['integer', Rule::exists(User::class, 'id')],
             'volume_brackets.*.profiles.*.locations' => ['required', 'array', 'min:1'],
-            'volume_brackets.*.profiles.*.locations.*' => ['string'],
+            'volume_brackets.*.profiles.*.locations.*' => ['integer', Rule::exists(SubArea::class, 'id')],
         ];
     }
 

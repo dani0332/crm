@@ -1,7 +1,6 @@
 <script setup>
 import { nextTick, onMounted, ref, watch } from 'vue';
 import CollapseIcon from '../Savings/components/CollapseIcon.vue';
-import LocationTagsInput from './LocationTagsInput.vue';
 
 const props = defineProps({
   title: {
@@ -17,6 +16,10 @@ const props = defineProps({
     required: true,
   },
   advisorOptions: {
+    type: Array,
+    default: () => [],
+  },
+  locationOptions: {
     type: Array,
     default: () => [],
   },
@@ -145,7 +148,7 @@ const handleBlur = (event, bracket, field) => {
 
 const createEmptyProfile = () => ({
   advisorIds: [],
-  locations: [], // Will store location names as strings
+  locations: [], // Will store location IDs as integers
 });
 
 const addBracket = () => {
@@ -554,13 +557,32 @@ onMounted(() => {
                         </x-select>
                       </div>
                       <div>
-                        <LocationTagsInput
+                        <x-select
                           v-model="profile.locations"
+                          :options="locationOptions"
+                          placeholder="Select locations..."
+                          multiple
+                          filterable
                           :disabled="viewMode"
+                          class="w-full min-h-[40px]"
                           label="Locations"
-                          placeholder="Type location and press Enter..."
-                          tooltip="Type location names (e.g., Abu Dhabi, Dubai) and press Enter to add them. This profile will apply to these locations."
-                        />
+                          required
+                          tooltip="Select one or more locations where this profile will apply."
+                        >
+                          <template
+                            #content-footer
+                            v-if="locationOptions.length > 0 && !viewMode"
+                          >
+                            <ui-select-actions
+                              @select-all="
+                                profile.locations = locationOptions.map(
+                                  item => item.value,
+                                )
+                              "
+                              @clear="profile.locations = []"
+                            />
+                          </template>
+                        </x-select>
                       </div>
                     </div>
                   </div>

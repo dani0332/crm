@@ -11,7 +11,6 @@ use App\Models\BusinessQuote;
 use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 trait AllocationConfigurationFindable
 {
@@ -118,16 +117,16 @@ trait AllocationConfigurationFindable
     public function getHomeEligibleAdvisorIds(HomeQuote $lead): array
     {
         $configuration = $this->findConfig(QuoteTypes::HOME);
-        $address = Str::lower($lead?->subArea?->text ?? '');
+        $subAreaId = $lead?->sub_area_id;
 
-        if (! $configuration || ! $address || (! $lead->hasContents() && ! $lead->hasBuilding() && ! $lead->hasPersonalBelongings())) {
+        if (! $configuration || ! $subAreaId || (! $lead->hasContents() && ! $lead->hasBuilding() && ! $lead->hasPersonalBelongings())) {
             return [];
         }
 
         if ($lead->hasContents()) {
             $contentsValue = $lead->contents?->min_value ?? 0;
 
-            $advisorIds = $this->evaluateHomeAdvisorIds($configuration, 'contents_min', 'contents_max', $contentsValue, $address);
+            $advisorIds = $this->evaluateHomeAdvisorIds($configuration, 'contents_min', 'contents_max', $contentsValue, $subAreaId);
 
             if (! empty($advisorIds)) {
                 return $advisorIds;
@@ -137,7 +136,7 @@ trait AllocationConfigurationFindable
         if ($lead->hasBuilding()) {
             $buildingValue = (float) $lead->building_value ?? 0;
 
-            $advisorIds = $this->evaluateHomeAdvisorIds($configuration, 'building_min', 'building_max', $buildingValue, $address);
+            $advisorIds = $this->evaluateHomeAdvisorIds($configuration, 'building_min', 'building_max', $buildingValue, $subAreaId);
 
             if (! empty($advisorIds)) {
                 return $advisorIds;
@@ -149,13 +148,13 @@ trait AllocationConfigurationFindable
         return [];
     }
 
-    private function evaluateHomeAdvisorIds(AllocationConfiguration $configuration, string $minKey, string $maxKey, float|int $value, string $address): array
+    private function evaluateHomeAdvisorIds(AllocationConfiguration $configuration, string $minKey, string $maxKey, float|int $value, int $subAreaId): array
     {
         foreach (['value_brackets', 'volume_brackets'] as $bracketType) {
             $brackets = $configuration?->{$bracketType};
             $bracketData = $this->getMatchingBracket($brackets, $value, $minKey, $maxKey);
             if ($bracketData) {
-                $profile = $this->getMatchingProfileDataForLocation($bracketData['profiles'], 'locations', $address);
+                $profile = $this->getMatchingProfileDataForLocation($bracketData['profiles'], 'locations', $subAreaId);
                 $advisorIds = $this->getAdvisorIds($profile);
 
                 if (! empty($advisorIds)) {
@@ -229,15 +228,9 @@ trait AllocationConfigurationFindable
         return $profiles->filter(fn ($profile) => $this->matchesTargetLocations($value, $profile[$key]))->first();
     }
 
-    private function matchesTargetLocations(string $address, array $locations): bool
+    private function matchesTargetLocations(int $subAreaId, array $locations): bool
     {
-        foreach ($locations as $keyword) {
-            if (Str::contains($address, $keyword)) {
-                return true;
-            }
-        }
-
-        return false;
+        return in_array($subAreaId, $locations);
     }
 
     private function getAdvisorIds(?array $profile): array
