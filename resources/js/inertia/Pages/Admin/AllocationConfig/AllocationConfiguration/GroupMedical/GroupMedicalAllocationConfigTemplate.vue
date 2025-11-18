@@ -60,9 +60,21 @@ const validateBracket = (bracket, bracketIndex, type) => {
     );
   }
 
+  if (bracket.employees_min && bracket.employees_min > 99999) {
+    errors.push(
+      `${type} Bracket ${bracketIndex + 1}: Minimum number of employees cannot exceed 99999`,
+    );
+  }
+
   if (!bracket.employees_max || bracket.employees_max <= 0) {
     errors.push(
       `${type} Bracket ${bracketIndex + 1}: Maximum number of employees is required and must be greater than 0`,
+    );
+  }
+
+  if (bracket.employees_max && bracket.employees_max > 99999) {
+    errors.push(
+      `${type} Bracket ${bracketIndex + 1}: Maximum number of employees cannot exceed 99999`,
     );
   }
 

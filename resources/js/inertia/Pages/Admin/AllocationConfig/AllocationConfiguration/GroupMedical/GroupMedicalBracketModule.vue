@@ -275,7 +275,10 @@ const toggleModule = () => {
                       @input="handleInput($event, bracket, 'employees_min')"
                       @blur="handleBlur($event, bracket, 'employees_min')"
                       label="Minimum"
-                      tooltip="Set the minimum number of employees for this bracket."
+                      tooltip="Set the minimum number of employees for this bracket (max: 99999)."
+                      type="number"
+                      min="1"
+                      max="99999"
                     />
                   </div>
                   <div>
@@ -287,7 +290,10 @@ const toggleModule = () => {
                       @input="handleInput($event, bracket, 'employees_max')"
                       @blur="handleBlur($event, bracket, 'employees_max')"
                       label="Maximum"
-                      tooltip="Set the maximum number of employees for this bracket."
+                      tooltip="Set the maximum number of employees for this bracket (max: 99999)."
+                      type="number"
+                      min="1"
+                      max="99999"
                     />
                   </div>
                 </div>
