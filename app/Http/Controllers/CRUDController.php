@@ -886,7 +886,7 @@ class CRUDController extends Controller
                 }
 
                 $isEpEcbPaymentPaid = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB, true);
-                $carTypeofInsurance = CarTypeInsurance::find($record->car_type_insurance_id)->select('id', 'text')->first();
+                $carTypeofInsurance = CarTypeInsurance::select('id', 'text')->find($record->car_type_insurance_id) ?? null;
 
                 return inertia('PersonalQuote/Car/Show', compact([
                     'record',
