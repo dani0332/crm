@@ -1,12 +1,13 @@
 <script setup>
-const { quoteId, modals, customerVerificationData } = defineProps({
+const { quoteId, modals, customerVerificationData, isLoadingVerificationDataUpdate } = defineProps({
   quoteId: Number,
   modals: Object,
   customerVerificationData: Object,
+  isLoadingVerificationDataUpdate: Boolean,
 });
 const notification = useNotifications('toast');
-const isLoading = ref(false);
 const emit = defineEmits();
+const isLoading = ref(false);
 
 // Update webform data with OCR data
 const updateAndSave = async () => {
@@ -14,26 +15,24 @@ const updateAndSave = async () => {
 
   // Make api request
   await axios.get(`/quotes/car/${quoteId}/update-ocr-webform`).then(response => {
-    notification.success({
-          title: response.data.message,
-          position: 'top',
-        });
-  
+
     // Emit event to reload updated plans
     emit('ocr-webform-updated');
-
-    // Close modal
-    modals.customerVerification = false;
   }).catch(error => {
     notification.error({
       title: 'Error occurred while updating',
       position: 'top',
     });
     console.log(error);
-  }).finally(() => {
-    isLoading.value = false;
   });
 }
+
+// Watch props to hide loader (once parent processing is completed)
+watch(() => isLoadingVerificationDataUpdate, (val) => {
+  if (val === false) {
+    isLoading.value = false;   // hide loader when parent finishes
+  }
+});
 </script>
 
 <template>

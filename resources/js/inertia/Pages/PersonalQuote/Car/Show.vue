@@ -123,6 +123,7 @@ defineProps({
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
+const isLoadingVerificationDataUpdate = ref(false);
 
 const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
@@ -583,6 +584,26 @@ const leadStatusDisabled = computed(() => {
 const assumptionState = reactive({
   isEditing: false,
 });
+
+const refreshComponent = () => {
+  isLoadingVerificationDataUpdate.value = true;
+  onLoadAvailablePlansData();
+
+  // Reload customer verification data
+  router.reload({
+    only: ['customerVerificationData'],
+    onFinish: () => {
+      // Show success for CustomerVerificationDetails update
+      notification.success({
+        title: 'OCR webform data updated successfully',
+        position: 'top',
+      });
+
+      modals.customerVerification = false;
+      isLoadingVerificationDataUpdate.value = false;
+    } 
+  });
+};
 
 const assumptionsForm = useForm({
   cylinder: page.props.record.cylinder || null,
@@ -4633,6 +4654,7 @@ const handleCancelConfirmationModal = () => {
     :quoteId="$page.props.record.id"
     :modals="modals"
     :customerVerificationData="customerVerificationData"
-     @ocr-webform-updated="onLoadAvailablePlansData"
+    :isLoadingVerificationDataUpdate="isLoadingVerificationDataUpdate"
+     @ocr-webform-updated="refreshComponent"
   />
 </template>
