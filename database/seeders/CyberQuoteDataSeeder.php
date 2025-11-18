@@ -12,6 +12,7 @@ use App\Models\QuoteStatus;
 use App\Models\QuoteStatusMap;
 use App\Models\QuoteType;
 use App\Models\Team;
+use App\Models\User;
 use Database\Seeders\Traits\PermissionableSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -33,6 +34,8 @@ class CyberQuoteDataSeeder extends Seeder
         $this->seedDocumentTypes();
 
         $this->seedCyberPermissions();
+
+        $this->assignCyberManagerRole();
     }
 
     private function upsertQuoteType()
@@ -301,6 +304,33 @@ class CyberQuoteDataSeeder extends Seeder
             $permissions = $carAdvisorRole->permissions;
             $permissions = $permissions->filter(fn ($permission) => ! Str::of($permission->name)->startsWith('car'))->values();
             $this->assignPermissionsToRole($permissions, $cyberAdvisorRole);
+        }
+    }
+
+    private function assignCyberManagerRole()
+    {
+        $cyberManagerEmail = 'sandeep.sharma@insurancemarket.ae';
+        $cyberManagerRole = Role::where('name', RolesEnum::CyberManager)->first();
+
+        if (! $cyberManagerRole) {
+            $this->command->warn('Cyber Manager role not found. Please ensure CyberQuoteDataSeeder has created the role.');
+
+            return;
+        }
+
+        $user = User::where('email', $cyberManagerEmail)->first();
+
+        if (! $user) {
+            $this->command->warn("User with email {$cyberManagerEmail} not found. Skipping Cyber Manager role assignment.");
+
+            return;
+        }
+
+        if (! $user->hasRole(RolesEnum::CyberManager)) {
+            $user->assignRole(RolesEnum::CyberManager);
+            $this->command->info("Cyber Manager role assigned to {$cyberManagerEmail}");
+        } else {
+            $this->command->info("User {$cyberManagerEmail} already has Cyber Manager role.");
         }
     }
 }

@@ -92,7 +92,7 @@ trait QuotePaymentable
     public function scopeAdvisorRequestedOrPaymentAuthorizedOrDeclinedCyber($q)
     {
         $q->where(function ($sq) {
-            $sq->whereHas('cyberQuoteRequest', function ($cyber) {
+            $sq->whereHas('cyberQuote', function ($cyber) {
                 $cyber->where('sic_advisor_requested', 1);
             })->orWhere->hasPaidOrDeclinedStatus()->orWhere->paymentLinkRequested();
         });

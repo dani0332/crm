@@ -353,7 +353,7 @@ class QuoteAllocation extends Command
                 'sic_flow_enabled',
                 'quote_type_id',
             ])
-            ->with('cyberQuoteRequest:id,personal_quote_id,sic_advisor_requested')
+            ->with('cyberQuote:id,personal_quote_id,sic_advisor_requested')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->where('quote_type_id', QuoteTypeId::Cyber)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -367,7 +367,7 @@ class QuoteAllocation extends Command
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
             $isPaid = $lead->isPaymentAuthorizedOrDeclined();
-            $sicRequested = $lead->cyberQuoteRequest?->sic_advisor_requested ?? false;
+            $sicRequested = $lead->cyberQuote?->sic_advisor_requested ?? false;
 
             LoggerService::info(self::class.': Processing cyber quote allocation', extra: [
                 'payment_status_id' => $lead->payment_status_id,

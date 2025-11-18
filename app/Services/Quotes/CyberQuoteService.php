@@ -12,8 +12,8 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Services\LookupService;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CyberQuoteService extends BaseQuoteService
@@ -72,7 +72,7 @@ class CyberQuoteService extends BaseQuoteService
     public function getOne(string $uuid, $allDetails = false)
     {
         return $this->baseQuery()
-            ->with('cyberQuoteRequest')
+            ->with('cyberQuote')
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
                 $individualCustomerType = CustomerTypeEnum::Individual;
@@ -152,7 +152,7 @@ class CyberQuoteService extends BaseQuoteService
     {
         $listQuotePlans = '';
         $quotePlans = $this->getQuotePlans($id);
-        
+
         if (isset($quotePlans->message) && $quotePlans->message != '') {
             $listQuotePlans = $quotePlans->message;
         } else {
@@ -290,7 +290,7 @@ class CyberQuoteService extends BaseQuoteService
             $quoteData['updated_by_id'] = Auth::id();
             $quote->update($quoteData);
 
-            $quote->cyberQuoteRequest()->updateOrCreate(
+            $quote->cyberQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
                 Arr::only($data, ['emirate_of_registration_id'])
             );
@@ -304,4 +304,3 @@ class CyberQuoteService extends BaseQuoteService
         return app(LookupService::class)->getCyberCoverages();
     }
 }
-
