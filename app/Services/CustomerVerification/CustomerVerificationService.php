@@ -16,6 +16,8 @@ use App\Models\Emirate;
 use App\Models\RegistrationCertificate;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleDriverDetail;
+use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Services\CapiService;
 use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
@@ -621,7 +623,7 @@ class CustomerVerificationService
         // Add customer verification data if exists
         if ($customerVerificationDetails && $customerVerificationDetails->customer_verified_data) {
             $customerVerificationData = json_decode($customerVerificationDetails->customer_verified_data, true);
-            $name = explode(' ', $customerVerificationData['name']);
+            $name = explode(' ', $customerVerificationData['name'] ?? null);
 
             $webFormData = array_filter([
                 'first_name' => $name[0] ?? null,
@@ -631,6 +633,29 @@ class CustomerVerificationService
                 'year_of_manufacture' => $customerVerificationData['carModelYear'] ?? null,
 
             ], fn ($value) => ! empty($value));
+
+            // Get car make id
+            $carMake = $customerVerificationData['carMake'] ?? null;
+            if ($carMake) {
+                $carMake = CarMake::where('text', $carMake)->first();
+
+                if ($carMake) {
+                    $webFormData['car_make_id'] = $carMake->id;
+                }
+            }
+
+            // Get car make modek id
+            $carModel = $customerVerificationData['carMakeModel'] ?? null;
+            if ($carModel) {
+                $carModel = CarModel::where('text', $carModel)->first();
+
+                if ($carModel) {
+                    $webFormData['car_model_id'] = $carModel->id;
+                }
+            }
+
+            // Get car model id
+            $carModel = $customerVerificationData['carModel'] ?? null;
         }
 
         // Add registration certificate data if exists
