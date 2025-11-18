@@ -1,5 +1,5 @@
 <script setup>
-import { ref, nextTick, watch, onMounted } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
 import CollapseIcon from '../Savings/components/CollapseIcon.vue';
 
 const props = defineProps({
@@ -274,7 +274,6 @@ const toggleModule = () => {
                       :disabled="viewMode"
                       @input="handleInput($event, bracket, 'employees_min')"
                       @blur="handleBlur($event, bracket, 'employees_min')"
-                      placeholder="1"
                       label="Minimum"
                       tooltip="Set the minimum number of employees for this bracket."
                     />
@@ -287,7 +286,6 @@ const toggleModule = () => {
                       :disabled="viewMode"
                       @input="handleInput($event, bracket, 'employees_max')"
                       @blur="handleBlur($event, bracket, 'employees_max')"
-                      placeholder="50"
                       label="Maximum"
                       tooltip="Set the maximum number of employees for this bracket."
                     />

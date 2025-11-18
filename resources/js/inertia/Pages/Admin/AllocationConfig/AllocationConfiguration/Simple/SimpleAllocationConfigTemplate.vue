@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, nextTick } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
 import CollapseIcon from '../Savings/components/CollapseIcon.vue';
 
 const props = defineProps({
@@ -375,7 +375,6 @@ defineExpose({
                     :disabled="viewMode"
                     @input="handleInput($event, bracket, 'min')"
                     @blur="handleBlur($event, bracket, 'min')"
-                    placeholder="1000"
                     label="Minimum Amount"
                     tooltip="Set the minimum amount for this bracket."
                   >
@@ -396,7 +395,6 @@ defineExpose({
                     :disabled="viewMode"
                     @input="handleInput($event, bracket, 'max')"
                     @blur="handleBlur($event, bracket, 'max')"
-                    placeholder="10000"
                     label="Maximum Amount"
                     tooltip="Set the maximum amount for this bracket."
                   >

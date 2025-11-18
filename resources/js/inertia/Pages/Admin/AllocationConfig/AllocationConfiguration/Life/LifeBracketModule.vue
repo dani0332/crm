@@ -300,7 +300,6 @@ onMounted(() => {
                       :disabled="viewMode"
                       @input="handleInput($event, bracket, 'min')"
                       @blur="handleBlur($event, bracket, 'min')"
-                      placeholder="10000"
                       label="Minimum Amount"
                       tooltip="Set the minimum sum insured amount for this bracket."
                     >
@@ -321,7 +320,6 @@ onMounted(() => {
                       :disabled="viewMode"
                       @input="handleInput($event, bracket, 'max')"
                       @blur="handleBlur($event, bracket, 'max')"
-                      placeholder="50000"
                       label="Maximum Amount"
                       tooltip="Set the maximum sum insured amount for this bracket."
                     >

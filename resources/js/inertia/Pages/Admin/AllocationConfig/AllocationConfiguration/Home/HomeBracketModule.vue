@@ -1,5 +1,5 @@
 <script setup>
-import { ref, nextTick, watch, onMounted } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
 import CollapseIcon from '../Savings/components/CollapseIcon.vue';
 import LocationTagsInput from './LocationTagsInput.vue';
 
@@ -389,7 +389,6 @@ onMounted(() => {
                       :disabled="viewMode"
                       @input="handleInput($event, bracket, 'building_min')"
                       @blur="handleBlur($event, bracket, 'building_min')"
-                      placeholder="100000"
                       label="Minimum Amount"
                       tooltip="Set the minimum building value for this bracket."
                     >
@@ -410,7 +409,6 @@ onMounted(() => {
                       :disabled="viewMode"
                       @input="handleInput($event, bracket, 'building_max')"
                       @blur="handleBlur($event, bracket, 'building_max')"
-                      placeholder="500000"
                       label="Maximum Amount"
                       tooltip="Set the maximum building value for this bracket."
                     >

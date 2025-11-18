@@ -1,5 +1,5 @@
 <script setup>
-import { ref, nextTick, watch, onMounted } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
 import CollapseIcon from './components/CollapseIcon.vue';
 
 const props = defineProps({
@@ -308,7 +308,6 @@ onMounted(() => {
                     :disabled="viewMode"
                     @input="handleMinInput($event, bracket)"
                     @blur="handleMinBlur($event, bracket)"
-                    placeholder="1000"
                     label="Minimum Amount"
                     tooltip="Set the min investment amount for leads in this category."
                   >
@@ -329,7 +328,6 @@ onMounted(() => {
                     :disabled="viewMode"
                     @input="handleMaxInput($event, bracket)"
                     @blur="handleMaxBlur($event, bracket)"
-                    placeholder="2000"
                     label="Maximum Amount"
                     tooltip="Set the max investment amount for leads in this category."
                   >
