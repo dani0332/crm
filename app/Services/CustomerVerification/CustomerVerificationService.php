@@ -446,6 +446,21 @@ class CustomerVerificationService
             }
         }
 
+        // Additional fields for separate make and model
+        if ($this->hasOcrKey($ocrData, 'vehicleMake')) {
+            $carMake = $this->extractOcrValue($ocrData, 'vehicleMake');
+            if (! empty($carMake)) {
+                $verificationData['carMake'] = $carMake;
+            }
+        }
+
+        if ($this->hasOcrKey($ocrData, 'vehicleMakeModel')) {
+            $carMakeModel = $this->extractOcrValue($ocrData, 'vehicleMakeModel');
+            if (! empty($carMakeModel)) {
+                $verificationData['carMakeModel'] = $carMakeModel;
+            }
+        }
+
         if (empty($verificationData)) {
             LoggerService::info('No valid customer verification data to update from RC OCR', extra: [
                 'document_type' => $documentType,
