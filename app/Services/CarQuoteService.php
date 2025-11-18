@@ -357,7 +357,7 @@ class CarQuoteService extends BaseService
         }
     }
 
-    private function verifyOCRData(CarQuote $carQuote): void
+    public function verifyOCRData(CarQuote $carQuote): void
     {
         // Get OCR enabled status
         $isOCREnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_ENABLED, useCache: true) == '1';
