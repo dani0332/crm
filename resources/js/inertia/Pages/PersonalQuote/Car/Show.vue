@@ -119,6 +119,7 @@ defineProps({
   insurerApiStatus: String,
   isAddionalFieldsEnabled: Boolean,
   rtaConfigurationData: Object,
+  carTypeofInsurance: Object,
 });
 
 const page = usePage();
@@ -2249,7 +2250,7 @@ const handleCancelConfirmationModal = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TYPE OF CAR INSURANCE</dt>
-                <dd>{{ record.current_insurance_status }}</dd>
+                <dd>{{ carTypeofInsurance?.text ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENTLY INSURED WITH</dt>
