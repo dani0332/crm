@@ -1,5 +1,5 @@
 <script setup>
-import { ref, nextTick, watch, onMounted } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
 import CollapseIcon from '../Savings/components/CollapseIcon.vue';
 
 const props = defineProps({
@@ -52,7 +52,7 @@ watch(
 
       nextTick(() => {
         const newBracketElement = document.querySelector(
-          `[data-bracket-index="${props.type.toLowerCase()}-${newLength - 1}"]`,
+          `[data-bracket-index="${props.title.toLowerCase().replace(/\s+/g, '-')}-${newLength - 1}"]`,
         );
         if (newBracketElement) {
           newBracketElement.scrollIntoView({
@@ -80,7 +80,7 @@ watch(
       const oldCount = oldProfileCounts?.[bracketIndex] || 0;
       if (newCount > oldCount) {
         const profileIndex = newCount - 1;
-        const profileKey = `${props.type.toLowerCase()}-${bracketIndex}-${profileIndex}`;
+        const profileKey = `${props.title.toLowerCase().replace(/\s+/g, '-')}-${bracketIndex}-${profileIndex}`;
         highlightedProfileKey.value = profileKey;
 
         nextTick(() => {
@@ -235,7 +235,7 @@ onMounted(() => {
           <div
             v-for="(bracket, bracketIndex) in brackets"
             :key="`bracket-${bracketIndex}`"
-            :data-bracket-index="`${type.toLowerCase()}-${bracketIndex}`"
+            :data-bracket-index="`${title.toLowerCase().replace(/\s+/g, '-')}-${bracketIndex}`"
             class="border border-gray-200 rounded-lg p-4 transition-all duration-500"
             :class="{
               'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
@@ -372,15 +372,15 @@ onMounted(() => {
                   <div
                     v-for="(profile, profileIndex) in bracket.profiles"
                     :key="`profile-${bracketIndex}-${profileIndex}`"
-                    :data-profile-key="`${type.toLowerCase()}-${bracketIndex}-${profileIndex}`"
+                    :data-profile-key="`${title.toLowerCase().replace(/\s+/g, '-')}-${bracketIndex}-${profileIndex}`"
                     class="bg-gray-50 p-4 rounded-md"
                     :class="{
                       'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
                         highlightedProfileKey ===
-                        `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`,
+                        `${title.toLowerCase().replace(/\s+/g, '-')}-${bracketIndex}-${profileIndex}`,
                       'shadow-lg':
                         highlightedProfileKey ===
-                        `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`,
+                        `${title.toLowerCase().replace(/\s+/g, '-')}-${bracketIndex}-${profileIndex}`,
                     }"
                   >
                     <div class="flex items-center justify-between mb-3">
@@ -399,7 +399,7 @@ onMounted(() => {
                           <span
                             v-if="
                               highlightedProfileKey ===
-                              `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`
+                              `${title.toLowerCase().replace(/\s+/g, '-')}-${bracketIndex}-${profileIndex}`
                             "
                             class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
                           >
