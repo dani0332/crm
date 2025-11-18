@@ -87,10 +87,10 @@ class DocRequiredForPolicySendSeeder extends Seeder
 
         foreach ($documentTypes as $quoteTypeId => $documentTypeCodes) {
             foreach ($documentTypeCodes as $documentTypeCode) {
-                $documentType = DocumentType::where('quote_type_id', $quoteTypeId)->where('code', $documentTypeCode)->first();
-                if ($documentType) {
-                    $documentType->is_required_for_send_policy = 1;
-                    $documentType->save();
+                $documentType = DocumentType::Active()->where('quote_type_id', $quoteTypeId)->where('code', $documentTypeCode)->first();
+                if($documentType) {
+                        $documentType->is_required_for_send_policy = 1;
+                        $documentType->save();
                 }
             }
         }
