@@ -967,10 +967,13 @@ class SplitPaymentService
 
             if (($masterPayment->insuranceProvider->code == InsuranceProviderEnum::ALNC->value && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
                 if ($sendUpdateId) {
-                    app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
-                    $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
-                    LoggerService::info("Master payment code: {$quoteModel->code} Quote status updated to Transaction Approved for send update");
-
+                    if (in_array($quoteModel->status, [SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED, SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED, SendUpdateLogStatusEnum::UPDATE_BOOKED])) {
+                        LoggerService::info("Master payment code: {$quoteModel->code} Quote status is already in the list of update booking queued, update booking failed or update booked, so skipping the update");
+                    } else {
+                        app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
+                        $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
+                        LoggerService::info("Master payment code: {$quoteModel->code} Quote status updated to Transaction Approved for send update");
+                    }
                 } else {
                     $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quoteModel);
                     LoggerService::info("Master payment code: {$quoteModel->code} Lock Lead status: {$lockLeadSectionsDetails['lead_status']} Quote Status ID: {$quoteModel->quote_status_id}");
