@@ -1341,7 +1341,10 @@ class SendUpdateLogService
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             $lookupNoteKey = strtolower($quoteType).'-su-notes';
-            $notes = Lookup::where('key', $lookupNoteKey)->whereIn('code', json_decode($sendUpdateLog->notes, true))->get() ?? [];
+            $noteCodes = json_decode($sendUpdateLog?->notes, true) ?? [];
+            $notes = ! empty($noteCodes)
+                ? Lookup::where('key', $lookupNoteKey)->whereIn('code', $noteCodes)->get()
+                : [];
             if (! empty($notes)) {
                 $notes = implode(', ', $notes->pluck('description')->toArray());
             }

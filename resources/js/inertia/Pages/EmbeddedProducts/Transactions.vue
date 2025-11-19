@@ -22,7 +22,6 @@ const loader = reactive({
 
 const filters = reactive({
   ref_id: '',
-  email: '',
   name: '',
   date_of_purchase: '',
   chassis_number: '',
@@ -49,8 +48,6 @@ const tableHeader = [
   { text: 'Sync Status', value: 'sync_status', sortable: true },
   { text: 'NATIONALITY', value: 'nationality' },
   { text: 'Vehicle', value: 'vehicle' },
-  { text: 'Contact Number', value: 'contact_number' },
-  { text: 'Email ID', value: 'email' },
   { text: 'Contribution Amount', value: 'contribution_amount', sortable: true },
   { text: 'Policy Issue Status', value: 'status' },
   { text: 'Certificate Number', value: 'certificate_number' },
@@ -317,16 +314,6 @@ const filteredHeaders = computed(() => {
             name="chassis_number"
             class="w-full"
             placeholder="Chassis Number"
-          />
-        </div>
-        <div>
-          <x-input
-            v-model="filters.email"
-            type="search"
-            name="first_name"
-            class="w-full"
-            placeholder="Type here"
-            label="Email"
           />
         </div>
         <div>
