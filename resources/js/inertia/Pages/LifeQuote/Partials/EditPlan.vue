@@ -190,6 +190,7 @@ const onSubmit = () => {
     coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
     monthlyPremium: Number(parseFloat(rider?.monthlyPremium ?? 0).toFixed(2)) || 0,
     annualPremium: Number(parseFloat(rider?.annualPremium ?? 0).toFixed(2)) || 0,
+    slug: rider?.slug ?? '',
   }));
 
   editForm.riders = processedRiders;
@@ -358,6 +359,7 @@ onMounted(() => {
       inputRequired: rider?.inputRequired ?? false,
       monthlyPremium: parseFloat(rider?.monthlyPremium ?? 0) || 0,
       annualPremium: parseFloat(rider?.annualPremium ?? 0) || 0,
+      slug: rider?.slug ?? '',
     }));
 
     getRiderDetails(props.selectedPlan.planId);
