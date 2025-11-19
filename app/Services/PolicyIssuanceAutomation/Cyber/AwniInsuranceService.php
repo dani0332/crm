@@ -379,7 +379,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             'CustName' => trim(($quote->first_name ?? '') . ' ' . ($quote->last_name ?? '')),
             'CustMobile' => $quote->mobile_no,
             'CustEmail' => $quote->email,
-            'CustEID' => $customer->emirates_id_number ?? "784200012345671",
+            'CustEID' => str_replace('-', '', $customer->emirates_id_number ?? "784200012345671"),
             'CustDOB' => $customer->dob ? strtoupper(Carbon::parse($customer->dob)->format('d-M-Y')) : null,
             'CustAddress' => $quote->company_address ?? "abc address",
             'CustCountryCode' => $nationality?->awni_country_code ?? null,
