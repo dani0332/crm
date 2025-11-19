@@ -4188,6 +4188,7 @@ class SageApiService
 
     }
 
+    // Reminder::This function not in used
     public function applyPaymentAPInvoices($sageRequestDataArray)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
@@ -4221,6 +4222,7 @@ class SageApiService
         return $returnMessage;
     }
 
+    // Reminder::This function not in used
     private function applyUpfrontPaymentAPInvoices($sageRequestDataArray)
     {
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
@@ -4339,6 +4341,7 @@ class SageApiService
         return $returnMessage;
     }
 
+    // Reminder::This function not in used
     private function applySplitPaymentAPInvoices($sageRequestDataArray)
     {
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
@@ -4461,6 +4464,7 @@ class SageApiService
         return $returnMessage;
     }
 
+    // Reminder::This function not in used
     private function applyNonSplitNonUpfrontPaymentAPInvoices($sageRequestDataArray)
     {
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
