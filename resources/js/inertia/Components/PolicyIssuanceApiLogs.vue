@@ -53,7 +53,6 @@ const togglePolicyIssuance = () => {
     });
     return;
   }
-  console.log('togglePolicyIssuance');
   axios.get(`/trigger-policy-issuance/${policyIssuanceId.value}`).then(res => {
     notification.success({
       title: res.data.message || 'Policy Issuance Triggered Successfully',
