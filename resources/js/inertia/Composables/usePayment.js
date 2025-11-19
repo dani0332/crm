@@ -124,34 +124,34 @@ export const usePayment = () => {
    * Returns an object with hasAuthorized (boolean) and statusText (string or null).
    * Breaks on first matching master payment.
    */
-  const hasAuthorizedSplit = (payments) => {
+  const hasAuthorizedSplit = payments => {
     const authorizedStatuses = [
       paymentStatusEnum.AUTHORISED,
       paymentStatusEnum.PAID,
       paymentStatusEnum.CAPTURED,
       paymentStatusEnum.PARTIAL_CAPTURED,
-      paymentStatusEnum.PARTIALLY_PAID
+      paymentStatusEnum.PARTIALLY_PAID,
     ];
-    
+
     if (!Array.isArray(payments)) {
       return {
         hasAuthorized: false,
-        statusText: null
+        statusText: null,
       };
     }
-    
+
     for (const payment of payments) {
       if (authorizedStatuses.includes(payment.payment_status_id)) {
         return {
           hasAuthorized: true,
-          statusText: formatString(payment.payment_status?.text)
+          statusText: formatString(payment.payment_status?.text),
         };
       }
     }
-    
+
     return {
       hasAuthorized: false,
-      statusText: null
+      statusText: null,
     };
   };
 
