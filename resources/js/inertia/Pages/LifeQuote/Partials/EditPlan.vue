@@ -188,6 +188,8 @@ const onSubmit = () => {
     loading: Number(parseFloat(rider.loading).toFixed(2)) || 0,
     finalPrice: Number(parseFloat(rider.finalPrice).toFixed(2)) || 0,
     coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
+    monthlyPremium: Number(parseFloat(rider?.monthlyPremium ?? 0).toFixed(2)) || 0,
+    annualPremium: Number(parseFloat(rider?.annualPremium ?? 0).toFixed(2)) || 0,
   }));
 
   editForm.riders = processedRiders;
@@ -354,6 +356,8 @@ onMounted(() => {
       loading: parseInt(rider?.loading) ?? 0,
       finalPrice: parseInt(rider?.finalPrice) ?? 0,
       inputRequired: rider?.inputRequired ?? false,
+      monthlyPremium: parseFloat(rider?.monthlyPremium ?? 0) || 0,
+      annualPremium: parseFloat(rider?.annualPremium ?? 0) || 0,
     }));
 
     getRiderDetails(props.selectedPlan.planId);
