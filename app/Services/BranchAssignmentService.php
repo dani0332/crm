@@ -12,35 +12,29 @@ class BranchAssignmentService extends BaseService
 {
     public function getGridData($request)
     {
-        $dataset = User::select('id', 'name')
-            ->whereHas('usersroles', function ($query) {
+        $dataset = UserBranch::with('user', 'user.usersroles', 'branch')
+        ->whereHas('user', function ($query) {
+            $query->whereHas('usersroles', function ($query) {
                 $query->where('name', 'like', '%advisor%');
-            })
-            ->with('userBranches', 'userBranches.branch')
-            ->when(! empty($request['advisors']), function ($query) use ($request) {
-                $query->whereIn('id', $request['advisors']);
-            })
-            ->when(! empty($request['primary_branch']), function ($query) use ($request) {
-                $query->whereHas('userBranches', function ($query) use ($request) {
-                    $query->where('branch_id', $request['primary_branch'])
-                        ->where('is_primary', 1);
-                });
-            })
-            ->paginate();
+            });
+        })
+        ->when(! empty($request['advisors']), function ($query) use ($request) {
+            $query->whereIn('user_id', $request['advisors']);
+        })
+        ->when(! empty($request['primary_branch']), function ($query) use ($request) {
+            $query->whereHas('branch', function ($query) use ($request) {
+                $query->where('id', $request['primary_branch'])
+                    ->where('is_primary', 1);
+            });
+        })
+        ->where('status', 1)
+        ->paginate();
 
         $dataset->map(function ($item) {
 
-            $item->current_branches = $item->userBranches
-                ->where('status', 1)
-                ->pluck('branch.name')
+            $item->roles = $item->user->usersroles
+                ->pluck('name')
                 ->implode(', ');
-            $primaryBranch = $item->userBranches
-                ->where('status', 1)
-                ->where('is_primary', 1)
-                ->first();
-            $item->primary_branch = $primaryBranch?->branch->name;
-            $item->effective_from = $primaryBranch?->effective_from;
-            $item->effective_to = $primaryBranch?->effective_to;
 
             return $item;
         });
@@ -111,5 +105,29 @@ class BranchAssignmentService extends BaseService
         }
 
         return true;
+    }
+
+    public function createAssignment($user, $data)
+    {
+        $assignment = $user->userBranches()->create($data);
+        if (! $assignment) {
+            return false;
+        }
+
+        $assignment->assignment_id = "BA" . str_pad($assignment->id, 3, '0', STR_PAD_LEFT);
+        $assignment->save();
+
+        return $assignment;
+    }
+
+    public function getAssignedUsers()
+    {
+        $assignments = UserBranch::select('user_id')
+            ->where('status', 1)
+            ->groupBy('user_id')
+            ->pluck('user_id')
+            ->toArray();
+
+        return $assignments;
     }
 }

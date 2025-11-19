@@ -405,6 +405,7 @@ class UserService extends BaseService
             ->whereHas('usersroles', function ($query) {
                 $query->where('name', 'like', '%advisor%');
             })
+            ->activeUser()
             ->get();
     }
 }
