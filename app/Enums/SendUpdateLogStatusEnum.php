@@ -119,7 +119,7 @@ final class SendUpdateLogStatusEnum extends Enum
      *
      * @return array
      */
-    public static function getBookingStatuses(): array
+    public static function getSendUpdateBookingStatuses(): array
     {
         return [
             self::UPDATE_BOOKING_QUEUED,
