@@ -306,7 +306,7 @@ class YachtQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'customer'])
             ->filter()
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');

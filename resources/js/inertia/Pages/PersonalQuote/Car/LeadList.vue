@@ -712,8 +712,8 @@ const onExport = (url, isLoading = false, exportType = 'download') => {
         filters.created_at_start,
         filters.created_at_end,
       );
-      maxLimit = 31;
-      maxPeriod = '31 days';
+      maxLimit = 15;
+      maxPeriod = '15 days';
     }
 
     if (diff > maxLimit) {
