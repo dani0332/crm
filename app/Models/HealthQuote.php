@@ -14,7 +14,6 @@ use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

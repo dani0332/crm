@@ -43,18 +43,17 @@ use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
-use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
-use App\Services\UserService;
-use Illuminate\Support\Facades\Auth;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class BusinessQuoteController extends Controller
 {
