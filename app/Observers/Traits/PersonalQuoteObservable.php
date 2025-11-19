@@ -27,6 +27,7 @@ use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 
 trait PersonalQuoteObservable
 {
@@ -111,6 +112,10 @@ trait PersonalQuoteObservable
                 SendOCAEmailJob::dispatch($personalQuote->uuid, []);
                 LoggerService::info(self::class." - OCA email sent to customer for life quote {$personalQuote->uuid}");
             }
+        }
+        if($personalQuote->isCyber()) {
+            SendCyberOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+            LoggerService::info(self::class." - OCB Intro Email sent to customer for device quote {$personalQuote->uuid}");
         }
 
         if ($personalQuote->isCyber()) {

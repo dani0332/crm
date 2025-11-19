@@ -34,21 +34,20 @@ class CyberEmailService extends BaseService
 
         if ($response && $response->status_code === 200) {
             LoggerService::info('sendCyberOCBIntroEmail - Successfully triggered event');
-            if (! empty($response->headers['Run-Id'])) {
-                app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, WorkflowTypeEnum::CYBER_OCB_INTRO_EMAIL);
+    
+                app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, WorkflowTypeEnum::CYBER_OCB_INTRO_EMAIL,QuoteTypes::CYBER->id());
                 LoggerService::info('sendCyberOCBIntroEmail - Successfully created quote flow details');
                 if (getWhatsappConsent(QuoteTypes::CYBER, $lead->uuid)) {
                     app(BirdService::class)->createQuoteWhatsAppFlowDetails($lead, WorkflowTypeEnum::CYBER_OCB_INTRO_WHATSAPP, QuoteTypes::CYBER->id());
                     LoggerService::info('sendCyberOCBIntroEmail - Successfully created quote whatsapp flow details');
                 }
             }
-        } else {
-            LoggerService::info("sendCyberOCBIntroEmail - Error triggering event having response status code: {$response?->status_code}");
-        }
+      
     }
 
     private function buildEmailData($lead, $advisor, $workflowType)
     {
+        $isFlowExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::CYBER->id(), WorkflowTypeEnum::CYBER_OCB_INTRO_EMAIL);
         return [
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorLandLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
@@ -63,6 +62,7 @@ class CyberEmailService extends BaseService
             'refID' => $lead->code,
             'customerMobile' => $lead->mobile_no ?? '',
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::CYBER, $lead->uuid),
+            'isFollowupExecuted' => $isFlowExecuted ? true : false,
             'workflowType' => $workflowType,
 
         ];
