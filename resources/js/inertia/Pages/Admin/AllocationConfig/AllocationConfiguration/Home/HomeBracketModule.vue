@@ -330,7 +330,6 @@ onMounted(() => {
                       :disabled="viewMode"
                       @input="handleInput($event, bracket, 'contents_min')"
                       @blur="handleBlur($event, bracket, 'contents_min')"
-                      placeholder="10000"
                       label="Minimum Amount"
                       tooltip="Set the minimum contents value for this bracket."
                     >
@@ -351,7 +350,6 @@ onMounted(() => {
                       :disabled="viewMode"
                       @input="handleInput($event, bracket, 'contents_max')"
                       @blur="handleBlur($event, bracket, 'contents_max')"
-                      placeholder="50000"
                       label="Maximum Amount"
                       tooltip="Set the maximum contents value for this bracket."
                     >
