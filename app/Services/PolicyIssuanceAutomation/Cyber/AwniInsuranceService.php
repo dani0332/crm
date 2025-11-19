@@ -389,8 +389,8 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             'PolStartDate' => strtoupper(Carbon::now()->format('d-M-Y')),
             'CustCode' => 150214,
             'BrokerCode' => 150214,
-            'PaymentRefNo' => $splitPayment?->payment_receipt_id.'-'.now()->timestamp,
-            'PartnerRefNo' => $quote->code.'-'.now()->timestamp,
+            'PaymentRefNo' => $splitPayment?->reference,
+            'PartnerRefNo' => $quote->code,
         ];
 
         $issuePolicy = $this->httpCall($endPoint, $payload, self::POLICY_ISSUANCE_RESPONSE);
