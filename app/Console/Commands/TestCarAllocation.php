@@ -49,7 +49,7 @@ class TestCarAllocation extends Command
         $this->info('═══════════════════════════════════════════════════════');
         $this->newLine();
 
-        $this->line("  <fg=cyan>Parameters:</>");
+        $this->line('  <fg=cyan>Parameters:</>');
         $this->line("  • Quote Type: <fg=white>{$quoteType}</>");
         $this->line("  • To Date: <fg=white>{$to->format('Y-m-d H:i:s')}</>");
         $this->line("  • Chunk Size: <fg=white>{$chunkSize}</>");
@@ -60,13 +60,13 @@ class TestCarAllocation extends Command
         $shouldIncludeDubaiNow = $applicationStorageService->getValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
         $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
 
-        $this->line("  <fg=cyan>Variables:</>");
-        $this->line("  • Should Include Dubai Now: <fg=white>".($shouldIncludeDubaiNow ? 'Yes' : 'No')."</>");
-        $this->line("  • Exempted Lead Sources: <fg=white>".implode(', ', $exemptedLeadSources)."</>");
+        $this->line('  <fg=cyan>Variables:</>');
+        $this->line('  • Should Include Dubai Now: <fg=white>'.($shouldIncludeDubaiNow ? 'Yes' : 'No').'</>');
+        $this->line('  • Exempted Lead Sources: <fg=white>'.implode(', ', $exemptedLeadSources).'</>');
 
         if ($shouldIncludeDubaiNow) {
             $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
-            $this->line("  • Updated Exempted Lead Sources: <fg=white>".implode(', ', $exemptedLeadSources)."</>");
+            $this->line('  • Updated Exempted Lead Sources: <fg=white>'.implode(', ', $exemptedLeadSources).'</>');
         }
         $this->newLine();
 
@@ -113,7 +113,7 @@ class TestCarAllocation extends Command
         $leads->logRawSql();
 
         $this->info("  <fg=cyan>Query executed with chunk size:</> <fg=white>{$chunkSize}</>");
-        $this->line("  <fg=cyan>AI Advisor ID:</> <fg=white>".($aiAdvisorId ? $aiAdvisorId : 'N/A (will only query leads without advisors)')."</>");
+        $this->line('  <fg=cyan>AI Advisor ID:</> <fg=white>'.($aiAdvisorId ? $aiAdvisorId : 'N/A (will only query leads without advisors)').'</>');
         $this->newLine();
 
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
@@ -147,14 +147,15 @@ class TestCarAllocation extends Command
         foreach ($leadsCollection as $lead) {
             if ($lead->tier_id == TiersIdEnum::TIER_R) {
                 $this->warn("  ⚠️  Skipping Tier R lead: <fg=white>{$lead->uuid}</>");
+
                 continue;
             }
 
             $this->line("  <fg=cyan>Processing lead:</> <fg=white>{$lead->uuid}</>");
             $this->line("    • Payment Status ID: <fg=white>{$lead->payment_status_id}</>");
             $this->line("    • Source: <fg=white>{$lead->source}</>");
-            $this->line("    • SIC Advisor Requested: <fg=white>".($lead->sic_advisor_requested ? 'Yes' : 'No')."</>");
-            $this->line("    • SIC Flow Enabled: <fg=white>".($lead->sic_flow_enabled ? 'Yes' : 'No')."</>");
+            $this->line('    • SIC Advisor Requested: <fg=white>'.($lead->sic_advisor_requested ? 'Yes' : 'No').'</>');
+            $this->line('    • SIC Flow Enabled: <fg=white>'.($lead->sic_flow_enabled ? 'Yes' : 'No').'</>');
 
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
@@ -169,11 +170,11 @@ class TestCarAllocation extends Command
             ]);
 
             $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
-            $this->line("    • Current Team ID: <fg=white>".($currentTeamId ? $currentTeamId : 'false (will use default allocation)')."</>");
+            $this->line('    • Current Team ID: <fg=white>'.($currentTeamId ? $currentTeamId : 'false (will use default allocation)').'</>');
 
             QuoteTypes::CAR->allocate(uuid: $lead->uuid, teamId: $currentTeamId);
             $processedRecords++;
-            $this->info("    ✅ <fg=green>Allocated successfully</>");
+            $this->info('    ✅ <fg=green>Allocated successfully</>');
             LoggerService::info(self::class.': Processed car quote allocation');
             $this->newLine();
         }
@@ -323,6 +324,7 @@ class TestCarAllocation extends Command
                 if ($lead->tier_id == TiersIdEnum::TIER_R) {
                     $this->warn("⚠️  Skipping Tier R lead: {$lead->uuid}");
                     $skipped++;
+
                     continue;
                 }
 
@@ -381,7 +383,7 @@ class TestCarAllocation extends Command
         $isAIG = $lead->isAIG(QuoteTypes::CAR);
         $isTierR = $lead->tier_id == TiersIdEnum::TIER_R;
         $isAIAdvisorRequired = $lead->ai_advisor_required ?? false;
-        
+
         // Try to get AI advisor ID for comparison
         $aiAdvisorId = null;
         try {
@@ -635,7 +637,7 @@ class TestCarAllocation extends Command
                 $this->line("  • Assigned To: <fg=white>{$lead->advisor?->name}</>");
                 $this->line("  • Advisor Email: <fg=white>{$lead->advisor?->email}</>");
                 $this->line("  • Advisor ID: <fg=white>{$lead->advisor_id}</>");
-                $this->line("  • Tier ID: <fg=white>".($lead->tier_id ? (TiersIdEnum::getDescription($lead->tier_id) ?? "TIER_{$lead->tier_id}") : 'Not Assigned')."</>");
+                $this->line('  • Tier ID: <fg=white>'.($lead->tier_id ? (TiersIdEnum::getDescription($lead->tier_id) ?? "TIER_{$lead->tier_id}") : 'Not Assigned').'</>');
 
                 if ($isPaid && $lead->payment_status_id == PaymentStatusEnum::AUTHORISED) {
                     $this->line('  • Reason: <fg=cyan>Lead is AUTHORISED → Assigned to SIC_UNASSISTED team</>');
@@ -717,7 +719,7 @@ class TestCarAllocation extends Command
                 $this->error('❌ <fg=red;options=bold>ALLOCATION ERROR</>');
                 $this->line("  • Lead UUID: <fg=white>{$lead->uuid}</>");
                 $this->line("  • Error: <fg=red>{$e->getMessage()}</>");
-                $this->line("  • Stack Trace: <fg=gray>".substr($e->getTraceAsString(), 0, 200)."...</>");
+                $this->line('  • Stack Trace: <fg=gray>'.substr($e->getTraceAsString(), 0, 200).'...</>');
             }
 
             LoggerService::error('TestCarAllocation: Allocation failed', exception: $e, extra: [
@@ -732,4 +734,3 @@ class TestCarAllocation extends Command
         }
     }
 }
-
