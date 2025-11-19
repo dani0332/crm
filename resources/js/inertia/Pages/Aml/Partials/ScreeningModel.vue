@@ -1,9 +1,9 @@
 <script setup>
-import AdditionalVehicleTransactionDetails from './AdditionalVehicleTransactionDetails.vue';
+import { computed, ref, watch } from 'vue';
 import AdditionalDriverDetails from './AdditionalDriverDetails.vue';
+import AdditionalVehicleTransactionDetails from './AdditionalVehicleTransactionDetails.vue';
 import KYCDetails from './KYCDetails.vue';
 import MembersDetails from './MembersDetails.vue';
-import { computed, ref, watch } from 'vue';
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   quoteTypeCodeEnum: Object,
@@ -69,33 +69,15 @@ const rules = {
     );
   },
 };
+
+// Wrapper function for screening ID masking utility
+const applyScreeningIdMask = screeningId =>
+  applyScreeningIdNumberMasking(screeningId);
+
 const applyScreeningIdNumMasking = () => {
-  let screeningIdNumber = screeningFormDetails.screening_id_number.replace(
-    /\D/g,
-    '',
+  screeningFormDetails.screening_id_number = applyScreeningIdMask(
+    screeningFormDetails.screening_id_number,
   );
-  if (screeningIdNumber?.length > 15) {
-    screeningIdNumber = screeningIdNumber.substring(0, 15); // Limit to 15 characters
-  }
-  if (screeningIdNumber?.length <= 3) {
-    screeningIdNumber = screeningIdNumber.replace(/(\d{3})(\d{0,})/, '$1-$2');
-  } else if (screeningIdNumber?.length <= 7) {
-    screeningIdNumber = screeningIdNumber.replace(
-      /(\d{3})(\d{4})(\d{0,})/,
-      '$1-$2-$3',
-    );
-  } else if (screeningIdNumber?.length <= 13) {
-    screeningIdNumber = screeningIdNumber.replace(
-      /(\d{3})(\d{4})(\d{7})(\d{0,})/,
-      '$1-$2-$3-$4',
-    );
-  } else {
-    screeningIdNumber = screeningIdNumber.replace(
-      /(\d{3})(\d{4})(\d{7})(\d{1,})/,
-      '$1-$2-$3-$4',
-    );
-  }
-  screeningFormDetails.screening_id_number = screeningIdNumber;
 };
 const validatePassportNumber = eventType => {
   const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
@@ -200,7 +182,11 @@ const screeningFormDetails = useForm({
   quote_type: page.props.quoteType.code,
   // Individual Type
   screening_id_type: page.props.insuredDetails?.insured?.id_type ?? null,
-  screening_id_number: page.props.insuredDetails?.insured?.id_number ?? null,
+  screening_id_number:
+    page.props.insuredDetails?.insured?.id_number &&
+    page.props.insuredDetails?.insured?.id_type === 'emiratesId'
+      ? applyScreeningIdMask(page.props.insuredDetails.insured.id_number)
+      : (page.props.insuredDetails?.insured?.id_number ?? null),
   insured_first_name:
     page.props.insuredDetails?.insured?.first_name ??
     (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health

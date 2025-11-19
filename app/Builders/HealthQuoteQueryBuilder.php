@@ -26,6 +26,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'first_name',
             'last_name',
             'source',
+            'sub_source_id',
             'health_team_type',
             'premium',
             'policy_number',
@@ -97,6 +98,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'memberCategory:id,text',
             'insuranceProvider:id,text',
             'plan:id,text',
+            'subSource:id,text',
         ]);
     }
 

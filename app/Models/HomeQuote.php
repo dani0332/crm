@@ -237,4 +237,14 @@ class HomeQuote extends Model implements AuditableContract
         return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
             ->where('quote_type_id', QuoteTypeId::Home)->withTrashed();
     }
+
+    public function subSource()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_id');
+    }
+
+    public function subSourceOption()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_options_id');
+    }
 }
