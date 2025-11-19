@@ -1640,7 +1640,6 @@ const fullAddress = computed(() => {
   // Filter out null or undefined parts and join the rest with comma and space
   return parts.filter(part => part).join(', ');
 });
-
 </script>
 
 <template>
@@ -2661,15 +2660,13 @@ const fullAddress = computed(() => {
               v-if="isAuthorizedPayment.hasAuthorized"
               position="bottom"
             >
-              <x-button
-                size="sm"
-                color="orange"
-                :disabled="true"
-              >
+              <x-button size="sm" color="orange" :disabled="true">
                 Add Member
               </x-button>
               <template #tooltip>
-                {{ `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}` }}
+                {{
+                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}`
+                }}
               </template>
             </x-tooltip>
             <!-- Show existing button when payment is not authorized -->
@@ -2699,22 +2696,19 @@ const fullAddress = computed(() => {
             <AddMemButtonReuseTemplate v-else />
           </div>
 
-            <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
+          <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
             <!-- Show button with tooltip when payment is authorized -->
             <x-tooltip
               v-if="isAuthorizedPayment.hasAuthorized"
               position="bottom"
             >
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                :disabled="true"
-              >
+              <x-button size="xs" color="primary" outlined :disabled="true">
                 Edit
               </x-button>
               <template #tooltip>
-                {{ `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}` }}
+                {{
+                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}`
+                }}
               </template>
             </x-tooltip>
             <!-- Show existing button when payment is not authorized -->
@@ -2737,16 +2731,13 @@ const fullAddress = computed(() => {
               v-if="isAuthorizedPayment.hasAuthorized"
               position="bottom"
             >
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                :disabled="true"
-              >
+              <x-button size="xs" color="error" outlined :disabled="true">
                 Delete
               </x-button>
               <template #tooltip>
-                {{ `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}` }}
+                {{
+                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}`
+                }}
               </template>
             </x-tooltip>
             <!-- Show existing button when payment is not authorized -->
