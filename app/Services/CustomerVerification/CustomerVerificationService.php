@@ -536,7 +536,7 @@ class CustomerVerificationService
     private function updateCustomerVerificationStatus(Model $quote): void
     {
         $requestData = ['quoteUuid' => $quote->uuid,
-            'quoteTypeId' => QuoteTypes::getId(QuoteTypes::CAR),
+            'quoteTypeId' => QuoteTypes::getId(QuoteTypes::from($this->getQuoteType($quote))),
             'callSource' => LeadSourceEnum::IMCRM,
         ];
 
