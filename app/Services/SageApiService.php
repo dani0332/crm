@@ -1076,7 +1076,6 @@ class SageApiService
         } else {
             $createPremiumPrepaymentResponse = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($createPremiumPrepaymentResponse, true);
-            LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: Created AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].' :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
         }
 
         if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
@@ -1088,6 +1087,7 @@ class SageApiService
             }
             if ($isLiveApiCallStep2) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $paymentSplit, $quoteDetails, 2, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
+                LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API Payments: Created AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].' :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
             }
 
             $isLiveApiCallStep3 = true;
