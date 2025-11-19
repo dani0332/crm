@@ -98,7 +98,6 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'wcAdvisor:id,name',
             'supportUser:id,name',
             'memberCategory:id,text',
-            'insuranceProvider:id,text',
             'plan:id,text',
             'subSource:id,text',
         ]);
