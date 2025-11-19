@@ -728,13 +728,13 @@ const computeddeviceCoverages = computed(() => {
     >
       <template #item-uuid="{ code, uuid, stale_at }">
         <Link
+        
           :href="route('device-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
           <span>{{ code }}</span>
           <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
-        <!-- <span v-else>{{ code }}</span> -->
       </template>
       <template #item-insurance_provider_plan="{ insurance_provider_plan }">
         {{ insurance_provider_plan?.text ?? '' }}

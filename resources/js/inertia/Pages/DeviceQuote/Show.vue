@@ -80,8 +80,8 @@ const modals = reactive({
 });
 
 const leadDuplicateForm = useForm({
-  modelType: 'Cyber',
-  parentType: 'Cyber',
+  modelType: 'Device',
+  parentType: 'Device',
   entityId: page.props.quote.id,
   entityCode: page.props.quote.code,
   entityUId: page.props.quote.uid,
@@ -371,7 +371,7 @@ const onLoadAvailablePlansData = async () => {
   let data = {
     jsonData: true,
   };
-  let url = `/quotes/cyber/available-plans/${page.props.quote.uuid}`;
+  let url = `/quotes/device/available-plans/${page.props.quote.uuid}`;
   axios
     .post(url, data)
     .then(res => {
@@ -429,7 +429,7 @@ const getPlanDetails = id => {
       viewButtonLoading.value = false;
     } else {
       axios
-        .get(`/cyber/${page.props.quote.uuid}/plan_details/${id}`)
+        .get(`/device/${page.props.quote.uuid}/plan_details/${id}`)
         .then(res => {
           planDetails.value = res.data;
           modals.planDetails = true;
@@ -489,10 +489,10 @@ const copyLink = () => {
 
 <template>
   <div>
-    <Head title="Cyber Quotes" />
+    <Head title="Device Quotes" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Cyber Detail</h2>
+        <h2 class="text-xl font-semibold">Device Detail</h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
           v-if="countDays !== false"
@@ -524,7 +524,7 @@ const copyLink = () => {
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
           <Link
             v-if="!isDisabled"
-            :href="route('cyber-quotes-edit', quote.uuid)"
+            :href="route('device-quotes-edit', quote.uuid)"
           >
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
@@ -540,7 +540,7 @@ const copyLink = () => {
           <LeadEditBtnReuseTemplate
             v-if="
               canAny([
-                permissionsEnum.CYBER_QUOTES_EDIT,
+                permissionsEnum.DEVICE_QUOTES_EDIT,
                 permissionsEnum.VIEW_ALL_LEADS,
               ])
             "
@@ -556,7 +556,7 @@ const copyLink = () => {
           <LeadEditBtnReuseTemplate
             v-if="
               canAny([
-                permissionsEnum.CYBER_QUOTES_EDIT,
+                permissionsEnum.DEVICE_QUOTES_EDIT,
                 permissionsEnum.VIEW_ALL_LEADS,
               ])
             "
@@ -566,15 +566,15 @@ const copyLink = () => {
         <Link
           v-if="
             canAny([
-              permissionsEnum.CYBER_QUOTES_EDIT,
+              permissionsEnum.DEVICE_QUOTES_EDIT,
               permissionsEnum.VIEW_ALL_LEADS,
             ])
           "
-          :href="route('cyber-quotes-list')"
+          :href="route('device-quotes-list')"
           preserve-scroll
         >
           <x-button size="sm" color="primary" tag="div">
-            Cyber Quotes
+            Device Quotes
           </x-button>
         </Link>
       </template>
@@ -733,12 +733,12 @@ const copyLink = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TYPE OF INSURANCE</dt>
-                <dd>Cyber</dd>
+                <dd>Device</dd>
               </div>
             </dl>
           </div>
 
-          <div class="mt-6" v-if="quote?.cyber_quote">
+          <div class="mt-6" v-if="quote?.device_quote">
             <h3 class="font-semibold text-primary-800">Quote Details</h3>
             <x-divider class="mb-4 mt-1" />
 
@@ -902,7 +902,7 @@ const copyLink = () => {
                   <dt class="font-medium">NATIONALITY</dt>
                   <dd>{{ quote.nationality?.text }}</dd>
                 </div>
-                <RiskRatingScoreDetails :quote="quote" :modelType="'Cyber'" />
+                <RiskRatingScoreDetails :quote="quote" :modelType="'Device'" />
               </dl>
               <dl
                 v-if="
@@ -1130,7 +1130,7 @@ const copyLink = () => {
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
         quote.source == $page.props.leadSource.INSLY
       "
-      modelType="Cyber"
+      modelType="Device"
       :quote="quote"
       :insly-id="quote?.quote_detail?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
@@ -1286,7 +1286,7 @@ const copyLink = () => {
                       v-if="selectedProviderPlan.id != item.id"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
-                      :quoteType="'Cyber'"
+                      :quoteType="'Device'"
                       :uuid="quote.uuid"
                       :code="quote.code"
                       :plans="availablePlansTable.data || []"
@@ -1473,7 +1473,7 @@ const copyLink = () => {
                                 >{{ doc.text }}</span
                               >
                               <template #tooltip
-                                >Policy wordings for this cyber plan</template
+                                >Policy wordings for this device plan</template
                               >
                             </x-tooltip>
                           </div>
@@ -1542,7 +1542,7 @@ const copyLink = () => {
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
-      :quoteType="'Cyber'"
+      :quoteType="'Device'"
       :isFuncsEnabled="isFuncsEnabled"
     />
 
@@ -1570,7 +1570,7 @@ const copyLink = () => {
       :quote="quote"
       :quoteStatusEnum="quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="cyber"
+      modelType="device"
       :expanded="sectionExpanded"
       :payments="payments"
     />
@@ -1582,13 +1582,13 @@ const copyLink = () => {
       :quote="quote"
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
-      quoteType="cyber"
+      quoteType="device"
       :bookPolicyDetails="bookPolicyDetails"
     />
 
     <CustomerAcceptanceLogsSection
       :leadId="quote.id"
-      lob="cyber"
+      lob="device"
       :expanded="sectionExpanded"
     />
 
@@ -1601,7 +1601,7 @@ const copyLink = () => {
         ])
       "
       :quote="quote"
-      quoteType="cyber"
+      quoteType="device"
       :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
@@ -1651,7 +1651,7 @@ const copyLink = () => {
     />
 
     <lead-raw-data
-      :modelType="'Cyber'"
+      :modelType="'Device'"
       :code="$page.props.quote.code"
     ></lead-raw-data>
   </div>
