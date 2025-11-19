@@ -154,10 +154,11 @@ class AwniInsuranceService implements PolicyIssuanceInterface
                 return $response;
             }
             // dd($quote->payments, $quote->cyberPlanDetail);
-            if (!$quote->payments || !$quote->cyberPlanDetail) {
-                LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - Payments or cyber plan detail not found');
-                $response['error'] = 'Payments or cyber plan detail not found';
-                $response['message'] = 'Payments or cyber plan detail not found';
+            $customer = $quote->customer;
+            if (!$quote->payments || !$quote->cyberPlanDetail || !$customer->emirates_id_number) {
+                LoggerService::info('automation:' . $this->className . ' fn:' . __FUNCTION__ . ' Quote : ' . $quote->code . ' - Payments or cyber plan detail or emirates id number not found');
+                $response['error'] = 'Payments or cyber plan detail or emirates id number not found';
+                $response['message'] = 'Payments or cyber plan detail or emirates id number not found';
 
                 return $response;
             }
