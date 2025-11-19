@@ -54,6 +54,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         $advisors = [];
         if ($lead->source == LeadSourceEnum::REVIVAL && $lead->nationality_id && in_array($lead->nationality_id, app(BuyLeadService::class)->getCarCatANationalitiesIds())) {
             $advisors = $this->fetchAdvisors('getCATANationalitiesAdvisorsByStatus', $tier, $tierUserIds, $teamId);
+            return $advisors ?? [];
         }
         if ($lead->isBuyLeadApplicable($this->allocationRequest->isSIC()) && ($tier->isValue() || $tier->isVolume())) {
             $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $teamId);
