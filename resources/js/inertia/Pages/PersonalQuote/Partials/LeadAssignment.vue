@@ -64,9 +64,11 @@ function onAssignLead(isValid) {
   //     ? `/quotes/car/manualLeadAssign`
   //     : `/quotes/${props.quoteType}/leadAssign`;
 
-const postUrl = Array(quoteTypeCodeEnum.Car.toLowerCase(), quoteTypeCodeEnum.Business.toLowerCase(),quoteTypeCodeEnum.Health.toLowerCase()).includes(
-    props.quoteType.toLowerCase(),
-  )
+  const postUrl = Array(
+    quoteTypeCodeEnum.Car.toLowerCase(),
+    quoteTypeCodeEnum.Business.toLowerCase(),
+    quoteTypeCodeEnum.Health.toLowerCase(),
+  ).includes(props.quoteType.toLowerCase())
     ? `/quotes/${props.quoteType}/manualLeadAssign`
     : props.quoteType === 'tmlead'
       ? '/telemarketing/tmLeadsAssign'

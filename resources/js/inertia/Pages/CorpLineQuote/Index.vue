@@ -158,7 +158,10 @@ const assignableSupportUserOptions = computed(() => {
     ? supportUsers.filter(user => user.id === page.props?.auth?.user?.id)
     : supportUsers;
 
-  return filteredSupportUsers.map(user => ({ value: user.id, label: user.name }));
+  return filteredSupportUsers.map(user => ({
+    value: user.id,
+    label: user.name,
+  }));
 });
 
 const renewalBatchOptions = computed(() => {
