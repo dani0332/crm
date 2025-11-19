@@ -104,7 +104,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         if ($this->isPolicyIssuanceAutomationEnabled()) {
             $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
         } else {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - AXA Car Automation is disabled');
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - LIVA Car Automation is disabled');
         }
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
@@ -138,7 +138,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted);
 
             $response['status'] = $executeStepSequence['status'];
+            $response['error'] = $executeStepSequence['error'] ?? 'Unknown error';
             $response['message'] = $executeStepSequence['message'];
+
+            if (isset($executeStepSequence['booking_pending']) && $executeStepSequence['booking_pending']) {
+                $response['booking_pending'] = true;
+            }
 
         } catch (Exception $e) {
             $response['error'] = $e->getMessage();
@@ -173,8 +178,17 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
 
         if ($nextStepToBeExecuted === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
-            $uploadPolicyDocumentsToIMCRMResponse = $this->executeUploadPolicyDocumentsStep($quote, $process);
+            if (isset($issuePolicyResponse['issuePolicyResponsePolicyNumber']) && $issuePolicyResponse['issuePolicyResponsePolicyNumber']) {
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy number fetched from issue policy response : '.$issuePolicyResponse['issuePolicyResponsePolicyNumber']);
+                $issuePolicyResponsePolicyNumber = $issuePolicyResponse['issuePolicyResponsePolicyNumber'];
+            }
+
+            $uploadPolicyDocumentsToIMCRMResponse = $this->executeUploadPolicyDocumentsStep($quote, $process, $issuePolicyResponsePolicyNumber);
             if (isset($uploadPolicyDocumentsToIMCRMResponse['status']) && ! $uploadPolicyDocumentsToIMCRMResponse['status']) {
+                return $uploadPolicyDocumentsToIMCRMResponse;
+            }
+
+            if (isset($uploadPolicyDocumentsToIMCRMResponse['booking_pending']) && $uploadPolicyDocumentsToIMCRMResponse['booking_pending']) {
                 return $uploadPolicyDocumentsToIMCRMResponse;
             }
 
@@ -429,10 +443,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    private function executeUploadPolicyDocumentsStep($quote, $process)
+    private function executeUploadPolicyDocumentsStep($quote, $process, $issuePolicyResponsePolicyNumber = null)
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
-        $uploadPolicyDocumentsToIMCRMResponse = $this->uploadPolicyDocumentsToIMCRM($quote, $process);
+        $uploadPolicyDocumentsToIMCRMResponse = $this->uploadPolicyDocumentsToIMCRM($quote, $process, $issuePolicyResponsePolicyNumber);
 
         if (! $uploadPolicyDocumentsToIMCRMResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $uploadPolicyDocumentsToIMCRMResponse]);
@@ -449,7 +463,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return $uploadPolicyDocumentsToIMCRMResponse;
     }
 
-    public function uploadPolicyDocumentsToIMCRM($quote, $process): array
+    public function uploadPolicyDocumentsToIMCRM($quote, $process, $issuePolicyResponsePolicyNumber = null): array
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$process->id.' - Step : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
@@ -461,7 +475,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $payload = [
             'RetrieveRequest' => [
                 'RetrieveType' => '6',
-                'TransactionNumber' => $quote?->policy_number,
+                'TransactionNumber' => $issuePolicyResponsePolicyNumber ?? '',
                 'PartnerTrnReferenceNumber' => $quote->uuid,
                 'Documents' => [
                     'DocsInResponse' => true,
@@ -537,6 +551,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $response['status'] = true;
         $response['message'] = 'Fetched all documents from insurer and Uploaded to IMCRM';
         $response['completed_step'] = self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM;
+        $response['booking_pending'] = true;
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Process completed step updated to : '.$response['completed_step']);
 
@@ -677,7 +692,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.', updating quote and payment information from Liva createPolicyRequest response');
 
         $quote->update([
-            'policy_number' => $issuePolicyResult?->PolicyNumber,
+            'policy_number' => $issuePolicyResult?->ConcatPolNumberWithRenCnt,
             'policy_issuance_date' => $issuePolicyResult?->PolicyCreationDate,
             'policy_start_date' => $issuePolicyResult?->PolicyEffectiveDate,
             'policy_expiry_date' => $issuePolicyResult?->PolicyExpiryDate,
@@ -700,6 +715,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $response['message'] = 'Policy issued successfully';
         $response['completed_step'] = self::ISSUE_POLICY;
         $response['data'] = $issuePolicy['data']; // verify this
+        $response['issuePolicyResponsePolicyNumber'] = $issuePolicyResult?->PolicyNumber;
 
         return $response;
     }

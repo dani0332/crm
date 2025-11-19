@@ -35,7 +35,9 @@ class PolicyIssuanceObserver
             $policyIssuance->status === PolicyIssuanceEnum::BOOKING_PENDING_STATUS &&
             $policyIssuance->insuranceProvider->code === InsuranceProvidersEnum::AXA
         ) {
+            LoggerService::info('PolicyIssuanceObserver fn:'.__FUNCTION__.' - Executing policy issuance automation steps for quote: '.$policyIssuance->model->code);
             app(PolicyIssuanceService::class)->executePolicyIssuanceAutomationSteps();
+            LoggerService::info('PolicyIssuanceObserver fn:'.__FUNCTION__.' - Policy issuance automation steps executed for quote: '.$policyIssuance->model->code);
         }
 
         LoggerService::info($this->className.' fn:'.__FUNCTION__.' - End Policy Issuance ID : '.$policyIssuance->id);

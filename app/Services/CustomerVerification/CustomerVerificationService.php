@@ -473,8 +473,9 @@ class CustomerVerificationService
 
         LoggerService::info('Customer verification found:'.json_encode($data));
         if ($data) {
-            $existingData = json_decode($data->customer_verified_data, true);
-            $existingData = array_merge($existingData, $verificationData);
+            $existingData = $data->customer_verified_data
+            ? array_merge(json_decode($data->customer_verified_data, true), $verificationData)
+            : $verificationData;
 
             $data->update(['customer_verified_data' => json_encode($existingData)]);
         } else {
