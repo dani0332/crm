@@ -15,6 +15,7 @@ use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
 use App\Models\Emirate;
+use App\Models\PersonalQuote;
 use App\Models\RegistrationCertificate;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleDriverDetail;
@@ -566,6 +567,21 @@ class CustomerVerificationService
             'document_type' => $documentType,
             'quote_type' => $quoteType->value,
         ]);
+    }
+
+    private function getQuoteType($quote): string
+    {
+        return match (true) {
+            $quote instanceof CarQuote => QuoteTypes::CAR->value,
+            $quote instanceof PersonalQuote => QuoteTypes::PERSONAL->value,
+            // Add other quote types here as needed
+            default => null,
+        };
+    }
+
+    private function getQuoteTypeId($quote)
+    {
+        return ($quote instanceof CarQuote) ? QuoteTypes::CAR->id() : $quote->quote_type_id;
     }
 
     public function isCustomerVerificationEnabled(): bool
