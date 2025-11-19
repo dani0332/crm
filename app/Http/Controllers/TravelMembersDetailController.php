@@ -143,6 +143,7 @@ class TravelMembersDetailController extends Controller
             $memberDetail = $memberDetail->load(['relation', 'nationality']);
 
             app(TravelQuoteService::class)->setQuoteUpdatedAt($quoteObject->id);
+            app(TravelQuoteService::class)->updateCustomerProfileDetails($request->quote_type, $quoteObject->uuid);
 
             return redirect()->back(302, ['status' => true, 'message' => 'Updated', 'data' => $memberDetail]);
         }

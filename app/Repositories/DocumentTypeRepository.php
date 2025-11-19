@@ -24,7 +24,7 @@ class DocumentTypeRepository extends BaseRepository
      *
      * @return array
      */
-    public function fetchSendPolicyDocumentCodes($quoteType, $quote)
+    public function fetchSendPolicyDocumentCodes($quoteType, $quote, $bringDocumentCodesOnly = true)
     {
         // Fetch document type codes marked as required for policy sending, filtered by quote type.
         $documentTypeCodes = DocumentType::requiredForSendPolicy()->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType));
@@ -36,7 +36,7 @@ class DocumentTypeRepository extends BaseRepository
                 ->where('quote_request_id', $quote->id)
                 ->where('quote_type_id', QuoteTypes::BUSINESS->id())
                 ->where(function ($aml) {
-                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
                     $aml->orWhereNull('screening_type');
                 })->latest()->first();
             $businessTypeOfInsurance = $quote->business_type_of_insurance_id;
@@ -47,7 +47,11 @@ class DocumentTypeRepository extends BaseRepository
             $documentTypeCodes->getBusinessDocument($businessTypeOfInsurance, $businessTypeOfCustomer, $businessInsurerName);
         }
 
-        return $documentTypeCodes->pluck('code')->toArray();
+        if ($bringDocumentCodesOnly) {
+            return $documentTypeCodes->pluck('code')->toArray();
+        }
+
+        return $documentTypeCodes->get();
     }
 
     /**
@@ -66,7 +70,7 @@ class DocumentTypeRepository extends BaseRepository
                 ->where('quote_request_id', $quote->id)
                 ->where('quote_type_id', QuoteTypes::BUSINESS->id())
                 ->where(function ($aml) {
-                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
                     $aml->orWhereNull('screening_type');
                 })->latest()->first();
 
@@ -104,7 +108,7 @@ class DocumentTypeRepository extends BaseRepository
                 ->where('quote_request_id', $quote->id)
                 ->where('quote_type_id', QuoteTypes::BUSINESS->id())
                 ->where(function ($aml) {
-                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
                     $aml->orWhereNull('screening_type');
                 })->latest()->first();
             $documentTypes->when($quote->business_type_of_insurance_id, function ($query) use ($quote) {
@@ -133,5 +137,19 @@ class DocumentTypeRepository extends BaseRepository
         }
 
         return false;
+    }
+
+    public function fetchAreSendPolicyDocsUploaded($quoteDocuments, $quoteType, $record)
+    {
+        $documentTypeCodes = $this->fetchSendPolicyDocumentCodes($quoteType, $record, false);
+        $docCodes = collect($documentTypeCodes)->where('is_required_for_send_policy', 1)->pluck('code')->toArray();
+        $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $docCodes)->groupBy('document_type_code')->count();
+        $requiredDocuments = collect($documentTypeCodes)->where('is_required_for_send_policy', 1)->pluck('text')->toArray();
+
+        return [
+            'disabled' => $quoteDocumentsCount != count($documentTypeCodes),
+            'documentTypeCodes' => $documentTypeCodes,
+            'requiredDocuments' => $requiredDocuments,
+        ];
     }
 }

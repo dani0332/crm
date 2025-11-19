@@ -474,7 +474,7 @@ const isPolicySendUpdateBooked = option => {
       </div>
       <div class="flex w-full custombreak">
         <div class="w-1/6 px-2 text-center"></div>
-        <template v-if="splitPaymentRecord.payment_method.code == 'CC'">
+        <template v-if="splitPaymentRecord.payment_method?.code == 'CC'">
           <div class="w-1/5 px-2">
             <span class="text-sm"> AUTHORISED AMOUNT </span>
           </div>
@@ -508,7 +508,7 @@ const isPolicySendUpdateBooked = option => {
 
       <div class="flex w-full custombreak pb-5">
         <div class="w-1/6 px-2 text-center"></div>
-        <template v-if="splitPaymentRecord.payment_method.code == 'CC'">
+        <template v-if="splitPaymentRecord.payment_method?.code == 'CC'">
           <div class="w-1/5 px-2">
             {{
               splitPaymentRecord.premium_authorized !== null
@@ -587,7 +587,7 @@ const isPolicySendUpdateBooked = option => {
       <div class="flex w-full custombreak pb-5">
         <div class="w-1/6 px-2 text-center"></div>
         <div class="w-1/5 px-2">
-          {{ formatString(splitPaymentRecord.payment_status.text) }}
+          {{ formatString(splitPaymentRecord.payment_status?.text) }}
         </div>
         <div class="w-1/5 px-2">
           {{

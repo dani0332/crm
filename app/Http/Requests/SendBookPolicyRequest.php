@@ -68,8 +68,7 @@ class SendBookPolicyRequest extends FormRequest
                     $validator->errors()->add('error', 'Please select advisor');
                 }
 
-                // The str_contains condition is added only for the production environment and will be removed once the issue with comma-separated emails is resolved.
-                if (! $quote?->email || str_contains($quote?->email, ',')) {
+                if (! $quote?->email) {
                     $validator->errors()->add('error', 'Customer email is required');
                 }
             });

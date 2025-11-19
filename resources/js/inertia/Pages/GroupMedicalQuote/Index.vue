@@ -1,5 +1,6 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 defineProps({
   model: String,
@@ -13,10 +14,16 @@ defineProps({
   canAssignLeadAdvisor: Boolean,
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  subSources: Array,
 });
 
 const canExport = ref(false);
 const page = usePage();
+const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
 const { isRequired } = useRules();
@@ -49,6 +56,10 @@ const loader = reactive({
 
 const manualAssignmentSuccess = () => {
   quotesSelected.value = [];
+};
+const createLeadModal = ref(false);
+const onLeadConfirmed = leadData => {
+  createLeadModal.value = false;
 };
 const filters = reactive({
   code: '',
@@ -147,6 +158,7 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source_text' },
 ];
 
 function resetFilters() {
@@ -512,16 +524,15 @@ const insurerAMLStatusOption = computed(() => {
           </x-button>
         </Link>
 
-        <Link :href="route('amt.create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead
-          </x-button>
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          tag="div"
+          v-if="readOnlyMode.isDisable === true"
+          @click="createLeadModal = true"
+        >
+          Create Lead
+        </x-button>
       </div>
     </div>
     <x-divider class="my-4" />
@@ -814,6 +825,15 @@ const insurerAMLStatusOption = computed(() => {
         </div>
       </div>
     </x-form>
+
+    <!-- Create Lead Modal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      :sub-sources="subSources || []"
+      route-name="amt.create"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
+    />
 
     <Transition name="fade">
       <div v-if="quotesSelected.length > 0" class="mb-4">

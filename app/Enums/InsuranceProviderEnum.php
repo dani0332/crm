@@ -55,6 +55,30 @@ enum InsuranceProviderEnum: string
     case OALLIANZ = 'OALLIANZ';
     case NHICD = 'NHICD';
 
+    public const AWNI = 'AWNI';
+    public const ASNIC = 'ASNIC';
+    public const AHAC = 'AHAC';
+    public const ABNIC = 'ABNIC';
+    public const DATPJSC = 'DATPJSC';
+    public const DICPSC = 'DICPSC';
+    public const DICORI = 'DICORI';
+    public const AMAN = 'AMAN';
+    public const MAXMED = 'MAXMED';
+    public const NLAGICSAOC = 'NLAGICSAOC';
+    public const NTCWATANIA = 'NTCWATANIA';
+    public const NIADB = 'NIADB';
+    public const NTFPJSC = 'NTFPJSC';
+    public const EECIC = 'EECIC';
+    public const VIV = 'VIV';
+    public const NOW = 'NOW';
+    public const HYH = 'HYH';
+    public const YAS = 'YAS';
+    public const ISON = 'ISON';
+    public const MAXHEALTH = 'MAXHEALTH';
+    public const ORITAK = 'ORITAK';
+    public const APR_HYH = 'APR_HYH';
+    public const MTI = 'MTI';
+
     public function isEligibleForAccuracyMatrix(): bool
     {
         return in_array($this, [

@@ -364,6 +364,7 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
         splitPaymentId: splitPaymentId,
         isInertia: true,
         new_payment_structure: true,
+        isPlanDetailEnabled: props.isPlanDetailEnabled,
       });
 
       if (response.data.success) {

@@ -270,15 +270,14 @@ onUnmounted(() => {
           class="flex gap-2 mb-4 justify-end"
           v-if="readOnlyMode.isDisable === true"
         >
-          <!-- TODO: Uncomment this when Customer OCR Journey is supported on prod/stage -->
-          <!-- <x-tag
+          <x-tag
             v-if="quoteType == quoteTypeCodeEnum.Car"
             :color="documentVerificationStatus ? 'success' : 'amber'"
           >
             {{
               documentVerificationStatus ? 'Verified' : 'Verification Pending'
             }}
-          </x-tag> -->
+          </x-tag>
           <DownloadDocuments
             v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
             :quote="page.props.quote"
@@ -372,7 +371,7 @@ onUnmounted(() => {
               v-else
               :href="storageUrl + (item.watermarked_doc_url || item.doc_url)"
               target="_blank"
-              class="text-primary-600"
+              class="text-primary-600 cursor-pointer"
             >
               {{ item.original_name }}
             </a>

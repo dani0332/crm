@@ -729,7 +729,7 @@ const isTravelQuoteAndAMLNotCleared = () => {
     ];
     if (allowedQuoteStatuesForAMLAlert.includes(props.quote.quote_status_id)) {
       notification.error({
-        title: 'Kindly clear the AML.',
+        title: 'Kindly clear the AML',
         position: 'top',
         timeout: 30000,
       });
@@ -1784,6 +1784,41 @@ const isDocTypeLoading = docType => {
                     </template>
                   </x-tooltip>
                 </template>
+                <template v-else-if="props.bookPolicyDetails.disabled">
+                  <x-tooltip>
+                    <x-button
+                      size="sm"
+                      color="orange"
+                      class="mt-4"
+                      @click.prevent="confirmSendPolicy"
+                      :disabled="
+                        bp.isEditing ||
+                        is_lacking_payment ||
+                        isAMLNotClearedForTravelQuote ||
+                        disableIfPolicyFailedAndNoBookingFailedEditPermission ||
+                        props.bookPolicyDetails.disabled
+                      "
+                      v-if="showSendAndBookPolicyButton"
+                    >
+                      {{ props.bookPolicyDetails?.text }}
+                    </x-button>
+                    <template #tooltip>
+                      <span
+                        class="custom-tooltip-content"
+                        :class="{ hidden: !props.bookPolicyDetails.disabled }"
+                      >
+                        {{
+                          props.bookPolicyDetails.disabled
+                            ? ('Please upload the required documents to send policy to customer: ' +
+                                props.bookPolicyDetails.requiredDocuments.join(
+                                  ', ',
+                                ) ?? '')
+                            : ''
+                        }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </template>
                 <template v-else>
                   <x-button
                     size="sm"
@@ -1794,7 +1829,8 @@ const isDocTypeLoading = docType => {
                       bp.isEditing ||
                       is_lacking_payment ||
                       isAMLNotClearedForTravelQuote ||
-                      disableIfPolicyFailedAndNoBookingFailedEditPermission
+                      disableIfPolicyFailedAndNoBookingFailedEditPermission ||
+                      props.bookPolicyDetails.disabled
                     "
                     v-if="showSendAndBookPolicyButton"
                   >

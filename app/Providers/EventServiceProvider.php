@@ -11,6 +11,7 @@ use App\Events\QuoteEmailUpdated;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Listeners\Axiom\HandleAxiomBatchFlush;
 use App\Listeners\HandleBikeAdvisorUpdated;
+use App\Listeners\HandleBookPolicyJobFailed;
 use App\Listeners\HandleCarAdvisorUpdated;
 use App\Listeners\HandleHealthAdvisorUpdated;
 use App\Listeners\HandleTravelAdvisorUpdated;
@@ -86,6 +87,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         \Illuminate\Queue\Events\JobFailed::class => [
             HandleAxiomBatchFlush::class,
+            HandleBookPolicyJobFailed::class,
         ],
         \Illuminate\Queue\Events\JobReleasedAfterException::class => [
             HandleAxiomBatchFlush::class,

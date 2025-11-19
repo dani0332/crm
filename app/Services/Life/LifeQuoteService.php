@@ -97,6 +97,7 @@ class LifeQuoteService extends BaseService
             'renewalBatchModel',
             'paymentStatus',
             'payments',
+            'subSource:id,text',
             'lifeQuote' => function ($q) {
                 $q->with([
                     'insuranceTenure',
@@ -185,6 +186,7 @@ class LifeQuoteService extends BaseService
                     }
                 }
             })
+
             ->filter(! $isExportRequest, $isTotalLeadCountRequest)
             ->withFakeLeadCriteria($isTotalLeadCountRequest);
 
@@ -292,7 +294,18 @@ class LifeQuoteService extends BaseService
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'createdById' => auth()->user()->id,
+
+            // Lead source fields from CreateLeadModal
+            'subSourceId' => $data['sub_source_id'] ?? null,
+            'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
+            'additionalNotes' => $data['notes'] ?? null,
         ];
+
+        LoggerService::info('saveLifeQuote: ', [
+            'subSourceId' => $data['sub_source_id'] ?? null,
+            'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
 
         return CapiRequestService::sendCAPIRequest('/api/v2-save-life-quote', $lifeQuote);
     }
@@ -353,6 +366,8 @@ class LifeQuoteService extends BaseService
                 'latestInsured' => function ($q) {
                     $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
                 },
+                'subSource',
+                'subSourceOption',
             ])
             ->select([
                 'personal_quotes.*',
@@ -552,6 +567,7 @@ class LifeQuoteService extends BaseService
 
             $quoteData = Arr::only($data, app(PersonalQuote::class)->allowedColumns());
             $quoteData['updated_by_id'] = auth()->user()->id;
+            LoggerService::info('updateLifeQuote: ', $quoteData);
             $quote->update($quoteData);
 
             if ($quote->lifeQuote) {
@@ -796,7 +812,9 @@ class LifeQuoteService extends BaseService
     {
         $quotePlans = $this->quotePlans($data);
 
-        $quote = PersonalQuote::where('uuid', $data['quote_uuid'])->first();
+        $quote = PersonalQuote::where('uuid', $data['quote_uuid'])->with(['advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
+        }])->first();
 
         if (! $quotePlans || ! isset($quotePlans->quotes) || ! isset($quotePlans->quotes->plans)) {
             LoggerService::info('fn: exportPlansPdf - No plans found for the quote');

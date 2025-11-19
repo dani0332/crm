@@ -1,11 +1,10 @@
 <script setup>
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
-import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const page = usePage();
 defineProps({
@@ -374,6 +373,37 @@ const travelerForm = useForm({
   customer_type: page.props.quote.customer_type,
 });
 
+// Computed property for full name (first + last name)
+const travelerFullName = computed({
+  get() {
+    const firstName = travelerForm.first_name || '';
+    const lastName = travelerForm.last_name || '';
+    return firstName && lastName
+      ? `${firstName} ${lastName}`
+      : firstName || lastName;
+  },
+  set(value) {
+    if (!value || value.trim() === '') {
+      travelerForm.first_name = '';
+      travelerForm.last_name = '';
+      return;
+    }
+
+    const trimmedValue = value.trim();
+    const spaceIndex = trimmedValue.indexOf(' ');
+
+    if (spaceIndex === -1) {
+      // No space found, entire value is first name
+      travelerForm.first_name = trimmedValue;
+      travelerForm.last_name = '';
+    } else {
+      // Split: first word is first_name, rest is last_name
+      travelerForm.first_name = trimmedValue.substring(0, spaceIndex);
+      travelerForm.last_name = trimmedValue.substring(spaceIndex + 1).trim();
+    }
+  },
+});
+
 const travelerFieldReq = reactive({
   nationality: false,
   dob: false,
@@ -448,7 +478,11 @@ const showErrors = errors => {
 const addTravelMember = isValid => {
   if (!isValid) return;
 
-  travelerForm.name = travelerForm.first_name;
+  // Set name as concatenation of first_name and last_name
+  travelerForm.name = travelerForm.last_name
+    ? `${travelerForm.first_name} ${travelerForm.last_name}`.trim()
+    : travelerForm.first_name;
+
   travelerForm.post(route('travelers.store'), {
     preserveScroll: true,
     onBefore: () => {
@@ -519,7 +553,12 @@ const onEditTraveler = traveler => {
 
 const editTraveler = isValid => {
   if (!isValid) return;
-  travelerForm.name = travelerForm.first_name;
+
+  // Set name as concatenation of first_name and last_name
+  travelerForm.name = travelerForm.last_name
+    ? `${travelerForm.first_name} ${travelerForm.last_name}`.trim()
+    : travelerForm.first_name;
+
   travelerForm.put(route('travelers.update', travelerForm.id), {
     preserveScroll: true,
     onBefore: () => {
@@ -893,57 +932,6 @@ const onLoadAvailablePlansDataAndPlanDetails = async selectedPlanData => {
   getPlanDetails(planDetails.value.id);
   await onLoadAvailablePlansData();
 };
-
-const emailStatusesTable = reactive({
-  isLoading: false,
-  columns: [
-    {
-      text: 'Id',
-      value: 'id',
-    },
-    {
-      text: 'Email Subject',
-      value: 'email_subject',
-    },
-    {
-      text: 'Email Address',
-      value: 'email_address',
-    },
-    {
-      text: 'Status',
-      value: 'status',
-    },
-    {
-      text: 'Reason',
-      value: 'reason',
-    },
-    {
-      text: 'Template Id',
-      value: 'template_id',
-    },
-    {
-      text: 'Customer Id',
-      value: 'customer_id',
-    },
-    {
-      text: 'Created At',
-      value: 'created_at',
-    },
-    {
-      text: 'Updated At',
-      value: 'updated_at',
-    },
-  ],
-});
-
-const emailStatusesTableColumns = computed(() => {
-  return emailStatusesTable.columns.filter(column => {
-    if (!page.props.isAdmin) {
-      return column.value !== 'customer_id' && column.value !== 'template_id';
-    }
-    return column;
-  });
-});
 
 const availablePlansTable = reactive({
   data: [],
@@ -1898,6 +1886,52 @@ const fullAddress = computed(() => {
                 <dt class="font-medium uppercase">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
+
+              <!-- Sub-source fields -->
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      IMCRM SUB-SOURCE
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  {{ quote.sub_source_text || quote.sub_source_id || 'N/A' }}
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_option_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  {{
+                    quote.sub_source_option_text ||
+                    quote.sub_source_options_id ||
+                    'N/A'
+                  }}
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDITIONAL NOTES</dt>
+                <dd>{{ quote.additional_notes || 'N/A' }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INSURER AML STATUS</dt>
                 <dd>{{ capitalizeString(quote?.insurer_aml_status) }}</dd>
@@ -2745,9 +2779,9 @@ const fullAddress = computed(() => {
       >
         <div class="grid md:grid-cols-2 gap-4">
           <x-input
-            v-model="travelerForm.first_name"
-            label="Member Name*"
-            placeholder="Member Name"
+            v-model="travelerFullName"
+            label="First & Last Name*"
+            placeholder="First & Last Name"
             :rules="[isRequired, maxCharacters(40)]"
             :hasError="travelerForm.errors.first_name"
           />
@@ -3022,167 +3056,7 @@ const fullAddress = computed(() => {
       </Collapsible>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex flex-wrap gap-4 justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <DataTable
-            table-class-name="tablefixed compact"
-            :headers="emailStatusesTableColumns"
-            :items="emailStatuses || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="emailStatuses.length < 15"
-          >
-            <template #item-email_status="item">
-              <span class="text-primary-600 uppercase">{{
-                item.email_status
-              }}</span>
-            </template>
-            <template #item-reason="item">
-              <span class="text-primary-600 uppercase">{{ item.reason }}</span>
-            </template>
-          </DataTable>
-        </template>
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            Documents
-            <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
-          </h3>
-          <div class="flex gap-2">
-            <Link
-              v-if="
-                quote?.insly_id &&
-                canAny([
-                  permissionsEnum.VIEW_LEGACY_DETAILS,
-                  permissionsEnum.VIEW_ALL_LEADS,
-                ])
-              "
-              :href="`/legacy-policy/${quote.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-tooltip placement="top">
-              <x-button
-                @click.prevent="getupdateDocumentValidate(true)"
-                v-if="can(permissionsEnum.DOCUMENT_VERIFY)"
-                size="sm"
-                color="green"
-              >
-                Verify Documents
-              </x-button>
-              <template #tooltip>
-                Verify Documents: Clicking this button confirms that all
-                submitted documents are accurate and valid.</template
-              >
-            </x-tooltip>
-            <x-button
-              @click.prevent="modals.doc = true"
-              size="sm"
-              color="primary"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Upload Documents
-            </x-button>
-            <x-button
-              size="sm"
-              color="red"
-              v-if="
-                displaySendPolicyButton &&
-                permissions.notProductionApproval &&
-                permissions.isQuoteDocumentEnabled
-              "
-              @click="sendPolicyToClient"
-            >
-              Send Policy
-            </x-button>
-          </div>
-        </div>
-        <DataTable
-          table-class-name="compact"
-          :headers="quoteDocumentsTable.columns"
-          :items="quoteDocuments || []"
-          border-cell
-          hide-rows-per-page
-          :rows-per-page="15"
-          :hide-footer="quoteDocuments.length < 15"
-        >
-          <template #item-original_name="item">
-            <a
-              :href="cdnPath + item.doc_url"
-              target="_blank"
-              class="text-primary-600"
-            >
-              {{ item.original_name }}
-            </a>
-          </template>
-          <template #item-action="{ doc_name }">
-            <div>
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="onDocDelete(doc_name)"
-                v-if="readOnlyMode.isDisable === true"
-              >
-                Delete
-              </x-button>
-            </div>
-          </template>
-        </DataTable>
-
-        <x-modal
-          v-model="modals.doc"
-          size="xl"
-          title="Upload Documents"
-          show-close
-          backdrop
-        >
-          <LazyDocumentUploader
-            :members="memberDataDocs(travelers)"
-            :doc-types="documentTypes"
-            :docs="quoteDocuments || []"
-            :cdn="cdnPath"
-          />
-        </x-modal>
-        <x-modal
-          v-model="modals.docConfirm"
-          title="Delete Document"
-          show-close
-          backdrop
-        >
-          <p>Are you sure you want to delete this document?</p>
-          <template #actions>
-            <div class="text-right space-x-4">
-              <x-button
-                size="sm"
-                ghost
-                @click.prevent="modals.docConfirm = false"
-              >
-                Cancel
-              </x-button>
-              <x-button
-                size="sm"
-                color="error"
-                @click.prevent="confirmDeleteDoc"
-                :loading="quoteDocumentsTable.isLoading"
-              >
-                Delete
-              </x-button>
-            </div>
-          </template>
-        </x-modal>
-      </Collapsible>
-    </div>
+    <EmailStatus :emailStatuses="emailStatuses" :expanded="sectionExpanded" />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
