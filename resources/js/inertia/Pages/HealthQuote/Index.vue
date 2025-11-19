@@ -1297,7 +1297,12 @@ const onLeadConfirmed = leadData => {};
           <LeadAssignment
             :selected="quotesSelected.map(e => e.id)"
             :advisors="advisorOptions"
-            :supportUsers="$page.props.supportUsers?.map(u => ({ value: u.id, label: u.name })) || []"
+            :supportUsers="
+              $page.props.supportUsers?.map(u => ({
+                value: u.id,
+                label: u.name,
+              })) || []
+            "
             :canAssignClientSupport="$page.props.canAssignClientSupport"
             :canAssignLeadAdvisor="$page.props.canAssignLeadAdvisor"
             quoteType="health"
