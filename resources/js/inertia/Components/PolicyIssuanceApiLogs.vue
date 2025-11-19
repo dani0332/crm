@@ -46,8 +46,36 @@ const selectLog = item => {
 };
 
 const togglePolicyIssuance = () => {
+  if (!policyIssuanceId.value) {
+    notification.error({
+      title: 'No Policy Issuance ID Found',
+      position: 'top',
+    });
+    return;
+  }
   console.log('togglePolicyIssuance');
+  axios.get(`/trigger-policy-issuance/${policyIssuanceId.value}`).then(res => {
+    notification.success({
+      title: res.data.message || 'Policy Issuance Triggered Successfully',
+      position: 'top',
+    });
+  }).catch(err => {
+    notification.error({
+      title: err.response.data.message || 'Failed to Trigger Policy Issuance',
+      position: 'top',
+    });
+  });
 };
+
+const policyIssuanceId = computed(() => {
+  if(!apiLogs.data) {
+    return null;
+  }
+  if(apiLogs.data.length === 0) {
+    return null;
+  }
+  return apiLogs.data[0]?.policy_issuance_id;
+});
 
 const apiLogs = reactive({
   loading: false,

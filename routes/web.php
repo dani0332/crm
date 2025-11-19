@@ -89,6 +89,7 @@ use App\Http\Controllers\V2\LegacyPolicyController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
+use App\Http\Controllers\V2\PolicyIssuanceController;
 use App\Http\Controllers\V2\QuoteSyncController;
 use App\Http\Controllers\V2\SavingsQuoteController;
 use App\Http\Controllers\V2\SearchController;
@@ -967,7 +968,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return view('pdf.bor-document', $pdfData);
     });
 
+    Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance']);
+
+
     // Cyber Quote Policy Automation Routes for testing purposes
+    // this route is only for testing purposes to trigger the policy issuance automation
     Route::get('/trigger-policy-document-update', function () { 
 
         // without plan id and payments
