@@ -24,7 +24,7 @@ class DocumentTypeRepository extends BaseRepository
      *
      * @return array
      */
-    public function fetchSendPolicyDocumentCodes($quoteType, $quote)
+    public function fetchSendPolicyDocumentCodes($quoteType, $quote, $bringDocumentCodesOnly = true)
     {
         // Fetch document type codes marked as required for policy sending, filtered by quote type.
         $documentTypeCodes = DocumentType::requiredForSendPolicy()->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType));
@@ -47,7 +47,11 @@ class DocumentTypeRepository extends BaseRepository
             $documentTypeCodes->getBusinessDocument($businessTypeOfInsurance, $businessTypeOfCustomer, $businessInsurerName);
         }
 
-        return $documentTypeCodes->pluck('code')->toArray();
+        if ($bringDocumentCodesOnly) {
+            return $documentTypeCodes->pluck('code')->toArray();
+        }
+
+        return $documentTypeCodes->get();
     }
 
     /**
@@ -133,5 +137,19 @@ class DocumentTypeRepository extends BaseRepository
         }
 
         return false;
+    }
+
+    public function fetchAreSendPolicyDocsUploaded($quoteDocuments, $quoteType, $record)
+    {
+        $documentTypeCodes = $this->fetchSendPolicyDocumentCodes($quoteType, $record, false);
+        $docCodes = collect($documentTypeCodes)->where('is_required_for_send_policy', 1)->pluck('code')->toArray();
+        $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $docCodes)->groupBy('document_type_code')->count();
+        $requiredDocuments = collect($documentTypeCodes)->where('is_required_for_send_policy', 1)->pluck('text')->toArray();
+
+        return [
+            'disabled' => $quoteDocumentsCount != count($documentTypeCodes),
+            'documentTypeCodes' => $documentTypeCodes,
+            'requiredDocuments' => $requiredDocuments,
+        ];
     }
 }

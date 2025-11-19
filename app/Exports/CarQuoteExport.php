@@ -33,9 +33,6 @@ class CarQuoteExport implements CsvExportableInterface
 
         $query = $this->carQuoteService->getGridData(requestParams: $requestParams);
 
-        // Log SQL for visibility (no extra DB hit)
-        LoggerService::sql('CarQuoteExport.getGridData', $query);
-
         $beforeGet = microtime(true);
         $collection = $query->get();
         $querySeconds = round(microtime(true) - $beforeGet, 3);
@@ -45,8 +42,6 @@ class CarQuoteExport implements CsvExportableInterface
             'query_seconds' => $querySeconds,
             'total_seconds' => round(microtime(true) - $startTime, 3),
         ]);
-
-        LoggerService::info("\n\n");
 
         return $collection;
     }
@@ -121,6 +116,7 @@ class CarQuoteExport implements CsvExportableInterface
             'PRIVATE CLIENT',
             'INSURER',
             'IMCRM SUB-SOURCE',
+            'REPAIR TYPE',
         ];
     }
 
@@ -185,6 +181,7 @@ class CarQuoteExport implements CsvExportableInterface
             $quote->customer?->pcp_tag_formatted ?? '',
             $quote->insuranceProvider?->text ?? '',
             $quote->subSource?->text ?? '',
+            $quote->plan?->repair_type ?? '',
         ];
     }
 
