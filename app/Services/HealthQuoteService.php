@@ -360,7 +360,7 @@ class HealthQuoteService extends BaseService
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
 
-            if (Auth::user()->hasRole([RolesEnum::CLIENTSUPPORTLEAD, RolesEnum::CLIENTSUPPORT])) {
+            if (Auth::user()->hasAnyRole([RolesEnum::CLIENTSUPPORTLEAD, RolesEnum::CLIENTSUPPORT])) {
                 $dataArr['supportUserId'] = Auth::user()->id;
             } else {
                 $dataArr['advisorId'] = Auth::user()->id;
