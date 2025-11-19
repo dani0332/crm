@@ -1256,6 +1256,19 @@ const canSelectMetLifePlan = computed(() => {
 
   return isApplicationPending && hasHealthQuestionnaire;
 });
+
+const getDisplayPrice = item => {
+  if (item.isApi && item.instantPolicy) {
+    // metlife
+    return item.totalPrice === 0 ? item.actualPremium : item.totalPrice;
+  }
+  if (item.isApi && !item.instantPolicy) {
+    // zurich
+    return item.actualPremium;
+  }
+  return item.totalPrice;
+};
+
 </script>
 <template>
   <div>
@@ -2207,9 +2220,7 @@ const canSelectMetLifePlan = computed(() => {
               >
                 <template #item-totalPrice="item">
                   <span class="copay-max">{{
-                      (item.isApi && !item.instantPolicy)
-                      ? numberFormat(item.actualPremium)
-                      : numberFormat(item.totalPrice)
+                    numberFormat(getDisplayPrice(item))
                   }}</span>
                 </template>
 
