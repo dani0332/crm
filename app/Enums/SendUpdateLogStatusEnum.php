@@ -116,8 +116,6 @@ final class SendUpdateLogStatusEnum extends Enum
     /**
      * Get statuses that indicate booking is in progress or completed.
      * These statuses should skip transaction approval updates.
-     *
-     * @return array
      */
     public static function getBookingStatuses(): array
     {
