@@ -112,4 +112,19 @@ final class SendUpdateLogStatusEnum extends Enum
 
         ];
     }
+
+    /**
+     * Get statuses that indicate booking is in progress or completed.
+     * These statuses should skip transaction approval updates.
+     *
+     * @return array
+     */
+    public static function getBookingStatuses(): array
+    {
+        return [
+            self::UPDATE_BOOKING_QUEUED,
+            self::UPDATE_BOOKING_FAILED,
+            self::UPDATE_BOOKED,
+        ];
+    }
 }
