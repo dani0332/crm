@@ -1,4 +1,5 @@
 <script setup>
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 defineProps({
   quotes: Object,
@@ -8,6 +9,7 @@ defineProps({
   canAssignClientSupport: Boolean,
   canAssignLeadAdvisor: Boolean,
   renewalBatches: Array,
+  subSources: Array,
   totalCount: {
     type: Number,
     default: 0,
@@ -20,6 +22,10 @@ const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 const canExport = ref(false);
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
@@ -232,6 +238,7 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source_text', is_active: true },
 ]);
 
 const setIntialState = () => {
@@ -537,6 +544,11 @@ onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
+const createLeadModal = ref(false);
+const onLeadConfirmed = leadData => {
+  createLeadModal.value = false;
+};
+
 const resetDateFilters = filterName => {
   const filterMappings = {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
@@ -638,16 +650,15 @@ const insurerAMLStatusOption = computed(() => {
             Cards View</x-button
           >
         </Link>
-        <Link :href="route('business.create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead</x-button
-          >
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          tag="div"
+          v-if="readOnlyMode.isDisable === true"
+          @click="createLeadModal = true"
+        >
+          Create Lead</x-button
+        >
       </template>
     </StickyHeader>
 
@@ -1162,6 +1173,9 @@ const insurerAMLStatusOption = computed(() => {
             : ''
         }}
       </template>
+      <template #item-sub_source_text="{ sub_source_text }">
+        {{ sub_source_text }}
+      </template>
     </DataTable>
 
     <Pagination
@@ -1172,6 +1186,15 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <!-- CreateLeadModal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      :sub-sources="subSources || []"
+      route-name="business.create"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>
