@@ -411,11 +411,7 @@ class BusinessQuoteService extends BaseService
         }
         // Filter by support user (OE/AE)
         if (isset($request->support_user_id) && is_array($request->support_user_id) && count($request->support_user_id) > 0) {
-            if (count($request->support_user_id) === 1 && $request->support_user_id[0] == '-1') {
-                $this->query->whereNull('bqr.support_user_id');
-            } else {
-                $this->query->whereIn('bqr.support_user_id', $request->support_user_id);
-            }
+            $this->query->whereIn('bqr.support_user_id', $request->support_user_id);
         }
         if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
             $this->query->whereIn('bqr.renewal_batch_id', $request->renewal_batches);

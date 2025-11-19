@@ -242,11 +242,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
         // Filter by support user (OE/AE)
         if ($this->hasFilterValue('support_user_id', $requestParams) && is_array($this->getFilterValue('support_user_id', $requestParams))) {
             $ids = $this->getFilterValue('support_user_id', $requestParams);
-            if (count($ids) === 1 && (string) $ids[0] === '-1') {
-                $query->whereNull('support_user_id');
-            } else {
-                $query->whereIn('support_user_id', $ids);
-            }
+            $query->whereIn('support_user_id', $ids);
         }
     }
 
