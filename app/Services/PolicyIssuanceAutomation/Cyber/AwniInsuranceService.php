@@ -430,6 +430,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             'commission' => $issuePolicyResult?->policyInfo?->commissionAmt,
             'commission_vat' => $issuePolicyResult?->policyInfo?->commissionVatAmt,
             'commmission_percentage' => $issuePolicyResult?->policyInfo?->CommissionPercentage ?? 0, // TODO: need to verify commission percentage is not coming in response
+            'insurer_tax_number' => $issuePolicyResult?->policyInfo?->invoiceNo ?? null,
             'insurer_invoice_date' => $issuePolicyResult?->policyInfo?->policyIssuedDate ?? null,
             'insurer_commmission_invoice_number' => $issuePolicyResult?->policyInfo?->invoiceNo ?? null,
         ]);

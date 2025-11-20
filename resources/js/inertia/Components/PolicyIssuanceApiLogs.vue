@@ -66,6 +66,16 @@ const togglePolicyIssuance = () => {
   });
 };
 
+const policyIssuanceDetail = computed(() => {
+  if(!apiLogs.data) {
+    return null;
+  }
+  if(apiLogs.data.length === 0) {
+    return null;
+  }
+  return apiLogs.data[0]?.policy_issuance;
+});
+
 const policyIssuanceId = computed(() => {
   if(!apiLogs.data) {
     return null;
@@ -181,6 +191,29 @@ const onLoadAuditLogData = async () => {
           </x-button>
         </div>
         <div v-else>
+          <div class="flex items-center gap-4 my-3">
+            <div v-if="policyIssuanceDetail && hasRole(rolesEnum.Engineering)">
+              <p class="text-sm">
+                completed step: {{ policyIssuanceDetail.completed_step }}
+                <x-tag
+                  size="xs"
+                  color="success"
+                  class="mt-0.5 text-[10px]"
+                >
+                  {{ policyIssuanceDetail.status }}
+                </x-tag>
+              </p>
+              <p class="text-sm">
+                message: {{ policyIssuanceDetail.message }}
+              </p>
+              <p class="text-sm">
+                data: {{ policyIssuanceDetail.data }}
+              </p>
+              <p class="text-sm">
+                request: {{ policyIssuanceDetail.request }}
+              </p>
+            </div>
+          </div>
           <div class="flex items-center gap-4 my-3">
             <x-select
               class="flex-1 mt-1"
