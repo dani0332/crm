@@ -100,7 +100,6 @@ class BusinessQuoteController extends Controller
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
-        $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
 
         // Support users and assignment permissions for LeadAssignment component
         $supportUsers = app(UserService::class)->getSupportUsers([
@@ -116,6 +115,9 @@ class BusinessQuoteController extends Controller
         $canAssignLeadAdvisor = auth()->user()->isAdmin()
             || $isManagerORDeputy
             || Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
+
+        $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport);
+
         // PD Revert
         // $totalCount = count(request()->all()) > 1 || $hasOtherFilters ? $count : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
         $totalCount = 0;
