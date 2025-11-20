@@ -116,9 +116,8 @@ class Dtt extends Command
             ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
             ->get();
 
-
         info($logPrefix.' count - '.count($leads).' - '.json_encode($leads->pluck('uuid')->toArray()));
-       
+
         $delayCounter = 0;
         foreach ($leads as $carLead) {
             $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
