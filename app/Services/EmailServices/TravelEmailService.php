@@ -13,6 +13,7 @@ use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Jobs\SendAutomatedTravelFollowup;
+use App\Jobs\SendAutomatedTravelRenewalFollowup;
 use App\Jobs\SICFollowupEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\QuoteFlowDetails;
@@ -341,14 +342,58 @@ class TravelEmailService extends BaseService
         if ($travelRenewalEvent) {
             $response = app(BirdService::class)->triggerWebHookRequest($travelRenewalEvent->value, $emailData);
             info("SendOCBTravelRenewalIntroEmail workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+            
+            // Update lead status to Quoted
             $lead->quote_status_id = QuoteStatusEnum::Quoted;
             $lead->save();
+
+            // Trigger automated renewal followup after status is updated to Quoted
+            if (in_array($response->status_code, [200, 201])) {
+                SendAutomatedTravelRenewalFollowup::dispatch($lead->uuid)->delay(now()->addSeconds(10));
+                LoggerService::info(self::class." - Automated Travel Renewal Followup dispatched after status updated to Quoted for quote: {$lead->uuid}");
+            }
 
             return $response->status_code;
         } else {
             info("SendOCBTravelRenewalIntroEmail workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
         }
     }
+
+    /**
+     * Send automated travel renewal follow-up emails
+     */
+    public function sendAutomatedTravelRenewalFollowup(TravelQuote $travelQuote)
+    {
+        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS)->first();
+
+        LoggerService::info('sendAutomatedTravelRenewalFollowup - Initiating process for Travel renewal quote');
+
+        if ($workflowUrl && ! empty($workflowUrl->value)) {
+            // Fetch the advisor
+            $advisor = User::find($travelQuote->advisor_id);
+            if (! $advisor) {
+                LoggerService::info("sendAutomatedTravelRenewalFollowup - Advisor not found for travel renewal quote: {$travelQuote->uuid}");
+            }
+
+            // Build email data for automated follow-ups using common email data builder
+            $emailData = $this->buildCommonEmailData($travelQuote, $advisor, null, WorkflowTypeEnum::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS);
+
+            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
+
+            LoggerService::info('sendAutomatedTravelRenewalFollowup - Response: '.json_encode($response));
+
+            if ($response && $response->status_code === 200) {
+                app(BirdService::class)->createQuoteWorkFlowDetails($travelQuote, $response, QuoteFlowType::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::TRAVEL->id());
+                LoggerService::info('sendAutomatedTravelRenewalFollowup - Successfully triggered automated follow-up workflow');
+            } else {
+                LoggerService::info("sendAutomatedTravelRenewalFollowup - Error triggering event having response status code: {$response?->status_code}");
+            }
+        } else {
+            LoggerService::info(self::class." - Automated Travel Renewal Followup workflow url not found for quote: {$travelQuote->uuid}");
+        }
+    }
+
+    
     public function sendTravelAllianceFailedAllocationEmail($lead)
     {
         $advisor = User::where('id', $lead->advisor_id)->first();

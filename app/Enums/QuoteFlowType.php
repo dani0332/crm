@@ -32,6 +32,7 @@ enum QuoteFlowType: int
     case LIFE_ADVANCE_BIRTHDAY_WISH = 13;
     case LIFE_BIRTHDAY_WISH = 14;
     case HOME_RENEWAL_AUTOMATED_FOLLOWUPS = 15;
+    case TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS = 40;
     case SIC_HEALTH_FOLLOWUPS_WA = 10;
     case CAR_AUTOMATION_FAILED = 36;
     case CAR_AI_ADVISOR_OCB = 39;
@@ -62,6 +63,7 @@ enum QuoteFlowType: int
             QuoteFlowType::OTHER_BUSINESS_NEW_POLICY => 'other_business_new_policy',
             QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS => 'home_automated_followups',
             QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS => 'home_renewal_automated_followups',
+            QuoteFlowType::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS => 'travel_renewal_automated_followups',
             QuoteFlowType::MOTOR_PCP_FOLLOWUPS => 'motor_pcp_followups',
             QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA => 'sic_health_followups_wa',
             QuoteFlowType::LIFE_AUTOMATED_FOLLOWUPS => 'life_automated_followups',
@@ -106,6 +108,7 @@ enum QuoteFlowType: int
             15 => QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS,
             36 => QuoteFlowType::CAR_AUTOMATION_FAILED,
             39 => QuoteFlowType::CAR_AI_ADVISOR_OCB,
+            40 => QuoteFlowType::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS,
             default => null,  // Return null if the value doesn't match any case
         };
     }
