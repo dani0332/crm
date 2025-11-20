@@ -352,7 +352,7 @@ const selectedProviderPlan = ref({
   id: page.props?.quote?.plan_id,
   planName: page.props?.quote?.plans?.name,
   providerName: page.props?.quote?.plans?.providerName,
-  premium: page.props?.quote?.plans?.premium,
+  premium: page.props?.quote?.plans?.premium || page.props?.quote?.premium,
 });
 
 const handlePlanSelected = plan => {
@@ -377,13 +377,15 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
+      let plansData = [];
       if (typeof res.data === 'string') {
         availablePlansTable.data = res.data;
       } else if (
         res.data?.quotes?.plans &&
         Array.isArray(res.data.quotes.plans)
       ) {
-        availablePlansTable.data = res.data.quotes.plans.map(plan => ({
+        plansData = res.data.quotes.plans;
+        availablePlansTable.data = plansData.map(plan => ({
           ...plan,
           isManualUpdate: plan.isManualUpdate ?? false,
           isDisabled: plan.isDisabled ?? false,
@@ -396,7 +398,8 @@ const onLoadAvailablePlansData = async () => {
           ).toFixed(2),
         }));
       } else if (Array.isArray(res.data) && res.data.length > 0) {
-        availablePlansTable.data = res.data.map(plan => ({
+        plansData = res.data;
+        availablePlansTable.data = plansData.map(plan => ({
           ...plan,
           isManualUpdate: plan.isManualUpdate ?? false,
           isDisabled: plan.isDisabled ?? false,
@@ -410,6 +413,18 @@ const onLoadAvailablePlansData = async () => {
         }));
       } else {
         availablePlansTable.data = [];
+      }
+
+      if (plansData.length > 0 && page.props?.quote?.plan_id) {
+        const selectedPlan = plansData.find(
+          plan => plan.id == page.props.quote.plan_id
+        );
+        if (selectedPlan) {
+          selectedProviderPlan.value.id = selectedPlan.id;
+          selectedProviderPlan.value.planName = selectedPlan.planName || selectedPlan.name;
+          selectedProviderPlan.value.providerName = selectedPlan.providerName;
+          selectedProviderPlan.value.premium = selectedPlan.premium || page.props?.quote?.premium;
+        }
       }
     })
     .catch(err => {
@@ -731,10 +746,10 @@ const copyLink = () => {
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-                <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.premium || quote.premium || '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AUTHORISED AT</dt>
+                <dt class="font-medium">AUTHORIZED AT</dt>
                 <dd>{{ quote.paid_at ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -751,7 +766,7 @@ const copyLink = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>Al Wathba National Insurance Company</dd>
+                <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
               </div>
             </dl>
           </div>
