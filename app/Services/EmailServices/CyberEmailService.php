@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
+use App\Jobs\SendCyberAutomatedFollowupJob;
 
 class CyberEmailService extends BaseService
 {
@@ -35,6 +36,11 @@ class CyberEmailService extends BaseService
 
         if ($response && $response->status_code === 200) {
             LoggerService::info('sendCyberOCBIntroEmail - Successfully triggered event');
+            $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::CYBER->id(), QuoteFlowType::CYBER_AUTOMATED_FOLLOWUPS->value);
+            if(!$isFollowupExecuted){
+                SendCyberAutomatedFollowupJob::dispatch($lead->uuid)->delay(now()->addSeconds(10));
+                LoggerService::info('sendCyberOCBIntroEmail - Successfully dispatched cyber automated followup job');
+            }
 
             app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::CYBER_OCB_INTRO_EMAIL->value, QuoteTypes::CYBER->id());
             LoggerService::info('sendCyberOCBIntroEmail - Successfully created quote flow details');
@@ -72,6 +78,11 @@ class CyberEmailService extends BaseService
 
     public function sendCyberAutomatedFollowups($lead)
     {
+        $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::CYBER->id(), QuoteFlowType::CYBER_AUTOMATED_FOLLOWUPS->value);
+        if($isFollowupExecuted){
+            LoggerService::info('sendCyberAutomatedFollowups - Followup already executed');
+            return;
+        }
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CYBER_AUTOMATED_FOLLOWUPS)->first();
 
         LoggerService::info('| sendCyberAutomatedFollowups - Initiating process');
@@ -91,6 +102,8 @@ class CyberEmailService extends BaseService
 
         if ($response && $response->status_code === 200) {
             LoggerService::info('sendCyberAutomatedFollowups - Successfully triggered event');
+            app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::CYBER_AUTOMATED_FOLLOWUPS->value, QuoteTypes::CYBER->id());
+            LoggerService::info('sendCyberAutomatedFollowups - Successfully created quote flow details');
         } else {
             LoggerService::info("sendCyberAutomatedFollowups - Error triggering event having response status code: {$response?->status_code}");
         }
