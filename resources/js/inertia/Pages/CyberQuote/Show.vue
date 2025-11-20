@@ -54,6 +54,7 @@ const props = defineProps({
   paymentDocument: Array,
   emailStatuses: Array,
   isFuncsEnabled: Object,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -655,96 +656,62 @@ const copyLink = () => {
                 <dd>{{ quote.id }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <x-tooltip placement="bottom">
-                  <label
-                    class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                  >
-                    Ref-ID
-                  </label>
-                  <template #tooltip> Reference ID </template>
-                </x-tooltip>
-                <div>{{ quote.code }}</div>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote?.advisor?.name }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CREATED DATE</dt>
-                <dd>{{ quote.created_at }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
-                <dd>
-                  {{ quote.quote_detail?.next_followup_date }}
-                </dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">LOST REASON</dt>
-                <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS ECOMMERCE</dt>
                 <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CYBER COVERAGE UP TO</dt>
+                <dd>{{ quote?.cyber_quote?.coverage ? '$ ' + quote.cyber_quote.coverage.text : '-' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IM AML STATUS</dt>
+                <dd>{{ amlStatusName || '-' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>{{ quote?.insurer_aml_status || 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <div>
-                  <x-tooltip placement="bottom">
-                    <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                    >
-                      PARENT REF-ID
-                    </label>
-                    <template #tooltip> Parent Reference ID </template>
-                  </x-tooltip>
-                </div>
-                <div>
-                  <Link
-                    v-if="quote.parent_duplicate_quote_id"
-                    :href="
-                      getDetailPageRoute(
-                        linkedQuoteDetails.uuid,
-                        linkedQuoteDetails.quote_type_id,
-                      )
-                    "
-                    class="text-primary-500 hover:underline"
-                  >
-                    {{ quote.parent_duplicate_quote_id ?? '' }}
-                  </Link>
-                </div>
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ quote?.insurer_api_status || 'N/A' }}</dd>
               </div>
-
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ quote?.api_issuance_status || 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CUSTOMER TYPE</dt>
+                <dd>{{ quote.customer_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CREATED DATE</dt>
+                <dd>{{ quote.created_at }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">NATIONALITY</dt>
+                <dd>{{ quote.nationality?.text || '-' }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TYPE OF INSURANCE</dt>
                 <dd>Cyber</dd>
               </div>
             </dl>
-          </div>
-
-          <div class="mt-6" v-if="quote?.cyber_quote">
-            <h3 class="font-semibold text-primary-800">Quote Details</h3>
-            <x-divider class="mb-4 mt-1" />
-
-            <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"></dl>
-            </div>
           </div>
         </template>
       </Collapsible>
@@ -897,10 +864,6 @@ const copyLink = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">GENDER</dt>
                   <dd>{{ quote.gender_label }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ quote.nationality?.text }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Cyber'" />
               </dl>

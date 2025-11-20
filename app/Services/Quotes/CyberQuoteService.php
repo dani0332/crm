@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Quotes;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
@@ -97,6 +98,7 @@ class CyberQuoteService extends BaseQuoteService
                     'insuranceProvider:id,text,code',
                     'insuranceProviderPlan',
                     'insuranceProvider',
+                    'cyberQuote.coverage',
                     'payments' => function ($q) {
                         $q->with([
                             'paymentStatus',
@@ -143,8 +145,11 @@ class CyberQuoteService extends BaseQuoteService
 
         $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::CYBER_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::CYBER) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));
 
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
+
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::CyberManager),
+            'amlStatusName' => $amlStatusName,
             ...$data,
         ];
     }
