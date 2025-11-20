@@ -394,6 +394,8 @@ const getPaymentTermTitle = months => {
 };
 
 const getTotalAnnualPremium = (item) => {
+  if (!item) return 'N/A';
+  
   const paymentTermTitle = getPaymentTermTitle(item.paymentTerm);
   const mapping = {
     Monthly: 12,
@@ -401,17 +403,31 @@ const getTotalAnnualPremium = (item) => {
     'Semi-Annually': 2,
     Annually: 1,
   };
-  let value = 0;
+  
+  if (!paymentTermTitle || !mapping[paymentTermTitle]) return 'N/A';
+  
   let price = 0;
   if (item.isApi && item.instantPolicy) {
     // metlife
-    price = item.totalPrice === 0 ? item.actualPremium : item.totalPrice;
-    value = price * mapping[paymentTermTitle];
+    if (item.totalPrice === 0) {
+      if (item.actualPremium == null) return 'N/A';
+      price = item.actualPremium;
+    } else {
+      if (item.totalPrice == null) return 'N/A';
+      price = item.totalPrice;
+    }
   } else {
     // zurich & manual plan
-    price = item.isApi ? item.actualPremium : item.totalPrice;
-    value = price * mapping[paymentTermTitle];
+    if (item.isApi) {
+      if (item.actualPremium == null) return 'N/A';
+      price = item.actualPremium;
+    } else {
+      if (item.totalPrice == null) return 'N/A';
+      price = item.totalPrice;
+    }
   }
+  
+  const value = price * mapping[paymentTermTitle];
   return numberFormat(value);
 };
 
@@ -1280,12 +1296,17 @@ const getDisplayPrice = item => {
 };
 
 const getDisplayPriceInAED = item => {
+  if (!item) return 'N/A';
+  
   if (item.isApi && item.instantPolicy) {
     // metlife
-    return item.totalPrice === 0 ? item.actualPremium : item.totalPrice;
+    if (item.totalPrice === 0) {
+      return item.actualPremium != null ? item.actualPremium : 'N/A';
+    }
+    return item.totalPrice != null ? item.totalPrice : 'N/A';
   }
   // zurich & manual plan
-  return item.actualPremium;
+  return item.actualPremium != null ? item.actualPremium : 'N/A';
 };
 
 </script>
