@@ -117,6 +117,10 @@ class BuyLeadRequest extends Model
     {
         return self::byValueOrVolume($quoteType, $isValue)->bySegment($isSIC)->where('quote_type_id', $quoteType->id())->where('user_id', $userId)->active()->unfulfilled()->first();
     }
+    public static function getCATANationalitiesRequest(QuoteTypes $quoteType, bool $isSIC, int $userId, bool $isValue): ?BuyLeadRequest
+    {
+        return self::byValueOrVolume($quoteType, $isValue)->bySegment($isSIC)->where('quote_type_id', $quoteType->id())->where('user_id', $userId)->where('source', LeadSourceEnum::REVIVAL)->active()->unfulfilled()->first();
+    }
 
     public function buyLead($lead, QuoteTypes $quoteType)
     {

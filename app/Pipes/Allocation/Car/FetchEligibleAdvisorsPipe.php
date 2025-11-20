@@ -52,7 +52,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         LoggerService::info(self::class."::fetchEligibleUsersByStatus - Users against tierID {$tier->id} and tier name: {$tier->name} are: ".json_encode($tierUserIds));
 
         $advisors = [];
-        if ($lead->source == LeadSourceEnum::REVIVAL && $lead->nationality_id && in_array($lead->nationality_id, app(BuyLeadService::class)->getCarCatANationalitiesIds())) {
+        if ($lead->isBuyLeadApplicable($this->allocationRequest->isSIC()) && $lead->source == LeadSourceEnum::REVIVAL && $lead->nationality_id && in_array($lead->nationality_id, app(BuyLeadService::class)->getCarCatANationalitiesIds())) {
             $advisors = $this->fetchAdvisors('getCATANationalitiesAdvisorsByStatus', $tier, $tierUserIds, $teamId);
 
             return $advisors ?? [];

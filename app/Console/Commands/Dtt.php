@@ -110,16 +110,15 @@ class Dtt extends Command
             ->whereNotIn('source', $excludeSources)
             ->whereNull('renewal_batch')
             ->whereNull('previous_quote_policy_number')
-
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-
             ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
-
+            ->orderByDesc('car_value')
             ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
             ->get();
 
-        info($logPrefix.' count - '.count($leads).' - '.json_encode($leads->pluck('uuid')->toArray()));
 
+        info($logPrefix.' count - '.count($leads).' - '.json_encode($leads->pluck('uuid')->toArray()));
+       
         $delayCounter = 0;
         foreach ($leads as $carLead) {
             $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
