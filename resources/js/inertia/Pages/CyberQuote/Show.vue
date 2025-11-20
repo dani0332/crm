@@ -153,6 +153,7 @@ const customerProfileForm = useForm({
   emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer.emirates_id_expiry_date || null,
+  emirates_id_issuing_date: null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
@@ -798,24 +799,24 @@ const copyLink = () => {
                   <dd>{{ quote.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">INSURED FIRST NAME</dt>
+                  <dt class="font-medium">INSURED'S FIRST NAME</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.insured_first_name"
                       :rules="[isRequired]"
-                      placeholder="INSURED FIRST NAME"
+                      placeholder="INSURED'S FIRST NAME"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">INSURED LAST NAME</dt>
+                  <dt class="font-medium">INSURED'S LAST NAME</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.insured_last_name"
                       :rules="[isRequired]"
-                      placeholder="INSURED LAST NAME"
+                      placeholder="INSURED'S LAST NAME"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
@@ -834,11 +835,7 @@ const copyLink = () => {
                   <dd>{{ quote.dob }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">AGE</dt>
-                  <dd>{{ quote.age }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                  <dt class="font-medium">EMIRATES ID</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
@@ -848,6 +845,10 @@ const copyLink = () => {
                       :disabled="!isProfileUpdateAllow"
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ quote.nationality?.text || '-' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
@@ -862,10 +863,15 @@ const copyLink = () => {
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">GENDER</dt>
-                  <dd>{{ quote.gender_label }}</dd>
+                  <dt class="font-medium">EMIRATES ID ISSUING DATE</dt>
+                  <dd>
+                    <DatePicker
+                      v-model="customerProfileForm.emirates_id_issuing_date"
+                      placeholder="EMIRATES ID ISSUING DATE"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
                 </div>
-                <RiskRatingScoreDetails :quote="quote" :modelType="'Cyber'" />
               </dl>
               <dl
                 v-if="
