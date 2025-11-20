@@ -6,12 +6,12 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
+use App\Jobs\SendCyberAutomatedFollowupJob;
 use App\Models\ApplicationStorage;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
-use App\Jobs\SendCyberAutomatedFollowupJob;
 
 class CyberEmailService extends BaseService
 {
@@ -37,7 +37,7 @@ class CyberEmailService extends BaseService
         if ($response && $response->status_code === 200) {
             LoggerService::info('sendCyberOCBIntroEmail - Successfully triggered event');
             $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::CYBER->id(), QuoteFlowType::CYBER_AUTOMATED_FOLLOWUPS->value);
-            if(!$isFollowupExecuted){
+            if (! $isFollowupExecuted) {
                 SendCyberAutomatedFollowupJob::dispatch($lead->uuid)->delay(now()->addSeconds(10));
                 LoggerService::info('sendCyberOCBIntroEmail - Successfully dispatched cyber automated followup job');
             }
@@ -79,8 +79,9 @@ class CyberEmailService extends BaseService
     public function sendCyberAutomatedFollowups($lead)
     {
         $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::CYBER->id(), QuoteFlowType::CYBER_AUTOMATED_FOLLOWUPS->value);
-        if($isFollowupExecuted){
+        if ($isFollowupExecuted) {
             LoggerService::info('sendCyberAutomatedFollowups - Followup already executed');
+
             return;
         }
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CYBER_AUTOMATED_FOLLOWUPS)->first();
