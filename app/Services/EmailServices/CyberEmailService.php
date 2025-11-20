@@ -3,6 +3,7 @@
 namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
@@ -10,7 +11,6 @@ use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
-use App\Enums\QuoteFlowType;
 
 class CyberEmailService extends BaseService
 {
@@ -35,20 +35,21 @@ class CyberEmailService extends BaseService
 
         if ($response && $response->status_code === 200) {
             LoggerService::info('sendCyberOCBIntroEmail - Successfully triggered event');
-    
-                app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::CYBER_OCB_INTRO_EMAIL->value,QuoteTypes::CYBER->id());
-                LoggerService::info('sendCyberOCBIntroEmail - Successfully created quote flow details');
-                if (getWhatsappConsent(QuoteTypes::CYBER, $lead->uuid)) {
-                    app(BirdService::class)->createQuoteWhatsAppFlowDetails($lead, WorkflowTypeEnum::CYBER_OCB_INTRO_WHATSAPP, QuoteTypes::CYBER->id());
-                    LoggerService::info('sendCyberOCBIntroEmail - Successfully created quote whatsapp flow details');
-                }
+
+            app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::CYBER_OCB_INTRO_EMAIL->value, QuoteTypes::CYBER->id());
+            LoggerService::info('sendCyberOCBIntroEmail - Successfully created quote flow details');
+            if (getWhatsappConsent(QuoteTypes::CYBER, $lead->uuid)) {
+                app(BirdService::class)->createQuoteWhatsAppFlowDetails($lead, WorkflowTypeEnum::CYBER_OCB_INTRO_WHATSAPP, QuoteTypes::CYBER->id());
+                LoggerService::info('sendCyberOCBIntroEmail - Successfully created quote whatsapp flow details');
             }
+        }
 
     }
 
     private function buildEmailData($lead, $advisor, $workflowType)
     {
         $isFlowExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::CYBER->id(), QuoteFlowType::CYBER_OCB_INTRO_EMAIL->value);
+
         return [
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorLandLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
