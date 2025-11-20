@@ -204,8 +204,8 @@ class EpEcbService extends EpBookingService
                 dispatch(new SyncEpDocumentsJob($this->context));
             } else {
                 // Dispatch job with 2 minutes delay, because documents are available after 2 minutes of policy creation
-                LoggerService::info($this->logPrefix.' Dispatch SyncEpDocumentsJob with 1 minutes delay', extra: $this->logExtra);
-                dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(1));
+                LoggerService::info($this->logPrefix.' Dispatch SyncEpDocumentsJob with 2 minutes delay', extra: $this->logExtra);
+                dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(2));
             }
         }
 
@@ -966,6 +966,10 @@ class EpEcbService extends EpBookingService
     private function getCustomerInfo(string $step): array
     {
         $emirateIdNumber = $this->getEmirateIdNumber();
+        if (empty($emirateIdNumber)) {
+            throw new Exception('Emirate ID number is not found');
+        }
+
         $customerDetails = [
             'customer_type' => null,
             'customer_fname' => $this->quote?->first_name,

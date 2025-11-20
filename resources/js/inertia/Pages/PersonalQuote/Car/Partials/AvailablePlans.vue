@@ -248,6 +248,23 @@ const onToggleManual = () => {
   }, 300);
 };
 
+// Handle addon option toggle with radio button behavior
+const onToggleAddonOption = (addonCode, selectedOption) => {
+  const addon = planForm.addons.find(addon => addon.code === addonCode);
+  if (!addon) return;
+  if (selectedOption.isSelected) {
+    addon.carAddonOption.forEach(option => {
+      if (option.id !== selectedOption.id) {
+        option.isSelected = false;
+      }
+    });
+  } else {
+    addon.carAddonOption.forEach(option => {
+      option.isSelected = false;
+    });
+  }
+};
+
 const readOnlyMode = reactive({
   isDisable: true,
 });
@@ -507,6 +524,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                     :disabled="!planForm.is_manual_update"
                     color="success"
                     class="mt-2"
+                    @change="onToggleAddonOption(addon.code, option)"
                   />
                 </div>
               </template>

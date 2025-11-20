@@ -108,9 +108,7 @@ class BirdService extends BaseService
                 LoggerService::info(' - createQuoteWorkFlowDetails  run id not found for quote: '.$lead->uuid);
             }
         } catch (\Throwable $th) {
-
             LoggerService::error(" - createQuoteWorkFlowDetails-Error: {$th->getMessage()} ");
-
         }
     }
     public function createQuoteWhatsAppFlowDetails($lead, $flowType = null, $quoteTypeId = null)

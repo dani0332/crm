@@ -45,7 +45,10 @@ class SavingsQuoteRequest extends FormRequest
             'currency_id' => ['required', Rule::exists(CurrencyType::class, 'id')],
             'investment_amount' => 'required|numeric|min:1',
             'investment_frequency' => ['required', Rule::exists(Lookup::class, 'id')],
-            'additional_notes' => 'required|string',
+            'notes' => 'required|string',
+            // Sub-source fields
+            'sub_source_id' => ['nullable', Rule::exists(Lookup::class, 'id')],
+            'sub_source_options_id' => ['nullable', Rule::exists(Lookup::class, 'id')],
         ];
     }
 
