@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
+use App\Enums\QuoteFlowType;
 
 class CyberEmailService extends BaseService
 {
@@ -31,11 +32,12 @@ class CyberEmailService extends BaseService
         $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::CYBER_OCB_INTRO_EMAIL);
 
         $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-
+        info("response: ".json_encode($response));
+        info("response headers: ".json_encode($response->headers));
         if ($response && $response->status_code === 200) {
             LoggerService::info('sendCyberOCBIntroEmail - Successfully triggered event');
     
-                app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, WorkflowTypeEnum::CYBER_OCB_INTRO_EMAIL,QuoteTypes::CYBER->id());
+                app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::CYBER_OCB_INTRO_EMAIL->value,QuoteTypes::CYBER->id());
                 LoggerService::info('sendCyberOCBIntroEmail - Successfully created quote flow details');
                 if (getWhatsappConsent(QuoteTypes::CYBER, $lead->uuid)) {
                     app(BirdService::class)->createQuoteWhatsAppFlowDetails($lead, WorkflowTypeEnum::CYBER_OCB_INTRO_WHATSAPP, QuoteTypes::CYBER->id());
@@ -47,7 +49,7 @@ class CyberEmailService extends BaseService
 
     private function buildEmailData($lead, $advisor, $workflowType)
     {
-        $isFlowExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::CYBER->id(), WorkflowTypeEnum::CYBER_OCB_INTRO_EMAIL);
+        $isFlowExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::CYBER->id(), QuoteFlowType::CYBER_OCB_INTRO_EMAIL->value);
         return [
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorLandLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
