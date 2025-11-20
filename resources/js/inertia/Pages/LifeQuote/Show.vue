@@ -393,15 +393,25 @@ const getPaymentTermTitle = months => {
   return mapping[months] || '';
 };
 
-const getTotalAnnualPremium = (paymentTerm, premium) => {
-  const paymentTermTitle = getPaymentTermTitle(paymentTerm);
+const getTotalAnnualPremium = (item) => {
+  const paymentTermTitle = getPaymentTermTitle(item.paymentTerm);
   const mapping = {
     Monthly: 12,
     Quarterly: 4,
     'Semi-Annually': 2,
     Annually: 1,
   };
-  let value = premium * mapping[paymentTermTitle];
+  let value = 0;
+  let price = 0;
+  if (item.isApi && item.instantPolicy) {
+    // metlife
+    price = item.totalPrice === 0 ? item.actualPremium : item.totalPrice;
+    value = price * mapping[paymentTermTitle];
+  } else {
+    // zurich & manual plan
+    price = item.isApi ? item.actualPremium : item.totalPrice;
+    value = price * mapping[paymentTermTitle];
+  }
   return numberFormat(value);
 };
 
@@ -426,8 +436,8 @@ const getTotalAnnualPremiumAED = item => {
     return numberFormat(totalAnnualPremiumAED);
   } else if (item.currency === 'AED') {
     return item.isManualPlan
-      ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice)
-      : getTotalAnnualPremium(item.paymentTerm, item.actualPremium);
+      ? getTotalAnnualPremium(item)
+      : getTotalAnnualPremium(item);
   }
   return 'N/A';
 };
@@ -1267,6 +1277,15 @@ const getDisplayPrice = item => {
     return item.actualPremium;
   }
   return item.totalPrice;
+};
+
+const getDisplayPriceInAED = item => {
+  if (item.isApi && item.instantPolicy) {
+    // metlife
+    return item.totalPrice === 0 ? item.actualPremium : item.totalPrice;
+  }
+  // zurich & manual plan
+  return item.actualPremium;
 };
 
 </script>
@@ -2313,18 +2332,15 @@ const getDisplayPrice = item => {
                     N/A
                   </div>
                   <div v-else class="copay-max">
-                    {{ numberFormat(item.actualPremium) }}
+                    {{ getDisplayPriceInAED(item) }}
                   </div>
                 </template>
 
                 <template #item-totalAnnualPremium="item">
                   <span class="copay-max">{{
                     item.isManualPlan
-                      ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice)
-                      : getTotalAnnualPremium(
-                          item.paymentTerm,
-                          item.actualPremium,
-                        )
+                      ? getTotalAnnualPremium(item)
+                      : getTotalAnnualPremium(item)
                   }}</span>
                 </template>
 

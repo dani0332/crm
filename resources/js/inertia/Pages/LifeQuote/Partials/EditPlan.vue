@@ -45,7 +45,6 @@ const showSaveButton = ref(false);
 
 let selectedTabIndex = ref(0);
 let overallLoadingState = ref(false);
-let totalPrice = props.selectedPlan.actualPremium;
 let errorMessage = ref(null);
 
 const formatDate = timestamp => {
@@ -129,6 +128,9 @@ const editForm = reactive({
   isApi: props.selectedPlan.isApi,
   isManualUpdate: props.selectedPlan.isManualPlan || props.selectedPlan.isApi,
   overallLoading: props?.selectedPlan?.overallLoading ?? 0,
+  discountPremium: props?.selectedPlan?.discountPremium ?? 0,
+  isInstantPolicy: props?.selectedPlan?.instantPolicy ?? false,
+  ridersPrice: props?.selectedPlan?.ridersPrice ?? 0,
 });
 
 // Make actualPremium a computed value to ensure reactivity
@@ -140,6 +142,19 @@ const actualPremium = computed(() => {
   );
   const riderPrice = Math.max(0, parseFloat(getRiderPrice()) || 0);
   return basePremium + overallLoadingValue + riderPrice;
+});
+
+const discountPremiumTotal = computed(() => {
+  return editForm.discountPremium;
+});
+
+const totalPrice = computed(() => {
+  let totalPrice = 0;
+  totalPrice = discountPremiumTotal.value + parseFloat(editForm.ridersPrice);
+
+  return editForm.isApi && editForm.isInstantPolicy && editForm.paymentTerm === props.paymentTermEnum.ANNUALLY
+    ? totalPrice
+    : actualPremium.value;
 });
 
 const toggleVisiblity = () => {
@@ -557,12 +572,24 @@ const validateRiderCoverValue = (value, riderId) => {
   return true;
 };
 const formattedSumAssured = useFormattedNumberField(editForm, 'sumAssured');
-const formattedActualPremium = useFormattedNumberField(
-  editForm,
-  'actualPremium',
-);
-
+const formattedActualPremium = useFormattedNumberField(editForm, 'actualPremium');
+const formattedDiscountPremium = useFormattedNumberField(editForm, 'discountPremium');
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
+
+const getDisplayPrice = computed({
+  get: () => {
+    return editForm.isApi && editForm.isInstantPolicy && editForm.paymentTerm === props.paymentTermEnum.ANNUALLY
+      ? formattedDiscountPremium.value
+      : formattedActualPremium.value;
+  },
+  set: value => {
+    if (editForm.isApi && editForm.isInstantPolicy && editForm.paymentTerm === props.paymentTermEnum.ANNUALLY) {
+      formattedDiscountPremium.value = value;
+    } else {
+      formattedActualPremium.value = value;
+    }
+  },
+});
 </script>
 
 <template>
@@ -685,7 +712,7 @@ const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
               <div class="grid sm:grid-cols-2">
                 <dt class="mt-2">Price:</dt>
                 <x-input
-                  v-model="formattedActualPremium"
+                  v-model="getDisplayPrice"
                   :disabled="editForm.isApi"
                   :rules="[isRequired, validatePriceRange, isNonNegative]"
                   size="sm"
@@ -970,7 +997,7 @@ const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
           <dl class="flex flex-row">
             <dt class="font-bold text-lg ml-4">Total Price:</dt>
             <dd class="text-lg">
-              &nbsp; {{ editForm.currency }} {{ numberFormat(actualPremium) }}
+              &nbsp; {{ editForm.currency }} {{ numberFormat(totalPrice) }}
             </dd>
           </dl>
 
@@ -1021,7 +1048,7 @@ const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
             <dl class="flex flex-row">
               <dt class="font-bold text-sm ml-4">Total Price:</dt>
               <dd class="text-sm">
-                &nbsp; {{ editForm.currency }} {{ numberFormat(actualPremium) }}
+                &nbsp; {{ editForm.currency }} {{ numberFormat(totalPrice) }}
               </dd>
             </dl>
           </div>
@@ -1080,7 +1107,7 @@ const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
             <div class="flex items-center">
               <span class="font-bold mr-2">Total Price:</span>
               <span class="">
-                {{ editForm.currency }} {{ numberFormat(actualPremium) }}
+                {{ editForm.currency }} {{ numberFormat(totalPrice) }}
               </span>
             </div>
           </div>
