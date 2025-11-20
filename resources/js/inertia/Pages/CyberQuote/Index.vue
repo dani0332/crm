@@ -745,8 +745,8 @@ const computedCyberCoverages = computed(() => {
       <template #item-insurance_provider_plan="{ insurance_provider_plan }">
         {{ insurance_provider_plan?.text ?? '' }}
       </template>
-      <template #item-coverage_up_to>
-        {{ null }}
+      <template #item-coverage_up_to="{ cyber_quote }">
+        {{ cyber_quote?.coverage ? '$ ' + cyber_quote.coverage.text : '' }}
       </template>
       <template #item-authorized_at="item">
         <p v-if="item?.payment_status?.text === 'AUTHORISED'">

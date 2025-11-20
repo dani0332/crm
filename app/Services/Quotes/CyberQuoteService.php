@@ -35,6 +35,7 @@ class CyberQuoteService extends BaseQuoteService
             'renewalBatchModel',
             'nationality',
             'insuranceProviderPlan',
+            'cyberQuote.coverage',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -48,6 +49,11 @@ class CyberQuoteService extends BaseQuoteService
             ->filterIn('insurer_aml_status')
             ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
+            ->when(request()->filled('coverage_up_to'), function ($q) {
+                $q->whereHas('cyberQuote', function ($subQuery) {
+                    $subQuery->where('coverage_id', request('coverage_up_to'));
+                });
+            })
             ->when(request()->filled('insurer_tax_invoice_number'), function ($q) {
                 $q->whereHas('payments', function ($subQuery) {
                     $subQuery->where('insurer_tax_number', request('insurer_tax_invoice_number'));
