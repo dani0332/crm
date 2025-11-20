@@ -689,6 +689,9 @@ class CentralService extends BaseService
             QuoteStatusEnum::PolicyCancelled,
             QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::PolicyCancelledReissued,
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
+            QuoteStatusEnum::PolicySentToCustomer,
         ];
 
         // Lock functionality check for Available Plans, Plan Details and Member Details
