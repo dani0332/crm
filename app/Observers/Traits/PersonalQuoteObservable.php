@@ -11,6 +11,7 @@ use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 use App\Jobs\SendAutomatedHomeRenewalFollowup;
 use App\Jobs\SendAutomatedLifeFollowup;
 use App\Jobs\SendFICEmailForLife;
@@ -27,7 +28,6 @@ use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 
 trait PersonalQuoteObservable
 {
@@ -113,7 +113,7 @@ trait PersonalQuoteObservable
                 LoggerService::info(self::class." - OCA email sent to customer for life quote {$personalQuote->uuid}");
             }
         }
-        if($personalQuote->isCyber()) {
+        if ($personalQuote->isCyber()) {
             SendCyberOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
             LoggerService::info(self::class." - OCB Intro Email sent to customer for device quote {$personalQuote->uuid}");
         }

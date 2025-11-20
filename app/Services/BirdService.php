@@ -93,7 +93,6 @@ class BirdService extends BaseService
             } elseif (! empty($response->headers['run-id'])) {
                 $runId = collect($response->headers['run-id'])->first();
             }
-          
 
             if ($runId) {
                 QuoteFlowDetails::create([

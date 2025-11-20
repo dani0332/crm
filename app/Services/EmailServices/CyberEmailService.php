@@ -32,8 +32,7 @@ class CyberEmailService extends BaseService
         $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::CYBER_OCB_INTRO_EMAIL);
 
         $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-        info("response: ".json_encode($response));
-        info("response headers: ".json_encode($response->headers));
+
         if ($response && $response->status_code === 200) {
             LoggerService::info('sendCyberOCBIntroEmail - Successfully triggered event');
     
@@ -44,7 +43,7 @@ class CyberEmailService extends BaseService
                     LoggerService::info('sendCyberOCBIntroEmail - Successfully created quote whatsapp flow details');
                 }
             }
-      
+
     }
 
     private function buildEmailData($lead, $advisor, $workflowType)
