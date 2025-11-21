@@ -203,10 +203,10 @@ class LookupService extends BaseService
     {
         $permissions = app(SendUpdateLogService::class)->checkSendUpdatePermissions();
         $permissionHash = md5(json_encode($permissions));
-        
+
         return Cache::remember(
-            "send_update_options_{$quoteTypeId}_{$permissionHash}", 
-            now()->addHour(), 
+            "send_update_options_{$quoteTypeId}_{$permissionHash}",
+            now()->addHour(),
             function () use ($quoteTypeId, $permissions) {
                 return Lookup::where([
                     'code' => LookupsEnum::SEND_UPDATE_CODE,
