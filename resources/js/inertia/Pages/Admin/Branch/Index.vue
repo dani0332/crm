@@ -105,10 +105,10 @@ onMounted(() => {
       </Link>
     </template>
 
-    <template #item-is_active="{ is_active }">
+    <template #item-status="{ status }">
       <div class="text-center">
-        <x-tag size="sm" :color="is_active ? 'success' : 'error'">
-          {{ is_active ? 'Yes' : 'No' }}
+        <x-tag size="sm" :color="status ? 'success' : 'error'">
+          {{ status ? 'Active' : 'Inactive' }}
         </x-tag>
       </div>
     </template>

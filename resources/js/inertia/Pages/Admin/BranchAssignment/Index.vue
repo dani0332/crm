@@ -256,7 +256,7 @@ const handleRemoveBranch = (userId, branchId) => {
           color="#ff5e00"
           @click="handleRemoveBranch(user_id, branch_id)"
         >
-          Remove Branch
+          Inactivate
         </x-button>
       </div>
     </template>
