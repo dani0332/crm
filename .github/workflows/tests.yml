@@ -41,4 +41,3 @@ jobs:
       - name: Run Tests with Coverage (optional)
         if: false
         run: vendor/bin/pest --coverage
-
