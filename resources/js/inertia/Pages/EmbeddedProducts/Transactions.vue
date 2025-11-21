@@ -316,16 +316,16 @@ const showCertificateNumberFilter = computed(()=>{
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
-              Certificate Number
+              EP policy number
             </label>
-            <template #tooltip> Certificate Number </template>
+            <template #tooltip> EP policy number </template>
           </x-tooltip>
           <x-input
             v-model="filters.certificate_number"
             type="search"
             name="certificate_number"
             class="w-full"
-            placeholder="Search by Certificate Number"
+            placeholder="Search by EP policy number"
           />
         </div>
 
