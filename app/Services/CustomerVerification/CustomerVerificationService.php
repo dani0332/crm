@@ -681,8 +681,6 @@ class CustomerVerificationService
             if ($yearsDifference >= 1) {
                 // Restrict to 5 years as per our policy
                 $yearsDifference = min($yearsDifference, 5);
-                /*$webFormData['uae_license_held_for_id'] = UAELicenseHeldFor::where('code', 'like', "{$yearsDifference} year%")
-                    ->first()->id;*/
 
                 if ($id = UAELicenseHeldFor::where('code', 'like', "{$yearsDifference} year%")->value('id')) {
                     $webFormData['uae_license_held_for_id'] = $id;
@@ -693,12 +691,6 @@ class CustomerVerificationService
             if ($yearsDifference < 1) {
                 $monthsDifference = (int) $driverLicenseIssueDate->diffInMonths(Carbon::now());
                 $monthsDifference = ceil($monthsDifference / 5);
-                /*$ueaLicenseHeldFor = UAELicenseHeldFor::where('code', self::MONTHS_RULES[$monthsDifference])
-                    ->first();
-
-                if ($ueaLicenseHeldFor) {
-                    $webFormData['uae_license_held_for_id'] = $ueaLicenseHeldFor->id;
-                }*/
 
                 if ($id = UAELicenseHeldFor::where('code', self::MONTHS_RULES[$monthsDifference])->value('id')) {
                     $webFormData['uae_license_held_for_id'] = $id;
