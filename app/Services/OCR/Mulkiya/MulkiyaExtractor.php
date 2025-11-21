@@ -102,7 +102,7 @@ class MulkiyaExtractor
                 'model' => $data['vehicalModel'] ?? null,
                 'vehicle_class' => $data['vehicalClass'] ?? null,
                 'vehicle_type' => $data['vehicalType'] ?? null,
-                'vehicle_make' => $data['vehicalModel'] ?? null,
+                'vehicle_make' => $data['vehicalMake'] ?? null,
                 'vehicle_make_model' => $data['vehicleMakeModel'] ?? null,
                 'origin' => $data['origin'] ?? null,
                 'number_of_passengers' => isset($data['numberOfPassengers']) ? (int) $data['numberOfPassengers'] : null,
