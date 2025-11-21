@@ -20,6 +20,8 @@ const buyForm = useForm({
 
 const loader = ref(false);
 const fetchLoader = ref(false);
+const nationalitiesLoader = ref(false);
+
 const onSubmit = isValid => {
   if (isValid) {
     loader.value = true;
@@ -52,9 +54,40 @@ const computedValueText = computed(() => {
   return buyForm.quote_type == 'Health' ? `Good` : 'Value';
 });
 
+const fetchNationalities = () => {
+  if (buyForm.quote_type !== 'CAR_CAT_A') {
+    return;
+  }
+
+  nationalitiesLoader.value = true;
+  axios
+    .post(route('admin.buy-leads.config.fetch-nationalities'), {
+      quote_type: buyForm.quote_type,
+    })
+    .then(response => {
+      let { nationalities } = response.data;
+      buyForm.nationalities = nationalities?.map(item => item.id) ?? [];
+      nationalitiesLoader.value = false;
+    })
+    .catch(error => {
+      nationalitiesLoader.value = false;
+      notification.error({
+        title: 'Error fetching nationalities',
+        position: 'top',
+      });
+    });
+};
+
 const fetchValues = () => {
   buyForm.value = '';
   buyForm.volume = '';
+
+  // For non-CAR_CAT_A, reset nationalities as they are not department-specific
+  // For CAR_CAT_A, nationalities are fetched separately when LOB changes
+  if (buyForm.quote_type !== 'CAR_CAT_A') {
+    buyForm.nationalities = [];
+  }
+
   fetchLoader.value = true;
   axios
     .post(route('admin.buy-leads.config.fetch'), {
@@ -67,7 +100,6 @@ const fetchValues = () => {
         buyForm.value = config.value;
         buyForm.volume = config.volume;
         buyForm.segment = config.segment;
-        buyForm.nationalities = config?.nationalities?.map(item => item.id) ?? [];
       } else {
         // TODO: For Now Setting Default Segment as SIC but need to remove this later
         buyForm.segment = 'sic';
@@ -76,13 +108,27 @@ const fetchValues = () => {
     })
     .catch(error => {
       fetchLoader.value = false;
-      notification.success({
+      notification.error({
         title: 'Error fetching configuration',
         position: 'top',
       });
     });
 };
 
+// Watch for LOB changes - fetch nationalities immediately for CAR_CAT_A
+watch(
+  () => buyForm.quote_type,
+  newQuoteType => {
+    if (newQuoteType === 'CAR_CAT_A') {
+      fetchNationalities();
+    } else {
+      // Clear nationalities for non-CAR_CAT_A LOBs
+      buyForm.nationalities = [];
+    }
+  },
+);
+
+// Watch for both LOB and department changes - fetch pricing config
 watch(
   [() => buyForm.quote_type, () => buyForm.department_id],
   () => {
@@ -185,11 +231,17 @@ watch(
         </div>
       </div>
     </div>
-    
-    <div class="grid sm:grid-cols-2 gap-4" v-if="buyForm.quote_type == 'CAR_CAT_A'">
-      <div class="grid sm:grid-cols-1 gap-4">
 
-        <p class="font-medium">CAT A - Nationalities</p>
+    <div
+      class="grid sm:grid-cols-2 gap-4"
+      v-if="buyForm.quote_type == 'CAR_CAT_A'"
+    >
+      <div class="grid sm:grid-cols-1 gap-4">
+        <p class="font-medium">CAT A - Nationalities (Per LOB Configuration)</p>
+        <p class="text-sm text-gray-500 -mt-2">
+          Note: Nationalities are configured per Line of Business (LOB). Changes
+          will apply to all departments within this LOB.
+        </p>
         <x-select
           placeholder="Select Nationalities"
           :options="props.nationalities"
@@ -197,10 +249,16 @@ watch(
           multiple
           v-model="buyForm.nationalities"
           :rules="[isRequired]"
+          :loading="nationalitiesLoader"
+          :disabled="nationalitiesLoader"
         >
           <template #content-footer>
             <ui-select-actions
-              @select-all="buyForm.nationalities = props.nationalities.map(item => item.value)"
+              @select-all="
+                buyForm.nationalities = props.nationalities.map(
+                  item => item.value,
+                )
+              "
               @clear="buyForm.nationalities = []"
             />
           </template>

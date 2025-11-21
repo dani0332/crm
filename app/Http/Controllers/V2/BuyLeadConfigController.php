@@ -9,9 +9,11 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BuyLeads\BuyLeadConfigUpsertRequest;
 use App\Http\Requests\BuyLeads\BuyLeadsConfigFetchRequest;
+use App\Http\Requests\BuyLeads\BuyLeadsNationalitiesFetchRequest;
 use App\Models\BuyLeadConfiguration;
+use App\Models\BuyLeadConfigurationNationality;
 use App\Models\Department;
-use App\Repositories\NationalityRepository;
+use App\Models\Nationality;
 use Illuminate\Support\Arr;
 
 class BuyLeadConfigController extends Controller
@@ -24,12 +26,7 @@ class BuyLeadConfigController extends Controller
     public function show()
     {
         $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CAR_CAT_A->value]))->values()->toArray();
-        $data['nationalities'] = NationalityRepository::withActive()->get()->map(function ($nationality) {
-            return [
-                'value' => $nationality->id,
-                'label' => $nationality->text,
-            ];
-        })->toArray();
+        $data['nationalities'] = Nationality::withActive()->options();
         $data['segments'] = BuyLeadSegment::withLabels();
         $data['departments'] = Department::where('is_active', true)->get()
             ->map(function ($department) {
@@ -50,33 +47,63 @@ class BuyLeadConfigController extends Controller
             ->where('department_id', $request->department_id);
 
         if ($isCarRevival) {
-            $baseQuery->where('source', LeadSourceEnum::REVIVAL)
-                ->with('nationalities');
+            $baseQuery->where('source', LeadSourceEnum::REVIVAL);
             $quoteTypeId = QuoteTypes::CAR->id();
         }
         $config = $baseQuery->where('quote_type_id', $quoteTypeId)->first();
 
+        if ($isCarRevival) {
+            $config?->setAttribute('nationalities',
+                BuyLeadConfigurationNationality::forQuoteType($request->quote_type)
+                    ->with('nationality')
+                    ->get()
+                    ->map(fn ($crn) => ['id' => $crn->nationality_id, 'text' => $crn->nationality->text])
+            );
+        }
+
         return response()->json(['config' => $config]);
+    }
+
+    public function fetchNationalities(BuyLeadsNationalitiesFetchRequest $request)
+    {
+        $nationalities = BuyLeadConfigurationNationality::forQuoteType($request->quote_type)
+            ->with('nationality')
+            ->get()
+            ->map(fn ($crn) => ['id' => $crn->nationality_id, 'text' => $crn->nationality->text])
+            ->values();
+
+        return response()->json(['nationalities' => $nationalities]);
     }
 
     public function upsert(BuyLeadConfigUpsertRequest $request)
     {
         $data = $request->validated();
         $isCarRevival = $request->quote_type === QuoteTypes::CAR_CAT_A->value;
+
         if ($isCarRevival) {
             $data['quote_type_id'] = QuoteTypes::CAR->id();
             $data['source'] = LeadSourceEnum::REVIVAL;
-            $buyLeadConfiguration = BuyLeadConfiguration::updateOrCreate(
+
+            // Create/update buy lead configuration (pricing per department)
+            BuyLeadConfiguration::updateOrCreate(
                 [
                     'quote_type_id' => QuoteTypes::CAR->id(),
                     'department_id' => $data['department_id'],
                     'source' => LeadSourceEnum::REVIVAL,
                 ],
-                $data
+                [
+                    'value' => $data['value'],
+                    'volume' => $data['volume'],
+                    'segment' => $data['segment'],
+                ]
             );
-            $this->syncNationalities($buyLeadConfiguration, $data['nationalities']);
+
+            // Sync nationalities per quote type (LOB-specific, independent of department)
+            if (isset($data['nationalities']) && is_array($data['nationalities'])) {
+                BuyLeadConfigurationNationality::syncNationalities($request->quote_type, $data['nationalities']);
+            }
         } else {
-            $buyLeadConfiguration = BuyLeadConfiguration::updateOrCreate(
+            BuyLeadConfiguration::updateOrCreate(
                 [
                     'quote_type_id' => $request->getQuoteTypeId(),
                     'department_id' => $data['department_id'],
@@ -86,12 +113,5 @@ class BuyLeadConfigController extends Controller
         }
 
         return to_route('admin.buy-leads.config.show');
-    }
-
-    private function syncNationalities($buyLeadConfiguration, $nationalities)
-    {
-        if (isset($nationalities) && count($nationalities) > 0) {
-            $buyLeadConfiguration->nationalities()->syncWithoutDetaching($nationalities);
-        }
     }
 }

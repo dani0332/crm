@@ -553,6 +553,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::prefix('config')->group(function () {
                 Route::get('show', [BuyLeadConfigController::class, 'show'])->name('admin.buy-leads.config.show');
                 Route::post('fetch', [BuyLeadConfigController::class, 'fetch'])->name('admin.buy-leads.config.fetch');
+                Route::post('fetch-nationalities', [BuyLeadConfigController::class, 'fetchNationalities'])->name('admin.buy-leads.config.fetch-nationalities');
                 Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
             });
         });

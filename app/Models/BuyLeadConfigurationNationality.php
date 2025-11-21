@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class BuyLeadConfigurationNationality extends Model
 {
     protected $table = 'buy_lead_configuration_nationalities';
-
     protected $fillable = [
         'quote_type',
         'nationality_id',
