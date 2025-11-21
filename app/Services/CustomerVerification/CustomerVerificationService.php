@@ -650,7 +650,6 @@ class CustomerVerificationService
                 'nationality_id' => $customerVerificationData['nationality_id'] ?? null,
                 'dob' => $customerVerificationData['date_of_birth'] ?? null,
                 'year_of_manufacture' => $customerVerificationData['carModelYear'] ?? null,
-
             ], fn ($value) => ! empty($value));
 
             // Get car make id
@@ -658,13 +657,10 @@ class CustomerVerificationService
                 $webFormData['car_make_id'] = CarMake::where('text', $customerVerificationData['carMake'])->first()?->id;
             }
 
-            // Get car make modek id
+            // Get car make model id
             if (array_key_exists('carMakeModel', $customerVerificationData)) {
                 $webFormData['car_model_id'] = CarModel::where('text', $customerVerificationData['carMakeModel'])->first()?->id;
             }
-
-            // Get car model id
-            $carModel = $customerVerificationData['carModel'] ?? null;
         }
 
         // Add registration certificate data if exists
@@ -685,18 +681,28 @@ class CustomerVerificationService
             if ($yearsDifference >= 1) {
                 // Restrict to 5 years as per our policy
                 $yearsDifference = min($yearsDifference, 5);
-                $webFormData['uae_license_held_for_id'] = UAELicenseHeldFor::where('code', 'like', "{$yearsDifference} year%")
-                    ->first()->id;
+                /*$webFormData['uae_license_held_for_id'] = UAELicenseHeldFor::where('code', 'like', "{$yearsDifference} year%")
+                    ->first()->id;*/
+
+                if ($id = UAELicenseHeldFor::where('code', 'like', "{$yearsDifference} year%")->value('id')) {
+                    $webFormData['uae_license_held_for_id'] = $id;
+                }
             }
 
             // If in months
             if ($yearsDifference < 1) {
                 $monthsDifference = (int) $driverLicenseIssueDate->diffInMonths(Carbon::now());
                 $monthsDifference = ceil($monthsDifference / 5);
-                $ueaLicenseHeldFor = UAELicenseHeldFor::where('code', self::MONTHS_RULES[$monthsDifference])
+                /*$ueaLicenseHeldFor = UAELicenseHeldFor::where('code', self::MONTHS_RULES[$monthsDifference])
                     ->first();
 
-                $webFormData['uae_license_held_for_id'] = $ueaLicenseHeldFor->id;
+                if ($ueaLicenseHeldFor) {
+                    $webFormData['uae_license_held_for_id'] = $ueaLicenseHeldFor->id;
+                }*/
+
+                if ($id = UAELicenseHeldFor::where('code', self::MONTHS_RULES[$monthsDifference])->value('id')) {
+                    $webFormData['uae_license_held_for_id'] = $id;
+                }
             }
         }
 
