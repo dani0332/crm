@@ -432,8 +432,10 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             'commmission_percentage' => $issuePolicyResult?->policyInfo?->CommissionPercentage ?? 0, // TODO: need to verify commission percentage is not coming in response
             'insurer_tax_number' => $issuePolicyResult?->policyInfo?->invoiceNo ?? null,
             'insurer_invoice_date' => $issuePolicyResult?->policyInfo?->policyIssuedDate ?? null,
-            'insurer_commmission_invoice_number' => $issuePolicyResult?->policyInfo?->creditNoteNo ?? null,
-
+            //TODO : Remove time stamp and use creditNoteNo if available
+            'insurer_commmission_invoice_number' => $issuePolicyResult?->policyInfo?->invoiceNo.'-'.now()->format('YmdHis') ?? null,
+        ]);
+        
         $response['status'] = true;
         $response['message'] = 'Policy issued successfully';
         $response['completed_step'] = self::ISSUE_POLICY;
