@@ -689,6 +689,7 @@ class CentralService extends BaseService
             QuoteStatusEnum::PolicyCancelled,
             QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::PolicyCancelledReissued,
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
         ];
 
         // Lock functionality check for Available Plans, Plan Details and Member Details
@@ -1576,7 +1577,7 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Car) {
             $emailData->carDetails = $quote?->carMake?->text.' '.$quote?->carModel?->text.' '.$quote?->carModelDetail?->text;
-            $emailData->companyName = '';   
+            $emailData->companyName = '';
             if (app(LeadAllocationService::class)->isCommercialVehicles($quote)) {
                 $emailData->companyName = $quote->company_name ?? '';
             }
@@ -1721,6 +1722,7 @@ class CentralService extends BaseService
 
                 if (empty($emailData->eCard)) {
                     LoggerService::info('E-Card not found.');
+                    $emailData->eCardExt = '';
                 } else {
                     $emailData->eCard = $storageUrl.$emailData->eCard;
                     $emailData->eCardExt = ! empty($emailData->eCard) ? pathinfo($emailData->eCard, PATHINFO_EXTENSION) : '';
