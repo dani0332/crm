@@ -1722,6 +1722,7 @@ class CentralService extends BaseService
 
                 if (empty($emailData->eCard)) {
                     LoggerService::info('E-Card not found.');
+                    $emailData->eCardExt = '';
                 } else {
                     $emailData->eCard = $storageUrl.$emailData->eCard;
                     $emailData->eCardExt = ! empty($emailData->eCard) ? pathinfo($emailData->eCard, PATHINFO_EXTENSION) : '';
