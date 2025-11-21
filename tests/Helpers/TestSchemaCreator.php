@@ -182,6 +182,17 @@ class TestSchemaCreator
                 $table->decimal('weight', 8, 2)->nullable();
                 $table->decimal('bmi', 8, 2)->nullable();
                 $table->integer('age')->nullable();
+                $table->decimal('sum_insured_value', 15, 2)->nullable();
+                $table->unsignedBigInteger('sum_insured_currency_id')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->unsignedBigInteger('marital_status_id')->nullable();
+                $table->unsignedBigInteger('purpose_of_insurance_id')->nullable();
+                $table->unsignedBigInteger('number_of_years_id')->nullable();
+                $table->boolean('is_smoker')->default(0);
+                $table->string('gender')->nullable();
+                $table->text('others_info')->nullable();
+                $table->string('uuid')->nullable();
+                $table->string('lang')->nullable();
                 $table->timestamps();
             });
         }

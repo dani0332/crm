@@ -135,5 +135,35 @@ class TestDataSeeder
             'number_of_years_id' => $numberOfYearsId,
         ];
     }
+
+    /**
+     * Create a user with Admin role for testing.
+     *
+     * @param  array  $attributes
+     * @return User
+     */
+    public static function createAdminUser(array $attributes = []): User
+    {
+        $user = self::createUser($attributes);
+
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $roleId = $db->table('roles')->where('name', \App\Enums\RolesEnum::Admin)->value('id');
+        if (! $roleId) {
+            $roleId = $db->table('roles')->insertGetId([
+                'name' => \App\Enums\RolesEnum::Admin,
+                'guard_name' => 'web',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $db->table('model_has_roles')->insertOrIgnore([
+            'role_id' => $roleId,
+            'model_type' => User::class,
+            'model_id' => $user->id,
+        ]);
+
+        return $user;
+    }
 }
 

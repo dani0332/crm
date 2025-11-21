@@ -1,0 +1,44 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        php: [8.2]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: json, dom, curl, libxml, mbstring, pdo, pdo_sqlite
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Copy environment file
+        run: cp .env.example .env || true
+
+      - name: Generate application key
+        run: php artisan key:generate || true
+
+      - name: Run Tests
+        run: vendor/bin/pest
+
+      - name: Run Tests with Coverage (optional)
+        if: false
+        run: vendor/bin/pest --coverage
+

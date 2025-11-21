@@ -1,38 +1,18 @@
 <?php
 
-use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\RolesEnum;
-use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
-use App\Services\CapiRequestService;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Config;
-use Spatie\Permission\Models\Role;
+use Tests\Helpers\LifeQuoteMockHelper;
+use Tests\Helpers\LifeQuoteTestDataBuilder;
 use Tests\Helpers\MigrationLoader;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    // Create minimal schema for required lookup tables
     TestSchemaCreator::createMinimalSchema();
-    
-    // Load external migrations (they may create additional tables)
     MigrationLoader::loadExternalMigrations();
-
-    // Seed required lookup data
     $this->lookups = TestDataSeeder::seedLifeQuoteLookups();
-
-    // Create authenticated user with Admin role to bypass permission checks
-    $this->user = TestDataSeeder::createUser();
-    
-    // Create Admin role if it doesn't exist and assign to user
-    $adminRole = Role::firstOrCreate(
-        ['name' => RolesEnum::Admin, 'guard_name' => 'web'],
-        ['created_at' => now(), 'updated_at' => now()]
-    );
-    $this->user->assignRole($adminRole);
-    
+    $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
 });
 
@@ -40,95 +20,36 @@ afterEach(function () {
     Mockery::close();
 });
 
-test('can create a life quote', function () {
-    // Generate a test UUID
+test('can create a life quote using actual controller method', function () {
     $testUuid = 'test-quote-uuid-'.uniqid();
+    $quoteData = LifeQuoteTestDataBuilder::buildQuoteData([], $this->lookups);
 
-    // Create a PersonalQuote with the UUID that will be returned by the mock
-    $personalQuote = PersonalQuote::create([
-        'uuid' => $testUuid,
-        'quote_type_id' => QuoteTypeId::Life,
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'email' => 'john.doe@example.com',
-        'mobile_no' => '+971501234567',
-        'dob' => '1990-01-15',
-        'source' => 'TEST',
-        'device' => 'DESKTOP',
-        'code' => 'TEST-'.uniqid(),
-        'created_by_id' => $this->user->id,
-    ]);
+    LifeQuoteMockHelper::mockCapiRequestService($testUuid);
 
-    // Create associated LifeQuote
-    $lifeQuote = LifeQuote::create([
-        'personal_quote_id' => $personalQuote->id,
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'email' => 'john.doe@example.com',
-        'mobile_no' => '+971501234567',
-        'height' => 175,
-        'weight' => 75,
-        'bmi' => 24.5,
-        'age' => 34,
-    ]);
-
-    // Mock CapiRequestService to return a successful response
-    $mockResponse = (object) [
-        'quoteUID' => $testUuid,
-        'msg' => null,
-        'errors' => null,
-    ];
-
-    // Mock the static method using Mockery
-    $mock = Mockery::mock('alias:'.CapiRequestService::class);
-    $mock->shouldReceive('sendCAPIRequest')
-        ->once()
-        ->with('/api/v2-save-life-quote', Mockery::type('array'))
-        ->andReturn($mockResponse);
-
-    // Prepare test data
-    $quoteData = [
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'email' => 'john.doe@gmail.com',
-        'mobile_no' => '+971501234567',
-        'dob' => '1990-01-15',
-        'sum_insured_value' => 100000,
-        'nationality_id' => $this->lookups['nationality_id'],
-        'sum_insured_currency_id' => $this->lookups['currency_id'],
-        'marital_status_id' => $this->lookups['marital_status_id'],
-        'purpose_of_insurance_id' => $this->lookups['purpose_of_insurance_id'],
-        'number_of_years_id' => $this->lookups['number_of_years_id'],
-        'is_smoker' => 0,
-        'gender' => GenericRequestEnum::MALE_SINGLE,
-        'others_info' => 'Test information',
-        'height' => 175,
-        'weight' => 75,
-        'bmi' => 24.5,
-        'age' => 34,
-    ];
-
-    // Make POST request to create life quote
     $response = $this->post(route('life-quotes-store'), $quoteData);
 
-    // Assert redirect to show page
     $response->assertRedirect(route('life-quotes-show', $testUuid));
-
-    // Assert success message
     $response->assertSessionHas('message', 'Quote is created successfully.');
 
-    // Verify PersonalQuote exists
-    $personalQuote->refresh();
-    expect($personalQuote->first_name)->toBe('John')
-        ->and($personalQuote->last_name)->toBe('Doe')
-        ->and($personalQuote->email)->toBe('john.doe@example.com');
+    $personalQuote = PersonalQuote::where('uuid', $testUuid)->firstOrFail();
+    expect($personalQuote->first_name)->toBe($quoteData['first_name'])
+        ->and($personalQuote->last_name)->toBe($quoteData['last_name'])
+        ->and($personalQuote->email)->toBe($quoteData['email'])
+        ->and($personalQuote->quote_type_id)->toBe(QuoteTypeId::Life)
+        ->and($personalQuote->created_by_id)->toBe($this->user->id);
 
-    // Verify LifeQuote was updated with the new values
-    $lifeQuote->refresh();
-    expect($lifeQuote->height)->toBe(175)
-        ->and($lifeQuote->weight)->toBe(75)
-        ->and($lifeQuote->bmi)->toBe(24.5)
-        ->and($lifeQuote->age)->toBe(34);
+    $lifeQuote = $personalQuote->lifeQuote;
+    expect($lifeQuote)->not->toBeNull()
+        ->and($lifeQuote->first_name)->toBe($quoteData['first_name'])
+        ->and($lifeQuote->last_name)->toBe($quoteData['last_name'])
+        ->and($lifeQuote->email)->toBe($quoteData['email'])
+        ->and($lifeQuote->sum_insured_value)->toBe($quoteData['sum_insured_value'])
+        ->and($lifeQuote->is_smoker)->toBe($quoteData['is_smoker'])
+        ->and($lifeQuote->gender)->toBe($quoteData['gender'])
+        ->and($lifeQuote->height)->toBe($quoteData['height'])
+        ->and($lifeQuote->weight)->toBe($quoteData['weight'])
+        ->and($lifeQuote->bmi)->toBe($quoteData['bmi'])
+        ->and($lifeQuote->age)->toBe($quoteData['age']);
 });
 
 test('validates required fields when creating life quote', function () {
@@ -153,8 +74,7 @@ test('validates required fields when creating life quote', function () {
         'bmi',
         'age',
     ]);
-    
-    // Should return validation errors, not 403
-    $response->assertStatus(302); // Redirect back with errors
+
+    $response->assertStatus(302);
 });
 
