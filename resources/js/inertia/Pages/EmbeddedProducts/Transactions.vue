@@ -111,7 +111,6 @@ function filterTransactions(isValid) {
       preserveScroll: true,
       onFinish: () => {
         loader.table = false;
-        setQueryFilters();
       },
       onBefore: () => {
         loader.table = true;
