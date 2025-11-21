@@ -38,4 +38,3 @@ expect()->extend('toBeOne', function () {
 | global functions to help you to reduce the amount of code you need to write.
 |
 */
-

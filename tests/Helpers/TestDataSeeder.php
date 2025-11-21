@@ -10,9 +10,6 @@ class TestDataSeeder
 {
     /**
      * Create a test user with authentication.
-     *
-     * @param  array  $attributes
-     * @return User
      */
     public static function createUser(array $attributes = []): User
     {
@@ -25,16 +22,12 @@ class TestDataSeeder
 
         $user = User::factory()->create(array_merge($defaults, $attributes));
         $user->setConnection('sqlite');
-        
+
         return $user;
     }
 
     /**
      * Create a user with a specific role.
-     *
-     * @param  string  $roleName
-     * @param  array  $attributes
-     * @return User
      */
     public static function createUserWithRole(string $roleName, array $attributes = []): User
     {
@@ -51,7 +44,7 @@ class TestDataSeeder
                 'updated_at' => now(),
             ]);
         }
-        
+
         // Assign role
         $db->table('model_has_roles')->insertOrIgnore([
             'role_id' => $roleId,
@@ -138,9 +131,6 @@ class TestDataSeeder
 
     /**
      * Create a user with Admin role for testing.
-     *
-     * @param  array  $attributes
-     * @return User
      */
     public static function createAdminUser(array $attributes = []): User
     {
@@ -166,4 +156,3 @@ class TestDataSeeder
         return $user;
     }
 }
-

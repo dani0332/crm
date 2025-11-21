@@ -12,9 +12,6 @@ class LifeQuoteMockHelper
 {
     /**
      * Mock CapiRequestService to simulate external API behavior.
-     *
-     * @param  string  $testUuid
-     * @return \Mockery\MockInterface
      */
     public static function mockCapiRequestService(string $testUuid): \Mockery\MockInterface
     {
@@ -31,10 +28,6 @@ class LifeQuoteMockHelper
 
     /**
      * Simulate what the CAPI service does: creates records and returns response.
-     *
-     * @param  string  $testUuid
-     * @param  array  $data
-     * @return object
      */
     private static function simulateCapiResponse(string $testUuid, array $data): object
     {
@@ -81,4 +74,3 @@ class LifeQuoteMockHelper
         ];
     }
 }
-

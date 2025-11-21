@@ -8,10 +8,6 @@ class LifeQuoteTestDataBuilder
 {
     /**
      * Build default life quote request data.
-     *
-     * @param  array  $overrides
-     * @param  array  $lookups
-     * @return array
      */
     public static function buildQuoteData(array $overrides = [], array $lookups = []): array
     {
@@ -47,9 +43,6 @@ class LifeQuoteTestDataBuilder
 
     /**
      * Build minimal valid quote data (for validation tests).
-     *
-     * @param  array  $lookups
-     * @return array
      */
     public static function buildMinimalValidData(array $lookups): array
     {
@@ -58,10 +51,6 @@ class LifeQuoteTestDataBuilder
 
     /**
      * Build quote data for a female smoker.
-     *
-     * @param  array  $overrides
-     * @param  array  $lookups
-     * @return array
      */
     public static function buildFemaleSmokerData(array $overrides = [], array $lookups = []): array
     {
@@ -75,4 +64,3 @@ class LifeQuoteTestDataBuilder
         ], $overrides), $lookups);
     }
 }
-

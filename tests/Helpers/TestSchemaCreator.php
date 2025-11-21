@@ -8,8 +8,6 @@ class TestSchemaCreator
 {
     /**
      * Create minimal required tables for LifeQuote tests.
-     *
-     * @return void
      */
     public static function createMinimalSchema(): void
     {
@@ -272,4 +270,3 @@ class TestSchemaCreator
         }
     }
 }
-

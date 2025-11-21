@@ -75,4 +75,3 @@ test('validates required fields when creating life quote', function () {
 
     $response->assertStatus(302);
 });
-
