@@ -201,14 +201,21 @@ class LookupService extends BaseService
 
     public function getSendUpdateOptions($quoteTypeId)
     {
-        return Cache::remember("send_update_options_{$quoteTypeId}", now()->addHour(), function () use ($quoteTypeId) {
-            return Lookup::where([
-                'code' => LookupsEnum::SEND_UPDATE_CODE,
-                'parent_id' => null,
-            ])
-                ->withChildTree($quoteTypeId, app(SendUpdateLogService::class)->checkSendUpdatePermissions())
-                ->get();
-        });
+        $permissions = app(SendUpdateLogService::class)->checkSendUpdatePermissions();
+        $permissionHash = md5(json_encode($permissions));
+        
+        return Cache::remember(
+            "send_update_options_{$quoteTypeId}_{$permissionHash}", 
+            now()->addHour(), 
+            function () use ($quoteTypeId, $permissions) {
+                return Lookup::where([
+                    'code' => LookupsEnum::SEND_UPDATE_CODE,
+                    'parent_id' => null,
+                ])
+                    ->withChildTree($quoteTypeId, $permissions)
+                    ->get();
+            }
+        );
     }
 
     public function getCompanyTypes()
