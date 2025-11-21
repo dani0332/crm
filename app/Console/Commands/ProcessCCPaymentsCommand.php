@@ -3,10 +3,13 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EnvEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Jobs\ProcessCCPaymentJob;
 use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
+use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
 
 class ProcessCCPaymentsCommand extends Command
@@ -30,30 +33,48 @@ class ProcessCCPaymentsCommand extends Command
      */
     public function handle()
     {
-        info('CC Payments Job Started');
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CC_PAYMENT_PROCESS_COMMAND);
+
+        $environment = app()->environment();
+
+        LoggerService::info("CC Payments Process Command Job Started in {$environment}");
+
+        // Only enable in non-production environments
+        if (! in_array($environment, [EnvEnum::PRODUCTION, EnvEnum::TEST, EnvEnum::STAGING, EnvEnum::DEVELOPMENT])) {
+            LoggerService::info("CC Payments Process Command Job Disabled in {$environment}");
+
+            return 0;
+        }
 
         $processCcPaymentsEnabled = ApplicationStorage::where('key_name', ApplicationStorageEnums::PROCESS_CC_PAYMENTS_ENABLED)->first();
 
-        if ($processCcPaymentsEnabled?->value) {
+        if (! $processCcPaymentsEnabled?->value) {
+            LoggerService::info("CC Payments Process Command Job Disabled in {$environment}");
 
-            info('CC Payments Job ProcessCcPayments Enabled');
-
-            CcPaymentProcess::where('status', PaymentProcessJobEnum::PENDING)
-                ->chunk(100, function ($pendingCCRecords) {
-                    foreach ($pendingCCRecords as $pendingCCRecord) {
-                        $splitPayment = $pendingCCRecord->splitPayment;
-                        $splitPaymentCode = $splitPayment->code;
-                        $pendingCCRecord->update(['status' => PaymentProcessJobEnum::QUEUED]);
-                        info("Payment splits code: {$splitPaymentCode} - CC payment ID: {$pendingCCRecord->id} marked as queued for processing");
-                        ProcessCCPaymentJob::dispatch($pendingCCRecord->id, $splitPaymentCode);
-                        info("Payment splits code: {$splitPaymentCode} - CC Payments Job ProcessCCPayments dispatched");
-                    }
-                });
-        } else {
-            info('CC Payments Job ProcessCcPayments are disabled');
+            return 0;
         }
 
-        info('CC Payments Job Ended');
+        LoggerService::info("CC Payments Process Command Job Enabled in {$environment}");
+
+        CcPaymentProcess::where('status', PaymentProcessJobEnum::PENDING)
+            ->chunk(100, function ($pendingCCRecords) use ($environment) {
+
+                LoggerService::info("Processing {$pendingCCRecords->count()} pending CC payments in {$environment}");
+
+                foreach ($pendingCCRecords as $pendingCCRecord) {
+                    $splitPayment = $pendingCCRecord->splitPayment;
+                    $splitPaymentCode = $splitPayment->code;
+
+                    LoggerService::info("Queueing CC payment for split code: {$splitPaymentCode} ({$environment})");
+                    $pendingCCRecord->update(['status' => PaymentProcessJobEnum::QUEUED]);
+                    LoggerService::info("CC payment queued for split: {$splitPaymentCode} ({$environment})");
+
+                    ProcessCCPaymentJob::dispatch($pendingCCRecord->id, $splitPayment->code);
+                    LoggerService::info("Dispatched CC payment job for split: {$splitPaymentCode} ({$environment})");
+                }
+            });
+
+        LoggerService::info("CC Payments Command completed in {$environment}");
 
         return 0;
     }
