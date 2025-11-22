@@ -1,11 +1,12 @@
-@@ -1,93 +1,94 @@
 name: Run Tests
+
 on:
   pull_request:
     branches:
       - develop
       - main
     types: [opened, reopened, edited, synchronize]
+
 permissions:
   contents: read
   pull-requests: write
