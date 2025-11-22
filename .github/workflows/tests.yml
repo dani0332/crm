@@ -99,19 +99,19 @@ jobs:
           script: |
             const prNumber = context.payload.pull_request.number;
             const marker = '<!-- test-summary-comment -->';
-            
+
             // Build the comment body
             const statusEmoji = process.env.TEST_OUTCOME === 'success' ? '✅' : '❌';
             const statusText = process.env.TEST_OUTCOME === 'success' ? '**All tests passed!**' : '**Tests failed!**';
             const statusBadge = process.env.TEST_OUTCOME === 'success' ? '✅ Success' : '❌ Failed';
-            
+
             const testOutput = process.env.TEST_OUTPUT || 'No output captured';
-            
+
             const commentBody = `${marker}
             ## 🧪 Test Results Summary
-            
+
             ${statusEmoji} ${statusText}
-            
+
             | Metric | Count |
             |--------|-------|
             | ✅ Passed | ${process.env.TEST_PASSED} |
@@ -120,33 +120,33 @@ jobs:
             | ⚡ Risky | ${process.env.TEST_RISKY} |
             | ⏭️ Skipped | ${process.env.TEST_SKIPPED} |
             | ⚠️ Incomplete | ${process.env.TEST_INCOMPLETE} |
-            
+
             **Status:** ${statusBadge} | **Exit Code:** \`${process.env.TEST_EXIT_CODE}\`
-            
+
             <details>
             <summary>📋 View Test Output (Last 50 lines)</summary>
-            
+
             \`\`\`text
             ${testOutput}
             \`\`\`
-            
+
             </details>
-            
+
             ---
             *This comment is automatically updated on each test run*`;
-            
+
             // Get all comments on the PR
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
             });
-            
+
             // Find existing test summary comments (by marker and bot user)
             const existingComments = comments.filter(comment => 
               comment.body.includes(marker) && comment.user.type === 'Bot'
             );
-            
+
             // Delete all existing test summary comments to prevent duplicates
             for (const comment of existingComments) {
               await github.rest.issues.deleteComment({
@@ -155,7 +155,7 @@ jobs:
                 comment_id: comment.id,
               });
             }
-            
+
             // Create new comment
             await github.rest.issues.createComment({
               owner: context.repo.owner,
