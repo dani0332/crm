@@ -88,6 +88,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
+            <!-- test-summary-comment -->
             ## 🧪 Test Results Summary
             
             ${{ steps.tests.outcome == 'success' && '✅ **All tests passed!**' || '❌ **Tests failed!**' }}
@@ -114,7 +115,6 @@ jobs:
             
             ---
             *This comment is automatically updated on each test run*
-            <!-- test-summary-comment -->
 
       - name: Run Tests with Coverage (optional)
         if: false
