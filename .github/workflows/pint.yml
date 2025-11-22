@@ -8,7 +8,47 @@ on:
     types: [opened, reopened, edited, synchronize]
 
 jobs:
+  check-php-files:
+    runs-on: ubuntu-latest
+    outputs:
+      has-php-files: ${{ steps.check.outputs.has-php-files }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for PHP files
+        id: check
+        run: |
+          # Get changed files in the PR
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # Get the base and head refs
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            
+            # Get list of changed files
+            CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR ${BASE_SHA}..${HEAD_SHA} || echo "")
+            
+            # Check if any PHP files are in the changed files
+            PHP_FILES=$(echo "$CHANGED_FILES" | grep -E '\.php$' || echo "")
+            
+            if [ -n "$PHP_FILES" ]; then
+              echo "has-php-files=true" >> $GITHUB_OUTPUT
+              echo "Found PHP files in PR:"
+              echo "$PHP_FILES"
+            else
+              echo "has-php-files=false" >> $GITHUB_OUTPUT
+              echo "No PHP files found in PR changes"
+            fi
+          else
+            # For non-PR events, default to true
+            echo "has-php-files=true" >> $GITHUB_OUTPUT
+          fi
+
   build:
+    needs: check-php-files
+    if: needs.check-php-files.outputs.has-php-files == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true

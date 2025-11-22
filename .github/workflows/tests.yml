@@ -97,17 +97,18 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = context.payload.pull_request.number;
-            const marker = '<!-- test-summary-comment -->';
-            
-            // Build the comment body
-            const statusEmoji = process.env.TEST_OUTCOME === 'success' ? '✅' : '❌';
-            const statusText = process.env.TEST_OUTCOME === 'success' ? '**All tests passed!**' : '**Tests failed!**';
-            const statusBadge = process.env.TEST_OUTCOME === 'success' ? '✅ Success' : '❌ Failed';
-            
-            const testOutput = process.env.TEST_OUTPUT || 'No output captured';
-            
-            const commentBody = `${marker}
+            try {
+              const prNumber = context.payload.pull_request.number;
+              const marker = '<!-- test-summary-comment -->';
+              
+              // Build the comment body
+              const statusEmoji = process.env.TEST_OUTCOME === 'success' ? '✅' : '❌';
+              const statusText = process.env.TEST_OUTCOME === 'success' ? '**All tests passed!**' : '**Tests failed!**';
+              const statusBadge = process.env.TEST_OUTCOME === 'success' ? '✅ Success' : '❌ Failed';
+              
+              const testOutput = process.env.TEST_OUTPUT || 'No output captured';
+              
+              const commentBody = `${marker}
             ## 🧪 Test Results Summary
             
             ${statusEmoji} ${statusText}
@@ -134,35 +135,45 @@ jobs:
             
             ---
             *This comment is automatically updated on each test run*`;
-            
-            // Get all comments on the PR
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-            });
-            
-            // Find existing test summary comments (by marker and bot user)
-            const existingComments = comments.filter(comment => 
-              comment.body.includes(marker) && comment.user.type === 'Bot'
-            );
-            
-            // Delete all existing test summary comments to prevent duplicates
-            for (const comment of existingComments) {
-              await github.rest.issues.deleteComment({
+              
+              // Get all comments on the PR
+              const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: comment.id,
+                issue_number: prNumber,
               });
+              
+              // Find existing test summary comments (by marker)
+              const existingComments = comments.filter(comment => 
+                comment.body && comment.body.includes(marker)
+              );
+              
+              // Delete all existing test summary comments to prevent duplicates
+              for (const comment of existingComments) {
+                try {
+                  await github.rest.issues.deleteComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: comment.id,
+                  });
+                } catch (error) {
+                  console.log(`Failed to delete comment ${comment.id}:`, error.message);
+                }
+              }
+              
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody,
+              });
+              
+              console.log('Test summary comment posted successfully');
+            } catch (error) {
+              console.error('Error posting test summary:', error);
+              throw error; // Re-throw to fail the step and show error in logs
             }
-            
-            // Create new comment
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body: commentBody,
-            });
 
       - name: Run Tests with Coverage (optional)
         if: false
