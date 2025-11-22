@@ -7,6 +7,10 @@ on:
       - main
     types: [opened, reopened, edited, synchronize]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -36,7 +40,81 @@ jobs:
         run: php artisan key:generate || true
 
       - name: Run Tests
-        run: vendor/bin/pest
+        id: tests
+        continue-on-error: true
+        run: |
+          set +e
+          vendor/bin/pest --log-junit test-results.xml > test-output.txt 2>&1
+          TEST_EXIT_CODE=$?
+          echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
+          
+          # Extract test summary from Pest output
+          # Pest typically shows: "Tests:    123 passed"
+          PASSED=$(grep -oE '[0-9]+\s+passed' test-output.txt | grep -oE '[0-9]+' | head -1 || echo "0")
+          FAILED=$(grep -oE '[0-9]+\s+failed' test-output.txt | grep -oE '[0-9]+' | head -1 || echo "0")
+          WARNINGS=$(grep -oE '[0-9]+\s+warnings?' test-output.txt | grep -oE '[0-9]+' | head -1 || echo "0")
+          RISKY=$(grep -oE '[0-9]+\s+risky' test-output.txt | grep -oE '[0-9]+' | head -1 || echo "0")
+          SKIPPED=$(grep -oE '[0-9]+\s+skipped' test-output.txt | grep -oE '[0-9]+' | head -1 || echo "0")
+          INCOMPLETE=$(grep -oE '[0-9]+\s+incomplete' test-output.txt | grep -oE '[0-9]+' | head -1 || echo "0")
+          
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED" >> $GITHUB_OUTPUT
+          echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
+          echo "risky=$RISKY" >> $GITHUB_OUTPUT
+          echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+          echo "incomplete=$INCOMPLETE" >> $GITHUB_OUTPUT
+          
+          # Store last 50 lines of output for summary
+          tail -50 test-output.txt > test-output-summary.txt
+          
+          exit $TEST_EXIT_CODE
+
+      - name: Read Test Output
+        id: test-output
+        if: always()
+        run: |
+          if [ -f test-output-summary.txt ]; then
+            {
+              echo 'output<<EOF'
+              cat test-output-summary.txt
+              echo EOF
+            } >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post Test Summary to PR
+        if: always() && github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## 🧪 Test Results Summary
+            
+            ${{ steps.tests.outcome == 'success' && '✅ **All tests passed!**' || '❌ **Tests failed!**' }}
+            
+            | Metric | Count |
+            |--------|-------|
+            | ✅ Passed | ${{ steps.tests.outputs.passed || '0' }} |
+            | ❌ Failed | ${{ steps.tests.outputs.failed || '0' }} |
+            | ⚠️ Warnings | ${{ steps.tests.outputs.warnings || '0' }} |
+            | ⚡ Risky | ${{ steps.tests.outputs.risky || '0' }} |
+            | ⏭️ Skipped | ${{ steps.tests.outputs.skipped || '0' }} |
+            | ⚠️ Incomplete | ${{ steps.tests.outputs.incomplete || '0' }} |
+            
+            **Status:** ${{ steps.tests.outcome == 'success' && '✅ Success' || '❌ Failed' }} | **Exit Code:** `${{ steps.tests.outputs.exit_code || 'N/A' }}`
+            
+            <details>
+            <summary>📋 View Test Output (Last 50 lines)</summary>
+            
+            ```text
+            ${{ steps.test-output.outputs.output }}
+            ```
+            
+            </details>
+            
+            ---
+            *This comment is automatically updated on each test run*
+            <!-- test-summary-comment -->
 
       - name: Run Tests with Coverage (optional)
         if: false
