@@ -83,38 +83,86 @@ jobs:
 
       - name: Post Test Summary to PR
         if: always() && github.event_name == 'pull_request'
-        uses: peter-evans/create-or-update-comment@v4
+        uses: actions/github-script@v7
+        env:
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+          TEST_PASSED: ${{ steps.tests.outputs.passed || '0' }}
+          TEST_FAILED: ${{ steps.tests.outputs.failed || '0' }}
+          TEST_WARNINGS: ${{ steps.tests.outputs.warnings || '0' }}
+          TEST_RISKY: ${{ steps.tests.outputs.risky || '0' }}
+          TEST_SKIPPED: ${{ steps.tests.outputs.skipped || '0' }}
+          TEST_INCOMPLETE: ${{ steps.tests.outputs.incomplete || '0' }}
+          TEST_EXIT_CODE: ${{ steps.tests.outputs.exit_code || 'N/A' }}
+          TEST_OUTPUT: ${{ steps.test-output.outputs.output }}
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            <!-- test-summary-comment -->
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const marker = '<!-- test-summary-comment -->';
+            
+            // Build the comment body
+            const statusEmoji = process.env.TEST_OUTCOME === 'success' ? '✅' : '❌';
+            const statusText = process.env.TEST_OUTCOME === 'success' ? '**All tests passed!**' : '**Tests failed!**';
+            const statusBadge = process.env.TEST_OUTCOME === 'success' ? '✅ Success' : '❌ Failed';
+            
+            const testOutput = process.env.TEST_OUTPUT || 'No output captured';
+            
+            const commentBody = `${marker}
             ## 🧪 Test Results Summary
-
-            ${{ steps.tests.outcome == 'success' && '✅ **All tests passed!**' || '❌ **Tests failed!**' }}
-
+            
+            ${statusEmoji} ${statusText}
+            
             | Metric | Count |
             |--------|-------|
-            | ✅ Passed | ${{ steps.tests.outputs.passed || '0' }} |
-            | ❌ Failed | ${{ steps.tests.outputs.failed || '0' }} |
-            | ⚠️ Warnings | ${{ steps.tests.outputs.warnings || '0' }} |
-            | ⚡ Risky | ${{ steps.tests.outputs.risky || '0' }} |
-            | ⏭️ Skipped | ${{ steps.tests.outputs.skipped || '0' }} |
-            | ⚠️ Incomplete | ${{ steps.tests.outputs.incomplete || '0' }} |
-
-            **Status:** ${{ steps.tests.outcome == 'success' && '✅ Success' || '❌ Failed' }} | **Exit Code:** `${{ steps.tests.outputs.exit_code || 'N/A' }}`
-
+            | ✅ Passed | ${process.env.TEST_PASSED} |
+            | ❌ Failed | ${process.env.TEST_FAILED} |
+            | ⚠️ Warnings | ${process.env.TEST_WARNINGS} |
+            | ⚡ Risky | ${process.env.TEST_RISKY} |
+            | ⏭️ Skipped | ${process.env.TEST_SKIPPED} |
+            | ⚠️ Incomplete | ${process.env.TEST_INCOMPLETE} |
+            
+            **Status:** ${statusBadge} | **Exit Code:** \`${process.env.TEST_EXIT_CODE}\`
+            
             <details>
             <summary>📋 View Test Output (Last 50 lines)</summary>
-
-            ```text
-            ${{ steps.test-output.outputs.output }}
-            ```
-
+            
+            \`\`\`text
+            ${testOutput}
+            \`\`\`
+            
             </details>
-
+            
             ---
-            *This comment is automatically updated on each test run*
+            *This comment is automatically updated on each test run*`;
+            
+            // Get all comments on the PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            // Find existing test summary comments (by marker and bot user)
+            const existingComments = comments.filter(comment => 
+              comment.body.includes(marker) && comment.user.type === 'Bot'
+            );
+            
+            // Delete all existing test summary comments to prevent duplicates
+            for (const comment of existingComments) {
+              await github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: comment.id,
+              });
+            }
+            
+            // Create new comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: commentBody,
+            });
 
       - name: Run Tests with Coverage (optional)
         if: false
