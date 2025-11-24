@@ -149,15 +149,29 @@ const discountPremiumTotal = computed(() => {
 });
 
 const totalPrice = computed(() => {
-  let totalPrice = 0;
-  totalPrice =
-    discountPremiumTotal.value + (parseFloat(editForm.ridersPrice) || 0);
-
-  return editForm.isApi &&
+  if (
+    editForm.isApi &&
     editForm.isInstantPolicy &&
     editForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
-    ? totalPrice
-    : actualPremium.value;
+  ) {
+    // metlife annually
+    const currentRidersPrice = getRiderPrice();
+    return discountPremiumTotal.value + currentRidersPrice;
+  }
+
+  if (editForm.isApi && editForm.isInstantPolicy) {
+    // metlife monthly, quarterly, semi-annually
+    const currentRidersPrice = getRiderPrice();
+    return editForm.actualPremium + currentRidersPrice;
+  }
+
+  if (editForm.isApi && !editForm.isInstantPolicy) {
+    // zurich
+    return actualPremium.value;
+  }
+
+  // manual plan
+  return actualPremium.value;
 });
 
 const toggleVisiblity = () => {
@@ -425,7 +439,13 @@ const getRiderPrice = () => {
   return totalRiderPrice;
 };
 
-watch(ridersData, newRidersData => {}, { deep: true });
+watch(ridersData, () => {
+  // Only update ridersPrice for MetLife plans (for display purposes)
+  if (editForm.isApi && editForm.isInstantPolicy) {
+    const newTotalRiderPrice = getRiderPrice();
+    editForm.ridersPrice = newTotalRiderPrice;
+  }
+}, { deep: true });
 
 // tabs
 const tabs = ref([
@@ -886,7 +906,7 @@ const getDisplayPrice = computed({
               </div>
               <div
                 class="grid grid-cols-10 items-center gap-4 p-2"
-                v-for="(rider, index) in ridersData"
+                v-for="rider in ridersData"
                 :key="rider.id"
               >
                 <div>
