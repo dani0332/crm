@@ -855,7 +855,7 @@ const getDisplayPrice = computed({
                 </div>
                 <div class="col-span-2">
                   <x-input
-                    type="number"
+                    type="text"
                     @keydown="e => preventInvalidInputs(e, false)"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="getDisplayPrice"
