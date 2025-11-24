@@ -166,6 +166,8 @@ const createForm = reactive({
   isVariant: true,
   update: false,
   getQuoteLoading: false,
+  discountPremium: null,
+  isInstantPolicy: false,
 });
 
 // Ensure numeric fields are never negative
@@ -243,6 +245,8 @@ watch(
     } else {
       ridersData.value = [];
     }
+    createForm.discountPremium = props.plan?.discountPremium ?? 0;
+    createForm.isInstantPolicy = props.plan?.instantPolicy ?? props.plan?.isInstantPolicy ?? false;
   },
   { deep: true },
 );
@@ -266,6 +270,8 @@ const getQuote = () => {
   createForm.actualPremium =
     Number(parseFloat(createForm.actualPremium).toFixed(2)) || 0;
   createForm.riders = processedRiders;
+  createForm.discountPremium =
+    Number(parseFloat(createForm.discountPremium).toFixed(2)) || 0;
 
   axios
     .post(`/personal-quotes/get-life-provider-plan`, {
@@ -293,6 +299,10 @@ const getQuote = () => {
         createForm.actualPremium = Math.max(
           0,
           Number(res.data.providerPlan.plan.actualPremium),
+        );
+        createForm.discountPremium = Math.max(
+          0,
+          Number(res.data.providerPlan.plan.discountPremium),
         );
         errorMessage.value = null;
       }
@@ -372,6 +382,8 @@ const onSubmit = () => {
   createForm.actualPremium =
     Number(parseFloat(createForm.actualPremium).toFixed(2)) || 0;
   createForm.riders = processedRiders;
+  createForm.discountPremium =
+    Number(parseFloat(createForm.discountPremium).toFixed(2)) || 0;
 
   axios
     .post('/personal-quotes/life-plan-manual-create', {
@@ -453,6 +465,10 @@ onMounted(() => {
         ? Math.max(0, Number(props.plan.actualPremium))
         : null;
     }
+    createForm.discountPremium = props.plan?.discountPremium
+      ? Math.max(0, Number(props.plan.discountPremium))
+      : null;
+    createForm.isInstantPolicy = props.plan?.instantPolicy ?? props.plan?.isInstantPolicy ?? false;
 
     // Handle rider data initialization
     if (
@@ -532,10 +548,19 @@ const validateRiderCoverValue = (value, riderId) => {
 };
 
 const formattedSumAssured = useFormattedNumberField(createForm, 'sumAssured');
+const formattedDiscountPremium = useFormattedNumberField(createForm, 'discountPremium');
 const formattedActualPremium = useFormattedNumberField(
   createForm,
   'actualPremium',
 );
+
+const totalPrice = computed(() => {
+  let totalPrice = 0;
+  totalPrice = Number(formattedDiscountPremium.value) || 0;
+  return props.plan.isApi && createForm.isInstantPolicy && createForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
+    ? totalPrice
+    : formattedActualPremium.value;
+});
 </script>
 
 <template>
@@ -673,7 +698,7 @@ const formattedActualPremium = useFormattedNumberField(
           >
           <x-input
             id="price"
-            v-model="formattedActualPremium"
+            v-model="totalPrice"
             placeholder="Enter Price"
             :rules="
               submitType === 'getQuote'
@@ -734,13 +759,13 @@ const formattedActualPremium = useFormattedNumberField(
             step="any"
             @keydown="e => preventInvalidInputs(e, true)"
             class="w-full h-10 p-2 rounded-md"
-            v-model="createForm.actualPremium"
+            v-model="totalPrice"
             disabled
           />
         </div>
         <div
           class="grid grid-cols-6 items-center gap-4 p-2 border-b mb-4"
-          v-for="(rider, index) in ridersData"
+          v-for="rider in ridersData"
           :key="rider.riderId"
         >
           <span class="text-gray-700 col-span-2">{{ rider.text }}</span>

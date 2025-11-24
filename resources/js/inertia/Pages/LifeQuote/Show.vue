@@ -407,15 +407,16 @@ const getTotalAnnualPremium = (item) => {
   if (!paymentTermTitle || !mapping[paymentTermTitle]) return 'N/A';
   
   let price = 0;
-  if (item.isApi && item.instantPolicy) {
-    // metlife
-    if (item.totalPrice === 0) {
-      if (item.actualPremium == null) return 'N/A';
-      price = item.actualPremium;
-    } else {
-      if (item.totalPrice == null) return 'N/A';
-      price = item.totalPrice;
-    }
+  if (item.isApi && item.instantPolicy && item.paymentTerm === page.props.paymentTerms?.ANNUALLY) {
+    // metlife annually
+    const discountPremium = item.discountPremium != null ? item.discountPremium : 0;
+    const ridersPrice = item.ridersPrice != null ? item.ridersPrice : 0;
+    price = discountPremium + ridersPrice;
+  } else if (item.isApi && item.instantPolicy) {
+    // metlife monthly, quarterly, semi-annually
+    const actualPremium = item.actualPremium != null ? item.actualPremium : 0;
+    const ridersPrice = item.ridersPrice != null ? item.ridersPrice : 0;
+    price = actualPremium + ridersPrice;
   } else {
     // zurich & manual plan
     if (item.isApi) {
@@ -1284,27 +1285,42 @@ const canSelectMetLifePlan = computed(() => {
 });
 
 const getDisplayPrice = item => {
-  if (item.isApi && item.instantPolicy) {
-    // metlife
-    return item.totalPrice === 0 ? item.actualPremium : item.totalPrice;
+  if (item.isApi && item.instantPolicy && item.paymentTerm === page.props.paymentTerms?.ANNUALLY) {
+    // metlife annually
+    return item.discountPremium + item.ridersPrice;
   }
+
+  if (item.isApi && item.instantPolicy) {
+    // metlife monthly, quarterly, semi-annually
+    return item.actualPremium + item.ridersPrice;
+  }
+
   if (item.isApi && !item.instantPolicy) {
     // zurich
     return item.actualPremium;
   }
+  
+  // manual plan
   return item.totalPrice;
 };
 
 const getDisplayPriceInAED = item => {
   if (!item) return 'N/A';
   
-  if (item.isApi && item.instantPolicy) {
-    // metlife
-    if (item.totalPrice === 0) {
-      return item.actualPremium != null ? item.actualPremium : 'N/A';
-    }
-    return item.totalPrice != null ? item.totalPrice : 'N/A';
+  if (item.isApi && item.instantPolicy && item.paymentTerm === page.props.paymentTerms?.ANNUALLY) {
+    // metlife annually
+    const discountPremium = item.discountPremium != null ? item.discountPremium : 0;
+    const ridersPrice = item.ridersPrice != null ? item.ridersPrice : 0;
+    return discountPremium + ridersPrice;
   }
+
+  if (item.isApi && item.instantPolicy) {
+    // metlife monthly, quarterly, semi-annually
+    const actualPremium = item.actualPremium != null ? item.actualPremium : 0;
+    const ridersPrice = item.ridersPrice != null ? item.ridersPrice : 0;
+    return actualPremium + ridersPrice;
+  }
+
   // zurich & manual plan
   return item.actualPremium != null ? item.actualPremium : 'N/A';
 };
