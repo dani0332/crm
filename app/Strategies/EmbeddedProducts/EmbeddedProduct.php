@@ -5,10 +5,12 @@ namespace App\Strategies\EmbeddedProducts;
 use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -38,6 +40,9 @@ class EmbeddedProduct
             'VEHICLE',
             'CONTRIBUTION AMOUNT',
             'POLICY ISSUE STATUS',
+            'EP Payment Status',
+            'EP API Status',
+            'EP Sage Status',
             'CERTIFICATE NUMBER',
         ];
     }
@@ -57,6 +62,9 @@ class EmbeddedProduct
             $certificate->vehicle,
             $certificate->contribution_amount,
             $certificate->status,
+            $certificate->ep_payment_status,
+            $certificate->ep_api_status,
+            $certificate->ep_sage_status,
             $certificate->certificate_number,
         ];
     }
@@ -95,6 +103,8 @@ class EmbeddedProduct
                 $emiratesIdNumber = ($customerInsured?->insured?->id_number ?? $customer?->emirates_id_number) ?? '';
             }
 
+
+
             $item->id = $item->id;
             $item->ref_id = $item->code;
             $item->payment_date = isset($item->captured_at) ? Carbon::parse($item->captured_at)->format($dateFormat) : '';
@@ -104,6 +114,11 @@ class EmbeddedProduct
             $item->name = $firstName.' '.$lastName;
             $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
             $item->status = $status;
+            $item->ep_payment_status = !empty($item->relationLoaded('paymentStatus')) ? $item->paymentStatus->text : '';
+            $item->ep_api_status = $item->policy_status ?? '';
+            $item->ep_sage_status = $item->sage_status instanceof SageEmbeddedProductEnum
+                ? $item->sage_status->value
+                : ($item->sage_status ?? '');
             $item->emirates_id_number = $emiratesIdNumber;
 
             if ($item?->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER) {
@@ -160,6 +175,7 @@ class EmbeddedProduct
             'quoteRequest.quoteStatus',
             'quoteRequest.advisor',
             'quoteRequest.quoteRequestEntityMapping',
+            'paymentStatus',
         ];
     }
 
@@ -168,6 +184,10 @@ class EmbeddedProduct
         $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
             $query->where('id', $ep->id);
         });
+
+        info("filterreport: ".print_r([
+                $this->getReportRelations()
+            ],1));
         $dataset = $productTransaction->with($this->getReportRelations())
             ->join('payments', function ($join) {
                 $join->on('embedded_transactions.id', '=', 'payments.paymentable_id')
@@ -230,10 +250,13 @@ class EmbeddedProduct
         if (isset($filters['excel_export']) && $filters['excel_export'] == true) {
             $dataset = $dataset->get();
         } else {
+            LoggerService::sql("report list: ",$dataset);
             $dataset = $dataset->simplePaginate()->withQueryString();
         }
 
         $dataset = $this->postFilterReportProcessing($dataset);
+
+        // info("dataset: ".print_r($dataset[0], true));
 
         return $dataset;
     }

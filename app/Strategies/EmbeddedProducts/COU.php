@@ -18,6 +18,7 @@ class COU extends EmbeddedProduct
             'quoteRequest.quoteStatus',
             'quoteRequest.advisor',
             'quoteRequest.quoteRequestEntityMapping',
+            'paymentStatus'
         ];
     }
 
@@ -73,5 +74,45 @@ class COU extends EmbeddedProduct
             : '';
 
         return $item;
+    }
+
+    public function getExcelColumns()
+    {
+        return [
+            'EP REF-ID',
+            'ADVISOR NAME',
+            'DATE OF ISSUANCE',
+            'PLAN COMMENCEMENT DATE',
+            'PLAN END DATE',
+            'FULL NAME',
+            'EMIRATES ID NUMBER',
+            'DOB',
+            'AGE',
+            'VEHICLE',
+            'CONTRIBUTION AMOUNT',
+            'POLICY ISSUE STATUS',
+            'EP Payment Status',
+            'CERTIFICATE NUMBER',
+        ];
+    }
+
+    public function getExcelData($certificate)
+    {
+        return [
+            $certificate->ref_id,
+            $certificate->advisor_name,
+            $certificate->payment_date,
+            $certificate->plan_start_date,
+            $certificate->plan_end_date,
+            $certificate->name,
+            $certificate->emirates_id_number,
+            $certificate->dob,
+            $certificate->age,
+            $certificate->vehicle,
+            $certificate->contribution_amount,
+            $certificate->status,
+            $certificate->ep_payment_status,
+            $certificate->certificate_number,
+        ];
     }
 }

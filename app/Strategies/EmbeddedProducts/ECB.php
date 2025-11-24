@@ -15,6 +15,9 @@ class ECB extends EmbeddedProduct
             'EMIRATES ID NUMBER',
             'Contribution Amount', // Payment Amount With VAT
             'POLICY ISSUE STATUS',
+            'EP Payment Status',
+            'EP API Status',
+            'EP Sage Status',
             'Certificate Number',
             'Model Year',
             'Make',
@@ -35,6 +38,9 @@ class ECB extends EmbeddedProduct
             $certificate->emirates_id_number,
             $certificate->contribution_amount,
             $certificate->status,
+            $certificate->ep_payment_status,
+            $certificate->ep_api_status,
+            $certificate->ep_sage_status,
             $certificate->certificate_number,
             $certificate->model_year,
             $certificate->make,
@@ -55,6 +61,7 @@ class ECB extends EmbeddedProduct
             'quoteRequest.customer.customerInsured.insured',
             'quoteRequest.quoteStatus',
             'quoteRequest.quoteRequestEntityMapping',
+            'paymentStatus'
         ];
     }
 

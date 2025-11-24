@@ -50,6 +50,11 @@ const tableHeader = [
   { text: 'Vehicle', value: 'vehicle' },
   { text: 'Contribution Amount', value: 'contribution_amount', sortable: true },
   { text: 'Policy Issue Status', value: 'status' },
+
+  { text: 'EP Payment Status', value: 'ep_payment_status' },
+  { text: 'EP API Status', value: 'ep_api_status' },
+  { text: 'EP Sage Status', value: 'ep_sage_status' },
+
   { text: 'Certificate Number', value: 'certificate_number' },
   { text: 'Model Year', value: 'model_year' },
   { text: 'Make', value: 'make' },
@@ -227,6 +232,25 @@ const filteredHeaders = computed(() => {
         'vehicle',
       ];
       return !excludeHeaders.includes(header.value);
+    } else if (
+      ![  page.props.ep_enums.ECB,
+          page.props.ep_enums.RDX,
+          page.props.ep_enums.MDX
+      ].includes(page.props.embeddedProduct.detail.short_code)) {
+
+      /** exclude these columns (from filtering out) if its -- NOT -- from ECB,RDX,MDX */
+      const excludeHeaders = [
+        'ep_api_status',
+        'ep_sage_status',
+      ];
+
+      if(page.props.embeddedProduct.detail.short_code !==
+        page.props.ep_enums.COURIER){
+        /** only exclude this column (from filtering out) for ECB,RDX,MDX AND COURIER */
+        excludeHeaders.push("ep_payment_status");
+      }
+
+      return !excludeHeaders.includes(header.value);
     } else {
       let excludeHeaders = [
         'model_year',
@@ -266,7 +290,7 @@ const filteredHeaders = computed(() => {
         <li><span class="text-gray-400">/</span></li>
         <li>
           <span class="text-sm font-semibold">
-            {{ embeddedProduct.detail.product_name }}
+            {{ embeddedProduct.detail.product_name }} {{ page.props.embeddedProduct.detail.short_code}}
           </span>
         </li>
       </ol>
@@ -326,6 +350,10 @@ const filteredHeaders = computed(() => {
             label="Name"
           />
         </div>
+
+
+
+
         <div>
           <x-tooltip placement="bottom">
             <label
@@ -368,6 +396,18 @@ const filteredHeaders = computed(() => {
             format="MM-yyyy"
           />
         </div>
+        <div v-if="embeddedProduct.detail.short_code === ep_enums.COURIER">
+          <x-select
+            v-model="filters.sync_status"
+            placeholder="Select Sync Status"
+            :options="sync_statuses"
+            class="w-full"
+            filterable
+            filterPlaceholder="Filter Sync Status...."
+            label="Sync Status"
+          />
+        </div>
+
         <div v-if="embeddedProduct.detail.short_code === ep_enums.COURIER">
           <x-select
             v-model="filters.sync_status"
