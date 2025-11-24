@@ -58,6 +58,38 @@ trait SpatieActivityLog
         $activity->feature = $feature;
         $activity->ip_address = request()->ip();
         $activity->code = $code;
+
+        // For update events, ensure both old and new values are stored
+        if ($eventName === 'updated') {
+            // Get current properties (convert to array if needed)
+            $properties = $activity->properties ?? [];
+            if (is_object($properties) && method_exists($properties, 'toArray')) {
+                $properties = $properties->toArray();
+            }
+            if (!is_array($properties)) {
+                $properties = [];
+            }
+            
+            // Get changed attributes (new values)
+            $changedAttributes = $this->getChanges();
+            
+            // Only process if there are actual changes
+            if (!empty($changedAttributes)) {
+                // Build old values array from original attributes
+                $oldValues = [];
+                foreach (array_keys($changedAttributes) as $attribute) {
+                    $oldValues[$attribute] = $this->getOriginal($attribute);
+                }
+                
+                // Ensure properties structure includes both old and attributes
+                // Preserve any existing properties but ensure old and attributes are set correctly
+                $properties['old'] = $oldValues;
+                $properties['attributes'] = $changedAttributes;
+                
+                // Update activity properties
+                $activity->properties = $properties;
+            }
+        }
     }
 
     /**
