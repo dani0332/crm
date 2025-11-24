@@ -6,6 +6,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\BuyLeads\RequestBuyLeadsRequest;
 use App\Models\BuyLeadConfiguration;
+use App\Models\BuyLeadConfigurationNationality;
 use App\Models\BuyLeadRequest;
 use App\Models\BuyLeadRequestLog;
 use App\Models\LeadAllocation;
@@ -211,14 +212,9 @@ class BuyLeadService
         return $pdf->download($pdfName);
     }
 
-    public function getCarCatANationalitiesIds()
+    public static function getNationalitiesIds(QuoteTypes $quoteType)
     {
-        $buyLeadConfiguration = BuyLeadConfiguration::latest()->where('quote_type_id', QuoteTypes::CAR->id())->where('source', LeadSourceEnum::REVIVAL)->first();
-        if (! $buyLeadConfiguration) {
-            return [];
-        }
-
-        return $buyLeadConfiguration->nationalities->pluck('id')->toArray() ?? [];
+        return BuyLeadConfigurationNationality::where('quote_type', $quoteType)->pluck('nationality_id')->toArray();
     }
 
 }
