@@ -30,9 +30,7 @@ class ActivityLog extends SpatieActivity
         'url',
         'feature',
         'ip_address',
-        'user_agent',
-        'device_type',
-        'code',
+        'code'
     ];
 
     /**

@@ -49,7 +49,10 @@ trait SpatieActivityLog
     {
         // Get feature from Context (set by LoggerService::startFeatureLogging)
         $feature = Context::get('feature') ?? null;
+
+        // Will store the code in context if necessary
         $code = Context::get('code') ?? null;
+        
         // Set extra column values
         $activity->url = request()->getRequestUri();
         $activity->feature = $feature;

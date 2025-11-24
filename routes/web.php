@@ -96,6 +96,7 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Models\BorLog;
+use App\Models\CarQuote;
 use App\Services\AddBatchForNonMotors;
 use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;
@@ -134,6 +135,17 @@ Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redire
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
+
+    Route::get('/test-activity-log', function () {
+        $quote = CarQuote::where('code', 'CAR-RX3498V7')->first();
+        $quote->update([
+            'kyc_decision' => "Test Decision ". now()->format('Y-m-d H:i:s'),
+            'insurer_aml_status' => "Test AML Status ". now()->format('Y-m-d H:i:s'),
+            'aml_status' => "Test AML Status ". now()->format('Y-m-d H:i:s'),
+        ]);
+        return 'Activity log test';
+    });
+
     Route::get('/login-as/{id}', [ImpersonateController::class, 'loginAs'])->name('login-as.id.login');
     Route::get('/leave-login-as', [ImpersonateController::class, 'leave'])->name('login-as.leave');
 

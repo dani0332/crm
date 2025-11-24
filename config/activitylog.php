@@ -11,7 +11,7 @@ return [
      * When the clean-command is executed, all recording activities older than
      * the number of days specified here will be deleted.
      */
-    'delete_records_older_than_days' => 365,
+    // 'delete_records_older_than_days' => 365,
 
     /*
      * If no log name is passed to the activity() helper
@@ -61,5 +61,5 @@ return [
      * Activities will be inserted to database when this many activities are queued.
      * Can be set to 10, 100, 1000, 10000, etc.
      */
-    'batch_size' => env('ACTIVITY_LOGGER_BATCH_SIZE', 100),
+    'batch_size' => env('ACTIVITY_LOGGER_BATCH_SIZE', 5),
 ];
