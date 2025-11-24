@@ -15,6 +15,7 @@ use Exception;
 class MetLifeException extends Exception
 {
     // Error type constants for categorization
+    public const METLIFE_INTEGRATION_DISABLED = 'metlife_integration_disabled';
     public const QUOTE_NOT_FOUND = 'quote_not_found';
     public const DOCUMENT_TYPE_NOT_FOUND = 'document_type_not_found';
     public const DOCUMENT_UPLOAD_FAILED = 'document_upload_failed';

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\MetLife;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -21,6 +22,20 @@ class MTLHealthQuestionnaireService
 
     public function syncHealthQuestionnaire(array $requestData)
     {
+        $isMetLifeEnabled = (bool) getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_METLIFE);
+
+        if (! $isMetLifeEnabled) {
+            LoggerService::warning('MetLife integration is disabled - skipping health questionnaire sync', [
+                'quote_uuid' => $requestData['quote_uuid'] ?? 'N/A',
+            ]);
+
+            throw new MetLifeException(
+                'MetLife integration is disabled',
+                MetLifeException::METLIFE_INTEGRATION_DISABLED,
+                ['quote_uuid' => $requestData['quote_uuid'] ?? null]
+            );
+        }
+
         LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($requestData['quote_uuid']));
 
         LoggerService::info('DEBUG: Starting health questionnaire sync', [

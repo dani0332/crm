@@ -126,7 +126,7 @@ class MetLifeIntegrationTest extends TestCase
 
         $this->assertFalse($result['status']);
         $this->assertEquals('MetLife integration is disabled', $result['message']);
-        $this->assertEquals('INTEGRATION_DISABLED', $result['error']);
+        $this->assertEquals('metlife_integration_disabled', $result['error']);
     }
 
     public function test_metlife_workflow_with_api_failure()
