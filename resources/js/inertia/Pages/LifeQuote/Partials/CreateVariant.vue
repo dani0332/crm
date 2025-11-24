@@ -568,6 +568,10 @@ const totalPrice = computed(() => {
     ? totalPrice
     : formattedActualPremium.value;
 });
+
+const isMetLife = computed(() => {
+  return props.plan.isApi && createForm.isInstantPolicy;
+});
 </script>
 
 <template>
@@ -736,7 +740,17 @@ const totalPrice = computed(() => {
         </div>
       </div>
 
-      <div class="mt-6">
+      <div class="mt-6" v-if="isMetLife">
+        <div class="bg-gray-100 rounded-lg p-4">
+          <p class="text-gray-700 text-sm text-center">
+            Once the variant is saved, you can add optional riders by navigating
+            to the Available Plan section and selecting "View" for the
+            corresponding plan.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6" v-if="!isMetLife">
         <h3 class="font-semibold bg-gray-100 p-4 rounded-md text-gray-700">
           RIDERS
         </h3>

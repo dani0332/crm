@@ -1144,11 +1144,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
 const totalAnnualPrice = computed(() => {
   if (!ecomDetail.value) return 'N/A';
 
-  let totalPrice =
-    (ecomDetail.value?.isManualPlan
-      ? ecomDetail.value?.totalPrice
-      : ecomDetail.value?.actualPremium) *
-    (page.props.quote?.life_quote?.payment_term ?? 1);
+  const displayPrice = getEcomDisplayPrice(ecomDetail.value);
+  const totalPrice = displayPrice * (page.props.quote?.life_quote?.payment_term ?? 1);
 
   return totalPrice;
 });
@@ -1239,12 +1236,11 @@ const enableExchangeRateEdit = () => {
 };
 
 const getTotalAnnualPriceAED = () => {
+  if (!ecomDetail.value) return 'N/A';
+
+  const displayPrice = getEcomDisplayPrice(ecomDetail.value);
   const priceInAED =
-    Math.round(
-      (ecomDetail.value?.isManualPlan
-        ? ecomDetail.value?.totalPrice * planExchangeRate.value
-        : ecomDetail.value?.actualPremium * planExchangeRate.value) * 100,
-    ) / 100;
+    Math.round(displayPrice * planExchangeRate.value * 100) / 100;
 
   return numberFormat(
     priceInAED * (page.props.quote?.life_quote?.payment_term ?? 1),
@@ -1301,6 +1297,34 @@ const getDisplayPrice = item => {
     item.isApi &&
     item.instantPolicy &&
     item.paymentTerm === page.props.paymentTerms?.ANNUALLY
+  ) {
+    // metlife annually
+    return item.discountPremium + item.ridersPrice;
+  }
+
+  if (item.isApi && item.instantPolicy) {
+    // metlife monthly, quarterly, semi-annually
+    return item.actualPremium + item.ridersPrice;
+  }
+
+  if (item.isApi && !item.instantPolicy) {
+    // zurich
+    return item.actualPremium;
+  }
+
+  // manual plan
+  return item.totalPrice;
+};
+
+const getEcomDisplayPrice = item => {
+  if (!item) return 0;
+
+  const paymentTerm = item.paymentTerm ?? page.props.quote?.life_quote?.payment_term;
+
+  if (
+    item.isApi &&
+    item.instantPolicy &&
+    paymentTerm === page.props.paymentTerms?.ANNUALLY
   ) {
     // metlife annually
     return item.discountPremium + item.ridersPrice;
@@ -2584,11 +2608,7 @@ const getDisplayPriceInAED = item => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Price</dt>
                 <dd>
-                  {{
-                    ecomDetail?.isManualPlan
-                      ? numberFormat(ecomDetail?.totalPrice)
-                      : (numberFormat(ecomDetail?.actualPremium) ?? 'N/A')
-                  }}
+                  {{ numberFormat(getEcomDisplayPrice(ecomDetail)) }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -2604,11 +2624,9 @@ const getDisplayPriceInAED = item => {
                 <dt class="font-medium uppercase">Total Price AED</dt>
                 <dd>
                   {{
-                    ecomDetail?.isManualPlan
-                      ? numberFormat(ecomDetail?.totalPrice * planExchangeRate)
-                      : numberFormat(
-                          ecomDetail?.actualPremium * planExchangeRate,
-                        )
+                    numberFormat(
+                      getEcomDisplayPrice(ecomDetail) * planExchangeRate,
+                    )
                   }}
                 </dd>
               </div>
