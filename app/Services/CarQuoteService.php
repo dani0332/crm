@@ -1203,6 +1203,7 @@ class CarQuoteService extends BaseService
         $client = new \GuzzleHttp\Client;
 
         try {
+            LoggerService::info('Calling KEN get-car-quote-plans to update plans', ['quote_uuid' => $quoteUuId, 'data' => $plansDataArr]);
             $kenRequest = $client->post(
                 $plansApiEndPoint,
                 [
