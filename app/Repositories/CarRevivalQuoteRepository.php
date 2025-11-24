@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarTypeInsurance;
@@ -63,10 +64,10 @@ class CarRevivalQuoteRepository extends BaseRepository
             ->filter();
 
         if (request()->get('is_cat_a_nationalities') == 1) {
-            $query->whereIn('nationality_id', app(BuyLeadService::class)->getCarCatANationalitiesIds());
+            $query->whereIn('nationality_id', BuyLeadService::getNationalitiesIds(QuoteTypes::CAR_CAT_A));
         }
         if (request()->get('is_cat_a_nationalities') == 0) {
-            $query->whereNotIn('nationality_id', app(BuyLeadService::class)->getCarCatANationalitiesIds());
+            $query->whereNotIn('nationality_id', BuyLeadService::getNationalitiesIds(QuoteTypes::CAR_CAT_A));
         }
         // Custom Filters
         $query->when(request()->get('quote_batch_id'), function ($query) {
