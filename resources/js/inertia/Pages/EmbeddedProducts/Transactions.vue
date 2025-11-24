@@ -290,7 +290,7 @@ const filteredHeaders = computed(() => {
         <li><span class="text-gray-400">/</span></li>
         <li>
           <span class="text-sm font-semibold">
-            {{ embeddedProduct.detail.product_name }} {{ page.props.embeddedProduct.detail.short_code}}
+            {{ embeddedProduct.detail.product_name }}
           </span>
         </li>
       </ol>

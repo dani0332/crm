@@ -185,9 +185,6 @@ class EmbeddedProduct
             $query->where('id', $ep->id);
         });
 
-        info("filterreport: ".print_r([
-                $this->getReportRelations()
-            ],1));
         $dataset = $productTransaction->with($this->getReportRelations())
             ->join('payments', function ($join) {
                 $join->on('embedded_transactions.id', '=', 'payments.paymentable_id')
@@ -255,8 +252,6 @@ class EmbeddedProduct
         }
 
         $dataset = $this->postFilterReportProcessing($dataset);
-
-        // info("dataset: ".print_r($dataset[0], true));
 
         return $dataset;
     }
