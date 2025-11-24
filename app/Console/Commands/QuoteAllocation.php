@@ -346,7 +346,7 @@ class QuoteAllocation extends Command
     {
         $processedRecords = 0;
         LoggerService::info(self::class.': Executing car revival quote allocation for cat A nationalities');
-        $nationalityIds = app(BuyLeadService::class)->getCarCatANationalitiesIds();
+        $nationalityIds = BuyLeadService::getNationalitiesIds(QuoteTypes::CAR_CAT_A);
 
         $leads = CarQuote::query()
             ->whereIn('nationality_id', $nationalityIds)

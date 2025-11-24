@@ -8,6 +8,7 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
 use App\Services\BuyLeads\BuyLeadService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -503,7 +504,7 @@ class CarQuote extends BaseModel
         $shouldIncludeDubaiNow = getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
 
         // Check if the lead is a CAT A nationality
-        $isCATANationality = $this->source == LeadSourceEnum::REVIVAL && ! in_array($this->nationality_id, app(BuyLeadService::class)->getCarCatANationalitiesIds());
+        $isCATANationality = $this->source == LeadSourceEnum::REVIVAL && ! in_array($this->nationality_id, BuyLeadService::getNationalitiesIds(QuoteTypes::CAR_CAT_A));
         // List of exempted lead sources
         $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY];
         if ($isCATANationality) {

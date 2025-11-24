@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\QuoteTypes;
 use Illuminate\Database\Eloquent\Model;
 
 class BuyLeadConfigurationNationality extends Model
@@ -11,6 +12,13 @@ class BuyLeadConfigurationNationality extends Model
         'quote_type',
         'nationality_id',
     ];
+
+    public function casts()
+    {
+        return [
+            'quote_type' => QuoteTypes::class,
+        ];
+    }
 
     public function nationality()
     {
