@@ -1554,6 +1554,8 @@ class CentralService extends BaseService
 
     private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $workflowType = null, $existingEmailData = null): void
     {
+        $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
+
         $emailData->advisorEmail = $quote->advisor->email ?? '';
         $emailData->customerName = $quote->first_name.' '.$quote->last_name;
         $emailData->advisorLandLine = $quote->advisor->landline_no ?? '';
@@ -1651,9 +1653,12 @@ class CentralService extends BaseService
             $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) ? (string) $quote->cyberPlanDetail->coverage : '-';
             $emailData->planName = $quote?->cyberPlanDetail?->planName ?? '-';
             $emailData->providerName = $quote?->cyberPlanDetail?->providerName ?? '-';
+            $emailData->policyWording = $quote?->cyberPolicyWording?->link ?? '';
+            $emailData->taxInvoice = $quoteDocuments->filter(function ($document) {
+                return $document['document_type_code'] == DocumentTypeCode::CYBER_TAX_INVOICE;
+            })->first()?->doc_url ?? '';;
         }
 
-        $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
         if (
             $quoteTypeId != QuoteTypeId::Business ||
             (

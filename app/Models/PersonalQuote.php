@@ -10,6 +10,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -609,6 +610,11 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->hasOne(CyberPlan::class, 'quoteUuid', 'uuid')->where('planId', $this->plan_id);
     }
 
+    public function cyberPolicyWording()
+    {
+        return $this->hasOne(PolicyWording::class, 'plan_id', 'plan_id');
+    }
+
     /**
      * Check if booking has failed
      *
@@ -636,7 +642,7 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function isPolicyIssuanceFailed()
     {
-        return in_array($this->insurer_api_status_id, app(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
+        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
     }
 
     public function subSource()
