@@ -742,7 +742,7 @@ const isMetLife = computed(() => {
 
       <div class="mt-6" v-if="isMetLife">
         <div class="bg-gray-100 rounded-lg p-4">
-          <p class="text-gray-700 text-sm text-center">
+          <p class="text-primary-700 text-sm text-center">
             Once the variant is saved, you can add optional riders by navigating
             to the Available Plan section and selecting "View" for the
             corresponding plan.
