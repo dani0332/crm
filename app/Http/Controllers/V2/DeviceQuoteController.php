@@ -67,12 +67,7 @@ class DeviceQuoteController extends Controller
     public function store(DeviceQuoteRequest $request)
     {
         $response = $this->deviceQuoteService->create($request->validated());
-
-        if (! empty($response->errors) || ! empty($response->msg)) {
-            vAbort($response->msg);
-        }
-
-        return redirect(route('device-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
+        return redirect(route('device-quotes-show', $response->uuid))->with('message', $response->message ?? 'Quote is created successfully.');
     }
 
     public function edit($uuid)

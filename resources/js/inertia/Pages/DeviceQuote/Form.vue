@@ -6,21 +6,85 @@ const dateFormat = date =>
 const props = defineProps({
   quote: { type: Object, default: null },
   lookUpData: { type: Object, required: true },
+  deviceMakes: { type: Array, required: true },
+
 });
 
 // Format API data for dropdowns and selects
-const nationalities = computed(() => {
-  return props.lookUpData.nationality.map(item => ({
+const mobileBrands = computed(() => {
+  return props.lookUpData?.mobileBrands?.map(item => ({
     value: item.id,
     label: item.text,
-  }));
+  })) || [];
 });
 
-const emiratesOfRegistration = computed(() => {
-  return props.lookUpData.emiratesOfRegistration.map(item => ({
+const mobileModels = computed(() => {
+  return props.lookUpData?.mobileModels?.map(item => ({
     value: item.id,
     label: item.text,
-  }));
+  })) || [];
+});
+
+const emiratesOfResidence = computed(() => {
+  return props.lookUpData?.emiratesOfResidence?.map(item => ({
+    value: item.id,
+    label: item.text,
+  })) || [];
+});
+
+// Generate year options (current year and past years)
+const currentYear = new Date().getFullYear();
+const yearOptions = computed(() => {
+  const years = [];
+  for (let year = currentYear; year >= currentYear - 10; year--) {
+    years.push({ value: year, label: year.toString() });
+  }
+  return years;
+});
+
+const deviceMakesList = computed(() => {
+  return props.deviceMakes.map(item => {
+    console.log("item",item);
+    return {
+      value: item.id,
+      label: item.text,
+      models: item.device_models?.map(model => ({
+        value: model.id,
+        label: model.text,
+      })),
+    };
+  });
+});
+
+const selectedDeviceMake = computed(() => {
+  // console.log("quoteForm",quoteForm.make_id);
+  // console.log("deviceMakesList",deviceMakesList);
+  // console.log(quoteForm.value.make_id ? true : false);
+  if (!quoteForm.make_id) {
+    return [];
+  }
+  console.log("deviceMakesList.value.find(item => item.value === quoteForm.make_id)?.models",deviceMakesList.value.find(item => item.value === quoteForm.make_id)?.models);
+  return deviceMakesList.value.find(item => item.value === quoteForm.make_id)?.models || [];
+  console.log("selectedDeviceMake",selectedDeviceMake.value);
+});
+// console.log("selectedDeviceMake",selectedDeviceMake.value);
+
+// Generate month options
+const monthOptions = computed(() => {
+  return [
+    { value: '01', label: 'January' },
+    { value: '02', label: 'February' },
+    { value: '03', label: 'March' },
+    { value: '04', label: 'April' },
+    { value: '05', label: 'May' },
+    { value: '06', label: 'June' },
+    { value: '07', label: 'July' },
+    { value: '08', label: 'August' },
+    { value: '09', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
+  ];
 });
 
 const quoteForm = useForm({
@@ -28,10 +92,11 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
-  dob: props.quote?.dob ? dateFormat(props.quote?.dob) : '',
-  nationality_id: props.quote?.nationality_id || '',
-  emirate_of_registration_id:
-  props.quote?.cyber_quote?.emirate_of_registration_id || '',
+  month_of_purchase: props.quote?.month_of_purchase || '',
+  year_of_purchase: props.quote?.year_of_purchase || '',
+  make_id: props.quote?.device_quote?.make_id || '',
+  model_id: props.quote?.device_quote?.model_id || '',
+  imei: props.quote?.device_quote?.imei || '',
 });
 
 const { isRequired, isEmail, isMobileNo, isValidName } = useRules();
@@ -40,15 +105,13 @@ const editMode = computed(() => {
   return props.quote && props.quote.uuid ? true : false;
 });
 
-const isEmptyField = ref(false);
-
 function onSubmit(isValid) {
   if (isValid) {
     quoteForm.clearErrors();
     let method = editMode.value ? 'put' : 'post';
     const url = editMode.value
-      ? route('cyber-quotes-update', props.quote.uuid)
-      : route('cyber-quotes-store');
+      ? route('device-quotes-update', props.quote.uuid)
+      : route('device-quotes-store');
 
     quoteForm.submit(method, url, {
       onError: errors => {
@@ -61,14 +124,14 @@ function onSubmit(isValid) {
 
 <template>
   <div>
-    <Head title="Cyber Quote" />
+    <Head title="Device Quote" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">
-        Cyber Quote <span v-if="quote">{{ quote?.uuid }}</span>
+        Device Quote <span v-if="quote">{{ quote?.uuid }}</span>
       </h2>
       <div>
-        <Link :href="route('cyber-quotes-list')">
-          <x-button size="sm" color="#ff5e00"> Cyber Quotes List </x-button>
+        <Link :href="route('device-quotes-list')">
+          <x-button size="sm" color="#ff5e00"> Device Quotes List </x-button>
         </Link>
       </div>
     </div>
@@ -101,59 +164,87 @@ function onSubmit(isValid) {
           :error="quoteForm.errors.last_name"
         />
         <x-input
-          v-model="quoteForm.email"
-          type="email"
-          label="Email"
-          required
-          :disabled="editMode"
-          :rules="[isRequired, isEmail]"
-          class="w-full"
-          :error="quoteForm.errors.email"
-        />
-        <x-input
           v-model="quoteForm.mobile_no"
           type="tel"
-          label="Phone Number"
+          label="Your Phone Number"
           required
           :disabled="editMode"
           :rules="[isRequired, ...(editMode ? [] : [isMobileNo])]"
           class="w-full"
           :error="quoteForm.errors.mobile_no"
         />
-
-        <DatePicker
-          v-model="quoteForm.dob"
+        <x-input
+          v-model="quoteForm.email"
+          type="email"
+          label="Your Email"
+          required
+          :disabled="editMode"
+          :rules="[isRequired, isEmail]"
           class="w-full"
+          :error="quoteForm.errors.email"
+        />
+
+        <!-- Device Details -->
+        <x-select
+          v-model="quoteForm.month_of_purchase"
+          :options="monthOptions"
+          class="w-full"
+          :error="quoteForm.errors.month_of_purchase"
           :rules="[isRequired]"
-          :max-date="new Date()"
-          label="Date of Birth"
-          format="dd-MM-yyyy"
+          label="Month of purchase"
+          placeholder="Select Month"
           required
         />
 
         <x-select
-          v-model="quoteForm.nationality_id"
-          :options="nationalities"
+          v-model="quoteForm.year_of_purchase"
+          :options="yearOptions"
           class="w-full"
-          :error="quoteForm.errors.nationality_id"
+          :error="quoteForm.errors.year_of_purchase"
           :rules="[isRequired]"
-          label="Nationality"
-          filterable
-          placeholder="Search by Nationality"
+          label="Year of purchase"
+          placeholder="Select Year"
           required
         />
 
         <x-select
-          v-model="quoteForm.emirate_of_registration_id"
-          :options="emiratesOfRegistration"
+          v-model="quoteForm.make_id"
+          :options="deviceMakesList"
           class="w-full"
-          :error="quoteForm.errors.emirate_of_registration_id"
+          :error="quoteForm.errors.make_id"
           :rules="[isRequired]"
-          label="Emirate of Registration"
+          label="Device Make"
           filterable
-          placeholder="Search by Emirate of Registration"
+          placeholder="Search by Device Make"
           required
         />
+
+        <x-select
+          v-model="quoteForm.model_id"
+          :options="selectedDeviceMake"
+          class="w-full"
+          :error="quoteForm.errors.model_id"
+          :rules="[isRequired]"
+          label="Device Model"
+          filterable
+          placeholder="Search by Mobile Model"
+          required
+        />
+
+        <x-input
+          v-model="quoteForm.imei"
+          type="text"
+          label="IMEI Number"
+          required
+          :rules="[
+            isRequired, 
+            (v) => !!v && /^\d{15}$/.test(v) || 'IMEI must be a 15-digit number.'
+          ]"
+          class="w-full"
+          :error="quoteForm.errors.imei"
+          placeholder="Enter 15 digit IMEI number"
+        />
+
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">

@@ -12,6 +12,7 @@ use App\Services\LookupService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use App\Models\DeviceMake;
 
 class DeviceQuoteService extends BaseQuoteService
 {
@@ -236,9 +237,11 @@ class DeviceQuoteService extends BaseQuoteService
     public function getFormOptions()
     {
         $lookUpData = app(LookupService::class)->getDeviceQuoteLookUpData();
+        $deviceMakes = DeviceMake::with('deviceModels')->get();
 
         return [
             'lookUpData' => $lookUpData,
+            'deviceMakes' => $deviceMakes,
         ];
     }
 
@@ -252,19 +255,22 @@ class DeviceQuoteService extends BaseQuoteService
             'lastName' => $data['last_name'],
             'email' => $data['email'],
             'mobileNo' => $data['mobile_no'],
-            'dob' => $data['dob'],
-            'nationalityId' => (int) $data['nationality_id'],
-            'emirateOfRegistrationId' => (int) $data['emirate_of_registration_id'],
+            'purchaseMonth' => $data['month_of_purchase'],
+            'purchaseYear' => $data['year_of_purchase'],
+            'phoneMakeId' => $data['make_id'],
+            'phoneModelId' => $data['model_id'],
+            'imei' => $data['imei'],
             'quoteTypeId' => (int) $this->quoteType->id(),
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
+            'whatsappConsent'=>false,
             'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
         ];
 
         // Make API request to save the savings quote
-        $response = Capi::request('/api/cyber/create', 'post', $data);
+        $response = Capi::request('/api/device/create', 'post', $data);
 
         if (isset($response->quoteUID)) {
             $this->selfAssign(QuoteTypes::Device, $response->quoteUID, true);
@@ -298,7 +304,5 @@ class DeviceQuoteService extends BaseQuoteService
     {
         return app(LookupService::class)->getDeviceCoverages();
     }
-    public function hasOtherFilters(){
-        
-    }
+   
 }

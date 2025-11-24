@@ -11,7 +11,7 @@ class DeviceQuoteRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,16 @@ class DeviceQuoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'first_name' => 'required|between:1,20',
+            'last_name' => 'required|between:1,50',
+            'email' => 'required|email:rfc,dns',
+            'mobile_no' => 'required',
+            'month_of_purchase' => 'required',
+            'year_of_purchase' => 'required',
+            'make_id' => 'required',
+            'model_id' => 'required',
+            'imei' => 'required|digits:15',
+
         ];
     }
 }
