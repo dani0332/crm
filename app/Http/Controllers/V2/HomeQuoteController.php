@@ -25,6 +25,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\Reports\RenewalBatchReportService;
 use Illuminate\Http\Request;
+use App\Services\BranchAssignmentService;
 
 class HomeQuoteController extends Controller
 {
@@ -92,6 +93,7 @@ class HomeQuoteController extends Controller
             abort(404, 'No Quote Found. Please check your details and try again.');
         }
 
+        $quote->branch_name = app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Home);
         $quoteWithData = HomeQuoteRepository::getShowFormOptions($quote);
 
         return inertia('HomeQuote/Show', $quoteWithData);

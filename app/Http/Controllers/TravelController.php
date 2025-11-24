@@ -64,6 +64,7 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Response;
 use Inertia\ResponseFactory;
 use RuntimeException;
+use App\Services\BranchAssignmentService;
 
 class TravelController extends Controller
 {
@@ -104,6 +105,8 @@ class TravelController extends Controller
         $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
         $gridData = $this->travelQuoteService->getGridData();
         $quotes = $gridData->simplePaginate(10)->withQueryString();
+        $this->travelQuoteService->postProcessTravelQuotes($quotes);
+        
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         $isManager = auth()->user()->isManagerOrDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;
@@ -282,6 +285,7 @@ class TravelController extends Controller
         }
 
         $customerAddressData = app(CustomerService::class)->getCustomerAddressData($record);
+        $record->branch_name = app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Travel);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,

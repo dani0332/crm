@@ -52,6 +52,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Services\BranchAssignmentService;
 
 class BusinessQuoteController extends Controller
 {
@@ -97,6 +98,7 @@ class BusinessQuoteController extends Controller
         $count = 0;
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $quotes = $gridData->simplePaginate(10)->withQueryString();
+        $this->businessQuoteService->postProcessBusinessQuotes($quotes);
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
         // PD Revert
@@ -288,6 +290,7 @@ class BusinessQuoteController extends Controller
 
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
+        $record->branch_name = app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Business);
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),

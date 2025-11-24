@@ -14,6 +14,7 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use App\Services\BranchAssignmentService;
 
 class CarQuoteExport implements CsvExportableInterface
 {
@@ -126,6 +127,8 @@ class CarQuoteExport implements CsvExportableInterface
      */
     public function map($quote): array
     {
+        $branchName = app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car);
+
         return [
             $quote->code,
             $quote->batch?->name,
@@ -162,7 +165,7 @@ class CarQuoteExport implements CsvExportableInterface
             $quote->updated_by,
             $quote->additional_notes,
             $quote->advisor?->name,
-            $quote->advisor?->primaryBranch?->branch?->name,
+            $branchName,
             $quote->policy_number,
             $quote->policy_expiry_date ? date(config('constants.datetime_format'), strtotime($quote->policy_expiry_date)) : '',
             $quote->is_gcc_standard ? 'Yes' : 'No',

@@ -200,7 +200,7 @@ class TravelQuoteService extends BaseService
             'ss.description as sub_source_description',
             'sso.text as sub_source_option_text',
             'sso.description as sub_source_option_description',
-            'b.name as branch_name',
+            'ub.branch_id as advisor_primary_branch_id',
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -237,8 +237,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('user_branches as ub', function ($join) {
                 $join->on('ub.user_id', '=', 'tqr.advisor_id')
                     ->where('ub.is_primary', '=', 1);
-            })
-            ->leftJoin('branches as b', 'b.id', '=', 'ub.branch_id');
+            });
     }
 
     public function getCustomerTravelInfo(int $quoteRequestId, string $quoteType)
@@ -442,6 +441,15 @@ class TravelQuoteService extends BaseService
 
         return $query;
 
+    }
+
+    public function postProcessTravelQuotes($quotes)
+    {
+        return $quotes->map(function ($quote) {
+            $quote->branch_name = app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel);
+
+            return $quote;
+        });
     }
 
     private function parseDate($date, $isStartOfDay)

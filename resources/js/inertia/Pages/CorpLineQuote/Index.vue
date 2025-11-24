@@ -157,6 +157,7 @@ const tableHeader = ref([
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
+  { text: 'BRANCH', value: 'branch_name' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
   {
     text: 'INSURER AML STATUS',

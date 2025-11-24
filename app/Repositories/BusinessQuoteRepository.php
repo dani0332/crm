@@ -45,6 +45,7 @@ class BusinessQuoteRepository extends BaseRepository
             'businessQuoteRequestDetail.lostReason',
             'quoteStatus',
             'advisor',
+            'advisor.primaryBranch',
             'supportUser',
             'businessTypeOfInsurance',
             'subSource',

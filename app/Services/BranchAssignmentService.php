@@ -2,14 +2,36 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\UserBranch;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\DB;
 use App\Enums\QuoteTypeId;
+use App\Models\Branch;
+use App\Models\BranchOverrideConfig;
+use App\Enums\EmirateEnum;
+use App\Enums\BranchEnum;
 
 class BranchAssignmentService extends BaseService
 {
+    private static $branches = [];
+    private static $branchOverrideConfigs = [];
+
+    public function __construct()
+    {
+        $this->loadBranchData();
+    }
+
+    private function loadBranchData()
+    {
+        if(empty(self::$branches)) {
+            self::$branches = Branch::all();
+        }
+
+        if(empty(self::$branchOverrideConfigs)) {
+            self::$branchOverrideConfigs = BranchOverrideConfig::active()->get();
+        }
+    }
+
     public function getGridData($request)
     {
         $dataset = UserBranch::with('user', 'user.usersroles', 'branch')
@@ -130,4 +152,71 @@ class BranchAssignmentService extends BaseService
 
         return $assignments;
     }
+
+    /**
+     * Get the branch name after applying any overrides for the quote type.
+     *
+     * @param int|null $primaryAdvisorBranchId
+     * @param int $quoteTypeId
+     * @param int|null $emirateOfYourVisaId
+     * @return string
+     */
+    public function getBranchName($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null): string
+    {
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            return $this->getHealthBranchName($primaryAdvisorBranchId, $emirateOfYourVisaId);
+        }
+
+        return $this->getBranchNameWithOverride($primaryAdvisorBranchId, $quoteTypeId);
+    }
+
+    /**
+     * Get branch name for Health quotes based on emirate and advisor branch.
+     *
+     * @param int|null $primaryAdvisorBranchId
+     * @param int|null $emirateOfYourVisaId
+     * @return string
+     */
+    private function getHealthBranchName($primaryAdvisorBranchId, $emirateOfYourVisaId): string
+    {
+        if (empty($emirateOfYourVisaId) || empty($primaryAdvisorBranchId)) {
+            return '';
+        }
+
+        // Check if emirate is Abu Dhabi
+        if ($emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
+            return BranchEnum::ABU_DHABI->name();
+        }
+
+        $branch = self::$branches->find($primaryAdvisorBranchId);
+        
+        return $branch->name ?? '';
+    }
+
+    /**
+     * Get branch name with override configuration applied.
+     *
+     * @param int|null $primaryAdvisorBranchId
+     * @param int $quoteTypeId
+     * @return string
+     */
+    private function getBranchNameWithOverride($primaryAdvisorBranchId, $quoteTypeId): string
+    {
+        if (empty($primaryAdvisorBranchId)) {
+            return '';
+        }
+
+        // Check if there's an active override configuration for this branch and quote type
+        $overrideConfig = self::$branchOverrideConfigs
+            ->where('source_branch_id', $primaryAdvisorBranchId)
+            ->where('quote_type_id', $quoteTypeId)
+            ->first();
+
+        $targetBranchId = $overrideConfig?->target_branch_id ?? $primaryAdvisorBranchId;
+        $branch = self::$branches->find($targetBranchId);
+
+        return $branch?->name ?? '';
+    }
+
+
 }

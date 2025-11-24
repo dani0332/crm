@@ -11,6 +11,7 @@ use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use App\Services\BranchAssignmentService;
 
 class TravelQuoteExport implements CsvExportableInterface
 {
@@ -87,6 +88,7 @@ class TravelQuoteExport implements CsvExportableInterface
     public function map($quote): array
     {
         $ageGroup = $this->getAgeGroup($quote);
+        $branchName = app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel);
 
         return [
             $quote->code,
@@ -97,7 +99,7 @@ class TravelQuoteExport implements CsvExportableInterface
             AMLStatusCode::getName($quote->insurer_aml_status, 'N/A') ?? '',
             $quote->sic_advisor_requested == '0' ? 'No' : 'Yes',
             optional($quote->advisor)->name,
-            $quote->advisor?->primaryBranch?->branch?->name,
+            $branchName,
             $quote->travelQuoteRequestDetail->advisor_assigned_date ?? '',
             $quote->api_issuance_status ? $quote->api_issuance_status : '',
             $quote->insurer_api_status ? $quote->insurer_api_status : '',

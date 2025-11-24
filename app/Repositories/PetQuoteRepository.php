@@ -20,6 +20,8 @@ use Config;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\BranchAssignmentService;
+use App\Enums\QuoteTypeId;
 
 class PetQuoteRepository extends BaseRepository
 {
@@ -136,7 +138,7 @@ class PetQuoteRepository extends BaseRepository
             'petQuote.petType:id,text',
             'currentlyInsuredWith',
             'advisor',
-            'advisor.primaryBranch.branch:id,name',
+            'advisor.primaryBranch',
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
             'paymentStatus',
             'payments',
@@ -219,8 +221,22 @@ class PetQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        $result = ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        if (!$forTotalLeadsCount && !$forExport) {
+            $this->postProcessPetQuote($result);
+        }
+
+        return $result;
     }
+
+    private function postProcessPetQuote($query)
+    {
+        return $query->map(function ($item) {
+            $item->branch_name = app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Pet);
+            return $item;
+        });
+    }
+
 
     /**
      * Get filter value from requestParams or request object.
@@ -264,7 +280,7 @@ class PetQuoteRepository extends BaseRepository
                 'petQuote.petType:id,text',
                 'plans:id,text',
                 'advisor',
-                'advisor.primaryBranch.branch:id,name',
+                'advisor.primaryBranch',
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
@@ -324,6 +340,7 @@ class PetQuoteRepository extends BaseRepository
         if (isset($data['latest_insured'])) {
             $quote->emirates_id_number = $data['latest_insured']['id_type'] == 'emiratesId' ? $data['latest_insured']['id_number'] : null;
         }
+        $quote->branch_name = app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Pet);
 
         return $quote;
     }

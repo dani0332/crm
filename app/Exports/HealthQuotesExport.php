@@ -9,6 +9,8 @@ use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use App\Services\BranchAssignmentService;
+use App\Enums\QuoteTypeId;
 
 class HealthQuotesExport implements CsvExportableInterface
 {
@@ -87,6 +89,7 @@ class HealthQuotesExport implements CsvExportableInterface
 
     public function map($quote): array
     {
+        $branchName = app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id);
         return [
             $quote->code,
             $quote->first_name,
@@ -95,7 +98,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->has_pec_tag ? 'Yes' : 'No',
             $quote->quoteStatus?->text,
             $quote->advisor?->name,
-            $this->healthQuoteService->getBranchName($quote->emirate_of_your_visa_id, $quote->advisor?->primaryBranch?->branch?->name),
+            $branchName,
             $quote->advisor?->email,
             $quote->wcAdvisor?->name,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),

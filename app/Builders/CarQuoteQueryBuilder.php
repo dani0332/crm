@@ -96,7 +96,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'paymentStatus:id,text',
             'quoteViewCount:quote_id,quote_type_id,user_id,visit_count',
             'advisor:id,name',
-            'advisor.primaryBranch.branch:id,name',
+            'advisor.primaryBranch',
             'carTypeInsurance:id,text',
             'customer:id,pcp_tag',
             'quoteTags:quote_uuid,name',

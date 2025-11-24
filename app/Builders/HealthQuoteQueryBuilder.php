@@ -78,7 +78,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'nationality:id,text',
             'emirate:id,text',
             'advisor:id,name,email,mobile_no,landline_no',
-            'advisor.primaryBranch.branch:id,name',
+            'advisor.primaryBranch',
             'previousAdvisor:id,name',
             'healthQuoteRequestDetail:id,health_quote_request_id,next_followup_date,transapp_code,notes,insly_id,lost_reason_id,advisor_assigned_date',
             'healthLeadType:id,text',

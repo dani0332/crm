@@ -8,6 +8,8 @@ use App\Repositories\BusinessQuoteRepository;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use App\Services\BranchAssignmentService;
+use App\Enums\QuoteTypeId;
 
 class BusinessQuoteExport implements CsvExportableInterface
 {
@@ -39,6 +41,7 @@ class BusinessQuoteExport implements CsvExportableInterface
             'POLICY NUMBER',
             'LOST REASON',
             'ADVISOR',
+            'BRANCH',
             'LEAD STATUS',
             'CREATED DATE',
             'ADVISOR ASSIGNED DATE',
@@ -59,6 +62,7 @@ class BusinessQuoteExport implements CsvExportableInterface
 
     public function map($quote): array
     {
+        $branch = app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Business);
         return [
             $quote->code,
             $quote->first_name,
@@ -69,6 +73,7 @@ class BusinessQuoteExport implements CsvExportableInterface
             $quote->policy_number,
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,
             optional($quote->advisor)->name,
+            $branch,
             optional($quote->quoteStatus)->text,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             isset($quote->businessQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->businessQuoteRequestDetail->advisor_assigned_date)) : '',

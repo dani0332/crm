@@ -50,6 +50,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use App\Services\BranchAssignmentService;
 
 class HomeQuoteRepository extends BaseRepository
 {
@@ -141,8 +142,20 @@ class HomeQuoteRepository extends BaseRepository
                 })
             );
 
+        if (!$forTotalLeadsCount && !$forExport) {
+            $this->postProcessHomeQuote($query);
+        }
+
         // logger()->debug("toRawSql: " . $query->toRawSql());
         return $query;
+    }
+
+    private function postProcessHomeQuote($query)
+    {
+        return $query->map(function ($item) {
+            $item->branch_name = app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Home);
+            return $item;
+        });
     }
 
     /**
