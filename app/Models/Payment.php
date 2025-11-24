@@ -12,10 +12,11 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable;
+use App\Traits\SpatieActivityLog;
 
 class Payment extends Model implements Auditable
 {
-    use AuditableTrait;
+    use AuditableTrait, SpatieActivityLog;
 
     protected $activityLogName = 'Payment';
 

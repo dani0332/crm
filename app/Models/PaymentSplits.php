@@ -11,10 +11,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable;
+use App\Traits\SpatieActivityLog;
 
 class PaymentSplits extends Model implements Auditable
 {
-    use AuditableTrait, HasFactory;
+    use AuditableTrait, HasFactory, SpatieActivityLog;
 
     protected $activityLogName = 'Payment Split';
 
