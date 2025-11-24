@@ -1134,18 +1134,21 @@ class AMLService
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningFailed];
 
+                $actionRequired = 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection';
+                $statusAPIFailed = 'Quote Finalized But Premium Not Matched';
+                
                 LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob', extra: [
-                    'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
-                    'statusAPIFailed' => 'Quote Finalized But Premium Not Matched',
-                    'processInvolved' => 'Quote Finalization',
+                    'actionRequired' => $actionRequired,
+                    'statusAPIFailed' => $statusAPIFailed,
+                    'processInvolved' => PolicyIssuanceEnum::PROCESS_INVOLVED_QUOTE_FINALIZATION,
                 ]);
 
                 AutomationFailedJob::dispatch(
                     $quoteDetails->id,
                     QuoteTypeId::Car,
-                    'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
-                    'Quote Finalized But Premium Not Matched',
-                    'Quote Finalization',
+                    $actionRequired,
+                    $statusAPIFailed,
+                    PolicyIssuanceEnum::PROCESS_INVOLVED_QUOTE_FINALIZATION,
                     WorkflowTypeEnum::CAR_AUTOMATION_FAILED
                 )->onQueue('policy-issuance-automation');
             }
