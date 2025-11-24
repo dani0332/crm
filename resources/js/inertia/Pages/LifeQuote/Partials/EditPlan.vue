@@ -995,7 +995,7 @@ const getDisplayPrice = computed({
         <div class="flex justify-between gap-4">
           <!-- Price section aligned to the left -->
           <dl class="flex flex-row">
-            <dt class="font-bold text-lg ml-4">Total Price: 1</dt>
+            <dt class="font-bold text-lg ml-4">Total Price:</dt>
             <dd class="text-lg">
               &nbsp; {{ editForm.currency }} {{ numberFormat(totalPrice) }}
             </dd>
@@ -1046,7 +1046,7 @@ const getDisplayPrice = computed({
           <div class="flex flex-col">
             <p v-if="errorMessage" class="text-red-600">{{ errorMessage }}</p>
             <dl class="flex flex-row">
-              <dt class="font-bold text-sm ml-4">Total Price: 2</dt>
+              <dt class="font-bold text-sm ml-4">Total Price:</dt>
               <dd class="text-sm">
                 &nbsp; {{ editForm.currency }} {{ numberFormat(totalPrice) }}
               </dd>
@@ -1105,7 +1105,7 @@ const getDisplayPrice = computed({
 
             <!-- Total Price section -->
             <div class="flex items-center">
-              <span class="font-bold mr-2">Total Price: 3</span>
+              <span class="font-bold mr-2">Total Price:</span>
               <span class="">
                 {{ editForm.currency }} {{ numberFormat(totalPrice) }}
               </span>
