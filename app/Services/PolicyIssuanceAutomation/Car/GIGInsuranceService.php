@@ -26,7 +26,6 @@ use App\Jobs\OCR\PopulateDocumentData;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
-use App\Models\PolicyIssuance;
 use App\Models\User;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;

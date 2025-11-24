@@ -1136,7 +1136,7 @@ class AMLService
 
                 $actionRequired = 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection';
                 $statusAPIFailed = 'Quote Finalized But Premium Not Matched';
-                
+
                 LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob', extra: [
                     'actionRequired' => $actionRequired,
                     'statusAPIFailed' => $statusAPIFailed,

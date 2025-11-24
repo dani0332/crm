@@ -2196,7 +2196,7 @@ class CentralService extends BaseService
                         'statusAPIFailed' => $statusAPIFailed,
                         'processInvolved' => PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,
                     ]);
-    
+
                     AutomationFailedJob::dispatch(
                         $quote->id,
                         QuoteTypeId::Car,
