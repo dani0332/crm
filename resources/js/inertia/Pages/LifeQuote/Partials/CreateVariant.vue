@@ -560,12 +560,11 @@ const formattedActualPremium = useFormattedNumberField(
 );
 
 const totalPrice = computed(() => {
-  let totalPrice = 0;
-  totalPrice = Number(formattedDiscountPremium.value) || 0;
+  const discountPremium = cleanFormattedValueToFloat(formattedDiscountPremium.value) || 0;
   return props.plan.isApi &&
     createForm.isInstantPolicy &&
     createForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
-    ? totalPrice
+    ? discountPremium
     : formattedActualPremium.value;
 });
 
