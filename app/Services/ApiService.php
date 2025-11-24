@@ -583,7 +583,12 @@ class ApiService
             }
         } catch (\Exception $e) {
             LoggerService::error(self::class.': Verify missing docs failed', exception: $e);
-            return ['success' => false, 'message' => 'Verify missing docs failed: '.$e->getMessage()];
+            return [
+                'success' => false,
+                'message' => 'Verify missing docs failed: '.$e->getMessage(),
+                'isDocumentMissing' => null,
+                'missingDocuments' => null,
+            ];
         }
     }
 }
