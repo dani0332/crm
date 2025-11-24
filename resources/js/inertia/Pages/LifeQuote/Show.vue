@@ -393,9 +393,9 @@ const getPaymentTermTitle = months => {
   return mapping[months] || '';
 };
 
-const getTotalAnnualPremium = (item) => {
+const getTotalAnnualPremium = item => {
   if (!item) return 'N/A';
-  
+
   const paymentTermTitle = getPaymentTermTitle(item.paymentTerm);
   const mapping = {
     Monthly: 12,
@@ -403,13 +403,18 @@ const getTotalAnnualPremium = (item) => {
     'Semi-Annually': 2,
     Annually: 1,
   };
-  
+
   if (!paymentTermTitle || !mapping[paymentTermTitle]) return 'N/A';
-  
+
   let price = 0;
-  if (item.isApi && item.instantPolicy && item.paymentTerm === page.props.paymentTerms?.ANNUALLY) {
+  if (
+    item.isApi &&
+    item.instantPolicy &&
+    item.paymentTerm === page.props.paymentTerms?.ANNUALLY
+  ) {
     // metlife annually
-    const discountPremium = item.discountPremium != null ? item.discountPremium : 0;
+    const discountPremium =
+      item.discountPremium != null ? item.discountPremium : 0;
     const ridersPrice = item.ridersPrice != null ? item.ridersPrice : 0;
     price = discountPremium + ridersPrice;
   } else if (item.isApi && item.instantPolicy) {
@@ -427,7 +432,7 @@ const getTotalAnnualPremium = (item) => {
       price = item.totalPrice;
     }
   }
-  
+
   const value = price * mapping[paymentTermTitle];
   return numberFormat(value);
 };
@@ -978,7 +983,10 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('document-notification', handleDocumentNotification);
+  window.removeEventListener(
+    'document-notification',
+    handleDocumentNotification,
+  );
 });
 
 const onLoadAvailablePlansData = async () => {
@@ -1268,7 +1276,7 @@ const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 
 const isMetLife = item => {
   if (!item) return false;
-  
+
   return item.providerCode === insuranceProviderCodeEnum?.MTL;
 };
 
@@ -1276,16 +1284,24 @@ const canSelectMetLifePlan = computed(() => {
   const quote = page.props.quote;
   if (!quote) return false;
 
-  const isApplicationPending = quote.quote_status_id === page.props.quoteStatusEnum?.ApplicationPending;
-  const hasHealthQuestionnaire = quote.documents?.some(
-    doc => doc.document_type_code === documentTypeCodeEnum?.LIFE_HEALTH_QUESTIONNAIRE
-  ) ?? false;
+  const isApplicationPending =
+    quote.quote_status_id === page.props.quoteStatusEnum?.ApplicationPending;
+  const hasHealthQuestionnaire =
+    quote.documents?.some(
+      doc =>
+        doc.document_type_code ===
+        documentTypeCodeEnum?.LIFE_HEALTH_QUESTIONNAIRE,
+    ) ?? false;
 
   return isApplicationPending && hasHealthQuestionnaire;
 });
 
 const getDisplayPrice = item => {
-  if (item.isApi && item.instantPolicy && item.paymentTerm === page.props.paymentTerms?.ANNUALLY) {
+  if (
+    item.isApi &&
+    item.instantPolicy &&
+    item.paymentTerm === page.props.paymentTerms?.ANNUALLY
+  ) {
     // metlife annually
     return item.discountPremium + item.ridersPrice;
   }
@@ -1299,17 +1315,22 @@ const getDisplayPrice = item => {
     // zurich
     return item.actualPremium;
   }
-  
+
   // manual plan
   return item.totalPrice;
 };
 
 const getDisplayPriceInAED = item => {
   if (!item) return 'N/A';
-  
-  if (item.isApi && item.instantPolicy && item.paymentTerm === page.props.paymentTerms?.ANNUALLY) {
+
+  if (
+    item.isApi &&
+    item.instantPolicy &&
+    item.paymentTerm === page.props.paymentTerms?.ANNUALLY
+  ) {
     // metlife annually
-    const discountPremium = item.discountPremium != null ? item.discountPremium : 0;
+    const discountPremium =
+      item.discountPremium != null ? item.discountPremium : 0;
     const ridersPrice = item.ridersPrice != null ? item.ridersPrice : 0;
     return discountPremium + ridersPrice;
   }
@@ -1324,7 +1345,6 @@ const getDisplayPriceInAED = item => {
   // zurich & manual plan
   return item.actualPremium != null ? item.actualPremium : 'N/A';
 };
-
 </script>
 <template>
   <div>
@@ -2487,7 +2507,11 @@ const getDisplayPriceInAED = item => {
                       >
 
                       <x-tooltip
-                        v-else-if="!item.isDisabled && isMetLife(item) && !canSelectMetLifePlan"
+                        v-else-if="
+                          !item.isDisabled &&
+                          isMetLife(item) &&
+                          !canSelectMetLifePlan
+                        "
                         placement="top"
                       >
                         <x-button
@@ -2499,12 +2523,16 @@ const getDisplayPriceInAED = item => {
                           Select
                         </x-button>
                         <template #tooltip>
-                          This plan cannot be manually selected. To proceed, you can guide the client to click 'Buy Now'.
+                          This plan cannot be manually selected. To proceed, you
+                          can guide the client to click 'Buy Now'.
                         </template>
                       </x-tooltip>
 
                       <x-button
-                        v-else-if="!item.isDisabled && (!isMetLife(item) || canSelectMetLifePlan)"
+                        v-else-if="
+                          !item.isDisabled &&
+                          (!isMetLife(item) || canSelectMetLifePlan)
+                        "
                         size="xs"
                         color="emerald"
                         outlined

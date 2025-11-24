@@ -150,9 +150,12 @@ const discountPremiumTotal = computed(() => {
 
 const totalPrice = computed(() => {
   let totalPrice = 0;
-  totalPrice = discountPremiumTotal.value + (parseFloat(editForm.ridersPrice) || 0);
+  totalPrice =
+    discountPremiumTotal.value + (parseFloat(editForm.ridersPrice) || 0);
 
-  return editForm.isApi && editForm.isInstantPolicy && editForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
+  return editForm.isApi &&
+    editForm.isInstantPolicy &&
+    editForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
     ? totalPrice
     : actualPremium.value;
 });
@@ -203,8 +206,10 @@ const onSubmit = () => {
     loading: Number(parseFloat(rider.loading).toFixed(2)) || 0,
     finalPrice: Number(parseFloat(rider.finalPrice).toFixed(2)) || 0,
     coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
-    monthlyPremium: Number(parseFloat(rider?.monthlyPremium ?? 0).toFixed(2)) || 0,
-    annualPremium: Number(parseFloat(rider?.annualPremium ?? 0).toFixed(2)) || 0,
+    monthlyPremium:
+      Number(parseFloat(rider?.monthlyPremium ?? 0).toFixed(2)) || 0,
+    annualPremium:
+      Number(parseFloat(rider?.annualPremium ?? 0).toFixed(2)) || 0,
     slug: rider?.slug ?? '',
   }));
 
@@ -572,18 +577,30 @@ const validateRiderCoverValue = (value, riderId) => {
   return true;
 };
 const formattedSumAssured = useFormattedNumberField(editForm, 'sumAssured');
-const formattedActualPremium = useFormattedNumberField(editForm, 'actualPremium');
-const formattedDiscountPremium = useFormattedNumberField(editForm, 'discountPremium');
+const formattedActualPremium = useFormattedNumberField(
+  editForm,
+  'actualPremium',
+);
+const formattedDiscountPremium = useFormattedNumberField(
+  editForm,
+  'discountPremium',
+);
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 
 const getDisplayPrice = computed({
   get: () => {
-    return editForm.isApi && editForm.isInstantPolicy && editForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
+    return editForm.isApi &&
+      editForm.isInstantPolicy &&
+      editForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
       ? formattedDiscountPremium.value
       : formattedActualPremium.value;
   },
   set: value => {
-    if (editForm.isApi && editForm.isInstantPolicy && editForm.paymentTerm === props.paymentTermEnum?.ANNUALLY) {
+    if (
+      editForm.isApi &&
+      editForm.isInstantPolicy &&
+      editForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
+    ) {
       formattedDiscountPremium.value = value;
     } else {
       formattedActualPremium.value = value;

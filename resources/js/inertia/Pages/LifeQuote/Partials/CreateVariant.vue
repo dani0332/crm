@@ -246,7 +246,8 @@ watch(
       ridersData.value = [];
     }
     createForm.discountPremium = props.plan?.discountPremium ?? 0;
-    createForm.isInstantPolicy = props.plan?.instantPolicy ?? props.plan?.isInstantPolicy ?? false;
+    createForm.isInstantPolicy =
+      props.plan?.instantPolicy ?? props.plan?.isInstantPolicy ?? false;
   },
   { deep: true },
 );
@@ -468,7 +469,8 @@ onMounted(() => {
     createForm.discountPremium = props.plan?.discountPremium
       ? Math.max(0, Number(props.plan.discountPremium))
       : null;
-    createForm.isInstantPolicy = props.plan?.instantPolicy ?? props.plan?.isInstantPolicy ?? false;
+    createForm.isInstantPolicy =
+      props.plan?.instantPolicy ?? props.plan?.isInstantPolicy ?? false;
 
     // Handle rider data initialization
     if (
@@ -548,7 +550,10 @@ const validateRiderCoverValue = (value, riderId) => {
 };
 
 const formattedSumAssured = useFormattedNumberField(createForm, 'sumAssured');
-const formattedDiscountPremium = useFormattedNumberField(createForm, 'discountPremium');
+const formattedDiscountPremium = useFormattedNumberField(
+  createForm,
+  'discountPremium',
+);
 const formattedActualPremium = useFormattedNumberField(
   createForm,
   'actualPremium',
@@ -557,7 +562,9 @@ const formattedActualPremium = useFormattedNumberField(
 const totalPrice = computed(() => {
   let totalPrice = 0;
   totalPrice = Number(formattedDiscountPremium.value) || 0;
-  return props.plan.isApi && createForm.isInstantPolicy && createForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
+  return props.plan.isApi &&
+    createForm.isInstantPolicy &&
+    createForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
     ? totalPrice
     : formattedActualPremium.value;
 });
