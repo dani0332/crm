@@ -1650,8 +1650,7 @@ class CentralService extends BaseService
         ) {
             $handBookDocuments = $existingEmailData->handBookDocuments ?? [];
             if (! empty($handBookDocuments)) {
-                // Get the latest document from the array
-                $latestDocument = collect($handBookDocuments)->last();
+                $latestDocument = $quoteTypeId == QuoteTypeId::Health ? collect($handBookDocuments)->first() : collect($handBookDocuments)->last();
                 $url = $latestDocument['url'] ?? null;
 
                 if ($url) {
