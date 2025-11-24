@@ -17,6 +17,8 @@ class Payment extends Model implements Auditable
 {
     use AuditableTrait;
 
+    protected $activityLogName = 'Payment';
+
     protected $auditEvents = [
         'updated',
     ];

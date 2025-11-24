@@ -16,6 +16,8 @@ class PaymentSplits extends Model implements Auditable
 {
     use AuditableTrait, HasFactory;
 
+    protected $activityLogName = 'Payment Split';
+
     protected $auditEvents = [
         'updated',
     ];

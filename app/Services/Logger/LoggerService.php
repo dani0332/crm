@@ -10,9 +10,17 @@ use Illuminate\Support\Facades\Log;
 
 class LoggerService
 {
-    public static function startFeatureLogging(LoggerFeatureEnum $feature)
+    public static function startFeatureLogging(LoggerFeatureEnum $feature, $code = null)
     {
         Log::withContext(['feature' => $feature->value]);
+
+        // Add feature to context for activity log
+        Context::add('feature', $feature->value);
+
+        // Add code to context for activity log
+        if ($code !== null) {
+            Context::add('code', $code);
+        }
     }
 
     public static function startQuoteLogging(Model|string|null $lead, ?LoggerFeatureEnum $feature = null)
