@@ -572,6 +572,14 @@ class ApiService
                     }
 
                     break;
+                default:
+                    LoggerService::warning(self::class.': Unsupported quote type for verify missing docs', ['quote_type' => $quoteType]);
+                    return [
+                        'success' => false,
+                        'message' => 'Unsupported quote type. Missing docs verification is only available for CAR quotes.',
+                        'isDocumentMissing' => null,
+                        'missingDocuments' => null,
+                    ];
             }
         } catch (\Exception $e) {
             LoggerService::error(self::class.': Verify missing docs failed', exception: $e);
