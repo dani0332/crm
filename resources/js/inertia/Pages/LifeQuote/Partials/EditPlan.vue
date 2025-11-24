@@ -439,13 +439,17 @@ const getRiderPrice = () => {
   return totalRiderPrice;
 };
 
-watch(ridersData, () => {
-  // Only update ridersPrice for MetLife plans (for display purposes)
-  if (editForm.isApi && editForm.isInstantPolicy) {
-    const newTotalRiderPrice = getRiderPrice();
-    editForm.ridersPrice = newTotalRiderPrice;
-  }
-}, { deep: true });
+watch(
+  ridersData,
+  () => {
+    // Only update ridersPrice for MetLife plans (for display purposes)
+    if (editForm.isApi && editForm.isInstantPolicy) {
+      const newTotalRiderPrice = getRiderPrice();
+      editForm.ridersPrice = newTotalRiderPrice;
+    }
+  },
+  { deep: true },
+);
 
 // tabs
 const tabs = ref([
