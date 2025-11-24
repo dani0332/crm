@@ -271,7 +271,7 @@ class HealthQuoteService extends BaseService
 
     public function getBranchName($emirateOfYourVisaId, $advisorBranchName): string
     {
-        if (empty($emirateOfYourVisaId) && empty($advisorBranchName)) {
+        if (empty($emirateOfYourVisaId) || empty($advisorBranchName)) {
             return '';
         }
 

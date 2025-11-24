@@ -96,7 +96,7 @@ class BranchAssignmentService extends BaseService
     public function hasBranchAssignment($quote, $quoteTypeId): bool
     {
         $hasBranch = $quoteTypeId == QuoteTypeId::Health
-            ? ($quote->advisor?->primaryBranch()->exists() || $quote->emirate_of_your_visa_id !== null)
+            ? ($quote->advisor?->primaryBranch()->exists() && $quote->emirate_of_your_visa_id !== null)
             : $quote->advisor?->primaryBranch()->exists();
 
         if (!$hasBranch) {
