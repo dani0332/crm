@@ -411,7 +411,7 @@ const computeddeviceCoverages = computed(() => {
         <div v-if="readOnlyMode.isDisable === true">
           <Link :href="route('device-quotes-create')">
             <x-button
-              v-if="can(permissionsEnum.device_QUOTES_CREATE)"
+              v-if="can(permissionsEnum.DEVICE_QUOTES_CREATE)"
               size="sm"
               color="#ff5e00"
               :href="route('device-quotes-create')"
