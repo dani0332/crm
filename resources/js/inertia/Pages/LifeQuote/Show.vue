@@ -1358,18 +1358,18 @@ const getDisplayPriceInAED = item => {
     const discountPremium =
       item.discountPremium != null ? item.discountPremium : 0;
     const ridersPrice = item.ridersPrice != null ? item.ridersPrice : 0;
-    return discountPremium + ridersPrice;
+    return numberFormat(discountPremium + ridersPrice);
   }
 
   if (item.isApi && item.instantPolicy) {
     // metlife monthly, quarterly, semi-annually
     const actualPremium = item.actualPremium != null ? item.actualPremium : 0;
     const ridersPrice = item.ridersPrice != null ? item.ridersPrice : 0;
-    return actualPremium + ridersPrice;
+    return numberFormat(actualPremium + ridersPrice);
   }
 
   // zurich & manual plan
-  return item.actualPremium != null ? item.actualPremium : 'N/A';
+  return item.actualPremium != null ? numberFormat(item.actualPremium) : 'N/A';
 };
 </script>
 <template>
