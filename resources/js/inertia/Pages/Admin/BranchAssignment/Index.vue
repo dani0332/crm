@@ -293,6 +293,7 @@ const handleRemoveBranch = (userId, branchId) => {
         filterPlaceholder="Filter advisor...."
         required
         :error="$page.props.errors.user_id"
+        filterable
       />
 
       <x-select
