@@ -1145,7 +1145,8 @@ const totalAnnualPrice = computed(() => {
   if (!ecomDetail.value) return 'N/A';
 
   const displayPrice = getEcomDisplayPrice(ecomDetail.value);
-  const totalPrice = displayPrice * (page.props.quote?.life_quote?.payment_term ?? 1);
+  const totalPrice =
+    displayPrice * (page.props.quote?.life_quote?.payment_term ?? 1);
 
   return totalPrice;
 });
@@ -1319,7 +1320,8 @@ const getDisplayPrice = item => {
 const getEcomDisplayPrice = item => {
   if (!item) return 0;
 
-  const paymentTerm = item.paymentTerm ?? page.props.quote?.life_quote?.payment_term;
+  const paymentTerm =
+    item.paymentTerm ?? page.props.quote?.life_quote?.payment_term;
 
   if (
     item.isApi &&
