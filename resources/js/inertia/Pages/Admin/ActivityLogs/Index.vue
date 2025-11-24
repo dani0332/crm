@@ -217,6 +217,19 @@ const formattedProperties = computed(() => {
   if (!selectedLog.value?.properties) return null;
   return formatProperties(selectedLog.value.properties);
 });
+
+const hasFiltersApplied = computed(() => {
+  return !!(
+    filters.user_id ||
+    filters.log_name ||
+    filters.feature ||
+    filters.event ||
+    filters.subject_type ||
+    filters.date_from ||
+    filters.date_to ||
+    filters.code
+  );
+});
 </script>
 
 <template>
@@ -313,11 +326,24 @@ const formattedProperties = computed(() => {
 
   <!-- Table -->
   <div class="mt-4">
+    <div
+      v-if="!hasFiltersApplied"
+      class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center"
+    >
+      <div class="text-gray-500 text-lg mb-2">
+        <i class="fa fa-filter text-4xl mb-4"></i>
+      </div>
+      <p class="text-gray-700 font-medium mb-1">No filters applied</p>
+      <p class="text-gray-500 text-sm">
+        Please apply at least one filter to view activity logs.
+      </p>
+    </div>
     <DataTable
+      v-else
       table-class-name="mt-4"
       :loading="loader.table"
       :headers="tableHeader"
-      :items="props.activityLogs.data || []"
+      :items="props.activityLogs?.data || []"
       border-cell
       hide-rows-per-page
       hide-footer
@@ -361,6 +387,7 @@ const formattedProperties = computed(() => {
     </DataTable>
 
     <Pagination
+      v-if="hasFiltersApplied && props.activityLogs"
       :links="{
         next: props.activityLogs.next_page_url,
         prev: props.activityLogs.prev_page_url,

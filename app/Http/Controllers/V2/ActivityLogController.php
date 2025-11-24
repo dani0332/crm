@@ -41,10 +41,13 @@ class ActivityLogController extends Controller
         // Remove empty filters
         $filters = array_filter($filters, fn($value) => !empty($value));
 
-        $perPage = (int) $request->get('per_page', 20);
-        $perPage = min(max($perPage, 10), 100); // Limit between 10 and 100
-
-        $activityLogs = $this->activityLogService->getActivityLogs($filters, $perPage);
+        // Only fetch activity logs if filters are applied
+        $activityLogs = null;
+        if (!empty($filters)) {
+            $perPage = (int) $request->get('per_page', 20);
+            $perPage = min(max($perPage, 10), 100); // Limit between 10 and 100
+            $activityLogs = $this->activityLogService->getActivityLogs($filters, $perPage);
+        }
         $users = $this->activityLogService->getUsersWithLogs();
         $logNames = $this->activityLogService->getUniqueLogNames();
         $features = $this->activityLogService->getUniqueFeatures();

@@ -61,5 +61,5 @@ return [
      * Activities will be inserted to database when this many activities are queued.
      * Can be set to 10, 100, 1000, 10000, etc.
      */
-    'batch_size' => env('ACTIVITY_LOGGER_BATCH_SIZE', 1),
+    'batch_size' => env('ACTIVITY_LOGGER_BATCH_SIZE', 5),
 ];
