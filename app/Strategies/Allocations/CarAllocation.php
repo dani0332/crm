@@ -2,9 +2,11 @@
 
 namespace App\Strategies\Allocations;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Pipes\Allocation\Car\ApplyRuleExclusionPipe;
 use App\Pipes\Allocation\Car\AssignLeadPipe;
+use App\Pipes\Allocation\Car\EvaluateCatAEligibleAdvisorPipe;
 use App\Pipes\Allocation\Car\EvaluateTeamPipe;
 use App\Pipes\Allocation\Car\EvaluateTierPipe;
 use App\Pipes\Allocation\Car\FetchEligibleAdvisorsPipe;
@@ -18,6 +20,7 @@ use App\Pipes\Allocation\Common\ValidateNationalityConfigPipe;
 use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\AllocationService;
+use App\Services\BuyLeads\BuyLeadService;
 use Exception;
 use Illuminate\Support\Facades\Pipeline;
 
@@ -45,27 +48,52 @@ class CarAllocation implements Allocation
             evaluateTierOnly: $this->evaluateTierOnly
         );
 
+        $pipes = $this->getPipes();
+
         try {
-            return Pipeline::send($allocationRequest)->through([
-                FetchLeadPipe::class,
-                VerifyLeadPreChecksPipe::class,
-                VerifyAlreadyInProgressAllocationPipe::class,
-                EvaluateTierPipe::class,
-                ValidateNationalityConfigPipe::class,
-                EvaluateTeamPipe::class,
-                FetchTierUsersPipe::class,
-                ApplyRuleExclusionPipe::class,
-                FetchEligibleAdvisorsPipe::class,
-                ResetNationalityConfigPipe::class,
-                ApplyRuleExclusionPipe::class,
-                FetchEligibleAdvisorsPipe::class,
-                FinalizeEligibleAdvisorPipe::class,
-                AssignLeadPipe::class,
-                MakeResponsePipe::class,
-            ])->thenReturn();
+            return Pipeline::send($allocationRequest)->through($pipes)->thenReturn();
 
         } catch (Exception $e) {
             return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, $e);
         }
+    }
+
+    private function getPipes()
+    {
+        $lead = QuoteTypes::CAR->model()->where('uuid', $this->uuid)->first();
+
+        $basePipes = [
+            FetchLeadPipe::class,
+            VerifyLeadPreChecksPipe::class,
+            VerifyAlreadyInProgressAllocationPipe::class,
+            EvaluateTierPipe::class,
+        ];
+
+        $isSIC = $lead->isSIC(QuoteTypes::CAR);
+        $catANationalitiesIds = BuyLeadService::getNationalitiesIds(QuoteTypes::CAR_CAT_A);
+
+        if ($lead && $lead->source == LeadSourceEnum::REVIVAL && $lead->isBuyLeadApplicable($isSIC) && in_array($lead->nationality_id, $catANationalitiesIds)) {
+            return [
+                ...$basePipes,
+                EvaluateCatAEligibleAdvisorPipe::class,
+                AssignLeadPipe::class,
+                MakeResponsePipe::class,
+            ];
+        }
+
+        return [
+            ...$basePipes,
+            ValidateNationalityConfigPipe::class,
+            EvaluateTeamPipe::class,
+            FetchTierUsersPipe::class,
+            ApplyRuleExclusionPipe::class,
+            FetchEligibleAdvisorsPipe::class,
+            ResetNationalityConfigPipe::class,
+            ApplyRuleExclusionPipe::class,
+            FetchEligibleAdvisorsPipe::class,
+            FinalizeEligibleAdvisorPipe::class,
+            AssignLeadPipe::class,
+            MakeResponsePipe::class,
+        ];
     }
 }
