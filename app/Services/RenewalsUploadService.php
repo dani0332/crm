@@ -113,9 +113,9 @@ use Illuminate\Bus\Batch;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Throwable;
-use Maatwebsite\Excel\Facades\Excel;
 
 class RenewalsUploadService
 {
@@ -1151,6 +1151,9 @@ class RenewalsUploadService
 
             if ($isQuoteTypeCar) {
                 $quoteData['dob'] = (! empty($data['dob'])) ? $this->formatDate($data['dob']) : null;
+                if ($carTypeOfInsurance) {
+                    $quoteData['car_type_insurance_id'] = $carTypeOfInsurance->id;
+                }
                 $quoteData['claim_history_id'] = $claimHistory->id ?? null;
                 $quoteData['nationality_id'] = $nationality->id ?? null;
                 $quoteData['emirate_of_registration_id'] = $emirate->id ?? null;

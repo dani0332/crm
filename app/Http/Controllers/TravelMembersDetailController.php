@@ -161,7 +161,7 @@ class TravelMembersDetailController extends Controller
     {
         $data = CustomerMembers::find($id);
         if ($data) {
-            TravelQuote::find($data->quote_id)->update(['primary_member_id' => null]);
+            TravelQuote::find($data->quote_id)->update(['primary_member_id' => null, 'quote_updated_at' => Carbon::now()]);
             $data->delete();
         }
 

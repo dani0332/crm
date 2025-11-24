@@ -37,7 +37,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
         $this->vehicleColor();
         $this->bankName();
         $this->annualMileageEstimate();
-        $this->nationalityList();
+        // $this->nationalityList();
     }
 
     private function rtaTransactionType()

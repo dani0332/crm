@@ -368,7 +368,7 @@ class PolicyIssuanceService
         }
     }
 
-    public function allocateLead($quoteType, $quote, $isInsurerApiStatusAlreadyFailed, $statusAPIFailed = null, $processInvolved = null)
+    public function allocateLead($quoteType, $quote, $isInsurerApiStatusAlreadyFailed, $statusAPIFailed = '', $processInvolved = '')
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' allocation of failed lead executed');
         $uuid = $quote->uuid;
