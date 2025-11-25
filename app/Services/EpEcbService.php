@@ -1082,6 +1082,7 @@ class EpEcbService extends EpBookingService
             ->select('document_type_code', 'doc_name', 'doc_url')
             ->get()
             ->unique('document_type_code')
+            ->values()
             ->map(function ($document) {
                 return [
                     'document_type' => $document->document_type_code,
