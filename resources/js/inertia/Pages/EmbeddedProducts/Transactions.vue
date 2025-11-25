@@ -242,16 +242,18 @@ const filteredHeaders = computed(() => {
   });
 });
 
-const showCertificateNumberFilter = computed(()=>{
-  const reports = [page.props.ep_enums.ECB,
+const showCertificateNumberFilter = computed(() => {
+  const reports = [
+    page.props.ep_enums.ECB,
     page.props.ep_enums.RDX,
-    page.props.ep_enums.MDX];
+    page.props.ep_enums.MDX,
+  ];
 
-  if(reports.includes(page.props.embeddedProduct.detail.short_code)){
+  if (reports.includes(page.props.embeddedProduct.detail.short_code)) {
     return true;
   }
   return false;
-})
+});
 </script>
 
 <template>
