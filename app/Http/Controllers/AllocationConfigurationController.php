@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\TeamTypeEnum;
 use App\Http\Requests\AllocationConfigurationRequest;
 use App\Http\Requests\FetchAllocationConfigurationRequest;
 use App\Models\Allocation\AllocationConfiguration;
-use App\Services\AllocationConfigurationService;
+use App\Models\BusinessTypeOfInsurance;
+use App\Models\HealthPlanType;
+use App\Models\Team;
+use App\Services\AllocationConfiguration\AllocationConfigurationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Response;
@@ -79,6 +83,83 @@ class AllocationConfigurationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update allocation configuration.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getTeams()
+    {
+        try {
+            $teams = Team::where('type', TeamTypeEnum::TEAM)
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'name']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $teams,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch teams.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getPlanTypes()
+    {
+        try {
+            $planTypes = HealthPlanType::orderBy('text')->get(['id', 'text']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $planTypes,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch plan types.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getBusinessTypes()
+    {
+        try {
+            $businessTypes = BusinessTypeOfInsurance::orderBy('id')
+                ->get(['id', 'text as name']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $businessTypes,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch business types.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getSubAreas()
+    {
+        try {
+            $subAreas = \App\Models\SubArea::orderBy('text')
+                ->get(['id', 'text as name']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $subAreas,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch sub areas.',
                 'error' => $e->getMessage(),
             ], 500);
         }
