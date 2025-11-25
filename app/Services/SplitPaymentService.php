@@ -1084,7 +1084,7 @@ class SplitPaymentService
 
             foreach ($paymentSplits as $paymentSplit) {
                 $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
-                
+
                 LoggerService::info('Processing payment split', extra: [
                     'payment_id' => $payment->id,
                     'payment_split_id' => $paymentSplit->id,
@@ -1101,7 +1101,7 @@ class SplitPaymentService
                         '%.2f',
                         $commission - $commissionSplitSumWithoutLastSplit
                     );
-                    
+
                     LoggerService::info('Last payment split - adjusting for rounding', extra: [
                         'payment_id' => $payment->id,
                         'payment_split_id' => $paymentSplit->id,
@@ -1114,7 +1114,7 @@ class SplitPaymentService
                     ]);
                 } else {
                     $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
-                    
+
                     LoggerService::info('Accumulated commission split sum', extra: [
                         'payment_id' => $payment->id,
                         'payment_split_id' => $paymentSplit->id,
@@ -1127,7 +1127,7 @@ class SplitPaymentService
                 $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
                 /* Add Vat on commission to the first Installment of commission */
                 $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
-                
+
                 LoggerService::info('Saving payment split with commission values', extra: [
                     'payment_id' => $payment->id,
                     'payment_split_id' => $paymentSplit->id,
