@@ -75,6 +75,10 @@ class LifeSyncHealthQuestionnaireJob implements ShouldQueue
     {
         $isMetLifeEnabled = getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_METLIFE, useCache: true) == '1';
 
+        if (! $isMetLifeEnabled) {
+            LoggerService::warning('LifeSyncHealthQuestionnaireJob skipped - MetLife integration is disabled');
+        }
+
         return [Skip::when(fn () => ! $isMetLifeEnabled)];
     }
 }
