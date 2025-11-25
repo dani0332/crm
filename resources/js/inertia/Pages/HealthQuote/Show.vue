@@ -2204,6 +2204,52 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
 
               <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      IMCRM SUB-SOURCE
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  {{
+                    quote?.sub_source?.text ||
+                    quote.sub_source_text ||
+                    quote.sub_source_id ||
+                    'N/A'
+                  }}
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_option_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  {{
+                    quote?.sub_source_option?.text ||
+                    quote.sub_source_option_text ||
+                    quote.sub_source_options_id ||
+                    'N/A'
+                  }}
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
               </div>

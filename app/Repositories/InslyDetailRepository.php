@@ -419,9 +419,15 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::LIFE->value:
+                            $lifeQuoteData = Arr::only($payLoad, (new LifeQuote)->allowedColumns());
+                            if (isset($payLoad['uuid'])) {
+                                $lifeQuoteData['uuid'] = $payLoad['uuid'];
+                            } elseif (isset($obj->uuid)) {
+                                $lifeQuoteData['uuid'] = $obj->uuid;
+                            }
                             $obj->lifeQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
-                                Arr::only($payLoad, (new LifeQuote)->allowedColumns())
+                                $lifeQuoteData
                             );
                             $obj->quoteDetail()->updateOrCreate(
                                 ['personal_quote_id' => $id],

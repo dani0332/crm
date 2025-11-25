@@ -134,7 +134,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('leads:process-travel-renewals')->timezone('Asia/Dubai')->dailyAt('00:50')->onOneServer()->withoutOverlapping();
         $schedule->command('leads:process-car-cqf-renewals')->timezone('Asia/Dubai')->dailyAt('03:00')->onOneServer()->withoutOverlapping();
 
-        $schedule->command('policy-issuance-automation:run')->timezone('Asia/Dubai')->everyTwoMinutes()->onOneServer()->withoutOverlapping(4);
+        $schedule->command('policy-issuance-automation:run')->timezone('Asia/Dubai')->everyThreeMinutes()->onOneServer()->withoutOverlapping(4);
         $schedule->command('aml-screening-automation:run')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
         $schedule->command('aml-screening-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
         $schedule->command('policy-issuance-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping();

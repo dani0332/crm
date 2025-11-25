@@ -6,6 +6,7 @@ use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Exceptions\EpEcbException;
 use App\Jobs\EpWatermarkDocumentJob;
 use App\Jobs\SyncEpDocumentsJob;
 use App\Models\DocumentType;
@@ -60,11 +61,11 @@ class EpEcbService extends EpBookingService
         $this->logExtra = $this->context->logExtra;
 
         if (! $this->quote) {
-            throw new Exception('Quote not found.');
+            throw new EpEcbException('Quote not found.');
         }
 
         if (! $this->embeddedTransaction) {
-            throw new Exception("EmbeddedTransaction not found with ID: {$this->context->etId}");
+            throw new EpEcbException("EmbeddedTransaction not found with ID: {$this->context->etId}");
         }
 
         // Load API configuration
@@ -137,6 +138,12 @@ class EpEcbService extends EpBookingService
             $this->executeWorkflowFromStep();
 
             LoggerService::info($this->logPrefix.' Purchase flow completed successfully', extra: $this->logExtra);
+        } catch (EpEcbException $e) {
+            LoggerService::info($this->logPrefix.' Purchase flow failed', extra: [
+                ...$this->logExtra,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
         } catch (Exception $e) {
             LoggerService::error($this->logPrefix.' Purchase flow failed', extra: [
                 ...$this->logExtra,
@@ -301,13 +308,13 @@ class EpEcbService extends EpBookingService
         );
 
         if (! $response['success']) {
-            throw new Exception('GetToken API call failed: '.($response['error'] ?? 'Unknown error'));
+            throw new EpEcbException('GetToken API call failed: '.($response['error'] ?? 'Unknown error'));
         }
 
         $responseData = $response['data'];
 
         if (! isset($responseData->access_token)) {
-            throw new Exception('Token not found in GetToken response');
+            throw new EpEcbException('Token not found in GetToken response');
         }
 
         $this->bearerToken = $responseData->access_token;
@@ -322,7 +329,7 @@ class EpEcbService extends EpBookingService
     private function executeGetQuote(): void
     {
         if (! $this->bearerToken) {
-            throw new Exception('No bearer token available for GetQuote');
+            throw new EpEcbException('No bearer token available for GetQuote');
         }
 
         // Check if we already have a restored quote reference number
@@ -342,12 +349,12 @@ class EpEcbService extends EpBookingService
         );
 
         if (! $response['success']) {
-            throw new Exception('GetQuote API call failed: '.($response['error'] ?? 'Unknown error'));
+            throw new EpEcbException('GetQuote API call failed: '.($response['error'] ?? 'Unknown error'));
         }
 
         $responseQuote = $response['data']->quotes[0] ?? null;
         if (empty($responseQuote->quote_reference_no ?? null)) {
-            throw new Exception('Quote reference number not found in GetQuote response');
+            throw new EpEcbException('Quote reference number not found in GetQuote response');
         }
 
         $this->quoteReferenceNumber = $responseQuote->quote_reference_no;
@@ -364,11 +371,11 @@ class EpEcbService extends EpBookingService
     private function executeCreatePolicyFromQuote(): void
     {
         if (! $this->bearerToken) {
-            throw new Exception('No bearer token available for CreatePolicyFromQuote');
+            throw new EpEcbException('No bearer token available for CreatePolicyFromQuote');
         }
 
         if (! $this->quoteReferenceNumber) {
-            throw new Exception('No quote reference number available for CreatePolicyFromQuote');
+            throw new EpEcbException('No quote reference number available for CreatePolicyFromQuote');
         }
 
         // Check if we already have a restored policy number
@@ -390,12 +397,12 @@ class EpEcbService extends EpBookingService
         if (! $response['success']) {
             $responseErrorCode = $response['errorCode'] ?? '-';
             $responseStatusMessage = $response['statusMessage'] ?? 'Unknown error';
-            throw new Exception("CreatePolicyFromQuote API call failed: ($responseErrorCode) - $responseStatusMessage");
+            throw new EpEcbException("CreatePolicyFromQuote API call failed: ($responseErrorCode) - $responseStatusMessage");
         }
 
         $responseData = $response['data'];
         if (empty($responseData->policy_no ?? null)) {
-            throw new Exception('Policy number not found in CreatePolicyFromQuote response');
+            throw new EpEcbException('Policy number not found in CreatePolicyFromQuote response');
         }
 
         $this->policyNumber = $responseData->policy_no;
@@ -412,7 +419,7 @@ class EpEcbService extends EpBookingService
     private function executeCreatePolicyWithoutQuote(): void
     {
         if (! $this->bearerToken) {
-            throw new Exception('No bearer token available for CreatePolicyFromQuote');
+            throw new EpEcbException('No bearer token available for CreatePolicyFromQuote');
         }
 
         // Check if we already have a restored policy number
@@ -434,12 +441,12 @@ class EpEcbService extends EpBookingService
         if (! $response['success']) {
             $responseErrorCode = $response['errorCode'] ?? '-';
             $responseStatusMessage = $response['statusMessage'] ?? 'Unknown error';
-            throw new Exception("CreatePolicyWithoutQuote API call failed: ($responseErrorCode) - $responseStatusMessage");
+            throw new EpEcbException("CreatePolicyWithoutQuote API call failed: ($responseErrorCode) - $responseStatusMessage");
         }
 
         $responseData = $response['data'];
         if (empty($responseData->policy_no ?? null)) {
-            throw new Exception('Policy number not found in CreatePolicyWithoutQuote response');
+            throw new EpEcbException('Policy number not found in CreatePolicyWithoutQuote response');
         }
 
         $this->policyNumber = $responseData->policy_no;
@@ -538,7 +545,7 @@ class EpEcbService extends EpBookingService
     private function executeGetPolicyDocuments(): array
     {
         if (! $this->policyNumber) {
-            throw new Exception('No policy number available for GetDocuments');
+            throw new EpEcbException('No policy number available for GetDocuments');
         }
 
         $this->executeGetToken();
@@ -553,7 +560,7 @@ class EpEcbService extends EpBookingService
         if (! $response['success']) {
             $responseErrorCode = $response['errorCode'] ?? '-';
             $responseStatusMessage = $response['statusMessage'] ?? 'Unknown error';
-            throw new Exception("GetPolicyDocuments API call failed: ($responseErrorCode) - $responseStatusMessage");
+            throw new EpEcbException("GetPolicyDocuments API call failed: ($responseErrorCode) - $responseStatusMessage");
         }
 
         return (array) $response['data'] ?? [];
@@ -644,7 +651,7 @@ class EpEcbService extends EpBookingService
                 'PUT' => $httpClient->put($url, $data),
                 'PATCH' => $httpClient->patch($url, $data),
                 'DELETE' => $httpClient->delete($url, $data),
-                default => throw new Exception("Unsupported HTTP method: {$method}")
+                default => throw new EpEcbException("Unsupported HTTP method: {$method}")
             };
 
             $responseTime = round((microtime(true) - $startTime) * 1000, 2);
@@ -857,7 +864,7 @@ class EpEcbService extends EpBookingService
     private function buildQuotePayload(): array
     {
         if (! $this->quote) {
-            throw new Exception('Quote not found for building quote payload');
+            throw new EpEcbException('Quote not found for building quote payload');
         }
 
         $productInfo = $this->getProductInfo(self::STEP_GET_QUOTE);
@@ -880,11 +887,11 @@ class EpEcbService extends EpBookingService
     private function buildPolicyFromQuotePayload(): array
     {
         if (! $this->quote) {
-            throw new Exception('Quote not found for building policy payload');
+            throw new EpEcbException('Quote not found for building policy payload');
         }
 
         if (! $this->embeddedTransaction) {
-            throw new Exception('EmbeddedTransaction not found for building policy payload');
+            throw new EpEcbException('EmbeddedTransaction not found for building policy payload');
         }
 
         $salesInfo = $this->getSalesInfo(self::STEP_CREATE_POLICY_FROM_QUOTE);
@@ -966,6 +973,10 @@ class EpEcbService extends EpBookingService
     private function getCustomerInfo(string $step): array
     {
         $emirateIdNumber = $this->getEmirateIdNumber();
+        if (empty($emirateIdNumber)) {
+            throw new EpEcbException('Emirate ID number is not found');
+        }
+
         $customerDetails = [
             'customer_type' => null,
             'customer_fname' => $this->quote?->first_name,

@@ -15,6 +15,7 @@ use App\Jobs\SendAutomatedHomeRenewalFollowup;
 use App\Jobs\SendAutomatedLifeFollowup;
 use App\Jobs\SendFICEmailForLife;
 use App\Jobs\SendHomeOCBIntroEmailJob;
+use App\Jobs\SendOCAEmailJob;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
@@ -105,6 +106,10 @@ trait PersonalQuoteObservable
         if ($personalQuote->isLife()) {
             if ($personalQuote->isFIC(quoteType: QuoteTypes::LIFE)) {
                 SendFICEmailForLife::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+                LoggerService::info(self::class." - FIC email sent to customer for life quote {$personalQuote->uuid}");
+            } else {
+                SendOCAEmailJob::dispatch($personalQuote->uuid, []);
+                LoggerService::info(self::class." - OCA email sent to customer for life quote {$personalQuote->uuid}");
             }
         }
 
@@ -115,24 +120,24 @@ trait PersonalQuoteObservable
     {
 
         if ($personalQuote->isHome()) {
-            info(self::class." - sending home intro email for quote: {$personalQuote->uuid}");
+            LoggerService::info(self::class." - sending home intro email for quote: {$personalQuote->uuid} Quote Status: {$personalQuote->quote_status_id}");
             SendHomeOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(Carbon::now()->addMinutes(1));
-            info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid);
-            info(self::class." - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
-            if ($personalQuote->source != LeadSourceEnum::IMCRM && ! empty($oldAdvisorId)) {
+            LoggerService::info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid);
+            LoggerService::info(self::class." - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
+            if (! $personalQuote->isSuppressIntroEmail() && $personalQuote->source != LeadSourceEnum::IMCRM && ! empty($oldAdvisorId)) {
                 if ($oldAdvisorId != $personalQuote->advisor_id) {
-                    info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
+                    LoggerService::info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
 
                     $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
-                    info(self::class." Sending {$emailType} email to customer for home quote {$personalQuote->uuid}");
+                    LoggerService::info(self::class." Sending {$emailType} email to customer for home quote {$personalQuote->uuid}");
                     app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, QuoteTypes::HOME->value, $oldAdvisorId);
-                    info(self::class." | {$emailType} email sent to customer for home quote {$personalQuote->uuid}");
+                    LoggerService::info(self::class." | {$emailType} email sent to customer for home quote {$personalQuote->uuid}");
                 } else {
-                    info(self::class." - Advisor ID not updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
+                    LoggerService::info(self::class." - Advisor ID not updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
                 }
 
             } else {
-                info(self::class." - lead source: {$personalQuote->source} |  - Old Advisor ID: {$oldAdvisorId} |  Advisor ID: {$personalQuote->advisor_id}");
+                LoggerService::info(self::class." - lead source: {$personalQuote->source} |  - Old Advisor ID: {$oldAdvisorId} |  Advisor ID: {$personalQuote->advisor_id} Quote Status: {$personalQuote->quote_status_id}");
             }
         }
     }
@@ -212,13 +217,13 @@ trait PersonalQuoteObservable
             $isEligibleForEmail = true;
         }
 
-        if ($isEligibleForEmail) {
+        if (! $personalQuote->isSuppressIntroEmail() && $isEligibleForEmail) {
             $quoteType = QuoteTypes::getName($personalQuote->quote_type_id);
-            info(self::class." - Quote Type: {$quoteType->value} quote:  {$personalQuote->uuid}");
+            LoggerService::info(self::class." - Quote Type: {$quoteType->value} quote:  {$personalQuote->uuid}");
             $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
-            info(self::class." Sending {$emailType} email to customer for {$quoteType->value} quote {$personalQuote->uuid}");
+            LoggerService::info(self::class." Sending {$emailType} email to customer for {$quoteType->value} quote {$personalQuote->uuid}");
             app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, $quoteType->value, $oldAdvisorId);
-            info(self::class." | {$emailType} email sent to customer for {$quoteType->value} quote {$personalQuote->uuid}");
+            LoggerService::info(self::class." | {$emailType} email sent to customer for {$quoteType->value} quote {$personalQuote->uuid}");
         }
     }
 
