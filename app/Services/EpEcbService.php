@@ -18,7 +18,7 @@ use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
-use League\Config\Exception\ValidationException;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class EpEcbService extends EpBookingService
