@@ -48,6 +48,7 @@ class BirdService extends BaseService
             // Log the response details
             LoggerService::info("Bird Webhook Response: Ref-ID: {$uuid} | Status: {$response->status()} | Time: ".now());
             LoggerService::info("Bird Webhook Response: Ref-ID: {$uuid} | Headers: ".json_encode($response->headers()));
+
             return (object) ['headers' => $response->headers() ?? '', 'body' => $response->body(), 'status_code' => $response->status()];
         } catch (\Exception $e) {
             // Log the error with full context and rethrow the exception
@@ -86,10 +87,10 @@ class BirdService extends BaseService
     public function createQuoteWorkFlowDetails($lead, $response, $flowType = null, $quoteTypeId = null)
     {
         try {
-            $runId = "";
+            $runId = '';
             if (isset($response->headers['Run-Id'])) {
-                $runId = is_array($response->headers['Run-Id']) 
-                    ? collect($response->headers['Run-Id'])->first() 
+                $runId = is_array($response->headers['Run-Id'])
+                    ? collect($response->headers['Run-Id'])->first()
                     : $response->headers['Run-Id'];
             } elseif (isset($response->headers['run-id'])) {
                 $runId = is_array($response->headers['run-id'])

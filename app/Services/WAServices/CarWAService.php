@@ -2,16 +2,15 @@
 
 namespace App\Services\WAServices;
 
-use App\Services\BaseService;
-use App\Models\CarQuote;
-use App\Services\BirdService;
-use App\Services\Logger\LoggerService;
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\WorkflowTypeEnum;
-use App\Models\User;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
-use PgSql\Lob;
+use App\Enums\WorkflowTypeEnum;
+use App\Models\CarQuote;
+use App\Models\User;
+use App\Services\BaseService;
+use App\Services\BirdService;
+use App\Services\Logger\LoggerService;
 
 class CarWAService extends BaseService
 {
@@ -39,11 +38,11 @@ class CarWAService extends BaseService
         if (! empty($carMissingDocReminderWorkflow)) {
             $response = app(BirdService::class)->triggerWebHookRequest($carMissingDocReminderWorkflow, (object) $payload);
             LoggerService::info('sendWhatsappNotificationToCustomer - Webhook request sent to: '.$carMissingDocReminderWorkflow.' with Ref-ID: '.$carQuote->uuid);
-            
-            $runId = "";
+
+            $runId = '';
             if (isset($response->headers['Run-Id'])) {
-                $runId = is_array($response->headers['Run-Id']) 
-                    ? collect($response->headers['Run-Id'])->first() 
+                $runId = is_array($response->headers['Run-Id'])
+                    ? collect($response->headers['Run-Id'])->first()
                     : $response->headers['Run-Id'];
             } elseif (isset($response->headers['run-id'])) {
                 $runId = is_array($response->headers['run-id'])
@@ -59,8 +58,5 @@ class CarWAService extends BaseService
             LoggerService::info('sendWhatsappNotificationToCustomer - Webhook URL not found in storage with Ref-ID:'.$carQuote->uuid);
         }
     }
-
-
-   
 
 }
