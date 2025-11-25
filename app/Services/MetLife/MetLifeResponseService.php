@@ -23,12 +23,6 @@ class MetLifeResponseService
         $fileReference = $response['file_reference'] ?? $response['data']['file_reference'] ?? null;
 
         if ($fileReference) {
-            LoggerService::info('MetLife upload successful', [
-                'policy_number' => $policyNumber,
-                'quote_uuid' => $quoteUuid,
-                'file_reference' => $fileReference,
-            ]);
-
             return $this->createResponse(
                 true,
                 'Document uploaded successfully',

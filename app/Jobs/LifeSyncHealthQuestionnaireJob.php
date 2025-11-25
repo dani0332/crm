@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteTypes;
 use App\Exceptions\MetLife\MetLifeException;
 use App\Services\Logger\LoggerService;
 use App\Services\MetLife\MetLifeApiService;
@@ -21,16 +22,13 @@ class LifeSyncHealthQuestionnaireJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 120;
     public $backoff = 300;
-    private array $requestData;
 
-    public function __construct(array $requestData)
-    {
-        $this->requestData = $requestData;
-    }
+    public function __construct(private array $requestData) {}
 
     public function handle(MetLifeApiService $metLifeService): void
     {
-        LoggerService::info('Processing Health Questionnaire sync job.', ['quote_uuid' => $this->requestData['quote_uuid']]);
+        LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($this->requestData['quote_uuid']));
+        LoggerService::info('Processing Health Questionnaire sync job.');
 
         try {
             $result = $metLifeService->syncHealthQuestionnaire($this->requestData);
@@ -73,14 +71,10 @@ class LifeSyncHealthQuestionnaireJob implements ShouldQueue
         ]);
     }
 
-    public function middleware()
+    public function middleware(): array
     {
         $isMetLifeEnabled = getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_METLIFE, useCache: true) == '1';
 
-        if (! $isMetLifeEnabled) {
-            return [Skip::when(fn () => true)];
-        }
-
-        return [];
+        return [Skip::when(fn () => ! $isMetLifeEnabled)];
     }
 }

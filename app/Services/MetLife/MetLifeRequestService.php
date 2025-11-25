@@ -12,24 +12,14 @@ use Illuminate\Support\Facades\Http;
 
 class MetLifeRequestService
 {
-    private string $baseUrl;
-    private int $timeout;
-
-    public function __construct(string $baseUrl, int $timeout)
-    {
-        $this->baseUrl = $baseUrl;
-        $this->timeout = $timeout;
-    }
+    public function __construct(
+        private string $baseUrl,
+        private int $timeout
+    ) {}
 
     public function makeRequest(string $endpoint, string $method = 'GET', array $data = [], array $headers = []): array
     {
         try {
-            LoggerService::info('MetLife API request', [
-                'endpoint' => $endpoint,
-                'method' => $method,
-                'url' => $this->baseUrl.$endpoint,
-            ]);
-
             $http = Http::baseUrl($this->baseUrl)
                 ->timeout($this->timeout)
                 ->withHeaders($headers);
@@ -44,38 +34,28 @@ class MetLifeRequestService
                 ),
             };
 
-            LoggerService::info('MetLife API response', [
-                'endpoint' => $endpoint,
-                'status_code' => $response->status(),
-                'successful' => $response->successful(),
-            ]);
-
             return $this->handleResponse($response, $endpoint);
 
         } catch (MetLifeException $e) {
-            LoggerService::warning('MetLife request exception', [
+            LoggerService::warning('MetLife request failed', [
                 'endpoint' => $endpoint,
-                'method' => $method,
                 'error' => $e->getMessage(),
-                'error_type' => $e->getErrorType(),
-                'context' => $e->getContext(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'MetLife operation failed: '.$e->getMessage(),
+                'message' => "MetLife operation failed: {$e->getMessage()}",
                 'data' => ['exception_code' => $e->getCode(), 'error_type' => $e->getErrorType()],
             ];
         } catch (Exception $e) {
-            LoggerService::warning('MetLife request exception', [
+            LoggerService::warning('MetLife request failed', [
                 'endpoint' => $endpoint,
-                'method' => $method,
                 'error' => $e->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'MetLife operation failed: '.$e->getMessage(),
+                'message' => "MetLife operation failed: {$e->getMessage()}",
                 'data' => ['exception_code' => $e->getCode()],
             ];
         }

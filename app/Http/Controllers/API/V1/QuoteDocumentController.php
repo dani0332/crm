@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteQuoteDocumentRequest;
 use App\Http\Requests\QuoteDocumentRequest;
@@ -92,7 +93,8 @@ class QuoteDocumentController extends Controller
 
         $validatedData = $request->validated();
 
-        LoggerService::info('API request recive to upload documents to MetLife against Quote uuid: '.$validatedData['quote_uuid']);
+        LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($validatedData['quote_uuid']));
+        LoggerService::info('API request received to upload documents to MetLife');
 
         $quote = $this->getQuoteObject($quoteType, $validatedData['quote_uuid']);
 

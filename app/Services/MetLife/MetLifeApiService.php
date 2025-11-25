@@ -14,6 +14,13 @@ use Illuminate\Support\Facades\Storage;
 class MetLifeApiService extends BaseService
 {
     private const UNKNOWN_ERROR_MESSAGE = 'Unknown error';
+    private const ACCEPTED_DOCUMENT_MIME_TYPES = [
+        'application/pdf',
+        'image/jpeg',
+        'image/png',
+        'image/bmp',
+        'image/tiff',
+    ];
 
     private string $baseUrl;
     private string $apiVersion;
@@ -30,13 +37,6 @@ class MetLifeApiService extends BaseService
     private MetLifeCacheService $cache;
     private MetLifeResponseService $responseService;
     private MetLifeValidationService $validator;
-    private ?array $acceptedDocumentMimeTypes = [
-        'application/pdf',
-        'image/jpeg',
-        'image/png',
-        'image/bmp',
-        'image/tiff',
-    ];
 
     public function __construct()
     {
@@ -47,12 +47,10 @@ class MetLifeApiService extends BaseService
         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
         $this->sessionTimeout = (int) config('constants.METLIFE_SESSION_TIMEOUT', 7200);
         $this->csrfTokenRefreshInterval = (int) config('constants.METLIFE_CSRF_TOKEN_REFRESH_INTERVAL', 3600);
-
         $this->request = new MetLifeRequestService($this->baseUrl, $this->timeout);
         $this->cache = new MetLifeCacheService;
         $this->responseService = new MetLifeResponseService;
         $this->validator = new MetLifeValidationService;
-
         $this->loadCachedSession();
     }
 
@@ -64,29 +62,22 @@ class MetLifeApiService extends BaseService
 
         try {
             LoggerService::info('MetLife Auth: Initializing session');
-            $endpoint = '/api/v'.$this->apiVersion.'/init/';
+            $endpoint = "{$this->getBaseUrl()}/init/";
             $response = $this->request->makeRequest($endpoint, 'GET');
 
             if ($response['success']) {
                 $actualResponse = $response['data']['data'] ?? $response['data'];
-
-                $oldCsrfToken = $this->csrfToken;
-                $oldSessionId = $this->sessionId;
-
                 $this->csrfToken = $actualResponse['csrftoken'] ?? null;
                 $this->sessionId = $actualResponse['session_id'] ?? null;
                 $this->csrfTokenCreatedAt = time();
 
                 LoggerService::info('MetLife Auth: Session initialized', [
-                    'old_csrf_token' => $oldCsrfToken ? substr($oldCsrfToken, 0, 8).'...' : 'null',
-                    'new_csrf_token' => $this->csrfToken ? substr($this->csrfToken, 0, 8).'...' : 'null',
-                    'old_session_id' => $oldSessionId ? substr($oldSessionId, 0, 8).'...' : 'null',
-                    'new_session_id' => $this->sessionId ? substr($this->sessionId, 0, 8).'...' : 'null',
+                    'csrf_token' => $this->maskToken($this->csrfToken),
+                    'session_id' => $this->maskToken($this->sessionId),
                 ]);
 
                 if ($this->csrfToken) {
                     $this->cache->cacheTokens($this->csrfToken, $this->csrfTokenCreatedAt, $this->csrfTokenRefreshInterval);
-                    LoggerService::info('MetLife Auth: CSRF token cached');
                 }
 
                 $response = $this->responseService->createResponse(true, 'Session initialized successfully', $actualResponse);
@@ -110,40 +101,31 @@ class MetLifeApiService extends BaseService
         }
 
         try {
-            LoggerService::info('MetLife Auth: Attempting login', [
-                'username' => $this->username,
-                'current_session_id' => $this->sessionId ? substr($this->sessionId, 0, 8).'...' : 'null',
-                'current_csrf_token' => $this->csrfToken ? substr($this->csrfToken, 0, 8).'...' : 'null',
-            ]);
+            LoggerService::info('MetLife Auth: Attempting login');
 
             $data = ['username' => $this->username, 'password' => $this->password];
             $headers = $this->request->buildHeaders($this->sessionId, $this->csrfToken);
-            $response = $this->request->makeRequest('/api/v'.$this->apiVersion.'/login/', 'POST', $data, $headers);
+            $response = $this->request->makeRequest("{$this->getBaseUrl()}/login/", 'POST', $data, $headers);
 
             if ($response['success']) {
                 $actualResponse = $response['data']['data'] ?? $response['data'];
 
                 if ($actualResponse['success'] ?? false) {
-                    $oldSessionId = $this->sessionId;
                     $this->sessionId = $actualResponse['session_id'] ?? $this->sessionId;
                     $this->sessionCreatedAt = time();
 
                     LoggerService::info('MetLife Auth: Login successful', [
-                        'old_session_id' => $oldSessionId ? substr($oldSessionId, 0, 8).'...' : 'null',
-                        'new_session_id' => $this->sessionId ? substr($this->sessionId, 0, 8).'...' : 'null',
-                        'session_created_at' => $this->sessionCreatedAt,
+                        'session_id' => $this->maskToken($this->sessionId),
                     ]);
 
                     $this->cache->cacheSession($this->sessionId, $this->sessionCreatedAt, $this->sessionTimeout);
-                    LoggerService::info('MetLife Auth: Session cached');
-
                     $response = $this->responseService->createResponse(true, 'Login successful', $actualResponse);
                 } else {
-                    LoggerService::warning('MetLife Auth: Login failed - API returned success=false', [
+                    LoggerService::warning('MetLife Auth: Login failed', [
                         'message' => $actualResponse['message'] ?? self::UNKNOWN_ERROR_MESSAGE,
                     ]);
 
-                    $response = $this->responseService->createResponse(false, 'Login failed: '.($actualResponse['message'] ?? self::UNKNOWN_ERROR_MESSAGE), $actualResponse);
+                    $response = $this->responseService->createResponse(false, "Login failed: ".($actualResponse['message'] ?? self::UNKNOWN_ERROR_MESSAGE), $actualResponse);
                 }
             } else {
                 LoggerService::warning('MetLife Auth: Login request failed', [
@@ -168,6 +150,11 @@ class MetLifeApiService extends BaseService
         return $this->apiVersion;
     }
 
+    private function getBaseUrl(): string
+    {
+        return "/api/v{$this->apiVersion}";
+    }
+
     private function loadCachedSession(): void
     {
         $cachedData = $this->cache->loadCachedSessionData();
@@ -185,41 +172,18 @@ class MetLifeApiService extends BaseService
             return false;
         }
 
-        LoggerService::info('MetLife Auth: Checking session validity', [
-            'session_id' => $this->maskToken($this->sessionId),
-            'csrf_token' => $this->maskToken($this->csrfToken),
-            'session_created_at' => $this->sessionCreatedAt,
-            'csrf_token_created_at' => $this->csrfTokenCreatedAt,
-        ]);
-
         $csrfValid = $this->validator->isCsrfTokenValid($this->csrfToken, $this->csrfTokenCreatedAt, $this->csrfTokenRefreshInterval);
         $sessionValid = $this->validator->isSessionValid($this->sessionId, $this->sessionCreatedAt, $this->sessionTimeout);
 
-        LoggerService::info('MetLife Auth: Session validation results', [
-            'csrf_valid' => $csrfValid,
-            'session_valid' => $sessionValid,
-            'csrf_age' => $this->csrfTokenCreatedAt ? (time() - $this->csrfTokenCreatedAt) : 'null',
-            'session_age' => $this->sessionCreatedAt ? (time() - $this->sessionCreatedAt) : 'null',
-        ]);
-
-        $isValid = true;
-
         if (! $csrfValid && ! $this->refreshCsrfToken()) {
-            $isValid = false;
+            return false;
         }
 
-        if ($isValid && ! $sessionValid && ! $this->refreshSession()) {
-            $isValid = false;
+        if (! $sessionValid && ! $this->refreshSession()) {
+            return false;
         }
 
-        if ($isValid) {
-            LoggerService::info('MetLife Auth: Session validation completed', [
-                'final_session_id' => $this->maskToken($this->sessionId),
-                'final_csrf_token' => $this->maskToken($this->csrfToken),
-            ]);
-        }
-
-        return $isValid;
+        return true;
     }
 
     private function maskToken(?string $token): string
@@ -229,7 +193,6 @@ class MetLifeApiService extends BaseService
 
     private function refreshCsrfToken(): bool
     {
-        LoggerService::info('MetLife Auth: CSRF token invalid, refreshing...');
         $initResult = $this->initialize();
 
         if (! $initResult['success']) {
@@ -240,68 +203,40 @@ class MetLifeApiService extends BaseService
             return false;
         }
 
-        LoggerService::info('MetLife Auth: CSRF token refreshed successfully', [
-            'new_csrf_token' => $this->maskToken($this->csrfToken),
-        ]);
-
         return true;
     }
 
     private function refreshSession(): bool
     {
-        LoggerService::info('MetLife Auth: Session invalid, logging in...');
         $loginResult = $this->login();
 
         if (! $loginResult['success']) {
-            LoggerService::warning('MetLife Auth: Login failed', [
+            LoggerService::warning('MetLife Auth: Session refresh failed', [
                 'error' => $loginResult['message'] ?? self::UNKNOWN_ERROR_MESSAGE,
             ]);
 
             return false;
         }
 
-        LoggerService::info('MetLife Auth: Login successful', [
-            'new_session_id' => $this->maskToken($this->sessionId),
-        ]);
-
         return true;
     }
 
     public function makeRequest(string $endpoint, string $method = 'GET', array $data = []): array
     {
-        LoggerService::info('MetLife Auth: Starting request', [
-            'endpoint' => $endpoint,
-            'method' => $method,
-        ]);
-
         if (! $this->ensureValidSession()) {
             LoggerService::warning('MetLife Auth: Unable to establish valid session');
 
             return $this->responseService->createResponse(false, 'Unable to establish valid session');
         }
 
-        // Reload from cache to ensure we have the latest session data
         $this->loadCachedSession();
-
-        LoggerService::info('MetLife Auth: Building headers with current session data', [
-            'session_id' => $this->sessionId ? substr($this->sessionId, 0, 8).'...' : 'null',
-            'csrf_token' => $this->csrfToken ? substr($this->csrfToken, 0, 8).'...' : 'null',
-        ]);
-
         $headers = $this->request->buildHeaders($this->sessionId, $this->csrfToken);
-
-        LoggerService::info('MetLife Auth: Headers built, making request', [
-            'has_session_header' => isset($headers['x-session-id']),
-            'has_csrf_header' => isset($headers['X-CSRFToken']),
-        ]);
 
         return $this->request->makeRequest($endpoint, $method, $data, $headers);
     }
 
     public function handleDocumentUpload(array $validatedData, $quote): array
     {
-        LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($validatedData['quote_uuid']));
-
         $documents = QuoteDocument::where('quote_documentable_id', $quote->id)
             ->where('document_type_code', $validatedData['document_type_code'])
             ->get();
@@ -320,13 +255,6 @@ class MetLifeApiService extends BaseService
         foreach ($documents as $document) {
             $fileData = $this->getDocumentBase64Content($document);
             $documentName = $document->doc_name ?: $document->original_name;
-
-            LoggerService::info('Document details for MetLife upload', [
-                'document_id' => $document->id,
-                'original_name' => $document->original_name,
-                'doc_name' => $document->doc_name,
-                'final_document_name' => $documentName,
-            ]);
 
             if (! $fileData) {
                 $results[] = [
@@ -351,18 +279,10 @@ class MetLifeApiService extends BaseService
             if ($result['success'] && isset($result['data']['file_reference'])) {
                 $fileReference = $result['data']['file_reference'];
                 $document->update(['insurer_document_link' => $fileReference]);
-
-                LoggerService::info('Database updated with MetLife file reference', [
-                    'document_id' => $document->id,
-                    'file_reference' => $fileReference,
-                    'updated' => true,
-                ]);
             } else {
-                LoggerService::warning('Failed to update database with MetLife file reference', [
+                LoggerService::warning('Failed to upload document to MetLife', [
                     'document_id' => $document->id,
-                    'result_success' => $result['success'] ?? false,
-                    'has_file_reference' => isset($result['data']['file_reference']),
-                    'result_structure' => $result,
+                    'document_name' => $documentName,
                 ]);
             }
 
@@ -433,10 +353,11 @@ class MetLifeApiService extends BaseService
             $payload = [
                 'name' => $docName,
                 'data' => $data['file'],
-                'accepted_mime_types' => $this->acceptedDocumentMimeTypes,
+                'accepted_mime_types' => self::ACCEPTED_DOCUMENT_MIME_TYPES,
             ];
 
-            $endpoint = '/en/api/v'.$this->apiVersion.'/policy/'.$data['policy_number'].'/attachment/add/';
+            $policyNumber = $data['policy_number'];
+            $endpoint = "/en{$this->getBaseUrl()}/policy/{$policyNumber}/attachment/add/";
             $response = $this->makeRequest($endpoint, 'POST', $payload);
 
             return $this->responseService->handleUploadResponse(
@@ -466,18 +387,8 @@ class MetLifeApiService extends BaseService
     public function syncHealthQuestionnaire(array $requestData): array
     {
         try {
-            LoggerService::info('MetLifeApiService: Starting health questionnaire sync', [
-                'quote_uuid' => $requestData['quote_uuid'],
-                'policy_number' => $requestData['policy_number'],
-            ]);
-
             $healthQuestionnaireService = app(MTLHealthQuestionnaireService::class);
             $document = $healthQuestionnaireService->syncHealthQuestionnaire($requestData);
-
-            LoggerService::info('MetLifeApiService: Health questionnaire sync completed successfully', [
-                'quote_uuid' => $requestData['quote_uuid'],
-                'document_id' => $document->id ?? 'N/A',
-            ]);
 
             return $this->responseService->createResponse(true, 'Health questionnaire synced successfully', [
                 'document_id' => $document->id ?? null,
@@ -485,8 +396,7 @@ class MetLifeApiService extends BaseService
             ]);
 
         } catch (Exception $e) {
-            LoggerService::warning('MetLifeApiService: Exception in health questionnaire sync', [
-                'quote_uuid' => $requestData['quote_uuid'] ?? 'N/A',
+            LoggerService::warning('MetLifeApiService: Health questionnaire sync failed', [
                 'error' => $e->getMessage(),
             ]);
 
