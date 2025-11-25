@@ -103,6 +103,7 @@ class BirdService extends BaseService
                     'quote_type_id' => $quoteTypeId,
                     'flow_type' => $flowType,
                     'flow_id' => $runId,
+                    'started_at' => now(),
                 ]);
                 LoggerService::info('- createQuoteWorkFlowDetails  run id created for quote: '.$lead->uuid);
             } else {
