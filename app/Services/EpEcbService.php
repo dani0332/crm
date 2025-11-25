@@ -142,7 +142,7 @@ class EpEcbService extends EpBookingService
             $this->executeWorkflowFromStep();
 
             LoggerService::info($this->logPrefix.' Purchase flow completed successfully', extra: $this->logExtra);
-        } catch (EpEcbException | ValidationException $e) {
+        } catch (EpEcbException|ValidationException $e) {
             LoggerService::info($this->logPrefix.' Purchase flow failed', extra: [
                 ...$this->logExtra,
                 'error' => $e->getMessage(),
@@ -288,78 +288,78 @@ class EpEcbService extends EpBookingService
     {
         $documentTypeRule = implode(',', [QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY]);
         $customerIdTypeRule = implode(',', ['EID']);
-        $policySoldDateRules = "required|date|date_equals:today";
-        $documentUrlRules = "required|url|active_url";
+        $policySoldDateRules = 'required|date|date_equals:today';
+        $documentUrlRules = 'required|url|active_url';
 
         $validationRules = [];
         switch ($step) {
             case self::STEP_GET_QUOTE:
                 $validationRules = [
-                    "client_reference_number" => "nullable",
-                    "transaction_country" => "required|in:{$this->transactionCountry}",
-                    "transaction_currency" => "required|in:{$this->transactionCurrency}",
-                    "product_info.policy_product" => "required|in:{$this->policyProduct}",
-                    "customer_info.customer_type" => "nullable",
-                    "vehicle_info.vehicle_make" => "required",
-                    "vehicle_info.vehicle_model" => "required",
-                    "vehicle_info.vehicle_model_year" => "required",
+                    'client_reference_number' => 'nullable',
+                    'transaction_country' => "required|in:{$this->transactionCountry}",
+                    'transaction_currency' => "required|in:{$this->transactionCurrency}",
+                    'product_info.policy_product' => "required|in:{$this->policyProduct}",
+                    'customer_info.customer_type' => 'nullable',
+                    'vehicle_info.vehicle_make' => 'required',
+                    'vehicle_info.vehicle_model' => 'required',
+                    'vehicle_info.vehicle_model_year' => 'required',
                 ];
                 break;
             case self::STEP_CREATE_POLICY_FROM_QUOTE:
                 $validationRules = [
-                    "client_reference_number" => "nullable",
-                    "quote_reference_number" => "required",
-                    "transaction_country" => "required|in:{$this->transactionCountry}",
-                    "payment_reference_number" => "required",
-                    "sales_info.policy_sold_date" => $policySoldDateRules,
-                    "customer_info.customer_fname" => "required",
-                    "customer_info.customer_lname" => "required",
-                    "customer_info.customer_id_type" => "required|in:{$customerIdTypeRule}",
-                    "customer_info.customer_id_no" => "required",
-                    "vehicle_info.vehicle_chassis_no" => "required",
-                    "motor_insurance_info.mi_policy_number" => "required|in:NA",
-                    "motor_insurance_info.mi_policy_issuer" => "required",
-                    "motor_insurance_info.mi_start_date" => "required|date",
-                    "motor_insurance_info.mi_end_date" => "required|date",
-                    "motor_insurance_info.mi_coverage_area" => "required|in:NA",
-                    "motor_insurance_info.mi_sum_insured" => "required",
-                    "motor_insurance_info.mi_policy_excess" => "required",
-                    "document_info" => "required|array|size:2",
-                    "document_info.*.document_type" => "required|in:{$documentTypeRule}",
-                    "document_info.*.document_name" => "required",
-                    "document_info.*.document_url" => $documentUrlRules,
+                    'client_reference_number' => 'nullable',
+                    'quote_reference_number' => 'required',
+                    'transaction_country' => "required|in:{$this->transactionCountry}",
+                    'payment_reference_number' => 'required',
+                    'sales_info.policy_sold_date' => $policySoldDateRules,
+                    'customer_info.customer_fname' => 'required',
+                    'customer_info.customer_lname' => 'required',
+                    'customer_info.customer_id_type' => "required|in:{$customerIdTypeRule}",
+                    'customer_info.customer_id_no' => 'required',
+                    'vehicle_info.vehicle_chassis_no' => 'required',
+                    'motor_insurance_info.mi_policy_number' => 'required|in:NA',
+                    'motor_insurance_info.mi_policy_issuer' => 'required',
+                    'motor_insurance_info.mi_start_date' => 'required|date',
+                    'motor_insurance_info.mi_end_date' => 'required|date',
+                    'motor_insurance_info.mi_coverage_area' => 'required|in:NA',
+                    'motor_insurance_info.mi_sum_insured' => 'required',
+                    'motor_insurance_info.mi_policy_excess' => 'required',
+                    'document_info' => 'required|array|size:2',
+                    'document_info.*.document_type' => "required|in:{$documentTypeRule}",
+                    'document_info.*.document_name' => 'required',
+                    'document_info.*.document_url' => $documentUrlRules,
                 ];
                 break;
             case self::STEP_CREATE_POLICY_WITHOUT_QUOTE:
                 $validationRules = [
-                    "client_reference_number" => "nullable",
-                    "transaction_country" => "required|in:{$this->transactionCountry}",
-                    "payment_reference_number" => "required",
-                    "sales_info.policy_sold_date" => "required|date|date_equals:today",
-                    "sales_info.policy_currency" => "required|in:{$this->transactionCurrency}",
-                    "product_info.policy_product" => "required|in:{$this->policyProduct}",
-                    "product_info.policy_coverage_type" => "required|in:{$this->policyProduct}",
-                    "product_info.policy_plan_type" => "required|in:{$this->policyProduct}-STANDARD",
-                    "customer_info.customer_fname" => "required",
-                    "customer_info.customer_lname" => "required",
-                    "customer_info.customer_id_type" => "required|in:{$customerIdTypeRule}",
-                    "customer_info.customer_id_no" => "required",
-                    "vehicle_info.vehicle_make" => "required",
-                    "vehicle_info.vehicle_model" => "required",
-                    "vehicle_info.vehicle_first_regn_date" => "required|date",
-                    "vehicle_info.vehicle_model_year" => "required",
-                    "vehicle_info.vehicle_chassis_no" => "required",
-                    "motor_insurance_info.mi_policy_number" => "required|in:NA",
-                    "motor_insurance_info.mi_policy_issuer" => "required",
-                    "motor_insurance_info.mi_start_date" => "required|date",
-                    "motor_insurance_info.mi_end_date" => "required|date",
-                    "motor_insurance_info.mi_coverage_area" => "required|in:NA",
-                    "motor_insurance_info.mi_sum_insured" => "required",
-                    "motor_insurance_info.mi_policy_excess" => "required",
-                    "document_info" => "required|array|size:2",
-                    "document_info.*.document_type" => "required|in:{$documentTypeRule}",
-                    "document_info.*.document_name" => "required",
-                    "document_info.*.document_url" => $documentUrlRules,
+                    'client_reference_number' => 'nullable',
+                    'transaction_country' => "required|in:{$this->transactionCountry}",
+                    'payment_reference_number' => 'required',
+                    'sales_info.policy_sold_date' => 'required|date|date_equals:today',
+                    'sales_info.policy_currency' => "required|in:{$this->transactionCurrency}",
+                    'product_info.policy_product' => "required|in:{$this->policyProduct}",
+                    'product_info.policy_coverage_type' => "required|in:{$this->policyProduct}",
+                    'product_info.policy_plan_type' => "required|in:{$this->policyProduct}-STANDARD",
+                    'customer_info.customer_fname' => 'required',
+                    'customer_info.customer_lname' => 'required',
+                    'customer_info.customer_id_type' => "required|in:{$customerIdTypeRule}",
+                    'customer_info.customer_id_no' => 'required',
+                    'vehicle_info.vehicle_make' => 'required',
+                    'vehicle_info.vehicle_model' => 'required',
+                    'vehicle_info.vehicle_first_regn_date' => 'required|date',
+                    'vehicle_info.vehicle_model_year' => 'required',
+                    'vehicle_info.vehicle_chassis_no' => 'required',
+                    'motor_insurance_info.mi_policy_number' => 'required|in:NA',
+                    'motor_insurance_info.mi_policy_issuer' => 'required',
+                    'motor_insurance_info.mi_start_date' => 'required|date',
+                    'motor_insurance_info.mi_end_date' => 'required|date',
+                    'motor_insurance_info.mi_coverage_area' => 'required|in:NA',
+                    'motor_insurance_info.mi_sum_insured' => 'required',
+                    'motor_insurance_info.mi_policy_excess' => 'required',
+                    'document_info' => 'required|array|size:2',
+                    'document_info.*.document_type' => "required|in:{$documentTypeRule}",
+                    'document_info.*.document_name' => 'required',
+                    'document_info.*.document_url' => $documentUrlRules,
                 ];
                 break;
             case self::STEP_GET_POLICY_DOCUMENTS:
@@ -368,7 +368,7 @@ class EpEcbService extends EpBookingService
             default:
                 break;
         }
-        
+
         return $validationRules;
     }
     private function validatePayload($operation, $payload)
