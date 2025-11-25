@@ -36,6 +36,7 @@ class CustomerVerificationService
     private $documentTypeCode = null;
 
     public const MONTHS_RULES = [
+        0 => 'less than 6 months',
         1 => 'less than 6 months',
         2 => 'less than 1 year',
     ];
@@ -569,7 +570,7 @@ class CustomerVerificationService
         ]);
     }
 
-    private function getQuoteType($quote): string
+    private function getQuoteType($quote): string | null
     {
         return match (true) {
             $quote instanceof CarQuote => QuoteTypes::CAR->value,
