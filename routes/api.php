@@ -67,7 +67,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
         // Signature routes
         Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
     });
-    
+
     // Missing docs reminder and verify missing docs routes
     Route::prefix('imcrm')->group(function () {
         Route::post('/missing-docs-reminder/{quoteUuid}', [ApiController::class, 'missingDocsReminder'])->name('missingDocsReminder');
@@ -124,7 +124,6 @@ Route::prefix('v1')->group(function () {
 
     // User management routes
     Route::get('users/first-manager/{email}', [UserController::class, 'getFirstManager'])->name('getFirstManager');
- 
 
     // upload to metlife API route
     Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);

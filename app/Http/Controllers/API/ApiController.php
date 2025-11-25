@@ -551,9 +551,10 @@ class ApiController extends Controller
         try {
             LoggerService::info(self::class.': Missing docs reminder has been initiated');
             $response = app(ApiService::class)->missingDocsReminder($quoteUuid);
-        
-            if($response['success']) {
+
+            if ($response['success']) {
                 LoggerService::info(self::class.': Missing docs reminder has been completed');
+
                 return response()->json([
                     'success' => true,
                     'message' => $response['message'],
@@ -563,6 +564,7 @@ class ApiController extends Controller
                     'quote_uuid' => $quoteUuid,
                     'message' => $response['message'],
                 ]);
+
                 return response()->json([
                     'success' => false,
                     'message' => $response['message'],
@@ -574,6 +576,7 @@ class ApiController extends Controller
                 'message' => $e->getMessage(),
                 'exception' => $e->getTraceAsString(),
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -584,12 +587,12 @@ class ApiController extends Controller
     public function verifyMissingDocs($quoteUuid, $quoteType)
     {
         $response = app(ApiService::class)->verifyMissingDocs($quoteUuid, $quoteType);
-        if($response['success']) {
+        if ($response['success']) {
             return response()->json([
                 'success' => true,
                 'message' => $response['message'],
                 'missingDocuments' => $response['missingDocuments'] ?? null,
-                'isDocumentMissing' => $response['isDocumentMissing'] ?? null, 
+                'isDocumentMissing' => $response['isDocumentMissing'] ?? null,
             ], Response::HTTP_OK);
         } else {
             return response()->json([

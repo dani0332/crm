@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Enums\CarRegistrationType;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -12,6 +13,7 @@ use App\Events\CarQuoteAdvisorUpdated;
 use App\Events\LeadStatusUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
+use App\Jobs\CarMissingDocReminderJob;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendFailedPaymentEmailJob;
@@ -26,10 +28,6 @@ use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use App\Enums\PaymentStatusEnum;
-use App\Services\WAServices\CarWAService;
-use App\Enums\DocumentTypeCode;
-use App\Jobs\CarMissingDocReminderJob;
 
 class CarQuoteObserver
 {
@@ -173,9 +171,8 @@ class CarQuoteObserver
                 CarMissingDocReminderJob::dispatch($lead->uuid)->delay(now()->addSeconds(15));
                 LoggerService::info(self::class.' - dispatching CarMissingDocReminderJob', ['uuid' => $lead->uuid]);
             }
-          
-        }
 
+        }
 
         if (
             isset($dirty['car_make_id'])
