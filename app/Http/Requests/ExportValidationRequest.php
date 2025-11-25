@@ -110,8 +110,8 @@ class ExportValidationRequest extends FormRequest
                 $quoteType = $this->route('quoteType');
                 $isEmailExport = $this->input('exportType') === 'email';
 
-                if ((ucfirst($quoteType) == QuoteTypes::CAR->value) || $quoteType == RetentionReportEnum::RETENTION) {
-                    $diffInDays = 31;
+                if ((ucfirst($quoteType) == QuoteTypes::CAR->value)) {
+                    $diffInDays = 15;
                 }
 
                 if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
