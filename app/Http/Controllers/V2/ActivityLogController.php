@@ -6,6 +6,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
 use App\Services\ActivityLogService;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -44,7 +45,7 @@ class ActivityLogController extends Controller
             $activityLogs = $this->activityLogService->getActivityLogs($filters, $perPage);
         }
         
-        $users = $this->activityLogService->getAllUsers();
+        $users = app(UserService::class)->getAllUsers();
 
         return Inertia::render('Admin/ActivityLogs/Index', [
             'activityLogs' => $activityLogs,
