@@ -300,7 +300,7 @@ class MetLifeApiService extends BaseService
 
     public function handleDocumentUpload(array $validatedData, $quote): array
     {
-        LoggerService::startQuoteLogging(QuoteTypes::getName(QuoteTypes::LIFE->id())->refId($validatedData['quote_uuid']));
+        LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($validatedData['quote_uuid']));
 
         $documents = QuoteDocument::where('quote_documentable_id', $quote->id)
             ->where('document_type_code', $validatedData['document_type_code'])

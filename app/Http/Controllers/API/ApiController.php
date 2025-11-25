@@ -599,29 +599,31 @@ class ApiController extends Controller
             ], 403);
         }
 
-        LoggerService::startQuoteLogging(QuoteTypes::getName(QuoteTypes::LIFE->id())->refId($request->validated()['quote_uuid']));
+        $validatedData = $request->validated();
+
+        LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($validatedData['quote_uuid']));
         LoggerService::info(self::class.': Received request to sync Health Questionnaire data');
 
         try {
-            LifeSyncHealthQuestionnaireJob::dispatch($request->validated());
+            LifeSyncHealthQuestionnaireJob::dispatch($validatedData);
 
             LoggerService::info(self::class.': Health Questionnaire sync job dispatched');
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Health Questionnaire sync job has been queued.',
-                'quote_uuid' => $request->validated()['quote_uuid'],
+                'quote_uuid' => $validatedData['quote_uuid'],
             ], 202);
         } catch (\Exception $e) {
             LoggerService::error(self::class.': Health Questionnaire sync failed', extra: [
-                'request' => $request->validated(),
+                'request' => $validatedData,
             ], exception: $e);
 
             return response()->json([
                 'status' => 'error',
                 'message' => 'An error occurred while syncing Health Questionnaire data.',
                 'error_details' => $e->getMessage(),
-                'quote_uuid' => $request->validated()['quote_uuid'],
+                'quote_uuid' => $validatedData['quote_uuid'],
             ], 500);
         }
     }

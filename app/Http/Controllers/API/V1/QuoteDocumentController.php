@@ -90,9 +90,11 @@ class QuoteDocumentController extends Controller
             ], 403);
         }
 
-        LoggerService::info('API request recive to upload documents to MetLife against Quote uuid: '.$request->validated()['quote_uuid']);
+        $validatedData = $request->validated();
 
-        $quote = $this->getQuoteObject($quoteType, $request->validated()['quote_uuid']);
+        LoggerService::info('API request recive to upload documents to MetLife against Quote uuid: '.$validatedData['quote_uuid']);
+
+        $quote = $this->getQuoteObject($quoteType, $validatedData['quote_uuid']);
 
         if (! $quote) {
             return response()->json([
@@ -101,7 +103,7 @@ class QuoteDocumentController extends Controller
             ], 404);
         }
 
-        $result = $metLifeApiService->handleDocumentUpload($request->validated(), $quote);
+        $result = $metLifeApiService->handleDocumentUpload($validatedData, $quote);
 
         return response()->json($result, $result['success'] ? 200 : 500);
     }
