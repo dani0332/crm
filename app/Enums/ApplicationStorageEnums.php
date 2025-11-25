@@ -294,7 +294,6 @@ final class ApplicationStorageEnums extends Enum
 
     // Car Missing Doc Reminder Workflow
     public const BIRD_CAR_MISSING_DOC_REMINDER_WORKFLOW = 'BIRD_CAR_MISSING_DOC_REMINDER_WORKFLOW';
-    public const CAR_MISSING_DOC_REMINDER_SWITCH = 'CAR_MISSING_DOC_REMINDER_SWITCH';
     public const RTA_PORTAL_LINK = 'RTA_PORTAL_LINK';
 
     /* OCR Customer Journey Flag */
