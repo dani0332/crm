@@ -18,6 +18,7 @@ use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
+use League\Config\Exception\ValidationException;
 use Throwable;
 
 class EpEcbService extends EpBookingService
@@ -139,12 +140,12 @@ class EpEcbService extends EpBookingService
             $this->executeWorkflowFromStep();
 
             LoggerService::info($this->logPrefix.' Purchase flow completed successfully', extra: $this->logExtra);
-        } catch (EpEcbException $e) {
+        } catch (EpEcbException | ValidationException $e) {
             LoggerService::info($this->logPrefix.' Purchase flow failed', extra: [
                 ...$this->logExtra,
                 'error' => $e->getMessage(),
             ]);
-            throw $e;
+            throw new EpEcbException($e->getMessage());
         } catch (Exception $e) {
             LoggerService::error($this->logPrefix.' Purchase flow failed', extra: [
                 ...$this->logExtra,
