@@ -91,7 +91,16 @@ class QuoteDocumentController extends Controller
         }
 
         LoggerService::info('API request recive to upload documents to MetLife against Quote uuid: '.$request->validated()['quote_uuid']);
+
         $quote = $this->getQuoteObject($quoteType, $request->validated()['quote_uuid']);
+
+        if (! $quote) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Quote not found',
+            ], 404);
+        }
+
         $result = $metLifeApiService->handleDocumentUpload($request->validated(), $quote);
 
         return response()->json($result, $result['success'] ? 200 : 500);
