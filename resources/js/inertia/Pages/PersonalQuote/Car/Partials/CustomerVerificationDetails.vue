@@ -23,6 +23,8 @@ const updateAndSave = async () => {
       title: 'Error occurred while updating',
       position: 'top',
     });
+
+    isLoading.value = false;
     console.log(error);
   });
 }
