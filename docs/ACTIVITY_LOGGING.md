@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document explains how the Activity Logging system works in the application. The system uses Spatie Activity Log package with custom enhancements for automatic batching, old/new value tracking, and request-based activity grouping.
+This document explains how the Activity Logging system works in the application. The system uses Spatie Activity Log package with custom enhancements for automatic request-based batching, old/new value tracking, and activity grouping.
 
 ---
 
@@ -19,10 +19,8 @@ This document explains how the Activity Logging system works in the application.
    │
    ├─► ActivityLogBatchMiddleware::handle()
    │   │
-   │   └─► ActivityLogBatchHandler::startBatch()
-   │       ├─► Generate UUID (batch_uuid)
-   │       ├─► Set isOpen = true
-   │       └─► Initialize empty batch array []
+   │   └─► LogBatch::startBatch()
+   │       └─► Spatie generates UUID (batch_uuid) and sets batch context
    │
    │
 2. REQUEST PROCESSING
@@ -52,46 +50,21 @@ This document explains how the Activity Logging system works in the application.
    │   │                               │   └─► Store in properties: {old: {...}, attributes: {...}}
    │   │                               └─► ActivityLog model ready
    │   │                                   │
+   │   │                                   └─► Spatie automatically sets batch_uuid (from LogBatch context)
+   │   │                                   │
    │   │                                   └─► ActivityLog->save() called
-   │   │                                       │
-   │   │                                       └─► ActivityLog::save() override
-   │   │                                           │
-   │   │                                           ├─► Check: batch_enabled config?
-   │   │                                           │   ├─► NO → parent::save() (immediate insert)
-   │   │                                           │   └─► YES → Continue
-   │   │                                           │
-   │   │                                           └─► Check: ActivityLogBatchHandler::isOpen()?
-   │   │                                               ├─► NO → parent::save() (immediate insert)
-   │   │                                               └─► YES → ActivityLogBatchHandler::addToBatch()
-   │   │                                                   │
-   │   │                                                   └─► formatActivity() converts to array
-   │   │                                                       └─► Add to in-memory batch array
-   │   │                                                           └─► Return true (queued, not saved yet)
+   │   │                                       └─► Saves to database immediately with batch_uuid
    │   │
    │   └─► Multiple models can be modified in same request
-   │       └─► Each activity added to same batch array
+   │       └─► Each activity automatically gets same batch_uuid
    │
    │
 3. REQUEST COMPLETES
    │
    └─► ActivityLogBatchMiddleware::handle() finally block
        │
-       └─► ActivityLogBatchHandler::endBatch()
-           │
-           ├─► Check: batch is open and not empty?
-           │   ├─► NO → Reset state (doReset)
-           │   └─► YES → Continue
-           │
-           └─► insertBatch()
-               │
-               ├─► Ensure all activities have batch_uuid
-               ├─► Bulk insert all activities using Query Builder
-               │   └─► INSERT INTO activity_log (...) VALUES (...), (...), (...)
-               │
-               └─► doReset()
-                   ├─► Clear batch array
-                   ├─► Clear batch_uuid
-                   └─► Set isOpen = false
+       └─► LogBatch::endBatch()
+           └─► Spatie closes batch context (all activities already saved with batch_uuid)
 ```
 
 ---
@@ -100,7 +73,7 @@ This document explains how the Activity Logging system works in the application.
 
 ### 1. ActivityLogBatchMiddleware
 
-**Purpose:** Automatically starts and ends batches for each HTTP request.
+**Purpose:** Automatically starts and ends Spatie's LogBatch for each HTTP request.
 
 **Location:** `app/Http/Middleware/ActivityLogBatchMiddleware.php`
 
@@ -108,132 +81,83 @@ This document explains how the Activity Logging system works in the application.
 - Registered in `RouteServiceProvider` for all web and API routes
 - Runs at the **start** of every request
 - Uses `try...finally` to ensure batch always ends, even if exceptions occur
+- Uses **Spatie's LogBatch** facade for automatic batch UUID management
 
 **Code Example:**
 ```php
 public function handle(Request $request, Closure $next): Response
 {
-    // Start batch at the beginning of request
-    ActivityLogBatchHandler::startBatch();
+    // Start Spatie's LogBatch - all activities will share the same batch_uuid
+    LogBatch::startBatch();
 
     try {
         $response = $next($request);
     } finally {
         // Always end batch when request completes (even if exception occurs)
-        ActivityLogBatchHandler::endBatch();
+        // This ensures all activities are properly saved with the batch_uuid
+        LogBatch::endBatch();
     }
 
     return $response;
 }
 ```
 
+**How Spatie's LogBatch Works:**
+- `LogBatch::startBatch()` generates a UUID and stores it in context
+- All activities created while the batch is open automatically get the same `batch_uuid`
+- Spatie's `ActivityLogger` automatically sets `batch_uuid` on each activity before saving
+- `LogBatch::endBatch()` closes the batch context
+- Activities save individually but share the same `batch_uuid` for grouping
+
 **Why `try...finally`?**
 - The `finally` block **always executes**, regardless of:
   - Successful request completion
   - Exceptions thrown during request processing
   - Errors in controllers/services
-- This ensures activities are **never lost** - they're always inserted when the request ends
-- Without `finally`, if an exception occurs, `endBatch()` wouldn't be called and activities would remain in memory
+- This ensures `LogBatch::endBatch()` is always called, properly closing the batch context
+- Without `finally`, if an exception occurs, the batch context might remain open
 
 **Flow:**
 ```
 Request arrives
   ↓
-startBatch() → Generate UUID, initialize batch
+LogBatch::startBatch() → Spatie generates UUID and sets batch context
   ↓
 try {
   Process request (controller, services, models)
   ↓
-  Activities added to batch array
+  Model modified → Spatie creates ActivityLog
+  ↓
+  Spatie automatically sets batch_uuid (from LogBatch context)
+  ↓
+  ActivityLog->save() → Saves to database with batch_uuid
+  ↓
+  More activities → All get same batch_uuid automatically
   ↓
   Response ready
 } finally {
   ↓
-  endBatch() → Bulk insert all activities (ALWAYS executes)
-  ↓
-  Reset batch state
+  LogBatch::endBatch() → Close Spatie's batch context
 }
 ```
 
 ---
 
-### 2. ActivityLogBatchHandler (Singleton)
+### 2. ActivityLog Model
 
-**Purpose:** Manages the in-memory batch of activities during a request.
-
-**Location:** `app/Services/ActivityLogBatchHandler.php`
-
-**Key Properties:**
-- `$batchUuid` - Unique identifier for all activities in this request
-- `$batch` - Array of activity data waiting to be inserted
-- `$isOpen` - Boolean flag indicating if batch is active
-
-**Key Methods:**
-
-#### `startBatch()`
-- Generates a new UUID for the batch
-- Sets `isOpen = true`
-- Initializes empty batch array
-- Called automatically by middleware
-
-#### `isOpen()`
-- Returns whether a batch is currently open
-- Used by `ActivityLog` model to decide batching vs immediate save
-
-#### `addToBatch(ActivityLog $activity)`
-- Converts ActivityLog model to array format
-- Adds to in-memory batch array
-- If batch is not open, saves immediately instead
-
-#### `endBatch()`
-- Bulk inserts all activities in batch array
-- Uses Query Builder for performance (bypasses Eloquent)
-- Resets batch state
-- Called automatically by middleware
-
-#### `formatActivity(ActivityLog $activity, bool $includeBatchUuid)`
-- Converts model attributes to array
-- Ensures properties JSON is encoded
-- Adds timestamps if missing
-- Optionally includes batch_uuid
-
----
-
-### 3. ActivityLog Model
-
-**Purpose:** Extends Spatie's Activity model to intercept saves for batching.
+**Purpose:** Extends Spatie's Activity model with custom fillable attributes.
 
 **Location:** `app/Models/ActivityLog.php`
 
-**Key Override:**
-
-```php
-public function save(array $options = []): bool
-{
-    // If batching disabled → save immediately
-    if (!config('activitylog.batch_enabled', true)) {
-        return parent::save($options);
-    }
-
-    // If batch open → add to batch (don't save yet)
-    if (ActivityLogBatchHandler::isOpen()) {
-        ActivityLogBatchHandler::addToBatch($this);
-        return true; // Pretend it's saved
-    }
-
-    // Batch not open → save immediately
-    return parent::save($options);
-}
-```
-
-**Why override `save()`?**
-- Spatie package calls `$activity->save()` internally
-- We intercept this to check if batching is enabled
-- If yes, we queue it instead of saving immediately
+**Key Features:**
+- Extends Spatie's `Activity` model
+- Adds custom fillable attributes: `url`, `feature`, `ip_address`, `code`
+- Spatie automatically handles `batch_uuid` assignment when `LogBatch` is open
+- No custom `save()` override needed
 
 ---
 
-### 4. SpatieActivityLog Trait
+### 3. SpatieActivityLog Trait
 
 **Purpose:** Configures what and how to log for models using this trait.
 
@@ -289,8 +213,9 @@ Determines log name with priority:
 1. HTTP Request: PUT /api/payments/123
    │
    ├─► ActivityLogBatchMiddleware starts
-   │   └─► Batch UUID: "550e8400-e29b-41d4-a716-446655440000"
-   │   └─► Batch array: []
+   │   └─► LogBatch::startBatch()
+   │       └─► Spatie generates UUID: "550e8400-e29b-41d4-a716-446655440000"
+   │       └─► Batch context is now open
    │
 2. Controller: PaymentController@update
    │
@@ -330,55 +255,51 @@ Determines log name with priority:
    │             }
    │           }
    │
+   ├─► Spatie automatically sets batch_uuid
+   │   └─► batch_uuid: "550e8400-e29b-41d4-a716-446655440000" (from LogBatch context)
+   │
    ├─► ActivityLog->save() called
-   │   └─► Check: batch_enabled? YES
-   │   └─► Check: isOpen()? YES
-   │   └─► ActivityLogBatchHandler::addToBatch()
-   │       └─► Format to array, add to batch
-   │       └─► Batch array now: [activity1_data]
+   │   └─► Saves to database immediately with batch_uuid
    │
 3. More operations in same request...
    │
    ├─► Another model updated
-   │   └─► Another activity added to batch
-   │   └─► Batch array: [activity1_data, activity2_data]
+   │   └─► Spatie creates another ActivityLog
+   │   └─► Automatically gets same batch_uuid: "550e8400-..."
+   │   └─► Saves to database immediately
    │
 4. Request completes
    │
    └─► ActivityLogBatchMiddleware ends
-       └─► ActivityLogBatchHandler::endBatch()
-           └─► Bulk INSERT:
-               INSERT INTO activity_log 
-               (batch_uuid, log_name, description, ..., properties, created_at, updated_at)
-               VALUES
-               ('550e8400-...', 'Payment', 'User...', ..., '{"old":{...}}', NOW(), NOW()),
-               ('550e8400-...', 'Invoice', 'User...', ..., '{"old":{...}}', NOW(), NOW())
-           └─► Reset batch state
+       └─► LogBatch::endBatch()
+           └─► Spatie closes batch context
+           └─► All activities already saved with same batch_uuid
 ```
 
 ---
 
 ## Key Benefits
 
-### 1. **Performance**
-- **Before:** Each activity = 1 database INSERT (N queries for N activities)
-- **After:** All activities in request = 1 bulk INSERT (1 query for N activities)
-- **Result:** Significant reduction in database queries
-
-### 2. **Request Grouping**
-- All activities in same request share same `batch_uuid`
-- Easy to query: "Show all activities from this request"
+### 1. **Request Grouping**
+- All activities in same request automatically share same `batch_uuid`
+- Easy to query: `Activity::forBatch($batchUuid)->get()`
 - Useful for debugging and auditing
+- Example: When a user deletes an Author, all cascading Book deletions share the same batch_uuid
 
-### 3. **Old/New Value Tracking**
+### 2. **Old/New Value Tracking**
 - For updates, both old and new values are stored
 - Stored in `properties` JSON column
 - Frontend can display side-by-side comparison
 
-### 4. **Automatic**
+### 3. **Automatic**
 - No manual batching code needed
 - Works automatically for all models with `SpatieActivityLog` trait
-- Middleware handles everything
+- Middleware handles batch lifecycle automatically
+- Spatie's LogBatch handles batch UUID assignment automatically
+
+### 4. **Simple & Clean**
+- Uses Spatie's built-in batching functionality
+- Minimal code, maximum functionality
 
 ---
 
@@ -386,17 +307,19 @@ Determines log name with priority:
 
 ### Config File: `config/activitylog.php`
 
+The main configuration option:
+
 ```php
-'enabled' => env('ACTIVITY_LOGGER_ENABLED', true),        // Enable/disable globally
-'batch_enabled' => env('ACTIVITY_LOGGER_BATCH_ENABLED', true),  // Enable/disable batching
+'enabled' => env('ACTIVITY_LOGGER_ENABLED', true),  // Enable/disable globally
 ```
 
 ### Environment Variables
 
 ```env
 ACTIVITY_LOGGER_ENABLED=true
-ACTIVITY_LOGGER_BATCH_ENABLED=true
 ```
+
+**Note:** Batching is handled automatically by the middleware using Spatie's `LogBatch`. No additional configuration needed.
 
 ---
 
@@ -436,10 +359,9 @@ ACTIVITY_LOGGER_BATCH_ENABLED=true
         ┌─────────────────────────────────────┐
         │  ActivityLogBatchMiddleware          │
         │  ┌───────────────────────────────┐  │
-        │  │ startBatch()                   │  │
-        │  │ • Generate UUID                │  │
-        │  │ • isOpen = true                │  │
-        │  │ • batch = []                   │  │
+        │  │ LogBatch::startBatch()         │  │
+        │  │ • Spatie generates UUID       │  │
+        │  │ • Sets batch context          │  │
         │  └───────────────────────────────┘  │
         └─────────────────────────────────────┘
                           │
@@ -461,6 +383,7 @@ ACTIVITY_LOGGER_BATCH_ENABLED=true
         │  ┌───────────────────────────────┐  │
         │  │ Spatie Package                 │  │
         │  │ • Creates ActivityLog          │  │
+        │  │ • Sets batch_uuid (automatic)  │  │
         │  │ • Calls tapActivity()          │  │
         │  └───────────────────────────────┘  │
         │              │                       │
@@ -476,44 +399,33 @@ ACTIVITY_LOGGER_BATCH_ENABLED=true
         ┌─────────────────────────────────────┐
         │  ActivityLog->save()                  │
         │  ┌───────────────────────────────┐  │
-        │  │ Check: batch_enabled?         │  │
-        │  │ Check: isOpen()?              │  │
-        │  │ → addToBatch()                │  │
-        │  └───────────────────────────────┘  │
-        └─────────────────────────────────────┘
-                          │
-                          ▼
-        ┌─────────────────────────────────────┐
-        │  ActivityLogBatchHandler             │
-        │  ┌───────────────────────────────┐  │
-        │  │ formatActivity()              │  │
-        │  │ • Convert to array            │  │
-        │  │ • Add batch_uuid              │  │
-        │  │ • Add to batch[]              │  │
+        │  │ Saves to database             │  │
+        │  │ • With batch_uuid             │  │
+        │  │ • Immediately                 │  │
         │  └───────────────────────────────┘  │
         └─────────────────────────────────────┘
                           │
                           ▼
         ┌─────────────────────────────────────┐
         │  Request Processing Continues...      │
-        │  • More activities added to batch    │
+        │  • More activities created           │
+        │  • All get same batch_uuid           │
         └─────────────────────────────────────┘
                           │
                           ▼
         ┌─────────────────────────────────────┐
         │  ActivityLogBatchMiddleware          │
         │  ┌───────────────────────────────┐  │
-        │  │ endBatch()                    │  │
-        │  │ • Bulk INSERT                 │  │
-        │  │ • Reset state                 │  │
+        │  │ LogBatch::endBatch()          │  │
+        │  │ • Close batch context         │  │
         │  └───────────────────────────────┘  │
         └─────────────────────────────────────┘
                           │
                           ▼
         ┌─────────────────────────────────────┐
         │  Database: activity_log              │
-        │  • All activities inserted          │
-        │  • Same batch_uuid                  │
+        │  • All activities saved              │
+        │  • Same batch_uuid                   │
         └─────────────────────────────────────┘
 ```
 
@@ -523,16 +435,18 @@ ACTIVITY_LOGGER_BATCH_ENABLED=true
 
 The Activity Logging system works in these key steps:
 
-1. **Request Start:** Middleware opens a batch (generates UUID)
+1. **Request Start:** Middleware calls `LogBatch::startBatch()` - Spatie generates UUID and sets batch context
 2. **Model Changes:** Spatie intercepts Eloquent events, creates activities
 3. **Enrichment:** `tapActivity()` adds metadata (URL, IP, old/new values)
-4. **Batching:** Activities are queued in memory instead of saving immediately
-5. **Request End:** Middleware bulk inserts all activities in one query
-6. **Grouping:** All activities share same `batch_uuid` for easy querying
+4. **Automatic Batching:** Spatie automatically sets `batch_uuid` on each activity from the LogBatch context
+5. **Immediate Save:** Each activity saves to database immediately with `batch_uuid`
+6. **Request End:** Middleware calls `LogBatch::endBatch()` - closes batch context
+7. **Grouping:** All activities share same `batch_uuid` for easy querying
 
 This approach provides:
-- ✅ Better performance (bulk inserts)
-- ✅ Request-level grouping
+- ✅ Request-level grouping (all activities share same batch_uuid)
 - ✅ Complete audit trail with old/new values
 - ✅ Zero manual intervention needed
+- ✅ Simple implementation using Spatie's built-in functionality
+- ✅ Easy querying: `Activity::forBatch($batchUuid)->get()`
 
