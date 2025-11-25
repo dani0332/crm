@@ -11,10 +11,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use App\Traits\SpatieActivityLog;
 
 class HomeQuote extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog;
 
     protected $table = 'home_quote_request';
     protected $fillable = [];

@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use App\Traits\SpatieActivityLog;
 
 class BikeQuote extends Model implements AuditableContract
 {
-    use Auditable, HasFactory;
+    use Auditable, HasFactory, SpatieActivityLog;
 
     protected $table = 'bike_quote_request';
     protected $guarded = [];

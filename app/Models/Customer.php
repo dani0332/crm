@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use App\Traits\SpatieActivityLog;
 
 class Customer extends Model implements AuditableContract
 {
-    use Auditable, HasFactory;
+    use Auditable, HasFactory, SpatieActivityLog;
 
     protected $table = 'customer';
     protected $guarded = ['ref_id'];

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\SpatieActivityLog;
 
 class SageApiLog extends Model
 {
-    use HasFactory;
+    use HasFactory, SpatieActivityLog;
 
     /**
      * attributes those are mass assignable

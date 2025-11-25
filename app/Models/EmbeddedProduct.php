@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\SpatieActivityLog;
 
 class EmbeddedProduct extends Model
 {
+    use SpatieActivityLog;
+
     protected $fillable = [
         'insurance_provider_id',
         'product_name',

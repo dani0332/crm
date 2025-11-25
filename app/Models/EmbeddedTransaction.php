@@ -8,10 +8,11 @@ use App\Enums\SageEmbeddedProductEnum;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\SpatieActivityLog;
 
 class EmbeddedTransaction extends Model
 {
-    use HasFactory;
+    use HasFactory, SpatieActivityLog;
 
     protected $guarded = [];
     protected $appends = [

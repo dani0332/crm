@@ -4,12 +4,9 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\SpatieActivityLog;
 
 class PaymentStatusLog extends Model
 {
-    use SpatieActivityLog;
-
     protected $table = 'payment_status_log';
     protected $fillable = ['current_payment_status_id', 'payment_code', 'created_at', 'updated_at', 'previous_payment_status_id'];
 

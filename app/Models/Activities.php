@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use App\Traits\SpatieActivityLog;
 
 class Activities extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory;
+    use Auditable, FilterCriteria, HasFactory, SpatieActivityLog;
 
     protected $guarded = [];
     protected $table = 'activities';

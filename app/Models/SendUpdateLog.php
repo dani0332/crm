@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use App\Traits\SpatieActivityLog;
 
 class SendUpdateLog extends Model implements AuditableContract
 {
-    use Auditable;
+    use Auditable, SpatieActivityLog;
 
     protected $guarded = [];
     protected $casts = [

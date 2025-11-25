@@ -18,6 +18,7 @@ use Lab404\Impersonate\Models\Impersonate;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
+use App\Traits\SpatieActivityLog;
 
 class User extends Authenticatable implements AuditableContract
 {
@@ -27,6 +28,7 @@ class User extends Authenticatable implements AuditableContract
     use Impersonate;
     use Logable;
     use Notifiable;
+    use SpatieActivityLog;
 
     /**
      * The attributes that are mass assignable.

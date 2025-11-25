@@ -22,10 +22,11 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use App\Traits\SpatieActivityLog;
 
 class HealthQuote extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog;
 
     protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'has_pec_tag'];
     protected $table = 'health_quote_request';

@@ -17,10 +17,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use App\Traits\SpatieActivityLog;
 
 class TravelQuote extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog;
 
     protected $table = 'travel_quote_request';
     protected $guarded = [];
