@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\DTO\EpBookingContext;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -939,21 +941,6 @@ class EpEcbService extends EpBookingService
         ];
     }
 
-    private function getEmirateIdNumber(): string
-    {
-        $latestInsuredData = $this->quote?->latestInsured;
-        $insuredKyc = $latestInsuredData?->insuredKyc;
-
-        $emirateIdNumber = str_replace('-', '', $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '');
-
-        if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
-            $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
-                .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
-        }
-
-        return $emirateIdNumber;
-    }
-
     private function getDocumentsInfo(): array
     {
         $documentsInfo = $this->quote->documents()->whereIn('document_type_code', [QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY])
@@ -969,23 +956,38 @@ class EpEcbService extends EpBookingService
 
         return $documentsInfo->toArray();
     }
+    private function getCustomerTypeInfo(): array
+    {
+        $latestInsuredData = $this->quote?->latestInsured;
+        $insuredKyc = $latestInsuredData?->insuredKyc;
+
+        $proceedWithTradeLicense = $insuredKyc?->id_type == 'tradeLicense' 
+            && $this->quote?->registration_type == CarRegistrationType::COMPANY 
+            && $this->quote?->vehicle_use == CarVehicleUse::PRIVATE;
+
+        $customerIdType = $proceedWithTradeLicense ? 'TL' : 'EID';
+        $customerIdNo = $customerIdType == 'TL' 
+            ? $insuredKyc?->id_number 
+            : formatEmiratesIdNumber($insuredKyc?->id_number ?? '');
+
+        return [
+            'customer_id_type' => $customerIdType,
+            'customer_id_no' => $customerIdNo,
+        ];
+    }
 
     private function getCustomerInfo(string $step): array
     {
-        $emirateIdNumber = $this->getEmirateIdNumber();
-        if (empty($emirateIdNumber)) {
-            throw new EpEcbException('Emirate ID number is not found');
-        }
+        $customerTypeInfo = $this->getCustomerTypeInfo();
 
         $customerDetails = [
+            ...$customerTypeInfo,
             'customer_type' => null,
             'customer_fname' => $this->quote?->first_name,
             'customer_lname' => $this->quote?->last_name,
             'customer_mobile_no' => null,
             'customer_whatsapp_no' => null,
             'customer_email_id' => null,
-            'customer_id_type' => 'EID',
-            'customer_id_no' => $emirateIdNumber,
             'customer_id_expiry_date' => null,
             'customer_address' => null,
             'customer_address_city' => null,

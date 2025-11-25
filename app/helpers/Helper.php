@@ -1784,3 +1784,15 @@ if (! function_exists('getUserIpAddress')) {
         return $request->ip();
     }
 }
+
+if (! function_exists('formatEmiratesIdNumber')) {
+    function formatEmiratesIdNumber($eidNumber): string
+    {
+        $eidNumber = str_replace('-', '', $eidNumber);
+        if (strlen($eidNumber ?? '') == 15) {
+            $eidNumber = substr($eidNumber, 0, 3).'-'.substr($eidNumber, 3, 4)
+                .'-'.substr($eidNumber, 7, 7).'-'.substr($eidNumber, 14, 1);
+        }
+        return $eidNumber;
+    }
+}
