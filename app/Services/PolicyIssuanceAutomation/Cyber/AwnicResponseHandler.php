@@ -36,6 +36,22 @@ class AwnicResponseHandler
     }
 
     /**
+     * Update cyber quote with document IDs from issue policy response
+     *
+     * @param mixed $cyberQuote
+     * @param \stdClass $issuePolicyResult
+     * @return void
+     */
+    public function updateCyberQuoteFromIssuePolicyResponse($cyberQuote, $issuePolicyResult): void
+    {
+        $cyberQuote->update([
+            'awni_drcr_doc_id' => $issuePolicyResult?->policyInfo?->drcrDocId,
+            'awni_tax_invoice_doc_id' => $issuePolicyResult?->policyInfo?->taxInvoiceDocId,
+            'awni_policy_doc_id' => $issuePolicyResult?->policyInfo?->policyDocId,
+        ]);
+    }
+
+    /**
      * Update payment with commission data from issue policy response
      *
      * @param string $quoteCode
