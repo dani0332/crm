@@ -417,13 +417,15 @@ const onLoadAvailablePlansData = async () => {
 
       if (plansData.length > 0 && page.props?.quote?.plan_id) {
         const selectedPlan = plansData.find(
-          plan => plan.id == page.props.quote.plan_id
+          plan => plan.id == page.props.quote.plan_id,
         );
         if (selectedPlan) {
           selectedProviderPlan.value.id = selectedPlan.id;
-          selectedProviderPlan.value.planName = selectedPlan.planName || selectedPlan.name;
+          selectedProviderPlan.value.planName =
+            selectedPlan.planName || selectedPlan.name;
           selectedProviderPlan.value.providerName = selectedPlan.providerName;
-          selectedProviderPlan.value.premium = selectedPlan.premium || page.props?.quote?.premium;
+          selectedProviderPlan.value.premium =
+            selectedPlan.premium || page.props?.quote?.premium;
         }
       }
     })
@@ -689,7 +691,13 @@ const copyLink = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CYBER COVERAGE UP TO</dt>
-                <dd>{{ quote?.cyber_quote?.coverage ? '$ ' + quote.cyber_quote.coverage.text : '-' }}</dd>
+                <dd>
+                  {{
+                    quote?.cyber_quote?.coverage
+                      ? '$ ' + quote.cyber_quote.coverage.text
+                      : '-'
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IM AML STATUS</dt>
@@ -746,7 +754,9 @@ const copyLink = () => {
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-                <dd>{{ selectedProviderPlan.premium || quote.premium || '' }}</dd>
+                <dd>
+                  {{ selectedProviderPlan.premium || quote.premium || '' }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AUTHORIZED AT</dt>
