@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\Mulkiya;
 
+use App\Enums\QuoteTypeId;
 use App\Services\OCR\OcrUtils;
 
 class MulkiyaExtractor
@@ -14,19 +15,23 @@ class MulkiyaExtractor
 
     public function __construct(
         private object $data,
+        private ?int $providerId,
     ) {}
 
     public function extractMulkiyaData(): self
     {
         $this->extractedData = [
-            // Car Quote Detail fields
-            'plate_number' => null,
-            'traffic_code_number' => null,
+            // vehicle driver detail fields
+            'vehicle_plate_code' => null,
+            'vehicle_plate_number' => null,
             'first_registration_date' => null,
             'vehicle_color' => null,
-            'engine_number' => null,
-            'chassis_number' => null,
+            'vehicle_engine_number' => null,
             'rta_plate_category' => null,
+            'bank_name' => null,
+
+            // Car Quote Detail fields
+            'chassis_number' => null,
 
             // Car Quote fields
             'policy_expiry_date' => null,
@@ -50,6 +55,7 @@ class MulkiyaExtractor
             'ocr_done_by' => null,
             'doc_type' => null,
             'provider_id' => null,
+            'traffic_code_number' => null,
 
             // Metadata
             'ocr_processed_at' => now()->toDateTimeString(),
@@ -65,16 +71,19 @@ class MulkiyaExtractor
             }
 
             $data = $this->ensureArray($ocrData);
+            $plateInfo = $this->extractPlateCodeNumber($data['trafficPlateNumber'] ?? null);
 
             $this->extractedData = array_merge($this->extractedData, $this->getCleanData([
-                // Car Quote Detail fields
-                'plate_number' => $data['trafficPlateNumber'] ?? null,
-                'traffic_code_number' => $data['trafficCodeNumber'] ?? null,
+                // vehicle driver detail fields
+                'vehicle_plate_code' => $plateInfo['plate_code'] ?? null,
+                'vehicle_plate_number' => $plateInfo['plate_number'] ?? null,
                 'first_registration_date' => $this->formatDate($data['registrationDate'] ?? null),
-                'vehicle_color' => $data['vehicalColor'] ?? null,
-                'engine_number' => $data['engineNumber'] ?? null,
+                'vehicle_color' => $this->getVehicleColorCode($data['vehicalColor'] ?? null, QuoteTypeId::Car, $this->providerId),
+                'vehicle_engine_number' => $data['engineNumber'] ?? null,
+                'bank_name' => $this->getBankCode($data['mortageBy'] ?? null, QuoteTypeId::Car, $this->providerId),
+
+                // Car Quote Detail fields
                 'chassis_number' => $data['chassisNumber'] ?? null,
-                'rta_plate_category' => $data['plateType'] ?? null,
 
                 // Car Quote fields
                 'policy_expiry_date' => $this->formatDate($data['insuranceExpiryDate'] ?? null),
@@ -98,6 +107,7 @@ class MulkiyaExtractor
                 'ocr_done_by' => $data['ocr_done_by'] ?? null,
                 'doc_type' => $data['doc_type'] ?? null,
                 'provider_id' => $data['provider'] ?? null,
+                'traffic_code_number' => $data['trafficCodeNumber'] ?? null,
 
                 // Metadata
                 'ocr_model' => $data['vehicalModel'] ?? null,
@@ -108,15 +118,24 @@ class MulkiyaExtractor
         return $this;
     }
 
+    public function getVehicleDriverDetailFields(): array
+    {
+        return $this->getCleanData([
+            'vehicle_plate_number' => $this->extractedData['vehicle_plate_number'] ?? null,
+            'vehicle_plate_code' => $this->extractedData['vehicle_plate_code'] ?? null,
+            'first_registration_date' => $this->extractedData['first_registration_date'] ?? null,
+            'vehicle_color' => $this->extractedData['vehicle_color'] ?? null,
+            'vehicle_engine_number' => $this->extractedData['vehicle_engine_number'] ?? null,
+            'bank_name' => $this->extractedData['bank_name'] ?? null,
+            'bank_loan' => $this->extractedData['bank_name'] ? 1 : 0,
+            'traffic_code_number' => $this->extractedData['traffic_code_number'] ?? null,
+        ]);
+    }
+
     public function getCarQuoteDetailFields(): array
     {
         return $this->getCleanData([
-            'plate_number' => $this->extractedData['plate_number'] ?? null,
-            'first_registration_date' => $this->extractedData['first_registration_date'] ?? null,
-            'vehicle_color' => $this->extractedData['vehicle_color'] ?? null,
-            'engine_number' => $this->extractedData['engine_number'] ?? null,
             'chassis_number' => $this->extractedData['chassis_number'] ?? null,
-            'rta_plate_category' => $this->extractedData['rta_plate_category'] ?? null,
         ]);
     }
 
@@ -155,6 +174,7 @@ class MulkiyaExtractor
     public function getProcessedData(): array
     {
         return [
+            'vehicle_driver_detail_fields' => $this->getVehicleDriverDetailFields(),
             'car_quote_detail_fields' => $this->getCarQuoteDetailFields(),
             'car_quote_fields' => $this->getCarQuoteFields(),
             'registration_certificate_fields' => $this->getRegistrationCertificateFields(),

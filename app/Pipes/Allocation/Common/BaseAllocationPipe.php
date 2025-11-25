@@ -81,6 +81,11 @@ abstract class BaseAllocationPipe extends AllocationService
             $this->allocationRequest->markAsAIG();
         }
 
+        if (! $lead->isAIAdviserRequired() && $lead->isAIAdvisorAssigned()) {
+            $this->allocationRequest->setAsReassignmentJob();
+            $this->allocationRequest->overrideAdvisorId();
+        }
+
         return $lead;
     }
 
@@ -269,6 +274,10 @@ abstract class BaseAllocationPipe extends AllocationService
 
         $this->lead->advisor_id = $advisor->id;
         $this->lead->assignment_type = $assignmentType;
+
+        if ($advisor->isAi()) {
+            $this->lead->ai_advisor_assigned_at = now();
+        }
 
         $quoteBatch = $this->getQuoteBatch();
         $this->lead->quote_batch_id = $quoteBatch->id;

@@ -1,5 +1,10 @@
 <script setup>
 const notification = useNotifications('toast');
+const page = usePage();
+const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
+const can = permission => useCan(permission);
+const rolesEnum = page.props.rolesEnum;
 
 const props = defineProps({
   quote: { type: Object, default: null },
@@ -9,6 +14,8 @@ const props = defineProps({
   possession_types: Object,
   flash: Object,
   nationalities: Object,
+  subSources: { type: Array, default: () => [] },
+  leadSourceParams: { type: Object, default: () => ({}) },
 });
 
 const quoteForm = useForm({
@@ -17,6 +24,7 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
+  source: props.quote?.source || '',
   pet_type_id: props.quote?.pet_quote?.pet_type_id || '',
   breed_of_pet1: props.quote?.pet_quote?.breed_of_pet1 || '',
   pet_age_id: props.quote?.pet_quote?.pet_age_id || '',
@@ -29,12 +37,85 @@ const quoteForm = useForm({
   dob: props.quote?.unformatted_dob || null,
   nationality_id: props.quote?.nationality_id || null,
   customer_gender: props.quote?.customer?.gender || '',
+  // Sub-source fields from CreateLeadModal
+  sub_source_id:
+    parseInt(
+      props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0,
+    ) || null,
+  sub_source_options_id:
+    parseInt(
+      props.quote?.sub_source_options_id ||
+        props.leadSourceParams?.subSourceOption ||
+        0,
+    ) || null,
+  notes: (() => {
+    return props.quote?.notes || '';
+  })(),
 });
 
-const { isRequired, isEmail, isMobileNo } = useRules();
+const { isRequired, isEmail, isMobileNo, maxCharacters } = useRules();
 const editMode = computed(() => {
   return props.quote ? true : false;
 });
+
+// Sub-source computed properties
+const subSourceOptions = computed(() => {
+  return (props.subSources || []).map(item => ({
+    value: item.id,
+    label: item.text,
+    suffix: item.description || null,
+  }));
+});
+
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+  const selectedSubSource = props.subSources?.find(
+    source => source.id == quoteForm.sub_source_id,
+  );
+  return (
+    selectedSubSource?.childs?.map(option => ({
+      value: option.id,
+      label: option.text,
+      code: option.code,
+      suffix: option.description || null,
+      disabled:
+        !isPcpSubSourceOptionAllowed.value &&
+        ['pcp-cross-sell', 'pcp-customer-referral'].includes(
+          String(option.code),
+        ),
+    })) || []
+  );
+});
+
+const isReferralType = computed(() => {
+  return (
+    props.leadSourceParams?.type === 'referral' || quoteForm.source === 'IMCRM'
+  );
+});
+
+const canEditSubSourceFields = computed(() => {
+  return useHasAnyRole([
+    rolesEnum.PetManager,
+    rolesEnum.Admin,
+    rolesEnum.LeadPool,
+  ]);
+});
+
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
+
+// Watchers for sub-source fields
+watch(
+  () => quoteForm.sub_source_id,
+  newValue => {
+    if (newValue) {
+      quoteForm.sub_source_options_id = null;
+    }
+  },
+);
+
 function onSubmit(isValid) {
   if (isValid) {
     let method = editMode.value ? 'put' : 'post';
@@ -77,6 +158,57 @@ function onSubmit(isValid) {
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Lead Source Fields - Only show when type is referral -->
+        <x-select
+          v-if="isReferralType"
+          label="IMCRM SUB-SOURCE"
+          v-model="quoteForm.sub_source_id"
+          :options="subSourceOptions"
+          class="w-full"
+          placeholder="Select IMCRM SUB-SOURCE"
+          filterable
+          filterPlaceholder="Filter IMCRM SUB-SOURCE...."
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          required
+          :error="quoteForm.errors.sub_source_id"
+          tooltip="Manually created lead in IMCRM"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-select
+          v-if="isReferralType && quoteForm.sub_source_id"
+          label="SUB SOURCE OPTIONS"
+          v-model="quoteForm.sub_source_options_id"
+          :options="subSourceOptionOptions"
+          class="w-full"
+          placeholder="Select Sub Source Option"
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+          tooltip="Type of referral lead"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
         <x-input
           v-model="quoteForm.first_name"
           type="text"
@@ -250,6 +382,18 @@ function onSubmit(isValid) {
           :error="quoteForm.errors.gender"
           label="PET'S GENDER"
           required
+        />
+      </div>
+
+      <!-- Additional Notes field -->
+      <div class="grid sm:grid-cols-1 gap-4">
+        <x-textarea
+          label="ADDITIONAL NOTES"
+          v-model="quoteForm.notes"
+          :error="quoteForm.errors.notes"
+          class="w-full"
+          placeholder="Enter any additional notes..."
+          rows="3"
         />
       </div>
 

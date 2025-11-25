@@ -444,4 +444,21 @@ trait QuoteModelTrait
             ->map(fn ($name) => strtolower($name))
             ->toArray();
     }
+
+    public function isSuppressIntroEmail(): bool
+    {
+        $excludedQuoteStatuses = [
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+
+        return in_array($this->quote_status_id, $excludedQuoteStatuses);
+    }
 }

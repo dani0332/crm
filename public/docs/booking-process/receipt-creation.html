@@ -530,25 +530,47 @@
         </div>
 
         <div class="header">
-            <h1>🧾 Receipt Creation Process</h1>
-            <p>Comprehensive guide to payment receipt generation and invoice mapping in Sage 300</p>
+            <h1>🧾 Prepayment Receipt Creation Process</h1>
+            <p>Comprehensive guide to prepayment receipt generation and posting in Sage 300</p>
         </div>
 
         <div class="content-section">
             <h2>🎯 Overview</h2>
             <p>
-                The receipt creation process specifically handles the generation and posting of payment receipts and prepayments
-                in Sage 300 ERP system for both Accounts Receivable (AR) and Accounts Payable (AP). This process manages the
-                complete lifecycle of receipts from creation through status transitions: Open → Ready to Post → Posted.
+                The prepayment receipt creation process handles the generation and posting of prepayment receipts
+                in Sage 300 ERP system for both Accounts Receivable (AR) and Accounts Payable (AP).
             </p>
 
             <div class="highlight">
-                <h4>💡 Core Receipt Operations</h4>
+                <h4>💡 Important: Prepayment = Receipt in Sage 300</h4>
                 <p>
-                    AR Prepayment Receipts for customer advance payments, AP Payment Receipts for vendor payments,
-                    Commission Receipts for broker/agent payments, and systematic status management through Sage 300
-                    batch processing workflow with comprehensive error handling and recovery mechanisms.
+                    <strong>In Sage 300, a prepayment receipt IS the prepayment record - they are the same thing, not separate concepts.</strong><br>
+                    When we create a "prepayment receipt", we're creating the payment record in Sage 300 that will later be applied to invoices.
+                    The term "prepayment" refers to payments made before (or separate from) invoice creation, and "receipt" is simply
+                    the Sage 300 document type that records these prepayments.
                 </p>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>📋 What is a Prepayment Receipt?</h4>
+                    <ul>
+                        <li><strong>Single Concept:</strong> Prepayment receipt = payment record</li>
+                        <li><strong>AR Prepayment Receipt:</strong> Records customer payment before/separate from invoice</li>
+                        <li><strong>AP Prepayment Receipt:</strong> Records vendor payment before/separate from invoice</li>
+                        <li><strong>Purpose:</strong> Created first, then applied to invoices later</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔄 Prepayment Receipt Lifecycle</h4>
+                    <ul>
+                        <li><strong>Step 1:</strong> Create prepayment receipt (OPEN status)</li>
+                        <li><strong>Step 2:</strong> Ready to Post (validation)</li>
+                        <li><strong>Step 3:</strong> Post to GL (POSTED status)</li>
+                        <li><strong>Later:</strong> Apply to invoices (separate process)</li>
+                    </ul>
+                </div>
             </div>
 
             <div class="info-grid">
@@ -562,48 +584,49 @@
                 </div>
 
                 <div class="info-card">
-                    <h4>🗄️ Database Storage</h4>
+                    <h4>🗄️ Database Storage for Prepayment Receipt References</h4>
                     <ul>
-                        <li><strong>AR Receipt IDs:</strong> payment_splits.sage_reciept_id</li>
-                        <li><strong>AP Payment IDs:</strong> payment_splits.sage_ap_payment_receipt_id</li>
-                        <li><strong>Purpose:</strong> Track and reference Sage receipt batches</li>
+                        <li><strong>payment_splits.sage_reciept_id:</strong> Stores AR prepayment receipt document number</li>
+                        <li><strong>payment_splits.sage_ap_payment_receipt_id:</strong> Stores AP prepayment receipt document number</li>
+                        <li><strong>Purpose:</strong> Reference to the prepayment receipt (payment record) in Sage 300</li>
+                        <li><strong>Note:</strong> These store the actual payment record references, not separate receipts</li>
                     </ul>
                 </div>
             </div>
         </div>
 
         <div class="content-section">
-            <h2>📋 AR & AP Receipt Types</h2>
+            <h2>📋 Prepayment Receipt Types in Sage 300</h2>
 
             <div class="receipt-types">
                 <div class="receipt-type">
                     <span class="icon">💳</span>
-                    <h4>AR Prepayment Receipts</h4>
-                    <p>Customer advance payment receipts created in AR module. Goes through Open → Ready to Post → Posted status cycle.</p>
+                    <h4>AR Prepayment Receipt</h4>
+                    <p>Customer payment record created in AR module BEFORE applying to invoices. The prepayment receipt IS the payment itself - recorded in Sage as a receipt document that goes through Open → Ready to Post → Posted workflow.</p>
                 </div>
 
                 <div class="receipt-type">
                     <span class="icon">🏦</span>
-                    <h4>AP Payment Receipts</h4>
-                    <p>Vendor payment receipts created in AP module for insurance provider payments. Follows same status workflow.</p>
+                    <h4>AP Prepayment Receipt</h4>
+                    <p>Vendor payment record created in AP module BEFORE applying to invoices. The prepayment receipt IS the payment to the vendor - recorded in Sage as a payment document following the same status workflow.</p>
                 </div>
 
                 <div class="receipt-type">
                     <span class="icon">💼</span>
-                    <h4>Commission Receipts</h4>
-                    <p>Broker/agent commission payment receipts. Can be both AR (receiving commission) or AP (paying commission) depending on flow.</p>
+                    <h4>Commission Prepayment</h4>
+                    <p>Commission payment records. Can be AR prepayment receipts (receiving commission) or AP prepayment receipts (paying commission) - both are simply payment records in their respective modules.</p>
                 </div>
 
                 <div class="receipt-type">
                     <span class="icon">🔄</span>
-                    <h4>Receipt Status Lifecycle</h4>
-                    <p>All receipts follow: Create (Open) → Mark Ready to Post → Post to General Ledger (Posted) → Complete</p>
+                    <h4>Prepayment Receipt Lifecycle</h4>
+                    <p>All prepayment receipts (payment records) follow: Create (Open) → Mark Ready to Post → Post to General Ledger (Posted) → Later applied to invoices</p>
                 </div>
             </div>
         </div>
 
         <div class="content-section">
-            <h2>🔄 Receipt Status Lifecycle Workflow</h2>
+            <h2>🔄 Prepayment Receipt Status Lifecycle Workflow</h2>
 
             <div class="process-flow">
                 <div class="process-step">
@@ -1109,14 +1132,14 @@
                         <tr>
                             <td>sage_reciept_id</td>
                             <td>VARCHAR(100) NULLABLE</td>
-                            <td>Sage receipt reference</td>
-                            <td>Stores Sage receipt ID after creation</td>
+                            <td>AR prepayment receipt reference</td>
+                            <td>Stores AR prepayment receipt document number (payment record reference in Sage)</td>
                         </tr>
                         <tr>
                             <td>sage_ap_payment_receipt_id</td>
                             <td>VARCHAR(100) NULLABLE</td>
-                            <td>AP receipt reference</td>
-                            <td>For vendor payment receipts</td>
+                            <td>AP prepayment receipt reference</td>
+                            <td>Stores AP prepayment receipt document number (payment record reference in Sage)</td>
                         </tr>
                         <tr>
                             <td>captured_at</td>
@@ -1136,53 +1159,60 @@
         </div>
 
         <div class="content-section">
-            <h2>🗄️ Database Storage - Receipt ID Columns</h2>
-            <p>After successful receipt creation, the system stores Sage receipt IDs in specific database columns for tracking and reference.</p>
+            <h2>🗄️ Database Storage - Prepayment Receipt References</h2>
+            <p>After successful prepayment receipt creation, the system stores the Sage document numbers in specific database columns. These are references to the actual payment records (prepayment receipts) in Sage 300.</p>
 
             <div class="info-grid">
                 <div class="info-card">
-                    <h4>💳 AR Receipt ID Storage</h4>
+                    <h4>💳 AR Prepayment Receipt Reference</h4>
                     <ul>
                         <li><strong>Table:</strong> payment_splits</li>
                         <li><strong>Column:</strong> sage_reciept_id</li>
                         <li><strong>Type:</strong> VARCHAR(100) NULLABLE</li>
-                        <li><strong>Stores:</strong> AR receipt batch document number</li>
+                        <li><strong>Stores:</strong> AR prepayment receipt document number (payment record reference)</li>
                         <li><strong>Updated By:</strong> createARPrepaymentPremiumReceipt()</li>
+                        <li><strong>Purpose:</strong> Links payment split to its AR prepayment receipt in Sage</li>
                     </ul>
                 </div>
 
                 <div class="info-card">
-                    <h4>🏦 AP Payment ID Storage</h4>
+                    <h4>🏦 AP Prepayment Receipt Reference</h4>
                     <ul>
                         <li><strong>Table:</strong> payment_splits</li>
                         <li><strong>Column:</strong> sage_ap_payment_receipt_id</li>
                         <li><strong>Type:</strong> VARCHAR(100) NULLABLE</li>
-                        <li><strong>Stores:</strong> AP payment batch document number</li>
+                        <li><strong>Stores:</strong> AP prepayment receipt document number (payment record reference)</li>
                         <li><strong>Updated By:</strong> createAPPrepaymentPremiumReceipt()</li>
+                        <li><strong>Purpose:</strong> Links payment split to its AP prepayment receipt in Sage</li>
                     </ul>
                 </div>
             </div>
 
             <div class="code-block">
-                <pre>// AR Receipt ID Storage Example
+                <pre>// AR Prepayment Receipt Reference Storage
+// The document number IS the prepayment receipt (payment record) reference
 if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
     $documentNumberForReceipt = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+    // Store AR prepayment receipt reference
     $paymentSplit->update(['sage_reciept_id' => $documentNumberForReceipt]);
 }
 
-// AP Payment ID Storage Example
+// AP Prepayment Receipt Reference Storage
+// The document number IS the prepayment receipt (payment record) reference
 if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
     $documentNumberForReceipt = $sageResponse['PaymentsAdjustments'][0]['DocumentNumber'];
+    // Store AP prepayment receipt reference
     $paymentSplit->update(['sage_ap_payment_receipt_id' => $documentNumberForReceipt]);
 }</pre>
             </div>
 
             <div class="highlight">
-                <h4>🔍 Usage of Stored Receipt IDs</h4>
+                <h4>🔍 Usage of Stored Prepayment Receipt References</h4>
                 <p>
-                    These stored receipt IDs are used for payment status tracking, reconciliation processes,
-                    error recovery, and linking payment splits to their corresponding Sage 300 receipt batches
-                    for audit trails and financial reporting.
+                    <strong>These references point to the actual payment records (prepayment receipts) in Sage 300.</strong><br>
+                    They are used for: payment status tracking, reconciliation processes, applying payments to invoices later,
+                    error recovery, linking payment splits to their Sage payment records, audit trails, and financial reporting.
+                    When we "apply prepayment", we're using these references to apply the payment record to an invoice.
                 </p>
             </div>
         </div>
@@ -1416,24 +1446,247 @@ if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
             <h3>🔍 Error Recovery in Actual Functions</h3>
             <div class="info-grid">
                 <div class="info-card">
-                    <h4>🚨 AR Receipt Error Handling</h4>
+                    <h4>🚨 AR Prepayment Receipt Error Handling</h4>
                     <ul>
                         <li><strong>Batch Status Check:</strong> GET AR/ARReceiptAndAdjustmentBatches</li>
                         <li><strong>Already Posted Check:</strong> BatchStatus == 'POSTED'</li>
                         <li><strong>Document Validation:</strong> Check DocumentNumber exists</li>
-                        <li><strong>Database Update:</strong> sage_reciept_id field</li>
+                        <li><strong>Database Update:</strong> sage_reciept_id field (stores receipt reference)</li>
                     </ul>
                 </div>
 
                 <div class="info-card">
-                    <h4>🚨 AP Payment Error Handling</h4>
+                    <h4>🚨 AP Prepayment Receipt Error Handling</h4>
                     <ul>
                         <li><strong>Batch Status Check:</strong> GET AP/APPaymentAndAdjustmentBatches</li>
                         <li><strong>Already Posted Check:</strong> BatchStatus == 'POSTED'</li>
                         <li><strong>Document Validation:</strong> Check DocumentNumber exists</li>
-                        <li><strong>Database Update:</strong> sage_ap_payment_receipt_id field</li>
+                        <li><strong>Database Update:</strong> sage_ap_payment_receipt_id field (stores receipt reference)</li>
                     </ul>
                 </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔄 NRA Use Case - Non-Regular Approval Receipt Creation</h2>
+            <p><strong>📍 Special Scenario:</strong> Creating prepayment receipts when payment is approved AFTER policy/send update has already been booked on Sage.</p>
+
+            <div class="highlight">
+                <h4>💡 What is NRA (Non-Regular Approval)?</h4>
+                <p>
+                    <strong>NRA handles the scenario where a payment split is approved AFTER the policy has already been booked on Sage.</strong><br>
+                    In the normal flow, prepayment receipts are created during policy booking. However, in NRA cases, the payment
+                    approval happens later (e.g., delayed bank confirmation, manual verification), requiring separate prepayment receipt creation.
+                </p>
+            </div>
+
+            <h3>🎯 NRA Trigger Conditions</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>✅ When NRA Receipt Creation Occurs</h4>
+                    <ul>
+                        <li><strong>Payment Approved:</strong> $request->is_approved is true</li>
+                        <li><strong>Not Already Paid:</strong> $splitPayment->payment_status_id != PAID</li>
+                        <li><strong>Sage Enabled:</strong> isSageEnabled() returns true</li>
+                        <li><strong>Post-Booking Approval:</strong> shouldCreateAndSchedulePostPrepayment() returns true</li>
+                        <li><strong>Not Health AUH:</strong> !$isHealthAUH (Health Abu Dhabi excluded)</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🚫 When NRA Receipt Creation is Skipped</h4>
+                    <ul>
+                        <li><strong>Already Paid:</strong> Split payment already has PAID status</li>
+                        <li><strong>Sage Disabled:</strong> Sage integration is disabled</li>
+                        <li><strong>Regular Booking:</strong> Payment approved during normal booking flow</li>
+                        <li><strong>Health AUH:</strong> Health Abu Dhabi quote type</li>
+                        <li><strong>Payment Declined:</strong> Payment is being declined instead of approved</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>🔧 NRA Implementation in PaymentRepository</h3>
+            <p>The NRA use case is implemented in the <code>fetchSplitPaymentApproveDecline()</code> method in <strong>PaymentRepository</strong>.</p>
+
+            <div class="code-block">
+                <pre>public function fetchSplitPaymentApproveDecline($request)
+{
+    LoggerService::startFeatureLogging(LoggerFeatureEnum::APPROVE_DECLINE_CHILD_PAYMENT);
+
+    // Fetch payment split and related data
+    $splitPayment = PaymentSplits::find($request->splitPaymentId);
+    $masterPayment = $splitPayment->payment;
+    $quote = $masterPayment?->paymentable;
+
+    $isHealthAUH = $this->isHealthAUHLead(ucfirst($request->modelType), $quote);
+
+    /* Handle NRA case where payment is approved after policy/send update is booked */
+    $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quote, $splitPayment);
+    info(self::class.' fn:'.__FUNCTION__.' Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no
+        .' trigger creation of Premium Sage receipt: ',
+        ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]
+    );
+
+    // Process Sage API call outside transaction if needed
+    if ($request->is_approved
+        && $splitPayment->payment_status_id != PaymentStatusEnum::PAID
+        && (new SageApiService)->isSageEnabled()
+        && $shouldCreatePrepaymentPremiumReceipt
+        && !$isHealthAUH
+    ) {
+        // Build Sage request for NRA receipt creation
+        $sageRequest = $request->safe();
+        $sageRequest->userId = auth()->id();
+        $sageRequest->quoteType = $request->modelType;
+        $sageRequest->quoteTypeId = QuoteTypes::getIdFromValue($request->modelType);
+        $sageRequest->advisor_id = $quote->advisor_id;
+        $sageRequest->collection_amount = $request->collection_amount;
+        $sageRequest->insurerReceiptNumber = $request->insurer_receipt_number;
+
+        /* Handle NRA case where payment is approved after policy/send update is booked */
+        $sageARPrepaymentResponse = (new SageApiService)->createARPrepaymentPremiumReceipt(
+            $sageRequest,
+            $quote,
+            $masterPayment,
+            $splitPayment,
+            $request->collection_amount
+        );
+
+        if (!$sageARPrepaymentResponse['status']) {
+            vAbort($sageARPrepaymentResponse['message']);
+        }
+
+        /* AP Prepayment creation is currently commented out
+        $sageRequest->sage_customer_number = $sageARPrepaymentResponse['sageCustomerNumber'];
+
+        $sageAPPrepaymentResponse = (new SageApiService)->createAPPrepaymentPremiumReceipt(
+            $sageRequest, $quote, $masterPayment, $splitPayment, $request->collection_amount
+        );
+
+        if (!$sageAPPrepaymentResponse['status']) {
+            vAbort($sageAPPrepaymentResponse['message']);
+        }
+        */
+    }
+
+    // Continue with database transaction for payment approval/decline
+    return $this->handleWithDeadlockRetries(function () use ($request, $splitPayment, $masterPayment) {
+        // Update payment split status, collection amount, etc.
+        // ... (transaction logic continues)
+    }, $maxRetries);
+}</pre>
+            </div>
+
+            <h3>📋 NRA Receipt Creation Flow</h3>
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="step-number">1</div>
+                    <h4>Policy Already Booked</h4>
+                    <p>Policy/send update has been booked on Sage without this payment split</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">2</div>
+                    <h4>Payment Approval Request</h4>
+                    <p>User approves payment split via fetchSplitPaymentApproveDecline()</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">3</div>
+                    <h4>NRA Validation Check</h4>
+                    <p>System validates if NRA receipt creation is needed</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">4</div>
+                    <h4>Create AR Prepayment Receipt</h4>
+                    <p>Calls createARPrepaymentPremiumReceipt() outside transaction</p>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">5</div>
+                    <h4>Update Payment Status</h4>
+                    <p>Complete approval in database transaction</p>
+                </div>
+            </div>
+
+            <h3>🔍 Key NRA Methods</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>shouldCreateAndSchedulePostPrepayment()</h4>
+                    <ul>
+                        <li><strong>Location:</strong> SageApiService</li>
+                        <li><strong>Purpose:</strong> Determines if NRA receipt creation is needed</li>
+                        <li><strong>Checks:</strong> Quote booking status, payment split status, Sage process status</li>
+                        <li><strong>Returns:</strong> Boolean indicating if post-booking receipt should be created</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>createARPrepaymentPremiumReceipt()</h4>
+                    <ul>
+                        <li><strong>Location:</strong> SageApiService</li>
+                        <li><strong>Called For:</strong> Both regular booking AND NRA scenarios</li>
+                        <li><strong>Parameters:</strong> sageRequest, quote, masterPayment, splitPayment, collectionAmount</li>
+                        <li><strong>Result:</strong> Creates AR prepayment receipt in Sage 300</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight">
+                <h4>⚠️ Important NRA Considerations</h4>
+                <p>
+                    <strong>Transaction Isolation:</strong> NRA receipt creation happens OUTSIDE the database transaction to prevent
+                    long-running Sage API calls from blocking database operations.<br><br>
+                    <strong>AP Receipt Commented:</strong> AP prepayment receipt creation is currently commented out in NRA flow (same as regular flow).<br><br>
+                    <strong>Error Handling:</strong> If AR receipt creation fails, the entire approval process is aborted with vAbort().<br><br>
+                    <strong>Audit Trail:</strong> NRA receipt creation is logged with specific feature flag (APPROVE_DECLINE_CHILD_PAYMENT).
+                </p>
+            </div>
+
+            <h3>📊 NRA vs Regular Receipt Creation</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>Regular Receipt Creation</th>
+                            <th>NRA Receipt Creation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Timing</strong></td>
+                            <td>During policy booking (BookPolicyOnSageJob)</td>
+                            <td>After policy booking (Payment approval)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Trigger</strong></td>
+                            <td>postBookPolicyToSage() workflow</td>
+                            <td>fetchSplitPaymentApproveDecline() approval</td>
+                        </tr>
+                        <tr>
+                            <td><strong>All Splits</strong></td>
+                            <td>Creates receipts for all paid splits at once</td>
+                            <td>Creates receipt for single approved split</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Transaction</strong></td>
+                            <td>Part of booking workflow transaction</td>
+                            <td>Outside payment approval transaction</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Use Case</strong></td>
+                            <td>Normal payment flow - pay then book</td>
+                            <td>Delayed approval - book then pay later</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Method Called</strong></td>
+                            <td>createARPrepaymentPremiumReceipts() (plural)</td>
+                            <td>createARPrepaymentPremiumReceipt() (singular)</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -1448,6 +1701,7 @@ if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
                         <li>Main policy booking orchestrator</li>
                         <li>Triggers receipt creation after customer verification</li>
                         <li>Coordinates with invoice creation process</li>
+                        <li><strong>Flow:</strong> Regular booking - payment approved before/during booking</li>
                     </ul>
                 </div>
 
@@ -1457,6 +1711,16 @@ if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
                         <li>Handles prepayment receipt posting</li>
                         <li>Processes split payment installments</li>
                         <li>Manages payment schedule updates</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>PaymentRepository::fetchSplitPaymentApproveDecline()</h4>
+                    <ul>
+                        <li><strong>NRA Use Case:</strong> Post-booking payment approval</li>
+                        <li>Handles payment split approval/decline</li>
+                        <li>Creates prepayment receipt AFTER policy is booked</li>
+                        <li><strong>Flow:</strong> Book policy first, approve payment later</li>
                     </ul>
                 </div>
             </div>
@@ -1470,16 +1734,26 @@ if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
                         <li>PaymentSplits</li>
                         <li>SageApiLog</li>
                         <li>SendUpdateLog</li>
+                        <li>QuoteDocument</li>
                     </ul>
                 </div>
 
                 <div class="info-card">
                     <h4>Services</h4>
                     <ul>
+                        <li>SageApiService</li>
                         <li>SagePayloadFactory</li>
                         <li>LoggerService</li>
                         <li>SageCustomApiService</li>
-                        <li>PaymentService</li>
+                        <li>SplitPaymentService</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>Repositories</h4>
+                    <ul>
+                        <li>PaymentRepository (NRA use case)</li>
+                        <li>SendUpdateLogRepository</li>
                     </ul>
                 </div>
             </div>

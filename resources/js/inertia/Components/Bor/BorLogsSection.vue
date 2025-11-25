@@ -119,7 +119,6 @@ const fetchBorLogs = async (page = 1) => {
       throw new Error(response.data.message || 'Failed to fetch BOR logs');
     }
   } catch (err) {
-    console.error('Error fetching BOR logs:', err);
     error.value =
       err.response?.data?.message ||
       'Failed to load BOR logs. Please try again.';
@@ -255,7 +254,6 @@ const handleUpdateStatus = (borLogId, newStatus) => {
         });
       },
       onError: errors => {
-        console.error('Error updating BOR status:', errors);
         notification.error({
           title: 'Error',
           message: 'Failed to update status',

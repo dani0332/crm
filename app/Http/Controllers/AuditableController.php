@@ -93,8 +93,10 @@ class AuditableController extends Controller
         }
 
         $policyIssuanceLogs = $quote->policyIssuance?->policyIssuanceLogs()
-            ->with(['policyIssuance.insuranceProvider:id,code,text', 'policyIssuance.model:id,uuid'])->get()
-            ->sortByDesc('created_at')->values();
+            ->with(['policyIssuance.insuranceProvider:id,code,text', 'policyIssuance.model:id,uuid'])
+            ->get()
+            ->sortByDesc('created_at')
+            ->values();
 
         return response()->json([
             'success' => true,

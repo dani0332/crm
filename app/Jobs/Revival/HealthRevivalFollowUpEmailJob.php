@@ -12,18 +12,18 @@ use App\Models\ApplicationStorage;
 use App\Models\DttRevival;
 use App\Models\HealthQuote;
 use App\Services\ApplicationStorageService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use Carbon\Carbon;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Sammyjo20\LaravelHaystack\Concerns\Stackable;
-use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 
-class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
+class HealthRevivalFollowUpEmailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, Stackable;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 3;
     public $timeout = 120;
@@ -47,15 +47,17 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
      */
     public function handle()
     {
+        LoggerService::info('HealthRevivalFollowUpEmailJob -  UUID: '.$this->uuid.' - Type: '.$this->type);
+
         if ($this->uuid == null || $this->type == null) {
-            info('HealthRevivalFollowUpEmailJob - UUID or Type Null. UUID: '.$this->uuid.' - Type: '.$this->type);
+            LoggerService::info('HealthRevivalFollowUpEmailJob - UUID or Type Null. UUID: '.$this->uuid.' - Type: '.$this->type);
 
             return false;
         }
 
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_HEALTH_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
-            info('DTT_HEALTH is not enabled from cms');
+            LoggerService::info('DTT_HEALTH is not enabled from cms');
 
             return false;
         }
@@ -69,13 +71,15 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
 
     private function unrepliedWithPreviousPlantype()
     {
+        LoggerService::info('HealthRevivalFollowUpEmailJob - Unreplied With Previous Plantype - UUID: '.$this->uuid);
+
         $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
         $leadStatusArray = [QuoteStatusEnum::ApplicationPending, QuoteStatusEnum::Stale, QuoteStatusEnum::Lost];
         $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
 
         $item = DttRevival::where('uuid', $this->uuid)->where('is_active', 1)->first();
         if (! $item) {
-            info($this->logPrefix.'Revival Follow Up Not Active - UUID: '.$this->uuid);
+            LoggerService::info($this->logPrefix.'Revival Follow Up Not Active - UUID: '.$this->uuid);
 
             return false;
         }
@@ -104,7 +108,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
             ]);
 
             if (empty($response['quote']['plans'])) {
-                info($this->logPrefix.'noPlansReturned - '.$healthQuote->uuid);
+                LoggerService::info($this->logPrefix.'noPlansReturned - '.$healthQuote->uuid);
 
                 return false;
             }
@@ -198,7 +202,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
                 }
             }
         } else {
-            info($this->logPrefix.'Disabling DTT Revival Follow Up - UUID: '.$item->uuid);
+            LoggerService::info($this->logPrefix.'Disabling DTT Revival Follow Up - UUID: '.$item->uuid);
             DttRevival::where('uuid', $item->uuid)->update(['is_active' => false]);
         }
     }
@@ -211,7 +215,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
 
         $item = DttRevival::where('uuid', $this->uuid)->first();
         if (! $item) {
-            info($this->logPrefix.'Revival Follow Up Not Active - UUID: '.$item->uuid);
+            LoggerService::info($this->logPrefix.'Revival Follow Up Not Active - UUID: '.$item->uuid);
 
             return false;
         }
@@ -243,7 +247,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
             ]);
 
             if (empty($response['planTypes'])) {
-                info($this->logPrefix.'noPlansReturned - '.$lead->uuid);
+                LoggerService::info($this->logPrefix.'noPlansReturned - '.$lead->uuid);
 
                 return false;
             }
@@ -293,13 +297,15 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
                 }
             }
         } else {
-            info($this->logPrefix.'Disabling DTT Revival Follow Up - UUID: '.$item->uuid);
+            LoggerService::info($this->logPrefix.'Disabling DTT Revival Follow Up - UUID: '.$item->uuid);
             DttRevival::where('uuid', $item->uuid)->update(['is_active' => false]);
         }
     }
 
     private function sendDTTFollowUpEmail($emailData)
     {
+        LoggerService::info('HealthRevivalFollowUpEmailJob - Send DTT Follow Up Email - UUID: '.$emailData->uuid);
+
         $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
         if ($response == 201) {
 
@@ -316,9 +322,9 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
                 $lead->update(['quote_status_id' => QuoteStatusEnum::Stale]);
             }
 
-            info($this->logPrefix.'Email Sent - UUID - '.$emailData->uuid.' Follow Up Count: '.$revivalRecord->follow_up_email_count);
+            LoggerService::info($this->logPrefix.'Email Sent - UUID - '.$emailData->uuid.' Follow Up Count: '.$revivalRecord->follow_up_email_count);
         } else {
-            info($this->logPrefix.'Email NOT Sent - UUID - '.$emailData->uuid);
+            LoggerService::info($this->logPrefix.'Email NOT Sent - UUID - '.$emailData->uuid);
         }
     }
 

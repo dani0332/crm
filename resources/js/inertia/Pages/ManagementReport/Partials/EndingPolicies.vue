@@ -132,6 +132,26 @@ const tableHeader = reactive([
     value: 'pec_flag',
     tooltip: 'Indicates if the policy has Pre-Existing Condition (PEC) flag',
   },
+  {
+    text: 'Travel Coverage',
+    value: 'travel_coverage',
+    tooltip: 'The coverage of the travel policy',
+  },
+  {
+    text: 'Traveling Where',
+    value: 'traveling_where',
+    tooltip: 'The traveling where of the travel policy',
+  },
+  {
+    text: 'IMCRM SUB-SOURCE',
+    value: 'sub_source',
+    tooltip: 'The IMCRM SUB-SOURCE (lookup) of the lead',
+  },
+  {
+    text: 'SUB SOURCE OPTIONS',
+    value: 'sub_source_option',
+    tooltip: 'The SUB SOURCE OPTION of the lead',
+  },
 ]);
 
 const calculateTotalSum = useCalculateTotalSum;

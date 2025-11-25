@@ -364,6 +364,7 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
         splitPaymentId: splitPaymentId,
         isInertia: true,
         new_payment_structure: true,
+        isPlanDetailEnabled: props.isPlanDetailEnabled,
       });
 
       if (response.data.success) {
@@ -409,21 +410,6 @@ const isCPD = computed(() => {
 });
 
 const addPaymentModal = async () => {
-  if (
-    !isLifePlanDetailsEnabled.value &&
-    props.quoteType === quoteTypeCodeEnum.Life
-  ) {
-    if (
-      exchangeRate.value == 0 &&
-      props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED'
-    ) {
-      notification.error({
-        title: 'Please update the Exchange Rate in the Available Plan Section.',
-        position: 'top',
-      });
-      return;
-    }
-  }
   if (props.sendUpdate) {
     if (isEF.value && !props.sendUpdate?.price_with_vat) {
       notification.error({
@@ -463,6 +449,27 @@ const addPaymentModal = async () => {
       position: 'top',
     });
     return;
+  }
+
+  // Check exchange rate only after confirming a plan is selected
+  if (
+    !isLifePlanDetailsEnabled.value &&
+    props.quoteType === quoteTypeCodeEnum.Life
+  ) {
+    const planCurrency =
+      props.quoteRequest?.quote_customer_plan?.plan?.currency;
+    if (
+      planDetail.value &&
+      planCurrency &&
+      exchangeRate.value == 0 &&
+      planCurrency !== 'AED'
+    ) {
+      notification.error({
+        title: 'Please update the Exchange Rate in the Available Plan Section.',
+        position: 'top',
+      });
+      return;
+    }
   }
 
   createPaymentModal.value = true;
@@ -1016,6 +1023,7 @@ const fetchInsurerAMLStatus = async () => {
         quoteRequestId: props.quoteRequest.id,
         quoteType: page.props.quoteTypeId,
         insurerAMLStatus: props.quoteRequest.insurer_aml_status,
+        insuranceProviderId: props.quoteRequest?.insurance_provider_id,
       },
     });
     NProgress.done();

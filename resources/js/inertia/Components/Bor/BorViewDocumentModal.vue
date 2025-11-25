@@ -54,10 +54,6 @@ const getStatusBadge = status => {
       class: 'bg-yellow-100 text-yellow-800',
       text: 'Signature Requested',
     },
-    SENT_TO_INSURER: {
-      class: 'bg-blue-100 text-blue-800',
-      text: 'Sent to Insurer',
-    },
     DOCUMENT_SIGNED: {
       class: 'bg-indigo-100 text-indigo-800',
       text: 'Document Signed',
@@ -139,7 +135,6 @@ const viewSignedPdf = async () => {
       throw new Error(response.data.message || 'Failed to load document');
     }
   } catch (error) {
-    console.error('Error viewing signed PDF:', error);
     const notification = useNotifications('toast');
     notification.error({
       title: 'View Error',

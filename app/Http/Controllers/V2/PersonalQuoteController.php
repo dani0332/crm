@@ -19,6 +19,7 @@ use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
 use App\Services\SLA\SLAService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Database\Eloquent\Model;
 
 class PersonalQuoteController extends Controller
 {
@@ -79,7 +80,9 @@ class PersonalQuoteController extends Controller
 
         app(CentralService::class)->updateQuoteInformation($request->folder_path, $quoteId);
 
-        app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::DOCUMENTS_UPLOAD);
+        if ($quote && $quote instanceof Model) {
+            app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::DOCUMENTS_UPLOAD);
+        }
 
         return back()->with('message', 'All files uploaded successfully');
     }

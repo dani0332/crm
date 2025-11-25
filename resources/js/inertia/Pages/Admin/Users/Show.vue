@@ -8,6 +8,7 @@ const props = defineProps({
   managerName: String,
   productName: String,
   userAdvisors: Array,
+  rmCategoryText: String,
 });
 
 const user = ref(props.user);
@@ -210,6 +211,10 @@ function onSubmit(isValid) {
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">LOB VISIBILITY TEAM</dt>
           <dd>{{ additionalTeamNames ?? 'N/A' }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">RM CATEGORY</dt>
+          <dd>{{ rmCategoryText ?? 'N/A' }}</dd>
         </div>
 
         <div class="grid sm:grid-cols-2">

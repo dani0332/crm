@@ -258,6 +258,39 @@ const onLoadAuditLogData = async () => {
         </div>
       </dl>
 
+      <dl class="mt-5">
+        <div class="grid sm:grid-cols-1">
+          <dt class="font-medium">
+            Endpoint:
+            <span class="text-primary ml-5">{{ selectedLog.endPoint }}</span>
+          </dt>
+        </div>
+      </dl>
+
+      <dl class="mt-5">
+        <div class="grid sm:grid-cols-1">
+          <dt class="font-medium">
+            Policy Issuance Status:
+            <x-tag
+              v-if="selectedLog.policy_issuance?.status"
+              size="xs"
+              :color="
+                selectedLog.policy_issuance?.status === 'completed'
+                  ? 'success'
+                  : 'red'
+              "
+              class="ml-5 mt-0.5 text-[10px]"
+            >
+              {{
+                selectedLog.policy_issuance?.status === 'completed'
+                  ? 'COMPLETED'
+                  : selectedLog.policy_issuance?.status.toUpperCase()
+              }}
+            </x-tag>
+          </dt>
+        </div>
+      </dl>
+
       <x-divider class="my-5" />
       <dl class="">
         <dt class="font-medium mb-2">Payload:</dt>

@@ -50,9 +50,9 @@ use Auth;
 use Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use PDF;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthQuoteService extends BaseService
 {
@@ -211,6 +211,13 @@ class HealthQuoteService extends BaseService
             'hqr.pc_qualified',
             DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
             DB::raw(HealthQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
+            // Sub-source fields
+            'hqr.sub_source_id',
+            'hqr.sub_source_options_id',
+            'ss.text as sub_source_text',
+            'ss.description as sub_source_description',
+            'sso.text as sub_source_option_text',
+            'sso.description as sub_source_option_description',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -219,6 +226,8 @@ class HealthQuoteService extends BaseService
             ->leftJoin('health_cover_for as hcf', 'hcf.id', '=', 'hqr.cover_for_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'hqr.transaction_type_id')
+            ->leftJoin('lookups as ss', 'ss.id', '=', 'hqr.sub_source_id')
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'hqr.sub_source_options_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('health_lead_type as lt', 'lt.id', '=', 'hqr.lead_type_id')
@@ -323,7 +332,19 @@ class HealthQuoteService extends BaseService
             'hasHome' => $request->has_home == 'on' ? true : false,
             'currentlyInsuredWithId' => $request->currently_insured_with_id,
             'healthPlanTypeId' => $request->plan_type_id,
+            // Sub-source fields from CreateLeadModal
+            'subSourceId' => $request->sub_source_id ?? null,
+            'subSourceOptionsId' => $request->sub_source_options_id ?? null,
+            'additionalNotes' => $request->additional_notes ?? null,
         ];
+
+        // Log lead source parameters for Health quotes
+        info('Health saveHealthQuote - Lead source parameters:', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->sub_source_id,
+            'subSourceOptionsId' => $request->sub_source_options_id,
+            'additionalNotes' => $request->additional_notes,
+        ]);
         $dataArr['memberDetails'][] = [
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
@@ -454,6 +475,17 @@ class HealthQuoteService extends BaseService
         $healthQuote->dob = $request->dob;
         $healthQuote->policy_start_date = $request->policy_start_date;
         $healthQuote->health_plan_type_id = $request->plan_type_id;
+
+        // Update sub-source fields from CreateLeadModal
+        if ($request->has('sub_source_id')) {
+            $healthQuote->sub_source_id = $request->sub_source_id;
+        }
+        if ($request->has('sub_source_options_id')) {
+            $healthQuote->sub_source_options_id = $request->sub_source_options_id;
+        }
+        if ($request->has('additional_notes')) {
+            $healthQuote->additional_notes = $request->additional_notes;
+        }
 
         $healthQuote->save();
 
@@ -1014,8 +1046,11 @@ class HealthQuoteService extends BaseService
         $userId = (int) $request->assigned_to_id_new;
         $quote_type = $request->modelType;
         $quoteBatch = QuoteBatches::latest()->first();
+        $jobs = [];
+        $delayCounter = 0;
 
         foreach ($leadsIds as $leadId) {
+            $currentJobChains = [];
             $lead = $this->getEntityPlain($leadId);
 
             if (isset($request->assign_team) && $request->assign_team !== '') {
@@ -1052,13 +1087,18 @@ class HealthQuoteService extends BaseService
 
             $lead->save();
 
-            Haystack::build()
-                ->addJob(new GetQuotePlansJob($lead))
-                ->then(function () use ($lead, $isReassignment, $previousAdvisorId) {
-                    if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                        IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment)->delay(now()->addSeconds(15));
-                    }
-                })->dispatch();
+            $currentJobChains[] = new GetQuotePlansJob($lead);
+            if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
+                $currentJobChains[] = (new IntroEmailJob(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment))->delay(now()->addSeconds(15 + $delayCounter));
+                $delayCounter += 15;
+            }
+            $jobs[] = $currentJobChains;
+        }
+
+        if ($jobs != null && count($jobs) > 0) {
+            Bus::batch($jobs)
+                ->name('Health Leads Manual Assignment')
+                ->dispatch();
         }
 
         return [];
@@ -1341,6 +1381,7 @@ class HealthQuoteService extends BaseService
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
                 'isPecMarked' => $request->pec == 1,
+                'isPrincipal' => $request->is_principal == 1,
             ];
 
             $dataArray = [
@@ -1349,6 +1390,7 @@ class HealthQuoteService extends BaseService
             ];
 
             $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
+
         } else {
             $response = [
                 'status' => false,
@@ -1435,7 +1477,7 @@ class HealthQuoteService extends BaseService
 
         $isAUH = $quote->isAUHLead(false);
 
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150, 'isRemoteEnabled' => true])
             ->loadView('pdf.health_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'isAUH'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf

@@ -649,6 +649,355 @@
         </div>
 
         <div class="content-section">
+            <h2>📦 AP Invoice Creation Scenarios</h2>
+            <p>AP invoices are created for vendor payments to insurance providers across three main scenarios:</p>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>🏠 Main Lead Policy Booking</h4>
+                    <ul>
+                        <li><strong>Context:</strong> Standard policy booking requiring insurer payment</li>
+                        <li><strong>Invoice Types:</strong> Premium Invoice to vendor (insurance provider)</li>
+                        <li><strong>Payment Modes:</strong> Upfront or Split Payment with schedules</li>
+                        <li><strong>GL Account:</strong> Uses insurerGlLiaiblityAccount from insurer config</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔗 Embedded Product Booking</h4>
+                    <ul>
+                        <li><strong>Context:</strong> EP vendor payment to embedded product provider</li>
+                        <li><strong>Invoice Types:</strong> EP Premium Invoice</li>
+                        <li><strong>Special Handling:</strong> Separate from main policy AP invoice</li>
+                        <li><strong>Revenue Account:</strong> EP-specific vendor payment account</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>📝 Send Update (Endorsements)</h4>
+                    <ul>
+                        <li><strong>Context:</strong> Policy changes requiring vendor payment adjustment</li>
+                        <li><strong>Invoice Types:</strong> Straight (additional) or Reversal + Correction</li>
+                        <li><strong>Entry Types:</strong> SCT_STRAIGHT, SCT_REVERSAL</li>
+                        <li><strong>Purpose:</strong> Adjust vendor payment obligations for changes</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight">
+                <h4>⚡ Key Differences: AP vs AR Invoices</h4>
+                <p>
+                    <strong>AP Invoices:</strong> Payments TO vendors (insurance providers) - represents company's obligations<br>
+                    <strong>AR Invoices:</strong> Payments FROM customers - represents company's receivables<br>
+                    <strong>Vendor ID:</strong> AP uses sageVenderId from insurance_providers table<br>
+                    <strong>Customer ID:</strong> AR uses customerId from customers/entities tables
+                </p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>💰 Upfront Payment AP Invoice Creation</h2>
+            <p><strong>Payment Frequency:</strong> PaymentFrequency::UPFRONT | <strong>Context:</strong> Single vendor payment to insurance provider</p>
+
+            <h3>📋 Characteristics</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>💳 Payment Structure</h4>
+                    <ul>
+                        <li>Single payment to vendor (insurance provider)</li>
+                        <li>Immediate vendor payment obligation</li>
+                        <li>No payment schedules for vendor</li>
+                        <li>Full premium amount to insurer</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>📄 Invoice Structure</h4>
+                    <ul>
+                        <li>Single AP invoice to vendor</li>
+                        <li>Uses insurerGlLiaiblityAccount GL account</li>
+                        <li>Terms Code: 'COD' for upfront payment</li>
+                        <li>No PaymentSchedules array needed</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🗄️ Vendor Details</h4>
+                    <ul>
+                        <li>Vendor ID from insurance_providers.sageVenderId</li>
+                        <li>GL Account from insurance_providers.insurerGlLiaiblityAccount</li>
+                        <li>Direction: Payment TO vendor (not FROM)</li>
+                        <li>Represents company's payment obligation</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔄 Workflow Steps</h4>
+                    <ul>
+                        <li>Step 1: Create AP Invoice (OPEN status)</li>
+                        <li>Step 2: Ready to Post (PATCH to READY_TO_POST)</li>
+                        <li>Step 3: Post to GL (POST to POSTED status)</li>
+                        <li>Creates vendor payment obligation in Sage</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>🔧 Implementation: createUpfrontAPInvoicePrem()</h3>
+            <p><strong>Service:</strong> SageApiService.php | <strong>Method:</strong> createUpfrontAPInvoicePrem()</p>
+
+            <div class="code-block">
+                <pre>private function createUpfrontAPInvoicePrem($sageRequestDataArray)
+{
+    [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
+    $totalSteps = 15;
+    $currentStep = 10;
+
+    $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
+    $reverseInvoiceDetails = $extraDetails['sageReversalInvoice'] ?? '';
+
+    // Step 1: Create AP Invoice to vendor
+    $payLoadOptions = SagePayloadFactory::createAPInvoicePrem(
+        request: $sageRequest,
+        type: $sageEntryType,
+        reversalDetails: $reverseInvoiceDetails,
+        extras: $extraDetails
+    );
+
+    $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+    $sageResponse = json_decode($resp, true);
+
+    if (!empty($sageResponse['BatchNumber'])) {
+        $this->logSageApiCall($payLoadOptions, $sageResponse, $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+
+        // Step 2: Ready to Post
+        $currentStep = 11;
+        $readyToPostInvoiceAp = SagePayloadFactory::readyToPostInvoiceAp($sageResponse['BatchNumber'], $sageEntryType);
+        $readyResp = $this->postToSage300($readyToPostInvoiceAp['endPoint'], $readyToPostInvoiceAp['payload'], 'PATCH');
+
+        $this->logSageApiCall($readyToPostInvoiceAp, json_decode($readyResp, true), $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+
+        // Step 3: Post to General Ledger
+        $currentStep = 12;
+        $apPostInvoices = SagePayloadFactory::aPPostInvoices($sageResponse['BatchNumber'], $sageEntryType);
+        $postResp = $this->postToSage300($apPostInvoices['endPoint'], $apPostInvoices['payload']);
+
+        $this->logSageApiCall($apPostInvoices, json_decode($postResp, true), $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+
+        return ['status' => true, 'message' => 'Upfront AP invoice created and posted'];
+    }
+
+    return ['status' => false, 'message' => 'AP invoice creation failed'];
+}</pre>
+            </div>
+
+            <div class="highlight">
+                <h4>💡 Key Points for Upfront AP Invoices</h4>
+                <p>
+                    <strong>Vendor Payment:</strong> AP invoices represent payments TO vendors (insurance providers)<br>
+                    <strong>GL Account:</strong> Uses insurerGlLiaiblityAccount from insurance provider configuration<br>
+                    <strong>Single Transaction:</strong> Full premium amount in one invoice to vendor<br>
+                    <strong>Immediate Obligation:</strong> Creates immediate payment obligation in Sage 300
+                </p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>📅 Split Payment AP Invoice Creation</h2>
+            <p><strong>Payment Frequency:</strong> PaymentFrequency::SPLIT_PAYMENTS | <strong>Context:</strong> Installment-based vendor payments</p>
+
+            <h3>📋 Characteristics</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>💳 Payment Structure</h4>
+                    <ul>
+                        <li>Multiple vendor payment obligations</li>
+                        <li>Aligned with customer installments</li>
+                        <li>Future payments scheduled in PaymentSchedules</li>
+                        <li>Each vendor payment matches customer split</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>📄 Invoice Structure</h4>
+                    <ul>
+                        <li>AP invoice with PaymentSchedules array</li>
+                        <li>Future vendor payment obligations</li>
+                        <li>Terms Code: SPLIT2-SPLIT9, SPLI10+</li>
+                        <li>Partial vendor payments tracked</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔄 Vendor Payment Tracking</h4>
+                    <ul>
+                        <li>Each installment creates vendor obligation</li>
+                        <li>Payment due dates match customer splits</li>
+                        <li>Vendor gets paid as customer pays</li>
+                        <li>Future obligations in PaymentSchedules</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>⚖️ Balance Maintenance</h4>
+                    <ul>
+                        <li>Customer AR vs Vendor AP balance</li>
+                        <li>Split payment synchronization</li>
+                        <li>Installment amount matching</li>
+                        <li>Due date alignment</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>🔧 Implementation: createNonUpfrontAPInvoicePrem()</h3>
+            <p><strong>Service:</strong> SageApiService.php | <strong>Method:</strong> createNonUpfrontAPInvoicePrem()</p>
+
+            <div class="code-block">
+                <pre>private function createNonUpfrontAPInvoicePrem($sageRequestDataArray)
+{
+    [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
+    $totalSteps = 15;
+    $currentStep = 10;
+
+    $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
+    $reverseInvoiceDetails = $extraDetails['sageReversalInvoice'] ?? '';
+
+    // Separate paid and unpaid splits for vendor payment obligations
+    $paidSplits = $paymentSplits->whereIn('payment_status_id', [
+        PaymentStatusEnum::PAID,
+        PaymentStatusEnum::CAPTURED
+    ]);
+
+    $unpaidSplits = $paymentSplits->whereNotIn('payment_status_id', [
+        PaymentStatusEnum::PAID,
+        PaymentStatusEnum::CAPTURED
+    ]);
+
+    LoggerService::info('Split Payment AP Invoice: Vendor Obligations - Paid='.$paidSplits->count().' Future='.$unpaidSplits->count());
+
+    // Create AP invoice with payment schedules for future vendor obligations
+    $payLoadOptions = SagePayloadFactory::createAPInvoiceSplitPayments(
+        $sageRequest,
+        $paymentSplits,  // All splits for vendor payment schedules
+        $sageEntryType,
+        $reverseInvoiceDetails,
+        $extraDetails
+    );
+
+    $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+    $sageResponse = json_decode($resp, true);
+
+    if (!empty($sageResponse['BatchNumber'])) {
+        $this->logSageApiCall($payLoadOptions, $sageResponse, $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+
+        // Ready to Post
+        $currentStep = 11;
+        $readyToPostInvoiceAp = SagePayloadFactory::readyToPostInvoiceAp($sageResponse['BatchNumber'], $sageEntryType);
+        $readyResp = $this->postToSage300($readyToPostInvoiceAp['endPoint'], $readyToPostInvoiceAp['payload'], 'PATCH');
+
+        $this->logSageApiCall($readyToPostInvoiceAp, json_decode($readyResp, true), $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+
+        // Post to GL
+        $currentStep = 12;
+        $apPostInvoices = SagePayloadFactory::aPPostInvoices($sageResponse['BatchNumber'], $sageEntryType);
+        $postResp = $this->postToSage300($apPostInvoices['endPoint'], $apPostInvoices['payload']);
+
+        $this->logSageApiCall($apPostInvoices, json_decode($postResp, true), $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+
+        return ['status' => true, 'message' => 'Split payment AP invoice created'];
+    }
+
+    return ['status' => false, 'message' => 'AP split payment invoice creation failed'];
+}</pre>
+            </div>
+
+            <h3>📊 Vendor Payment Schedule Structure</h3>
+            <div class="code-block">
+                <pre>// Example AP PaymentSchedules array for vendor obligations
+"PaymentSchedules" => [
+    [
+        "DueDate" => "2024-11-15",
+        "PaymentAmount" => 500.00,  // Second vendor payment
+        "ScheduleNumber" => 2
+    ],
+    [
+        "DueDate" => "2024-12-15",
+        "PaymentAmount" => 500.00,  // Third vendor payment
+        "ScheduleNumber" => 3
+    ],
+    // ... matches customer payment splits
+]</pre>
+            </div>
+
+            <div class="highlight">
+                <h4>💡 Key Points for Split Payment AP Invoices</h4>
+                <p>
+                    <strong>Vendor Obligations:</strong> Each customer installment creates matching vendor payment obligation<br>
+                    <strong>Due Date Alignment:</strong> Vendor payment dates typically match customer payment dates<br>
+                    <strong>Balance Tracking:</strong> System tracks AR receivables vs AP payables for each split<br>
+                    <strong>Terms Matching:</strong> AP invoice terms match AR invoice split payment terms
+                </p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔄 Non-Split/Non-Upfront AP Invoice Creation</h2>
+            <p><strong>Payment Frequency:</strong> Other (Not UPFRONT, Not SPLIT_PAYMENTS) | <strong>Context:</strong> Alternative vendor payment arrangements</p>
+
+            <h3>📋 Characteristics</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>💳 Payment Structure</h4>
+                    <ul>
+                        <li>Custom vendor payment arrangement</li>
+                        <li>Neither standard upfront nor split</li>
+                        <li>Flexible payment obligations</li>
+                        <li>Handles special cases</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>📄 Invoice Structure</h4>
+                    <ul>
+                        <li>Similar to split payment AP invoice</li>
+                        <li>May have custom payment schedules</li>
+                        <li>Terms based on arrangement</li>
+                        <li>Edge case handling</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔄 Workflow</h4>
+                    <ul>
+                        <li>Follows split payment logic internally</li>
+                        <li>Creates vendor payment obligations</li>
+                        <li>Handles custom terms</li>
+                        <li>Migration data compatibility</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>⚠️ Use Cases</h4>
+                    <ul>
+                        <li>Custom insurer payment terms</li>
+                        <li>Special financing agreements</li>
+                        <li>Deferred vendor payments</li>
+                        <li>Historic data support</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight">
+                <h4>💡 Key Points for Non-Split/Non-Upfront AP</h4>
+                <p>
+                    <strong>Flexibility:</strong> Handles vendor payment scenarios not covered by standard upfront or split<br>
+                    <strong>Custom Terms:</strong> May use custom terms codes based on specific arrangement<br>
+                    <strong>Similar Processing:</strong> Uses split payment logic with custom rules and validation<br>
+                    <strong>Vendor Specific:</strong> Accommodates special insurer payment requirements
+                </p>
+            </div>
+        </div>
+
+        <div class="content-section">
             <h2>🛠️ Core AP Invoice Creation Functions</h2>
             <p><strong>📍 Function Type:</strong> These are <span style="color: #e67e22; font-weight: bold;">Sage API Service Methods</span> that orchestrate AP invoice creation processes.</p>
 

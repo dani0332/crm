@@ -21,8 +21,10 @@ class BorService
     protected $borEmailService;
     protected $borPdfService;
 
-    public function __construct(BorEmailService $borEmailService, BorPdfService $borPdfService)
-    {
+    public function __construct(
+        BorEmailService $borEmailService,
+        BorPdfService $borPdfService,
+    ) {
         $this->borEmailService = $borEmailService;
         $this->borPdfService = $borPdfService;
     }
@@ -77,10 +79,10 @@ class BorService
             $borLog->total_documents = $isDocumentUploaded || $isSignedDocument ? 1 : 0;
         } catch (\Exception $e) {
             // Log error but don't fail the entire request
-            \Illuminate\Support\Facades\Log::warning('Failed to load documents for BOR log', [
+            LoggerService::warning('Failed to load documents for BOR log', [
                 'bor_log_id' => $borLog->id,
                 'error' => $e->getMessage(),
-            ]);
+            ], $e);
 
             // Add empty collections to prevent frontend errors
             $borLog->uploaded_documents = collect([]);
@@ -128,9 +130,6 @@ class BorService
         if ($quoteObject->advisor_id !== null) {
             $emailSent = $this->borEmailService->sendBorRequestEmail($borLog);
         }
-
-        // Update email sent status
-        // $borLog->update(['email_sent' => $emailSent]);
 
         // Enrich the created BOR log with document data
         $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote', 'signedDocument', 'document']));
@@ -183,7 +182,7 @@ class BorService
             'Health' => DocumentTypeCode::BAL_HLTH,
             'Life' => DocumentTypeCode::BAL_LIFE,
             'Cycle' => DocumentTypeCode::BAL_CYCLE,
-            'Yacht' => DocumentTypeCode::BAL_YACHT,
+            'Yacht' => DocumentTypeCode::BAL_YCHT,
             'Business' => [DocumentTypeCode::BUS_BAL, DocumentTypeCode::BAL_BS],
             'Group Medical' => DocumentTypeCode::GM_BOL,
         ];
@@ -314,8 +313,8 @@ class BorService
             // Update BOR log status
             $borLog->update([
                 'status' => BorStatusEnum::DOCUMENT_UPLOADED,
-                'quote_document_id' => $uploadedDocument->id,
-                'document_id' => $uploadedDocument->doc_uuid,
+                'quote_document_id' => $uploadedDocument->id ?? null,
+                'document_id' => $uploadedDocument->doc_uuid ?? null,
                 'user_agent' => getUserIpAddress(request()),
                 'date_uploaded' => now(),
             ]);
@@ -386,7 +385,7 @@ class BorService
             $borDocTypes = $this->determineBorDocumentType($quoteType->value);
             is_array($borDocTypes) ? $borDocTypes = $borDocTypes : $borDocTypes = [$borDocTypes];
         } else {
-            $borDocTypes = [DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YACHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_PET, DocumentTypeCode::BAL_BS, DocumentTypeCode::GM_BOL, DocumentTypeCode::BUS_BAL];
+            $borDocTypes = [DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YCHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_PET, DocumentTypeCode::BAL_BS, DocumentTypeCode::GM_BOL, DocumentTypeCode::BUS_BAL];
         }
 
         $documentQuery = DocumentType::whereIn('code', $borDocTypes)
@@ -418,4 +417,365 @@ class BorService
 
         return $documentTypes;
     }
+
+    /**
+     * Sign a BOR document
+     *
+     * @param  \Illuminate\Http\UploadedFile|string|null  $file
+     */
+    public function signDocument(array $data, $file = null): array
+    {
+        $borLog = BorLog::with('personalQuote')->where('bor_reference', $data['bor_ref_id'])->first();
+
+        if (! $borLog) {
+            throw new \Exception('BOR log not found');
+        }
+
+        $quote = $borLog->personalQuote;
+        $quoteType = QuoteTypes::getName($quote->quote_type_id)->value;
+        $quote = checkPersonalQuotes($quoteType) ? $quote : $this->getQuoteObject($quoteType, $quote->quote_id);
+
+        if (! $quote) {
+            throw new \Exception('Quote not found');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Prepare document upload data
+            $uploadData = [
+                'quote_uuid' => $quote->uuid,
+                'document_category' => $data['bor_ref_id'],
+                'bor_signature' => true,
+                'document_type_code' => $data['document_type_code'] ?? null,
+            ];
+
+            // Handle previous document deletion if new file is uploaded
+            $previousDoc = $borLog->document;
+            if ($previousDoc && $previousDoc->doc_url && $file) {
+                \Illuminate\Support\Facades\Storage::disk('azureIM')->delete($previousDoc->doc_url);
+                $previousDoc->delete();
+            }
+
+            // Upload new document if provided
+            $document = null;
+            if ($file) {
+                // Add is_base_64 flag to upload data for proper handling
+                $uploadData['is_base_64'] = $data['is_base_64'] ?? 0;
+                $uploadData['file_name'] = $data['file_name'] ?? null;
+
+                $quoteDocumentService = app(QuoteDocumentService::class);
+                $document = $quoteDocumentService->uploadQuoteDocument($file, $uploadData, $quote);
+            }
+
+            $docIsPresent = isset($document) && ! is_null($document);
+
+            // Update BOR log
+            $updateData = [
+                'quote_document_id' => ($docIsPresent && $document) ? ($document->id ?? null) : $borLog->quote_document_id,
+                'document_id' => ($docIsPresent && $document) ? ($document->doc_uuid ?? null) : $borLog->document_id,
+                'user_agent' => getUserIpAddress(request()),
+                'download_clicked' => $borLog->download_clicked == 1 ? 1 : ($data['download_clicked'] ?? 0),
+                'insurer_name' => ! empty(trim($data['insurer_name'] ?? '')) ? $data['insurer_name'] : $borLog->insurer_name,
+                'policy_number' => ! empty(trim($data['policy_number'] ?? '')) ? $data['policy_number'] : $borLog->policy_number,
+                'status' => $docIsPresent ? BorStatusEnum::DOCUMENT_SIGNED : $borLog->status,
+                'date_signed' => $docIsPresent ? now() : $borLog->date_signed,
+            ];
+
+            $borLog->update($updateData);
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => 'Document signed successfully',
+                'data' => $document,
+                'borLog' => $borLog->fresh(),
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Upload a quote document for BOR
+     *
+     * @param  \Illuminate\Http\UploadedFile|string  $file
+     */
+    public function uploadQuoteDocument(array $data, $file): array
+    {
+        $quoteType = $data['quote_type'];
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+
+        if (! $quote) {
+            throw new \Exception('Quote not found');
+        }
+
+        // Ensure is_base_64 flag is set in data for proper handling
+        $data['is_base_64'] = $data['is_base_64'] ?? 0;
+
+        $quoteDocumentService = new QuoteDocumentService;
+        $document = $quoteDocumentService->uploadQuoteDocument($file, $data, $quote);
+
+        return [
+            'success' => true,
+            'message' => 'Document uploaded successfully',
+            'document' => $document,
+        ];
+    }
+
+    /**
+     * Delete a BOR document
+     */
+    public function deleteDocument(array $data): array
+    {
+        $borLog = BorLog::with('personalQuote.documents')->where('bor_reference', $data['bor_ref_id'])->first();
+
+        if (! $borLog) {
+            throw new \Exception('BOR log not found');
+        }
+
+        $quote = $borLog->personalQuote;
+        if (! $quote) {
+            throw new \Exception('Personal quote not found');
+        }
+
+        $quoteName = QuoteTypes::getName($quote->quote_type_id);
+        $isPersonalQuote = checkPersonalQuotes($quoteName->value);
+        $quote = $isPersonalQuote ? $this->getQuoteObject($quoteName->value, $quote->id) : $this->getQuoteObject($quoteName->value, $quote->quote_id);
+
+        if (! $quote) {
+            throw new \Exception('Quote not found');
+        }
+
+        $deleteData = [
+            'doc_name' => $data['doc_name'],
+            'doc_uuid' => $data['doc_uuid'],
+            'document_category' => $data['bor_ref_id'],
+        ];
+
+        $quoteDocumentService = new QuoteDocumentService;
+        $result = $quoteDocumentService->deleteBorDocument($quote, $deleteData);
+
+        return [
+            'success' => true,
+            'message' => 'Document deleted successfully',
+            'data' => $result,
+        ];
+    }
+
+    /****************************************** SSE ******************************************/
+
+    /**
+     * Handle SSE streaming for BOR log updates
+     */
+    public function streamBorLogUpdates(string $borRefId): callable
+    {
+        return function () use ($borRefId) {
+            // Disable all output buffering for real-time streaming
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+
+            // Set up unbuffered output
+            if (function_exists('apache_setenv')) {
+                apache_setenv('no-gzip', '1');
+            }
+
+            // Critical PHP settings for SSE
+            ini_set('output_buffering', 0);
+            ini_set('implicit_flush', 1);
+            ini_set('zlib.output_compression', 0);
+            ini_set('max_execution_time', 600); // 10 minutes for SSE
+            ini_set('memory_limit', '256M');
+
+            // Ignore user disconnect to continue processing
+            ignore_user_abort(true);
+
+            $lastDataHash = null;
+            $maxIterations = 200; // Maximum 10 minutes (200 * 3 seconds)
+            $iteration = 0;
+
+            LoggerService::info('SSE BOR stream started', ['bor_ref_id' => $borRefId]);
+
+            // Send initial connection confirmation
+            echo "event: connected\n";
+            echo 'data: '.json_encode(['message' => 'SSE connection established', 'bor_ref_id' => $borRefId])."\n\n";
+            flush();
+
+            while ($iteration < $maxIterations) {
+                // Enhanced connection status check with detailed logging
+                $connectionStatus = connection_status();
+                $connectionAborted = connection_aborted();
+
+                if ($connectionAborted || $connectionStatus !== CONNECTION_NORMAL) {
+                    LoggerService::warning('SSE BOR client disconnected', [
+                        'bor_ref_id' => $borRefId,
+                        'iteration' => $iteration,
+                        'connection_status' => $connectionStatus,
+                        'connection_aborted' => $connectionAborted,
+                        'connection_status_text' => $this->getConnectionStatusText($connectionStatus),
+                        'memory_usage' => memory_get_usage(true),
+                        'execution_time' => (microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']).'s',
+                    ]);
+
+                    // Try to send a final disconnect event before breaking
+                    try {
+                        echo "event: disconnect\n";
+                        echo 'data: '.json_encode([
+                            'message' => 'Client disconnected',
+                            'iteration' => $iteration,
+                            'reason' => $this->getConnectionStatusText($connectionStatus),
+                        ])."\n\n";
+                        flush();
+                    } catch (\Exception $e) {
+                        LoggerService::error('Failed to send disconnect event', ['error' => $e->getMessage()]);
+                    }
+                    break;
+                }
+
+                // Check connection status periodically with more details
+                if ($iteration % 5 == 0) {
+                    LoggerService::info('SSE BOR connection status check', [
+                        'bor_ref_id' => $borRefId,
+                        'iteration' => $iteration,
+                        'connection_status' => $connectionStatus,
+                        'connection_status_text' => $this->getConnectionStatusText($connectionStatus),
+                        'memory_usage' => memory_get_usage(true),
+                        'peak_memory' => memory_get_peak_usage(true),
+                        'execution_time' => (microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']).'s',
+                    ]);
+                }
+
+                $borLog = BorLog::where('bor_reference', $borRefId)->first();
+
+                if (! $borLog) {
+                    echo "event: error\n";
+                    echo 'data: '.json_encode(['error' => 'BOR log not found'])."\n\n";
+                    flush();
+                    break;
+                }
+
+                // Create a hash of the current data to detect changes
+                $currentDataHash = md5(json_encode($borLog->toArray()));
+
+                // Only send data if it has changed
+                if ($lastDataHash !== $currentDataHash) {
+                    echo "event: borUpdate\n";
+                    echo 'data: '.json_encode(['data' => $borLog])."\n\n";
+                    flush();
+
+                    LoggerService::info('SSE BOR data sent', [
+                        'bor_ref_id' => $borRefId,
+                        'status' => $borLog->status,
+                        'iteration' => $iteration,
+                    ]);
+
+                    $lastDataHash = $currentDataHash;
+                } else {
+                    // Send a heartbeat to keep connection alive without duplicating data
+                    echo "event: heartbeat\n";
+                    echo 'data: '.json_encode([
+                        'timestamp' => now()->toISOString(),
+                        'iteration' => $iteration,
+                        'server_time' => time(),
+                        'memory_usage' => round(memory_get_usage(true) / 1024 / 1024, 2).'MB',
+                    ])."\n\n";
+
+                    // Ensure data is sent immediately
+                    if (ob_get_level()) {
+                        ob_flush();
+                    }
+                    flush();
+
+                    LoggerService::info('SSE BOR heartbeat sent', [
+                        'bor_ref_id' => $borRefId,
+                        'iteration' => $iteration,
+                        'connection_status' => $connectionStatus,
+                    ]);
+                }
+
+                // Check if BOR process is completed
+                if ($borLog->status == BorStatusEnum::DOCUMENT_SIGNED || $borLog->status == BorStatusEnum::DOCUMENT_UPLOADED) {
+                    LoggerService::info('SSE BOR process completed, ending stream', [
+                        'bor_ref_id' => $borRefId,
+                        'status' => $borLog->status,
+                    ]);
+                    echo "event: completed\n";
+                    echo 'data: '.json_encode(['message' => 'BOR process completed', 'data' => $borLog])."\n\n";
+                    flush();
+                    break;
+                }
+
+                $iteration++;
+
+                // Use a shorter sleep with connection check
+                for ($i = 0; $i < 3; $i++) {
+                    sleep(1);
+                    // Quick connection check during sleep
+                    if (connection_aborted()) {
+                        LoggerService::info('SSE BOR connection lost during sleep', [
+                            'bor_ref_id' => $borRefId,
+                            'iteration' => $iteration,
+                            'sleep_second' => $i + 1,
+                        ]);
+                        break 2; // Break out of both loops
+                    }
+                }
+            }
+
+            if ($iteration >= $maxIterations) {
+                LoggerService::info('SSE BOR stream timeout', ['bor_ref_id' => $borRefId]);
+                echo "event: timeout\n";
+                echo 'data: '.json_encode(['message' => 'Stream timeout reached'])."\n\n";
+                flush();
+            }
+
+            LoggerService::info('SSE BOR stream ended', ['bor_ref_id' => $borRefId]);
+        };
+    }
+
+    /**
+     * Get the SSE headers for streaming response
+     */
+    public function getSseHeaders(): array
+    {
+        return [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+            'Connection' => 'keep-alive',
+            'X-Accel-Buffering' => 'no', // Disable Nginx buffering
+            'X-Proxy-Buffering' => 'no', // Disable proxy buffering
+            'X-Azure-FDID' => 'no-buffer', // Azure Front Door hint
+            'Transfer-Encoding' => 'chunked', // Force chunked encoding
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Accept, Cache-Control',
+            'Access-Control-Allow-Credentials' => 'true',
+            'Access-Control-Expose-Headers' => 'Content-Type, Cache-Control, Connection',
+        ];
+    }
+
+    /**
+     * Get human-readable connection status text
+     */
+    private function getConnectionStatusText($status)
+    {
+        switch ($status) {
+            case CONNECTION_NORMAL:
+                return 'NORMAL';
+            case CONNECTION_ABORTED:
+                return 'ABORTED';
+            case CONNECTION_TIMEOUT:
+                return 'TIMEOUT';
+            default:
+                return 'UNKNOWN_'.$status;
+        }
+    }
+
+    /****************************************** SSE ******************************************/
 }

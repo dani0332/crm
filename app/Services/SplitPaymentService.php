@@ -39,6 +39,7 @@ use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\Life\EmbeddedProductService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\CentralTrait;
@@ -568,8 +569,16 @@ class SplitPaymentService
 
         $payment = $splitPayment->payment;
         $modelType = $request->modelType;
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $processNewUrl = true;
 
-        if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard) {
+        // for car quote with plan detail enabled, de-select embeded products & generate old url
+        if ($quoteTypeId == QuoteTypeId::Car && $request->isPlanDetailEnabled) {
+            (new EmbeddedProductService)->deSelectEPTransactions($payment->paymentable_id);
+            $processNewUrl = false;
+        }
+
+        if ($processNewUrl && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard) {
             // Check if the transaction is an "embedded" transaction from the main website's quote flow.
             $isEmbedded = EmbeddedTransaction::where('quote_request_type', $payment->paymentable_type)
                 ->where('quote_request_id', $payment->paymentable_id)
@@ -610,7 +619,6 @@ class SplitPaymentService
         $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
         $paymentLink .= $splitPayment->payment_method === PaymentMethodsEnum::InsureNowPayLater ? 'tabby' : 'checkout';
 
-        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $paymentParams = [
             'code' => $payment->code.'-'.$splitPayment->sr_no,
             'quoteTypeId' => $quoteTypeId,
@@ -690,7 +698,7 @@ class SplitPaymentService
                 'amountCollected' => $amountCollected,
                 'isFromJob' => $isFromJob,
             ];
-            LoggerService::error("processSplitPaymentApprove: Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}", extra: $extra);
+            LoggerService::info("processSplitPaymentApprove: Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}", extra: $extra);
             if ($isFromJob) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => PaymentProcessJobEnum::QUOTE_NOTFOUND_MESSAGE]);
 
@@ -834,11 +842,15 @@ class SplitPaymentService
                     LoggerService::info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} Starting send update log process");
 
                     $sendUpdateLog = $parentPayment->sendUpdateLog;
-                    app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdateLog->id, $sendUpdateLog->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
-                    $sendUpdateLog->update([
-                        'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
-                    ]);
-                    LoggerService::info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} Send update log status updated successfully");
+                    if (in_array($sendUpdateLog->status, SendUpdateLogStatusEnum::getSendUpdateBookingStatuses())) {
+                        LoggerService::info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} Send update log status is already in the list of update booking queued, update booking failed or update booked, so skipping the update");
+                    } else {
+                        app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdateLog->id, $sendUpdateLog->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
+                        $sendUpdateLog->update([
+                            'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
+                        ]);
+                        LoggerService::info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} Send update log status updated successfully");
+                    }
                 }
             }, $maxRetries);
 
@@ -865,6 +877,7 @@ class SplitPaymentService
                 if ($isFromJob) { // TODO : Add Ecom check to make sure only customer purchased policy schedule for automation
                     LoggerService::info("Split payment Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no}  createPolicyIssuanceAutomation started");
                     $this->createPolicyIssuanceAutomation($quoteModel, $modelType, $paymentSplit->payment);
+
                 }
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
 
@@ -958,10 +971,13 @@ class SplitPaymentService
 
             if (($masterPayment->insuranceProvider->code == InsuranceProviderEnum::ALNC->value && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
                 if ($sendUpdateId) {
-                    app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
-                    $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
-                    LoggerService::info("Master payment code: {$quoteModel->code} Quote status updated to Transaction Approved for send update");
-
+                    if (in_array($quoteModel->status, SendUpdateLogStatusEnum::getSendUpdateBookingStatuses())) {
+                        LoggerService::info("Master payment code: {$quoteModel->code} Quote status is already in the list of update booking queued, update booking failed or update booked, so skipping the update");
+                    } else {
+                        app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
+                        $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
+                        LoggerService::info("Master payment code: {$quoteModel->code} Quote status updated to Transaction Approved for send update");
+                    }
                 } else {
                     $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quoteModel);
                     LoggerService::info("Master payment code: {$quoteModel->code} Lock Lead status: {$lockLeadSectionsDetails['lead_status']} Quote Status ID: {$quoteModel->quote_status_id}");
@@ -1091,6 +1107,9 @@ class SplitPaymentService
     {
         $commission = $payment->commission_vat_applicable ?: $payment->commission_vat_not_applicable;
         $totalPriceVatApplicable = $payment->paymentSplits()->sum('price_vat_applicable');
+        if ($totalPriceVatApplicable == 0) {
+            $totalPriceVatApplicable = 1;
+        }
         LoggerService::info('fn: calculateCommissionSplit - Payment Code: '.$payment->code.' - Total Price Vat Applicable: '.$totalPriceVatApplicable);
 
         return roundNumber(($paymentSplit->price_vat_applicable / $totalPriceVatApplicable) * $commission);
@@ -1333,13 +1352,44 @@ class SplitPaymentService
 
     private function createPolicyIssuanceAutomation($quote, $quoteType, $payment)
     {
-        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+        try {
+            LoggerService::info("createPolicyIssuanceAutomation called for quote: {$quote->code}");
 
-        if ($insuranceProvider) {
-            $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
-            if (isset($insuranceProviderAutomation) && ! isset($quote->insurer_api_status_id)) {
-                $insuranceProviderAutomation?->createPolicyIssuanceSchedule($quote, $insuranceProvider);
+            $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+
+            if (! $insuranceProvider) {
+                LoggerService::info("No insurance provider found for quote: {$quote->code} - skipping policy issuance automation");
+
+                return;
             }
+
+            LoggerService::info("Insurance provider found: {$insuranceProvider->code} for quote: {$quote->code}");
+
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
+
+            if (! isset($insuranceProviderAutomation)) {
+                LoggerService::info("Insurance provider automation not available for {$insuranceProvider->code} - quote: {$quote->code}");
+
+                return;
+            }
+
+            LoggerService::info("Insurance provider automation initialized for {$insuranceProvider->code} - quote: {$quote->code}");
+
+            // Check without triggering lazy load
+            $hasExistingStatus = ! is_null($quote->getAttributeValue('insurer_api_status_id'));
+            LoggerService::info("Checking existing status for quote: {$quote->code} - hasExistingStatus: ".($hasExistingStatus ? 'true' : 'false'));
+
+            if ($hasExistingStatus) {
+                LoggerService::info("Quote {$quote->code} already has insurer_api_status_id - skipping policy issuance");
+
+                return;
+            }
+
+            LoggerService::info("schedulePolicyIssuance for quote: {$quote->code}");
+            $insuranceProviderAutomation?->createPolicyIssuanceSchedule($quote, $insuranceProvider);
+            LoggerService::info("schedulePolicyIssuance completed for quote: {$quote->code}");
+        } catch (\Exception $e) {
+            LoggerService::error("Exception in createPolicyIssuanceAutomation for quote: {$quote->code}", exception: $e);
         }
     }
 
@@ -1403,7 +1453,7 @@ class SplitPaymentService
         LoggerService::info("Split payment Code: {$paymentCode} isTravelOrCarQuote: ".($isTravelOrCarQuote ? 'true' : 'false'));
 
         // Check if the insurance provider is ALNC or AXA
-        $isAlncOrAxa = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA]);
+        $isAlncOrAxa = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA]);
         LoggerService::info("Split payment Code: {$paymentCode} isAlncOrAxa: ".($isAlncOrAxa ? 'true' : 'false'));
 
         // Only process if payment is not approved and:

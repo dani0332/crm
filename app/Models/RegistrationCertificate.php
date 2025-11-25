@@ -38,6 +38,11 @@ class RegistrationCertificate extends Model
         'nationality_id' => 'integer',
     ];
 
+    public function quotable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
     public function nationality(): BelongsTo
     {
         return $this->belongsTo(Nationality::class);
@@ -49,5 +54,11 @@ class RegistrationCertificate extends Model
     public function certificatable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function scopeForQuotable($query, $quotableType, $quotableId)
+    {
+        return $query->where('certificatable_type', $quotableType)
+            ->where('certificatable_id', $quotableId);
     }
 }
