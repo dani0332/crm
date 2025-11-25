@@ -570,7 +570,7 @@ class CustomerVerificationService
         ]);
     }
 
-    private function getQuoteType($quote): string | null
+    private function getQuoteType($quote): ?string
     {
         return match (true) {
             $quote instanceof CarQuote => QuoteTypes::CAR->value,
