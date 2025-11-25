@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services\MetLife;
 
-use App\Enums\QuoteTypes;
 use App\Models\QuoteDocument;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
@@ -125,7 +124,7 @@ class MetLifeApiService extends BaseService
                         'message' => $actualResponse['message'] ?? self::UNKNOWN_ERROR_MESSAGE,
                     ]);
 
-                    $response = $this->responseService->createResponse(false, "Login failed: ".($actualResponse['message'] ?? self::UNKNOWN_ERROR_MESSAGE), $actualResponse);
+                    $response = $this->responseService->createResponse(false, 'Login failed: '.($actualResponse['message'] ?? self::UNKNOWN_ERROR_MESSAGE), $actualResponse);
                 }
             } else {
                 LoggerService::warning('MetLife Auth: Login request failed', [
