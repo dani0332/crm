@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, onMounted, ref, watch } from 'vue';
-import CollapseIcon from './components/CollapseIcon.vue';
+import CollapseIcon from '../Savings/components/CollapseIcon.vue';
 
 const props = defineProps({
   title: {
@@ -52,7 +52,7 @@ watch(
 
       nextTick(() => {
         const newBracketElement = document.querySelector(
-          `[data-bracket-index="${props.type.toLowerCase()}-${newLength - 1}"]`,
+          `[data-bracket-index="${props.title.toLowerCase().replace(/\s+/g, '-')}-${newLength - 1}"]`,
         );
         if (newBracketElement) {
           newBracketElement.scrollIntoView({
@@ -80,7 +80,7 @@ watch(
       const oldCount = oldProfileCounts?.[bracketIndex] || 0;
       if (newCount > oldCount) {
         const profileIndex = newCount - 1;
-        const profileKey = `${props.type.toLowerCase()}-${bracketIndex}-${profileIndex}`;
+        const profileKey = `${props.title.toLowerCase().replace(/\s+/g, '-')}-${bracketIndex}-${profileIndex}`;
         highlightedProfileKey.value = profileKey;
 
         nextTick(() => {
@@ -134,24 +134,14 @@ const formatNumberInput = event => {
   return value;
 };
 
-const handleMinInput = (event, bracket) => {
+const handleInput = (event, bracket, field) => {
   const formattedValue = formatNumberInput(event);
-  bracket.min = formattedValue;
+  bracket[field] = formattedValue;
 };
 
-const handleMaxInput = (event, bracket) => {
-  const formattedValue = formatNumberInput(event);
-  bracket.max = formattedValue;
-};
-
-const handleMinBlur = (event, bracket) => {
+const handleBlur = (event, bracket, field) => {
   const value = event.target.value;
-  bracket.min = value === '' ? 0 : parseFloat(value);
-};
-
-const handleMaxBlur = (event, bracket) => {
-  const value = event.target.value;
-  bracket.max = value === '' ? 0 : parseFloat(value);
+  bracket[field] = value === '' ? 0 : parseFloat(value);
 };
 
 const createEmptyProfile = () => ({
@@ -226,7 +216,7 @@ onMounted(() => {
           </x-button>
           <template #tooltip>
             <span class="custom-tooltip-content">
-              Add a new investment amount bracket for this frequency type.
+              Add a new Sum insured amount bracket for this
             </span>
           </template>
         </x-tooltip>
@@ -245,7 +235,7 @@ onMounted(() => {
           <div
             v-for="(bracket, bracketIndex) in brackets"
             :key="`bracket-${bracketIndex}`"
-            :data-bracket-index="`${type.toLowerCase()}-${bracketIndex}`"
+            :data-bracket-index="`${title.toLowerCase().replace(/\s+/g, '-')}-${bracketIndex}`"
             class="border border-gray-200 rounded-lg p-4 transition-all duration-500"
             :class="{
               'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
@@ -299,49 +289,53 @@ onMounted(() => {
               v-show="!collapsedBrackets.has(bracketIndex)"
               class="space-y-4"
             >
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <x-input
-                    v-model="bracket.min"
-                    class="!mb-0 mt-1"
-                    required
-                    :disabled="viewMode"
-                    @input="handleMinInput($event, bracket)"
-                    @blur="handleMinBlur($event, bracket)"
-                    label="Minimum Amount"
-                    tooltip="Set the min investment amount for leads in this category."
-                  >
-                    <template #suffix>
-                      <div
-                        class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
-                      >
-                        <span>USD</span>
-                      </div>
-                    </template>
-                  </x-input>
-                </div>
-                <div>
-                  <x-input
-                    v-model="bracket.max"
-                    class="!mb-0 mt-1"
-                    required
-                    :disabled="viewMode"
-                    @input="handleMaxInput($event, bracket)"
-                    @blur="handleMaxBlur($event, bracket)"
-                    label="Maximum Amount"
-                    tooltip="Set the max investment amount for leads in this category."
-                  >
-                    <template #suffix>
-                      <div
-                        class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
-                      >
-                        <span>USD</span>
-                      </div>
-                    </template>
-                  </x-input>
+              <!-- Sum Insured Amount Section -->
+              <div class="pb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <x-input
+                      v-model="bracket.min"
+                      class="!mb-0 mt-1"
+                      required
+                      :disabled="viewMode"
+                      @input="handleInput($event, bracket, 'min')"
+                      @blur="handleBlur($event, bracket, 'min')"
+                      label="Minimum Amount"
+                      tooltip="Set the minimum sum insured amount for this bracket."
+                    >
+                      <template #suffix>
+                        <div
+                          class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                        >
+                          <span>AED</span>
+                        </div>
+                      </template>
+                    </x-input>
+                  </div>
+                  <div>
+                    <x-input
+                      v-model="bracket.max"
+                      class="!mb-0 mt-1"
+                      required
+                      :disabled="viewMode"
+                      @input="handleInput($event, bracket, 'max')"
+                      @blur="handleBlur($event, bracket, 'max')"
+                      label="Maximum Amount"
+                      tooltip="Set the maximum sum insured amount for this bracket."
+                    >
+                      <template #suffix>
+                        <div
+                          class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                        >
+                          <span>AED</span>
+                        </div>
+                      </template>
+                    </x-input>
+                  </div>
                 </div>
               </div>
 
+              <!-- Advisor Allocation Profiles -->
               <div class="border-t pt-4">
                 <div class="flex items-center justify-between mb-4">
                   <h5 class="text-sm font-medium text-gray-700">
@@ -358,8 +352,8 @@ onMounted(() => {
                     </x-button>
                     <template #tooltip>
                       <span class="custom-tooltip-content">
-                        Set who gets the lead – based on amount and customer
-                        nationality.
+                        Set who gets the lead – based on sum insured amount and
+                        customer nationality.
                       </span>
                     </template>
                   </x-tooltip>
@@ -376,15 +370,15 @@ onMounted(() => {
                   <div
                     v-for="(profile, profileIndex) in bracket.profiles"
                     :key="`profile-${bracketIndex}-${profileIndex}`"
-                    :data-profile-key="`${type.toLowerCase()}-${bracketIndex}-${profileIndex}`"
+                    :data-profile-key="`${title.toLowerCase().replace(/\s+/g, '-')}-${bracketIndex}-${profileIndex}`"
                     class="bg-gray-50 p-4 rounded-md"
                     :class="{
                       'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
                         highlightedProfileKey ===
-                        `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`,
+                        `${title.toLowerCase().replace(/\s+/g, '-')}-${bracketIndex}-${profileIndex}`,
                       'shadow-lg':
                         highlightedProfileKey ===
-                        `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`,
+                        `${title.toLowerCase().replace(/\s+/g, '-')}-${bracketIndex}-${profileIndex}`,
                     }"
                   >
                     <div class="flex items-center justify-between mb-3">
@@ -403,7 +397,7 @@ onMounted(() => {
                           <span
                             v-if="
                               highlightedProfileKey ===
-                              `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`
+                              `${title.toLowerCase().replace(/\s+/g, '-')}-${bracketIndex}-${profileIndex}`
                             "
                             class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
                           >
