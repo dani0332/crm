@@ -27,6 +27,7 @@ enum LoggerFeatureEnum: string
     case SELECT_INSURANCE_PROVIDER = 'select-insurance-provider';
     case SEND_AND_BOOK_POLICY_EMAIL_JOB = 'send-and-book-policy-email-job';
     case POLICY_AUTOMATION = 'policy-automation';
+    case AWNIC_CYBER_POLICY_AUTOMATION = 'awnic-cyber-policy-automation';
     case SAGE_POLICY_BOOKING = 'sage-policy-booking';
     case POLICY_ISSUE_WHATSAPP_MESSAGE = 'policy-issue-whatsapp-message';
     case SAGE_ENDORSEMENT_BOOKING = 'sage-endorsement-booking';
