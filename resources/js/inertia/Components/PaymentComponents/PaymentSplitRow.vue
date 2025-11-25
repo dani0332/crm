@@ -197,7 +197,7 @@ const showRetryButton = computed(() => {
     !enablePostPrepaymentButton.value &&
     can(permissionEnum.RETRY_PREPAYMENT_BUTTON) &&
     props.splitPayment.prepayment_receipt_status?.showRetryButton &&
-    props.splitPayment.payment_method !== paymentMethodsEnums.CreditCard
+    props.splitPayment.payment_method?.code !== paymentMethodsEnums.CreditCard
   );
 });
 
@@ -298,7 +298,7 @@ const triggerPostPrepayment = async () => {
     </td>
     <td>{{ formatDate(splitPayment.due_date) }}</td>
     <td>{{ formatDate(splitPayment.due_date) }}</td>
-    <td>{{ splitPayment.payment_method.name }}</td>
+    <td>{{ splitPayment.payment_method?.name }}</td>
     <td>
       {{ formatAmount(splitPayment.price_vat_applicable) }}
     </td>
@@ -328,7 +328,7 @@ const triggerPostPrepayment = async () => {
       }}
     </td>
     <td>
-      {{ formatString(splitPayment.payment_status.text) }}
+      {{ formatString(splitPayment.payment_status?.text) }}
     </td>
     <td>
       <x-tooltip placement="top">
@@ -365,7 +365,7 @@ const triggerPostPrepayment = async () => {
 
         <x-button
           v-if="
-            splitPayment.payment_method.code == paymentMethodsEnums.CreditCard
+            splitPayment.payment_method?.code == paymentMethodsEnums.CreditCard
           "
           class="ml-2"
           size="xs"
@@ -377,7 +377,7 @@ const triggerPostPrepayment = async () => {
 
         <x-button
           v-if="
-            splitPayment.payment_method.code ==
+            splitPayment.payment_method?.code ==
             paymentMethodsEnums.InsurerPaymentLink
           "
           class="ml-2"

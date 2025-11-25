@@ -27,16 +27,16 @@ class DrivingLicenseExtractor
     private function initializeExtractedData(): void
     {
         $this->extractedData = [
-            // Driving License Detail fields
-            'license_number' => null,
-            'license_issue_date' => null,
-            'license_expiry_date' => null,
-            'license_issue_place' => null,
+            // vehicle driver detail fields
+            'driver_license_number' => null,
+            'driver_license_issue_date' => null,
+            'driver_license_expiry_date' => null,
+            'driver_license_issue_place' => null,
             'traffic_code_number' => null,
-            'first_name' => null,
-            'last_name' => null,
-            'dob' => null,
-            'gender' => null,
+            'driver_first_name' => null,
+            'driver_last_name' => null,
+            'driver_dob' => null,
+            'driver_gender' => null,
             'nationality_string' => null,
 
             // Metadata
@@ -71,18 +71,18 @@ class DrivingLicenseExtractor
     private function updateExtractedData(array $data, array $personalInfo): void
     {
         $this->extractedData = array_merge($this->extractedData, $this->getCleanData([
-            // Driving License Detail fields
-            'license_number' => $data['licenseNumber'] ?? null,
-            'license_issue_date' => $this->formatDate($data['issueDate'] ?? null),
-            'license_expiry_date' => $this->formatDate($data['expiryDate'] ?? null),
-            'license_issue_place' => $data['placeOfIssue'] ?? null,
+            // vehicle driver detail fields
+            'driver_license_number' => $data['licenseNumber'] ?? null,
+            'driver_license_issue_date' => $this->formatDate($data['issueDate'] ?? null),
+            'driver_license_expiry_date' => $this->formatDate($data['expiryDate'] ?? null),
+            'driver_license_issue_place' => $this->getIssuancePlaceCode($data['placeOfIssue'] ?? null),
             'traffic_code_number' => $data['trafficCodeNumber'] ?? null,
 
             // Personal information fields - split full name into first and last name
-            'first_name' => $this->extractFirstName($personalInfo['fullName'] ?? null),
-            'last_name' => $this->extractLastName($personalInfo['fullName'] ?? null),
-            'dob' => $this->formatDate($personalInfo['dateOfBirth'] ?? null),
-            'gender' => $this->formatGender($personalInfo['sex'] ?? null),
+            'driver_first_name' => $this->extractFirstName($personalInfo['fullName'] ?? null),
+            'driver_last_name' => $this->extractLastName($personalInfo['fullName'] ?? null),
+            'driver_dob' => $this->formatDate($personalInfo['dateOfBirth'] ?? null),
+            'driver_gender' => $this->formatGender($personalInfo['sex'] ?? null),
             'nationality_string' => $personalInfo['nationality'] ?? null,
 
             // Metadata
@@ -91,18 +91,18 @@ class DrivingLicenseExtractor
         ]));
     }
 
-    public function getDrivingLicenseDetailFields(): array
+    public function getVehicleDriverDetailFields(): array
     {
         return $this->getCleanData([
-            'license_number' => $this->extractedData['license_number'] ?? null,
-            'license_issue_date' => $this->extractedData['license_issue_date'] ?? null,
-            'license_expiry_date' => $this->extractedData['license_expiry_date'] ?? null,
-            'license_issue_place' => $this->extractedData['license_issue_place'] ?? null,
+            'driver_license_number' => $this->extractedData['driver_license_number'] ?? null,
+            'driver_license_issue_date' => $this->extractedData['driver_license_issue_date'] ?? null,
+            'driver_license_expiry_date' => $this->extractedData['driver_license_expiry_date'] ?? null,
+            'driver_license_issue_place' => $this->extractedData['driver_license_issue_place'] ?? null,
             'traffic_code_number' => $this->extractedData['traffic_code_number'] ?? null,
-            'first_name' => $this->extractedData['first_name'] ?? null,
-            'last_name' => $this->extractedData['last_name'] ?? null,
-            'dob' => $this->extractedData['dob'] ?? null,
-            'gender' => $this->extractedData['gender'] ?? null,
+            'driver_first_name' => $this->extractedData['driver_first_name'] ?? null,
+            'driver_last_name' => $this->extractedData['driver_last_name'] ?? null,
+            'driver_dob' => $this->extractedData['driver_dob'] ?? null,
+            'driver_gender' => $this->extractedData['driver_gender'] ?? null,
             'nationality_string' => $this->extractedData['nationality_string'] ?? null,
         ]);
     }
@@ -110,7 +110,7 @@ class DrivingLicenseExtractor
     public function getProcessedData(): array
     {
         return [
-            'driving_license_detail_fields' => $this->getDrivingLicenseDetailFields(),
+            'vehicle_driver_detail_fields' => $this->getVehicleDriverDetailFields(),
         ];
     }
 }

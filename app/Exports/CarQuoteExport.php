@@ -9,6 +9,7 @@ use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
 use App\Services\CarQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
@@ -28,7 +29,21 @@ class CarQuoteExport implements CsvExportableInterface
      */
     public function collection(array $requestParams = []): Collection
     {
-        return $this->carQuoteService->getGridData(requestParams: $requestParams)->get();
+        $startTime = microtime(true);
+
+        $query = $this->carQuoteService->getGridData(requestParams: $requestParams);
+
+        $beforeGet = microtime(true);
+        $collection = $query->get();
+        $querySeconds = round(microtime(true) - $beforeGet, 3);
+
+        LoggerService::info('CarQuoteExport.collection done', extra: [
+            'rows' => $collection->count(),
+            'query_seconds' => $querySeconds,
+            'total_seconds' => round(microtime(true) - $startTime, 3),
+        ]);
+
+        return $collection;
     }
 
     /**
@@ -100,6 +115,8 @@ class CarQuoteExport implements CsvExportableInterface
             'LEAD ASSIGNMENT TRIGGER',
             'PRIVATE CLIENT',
             'INSURER',
+            'IMCRM SUB-SOURCE',
+            'REPAIR TYPE',
         ];
     }
 
@@ -163,6 +180,8 @@ class CarQuoteExport implements CsvExportableInterface
             $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
             $quote->customer?->pcp_tag_formatted ?? '',
             $quote->insuranceProvider?->text ?? '',
+            $quote->subSource?->text ?? '',
+            $quote->plan?->repair_type ?? '',
         ];
     }
 

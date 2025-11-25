@@ -155,7 +155,6 @@ class SendUpdateValidationRequest extends FormRequest
                         SendUpdateLogStatusEnum::DM,
                         SendUpdateLogStatusEnum::DTSI,
                         SendUpdateLogStatusEnum::DOV,
-                        SendUpdateLogStatusEnum::ATIB,
                         SendUpdateLogStatusEnum::ACB,
                         SendUpdateLogStatusEnum::ATCRNB,
                         SendUpdateLogStatusEnum::ATCRNB_RBB,

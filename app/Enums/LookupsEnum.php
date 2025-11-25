@@ -62,8 +62,9 @@ enum LookupsEnum: string
     case NATIONALITY_LIST = 'nationality-list';
     case DRIVING_EXPERIENCE = 'driving-experience';
     case RM_CATEGORY = 'rm-category';
-
     // Claims
     case CLAIM_TYPES = 'claim-types';
     case CLAIM_SUB_STATUSES = 'claim-sub-statuses';
+    case SUB_SOURCE = 'sub-source';
+    case SUB_SOURCE_OPTION = 'sub-source-option';
 }

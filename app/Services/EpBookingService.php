@@ -257,7 +257,10 @@ class EpBookingService extends BaseService
         $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
 
         $sageApiService = (new SageApiService);
-        $sageApiService->updateAndLogQuoteStatus($this->quote, $this->context?->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
+
+        if ($this->quote->quote_status_id != QuoteStatusEnum::POLICY_BOOKING_QUEUED) {
+            $sageApiService->updateAndLogQuoteStatus($this->quote, $this->context?->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
+        }
 
         $request = new \stdClass;
         $request->quote_id = $this->quote?->id;

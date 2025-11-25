@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
 use Illuminate\Database\Seeder;
 
@@ -666,6 +667,38 @@ class DocumentTypesSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
                 'business_type_of_insurance_id' => BusinessTypeOfInsuranceIdEnum::CAR_FLEET,
                 'business_type_of_customer' => DocumentTypeCode::COMPANY_BUSINESS_TYPE_OF_CUSTOMER,
+            ],
+            [
+                'code' => DocumentTypeCode::MTL_EID,
+                'text' => 'Emirates ID',
+                'description' => 'Please upload your valid Emirates ID license.',
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypes::LIFE->id(),
+                'folder_path' => 'life',
+                'accepted_files' => '.pdf,.xlsx,.docx,.jpeg,.jpg,.png',
+                'max_files' => 2,
+                'max_size' => 25,
+                'is_required' => 1,
+                'send_to_customer' => 0,
+                'sort_order' => 1,
+                'receive_from_customer' => 1,
+                'category' => DocumentTypeCode::QUOTE,
+                'is_required_for_send_policy' => 0,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+            ],
+            [
+                'code' => DocumentTypeCode::LIFE_HEALTH_QUESTIONNAIRE,
+                'text' => 'Life Health Questionnaire',
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypes::LIFE->id(),
+                'folder_path' => 'life_health_questionnaire',
+                'accepted_files' => '.pdf',
+                'max_files' => 15,
+                'max_size' => 25,
+                'is_required' => 0,
+                'receive_from_customer' => 1,
+                'category' => DocumentTypeCode::QUOTE,
             ],
         ];
 

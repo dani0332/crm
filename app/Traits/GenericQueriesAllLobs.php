@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CarRegistrationType;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
@@ -20,6 +21,7 @@ use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\InsuranceProvider;
+use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuoteDetail;
 use App\Models\SendUpdateLog;
@@ -314,29 +316,28 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails = array_merge($bookPolicyDetails, $tapPaymentConfiguration);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
-            if (! empty($quoteDocuments)) {
-                $isAllRequiredDocumentUploaded = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $quoteType, $record);
-                if ($isAllRequiredDocumentUploaded) {
-                    $bookPolicyDetails['sendButton'] = true;
-                    $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
-                    $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::CUSTOMER;
-                }
-                if ($bookPolicyDetails['sendButton']) {
-                    $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
-                    $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
-                    if ($taxDocumentsCount == count($taxDocuments)) {
-                        $bookPolicyDetails['editButton'] = true;
-                        $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
+            $quoteType = strtolower(QuoteTypes::CAR->value) == strtolower($quoteType) && $record->registration_type == CarRegistrationType::COMPANY ? quoteTypeCode::CompanyCar : $quoteType;
+            $areSendPolicyDocsUploaded = app(DocumentTypeRepository::class)->fetchAreSendPolicyDocsUploaded($quoteDocuments, $quoteType, $record);
+            $bookPolicyDetails['disabled'] = $areSendPolicyDocsUploaded['disabled'];
+            $bookPolicyDetails['sendButton'] = true;
+            $bookPolicyDetails['requiredDocuments'] = $areSendPolicyDocsUploaded['requiredDocuments'];
+            $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
+            $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::CUSTOMER;
+            if ($bookPolicyDetails['sendButton']) {
+                $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
+                $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
+                if ($taxDocumentsCount == count($taxDocuments)) {
+                    $bookPolicyDetails['editButton'] = true;
+                    $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
 
-                        if ($areBookingDetailsFilled) {
-                            $isMainLead = $this->checkMainLead($record, $quoteType);
-                            if (! $isMainLead || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
-                                $bookPolicyDetails['bookButton'] = true;
-                                $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
-                                $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
-                            } else {
-                                $bookPolicyDetails['policyCancelled'] = true;
-                            }
+                    if ($areBookingDetailsFilled) {
+                        $isMainLead = $this->checkMainLead($record, $quoteType);
+                        if (! $isMainLead || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
+                            $bookPolicyDetails['bookButton'] = true;
+                            $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
+                            $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
+                        } else {
+                            $bookPolicyDetails['policyCancelled'] = true;
                         }
                     }
                 }
@@ -837,5 +838,80 @@ trait GenericQueriesAllLobs
         return strtolower($quoteType) === strtolower(QuoteTypes::HEALTH->value) &&
                                             isset($record->emirate_of_your_visa_id) &&
                                             $record->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI;
+    }
+
+    /**
+     * Format dates from various input types to display format (d/m/Y) with comprehensive error handling
+     *
+     * @param  mixed  $date  Date input (string, DateTime, Carbon, or null)
+     * @return string Formatted date in d/m/Y format or empty string on error
+     */
+    protected function formatDateToDisplay($date): string
+    {
+        if (! $date) {
+            return '';
+        }
+
+        if (is_string($date)) {
+            try {
+                if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $date)) {
+                    $dateObj = Carbon::createFromFormat('d-m-Y', $date);
+
+                    return $dateObj->format('d/m/Y');
+                }
+
+                $dateObj = Carbon::parse($date);
+
+                return $dateObj->format('d/m/Y');
+            } catch (\Exception $e) {
+                LoggerService::warning('Failed to format date', extra: [
+                    'date_input' => $date,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return '';
+            }
+        }
+
+        if ($date instanceof \DateTime || $date instanceof Carbon) {
+            try {
+                return $date->format('d/m/Y');
+            } catch (\Exception $e) {
+                LoggerService::warning('Failed to format date object', extra: [
+                    'date_class' => get_class($date),
+                    'error' => $e->getMessage(),
+                ]);
+
+                return '';
+            }
+        }
+
+        LoggerService::warning('Unexpected date type for formatting', extra: [
+            'date_type' => gettype($date),
+            'date_value' => $date,
+        ]);
+
+        return '';
+    }
+
+    public function getNationalityId(?string $nationality): ?int
+    {
+        if (empty($nationality)) {
+            return null;
+        }
+
+        $nationalityRecord = Nationality::where('text', 'LIKE', '%'.$nationality.'%')
+            ->orWhere('code', $nationality)
+            ->orWhere('country_name', 'LIKE', '%'.$nationality.'%')
+            ->first();
+
+        return $nationalityRecord?->id;
+    }
+
+    public function getNationalityById($nationalityId): ?string
+    {
+        $nationalityRecord = Nationality::find($nationalityId);
+
+        return $nationalityRecord?->text;
     }
 }
