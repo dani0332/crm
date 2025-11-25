@@ -1074,7 +1074,7 @@ class SplitPaymentService
         $maxRetries = 5;
 
         $response = $this->handleWithDeadlockRetries(function () use ($payment, $paymentSplits, $commission, $commissionSplitSumWithoutLastSplit) {
-            Log::info('Starting commission split calculation', [
+            LoggerService::info('Starting commission split calculation', extra: [
                 'payment_id' => $payment->id,
                 'total_commission' => $commission,
                 'total_payment_splits' => count($paymentSplits),
@@ -1085,7 +1085,7 @@ class SplitPaymentService
             foreach ($paymentSplits as $paymentSplit) {
                 $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
                 
-                Log::info('Processing payment split', [
+                LoggerService::info('Processing payment split', extra: [
                     'payment_id' => $payment->id,
                     'payment_split_id' => $paymentSplit->id,
                     'sr_no' => $paymentSplit->sr_no,
@@ -1102,7 +1102,7 @@ class SplitPaymentService
                         $commission - $commissionSplitSumWithoutLastSplit
                     );
                     
-                    Log::info('Last payment split - adjusting for rounding', [
+                    LoggerService::info('Last payment split - adjusting for rounding', extra: [
                         'payment_id' => $payment->id,
                         'payment_split_id' => $paymentSplit->id,
                         'sr_no' => $paymentSplit->sr_no,
@@ -1115,7 +1115,7 @@ class SplitPaymentService
                 } else {
                     $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
                     
-                    Log::info('Accumulated commission split sum', [
+                    LoggerService::info('Accumulated commission split sum', extra: [
                         'payment_id' => $payment->id,
                         'payment_split_id' => $paymentSplit->id,
                         'sr_no' => $paymentSplit->sr_no,
@@ -1128,7 +1128,7 @@ class SplitPaymentService
                 /* Add Vat on commission to the first Installment of commission */
                 $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
                 
-                Log::info('Saving payment split with commission values', [
+                LoggerService::info('Saving payment split with commission values', extra: [
                     'payment_id' => $payment->id,
                     'payment_split_id' => $paymentSplit->id,
                     'sr_no' => $paymentSplit->sr_no,
@@ -1140,7 +1140,7 @@ class SplitPaymentService
                 $paymentSplit->save();
             }
 
-            Log::info('Completed commission split calculation', [
+            LoggerService::info('Completed commission split calculation', extra: [
                 'payment_id' => $payment->id,
                 'total_commission' => $commission,
                 'final_commission_split_sum' => $commissionSplitSumWithoutLastSplit,
