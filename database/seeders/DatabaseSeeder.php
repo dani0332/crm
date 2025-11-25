@@ -33,7 +33,7 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             AiAdvisorSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
-            CarAdditionalDetailsForLivaSeeder::class,
+            // CarAdditionalDetailsForLivaSeeder::class,
             CarGIGVehicleTransactionDriverDetailsForAMLSeeder::class,
             CPARulesSeeder::class,
             BorDocumentSeeder::class,
