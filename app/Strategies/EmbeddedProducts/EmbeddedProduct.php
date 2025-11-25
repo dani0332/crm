@@ -191,7 +191,9 @@ class EmbeddedProduct
                     ->where('payments.paymentable_type', '=', 'App\\Models\\EmbeddedTransaction');
             })
             ->where('embedded_transactions.is_selected', true)
-            ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
+            ->when(!empty($filters['ep_payment_status'] ?? null), function ($query) use ($filters) {
+                $query->whereIn('embedded_transactions.payment_status_id', (array)$filters['ep_payment_status']);
+            })
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
             })
@@ -227,6 +229,16 @@ class EmbeddedProduct
             })
             ->when(isset($filters['sync_status']), function ($query) use ($filters) {
                 $query->filterBySyncStatus(CourierSyncStatusEnum::tryFrom($filters['sync_status']));
+            })
+            ->when(! empty($filters['ep_api_status'] ?? null), function ($query) use ($filters) {
+                $query->whereIn('embedded_transactions.policy_status', (array) $filters['ep_api_status']);
+            })
+            ->when(! empty($filters['ep_sage_status'] ?? null), function ($query) use ($filters) {
+                $sageStatusIds = SageEmbeddedProductEnum::idsFromValues((array) $filters['ep_sage_status']);
+
+                if (! empty($sageStatusIds)) {
+                    $query->whereIn('embedded_transactions.sage_status_id', $sageStatusIds);
+                }
             });
 
         $dataset = $this->updateQuery($dataset, $filters);

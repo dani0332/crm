@@ -1,8 +1,13 @@
 <script setup>
+import { setQueryStringFilters } from '../../Composables/utilities.js';
+
 defineProps({
   embeddedProduct: Object,
   ep_enums: Object,
   sync_statuses: Object,
+  sage_statuses: Array,
+  payment_statuses: Array,
+  policy_statuses: Array,
 });
 
 const dateFormat = date =>
@@ -27,6 +32,9 @@ const filters = reactive({
   chassis_number: '',
   sync_status: 'all',
   months: '',
+  ep_payment_status: [],
+  ep_api_status: [],
+  ep_sage_status: [],
 });
 
 const getLink = (quote_uuid, quote_type_id, ref_id) =>
@@ -65,7 +73,13 @@ const tableHeader = [
 
 function resetFilters() {
   for (const key in filters) {
-    filters[key] = '';
+    if (Array.isArray(filters[key])) {
+      filters[key] = [];
+    } else if (key === 'sync_status') {
+      filters[key] = 'all';
+    } else {
+      filters[key] = '';
+    }
   }
   router.visit(
     route(
@@ -122,22 +136,6 @@ function filterTransactions(isValid) {
       },
     },
   );
-}
-
-function setQueryFilters() {
-  var currentParams = {
-    ...params,
-    ...serverOptions.value,
-  };
-  Object(currentParams).hasOwnProperty('rowsPerPage') &&
-    delete currentParams.rowsPerPage;
-  for (const [key] of Object.entries(currentParams)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = currentParams[key];
-    } else {
-      filters[key] = currentParams[key];
-    }
-  }
 }
 
 function exportReport() {
@@ -200,7 +198,10 @@ function reSync(code) {
 }
 
 onMounted(() => {
-  setQueryFilters();
+  setQueryStringFilters({
+    ...params,
+    ...serverOptions.value,
+  }, filters)
 });
 
 watch(
@@ -265,6 +266,40 @@ const filteredHeaders = computed(() => {
     return true;
   });
 });
+
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
+
+const showEpPaymentStatusFilter = (function () {
+  const reports = [
+    page.props.ep_enums.ECB,
+    page.props.ep_enums.RDX,
+    page.props.ep_enums.MDX,
+    page.props.ep_enums.COURIER,
+  ];
+
+  return reports.includes(page.props.embeddedProduct.detail.short_code);
+})();
+
+const showEpApiStatusFilter = (function () {
+  const reports = [
+    page.props.ep_enums.ECB,
+    page.props.ep_enums.RDX,
+    page.props.ep_enums.MDX,
+  ];
+
+  return reports.includes(page.props.embeddedProduct.detail.short_code);
+})();
+
+const showEpSageStatusFilter = (function () {
+  const reports = [
+    page.props.ep_enums.ECB,
+    page.props.ep_enums.RDX,
+    page.props.ep_enums.MDX,
+  ];
+
+  return reports.includes(page.props.embeddedProduct.detail.short_code);
+})();
 </script>
 
 <template>
@@ -408,15 +443,45 @@ const filteredHeaders = computed(() => {
           />
         </div>
 
-        <div v-if="embeddedProduct.detail.short_code === ep_enums.COURIER">
+        <div v-if="showEpPaymentStatusFilter">
           <x-select
-            v-model="filters.sync_status"
-            placeholder="Select Sync Status"
-            :options="sync_statuses"
+            v-model="filters.ep_payment_status"
+            placeholder="Select EP Payment Status"
+            :options="payment_statuses"
             class="w-full"
+            multiple
+            truncate
             filterable
-            filterPlaceholder="Filter Sync Status...."
-            label="Sync Status"
+            filterPlaceholder="Filter EP Payment Status...."
+            label="EP Payment Status"
+          />
+        </div>
+
+        <div v-if="showEpApiStatusFilter">
+          <x-select
+            v-model="filters.ep_api_status"
+            placeholder="Select EP API Status"
+            :options="policy_statuses"
+            class="w-full"
+            multiple
+            truncate
+            filterable
+            filterPlaceholder="Filter EP API Status...."
+            label="EP API Status"
+          />
+        </div>
+
+        <div v-if="showEpSageStatusFilter">
+          <x-select
+            v-model="filters.ep_sage_status"
+            placeholder="Select EP Sage Status"
+            :options="sage_statuses"
+            class="w-full"
+            multiple
+            truncate
+            filterable
+            filterPlaceholder="Filter EP Sage Status...."
+            label="EP Sage Status"
           />
         </div>
       </div>

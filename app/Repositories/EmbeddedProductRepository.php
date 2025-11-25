@@ -1012,8 +1012,6 @@ class EmbeddedProductRepository extends BaseRepository
 
         $dataset = $strategy->getTransactionData($dataset, $isAlfredProtect);
 
-        //LoggerService::info("after getTransactionData",$dataset);
-
         return $dataset;
     }
 
