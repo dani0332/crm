@@ -225,7 +225,7 @@ trait AllocationConfigurationFindable
 
         $profiles = is_array($profiles) ? collect($profiles) : $profiles;
 
-        return $profiles->filter(fn ($profile) => $this->matchesTargetLocations($value, $profile[$key]))->first();
+        return $profiles->filter(fn ($profile) => isset($profile[$key]) && $this->matchesTargetLocations($value, $profile[$key]))->first();
     }
 
     private function matchesTargetLocations(int $subAreaId, array $locations): bool
