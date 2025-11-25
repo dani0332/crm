@@ -47,11 +47,9 @@ trait SpatieActivityLog
      */
     public function tapActivity(Activity $activity, string $eventName): void
     {
-        // Get feature from Context (set by LoggerService::startFeatureLogging)
-        $feature = Context::get('feature') ?? null;
-
-        // Will store the code in context if necessary
-        $code = Context::get('code') ?? null;
+        // Get feature and code from Context (set by LoggerService::startFeatureLogging)
+        $feature = Context::get('feature');
+        $code = Context::get('code');
         
         // Set extra column values
         $activity->url = request()->getRequestUri();

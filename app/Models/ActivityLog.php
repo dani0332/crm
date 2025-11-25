@@ -7,10 +7,6 @@ use Spatie\Activitylog\Models\Activity as SpatieActivity;
 
 class ActivityLog extends SpatieActivity
 {
-    /**
-     * Static instance of batch handler (singleton pattern)
-     */
-    protected static ?ActivityLogBatchHandler $batchHandler = null;
 
     /**
      * The attributes that are mass assignable.
@@ -34,34 +30,26 @@ class ActivityLog extends SpatieActivity
     ];
 
     /**
-     * Get or create batch handler instance
-     */
-    protected static function getBatchHandler(): ActivityLogBatchHandler
-    {
-        if (self::$batchHandler === null) {
-            self::$batchHandler = new ActivityLogBatchHandler();
-        }
-
-        return self::$batchHandler;
-    }
-
-    /**
      * Override save method to batch activities
      * 
      * Spatie Activity Log uses $activity->save() internally,
      * so we override this method to intercept and batch activities.
      */
-    public function save(array $options = [])
+    public function save(array $options = []): bool
     {
         // If batching is disabled, save immediately
         if (!config('activitylog.batch_enabled', true)) {
             return parent::save($options);
         }
 
-        // Add to batch queue instead of saving immediately
-        self::getBatchHandler()->addToBatch($this);
+        // If batch is open, add to batch queue instead of saving immediately
+        if (ActivityLogBatchHandler::isOpen()) {
+            ActivityLogBatchHandler::addToBatch($this);
+            // Return true to indicate "saved" (even though it's queued)
+            return true;
+        }
 
-        // Return true to indicate "saved" (even though it's queued)
-        return true;
+        // Batch is not open, save immediately
+        return parent::save($options);
     }
 }

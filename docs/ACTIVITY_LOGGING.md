@@ -1,311 +1,538 @@
-# Activity Logging Implementation Guide
-
-This guide explains how to implement activity logging for new and existing models using the `SpatieActivityLog` trait.
+# Activity Logging System Documentation
 
 ## Overview
 
-The activity logging system uses the [Spatie Activity Log](https://github.com/spatie/laravel-activitylog) package with custom enhancements to track model changes. It automatically logs `created`, `updated`, and `deleted` events with both old and new values.
+This document explains how the Activity Logging system works in the application. The system uses Spatie Activity Log package with custom enhancements for automatic batching, old/new value tracking, and request-based activity grouping.
 
-## Features
+---
 
-- ✅ Automatic logging of model changes (created, updated, deleted)
-- ✅ Tracks both old and new values for updates
-- ✅ Custom log names per model
-- ✅ Automatic user tracking
-- ✅ IP address and URL tracking
-- ✅ Feature and code context support
-- ✅ Batched inserts for performance
-- ✅ Configurable event logging
+## How It Works - Complete Flow
 
-## Implementation Steps
+### System Architecture Diagram
 
-### 1. Add the Trait to Your Model
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         HTTP REQUEST LIFECYCLE                          │
+└─────────────────────────────────────────────────────────────────────────┘
 
-Add the `SpatieActivityLog` trait to your model:
-
-```php
-<?php
-
-namespace App\Models;
-
-use App\Traits\SpatieActivityLog;
-use Illuminate\Database\Eloquent\Model;
-
-class YourModel extends Model
-{
-    use SpatieActivityLog;
-    
-    // ... rest of your model
-}
+1. REQUEST ARRIVES
+   │
+   ├─► ActivityLogBatchMiddleware::handle()
+   │   │
+   │   └─► ActivityLogBatchHandler::startBatch()
+   │       ├─► Generate UUID (batch_uuid)
+   │       ├─► Set isOpen = true
+   │       └─► Initialize empty batch array []
+   │
+   │
+2. REQUEST PROCESSING
+   │
+   ├─► Controller/Service executes business logic
+   │   │
+   │   ├─► Model with SpatieActivityLog trait is modified
+   │   │   │
+   │   │   └─► Eloquent Event Fired (created/updated/deleted)
+   │   │       │
+   │   │       └─► Spatie Package intercepts event
+   │   │           │
+   │   │           └─► Calls model->getActivitylogOptions()
+   │   │               │
+   │   │               └─► SpatieActivityLog trait
+   │   │                   ├─► Determines log name
+   │   │                   ├─► Configures what to log
+   │   │                   └─► Creates ActivityLog model instance
+   │   │                       │
+   │   │                       └─► Calls model->tapActivity()
+   │   │                           │
+   │   │                           └─► SpatieActivityLog::tapActivity()
+   │   │                               ├─► Sets: url, feature, ip_address, code
+   │   │                               ├─► For 'updated' events:
+   │   │                               │   ├─► Extract old values (getOriginal)
+   │   │                               │   ├─► Extract new values (getChanges)
+   │   │                               │   └─► Store in properties: {old: {...}, attributes: {...}}
+   │   │                               └─► ActivityLog model ready
+   │   │                                   │
+   │   │                                   └─► ActivityLog->save() called
+   │   │                                       │
+   │   │                                       └─► ActivityLog::save() override
+   │   │                                           │
+   │   │                                           ├─► Check: batch_enabled config?
+   │   │                                           │   ├─► NO → parent::save() (immediate insert)
+   │   │                                           │   └─► YES → Continue
+   │   │                                           │
+   │   │                                           └─► Check: ActivityLogBatchHandler::isOpen()?
+   │   │                                               ├─► NO → parent::save() (immediate insert)
+   │   │                                               └─► YES → ActivityLogBatchHandler::addToBatch()
+   │   │                                                   │
+   │   │                                                   └─► formatActivity() converts to array
+   │   │                                                       └─► Add to in-memory batch array
+   │   │                                                           └─► Return true (queued, not saved yet)
+   │   │
+   │   └─► Multiple models can be modified in same request
+   │       └─► Each activity added to same batch array
+   │
+   │
+3. REQUEST COMPLETES
+   │
+   └─► ActivityLogBatchMiddleware::handle() finally block
+       │
+       └─► ActivityLogBatchHandler::endBatch()
+           │
+           ├─► Check: batch is open and not empty?
+           │   ├─► NO → Reset state (doReset)
+           │   └─► YES → Continue
+           │
+           └─► insertBatch()
+               │
+               ├─► Ensure all activities have batch_uuid
+               ├─► Bulk insert all activities using Query Builder
+               │   └─► INSERT INTO activity_log (...) VALUES (...), (...), (...)
+               │
+               └─► doReset()
+                   ├─► Clear batch array
+                   ├─► Clear batch_uuid
+                   └─► Set isOpen = false
 ```
 
-### 2. Set Custom Log Name (Optional)
+---
 
-You can customize the log name in two ways:
+## Component Breakdown
 
-#### Option A: Using Property (Recommended)
+### 1. ActivityLogBatchMiddleware
 
+**Purpose:** Automatically starts and ends batches for each HTTP request.
+
+**Location:** `app/Http/Middleware/ActivityLogBatchMiddleware.php`
+
+**How it works:**
+- Registered in `RouteServiceProvider` for all web and API routes
+- Runs at the **start** of every request
+- Uses `try...finally` to ensure batch always ends, even if exceptions occur
+
+**Code Example:**
 ```php
-class Payment extends Model
+public function handle(Request $request, Closure $next): Response
 {
-    use SpatieActivityLog;
-    
-    protected $activityLogName = 'Payment';
-}
-```
+    // Start batch at the beginning of request
+    ActivityLogBatchHandler::startBatch();
 
-#### Option B: Using Method
-
-```php
-class Payment extends Model
-{
-    use SpatieActivityLog;
-    
-    protected function getModelActivityLogName(): string
-    {
-        return 'Payment';
+    try {
+        $response = $next($request);
+    } finally {
+        // Always end batch when request completes (even if exception occurs)
+        ActivityLogBatchHandler::endBatch();
     }
+
+    return $response;
 }
 ```
 
-**Priority Order:**
-1. `$activityLogName` property (if set)
-2. `getModelActivityLogName()` method (if exists)
-3. Auto-generated from model class name (e.g., `PaymentSplits` → `Payment Splits`)
+**Why `try...finally`?**
+- The `finally` block **always executes**, regardless of:
+  - Successful request completion
+  - Exceptions thrown during request processing
+  - Errors in controllers/services
+- This ensures activities are **never lost** - they're always inserted when the request ends
+- Without `finally`, if an exception occurs, `endBatch()` wouldn't be called and activities would remain in memory
 
-### 3. Configure Events to Log (Optional)
-
-By default, the package logs `created`, `updated`, and `deleted` events. You can modify this behavior:
-
-```php
-class YourModel extends Model
-{
-    use SpatieActivityLog;
-    
-    // Only log deleted events
-    protected static $recordEvents = ['deleted'];
-    
-    // Log only created and updated
-    protected static $recordEvents = ['created', 'updated'];
-    
-    // Log only updated
-    protected static $recordEvents = ['updated'];
+**Flow:**
+```
+Request arrives
+  ↓
+startBatch() → Generate UUID, initialize batch
+  ↓
+try {
+  Process request (controller, services, models)
+  ↓
+  Activities added to batch array
+  ↓
+  Response ready
+} finally {
+  ↓
+  endBatch() → Bulk insert all activities (ALWAYS executes)
+  ↓
+  Reset batch state
 }
 ```
 
-**Available Events:**
-- `created` - When a new model is created
-- `updated` - When a model is updated
-- `deleted` - When a model is deleted
+---
 
-### 4. Add Extra Columns (If Needed)
+### 2. ActivityLogBatchHandler (Singleton)
 
-If you need to add custom data to activity logs, override the `tapActivity` method in your model:
+**Purpose:** Manages the in-memory batch of activities during a request.
+
+**Location:** `app/Services/ActivityLogBatchHandler.php`
+
+**Key Properties:**
+- `$batchUuid` - Unique identifier for all activities in this request
+- `$batch` - Array of activity data waiting to be inserted
+- `$isOpen` - Boolean flag indicating if batch is active
+
+**Key Methods:**
+
+#### `startBatch()`
+- Generates a new UUID for the batch
+- Sets `isOpen = true`
+- Initializes empty batch array
+- Called automatically by middleware
+
+#### `isOpen()`
+- Returns whether a batch is currently open
+- Used by `ActivityLog` model to decide batching vs immediate save
+
+#### `addToBatch(ActivityLog $activity)`
+- Converts ActivityLog model to array format
+- Adds to in-memory batch array
+- If batch is not open, saves immediately instead
+
+#### `endBatch()`
+- Bulk inserts all activities in batch array
+- Uses Query Builder for performance (bypasses Eloquent)
+- Resets batch state
+- Called automatically by middleware
+
+#### `formatActivity(ActivityLog $activity, bool $includeBatchUuid)`
+- Converts model attributes to array
+- Ensures properties JSON is encoded
+- Adds timestamps if missing
+- Optionally includes batch_uuid
+
+---
+
+### 3. ActivityLog Model
+
+**Purpose:** Extends Spatie's Activity model to intercept saves for batching.
+
+**Location:** `app/Models/ActivityLog.php`
+
+**Key Override:**
 
 ```php
-use Spatie\Activitylog\Contracts\Activity;
-
-class YourModel extends Model
+public function save(array $options = []): bool
 {
-    use SpatieActivityLog;
-    
-    public function tapActivity(Activity $activity, string $eventName): void
-    {
-        // Call parent to maintain default behavior
-        parent::tapActivity($activity, $eventName);
-        
-        // Add your custom columns
-        $activity->custom_field = $this->someValue;
-        $activity->another_field = $this->anotherValue;
+    // If batching disabled → save immediately
+    if (!config('activitylog.batch_enabled', true)) {
+        return parent::save($options);
     }
+
+    // If batch open → add to batch (don't save yet)
+    if (ActivityLogBatchHandler::isOpen()) {
+        ActivityLogBatchHandler::addToBatch($this);
+        return true; // Pretend it's saved
+    }
+
+    // Batch not open → save immediately
+    return parent::save($options);
 }
 ```
 
-**Note:** The trait already sets these columns automatically:
+**Why override `save()`?**
+- Spatie package calls `$activity->save()` internally
+- We intercept this to check if batching is enabled
+- If yes, we queue it instead of saving immediately
+
+---
+
+### 4. SpatieActivityLog Trait
+
+**Purpose:** Configures what and how to log for models using this trait.
+
+**Location:** `app/Traits/SpatieActivityLog.php`
+
+**Key Methods:**
+
+#### `getActivitylogOptions()`
+- Configures Spatie package:
+  - `logAll()` - Log all attributes
+  - `logOnlyDirty()` - Only log changed attributes
+  - `useLogName()` - Custom log name
+  - `setDescriptionForEvent()` - Human-readable description
+
+#### `tapActivity(Activity $activity, string $eventName)`
+Called **before** activity is saved. Enriches activity with:
 - `url` - Current request URI
-- `feature` - Feature from context (set via `LoggerService::startFeatureLogging()`)
+- `feature` - From Context (set by LoggerService)
 - `ip_address` - Client IP address
-- `code` - Code from context
-
-## Complete Example
-
-Here's a complete example for a `Payment` model:
-
-```php
-<?php
-
-namespace App\Models;
-
-use App\Traits\SpatieActivityLog;
-use Illuminate\Database\Eloquent\Model;
-
-class Payment extends Model
-{
-    use SpatieActivityLog;
-    
-    // Custom log name
-    protected $activityLogName = 'Payment';
-    
-    // Only log updates and deletes (skip created events)
-    protected static $recordEvents = ['updated', 'deleted'];
-    
-    protected $fillable = [
-        'amount',
-        'status',
-        // ... other fields
-    ];
-    
-    // Optional: Add custom data to activity logs
-    public function tapActivity(Activity $activity, string $eventName): void
-    {
-        parent::tapActivity($activity, $eventName);
-        
-        // Add payment-specific data
-        $activity->payment_code = $this->code;
+- `code` - From Context (set by LoggerService)
+- `properties` - For 'updated' events:
+  ```json
+  {
+    "old": {
+      "status": "pending",
+      "amount": 1000
+    },
+    "attributes": {
+      "status": "approved",
+      "amount": 1500
     }
-}
-```
-
-## How It Works
-
-### Automatic Logging
-
-When you perform operations on a model with the trait:
-
-```php
-// Create - logs 'created' event
-$payment = Payment::create([...]);
-
-// Update - logs 'updated' event with old and new values
-$payment->update(['status' => 'completed']);
-
-// Delete - logs 'deleted' event
-$payment->delete();
-```
-
-### Properties Structure
-
-For `updated` events, the properties are stored as:
-
-```json
-{
-  "old": {
-    "status": "pending",
-    "amount": 1000
-  },
-  "attributes": {
-    "status": "completed",
-    "amount": 1000
   }
-}
+  ```
+
+**Old/New Value Tracking:**
+- Uses `getOriginal()` to get old values
+- Uses `getChanges()` to get new values
+- Stores both in `properties` JSON column
+
+#### `getActivityLogName()`
+Determines log name with priority:
+1. `$activityLogName` property (if exists)
+2. `getModelActivityLogName()` method (if exists)
+3. Convert class name: `PaymentSplits` → `"Payment Splits"`
+
+---
+
+## Complete Example Flow
+
+### Scenario: User updates a Payment model
+
+```
+1. HTTP Request: PUT /api/payments/123
+   │
+   ├─► ActivityLogBatchMiddleware starts
+   │   └─► Batch UUID: "550e8400-e29b-41d4-a716-446655440000"
+   │   └─► Batch array: []
+   │
+2. Controller: PaymentController@update
+   │
+   ├─► Payment model loaded (has SpatieActivityLog trait)
+   │
+   ├─► Payment->status = 'approved'
+   │   Payment->amount = 1500
+   │   Payment->save()
+   │
+   ├─► Eloquent fires 'updated' event
+   │
+   ├─► Spatie intercepts event
+   │   └─► Creates ActivityLog instance
+   │       ├─► log_name: "Payment" (from trait)
+   │       ├─► description: "User 'John Doe' performed the 'updated' action on Payment - Changed fields: status, amount"
+   │       ├─► subject_type: "App\Models\Payment"
+   │       ├─► subject_id: 123
+   │       ├─► causer_type: "App\Models\User"
+   │       ├─► causer_id: 5
+   │       └─► event: "updated"
+   │
+   ├─► tapActivity() called
+   │   └─► Sets:
+   │       ├─► url: "/api/payments/123"
+   │       ├─► feature: "payment_management"
+   │       ├─► ip_address: "192.168.1.1"
+   │       ├─► code: "PAY_UPDATE"
+   │       └─► properties:
+   │           {
+   │             "old": {
+   │               "status": "pending",
+   │               "amount": 1000
+   │             },
+   │             "attributes": {
+   │               "status": "approved",
+   │               "amount": 1500
+   │             }
+   │           }
+   │
+   ├─► ActivityLog->save() called
+   │   └─► Check: batch_enabled? YES
+   │   └─► Check: isOpen()? YES
+   │   └─► ActivityLogBatchHandler::addToBatch()
+   │       └─► Format to array, add to batch
+   │       └─► Batch array now: [activity1_data]
+   │
+3. More operations in same request...
+   │
+   ├─► Another model updated
+   │   └─► Another activity added to batch
+   │   └─► Batch array: [activity1_data, activity2_data]
+   │
+4. Request completes
+   │
+   └─► ActivityLogBatchMiddleware ends
+       └─► ActivityLogBatchHandler::endBatch()
+           └─► Bulk INSERT:
+               INSERT INTO activity_log 
+               (batch_uuid, log_name, description, ..., properties, created_at, updated_at)
+               VALUES
+               ('550e8400-...', 'Payment', 'User...', ..., '{"old":{...}}', NOW(), NOW()),
+               ('550e8400-...', 'Invoice', 'User...', ..., '{"old":{...}}', NOW(), NOW())
+           └─► Reset batch state
 ```
 
-### Description Format
+---
 
-Activity descriptions are automatically generated:
+## Key Benefits
 
-```
-User 'John Doe' performed the 'updated' action on Payment - Changed fields: status, amount
-```
+### 1. **Performance**
+- **Before:** Each activity = 1 database INSERT (N queries for N activities)
+- **After:** All activities in request = 1 bulk INSERT (1 query for N activities)
+- **Result:** Significant reduction in database queries
+
+### 2. **Request Grouping**
+- All activities in same request share same `batch_uuid`
+- Easy to query: "Show all activities from this request"
+- Useful for debugging and auditing
+
+### 3. **Old/New Value Tracking**
+- For updates, both old and new values are stored
+- Stored in `properties` JSON column
+- Frontend can display side-by-side comparison
+
+### 4. **Automatic**
+- No manual batching code needed
+- Works automatically for all models with `SpatieActivityLog` trait
+- Middleware handles everything
+
+---
 
 ## Configuration
 
-### Environment Variables
-
-Set these in your `.env` file:
-
-```env
-# Enable/disable activity logging
-ACTIVITY_LOGGER_ENABLED=true
-
-# Table name (default: activity_log)
-ACTIVITY_LOGGER_TABLE_NAME=activity_log
-
-# Enable batching (recommended for performance)
-ACTIVITY_LOGGER_BATCH_ENABLED=true
-
-# Batch size (number of activities before inserting)
-ACTIVITY_LOGGER_BATCH_SIZE=5
-```
-
-### Config File
-
-Configuration is in `config/activitylog.php`. Key settings:
-
-- `enabled` - Enable/disable activity logging globally
-- `batch_enabled` - Enable batched inserts
-- `batch_size` - Number of activities to batch before insert
-
-## Context Support
-
-You can set feature and code context for better tracking:
+### Config File: `config/activitylog.php`
 
 ```php
-use Illuminate\Support\Facades\Context;
-
-// Set feature context
-Context::put('feature', 'Payment Processing');
-
-// Set code context
-Context::put('code', 'PAY-12345');
-
-// Now all activity logs will include this context
-$payment->update(['status' => 'completed']);
+'enabled' => env('ACTIVITY_LOGGER_ENABLED', true),        // Enable/disable globally
+'batch_enabled' => env('ACTIVITY_LOGGER_BATCH_ENABLED', true),  // Enable/disable batching
 ```
 
-## Viewing Activity Logs
+### Environment Variables
 
-Activity logs can be viewed in the admin panel:
+```env
+ACTIVITY_LOGGER_ENABLED=true
+ACTIVITY_LOGGER_BATCH_ENABLED=true
+```
 
-1. Navigate to **Admin → Activity Logs** (requires Engineering or Admin role)
-2. Filter by user, log name, feature, event, date range, etc.
-3. Click "View Details" to see full activity information including old/new values
+---
 
-## Best Practices
+## Database Schema
 
-1. **Use descriptive log names**: Set `$activityLogName` for clarity
-2. **Limit events when needed**: Use `$recordEvents` to avoid unnecessary logs
-3. **Set context**: Use `Context::put()` to add feature/code context
-4. **Keep batching enabled**: Improves performance for high-volume operations
-5. **Review logs regularly**: Monitor activity logs for audit and debugging
+### activity_log Table
 
-## Troubleshooting
+```sql
+- id (bigint, primary key)
+- log_name (varchar) - Category/type of log
+- description (text) - Human-readable description
+- subject_type (varchar) - Model class (e.g., "App\Models\Payment")
+- subject_id (bigint) - Model ID
+- event (varchar) - "created", "updated", "deleted"
+- causer_type (varchar) - User model class
+- causer_id (bigint) - User ID
+- properties (json) - Old/new values, metadata
+- batch_uuid (uuid) - Groups activities from same request
+- url (varchar) - Request URI
+- feature (varchar) - Feature name
+- ip_address (varchar) - Client IP
+- code (varchar) - Activity code
+- created_at (timestamp)
+- updated_at (timestamp)
+```
 
-### Activity logs not being created
+---
 
-1. Check `ACTIVITY_LOGGER_ENABLED` is `true`
-2. Verify the trait is added to the model
-3. Check database connection and table exists
-4. Review Laravel logs for errors
+## Visual Flow Diagram
 
-### Missing old values
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    HTTP REQUEST ARRIVES                     │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+        ┌─────────────────────────────────────┐
+        │  ActivityLogBatchMiddleware          │
+        │  ┌───────────────────────────────┐  │
+        │  │ startBatch()                   │  │
+        │  │ • Generate UUID                │  │
+        │  │ • isOpen = true                │  │
+        │  │ • batch = []                   │  │
+        │  └───────────────────────────────┘  │
+        └─────────────────────────────────────┘
+                          │
+                          ▼
+        ┌─────────────────────────────────────┐
+        │  Controller/Service                 │
+        │  • Business logic                   │
+        │  • Model operations                 │
+        └─────────────────────────────────────┘
+                          │
+                          ▼
+        ┌─────────────────────────────────────┐
+        │  Model with SpatieActivityLog       │
+        │  ┌───────────────────────────────┐  │
+        │  │ Eloquent Event (updated)      │  │
+        │  └───────────────────────────────┘  │
+        │              │                       │
+        │              ▼                       │
+        │  ┌───────────────────────────────┐  │
+        │  │ Spatie Package                 │  │
+        │  │ • Creates ActivityLog          │  │
+        │  │ • Calls tapActivity()          │  │
+        │  └───────────────────────────────┘  │
+        │              │                       │
+        │              ▼                       │
+        │  ┌───────────────────────────────┐  │
+        │  │ tapActivity()                 │  │
+        │  │ • Sets url, feature, IP       │  │
+        │  │ • Stores old/new values       │  │
+        │  └───────────────────────────────┘  │
+        └─────────────────────────────────────┘
+                          │
+                          ▼
+        ┌─────────────────────────────────────┐
+        │  ActivityLog->save()                  │
+        │  ┌───────────────────────────────┐  │
+        │  │ Check: batch_enabled?         │  │
+        │  │ Check: isOpen()?              │  │
+        │  │ → addToBatch()                │  │
+        │  └───────────────────────────────┘  │
+        └─────────────────────────────────────┘
+                          │
+                          ▼
+        ┌─────────────────────────────────────┐
+        │  ActivityLogBatchHandler             │
+        │  ┌───────────────────────────────┐  │
+        │  │ formatActivity()              │  │
+        │  │ • Convert to array            │  │
+        │  │ • Add batch_uuid              │  │
+        │  │ • Add to batch[]              │  │
+        │  └───────────────────────────────┘  │
+        └─────────────────────────────────────┘
+                          │
+                          ▼
+        ┌─────────────────────────────────────┐
+        │  Request Processing Continues...      │
+        │  • More activities added to batch    │
+        └─────────────────────────────────────┘
+                          │
+                          ▼
+        ┌─────────────────────────────────────┐
+        │  ActivityLogBatchMiddleware          │
+        │  ┌───────────────────────────────┐  │
+        │  │ endBatch()                    │  │
+        │  │ • Bulk INSERT                 │  │
+        │  │ • Reset state                 │  │
+        │  └───────────────────────────────┘  │
+        └─────────────────────────────────────┘
+                          │
+                          ▼
+        ┌─────────────────────────────────────┐
+        │  Database: activity_log              │
+        │  • All activities inserted          │
+        │  • Same batch_uuid                  │
+        └─────────────────────────────────────┘
+```
 
-- Old values are automatically captured for `updated` events
-- Ensure you're using the latest version of the trait
-- Check that `getOriginal()` is available on the model
+---
 
-### Performance issues
+## Summary
 
-- Enable batching: `ACTIVITY_LOGGER_BATCH_ENABLED=true`
-- Adjust batch size based on your needs
-- Consider indexing the `activity_log` table
+The Activity Logging system works in these key steps:
 
-## Migration
+1. **Request Start:** Middleware opens a batch (generates UUID)
+2. **Model Changes:** Spatie intercepts Eloquent events, creates activities
+3. **Enrichment:** `tapActivity()` adds metadata (URL, IP, old/new values)
+4. **Batching:** Activities are queued in memory instead of saving immediately
+5. **Request End:** Middleware bulk inserts all activities in one query
+6. **Grouping:** All activities share same `batch_uuid` for easy querying
 
-If you need to add activity logging to an existing model:
-
-1. Add the trait: `use SpatieActivityLog;`
-2. Set log name (optional): `protected $activityLogName = 'ModelName';`
-3. Configure events (optional): `protected static $recordEvents = ['updated'];`
-4. Test with a sample update/delete operation
-5. Verify logs appear in the admin panel
-
-## Related Files
-
-- Trait: `app/Traits/SpatieActivityLog.php`
-- Model: `app/Models/ActivityLog.php`
-- Service: `app/Services/ActivityLogService.php`
-- Controller: `app/Http/Controllers/V2/ActivityLogController.php`
-- Config: `config/activitylog.php`
-- Migration: `database/migrations/2025_11_24_102343_create_activity_log_table.php`
+This approach provides:
+- ✅ Better performance (bulk inserts)
+- ✅ Request-level grouping
+- ✅ Complete audit trail with old/new values
+- ✅ Zero manual intervention needed
 

@@ -4,144 +4,217 @@ namespace App\Services;
 
 use App\Models\ActivityLog;
 use App\Services\Logger\LoggerService;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
+/**
+ * Activity Log Batch Handler
+ * 
+ * Singleton class that manages batching of activity logs per HTTP request.
+ * Activities are collected in memory during a request and bulk inserted at the end.
+ */
 class ActivityLogBatchHandler
 {
-    private const CACHE_KEY = 'activity_log_batch';
-    private const CACHE_BATCH_UUID_KEY = 'activity_log_batch_uuid';
-    private const CACHE_TTL = 300; 
+    /**
+     * Singleton instance
+     */
+    protected static ?self $instance = null;
 
-    protected static ?int $batchSize = null;
+    /**
+     * Current batch UUID
+     */
+    protected ?string $batchUuid = null;
 
-    public function __construct()
+    /**
+     * Batch of activities to be inserted
+     */
+    protected array $batch = [];
+
+    /**
+     * Whether batch is currently open
+     */
+    protected bool $isOpen = false;
+
+    /**
+     * Private constructor to enforce singleton pattern
+     */
+    private function __construct()
     {
-        if (self::$batchSize === null) {
-            self::$batchSize = config('activitylog.batch_size', 10);
+        //
+    }
+
+    /**
+     * Get singleton instance
+     */
+    public static function getInstance(): self
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
         }
+
+        return self::$instance;
+    }
+
+    /**
+     * Start a new batch
+     */
+    private function doStartBatch(): void
+    {
+        if ($this->isOpen) {
+            // Batch already open, don't reset
+            return;
+        }
+
+        $this->isOpen = true;
+        $this->batchUuid = (string) Str::uuid();
+        $this->batch = [];
+    }
+
+    /**
+     * Check if there's an open batch
+     */
+    private function doIsOpen(): bool
+    {
+        return $this->isOpen;
+    }
+
+    /**
+     * End the current batch and insert all activities
+     * 
+     * If batch is empty or not open, only resets the state.
+     * Otherwise, bulk inserts all activities and resets.
+     */
+    private function doEndBatch(): void
+    {
+        if (!$this->isOpen || empty($this->batch)) {
+            $this->doReset();
+            return;
+        }
+
+        $this->insertBatch();
+        $this->doReset();
     }
 
     /**
      * Add activity to batch queue
+     * 
+     * If batch is not open, saves immediately to database.
+     * Otherwise, adds to in-memory batch array for bulk insert.
      */
-    public function addToBatch(ActivityLog $activity): void
+    private function doAddToBatch(ActivityLog $activity): void
     {
-        // Convert activity to array for batching
-        $activityData = $this->formatActivity($activity);
-
-        // Get existing batch from cache
-        $batch = Cache::get(self::CACHE_KEY, []);
-        
-        // Add new activity to batch
-        $batch[] = $activityData;
-        
-        // Store back in cache
-        Cache::put(self::CACHE_KEY, $batch, self::CACHE_TTL);
-
-        $currentBatchSize = count($batch);        
-        // Only insert when batch is full
-        if ($currentBatchSize >= self::$batchSize) {
-            LoggerService::info("Batch size reached ({$currentBatchSize}), inserting batch...");
-            self::insertBatch();
+        // If batch is not open, save immediately (bypass batching)
+        if (!$this->isOpen) {
+            $activity->getConnection()
+                ->table($activity->getTable())
+                ->insert($this->formatActivity($activity, includeBatchUuid: false));
+            return;
         }
+
+        // Add to in-memory batch array for bulk insert at end of request
+        $this->batch[] = $this->formatActivity($activity, includeBatchUuid: true);
     }
 
     /**
-     * Get or create batch UUID
-     * Used to group activities into a single batch for insertion into the database 
-     * This is used to ensure that all activities are inserted into the database in a single transaction
+     * Format activity model to array for batch insertion or direct insert
+     * 
+     * @param ActivityLog $activity The activity log model to format
+     * @param bool $includeBatchUuid Whether to include batch_uuid in the formatted data
+     * @return array Formatted activity data ready for database insertion
      */
-    private function getOrCreateBatchUuid(): string
+    protected function formatActivity(ActivityLog $activity, bool $includeBatchUuid = true): array
     {
-        $batchUuid = Cache::get(self::CACHE_BATCH_UUID_KEY);
-        
-        if (!$batchUuid) {
-            $batchUuid = (string) Str::uuid();
-            Cache::put(self::CACHE_BATCH_UUID_KEY, $batchUuid, self::CACHE_TTL);
-        }
-
-        return $batchUuid;
-    }
-
-    /**
-     * Format activity model to array for batch insertion
-     */
-    protected function formatActivity(ActivityLog $activity): array
-    {
-        $batchUuid = $this->getOrCreateBatchUuid();
-
         $activityData = $activity->getAttributes();
 
         // Ensure properties is JSON encoded if it's an array
-        if (isset($activityData['properties'])) {
-            if (is_array($activityData['properties'])) {
-                $activityData['properties'] = json_encode($activityData['properties']);
-            }
+        if (isset($activityData['properties']) && is_array($activityData['properties'])) {
+            $activityData['properties'] = json_encode($activityData['properties']);
         } else {
-            $activityData['properties'] = null;
+            $activityData['properties'] = $activityData['properties'] ?? null;
         }
 
         // Add timestamps if not set
         $now = now();
         $activityData['created_at'] = $now;
         $activityData['updated_at'] = $now;
-        $activityData['batch_uuid'] = $batchUuid;
+        
+        // Include batch_uuid only if requested and batch is open
+        if ($includeBatchUuid && $this->isOpen && $this->batchUuid) {
+            $activityData['batch_uuid'] = $this->batchUuid;
+        }
 
         return $activityData;
     }
 
     /**
-     * Insert batch to database
+     * Insert batch to database using bulk insert
      */
-    public static function insertBatch(): void
+    protected function insertBatch(): void
     {
-        // Get batch from cache
-        $batch = Cache::get(self::CACHE_KEY, []);
-        
-        if (empty($batch)) {
+        if (empty($this->batch)) {
             return;
         }
 
         try {
-            // Get batch UUID
-            $batchUuid = Cache::get(self::CACHE_BATCH_UUID_KEY);
-            
             // Ensure all activities have batch_uuid
-            if ($batchUuid) {
-                foreach ($batch as &$activity) {
-                    $activity['batch_uuid'] = $batchUuid;
+            foreach ($this->batch as &$activityData) {
+                if (!isset($activityData['batch_uuid'])) {
+                    $activityData['batch_uuid'] = $this->batchUuid;
                 }
-                unset($activity);
             }
+            unset($activityData);
 
             // Bulk insert using query builder to bypass model save
-            $instance = new ActivityLog();
-            $instance->getConnection()->table($instance->getTable())->insert($batch);
+            $model = new ActivityLog();
+            $model->getConnection()
+                ->table($model->getTable())
+                ->insert($this->batch);
 
-            $batchCount = count($batch);
-        
-            // Clear the batch from cache
-            self::reset();
-
-            // Log success
+            $batchCount = count($this->batch);
             LoggerService::info("Activity log batch inserted: {$batchCount} records");
         } catch (\Exception $e) {
             // Log error but don't throw to prevent breaking the application
-            Log::info('Error inserting activity log batch: ' . $e->getMessage(), [
+            Log::error('Error inserting activity log batch: ' . $e->getMessage(), [
                 'exception' => $e,
-                'batch_count' => count($batch),
+                'batch_count' => count($this->batch),
+                'batch_uuid' => $this->batchUuid,
             ]);
         }
     }
 
     /**
-     * Reset batch state (useful for testing)
+     * Reset batch state
+     * 
+     * Clears batch array, UUID, and closes the batch.
      */
-    public static function reset(): void
+    private function doReset(): void
     {
-        Cache::forget(self::CACHE_KEY);
-        Cache::forget(self::CACHE_BATCH_UUID_KEY);
+        $this->batch = [];
+        $this->batchUuid = null;
+        $this->isOpen = false;
+    }
+
+    /**
+     * Static methods for convenience (delegate to singleton instance)
+     * These are the public API methods
+     */
+    public static function startBatch(): void
+    {
+        self::getInstance()->doStartBatch();
+    }
+
+    public static function isOpen(): bool
+    {
+        return self::getInstance()->doIsOpen();
+    }
+
+    public static function endBatch(): void
+    {
+        self::getInstance()->doEndBatch();
+    }
+
+    public static function addToBatch(ActivityLog $activity): void
+    {
+        self::getInstance()->doAddToBatch($activity);
     }
 }

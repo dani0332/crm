@@ -44,83 +44,11 @@ class ActivityLogService extends BaseService
     }
 
     /**
-     * Get a single activity log by ID with relationships
+     * Get all users for filter dropdown
      *
-     * @param int $id
-     * @return ActivityLog|null
+     * @return \Illuminate\Database\Eloquent\Collection<int, User>
      */
-    public function getActivityLogById(int $id): ?ActivityLog
-    {
-        return ActivityLog::with(['causer:id,name,email', 'subject'])
-            ->find($id);
-    }
-
-    /**
-     * Get unique log names for filter dropdown
-     *
-     * @return array
-     */
-    public function getUniqueLogNames(): array
-    {
-        return ActivityLog::select('log_name')
-            ->distinct()
-            ->whereNotNull('log_name')
-            ->orderBy('log_name')
-            ->pluck('log_name')
-            ->toArray();
-    }
-
-    /**
-     * Get unique features for filter dropdown
-     *
-     * @return array
-     */
-    public function getUniqueFeatures(): array
-    {
-        return ActivityLog::select('feature')
-            ->distinct()
-            ->whereNotNull('feature')
-            ->orderBy('feature')
-            ->pluck('feature')
-            ->toArray();
-    }
-
-    /**
-     * Get unique events for filter dropdown
-     *
-     * @return array
-     */
-    public function getUniqueEvents(): array
-    {
-        return ActivityLog::select('event')
-            ->distinct()
-            ->whereNotNull('event')
-            ->orderBy('event')
-            ->pluck('event')
-            ->toArray();
-    }
-
-    /**
-     * Get unique subject types for filter dropdown
-     *
-     * @return array
-     */
-    public function getUniqueSubjectTypes(): array
-    {
-        return ActivityLog::select('subject_type')
-            ->distinct()
-            ->whereNotNull('subject_type')
-            ->orderBy('subject_type')
-            ->pluck('subject_type')
-            ->toArray();
-    }
-
-    /**
-     * Get all users
-     *
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    public function getAllUsers()
+    public function getAllUsers(): \Illuminate\Database\Eloquent\Collection
     {
         return User::select('id', 'name', 'email')
             ->orderBy('name')

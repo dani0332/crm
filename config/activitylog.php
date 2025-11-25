@@ -44,22 +44,8 @@ return [
     'table_name' => env('ACTIVITY_LOGGER_TABLE_NAME', 'activity_log'),
 
     /*
-     * This is the database connection that will be used by the migration and
-     * the Activity model shipped with this package. In case it's not set
-     * Laravel's database.default will be used instead.
-     */
-    'database_connection' => env('ACTIVITY_LOGGER_DB_CONNECTION'),
-
-    /*
      * Enable batching of activity logs.
-     * When enabled, activities will be batched and inserted in bulk instead of saving immediately.
+     * When enabled, activities will be batched per HTTP request and inserted in bulk at the end of each request.
      */
     'batch_enabled' => env('ACTIVITY_LOGGER_BATCH_ENABLED', true),
-
-    /*
-     * Batch size for activity logs.
-     * Activities will be inserted to database when this many activities are queued.
-     * Can be set to 10, 100, 1000, 10000, etc.
-     */
-    'batch_size' => env('ACTIVITY_LOGGER_BATCH_SIZE', 5),
 ];
