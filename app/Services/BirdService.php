@@ -19,7 +19,14 @@ class BirdService extends BaseService
     }
     public function triggerWebHookRequest($url, $data, $method = 'post', $isAccessKey = false)
     {
-        $uuid = $data->uuid ?? '';
+
+        if (is_array($data)) {
+            $uuid = $data['uuid'] ?? $data['refId'] ?? $data['quoteUID'] ?? '';
+        } elseif (is_object($data)) {
+            $uuid = $data->uuid ?? $data->refId ?? $data->quoteUID ?? '';
+        } else {
+            $uuid = '';
+        }
         $logContext = ['Ref-ID' => $uuid, 'URL' => $url, 'Method' => $method];
 
         try {
@@ -79,8 +86,15 @@ class BirdService extends BaseService
     public function createQuoteWorkFlowDetails($lead, $response, $flowType = null, $quoteTypeId = null)
     {
         try {
+            // Check for both 'Run-Id' and 'run-id' (case-insensitive)
+            $runId = null;
             if (! empty($response->headers['Run-Id'])) {
                 $runId = collect($response->headers['Run-Id'])->first();
+            } elseif (! empty($response->headers['run-id'])) {
+                $runId = collect($response->headers['run-id'])->first();
+            }
+
+            if ($runId) {
                 QuoteFlowDetails::create([
                     'quote_uuid' => $lead->uuid,
                     'quote_type_id' => $quoteTypeId,
@@ -88,14 +102,12 @@ class BirdService extends BaseService
                     'flow_id' => $runId,
                     'started_at' => now(),
                 ]);
-                LoggerService::info('- createQuoteWorkFlowDetails  run id created');
+                LoggerService::info('- createQuoteWorkFlowDetails run id created: '.$runId);
             } else {
-                LoggerService::info(' - createQuoteWorkFlowDetails  run id not found ');
+                LoggerService::warning(' - createQuoteWorkFlowDetails run id not found in response headers');
             }
         } catch (\Throwable $th) {
-
             LoggerService::error(" - createQuoteWorkFlowDetails-Error: {$th->getMessage()} ");
-
         }
     }
     public function createQuoteWhatsAppFlowDetails($lead, $flowType = null, $quoteTypeId = null)

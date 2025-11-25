@@ -143,6 +143,7 @@ class TravelMembersDetailController extends Controller
             $memberDetail = $memberDetail->load(['relation', 'nationality']);
 
             app(TravelQuoteService::class)->setQuoteUpdatedAt($quoteObject->id);
+            app(TravelQuoteService::class)->updateCustomerProfileDetails($request->quote_type, $quoteObject->uuid);
 
             return redirect()->back(302, ['status' => true, 'message' => 'Updated', 'data' => $memberDetail]);
         }
@@ -160,7 +161,7 @@ class TravelMembersDetailController extends Controller
     {
         $data = CustomerMembers::find($id);
         if ($data) {
-            TravelQuote::find($data->quote_id)->update(['primary_member_id' => null]);
+            TravelQuote::find($data->quote_id)->update(['primary_member_id' => null, 'quote_updated_at' => Carbon::now()]);
             $data->delete();
         }
 

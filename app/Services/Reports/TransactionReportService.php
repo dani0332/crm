@@ -2,9 +2,11 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\TravelQuoteEnum;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -26,13 +28,13 @@ class TransactionReportService extends ManagementReport
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::APPROVED_TRANSACTIONS;
 
         if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
-            $this->reportDateRange = (isset($request['policyBookDate'][0]) && $request['policyBookDate'][0] != null && $request['policyBookDate'][0] != 'null' ? Carbon::parse($request['policyBookDate'][0])->toDateString() : today()->toDateString())
+            $this->reportDateRange = (isset($request['policyBookDate'][0]) && isValidDate($request['policyBookDate'][0]) ? Carbon::parse($request['policyBookDate'][0])->toDateString() : today()->toDateString())
                 .' - '.
-                (isset($request['policyBookDate'][1]) && $request['policyBookDate'][1] != null && $request['policyBookDate'][1] != 'null' ? Carbon::parse($request['policyBookDate'][1])->toDateString() : today()->toDateString());
+                (isset($request['policyBookDate'][1]) && isValidDate($request['policyBookDate'][1]) ? Carbon::parse($request['policyBookDate'][1])->toDateString() : today()->toDateString());
         } elseif ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
-            $this->reportDateRange = (isset($request['paymentDueDate'][0]) && $request['paymentDueDate'][0] != null && $request['paymentDueDate'][0] != 'null' ? Carbon::parse($request['paymentDueDate'][0])->toDateString() : today()->toDateString())
+            $this->reportDateRange = (isset($request['paymentDueDate'][0]) && isValidDate($request['paymentDueDate'][0]) ? Carbon::parse($request['paymentDueDate'][0])->toDateString() : today()->toDateString())
                 .' - '.
-                (isset($request['paymentDueDate'][1]) && $request['paymentDueDate'][1] != null && $request['paymentDueDate'][1] != 'null' ? Carbon::parse($request['paymentDueDate'][1])->toDateString() : today()->toDateString());
+                (isset($request['paymentDueDate'][1]) && isValidDate($request['paymentDueDate'][1]) ? Carbon::parse($request['paymentDueDate'][1])->toDateString() : today()->toDateString());
         }
 
         $query = PersonalQuote::query()
@@ -85,6 +87,8 @@ class TransactionReportService extends ManagementReport
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'p.broker_invoice_number',
                 'btoi.text as sub_type_line_of_business',
+                'ls.text as sub_source',
+                'sso.text as sub_source_option',
                 'p.insurer_commmission_invoice_number',
                 'l.text as transaction_type',
                 'qs.text as quote_status',
@@ -95,7 +99,13 @@ class TransactionReportService extends ManagementReport
                 DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
                 'ciw.text as currently_insured_with_text',
                 'cqr.currently_insured_with as currently_insured_with',
-                DB::raw('CASE WHEN hqr.id IS NULL THEN "N/A" WHEN hqr.pec_marked_at IS NOT NULL THEN "Yes" ELSE "No" END as pec_flag')
+                DB::raw('CASE WHEN hqr.id IS NULL THEN "N/A" WHEN hqr.pec_marked_at IS NOT NULL THEN "Yes" ELSE "No" END as pec_flag'),
+                'tqr.coverage_code as travel_coverage_code',
+                'tqr.days_cover_for as travel_days_cover_for',
+                'tqr.direction_code as travel_direction_code',
+                'cli.text as travel_currently_located_in_id_text',
+                'tqr.region_cover_for_id as travel_region_cover_for_id',
+                'n.text as travel_destination_id_text',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -110,6 +120,8 @@ class TransactionReportService extends ManagementReport
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id')
+            ->leftJoin('lookups as ls', 'personal_quotes.sub_source_id', '=', 'ls.id')
+            ->leftJoin('lookups as sso', 'personal_quotes.sub_source_options_id', '=', 'sso.id')
             ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
             ->join('quote_status as qs', 'qs.id', '=', 'personal_quotes.quote_status_id')
             ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
@@ -120,7 +132,13 @@ class TransactionReportService extends ManagementReport
             ->leftJoin('health_quote_request as hqr', function ($join) {
                 $join->on('personal_quotes.quote_id', '=', 'hqr.id')
                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
-            });
+            })
+            ->leftJoin('travel_quote_request as tqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'tqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Travel);
+            })
+            ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
+            ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id');
 
         $this->applyFilters($query, $request, isSSR: true);
 
@@ -170,9 +188,41 @@ class TransactionReportService extends ManagementReport
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->commmission_percentage = number_format(strToFloat($item->commmission_percentage), 2);
             $item->policy_booking_date = ! empty($item->policy_booking_date) ? Carbon::parse($item->policy_booking_date)->format('Y-m-d') : null;
+            $item->insurer_tax_invoice_date = ! empty($item->insurer_tax_invoice_date) ? Carbon::parse($item->insurer_tax_invoice_date)->format(config('constants.DATE_DISPLAY_SLASH_FORMAT')) : null;
             $item->currently_insured_with_text = $item->quote_type_id == QuoteTypeId::Car
                 ? ($item->currently_insured_with_text ?? $item->currently_insured_with ?? 'N/A')
                 : ($item->currently_insured_with_text ?? 'N/A');
+
+            if ($item->quote_type_id == QuoteTypeId::Travel) {
+                $item->travel_coverage = $item->source == LeadSourceEnum::RENEWAL_UPLOAD
+                    ? TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP
+                    : ($item->travel_coverage_code != null
+                        ? $item->travel_coverage_code
+                        : ($item->travel_days_cover_for !== null && $item->travel_days_cover_for <= 92
+                            ? TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP
+                            : ($item->travel_days_cover_for !== null
+                                ? TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP.
+                                '/'.
+                                TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP
+                                : 'N/A')));
+
+                $item->traveling_where = $item->travel_direction_code !== null
+                    ? $item->travel_direction_code
+                    : (
+                        ($item->travel_currently_located_in_id_text == TravelQuoteEnum::LOCATION_UAE_TEXT &&
+                            $item->travel_region_cover_for_id != TravelQuoteEnum::REGION_COVER_ID_UAE
+                        ) ? TravelQuoteEnum::TRAVEL_UAE_OUTBOUND
+                        : (
+                            ($item->travel_destination_id_text == TravelQuoteEnum::LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                                $item->travel_region_cover_for_id == TravelQuoteEnum::REGION_COVER_ID_UAE
+                            ) ? TravelQuoteEnum::TRAVEL_UAE_INBOUND
+                            : 'N/A'
+                        )
+                    );
+            } else {
+                $item->travel_coverage = 'N/A';
+                $item->traveling_where = 'N/A';
+            }
         });
     }
 

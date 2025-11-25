@@ -19,6 +19,12 @@ class AssignLeadPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
+        if ($this->allocationRequest->get('isAdvisorAlreadyAssigned')) {
+            $this->allocationRequest->markAsAllocated();
+
+            return $next($request);
+        }
+
         $this->assign(function () {
             $this->sendWhatsappNotificationToCustomer();
         });
@@ -28,8 +34,9 @@ class AssignLeadPipe extends BaseAllocationPipe
 
     private function sendWhatsappNotificationToCustomer()
     {
-        if ($this->lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-            $advisor = $this->allocationRequest->getAdvisor();
+        $advisor = $this->allocationRequest->getAdvisor();
+
+        if ($this->lead->source != LeadSourceEnum::RENEWAL_UPLOAD && ! $advisor->isAi()) {
             app(SendEmailCustomerService::class)->sendWhatsappNotificationToCustomer($this->lead, $advisor->id);
         }
     }

@@ -288,4 +288,15 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->previous_personal_belongings_aed ? number_format($this->previous_personal_belongings_aed, 2).' AED' : 'N/A';
     }
+
+    public function subSourceOption()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_options_id');
+
+    }
+
+    public function subSource()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_id');
+    }
 }

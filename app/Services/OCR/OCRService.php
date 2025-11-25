@@ -2,9 +2,11 @@
 
 namespace App\Services\OCR;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
+use App\Enums\OCRSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Events\OcrNotifications;
@@ -34,14 +36,20 @@ class OCRService
         protected OcrLogService $ocrLogService
     ) {}
 
-    private function sendRequest(string $endpoint, array $data = [], string $method = 'POST')
+    private function sendRequest(string $endpoint, array $data, bool $isEcom, string $method = 'POST')
     {
         try {
             $response = Http::baseUrl(config('constants.OCR_API_ENDPOINT'))
                 ->withHeader('Referer', trim(config('constants.APP_URL'), '/'))
                 ->withHeader('x-api-key', config('constants.OCR_API_KEY'))
+                ->withHeader('source', $isEcom ? OCRSourceEnum::ECOM->value : OCRSourceEnum::IMCRM->value)
                 ->timeout(config('constants.OCR_API_TIMEOUT'))
-                ->beforeSending(fn () => LoggerService::info(self::class."::sendRequest - Calling OCR API via {$method} request to {$endpoint}"))
+                ->beforeSending(function ($request) use ($method, $endpoint) {
+                    $headers = $request->headers();
+
+                    LoggerService::info('OCR API request headers:', $headers);
+                    LoggerService::info(self::class."::sendRequest - Calling OCR API via {$method} request to {$endpoint}");
+                })
                 ->when(
                     $method === 'GET',
                     fn (PendingRequest $http) => $http->get($endpoint, $data),
@@ -73,7 +81,8 @@ class OCRService
         QuoteTypes $quoteType,
         Model $quote,
         string $docUrl,
-        OCRDocumentTypeEnum $docType
+        OCRDocumentTypeEnum $docType,
+        bool $isEcom
     ) {
         $providerCode = $this->extractProviderCode($quote);
 
@@ -96,7 +105,7 @@ class OCRService
             'request_data' => $requestData,
         ]);
 
-        $response = $this->sendRequest('/process-document', $requestData);
+        $response = $this->sendRequest('/process-document', $requestData, $isEcom);
 
         if ($response['ok']) {
             LoggerService::info('OCR API Response Success - Quote UUID: '.$quote->uuid);
@@ -405,12 +414,39 @@ class OCRService
 
         $url = $this->quoteDocumentService->getDocumentUrl($documentPath);
 
+        // Validate URL before proceeding
+        if (! $url || empty($url)) {
+            LoggerService::warning('OCR processing failed - Document URL is null or empty - Quote UUID: '.$quote->uuid, [
+                'document_path' => $documentPath,
+                'document_type' => $docType?->value,
+                'quote_type' => $quoteType->value,
+            ]);
+
+            $this->ocrLogService->logActivity(
+                $quote,
+                $documentType,
+                'failed',
+                null,
+                null,
+                null,
+                'Document file not found in storage',
+                $userId
+            );
+
+            if (! $isEcom && $this->requiresOcrNotifications($docType)) {
+                event(new OcrNotifications($quote, 'end', 'OCR processing failed - Document not found in storage', null, $docType?->value, $userId));
+            }
+
+            return false;
+        }
+
         try {
             // Record start time for OCR API call
             $apiCallStartTime = microtime(true);
             LoggerService::info('Starting OCR API call - Quote UUID: '.$quote->uuid);
 
-            $data = $this->getData($quoteType, $quote, $url, $docType);
+            $data = $this->getData($quoteType, $quote, $url, $docType, $isEcom);
+            LoggerService::info('OCR API call data: '.json_encode($data));
 
             if ($data) {
                 $result = $this->processOcrData(
@@ -463,13 +499,18 @@ class OCRService
         string $filePathAzure,
         string $fileMimeType,
         ?string $quoteTypeParam = null,
-        bool $isSendUpdateEligibleForOCR = false
+        bool $isSendUpdateEligibleForOCR = false,
     ): void {
 
         // early return if Customer OCR Journey is not supported on prod
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
-        if (in_array($docType, [OCRDocumentTypeEnum::ID_CARD, OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE, OCRDocumentTypeEnum::DRIVING_LICENSE])) {
-            LoggerService::info(self::class.' - Customer OCR Journey is not supported for now');
+        $isOCRCustomerJourneyEnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_ENABLED, useCache: true) == '1';
+        if (! $isOCRCustomerJourneyEnabled && in_array($docType, [OCRDocumentTypeEnum::ID_CARD, OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE, OCRDocumentTypeEnum::DRIVING_LICENSE])) {
+            LoggerService::info(self::class.' - OCR Customer Journey is not supported for now', [
+                'docType' => $docType,
+                'isOCRCustomerJourneyEnabled' => $isOCRCustomerJourneyEnabled,
+                'quote_uuid' => $quote->uuid,
+            ]);
 
             return;
         }
@@ -533,6 +574,8 @@ class OCRService
         // if userId is null, it means the request is from ecom
         $isEcom = is_null($userId);
 
+        LoggerService::info('OCR Dispatch - Quote UUID: '.$quote->uuid);
+        LoggerService::info('OCR Dispatch - File Path Azure: '.$filePathAzure);
         if ($quote && $filePathAzure) {
             LoggerService::info('OCR Dispatch - Dispatching PopulateDocumentData job - Quote UUID: '.$quote->uuid);
 

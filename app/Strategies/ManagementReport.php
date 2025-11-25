@@ -16,6 +16,7 @@ use App\Models\LeadSource;
 use App\Models\Lookup;
 use App\Models\Team;
 use App\Services\ApplicationStorageService;
+use App\Services\LookupService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -87,6 +88,31 @@ class ManagementReport
             ->map(fn ($users) => $users->name)
             ->toArray();
 
+        $subSources = app(LookupService::class)->getSubSource()
+            ->sortBy('id')
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'text' => $item->text,
+                    'code' => $item->code,
+                    'description' => $item->description,
+                    'childs' => $item->childs
+                        ->where('is_active', 1)
+                        ->sortBy('text')
+                        ->map(function ($c) {
+                            return [
+                                'id' => $c->id,
+                                'text' => $c->text,
+                                'description' => $c->description,
+                            ];
+                        })
+                        ->values()
+                        ->toArray(),
+                ];
+            })
+            ->values()
+            ->toArray();
+
         return [
             'maxDays' => $maxDays,
             'leadSources' => $leadSources,
@@ -95,6 +121,7 @@ class ManagementReport
             'transactionTypes' => $transactionTypes,
             'departments' => $departments,
             'lobs' => $lobs,
+            'subSources' => $subSources,
         ];
     }
     public function applyFilters($query, $request, $endorsementsQuery = false, $isSSR = false)
@@ -144,6 +171,18 @@ class ManagementReport
     {
         if (! empty($request['leadSources'])) {
             $query->whereIn('personal_quotes.source', $request['leadSources']);
+        }
+
+        // Sub Source filter: allow filtering by codes sent from UI
+        if (! empty($request['subSources'])) {
+            $codes = is_array($request['subSources']) ? $request['subSources'] : [$request['subSources']];
+            $query->whereIn('personal_quotes.sub_source_id', $codes);
+        }
+
+        // Sub Source Option filter: gate to Sales Detail only (for now)
+        if (! empty($request['sub_source_options_id'])) {
+            $ids = is_array($request['sub_source_options_id']) ? $request['sub_source_options_id'] : [$request['sub_source_options_id']];
+            $query->whereIn('personal_quotes.sub_source_options_id', $ids);
         }
 
         $departments = $request['department_id'] ?? [];
@@ -226,8 +265,8 @@ class ManagementReport
             if (is_array($request[$filterKey])) {
                 $dates = [];
                 foreach ($request[$filterKey] as $key => $dateString) {
-                    // Add null check before parsing (including string 'null')
-                    if ($dateString != null && $dateString != '' && $dateString != 'null') {
+                    // Validate date before parsing
+                    if (isValidDate($dateString)) {
                         $carbonDate = Carbon::parse($dateString);
                         if ($key == 0) {
                             $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
@@ -245,8 +284,8 @@ class ManagementReport
                 }
                 $request[$filterKey] = $dates;
             } else {
-                // Add null check for single date value (including string 'null')
-                if ($request[$filterKey] != null && $request[$filterKey] != '' && $request[$filterKey] != 'null') {
+                // Validate date before parsing
+                if (isValidDate($request[$filterKey])) {
                     $carbonDate = Carbon::parse($request[$filterKey]);
                     $dates = $carbonDate->startOfDay();
                     $request[$filterKey] = $dates;

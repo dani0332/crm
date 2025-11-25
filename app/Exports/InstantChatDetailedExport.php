@@ -56,6 +56,7 @@ class InstantChatDetailedExport implements CsvExportableInterface
             'OUTPUT TOKENS USAGE',
             'TOTAL TOKENS USED',
             'SEGMENT',
+            'RENEWAL BATCH',
             'LEAD ASSIGNMENT TRIGGER',
         ];
     }
@@ -88,6 +89,7 @@ class InstantChatDetailedExport implements CsvExportableInterface
             is_array($chat) ? ($chat['completion_tokens'] ?? 'N/A') : (isset($chat->completion_tokens) ? $chat->completion_tokens : 'N/A'),
             is_array($chat) ? ($chat['total_tokens'] ?? 'N/A') : (isset($chat->total_tokens) ? $chat->total_tokens : 'N/A'),
             is_array($chat) ? ($chat['segment'] ?? 'N/A') : ($chat->segment ?? 'N/A'),
+            is_array($chat) ? ($chat['renewal_batch_id_text'] ?? 'N/A') : ($chat->renewal_batch_id_text ?? 'N/A'),
             is_array($chat) ? ($chat['lead_assignment_trigger_text'] ?? 'N/A') : ($chat->lead_assignment_trigger_text ?? 'N/A'),
         ];
     }
@@ -135,7 +137,7 @@ class InstantChatDetailedExport implements CsvExportableInterface
         // Pass through any other parameters that might be relevant
         $passThroughParams = [
             'quoteId', 'email', 'mobile_no', 'transaction_type_id',
-            'quote_batch_id', 'quote_status_id', 'payment_status_id',
+            'quote_batch_id', 'renewal_batch_id', 'quote_status_id', 'payment_status_id',
             'assigment_type', 'sale_leads', 'segment',
         ];
 

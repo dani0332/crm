@@ -9,6 +9,7 @@ final class QuoteDocumentsEnum extends Enum
     public const CAR_POLICY_CERTIFICATE = 'CPC';
     public const POLICY_SCHEDULE = 'CPS';
     public const CAR_TAX_INVOICE = 'CTI';
+    public const CAR_EP_TAX_INVOICE = 'TI';
     public const CAR_TAX_INVOICE_RAISE_BY_BUYER = 'CTIRBB';
     public const CAR_TAX_CREDIT = 'CTC';
     public const CAR_TAX_CREDIT_RAISE_BY_BUYER = 'CTCRBB';
@@ -56,5 +57,14 @@ final class QuoteDocumentsEnum extends Enum
     public static function getSukoonInitialDocTypes(): array
     {
         return [self::CAR_TAX_INVOICE, self::POLICY_SCHEDULE];
+    }
+
+    public static function getWatermarkableDocTypeCodes($shortCode): array
+    {
+        return match ($shortCode) {
+            EmbeddedProductEnum::ECB => [self::CAR_EP_TAX_INVOICE, self::POLICY_SCHEDULE],
+            EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX => self::getSukoonInitialDocTypes(),
+            default => []
+        };
     }
 }

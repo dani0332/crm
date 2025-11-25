@@ -19,6 +19,7 @@ use App\Models\InsuranceProvider;
 use App\Models\InsurerRequestResponse;
 use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
@@ -359,12 +360,25 @@ class SukoonMedexService
 
         LoggerService::info("{$this->logPrefix} Begin handleJobSuccess: QuoteStatusId: {$quoteStatusId}, EpPolicyStatus: {$epPolicyStatus}");
 
-        if ($epPolicyStatus == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE) {
+        $epTransactionRepo = app(EmbeddedTransactionRepository::class);
+        $underProcessEpTransactions = $epTransactionRepo->getUnderProcessEpTransactions($this->quoteTypeId, $this->currentQuote->id);
+        if ($underProcessEpTransactions->isEmpty()) {
             $response = match ($quoteStatusId) {
                 QuoteStatusEnum::PolicyIssued => $this->callSageBookingProcess(),
                 QuoteStatusEnum::PolicyBooked => $this->scheduleSageBookingForSukoonEp(),
                 default => ['status' => true, 'message' => 'Sage booking is not called'],
             };
+
+        } else {
+            $underProcessEpDetails = $underProcessEpTransactions->map(function ($item) {
+                return [
+                    'et_id' => $item->id,
+                    'short_code' => $item->product->embeddedProduct->short_code ?? '',
+                    'payment_status_id' => $item->payment_status_id ?? '',
+                    'policy_status' => $item->policy_status ?? '',
+                ];
+            });
+            LoggerService::info("{$this->logPrefix} Under process EP transactions found: ", extra: ['underProcessEpDetails' => $underProcessEpDetails]);
         }
 
         LoggerService::info("{$this->logPrefix} Finish handleJobSuccess: QuoteStatusId: {$quoteStatusId}, EpPolicyStatus: {$epPolicyStatus}", extra: ['response' => $response]);
@@ -375,7 +389,9 @@ class SukoonMedexService
     private function callSageBookingProcess()
     {
         $sageApiService = (new SageApiService);
-        $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
+        if ($this->currentQuote->quote_status_id != QuoteStatusEnum::POLICY_BOOKING_QUEUED) {
+            $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
+        }
 
         $request = new \stdClass;
         $request->quote_id = $this->currentQuote->id;

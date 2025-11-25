@@ -319,7 +319,7 @@ class AllocationService extends BaseService
             $tier = $request->getTier();
 
             return [
-                'advisorId' => $lead->advisor_id,
+                'advisorId' => $lead?->advisor_id,
                 'message' => 'Tier evaluated successfully',
                 'status' => Response::HTTP_OK,
                 'tierId' => $tier->id,
@@ -327,20 +327,36 @@ class AllocationService extends BaseService
             ];
         }
 
-        if ($request->isAllocated() || $request->isSameAdvisor()) {
-            $message = 'Advisor assigned successfully!';
+        $isAllocated = $request->isAllocated();
+        $isSameAdvisor = $request->isSameAdvisor();
+        $isAlreadyAssigned = ! empty($lead?->advisor_id);
 
-            if ($request->isSameAdvisor()) {
+        if ($isAllocated || $isSameAdvisor || $isAlreadyAssigned) {
+            // priority order - isAllocated (new assignment) > isSameAdvisor > already assigned
+            if ($isAllocated) {
+                $message = 'Advisor assigned successfully!';
+            } elseif ($isSameAdvisor) {
                 $message = 'Found same advisor as previous advisor so further allocation is skipped';
+            } else {
+                $message = 'Advisor already assigned';
             }
 
+            $advisor = $request->getAdvisor() ?? $lead?->advisor;
+            $landLine = (! empty($advisor?->landline_no) ? formatLandlineDisplay($advisor->landline_no) : '');
+            $whatsAppNumber = ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
+
             $data = [
-                'advisorId' => $request->getAdvisor()?->id ?? $lead?->advisor_id,
+                'advisorId' => $advisor?->id ?? $lead?->advisor_id,
+                'isAIAdvisor' => $advisor?->isAi(),
+                'advisorName' => $advisor?->name,
+                'advisorEmail' => $advisor?->email,
+                'advisorPhone' => $whatsAppNumber,
+                'advisorLandLine' => $landLine,
                 'message' => $message,
                 'status' => Response::HTTP_OK,
             ];
 
-            $tier = $request->getTier();
+            $tier = $request->getTier() ?? $lead->tier;
 
             if ($tier) {
                 $data['tierId'] = $tier->id;

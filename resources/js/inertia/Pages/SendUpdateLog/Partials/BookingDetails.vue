@@ -958,7 +958,6 @@ const sendUpdateValidation = () => {
         let responseError = errors.response.data.errors.error;
         Object.keys(responseError).forEach(function (key) {
           if (
-            responseError[key] === 'Please select Addons' ||
             responseError[key] === 'Please select Emirate' ||
             responseError[key] === 'Please select Seating capacity'
           ) {
