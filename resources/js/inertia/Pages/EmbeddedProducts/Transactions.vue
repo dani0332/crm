@@ -507,12 +507,12 @@ const showEpSageStatusFilter = (function () {
       hide-rows-per-page
       hide-footer
     >
-      <template #item-id="{ id }">
+      <template #item-id="item">
         <Link
-          :href="route('embedded-products.edit', id)"
+          :href="getDetailPageRoute(item.quote_request.uuid,item.quote_type_id)"
           class="text-primary-500 hover:underline"
         >
-          {{ id }}
+         {{ item.ref_id }}
         </Link>
       </template>
 
