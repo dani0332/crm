@@ -121,7 +121,7 @@ class MTLHealthQuestionnaireService
         $healthQuestionnaire = $this->extractHealthQuestionnaire($rawData);
 
         if (empty($healthQuestionnaire)) {
-            $availableForms = array_column($rawData['submitted_data']['fields'] ?? [], 'form_name');
+            $availableForms = array_column(($rawData['submitted_data'] ?? [])['fields'] ?? [], 'form_name');
             LoggerService::warning('Health questionnaire not found in response', [
                 'policy_number' => $policyNumber,
                 'available_forms' => $availableForms,
@@ -138,7 +138,7 @@ class MTLHealthQuestionnaireService
 
     private function extractHealthQuestionnaire(array $responseData): ?array
     {
-        $fields = $responseData['submitted_data']['fields'] ?? [];
+        $fields = ($responseData['submitted_data'] ?? [])['fields'] ?? [];
 
         foreach ($fields as $field) {
             if ($this->isHealthQuestionnaire($field)) {
