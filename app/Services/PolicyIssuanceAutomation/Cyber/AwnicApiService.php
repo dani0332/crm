@@ -86,7 +86,6 @@ class AwnicApiService
         ]);
 
         $this->responseHandler->updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult);
-        $this->responseHandler->updateCyberQuoteFromIssuePolicyResponse($quote->cyberQuote, $issuePolicyResult);
         $this->responseHandler->updatePaymentFromIssuePolicyResponse($quote->code, $issuePolicyResult);
         
         $response['status'] = true;

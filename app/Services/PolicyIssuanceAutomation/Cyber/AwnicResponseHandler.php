@@ -36,17 +36,6 @@ class AwnicResponseHandler
     }
 
     /**
-     * Update cyber quote with document IDs from issue policy response
-     *
-     * @param mixed $cyberQuote
-     * @param \stdClass $issuePolicyResult
-     * @return void
-     */
-    public function updateCyberQuoteFromIssuePolicyResponse($cyberQuote, $issuePolicyResult): void
-    {
-    }
-
-    /**
      * Update payment with commission data from issue policy response
      *
      * @param string $quoteCode
@@ -62,7 +51,6 @@ class AwnicResponseHandler
             'commmission_percentage' => $issuePolicyResult?->policyInfo?->CommissionPercentage ?? 0, // TODO: need to verify commission percentage is not coming in response
             'insurer_tax_number' => $issuePolicyResult?->policyInfo?->invoiceNo ?? null,
             'insurer_invoice_date' => $issuePolicyResult?->policyInfo?->policyIssuedDate ?? null,
-            //TODO : Remove time stamp and use creditNoteNo if available
             'insurer_commmission_invoice_number' => $issuePolicyResult?->policyInfo?->creditNoteNo ?? null,
         ]);
     }
