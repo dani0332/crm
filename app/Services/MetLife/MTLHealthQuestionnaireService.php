@@ -12,6 +12,7 @@ use App\Events\DocumentNotificationEvent;
 use App\Exceptions\MetLife\MetLifeException;
 use App\Models\DocumentType;
 use App\Models\PersonalQuote;
+use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
@@ -89,7 +90,7 @@ class MTLHealthQuestionnaireService
             true
         );
 
-        if (! $document) {
+        if (! $document instanceof QuoteDocument) {
             LoggerService::warning('DEBUG: Document upload failed', ['quote_uuid' => $quote->uuid]);
             throw new MetLifeException(
                 'Failed to upload health questionnaire document for quote: '.$quote->uuid,
