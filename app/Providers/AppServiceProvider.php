@@ -45,12 +45,6 @@ use App\Observers\YachtQuoteObserver;
 use App\Services\CsvExportService;
 use App\Services\EmailExportService;
 use App\Services\LeadsCountService;
-use App\Services\PolicyIssuanceAutomation\Cyber\AwnicBookPolicyService;
-use App\Services\PolicyIssuanceAutomation\Cyber\AwnicHttpClient;
-use App\Services\PolicyIssuanceAutomation\Cyber\AwnicResponseHandler;
-use App\Services\PolicyIssuanceAutomation\Cyber\AwnicStepExecutor;
-use App\Services\PolicyIssuanceAutomation\Cyber\AwnicValidationService;
-use App\Services\PolicyIssuanceAutomation\Cyber\AwniInsuranceService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -108,15 +102,6 @@ class AppServiceProvider extends ServiceProvider
         //         $query->time
         //     );
         // });
-
-        $this->app->bind(AwniInsuranceService::class, function ($app) {
-            return new AwniInsuranceService(
-                $app->make(AwnicStepExecutor::class),
-                $app->make(AwnicValidationService::class),
-                $app->make(AwnicBookPolicyService::class),
-                $app->make(AwnicResponseHandler::class),
-            );
-        });
 
         if ($this->app->runningInConsole()) {
             Log::withContext([
