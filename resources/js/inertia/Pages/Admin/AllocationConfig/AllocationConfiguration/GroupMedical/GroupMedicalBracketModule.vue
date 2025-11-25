@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, onMounted, ref, watch } from 'vue';
-import CollapseIcon from './components/CollapseIcon.vue';
+import CollapseIcon from '../Savings/components/CollapseIcon.vue';
 
 const props = defineProps({
   title: {
@@ -19,7 +19,7 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  nationalityOptions: {
+  planTypeOptions: {
     type: Array,
     default: () => [],
   },
@@ -37,22 +37,28 @@ const emit = defineEmits([
 ]);
 
 const highlightedBracketIndex = ref(-1);
-const isInitialized = ref(false);
-const previousBracketCount = ref(props.brackets.length);
 const highlightedProfileKey = ref('');
 const collapsedBrackets = ref(new Set());
-const isModuleCollapsed = ref(false);
 const collapsedProfiles = ref(new Set());
+const isModuleCollapsed = ref(false);
+const isInitialized = ref(false);
+
+onMounted(() => {
+  setTimeout(() => {
+    isInitialized.value = true;
+  }, 100);
+});
 
 watch(
   () => props.brackets.length,
   (newLength, oldLength) => {
     if (isInitialized.value && newLength > oldLength) {
-      highlightedBracketIndex.value = newLength - 1;
+      const newBracketIndex = newLength - 1;
+      highlightedBracketIndex.value = newBracketIndex;
 
       nextTick(() => {
         const newBracketElement = document.querySelector(
-          `[data-bracket-index="${props.type.toLowerCase()}-${newLength - 1}"]`,
+          `[data-bracket-index="${props.type.toLowerCase()}-${newBracketIndex}"]`,
         );
         if (newBracketElement) {
           newBracketElement.scrollIntoView({
@@ -104,63 +110,27 @@ watch(
   { deep: true },
 );
 
-const validatePositiveNumber = value => {
-  const num = parseFloat(value);
-  return !isNaN(num) && num >= 0;
-};
-
-const formatNumberInput = event => {
-  let value = event.target.value;
-
+const handleInput = (event, bracket, field) => {
+  let value = event.target.value.replace(/[^0-9]/g, '');
   if (value === '') {
-    return '';
+    bracket[field] = null;
+  } else {
+    bracket[field] = parseInt(value, 10);
   }
-
-  value = value.replace(/[^0-9.]/g, '');
-
-  if (value === '') {
-    return '';
-  }
-
-  const parts = value.split('.');
-  if (parts.length > 2) {
-    value = parts[0] + '.' + parts.slice(1).join('');
-  }
-  if (parts[1] && parts[1].length > 2) {
-    value = parts[0] + '.' + parts[1].substring(0, 2);
-  }
-
-  event.target.value = value;
-  return value;
 };
 
-const handleMinInput = (event, bracket) => {
-  const formattedValue = formatNumberInput(event);
-  bracket.min = formattedValue;
-};
-
-const handleMaxInput = (event, bracket) => {
-  const formattedValue = formatNumberInput(event);
-  bracket.max = formattedValue;
-};
-
-const handleMinBlur = (event, bracket) => {
-  const value = event.target.value;
-  bracket.min = value === '' ? 0 : parseFloat(value);
-};
-
-const handleMaxBlur = (event, bracket) => {
-  const value = event.target.value;
-  bracket.max = value === '' ? 0 : parseFloat(value);
+const handleBlur = (event, bracket, field) => {
+  if (bracket[field] !== null && bracket[field] !== '') {
+    bracket[field] = parseInt(bracket[field], 10);
+  }
 };
 
 const createEmptyProfile = () => ({
   advisorIds: [],
-  nationalityIds: [],
+  planTypeIds: [],
 });
 
 const addBracket = () => {
-  isModuleCollapsed.value = false;
   emit('add-bracket');
 };
 
@@ -170,24 +140,20 @@ const removeBracket = index => {
 
 const addProfile = bracket => {
   bracket.profiles.push(createEmptyProfile());
-  emit('add-profile', bracket);
+  emit('add-profile');
 };
 
 const removeProfile = (bracket, profileIndex) => {
   bracket.profiles.splice(profileIndex, 1);
-  emit('remove-profile', bracket, profileIndex);
+  emit('remove-profile');
 };
 
-const toggleBracket = index => {
-  if (collapsedBrackets.value.has(index)) {
-    collapsedBrackets.value.delete(index);
+const toggleBracket = bracketIndex => {
+  if (collapsedBrackets.value.has(bracketIndex)) {
+    collapsedBrackets.value.delete(bracketIndex);
   } else {
-    collapsedBrackets.value.add(index);
+    collapsedBrackets.value.add(bracketIndex);
   }
-};
-
-const toggleModule = () => {
-  isModuleCollapsed.value = !isModuleCollapsed.value;
 };
 
 const toggleProfile = (bracketIndex, profileIndex) => {
@@ -199,11 +165,9 @@ const toggleProfile = (bracketIndex, profileIndex) => {
   }
 };
 
-onMounted(() => {
-  setTimeout(() => {
-    isInitialized.value = true;
-  }, 100);
-});
+const toggleModule = () => {
+  isModuleCollapsed.value = !isModuleCollapsed.value;
+};
 </script>
 
 <template>
@@ -213,12 +177,9 @@ onMounted(() => {
         <div class="flex items-center space-x-2">
           <CollapseIcon
             :is-expanded="!isModuleCollapsed"
-            size="md"
             @click="toggleModule"
           />
-          <h3 class="text-lg font-medium text-gray-900">
-            {{ title }}
-          </h3>
+          <h3 class="text-lg font-medium text-gray-900">{{ title }}</h3>
         </div>
         <x-tooltip v-if="!viewMode">
           <x-button size="md" color="#ff5e00" type="button" @click="addBracket">
@@ -226,7 +187,7 @@ onMounted(() => {
           </x-button>
           <template #tooltip>
             <span class="custom-tooltip-content">
-              Add a new investment amount bracket for this frequency type.
+              Add a bracket for this {{ type }} category.
             </span>
           </template>
         </x-tooltip>
@@ -237,8 +198,8 @@ onMounted(() => {
           v-if="brackets.length === 0"
           class="text-center py-8 text-gray-500"
         >
-          No {{ type.toLowerCase() }} brackets configured. Click "Create new
-          price bracket" to create one.
+          No brackets configured. Click "Create new price bracket" to get
+          started.
         </div>
 
         <div v-else class="space-y-6">
@@ -257,11 +218,11 @@ onMounted(() => {
               <div class="flex items-center space-x-2">
                 <CollapseIcon
                   :is-expanded="!collapsedBrackets.has(bracketIndex)"
-                  size="md"
+                  size="sm"
                   @click="toggleBracket(bracketIndex)"
                 />
-                <h4 class="text-md font-medium text-gray-800">
-                  {{ type }} (Bracket {{ bracketIndex + 1 }})
+                <h4 class="text-md font-medium text-gray-700">
+                  Bracket {{ bracketIndex + 1 }}
                   <span
                     v-if="highlightedBracketIndex === bracketIndex"
                     class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
@@ -299,49 +260,46 @@ onMounted(() => {
               v-show="!collapsedBrackets.has(bracketIndex)"
               class="space-y-4"
             >
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <x-input
-                    v-model="bracket.min"
-                    class="!mb-0 mt-1"
-                    required
-                    :disabled="viewMode"
-                    @input="handleMinInput($event, bracket)"
-                    @blur="handleMinBlur($event, bracket)"
-                    label="Minimum Amount"
-                    tooltip="Set the min investment amount for leads in this category."
-                  >
-                    <template #suffix>
-                      <div
-                        class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
-                      >
-                        <span>USD</span>
-                      </div>
-                    </template>
-                  </x-input>
-                </div>
-                <div>
-                  <x-input
-                    v-model="bracket.max"
-                    class="!mb-0 mt-1"
-                    required
-                    :disabled="viewMode"
-                    @input="handleMaxInput($event, bracket)"
-                    @blur="handleMaxBlur($event, bracket)"
-                    label="Maximum Amount"
-                    tooltip="Set the max investment amount for leads in this category."
-                  >
-                    <template #suffix>
-                      <div
-                        class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
-                      >
-                        <span>USD</span>
-                      </div>
-                    </template>
-                  </x-input>
+              <!-- Number of Employees Section -->
+              <div class="border-b pb-4">
+                <h5 class="text-sm font-medium text-gray-700 mb-3">
+                  Number of Employees
+                </h5>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <x-input
+                      v-model="bracket.employees_min"
+                      class="!mb-0 mt-1"
+                      required
+                      :disabled="viewMode"
+                      @input="handleInput($event, bracket, 'employees_min')"
+                      @blur="handleBlur($event, bracket, 'employees_min')"
+                      label="Minimum"
+                      tooltip="Set the minimum number of employees for this bracket (max: 99999)."
+                      type="number"
+                      min="1"
+                      max="99999"
+                    />
+                  </div>
+                  <div>
+                    <x-input
+                      v-model="bracket.employees_max"
+                      class="!mb-0 mt-1"
+                      required
+                      :disabled="viewMode"
+                      @input="handleInput($event, bracket, 'employees_max')"
+                      @blur="handleBlur($event, bracket, 'employees_max')"
+                      label="Maximum"
+                      tooltip="Set the maximum number of employees for this bracket (max: 99999)."
+                      type="number"
+                      min="1"
+                      max="99999"
+                    />
+                  </div>
                 </div>
               </div>
 
+              <!-- Advisor Allocation Profiles -->
               <div class="border-t pt-4">
                 <div class="flex items-center justify-between mb-4">
                   <h5 class="text-sm font-medium text-gray-700">
@@ -358,8 +316,8 @@ onMounted(() => {
                     </x-button>
                     <template #tooltip>
                       <span class="custom-tooltip-content">
-                        Set who gets the lead – based on amount and customer
-                        nationality.
+                        Set who gets the lead – based on employee count and plan
+                        type.
                       </span>
                     </template>
                   </x-tooltip>
@@ -377,7 +335,7 @@ onMounted(() => {
                     v-for="(profile, profileIndex) in bracket.profiles"
                     :key="`profile-${bracketIndex}-${profileIndex}`"
                     :data-profile-key="`${type.toLowerCase()}-${bracketIndex}-${profileIndex}`"
-                    class="bg-gray-50 p-4 rounded-md"
+                    class="bg-gray-50 p-4 rounded-md transition-all duration-500"
                     :class="{
                       'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
                         highlightedProfileKey ===
@@ -472,28 +430,28 @@ onMounted(() => {
                       </div>
                       <div>
                         <x-select
-                          v-model="profile.nationalityIds"
-                          :options="nationalityOptions"
-                          placeholder="Select nationalities..."
+                          v-model="profile.planTypeIds"
+                          :options="planTypeOptions"
+                          placeholder="Select plan types..."
                           multiple
                           filterable
                           :disabled="viewMode"
                           class="w-full min-h-[40px]"
-                          label="Nationalities"
+                          label="Plan Type"
                           required
-                          tooltip="Select the nationalities of customers this profile applies to."
+                          tooltip="Select the plan types this profile applies to."
                         >
                           <template
                             #content-footer
-                            v-if="nationalityOptions.length > 0 && !viewMode"
+                            v-if="planTypeOptions.length > 0 && !viewMode"
                           >
                             <ui-select-actions
                               @select-all="
-                                profile.nationalityIds = nationalityOptions.map(
+                                profile.planTypeIds = planTypeOptions.map(
                                   item => item.value,
                                 )
                               "
-                              @clear="profile.nationalityIds = []"
+                              @clear="profile.planTypeIds = []"
                             />
                           </template>
                         </x-select>

@@ -1,25 +1,17 @@
 <script setup>
 import { nextTick, onMounted, ref, watch } from 'vue';
-import CollapseIcon from './components/CollapseIcon.vue';
+import CollapseIcon from '../Savings/components/CollapseIcon.vue';
 
 const props = defineProps({
-  title: {
-    type: String,
-    required: true,
-  },
-  type: {
-    type: String,
-    required: true,
-  },
-  brackets: {
-    type: Array,
-    required: true,
+  configuration: {
+    type: Object,
+    default: null,
   },
   advisorOptions: {
     type: Array,
     default: () => [],
   },
-  nationalityOptions: {
+  teamOptions: {
     type: Array,
     default: () => [],
   },
@@ -27,32 +19,137 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  lobName: {
+    type: String,
+    required: true,
+  },
 });
 
-const emit = defineEmits([
-  'add-bracket',
-  'remove-bracket',
-  'add-profile',
-  'remove-profile',
-]);
+const emit = defineEmits(['data-update']);
 
-const highlightedBracketIndex = ref(-1);
-const isInitialized = ref(false);
-const previousBracketCount = ref(props.brackets.length);
+const brackets = ref([]);
+const validationErrors = ref({});
+const highlightedBracketIndex = ref(null);
 const highlightedProfileKey = ref('');
 const collapsedBrackets = ref(new Set());
-const isModuleCollapsed = ref(false);
 const collapsedProfiles = ref(new Set());
+const isModuleCollapsed = ref(false);
+const isInitialized = ref(false);
+
+const initializeData = () => {
+  if (props.configuration && props.configuration.brackets) {
+    brackets.value = JSON.parse(JSON.stringify(props.configuration.brackets));
+  } else {
+    brackets.value = [];
+  }
+
+  emitData();
+};
+
+const emitData = () => {
+  const data = {
+    brackets: brackets.value,
+  };
+  emit('data-update', data);
+};
+
+const validateAllBrackets = () => {
+  const errors = [];
+
+  if (brackets.value.length === 0) {
+    errors.push(
+      `${props.lobName}: At least one bracket with profiles is required`,
+    );
+    return errors;
+  }
+
+  brackets.value.forEach((bracket, bracketIndex) => {
+    // Validate min/max amounts
+    if (!bracket.min || !bracket.max) {
+      errors.push(
+        `${props.lobName} Bracket ${bracketIndex + 1}: Minimum and Maximum amounts are required`,
+      );
+    } else if (parseFloat(bracket.min) > parseFloat(bracket.max)) {
+      errors.push(
+        `${props.lobName} Bracket ${bracketIndex + 1}: Minimum amount cannot be greater than Maximum amount`,
+      );
+    }
+
+    if (!bracket.profiles || bracket.profiles.length === 0) {
+      errors.push(
+        `${props.lobName} Bracket ${bracketIndex + 1}: At least one advisor profile is required`,
+      );
+    } else {
+      bracket.profiles.forEach((profile, profileIndex) => {
+        if (!profile.advisorIds || profile.advisorIds.length === 0) {
+          errors.push(
+            `${props.lobName} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one advisor must be selected`,
+          );
+        }
+
+        if (!profile.teamIds || profile.teamIds.length === 0) {
+          errors.push(
+            `${props.lobName} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one team must be selected`,
+          );
+        }
+      });
+    }
+  });
+
+  return errors;
+};
+
+const validate = () => {
+  const errors = validateAllBrackets();
+  validationErrors.value = errors;
+  return {
+    isValid: errors.length === 0,
+    errors: errors,
+  };
+};
+
+const clearValidationErrors = () => {
+  validationErrors.value = {};
+};
 
 watch(
-  () => props.brackets.length,
+  brackets,
+  () => {
+    if (Object.keys(validationErrors.value).length > 0) {
+      clearValidationErrors();
+    }
+    emitData();
+  },
+  { deep: true },
+);
+
+onMounted(() => {
+  initializeData();
+  setTimeout(() => {
+    isInitialized.value = true;
+  }, 100);
+});
+
+watch(
+  () => props.configuration,
+  newConfig => {
+    if (newConfig) {
+      initializeData();
+    }
+  },
+  { deep: true },
+);
+
+watch(
+  () => brackets.value.length,
   (newLength, oldLength) => {
     if (isInitialized.value && newLength > oldLength) {
-      highlightedBracketIndex.value = newLength - 1;
+      const newBracketIndex = newLength - 1;
+      highlightedBracketIndex.value = newBracketIndex;
 
       nextTick(() => {
         const newBracketElement = document.querySelector(
-          `[data-bracket-index="${props.type.toLowerCase()}-${newLength - 1}"]`,
+          `[data-bracket-index="bracket-${newBracketIndex}"]`,
         );
         if (newBracketElement) {
           newBracketElement.scrollIntoView({
@@ -63,16 +160,15 @@ watch(
       });
 
       setTimeout(() => {
-        highlightedBracketIndex.value = -1;
+        highlightedBracketIndex.value = null;
       }, 2000);
-    } else if (isInitialized.value && newLength < oldLength) {
-      highlightedBracketIndex.value = -1;
     }
   },
 );
 
+// Watch for profile additions within brackets
 watch(
-  () => props.brackets.map(bracket => bracket.profiles?.length || 0),
+  () => brackets.value.map(bracket => bracket.profiles?.length || 0),
   (newProfileCounts, oldProfileCounts) => {
     if (!isInitialized.value) return;
 
@@ -80,7 +176,7 @@ watch(
       const oldCount = oldProfileCounts?.[bracketIndex] || 0;
       if (newCount > oldCount) {
         const profileIndex = newCount - 1;
-        const profileKey = `${props.type.toLowerCase()}-${bracketIndex}-${profileIndex}`;
+        const profileKey = `${bracketIndex}-${profileIndex}`;
         highlightedProfileKey.value = profileKey;
 
         nextTick(() => {
@@ -104,90 +200,39 @@ watch(
   { deep: true },
 );
 
-const validatePositiveNumber = value => {
-  const num = parseFloat(value);
-  return !isNaN(num) && num >= 0;
-};
-
-const formatNumberInput = event => {
-  let value = event.target.value;
-
-  if (value === '') {
-    return '';
-  }
-
-  value = value.replace(/[^0-9.]/g, '');
-
-  if (value === '') {
-    return '';
-  }
-
-  const parts = value.split('.');
-  if (parts.length > 2) {
-    value = parts[0] + '.' + parts.slice(1).join('');
-  }
-  if (parts[1] && parts[1].length > 2) {
-    value = parts[0] + '.' + parts[1].substring(0, 2);
-  }
-
-  event.target.value = value;
-  return value;
-};
-
-const handleMinInput = (event, bracket) => {
-  const formattedValue = formatNumberInput(event);
-  bracket.min = formattedValue;
-};
-
-const handleMaxInput = (event, bracket) => {
-  const formattedValue = formatNumberInput(event);
-  bracket.max = formattedValue;
-};
-
-const handleMinBlur = (event, bracket) => {
-  const value = event.target.value;
-  bracket.min = value === '' ? 0 : parseFloat(value);
-};
-
-const handleMaxBlur = (event, bracket) => {
-  const value = event.target.value;
-  bracket.max = value === '' ? 0 : parseFloat(value);
-};
+const createEmptyBracket = () => ({
+  min: 0,
+  max: 0,
+  profiles: [],
+});
 
 const createEmptyProfile = () => ({
   advisorIds: [],
-  nationalityIds: [],
+  teamIds: [],
 });
 
 const addBracket = () => {
-  isModuleCollapsed.value = false;
-  emit('add-bracket');
+  brackets.value.push(createEmptyBracket());
 };
 
-const removeBracket = index => {
-  emit('remove-bracket', index);
+const removeBracket = bracketIndex => {
+  brackets.value.splice(bracketIndex, 1);
 };
 
 const addProfile = bracket => {
   bracket.profiles.push(createEmptyProfile());
-  emit('add-profile', bracket);
 };
 
 const removeProfile = (bracket, profileIndex) => {
   bracket.profiles.splice(profileIndex, 1);
-  emit('remove-profile', bracket, profileIndex);
 };
 
-const toggleBracket = index => {
-  if (collapsedBrackets.value.has(index)) {
-    collapsedBrackets.value.delete(index);
+const toggleBracket = bracketIndex => {
+  if (collapsedBrackets.value.has(bracketIndex)) {
+    collapsedBrackets.value.delete(bracketIndex);
   } else {
-    collapsedBrackets.value.add(index);
+    collapsedBrackets.value.add(bracketIndex);
   }
-};
-
-const toggleModule = () => {
-  isModuleCollapsed.value = !isModuleCollapsed.value;
 };
 
 const toggleProfile = (bracketIndex, profileIndex) => {
@@ -199,10 +244,33 @@ const toggleProfile = (bracketIndex, profileIndex) => {
   }
 };
 
-onMounted(() => {
-  setTimeout(() => {
-    isInitialized.value = true;
-  }, 100);
+const toggleModule = () => {
+  isModuleCollapsed.value = !isModuleCollapsed.value;
+};
+
+// Number formatting helpers
+const formatNumberInput = value => {
+  if (!value) return '';
+  const num = parseFloat(String(value).replace(/,/g, ''));
+  return isNaN(num) ? '' : num.toLocaleString('en-US');
+};
+
+const handleInput = (event, bracket, field) => {
+  const rawValue = event.target.value.replace(/,/g, '');
+  bracket[field] = rawValue;
+};
+
+const handleBlur = (event, bracket, field) => {
+  const rawValue = event.target.value.replace(/,/g, '');
+  const numValue = parseFloat(rawValue);
+  if (!isNaN(numValue)) {
+    bracket[field] = numValue;
+  }
+};
+
+defineExpose({
+  validate,
+  clearValidationErrors,
 });
 </script>
 
@@ -213,20 +281,19 @@ onMounted(() => {
         <div class="flex items-center space-x-2">
           <CollapseIcon
             :is-expanded="!isModuleCollapsed"
-            size="md"
             @click="toggleModule"
           />
           <h3 class="text-lg font-medium text-gray-900">
-            {{ title }}
+            {{ lobName }} Allocation Configuration
           </h3>
         </div>
         <x-tooltip v-if="!viewMode">
           <x-button size="md" color="#ff5e00" type="button" @click="addBracket">
-            Create new price bracket
+            Create new bracket
           </x-button>
           <template #tooltip>
             <span class="custom-tooltip-content">
-              Add a new investment amount bracket for this frequency type.
+              Add a new bracket for {{ lobName }} allocation.
             </span>
           </template>
         </x-tooltip>
@@ -237,15 +304,14 @@ onMounted(() => {
           v-if="brackets.length === 0"
           class="text-center py-8 text-gray-500"
         >
-          No {{ type.toLowerCase() }} brackets configured. Click "Create new
-          price bracket" to create one.
+          No brackets configured. Click "Create new bracket" to get started.
         </div>
 
         <div v-else class="space-y-6">
           <div
             v-for="(bracket, bracketIndex) in brackets"
             :key="`bracket-${bracketIndex}`"
-            :data-bracket-index="`${type.toLowerCase()}-${bracketIndex}`"
+            :data-bracket-index="`bracket-${bracketIndex}`"
             class="border border-gray-200 rounded-lg p-4 transition-all duration-500"
             :class="{
               'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
@@ -257,11 +323,11 @@ onMounted(() => {
               <div class="flex items-center space-x-2">
                 <CollapseIcon
                   :is-expanded="!collapsedBrackets.has(bracketIndex)"
-                  size="md"
+                  size="sm"
                   @click="toggleBracket(bracketIndex)"
                 />
-                <h4 class="text-md font-medium text-gray-800">
-                  {{ type }} (Bracket {{ bracketIndex + 1 }})
+                <h4 class="text-md font-medium text-gray-700">
+                  Bracket {{ bracketIndex + 1 }}
                   <span
                     v-if="highlightedBracketIndex === bracketIndex"
                     class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
@@ -299,49 +365,51 @@ onMounted(() => {
               v-show="!collapsedBrackets.has(bracketIndex)"
               class="space-y-4"
             >
+              <!-- Amount Range -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <x-input
-                    v-model="bracket.min"
+                    :model-value="formatNumberInput(bracket.min)"
                     class="!mb-0 mt-1"
                     required
                     :disabled="viewMode"
-                    @input="handleMinInput($event, bracket)"
-                    @blur="handleMinBlur($event, bracket)"
+                    @input="handleInput($event, bracket, 'min')"
+                    @blur="handleBlur($event, bracket, 'min')"
                     label="Minimum Amount"
-                    tooltip="Set the min investment amount for leads in this category."
+                    tooltip="Set the minimum amount for this bracket."
                   >
                     <template #suffix>
                       <div
                         class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
                       >
-                        <span>USD</span>
+                        <span>AED</span>
                       </div>
                     </template>
                   </x-input>
                 </div>
                 <div>
                   <x-input
-                    v-model="bracket.max"
+                    :model-value="formatNumberInput(bracket.max)"
                     class="!mb-0 mt-1"
                     required
                     :disabled="viewMode"
-                    @input="handleMaxInput($event, bracket)"
-                    @blur="handleMaxBlur($event, bracket)"
+                    @input="handleInput($event, bracket, 'max')"
+                    @blur="handleBlur($event, bracket, 'max')"
                     label="Maximum Amount"
-                    tooltip="Set the max investment amount for leads in this category."
+                    tooltip="Set the maximum amount for this bracket."
                   >
                     <template #suffix>
                       <div
                         class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
                       >
-                        <span>USD</span>
+                        <span>AED</span>
                       </div>
                     </template>
                   </x-input>
                 </div>
               </div>
 
+              <!-- Advisor Allocation Profiles -->
               <div class="border-t pt-4">
                 <div class="flex items-center justify-between mb-4">
                   <h5 class="text-sm font-medium text-gray-700">
@@ -358,8 +426,7 @@ onMounted(() => {
                     </x-button>
                     <template #tooltip>
                       <span class="custom-tooltip-content">
-                        Set who gets the lead – based on amount and customer
-                        nationality.
+                        Set who gets the lead for {{ lobName }} insurance.
                       </span>
                     </template>
                   </x-tooltip>
@@ -376,15 +443,15 @@ onMounted(() => {
                   <div
                     v-for="(profile, profileIndex) in bracket.profiles"
                     :key="`profile-${bracketIndex}-${profileIndex}`"
-                    :data-profile-key="`${type.toLowerCase()}-${bracketIndex}-${profileIndex}`"
-                    class="bg-gray-50 p-4 rounded-md"
+                    :data-profile-key="`${bracketIndex}-${profileIndex}`"
+                    class="bg-gray-50 p-4 rounded-md transition-all duration-500"
                     :class="{
                       'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
                         highlightedProfileKey ===
-                        `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`,
+                        `${bracketIndex}-${profileIndex}`,
                       'shadow-lg':
                         highlightedProfileKey ===
-                        `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`,
+                        `${bracketIndex}-${profileIndex}`,
                     }"
                   >
                     <div class="flex items-center justify-between mb-3">
@@ -403,7 +470,7 @@ onMounted(() => {
                           <span
                             v-if="
                               highlightedProfileKey ===
-                              `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`
+                              `${bracketIndex}-${profileIndex}`
                             "
                             class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
                           >
@@ -472,28 +539,28 @@ onMounted(() => {
                       </div>
                       <div>
                         <x-select
-                          v-model="profile.nationalityIds"
-                          :options="nationalityOptions"
-                          placeholder="Select nationalities..."
+                          v-model="profile.teamIds"
+                          :options="teamOptions"
+                          placeholder="Select teams..."
                           multiple
                           filterable
                           :disabled="viewMode"
                           class="w-full min-h-[40px]"
-                          label="Nationalities"
+                          label="Teams"
                           required
-                          tooltip="Select the nationalities of customers this profile applies to."
+                          tooltip="Select the teams this profile applies to."
                         >
                           <template
                             #content-footer
-                            v-if="nationalityOptions.length > 0 && !viewMode"
+                            v-if="teamOptions.length > 0 && !viewMode"
                           >
                             <ui-select-actions
                               @select-all="
-                                profile.nationalityIds = nationalityOptions.map(
+                                profile.teamIds = teamOptions.map(
                                   item => item.value,
                                 )
                               "
-                              @clear="profile.nationalityIds = []"
+                              @clear="profile.teamIds = []"
                             />
                           </template>
                         </x-select>

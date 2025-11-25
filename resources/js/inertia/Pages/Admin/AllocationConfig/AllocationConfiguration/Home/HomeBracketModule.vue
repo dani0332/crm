@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, onMounted, ref, watch } from 'vue';
-import CollapseIcon from './components/CollapseIcon.vue';
+import CollapseIcon from '../Savings/components/CollapseIcon.vue';
 
 const props = defineProps({
   title: {
@@ -19,7 +19,7 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  nationalityOptions: {
+  locationOptions: {
     type: Array,
     default: () => [],
   },
@@ -43,6 +43,8 @@ const highlightedProfileKey = ref('');
 const collapsedBrackets = ref(new Set());
 const isModuleCollapsed = ref(false);
 const collapsedProfiles = ref(new Set());
+const collapsedContents = ref(new Set());
+const collapsedBuilding = ref(new Set());
 
 watch(
   () => props.brackets.length,
@@ -134,29 +136,19 @@ const formatNumberInput = event => {
   return value;
 };
 
-const handleMinInput = (event, bracket) => {
+const handleInput = (event, bracket, field) => {
   const formattedValue = formatNumberInput(event);
-  bracket.min = formattedValue;
+  bracket[field] = formattedValue;
 };
 
-const handleMaxInput = (event, bracket) => {
-  const formattedValue = formatNumberInput(event);
-  bracket.max = formattedValue;
-};
-
-const handleMinBlur = (event, bracket) => {
+const handleBlur = (event, bracket, field) => {
   const value = event.target.value;
-  bracket.min = value === '' ? 0 : parseFloat(value);
-};
-
-const handleMaxBlur = (event, bracket) => {
-  const value = event.target.value;
-  bracket.max = value === '' ? 0 : parseFloat(value);
+  bracket[field] = value === '' ? 0 : parseFloat(value);
 };
 
 const createEmptyProfile = () => ({
   advisorIds: [],
-  nationalityIds: [],
+  locations: [], // Will store location IDs as integers
 });
 
 const addBracket = () => {
@@ -199,6 +191,22 @@ const toggleProfile = (bracketIndex, profileIndex) => {
   }
 };
 
+const toggleContents = bracketIndex => {
+  if (collapsedContents.value.has(bracketIndex)) {
+    collapsedContents.value.delete(bracketIndex);
+  } else {
+    collapsedContents.value.add(bracketIndex);
+  }
+};
+
+const toggleBuilding = bracketIndex => {
+  if (collapsedBuilding.value.has(bracketIndex)) {
+    collapsedBuilding.value.delete(bracketIndex);
+  } else {
+    collapsedBuilding.value.add(bracketIndex);
+  }
+};
+
 onMounted(() => {
   setTimeout(() => {
     isInitialized.value = true;
@@ -225,9 +233,7 @@ onMounted(() => {
             Create new price bracket
           </x-button>
           <template #tooltip>
-            <span class="custom-tooltip-content">
-              Add a new investment amount bracket for this frequency type.
-            </span>
+            <span class="custom-tooltip-content"> Add bracket for this </span>
           </template>
         </x-tooltip>
       </div>
@@ -299,49 +305,127 @@ onMounted(() => {
               v-show="!collapsedBrackets.has(bracketIndex)"
               class="space-y-4"
             >
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <x-input
-                    v-model="bracket.min"
-                    class="!mb-0 mt-1"
-                    required
-                    :disabled="viewMode"
-                    @input="handleMinInput($event, bracket)"
-                    @blur="handleMinBlur($event, bracket)"
-                    label="Minimum Amount"
-                    tooltip="Set the min investment amount for leads in this category."
-                  >
-                    <template #suffix>
-                      <div
-                        class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
-                      >
-                        <span>USD</span>
-                      </div>
-                    </template>
-                  </x-input>
+              <!-- Contents Value Section -->
+              <div class="pb-4">
+                <div class="flex items-center space-x-2 mb-3">
+                  <CollapseIcon
+                    class="cursor-pointer"
+                    :is-expanded="!collapsedContents.has(bracketIndex)"
+                    @click="toggleContents(bracketIndex)"
+                    size="sm"
+                  />
+                  <h5 class="text-sm font-medium text-gray-700">
+                    Contents Value
+                  </h5>
                 </div>
-                <div>
-                  <x-input
-                    v-model="bracket.max"
-                    class="!mb-0 mt-1"
-                    required
-                    :disabled="viewMode"
-                    @input="handleMaxInput($event, bracket)"
-                    @blur="handleMaxBlur($event, bracket)"
-                    label="Maximum Amount"
-                    tooltip="Set the max investment amount for leads in this category."
-                  >
-                    <template #suffix>
-                      <div
-                        class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
-                      >
-                        <span>USD</span>
-                      </div>
-                    </template>
-                  </x-input>
+                <div
+                  v-show="!collapsedContents.has(bracketIndex)"
+                  class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
+                  <div>
+                    <x-input
+                      v-model="bracket.contents_min"
+                      class="!mb-0 mt-1"
+                      required
+                      :disabled="viewMode"
+                      @input="handleInput($event, bracket, 'contents_min')"
+                      @blur="handleBlur($event, bracket, 'contents_min')"
+                      label="Minimum Amount"
+                      tooltip="Set the minimum contents value for this bracket."
+                    >
+                      <template #suffix>
+                        <div
+                          class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                        >
+                          <span>AED</span>
+                        </div>
+                      </template>
+                    </x-input>
+                  </div>
+                  <div>
+                    <x-input
+                      v-model="bracket.contents_max"
+                      class="!mb-0 mt-1"
+                      required
+                      :disabled="viewMode"
+                      @input="handleInput($event, bracket, 'contents_max')"
+                      @blur="handleBlur($event, bracket, 'contents_max')"
+                      label="Maximum Amount"
+                      tooltip="Set the maximum contents value for this bracket."
+                    >
+                      <template #suffix>
+                        <div
+                          class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                        >
+                          <span>AED</span>
+                        </div>
+                      </template>
+                    </x-input>
+                  </div>
                 </div>
               </div>
 
+              <!-- Building Value Section -->
+              <div class="pb-4">
+                <div class="flex items-center space-x-2 mb-3">
+                  <CollapseIcon
+                    class="cursor-pointer"
+                    :is-expanded="!collapsedBuilding.has(bracketIndex)"
+                    size="sm"
+                    @click="toggleBuilding(bracketIndex)"
+                  />
+                  <h5 class="text-sm font-medium text-gray-700">
+                    Building Value
+                  </h5>
+                </div>
+                <div
+                  v-show="!collapsedBuilding.has(bracketIndex)"
+                  class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
+                  <div>
+                    <x-input
+                      v-model="bracket.building_min"
+                      class="!mb-0 mt-1"
+                      required
+                      :disabled="viewMode"
+                      @input="handleInput($event, bracket, 'building_min')"
+                      @blur="handleBlur($event, bracket, 'building_min')"
+                      label="Minimum Amount"
+                      tooltip="Set the minimum building value for this bracket."
+                    >
+                      <template #suffix>
+                        <div
+                          class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                        >
+                          <span>AED</span>
+                        </div>
+                      </template>
+                    </x-input>
+                  </div>
+                  <div>
+                    <x-input
+                      v-model="bracket.building_max"
+                      class="!mb-0 mt-1"
+                      required
+                      :disabled="viewMode"
+                      @input="handleInput($event, bracket, 'building_max')"
+                      @blur="handleBlur($event, bracket, 'building_max')"
+                      label="Maximum Amount"
+                      tooltip="Set the maximum building value for this bracket."
+                    >
+                      <template #suffix>
+                        <div
+                          class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                        >
+                          <span>AED</span>
+                        </div>
+                      </template>
+                    </x-input>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Advisor Allocation Profiles -->
               <div class="border-t pt-4">
                 <div class="flex items-center justify-between mb-4">
                   <h5 class="text-sm font-medium text-gray-700">
@@ -358,8 +442,8 @@ onMounted(() => {
                     </x-button>
                     <template #tooltip>
                       <span class="custom-tooltip-content">
-                        Set who gets the lead – based on amount and customer
-                        nationality.
+                        Set who gets the lead – based on property values and
+                        location.
                       </span>
                     </template>
                   </x-tooltip>
@@ -472,28 +556,28 @@ onMounted(() => {
                       </div>
                       <div>
                         <x-select
-                          v-model="profile.nationalityIds"
-                          :options="nationalityOptions"
-                          placeholder="Select nationalities..."
+                          v-model="profile.locations"
+                          :options="locationOptions"
+                          placeholder="Select locations..."
                           multiple
                           filterable
                           :disabled="viewMode"
                           class="w-full min-h-[40px]"
-                          label="Nationalities"
+                          label="Locations"
                           required
-                          tooltip="Select the nationalities of customers this profile applies to."
+                          tooltip="Select one or more locations where this profile will apply."
                         >
                           <template
                             #content-footer
-                            v-if="nationalityOptions.length > 0 && !viewMode"
+                            v-if="locationOptions.length > 0 && !viewMode"
                           >
                             <ui-select-actions
                               @select-all="
-                                profile.nationalityIds = nationalityOptions.map(
+                                profile.locations = locationOptions.map(
                                   item => item.value,
                                 )
                               "
-                              @clear="profile.nationalityIds = []"
+                              @clear="profile.locations = []"
                             />
                           </template>
                         </x-select>
