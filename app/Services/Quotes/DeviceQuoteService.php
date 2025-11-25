@@ -171,6 +171,7 @@ class DeviceQuoteService extends BaseQuoteService
         $plansApiPassword = config('constants.KEN_API_PWD');
         $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
+
         $plansDataArr = [
             'quoteUID' => $id,
             'lang' => 'en',
@@ -283,19 +284,23 @@ class DeviceQuoteService extends BaseQuoteService
     {
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->baseQuery()->where('uuid', $uuid)->firstOrFail();
-
+           
             $quoteData = Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id',
+                'first_name', 'last_name', 'email', 'mobile_no',
             ]);
 
             $quoteData['updated_by_id'] = Auth::id();
             $quote->update($quoteData);
-
-            $quote->deviceQuote()->updateOrCreate(
-                ['personal_quote_id' => $quote->id],
-                Arr::only($data, ['emirate_of_registration_id'])
-            );
-
+           
+            if (!empty($quote->deviceQuote)) {
+                 // Combine month and year into purchase_date in Y-m format
+                $purchaseDate = sprintf('%04d-%02d', $data['year_of_purchase'], $data['month_of_purchase']);
+                $quote->deviceQuote->purchase_date = $purchaseDate . '-01';
+                $quote->deviceQuote->model_id = $data['model_id'];
+                $quote->deviceQuote->make_id = $data['make_id'];
+                $quote->deviceQuote->imei = $data['imei'];
+                $quote->deviceQuote->save();
+            }
             return $quote;
         });
     }

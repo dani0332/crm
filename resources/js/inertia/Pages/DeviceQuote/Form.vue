@@ -18,19 +18,6 @@ const mobileBrands = computed(() => {
   })) || [];
 });
 
-const mobileModels = computed(() => {
-  return props.lookUpData?.mobileModels?.map(item => ({
-    value: item.id,
-    label: item.text,
-  })) || [];
-});
-
-const emiratesOfResidence = computed(() => {
-  return props.lookUpData?.emiratesOfResidence?.map(item => ({
-    value: item.id,
-    label: item.text,
-  })) || [];
-});
 
 // Generate year options (current year and past years)
 const currentYear = new Date().getFullYear();
@@ -44,7 +31,6 @@ const yearOptions = computed(() => {
 
 const deviceMakesList = computed(() => {
   return props.deviceMakes.map(item => {
-    console.log("item",item);
     return {
       value: item.id,
       label: item.text,
@@ -57,17 +43,11 @@ const deviceMakesList = computed(() => {
 });
 
 const selectedDeviceMake = computed(() => {
-  // console.log("quoteForm",quoteForm.make_id);
-  // console.log("deviceMakesList",deviceMakesList);
-  // console.log(quoteForm.value.make_id ? true : false);
   if (!quoteForm.make_id) {
     return [];
   }
-  console.log("deviceMakesList.value.find(item => item.value === quoteForm.make_id)?.models",deviceMakesList.value.find(item => item.value === quoteForm.make_id)?.models);
   return deviceMakesList.value.find(item => item.value === quoteForm.make_id)?.models || [];
-  console.log("selectedDeviceMake",selectedDeviceMake.value);
 });
-// console.log("selectedDeviceMake",selectedDeviceMake.value);
 
 // Generate month options
 const monthOptions = computed(() => {
@@ -92,12 +72,15 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
-  month_of_purchase: props.quote?.month_of_purchase || '',
-  year_of_purchase: props.quote?.year_of_purchase || '',
+  month_of_purchase: props.quote?.device_quote?.purchase_date ? String(new Date(props.quote?.device_quote?.purchase_date).getMonth() + 1).padStart(2, '0') : '',
+  year_of_purchase: props.quote?.device_quote?.purchase_date
+    ? Number(new Date(props.quote.device_quote.purchase_date).getFullYear())
+    : '',
   make_id: props.quote?.device_quote?.make_id || '',
   model_id: props.quote?.device_quote?.model_id || '',
   imei: props.quote?.device_quote?.imei || '',
 });
+
 
 const { isRequired, isEmail, isMobileNo, isValidName } = useRules();
 

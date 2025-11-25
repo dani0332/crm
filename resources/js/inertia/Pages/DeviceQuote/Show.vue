@@ -735,6 +735,63 @@ const copyLink = () => {
                 <dt class="font-medium">TYPE OF INSURANCE</dt>
                 <dd>Device</dd>
               </div>
+
+              <!-- New fields for device quote details -->
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="quote?.device_quote"
+              >
+                <dt class="font-medium">MONTH OF PURCHASE</dt>
+                <dd>
+                  {{
+                    quote.device_quote.purchase_date
+                      ? new Date(quote.device_quote.purchase_date).toLocaleString('default', { month: 'long' })
+                      : 'N/A'
+                  }}
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="quote?.device_quote"
+              >
+                <dt class="font-medium">YEAR OF PURCHASE</dt>
+                <dd>
+                  {{
+                    quote.device_quote.purchase_date
+                      ? new Date(quote.device_quote.purchase_date).getFullYear()
+                      : 'N/A'
+                  }}
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="quote?.device_quote?.make"
+              >
+                <dt class="font-medium">DEVICE MAKE</dt>
+                <dd>
+                  {{ quote.device_quote.make.name ?? 'N/A' }}
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="quote?.device_quote?.model"
+              >
+                <dt class="font-medium">DEVICE MODEL</dt>
+                <dd>
+                  {{ quote.device_quote.model.name ?? 'N/A' }}
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="quote?.device_quote"
+              >
+                <dt class="font-medium">IMEI NUMBER</dt>
+                <dd>
+                  {{ quote.device_quote.imei ?? 'N/A' }}
+                </dd>
+              </div>
+              <!-- End new fields -->
+
             </dl>
           </div>
 
