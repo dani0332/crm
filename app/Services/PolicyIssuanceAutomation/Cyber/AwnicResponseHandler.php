@@ -29,6 +29,9 @@ class AwnicResponseHandler
             'quote_status_id' => QuoteStatusEnum::PolicyIssued,
             'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
             'quote_status_date' => now(),
+            'awni_drcr_doc_id' => $issuePolicyResult?->policyInfo?->drcrDocId,
+            'awni_tax_invoice_doc_id' => $issuePolicyResult?->policyInfo?->taxInvoiceDocId,
+            'awni_policy_doc_id' => $issuePolicyResult?->policyInfo?->policyDocId,
         ]);
     }
 
@@ -41,11 +44,6 @@ class AwnicResponseHandler
      */
     public function updateCyberQuoteFromIssuePolicyResponse($cyberQuote, $issuePolicyResult): void
     {
-        $cyberQuote->update([
-            'awni_drcr_doc_id' => $issuePolicyResult?->policyInfo?->drcrDocId,
-            'awni_tax_invoice_doc_id' => $issuePolicyResult?->policyInfo?->taxInvoiceDocId,
-            'awni_policy_doc_id' => $issuePolicyResult?->policyInfo?->policyDocId,
-        ]);
     }
 
     /**
@@ -65,7 +63,7 @@ class AwnicResponseHandler
             'insurer_tax_number' => $issuePolicyResult?->policyInfo?->invoiceNo ?? null,
             'insurer_invoice_date' => $issuePolicyResult?->policyInfo?->policyIssuedDate ?? null,
             //TODO : Remove time stamp and use creditNoteNo if available
-            'insurer_commmission_invoice_number' => $issuePolicyResult?->policyInfo?->invoiceNo.'-'.now()->format('YmdHis') ?? null,
+            'insurer_commmission_invoice_number' => $issuePolicyResult?->policyInfo?->creditNoteNo ?? null,
         ]);
     }
 
