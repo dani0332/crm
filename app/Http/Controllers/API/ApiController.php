@@ -24,6 +24,7 @@ use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
+use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
@@ -32,6 +33,7 @@ use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\UpdateCustomerRepliedRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
+use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Jobs\RunCQFJobs;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
@@ -47,6 +49,7 @@ use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\Logger\LoggerService;
+use App\Services\MetLife\MetLifeApiService;
 use App\Services\NotificationService;
 use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -636,6 +639,46 @@ class ApiController extends Controller
                 'message' => 'An error occurred while updating customer replied status',
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function lifeSyncHealthQuestionnaire(LifeSyncHealthQuestionnaireRequest $request)
+    {
+        $metLifeApiService = new MetLifeApiService;
+
+        if (! $metLifeApiService->isMetLifeEnabled()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'MetLife feature is not enabled right now',
+            ], 403);
+        }
+
+        $validatedData = $request->validated();
+
+        LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($validatedData['quote_uuid']));
+        LoggerService::info(self::class.': Received request to sync Health Questionnaire data');
+
+        try {
+            LifeSyncHealthQuestionnaireJob::dispatch($validatedData);
+
+            LoggerService::info(self::class.': Health Questionnaire sync job dispatched');
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Health Questionnaire sync job has been queued.',
+                'quote_uuid' => $validatedData['quote_uuid'],
+            ], 202);
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': Health Questionnaire sync failed', extra: [
+                'request' => $validatedData,
+            ], exception: $e);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while syncing Health Questionnaire data.',
+                'error_details' => $e->getMessage(),
+                'quote_uuid' => $validatedData['quote_uuid'],
+            ], 500);
         }
     }
 }
