@@ -180,7 +180,6 @@ class DeviceQuoteService extends BaseQuoteService
         ];
 
         $client = new \GuzzleHttp\Client;
-
         try {
             $kenRequest = $client->post(
                 $plansApiEndPoint,

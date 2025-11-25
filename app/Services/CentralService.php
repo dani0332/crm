@@ -79,6 +79,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Services\Quotes\DeviceQuoteService;
 
 class CentralService extends BaseService
 {
@@ -97,6 +98,7 @@ class CentralService extends BaseService
             quoteTypeCode::Pet,
             quoteTypeCode::Cycle,
             quoteTypeCode::SAVINGS,
+            quoteTypeCode::Device,
         ];
 
         if (strtolower($quoteType) == strtolower(quoteTypeCode::Business)) {
@@ -337,6 +339,8 @@ class CentralService extends BaseService
                 return app(HomeQuoteService::class)->getQuotePlans($id, ['getLatestRating' => $getLatestRating]);
             case quoteTypeCode::SAVINGS:
                 return app(SavingsQuoteService::class)->getAvailablePlans($id);
+            case quoteTypeCode::Device:
+                return app(DeviceQuoteService::class)->getAvailablePlans($id);
             default:
                 return [];
         }
