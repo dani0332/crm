@@ -23,33 +23,13 @@ class ActivityLogService extends BaseService
         $query = ActivityLog::with(['causer:id,name,email', 'subject'])
             ->orderBy('created_at', 'desc');
 
-        // Filter by user (causer)
+        // Filter by user (causer) - required
         if (!empty($filters['user_id'])) {
             $query->where('causer_id', $filters['user_id'])
                 ->where('causer_type', User::class);
         }
 
-        // Filter by log name
-        if (!empty($filters['log_name'])) {
-            $query->where('log_name', $filters['log_name']);
-        }
-
-        // Filter by feature
-        if (!empty($filters['feature'])) {
-            $query->where('feature', $filters['feature']);
-        }
-
-        // Filter by event
-        if (!empty($filters['event'])) {
-            $query->where('event', $filters['event']);
-        }
-
-        // Filter by subject type
-        if (!empty($filters['subject_type'])) {
-            $query->where('subject_type', $filters['subject_type']);
-        }
-
-        // Filter by date range
+        // Filter by date range - required
         if (!empty($filters['date_from'])) {
             $dateFrom = Carbon::parse($filters['date_from'])->startOfDay();
             $query->where('created_at', '>=', $dateFrom);
@@ -58,11 +38,6 @@ class ActivityLogService extends BaseService
         if (!empty($filters['date_to'])) {
             $dateTo = Carbon::parse($filters['date_to'])->endOfDay();
             $query->where('created_at', '<=', $dateTo);
-        }
-
-        // Filter by code
-        if (!empty($filters['code'])) {
-            $query->where('code', $filters['code']);
         }
 
         return $query->paginate($perPage)->withQueryString();
@@ -141,21 +116,13 @@ class ActivityLogService extends BaseService
     }
 
     /**
-     * Get users who have activity logs
+     * Get all users
      *
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function getUsersWithLogs()
+    public function getAllUsers()
     {
-        $userIds = ActivityLog::select('causer_id')
-            ->where('causer_type', User::class)
-            ->whereNotNull('causer_id')
-            ->distinct()
-            ->pluck('causer_id')
-            ->toArray();
-
         return User::select('id', 'name', 'email')
-            ->whereIn('id', $userIds)
             ->orderBy('name')
             ->get();
     }

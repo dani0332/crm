@@ -29,47 +29,30 @@ class ActivityLogController extends Controller
     {
         $filters = [
             'user_id' => $request->get('user_id'),
-            'log_name' => $request->get('log_name'),
-            'feature' => $request->get('feature'),
-            'event' => $request->get('event'),
-            'subject_type' => $request->get('subject_type'),
             'date_from' => $request->get('date_from'),
             'date_to' => $request->get('date_to'),
-            'code' => $request->get('code'),
         ];
 
         // Remove empty filters
         $filters = array_filter($filters, fn($value) => !empty($value));
 
-        // Only fetch activity logs if filters are applied
+        // Only fetch activity logs if all required filters are applied
         $activityLogs = null;
-        if (!empty($filters)) {
+        if (!empty($filters['user_id']) && !empty($filters['date_from']) && !empty($filters['date_to'])) {
             $perPage = (int) $request->get('per_page', 20);
             $perPage = min(max($perPage, 10), 100); // Limit between 10 and 100
             $activityLogs = $this->activityLogService->getActivityLogs($filters, $perPage);
         }
-        $users = $this->activityLogService->getUsersWithLogs();
-        $logNames = $this->activityLogService->getUniqueLogNames();
-        $features = $this->activityLogService->getUniqueFeatures();
-        $events = $this->activityLogService->getUniqueEvents();
-        $subjectTypes = $this->activityLogService->getUniqueSubjectTypes();
+        
+        $users = $this->activityLogService->getAllUsers();
 
         return Inertia::render('Admin/ActivityLogs/Index', [
             'activityLogs' => $activityLogs,
             'users' => $users,
-            'logNames' => $logNames,
-            'features' => $features,
-            'events' => $events,
-            'subjectTypes' => $subjectTypes,
             'filters' => $request->only([
                 'user_id',
-                'log_name',
-                'feature',
-                'event',
-                'subject_type',
                 'date_from',
                 'date_to',
-                'code',
             ]),
         ]);
     }

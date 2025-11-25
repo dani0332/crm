@@ -2,26 +2,18 @@
 const props = defineProps({
   activityLogs: Object,
   users: Array,
-  logNames: Array,
-  features: Array,
-  events: Array,
-  subjectTypes: Array,
   filters: Object,
 });
 
 const page = usePage();
+const { isRequired } = useRules();
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
 const filters = reactive({
   user_id: props.filters?.user_id || '',
-  log_name: props.filters?.log_name || '',
-  feature: props.filters?.feature || '',
-  event: props.filters?.event || '',
-  subject_type: props.filters?.subject_type || '',
   date_from: props.filters?.date_from || '',
   date_to: props.filters?.date_to || '',
-  code: props.filters?.code || '',
   page: 1,
 });
 
@@ -36,14 +28,9 @@ const modals = reactive({
 const selectedLog = ref(null);
 
 const tableHeader = [
-  { text: 'ID', value: 'id', sortable: true },
   { text: 'USER', value: 'causer.name' },
-  { text: 'LOG NAME', value: 'log_name' },
-  { text: 'FEATURE', value: 'feature' },
   { text: 'EVENT', value: 'event' },
   { text: 'DESCRIPTION', value: 'description' },
-  { text: 'SUBJECT TYPE', value: 'subject_type' },
-  { text: 'SUBJECT ID', value: 'subject_id' },
   { text: 'CREATED AT', value: 'created_at', sortable: true },
   { text: 'ACTION', value: 'action' },
 ];
@@ -52,34 +39,6 @@ const userOptions = computed(() => {
   return props.users.map(user => ({
     label: `${user.name} (${user.email})`,
     value: user.id,
-  }));
-});
-
-const logNameOptions = computed(() => {
-  return props.logNames.map(name => ({
-    label: name,
-    value: name,
-  }));
-});
-
-const featureOptions = computed(() => {
-  return props.features.map(feature => ({
-    label: feature,
-    value: feature,
-  }));
-});
-
-const eventOptions = computed(() => {
-  return props.events.map(event => ({
-    label: event,
-    value: event,
-  }));
-});
-
-const subjectTypeOptions = computed(() => {
-  return props.subjectTypes.map(type => ({
-    label: type,
-    value: type,
   }));
 });
 
@@ -96,16 +55,14 @@ const getEventTagColor = event => {
 };
 
 const onReset = () => {
-  Object.keys(filters).forEach(key => {
-    if (key !== 'page') {
-      filters[key] = '';
-    }
-  });
+  filters.user_id = '';
+  filters.date_from = '';
+  filters.date_to = '';
   filters.page = 1;
 
   router.visit(route('admin.activity-logs.index'), {
     method: 'get',
-    data: { page: 1 },
+    data: {},
     preserveScroll: true,
     onBefore: () => (loader.table = true),
     onSuccess: () => (loader.table = false),
@@ -113,21 +70,24 @@ const onReset = () => {
 };
 
 const onSubmit = isValid => {
+  // Validate required fields
+  if (!filters.user_id || !filters.date_from || !filters.date_to) {
+    return;
+  }
+
   if (isValid) {
     filters.page = 1;
 
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' ||
-          filters[key] === null ||
-          filters[key] === undefined ||
-          (Array.isArray(filters[key]) && filters[key].length === 0)) &&
-        delete filters[key],
-    );
+    // Ensure all required filters are included
+    const searchFilters = {
+      user_id: filters.user_id,
+      date_from: filters.date_from,
+      date_to: filters.date_to,
+    };
 
     router.visit(route('admin.activity-logs.index'), {
       method: 'get',
-      data: filters,
+      data: searchFilters,
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -176,8 +136,6 @@ const closeDetailModal = () => {
   }, 300);
 };
 
-const updateFilter = (field, val) =>
-  (filters[field] = !val || filters[field] === val ? '' : val);
 
 const formatProperties = properties => {
   if (!properties) return null;
@@ -219,16 +177,7 @@ const formattedProperties = computed(() => {
 });
 
 const hasFiltersApplied = computed(() => {
-  return !!(
-    filters.user_id ||
-    filters.log_name ||
-    filters.feature ||
-    filters.event ||
-    filters.subject_type ||
-    filters.date_from ||
-    filters.date_to ||
-    filters.code
-  );
+  return !!(filters.user_id && filters.date_from && filters.date_to);
 });
 </script>
 
@@ -241,7 +190,7 @@ const hasFiltersApplied = computed(() => {
 
   <!-- Filters -->
   <x-form @submit="onSubmit" :auto-focus="false">
-    <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
       <x-select
         label="USER"
         :modelValue="filters.user_id"
@@ -249,55 +198,9 @@ const hasFiltersApplied = computed(() => {
         class="w-full"
         filterable
         placeholder="Select user"
-        clearable
-        @update:modelValue="val => updateFilter('user_id', val)"
-      />
-      <x-select
-        label="LOG NAME"
-        :modelValue="filters.log_name"
-        :options="logNameOptions"
-        class="w-full"
-        filterable
-        placeholder="Select log name"
-        clearable
-        @update:modelValue="val => updateFilter('log_name', val)"
-      />
-      <x-select
-        label="FEATURE"
-        :modelValue="filters.feature"
-        :options="featureOptions"
-        class="w-full"
-        filterable
-        placeholder="Select feature"
-        clearable
-        @update:modelValue="val => updateFilter('feature', val)"
-      />
-      <x-select
-        label="EVENT"
-        :modelValue="filters.event"
-        :options="eventOptions"
-        class="w-full"
-        filterable
-        placeholder="Select event"
-        clearable
-        @update:modelValue="val => updateFilter('event', val)"
-      />
-      <x-select
-        label="SUBJECT TYPE"
-        :modelValue="filters.subject_type"
-        :options="subjectTypeOptions"
-        class="w-full"
-        filterable
-        placeholder="Select subject type"
-        clearable
-        @update:modelValue="val => updateFilter('subject_type', val)"
-      />
-      <x-input
-        v-model="filters.code"
-        type="text"
-        label="CODE"
-        placeholder="Enter code"
-        class="w-full"
+        required
+        :rules="[isRequired]"
+        @update:modelValue="val => (filters.user_id = val)"
       />
       <DatePicker
         v-model="filters.date_from"
@@ -306,6 +209,8 @@ const hasFiltersApplied = computed(() => {
         size="sm"
         model-type="yyyy-MM-dd"
         class="w-full"
+        required
+        :rules="[isRequired]"
       />
       <DatePicker
         v-model="filters.date_to"
@@ -314,6 +219,8 @@ const hasFiltersApplied = computed(() => {
         size="sm"
         model-type="yyyy-MM-dd"
         class="w-full"
+        required
+        :rules="[isRequired]"
       />
     </div>
     <div class="flex justify-end gap-3 mt-4">
@@ -333,9 +240,9 @@ const hasFiltersApplied = computed(() => {
       <div class="text-gray-500 text-lg mb-2">
         <i class="fa fa-filter text-4xl mb-4"></i>
       </div>
-      <p class="text-gray-700 font-medium mb-1">No filters applied</p>
+      <p class="text-gray-700 font-medium mb-1">Filters Required</p>
       <p class="text-gray-500 text-sm">
-        Please apply at least one filter to view activity logs.
+        Please select User, Date From, and Date To to view activity logs.
       </p>
     </div>
     <DataTable
@@ -364,12 +271,6 @@ const hasFiltersApplied = computed(() => {
         </div>
       </template>
 
-      <template #item-subject_type="{ subject_type }">
-        <div class="max-w-xs truncate" :title="subject_type">
-          {{ subject_type || '-' }}
-        </div>
-      </template>
-
       <template #item-created_at="{ created_at }">
         {{ dateFormat(created_at) }}
       </template>
@@ -381,7 +282,7 @@ const hasFiltersApplied = computed(() => {
           outlined
           @click.prevent="showDetailModal(item)"
         >
-          View Details
+          View
         </x-button>
       </template>
     </DataTable>
