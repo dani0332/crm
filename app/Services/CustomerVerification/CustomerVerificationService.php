@@ -702,11 +702,7 @@ class CustomerVerificationService
         CarQuote::where('id', $quoteId)->update($webFormData);
 
         // Verify OCR data (to update flag in database)
-        $quote = CarQuote::find($quoteId);
-        $this->carQuoteService->verifyOCRData($quote);
-
-        // Get latest plans
-        $this->carQuoteService->getQuotePlans($quote->uuid, getLatestRating: true);
+        $this->carQuoteService->verifyOCRData(CarQuote::find($quoteId));
     }
 
     private function getCustomerVerificationData(int $quoteId): ?CustomerVerificationDetail
