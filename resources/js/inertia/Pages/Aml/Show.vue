@@ -398,14 +398,16 @@ function fieldValidationsperson() {
         </template>
 
         <template #item-full_name="{ EntityDetails }">
-          {{ EntityDetails.Name.Full ?? '' }}
+          {{ EntityDetails.Name?.Full ?? '' }}
         </template>
 
         <template #item-date_of_birth="{ EntityDetails }">
           {{
-            EntityDetails.AdditionalInfo.filter(x => x.Type === 'DOB')
-              .map(dob => dob.Value)
-              .toString() ?? ''
+            EntityDetails.AdditionalInfo
+              ? EntityDetails.AdditionalInfo.filter(x => x.Type === 'DOB')
+                  .map(dob => dob.Value)
+                  .toString()
+              : ''
           }}
         </template>
 
@@ -415,9 +417,11 @@ function fieldValidationsperson() {
 
         <template #item-customer_id="{ EntityDetails }">
           {{
-            EntityDetails.IDs.filter(x => x.Type === 'ProprietaryUID')
-              .map(ProprietaryUID => ProprietaryUID.Number)
-              .toString() ?? ''
+            EntityDetails.IDs
+              ? EntityDetails.IDs.filter(x => x.Type === 'ProprietaryUID')
+                  .map(ProprietaryUID => ProprietaryUID.Number)
+                  .toString()
+              : ''
           }}
         </template>
 
@@ -448,6 +452,16 @@ function fieldValidationsperson() {
 
         <template #item-customer_type>
           {{ aml.search_type }}
+        </template>
+
+        <template #item-citizenship="{ EntityDetails }">
+          {{
+            EntityDetails.AdditionalInfo
+              ? EntityDetails.AdditionalInfo.filter(x => x.Type === 'Citizenship')
+                  .map(citizenship => citizenship.Value)
+                  .toString()
+              : ''
+          }}
         </template>
       </DataTable>
       <div v-if="amlResults.length" class="flex justify-end mb-4">
