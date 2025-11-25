@@ -457,7 +457,9 @@ function fieldValidationsperson() {
         <template #item-citizenship="{ EntityDetails }">
           {{
             EntityDetails.AdditionalInfo
-              ? EntityDetails.AdditionalInfo.filter(x => x.Type === 'Citizenship')
+              ? EntityDetails.AdditionalInfo.filter(
+                  x => x.Type === 'Citizenship',
+                )
                   .map(citizenship => citizenship.Value)
                   .toString()
               : ''
