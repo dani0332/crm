@@ -3,6 +3,7 @@
 namespace App\Services\OCR\Validators;
 
 use App\Enums\DocumentTypeCode;
+use App\Models\CarQuote;
 use App\Models\CustomerInsured;
 use App\Models\QuoteDocument;
 use App\Models\RegistrationCertificate;
@@ -63,6 +64,7 @@ class OCRDocumentValidator
     {
         $fieldsToVerify = self::FIELDS_TO_VERIFY['DRIVING_LICENSE_FIELDS'];
         $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $quoteId)
+            ->where('quoteable_type', CarQuote::class)
             ->select($fieldsToVerify)
             ->first();
 
@@ -80,6 +82,7 @@ class OCRDocumentValidator
     public function validateEIDFields(int $quoteId): bool
     {
         $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $quoteId)
+            ->where('quoteable_type', CarQuote::class)
             ->select('driver_gender')
             ->first();
 
@@ -118,10 +121,12 @@ class OCRDocumentValidator
     public function validateMulkiyaFields(int $quoteId): bool
     {
         $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $quoteId)
+            ->where('quoteable_type', CarQuote::class)
             ->select(self::FIELDS_TO_VERIFY['VEHICLE_DRIVER_DETAIL_FIELDS'])
             ->first();
 
         $registrationCertificate = RegistrationCertificate::where('certificatable_id', $quoteId)
+            ->where('certificatable_type', CarQuote::class)
             ->select(self::FIELDS_TO_VERIFY['REGISTRATION_CERTIFICATE_FIELDS'])
             ->first();
 
