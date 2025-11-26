@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\BranchEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
@@ -726,12 +727,11 @@ class SageApiService
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Payment Code: '.$payment->code.' - Capture payment process skip & proceeding with Policy Book process - Unpaid payment count: '.$unpaidPaymentCount.' - Is Insurer Payment: '.$isInsurerPayment);
         }
 
-        $isHealthAUHLead = $this->isHealthAUHLead($quoteType, $quote);
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote code: '.$quote->code.' - Is Health AUH Lead Check ', extra : [
-            'isHealthAUHLead' => $isHealthAUHLead,
-        ]);
-        if ($isHealthAUHLead) {
-
+        $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeId, $quote?->emirate_of_your_visa_id ?? null);
+        
+        if ($branch->id == BranchEnum::ABU_DHABI->value) {
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote code: '.$quote->code.' - Sage posting is not allowed for Abu Dhabi branch');
+            
             if (! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
                 LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
                 // dispath job to send email
@@ -751,7 +751,6 @@ class SageApiService
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ########## End of Policy Booked for : '.$quote->code.' ##########');
 
             return ['status' => true, 'message' => 'Policy is Booked'];
-
         }
 
         // Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
