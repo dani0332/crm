@@ -287,7 +287,7 @@ class EpEcbService extends EpBookingService
     private function getValidationRules(string $step): array
     {
         $documentTypeRule = implode(',', [QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY]);
-        $customerIdTypeRule = implode(',', ['EID']);
+        $customerIdTypeRule = implode(',', ['TL','EID']);
         $policySoldDateRules = 'required|date|date_equals:today';
         $documentUrlRules = 'required|url|active_url';
 
