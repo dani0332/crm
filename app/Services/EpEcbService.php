@@ -5,6 +5,7 @@ namespace App\Services;
 use App\DTO\EpBookingContext;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -1085,9 +1086,10 @@ class EpEcbService extends EpBookingService
         $latestInsuredData = $this->quote?->latestInsured;
         $insuredKyc = $latestInsuredData?->insuredKyc;
 
-        $proceedWithTradeLicense = $insuredKyc?->id_type == 'tradeLicense' 
-            && $this->quote?->registration_type == CarRegistrationType::COMPANY 
-            && $this->quote?->vehicle_use == CarVehicleUse::PRIVATE;
+        $proceedWithTradeLicense = $this->quote?->registration_type == CarRegistrationType::COMPANY
+            && $this->quote?->vehicle_use == CarVehicleUse::PRIVATE
+            && $latestInsuredData?->customer_type == CustomerTypeEnum::Entity
+            && $insuredKyc?->id_type == 'tradeLicense';
 
         $customerIdType = $proceedWithTradeLicense ? 'TL' : 'EID';
         $customerIdNo = $customerIdType == 'TL' 
