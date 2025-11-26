@@ -78,7 +78,7 @@ class CyberQuoteService extends BaseQuoteService
 
     public function getOne(string $uuid, $allDetails = false)
     {
-        return $this->baseQuery()
+        $quote = $this->baseQuery()
             ->with('cyberQuote')
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
@@ -136,6 +136,18 @@ class CyberQuoteService extends BaseQuoteService
             ");
             })
             ->where('uuid', $uuid)->firstOrFail();
+
+        $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
+
+        $data = ! empty($quote) ? $quote->toArray() : [];
+        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
+        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        if (isset($data['latestInsured'])) {
+            $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;
+        }
+
+        return $quote;
     }
 
     public function getShowData(string $uuid)
