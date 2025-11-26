@@ -729,7 +729,7 @@ class SageApiService
 
         $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeId, $quote?->emirate_of_your_visa_id ?? null);
         
-        if ($branch->id == BranchEnum::ABU_DHABI->value) {
+        if ($branch?->id == BranchEnum::ABU_DHABI->value) {
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote code: '.$quote->code.' - Sage posting is not allowed for Abu Dhabi branch');
             
             if (! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
