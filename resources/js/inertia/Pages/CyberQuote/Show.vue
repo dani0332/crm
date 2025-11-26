@@ -11,6 +11,7 @@ import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptan
 import OcrLogs from '../../Components/OcrLogs.vue';
 
 const props = defineProps({
+  insuredDetails: Array,
   quote: Object,
   documentTypes: Object,
   noteDocumentType: Object,
@@ -147,11 +148,11 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer.insured_first_name || '',
-  insured_last_name: page.props.quote?.customer.insured_last_name || '',
-  emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
+  insured_first_name: page.props.insuredDetails?.first_name || '',
+  insured_last_name: page.props.insuredDetails?.last_name || '',
+  emirates_id_number: page.props.insuredDetails?.id_number || null,
   emirates_id_expiry_date:
-    page.props.quote?.customer.emirates_id_expiry_date || null,
+    page.props.insuredDetails?.id_expiry_date || null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
