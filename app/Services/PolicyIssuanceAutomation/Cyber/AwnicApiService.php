@@ -86,7 +86,6 @@ class AwnicApiService
         ]);
 
         $this->responseHandler->updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult);
-        $this->responseHandler->updateCyberQuoteFromIssuePolicyResponse($quote->cyberQuote, $issuePolicyResult);
         $this->responseHandler->updatePaymentFromIssuePolicyResponse($quote->code, $issuePolicyResult);
         
         $response['status'] = true;
@@ -207,8 +206,7 @@ class AwnicApiService
 
         $uploadedDocumentsToIMCRM = collect();
 
-        $cyberQuote = $quote->cyberQuote;
-        foreach ($this->documentHandler->getDocTypeCodeForIMCRM($cyberQuote) as $i => $docId) {
+        foreach ($this->documentHandler->getDocTypeCodeForIMCRM($quote) as $imCrmDocKey => $docId) {
             $payload = $this->requestBuilder->buildDownloadDocumentPayload($docId);
 
             $downloadRequest = Awnic::post($endPoint, $payload, self::DOWNLOAD_DOCUMENT_RESPONSE);
@@ -216,10 +214,9 @@ class AwnicApiService
             app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $downloadRequest, Awnic::getBaseUrl() . $endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $downloadRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
             
             if(isset($downloadRequest['status'])) {
-                $docCode = $i;
+                $docCode = $imCrmDocKey;
 
                 $documentContent = $downloadRequest['data'];
-                // TODO: need to map document according to IMCRM cyber document types
                 if ($documentContent && isset($documentContent->documentContent, $documentContent->documentName)) {
                     $quoteDocument = $this->documentHandler->uploadAndAttachToQuoteDocuments($quote, $documentContent->documentContent, $docCode, $documentContent->documentName);
                 } else {

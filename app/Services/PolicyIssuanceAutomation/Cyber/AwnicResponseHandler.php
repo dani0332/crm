@@ -29,25 +29,9 @@ class AwnicResponseHandler
             'quote_status_id' => QuoteStatusEnum::PolicyIssued,
             'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
             'quote_status_date' => now(),
-            'awni_drcr_doc_id' => $issuePolicyResult?->policyInfo?->drcrDocId,
-            'awni_tax_invoice_doc_id' => $issuePolicyResult?->policyInfo?->taxInvoiceDocId,
-            'awni_policy_doc_id' => $issuePolicyResult?->policyInfo?->policyDocId,
-        ]);
-    }
-
-    /**
-     * Update cyber quote with document IDs from issue policy response
-     *
-     * @param mixed $cyberQuote
-     * @param \stdClass $issuePolicyResult
-     * @return void
-     */
-    public function updateCyberQuoteFromIssuePolicyResponse($cyberQuote, $issuePolicyResult): void
-    {
-        $cyberQuote->update([
-            'awni_drcr_doc_id' => $issuePolicyResult?->policyInfo?->drcrDocId,
-            'awni_tax_invoice_doc_id' => $issuePolicyResult?->policyInfo?->taxInvoiceDocId,
-            'awni_policy_doc_id' => $issuePolicyResult?->policyInfo?->policyDocId,
+            'insurer_debit_note_doc_id' => $issuePolicyResult?->policyInfo?->drcrDocId,
+            'insurer_tax_invoice_doc_id' => $issuePolicyResult?->policyInfo?->taxInvoiceDocId,
+            'insurer_policy_doc_id' => $issuePolicyResult?->policyInfo?->policyDocId,
         ]);
     }
 

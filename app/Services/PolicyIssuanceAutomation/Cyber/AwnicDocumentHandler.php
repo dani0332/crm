@@ -5,6 +5,7 @@ namespace App\Services\PolicyIssuanceAutomation\Cyber;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\CyberQuote;
+use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 
@@ -146,15 +147,15 @@ class AwnicDocumentHandler
     /**
      * Map document types to IMCRM document type codes
      *
-     * @param CyberQuote $cyberQuote
+     * @param PersonalQuote $quote
      * @return array
      */
-    public function getDocTypeCodeForIMCRM(CyberQuote $cyberQuote): array
+    public function getDocTypeCodeForIMCRM(PersonalQuote $quote): array
     {
         return [
-            DocumentTypeCode::CYBER_TAX_INVOICE => $cyberQuote->awni_tax_invoice_doc_id,
-            DocumentTypeCode::CYBER_TAX_INVOICE_RAISED_BY_BUYER => $cyberQuote->awni_drcr_doc_id,
-            DocumentTypeCode::CYBER_POLICY_SCHEDULE => $cyberQuote->awni_policy_doc_id,
+            DocumentTypeCode::CYBER_TAX_INVOICE => $quote->insurer_tax_invoice_doc_id,
+            DocumentTypeCode::CYBER_TAX_INVOICE_RAISED_BY_BUYER => $quote->insurer_debit_note_doc_id,
+            DocumentTypeCode::CYBER_POLICY_SCHEDULE => $quote->insurer_policy_doc_id,
         ];
     }
 }
