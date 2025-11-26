@@ -371,11 +371,13 @@ const handleSubmit = isValid => {
 };
 
 const onSubmit = () => {
-  const processedRiders = ridersData.value.map(rider => ({
-    ...rider,
-    price: Number(parseFloat(rider.price).toFixed(2)) || 0,
-    coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
-  }));
+  const processedRiders = isMetLife.value
+    ? []
+    : ridersData.value.map(rider => ({
+        ...rider,
+        price: Number(parseFloat(rider.price).toFixed(2)) || 0,
+        coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
+      }));
 
   createForm.loading = true;
   createForm.sumAssured =
