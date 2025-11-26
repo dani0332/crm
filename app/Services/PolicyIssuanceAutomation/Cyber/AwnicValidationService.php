@@ -81,9 +81,9 @@ class AwnicValidationService
      */
     public function validateRequiredData($quote): array
     {
-        $customer = $quote->customer;
+        $customer = $quote->customer ?? null;
         
-        if (!$quote->payments || !$quote->cyberPlanDetail || !$customer->emirates_id_number) {
+        if (!$quote->payments || !$quote->cyberPlanDetail || (!$customer?->emirates_id_number && $customer !== null)) {
             LoggerService::error('Missing required data', extra: [
                 'class' => $this->className,
                 'function' => __FUNCTION__,

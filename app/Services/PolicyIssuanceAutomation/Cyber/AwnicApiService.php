@@ -179,7 +179,6 @@ class AwnicApiService
         $response['status'] = true;
         $response['message'] = 'Documents uploaded successfully';
         $response['completed_step'] = self::UPLOAD_DOCUMENTS;
-        $response['data'] = $uploadResponse;
 
         return $response;
     }
@@ -243,7 +242,7 @@ class AwnicApiService
             'failed_uploads' => $uploadedDocumentsToIMCRM->where('status', false)->count(),
         ]);
 
-        if (! $allDocsDownload || empty($uploadedDocumentsToIMCRM)) {
+        if (! $allDocsDownload || $uploadedDocumentsToIMCRM->isEmpty()) {
             $docsUploadToIMCRMFailed = $uploadedDocumentsToIMCRM->where('status', false)->pluck('name')->toArray();
             LoggerService::error('Failed to fetch/upload all documents', extra: [
                 'class' => $this->className,

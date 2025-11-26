@@ -99,7 +99,7 @@ class AwnicDocumentHandler
         $documents = collect($quote->documents ?? []);
         $documents = $documents->where('document_type_code', $documentTypeCode);
 
-        if (! $documents) {
+        if ($documents->isEmpty() || $documents->count() === 0) {
             return null;
         }
 
