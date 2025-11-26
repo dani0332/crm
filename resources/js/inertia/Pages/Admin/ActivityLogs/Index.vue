@@ -222,13 +222,13 @@ const hasFiltersApplied = computed(() => {
       </template>
 
       <template #item-event="{ event }">
-        <x-tag size="sm" :color="getEventTagColor(event)">
+        <x-tag size="xs" :color="getEventTagColor(event)">
           {{ event ? event.toUpperCase() : '-' }}
         </x-tag>
       </template>
 
       <template #item-description="{ description }">
-        <div class="max-w-md truncate" :title="description">
+        <div :title="description">
           {{ description || '-' }}
         </div>
       </template>
