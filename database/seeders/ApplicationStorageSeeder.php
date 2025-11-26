@@ -69,6 +69,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedEpEcbConfigurations();
         $this->seedUnavailableTimeThreshold();
         $this->sendUpdateEmailBirdFlow();
+        $this->seedEnableMetLife();
     }
 
     private function livaCarAutomationSeed()
@@ -1041,6 +1042,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::EP_ECB_POLICY_DURATION],
             [
                 'value' => 'Your coverage lasts for 13 months or until the expiry of your motor insurance policy, whichever comes first.',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedEnableMetLife()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_METLIFE],
+            [
+                'value' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
