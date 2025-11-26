@@ -174,13 +174,12 @@ class BuyLeadRequest extends Model
 
     public static function getCatAUserIds(bool $isSIC)
     {
-        return self::bySegment($isSIC)->catA()->active()->unfulfilled()->pluck('user_id')->toArray();
+        return self::catA()->active()->unfulfilled()->pluck('user_id')->toArray();
     }
 
     public static function getCatARequest(QuoteTypes $quoteType, bool $isSIC, int $userId): ?BuyLeadRequest
     {
-        return self::bySegment($isSIC)
-            ->catA()
+        return self::catA()
             ->where('quote_type_id', $quoteType->id())
             ->where('user_id', $userId)
             ->active()
