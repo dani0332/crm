@@ -267,9 +267,6 @@ const filteredHeaders = computed(() => {
   });
 });
 
-const getDetailPageRoute = (uuid, quote_type_id) =>
-  useGetShowPageRoute(uuid, quote_type_id, null);
-
 const showEpPaymentStatusFilter = (function () {
   const reports = [
     page.props.ep_enums.ECB,
@@ -507,18 +504,18 @@ const showEpSageStatusFilter = (function () {
       hide-rows-per-page
       hide-footer
     >
-      <template #item-id="item">
+      <template #item-id="{ id }">
         <Link
-          :href="getDetailPageRoute(item.quote_request.uuid,item.quote_type_id)"
+          :href="route('embedded-products.edit', id)"
           class="text-primary-500 hover:underline"
         >
-         {{ item.ref_id }}
+          {{ id }}
         </Link>
       </template>
 
       <template
         #item-ref_id="item"
-        v-if="embeddedProduct.detail.short_code === ep_enums.COURIER"
+        v-if="[ep_enums.COURIER,ep_enums.MDX,ep_enums.ECB].includes(embeddedProduct.detail.short_code)"
       >
         <SanitizeHtml
           v-if="item.quote_request"
