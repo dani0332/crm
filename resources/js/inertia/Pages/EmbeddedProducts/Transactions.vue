@@ -515,7 +515,7 @@ const showEpSageStatusFilter = (function () {
 
       <template
         #item-ref_id="item"
-        v-if="[ep_enums.COURIER,ep_enums.MDX,ep_enums.ECB].includes(embeddedProduct.detail.short_code)"
+        v-if="[ep_enums.ECB,ep_enums.MDX,ep_enums.COURIER].includes(embeddedProduct.detail.short_code)"
       >
         <SanitizeHtml
           v-if="item.quote_request"
