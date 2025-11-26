@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Quotes;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
@@ -37,6 +38,7 @@ class CyberQuoteService extends BaseQuoteService
             'renewalBatchModel',
             'nationality',
             'insuranceProviderPlan',
+            'cyberQuote.coverage',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -50,6 +52,11 @@ class CyberQuoteService extends BaseQuoteService
             ->filterIn('insurer_aml_status')
             ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
+            ->when(request()->filled('coverage_up_to'), function ($q) {
+                $q->whereHas('cyberQuote', function ($subQuery) {
+                    $subQuery->where('coverage_id', request('coverage_up_to'));
+                });
+            })
             ->when(request()->filled('insurer_tax_invoice_number'), function ($q) {
                 $q->whereHas('payments', function ($subQuery) {
                     $subQuery->where('insurer_tax_number', request('insurer_tax_invoice_number'));
@@ -73,7 +80,7 @@ class CyberQuoteService extends BaseQuoteService
 
     public function getOne(string $uuid, $allDetails = false)
     {
-        return $this->baseQuery()
+        $quote = $this->baseQuery()
             ->with('cyberQuote')
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
@@ -93,6 +100,7 @@ class CyberQuoteService extends BaseQuoteService
                     'insuranceProvider:id,text,code',
                     'insuranceProviderPlan',
                     'insuranceProvider',
+                    'cyberQuote.coverage',
                     'payments' => function ($q) {
                         $q->with([
                             'paymentStatus',
@@ -130,6 +138,18 @@ class CyberQuoteService extends BaseQuoteService
             ");
             })
             ->where('uuid', $uuid)->firstOrFail();
+
+        $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
+
+        $data = ! empty($quote) ? $quote->toArray() : [];
+        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
+        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        if (isset($data['latestInsured'])) {
+            $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;
+        }
+
+        return $quote;
     }
 
     public function getShowData(string $uuid)
@@ -139,9 +159,12 @@ class CyberQuoteService extends BaseQuoteService
 
         $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::CYBER_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::CYBER) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));
 
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
+
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::CyberManager),
             'insuredDetails' => $this->customerInsuredService->getInsuredDetails($quote->id),
+            'amlStatusName' => $amlStatusName,
             ...$data,
         ];
     }

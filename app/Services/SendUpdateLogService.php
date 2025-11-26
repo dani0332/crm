@@ -52,6 +52,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\Quotes\CyberQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -674,7 +675,7 @@ class SendUpdateLogService
 
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
-            $quote = $repository::getBy('uuid', $quoteUuid);
+            $quote = $quoteType !== QuoteTypes::CYBER->value ? $repository::getBy('uuid', $quoteUuid) : app(CyberQuoteService::class)->getOne($quoteUuid);
             $payments = $quote?->payments ?? null;
             if ($payments === null || $payments->isEmpty()) {
                 $quote = PersonalQuoteRepository::getBy('uuid', $quoteUuid);
@@ -837,7 +838,7 @@ class SendUpdateLogService
 
     public function updatePaymentDetails($payment, $sendUpdateLog, $ignoreDiscount = false, $insurerDetails = null)
     {
-        LoggerService::info('fn:updatePaymentDetails - SendUpdateLogService');
+        LoggerService::info('Book Update - Update Payment Details');
         try {
             if ($insurerDetails !== null) {
                 $sendUpdatePaymentDetails = [
@@ -865,10 +866,10 @@ class SendUpdateLogService
             LoggerService::info('fn:updatePaymentDetails - Updating Payment Details - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid, extra: ['Payment Details' => json_encode($sendUpdatePaymentDetails)]);
             $payment->update($sendUpdatePaymentDetails);
 
-            info('Book Update - Payment Details Updated - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('Book Update - Payment Details Updated');
 
         } catch (\Exception $exception) {
-            logger()->error('Book Update - Error while updating details in Payment - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
+            logger()->warning('Book Update - Error while updating details in Payment - Exception: '.$exception->getMessage());
 
             return false;
         }
@@ -1073,6 +1074,7 @@ class SendUpdateLogService
             ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD ? 21 : 13)
         );
         $sageRequestPayload->quoteTypeId = $sendUpdateLog->quote_type_id;
+        $sageRequestPayload->quoteType = $sendUpdateRequest->quoteType;
         $sageRequestPayload->customer_id = $quoteDetails->customer_id;
         $commissionChargeIds = $preparedDetailsForEndorsement['splitPayments']->flatMap(function ($paymentSplit) {
             return $paymentSplit->paymentCharges()?->where('action_type', PaymentChargesEnum::ACTION_TYPE_CHARGE->value)

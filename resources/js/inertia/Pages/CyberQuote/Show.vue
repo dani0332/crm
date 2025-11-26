@@ -55,6 +55,7 @@ const props = defineProps({
   paymentDocument: Array,
   emailStatuses: Array,
   isFuncsEnabled: Object,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -153,6 +154,7 @@ const customerProfileForm = useForm({
   emirates_id_number: page.props.insuredDetails?.id_number || null,
   emirates_id_expiry_date:
     page.props.insuredDetails?.id_expiry_date || null,
+  emirates_id_issuing_date: page.props.insuredDetails?.id_issuance_date || null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
@@ -351,7 +353,7 @@ const selectedProviderPlan = ref({
   id: page.props?.quote?.plan_id,
   planName: page.props?.quote?.plans?.name,
   providerName: page.props?.quote?.plans?.providerName,
-  premium: page.props?.quote?.plans?.premium,
+  premium: page.props?.quote?.plans?.premium || page.props?.quote?.premium,
 });
 
 const handlePlanSelected = plan => {
@@ -376,13 +378,15 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
+      let plansData = [];
       if (typeof res.data === 'string') {
         availablePlansTable.data = res.data;
       } else if (
         res.data?.quotes?.plans &&
         Array.isArray(res.data.quotes.plans)
       ) {
-        availablePlansTable.data = res.data.quotes.plans.map(plan => ({
+        plansData = res.data.quotes.plans;
+        availablePlansTable.data = plansData.map(plan => ({
           ...plan,
           isManualUpdate: plan.isManualUpdate ?? false,
           isDisabled: plan.isDisabled ?? false,
@@ -395,7 +399,8 @@ const onLoadAvailablePlansData = async () => {
           ).toFixed(2),
         }));
       } else if (Array.isArray(res.data) && res.data.length > 0) {
-        availablePlansTable.data = res.data.map(plan => ({
+        plansData = res.data;
+        availablePlansTable.data = plansData.map(plan => ({
           ...plan,
           isManualUpdate: plan.isManualUpdate ?? false,
           isDisabled: plan.isDisabled ?? false,
@@ -409,6 +414,20 @@ const onLoadAvailablePlansData = async () => {
         }));
       } else {
         availablePlansTable.data = [];
+      }
+
+      if (plansData.length > 0 && page.props?.quote?.plan_id) {
+        const selectedPlan = plansData.find(
+          plan => plan.id == page.props.quote.plan_id,
+        );
+        if (selectedPlan) {
+          selectedProviderPlan.value.id = selectedPlan.id;
+          selectedProviderPlan.value.planName =
+            selectedPlan.planName || selectedPlan.name;
+          selectedProviderPlan.value.providerName = selectedPlan.providerName;
+          selectedProviderPlan.value.premium =
+            selectedPlan.premium || page.props?.quote?.premium;
+        }
       }
     })
     .catch(err => {
@@ -656,96 +675,68 @@ const copyLink = () => {
                 <dd>{{ quote.id }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <x-tooltip placement="bottom">
-                  <label
-                    class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                  >
-                    Ref-ID
-                  </label>
-                  <template #tooltip> Reference ID </template>
-                </x-tooltip>
-                <div>{{ quote.code }}</div>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote?.advisor?.name }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CREATED DATE</dt>
-                <dd>{{ quote.created_at }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
-                <dd>
-                  {{ quote.quote_detail?.next_followup_date }}
-                </dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">LOST REASON</dt>
-                <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS ECOMMERCE</dt>
                 <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CYBER COVERAGE UP TO</dt>
+                <dd>
+                  {{
+                    quote?.cyber_quote?.coverage
+                      ? '$ ' + quote.cyber_quote.coverage.text
+                      : '-'
+                  }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IM AML STATUS</dt>
+                <dd>{{ amlStatusName || '-' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>{{ quote?.insurer_aml_status || 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <div>
-                  <x-tooltip placement="bottom">
-                    <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                    >
-                      PARENT REF-ID
-                    </label>
-                    <template #tooltip> Parent Reference ID </template>
-                  </x-tooltip>
-                </div>
-                <div>
-                  <Link
-                    v-if="quote.parent_duplicate_quote_id"
-                    :href="
-                      getDetailPageRoute(
-                        linkedQuoteDetails.uuid,
-                        linkedQuoteDetails.quote_type_id,
-                      )
-                    "
-                    class="text-primary-500 hover:underline"
-                  >
-                    {{ quote.parent_duplicate_quote_id ?? '' }}
-                  </Link>
-                </div>
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ quote?.insurer_api_status || 'N/A' }}</dd>
               </div>
-
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ quote?.api_issuance_status || 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CUSTOMER TYPE</dt>
+                <dd>{{ quote.customer_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CREATED DATE</dt>
+                <dd>{{ quote.created_at }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">NATIONALITY</dt>
+                <dd>{{ quote.nationality?.text || '-' }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TYPE OF INSURANCE</dt>
                 <dd>Cyber</dd>
               </div>
             </dl>
-          </div>
-
-          <div class="mt-6" v-if="quote?.cyber_quote">
-            <h3 class="font-semibold text-primary-800">Quote Details</h3>
-            <x-divider class="mb-4 mt-1" />
-
-            <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"></dl>
-            </div>
           </div>
         </template>
       </Collapsible>
@@ -764,10 +755,12 @@ const copyLink = () => {
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-                <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
+                <dd>
+                  {{ selectedProviderPlan.premium || quote.premium || '' }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AUTHORISED AT</dt>
+                <dt class="font-medium">AUTHORIZED AT</dt>
                 <dd>{{ quote.paid_at ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -784,7 +777,7 @@ const copyLink = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>Al Wathba National Insurance Company</dd>
+                <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
               </div>
             </dl>
           </div>
@@ -832,24 +825,24 @@ const copyLink = () => {
                   <dd>{{ quote.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">INSURED FIRST NAME</dt>
+                  <dt class="font-medium">INSURED'S FIRST NAME</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.insured_first_name"
                       :rules="[isRequired]"
-                      placeholder="INSURED FIRST NAME"
+                      placeholder="INSURED'S FIRST NAME"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">INSURED LAST NAME</dt>
+                  <dt class="font-medium">INSURED'S LAST NAME</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.insured_last_name"
                       :rules="[isRequired]"
-                      placeholder="INSURED LAST NAME"
+                      placeholder="INSURED'S LAST NAME"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
@@ -868,11 +861,7 @@ const copyLink = () => {
                   <dd>{{ quote.dob }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">AGE</dt>
-                  <dd>{{ quote.age }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                  <dt class="font-medium">EMIRATES ID</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
@@ -882,6 +871,10 @@ const copyLink = () => {
                       :disabled="!isProfileUpdateAllow"
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ quote.nationality?.text || '-' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
@@ -896,14 +889,15 @@ const copyLink = () => {
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">GENDER</dt>
-                  <dd>{{ quote.gender_label }}</dd>
+                  <dt class="font-medium">EMIRATES ID ISSUING DATE</dt>
+                  <dd>
+                    <DatePicker
+                      v-model="customerProfileForm.emirates_id_issuing_date"
+                      placeholder="EMIRATES ID ISSUING DATE"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
                 </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ quote.nationality?.text }}</dd>
-                </div>
-                <RiskRatingScoreDetails :quote="quote" :modelType="'Cyber'" />
               </dl>
               <dl
                 v-if="
