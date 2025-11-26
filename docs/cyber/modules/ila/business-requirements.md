@@ -63,7 +63,7 @@ private const CYBER_ADVISOR_MAX_CAPACITY = 200;
 
 **Implementation**:
 
-- SIC advisor request flag: `cyber_quote_request.sic_advisor_requested`
+- SIC advisor request flag: `cyber_quote.sic_advisor_requested`
 - If SIC advisor requested OR retry flag set → Proceed with allocation
 - Otherwise → Stop allocation (lead not eligible)
 - Location: `app/Pipes/Allocation/Cyber/EvaluateTeamPipe.php:68-81`

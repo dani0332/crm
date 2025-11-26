@@ -38,17 +38,17 @@ class EvaluateTeamPipe extends BaseAllocationPipe
         $isPaymentAuthorizedOrDeclined = $lead->isPaymentAuthorizedOrDeclined();
         $hasRetryFlag = $lead->isAllocationFailed();
 
-        $cyberQuoteRequest = $lead->cyberQuoteRequest;
+        $cyberQuote = $lead->cyberQuote;
         $sicAdvisorRequested = false;
 
-        if ($cyberQuoteRequest && isset($cyberQuoteRequest->sic_advisor_requested)) {
-            $sicAdvisorRequested = (bool) $cyberQuoteRequest->sic_advisor_requested;
+        if ($cyberQuote && isset($cyberQuote->sic_advisor_requested)) {
+            $sicAdvisorRequested = (bool) $cyberQuote->sic_advisor_requested;
         }
 
         LoggerService::info(self::class.' - Cyber lead conditions evaluation', extra: [
             'isPaymentAuthorizedOrDeclined' => $isPaymentAuthorizedOrDeclined,
             'sicAdvisorRequested' => $sicAdvisorRequested,
-            'cyberQuoteRequestExists' => $cyberQuoteRequest ? true : false,
+            'cyberQuoteExists' => $cyberQuote ? true : false,
             'hasRetryFlag' => $hasRetryFlag,
         ]);
 

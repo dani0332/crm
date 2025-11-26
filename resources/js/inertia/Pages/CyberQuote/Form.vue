@@ -31,7 +31,7 @@ const quoteForm = useForm({
   dob: props.quote?.dob ? dateFormat(props.quote?.dob) : '',
   nationality_id: props.quote?.nationality_id || '',
   emirate_of_registration_id:
-    props.quote?.cyber_quote_request?.emirate_of_registration_id || '',
+    props.quote?.cyber_quote?.emirate_of_registration_id || '',
 });
 
 const { isRequired, isEmail, isMobileNo, isValidName } = useRules();

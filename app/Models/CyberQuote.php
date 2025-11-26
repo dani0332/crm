@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class CyberQuoteRequest extends Model implements AuditableContract
+class CyberQuote extends Model implements AuditableContract
 {
     use Auditable, HasFactory;
 
@@ -31,3 +31,4 @@ class CyberQuoteRequest extends Model implements AuditableContract
         ];
     }
 }
+

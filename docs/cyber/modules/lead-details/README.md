@@ -214,7 +214,7 @@ The Lead Details module provides Cyber Insurance Advisors with a comprehensive v
 
 ### Relationships Loaded
 
-- `cyberQuoteRequest`
+- `cyberQuote`
 - `quoteStatus`
 - `advisor`
 - `nationality`

@@ -29,11 +29,11 @@ Server-side Validation (CyberQuoteRequest)
     ↓
 CyberQuoteService::create() or update()
     ↓
-[Create] → External Capi API Call → Creates PersonalQuote & CyberQuoteRequest
+[Create] → External Capi API Call → Creates PersonalQuote & CyberQuote
     ↓
 [Create] → selfAssign() (if advisorId set)
     ↓
-[Update] → Update PersonalQuote & CyberQuoteRequest directly
+[Update] → Update PersonalQuote & CyberQuote directly
     ↓
 Redirect to Quote Show Page
     ↓
@@ -64,7 +64,7 @@ last_name: props.quote?.last_name || '', email: props.quote?.email || '',
 mobile_no: props.quote?.mobile_no || '', dob: props.quote?.dob ?
 dateFormat(props.quote?.dob) : '', nationality_id: props.quote?.nationality_id
 || '', emirate_of_registration_id:
-props.quote?.cyber_quote_request?.emirate_of_registration_id || '', });
+props.quote?.cyber_quote?.emirate_of_registration_id || '', });
 ```
 
 ### 2. Client-side Validation
@@ -191,7 +191,7 @@ public function store(CyberQuoteRequest $request)
 
 1. Prepares data for external API call
 2. Calls external Capi API: `Capi::request('/api/cyber/create', 'post', $data)`
-3. External API creates `PersonalQuote` and `CyberQuoteRequest` records
+3. External API creates `PersonalQuote` and `CyberQuote` records
 4. If `quoteUID` is returned, calls `selfAssign()` for self-assignment handling
 5. Returns API response with `quoteUID`
 
@@ -215,7 +215,7 @@ public function update(CyberQuoteRequest $request, $uuid)
 
 1. Finds existing quote by UUID
 2. Updates `PersonalQuote` record
-3. Updates `CyberQuoteRequest` record
+3. Updates `CyberQuote` record
 4. Returns success
 
 ### 6. External API Call
@@ -246,7 +246,7 @@ public function update(CyberQuoteRequest $request, $uuid)
 
 **Response**: Returns object with `quoteUID` if successful
 
-**Note**: The external API creates the `PersonalQuote` and `CyberQuoteRequest` records in the database.
+**Note**: The external API creates the `PersonalQuote` and `CyberQuote` records in the database.
 
 ### 7. Self-Assignment Handling
 
