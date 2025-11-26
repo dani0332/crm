@@ -675,7 +675,7 @@ class SendUpdateLogService
 
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
-            $quote = $quoteType !== QuoteTypes::CYBER->value ? app($repository)->getBy('uuid', $quoteUuid) : app(CyberQuoteService::class)->getOne($quoteUuid);
+            $quote = $quoteType !== QuoteTypes::CYBER->value ? $repository::getBy('uuid', $quoteUuid) : app(CyberQuoteService::class)->getOne($quoteUuid);
             $payments = $quote?->payments ?? null;
             if ($payments === null || $payments->isEmpty()) {
                 $quote = PersonalQuoteRepository::getBy('uuid', $quoteUuid);
