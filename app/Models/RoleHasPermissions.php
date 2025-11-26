@@ -3,11 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Traits\SpatieActivityLog;
 
 class RoleHasPermissions
 {
-    use HasFactory, SpatieActivityLog;
+    use HasFactory;
 
     protected $table = 'role_has_permissions';
 }
