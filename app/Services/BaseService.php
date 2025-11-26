@@ -336,7 +336,7 @@ class BaseService
         }
     }
 
-    public function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes, bool $isBuyLead = false)
+    public function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes, bool $isBuyLead = false, bool $isCatABuyLead = false)
     {
         if ($advisorAllocationRecord === null || $lead === null) {
             return;
@@ -345,7 +345,7 @@ class BaseService
         // Determine if the lead was system-assigned or manually assigned
         $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
 
-        $advisorAllocationRecord->adjustAssignmentCounts($isBuyLead, $isSystemAssigned);
+        $advisorAllocationRecord->adjustAssignmentCounts($isBuyLead, $isSystemAssigned, isCatABuyLead: $isCatABuyLead);
     }
 
     public function upsertManualAllocationCount($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId)
@@ -385,7 +385,7 @@ class BaseService
         }
     }
 
-    public function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes)
+    public function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes, bool $isCatABuyLead = false)
     {
         // Check if there is a previous advisor and the lead assignment date is today
         if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay() && $previousAdvisorAllocationRecord !== null) {
@@ -408,9 +408,16 @@ class BaseService
 
             // Decrement the total allocation count (if it's greater than 0) and update timestamps
             if (in_array($previousAssignmentType, [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD])) {
-                if ($previousAdvisorAllocationRecord->buy_lead_allocation_count > 0) {
-                    $previousAdvisorAllocationRecord->buy_lead_allocation_count = $previousAdvisorAllocationRecord->buy_lead_allocation_count - 1;
-                    $previousAdvisorAllocationRecord->updated_at = now();
+                if ($isCatABuyLead) {
+                    if ($previousAdvisorAllocationRecord->buy_lead_cat_a_allocation_count > 0) {
+                        $previousAdvisorAllocationRecord->buy_lead_cat_a_allocation_count = $previousAdvisorAllocationRecord->buy_lead_cat_a_allocation_count - 1;
+                        $previousAdvisorAllocationRecord->updated_at = now();
+                    }
+                } else {
+                    if ($previousAdvisorAllocationRecord->buy_lead_allocation_count > 0) {
+                        $previousAdvisorAllocationRecord->buy_lead_allocation_count = $previousAdvisorAllocationRecord->buy_lead_allocation_count - 1;
+                        $previousAdvisorAllocationRecord->updated_at = now();
+                    }
                 }
             } elseif ($previousAdvisorAllocationRecord->allocation_count > 0) {
                 $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
