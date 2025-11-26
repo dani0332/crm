@@ -46,6 +46,7 @@ class DatabaseSeeder extends Seeder
             CarAdditionalDetailsForSukoonSeeder::class,
             QICTokioLookupSeeder::class,
             DocRequiredForPolicySendSeeder::class,
+            DeviceQuoteSeeder::class,
         ]);
     }
 }

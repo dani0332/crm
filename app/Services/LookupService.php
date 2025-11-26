@@ -279,4 +279,19 @@ class LookupService extends BaseService
             ])->get();
         });
     }
+
+    public function getDeviceCoverages()
+    {
+        return CacheManager::remember(CacheKeyEnum::DEVICE_QUOTE_LOOKUPS, function () {
+            return Capi::request('/api/v1-get-all-device-lookups', 'post');
+        });
+    }
+
+    public function getDeviceQuoteLookUpData()
+    {
+        return CacheManager::remember(CacheKeyEnum::DEVICE_QUOTE_LOOKUPS, function () {
+            return Capi::request('/api/v1-get-all-device-lookups', 'post');
+        });
+    }
+
 }

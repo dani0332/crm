@@ -511,8 +511,8 @@ class SendUpdateLogService
     public function linkedQuoteDetails($quoteTypeCode, $quote)
     {
         LoggerService::info('fn:linkedQuoteDetails - Start - SendUpdateLogService');
-
         $quoteTypeId = QuoteTypeId::getValue($quoteTypeCode);
+     
         $quoteModel = $this->getModelObject($quoteTypeCode);
         $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get()->toArray();
 

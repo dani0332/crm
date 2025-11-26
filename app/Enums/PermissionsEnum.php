@@ -454,6 +454,13 @@ final class PermissionsEnum extends Enum
     public const EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS = 'edit-vehicle-transaction-driver-details';
     public const EDIT_LAST_YEAR_DETAILS = 'edit-last-year-details';
 
+    // Smart Phone Permissions
+    public const DEVICE_QUOTES_LIST = 'device-quotes-list';
+    public const DEVICE_QUOTES_CREATE = 'device-quotes-create';
+    public const DEVICE_QUOTES_EDIT = 'device-quotes-edit';
+    public const DEVICE_QUOTES_SHOW = 'device-quotes-show';
+    
+
     public static function getAdvisorConversionReportPermissions()
     {
         return [

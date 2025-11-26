@@ -627,4 +627,12 @@ class ApiController extends Controller
             ], 500);
         }
     }
+
+    public function deviceQuoteSendOCB(Request $request)
+    {
+           return response()->json([
+            'success' => true,
+            'message' => 'Device quote OCB email sent successfully',
+        ], Response::HTTP_OK);
+    }
 }

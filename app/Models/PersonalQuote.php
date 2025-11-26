@@ -594,4 +594,10 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Lookup::class, 'sub_source_options_id');
     }
+
+    public function deviceQuote()
+    {
+        return $this->hasOne(DeviceQuote::class, 'personal_quote_id', 'id');
+
+    }
 }

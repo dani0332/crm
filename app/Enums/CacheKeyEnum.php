@@ -8,6 +8,7 @@ enum CacheKeyEnum: string
     case SAVINGS_QUOTE_LOOKUPS = 'savings_quote_lookups';
     case CYBER_QUOTE_LOOKUPS = 'cyber_quote_lookups';
     case SUB_SOURCES = 'sub_sources';
+    case DEVICE_QUOTE_LOOKUPS = 'device_quote_lookups';
     public function expiry()
     {
         return match ($this) {
@@ -15,6 +16,7 @@ enum CacheKeyEnum: string
             self::SAVINGS_QUOTE_LOOKUPS => now()->endOfDay(),
             self::CYBER_QUOTE_LOOKUPS => now()->endOfDay(),
             self::SUB_SOURCES => now()->endOfDay(),
+            self::DEVICE_QUOTE_LOOKUPS => now()->endOfDay(),
             default => now()->addHour(),
         };
     }

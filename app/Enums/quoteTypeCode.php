@@ -15,6 +15,7 @@ use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use BenSampo\Enum\Enum;
+use App\Models\DeviceQuote;
 
 class quoteTypeCode extends Enum
 {
@@ -58,6 +59,7 @@ class quoteTypeCode extends Enum
     const SAVINGS = 'Savings';
     const Marine = 'Marine';
     const CompanyCar = 'CompanyCar';
+    const Device = 'Device';
 
     public static function getName($value)
     {
@@ -74,6 +76,7 @@ class quoteTypeCode extends Enum
             CycleQuote::class => self::Cycle,
             JetskiQuote::class => self::Jetski,
             SavingsQuote::class => self::SAVINGS,
+            DeviceQuote::class => self::Device,
         };
     }
 }
