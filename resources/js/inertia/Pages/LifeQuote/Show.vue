@@ -5,7 +5,8 @@ import {
   preventInvalidInputs,
   useIsQuoteCreatedAfterCutoff,
 } from '@/inertia/Composables/utilities.js';
-import { watch } from 'vue';
+import { watch, onMounted, onUnmounted } from 'vue';
+import { router } from '@inertiajs/vue3';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
@@ -392,15 +393,47 @@ const getPaymentTermTitle = months => {
   return mapping[months] || '';
 };
 
-const getTotalAnnualPremium = (paymentTerm, premium) => {
-  const paymentTermTitle = getPaymentTermTitle(paymentTerm);
+const getTotalAnnualPremium = item => {
+  if (!item) return 'N/A';
+
+  const paymentTermTitle = getPaymentTermTitle(item.paymentTerm);
   const mapping = {
     Monthly: 12,
     Quarterly: 4,
     'Semi-Annually': 2,
     Annually: 1,
   };
-  let value = premium * mapping[paymentTermTitle];
+
+  if (!paymentTermTitle || !mapping[paymentTermTitle]) return 'N/A';
+
+  let price = 0;
+  if (
+    item.isApi &&
+    item.instantPolicy &&
+    item.paymentTerm === page.props.paymentTerms?.ANNUALLY
+  ) {
+    // metlife annually
+    const discountPremium =
+      item.discountPremium != null ? item.discountPremium : 0;
+    const ridersPrice = item.ridersPrice != null ? item.ridersPrice : 0;
+    price = discountPremium + ridersPrice;
+  } else if (item.isApi && item.instantPolicy) {
+    // metlife monthly, quarterly, semi-annually
+    const actualPremium = item.actualPremium != null ? item.actualPremium : 0;
+    const ridersPrice = item.ridersPrice != null ? item.ridersPrice : 0;
+    price = actualPremium + ridersPrice;
+  } else {
+    // zurich & manual plan
+    if (item.isApi) {
+      if (item.actualPremium == null) return 'N/A';
+      price = item.actualPremium;
+    } else {
+      if (item.totalPrice == null) return 'N/A';
+      price = item.totalPrice;
+    }
+  }
+
+  const value = price * mapping[paymentTermTitle];
   return numberFormat(value);
 };
 
@@ -425,8 +458,8 @@ const getTotalAnnualPremiumAED = item => {
     return numberFormat(totalAnnualPremiumAED);
   } else if (item.currency === 'AED') {
     return item.isManualPlan
-      ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice)
-      : getTotalAnnualPremium(item.paymentTerm, item.actualPremium);
+      ? getTotalAnnualPremium(item)
+      : getTotalAnnualPremium(item);
   }
   return 'N/A';
 };
@@ -924,11 +957,36 @@ const shouldShowPlanDetailsSection = computed(() => {
   return true;
 });
 
+const handleDocumentNotification = event => {
+  const { quoteUID, status } = event.detail;
+
+  if (quoteUID === page.props.quote.uuid && status === 'success') {
+    router.reload({
+      preserveState: true,
+      preserveScroll: true,
+      only: ['quote'],
+      onSuccess: () => {
+        if (!shouldShowPlanDetailsSection.value) {
+          onLoadAvailablePlansData();
+        }
+      },
+    });
+  }
+};
+
 onMounted(() => {
   if (!shouldShowPlanDetailsSection.value) {
     onLoadAvailablePlansData();
   }
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  window.addEventListener('document-notification', handleDocumentNotification);
+});
+
+onUnmounted(() => {
+  window.removeEventListener(
+    'document-notification',
+    handleDocumentNotification,
+  );
 });
 
 const onLoadAvailablePlansData = async () => {
@@ -1086,11 +1144,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
 const totalAnnualPrice = computed(() => {
   if (!ecomDetail.value) return 'N/A';
 
-  let totalPrice =
-    (ecomDetail.value?.isManualPlan
-      ? ecomDetail.value?.totalPrice
-      : ecomDetail.value?.actualPremium) *
-    (page.props.quote?.life_quote?.payment_term ?? 1);
+  const displayPrice = getEcomDisplayPrice(ecomDetail.value);
+  const totalPrice =
+    displayPrice * (page.props.quote?.life_quote?.payment_term ?? 1);
 
   return totalPrice;
 });
@@ -1181,12 +1237,11 @@ const enableExchangeRateEdit = () => {
 };
 
 const getTotalAnnualPriceAED = () => {
+  if (!ecomDetail.value) return 'N/A';
+
+  const displayPrice = getEcomDisplayPrice(ecomDetail.value);
   const priceInAED =
-    Math.round(
-      (ecomDetail.value?.isManualPlan
-        ? ecomDetail.value?.totalPrice * planExchangeRate.value
-        : ecomDetail.value?.actualPremium * planExchangeRate.value) * 100,
-    ) / 100;
+    Math.round(displayPrice * planExchangeRate.value * 100) / 100;
 
   return numberFormat(
     priceInAED * (page.props.quote?.life_quote?.payment_term ?? 1),
@@ -1211,6 +1266,110 @@ const showSelectedButton = item => {
     !isDisabled &&
     isUnderwritten === item?.isUnderwritten
   );
+};
+
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
+const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
+
+const isMetLife = item => {
+  if (!item) return false;
+
+  return item.providerCode === insuranceProviderCodeEnum?.MTL;
+};
+
+const canSelectMetLifePlan = computed(() => {
+  const quote = page.props.quote;
+  if (!quote) return false;
+
+  const isApplicationPending =
+    quote.quote_status_id === page.props.quoteStatusEnum?.ApplicationPending;
+  const hasHealthQuestionnaire =
+    quote.documents?.some(
+      doc =>
+        doc.document_type_code ===
+        documentTypeCodeEnum?.LIFE_HEALTH_QUESTIONNAIRE,
+    ) ?? false;
+
+  return isApplicationPending && hasHealthQuestionnaire;
+});
+
+const getDisplayPrice = item => {
+  if (
+    item.isApi &&
+    item.instantPolicy &&
+    item.paymentTerm === page.props.paymentTerms?.ANNUALLY
+  ) {
+    // metlife annually
+    return item.discountPremium + item.ridersPrice;
+  }
+
+  if (item.isApi && item.instantPolicy) {
+    // metlife monthly, quarterly, semi-annually
+    return item.actualPremium + item.ridersPrice;
+  }
+
+  if (item.isApi && !item.instantPolicy) {
+    // zurich
+    return item.actualPremium;
+  }
+
+  // manual plan
+  return item.totalPrice;
+};
+
+const getEcomDisplayPrice = item => {
+  if (!item) return 0;
+
+  const paymentTerm =
+    item.paymentTerm ?? page.props.quote?.life_quote?.payment_term;
+
+  if (
+    item.isApi &&
+    item.instantPolicy &&
+    paymentTerm === page.props.paymentTerms?.ANNUALLY
+  ) {
+    // metlife annually
+    return item.discountPremium + item.ridersPrice;
+  }
+
+  if (item.isApi && item.instantPolicy) {
+    // metlife monthly, quarterly, semi-annually
+    return item.actualPremium + item.ridersPrice;
+  }
+
+  if (item.isApi && !item.instantPolicy) {
+    // zurich
+    return item.actualPremium;
+  }
+
+  // manual plan
+  return item.totalPrice;
+};
+
+const getDisplayPriceInAED = item => {
+  if (!item) return 'N/A';
+
+  if (
+    item.isApi &&
+    item.instantPolicy &&
+    item.paymentTerm === page.props.paymentTerms?.ANNUALLY
+  ) {
+    // metlife annually
+    const discountPremium =
+      item.discountPremium != null ? item.discountPremium : 0;
+    const ridersPrice = item.ridersPrice != null ? item.ridersPrice : 0;
+    return numberFormat(discountPremium + ridersPrice);
+  }
+
+  if (item.isApi && item.instantPolicy) {
+    // metlife monthly, quarterly, semi-annually
+    const actualPremium = item.actualPremium != null ? item.actualPremium : 0;
+    const ridersPrice = item.ridersPrice != null ? item.ridersPrice : 0;
+    return numberFormat(actualPremium + ridersPrice);
+  }
+
+  // zurich & manual plan
+  return item.actualPremium != null ? numberFormat(item.actualPremium) : 'N/A';
 };
 </script>
 <template>
@@ -2163,9 +2322,7 @@ const showSelectedButton = item => {
               >
                 <template #item-totalPrice="item">
                   <span class="copay-max">{{
-                    item.isManualPlan
-                      ? numberFormat(item.totalPrice)
-                      : numberFormat(item.actualPremium)
+                    numberFormat(getDisplayPrice(item))
                   }}</span>
                 </template>
 
@@ -2258,18 +2415,15 @@ const showSelectedButton = item => {
                     N/A
                   </div>
                   <div v-else class="copay-max">
-                    {{ numberFormat(item.actualPremium) }}
+                    {{ getDisplayPriceInAED(item) }}
                   </div>
                 </template>
 
                 <template #item-totalAnnualPremium="item">
                   <span class="copay-max">{{
                     item.isManualPlan
-                      ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice)
-                      : getTotalAnnualPremium(
-                          item.paymentTerm,
-                          item.actualPremium,
-                        )
+                      ? getTotalAnnualPremium(item)
+                      : getTotalAnnualPremium(item)
                   }}</span>
                 </template>
 
@@ -2354,6 +2508,7 @@ const showSelectedButton = item => {
                       View
                     </x-button>
                     <x-button
+                      v-if="!isMetLife(item)"
                       size="xs"
                       color="emerald"
                       outlined
@@ -2377,8 +2532,33 @@ const showSelectedButton = item => {
                         >Selected</x-button
                       >
 
+                      <x-tooltip
+                        v-else-if="
+                          !item.isDisabled &&
+                          isMetLife(item) &&
+                          !canSelectMetLifePlan
+                        "
+                        placement="top"
+                      >
+                        <x-button
+                          size="xs"
+                          color="emerald"
+                          outlined
+                          :disabled="true"
+                        >
+                          Select
+                        </x-button>
+                        <template #tooltip>
+                          This plan cannot be manually selected. To proceed, you
+                          can guide the client to click 'Buy Now'.
+                        </template>
+                      </x-tooltip>
+
                       <x-button
-                        v-else-if="!item.isDisabled"
+                        v-else-if="
+                          !item.isDisabled &&
+                          (!isMetLife(item) || canSelectMetLifePlan)
+                        "
                         size="xs"
                         color="emerald"
                         outlined
@@ -2430,11 +2610,7 @@ const showSelectedButton = item => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Price</dt>
                 <dd>
-                  {{
-                    ecomDetail?.isManualPlan
-                      ? numberFormat(ecomDetail?.totalPrice)
-                      : (numberFormat(ecomDetail?.actualPremium) ?? 'N/A')
-                  }}
+                  {{ numberFormat(getEcomDisplayPrice(ecomDetail)) }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -2450,11 +2626,9 @@ const showSelectedButton = item => {
                 <dt class="font-medium uppercase">Total Price AED</dt>
                 <dd>
                   {{
-                    ecomDetail?.isManualPlan
-                      ? numberFormat(ecomDetail?.totalPrice * planExchangeRate)
-                      : numberFormat(
-                          ecomDetail?.actualPremium * planExchangeRate,
-                        )
+                    numberFormat(
+                      getEcomDisplayPrice(ecomDetail) * planExchangeRate,
+                    )
                   }}
                 </dd>
               </div>
