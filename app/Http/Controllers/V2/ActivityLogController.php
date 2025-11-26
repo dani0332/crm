@@ -14,10 +14,12 @@ use Inertia\Response;
 class ActivityLogController extends Controller
 {
     protected ActivityLogService $activityLogService;
+    protected UserService $userService;
 
-    public function __construct(ActivityLogService $activityLogService)
+    public function __construct(ActivityLogService $activityLogService, UserService $userService)
     {
         $this->activityLogService = $activityLogService;
+        $this->userService = $userService;
     }
 
     /**
@@ -45,7 +47,7 @@ class ActivityLogController extends Controller
             $activityLogs = $this->activityLogService->getActivityLogs($filters, $perPage);
         }
         
-        $users = app(UserService::class)->getAllUsers();
+        $users = $this->userService->getAllUsers();
 
         return Inertia::render('Admin/ActivityLogs/Index', [
             'activityLogs' => $activityLogs,
