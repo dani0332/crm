@@ -48,7 +48,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         } elseif ($lead->isFakeOrDuplicate()) {
             LoggerService::info(self::class."::verifyPreChecks - Lead is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
         } elseif ($lead->hasExemptedSource()) {
-            if ($lead->isCatABuyLeadApplicable(QuoteTypes::CAR_CAT_A, $this->allocationRequest->isSIC())) {
+            if ($lead->isCatABuyLeadApplicable(QuoteTypes::CAR_CAT_A)) {
                 LoggerService::info(self::class.'::verifyPreChecks - Lead is a Revival lead and is a CAT A nationality, continuing assignment');
                 $continueAssignment = true;
             } else {

@@ -67,10 +67,7 @@ class CarAllocation implements Allocation
             EvaluateTierPipe::class,
         ];
 
-        $isSIC = $lead->isSIC(QuoteTypes::CAR);
-        $isCatABuyLeadApplicable = $lead && $lead->isCatABuyLeadApplicable(QuoteTypes::CAR_CAT_A, $isSIC);
-
-        if ($isCatABuyLeadApplicable) {
+        if ($lead && $lead->isCatABuyLeadApplicable(QuoteTypes::CAR_CAT_A)) {
             return [
                 ...$basePipes,
                 EvaluateCatAEligibleAdvisorPipe::class,

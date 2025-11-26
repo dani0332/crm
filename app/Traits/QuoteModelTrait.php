@@ -228,11 +228,9 @@ trait QuoteModelTrait
         );
     }
 
-    public function isCatABuyLeadApplicable(QuoteTypes $quoteType, bool $isSIC = false): bool
+    public function isCatABuyLeadApplicable(QuoteTypes $quoteType): bool
     {
-        return $this->source == LeadSourceEnum::REVIVAL &&
-               $this->isBuyLeadApplicable($isSIC) &&
-               in_array($this->nationality_id, BuyLeadService::getNationalitiesIds($quoteType));
+        return ! $this->isStale() && $this->source == LeadSourceEnum::REVIVAL && in_array($this->nationality_id, BuyLeadService::getNationalitiesIds($quoteType));
     }
 
     public function getForeignKey()
