@@ -23,7 +23,18 @@ class EvaluateCatAEligibleAdvisorPipe extends BaseAllocationPipe
         $tier = $request->getTier();
 
         $advisor = $this->evaluateCatAEligibleAdvisor($tier);
-        dd($advisor);
+
+        if (! $advisor) {
+            LoggerService::warning('No advisor found');
+
+            $this->allocationRequest->markAsFailed();
+
+            $this->throw('Advisor assignment is in progress and will be assigned shortly', self::OK);
+        }
+
+        $this->allocationRequest->setAdvisor($advisor);
+
+        $this->verifyIfAdvisorIsSameAsPreviousAdvisor($advisor);
 
         return $next($request);
     }
@@ -80,7 +91,15 @@ class EvaluateCatAEligibleAdvisorPipe extends BaseAllocationPipe
             ->first();
 
         if ($advisor) {
+            $this->allocationRequest->set('hasCatABuyLeadRequest', true);
+
             LoggerService::info(self::class."::getCATANationalitiesAdvisorByStatus - CAT A Buy Lead Advisor {$advisor->user_id} found");
+
+            $buyLeadRequest = BuyLeadRequest::getCatARequest($this->allocationRequest->getQuoteType(), $this->allocationRequest->isSIC(), $advisor->user_id);
+            $this->allocationRequest->setBuyLeadRequest($buyLeadRequest);
+
+            LoggerService::info("Cat A Nationality Buy Lead Request {$buyLeadRequest->id} found for advisor ID: {$advisor->user_id}");
+            $this->allocationRequest->getBuyLeadRequest()->startProcessing();
 
             return $advisor;
         }
