@@ -50,11 +50,20 @@ abstract class BaseQuoteService extends BaseService
 
     protected function baseQuery(): Builder
     {
-        return $this->quoteType->model()
+        $model = $this->quoteType->model();
+        $tableName = $model->getTable();
+        $sortBy = request()->sortBy ?? "{$tableName}.created_at";
+        
+        // If sortBy doesn't have a table prefix, add it
+        if ($sortBy && !str_contains($sortBy, '.')) {
+            $sortBy = "{$tableName}.{$sortBy}";
+        }
+        
+        return $model
             ->when($this->quoteType->isPersonalQuote(), fn ($query) => $query->where('quote_type_id', $this->quoteType->id()))
             ->when($this->isAdvisor(), fn ($query) => $query->where('advisor_id', Auth::id()))
             ->filterByAdvisors(request('advisors'))
-            ->orderBy((request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+            ->orderBy($sortBy, request()->sortType ?? 'desc');
     }
 
     protected function isAdvisor()
