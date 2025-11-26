@@ -8,6 +8,7 @@ use App\Models\CarQuote;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Cache;
 
@@ -55,6 +56,9 @@ class EmailStatusService extends BaseService
             case QuoteTypeId::Life:
                 $quote = PersonalQuote::where('uuid', $request->uuid)->first();
                 break;
+            case QuoteTypeId::Travel:
+                $quote = TravelQuote::where('uuid', $request->uuid)->first();
+                break;
 
             default:
                 $quote = null;
@@ -93,6 +97,95 @@ class EmailStatusService extends BaseService
         $emailStatus->email_status = $status;
         $emailStatus->save();
         info('EmailStatusService - EmailStatus updated for msg_id: '.$emailData->message_id.' email_status: '.$emailStatus->email_status.' | Time:'.now());
+    }
+
+    /**
+     * Update customer replied status in email_status table
+     */
+    public function updateCustomerRepliedStatus(string $quoteUuid, int $quoteTypeId, string $emailSubject): object
+    {
+        try {
+            // Get the quote based on quote type
+            $quote = $this->getQuoteByUuidAndType($quoteUuid, $quoteTypeId);
+
+            if (! $quote) {
+                LoggerService::warning(self::class.' - Quote not found', [
+                    'uuid' => $quoteUuid,
+                    'quote_type_id' => $quoteTypeId,
+                ]);
+
+                return (object) [
+                    'success' => false,
+                    'message' => 'Quote not found',
+                ];
+            }
+
+            // Strip reply/forward prefixes (Re:, RE:, Fwd:, FW:, Fw:, etc.)
+            $cleanSubject = preg_replace('/^(Re:|RE:|Fwd:|FW:|Fw:)\s*/i', '', trim($emailSubject));
+
+            // Match by quote_id, quote_type_id, and cleaned subject
+            $emailStatus = EmailStatus::where('quote_id', $quote->id)
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('email_subject', 'LIKE', "%{$cleanSubject}%")
+                ->latest()
+                ->first();
+
+            if (! $emailStatus) {
+                LoggerService::warning(self::class.' - Email status not found', [
+                    'uuid' => $quoteUuid,
+                    'quote_type_id' => $quoteTypeId,
+                ]);
+
+                return (object) [
+                    'success' => false,
+                    'message' => 'Email status record not found',
+                ];
+            }
+
+            // Update the customer_replied field
+            $emailStatus->customer_replied = true;
+            $emailStatus->save();
+
+            LoggerService::info(self::class.' - Customer replied status updated', [
+                'uuid' => $quoteUuid,
+                'email_status_id' => $emailStatus->id,
+            ]);
+
+            return (object) [
+                'success' => true,
+                'message' => 'Customer replied status updated successfully',
+                'data' => [
+                    'email_status_id' => $emailStatus->id,
+                    'customer_replied' => $emailStatus->customer_replied,
+                ],
+            ];
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.' - Error updating customer replied status', [
+                'uuid' => $quoteUuid,
+                'error' => $e->getMessage(),
+            ], $e);
+
+            return (object) [
+                'success' => false,
+                'message' => 'Error updating customer replied status: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Get quote by UUID and type
+     *
+     * @return mixed
+     */
+    private function getQuoteByUuidAndType(string $uuid, int $quoteTypeId)
+    {
+        return match ($quoteTypeId) {
+            QuoteTypeId::Car => CarQuote::where('uuid', $uuid)->first(),
+            QuoteTypeId::Health => HealthQuote::where('uuid', $uuid)->first(),
+            QuoteTypeId::Home, QuoteTypeId::Savings, QuoteTypeId::Life => PersonalQuote::where('uuid', $uuid)->first(),
+            QuoteTypeId::Travel => TravelQuote::where('uuid', $uuid)->first(),
+            default => null,
+        };
     }
 
 }

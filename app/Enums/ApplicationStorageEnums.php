@@ -139,6 +139,10 @@ final class ApplicationStorageEnums extends Enum
     public const DIS_INBOX_EMAIL_BCC = 'DIS_INBOX_EMAIL_BCC';
     public const BIRD_SIC_HEALTH_WORKFLOW = 'BIRD_SIC_HEALTH_WORKFLOW';
 
+    // Travel Automated Followups
+    public const TRAVEL_AUTOMATED_FOLLOWUPS = 'TRAVEL_AUTOMATED_FOLLOWUPS';
+    public const AUTOMATED_TRAVEL_FOLLOWUP_SWITCH = 'AUTOMATED_TRAVEL_FOLLOWUP_SWITCH';
+
     // MOTOR RENEWAL SIC 3.0
     public const BIRD_SIC_MOTOR_RENEWAL_WORKFLOW = 'BIRD_SIC_MOTOR_RENEWAL_WORKFLOW';
 
@@ -303,4 +307,7 @@ final class ApplicationStorageEnums extends Enum
     public const EP_FAILURE_EMAIL_TO = 'EP_FAILURE_EMAIL_TO';
     public const EP_FAILURE_EMAIL_REPLY_TO = 'EP_FAILURE_EMAIL_REPLY_TO';
     public const EP_FAILURE_EMAIL_CC = 'EP_FAILURE_EMAIL_CC';
+
+    // MetLife Integration
+    public const ENABLE_METLIFE = 'ENABLE_METLIFE';
 }

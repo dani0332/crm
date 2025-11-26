@@ -173,6 +173,7 @@ class ApiService
         if (isset($request->quoteTypeId) && $request->quoteTypeId == QuoteTypes::HEALTH->id()) {
 
             LoggerService::info('------ Health SIC workflow trigger request received for  lead : '.($request->quoteUuid ?? '').' ------');
+
             SendHealthOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
             LoggerService::info('------ Health SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
 

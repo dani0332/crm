@@ -46,6 +46,7 @@ use App\Services\CRUDService;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -109,6 +110,7 @@ class TravelController extends Controller
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
+        $subSources = $this->lookupService->getSubSource();
 
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
@@ -132,6 +134,7 @@ class TravelController extends Controller
             'insurerAMLStatus' => $insurerAMLStatus,
             'quoteSegments' => QuoteSegmentEnum::withLabels(QuoteTypeId::Travel),
             'assignmentTypes' => AssignmentTypeEnum::withLabels(),
+            'subSources' => $subSources,
         ]);
     }
 
@@ -400,6 +403,13 @@ class TravelController extends Controller
         }
 
         $model = $this->genericModel;
+        $subSources = $this->lookupService->getSubSource();
+
+        LoggerService::info('Travel create method called with parameters', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->input('subSourceId'),
+            'subSourceOptionsId' => $request->input('subSourceOptionsId'),
+        ]);
 
         return inertia('TravelQuote/Form', [
             'model' => json_encode($model->properties),
@@ -409,6 +419,12 @@ class TravelController extends Controller
             'dropdownSource' => $dropdownSource,
             'renewalAdvisors' => $renewalAdvisors ?? [],
             'isRenewalUser' => $isRenewalUser,
+            'subSources' => $subSources,
+            'leadSourceParams' => [
+                'type' => $request->input('type'),
+                'subSource' => $request->input('subSourceId'),
+                'subSourceOption' => $request->input('subSourceOptionsId'),
+            ],
         ]);
     }
 
@@ -483,6 +499,8 @@ class TravelController extends Controller
             ? $courierQuoteResponse['data']['status']
             : 'Pending';
 
+        $subSources = $this->lookupService->getSubSource();
+
         return inertia('TravelQuote/Form', [
             'quote' => $record,
             'quotePlans' => $quotePlans,
@@ -495,6 +513,8 @@ class TravelController extends Controller
             'fields' => $fields,
             'customerAddressData' => $customerAddressData,
             'courierQuoteStatus' => $courierQuoteStatus,
+            'subSources' => $subSources,
+            'leadSourceParams' => [], // Empty for edit mode
         ]);
     }
 

@@ -185,6 +185,7 @@ class TravelRenewalService extends AllocationService
             'coverageCode' => $quote->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP ? TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP : $quote->coverage_code,
             'regionCoverForId' => $quote->region_cover_for_id,
             'previousPolicyExpiryDate' => Carbon::parse($policyDates['policyExpiryDate'])->format('Y-m-d'),
+            'previousQuotePolicyNumber' => $quote->policy_number,
             'tripStarted' => false,
         ];
     }
