@@ -82,9 +82,9 @@ class SendUpdateSeederForCyber extends Seeder
                 Lookup::create([
                     'code' => $sendUpdateCode['code'],
                     'quote_type_id' => $sendUpdateCode['quote_type_id'],
-                    'parent_id' => $parent->parent_id,
-                    'key' => $parent->key,
-                    'text' => $parent->text,
+                    'parent_id' => $parent->parent_id ?? null,
+                    'key' => $parent->key ?? null,
+                    'text' => $parent->text ?? null,
                     'is_active' => 1,
                     'created_at' => now(),
                     'updated_at' => now(),

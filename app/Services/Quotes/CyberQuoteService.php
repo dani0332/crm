@@ -137,7 +137,6 @@ class CyberQuoteService extends BaseQuoteService
             })
             ->where('uuid', $uuid)->firstOrFail();
 
-        $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Individual;
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         $data = ! empty($quote) ? $quote->toArray() : [];
