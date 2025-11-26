@@ -149,6 +149,7 @@ class PetQuoteRepository extends BaseRepository
             },
             'quoteDetail',
             'customer',
+            'branch:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -232,7 +233,7 @@ class PetQuoteRepository extends BaseRepository
     private function postProcessPetQuote($query)
     {
         return $query->map(function ($item) {
-            $item->branch_name = app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Pet);
+            $item->branch_name = $item->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Pet);
             return $item;
         });
     }
@@ -320,6 +321,7 @@ class PetQuoteRepository extends BaseRepository
                 },
                 'quoteDetail',
                 'subSource', 'subSourceOption',
+                'branch:id,name',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -340,7 +342,7 @@ class PetQuoteRepository extends BaseRepository
         if (isset($data['latest_insured'])) {
             $quote->emirates_id_number = $data['latest_insured']['id_type'] == 'emiratesId' ? $data['latest_insured']['id_number'] : null;
         }
-        $quote->branch_name = app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Pet);
+        $quote->branch_name = $quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Pet);
 
         return $quote;
     }

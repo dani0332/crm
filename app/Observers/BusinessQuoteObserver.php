@@ -20,6 +20,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Services\BranchAssignmentService;
 
 class BusinessQuoteObserver
 {
@@ -100,8 +101,6 @@ class BusinessQuoteObserver
             $dirty = [...$dirty, 'stale_at' => $businessQuote->stale_at];
         }
 
-        $this->syncQuote($businessQuote, $dirty);
-
         if (isset($dirty['quote_status_id']) && $businessQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             try {
                 $this->updatePersonalQuote($businessQuote->uuid, QuoteTypeId::Business, $dirty);
@@ -111,7 +110,26 @@ class BusinessQuoteObserver
                     'uuid' => $businessQuote->uuid,
                 ]);
             }
+
+            if ($businessQuote->business_type_of_insurance_id != BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                try {
+                    app(BranchAssignmentService::class)->saveBranchOverride($businessQuote, QuoteTypeId::Business);
+                    BusinessQuote::withoutEvents(function () use ($businessQuote, &$dirty) {
+                        $branch = app(BranchAssignmentService::class)->getBranch($businessQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Business);
+                        $businessQuote->update([
+                            'branch_id' => $branch->id,
+                        ]);
+                        $dirty = [...$dirty, 'branch_id' => $branch->id];
+                    });
+                } catch (Exception $e) {
+                    LoggerService::error('BusinessQuoteObserver - save branch data failed', [
+                        'uuid' => $businessQuote->uuid,
+                    ], exception: $e);
+                }
+            }
         }
+
+        $this->syncQuote($businessQuote, $dirty);
 
         if (
             isset($dirty['quote_status_id']) &&

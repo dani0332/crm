@@ -26,6 +26,7 @@ use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use App\Services\BranchAssignmentService;
 
 class CarQuoteObserver
 {
@@ -104,8 +105,6 @@ class CarQuoteObserver
             }
         }
 
-        $this->syncQuote($lead, $dirty);
-
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             try {
                 $this->updatePersonalQuote($lead->uuid, QuoteTypeId::Car, $dirty);
@@ -115,7 +114,25 @@ class CarQuoteObserver
                     'uuid' => $lead->uuid,
                 ]);
             }
+
+            try {
+                app(BranchAssignmentService::class)->saveBranchOverride($lead, QuoteTypeId::Car);
+                CarQuote::withoutEvents(function () use ($lead, &$dirty) {
+
+                    $branch = app(BranchAssignmentService::class)->getBranch($lead?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car);
+                    $lead->update([
+                        'branch_id' => $branch->id,
+                    ]);
+                    $dirty = [...$dirty, 'branch_id' => $branch->id];
+                });
+            } catch (Exception $e) {
+                LoggerService::error('CarQuoteObserver - save branch data failed', [
+                    'uuid' => $lead->uuid,
+                ], exception: $e);
+            }
         }
+
+        $this->syncQuote($lead, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
             LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);

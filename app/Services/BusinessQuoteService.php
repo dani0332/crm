@@ -143,6 +143,7 @@ class BusinessQuoteService extends BaseService
                     END AS insurer_aml_status_display
                 '),
                 'ub.branch_id as advisor_primary_branch_id',
+                'b.name as lead_branch_name',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -174,13 +175,14 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('user_branches as ub', function ($join) {
                 $join->on('ub.user_id', '=', 'bqr.advisor_id')
                     ->where('ub.is_primary', '=', 1);
-            });
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id');
     }
 
     public function postProcessBusinessQuotes($quotes)
     {
         return $quotes->map(function ($quote) {
-            $quote->branch_name = app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::Business);
+            $quote->branch_name = $quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::Business);
 
             return $quote;
         });

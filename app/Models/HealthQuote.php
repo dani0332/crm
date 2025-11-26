@@ -549,4 +549,9 @@ class HealthQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Lookup::class, 'sub_source_options_id');
     }
+
+    public function branch()
+    {
+        return $this->hasOne(Branch::class, 'id', 'branch_id');
+    }
 }

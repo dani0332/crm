@@ -88,7 +88,7 @@ class TravelQuoteExport implements CsvExportableInterface
     public function map($quote): array
     {
         $ageGroup = $this->getAgeGroup($quote);
-        $branchName = app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel);
+        $branchName = $quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel);
 
         return [
             $quote->code,

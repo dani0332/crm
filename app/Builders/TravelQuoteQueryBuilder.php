@@ -72,6 +72,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'days_cover_for',
             'lead_assignment_trigger',
             'parent_id',
+            'branch_id',
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',
@@ -93,6 +94,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'quoteTags:quote_uuid,name',
             'parent:id,code',
             'child:id,code,parent_id',
+            'branch:id,name',
         ]);
     }
 

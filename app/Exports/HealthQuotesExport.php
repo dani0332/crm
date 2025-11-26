@@ -89,7 +89,7 @@ class HealthQuotesExport implements CsvExportableInterface
 
     public function map($quote): array
     {
-        $branchName = app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id);
+        $branchName = $quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id);
         return [
             $quote->code,
             $quote->first_name,

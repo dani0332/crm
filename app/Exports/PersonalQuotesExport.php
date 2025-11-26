@@ -353,7 +353,7 @@ class PersonalQuotesExport implements CsvExportableInterface
 
     protected function getValues(string $quoteType, $quote): array
     {
-        $branchName = app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypes::getIdFromValue($quoteType));
+        $branchName = $quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypes::getIdFromValue($quoteType));
         
         $baseFields = [
             'code' => $quote->code,

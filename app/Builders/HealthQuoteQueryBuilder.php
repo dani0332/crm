@@ -72,6 +72,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'gender',
             'emirate_of_your_visa_id',
             'pec_marked_at',
+            'branch_id',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
@@ -79,6 +80,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'emirate:id,text',
             'advisor:id,name,email,mobile_no,landline_no',
             'advisor.primaryBranch',
+            'branch:id,name',
             'previousAdvisor:id,name',
             'healthQuoteRequestDetail:id,health_quote_request_id,next_followup_date,transapp_code,notes,insly_id,lost_reason_id,advisor_assigned_date',
             'healthLeadType:id,text',

@@ -83,7 +83,7 @@ class LifeQuoteService extends BaseService
     private function postProcessLifeQuote($quotes)
     {
         $quotes->map(function ($item) {
-            $item->branch_name = app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Life);
+            $item->branch_name = $item->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Life);
 
             return $item;
         });
@@ -120,6 +120,7 @@ class LifeQuoteService extends BaseService
                     'subType:id,code',
                 ]);
             },
+            'branch:id,name',
         ])
             ->when(auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->user()->id);
@@ -379,6 +380,7 @@ class LifeQuoteService extends BaseService
                 },
                 'subSource',
                 'subSourceOption',
+                'branch:id,name',
             ])
             ->select([
                 'personal_quotes.*',
@@ -398,7 +400,7 @@ class LifeQuoteService extends BaseService
         $lifeQuote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $lifeQuote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $lifeQuote->transaction_type_text = $data['transaction_type']['text'] ?? null;
-        $lifeQuote->branch_name = app(BranchAssignmentService::class)->getBranchName($lifeQuote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Life);
+        $lifeQuote->branch_name = $lifeQuote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($lifeQuote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Life);
 
         return $lifeQuote;
     }

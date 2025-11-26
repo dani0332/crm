@@ -127,7 +127,7 @@ class CarQuoteExport implements CsvExportableInterface
      */
     public function map($quote): array
     {
-        $branchName = app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car);
+        $branchName = $quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car);
 
         return [
             $quote->code,

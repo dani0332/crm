@@ -27,6 +27,7 @@ use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Services\BranchAssignmentService;
 
 trait PersonalQuoteObservable
 {
@@ -177,6 +178,22 @@ trait PersonalQuoteObservable
                     'error' => $e->getMessage(),
                     'uuid' => $personalQuote->uuid,
                 ]);
+            }
+        }
+
+        if($personalQuote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            try {
+                app(BranchAssignmentService::class)->saveBranchOverride($personalQuote, $personalQuote->quote_type_id);
+                PersonalQuote::withoutEvents(function () use ($personalQuote) {
+                    $branch = app(BranchAssignmentService::class)->getBranch($personalQuote?->advisor?->primaryBranch?->branch_id, $personalQuote->quote_type_id);
+                    $personalQuote->update([
+                        'branch_id' => $branch->id,
+                    ]);
+                });
+            } catch (Exception $e) {
+                LoggerService::error('PersonalQuoteObserver - save branch data failed', [
+                    'uuid' => $personalQuote->uuid,
+                ], exception: $e);
             }
         }
     }

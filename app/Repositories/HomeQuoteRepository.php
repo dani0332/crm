@@ -153,7 +153,7 @@ class HomeQuoteRepository extends BaseRepository
     private function postProcessHomeQuote($query)
     {
         return $query->map(function ($item) {
-            $item->branch_name = app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Home);
+            $item->branch_name = $item->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Home);
             return $item;
         });
     }
@@ -247,6 +247,7 @@ class HomeQuoteRepository extends BaseRepository
             },
             'customer',
             'renewalBatchModel',
+            'branch:id,name',
         ];
     }
 
@@ -855,6 +856,7 @@ class HomeQuoteRepository extends BaseRepository
                 'transactionType',
                 'subSource',
                 'subSourceOption',
+                'branch:id,name',
             ])
             ->select([
                 $this->getTable().'.*',

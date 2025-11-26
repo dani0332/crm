@@ -10,6 +10,9 @@ use App\Models\Branch;
 use App\Models\BranchOverrideConfig;
 use App\Enums\EmirateEnum;
 use App\Enums\BranchEnum;
+use App\Enums\QuoteTypes;
+use Override;
+use App\Models\BranchOverride;
 
 class BranchAssignmentService extends BaseService
 {
@@ -154,69 +157,111 @@ class BranchAssignmentService extends BaseService
     }
 
     /**
-     * Get the branch name after applying any overrides for the quote type.
+     * Retrieves the display name of a branch using provided identifiers.
      *
-     * @param int|null $primaryAdvisorBranchId
-     * @param int $quoteTypeId
-     * @param int|null $emirateOfYourVisaId
-     * @return string
+     * This method resolves the branch instance based on the given advisor's primary branch ID,
+     * the quote type, and optionally the visa emirate ID (for Health quotes), then returns
+     * its human-readable name. If no branch is found, it returns an empty string.
+     *
+     * @param int|null $primaryAdvisorBranchId   The advisor's primary branch ID
+     * @param int      $quoteTypeId              The QuoteTypeId value
+     * @param int|null $emirateOfYourVisaId      (Optional) Visa emirate ID, used for Health quotes
+     * @return string                            The branch's display name, or empty string if not found
      */
     public function getBranchName($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null): string
     {
-        if ($quoteTypeId == QuoteTypeId::Health) {
-            return $this->getHealthBranchName($primaryAdvisorBranchId, $emirateOfYourVisaId);
-        }
+        $branch = $this->getBranch($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId);
 
-        return $this->getBranchNameWithOverride($primaryAdvisorBranchId, $quoteTypeId);
-    }
-
-    /**
-     * Get branch name for Health quotes based on emirate and advisor branch.
-     *
-     * @param int|null $primaryAdvisorBranchId
-     * @param int|null $emirateOfYourVisaId
-     * @return string
-     */
-    private function getHealthBranchName($primaryAdvisorBranchId, $emirateOfYourVisaId): string
-    {
-        if (empty($emirateOfYourVisaId) || empty($primaryAdvisorBranchId)) {
-            return '';
-        }
-
-        // Check if emirate is Abu Dhabi
-        if ($emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
-            return BranchEnum::ABU_DHABI->name();
-        }
-
-        $branch = self::$branches->find($primaryAdvisorBranchId);
-        
         return $branch->name ?? '';
     }
 
     /**
-     * Get branch name with override configuration applied.
+     * Returns the resolved branch instance for the given advisor and quote type,
+     * applying Health-specific logic based on the emirate if necessary,
+     * or branch override configuration for other quote types.
+     *
+     * @param int|null $primaryAdvisorBranchId  The advisor's primary branch ID
+     * @param int $quoteTypeId                  The QuoteTypeId value
+     * @param int|null $emirateOfYourVisaId     (Optional) Visa emirate ID, required only for Health quotes
+     * @return mixed|null                       The resolved branch model instance, or null if not found
+     */
+    public function getBranch($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null)
+    {
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            return $this->getHealthBranch($primaryAdvisorBranchId, $emirateOfYourVisaId);
+        }
+
+        return $this->getBranchWithOverride($primaryAdvisorBranchId, $quoteTypeId);
+    }
+
+    /**
+     * Get branch for Health quotes based on emirate and advisor branch.
+     *
+     * @param int|null $primaryAdvisorBranchId
+     * @param int|null $emirateOfYourVisaId
+     */
+    private function getHealthBranch($primaryAdvisorBranchId, $emirateOfYourVisaId)
+    {
+        if (empty($emirateOfYourVisaId) || empty($primaryAdvisorBranchId)) {
+            return null;
+        }
+
+        // Check if emirate is Abu Dhabi
+        if ($emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
+            $primaryAdvisorBranchId = BranchEnum::ABU_DHABI->value;
+        }
+
+        $branch = self::$branches->find($primaryAdvisorBranchId);
+        
+        return $branch;
+    }
+
+    /**
+     * Get branch with override configuration applied.
      *
      * @param int|null $primaryAdvisorBranchId
      * @param int $quoteTypeId
-     * @return string
+     
      */
-    private function getBranchNameWithOverride($primaryAdvisorBranchId, $quoteTypeId): string
+    private function getBranchWithOverride($primaryAdvisorBranchId, $quoteTypeId)
     {
         if (empty($primaryAdvisorBranchId)) {
-            return '';
+            return null;
         }
 
         // Check if there's an active override configuration for this branch and quote type
-        $overrideConfig = self::$branchOverrideConfigs
-            ->where('source_branch_id', $primaryAdvisorBranchId)
-            ->where('quote_type_id', $quoteTypeId)
-            ->first();
+        $overrideConfig = $this->getBranchOverrideConfig($primaryAdvisorBranchId, $quoteTypeId);
 
         $targetBranchId = $overrideConfig?->target_branch_id ?? $primaryAdvisorBranchId;
         $branch = self::$branches->find($targetBranchId);
 
-        return $branch?->name ?? '';
+        return $branch;
     }
 
+    private function getBranchOverrideConfig($primaryAdvisorBranchId, $quoteTypeId)
+    {
+        return self::$branchOverrideConfigs
+            ->where('source_branch_id', $primaryAdvisorBranchId)
+            ->where('quote_type_id', $quoteTypeId)
+            ->first() ?? null;
+    }
 
+    public function saveBranchOverride($quote, $quoteTypeId)
+    {
+        if($quoteTypeId == QuoteTypeId::Health) {
+            return;
+        }
+
+        $primaryAdvisorBranchId = $quote?->advisor?->primaryBranch?->branch_id;
+        $requestType = $quote::class;
+        $requestId = $quote->id;
+        $overrideConfig = $this->getBranchOverrideConfig($primaryAdvisorBranchId, $quoteTypeId);
+        if ($overrideConfig) {
+            BranchOverride::create([
+                'branch_override_config_id' => $overrideConfig->id,
+                'quote_request_type' => $requestType,
+                'quote_request_id' => $requestId,
+            ]);
+        }
+    }
 }

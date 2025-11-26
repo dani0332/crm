@@ -30,17 +30,9 @@ class BranchOverride extends Model
      */
     protected $fillable = [
         'branch_override_config_id',
-        'quotable_type',
-        'quotable_id',
+        'quote_request_type',
+        'quote_request_id',
     ];
-
-    /**
-     * Get the parent quotable model (CarQuote, TravelQuote, etc.).
-     */
-    public function quotable(): MorphTo
-    {
-        return $this->morphTo();
-    }
 
     /**
      * Get the branch override config that owns this override.
