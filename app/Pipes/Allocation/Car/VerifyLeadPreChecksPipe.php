@@ -2,11 +2,9 @@
 
 namespace App\Pipes\Allocation\Car;
 
-use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
-use App\Services\BuyLeads\BuyLeadService;
 use App\Services\Logger\LoggerService;
 use Closure;
 
@@ -50,7 +48,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         } elseif ($lead->isFakeOrDuplicate()) {
             LoggerService::info(self::class."::verifyPreChecks - Lead is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
         } elseif ($lead->hasExemptedSource()) {
-            if ($lead->source == LeadSourceEnum::REVIVAL && in_array($lead->nationality_id, BuyLeadService::getNationalitiesIds(QuoteTypes::CAR_CAT_A))) {
+            if ($lead->isCatABuyLeadApplicable(QuoteTypes::CAR_CAT_A, $this->allocationRequest->isSIC())) {
                 LoggerService::info(self::class.'::verifyPreChecks - Lead is a Revival lead and is a CAT A nationality, continuing assignment');
                 $continueAssignment = true;
             } else {

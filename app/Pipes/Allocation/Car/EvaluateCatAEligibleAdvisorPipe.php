@@ -5,7 +5,6 @@ namespace App\Pipes\Allocation\Car;
 use App\Enums\PermissionsEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\BuyLeadRequest;
-use App\Models\Tier;
 use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -20,9 +19,7 @@ class EvaluateCatAEligibleAdvisorPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        $tier = $request->getTier();
-
-        $advisor = $this->evaluateCatAEligibleAdvisor($tier);
+        $advisor = $this->evaluateCatAEligibleAdvisor();
 
         if (! $advisor) {
             LoggerService::warning('No advisor found');
@@ -39,9 +36,9 @@ class EvaluateCatAEligibleAdvisorPipe extends BaseAllocationPipe
         return $next($request);
     }
 
-    private function evaluateCatAEligibleAdvisor(Tier $tier)
+    private function evaluateCatAEligibleAdvisor()
     {
-        $advisor = $this->fetchAdvisor($tier);
+        $advisor = $this->fetchAdvisor();
 
         if ($advisor) {
             return User::find($advisor->user_id);
@@ -50,12 +47,12 @@ class EvaluateCatAEligibleAdvisorPipe extends BaseAllocationPipe
         return null;
     }
 
-    private function fetchAdvisor(Tier $tier)
+    private function fetchAdvisor()
     {
         $statusOrder = $this->getOnlineStatusesInOrder();
 
         foreach ($statusOrder as $status) {
-            $advisor = $this->getCATANationalitiesAdvisorByStatus($status, $tier);
+            $advisor = $this->getCATANationalitiesAdvisorByStatus($status);
 
             if ($advisor) {
                 LoggerService::info(self::class."::getCATANationalitiesAdvisorByStatus - Eligble Advisor {$advisor->user_id} found with the availability status of: ".UserStatusEnum::getUserStatusText($status));
@@ -69,9 +66,9 @@ class EvaluateCatAEligibleAdvisorPipe extends BaseAllocationPipe
         return null;
     }
 
-    private function getCATANationalitiesAdvisorByStatus($status, Tier $tier)
+    private function getCATANationalitiesAdvisorByStatus($status)
     {
-        LoggerService::info(self::class."::getCATANationalitiesAdvisorByStatus - CAT A Nationality allocation for tier: {$tier->name} and status: {$status}");
+        LoggerService::info(self::class."::getCATANationalitiesAdvisorByStatus - CAT A Nationality allocation for status: {$status}");
         $buyLeadRequestedUserIds = BuyLeadRequest::getCatAUserIds($this->allocationRequest->isSIC());
         $userIdsWithPermission = User::permission(PermissionsEnum::BUY_LEADS_REVIVAL)->pluck('id')->toArray();
         LoggerService::info(self::class.'::getCATANationalitiesAdvisorByStatus - user ids with permission are: '.json_encode($userIdsWithPermission));

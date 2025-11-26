@@ -2,7 +2,6 @@
 
 namespace App\Strategies\Allocations;
 
-use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Pipes\Allocation\Car\ApplyRuleExclusionPipe;
@@ -21,7 +20,6 @@ use App\Pipes\Allocation\Common\ValidateNationalityConfigPipe;
 use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\AllocationService;
-use App\Services\BuyLeads\BuyLeadService;
 use Exception;
 use Illuminate\Support\Facades\Pipeline;
 
@@ -70,9 +68,9 @@ class CarAllocation implements Allocation
         ];
 
         $isSIC = $lead->isSIC(QuoteTypes::CAR);
-        $catANationalitiesIds = BuyLeadService::getNationalitiesIds(QuoteTypes::CAR_CAT_A);
+        $isCatABuyLeadApplicable = $lead && $lead->isCatABuyLeadApplicable(QuoteTypes::CAR_CAT_A, $isSIC);
 
-        if ($lead && $lead->source == LeadSourceEnum::REVIVAL && $lead->isBuyLeadApplicable($isSIC) && in_array($lead->nationality_id, $catANationalitiesIds)) {
+        if ($isCatABuyLeadApplicable) {
             return [
                 ...$basePipes,
                 EvaluateCatAEligibleAdvisorPipe::class,
