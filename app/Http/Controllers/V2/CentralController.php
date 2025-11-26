@@ -781,7 +781,7 @@ class CentralController extends Controller
 
     public function voidPayment(Request $request): \Illuminate\Http\JsonResponse
     {
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::VOID_PAYMENT, $request->quote_code);
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::VOID_PAYMENT);
         $response = app(CentralService::class)->voidPayment($request);
 
         return response()->json(['status' => $response['status'], 'message' => $response['message']]);
