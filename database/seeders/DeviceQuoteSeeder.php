@@ -31,7 +31,7 @@ class DeviceQuoteSeeder extends Seeder
     {
         $quoteType = [
             'short_code' => 'DEV',
-            'code' => QuoteTypes::Device->value,
+            'code' => QuoteTypes::DEVICE->value,
             'text' => 'Device Insurance',
             'is_active' => 1,
         ];
