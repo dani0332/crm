@@ -4,6 +4,7 @@ namespace App\Strategies\Allocations;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
+use App\Models\CarQuote;
 use App\Pipes\Allocation\Car\ApplyRuleExclusionPipe;
 use App\Pipes\Allocation\Car\AssignLeadPipe;
 use App\Pipes\Allocation\Car\EvaluateCatAEligibleAdvisorPipe;
@@ -48,7 +49,8 @@ class CarAllocation implements Allocation
             evaluateTierOnly: $this->evaluateTierOnly
         );
 
-        $pipes = $this->getPipes();
+        $lead = CarQuote::where('uuid', $this->uuid)->first();
+        $pipes = $this->getPipes($lead);
 
         try {
             return Pipeline::send($allocationRequest)->through($pipes)->thenReturn();
@@ -58,10 +60,8 @@ class CarAllocation implements Allocation
         }
     }
 
-    private function getPipes()
+    private function getPipes(CarQuote $lead)
     {
-        $lead = QuoteTypes::CAR->model()->where('uuid', $this->uuid)->first();
-
         $basePipes = [
             FetchLeadPipe::class,
             VerifyLeadPreChecksPipe::class,
