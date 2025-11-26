@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
+use App\Services\CustomerInsuredService;
 use App\Services\LookupService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -18,8 +19,9 @@ use Illuminate\Support\Facades\DB;
 
 class CyberQuoteService extends BaseQuoteService
 {
-    public function __construct()
-    {
+    public function __construct(
+        private CustomerInsuredService $customerInsuredService
+    ) {
         parent::__construct(QuoteTypes::CYBER);
     }
 
@@ -139,6 +141,7 @@ class CyberQuoteService extends BaseQuoteService
 
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::CyberManager),
+            'insuredDetails' => $this->customerInsuredService->getInsuredDetails($quote->id),
             ...$data,
         ];
     }
