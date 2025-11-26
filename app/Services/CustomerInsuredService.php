@@ -29,7 +29,7 @@ class CustomerInsuredService
             ->where('insured_id', $insuredId)
             ->first();
 
-        if (! $insured || ! $insuredKyc) {
+        if (! $insured && ! $insuredKyc) {
             return null;
         }
 
