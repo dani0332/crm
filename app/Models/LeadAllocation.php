@@ -40,7 +40,7 @@ class LeadAllocation extends Model implements AuditableContract
         return $query->where('quote_type_id', QuoteTypes::TRAVEL->id());
     }
 
-    public function adjustAssignmentCounts(bool $isBuyLead, bool $isAuto = true, bool $deduct = false, bool $ignoreAssignmentCount = false, bool $isCATA = false)
+    public function adjustAssignmentCounts(bool $isBuyLead, bool $isAuto = true, bool $deduct = false, bool $ignoreAssignmentCount = false, bool $isCatABuyLead = false)
     {
         $adjustment = $deduct ? -1 : 1;
 
@@ -53,7 +53,7 @@ class LeadAllocation extends Model implements AuditableContract
         }
 
         if ($isBuyLead) {
-            if ($isCATA) {
+            if ($isCatABuyLead) {
                 $this->buy_lead_cat_a_allocation_count += $adjustment;
             } else {
                 $this->buy_lead_allocation_count += $adjustment;
