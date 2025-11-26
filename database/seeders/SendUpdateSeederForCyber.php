@@ -48,6 +48,30 @@ class SendUpdateSeederForCyber extends Seeder
             [
                 'code' => SendUpdateLogStatusEnum::CAA,
                 'quote_type_id' => QuoteTypeId::Cyber,
+            ],
+            [
+                'code' => SendUpdateLogStatusEnum::UWOS,
+                'quote_type_id' => QuoteTypeId::Cyber,
+            ],
+            [
+                'code' => SendUpdateLogStatusEnum::DWI,
+                'quote_type_id' => QuoteTypeId::Cyber,
+            ],
+            [
+                'code' => SendUpdateLogStatusEnum::CIID,
+                'quote_type_id' => QuoteTypeId::Cyber,
+            ],
+            [
+                'code' => SendUpdateLogStatusEnum::CII,
+                'quote_type_id' => QuoteTypeId::Cyber,
+            ],
+            [
+                'code' => SendUpdateLogStatusEnum::CIC,
+                'quote_type_id' => QuoteTypeId::Cyber,
+            ],
+            [
+                'code' => SendUpdateLogStatusEnum::CIED_EOP,
+                'quote_type_id' => QuoteTypeId::Cyber,
             ]
         ];
 
