@@ -12,6 +12,7 @@ use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Monolog\Logger;
 
 class UserService extends BaseService
 {
@@ -33,6 +34,7 @@ class UserService extends BaseService
         $user = new User;
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->employee_code = $request->employee_code ?? null;
         $user->mobile_no = $request->mobile_no;
         $user->landline_no = $request->landline_no;
         $user->calendar_link = $request->calendar_link;
@@ -52,7 +54,9 @@ class UserService extends BaseService
             }
         }
 
-        $user->save();
+        LoggerService::info("User Saved");
+        return ;
+        // $user->save();
 
         // Handle department sync - remove all if empty or null
         if ($request->department_ids !== null && ! empty($request->department_ids)) {
@@ -397,5 +401,22 @@ class UserService extends BaseService
                 'not_found' => count($emails),
             ];
         }
+    }
+
+    public function getEmployeeCode($email)
+    {
+        $employeeData = $this->hrmRequestService->getEmployeeCodes([$email]);
+
+        if ($employeeData === false || empty($employeeData)) {
+            return null;
+        }
+
+        foreach ($employeeData as $employee) {
+            if (($employee['email'] ?? '') === $email && !empty($employee['code'])) {
+                return $employee['code'];
+            }
+        }
+
+        return null;
     }
 }

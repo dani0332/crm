@@ -174,6 +174,14 @@ class UserController extends Controller
             'rm_category_id' => ['required', 'integer', 'regex:/^(-1|[1-9]\d*)$/'],
         ]);
 
+        $employeeCode = $this->userService->getEmployeeCode($request->email);
+
+        if (empty($employeeCode)) {
+            return redirect()->back()->withInput()->withErrors(['email' => 'Employee Code Not Found']);
+        }
+
+        $request->merge(['employee_code' => $employeeCode]);
+
         $user = $this->userService->createUserRecord($request);
         $products = $this->getAllProducts();
         if (! empty($request->products)) {
