@@ -648,7 +648,7 @@ class CentralService extends BaseService
                 $response = Ken::request($endpoint, 'post', $data);
                 break;
             case QuoteTypes::DEVICE->value:
-                $endpoint = '/process-device-quote-plan';
+                $endpoint = '/device/process-quote-plan';
                 $data = [
                     'planId' => intval($data->plan_id),
                     'quoteUID' => $uuid,
