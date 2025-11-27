@@ -608,7 +608,7 @@ const refreshComponent = () => {
 
       modals.customerVerification = false;
       isLoadingVerificationDataUpdate.value = false;
-    } 
+    },
   });
 };
 
@@ -4707,6 +4707,6 @@ const handleCancelConfirmationModal = () => {
     :modals="modals"
     :customerVerificationData="customerVerificationData"
     :isLoadingVerificationDataUpdate="isLoadingVerificationDataUpdate"
-     @ocr-webform-updated="refreshComponent"
+    @ocr-webform-updated="refreshComponent"
   />
 </template>
