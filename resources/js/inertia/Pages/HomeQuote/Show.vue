@@ -1583,8 +1583,8 @@ function handleOcrNotification(event) {
                   quote?.home_quote?.previous_building_aed
                 "
               >
-                <dt class="font-medium text-blue-600">PREVIOUS BUILDING AED</dt>
-                <dd class="text-blue-600 font-medium">
+                <dt class="font-medium">PREVIOUS BUILDING AED</dt>
+                <dd class="font-medium">
                   {{
                     Number(
                       quote?.home_quote?.previous_building_aed,
@@ -1622,10 +1622,8 @@ function handleOcrNotification(event) {
                   quote?.home_quote?.previous_personal_belongings_aed
                 "
               >
-                <dt class="font-medium text-blue-600">
-                  PREVIOUS PERSONAL BELONGINGS AED
-                </dt>
-                <dd class="text-blue-600 font-medium">
+                <dt class="font-medium">PREVIOUS PERSONAL BELONGINGS AED</dt>
+                <dd class="font-medium">
                   {{
                     Number(
                       quote?.home_quote?.previous_personal_belongings_aed,
@@ -1645,9 +1643,9 @@ function handleOcrNotification(event) {
                 class="grid sm:grid-cols-2"
                 v-if="quote?.source === $page.props.leadSource.RENEWAL_UPLOAD"
               >
-                <dt class="font-medium text-green-600">ENQUIRY COUNT</dt>
-                <dd class="text-green-600 font-medium">
-                  {{ quote?.enquiry_count || 0 }}
+                <dt class="font-medium">ENQUIRY COUNT</dt>
+                <dd class="">
+                  {{ quote?.home_quote?.enquiry_count || 0 }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
