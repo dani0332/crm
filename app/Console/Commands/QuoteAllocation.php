@@ -84,7 +84,7 @@ class QuoteAllocation extends Command
             $this->executeAllocation(QuoteTypes::PET, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::SAVINGS, $to, $chunkSize, $allocationStartDate);
-            $this->executeCarRevivalAllocation(QuoteTypeId::Car, $to, $chunkSize);
+            $this->executeCarRevivalAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate);
             LoggerService::endLogging();
         } else {
             LoggerService::info(self::class.': Quote Allocation Command is turned Off');
@@ -124,7 +124,7 @@ class QuoteAllocation extends Command
                 'sic_advisor_requested',
                 'quote_status_id',
             ])
-            ->where('created_at', '<=', $to)
+            ->whereBetween('created_at', [$allocationStartDate, $to])
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
             ->orderByDesc('created_at')
@@ -169,7 +169,7 @@ class QuoteAllocation extends Command
         $this->logProcessedRecords($processedRecords, $quoteType);
     }
 
-    public function executeCarRevivalAllocation($quoteType, $to, $chunkSize)
+    public function executeCarRevivalAllocation($quoteType, $to, $chunkSize, $allocationStartDate)
     {
         $processedRecords = 0;
         LoggerService::info(self::class.': Executing car revival quote allocation for cat A nationalities');
@@ -191,7 +191,7 @@ class QuoteAllocation extends Command
                 'quote_status_id',
                 'advisor_id',
             ])
-            ->where('created_at', '<=', $to)
+            ->whereBetween('created_at', [$allocationStartDate, $to])
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->orderByDesc('car_value')
             ->where('tier_id', '!=', TiersIdEnum::TIER_R)
