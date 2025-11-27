@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\AMLDecisionStatusEnum;
-use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
@@ -203,18 +201,7 @@ class BusinessQuoteController extends Controller
         $latestKycLog = KycLog::withTrashed()
             ->where('quote_request_id', $record->id)
             ->where('quote_type_id', QuoteTypes::BUSINESS->id())
-            ->where(function ($ryuFilter) {
-                $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
-                $ryuFilter->orWhereNull('decision');
-            })
-            ->where(function ($aml) {
-                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
-                $aml->orWhereNull('screening_type');
-            })
-            ->where(function ($query) {
-                $query->whereNull('screenshot');
-                $query->orWhere('screenshot', '');
-            })
+            ->standardAmlFilters()
             ->latest()->first();
         @[$documentTypes, $paymentDocuments] = app(QuoteDocumentService::class)->getDocumentTypes(self::TYPE_ID, $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::CORPLINE);
         $activities = $this->businessQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));

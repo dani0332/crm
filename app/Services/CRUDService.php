@@ -1192,7 +1192,7 @@ class CRUDService extends BaseService
             $data['quote_uuid'] = $quote->uuid;
             $kycLogs = AML::where([
                 'quote_request_id' => $quoteModel->id,
-            ])->where('decision', '!=', AMLDecisionStatusEnum::RYU)->orderBy('created_at', 'desc')->get();
+            ])->excludeRyuDecisionStrict()->orderBy('created_at', 'desc')->get();
             $pdf = PDF::loadView('pdf.risk_score_document', compact('quoteModel', 'detail', 'kycLogs', 'quoteType', 'data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();

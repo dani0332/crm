@@ -2,8 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\AMLDecisionStatusEnum;
-use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteTypes;
@@ -36,18 +34,7 @@ class DocumentTypeRepository extends BaseRepository
             $latestKycLog = KycLog::withTrashed()
                 ->where('quote_request_id', $quote->id)
                 ->where('quote_type_id', QuoteTypes::BUSINESS->id())
-                ->where(function ($ryuFilter) {
-                    $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
-                    $ryuFilter->orWhereNull('decision');
-                })
-                ->where(function ($aml) {
-                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
-                    $aml->orWhereNull('screening_type');
-                })
-                ->where(function ($query) {
-                    $query->whereNull('screenshot');
-                    $query->orWhere('screenshot', '');
-                })
+                ->standardAmlFilters()
                 ->latest()->first();
             $businessTypeOfInsurance = $quote->business_type_of_insurance_id;
             $businessTypeOfCustomer = $latestKycLog?->search_type;
@@ -79,18 +66,7 @@ class DocumentTypeRepository extends BaseRepository
             $latestKycLog = KycLog::withTrashed()
                 ->where('quote_request_id', $quote->id)
                 ->where('quote_type_id', QuoteTypes::BUSINESS->id())
-                ->where(function ($ryuFilter) {
-                    $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
-                    $ryuFilter->orWhereNull('decision');
-                })
-                ->where(function ($aml) {
-                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
-                    $aml->orWhereNull('screening_type');
-                })
-                ->where(function ($query) {
-                    $query->whereNull('screenshot');
-                    $query->orWhere('screenshot', '');
-                })
+                ->standardAmlFilters()
                 ->latest()->first();
 
             $businessTypeOfInsurance = $quote->business_type_of_insurance_id;
@@ -126,18 +102,7 @@ class DocumentTypeRepository extends BaseRepository
             $latestKycLog = KycLog::withTrashed()
                 ->where('quote_request_id', $quote->id)
                 ->where('quote_type_id', QuoteTypes::BUSINESS->id())
-                ->where(function ($ryuFilter) {
-                    $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
-                    $ryuFilter->orWhereNull('decision');
-                })
-                ->where(function ($aml) {
-                    $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
-                    $aml->orWhereNull('screening_type');
-                })
-                ->where(function ($query) {
-                    $query->whereNull('screenshot');
-                    $query->orWhere('screenshot', '');
-                })
+                ->standardAmlFilters()
                 ->latest()->first();
             $documentTypes->when($quote->business_type_of_insurance_id, function ($query) use ($quote) {
                 return $query->byBusinessTypeOfInsurance($quote->business_type_of_insurance_id);
