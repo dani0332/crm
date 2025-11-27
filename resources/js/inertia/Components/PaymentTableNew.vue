@@ -159,6 +159,7 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
   quoteTypeCodeEnum.SAVINGS,
+  quoteTypeCodeEnum.Device, // TODO:: NGI: confirm with Rucha and Waris, Waris first. (my research if we use or have premium price in device quote request table then keep it otherwise remove it)
 ]; //Ecommerce LOBs
 
 if (

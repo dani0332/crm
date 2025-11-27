@@ -497,6 +497,7 @@ class QuoteDocumentService extends BaseService
             QuoteTypeId::Corpline => ['CLPD', 'CLPDR', 'CLDPDR'],
             QuoteTypeId::CompanyCar => ['CPD', 'CPDR', 'CDPDR'],
             QuoteTypeId::Savings => ['SPD', 'SPDR', 'SDPDR'],
+            QuoteTypeId::Device => [DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_PROOF, DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_RECEIPT, DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_DISCOUNT_PROOF],
         ];
 
         return $mapping[$quoteTypeId] ?? [];

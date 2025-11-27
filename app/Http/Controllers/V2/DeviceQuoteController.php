@@ -11,18 +11,22 @@ use App\Models\PaymentStatus;
 use App\Models\InsuranceProviderPlan;
 use App\Enums\QuoteTypes;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Http\Requests\DeviceQuoteRequest;
+use App\Services\QuoteDocumentService;
 
 class DeviceQuoteController extends Controller
 {
     public function __construct(
-        public DeviceQuoteService $deviceQuoteService,
+        private DeviceQuoteService $deviceQuoteService,
+        private QuoteDocumentService $quoteDocumentService
     ) {
         // $this->middleware('permission:'.PermissionsEnum::SMART_PHONE_QUOTES_LIST.'|'.PermissionsEnum::VIEW_ALL_LEADS, ['only' => ['index']]);
         // $this->middleware('permission:'.PermissionsEnum::SMART_PHONE_QUOTES_CREATE, ['only' => ['create', 'store']]);
         // $this->middleware('permission:'.PermissionsEnum::SMART_PHONE_QUOTES_EDIT.'|'.PermissionsEnum::VIEW_ALL_LEADS, ['only' => ['edit', 'update']]);
         // $this->middleware('permission:'.PermissionsEnum::SMART_PHONE_QUOTES_SHOW.'|'.PermissionsEnum::VIEW_ALL_LEADS, ['only' => ['show']]);
     }
+
     public function index()
     {
         $advisors = $this->deviceQuoteService->getAdvisors();
@@ -41,7 +45,7 @@ class DeviceQuoteController extends Controller
 
         $data = $query->simplePaginate(10)->withQueryString();
 
-        $deviceCoverages = $this->deviceQuoteService->getDeviceCoverages();
+        // $deviceCoverages = $this->deviceQuoteService->getDeviceCoverages(); // commented because not in use.
 
         return inertia('DeviceQuote/Index', [
             'quotes' => $data,
@@ -90,8 +94,8 @@ class DeviceQuoteController extends Controller
     public function show($uuid)
     {
         $data = $this->deviceQuoteService->getShowData($uuid);
-
-        return inertia('DeviceQuote/Show', $data);
+        @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Device);
+        return inertia('DeviceQuote/Show', array_merge(compact('documentTypes', 'paymentDocument'), $data));
     }
 
 

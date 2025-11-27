@@ -135,6 +135,7 @@ class DeviceQuoteService extends BaseQuoteService
 
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::DeviceManager),
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             ...$data,
         ];
     }
@@ -148,7 +149,7 @@ class DeviceQuoteService extends BaseQuoteService
     {
         $listQuotePlans = '';
         $quotePlans = $this->getQuotePlans($id);
-        
+
         if (isset($quotePlans->message) && $quotePlans->message != '') {
             $listQuotePlans = $quotePlans->message;
         } else {
@@ -283,14 +284,14 @@ class DeviceQuoteService extends BaseQuoteService
     {
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->baseQuery()->where('uuid', $uuid)->firstOrFail();
-           
+
             $quoteData = Arr::only($data, [
                 'first_name', 'last_name', 'email', 'mobile_no',
             ]);
 
             $quoteData['updated_by_id'] = Auth::id();
             $quote->update($quoteData);
-           
+
             if (!empty($quote->deviceQuote)) {
                  // Combine month and year into purchase_date in Y-m format
                 $purchaseDate = sprintf('%04d-%02d', $data['year_of_purchase'], $data['month_of_purchase']);
@@ -308,5 +309,5 @@ class DeviceQuoteService extends BaseQuoteService
     {
         return app(LookupService::class)->getDeviceCoverages();
     }
-   
+
 }
