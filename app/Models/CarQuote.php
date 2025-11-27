@@ -633,4 +633,9 @@ class CarQuote extends BaseModel
     {
         return $this->hasOne(Branch::class, 'id', 'branch_id');
     }
+
+    public function branchOverride()
+    {
+        return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
 }

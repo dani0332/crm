@@ -69,6 +69,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedEpEcbConfigurations();
         $this->seedUnavailableTimeThreshold();
         $this->sendUpdateEmailBirdFlow();
+        $this->seedMisreportData();
     }
 
     private function livaCarAutomationSeed()
@@ -1041,6 +1042,34 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::EP_ECB_POLICY_DURATION],
             [
                 'value' => 'Your coverage lasts for 13 months or until the expiry of your motor insurance policy, whichever comes first.',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedMisreportData()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_MISREPORT_JOB],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/5fd51eb0-a17a-43d4-b9a8-11910469e7ac/invoke-sync';
+        if(env('APP_ENV') === 'production') {
+            $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/5fd51eb0-a17a-43d4-b9a8-11910469e7ac/invoke-sync';
+        }
+        
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_MISREPORT_JOB_WORKFLOW],
+            [
+                'value' => $birdWorkflowUrl,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

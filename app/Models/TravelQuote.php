@@ -431,4 +431,9 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
+
+    public function branchOverride()
+    {
+        return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
 }

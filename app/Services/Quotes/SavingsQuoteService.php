@@ -34,7 +34,7 @@ class SavingsQuoteService extends BaseQuoteService
         $this->httpService = $httpService;
     }
 
-    public function getData(bool $paginted = false, bool $forExport = false, bool $getTotalCount = false)
+    public function getData(bool $paginted = false, bool $forExport = false, bool $getTotalCount = false, bool $getQuery = false)
     {
         $query = $this->baseQuery()->with([
             'quoteStatus',
@@ -55,7 +55,9 @@ class SavingsQuoteService extends BaseQuoteService
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
-            ->filterByCreatedAt(request('created_at_start'), request('created_at_end'))
+            ->when(empty(request('booking_date')), function ($query) {
+                $query->filterByCreatedAt(request('created_at_start'), request('created_at_end'));
+            })
             ->when(request('investment_frequency'), function ($q) {
                 $q->whereHas('savingsQuote', function ($sq) {
                     $sq->where('investment_criteria_id', request('investment_frequency'));
@@ -69,6 +71,10 @@ class SavingsQuoteService extends BaseQuoteService
         if (request()->has('debug') && request()->debug == 'true') {
             echo $query->toRawSql();
             exit;
+        }
+
+        if ($getQuery) {
+            return $query;
         }
 
         return $query->resolveData($paginted, $forExport, $getTotalCount);
