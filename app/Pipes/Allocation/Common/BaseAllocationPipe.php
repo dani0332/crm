@@ -345,7 +345,7 @@ abstract class BaseAllocationPipe extends AllocationService
                 LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');
 
                 $quoteTypeId = $this->allocationRequest->getQuoteType()->id();
-                $isCatABuyLead = $this->allocationRequest->get('hasCatABuyLeadRequest');
+                $isCatABuyLead = $this->allocationRequest->get('hasCatABuyLeadRequest', false);
 
                 match ($assignmentType) {
                     AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD => $this->addAllocationCounts($advisor->id, $quoteTypeId, $this->allocationRequest->isBuyLead(), $isCatABuyLead),
