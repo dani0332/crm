@@ -152,8 +152,7 @@ const customerProfileForm = useForm({
   insured_first_name: page.props.insuredDetails?.first_name || '',
   insured_last_name: page.props.insuredDetails?.last_name || '',
   emirates_id_number: page.props.insuredDetails?.id_number || null,
-  emirates_id_expiry_date:
-    page.props.insuredDetails?.id_expiry_date || null,
+  emirates_id_expiry_date: page.props.insuredDetails?.id_expiry_date || null,
   emirates_id_issuing_date: page.props.insuredDetails?.id_issuance_date || null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
