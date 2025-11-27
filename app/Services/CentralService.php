@@ -647,6 +647,16 @@ class CentralService extends BaseService
                 ];
                 $response = Ken::request($endpoint, 'post', $data);
                 break;
+            case QuoteTypes::DEVICE->value:
+                $endpoint = '/process-device-quote-plan';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteUID' => $uuid,
+                    'quoteTypeId' => QuoteTypeId::Device,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                ];
+                $response = Ken::request($endpoint, 'post', $data);
+                break;
         }
 
         return $response;
