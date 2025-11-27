@@ -307,6 +307,8 @@ final class ApplicationStorageEnums extends Enum
     public const EP_FAILURE_EMAIL_TO = 'EP_FAILURE_EMAIL_TO';
     public const EP_FAILURE_EMAIL_REPLY_TO = 'EP_FAILURE_EMAIL_REPLY_TO';
     public const EP_FAILURE_EMAIL_CC = 'EP_FAILURE_EMAIL_CC';
+    
+    // Misreport Enum
     public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';
     public const BIRD_MISREPORT_JOB_WORKFLOW = 'BIRD_MISREPORT_JOB_WORKFLOW';
 }
