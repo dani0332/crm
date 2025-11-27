@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
