@@ -18,7 +18,7 @@ class DeviceQuoteService extends BaseQuoteService
 {
     public function __construct()
     {
-        parent::__construct(QuoteTypes::Device);
+        parent::__construct(QuoteTypes::DEVICE);
     }
 
     public function getData(bool $paginted = false, bool $forExport = false, bool $getTotalCount = false)
@@ -274,7 +274,7 @@ class DeviceQuoteService extends BaseQuoteService
         $response = Capi::request('/api/device/create', 'post', $data);
 
         if (isset($response->quoteUID)) {
-            $this->selfAssign(QuoteTypes::Device, $response->quoteUID, true);
+            $this->selfAssign(QuoteTypes::DEVICE, $response->quoteUID, true);
         }
 
         return $response;

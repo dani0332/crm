@@ -55,7 +55,7 @@ class DeviceQuoteController extends Controller
             'authorizedDays' => intval($authorizedDays->value),
             'insurerAMLStatus' => $insurerAMLStatus,
             'paymentStatuses' => $paymentStatuses,
-            'devicePlans' => InsuranceProviderPlan::where('quote_type_id', (int) QuoteTypes::Device->id())->select(['id', 'code', 'text'])->get(),
+            'devicePlans' => InsuranceProviderPlan::where('quote_type_id', (int) QuoteTypes::DEVICE->id())->select(['id', 'code', 'text'])->get(),
             'deviceCoverages' => [],
         ]);
     }
