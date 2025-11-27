@@ -172,6 +172,10 @@ const closeModal = () => {
               <dd class="text-gray-900">{{ log.ip_address || '-' }}</dd>
             </div>
             <div>
+              <dt class="font-medium text-gray-700">User Agent:</dt>
+              <dd class="text-gray-900">{{ log.user_agent || '-' }}</dd>
+            </div>
+            <div>
               <dt class="font-medium text-gray-700">Created At:</dt>
               <dd class="text-gray-900">
                 {{ dateFormat(log.created_at) }}

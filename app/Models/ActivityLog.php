@@ -22,8 +22,9 @@ class ActivityLog extends SpatieActivity
         'properties',
         'batch_uuid',
         'url',
+        'code',
         'feature',
         'ip_address',
-        'code'
+        'user_agent'
     ];
 }

@@ -8,7 +8,6 @@ const props = defineProps({
 });
 
 const page = usePage();
-const { isRequired } = useRules();
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
@@ -72,20 +71,14 @@ const onReset = () => {
 };
 
 const onSubmit = isValid => {
-  // Validate required fields
-  if (!filters.user_id || !filters.date_from || !filters.date_to) {
-    return;
-  }
-
   if (isValid) {
     filters.page = 1;
 
-    // Ensure all required filters are included
-    const searchFilters = {
-      user_id: filters.user_id,
-      date_from: filters.date_from,
-      date_to: filters.date_to,
-    };
+    // Include only provided filters (all optional)
+    const searchFilters = {};
+    if (filters.user_id) searchFilters.user_id = filters.user_id;
+    if (filters.date_from) searchFilters.date_from = filters.date_from;
+    if (filters.date_to) searchFilters.date_to = filters.date_to;
 
     router.visit(route('admin.activity-logs.index'), {
       method: 'get',
@@ -123,6 +116,7 @@ const showDetailModal = log => {
     url: log.url,
     feature: log.feature,
     ip_address: log.ip_address,
+    user_agent: log.user_agent,
     code: log.code,
     created_at: log.created_at,
     updated_at: log.updated_at,
@@ -139,7 +133,8 @@ const closeDetailModal = () => {
 };
 
 const hasFiltersApplied = computed(() => {
-  return !!(filters.user_id && filters.date_from && filters.date_to);
+  // Always show data, filters are optional
+  return true;
 });
 </script>
 
@@ -159,30 +154,24 @@ const hasFiltersApplied = computed(() => {
         :options="userOptions"
         class="w-full"
         filterable
-        placeholder="Select user"
-        required
-        :rules="[isRequired]"
+        placeholder="Select user (optional)"
         @update:modelValue="val => (filters.user_id = val)"
       />
       <DatePicker
         v-model="filters.date_from"
         label="DATE FROM"
-        placeholder="Select start date"
+        placeholder="Select start date (optional)"
         size="sm"
         model-type="yyyy-MM-dd"
         class="w-full"
-        required
-        :rules="[isRequired]"
       />
       <DatePicker
         v-model="filters.date_to"
         label="DATE TO"
-        placeholder="Select end date"
+        placeholder="Select end date (optional)"
         size="sm"
         model-type="yyyy-MM-dd"
         class="w-full"
-        required
-        :rules="[isRequired]"
       />
     </div>
     <div class="flex justify-end gap-3 mt-4">
@@ -195,20 +184,7 @@ const hasFiltersApplied = computed(() => {
 
   <!-- Table -->
   <div class="mt-4">
-    <div
-      v-if="!hasFiltersApplied"
-      class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center"
-    >
-      <div class="text-gray-500 text-lg mb-2">
-        <i class="fa fa-filter text-4xl mb-4"></i>
-      </div>
-      <p class="text-gray-700 font-medium mb-1">Filters Required</p>
-      <p class="text-gray-500 text-sm">
-        Please select User, Date From, and Date To to view activity logs.
-      </p>
-    </div>
     <DataTable
-      v-else
       table-class-name="mt-4"
       :loading="loader.table"
       :headers="tableHeader"
@@ -250,7 +226,7 @@ const hasFiltersApplied = computed(() => {
     </DataTable>
 
     <Pagination
-      v-if="hasFiltersApplied && props.activityLogs"
+      v-if="props.activityLogs"
       :links="{
         next: props.activityLogs.next_page_url,
         prev: props.activityLogs.prev_page_url,

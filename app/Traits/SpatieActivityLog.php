@@ -55,6 +55,7 @@ trait SpatieActivityLog
         $activity->url = request()->getRequestUri();
         $activity->feature = $feature;
         $activity->ip_address = request()->ip();
+        $activity->user_agent = request()->userAgent();
         $activity->code = $code;
 
         // For update events, ensure both old and new values are stored

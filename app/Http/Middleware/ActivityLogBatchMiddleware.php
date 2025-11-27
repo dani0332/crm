@@ -7,7 +7,6 @@ namespace App\Http\Middleware;
 use App\Services\ActivityLogService;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Spatie\Activitylog\Facades\LogBatch;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -26,9 +25,6 @@ class ActivityLogBatchMiddleware
     {
         LogBatch::startBatch();
 
-        $startTime = microtime(true);
-        $traceId = $request->header('X-Trace-Id', (string) Str::uuid());
-
         try {
             $response = $next($request);
         } finally {
@@ -36,7 +32,7 @@ class ActivityLogBatchMiddleware
             LogBatch::endBatch();
 
             // Log HTTP request details after response is ready
-            $this->activityLogService->logHttpRequest($request, $response ?? null, $traceId, $startTime);
+            $this->activityLogService->logHttpRequest($request);
         }
 
         return $response ?? response('', 500);

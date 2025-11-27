@@ -39,13 +39,10 @@ class ActivityLogController extends Controller
         // Remove empty filters
         $filters = array_filter($filters, fn($value) => !empty($value));
 
-        // Only fetch activity logs if all required filters are applied
-        $activityLogs = null;
-        if (!empty($filters['user_id']) && !empty($filters['date_from']) && !empty($filters['date_to'])) {
-            $perPage = (int) $request->get('per_page', 20);
-            $perPage = min(max($perPage, 10), 100); // Limit between 10 and 100
-            $activityLogs = $this->activityLogService->getActivityLogs($filters, $perPage);
-        }
+        // Always fetch activity logs (filters are optional)
+        $perPage = (int) $request->get('per_page', 20);
+        $perPage = min(max($perPage, 10), 100); // Limit between 10 and 100
+        $activityLogs = $this->activityLogService->getActivityLogs($filters, $perPage);
         
         $users = $this->userService->getAllUsers();
 

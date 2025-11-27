@@ -11,29 +11,26 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Context;
-use Symfony\Component\HttpFoundation\Response;
 
 class ActivityLogService extends BaseService
 {
     /**
-     * Get paginated activity logs with filters
+     * Get paginated activity logs with optional filters
      *
-     * @param array $filters
+     * @param array $filters Optional filters: user_id, date_from, date_to
      * @param int $perPage
      * @return LengthAwarePaginator
      */
     public function getActivityLogs(array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
-        $query = ActivityLog::with(['causer:id,name,email', 'subject'])
-            ->orderBy('created_at', 'desc');
+        $query = ActivityLog::with(['causer:id,name,email', 'subject']);
 
-        // Filter by user (causer) - required
+        // Filter by user (causer) - optional
         if (!empty($filters['user_id'])) {
             $query->where('causer_id', $filters['user_id'])
                 ->where('causer_type', User::class);
         }
 
-        // Filter by date range - required
         if (!empty($filters['date_from'])) {
             $dateFrom = Carbon::parse($filters['date_from'])->startOfDay();
             $query->where('created_at', '>=', $dateFrom);
@@ -44,32 +41,20 @@ class ActivityLogService extends BaseService
             $query->where('created_at', '<=', $dateTo);
         }
 
+        $query->orderBy('id', 'desc');
+
         return $query->paginate($perPage)->withQueryString();
     }
 
     /**
      * Log HTTP request details using Spatie activity log
      */
-    public function logHttpRequest(Request $request, ?Response $response, string $traceId, float $startTime): void
+    public function logHttpRequest(Request $request): void
     {
         try {
-            // Skip if activity logger is disabled
-            if (!config('activitylog.enabled', true)) {
+            if (!$this->shouldLogRequest($request)) {
                 return;
             }
-
-            // Skip if route should be excluded from logging
-            if ($this->shouldSkipLogging($request)) {
-                return;
-            }
-
-            // Skip if user is not authenticated
-            if (!$request->user()) {
-                return;
-            }
-
-            $endTime = microtime(true);
-            $executionTime = round(($endTime - $startTime) * 1000, 2);
 
             $user = $request->user();
             $method = $request->method();
@@ -77,18 +62,16 @@ class ActivityLogService extends BaseService
             $route = $request->route();
             $routeName = $route?->getName();
 
-            // Use default log name
-            $logName = config('activitylog.default_log_name', 'default');
-
-            // Extract resource name and identifier
-            $resourceName = $this->extractResourceName($request, $route, $path);
-            $identifier = $this->extractIdentifier($request, $route, $path);
-
-            // Build description using HTTP method
-            $description = $this->generateDescription($user, $method, $resourceName, $identifier, $path);
+            // Extract controller name and method name from route action
+            $logName = $this->extractLogName($route);
+            
+            // Build description: "User Name Sent Request to URL"
+            $userName = $user?->name;
+            $path = request()->path(); 
+            $description = sprintf('%s Sent Request to %s', $userName, $path);
 
             // Collect request data
-            $requestData = $this->collectRequestData($request, $traceId, $executionTime, $response);
+            $requestData = $this->collectRequestData($request);
 
             // Prepare properties
             $properties = [
@@ -97,9 +80,6 @@ class ActivityLogService extends BaseService
                 'url' => $request->fullUrl(),
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
-                'status_code' => $response?->getStatusCode() ?? 0,
-                'execution_time_ms' => $executionTime,
-                'trace_id' => $traceId,
             ];
 
             // Add request payload if available
@@ -112,11 +92,6 @@ class ActivityLogService extends BaseService
                 $properties['query_params'] = $requestData['query_params'];
             }
 
-            // Add file info if available
-            if (!empty($requestData['files'])) {
-                $properties['files'] = $requestData['files'];
-            }
-
             // Add route information
             if ($routeName) {
                 $properties['route_name'] = $routeName;
@@ -127,7 +102,7 @@ class ActivityLogService extends BaseService
             activity($logName)
                 ->causedBy($user)
                 ->withProperties($properties)
-                ->event($this->determineEvent($method))
+                ->event("Accessed")
                 ->tap(function ($activity) use ($request) {
                     // Get feature and code from Context (set by LoggerService::startFeatureLogging)
                     $feature = Context::get('feature');
@@ -136,6 +111,7 @@ class ActivityLogService extends BaseService
                     // Set custom fields
                     $activity->url = $request->getRequestUri();
                     $activity->ip_address = $request->ip();
+                    $activity->user_agent = $request->userAgent();
                     $activity->feature = $feature;
                     $activity->code = $code;
                 })
@@ -152,149 +128,38 @@ class ActivityLogService extends BaseService
     }
 
     /**
-     * Extract resource name from route and path
+     * Extract log name from route action (ControllerName@methodName)
      */
-    private function extractResourceName(Request $request, $route, string $path): ?string
+    private function extractLogName($route): string
     {
-        $pathSegments = array_filter(explode('/', $path));
+        $actionName = $route->getActionName();
         
-        $resourceMap = [
-            'quotes' => 'quote',
-            'personal-quotes' => 'personal quote',
-            'payments' => 'payment',
-            'customers' => 'customer',
-            'users' => 'user',
-            'leads' => 'lead',
-            'documents' => 'document',
-            'invoices' => 'invoice',
-            'policies' => 'policy',
-        ];
-        
-        $firstSegment = $pathSegments[0] ?? null;
-        if ($firstSegment && isset($resourceMap[$firstSegment])) {
-            return $resourceMap[$firstSegment];
-        }
-        
-        if ($route) {
-            $parameters = $route->parameters();
-            foreach (['quote', 'payment', 'customer', 'user'] as $key) {
-                if (isset($parameters[$key])) {
-                    return $resourceMap[$key . 's'] ?? $key;
-                }
+        if ($actionName && is_string($actionName) && str_contains($actionName, '@')) {
+            $parts = explode('@', $actionName);
+            if (count($parts) === 2) {
+                $controller = class_basename($parts[0]);
+                $method = $parts[1];
+                return sprintf('%s@%s', $controller, $method);
             }
         }
         
-        return null;
+        return config('activitylog.default_log_name', 'default');
     }
 
     /**
-     * Extract identifier (quote code, payment code, etc.) from request
+     * Collect request data (payload, query params, etc.)
      */
-    private function extractIdentifier(Request $request, $route, string $path): ?string
-    {
-        if ($route) {
-            $parameters = $route->parameters();
-            foreach (['uuid', 'code', 'id'] as $key) {
-                if (isset($parameters[$key])) {
-                    $value = $parameters[$key];
-                    if (is_object($value)) {
-                        return $value->code ?? $value->id ?? null;
-                    }
-                    if (preg_match('/^[A-Z]{3}-[A-Z0-9]+$/', strtoupper($value))) {
-                        return strtoupper($value);
-                    }
-                    return $value;
-                }
-            }
-        }
-        
-        $pathSegments = array_filter(explode('/', $path));
-        foreach ($pathSegments as $segment) {
-            if (preg_match('/^[A-Z]{3}-[A-Z0-9]+$/', strtoupper($segment))) {
-                return strtoupper($segment);
-            }
-        }
-        
-        $payload = $request->all();
-        foreach (['code', 'payment_code', 'quote_code', 'quote_uuid', 'uuid'] as $key) {
-            if (isset($payload[$key])) {
-                return $payload[$key];
-            }
-        }
-        
-        return null;
-    }
-
-    /**
-     * Generate description for activity log
-     */
-    private function generateDescription($user, string $method, ?string $resourceName, ?string $identifier, string $path): string
-    {
-        $userName = $user?->name ?? 'System';
-        $methodUpper = strtoupper($method);
-        
-        if ($identifier && $resourceName) {
-            return sprintf(
-                '%s %s %s %s',
-                $userName,
-                $methodUpper,
-                $resourceName,
-                $identifier
-            );
-        } elseif ($resourceName) {
-            return sprintf(
-                '%s %s %s',
-                $userName,
-                $methodUpper,
-                $resourceName
-            );
-        } else {
-            return sprintf(
-                '%s %s %s',
-                $userName,
-                $methodUpper,
-                $path
-            );
-        }
-    }
-
-    /**
-     * Determine event type from request method
-     */
-    private function determineEvent(string $method): string
-    {
-        return match (strtoupper($method)) {
-            'GET' => 'viewed',
-            'POST' => 'created',
-            'PUT', 'PATCH' => 'updated',
-            'DELETE' => 'deleted',
-            default => 'performed',
-        };
-    }
-
-    /**
-     * Collect request data (payload, query params, files, etc.)
-     */
-    private function collectRequestData(Request $request, string $traceId, float $executionTime, ?Response $response): array
+    private function collectRequestData(Request $request): array
     {
         $method = $request->method();
         $contentType = $request->header('Content-Type', '');
         
-        $requestData = [
-            'trace_id' => $traceId,
-            'execution_time_ms' => $executionTime,
-        ];
+        $requestData = [];
         
         // Extract payload based on method and content type
         $payload = $this->extractPayload($request, $method, $contentType);
         if (!empty($payload)) {
             $requestData['payload'] = $payload;
-        }
-        
-        // Extract file info if present
-        $fileInfo = $this->extractFileInfo($request);
-        if (!empty($fileInfo)) {
-            $requestData['files'] = $fileInfo;
         }
         
         // Collect query parameters
@@ -329,71 +194,11 @@ class ActivityLogService extends BaseService
                     $payload = $decoded;
                 }
             }
-        } elseif (str_contains($contentType, 'multipart/form-data') || str_contains($contentType, 'application/x-www-form-urlencoded')) {
-            $allData = $request->all();
-            $files = $request->allFiles();
-            
-            // Remove file keys from payload
-            foreach (array_keys($files) as $fileKey) {
-                unset($allData[$fileKey]);
-            }
-            
-            $payload = $allData;
-        } else {
+        }  else {
             $payload = $request->except(array_keys($request->allFiles()));
         }
         
         return $payload;
-    }
-
-    /**
-     * Extract file information from request (metadata only, not file objects)
-     * Handles both single files and arrays of files
-     */
-    private function extractFileInfo(Request $request): array
-    {
-        $fileInfo = [];
-        
-        foreach ($request->allFiles() as $fieldName => $file) {
-            if (is_array($file)) {
-                // Handle multiple files (e.g., files[] or files[0], files[1])
-                $fileInfo[$fieldName] = $this->extractMultipleFilesMetadata($file);
-            } elseif ($file instanceof \Illuminate\Http\UploadedFile) {
-                // Handle single file
-                $fileInfo[$fieldName] = $this->extractFileMetadata($file);
-            }
-        }
-        
-        return $fileInfo;
-    }
-
-    /**
-     * Extract metadata from a single uploaded file
-     */
-    private function extractFileMetadata(\Illuminate\Http\UploadedFile $file): array
-    {
-        return [
-            'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
-            'extension' => $file->getClientOriginalExtension(),
-        ];
-    }
-
-    /**
-     * Extract metadata from multiple uploaded files
-     */
-    private function extractMultipleFilesMetadata(array $files): array
-    {
-        $metadata = [];
-        
-        foreach ($files as $index => $file) {
-            if ($file instanceof \Illuminate\Http\UploadedFile) {
-                $metadata[$index] = $this->extractFileMetadata($file);
-            }
-        }
-        
-        return $metadata;
     }
 
     /**
@@ -413,6 +218,29 @@ class ActivityLogService extends BaseService
     }
 
     /**
+     * Check if the request should be logged
+     */
+    private function shouldLogRequest(Request $request): bool
+    {
+        // Skip if activity logger is disabled
+        if (!config('activitylog.enabled', true)) {
+            return false;
+        }
+
+        // Skip if route should be excluded from logging
+        if ($this->shouldSkipLogging($request)) {
+            return false;
+        }
+
+        // Skip if user is not authenticated
+        if (!$request->user()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Determine if HTTP request logging should be skipped for this request
      */
     private function shouldSkipLogging(Request $request): bool
@@ -424,36 +252,20 @@ class ActivityLogService extends BaseService
             '/activity-log',
             '/activity-logs',
             '/admin/activity',
+            '/google/callback',
         ];
 
-        $path = $request->path();
+        $path = $request->path(); 
         $routeName = $request->route()?->getName();
 
-        // Check excluded paths
         foreach ($excludedPaths as $excludedPath) {
-            if (str_starts_with($path, ltrim($excludedPath, '/'))) {
+            $normalizedExcluded = ltrim($excludedPath, '/');
+            
+            if (str_starts_with($path, $normalizedExcluded)) {
                 return true;
-            }
-        }
-
-        // Check route name patterns
-        if ($routeName) {
-            $internalRoutePatterns = [
-                'activity',
-                'horizon',
-                'telescope',
-                'queue',
-                'job',
-            ];
-
-            foreach ($internalRoutePatterns as $pattern) {
-                if (stripos($routeName, $pattern) !== false) {
-                    return true;
-                }
             }
         }
 
         return false;
     }
 }
-
