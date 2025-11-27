@@ -54,9 +54,7 @@ class UserService extends BaseService
             }
         }
 
-        LoggerService::info("User Saved");
-        return ;
-        // $user->save();
+        $user->save();
 
         // Handle department sync - remove all if empty or null
         if ($request->department_ids !== null && ! empty($request->department_ids)) {
