@@ -1,5 +1,10 @@
 <script setup>
-const { quoteId, modals, customerVerificationData, isLoadingVerificationDataUpdate } = defineProps({
+const {
+  quoteId,
+  modals,
+  customerVerificationData,
+  isLoadingVerificationDataUpdate,
+} = defineProps({
   quoteId: Number,
   modals: Object,
   customerVerificationData: Object,
@@ -14,27 +19,32 @@ const updateAndSave = async () => {
   isLoading.value = true;
 
   // Make api request
-  await axios.get(`/quotes/car/${quoteId}/update-ocr-webform`).then(response => {
+  await axios
+    .get(`/quotes/car/${quoteId}/update-ocr-webform`)
+    .then(response => {
+      // Emit event to reload updated plans
+      emit('ocr-webform-updated');
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error occurred while updating',
+        position: 'top',
+      });
 
-    // Emit event to reload updated plans
-    emit('ocr-webform-updated');
-  }).catch(error => {
-    notification.error({
-      title: 'Error occurred while updating',
-      position: 'top',
+      isLoading.value = false;
+      console.log(error);
     });
-
-    isLoading.value = false;
-    console.log(error);
-  });
-}
+};
 
 // Watch props to hide loader (once parent processing is completed)
-watch(() => isLoadingVerificationDataUpdate, (val) => {
-  if (val === false) {
-    isLoading.value = false;   // hide loader when parent finishes
-  }
-});
+watch(
+  () => isLoadingVerificationDataUpdate,
+  val => {
+    if (val === false) {
+      isLoading.value = false; // hide loader when parent finishes
+    }
+  },
+);
 </script>
 
 <template>
@@ -179,7 +189,8 @@ watch(() => isLoadingVerificationDataUpdate, (val) => {
                   "
                 >
                   {{
-                    customerVerificationData.customerVerified?.name?.value || '-'
+                    customerVerificationData.customerVerified?.name?.value ||
+                    '-'
                   }}
                 </div>
                 <span
@@ -362,13 +373,20 @@ watch(() => isLoadingVerificationDataUpdate, (val) => {
       </div>
 
       <!-- Update and save button-->
-      <div class="px-6 pb-6 max-w-4xl mx-auto flex justify-end" v-if="customerVerificationData.buttonData.status=='requires_verification'">
+      <div
+        class="px-6 pb-6 max-w-4xl mx-auto flex justify-end"
+        v-if="
+          customerVerificationData.buttonData.status == 'requires_verification'
+        "
+      >
         <x-button
-        size="sm"
-        color="orange"
-        :loading="isLoading"
-        @click="updateAndSave"
-        :disabled="isLoading">Update & Save</x-button>
+          size="sm"
+          color="orange"
+          :loading="isLoading"
+          @click="updateAndSave"
+          :disabled="isLoading"
+          >Update & Save</x-button
+        >
       </div>
 
       <template #actions>
