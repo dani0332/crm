@@ -511,7 +511,7 @@ const copyLink = () => {
     <Head title="Cyber Quotes" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Cyber Detail</h2>
+        <h2 class="text-xl font-semibold">Cyber Insurance Details</h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
           v-if="countDays !== false"
