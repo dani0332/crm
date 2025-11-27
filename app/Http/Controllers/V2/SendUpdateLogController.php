@@ -175,7 +175,7 @@ class SendUpdateLogController extends Controller
         $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode, $optionCode, $quoteTypeId);
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
         if (checkPersonalQuotes($quoteType)) {
-            if($quoteType == QuoteTypes::CYBER->value) {
+            if ($quoteType == QuoteTypes::CYBER->value) {
                 $realQuote = app(CyberQuoteService::class)->getOne($quote->uuid);
             } else {
                 $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';

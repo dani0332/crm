@@ -5,8 +5,6 @@ namespace Database\Seeders;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Lookup;
-use App\Models\SendUpdateLog;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SendUpdateSeederForCyber extends Seeder
@@ -21,7 +19,7 @@ class SendUpdateSeederForCyber extends Seeder
                 'code' => SendUpdateLogStatusEnum::CAAFE,
                 'quote_type_id' => QuoteTypeId::Cyber,
             ],
-            [   
+            [
                 'code' => SendUpdateLogStatusEnum::MPC,
                 'quote_type_id' => QuoteTypeId::Cyber,
             ],
@@ -72,12 +70,12 @@ class SendUpdateSeederForCyber extends Seeder
             [
                 'code' => SendUpdateLogStatusEnum::CIED_EOP,
                 'quote_type_id' => QuoteTypeId::Cyber,
-            ]
+            ],
         ];
 
         foreach ($sendUpdateCodes as $sendUpdateCode) {
             $existingSendUpdate = Lookup::where('code', $sendUpdateCode['code'])->where('quote_type_id', $sendUpdateCode['quote_type_id'])->first();
-            if (!$existingSendUpdate) {
+            if (! $existingSendUpdate) {
                 $parent = Lookup::where('code', $sendUpdateCode['code'])->first();
                 Lookup::create([
                     'code' => $sendUpdateCode['code'],
