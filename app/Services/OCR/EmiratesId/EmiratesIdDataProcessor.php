@@ -15,6 +15,7 @@ use App\Models\Nationality;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
+use App\Services\OCR\Validators\OCRDocumentValidator;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +30,7 @@ class EmiratesIdDataProcessor
     public function __construct(
         private Model $quote,
         private object $data,
+        private string $documentTypeCode
     ) {
         $this->emiratesIdExtractor = new EmiratesIdExtractor($this->data);
     }
@@ -50,6 +52,10 @@ class EmiratesIdDataProcessor
             $insuredUpdated = $this->updateInsuredTable($insured);
             $kycUpdated = $this->updateInsuredKycTable($insured);
             $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
+
+            // Trigger OCR success validation
+            $isOCRSuccess = app(OCRDocumentValidator::class)->validateEIDFields($this->quote->id);
+            LoggerService::info('EmiratesId data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($this->extractedData));
 
             DB::commit();
 
