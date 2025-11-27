@@ -16,6 +16,7 @@ import CustomerVerificationDetails from './Partials/CustomerVerificationDetails.
 import AdditionalVehicleTransactionDetails from '../../Aml/Partials/AdditionalVehicleTransactionDetails.vue';
 import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import { usePayment } from '@/inertia/Composables/usePayment';
 
 defineProps({
   quote: Object,
@@ -118,12 +119,18 @@ defineProps({
   insurerApiStatus: String,
   isAddionalFieldsEnabled: Boolean,
   rtaConfigurationData: Object,
+  carTypeofInsurance: Object,
 });
 
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 const isLoadingVerificationDataUpdate = ref(false);
+
+const { formatString } = usePayment();
+
+// Define record as computed property for template access
+const record = computed(() => page.props.record);
 
 const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
@@ -2170,6 +2177,39 @@ const handleCancelConfirmationModal = () => {
                 <dt class="font-medium">LEAD SOURCE</dt>
                 <dd>{{ record.source }}</dd>
               </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      IMCRM SUB-SOURCE
+                    </label>
+                    <template #tooltip>{{
+                      record.sub_source_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ record.sub_source_text || 'N/A' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{
+                      record.sub_source_option_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ record.sub_source_option_text || 'N/A' }}</dd>
+              </div>
+
               <div v-if="isCompanyCar" class="grid sm:grid-cols-2">
                 <dt class="font-medium">Vehicle use</dt>
                 <dd>
@@ -2231,7 +2271,7 @@ const handleCancelConfirmationModal = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TYPE OF CAR INSURANCE</dt>
-                <dd>{{ record.current_insurance_status }}</dd>
+                <dd>{{ carTypeofInsurance?.text ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENTLY INSURED WITH</dt>
@@ -3636,6 +3676,7 @@ const handleCancelConfirmationModal = () => {
                   puaPremium,
                   puaType,
                   isSystemDiscountPrice,
+                  tags,
                 }"
               >
                 <p>{{ providerName }}</p>
@@ -3692,6 +3733,17 @@ const handleCancelConfirmationModal = () => {
                       </template>
                       {{ puaType }}
                     </x-tooltip>
+                  </x-tag>
+                  <x-tag
+                    v-for="tag in tags
+                      ? tags.split(',').filter(t => t.trim())
+                      : []"
+                    :key="tag.trim()"
+                    size="xs"
+                    color="primary"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    {{ formatString(tag.trim()) }}
                   </x-tag>
                 </div>
               </template>

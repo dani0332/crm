@@ -102,8 +102,6 @@ class EmbeddedProduct
             $item->plan_end_date = $planEndDate;
             $item->certificate_number = $item->certificate_number ?? '';
             $item->name = $firstName.' '.$lastName;
-            $item->contact_number = $quoteObject->mobile_no ?? '';
-            $item->email = $quoteObject->email ?? '';
             $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
             $item->status = $status;
             $item->emirates_id_number = $emiratesIdNumber;
@@ -179,6 +177,9 @@ class EmbeddedProduct
             ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
+            })
+            ->when(isset($filters['certificate_number']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.certificate_number', 'like', "%{$filters['certificate_number']}%");
             })
             ->when(isset($filters['months']), function ($query) use ($filters) {
                 $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');

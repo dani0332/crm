@@ -22,6 +22,7 @@ use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
@@ -689,6 +690,7 @@ class CentralService extends BaseService
             QuoteStatusEnum::PolicyCancelled,
             QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::PolicyCancelledReissued,
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
         ];
 
         // Lock functionality check for Available Plans, Plan Details and Member Details
@@ -1534,12 +1536,12 @@ class CentralService extends BaseService
             'code' => $quote->code,
         ];
 
-        $this->emailDataExtend(emailData: $emailData, quote: $quote, quoteTypeId: $quoteTypeId, workflowType: $workflowType, existingEmailData: $existingEmailData);
+        $this->emailDataExtend($emailData, $quote, $quoteTypeId, $workflowType, $existingEmailData);
 
         return $emailData;
     }
 
-    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $workflowType = null, $existingEmailData = null): void
+    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $workflowType = null, $existingEmailData = null): void
     {
         $emailData->advisorEmail = $quote->advisor->email ?? '';
         $emailData->customerName = $quote->first_name.' '.$quote->last_name;
@@ -1576,8 +1578,9 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Car) {
             $emailData->carDetails = $quote?->carMake?->text.' '.$quote?->carModel?->text.' '.$quote?->carModelDetail?->text;
+            $emailData->companyName = '';
             if (app(LeadAllocationService::class)->isCommercialVehicles($quote)) {
-                $emailData->companyName = $quote->company_name ?? null;
+                $emailData->companyName = $quote->company_name ?? '';
             }
         }
 
@@ -1648,8 +1651,7 @@ class CentralService extends BaseService
         ) {
             $handBookDocuments = $existingEmailData->handBookDocuments ?? [];
             if (! empty($handBookDocuments)) {
-                // Get the latest document from the array
-                $latestDocument = collect($handBookDocuments)->last();
+                $latestDocument = $quoteTypeId == QuoteTypeId::Health ? collect($handBookDocuments)->first() : collect($handBookDocuments)->last();
                 $url = $latestDocument['url'] ?? null;
 
                 if ($url) {
@@ -1720,6 +1722,7 @@ class CentralService extends BaseService
 
                 if (empty($emailData->eCard)) {
                     LoggerService::info('E-Card not found.');
+                    $emailData->eCardExt = '';
                 } else {
                     $emailData->eCard = $storageUrl.$emailData->eCard;
                     $emailData->eCardExt = ! empty($emailData->eCard) ? pathinfo($emailData->eCard, PATHINFO_EXTENSION) : '';
@@ -1773,7 +1776,7 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Business) {
-            $emailData->companyName = $quote->company_name;
+            $emailData->companyName = $quote->company_name ?? '';
             $emailData->corplineDetails = $quote->brief_details;
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $emailData->tpa = '-'; // need to confirm.
@@ -2130,17 +2133,21 @@ class CentralService extends BaseService
         LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
 
         if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
+            $actionRequired = 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.';
+            $statusAPIFailed = 'Quote Referred To Insurer UW';
+
             LoggerService::info('fn:autoCaptureAMLValidationCheck failed - Going to dispatch AutomationFailedJob', extra: [
-                'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
-                'statusAPIFailed' => 'Quote Referred To Insurer UW',
-                'processInvolved' => 'Payment Capture',
+                'actionRequired' => $actionRequired,
+                'statusAPIFailed' => $statusAPIFailed,
+                'processInvolved' => PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,
             ]);
+
             AutomationFailedJob::dispatch(
                 $quote->id,
                 QuoteTypeId::Car,
-                'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
-                'Quote Referred To Insurer UW',
-                'Payment Capture',
+                $actionRequired,
+                $statusAPIFailed,
+                PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,
                 WorkflowTypeEnum::CAR_AUTOMATION_FAILED
             )->onQueue('policy-issuance-automation');
 
@@ -2171,32 +2178,30 @@ class CentralService extends BaseService
             if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
                 LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
 
+                $shouldEmailTrigger = false;
                 if ($responsePremiumAmount > $captureAmount) {
-                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
-                        'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
-                        'statusAPIFailed' => 'Premium Not Matched With Insurer',
-                        'processInvolved' => 'Payment Capture',
-                    ]);
-                    AutomationFailedJob::dispatch(
-                        $quote->id,
-                        QuoteTypeId::Car,
-                        'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
-                        'Premium Not Matched With Insurer',
-                        'Payment Capture',
-                        WorkflowTypeEnum::CAR_AUTOMATION_FAILED
-                    )->onQueue('policy-issuance-automation');
+                    $shouldEmailTrigger = true;
+                    $actionRequired = 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.';
+                    $statusAPIFailed = 'Premium Not Matched With Insurer';
                 } elseif ($responsePremiumAmount != $captureAmount) {
+                    $shouldEmailTrigger = true;
+                    $actionRequired = 'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.';
+                    $statusAPIFailed = 'Quote Referred To Insurer UW';
+                }
+
+                if ($shouldEmailTrigger) {
                     LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
-                        'actionRequired' => 'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
-                        'statusAPIFailed' => 'Quote Referred To Insurer UW',
-                        'processInvolved' => 'Payment Capture',
+                        'actionRequired' => $actionRequired,
+                        'statusAPIFailed' => $statusAPIFailed,
+                        'processInvolved' => PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,
                     ]);
+
                     AutomationFailedJob::dispatch(
                         $quote->id,
                         QuoteTypeId::Car,
-                        'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
-                        'Quote Referred To Insurer UW',
-                        'Payment Capture',
+                        $actionRequired,
+                        $statusAPIFailed,
+                        PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,
                         WorkflowTypeEnum::CAR_AUTOMATION_FAILED
                     )->onQueue('policy-issuance-automation');
                 }
