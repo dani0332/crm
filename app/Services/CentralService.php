@@ -1536,12 +1536,12 @@ class CentralService extends BaseService
             'code' => $quote->code,
         ];
 
-        $this->emailDataExtend(emailData: $emailData, quote: $quote, quoteTypeId: $quoteTypeId, workflowType: $workflowType, existingEmailData: $existingEmailData);
+        $this->emailDataExtend($emailData, $quote, $quoteTypeId, $workflowType, $existingEmailData);
 
         return $emailData;
     }
 
-    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $workflowType = null, $existingEmailData = null): void
+    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $workflowType = null, $existingEmailData = null): void
     {
         $emailData->advisorEmail = $quote->advisor->email ?? '';
         $emailData->customerName = $quote->first_name.' '.$quote->last_name;
@@ -1651,8 +1651,7 @@ class CentralService extends BaseService
         ) {
             $handBookDocuments = $existingEmailData->handBookDocuments ?? [];
             if (! empty($handBookDocuments)) {
-                // Get the latest document from the array
-                $latestDocument = collect($handBookDocuments)->last();
+                $latestDocument = $quoteTypeId == QuoteTypeId::Health ? collect($handBookDocuments)->first() : collect($handBookDocuments)->last();
                 $url = $latestDocument['url'] ?? null;
 
                 if ($url) {
