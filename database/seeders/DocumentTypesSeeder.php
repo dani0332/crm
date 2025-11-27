@@ -702,7 +702,7 @@ class DocumentTypesSeeder extends Seeder
             ],
             [
                 'code' => DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_PROOF,
-                'text' => 'Device Smart Phone Payment Proof',
+                'text' => 'Payment Proof',
                 'description' => null,
                 'is_active' => 1,
                 'quote_type_id' => QuoteTypeId::Device,
@@ -721,7 +721,7 @@ class DocumentTypesSeeder extends Seeder
             ],
             [
                 'code' => DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_RECEIPT,
-                'text' => 'Device Smart Phone Receipt',
+                'text' => 'Phone Receipt',
                 'description' => '',
                 'is_active' => 1,
                 'quote_type_id' => QuoteTypeId::Device,
@@ -740,7 +740,7 @@ class DocumentTypesSeeder extends Seeder
             ],
             [
                 'code' => DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_DISCOUNT_PROOF,
-                'text' => 'Device Smart Phone Discount Proof',
+                'text' => 'Discount Proof',
                 'description' => null,
                 'is_active' => 1,
                 'quote_type_id' => QuoteTypeId::Device,

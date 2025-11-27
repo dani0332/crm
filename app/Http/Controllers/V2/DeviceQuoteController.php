@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\PaymentGatewayIdEnum;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Enums\PermissionsEnum;
@@ -95,7 +96,11 @@ class DeviceQuoteController extends Controller
     {
         $data = $this->deviceQuoteService->getShowData($uuid);
         @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Device);
-        return inertia('DeviceQuote/Show', array_merge(compact('documentTypes', 'paymentDocument'), $data));
+        // dd(array_merge(compact('documentTypes', 'paymentDocument'), $data));
+        return inertia('DeviceQuote/Show', array_merge(compact('documentTypes', 'paymentDocument'), $data,
+        [
+            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+        ]));
     }
 
 
