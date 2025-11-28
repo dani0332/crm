@@ -969,3 +969,5 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return view('pdf.bor-document', $pdfData);
     });
 });
+
+Route::post('documents/temp-url', [QuoteDocumentController::class, 'getTempUrl'])->name('documents.temp-url');

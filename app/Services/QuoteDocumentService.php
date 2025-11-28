@@ -881,12 +881,12 @@ class QuoteDocumentService extends BaseService
         return true;
     }
 
-    public function getDocumentUrl($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
+    public function getDocumentUrl($filePath, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
     {
         $expiryTime = now()->addMinutes($expiryTimeInMinutes);
 
-        if (Storage::disk($storageDisk)->exists($fileName)) {
-            $encodedFileName = urlencode($fileName);
+        if (Storage::disk($storageDisk)->exists($filePath)) {
+            $encodedFileName = urlencode($filePath);
 
             return Storage::disk($storageDisk)->temporaryUrl($encodedFileName, $expiryTime);
         } else {
