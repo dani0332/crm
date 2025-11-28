@@ -914,14 +914,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             $params = [];
             if ($fromSageProcess) {
                 $params['--from-sage-process'] = true;
-            }
 
-            if ($startDate) {
-                $params['--start-date'] = $startDate;
-            }
-
-            if ($fromSageProcess && $sageProcessId) {
-                $params['--sage-process-id'] = $sageProcessId;
+                if ($startDate) {
+                    $params['--start-date'] = $startDate;
+                }
+    
+                if ($sageProcessId) {
+                    $params['--sage-process-id'] = $sageProcessId;
+                }
             }
 
             \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents', $params);
