@@ -238,7 +238,15 @@ class OCRService
             'is_send_update_eligible_for_ocr' => $isSendUpdateEligibleForOCR,
         ]);
 
-        $dataFilledResponse = $this->fill($quote, $docType, $data, $documentCategory, $isSendUpdateEligibleForOCR, $quoteType);
+        $dataFilledResponse = $this->fill(
+            $quote,
+            $docType,
+            $data,
+            $documentCategory,
+            $isSendUpdateEligibleForOCR,
+            $quoteType,
+            $documentType->code
+        );
 
         $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
         if ($isQuoteStatusTransectionApproved) {
