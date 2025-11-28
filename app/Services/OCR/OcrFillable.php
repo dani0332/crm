@@ -173,11 +173,11 @@ trait OcrFillable
         }
     }
 
-    private function fillMulkiya(Model $quote, object $data)
+    private function fillMulkiya(Model $quote, object $data, string $documentTypeCode)
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new MulkiyaDataProcessor($quote, $data);
+            $processor = new MulkiyaDataProcessor($quote, $data, $documentTypeCode);
 
             $success = $processor->processMulkiyaData();
 
@@ -294,7 +294,7 @@ trait OcrFillable
                 OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER => $this->fillTaxInvoiceRaisedByBuyer($quote, $data),
                 OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE => $this->fillCertificateOfIssuance($quote, $data),
                 OCRDocumentTypeEnum::ID_CARD => $this->fillEmiratesId($quote, $data, $documentTypeCode),
-                OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data),
+                OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data, $documentTypeCode),
                 OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data, $documentTypeCode),
                 OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE => in_array($quoteType, [QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL], true)
                     ? $this->fillPolicySchedule($quote, $data)
