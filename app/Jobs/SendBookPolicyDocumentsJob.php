@@ -198,7 +198,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 'quote_type_id' => $quoteTypeId,
                 'quote_uuid' => $quote->uuid,
                 'name' => QuoteTagEnums::POLICY_SENT_TO_CUSTOMER,
-            ],[
+            ], [
                 'value' => 1,
             ]);
 
