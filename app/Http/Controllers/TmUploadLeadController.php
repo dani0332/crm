@@ -74,6 +74,7 @@ class TmUploadLeadController extends Controller
                 return redirect('telemarketing/tmuploadlead')->with('message', 'Data is not valid in csv file, kindly follow the import instructions, correct the data and import it again.');
             }
 
+            // Disucss with Shahji we are just storing this file in DB, no operation is performed
             $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
             $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
 

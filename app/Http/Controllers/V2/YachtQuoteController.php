@@ -198,7 +198,6 @@ class YachtQuoteController extends Controller
         $lookupService = app(LookupService::class);
         $industryType = $lookupService->getCompanyTypes();
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Yacht);
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $sendUpdateOptions = [];
@@ -232,7 +231,6 @@ class YachtQuoteController extends Controller
             'insuranceProviders' => $insuranceProviders,
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
-            'storageUrl' => storageUrl(),
             'modelType' => QuoteTypes::YACHT,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::YachtManager),
             'embeddedProducts' => $embeddedProducts,
@@ -244,7 +242,6 @@ class YachtQuoteController extends Controller
             'emirates' => $emirates,
             'noteDocumentType' => $noteDocumentType,
             'quoteDocuments' => $quoteNotes,
-            'cdnPath' => $cdnPath,
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),

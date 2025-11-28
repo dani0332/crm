@@ -22,7 +22,6 @@ const props = defineProps({
   teams: Object,
   quoteDocuments: Object,
   documentTypes: Object,
-  cdnPath: String,
   documentType: Object,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
@@ -41,7 +40,6 @@ const props = defineProps({
   quoteRequest: Object,
   can: Object,
   paymentMethods: Object,
-  storageUrl: String,
   sendPolicy: Boolean,
   insuranceProviders: Array,
   planTypes: Array,
@@ -4039,7 +4037,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
       :eCommercePriceWithLP="
         ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
@@ -4099,7 +4096,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"

@@ -29,7 +29,6 @@ defineProps({
   displaySendPolicyButton: Boolean,
   documentTypes: Object,
   documentType: Object,
-  cdnPath: String,
   memberCategories: Array,
   emailStatuses: Array,
   isAdmin: Boolean,
@@ -53,7 +52,6 @@ defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   paymentTooltipEnum: Object,
-  storageUrl: String,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
@@ -3470,7 +3468,6 @@ const fullAddress = computed(() => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
@@ -3512,7 +3509,6 @@ const fullAddress = computed(() => {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"

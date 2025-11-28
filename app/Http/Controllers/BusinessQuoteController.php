@@ -269,8 +269,6 @@ class BusinessQuoteController extends Controller
             $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
         });
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-
         $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
         $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
@@ -304,7 +302,6 @@ class BusinessQuoteController extends Controller
             'lostReasons' => $this->lookupService->getLostReasons(),
             'quoteDocuments' => $quoteDocuments,
             'documentTypes' => $documentTypes,
-            'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
             'activities' => $activities,
             'customerAdditionalContacts' => $customerAdditionalContacts,

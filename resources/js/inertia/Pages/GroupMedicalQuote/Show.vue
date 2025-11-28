@@ -24,7 +24,6 @@ const props = defineProps({
   memberRelations: Array,
   canAddBatchNumber: Boolean,
   documentTypes: Object,
-  storageUrl: String,
   insuranceProviders: Object,
   vatPercentage: Number,
   paymentTooltipEnum: Object,
@@ -1416,7 +1415,6 @@ function handleOcrNotification(event) {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       quoteSubType="Group Medical"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
@@ -1440,7 +1438,6 @@ function handleOcrNotification(event) {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quoteDetails?.insly_id"
       :expanded="sectionExpanded"

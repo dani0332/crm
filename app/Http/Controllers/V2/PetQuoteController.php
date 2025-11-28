@@ -201,7 +201,6 @@ class PetQuoteController extends Controller
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
@@ -219,7 +218,6 @@ class PetQuoteController extends Controller
             'insuranceProviders' => $insuranceProviders,
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
-            'storageUrl' => storageUrl(),
             'duplicateAllowedLobs' => $duplicateAllowedLobs,
             'modelType' => QuoteTypes::PET,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::PetManager),
@@ -235,7 +233,6 @@ class PetQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'noteDocumentType' => $noteDocumentType,
             'quoteDocuments' => $quoteNotes,
-            'cdnPath' => $cdnPath,
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'permissions' => [

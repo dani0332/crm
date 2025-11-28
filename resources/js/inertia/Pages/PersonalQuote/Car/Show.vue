@@ -17,6 +17,7 @@ import AdditionalVehicleTransactionDetails from '../../Aml/Partials/AdditionalVe
 import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import { usePayment } from '@/inertia/Composables/usePayment';
+import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
 
 defineProps({
   quote: Object,
@@ -67,7 +68,6 @@ defineProps({
   websiteURL: String,
   docUploadURL: String,
   planURL: String,
-  storageUrl: String,
   insuranceProviders: Array,
   insuranceProvidersByQuoteType: Object,
   advisor: Object,
@@ -1889,6 +1889,8 @@ const handleCancelConfirmationModal = () => {
   modals.showConfirmationModal = false;
   modals.isConfirmed = false; // Reset confirmation flag when user cancels
 };
+
+const { openTempUrl } = useDocumentTempUrl();
 </script>
 
 <template>
@@ -3263,12 +3265,7 @@ const handleCancelConfirmationModal = () => {
             <template #item-documents="item">
               <template v-for="doc in item.documents" :key="doc">
                 <p class="my-2">
-                  <a
-                    class="underline"
-                    target="_blank"
-                    :href="leadDocsStoragePath + doc.path"
-                    >Document</a
-                  >
+                  <a class="text-primary-600 cursor-pointer" @click.prevent="openTempUrl(doc.path)">Document</a>
                 </p>
               </template>
             </template>
@@ -4111,7 +4108,6 @@ const handleCancelConfirmationModal = () => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
@@ -4233,7 +4229,6 @@ const handleCancelConfirmationModal = () => {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="record"
       :expanded="sectionExpanded"
       @copyUploadURL="copyUploadURL"

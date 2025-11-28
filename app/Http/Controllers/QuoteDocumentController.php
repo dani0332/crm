@@ -161,6 +161,7 @@ class QuoteDocumentController extends Controller
         return redirect()->back()->with('success', 'Document Uploaded Successfully');
     }
 
+    // TODO: This function is not used anywhere.
     public function sendPolicyDocument($quoteType, $quoteUuId)
     {
         $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);
@@ -239,6 +240,7 @@ class QuoteDocumentController extends Controller
         }
     }
 
+    // TODO: This function is not used anywhere.
     public function getQuoteUploadedDocuments($quoteType, $quoteUuId)
     {
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
