@@ -1572,7 +1572,7 @@ const copyLink = () => {
       :quote="quote"
       :quoteStatusEnum="quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="cyber"
+      modelType="Cyber"
       :expanded="sectionExpanded"
       :payments="payments"
     />
