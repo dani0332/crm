@@ -146,7 +146,7 @@ trait OcrFillable
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new EmiratesIdDataProcessor($quote, $data);
+            $processor = new EmiratesIdDataProcessor($quote, $data, $this->documentTypeCode);
 
             $success = $processor->processEmiratesIdData();
 
