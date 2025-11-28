@@ -2,6 +2,8 @@
 
 namespace App\Services\OCR\Validators;
 
+use App\Enums\DocumentTypeCode;
+use App\Models\CarQuote;
 use App\Models\CustomerInsured;
 use App\Models\QuoteDocument;
 use App\Models\RegistrationCertificate;

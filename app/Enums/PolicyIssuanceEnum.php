@@ -97,6 +97,15 @@ final class PolicyIssuanceEnum extends Enum
     const LIVA_AML_ACTIVE = 1;
     const LIVA_AML_ACCEPTED = 23;
 
+    // Process Involved
+    const PROCESS_INVOLVED_ISSUE_POLICY = 'Issue Policy';
+    const PROCESS_INVOLVED_UPLOAD_DOCUMENTS = 'Upload Documents';
+    const PROCESS_INVOLVED_BOOK_POLICY = 'Send and Book Policy';
+    const PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'Get and Upload Policy Documents to IMCRM';
+    const PROCESS_INVOLVED_OCR_PROCESSING = 'OCR Processing';
+    const PROCESS_INVOLVED_QUOTE_FINALIZATION = 'Quote Finalization';
+    const PROCESS_INVOLVED_PAYMENT_CAPTURE = 'Payment Capture';
+
     public static function getPolicyIssuanceSteps($insurerCode, $quoteType)
     {
         return match (ucfirst($quoteType)) {

@@ -69,6 +69,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedEpEcbConfigurations();
         $this->seedUnavailableTimeThreshold();
         $this->sendUpdateEmailBirdFlow();
+        $this->seedEnableMetLife();
         $this->seedCyberAdvisors();
     }
 
@@ -1067,6 +1068,19 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedEnableMetLife()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_METLIFE],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function seedCyberAdvisors()
     {
         ApplicationStorage::firstOrCreate(
@@ -1093,6 +1107,16 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE],
             [
                 'value' => '0',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 771,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

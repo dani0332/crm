@@ -152,8 +152,7 @@ const customerProfileForm = useForm({
   insured_first_name: page.props.insuredDetails?.first_name || '',
   insured_last_name: page.props.insuredDetails?.last_name || '',
   emirates_id_number: page.props.insuredDetails?.id_number || null,
-  emirates_id_expiry_date:
-    page.props.insuredDetails?.id_expiry_date || null,
+  emirates_id_expiry_date: page.props.insuredDetails?.id_expiry_date || null,
   emirates_id_issuing_date: page.props.insuredDetails?.id_issuance_date || null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
@@ -512,7 +511,7 @@ const copyLink = () => {
     <Head title="Cyber Quotes" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Cyber Detail</h2>
+        <h2 class="text-xl font-semibold">Cyber Insurance Details</h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
           v-if="countDays !== false"
@@ -675,20 +674,44 @@ const copyLink = () => {
                 <dd>{{ quote.id }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Ref-ID</dt>
+                <dd>{{ quote.code }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CUSTOMER TYPE</dt>
+                <dd>{{ quote.customer_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote?.advisor?.name }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CREATED DATE</dt>
+                <dd>{{ quote.created_at }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">NATIONALITY</dt>
+                <dd>{{ quote.nationality?.text || '-' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd></dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS ECOMMERCE</dt>
                 <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TYPE OF INSURANCE</dt>
+                <dd>Cyber</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CYBER COVERAGE UP TO</dt>
@@ -719,65 +742,6 @@ const copyLink = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">API ISSUANCE STATUS</dt>
                 <dd>{{ quote?.api_issuance_status || 'N/A' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CREATED DATE</dt>
-                <dd>{{ quote.created_at }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">NATIONALITY</dt>
-                <dd>{{ quote.nationality?.text || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TYPE OF INSURANCE</dt>
-                <dd>Cyber</dd>
-              </div>
-            </dl>
-          </div>
-        </template>
-      </Collapsible>
-    </div>
-
-    <div class="p-4 rounded shadow mb-6 bg-white" v-if="quote.is_ecommerce">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">E-COM Detail</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PRICE</dt>
-                <dd>
-                  {{ selectedProviderPlan.premium || quote.premium || '' }}
-                </dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AUTHORIZED AT</dt>
-                <dd>{{ quote.paid_at ?? 'N/A' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PAYMENT STATUS</dt>
-                <dd>{{ quote.payment_status_id_text ?? 'N/A' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PLAN NAME</dt>
-                <dd>{{ selectedProviderPlan.planName ?? 'N/A' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PAID AT</dt>
-                <dd>{{ quote.payment_paid_at ?? 'N/A' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
               </div>
             </dl>
           </div>
@@ -861,7 +825,19 @@ const copyLink = () => {
                   <dd>{{ quote.dob }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMIRATES ID</dt>
+                  <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
+                  <dd>
+                    <DatePicker
+                      v-model="customerProfileForm.emirates_id_expiry_date"
+                      :rules="[isRequired]"
+                      placeholder="EMIRATES ID EXPIRY DATE"
+                      :disabled="!isProfileUpdateAllow"
+                      :min-date="new Date()"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
@@ -875,18 +851,6 @@ const copyLink = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
                   <dd>{{ quote.nationality?.text || '-' }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
-                  <dd>
-                    <DatePicker
-                      v-model="customerProfileForm.emirates_id_expiry_date"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID EXPIRY DATE"
-                      :disabled="!isProfileUpdateAllow"
-                      :min-date="new Date()"
-                    />
-                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID ISSUING DATE</dt>
@@ -1139,6 +1103,49 @@ const copyLink = () => {
       :lost-reasons="lostReasons"
       :expanded="sectionExpanded"
     />
+
+    <div class="p-4 rounded shadow mb-6 bg-white" v-if="quote.is_ecommerce">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center flex-wrap gap-2">
+            <h3 class="text-lg font-semibold text-primary-800">E-COM Detail</h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRICE</dt>
+                <dd>
+                  {{ selectedProviderPlan.premium || quote.premium || '' }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AUTHORIZED AT</dt>
+                <dd>{{ quote.paid_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAID AT</dt>
+                <dd>{{ quote.payment_paid_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT STATUS</dt>
+                <dd>{{ quote.payment_status_id_text ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PROVIDER NAME</dt>
+                <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ selectedProviderPlan.planName ?? 'N/A' }}</dd>
+              </div>
+            </dl>
+          </div>
+        </template>
+      </Collapsible>
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -1565,7 +1572,7 @@ const copyLink = () => {
       :quote="quote"
       :quoteStatusEnum="quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="cyber"
+      modelType="Cyber"
       :expanded="sectionExpanded"
       :payments="payments"
     />

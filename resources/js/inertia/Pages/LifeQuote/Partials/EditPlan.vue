@@ -45,7 +45,6 @@ const showSaveButton = ref(false);
 
 let selectedTabIndex = ref(0);
 let overallLoadingState = ref(false);
-let totalPrice = props.selectedPlan.actualPremium;
 let errorMessage = ref(null);
 
 const formatDate = timestamp => {
@@ -129,6 +128,9 @@ const editForm = reactive({
   isApi: props.selectedPlan.isApi,
   isManualUpdate: props.selectedPlan.isManualPlan || props.selectedPlan.isApi,
   overallLoading: props?.selectedPlan?.overallLoading ?? 0,
+  discountPremium: props?.selectedPlan?.discountPremium ?? 0,
+  isInstantPolicy: props?.selectedPlan?.instantPolicy ?? false,
+  ridersPrice: props?.selectedPlan?.ridersPrice ?? 0,
 });
 
 // Make actualPremium a computed value to ensure reactivity
@@ -140,6 +142,36 @@ const actualPremium = computed(() => {
   );
   const riderPrice = Math.max(0, parseFloat(getRiderPrice()) || 0);
   return basePremium + overallLoadingValue + riderPrice;
+});
+
+const discountPremiumTotal = computed(() => {
+  return editForm.discountPremium;
+});
+
+const totalPrice = computed(() => {
+  if (
+    editForm.isApi &&
+    editForm.isInstantPolicy &&
+    editForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
+  ) {
+    // metlife annually
+    const currentRidersPrice = getRiderPrice();
+    return discountPremiumTotal.value + currentRidersPrice;
+  }
+
+  if (editForm.isApi && editForm.isInstantPolicy) {
+    // metlife monthly, quarterly, semi-annually
+    const currentRidersPrice = getRiderPrice();
+    return editForm.actualPremium + currentRidersPrice;
+  }
+
+  if (editForm.isApi && !editForm.isInstantPolicy) {
+    // zurich
+    return actualPremium.value;
+  }
+
+  // manual plan
+  return actualPremium.value;
 });
 
 const toggleVisiblity = () => {
@@ -188,6 +220,11 @@ const onSubmit = () => {
     loading: Number(parseFloat(rider.loading).toFixed(2)) || 0,
     finalPrice: Number(parseFloat(rider.finalPrice).toFixed(2)) || 0,
     coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
+    monthlyPremium:
+      Number(parseFloat(rider?.monthlyPremium ?? 0).toFixed(2)) || 0,
+    annualPremium:
+      Number(parseFloat(rider?.annualPremium ?? 0).toFixed(2)) || 0,
+    slug: rider?.slug ?? '',
   }));
 
   editForm.riders = processedRiders;
@@ -354,6 +391,9 @@ onMounted(() => {
       loading: parseInt(rider?.loading) ?? 0,
       finalPrice: parseInt(rider?.finalPrice) ?? 0,
       inputRequired: rider?.inputRequired ?? false,
+      monthlyPremium: parseFloat(rider?.monthlyPremium ?? 0) || 0,
+      annualPremium: parseFloat(rider?.annualPremium ?? 0) || 0,
+      slug: rider?.slug ?? '',
     }));
 
     getRiderDetails(props.selectedPlan.planId);
@@ -399,7 +439,17 @@ const getRiderPrice = () => {
   return totalRiderPrice;
 };
 
-watch(ridersData, newRidersData => {}, { deep: true });
+watch(
+  ridersData,
+  () => {
+    // Only update ridersPrice for MetLife plans (for display purposes)
+    if (editForm.isApi && editForm.isInstantPolicy) {
+      const newTotalRiderPrice = getRiderPrice();
+      editForm.ridersPrice = newTotalRiderPrice;
+    }
+  },
+  { deep: true },
+);
 
 // tabs
 const tabs = ref([
@@ -555,6 +605,32 @@ const formattedActualPremium = useFormattedNumberField(
   editForm,
   'actualPremium',
 );
+const formattedDiscountPremium = useFormattedNumberField(
+  editForm,
+  'discountPremium',
+);
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
+
+const getDisplayPrice = computed({
+  get: () => {
+    return editForm.isApi &&
+      editForm.isInstantPolicy &&
+      editForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
+      ? formattedDiscountPremium.value
+      : formattedActualPremium.value;
+  },
+  set: value => {
+    if (
+      editForm.isApi &&
+      editForm.isInstantPolicy &&
+      editForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
+    ) {
+      formattedDiscountPremium.value = value;
+    } else {
+      formattedActualPremium.value = value;
+    }
+  },
+});
 </script>
 
 <template>
@@ -677,7 +753,7 @@ const formattedActualPremium = useFormattedNumberField(
               <div class="grid sm:grid-cols-2">
                 <dt class="mt-2">Price:</dt>
                 <x-input
-                  v-model="formattedActualPremium"
+                  v-model="getDisplayPrice"
                   :disabled="editForm.isApi"
                   :rules="[isRequired, validatePriceRange, isNonNegative]"
                   size="sm"
@@ -803,10 +879,10 @@ const formattedActualPremium = useFormattedNumberField(
                 </div>
                 <div class="col-span-2">
                   <x-input
-                    type="number"
+                    type="text"
                     @keydown="e => preventInvalidInputs(e, false)"
                     class="w-full h-10 p-2 rounded-md"
-                    v-model="editForm.actualPremium"
+                    v-model="getDisplayPrice"
                     disabled
                   />
                 </div>
@@ -834,7 +910,7 @@ const formattedActualPremium = useFormattedNumberField(
               </div>
               <div
                 class="grid grid-cols-10 items-center gap-4 p-2"
-                v-for="(rider, index) in ridersData"
+                v-for="rider in ridersData"
                 :key="rider.id"
               >
                 <div>
@@ -962,7 +1038,7 @@ const formattedActualPremium = useFormattedNumberField(
           <dl class="flex flex-row">
             <dt class="font-bold text-lg ml-4">Total Price:</dt>
             <dd class="text-lg">
-              &nbsp; {{ editForm.currency }} {{ numberFormat(actualPremium) }}
+              &nbsp; {{ editForm.currency }} {{ numberFormat(totalPrice) }}
             </dd>
           </dl>
 
@@ -979,7 +1055,11 @@ const formattedActualPremium = useFormattedNumberField(
 
             <x-button
               v-if="
-                editForm.isApi && !editForm.isUnderwritten && !isPdfGenerated
+                editForm.isApi &&
+                !editForm.isUnderwritten &&
+                !isPdfGenerated &&
+                props.selectedPlan.providerCode ===
+                  insuranceProviderCodeEnum?.ZILL
               "
               @click="generatePdf()"
               class="mt-2"
@@ -1009,7 +1089,7 @@ const formattedActualPremium = useFormattedNumberField(
             <dl class="flex flex-row">
               <dt class="font-bold text-sm ml-4">Total Price:</dt>
               <dd class="text-sm">
-                &nbsp; {{ editForm.currency }} {{ numberFormat(actualPremium) }}
+                &nbsp; {{ editForm.currency }} {{ numberFormat(totalPrice) }}
               </dd>
             </dl>
           </div>
@@ -1068,7 +1148,7 @@ const formattedActualPremium = useFormattedNumberField(
             <div class="flex items-center">
               <span class="font-bold mr-2">Total Price:</span>
               <span class="">
-                {{ editForm.currency }} {{ numberFormat(actualPremium) }}
+                {{ editForm.currency }} {{ numberFormat(totalPrice) }}
               </span>
             </div>
           </div>

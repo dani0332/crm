@@ -102,7 +102,6 @@ final class SendUpdateLogStatusEnum extends Enum
     const CII = 'CII'; // change in insurer.
     const CIC = 'CIC'; // change in cover.
 
-
     public static function sendUpdateStatuses(): array
     {
         return [

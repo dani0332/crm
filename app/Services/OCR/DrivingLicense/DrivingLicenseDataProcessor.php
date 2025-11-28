@@ -10,6 +10,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class DrivingLicenseDataProcessor
@@ -19,7 +20,7 @@ class DrivingLicenseDataProcessor
     private DrivingLicenseExtractor $drivingLicenseExtractor;
 
     public function __construct(
-        private CarQuote $quote,
+        private Model $quote,
         private object $data,
         private string $documentTypeCode,
     ) {
@@ -71,7 +72,7 @@ class DrivingLicenseDataProcessor
         }
     }
 
-    private function updateVehicleDriverDetail(CarQuote $quote, array $fieldsToUpdate): bool
+    private function updateVehicleDriverDetail(Model $quote, array $fieldsToUpdate): bool
     {
         try {
             // Convert nationality string to nationality_id if nationality is provided
@@ -110,6 +111,8 @@ class DrivingLicenseDataProcessor
             } else {
                 LoggerService::info('VehicleDriverDetail created successfully');
             }
+
+            // Trigger OCR success validation
 
             return true;
 

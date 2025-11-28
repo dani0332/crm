@@ -15,6 +15,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  viewMode: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['data-update']);
@@ -201,6 +205,7 @@ defineExpose({
       :brackets="lumpsumBrackets"
       :advisor-options="advisorOptions"
       :nationality-options="nationalityOptions"
+      :view-mode="viewMode"
       @add-bracket="addLumpsumBracket"
       @remove-bracket="removeLumpsumBracket"
       @add-profile="onAddProfile"
@@ -213,6 +218,7 @@ defineExpose({
       :brackets="regularBrackets"
       :advisor-options="advisorOptions"
       :nationality-options="nationalityOptions"
+      :view-mode="viewMode"
       @add-bracket="addRegularBracket"
       @remove-bracket="removeRegularBracket"
       @add-profile="onAddProfile"
