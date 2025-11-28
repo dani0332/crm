@@ -188,7 +188,7 @@ class PolicyBulkSendDocuments extends Command
                 }
 
                 LoggerService::info('Payload Before Dispatch', extra: ['Payload' => json_encode($payload)]);
-                SendBookPolicyDocumentsJob::dispatch($payload, $quote->code, true);
+                SendBookPolicyDocumentsJob::dispatch($payload, $quote->code, true, true);
                 $successCount++;
                 LoggerService::info('Job dispatched for sage process', extra: [
                     'sage_process_id' => $sageProcess->id,
