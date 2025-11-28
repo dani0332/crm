@@ -144,7 +144,10 @@ class PolicyBulkSendDocuments extends Command
                     LoggerService::info('Invalid request data for sage process', extra: [
                         'sage_process_id' => $sageProcess->id,
                     ]);
-                    $failedProcesses[] = $sageProcess->id;
+
+                    if ($requestData['sagePayload']['sageProcessRequestType'] == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
+                        $failedProcesses[] = $sageProcess->id;
+                    }
 
                     continue;
                 }
@@ -184,7 +187,7 @@ class PolicyBulkSendDocuments extends Command
                     }
                 }
 
-                LoggerService::info('Payload: '.json_encode($payload));
+                LoggerService::info('Payload Before Dispatch', extra: ['Payload' => json_encode($payload)]);
                 SendBookPolicyDocumentsJob::dispatch($payload, $quote->code, true);
                 $successCount++;
                 LoggerService::info('Job dispatched for sage process', extra: [
