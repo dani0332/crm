@@ -47,14 +47,14 @@ class DrivingLicenseDataProcessor
                 $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote, $processedData['vehicle_driver_detail_fields']);
             }
 
-             // Trigger OCR success validation
-             $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
+            // Trigger OCR success validation
+            $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
                 'quoteId' => $this->quote->id,
                 'quoteableType' => get_class($this->quote),
             ]);
-            
-            $isOCRSuccess = $ocrDocumentValidator->validateDLFields();
-            LoggerService::info('Driving License data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($this->extractedData));
+
+            $isOCRSuccess = $ocrDocumentValidator->validateDLFields($this->documentTypeCode);
+            LoggerService::info('Driving License data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($processedData));
 
             DB::commit();
 
