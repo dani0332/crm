@@ -871,6 +871,24 @@ class SageApiService
 
         LoggerService::info('--------------------------------Sage Policy Booking process started-------------------------------');
 
+        // Dispatch the policy document job first, before any policy booking operations
+        $skipBookPolicyDocumentJob = false;
+        if ($quoteTypeId === QuoteTypeId::Travel) {
+            $quote->load('policyIssuance');
+            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
+                $skipBookPolicyDocumentJob = true;
+            }
+        }
+
+        LoggerService::info('Skipping book policy document job', extra: [
+            'skipBookPolicyDocumentJob' => $skipBookPolicyDocumentJob ? 'Yes' : 'No',
+        ]);
+        if (! $skipBookPolicyDocumentJob && ! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
+            LoggerService::info('Dispatching job to send customer documents after policy booking');
+            // dispath job to send email
+            SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
+        }
+
         if (! $isPolicyBookedOnSage) {
 
             LoggerService::info('Payment frequency: '.$payment->frequency);
@@ -954,23 +972,6 @@ class SageApiService
                     return $embeddedProductSageBookingResponse;
                 }
             }
-        }
-
-        $skipBookPolicyDocumentJob = false;
-        if ($quoteTypeId === QuoteTypeId::Travel) {
-            $quote->load('policyIssuance');
-            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
-                $skipBookPolicyDocumentJob = true;
-            }
-        }
-
-        LoggerService::info('Skipping book policy document job', extra: [
-            'skipBookPolicyDocumentJob' => $skipBookPolicyDocumentJob ? 'Yes' : 'No',
-        ]);
-        if (! $skipBookPolicyDocumentJob && ! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
-            LoggerService::info('Dispatching job to send customer documents after policy booking');
-            // dispath job to send email
-            SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
         }
 
         LoggerService::info('Marking quote status as Policy Booked');
