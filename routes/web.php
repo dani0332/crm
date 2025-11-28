@@ -909,21 +909,21 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             $fromSageProcess = $request->query('from_sage_process', false);
             $startDate = $request->query('start_date');
             $sageProcessId = $request->query('sage_process_id');
-            
+
             // Build command parameters
             $params = [];
             if ($fromSageProcess) {
                 $params['--from-sage-process'] = true;
             }
-            
+
             if ($startDate) {
                 $params['--start-date'] = $startDate;
             }
-            
+
             if ($fromSageProcess && $sageProcessId) {
                 $params['--sage-process-id'] = $sageProcessId;
             }
-            
+
             \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents', $params);
 
             return response()->json([
