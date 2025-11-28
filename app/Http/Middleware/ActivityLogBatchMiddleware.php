@@ -28,11 +28,12 @@ class ActivityLogBatchMiddleware
         try {
             $response = $next($request);
         } finally {
+            // Log HTTP request details after response is ready
+            $this->activityLogService->logHttpRequest($request);
+
             // This ensures all activities are properly saved with the batch_uuid
             LogBatch::endBatch();
 
-            // Log HTTP request details after response is ready
-            $this->activityLogService->logHttpRequest($request);
         }
 
         return $response ?? response('', 500);

@@ -10,6 +10,7 @@ use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Context;
 
 class ActivityLogService extends BaseService
@@ -129,9 +130,17 @@ class ActivityLogService extends BaseService
 
     /**
      * Extract log name from route action (ControllerName@methodName)
+     * 
+     * @param Route|null $route The route instance, which may be null for unregistered routes
+     * @return string The log name in format "Controller@method" or default log name
      */
-    private function extractLogName($route): string
+    private function extractLogName(?Route $route): string
     {
+        if ($route === null) {
+            return config('activitylog.default_log_name');
+        }
+
+        // Safe to call getActionName() here since we've verified $route is not null
         $actionName = $route->getActionName();
         
         if ($actionName && is_string($actionName) && str_contains($actionName, '@')) {
@@ -143,7 +152,7 @@ class ActivityLogService extends BaseService
             }
         }
         
-        return config('activitylog.default_log_name', 'default');
+        return config('activitylog.default_log_name');
     }
 
     /**
