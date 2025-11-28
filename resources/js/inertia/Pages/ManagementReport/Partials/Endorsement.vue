@@ -8,7 +8,7 @@ const props = defineProps({
 });
 
 const calculateTotalSum = useCalculateTotalSum;
-const dateFormat = date => date ? useDateFormat(date, 'YYYY-MM-DD') : 'N/A';
+const dateFormat = date => (date ? useDateFormat(date, 'YYYY-MM-DD') : 'N/A');
 const priceFormat = (price, thousandSeparator = false) => {
   return thousandSeparator
     ? parseFloat(price).toLocaleString('en-US', {
