@@ -271,6 +271,14 @@ class SageApiService
         $preparedData['sendUpdateLog'] = $sendUpdateLog;
 
         $isEndorsementActionDisabled = app(SendUpdateLogService::class)->isEndorsementBookingActionDisabled($sendUpdateLog);
+
+         // Check if sage booking is temporarily disabled
+        if ($this->isSageBookingTempDisabled()) {
+            LoggerService::info('Sage booking is temporarily disabled', extra: ['SendUpdateQuote' => $sendUpdateLog->code]);
+
+            return ['status' => false, 'message' => 'Sage booking temporarily disabled'];
+        }
+
         if (! $isEndorsementActionDisabled) {
 
             // create AR Prepayment Premium Receipt
