@@ -889,6 +889,13 @@ class SageApiService
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
         }
 
+        // Check if sage booking is temporarily disabled
+        if ($this->isSageBookingTempDisabled()) {
+            LoggerService::info('Sage booking is temporarily disabled', extra: ['QuoteCode' => $quote->code]);
+
+            return ['status' => false, 'message' => 'Sage booking temporarily disabled'];
+        }
+
         if (! $isPolicyBookedOnSage) {
 
             LoggerService::info('Payment frequency: '.$payment->frequency);
@@ -3689,6 +3696,11 @@ class SageApiService
     public function isSageRetryTimeoutEnabled()
     {
         return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED);
+    }
+
+    private function isSageBookingTempDisabled()
+    {
+        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::TEMP_DISABLE_SAGE_BOOKING);
     }
 
     public function isPaymentPaidOrCreditApproved($payment, $paymentSplits, $sageRequest)
