@@ -95,7 +95,7 @@ class PolicyBulkSendDocuments extends Command
 
     private function handleFromSageProcesses(?string $startDate = null, ?string $sageProcessId = null): int
     {
-        LoggerService::info('Fetching failed sage processes', extra:[
+        LoggerService::info('Fetching failed sage processes', extra: [
             'start_date' => $startDate,
             'sage_process_id' => $sageProcessId,
         ]);
@@ -141,7 +141,7 @@ class PolicyBulkSendDocuments extends Command
                 $requestData = json_decode($sageProcess->request, true);
 
                 if (! $requestData || ! isset($requestData['requestPayload']['model_type']) || ! isset($requestData['requestPayload']['quote_id'])) {
-                    LoggerService::info("Invalid request data for sage process", extra: [
+                    LoggerService::info('Invalid request data for sage process', extra: [
                         'sage_process_id' => $sageProcess->id,
                     ]);
                     $failedProcesses[] = $sageProcess->id;
@@ -152,7 +152,7 @@ class PolicyBulkSendDocuments extends Command
                 $modelType = $requestData['requestPayload']['model_type'];
                 $quoteId = $requestData['requestPayload']['quote_id'];
 
-                LoggerService::info("Processing sage process", extra: [
+                LoggerService::info('Processing sage process', extra: [
                     'sage_process_id' => $sageProcess->id,
                     'model_type' => $modelType,
                     'quote_id' => $quoteId,
@@ -162,7 +162,7 @@ class PolicyBulkSendDocuments extends Command
                 $quote = $this->getQuoteObjectBy($modelType, $quoteId, 'id');
 
                 if (! $quote) {
-                    LoggerService::info("Quote not found for sage process", extra: [
+                    LoggerService::info('Quote not found for sage process', extra: [
                         'sage_process_id' => $sageProcess->id,
                     ]);
                     $failedProcesses[] = $sageProcess->id;
@@ -184,15 +184,15 @@ class PolicyBulkSendDocuments extends Command
                     }
                 }
 
-                LoggerService::info("Payload: ".json_encode($payload));
+                LoggerService::info('Payload: '.json_encode($payload));
                 SendBookPolicyDocumentsJob::dispatch($payload, $quote->code, true);
                 $successCount++;
-                LoggerService::info("Job dispatched for sage process", extra: [
+                LoggerService::info('Job dispatched for sage process', extra: [
                     'sage_process_id' => $sageProcess->id,
                     'quote_code' => $quote->code,
                 ]);
             } catch (\Exception $e) {
-                LoggerService::info("Exception processing sage process", extra: [
+                LoggerService::info('Exception processing sage process', extra: [
                     'sage_process_id' => $sageProcess->id,
                     'error' => $e->getMessage(),
                 ]);
