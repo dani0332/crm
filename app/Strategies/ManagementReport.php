@@ -22,6 +22,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\SendUpdateLogStatusEnum;
 
 class ManagementReport
 {
@@ -259,7 +261,7 @@ class ManagementReport
         $query->whereIn('personal_quotes.quote_type_id', $lobsIds);
     }
 
-    protected function getDateFilter($query, $request, $fieldName, $filterKey, $secondOptionalFieldName = null)
+    protected function getDateFilter($query, $request, $fieldName, $filterKey, $secondOptionalFieldName = null, $isEndorsements = false)
     {
         if ($request[$filterKey] != null) {
             if (is_array($request[$filterKey])) {
@@ -306,7 +308,38 @@ class ManagementReport
                     ->orWhereBetween($secondOptionalFieldName, $dateRange);
             });
         } else {
-            $query->whereBetween($fieldName, $dateRange);
+            $includeFailedBookings = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::MR_INCLUDE_FAILED_BOOKINGS);
+            $failedBookingDateFrom = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::MR_FAILED_BOOKING_DATE_FROM);
+
+            if ($isEndorsements && $includeFailedBookings && $filterKey == 'policyBookDate') {
+
+                $query->where(function ($query) use ($fieldName, $dateRange, $failedBookingDateFrom) {
+                    $query->whereBetween($fieldName, $dateRange)
+                        ->orWhere(function ($query) use ($failedBookingDateFrom, $dateRange) {
+                            $query->where('send_update_logs.status', SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED)
+                                ->whereExists(function ($query) use ($failedBookingDateFrom, $dateRange) {
+                                    $query->select(DB::raw(1))
+                                        ->from('send_update_status_logs')
+                                        ->whereColumn('send_update_status_logs.send_update_log_id', 'send_update_logs.id')
+                                        ->where('send_update_status_logs.current_status', SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED)
+                                        ->where('send_update_status_logs.created_at', '>=', $failedBookingDateFrom)
+                                        ->whereBetween('send_update_status_logs.created_at', $dateRange);
+                                });
+                        });
+                });
+
+            } else if ($includeFailedBookings && $filterKey == 'policyBookDate') {
+                $query->where(function ($query) use ($fieldName, $dateRange, $failedBookingDateFrom) {
+                    $query->whereBetween($fieldName, $dateRange)
+                        ->orWhere(function ($query) use ($failedBookingDateFrom, $dateRange) {
+                            $query->whereBetween('personal_quotes.quote_status_date', $dateRange)
+                                ->where('personal_quotes.quote_status_date', '>=', $failedBookingDateFrom)
+                                ->where('personal_quotes.quote_status_id', QuoteStatusEnum::POLICY_BOOKING_FAILED);
+                        });
+                });
+            } else {
+                $query->whereBetween($fieldName, $dateRange);
+            }
         }
     }
 
@@ -319,7 +352,7 @@ class ManagementReport
     {
         if ($this->isReportType($request, ManagementReportTypeEnum::BOOKED_POLICIES)) {
             $field = $endorsementsQuery ? 'send_update_logs.booking_date' : 'personal_quotes.policy_booking_date';
-            $this->getDateFilter($query, $request, $field, 'policyBookDate');
+            $this->getDateFilter($query, $request, $field, 'policyBookDate', null, $endorsementsQuery);
         } elseif ($this->isReportType($request, ManagementReportTypeEnum::APPROVED_TRANSACTIONS)) {
             $this->getDateFilter($query, $request, 'p.payment_due_date', 'paymentDueDate', 'ps.due_date');
         } elseif ($this->isReportType($request, ManagementReportTypeEnum::PAID_TRANSACTIONS)) {
@@ -355,7 +388,7 @@ class ManagementReport
                 if ($this->isReportType($request, ManagementReportTypeEnum::APPROVED_TRANSACTIONS)) {
                     $this->getDateFilter($query, $request, 'send_update_logs.invoice_date', 'paymentDueDate', 'ps.due_date');
                 } elseif ($this->isReportType($request, ManagementReportTypeEnum::BOOKED_POLICIES)) {
-                    $this->getDateFilter($query, $request, 'send_update_logs.booking_date', 'policyBookDate');
+                    $this->getDateFilter($query, $request, 'send_update_logs.booking_date', 'policyBookDate', null, true);
                 } elseif ($this->isReportType($request, ManagementReportTypeEnum::PAID_TRANSACTIONS)) {
                     $this->getDateFilter($query, $request, 'ps.verified_at', 'paymentDate');
                 }
