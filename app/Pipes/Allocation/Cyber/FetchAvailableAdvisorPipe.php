@@ -48,26 +48,26 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         if (! $advisor) {
             if ($this->isTestMode()) {
                 LoggerService::info(self::class.' - No Cyber advisor available for allocation - Trying backup advisor (TEST MODE)');
-                
+
                 $backupAdvisor = $this->getBackupAdvisor();
-                
+
                 if ($backupAdvisor) {
                     LoggerService::info(self::class.' - Backup advisor found and assigned', extra: [
                         'advisorId' => $backupAdvisor->id,
                         'advisorName' => $backupAdvisor->name,
                         'advisorEmail' => $backupAdvisor->email,
                     ]);
-                    
+
                     $this->allocationRequest->setAdvisor($backupAdvisor);
-                    
+
                     return $next($request);
                 }
-                
+
                 LoggerService::info(self::class.' - No Cyber advisor available for allocation (including backup)');
             } else {
                 LoggerService::info(self::class.' - No Cyber advisor available for allocation (PRODUCTION MODE - backup advisor not used)');
             }
-            
+
             $this->allocationRequest->markAsFailed();
             $this->throw('Advisor not found', self::NOT_FOUND);
         }
