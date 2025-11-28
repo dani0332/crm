@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteTypes;
+use App\Exceptions\MetLife\MetLifeException;
+use App\Services\Logger\LoggerService;
+use App\Services\MetLife\MetLifeApiService;
+use Exception;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\Skip;
+use Illuminate\Queue\SerializesModels;
+
+class LifeSyncHealthQuestionnaireJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $tries = 3;
+    public $timeout = 120;
+    public $backoff = 300;
+
+    public function __construct(private array $requestData) {}
+
+    public function handle(MetLifeApiService $metLifeService): void
+    {
+        LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($this->requestData['quote_uuid']));
+        LoggerService::info('Processing Health Questionnaire sync job.');
+
+        try {
+            $result = $metLifeService->syncHealthQuestionnaire($this->requestData);
+
+            if (is_array($result) && ($result['success'] ?? true) === false) {
+                throw new MetLifeException(
+                    'Health questionnaire sync failed: '.($result['message'] ?? 'Unknown error'),
+                    MetLifeException::SYNC_FAILED,
+                    [
+                        'quote_uuid' => $this->requestData['quote_uuid'] ?? null,
+                        'api_response' => $result,
+                    ]
+                );
+            }
+
+            LoggerService::info('Health Questionnaire sync completed successfully.', ['quote_uuid' => $this->requestData['quote_uuid']]);
+        } catch (MetLifeException $e) {
+            LoggerService::warning('Health Questionnaire sync job failed.', [
+                'error' => $e->getMessage(),
+                'error_type' => $e->getErrorType(),
+                'trace' => $e->getTraceAsString(),
+                'context' => $e->getContext(),
+            ]);
+            throw $e;
+        } catch (Exception $e) {
+            LoggerService::warning('Health Questionnaire sync job failed.', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'quote_uuid' => $this->requestData['quote_uuid'],
+            ]);
+            throw $e;
+        }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        LoggerService::warning('LifeSyncHealthQuestionnaireJob failed', [
+            'quote_uuid' => $this->requestData['quote_uuid'] ?? 'N/A',
+            'error' => $exception->getMessage(),
+        ]);
+    }
+
+    public function middleware(): array
+    {
+        $isMetLifeEnabled = getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_METLIFE, useCache: true) == '1';
+
+        if (! $isMetLifeEnabled) {
+            LoggerService::warning('LifeSyncHealthQuestionnaireJob skipped - MetLife integration is disabled');
+        }
+
+        return [Skip::when(fn () => ! $isMetLifeEnabled)];
+    }
+}

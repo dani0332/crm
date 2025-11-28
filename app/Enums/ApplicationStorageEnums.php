@@ -293,6 +293,9 @@ final class ApplicationStorageEnums extends Enum
     /* Customer Callback SLA Configuration */
     public const SLA_CALLBACK_HOURS = 'SLA_CALLBACK_HOURS';
     public const SLA_REMINDER_MINUTES = 'SLA_REMINDER_MINUTES';
+
+    // Car Missing Doc Reminder Workflow
+    public const BIRD_CAR_MISSING_DOC_REMINDER_WORKFLOW = 'BIRD_CAR_MISSING_DOC_REMINDER_WORKFLOW';
     public const RTA_PORTAL_LINK = 'RTA_PORTAL_LINK';
 
     /* OCR Customer Journey Flag */
@@ -309,4 +312,7 @@ final class ApplicationStorageEnums extends Enum
     public const EP_FAILURE_EMAIL_TO = 'EP_FAILURE_EMAIL_TO';
     public const EP_FAILURE_EMAIL_REPLY_TO = 'EP_FAILURE_EMAIL_REPLY_TO';
     public const EP_FAILURE_EMAIL_CC = 'EP_FAILURE_EMAIL_CC';
+
+    // MetLife Integration
+    public const ENABLE_METLIFE = 'ENABLE_METLIFE';
 }
