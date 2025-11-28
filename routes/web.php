@@ -918,7 +918,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 if ($startDate) {
                     $params['--start-date'] = $startDate;
                 }
-    
+
                 if ($sageProcessId) {
                     $params['--sage-process-id'] = $sageProcessId;
                 }
