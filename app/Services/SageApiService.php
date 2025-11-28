@@ -272,7 +272,7 @@ class SageApiService
 
         $isEndorsementActionDisabled = app(SendUpdateLogService::class)->isEndorsementBookingActionDisabled($sendUpdateLog);
 
-         // Check if sage booking is temporarily disabled
+        // Check if sage booking is temporarily disabled
         if ($this->isSageBookingTempDisabled()) {
             LoggerService::info('Sage booking is temporarily disabled', extra: ['SendUpdateQuote' => $sendUpdateLog->code]);
 
