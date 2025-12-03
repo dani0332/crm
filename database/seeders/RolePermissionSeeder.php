@@ -324,7 +324,7 @@ class RolePermissionSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
-        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::CLAIM_LEAD])->get();
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::CLAIM_LEAD, RolesEnum::CLAIM_MANAGER])->get();
 
         $claimsPermissions = PermissionsEnum::getClaimsPermissions();
 
