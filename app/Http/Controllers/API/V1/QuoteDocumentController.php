@@ -24,7 +24,7 @@ class QuoteDocumentController extends Controller
 
     protected $quoteDocumentService;
 
-    public function __construct(ApiService $apiService,QuoteDocumentService $quoteDocumentService)
+    public function __construct(ApiService $apiService, QuoteDocumentService $quoteDocumentService)
     {
         $this->quoteDocumentService = $quoteDocumentService;
         $this->apiService = $apiService;
