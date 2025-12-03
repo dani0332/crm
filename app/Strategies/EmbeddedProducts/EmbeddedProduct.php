@@ -259,7 +259,6 @@ class EmbeddedProduct
         if (isset($filters['excel_export']) && $filters['excel_export'] == true) {
             $dataset = $dataset->get();
         } else {
-            LoggerService::sql("report list: ",$dataset);
             $dataset = $dataset->simplePaginate()->withQueryString();
         }
 
