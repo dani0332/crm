@@ -70,6 +70,8 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedUnavailableTimeThreshold();
         $this->sendUpdateEmailBirdFlow();
         $this->seedEnableMetLife();
+        $this->seedTempDisableSageBooking();
+        $this->seedMrIncludeFailedBookings();
         $this->seedCyberAdvisors();
     }
 
@@ -1074,6 +1076,42 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::ENABLE_METLIFE],
             [
                 'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedTempDisableSageBooking()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TEMP_DISABLE_SAGE_BOOKING],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedMrIncludeFailedBookings()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::MR_INCLUDE_FAILED_BOOKINGS],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::MR_FAILED_BOOKING_DATE_FROM],
+            [
+                'value' => '2025-11-27 12:00:00',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
