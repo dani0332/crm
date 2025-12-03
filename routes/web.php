@@ -7,6 +7,7 @@ use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
+use App\Http\Controllers\AllocationConfigurationController;
 use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
@@ -659,6 +660,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
         Route::post('car/change-insurer', [CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
+        Route::get('car/{quoteId}/update-ocr-webform', [CarQuoteController::class, 'updateOcrWebformData'])->name('update-ocr-webform');
 
         Route::post('/export-logs/create', [QuoteExportLogController::class, 'store'])->name('export-logs.create');
     });
@@ -867,14 +869,22 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ->name('admin.nationality-allocation-config.audit-logs');
 
     // Allocation Configuration Routes
-    Route::get('allocation-configuration', [\App\Http\Controllers\AllocationConfigurationController::class, 'index'])
+    Route::get('allocation-configuration', [AllocationConfigurationController::class, 'index'])
         ->name('admin.allocation-configuration.index');
-    Route::post('allocation-configuration/fetch', [\App\Http\Controllers\AllocationConfigurationController::class, 'fetchConfiguration'])
+    Route::post('allocation-configuration/fetch', [AllocationConfigurationController::class, 'fetchConfiguration'])
         ->name('admin.allocation-configuration.fetch');
-    Route::post('allocation-configuration', [\App\Http\Controllers\AllocationConfigurationController::class, 'store'])
+    Route::post('allocation-configuration', [AllocationConfigurationController::class, 'store'])
         ->name('admin.allocation-configuration.store');
-    Route::put('allocation-configuration/{allocationConfiguration}', [\App\Http\Controllers\AllocationConfigurationController::class, 'update'])
+    Route::put('allocation-configuration/{allocationConfiguration}', [AllocationConfigurationController::class, 'update'])
         ->name('admin.allocation-configuration.update');
+    Route::get('/teams', [AllocationConfigurationController::class, 'getTeams'])
+        ->name('admin.allocation-configuration.teams');
+    Route::get('/api/plan-types', [AllocationConfigurationController::class, 'getPlanTypes'])
+        ->name('admin.allocation-configuration.plan-types');
+    Route::get('/api/business-types', [AllocationConfigurationController::class, 'getBusinessTypes'])
+        ->name('admin.allocation-configuration.business-types');
+    Route::get('/api/sub-areas', [AllocationConfigurationController::class, 'getSubAreas'])
+        ->name('admin.allocation-configuration.sub-areas');
 
     Route::get('/add-batch-number', function () {
         $addBtchNuimber = new AddBatchForNonMotors;
@@ -883,8 +893,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Command to bulk send policy documents
-    Route::get('/run-policy-bulk-send', function () {
-
+    Route::get('/run-policy-bulk-send', function (\Illuminate\Http\Request $request) {
         // Check if user has admin role
         if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
             return response()->json(['error' => 'Not authorized'], 403);
@@ -902,12 +911,33 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         try {
-            // Execute the command
-            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+            // Check if fetching from sage_process_type flag
+            $fromSageProcess = $request->query('from_sage_process', false);
+            $startDate = $request->query('start_date');
+            $sageProcessId = $request->query('sage_process_id');
+
+            // Build command parameters
+            $params = [];
+            if ($fromSageProcess) {
+                $params['--from-sage-process'] = true;
+
+                if ($startDate) {
+                    $params['--start-date'] = $startDate;
+                }
+
+                if ($sageProcessId) {
+                    $params['--sage-process-id'] = $sageProcessId;
+                }
+            }
+
+            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents', $params);
 
             return response()->json([
                 'message' => 'Command executed successfully!',
                 'status' => 'completed',
+                'from_sage_process' => (bool) $fromSageProcess,
+                'start_date' => $startDate,
+                'sage_process_id' => $sageProcessId,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -915,7 +945,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 'status' => 'failed',
             ], 500);
         } finally {
-            // Always release the lock
             $lock->release();
         }
     })->name('run-policy-bulk-send');
