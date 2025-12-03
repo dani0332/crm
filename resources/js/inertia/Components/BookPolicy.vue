@@ -1979,6 +1979,24 @@ const isDocTypeLoading = docType => {
                       </template>
                     </x-tooltip>
 
+                    <x-tooltip v-else-if="props.bookPolicyDetails.isParentPolicyCancellationReissuedPending">
+                      <x-button
+                        size="sm"
+                        class="mt-4 mr-2"
+                        color="orange"
+                        :disabled="true"
+                      >
+                        {{ props.bookPolicyDetails?.text }}
+                      </x-button>
+                      <template #tooltip>
+                        <span>
+                          {{
+                            `Cancellation for the ${bpForm.parent_duplicate_quote_id} is still pending`
+                          }}
+                        </span>
+                      </template>
+                    </x-tooltip>
+
                     <x-button
                       v-else
                       size="sm"
