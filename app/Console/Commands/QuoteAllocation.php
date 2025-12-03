@@ -70,6 +70,7 @@ class QuoteAllocation extends Command
                 'start_date' => $allocationStartDate,
                 'end_date' => $to,
             ]);
+            $this->executeCarRevivalAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate);
             $this->executeCarAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
             $this->executeBikeAllocation(QuoteTypeId::Bike, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
@@ -84,7 +85,6 @@ class QuoteAllocation extends Command
             $this->executeAllocation(QuoteTypes::PET, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::SAVINGS, $to, $chunkSize, $allocationStartDate);
-            $this->executeCarRevivalAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate);
             LoggerService::endLogging();
         } else {
             LoggerService::info(self::class.': Quote Allocation Command is turned Off');
@@ -194,7 +194,6 @@ class QuoteAllocation extends Command
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->orderByDesc('car_value')
-            ->where('tier_id', '!=', TiersIdEnum::TIER_R)
             ->take($chunkSize);
 
         $leads->logRawSql();
@@ -204,6 +203,11 @@ class QuoteAllocation extends Command
 
         foreach ($leads->get() as $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
+
+            if ($lead->tier_id == TiersIdEnum::TIER_R) {
+                LoggerService::info(self::class.': Skipping car revival quote allocation for tier R');
+                continue;
+            }
 
             LoggerService::info(self::class.': Processing car quote allocation', extra: [
                 'payment_status_id' => $lead->payment_status_id,
