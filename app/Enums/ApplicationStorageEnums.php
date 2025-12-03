@@ -67,6 +67,7 @@ final class ApplicationStorageEnums extends Enum
     public const DUBAI_NOW_CC_GROUP = 'DUBAI_NOW_CC_GROUP';
     public const SAGE_ENABLED = 'SAGE_ENABLED';
     public const SAGE_TIMEOUT_RETRY_ENABLED = 'SAGE_TIMEOUT_RETRY_ENABLED';
+    public const TEMP_DISABLE_SAGE_BOOKING = 'TEMP_DISABLE_SAGE_BOOKING';
     public const DTT_ENABLED = 'DTT_ENABLED';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
@@ -313,4 +314,7 @@ final class ApplicationStorageEnums extends Enum
 
     // MetLife Integration
     public const ENABLE_METLIFE = 'ENABLE_METLIFE';
+
+    public const MR_INCLUDE_FAILED_BOOKINGS = 'MR_INCLUDE_FAILED_BOOKINGS';
+    public const MR_FAILED_BOOKING_DATE_FROM = 'MR_FAILED_BOOKING_DATE_FROM';
 }
