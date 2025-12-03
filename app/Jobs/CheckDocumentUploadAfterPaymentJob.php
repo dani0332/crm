@@ -20,7 +20,7 @@ class CheckDocumentUploadAfterPaymentJob implements ShouldQueue, ShouldBeUnique
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 120;
-    public $uniqueFor = 125;
+    public $uniqueFor = 90000; // 25 hours (24 hours delay + 1 hour buffer)
     public $tries = 1;
 
     private string $paymentCode;
