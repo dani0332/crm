@@ -4,10 +4,71 @@ namespace App\Services;
 
 use App\Services\Logger\LoggerService;
 use Exception;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class HRMRequestService
 {
+    /**
+     * Get access token for HRM API
+     *
+     * @return string|false
+     */
+    private function getAccessToken(): string|false
+    {
+        $cacheKey = 'hrm_api_access_token';
+
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
+
+        $clientId = config('constants.HRM_API_CLIENT_ID');
+        $clientSecret = config('constants.HRM_API_CLIENT_SECRET');
+        $apiEndPoint = config('constants.HRM_API_ENDPOINT');
+
+        if (empty($clientId) || empty($clientSecret) || empty($apiEndPoint)) {
+            LoggerService::error(static::class.'::getAccessToken - Missing API configuration');
+            return false;
+        }
+
+        $authUrl = rtrim($apiEndPoint, '/').'/v1/auth/obtain-token';
+
+        LoggerService::error(static::class.'::getAccessToken - Params',[
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret,
+            'authUrl' => $authUrl,
+        ]);
+
+        try {
+            // Using a separate timeout for auth if needed, or default
+            $response = Http::post($authUrl, [
+                'api_key' => $clientId,
+                'api_secret' => $clientSecret,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                if (isset($data['data']['token'])) {
+                    $token = $data['data']['token'];
+                    // Cache for 60 minutes
+                    Cache::put($cacheKey, $token, 60 * 60);
+
+                    return $token;
+                }
+            }
+
+            LoggerService::error(static::class.'::getAccessToken - Failed to obtain token', [
+                'status' => $response->status(),
+                'body' => $response->json(),
+            ]);
+
+        } catch (Exception $e) {
+            LoggerService::error(static::class.'::getAccessToken - Exception', [], $e);
+        }
+
+        return false;
+    }
+
     /**
      * Send HTTP request to HRM API
      *
@@ -20,14 +81,19 @@ class HRMRequestService
     {
         try {
             $apiEndPoint = config('constants.HRM_API_ENDPOINT');
-            $apiUsername = config('constants.HRM_API_USERNAME');
-            $apiPassword = config('constants.HRM_API_PASSWORD');
             $apiTimeout = config('constants.HRM_API_TIMEOUT', 2);
 
-            if (empty($apiEndPoint) || empty($apiUsername) || empty($apiPassword)) {
+            if (empty($apiEndPoint)) {
                 LoggerService::error(static::class.'::sendRequest - Missing API configuration', [
                     'endpoint_path' => $endpointPath,
                 ]);
+
+                return false;
+            }
+
+            $accessToken = $this->getAccessToken();
+            if (! $accessToken) {
+                LoggerService::error(static::class.'::sendRequest - Unable to get access token');
 
                 return false;
             }
@@ -41,7 +107,7 @@ class HRMRequestService
                 'timeout' => $apiTimeout,
             ]);
 
-            $httpResponse = Http::withBasicAuth($apiUsername, $apiPassword)
+            $httpResponse = Http::withToken($accessToken)
                 ->timeout($apiTimeout)
                 ->acceptJson()
                 ->asJson();
@@ -94,6 +160,7 @@ class HRMRequestService
             return false;
         }
     }
+
     /**
      * Get employee codes by email addresses
      *
@@ -123,5 +190,4 @@ class HRMRequestService
 
         return false;
     }
-
 }
