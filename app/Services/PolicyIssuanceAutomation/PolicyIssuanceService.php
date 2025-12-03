@@ -394,7 +394,10 @@ class PolicyIssuanceService
             'advisorId' => $advisorId,
         ]); */
 
-        if ($quoteType === QuoteTypes::CAR->value) {
+        if (
+            $quoteType === QuoteTypes::CAR->value &&
+            (! empty($statusAPIFailed) && ! empty($processInvolved))
+        ) {
             // For other quote types, we need to dispatch respective failure email job
             $actionRequired = 'Please coordinate with the IT Department to address and rectify the issue.';
 
