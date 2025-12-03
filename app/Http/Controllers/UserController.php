@@ -8,6 +8,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Http\Requests\InslyAdvisorRequest;
+use App\Jobs\SendManagerDeactivationAttemptEmailJob;
 use App\Models\BusinessTypeOfInsurance;
 use App\Models\InslyAdvisor;
 use App\Models\Team;
@@ -330,6 +331,7 @@ class UserController extends Controller
             ],
             'roles' => 'required',
             'teams' => 'required',
+            'manager' => 'required',
             'permissions' => 'nullable|array',
             'rm_category_id' => ['required', 'integer', 'regex:/^(-1|[1-9]\d*)$/'],
         ]);
@@ -347,6 +349,21 @@ class UserController extends Controller
             $user->password = bcrypt($request->password);
         }
         $user->is_active = $request->is_active ? 1 : 0;
+
+
+        if (! $request->is_active) {
+            $subordinates = $this->userService->getSubordinates($user->id);
+
+            if ($subordinates->isNotEmpty()) {
+                /** @var User $currentUser */
+                $currentUser = auth()->user();
+                SendManagerDeactivationAttemptEmailJob::dispatch($user, $subordinates, $currentUser);
+
+                $subordinateList = $subordinates->map(fn ($subordinate) => $subordinate->name.' ('.$subordinate->email.')')->implode(', ');
+
+                return back()->withErrors(['is_active' => "Cannot deactivate user. They are a manager for: {$subordinateList}"]);
+            }
+        }
 
         if ($request->department_ids != null) {
             app(DepartmentService::class)->syncUserDepartments($user, $request->department_ids);

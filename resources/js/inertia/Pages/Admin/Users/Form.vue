@@ -551,6 +551,8 @@ watch(
         multiple
         truncate
         filterable
+        required
+
         placeholder="Select Manager"
         filterPlaceholder="Filter managers...."
         label="MANAGER"

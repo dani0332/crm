@@ -109,6 +109,15 @@ class UserService extends BaseService
         return User::where('id', $userId)->first();
     }
 
+    public function getSubordinates(int $userId): Collection
+    {
+        return User::whereHas('managers', function ($query) use ($userId) {
+            $query->where('users.id', $userId);
+        })
+        ->select('name', 'email')
+        ->get();
+    }
+
     public function isAllowedToShowLeadListReport()
     {
         if (auth()->user()->hasAnyRole([RolesEnum::Admin])) {
