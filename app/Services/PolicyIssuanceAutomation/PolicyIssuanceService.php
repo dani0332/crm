@@ -342,7 +342,7 @@ class PolicyIssuanceService
         ]);
 
         $statusAPIFailed = null;
-        if ($quoteType === QuoteTypes::CAR->value) {
+        if ($quoteType === QuoteTypes::CAR->value && $processInvolved) {
             $statusAPIFailed = $this->getInsurerAPIStatuses($newInsurerApiStatus);
         }
         $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
@@ -379,26 +379,13 @@ class PolicyIssuanceService
             'advisorId' => $advisorId,
         ]);
 
-        /* $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-        if (! $advisorId) {
-            $response = QuoteTypes::getName($quoteType)->allocate($uuid, $unassistedTeamId);
-            if ($response && $response['advisorId']) {
-                $advisorId = $response['advisorId'];
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
-                    'advisorId' => $advisorId,
-                ]);
-            }
-        }
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor', extra: [
-            'advisorId' => $advisorId,
-        ]); */
+        $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
 
         if (
             $quoteType === QuoteTypes::CAR->value &&
-            (! empty($statusAPIFailed) && ! empty($processInvolved))
+            (! empty($statusAPIFailed) && ! empty($processInvolved)) &&
+            ! $isPolicyBooked
         ) {
-            // For other quote types, we need to dispatch respective failure email job
             $actionRequired = 'Please coordinate with the IT Department to address and rectify the issue.';
 
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Going to dispatch AutomationFailedJob', extra: [
@@ -424,7 +411,7 @@ class PolicyIssuanceService
                 'quote status id' => QuoteStatusEnum::PolicyBooked,
             ]);
 
-            if ($quote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            if ($isPolicyBooked) {
                 // Here we need to dispatch document email
                 $data = new \stdClass;
                 $data->model_type = $quoteType;
