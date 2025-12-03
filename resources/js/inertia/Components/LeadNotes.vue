@@ -1,5 +1,6 @@
 <script setup>
 import AppModal from './AppModal.vue';
+import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
 
 const props = defineProps({
   notes: Object,
@@ -243,6 +244,8 @@ watch(
     notes.value = props.notes;
   },
 );
+const { openTempUrl } = useDocumentTempUrl();
+
 </script>
 <template>
   <div v-if="can(permissionsEnum.SAVE_QUOTE_NOTES)">
@@ -413,14 +416,13 @@ watch(
           >
             <p v-if="file && file.id" class="max-w-[200px] truncate">
               <a
-                :href="cdn + `${file.url}`"
-                target="_blank"
-                class="text-primary"
+                @click.prevent="openTempUrl(file.url)"
+                class="text-primary cursor-pointer"
                 >{{ file.name }}</a
               >
             </p>
             <p v-else class="max-w-[200px] truncate">
-              <a :href="url(file)" target="_blank" class="text-primary">{{
+              <a @click.prevent="openTempUrl(file.url)" class="text-primary cursor-pointer">{{
                 file.name
               }}</a>
             </p>
