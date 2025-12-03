@@ -22,7 +22,6 @@ class CustomerBankAccount extends Model implements AuditableContract
     use Auditable, FilterCriteria, HasFactory;
 
     protected $table = 'customer_bank_accounts';
-
     protected $fillable = [
         'customer_id',
         'type',
@@ -34,7 +33,6 @@ class CustomerBankAccount extends Model implements AuditableContract
         'created_at',
         'updated_at',
     ];
-
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -57,8 +55,6 @@ class CustomerBankAccount extends Model implements AuditableContract
 
     /**
      * Get the customer that owns the bank account
-     *
-     * @return BelongsTo
      */
     public function customer(): BelongsTo
     {
@@ -67,20 +63,16 @@ class CustomerBankAccount extends Model implements AuditableContract
 
     /**
      * Get the claim request associated with this bank account
-     *
-     * @return BelongsTo
      */
     public function claimRequest(): BelongsTo
     {
         return $this->belongsTo(ClaimRequest::class, 'claim_uuid', 'uuid');
     }
 
-
     /**
      * Scope a query to only include bank accounts of a specific type
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string  $type
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByType($query, string $type)
@@ -88,4 +80,3 @@ class CustomerBankAccount extends Model implements AuditableContract
         return $query->where('type', $type);
     }
 }
-
