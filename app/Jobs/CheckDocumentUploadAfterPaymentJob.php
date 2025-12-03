@@ -41,13 +41,15 @@ class CheckDocumentUploadAfterPaymentJob implements ShouldQueue
         
         LoggerService::info("CheckDocumentUploadAfterPaymentJob: Starting job execution for payment code: {$this->paymentCode}");
 
-        $payment = Payment::whereCode($this->paymentCode)->first();
+        $payment = Payment::whereCode($this->paymentCode)
+            ->with('paymentable.documents')
+            ->first();
         if (!$payment) {
             LoggerService::info("CheckDocumentUploadAfterPaymentJob: Payment not found or not authorised for payment code: {$this->paymentCode}");
             return;
         }
 
-        $quote = $payment->paymentable->with('documents')->first();
+        $quote = $payment->paymentable;
         if (!$quote) {
             LoggerService::info("CheckDocumentUploadAfterPaymentJob: Quote not found for payment code: {$this->paymentCode}");
             return;
@@ -66,8 +68,6 @@ class CheckDocumentUploadAfterPaymentJob implements ShouldQueue
             LoggerService::info("CheckDocumentUploadAfterPaymentJob: Documents found for payment code: {$this->paymentCode}");
             return;
         }
-
-        LoggerService::info("CheckDocumentUploadAfterPaymentJob: Job execution completed for payment code: {$this->paymentCode}");
     }
 
     /**
