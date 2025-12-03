@@ -519,11 +519,6 @@ class ApiController extends Controller
         }
     }
 
-    public function getGenericDocuments(Request $request)
-    {
-        return GenericDocumentResource::collection($this->apiService->getGenericDocuments($request));
-    }
-
     public function runCQFJobs(Request $request)
     {
         try {

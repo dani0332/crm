@@ -54,7 +54,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/document-notification', [ApiController::class, 'documentNotification'])->name('documentNotification');
     Route::post('send-my-alfred-welcome-email', [GenericLobController::class, 'sendMyAlfredWelcomeEmail']);
 
-    Route::get('generic-documents/{insuranceProviderId?}/{quoteType?}', [ApiController::class, 'getGenericDocuments']);
+    Route::get('generic-documents/{insuranceProviderId?}/{quoteType?}', [QuoteDocumentController::class, 'getGenericDocuments']);
 
     // BOR (Broker on Record) API Routes
     Route::prefix('bor')->group(function () {

@@ -8,8 +8,10 @@ use App\Http\Requests\DeleteQuoteDocumentRequest;
 use App\Http\Requests\QuoteDocumentRequest;
 use App\Http\Requests\UploadToMetLifeRequest;
 use App\Http\Resources\DocumentTypeResource;
+use App\Http\Resources\GenericDocumentResource;
 use App\Http\Resources\QuoteDocumentResource;
 use App\Services\ActivitiesService;
+use App\Services\ApiService;
 use App\Services\Logger\LoggerService;
 use App\Services\MetLife\MetLifeApiService;
 use App\Services\QuoteDocumentService;
@@ -22,9 +24,10 @@ class QuoteDocumentController extends Controller
 
     protected $quoteDocumentService;
 
-    public function __construct(QuoteDocumentService $quoteDocumentService)
+    public function __construct(ApiService $apiService,QuoteDocumentService $quoteDocumentService)
     {
         $this->quoteDocumentService = $quoteDocumentService;
+        $this->apiService = $apiService;
     }
 
     /**
@@ -110,5 +113,10 @@ class QuoteDocumentController extends Controller
         $result = $metLifeApiService->handleDocumentUpload($validatedData, $quote);
 
         return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    public function getGenericDocuments(Request $request)
+    {
+        return GenericDocumentResource::collection($this->apiService->getGenericDocuments($request));
     }
 }
