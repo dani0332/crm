@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -29,8 +30,10 @@ use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\UpdateCustomerRepliedRequest;
+use App\Jobs\CheckDocumentUploadAfterPaymentJob;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
@@ -645,6 +648,41 @@ class ApiController extends Controller
         }
     }
 
+    /**
+     * Dispatch job to check document upload after 24 hours of payment authorization.
+     * Prevents duplicate job dispatch for the same payment code.
+     */
+    public function checkDocumentUploadAfterPayment(CheckDocumentUploadAfterPaymentRequest $request)
+    {
+        try {
+            $validated = $request->validated();
+            $paymentCode = $validated['payment_code'];
+
+            LoggerService::info("CheckDocumentUploadAfterPayment: Starting job execution for payment code: {$paymentCode}");
+
+            // Dispatch job with 24 hours delay
+            CheckDocumentUploadAfterPaymentJob::dispatch($paymentCode)
+                ->delay(now()->addHours(24));
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Job dispatched successfully. Will check document upload after 24 hours.',
+                'payment_code' => $paymentCode,
+            ], Response::HTTP_OK);
+            
+        } catch (\Exception $e) {
+            $paymentCodeForError = $request->input('payment_code', 'unknown');
+
+            LoggerService::error("CheckDocumentUploadAfterPayment: Failed to dispatch job for payment code: {$paymentCodeForError}", exception: $e);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while dispatching the job',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+    
     public function lifeSyncHealthQuestionnaire(LifeSyncHealthQuestionnaireRequest $request)
     {
         $metLifeApiService = new MetLifeApiService;

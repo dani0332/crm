@@ -49,4 +49,5 @@ enum LoggerFeatureEnum: string
 
     case CYBER_OCB_INTRO_EMAIL = 'cyber-ocb-intro-email';
     case CYBER_AUTOMATED_FOLLOWUPS = 'cyber-automated-followups';
+    case CHECK_DOCUMENT_UPLOAD_AFTER_PAYMENT = 'check-document-upload-after-payment';
 }
