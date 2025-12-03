@@ -81,7 +81,7 @@ watch(
   newVal => {
     if (newVal && props.plan?.planId) {
       isInitializing.value = true;
-      
+
       // Initialize form values from plan
       createForm.providerId = props.plan.providerId;
       createForm.planId = props.plan.planId;
@@ -127,14 +127,14 @@ watch(
       } else {
         ridersData.value = [];
       }
-      
+
       getRiderDetails(props.plan.planId);
       getCurrencyCoverages(props.plan.planId);
       submitType.value = props.plan.isApi ? 'getQuote' : 'onSubmit';
       exitAge.value = props.plan?.exitAge;
 
       quoteFetched.value = false;
-      
+
       setTimeout(() => {
         isInitializing.value = false;
       }, 100);
