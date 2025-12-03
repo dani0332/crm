@@ -598,7 +598,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $quote->update(['rta_upload_status' => PolicyIssuanceEnum::PIA_RTA_UPLOAD_STATUS_DONE]);
         }
 
-        if ($newDocument->exists) {
+        if ($newDocument?->exists) {
             WatermarkDocumentsJob::dispatch(
                 $newDocument->id,
                 $quote->uuid,
