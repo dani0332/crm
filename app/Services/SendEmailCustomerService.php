@@ -2016,4 +2016,39 @@ class SendEmailCustomerService extends BaseService
         return true;
     }
 
+    public function sendManagerDeactivationAttemptEmail($manager, $subordinates, $attemptedBy)
+    {
+        $workflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW);
+
+        if (empty($workflowUrl)) {
+            LoggerService::error('Manager Deactivation Attempt: BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW not found in ApplicationStorage.');
+
+            return;
+        }
+
+        $emailData = (object)[
+            'itSupportEmail' => "itsupport@afia.ae",
+            'managerName' => $manager->name,
+            'managerEmail' => $manager->email,
+            'managerId' => $manager->id,
+            'subordinatesCount' => count($subordinates),
+            'subordinates' => collect($subordinates)->map(function ($sub) {
+                return [
+                    'name' => $sub->name,
+                    'email' => $sub->email,
+                    'id' => $sub->id,
+                ];
+            })->toArray(),
+            'workflowType' => WorkflowTypeEnum::MANAGER_DEACTIVATION_ATTEMPT,
+            'timestamp' => now()->toDateTimeString(),
+        ];
+
+        LoggerService::info('Sending manager deactivation attempt email via Bird', [
+            'manager_id' => $manager->id,
+            'attempted_by' => $attemptedBy->id,
+        ]);
+
+        // app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
+    }
+
 }

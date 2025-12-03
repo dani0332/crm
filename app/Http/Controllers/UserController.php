@@ -411,13 +411,7 @@ class UserController extends Controller
 
         $user->save();
         if (isset($request->manager) && $request->manager != '0') {
-            DB::table('user_manager')->where('user_id', $user->id)->delete();
-            foreach ($request->manager as $managerId) {
-                DB::table('user_manager')->insert([
-                    'user_id' => $user->id,
-                    'manager_id' => $managerId,
-                ]);
-            }
+            $user->managers()->sync($request->manager);
         }
 
         if ($request->teams != '0') {
@@ -520,6 +514,7 @@ class UserController extends Controller
         return User::join('model_has_roles', 'model_has_roles.model_id', 'users.id')
             ->join('roles', 'roles.id', 'model_has_roles.role_id')
             ->whereIn('roles.name', $combinedRoleNames)
+            ->ActiveUser()
             ->select(
                 'users.id',
                 DB::raw('CONCAT(users.name, " - ", roles.name) as name')
