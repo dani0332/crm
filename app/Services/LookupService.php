@@ -201,14 +201,21 @@ class LookupService extends BaseService
 
     public function getSendUpdateOptions($quoteTypeId)
     {
-        return Cache::remember("send_update_options_{$quoteTypeId}", now()->addHour(), function () use ($quoteTypeId) {
-            return Lookup::where([
-                'code' => LookupsEnum::SEND_UPDATE_CODE,
-                'parent_id' => null,
-            ])
-                ->withChildTree($quoteTypeId, app(SendUpdateLogService::class)->checkSendUpdatePermissions())
-                ->get();
-        });
+        $permissions = app(SendUpdateLogService::class)->checkSendUpdatePermissions();
+        $permissionHash = md5(json_encode($permissions));
+
+        return Cache::remember(
+            "send_update_options_{$quoteTypeId}_{$permissionHash}",
+            now()->addHour(),
+            function () use ($quoteTypeId, $permissions) {
+                return Lookup::where([
+                    'code' => LookupsEnum::SEND_UPDATE_CODE,
+                    'parent_id' => null,
+                ])
+                    ->withChildTree($quoteTypeId, $permissions)
+                    ->get();
+            }
+        );
     }
 
     public function getCompanyTypes()
@@ -280,6 +287,15 @@ class LookupService extends BaseService
     {
         return CacheManager::remember(CacheKeyEnum::DEVICE_QUOTE_LOOKUPS, function () {
             return Capi::request('/api/v1-get-all-device-lookups', 'post');
+        });
+    }
+    public function getSubSource()
+    {
+        return CacheManager::remember(CacheKeyEnum::SUB_SOURCES, function () {
+            return Lookup::with(['childs'])->where([
+                'key' => LookupsEnum::SUB_SOURCE,
+                'is_active' => 1,
+            ])->get();
         });
     }
 }

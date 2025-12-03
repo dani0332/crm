@@ -8,9 +8,21 @@ export function useAllocationForm(props, errorHandling) {
   const templateData = ref({});
   const advisorOptions = ref([]);
   const nationalityOptions = ref([]);
+  const teamOptions = ref([]);
+  const businessTypeOptions = ref([]);
+  const planTypeOptions = ref([]);
+  const locationOptions = ref([]);
   const currentConfiguration = ref(null);
   const savingsTemplateRef = ref(null);
+  const homeTemplateRef = ref(null);
+  const lifeTemplateRef = ref(null);
+  const simpleTemplateRef = ref(null);
+  const commonTemplateRef = ref(null);
+  const corplineTemplateRef = ref(null);
+  const groupMedicalTemplateRef = ref(null);
   const auditLogsKey = ref(0);
+  const isViewMode = ref(false);
+  const originalConfiguration = ref(null);
 
   const {
     addError,
@@ -23,6 +35,7 @@ export function useAllocationForm(props, errorHandling) {
     return {
       quote_type: '',
       quote_type_id: '',
+      selectedQuoteTypeCode: '',
     };
   };
 
@@ -30,8 +43,9 @@ export function useAllocationForm(props, errorHandling) {
 
   const quoteTypeOptions = computed(() => {
     return props.quoteTypes.map(type => ({
-      value: type.id,
+      value: type.code,
       label: type.text,
+      id: type.id,
     }));
   });
 
@@ -42,8 +56,8 @@ export function useAllocationForm(props, errorHandling) {
     }));
   };
 
-  const getQuoteType = quoteTypeId => {
-    return props.quoteTypes.find(type => type.id === quoteTypeId);
+  const getQuoteType = quoteTypeCode => {
+    return props.quoteTypes.find(type => type.code === quoteTypeCode);
   };
 
   const fetchAdvisors = async quoteType => {
@@ -68,6 +82,86 @@ export function useAllocationForm(props, errorHandling) {
     }
   };
 
+  const fetchTeams = async () => {
+    teamOptions.value = [];
+    try {
+      const response = await axios.get('/teams');
+
+      if (
+        response.data.success &&
+        response.data.data &&
+        response.data.data.length > 0
+      ) {
+        teamOptions.value = response.data.data.map(team => ({
+          value: team.id,
+          label: team.name,
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    }
+  };
+
+  const fetchPlanTypes = async () => {
+    planTypeOptions.value = [];
+    try {
+      const response = await axios.get('/api/plan-types');
+
+      if (
+        response.data.success &&
+        response.data.data &&
+        response.data.data.length > 0
+      ) {
+        planTypeOptions.value = response.data.data.map(planType => ({
+          value: planType.id,
+          label: planType.text,
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching plan types:', error);
+    }
+  };
+
+  const fetchBusinessTypes = async () => {
+    businessTypeOptions.value = [];
+    try {
+      const response = await axios.get('/api/business-types');
+
+      if (
+        response.data.success &&
+        response.data.data &&
+        response.data.data.length > 0
+      ) {
+        businessTypeOptions.value = response.data.data.map(businessType => ({
+          value: businessType.id,
+          label: businessType.name,
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching business types:', error);
+    }
+  };
+
+  const fetchLocations = async () => {
+    locationOptions.value = [];
+    try {
+      const response = await axios.get('/api/sub-areas');
+
+      if (
+        response.data.success &&
+        response.data.data &&
+        response.data.data.length > 0
+      ) {
+        locationOptions.value = response.data.data.map(location => ({
+          value: location.id,
+          label: location.name,
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+    }
+  };
+
   const fetchConfiguration = async quoteType => {
     currentConfiguration.value = null;
     try {
@@ -80,27 +174,67 @@ export function useAllocationForm(props, errorHandling) {
 
       if (response.data.success && response.data.data) {
         currentConfiguration.value = response.data.data;
+        originalConfiguration.value = JSON.parse(
+          JSON.stringify(response.data.data),
+        );
+        isViewMode.value = true;
+      } else {
+        isViewMode.value = false;
       }
     } catch (error) {
       console.error('Error fetching configuration:', error);
+      isViewMode.value = false;
     }
   };
 
   const handleQuoteTypeChange = async quoteType => {
     form.quote_type = quoteType.code;
     form.quote_type_id = quoteType.id;
+    form.selectedQuoteTypeCode = quoteType.code;
 
     templateData.value = {};
     advisorOptions.value = [];
+    teamOptions.value = [];
+    businessTypeOptions.value = [];
+    planTypeOptions.value = [];
+    locationOptions.value = [];
     currentConfiguration.value = null;
+    successMessage.value = '';
+    clearAllErrors();
 
     isQuoteTypeLoading.value = true;
 
     try {
-      await Promise.all([
+      const fetchTasks = [
         fetchAdvisors(quoteType),
         fetchConfiguration(quoteType),
-      ]);
+      ];
+
+      // Fetch business types for Corpline
+      if (quoteType.code === props.quoteTypeCodeEnum.CORPLINE) {
+        fetchTasks.push(fetchBusinessTypes());
+      }
+
+      // Fetch teams for Simple LOBs (Pet, Yacht, Cycle)
+      if (
+        quoteType.code === props.quoteTypeCodeEnum.Pet ||
+        quoteType.code === props.quoteTypeCodeEnum.Yacht ||
+        quoteType.code === props.quoteTypeCodeEnum.Cycle
+      ) {
+        fetchTasks.push(fetchTeams());
+      }
+
+      // Fetch plan types for Group Medical
+      if (quoteType.code === props.quoteTypeCodeEnum.GroupMedical) {
+        fetchTasks.push(fetchPlanTypes());
+      }
+
+      // Fetch locations for Home
+      if (quoteType.code === props.quoteTypeCodeEnum.Home) {
+        fetchTasks.push(fetchLocations());
+      }
+
+      await Promise.all(fetchTasks);
 
       await new Promise(resolve => setTimeout(resolve, 300));
     } catch (error) {
@@ -112,6 +246,65 @@ export function useAllocationForm(props, errorHandling) {
 
   const onTemplateDataUpdate = data => {
     templateData.value = data;
+  };
+
+  const enableEditMode = () => {
+    isViewMode.value = false;
+    clearAllErrors();
+    successMessage.value = '';
+  };
+
+  const cancelEdit = () => {
+    if (originalConfiguration.value) {
+      currentConfiguration.value = JSON.parse(
+        JSON.stringify(originalConfiguration.value),
+      );
+      isViewMode.value = true;
+      clearAllErrors();
+      successMessage.value = '';
+
+      if (savingsTemplateRef.value) {
+        nextTick(() => {
+          savingsTemplateRef.value.clearValidationErrors();
+        });
+      }
+
+      if (homeTemplateRef.value) {
+        nextTick(() => {
+          homeTemplateRef.value.clearValidationErrors();
+        });
+      }
+
+      if (lifeTemplateRef.value) {
+        nextTick(() => {
+          lifeTemplateRef.value.clearValidationErrors();
+        });
+      }
+
+      if (simpleTemplateRef.value) {
+        nextTick(() => {
+          simpleTemplateRef.value.clearValidationErrors();
+        });
+      }
+
+      if (commonTemplateRef.value) {
+        nextTick(() => {
+          commonTemplateRef.value.clearValidationErrors();
+        });
+      }
+
+      if (corplineTemplateRef.value) {
+        nextTick(() => {
+          corplineTemplateRef.value.clearValidationErrors();
+        });
+      }
+
+      if (groupMedicalTemplateRef.value) {
+        nextTick(() => {
+          groupMedicalTemplateRef.value.clearValidationErrors();
+        });
+      }
+    }
   };
 
   const scrollToSuccess = () => {
@@ -130,20 +323,98 @@ export function useAllocationForm(props, errorHandling) {
     clearAllErrors();
 
     if (isValid) {
+      if (advisorOptions.value.length === 0) {
+        addError(
+          'No advisors available for this quote type. Please ensure advisors are configured.',
+          'advisor',
+        );
+        isSubmitting.value = false;
+        return;
+      }
+
       if (
         form.quote_type === props.quoteTypeCodeEnum.SAVINGS &&
         savingsTemplateRef.value
       ) {
-        if (advisorOptions.value.length === 0) {
-          addError(
-            'No advisors available for this quote type. Please ensure advisors are configured.',
-            'advisor',
-          );
+        const templateValidation = savingsTemplateRef.value.validate();
+
+        if (!templateValidation.isValid) {
+          templateValidation.errors.forEach(error => {
+            addError(error, 'bracket');
+          });
           isSubmitting.value = false;
           return;
         }
+      }
 
-        const templateValidation = savingsTemplateRef.value.validate();
+      // Validate Home template
+      if (
+        form.quote_type === props.quoteTypeCodeEnum.Home &&
+        homeTemplateRef.value
+      ) {
+        const templateValidation = homeTemplateRef.value.validate();
+
+        if (!templateValidation.isValid) {
+          templateValidation.errors.forEach(error => {
+            addError(error, 'bracket');
+          });
+          isSubmitting.value = false;
+          return;
+        }
+      }
+
+      if (
+        form.quote_type === props.quoteTypeCodeEnum.Life &&
+        lifeTemplateRef.value
+      ) {
+        const templateValidation = lifeTemplateRef.value.validate();
+
+        if (!templateValidation.isValid) {
+          templateValidation.errors.forEach(error => {
+            addError(error, 'bracket');
+          });
+          isSubmitting.value = false;
+          return;
+        }
+      }
+
+      if (
+        (form.quote_type === props.quoteTypeCodeEnum.Pet ||
+          form.quote_type === props.quoteTypeCodeEnum.Yacht ||
+          form.quote_type === props.quoteTypeCodeEnum.Cycle) &&
+        commonTemplateRef.value
+      ) {
+        const templateValidation = commonTemplateRef.value.validate();
+
+        if (!templateValidation.isValid) {
+          templateValidation.errors.forEach(error => {
+            addError(error, 'general');
+          });
+          isSubmitting.value = false;
+          return;
+        }
+      }
+
+      if (
+        form.quote_type === props.quoteTypeCodeEnum.CORPLINE &&
+        corplineTemplateRef.value
+      ) {
+        const templateValidation = corplineTemplateRef.value.validate();
+
+        if (!templateValidation.isValid) {
+          templateValidation.errors.forEach(error => {
+            addError(error, 'bracket');
+          });
+          isSubmitting.value = false;
+          return;
+        }
+      }
+
+      if (
+        form.quote_type === props.quoteTypeCodeEnum.GroupMedical &&
+        groupMedicalTemplateRef.value
+      ) {
+        const templateValidation = groupMedicalTemplateRef.value.validate();
 
         if (!templateValidation.isValid) {
           templateValidation.errors.forEach(error => {
@@ -165,7 +436,6 @@ export function useAllocationForm(props, errorHandling) {
         let response;
 
         if (currentConfiguration.value) {
-          // Update existing configuration
           response = await axios.put(
             route(
               'admin.allocation-configuration.update',
@@ -174,7 +444,6 @@ export function useAllocationForm(props, errorHandling) {
             submitData,
           );
         } else {
-          // Create new configuration
           response = await axios.post(
             route('admin.allocation-configuration.store'),
             submitData,
@@ -184,6 +453,9 @@ export function useAllocationForm(props, errorHandling) {
         if (response.data.success) {
           successMessage.value = response.data.message;
           currentConfiguration.value = response.data.data;
+          originalConfiguration.value = JSON.parse(
+            JSON.stringify(response.data.data),
+          );
           form.clearErrors();
           clearAllErrors();
 
@@ -191,7 +463,34 @@ export function useAllocationForm(props, errorHandling) {
             savingsTemplateRef.value.clearValidationErrors();
           }
 
+          if (homeTemplateRef.value) {
+            homeTemplateRef.value.clearValidationErrors();
+          }
+
+          if (lifeTemplateRef.value) {
+            lifeTemplateRef.value.clearValidationErrors();
+          }
+
+          if (simpleTemplateRef.value) {
+            simpleTemplateRef.value.clearValidationErrors();
+          }
+
+          if (commonTemplateRef.value) {
+            commonTemplateRef.value.clearValidationErrors();
+          }
+
+          if (corplineTemplateRef.value) {
+            corplineTemplateRef.value.clearValidationErrors();
+          }
+
+          if (groupMedicalTemplateRef.value) {
+            groupMedicalTemplateRef.value.clearValidationErrors();
+          }
+
           auditLogsKey.value += 1;
+
+          // Switch to view mode after successful save/update
+          isViewMode.value = true;
 
           scrollToSuccess();
         } else {
@@ -233,10 +532,10 @@ export function useAllocationForm(props, errorHandling) {
 
   // Watch for quote type changes
   watch(
-    () => form.quote_type_id,
-    (newQuoteTypeId, oldQuoteTypeId) => {
-      if (newQuoteTypeId && newQuoteTypeId !== oldQuoteTypeId) {
-        const newQuoteType = getQuoteType(newQuoteTypeId);
+    () => form.selectedQuoteTypeCode,
+    (newQuoteTypeCode, oldQuoteTypeCode) => {
+      if (newQuoteTypeCode && newQuoteTypeCode !== oldQuoteTypeCode) {
+        const newQuoteType = getQuoteType(newQuoteTypeCode);
 
         if (!newQuoteType) {
           return;
@@ -255,10 +554,21 @@ export function useAllocationForm(props, errorHandling) {
     templateData,
     advisorOptions,
     nationalityOptions,
+    teamOptions,
+    businessTypeOptions,
+    planTypeOptions,
+    locationOptions,
     currentConfiguration,
     savingsTemplateRef,
+    homeTemplateRef,
+    lifeTemplateRef,
+    simpleTemplateRef,
+    commonTemplateRef,
+    corplineTemplateRef,
+    groupMedicalTemplateRef,
     auditLogsKey,
     form,
+    isViewMode,
 
     // Computed
     quoteTypeOptions,
@@ -267,5 +577,7 @@ export function useAllocationForm(props, errorHandling) {
     initializeOptions,
     onTemplateDataUpdate,
     onSubmit,
+    enableEditMode,
+    cancelEdit,
   };
 }

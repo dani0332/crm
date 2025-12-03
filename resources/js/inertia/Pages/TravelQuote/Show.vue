@@ -5,6 +5,8 @@ import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+import { usePayment } from '@/inertia/Composables/usePayment.js';
 
 const page = usePage();
 defineProps({
@@ -80,7 +82,10 @@ const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const travelQuoteEnum = page.props.travelQuoteEnum;
+
 const checkedItems = ref([]);
+const { hasAuthorizedSplit } = usePayment();
 const checkCheckedPlans = computed(() => {
   return true;
 });
@@ -1376,6 +1381,10 @@ const isEmbeddedProduct = code => {
   return code.includes('TRA-CAR');
 };
 
+const isAuthorizedPayment = computed(() => {
+  return hasAuthorizedSplit(page.props.payments);
+});
+
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const selectedPlanIds = computed(() => {
   return page.props.payments.length > 0
@@ -1885,6 +1894,52 @@ const fullAddress = computed(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+
+              <!-- Sub-source fields -->
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      IMCRM SUB-SOURCE
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  {{ quote.sub_source_text || quote.sub_source_id || 'N/A' }}
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_option_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  {{
+                    quote.sub_source_option_text ||
+                    quote.sub_source_options_id ||
+                    'N/A'
+                  }}
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDITIONAL NOTES</dt>
+                <dd>{{ quote.additional_notes || 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INSURER AML STATUS</dt>
@@ -2600,7 +2655,23 @@ const fullAddress = computed(() => {
         <template #body>
           <x-divider class="my-4" />
           <AddMemberButtonTemplate v-slot="{ isDisabled }">
+            <!-- Show button with tooltip when payment is authorized -->
+            <x-tooltip
+              v-if="isAuthorizedPayment.hasAuthorized"
+              position="bottom"
+            >
+              <x-button size="sm" color="orange" :disabled="true">
+                Add Member
+              </x-button>
+              <template #tooltip>
+                {{
+                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}`
+                }}
+              </template>
+            </x-tooltip>
+            <!-- Show existing button when payment is not authorized -->
             <x-button
+              v-else
               size="sm"
               color="orange"
               @click.prevent="onAddTraveler"
@@ -2626,7 +2697,23 @@ const fullAddress = computed(() => {
           </div>
 
           <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
+            <!-- Show button with tooltip when payment is authorized -->
+            <x-tooltip
+              v-if="isAuthorizedPayment.hasAuthorized"
+              position="bottom"
+            >
+              <x-button size="xs" color="primary" outlined :disabled="true">
+                Edit
+              </x-button>
+              <template #tooltip>
+                {{
+                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}`
+                }}
+              </template>
+            </x-tooltip>
+            <!-- Show existing button when payment is not authorized -->
             <x-button
+              v-else
               size="xs"
               color="primary"
               @click.prevent="onEditTraveler(item)"
@@ -2639,7 +2726,23 @@ const fullAddress = computed(() => {
           </EditMemberButtonTemplate>
 
           <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
+            <!-- Show button with tooltip when payment is authorized -->
+            <x-tooltip
+              v-if="isAuthorizedPayment.hasAuthorized"
+              position="bottom"
+            >
+              <x-button size="xs" color="error" outlined :disabled="true">
+                Delete
+              </x-button>
+              <template #tooltip>
+                {{
+                  `${travelQuoteEnum.LOCK_MEMBER_DETAILS} ${' ' + isAuthorizedPayment.statusText}`
+                }}
+              </template>
+            </x-tooltip>
+            <!-- Show existing button when payment is not authorized -->
             <x-button
+              v-else
               size="xs"
               color="error"
               @click.prevent="

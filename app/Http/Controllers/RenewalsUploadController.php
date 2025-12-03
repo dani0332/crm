@@ -357,7 +357,7 @@ class RenewalsUploadController extends Controller
 
         $lobs = $this->renewalsUploadFileService->getNonMotorLobs();
 
-        $years = array_combine(range(date('Y'), 2010), range(date('Y'), 2010));
+        $years = array_combine(range((int) date('Y') + 1, 2010), range((int) date('Y') + 1, 2010));
 
         $months = $this->renewalsUploadFileService->getMonths();
 

@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CarRegistrationType;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
@@ -315,29 +316,28 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails = array_merge($bookPolicyDetails, $tapPaymentConfiguration);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
-            if (! empty($quoteDocuments)) {
-                $isAllRequiredDocumentUploaded = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $quoteType, $record);
-                if ($isAllRequiredDocumentUploaded) {
-                    $bookPolicyDetails['sendButton'] = true;
-                    $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
-                    $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::CUSTOMER;
-                }
-                if ($bookPolicyDetails['sendButton']) {
-                    $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
-                    $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
-                    if ($taxDocumentsCount == count($taxDocuments)) {
-                        $bookPolicyDetails['editButton'] = true;
-                        $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
+            $quoteType = strtolower(QuoteTypes::CAR->value) == strtolower($quoteType) && $record->registration_type == CarRegistrationType::COMPANY ? quoteTypeCode::CompanyCar : $quoteType;
+            $areSendPolicyDocsUploaded = app(DocumentTypeRepository::class)->fetchAreSendPolicyDocsUploaded($quoteDocuments, $quoteType, $record);
+            $bookPolicyDetails['disabled'] = $areSendPolicyDocsUploaded['disabled'];
+            $bookPolicyDetails['sendButton'] = true;
+            $bookPolicyDetails['requiredDocuments'] = $areSendPolicyDocsUploaded['requiredDocuments'];
+            $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
+            $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::CUSTOMER;
+            if ($bookPolicyDetails['sendButton']) {
+                $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
+                $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
+                if ($taxDocumentsCount == count($taxDocuments)) {
+                    $bookPolicyDetails['editButton'] = true;
+                    $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
 
-                        if ($areBookingDetailsFilled) {
-                            $isMainLead = $this->checkMainLead($record, $quoteType);
-                            if (! $isMainLead || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
-                                $bookPolicyDetails['bookButton'] = true;
-                                $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
-                                $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
-                            } else {
-                                $bookPolicyDetails['policyCancelled'] = true;
-                            }
+                    if ($areBookingDetailsFilled) {
+                        $isMainLead = $this->checkMainLead($record, $quoteType);
+                        if (! $isMainLead || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
+                            $bookPolicyDetails['bookButton'] = true;
+                            $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
+                            $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
+                        } else {
+                            $bookPolicyDetails['policyCancelled'] = true;
                         }
                     }
                 }

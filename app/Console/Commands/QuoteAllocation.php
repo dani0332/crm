@@ -113,6 +113,7 @@ class QuoteAllocation extends Command
             })
             ->select([
                 'uuid',
+                'code',
                 'payment_status_id',
                 'source',
                 'is_renewal_tier_email_sent',
