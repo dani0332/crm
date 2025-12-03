@@ -888,8 +888,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Command to bulk send policy documents
-    Route::get('/run-policy-bulk-send', function () {
-
+    Route::get('/run-policy-bulk-send', function (\Illuminate\Http\Request $request) {
         // Check if user has admin role
         if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
             return response()->json(['error' => 'Not authorized'], 403);
@@ -907,12 +906,33 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         try {
-            // Execute the command
-            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+            // Check if fetching from sage_process_type flag
+            $fromSageProcess = $request->query('from_sage_process', false);
+            $startDate = $request->query('start_date');
+            $sageProcessId = $request->query('sage_process_id');
+
+            // Build command parameters
+            $params = [];
+            if ($fromSageProcess) {
+                $params['--from-sage-process'] = true;
+
+                if ($startDate) {
+                    $params['--start-date'] = $startDate;
+                }
+
+                if ($sageProcessId) {
+                    $params['--sage-process-id'] = $sageProcessId;
+                }
+            }
+
+            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents', $params);
 
             return response()->json([
                 'message' => 'Command executed successfully!',
                 'status' => 'completed',
+                'from_sage_process' => (bool) $fromSageProcess,
+                'start_date' => $startDate,
+                'sage_process_id' => $sageProcessId,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -920,7 +940,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 'status' => 'failed',
             ], 500);
         } finally {
-            // Always release the lock
             $lock->release();
         }
     })->name('run-policy-bulk-send');
