@@ -1088,11 +1088,11 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-        
+
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::MR_FAILED_BOOKING_DATE_FROM],
             [
-                'value' => "2025-11-27 12:00:00",
+                'value' => '2025-11-27 12:00:00',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

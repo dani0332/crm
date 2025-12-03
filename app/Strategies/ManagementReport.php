@@ -2,6 +2,7 @@
 
 namespace App\Strategies;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
@@ -11,6 +12,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Department;
 use App\Models\LeadSource;
 use App\Models\Lookup;
@@ -22,8 +24,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\SendUpdateLogStatusEnum;
 
 class ManagementReport
 {
@@ -328,7 +328,7 @@ class ManagementReport
                         });
                 });
 
-            } else if ($includeFailedBookings && $filterKey == 'policyBookDate') {
+            } elseif ($includeFailedBookings && $filterKey == 'policyBookDate') {
                 $query->where(function ($query) use ($fieldName, $dateRange, $failedBookingDateFrom) {
                     $query->whereBetween($fieldName, $dateRange)
                         ->orWhere(function ($query) use ($failedBookingDateFrom, $dateRange) {
