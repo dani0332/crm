@@ -23,6 +23,7 @@ use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\SLA\SLAService;
 use Illuminate\Http\Request;
+use App\Http\Requests\MemberDeleteRequest;
 
 class HealthQuoteController extends Controller
 {
@@ -173,6 +174,11 @@ class HealthQuoteController extends Controller
     public function healthQuoteAddMember(MemberDetailRequest $request)
     {
         $request->validated();
+        
+        $quote = HealthQuote::where('uuid', $request->quoteId)->first();
+        if ($quote?->is_quote_locked) {
+            return redirect()->back()->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
+        }
 
         $response = $this->healthQuoteService->healthQuoteAddMember($request);
 
@@ -197,6 +203,11 @@ class HealthQuoteController extends Controller
     {
         $request->validated();
 
+        $quote = HealthQuote::where('uuid', $request->quoteId)->first();
+        if ($quote?->is_quote_locked) {
+            return redirect()->back()->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
+        }
+
         $response = $this->healthQuoteService->healthQuoteUpdateMember($request);
 
         $message = '';
@@ -216,7 +227,7 @@ class HealthQuoteController extends Controller
         return redirect()->back();
     }
 
-    public function healthQuoteDeleteMember(Request $request)
+    public function healthQuoteDeleteMember(MemberDeleteRequest $request)
     {
         $response = $this->healthQuoteService->healthQuoteDeleteMember($request);
 

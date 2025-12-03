@@ -221,6 +221,7 @@ class HealthQuoteService extends BaseService
             'sso.description as sub_source_option_description',
             'ub.branch_id as advisor_primary_branch_id',
             'b.name as lead_branch_name',
+            'is_quote_locked'
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -444,6 +445,10 @@ class HealthQuoteService extends BaseService
     public function updateHealthQuote(Request $request, $id)
     {
         $healthQuote = HealthQuote::where('uuid', $id)->first();
+        if ($healthQuote?->is_quote_locked) {
+            return redirect('quote/health/' . $id)->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
+        }
+
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
         $healthQuote->first_name = $request->first_name;
         $healthQuote->last_name = $request->last_name;

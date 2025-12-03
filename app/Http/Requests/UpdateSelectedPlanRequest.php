@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\QuoteTypes;
 use App\Rules\ValidateAuthorizedPayment;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\HealthQuote;
 
 class UpdateSelectedPlanRequest extends FormRequest
 {
@@ -47,6 +48,13 @@ class UpdateSelectedPlanRequest extends FormRequest
         $validator->after(function ($validator) use ($code) {
             $rule = new ValidateAuthorizedPayment($code);
             $rule->validate($validator, $code);
+
+            if (strtolower(request()->quoteType) == strtolower(QuoteTypes::HEALTH->value)) {
+                $quote = HealthQuote::where('code', request()->code)->first();
+                if ($quote?->is_quote_locked) {
+                    $validator->errors()->add('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
+                }
+            }
         });
     }
 }
