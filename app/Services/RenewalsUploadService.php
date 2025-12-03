@@ -2695,11 +2695,11 @@ class RenewalsUploadService
      */
     /**
      * Validates the batch for non-motor renewals considering cross-year ISO week numbering.
-     * 
-     * @param string $batchName
-     * @param string $endDate
-     * @param bool $isCreated
-     * @param object &$lead
+     *
+     * @param  string  $batchName
+     * @param  string  $endDate
+     * @param  bool  $isCreated
+     * @param  object  &$lead
      * @return bool
      */
     private function validateBatch($batchName, $endDate, $isCreated, &$lead)
@@ -2712,7 +2712,7 @@ class RenewalsUploadService
         // Use ISO-8601 week/year for proper cross-year week assignment
         $isoWeek = $endDateObj->isoWeek;
         $isoYear = $endDateObj->isoWeekYear;
-        $weekNumber = 'W' . $isoWeek;
+        $weekNumber = 'W'.$isoWeek;
 
         LoggerService::info('Validating with isoWeekYear: '.$isoYear.' and isoWeek: '.$weekNumber);
 
@@ -2723,7 +2723,7 @@ class RenewalsUploadService
         ])->first();
 
         // If not found: check also the calendar year in case the batch is not assigned by ISO year
-        if (!$batch) {
+        if (! $batch) {
             $calendarYear = $endDateObj->year;
             LoggerService::info('Batch not found by isoYear. Retrying with calendar year: '.$calendarYear);
             $batch = RenewalBatch::where([
@@ -2740,10 +2740,12 @@ class RenewalsUploadService
                 $lead->data = $data;
             }
             $lead->renewal_batch_id = $batch->id;
+
             return true;
         }
 
         LoggerService::info("Batch not found with isoYear: $isoYear or calendar year for week number: $weekNumber and batch name: $batchName");
+
         return false;
     }
 
