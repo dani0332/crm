@@ -4,6 +4,7 @@ globs:
   - "app/Http/Controllers/*Claims*"
   - "app/Services/*Claims*"
   - "app/Models/ClaimRequest*"
+  - "app/Models/CustomerBankAccount.php"
   - "app/Http/Requests/Claim*"
   - "app/Observers/ClaimRequest*"
   - "app/Enums/ClaimsEnum.php"
@@ -114,6 +115,12 @@ alwaysApply: false
 - `updateNextFollowUp($nextFollowupDatetime, $notes = null): void` - Update next follow-up
 - `isCarOrBikeLOB(): bool` - Check if claim is for Car or Bike LOB
 
+#### ClaimRequest Relationships
+- `customerBankAccounts()` - hasOne relationship to CustomerBankAccount (filtered by type='claim')
+  - Maps `uuid` to `claim_uuid`
+  - Only returns bank accounts with type='claim' for this specific claim
+  - Used to store claim-specific banking information for payouts
+
 ### ClaimRequestDetail Model
 - `scopeByClaimRequest($query, $claimRequestId)` - Filter by claim request
 - `scopeByServiceType($query, $serviceTypeId)` - Filter by service type
@@ -130,6 +137,65 @@ alwaysApply: false
 - `scopeByStatus(Builder $query, array $statusIds): Builder` - Filter by status
 - `scopeCreatedBy(Builder $query, int $userId): Builder` - Filter by creator
 - `createForClaim(int $claimRequestId, string $claimUuid, int $statusId, ?string $comment, ?string $commentAi, ?int $createdById): self` - Static method to create claim activity
+
+### CustomerBankAccount Model
+**Purpose**: Stores customer banking information associated with claims for payout processing
+
+#### Database Schema
+- `id` - Primary key
+- `customer_id` - Foreign key to customers table
+- `type` - Type of bank account usage (e.g., 'claim', 'quote')
+- `claim_uuid` - UUID linking to claim request
+- `bank_name` - Name of the bank
+- `account_name` - Account holder name
+- `iban` - International Bank Account Number
+- `swift_code` - SWIFT/BIC code for international transfers
+- `created_at`, `updated_at` - Timestamps
+
+#### Relationships
+- `customer()` - BelongsTo relationship with Customer model
+- `claimRequest()` - BelongsTo relationship with ClaimRequest model
+  - Maps `claim_uuid` to `uuid` on ClaimRequest
+  - Allows linking bank account to specific claim
+
+#### Scopes
+- `byType($type)` - Filter by account type (e.g., 'claim')
+
+#### Features
+- Implements `Auditable` trait for comprehensive audit logging
+- Uses `FilterCriteria` trait for advanced filtering
+- Strict typing with `declare(strict_types=1)`
+- Filterable by: customer_id, claim_uuid, type, bank_name, account_name, iban
+
+#### Business Logic Pattern
+- Multiple bank accounts can exist for a customer
+- Bank accounts are type-scoped (claim, quote, etc.)
+- ClaimRequest uses hasOne relationship filtered by type='claim'
+- Customer has hasMany relationship to all bank accounts
+
+## Claim Data Management Patterns
+
+### Bank Account Management
+- **Type-Based Segregation**: Bank accounts are filtered by `type` field ('claim', 'quote', etc.)
+- **Claim-Specific Banking**: Each claim can have one associated bank account via hasOne relationship
+- **UUID-Based Linking**: Bank accounts linked to claims using `claim_uuid` to `uuid` mapping
+- **Customer Aggregation**: Customers can have multiple bank accounts across different types via hasMany
+- **Audit Trail**: All bank account changes tracked via Auditable trait
+
+### Relationship Pattern - hasOne with Type Filtering
+```php
+// ClaimRequest Model
+public function customerBankAccounts()
+{
+    return $this->hasOne(CustomerBankAccount::class, 'claim_uuid', 'uuid')
+                ->where('type', 'claim');
+}
+```
+This pattern:
+- Uses hasOne for single bank account per claim
+- Applies type filtering to segregate claim-specific data
+- Maps custom keys (uuid to claim_uuid) for flexible relationships
+- Allows same customer to have different bank accounts per claim/quote
 
 ## Claim-Specific Validation Rules
 
@@ -340,6 +406,7 @@ alwaysApply: false
    - `app/Http/Controllers/ClaimsController.php`
    - `app/Services/ClaimsService.php`
    - `app/Models/ClaimRequest*.php`
+   - `app/Models/CustomerBankAccount.php`
    - `app/Http/Requests/Claim*.php`
    - `app/Observers/ClaimRequestObserver.php`
    - `app/Enums/ClaimsEnum.php`
