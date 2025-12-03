@@ -78,6 +78,7 @@ use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\V2\CustomerAcceptanceLogController;
 use App\Http\Controllers\V2\CustomerController as V2CustomerController;
 use App\Http\Controllers\V2\CycleQuoteController;
+use App\Http\Controllers\V2\DeviceQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\FollowupController;
 use App\Http\Controllers\V2\HealthRevivalQuoteController;
@@ -102,7 +103,6 @@ use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\V2\DeviceQuoteController;
 
 /*
 |--------------------------------------------------------------------------

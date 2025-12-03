@@ -646,7 +646,7 @@ class ApiController extends Controller
     }
     public function deviceQuoteSendOCB(Request $request)
     {
-           return response()->json([
+        return response()->json([
             'success' => true,
             'message' => 'Device quote OCB email sent successfully',
         ], Response::HTTP_OK);

@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Enums\PermissionsEnum;
-use App\Services\Quotes\DeviceQuoteService;
-use App\Services\AMLService;
-use App\Models\PaymentStatus;
-use App\Models\InsuranceProviderPlan;
-use App\Enums\QuoteTypes;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\DeviceQuoteRequest;
+use App\Models\InsuranceProviderPlan;
+use App\Models\PaymentStatus;
+use App\Services\AMLService;
+use App\Services\Quotes\DeviceQuoteService;
 
 class DeviceQuoteController extends Controller
 {
@@ -56,7 +55,6 @@ class DeviceQuoteController extends Controller
         ]);
     }
 
-
     public function create()
     {
         $data = $this->deviceQuoteService->getFormOptions();
@@ -67,6 +65,7 @@ class DeviceQuoteController extends Controller
     public function store(DeviceQuoteRequest $request)
     {
         $response = $this->deviceQuoteService->create($request->validated());
+
         return redirect(route('device-quotes-show', $response->uuid))->with('message', $response->message ?? 'Quote is created successfully.');
     }
 
@@ -93,6 +92,5 @@ class DeviceQuoteController extends Controller
 
         return inertia('DeviceQuote/Show', $data);
     }
-
 
 }

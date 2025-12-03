@@ -459,7 +459,6 @@ final class PermissionsEnum extends Enum
     public const DEVICE_QUOTES_CREATE = 'device-quotes-create';
     public const DEVICE_QUOTES_EDIT = 'device-quotes-edit';
     public const DEVICE_QUOTES_SHOW = 'device-quotes-show';
-    
 
     public static function getAdvisorConversionReportPermissions()
     {

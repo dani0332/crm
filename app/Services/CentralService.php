@@ -73,6 +73,7 @@ use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
@@ -80,7 +81,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Services\Quotes\DeviceQuoteService;
 
 class CentralService extends BaseService
 {

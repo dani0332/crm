@@ -2,18 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class DeviceQuote extends Model implements AuditableContract
 {
-    use Auditable, HasFactory, QuoteModelTrait,Filterable, FilterCriteria;
+    use Auditable, Filterable, FilterCriteria,HasFactory, QuoteModelTrait;
+
     protected $table = 'device_quote_request';
     protected $guarded = [];
 
@@ -32,5 +33,4 @@ class DeviceQuote extends Model implements AuditableContract
         ];
     }
 
-  
 }
