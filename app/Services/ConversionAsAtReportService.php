@@ -207,6 +207,10 @@ class ConversionAsAtReportService extends BaseService
             $lobs[QuoteTypes::getIdFromValue(quoteTypeCode::GroupMedical)] = quoteTypeCode::GroupMedical.' Insurance';
         }
 
+        if ($authUser->hasAnyRole([RolesEnum::SeniorManagement, RolesEnum::CyberManager]) || in_array('Cyber Insurance', $userProducts)) {
+            $lobs[QuoteTypes::getIdFromValue(quoteTypeCode::CYBER)] = quoteTypeCode::CYBER.' Insurance';
+        }
+
         return [
             'lobs' => $lobs,
         ];

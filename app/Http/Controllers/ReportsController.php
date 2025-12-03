@@ -604,14 +604,23 @@ class ReportsController extends Controller
             QuoteTypes::CYCLE,
             QuoteTypes::YACHT,
             QuoteTypes::SAVINGS,
+            QuoteTypes::CYBER,
         ];
 
         $products = Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->get();
 
+        $productNames = $products->pluck('name')->toArray();
+        $mappedProducts = array_map(function ($name) {
+            if ($name === 'Cyber Insurance') {
+                return 'Cyber';
+            }
+            return $name;
+        }, $productNames);
+
         return inertia('Reports/StaleLeadsReport', [
             'reportData' => $data,
             'teams' => $team,
-            'products' => $products->pluck('name')->toArray(),
+            'products' => $mappedProducts,
         ]);
     }
 
