@@ -6,7 +6,7 @@ const props = defineProps({
     type: String || null,
   },
 });
-const dateFormat = date => useDateFormat(date, 'YYYY-MM-DD');
+const dateFormat = date => (date ? useDateFormat(date, 'YYYY-MM-DD') : 'N/A');
 const priceFormat = (price, thousandSeparator = false) => {
   return thousandSeparator
     ? parseFloat(price).toLocaleString('en-US', {
@@ -119,9 +119,9 @@ const tableHeader = reactive([
     tooltip: 'Tax Invoice Number (DN) in Booking Details of the lead',
   },
   {
-    text: 'Tax Invoice Date',
+    text: 'Insurer Invoice Date',
     value: 'insurer_tax_invoice_date',
-    tooltip: 'Invoice Date of  Tax Invoice',
+    tooltip: 'The insurer’s tax invoice document date for each lead',
   },
   {
     text: 'Payment Status',
@@ -236,6 +236,16 @@ const tableHeader = reactive([
     text: 'Traveling Where',
     value: 'traveling_where',
     tooltip: 'Traveling Where',
+  },
+  {
+    text: 'IMCRM SUB-SOURCE',
+    value: 'sub_source',
+    tooltip: 'The IMCRM SUB-SOURCE of the lead',
+  },
+  {
+    text: 'SUB SOURCE OPTIONS',
+    value: 'sub_source_option',
+    tooltip: 'The SUB SOURCE OPTION of the lead',
   },
 ]);
 

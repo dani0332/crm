@@ -178,7 +178,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
 
         if ($nextStepToBeExecuted === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
-            $uploadPolicyDocumentsToIMCRMResponse = $this->executeUploadPolicyDocumentsStep($quote, $process);
+            if (isset($issuePolicyResponse['issuePolicyResponsePolicyNumber']) && $issuePolicyResponse['issuePolicyResponsePolicyNumber']) {
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy number fetched from issue policy response : '.$issuePolicyResponse['issuePolicyResponsePolicyNumber']);
+                $issuePolicyResponsePolicyNumber = $issuePolicyResponse['issuePolicyResponsePolicyNumber'];
+            }
+
+            $uploadPolicyDocumentsToIMCRMResponse = $this->executeUploadPolicyDocumentsStep($quote, $process, $issuePolicyResponsePolicyNumber);
             if (isset($uploadPolicyDocumentsToIMCRMResponse['status']) && ! $uploadPolicyDocumentsToIMCRMResponse['status']) {
                 return $uploadPolicyDocumentsToIMCRMResponse;
             }
@@ -214,7 +219,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         if (! $triggerBookPolicyResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $triggerBookPolicyResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Send And Book Policy');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY);
 
             return $triggerBookPolicyResponse;
         }
@@ -438,14 +443,14 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    private function executeUploadPolicyDocumentsStep($quote, $process)
+    private function executeUploadPolicyDocumentsStep($quote, $process, $issuePolicyResponsePolicyNumber = null)
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
-        $uploadPolicyDocumentsToIMCRMResponse = $this->uploadPolicyDocumentsToIMCRM($quote, $process);
+        $uploadPolicyDocumentsToIMCRMResponse = $this->uploadPolicyDocumentsToIMCRM($quote, $process, $issuePolicyResponsePolicyNumber);
 
         if (! $uploadPolicyDocumentsToIMCRMResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $uploadPolicyDocumentsToIMCRMResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Retrieve Document');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
             return $uploadPolicyDocumentsToIMCRMResponse;
         }
@@ -458,7 +463,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return $uploadPolicyDocumentsToIMCRMResponse;
     }
 
-    public function uploadPolicyDocumentsToIMCRM($quote, $process): array
+    public function uploadPolicyDocumentsToIMCRM($quote, $process, $issuePolicyResponsePolicyNumber = null): array
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$process->id.' - Step : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
@@ -470,7 +475,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $payload = [
             'RetrieveRequest' => [
                 'RetrieveType' => '6',
-                'TransactionNumber' => $quote?->policy_number,
+                'TransactionNumber' => $issuePolicyResponsePolicyNumber ?? '',
                 'PartnerTrnReferenceNumber' => $quote->uuid,
                 'Documents' => [
                     'DocsInResponse' => true,
@@ -613,7 +618,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         if (! $policyIssuanceResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $policyIssuanceResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Policy Creation');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY);
 
             return $policyIssuanceResponse;
         }
@@ -710,6 +715,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $response['message'] = 'Policy issued successfully';
         $response['completed_step'] = self::ISSUE_POLICY;
         $response['data'] = $issuePolicy['data']; // verify this
+        $response['issuePolicyResponsePolicyNumber'] = $issuePolicyResult?->PolicyNumber;
 
         return $response;
     }
@@ -739,7 +745,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document upload failed', extra: ['response' => $uploadDocumentsResponse]);
 
             $this->currentInsurerApiStatus = PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID;
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Document Upload');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_DOCUMENTS);
 
             return $uploadDocumentsResponse;
         }

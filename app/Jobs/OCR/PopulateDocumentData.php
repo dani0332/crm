@@ -73,7 +73,7 @@ class PopulateDocumentData implements ShouldQueue
                 $this->fileMimeType,
                 $this->userId,
                 $this->isEcom,
-                $this->isSendUpdateEligibleForOCR
+                $this->isSendUpdateEligibleForOCR,
             );
 
             if ($isSuccess === null) {

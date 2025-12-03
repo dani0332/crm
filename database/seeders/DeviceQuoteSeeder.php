@@ -2,15 +2,13 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Enums\QuoteTypes;
-use App\Models\QuoteType;
-use App\Enums\RolesEnum;
 use App\Enums\PermissionsEnum;
-use Database\Seeders\Traits\PermissionableSeeder;
-use App\Models\Role;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Models\QuoteType;
 use App\Services\Logger\LoggerService;
+use Database\Seeders\Traits\PermissionableSeeder;
+use Illuminate\Database\Seeder;
 
 class DeviceQuoteSeeder extends Seeder
 {
@@ -53,8 +51,6 @@ class DeviceQuoteSeeder extends Seeder
         ];
         $this->seedPermissions($permissions, [RolesEnum::Admin, RolesEnum::DeviceAdvisor, RolesEnum::DeviceManager, RolesEnum::Engineering]);
 
-     
     }
-  
-  
+
 }

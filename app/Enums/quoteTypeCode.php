@@ -6,6 +6,7 @@ use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\CycleQuote;
+use App\Models\DeviceQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
@@ -15,7 +16,6 @@ use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use BenSampo\Enum\Enum;
-use App\Models\DeviceQuote;
 
 class quoteTypeCode extends Enum
 {

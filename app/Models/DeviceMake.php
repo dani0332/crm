@@ -13,6 +13,4 @@ class DeviceMake extends Model
         return $this->hasMany(DeviceModel::class, 'make_id', 'id');
     }
 
-    
-
 }

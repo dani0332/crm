@@ -1,9 +1,50 @@
 <script setup>
-const { modals, customerVerificationData } = defineProps({
-  quote: Object,
+const {
+  quoteId,
+  modals,
+  customerVerificationData,
+  isLoadingVerificationDataUpdate,
+} = defineProps({
+  quoteId: Number,
   modals: Object,
   customerVerificationData: Object,
+  isLoadingVerificationDataUpdate: Boolean,
 });
+const notification = useNotifications('toast');
+const emit = defineEmits();
+const isLoading = ref(false);
+
+// Update webform data with OCR data
+const updateAndSave = async () => {
+  isLoading.value = true;
+
+  // Make api request
+  await axios
+    .get(`/quotes/car/${quoteId}/update-ocr-webform`)
+    .then(response => {
+      // Emit event to reload updated plans
+      emit('ocr-webform-updated');
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error occurred while updating',
+        position: 'top',
+      });
+
+      isLoading.value = false;
+      console.log(error);
+    });
+};
+
+// Watch props to hide loader (once parent processing is completed)
+watch(
+  () => isLoadingVerificationDataUpdate,
+  val => {
+    if (val === false) {
+      isLoading.value = false; // hide loader when parent finishes
+    }
+  },
+);
 </script>
 
 <template>
@@ -23,7 +64,7 @@ const { modals, customerVerificationData } = defineProps({
         </div>
       </template>
 
-      <div class="px-6 pb-6 max-w-4xl mx-auto">
+      <div class="px-6 pb-4 max-w-4xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
           <div
             class="bg-blue-50 p-5 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow duration-200"
@@ -142,13 +183,14 @@ const { modals, customerVerificationData } = defineProps({
                 <div
                   class="p-3 bg-white rounded-md text-gray-800 font-medium transition-colors duration-150"
                   :class="
-                    customerVerificationData.customerVerified?.name.error
+                    customerVerificationData.customerVerified?.name?.error
                       ? 'border-2 border-red-600'
                       : 'border border-green-100 hover:border-green-200'
                   "
                 >
                   {{
-                    customerVerificationData.customerVerified?.name.value || '-'
+                    customerVerificationData.customerVerified?.name?.value ||
+                    '-'
                   }}
                 </div>
                 <span
@@ -328,6 +370,23 @@ const { modals, customerVerificationData } = defineProps({
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Update and save button-->
+      <div
+        class="px-6 pb-6 max-w-4xl mx-auto flex justify-end"
+        v-if="
+          customerVerificationData.buttonData.status == 'requires_verification'
+        "
+      >
+        <x-button
+          size="sm"
+          color="orange"
+          :loading="isLoading"
+          @click="updateAndSave"
+          :disabled="isLoading"
+          >Update & Save</x-button
+        >
       </div>
 
       <template #actions>

@@ -113,6 +113,7 @@ use Illuminate\Bus\Batch;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Throwable;
 
@@ -907,6 +908,7 @@ class RenewalsUploadService
                         $quoteData['cylinder'] = $carModelDetail->cylinder;
                         $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
                         $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
+                        $quoteData['car_model_detail_id'] = $carModelDetail->id;
                     }
                 }
 
@@ -1149,6 +1151,9 @@ class RenewalsUploadService
 
             if ($isQuoteTypeCar) {
                 $quoteData['dob'] = (! empty($data['dob'])) ? $this->formatDate($data['dob']) : null;
+                if ($carTypeOfInsurance) {
+                    $quoteData['car_type_insurance_id'] = $carTypeOfInsurance->id;
+                }
                 $quoteData['claim_history_id'] = $claimHistory->id ?? null;
                 $quoteData['nationality_id'] = $nationality->id ?? null;
                 $quoteData['emirate_of_registration_id'] = $emirate->id ?? null;
@@ -1189,6 +1194,7 @@ class RenewalsUploadService
                     ->first())) {
                     $quoteData['cylinder'] = $carModelDetail->cylinder;
                     $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
+                    $quoteData['car_model_detail_id'] = $carModelDetail->id;
                 }
 
                 if ($renewalUploadLead->skip_plans == 2 && $data['make'] == GenericRequestEnum::MOTOR_BIKE) {
@@ -2687,33 +2693,47 @@ class RenewalsUploadService
      * @param  string  $endDate
      * @return void
      */
+    /**
+     * Validates the batch for non-motor renewals considering cross-year ISO week numbering.
+     *
+     * @param  string  $batchName
+     * @param  string  $endDate
+     * @param  bool  $isCreated
+     * @param  object  &$lead
+     * @return bool
+     */
     private function validateBatch($batchName, $endDate, $isCreated, &$lead)
     {
         LoggerService::info('Validating batch: '.$batchName.' with end date: '.$endDate);
-        // Extract year from endDate
-        $endDate = Carbon::createFromFormat('d/m/Y', $endDate);
-        $year = $endDate->format('Y');
 
-        // Extract week number from endDate and remove leading zero if present
-        $weekNumber = 'W'.$endDate->weekOfYear;
+        // Parse endDate into a Carbon instance for week and year calculations
+        $endDateObj = Carbon::createFromFormat('d/m/Y', $endDate);
 
-        LoggerService::info('Validating year: '.$year.' with week number: '.$weekNumber);
+        // Use ISO-8601 week/year for proper cross-year week assignment
+        $isoWeek = $endDateObj->isoWeek;
+        $isoYear = $endDateObj->isoWeekYear;
+        $weekNumber = 'W'.$isoWeek;
 
-        // Validate batch name by checking if it contains the week number
-        // if ((strpos($batchName, $weekNumber) === false || $batchName != $weekNumber) && !$isCreated ) {
-        //     LoggerService::info( 'Batch name does not contain week number');
+        LoggerService::info('Validating with isoWeekYear: '.$isoYear.' and isoWeek: '.$weekNumber);
 
-        //     return false;
-        // }
-
-        // Check if the batch exists in the table with the extracted year and week number
+        // Attempt to find the correct batch by ISO week-year first
         $batch = RenewalBatch::where([
-            ['name', $weekNumber.'-'.$year],
+            ['name', $weekNumber.'-'.$isoYear],
             ['quote_type_id', null],
         ])->first();
 
+        // If not found: check also the calendar year in case the batch is not assigned by ISO year
+        if (! $batch) {
+            $calendarYear = $endDateObj->year;
+            LoggerService::info('Batch not found by isoYear. Retrying with calendar year: '.$calendarYear);
+            $batch = RenewalBatch::where([
+                ['name', $weekNumber.'-'.$calendarYear],
+                ['quote_type_id', null],
+            ])->first();
+        }
+
         if ($batch) {
-            LoggerService::info('Batch found');
+            LoggerService::info("Batch found: {$batch->name}");
             if ($isCreated) {
                 $data = $lead->data;
                 $data['renewal_batch_id'] = $batch->id;
@@ -2723,7 +2743,8 @@ class RenewalsUploadService
 
             return true;
         }
-        LoggerService::info('Batch not found with year: '.$year.' and batch name: '.$batchName);
+
+        LoggerService::info("Batch not found with isoYear: $isoYear or calendar year for week number: $weekNumber and batch name: $batchName");
 
         return false;
     }
@@ -3092,6 +3113,7 @@ class RenewalsUploadService
                 $quoteType = QuoteTypes::getName($product);
                 $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
                 $quotes = $repository::getData()->withQueryString();
+                $quotes->load('customer');
             }
         } catch (\Exception $e) {
             LoggerService::error('UAC FN: getSearch Error: '.$e->getMessage());
@@ -3115,7 +3137,7 @@ class RenewalsUploadService
             $quotes = $repository::export();
         }
 
-        return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal');
+        return Excel::download(new RenewalQuotesExport($quotes, $quoteType->name), 'Renewal.xlsx');
     }
 
     public function getMonths(): array

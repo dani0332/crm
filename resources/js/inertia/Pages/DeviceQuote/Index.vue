@@ -381,7 +381,7 @@ const computedDevicePlans = computed(() => {
 const computeddeviceCoverages = computed(() => {
   return page.props.deviceCoverages?.map(item => ({
     value: item.id,
-    label: "$ " + item.text,
+    label: '$ ' + item.text,
   }));
 });
 </script>
@@ -630,7 +630,9 @@ const computeddeviceCoverages = computed(() => {
             <template #content-footer>
               <ui-select-actions
                 @select-all="
-                  filters.plan_name = computeddevicePlans.map(item => item.value)
+                  filters.plan_name = computeddevicePlans.map(
+                    item => item.value,
+                  )
                 "
                 @clear="filters.plan_name = []"
               />
@@ -728,7 +730,6 @@ const computeddeviceCoverages = computed(() => {
     >
       <template #item-uuid="{ code, uuid, stale_at }">
         <Link
-        
           :href="route('device-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >

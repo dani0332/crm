@@ -95,7 +95,7 @@ abstract class BaseQuoteService extends BaseService
         $quoteType = $this->quoteType;
 
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
-        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($quoteType->value, $quote) ; 
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($quoteType->value, $quote);
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled($quoteType->value);
         $quoteStatuses = $this->getQuoteStatuses([QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, $quoteType->id(), $quoteStatuses);

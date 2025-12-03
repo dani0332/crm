@@ -48,6 +48,8 @@ class MulkiyaExtractor
             'model' => null,
             'vehicle_class' => null,
             'vehicle_type' => null,
+            'vehicle_make' => null,
+            'vehicle_make_model' => null,
             'origin' => null,
             'number_of_passengers' => null,
             'gross_vehicle_weight' => null,
@@ -100,6 +102,8 @@ class MulkiyaExtractor
                 'model' => $data['vehicalModel'] ?? null,
                 'vehicle_class' => $data['vehicalClass'] ?? null,
                 'vehicle_type' => $data['vehicalType'] ?? null,
+                'vehicle_make' => $data['vehicleMake'] ?? null,
+                'vehicle_make_model' => $data['vehicleMakeModel'] ?? null,
                 'origin' => $data['origin'] ?? null,
                 'number_of_passengers' => isset($data['numberOfPassengers']) ? (int) $data['numberOfPassengers'] : null,
                 'gross_vehicle_weight' => $data['grossVehicleWeight'] ?? null,
@@ -168,6 +172,8 @@ class MulkiyaExtractor
             'doc_type' => $this->extractedData['doc_type'] ?? null,
             'provider_id' => $this->extractedData['provider_id'] ?? null,
             'traffic_code_number' => $this->extractedData['traffic_code_number'] ?? null,
+            'policy_expiry_date' => $this->extractedData['policy_expiry_date'] ?? null,
+            'chassis_number' => $this->extractedData['chassis_number'] ?? null,
         ]);
     }
 
