@@ -206,6 +206,7 @@ class QuoteAllocation extends Command
 
             if ($lead->tier_id == TiersIdEnum::TIER_R) {
                 LoggerService::info(self::class.': Skipping car revival quote allocation for tier R');
+
                 continue;
             }
 
