@@ -2422,7 +2422,7 @@ class CentralService extends BaseService
             $lifeDataArr['height'] = $lifeQuote->height ?? null;
             $lifeDataArr['weight'] = $lifeQuote->weight ?? null;
             $lifeDataArr['bmi'] = $lifeQuote->bmi ?? null;
-            $lifeDataArr['age'] = $lifeQuote->age ?? ($parentRecord->dob ? Carbon::parse($parentRecord->dob)->age : null);
+            $lifeDataArr['age'] = $lifeQuote->age ?? ($lifeDataArr['dob'] ? Carbon::parse($lifeDataArr['dob'])->age : null);
         } else {
             $lifeDataArr['dob'] = $parentRecord->dob ?? null;
             $lifeDataArr['sum_insured_value'] = null;
