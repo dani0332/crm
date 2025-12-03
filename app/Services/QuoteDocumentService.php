@@ -1116,7 +1116,7 @@ class QuoteDocumentService extends BaseService
             $documentType,
             $quote,
             $filePathAzure,
-            $fileMimeType
+            $fileMimeType,
         );
     }
 
