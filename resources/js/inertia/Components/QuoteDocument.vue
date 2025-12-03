@@ -227,7 +227,6 @@ onUnmounted(() => {
 });
 
 const { openTempUrl } = useDocumentTempUrl();
-
 </script>
 
 <template>
@@ -461,7 +460,7 @@ const { openTempUrl } = useDocumentTempUrl();
                 <a
                   @click.prevent="openTempUrl(quoteDocument.doc_url || quoteDocument.watermarked_doc_url)"
                   target="_blank"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>
