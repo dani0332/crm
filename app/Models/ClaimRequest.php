@@ -173,6 +173,11 @@ class ClaimRequest extends Model implements AuditableContract
         return $this->hasMany(Activities::class, 'claim_request_id');
     }
 
+    public function customerBankAccounts()
+    {
+        return $this->hasOne(CustomerBankAccount::class, 'claim_uuid', 'uuid')->where('type', 'claim');
+    }
+
     /**
      * Scopes
      */

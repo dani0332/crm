@@ -80,6 +80,7 @@ class ClaimsService extends BaseService
             'created_at',
         ])
             ->with([
+                'customerBankAccounts',
                 'quoteType:id,code,text',
                 'claimType:id,code,text',
                 'manager:id,name',
