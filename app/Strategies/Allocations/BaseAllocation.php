@@ -303,17 +303,26 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
             return;
         }
-
-        app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
-            $this->lead,
-            $this->quoteType->value,
-            isNonAdvisorEmail: true,
-        );
+        if (! $this->lead->isSuppressIntroEmail()) {
+            app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
+                $this->lead,
+                $this->quoteType->value,
+                isNonAdvisorEmail: true,
+            );
+        }
 
         $this->lead->touch('non_advisor_email_sent_at');
         LoggerService::info(self::class.' - Non Advisor Email sent to customer');
     }
 
+    protected function getAdvisorsByEmailsOrIds(int $onlineStatus, array $roles, ?array $emails = null, ?array $advisorIds = null)
+    {
+        return $this->getAdvisorBaseQuery($onlineStatus, $roles)
+            ->when(! is_null($emails), fn ($q) => $q->whereIn('users.email', $emails))
+            ->when(! is_null($advisorIds), fn ($q) => $q->whereIn('users.id', $advisorIds))
+            ->logRawSql()
+            ->first();
+    }
     protected function finalizeExcludedAdvisorIds(?array $excludedAdvisorIds): array
     {
         if (empty($excludedAdvisorIds)) {

@@ -281,10 +281,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     private function validateNewVehicleRegistration($validator): void
     {
         $this->validatePolicyEffectiveDateWithinLimit($validator);
-
-        if ($this->filled('plate_code') || $this->filled('plate_number')) {
-            $validator->errors()->add('plate_code', 'Plate code and plate number are not required for new vehicle registration.');
-        }
     }
 
     private function validateVehicleRenewal($validator): void

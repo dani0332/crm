@@ -113,6 +113,7 @@ use Illuminate\Bus\Batch;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Throwable;
 
@@ -907,6 +908,7 @@ class RenewalsUploadService
                         $quoteData['cylinder'] = $carModelDetail->cylinder;
                         $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
                         $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
+                        $quoteData['car_model_detail_id'] = $carModelDetail->id;
                     }
                 }
 
@@ -1149,6 +1151,9 @@ class RenewalsUploadService
 
             if ($isQuoteTypeCar) {
                 $quoteData['dob'] = (! empty($data['dob'])) ? $this->formatDate($data['dob']) : null;
+                if ($carTypeOfInsurance) {
+                    $quoteData['car_type_insurance_id'] = $carTypeOfInsurance->id;
+                }
                 $quoteData['claim_history_id'] = $claimHistory->id ?? null;
                 $quoteData['nationality_id'] = $nationality->id ?? null;
                 $quoteData['emirate_of_registration_id'] = $emirate->id ?? null;
@@ -1189,6 +1194,7 @@ class RenewalsUploadService
                     ->first())) {
                     $quoteData['cylinder'] = $carModelDetail->cylinder;
                     $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
+                    $quoteData['car_model_detail_id'] = $carModelDetail->id;
                 }
 
                 if ($renewalUploadLead->skip_plans == 2 && $data['make'] == GenericRequestEnum::MOTOR_BIKE) {
@@ -3092,6 +3098,7 @@ class RenewalsUploadService
                 $quoteType = QuoteTypes::getName($product);
                 $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
                 $quotes = $repository::getData()->withQueryString();
+                $quotes->load('customer');
             }
         } catch (\Exception $e) {
             LoggerService::error('UAC FN: getSearch Error: '.$e->getMessage());
@@ -3115,7 +3122,7 @@ class RenewalsUploadService
             $quotes = $repository::export();
         }
 
-        return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal');
+        return Excel::download(new RenewalQuotesExport($quotes, $quoteType->name), 'Renewal.xlsx');
     }
 
     public function getMonths(): array

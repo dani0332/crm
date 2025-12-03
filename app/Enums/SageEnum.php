@@ -46,6 +46,7 @@ final class SageEnum extends Enum
 
     // Creation of Customer
     const SRT_CREATE_CUSTOMER = 'CREATE_CUSTOMER';
+    const SRT_GET_CUSTOMER = 'GET_CUSTOMER';
 
     // AR Pre Payments Receipts
     const SRT_CREATE_PP_REC = 'AR_CREATE_PP_REC';
@@ -98,6 +99,9 @@ final class SageEnum extends Enum
     const SRT_AR_SPPAY_PAY_SCDULE_PATCH = 'SRT_AR_SPPAY_PAY_SCDULE_PATCH';
     const SRT_RTP_AR_SPPAY_INV = 'RTP_AR_SPPAY_INV';
     const SRT_POST_AR_SPPAY_INV = 'POST_AR_SPPAY_INV';
+
+    // AR Premium Invoice - Non upfront
+    const SRT_CREATE_AR_SPPAY_PREM_INV = 'CREATE_AR_SPPAY_PREM_INV';
 
     // AP Invoices - Upfront
     const EP_SRT_CREATE_AP_PREM_INV = 'EP_SRT_CREATE_AP_PREM_INV';

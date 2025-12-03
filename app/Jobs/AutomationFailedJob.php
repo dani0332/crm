@@ -62,6 +62,16 @@ class AutomationFailedJob implements ShouldQueue
         $quoteType = QuoteTypes::getName($this->quoteTypeId)->value;
         $quote = $this->getQuoteObject($quoteType, $this->quoteId);
 
+        if (! $quote) {
+            LoggerService::error('job:AutomationFailedJob - Quote not found', extra: [
+                'quoteId' => $this->quoteId,
+                'quoteTypeId' => $this->quoteTypeId,
+                'quoteType' => $quoteType,
+            ]);
+
+            return;
+        }
+
         LoggerService::startQuoteLogging($quote);
         LoggerService::info('job:AutomationFailedJob - Job started', extra: [
             'userToSendEmail' => $this->userToSendEmail,

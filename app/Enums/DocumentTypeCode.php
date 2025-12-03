@@ -35,6 +35,7 @@ class DocumentTypeCode extends Enum
     const SEND_UPDATE = 'SEND_UPDATE';
     const QUOTE_AND_ENDORSEMENT = 'QUOTE_AND_ENDORSEMENT';
     const EP = 'EMBEDDED_PRODUCT';
+    const LIFE_HEALTH_QUESTIONNAIRE = 'LIFE_HQ';
 
     // This is the same as the one in the database and we are using this as a text not it's code
     // The reason behind this code is different for all lob's but text is sames that's why we are using this as a text
@@ -81,6 +82,7 @@ class DocumentTypeCode extends Enum
     const Illustration_Document = 'LIFE_ID';
     const CPS = 'CPS'; // Car Policy Schedule
     const CPC = 'CPC'; // Car Policy Certificate
+    const MTL_EID = 'MTL_EID';
 
     // HOME SAL
     const HOME_SAL = 'HOME_SAL';
@@ -96,14 +98,14 @@ class DocumentTypeCode extends Enum
 
     // BAL
     const BAL = 'BAL';
-    const BAL_BIKE = 'BAL_Bike';
+    const BAL_BIKE = 'BAL_BIKE';
     const GM_BOL = 'GM_BOL';
     const BAL_TRVL = 'BAL_TRVL';
     const BAL_HOME = 'BAL_HOME';
     const BAL_HLTH = 'BAL_HLTH';
-    const BAL_YACHT = 'BAL_YCHT';
+    const BAL_YCHT = 'BAL_YCHT';
     const BAL_CYCLE = 'BAL_CYCLE';
-    const BAL_LIFE = 'BAL_Life';
+    const BAL_LIFE = 'BAL_LIFE';
     const BAL_PET = 'BAL_PET';
     const BOR_SIGN = 'BOR_SIGN';
     const BAL_BS = 'BAL_BS';
@@ -126,4 +128,14 @@ class DocumentTypeCode extends Enum
     const COMP_EC = 'COMP_EC'; // Trade Credit E-Card
     const COMP_PC = 'COMP_PC'; // Trade Credit Policy Certificate
     const COMP_PS = 'COMP_PS'; // Trade Credit Policy Schedule
+    const IND_PC = 'IND_PC'; // Group Travel Policy Certificate
+    const COMP_POLIC = 'COMP_POLIC'; // Holiday Homes Policy Certificate
+    const FIDEL_POC = 'FIDEL_POC'; // Goods In Transit Policy Certificate
+    const COM_P_MONE = 'COM_P_MONE'; // Livestock Insurance Policy Schedule
+    const COMP_LIVES = 'COMP_LIVES'; // Marine Cargo - Open Cover Policy Schedule
+    const COMP_MARIN = 'COMP_MARIN'; // Marine Cargo (individual shipment) insurance Policy Schedule
+    const COMP_MONEY = 'COMP_MONEY'; // Livestock Insurance Policy Schedule
+    const COMP_Polic = 'COMP_Polic'; // Holiday Homes Policy Schedule
+    const FIDEL_POS = 'FIDEL_POS'; // Goods In Transit Policy Schedule
+    const IND_PS = 'IND_PS'; // Group Travel Policy Schedule
 }

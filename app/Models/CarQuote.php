@@ -162,6 +162,16 @@ class CarQuote extends BaseModel
         return $this->belongsTo(Customer::class);
     }
 
+    public function subSource()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_id');
+    }
+
+    public function subSourceOption()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_options_id');
+    }
+
     public function nationality()
     {
         return $this->belongsTo(Nationality::class, 'nationality_id')->select(['id', 'code', 'text']);
@@ -320,7 +330,7 @@ class CarQuote extends BaseModel
 
     public function advisor()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link', 'is_ai_user']);
     }
 
     public function batch()

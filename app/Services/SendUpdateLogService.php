@@ -802,7 +802,6 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
             SendUpdateLogStatusEnum::ACB,
-            SendUpdateLogStatusEnum::ATIB,
             SendUpdateLogStatusEnum::DTSI,
             SendUpdateLogStatusEnum::DOV,
             SendUpdateLogStatusEnum::ATCRNB,
@@ -838,7 +837,7 @@ class SendUpdateLogService
 
     public function updatePaymentDetails($payment, $sendUpdateLog, $ignoreDiscount = false, $insurerDetails = null)
     {
-        LoggerService::info('fn:updatePaymentDetails - SendUpdateLogService');
+        LoggerService::info('Book Update - Update Payment Details');
         try {
             if ($insurerDetails !== null) {
                 $sendUpdatePaymentDetails = [
@@ -863,12 +862,13 @@ class SendUpdateLogService
                 $sendUpdatePaymentDetails['discount_value'] = $sendUpdateLog->discount;
             }
 
+            LoggerService::info('fn:updatePaymentDetails - Updating Payment Details - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid, extra: ['Payment Details' => json_encode($sendUpdatePaymentDetails)]);
             $payment->update($sendUpdatePaymentDetails);
 
-            info('Book Update - Payment Details Updated - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('Book Update - Payment Details Updated');
 
         } catch (\Exception $exception) {
-            logger()->error('Book Update - Error while updating details in Payment - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
+            logger()->warning('Book Update - Error while updating details in Payment - Exception: '.$exception->getMessage());
 
             return false;
         }
@@ -1073,6 +1073,7 @@ class SendUpdateLogService
             ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD ? 21 : 13)
         );
         $sageRequestPayload->quoteTypeId = $sendUpdateLog->quote_type_id;
+        $sageRequestPayload->quoteType = $sendUpdateRequest->quoteType;
         $sageRequestPayload->customer_id = $quoteDetails->customer_id;
         $commissionChargeIds = $preparedDetailsForEndorsement['splitPayments']->flatMap(function ($paymentSplit) {
             return $paymentSplit->paymentCharges()?->where('action_type', PaymentChargesEnum::ACTION_TYPE_CHARGE->value)
@@ -1143,7 +1144,9 @@ class SendUpdateLogService
             $sageProcessData['model_type'] = $quote::class;
             $sageProcessData['model_id'] = $quote->id;
             $response = $sageScheduleResponse = SageProcess::create($sageProcessData);
-            $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
+            if ($quote->status != SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
+                $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
+            }
             info('fn:updateSageProcessForDispatching - Sage process scheduled Successfully');
         }
 
@@ -1339,7 +1342,10 @@ class SendUpdateLogService
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             $lookupNoteKey = strtolower($quoteType).'-su-notes';
-            $notes = Lookup::where('key', $lookupNoteKey)->whereIn('code', json_decode($sendUpdateLog->notes, true))->get() ?? [];
+            $noteCodes = json_decode($sendUpdateLog?->notes, true) ?? [];
+            $notes = ! empty($noteCodes)
+                ? Lookup::where('key', $lookupNoteKey)->whereIn('code', $noteCodes)->get()
+                : [];
             if (! empty($notes)) {
                 $notes = implode(', ', $notes->pluck('description')->toArray());
             }
@@ -1503,7 +1509,6 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::DM,
                 SendUpdateLogStatusEnum::DOV,
                 SendUpdateLogStatusEnum::ACB,
-                SendUpdateLogStatusEnum::ATIB,
                 SendUpdateLogStatusEnum::DTSI,
                 SendUpdateLogStatusEnum::ATCRNB,
                 SendUpdateLogStatusEnum::ATCRNB_RBB,
