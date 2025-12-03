@@ -705,7 +705,7 @@ watch(
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SWIFT CODE</dt>
                 <dd>{{ claim.customer_bank_accounts?.swift_code || '-' }}</dd>
-              </div> 
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ formattedDateDmyWithTime(claim.created_at) }}</dd>
