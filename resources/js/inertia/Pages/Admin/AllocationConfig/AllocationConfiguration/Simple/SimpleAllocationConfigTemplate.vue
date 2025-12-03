@@ -1,0 +1,578 @@
+<script setup>
+import { nextTick, onMounted, ref, watch } from 'vue';
+import CollapseIcon from '../Savings/components/CollapseIcon.vue';
+
+const props = defineProps({
+  configuration: {
+    type: Object,
+    default: null,
+  },
+  advisorOptions: {
+    type: Array,
+    default: () => [],
+  },
+  teamOptions: {
+    type: Array,
+    default: () => [],
+  },
+  viewMode: {
+    type: Boolean,
+    default: false,
+  },
+  lobName: {
+    type: String,
+    required: true,
+  },
+});
+
+const emit = defineEmits(['data-update']);
+
+const brackets = ref([]);
+const validationErrors = ref({});
+const highlightedBracketIndex = ref(null);
+const highlightedProfileKey = ref('');
+const collapsedBrackets = ref(new Set());
+const collapsedProfiles = ref(new Set());
+const isModuleCollapsed = ref(false);
+const isInitialized = ref(false);
+
+const initializeData = () => {
+  if (props.configuration && props.configuration.brackets) {
+    brackets.value = JSON.parse(JSON.stringify(props.configuration.brackets));
+  } else {
+    brackets.value = [];
+  }
+
+  emitData();
+};
+
+const emitData = () => {
+  const data = {
+    brackets: brackets.value,
+  };
+  emit('data-update', data);
+};
+
+const validateAllBrackets = () => {
+  const errors = [];
+
+  if (brackets.value.length === 0) {
+    errors.push(
+      `${props.lobName}: At least one bracket with profiles is required`,
+    );
+    return errors;
+  }
+
+  brackets.value.forEach((bracket, bracketIndex) => {
+    // Validate min/max amounts
+    if (!bracket.min || !bracket.max) {
+      errors.push(
+        `${props.lobName} Bracket ${bracketIndex + 1}: Minimum and Maximum amounts are required`,
+      );
+    } else if (parseFloat(bracket.min) > parseFloat(bracket.max)) {
+      errors.push(
+        `${props.lobName} Bracket ${bracketIndex + 1}: Minimum amount cannot be greater than Maximum amount`,
+      );
+    }
+
+    if (!bracket.profiles || bracket.profiles.length === 0) {
+      errors.push(
+        `${props.lobName} Bracket ${bracketIndex + 1}: At least one advisor profile is required`,
+      );
+    } else {
+      bracket.profiles.forEach((profile, profileIndex) => {
+        if (!profile.advisorIds || profile.advisorIds.length === 0) {
+          errors.push(
+            `${props.lobName} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one advisor must be selected`,
+          );
+        }
+
+        if (!profile.teamIds || profile.teamIds.length === 0) {
+          errors.push(
+            `${props.lobName} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one team must be selected`,
+          );
+        }
+      });
+    }
+  });
+
+  return errors;
+};
+
+const validate = () => {
+  const errors = validateAllBrackets();
+  validationErrors.value = errors;
+  return {
+    isValid: errors.length === 0,
+    errors: errors,
+  };
+};
+
+const clearValidationErrors = () => {
+  validationErrors.value = {};
+};
+
+watch(
+  brackets,
+  () => {
+    if (Object.keys(validationErrors.value).length > 0) {
+      clearValidationErrors();
+    }
+    emitData();
+  },
+  { deep: true },
+);
+
+onMounted(() => {
+  initializeData();
+  setTimeout(() => {
+    isInitialized.value = true;
+  }, 100);
+});
+
+watch(
+  () => props.configuration,
+  newConfig => {
+    if (newConfig) {
+      initializeData();
+    }
+  },
+  { deep: true },
+);
+
+watch(
+  () => brackets.value.length,
+  (newLength, oldLength) => {
+    if (isInitialized.value && newLength > oldLength) {
+      const newBracketIndex = newLength - 1;
+      highlightedBracketIndex.value = newBracketIndex;
+
+      nextTick(() => {
+        const newBracketElement = document.querySelector(
+          `[data-bracket-index="bracket-${newBracketIndex}"]`,
+        );
+        if (newBracketElement) {
+          newBracketElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        }
+      });
+
+      setTimeout(() => {
+        highlightedBracketIndex.value = null;
+      }, 2000);
+    }
+  },
+);
+
+// Watch for profile additions within brackets
+watch(
+  () => brackets.value.map(bracket => bracket.profiles?.length || 0),
+  (newProfileCounts, oldProfileCounts) => {
+    if (!isInitialized.value) return;
+
+    newProfileCounts.forEach((newCount, bracketIndex) => {
+      const oldCount = oldProfileCounts?.[bracketIndex] || 0;
+      if (newCount > oldCount) {
+        const profileIndex = newCount - 1;
+        const profileKey = `${bracketIndex}-${profileIndex}`;
+        highlightedProfileKey.value = profileKey;
+
+        nextTick(() => {
+          const newProfileElement = document.querySelector(
+            `[data-profile-key="${profileKey}"]`,
+          );
+          if (newProfileElement) {
+            newProfileElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+          }
+        });
+
+        setTimeout(() => {
+          highlightedProfileKey.value = '';
+        }, 2000);
+      }
+    });
+  },
+  { deep: true },
+);
+
+const createEmptyBracket = () => ({
+  min: 0,
+  max: 0,
+  profiles: [],
+});
+
+const createEmptyProfile = () => ({
+  advisorIds: [],
+  teamIds: [],
+});
+
+const addBracket = () => {
+  brackets.value.push(createEmptyBracket());
+};
+
+const removeBracket = bracketIndex => {
+  brackets.value.splice(bracketIndex, 1);
+};
+
+const addProfile = bracket => {
+  bracket.profiles.push(createEmptyProfile());
+};
+
+const removeProfile = (bracket, profileIndex) => {
+  bracket.profiles.splice(profileIndex, 1);
+};
+
+const toggleBracket = bracketIndex => {
+  if (collapsedBrackets.value.has(bracketIndex)) {
+    collapsedBrackets.value.delete(bracketIndex);
+  } else {
+    collapsedBrackets.value.add(bracketIndex);
+  }
+};
+
+const toggleProfile = (bracketIndex, profileIndex) => {
+  const profileKey = `${bracketIndex}-${profileIndex}`;
+  if (collapsedProfiles.value.has(profileKey)) {
+    collapsedProfiles.value.delete(profileKey);
+  } else {
+    collapsedProfiles.value.add(profileKey);
+  }
+};
+
+const toggleModule = () => {
+  isModuleCollapsed.value = !isModuleCollapsed.value;
+};
+
+// Number formatting helpers
+const formatNumberInput = value => {
+  if (!value) return '';
+  const num = parseFloat(String(value).replace(/,/g, ''));
+  return isNaN(num) ? '' : num.toLocaleString('en-US');
+};
+
+const handleInput = (event, bracket, field) => {
+  const rawValue = event.target.value.replace(/,/g, '');
+  bracket[field] = rawValue;
+};
+
+const handleBlur = (event, bracket, field) => {
+  const rawValue = event.target.value.replace(/,/g, '');
+  const numValue = parseFloat(rawValue);
+  if (!isNaN(numValue)) {
+    bracket[field] = numValue;
+  }
+};
+
+defineExpose({
+  validate,
+  clearValidationErrors,
+});
+</script>
+
+<template>
+  <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+    <div class="p-6 bg-white border-b border-gray-200">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center space-x-2">
+          <CollapseIcon
+            :is-expanded="!isModuleCollapsed"
+            @click="toggleModule"
+          />
+          <h3 class="text-lg font-medium text-gray-900">
+            {{ lobName }} Allocation Configuration
+          </h3>
+        </div>
+        <x-tooltip v-if="!viewMode">
+          <x-button size="md" color="#ff5e00" type="button" @click="addBracket">
+            Create new bracket
+          </x-button>
+          <template #tooltip>
+            <span class="custom-tooltip-content">
+              Add a new bracket for {{ lobName }} allocation.
+            </span>
+          </template>
+        </x-tooltip>
+      </div>
+
+      <div v-show="!isModuleCollapsed">
+        <div
+          v-if="brackets.length === 0"
+          class="text-center py-8 text-gray-500"
+        >
+          No brackets configured. Click "Create new bracket" to get started.
+        </div>
+
+        <div v-else class="space-y-6">
+          <div
+            v-for="(bracket, bracketIndex) in brackets"
+            :key="`bracket-${bracketIndex}`"
+            :data-bracket-index="`bracket-${bracketIndex}`"
+            class="border border-gray-200 rounded-lg p-4 transition-all duration-500"
+            :class="{
+              'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
+                highlightedBracketIndex === bracketIndex,
+              'shadow-lg': highlightedBracketIndex === bracketIndex,
+            }"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-2">
+                <CollapseIcon
+                  :is-expanded="!collapsedBrackets.has(bracketIndex)"
+                  size="sm"
+                  @click="toggleBracket(bracketIndex)"
+                />
+                <h4 class="text-md font-medium text-gray-700">
+                  Bracket {{ bracketIndex + 1 }}
+                  <span
+                    v-if="highlightedBracketIndex === bracketIndex"
+                    class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
+                  >
+                    New!
+                  </span>
+                </h4>
+              </div>
+              <x-button
+                v-if="!viewMode"
+                size="sm"
+                color="error"
+                outlined
+                type="button"
+                @click="removeBracket(bracketIndex)"
+              >
+                <svg
+                  class="h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                  />
+                </svg>
+              </x-button>
+            </div>
+
+            <div
+              v-show="!collapsedBrackets.has(bracketIndex)"
+              class="space-y-4"
+            >
+              <!-- Amount Range -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <x-input
+                    :model-value="formatNumberInput(bracket.min)"
+                    class="!mb-0 mt-1"
+                    required
+                    :disabled="viewMode"
+                    @input="handleInput($event, bracket, 'min')"
+                    @blur="handleBlur($event, bracket, 'min')"
+                    label="Minimum Amount"
+                    tooltip="Set the minimum amount for this bracket."
+                  >
+                    <template #suffix>
+                      <div
+                        class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                      >
+                        <span>AED</span>
+                      </div>
+                    </template>
+                  </x-input>
+                </div>
+                <div>
+                  <x-input
+                    :model-value="formatNumberInput(bracket.max)"
+                    class="!mb-0 mt-1"
+                    required
+                    :disabled="viewMode"
+                    @input="handleInput($event, bracket, 'max')"
+                    @blur="handleBlur($event, bracket, 'max')"
+                    label="Maximum Amount"
+                    tooltip="Set the maximum amount for this bracket."
+                  >
+                    <template #suffix>
+                      <div
+                        class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                      >
+                        <span>AED</span>
+                      </div>
+                    </template>
+                  </x-input>
+                </div>
+              </div>
+
+              <!-- Advisor Allocation Profiles -->
+              <div class="border-t pt-4">
+                <div class="flex items-center justify-between mb-4">
+                  <h5 class="text-sm font-medium text-gray-700">
+                    Advisor Allocation Profiles
+                  </h5>
+                  <x-tooltip v-if="!viewMode">
+                    <x-button
+                      size="sm"
+                      color="#ff5e00"
+                      type="button"
+                      @click="addProfile(bracket)"
+                    >
+                      Add Profile
+                    </x-button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        Set who gets the lead for {{ lobName }} insurance.
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </div>
+
+                <div
+                  v-if="bracket.profiles.length === 0"
+                  class="text-center py-4 text-gray-400 text-sm"
+                >
+                  No advisor profiles configured for this bracket.
+                </div>
+
+                <div v-else class="space-y-4">
+                  <div
+                    v-for="(profile, profileIndex) in bracket.profiles"
+                    :key="`profile-${bracketIndex}-${profileIndex}`"
+                    :data-profile-key="`${bracketIndex}-${profileIndex}`"
+                    class="bg-gray-50 p-4 rounded-md transition-all duration-500"
+                    :class="{
+                      'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
+                        highlightedProfileKey ===
+                        `${bracketIndex}-${profileIndex}`,
+                      'shadow-lg':
+                        highlightedProfileKey ===
+                        `${bracketIndex}-${profileIndex}`,
+                    }"
+                  >
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="flex items-center space-x-2">
+                        <CollapseIcon
+                          :is-expanded="
+                            !collapsedProfiles.has(
+                              `${bracketIndex}-${profileIndex}`,
+                            )
+                          "
+                          size="sm"
+                          @click="toggleProfile(bracketIndex, profileIndex)"
+                        />
+                        <h6 class="text-sm font-medium text-gray-600">
+                          Profile {{ profileIndex + 1 }}
+                          <span
+                            v-if="
+                              highlightedProfileKey ===
+                              `${bracketIndex}-${profileIndex}`
+                            "
+                            class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
+                          >
+                            New!
+                          </span>
+                        </h6>
+                      </div>
+                      <button
+                        v-if="!viewMode"
+                        type="button"
+                        @click="removeProfile(bracket, profileIndex)"
+                        class="text-red-600 hover:text-red-800"
+                      >
+                        <svg
+                          class="h-4 w-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="1.5"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div
+                      v-show="
+                        !collapsedProfiles.has(
+                          `${bracketIndex}-${profileIndex}`,
+                        )
+                      "
+                      class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                    >
+                      <div>
+                        <x-select
+                          v-model="profile.advisorIds"
+                          :options="advisorOptions"
+                          placeholder="Select advisors..."
+                          multiple
+                          filterable
+                          :disabled="viewMode"
+                          class="w-full min-h-[40px]"
+                          label="Advisors"
+                          required
+                          tooltip="Select one or more advisors or managers eligible to receive leads in this profile."
+                        >
+                          <template
+                            #content-footer
+                            v-if="advisorOptions.length > 0 && !viewMode"
+                          >
+                            <ui-select-actions
+                              @select-all="
+                                profile.advisorIds = advisorOptions.map(
+                                  item => item.value,
+                                )
+                              "
+                              @clear="profile.advisorIds = []"
+                            />
+                          </template>
+                        </x-select>
+                      </div>
+                      <div>
+                        <x-select
+                          v-model="profile.teamIds"
+                          :options="teamOptions"
+                          placeholder="Select teams..."
+                          multiple
+                          filterable
+                          :disabled="viewMode"
+                          class="w-full min-h-[40px]"
+                          label="Teams"
+                          required
+                          tooltip="Select the teams this profile applies to."
+                        >
+                          <template
+                            #content-footer
+                            v-if="teamOptions.length > 0 && !viewMode"
+                          >
+                            <ui-select-actions
+                              @select-all="
+                                profile.teamIds = teamOptions.map(
+                                  item => item.value,
+                                )
+                              "
+                              @clear="profile.teamIds = []"
+                            />
+                          </template>
+                        </x-select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

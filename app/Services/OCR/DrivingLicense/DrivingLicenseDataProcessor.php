@@ -8,7 +8,9 @@ use App\Models\CarQuote;
 use App\Models\Nationality;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
+use App\Services\OCR\Validators\OCRDocumentValidator;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class DrivingLicenseDataProcessor
@@ -18,8 +20,9 @@ class DrivingLicenseDataProcessor
     private DrivingLicenseExtractor $drivingLicenseExtractor;
 
     public function __construct(
-        private CarQuote $quote,
+        private Model $quote,
         private object $data,
+        private string $documentTypeCode,
     ) {
         $this->drivingLicenseExtractor = new DrivingLicenseExtractor($this->data);
     }
@@ -45,6 +48,15 @@ class DrivingLicenseDataProcessor
                 $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote, $processedData['vehicle_driver_detail_fields']);
             }
 
+            // Trigger OCR success validation
+            $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
+                'quoteId' => $this->quote->id,
+                'quoteableType' => get_class($this->quote),
+            ]);
+
+            $isOCRSuccess = $ocrDocumentValidator->validateDLFields($this->documentTypeCode);
+            LoggerService::info('Driving License data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($processedData));
+
             DB::commit();
 
             LoggerService::info('Driving License data processing completed successfully');
@@ -60,7 +72,7 @@ class DrivingLicenseDataProcessor
         }
     }
 
-    private function updateVehicleDriverDetail(CarQuote $quote, array $fieldsToUpdate): bool
+    private function updateVehicleDriverDetail(Model $quote, array $fieldsToUpdate): bool
     {
         try {
             // Convert nationality string to nationality_id if nationality is provided
@@ -99,6 +111,8 @@ class DrivingLicenseDataProcessor
             } else {
                 LoggerService::info('VehicleDriverDetail created successfully');
             }
+
+            // Trigger OCR success validation
 
             return true;
 

@@ -55,7 +55,7 @@ class EpPurchaseFlowJob implements ShouldQueue
      */
     public function failed(Throwable $exception): void
     {
-        LoggerService::error("{$this->logPrefix} Failed after all retries", extra: [
+        LoggerService::info("{$this->logPrefix} Failed after all retries", extra: [
             ...$this->logExtra,
             'error' => $exception->getMessage(),
         ]);
