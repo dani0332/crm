@@ -17,7 +17,7 @@ use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -41,7 +41,7 @@ class SageProcessesService extends BaseService
      * Get failed sage processes with related quote/send_update and sage api logs
      *
      * @param  bool  $isExport  Whether this is for export
-     * @return LengthAwarePaginator|Collection|array
+     * @return Paginator|Collection|array
      */
     public function getFailedSageProcesses($request, bool $isExport = false)
     {
@@ -176,7 +176,7 @@ class SageProcessesService extends BaseService
      */
     protected function addCollectedSageReceiptIds($results): void
     {
-        $items = $results instanceof LengthAwarePaginator ? $results->items() : $results;
+        $items = $results instanceof Paginator ? $results->items() : $results;
 
         foreach ($items as $item) {
             $sageReceiptIds = [];
@@ -237,7 +237,7 @@ class SageProcessesService extends BaseService
      */
     protected function loadQuoteStatusEagerly($results): void
     {
-        $items = $results instanceof LengthAwarePaginator ? $results->items() : $results;
+        $items = $results instanceof Paginator ? $results->items() : $results;
 
         if (empty($items)) {
             return;
