@@ -52,7 +52,7 @@ class SageProcessesController extends Controller
             LoggerService::error('Error fetching failed Sage processes: '.$e->getMessage(), extra: [
                 'trace' => $e->getTraceAsString(),
             ]);
-
+            dd($e->getMessage());
             $response = [
                 'failedProcesses' => [],
                 'filters' => request()->all(),

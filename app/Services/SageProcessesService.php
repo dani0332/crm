@@ -54,7 +54,7 @@ class SageProcessesService extends BaseService
                 $query->whereIn('insurance_provider_id', $request->insurance_provider_id);
             })->when($request->quote_type_id, function ($query) use ($request) {
 
-                [$directModelClasses , $personalQuoteTypeIds] = $this->getDirectModelClassesAndPersonalQuoteTypeIds($request);
+                [$directModelClasses, $personalQuoteTypeIds] = $this->getDirectModelClassesAndPersonalQuoteTypeIds($request);
 
                 $query->where(function ($subQuery) use ($directModelClasses, $personalQuoteTypeIds) {
                     if (! empty($directModelClasses)) {
@@ -89,7 +89,9 @@ class SageProcessesService extends BaseService
                     $query->with([
                         'sageApiLogs' => function ($query) {
                             $query->where('status', SageEnum::STATUS_FAIL)
-                                ->select('id', 'section_type', 'section_id', 'sage_end_point', 'response', 'status', 'created_at');
+                                ->select('id', 'section_type', 'section_id', 'sage_end_point', 'response', 'status', 'created_at')
+                                ->orderBy('created_at', 'asc')
+                                ->limit(1);
                         },
                         'payments' => function ($query) {
                             $query->select('id', 'code', 'paymentable_type', 'paymentable_id', 'price_vat_applicable', 'price_vat',
@@ -97,9 +99,7 @@ class SageProcessesService extends BaseService
                                 'commission', 'captured_at', 'invoice_description', 'insurer_tax_number', 'insurer_commmission_invoice_number',
                                 'payment_status_id', 'send_update_log_id')
                                 ->with([
-                                    'paymentSplits' => function ($query) {
-                                        $query->select('id', 'code', 'sage_reciept_id');
-                                    },
+                                    'paymentSplits:id,code,sage_reciept_id',
                                     'paymentStatus:id,text',
                                 ]);
                         },
@@ -125,8 +125,8 @@ class SageProcessesService extends BaseService
             $results = $query->simplePaginate(10);
         }
 
-        // Load quoteStatus relation conditionally for models that have it
-        $this->loadQuoteStatusConditionally($results);
+        // Load quoteStatus relation efficiently in batches by model type
+        $this->loadQuoteStatusEagerly($results);
 
         // Add collected sage receipt IDs from payment splits
         $this->addCollectedSageReceiptIds($results);
@@ -170,6 +170,7 @@ class SageProcessesService extends BaseService
 
     /**
      * Add collected sage receipt IDs from payment splits to each process
+     * Optimized to use collection methods instead of nested loops
      *
      * @param  mixed  $results
      */
@@ -181,15 +182,14 @@ class SageProcessesService extends BaseService
             $sageReceiptIds = [];
 
             if ($item->model && $item->model->payments) {
-                foreach ($item->model->payments as $payment) {
-                    if ($payment->paymentSplits) {
-                        foreach ($payment->paymentSplits as $split) {
-                            if (! empty($split->sage_reciept_id)) {
-                                $sageReceiptIds[] = $split->sage_reciept_id;
-                            }
-                        }
-                    }
-                }
+                // Use collection methods to flatten and filter in one pass
+                $sageReceiptIds = $item->model->payments
+                    ->pluck('paymentSplits')
+                    ->flatten()
+                    ->pluck('sage_reciept_id')
+                    ->filter()
+                    ->values()
+                    ->toArray();
             }
 
             // Add as a formatted string (comma-separated) and as an array
@@ -197,55 +197,76 @@ class SageProcessesService extends BaseService
             $item->collected_sage_receipt_ids_array = $sageReceiptIds;
 
             // Add IMCRM error message extracted from sage API log response
-            $item->imcrm_error = $this->extractImcrmError($item);
+            $item->imcrm_error = $this->extractSageApiError($item);
         }
     }
 
     /**
      * Extract the IMCRM error message from the Sage API log response
      * This extracts the error.message.value from the JSON response
+     * Optimized to use null-safe operators and cleaner logic
      *
      * @param  mixed  $item
      */
-    protected function extractImcrmError($item): ?string
+    protected function extractSageApiError($item): ?string
     {
-        if ($item->model && $item->model->sageApiLogs && $item->model->sageApiLogs->isNotEmpty()) {
-            $firstFailedLog = $item->model->sageApiLogs->first();
-            if ($firstFailedLog && $firstFailedLog->response) {
-                try {
-                    $responseData = json_decode($firstFailedLog->response, true);
+        $firstFailedLog = $item->model?->sageApiLogs?->first();
 
-                    return $responseData['error']['message']['value'] ?? null;
-                } catch (\Exception $e) {
-                    LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not parse sage API response: '.$e->getMessage());
-
-                    return null;
-                }
-            }
+        if (! $firstFailedLog?->response) {
+            return null;
         }
 
-        return null;
+        try {
+            $responseData = json_decode($firstFailedLog->response, true);
+
+            return $responseData['error']['message']['value'] ?? null;
+        } catch (\Exception $e) {
+            LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not parse sage API response: '.$e->getMessage(), extra: [
+                'sage_api_log_id' => $firstFailedLog->id ?? null,
+            ]);
+
+            return null;
+        }
     }
 
     /**
-     * Load quoteStatus relation conditionally for models that have it
-     * This is done after fetching results because we need to check the actual polymorphic model type
+     * Load quoteStatus relation efficiently by grouping models by type
+     * This avoids N+1 queries by loading relationships in batches
      *
      * @param  mixed  $results
      */
-    protected function loadQuoteStatusConditionally($results): void
+    protected function loadQuoteStatusEagerly($results): void
     {
         $items = $results instanceof LengthAwarePaginator ? $results->items() : $results;
 
-        foreach ($items as $item) {
-            if ($item->model) {
-                // Check if the actual polymorphic model has quote_status_id column
-                if (Schema::hasColumn($item->model->getTable(), 'quote_status_id')) {
-                    try {
-                        $item->model->load('quoteStatus:id,text');
-                    } catch (\Exception $e) {
-                        LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not load quoteStatus for model: '.get_class($item->model));
-                    }
+        if (empty($items)) {
+            return;
+        }
+
+        // Group models by their class type to check schema once per type
+        [$modelsByType , $typesWithQuoteStatus] = $this->getModelsByTypeAndTypesWithQuoteStatus($items);
+
+        // Load quoteStatus for each model type in batch
+        foreach ($modelsByType as $modelClass => $models) {
+            if (isset($typesWithQuoteStatus[$modelClass]) && ! empty($models)) {
+                try {
+                    // Create a collection and load the relation in one query
+                    $modelCollection = collect($models);
+                    $modelIds = $modelCollection->pluck('id')->toArray();
+
+                    // Load all quoteStatus records in one query
+                    $modelClass::with('quoteStatus:id,text')->whereIn('id', $modelIds)->get()
+                        ->each(function ($loadedModel) use ($modelCollection) {
+                            $originalModel = $modelCollection->firstWhere('id', $loadedModel->id);
+                            if ($originalModel && isset($loadedModel->quoteStatus)) {
+                                $originalModel->setRelation('quoteStatus', $loadedModel->quoteStatus);
+                            }
+                        });
+                        
+                } catch (\Exception $e) {
+                    LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not load quoteStatus for model type: '.$modelClass, extra: [
+                        'error' => $e->getMessage(),
+                    ]);
                 }
             }
         }
@@ -274,6 +295,33 @@ class SageProcessesService extends BaseService
         }
 
         return [$directModelClasses, $personalQuoteTypeIds];
+    }
+
+    private function getModelsByTypeAndTypesWithQuoteStatus($items)
+    {
+        $modelsByType = [];
+        $typesWithQuoteStatus = [];
+
+        foreach ($items as $item) {
+            if ($item->model) {
+                $modelClass = get_class($item->model);
+
+                if (! isset($modelsByType[$modelClass])) {
+                    $modelsByType[$modelClass] = [];
+
+                    // Check schema only once per model type
+                    if (Schema::hasColumn($item->model->getTable(), 'quote_status_id')) {
+                        $typesWithQuoteStatus[$modelClass] = true;
+                    }
+                }
+
+                if (isset($typesWithQuoteStatus[$modelClass])) {
+                    $modelsByType[$modelClass][] = $item->model;
+                }
+            }
+        }
+
+        return [$modelsByType, $typesWithQuoteStatus];
     }
 
 }
