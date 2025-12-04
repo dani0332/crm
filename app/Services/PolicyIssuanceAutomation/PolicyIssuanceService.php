@@ -22,6 +22,7 @@ use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Cyber\AwniInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -45,6 +46,10 @@ class PolicyIssuanceService
                 InsuranceProvidersEnum::RSA => new LivaInsuranceService,
                 InsuranceProvidersEnum::AXA => new GIGInsuranceService,
 
+                default => null,
+            },
+            QuoteTypes::CYBER->value => match ($insurerCode) {
+                InsuranceProvidersEnum::AWNI => app(AwniInsuranceService::class),
                 default => null,
             },
             default => null,
@@ -345,14 +350,14 @@ class PolicyIssuanceService
         if ($quoteType === QuoteTypes::CAR->value) {
             $statusAPIFailed = $this->getInsurerAPIStatuses($newInsurerApiStatus);
         }
-        $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
-        $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus);
+        $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus, $quoteType);
+        $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus, $quoteType);
         $this->allocateLead($quoteType, $quote, $isInsurerApiStatusAlreadyFailed, $statusAPIFailed, $processInvolved);
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
     }
 
-    private function updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus)
+    private function updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus, $quoteType)
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote Insurer API  Status : '.$newInsurerApiStatus);
         if ($newInsurerApiStatus) {
@@ -360,7 +365,7 @@ class PolicyIssuanceService
         }
     }
 
-    private function updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus)
+    private function updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus, $quoteType)
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote API Issuance Status : '.$newApiIssuanceStatus);
         if ($newApiIssuanceStatus) {

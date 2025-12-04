@@ -1628,7 +1628,7 @@ const copyLink = () => {
       :advisors="advisors"
       :quote-type="quoteType"
       :expanded="sectionExpanded"
-    />
+    />    
 
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />
 
@@ -1643,6 +1643,13 @@ const copyLink = () => {
       v-if="can(permissionsEnum.API_LOG_VIEW)"
       :type="modelClass"
       :id="$page.props.quote.id"
+    />
+
+    <PolicyIssuanceApiLogs
+      :type="modelClass"
+      :quoteTypeId="$page.props.quoteTypeId"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
     />
 
     <OcrLogs

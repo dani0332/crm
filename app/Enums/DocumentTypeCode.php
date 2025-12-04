@@ -96,6 +96,17 @@ class DocumentTypeCode extends Enum
     const POLICY_CERTIFICATE = 'CPC';
     const POLICY_SCHEDULE = 'CPS';
 
+    // CYBER document types
+    const CYBER_EMIRATES_ID = 'EID_CYB';
+    const CYBER_KYC_DOCUMENT = 'KYC_CYB';
+    const CYBER_POLICY_CERTIFICATE = 'PC_CYB';
+    const CYBER_POLICY_SCHEDULE = 'PS_CYB';
+    const CYBER_TAX_INVOICE = 'TI_CYB';
+    const CYBER_TAX_INVOICE_RAISED_BY_BUYER = 'TIRBB_CYB';
+    const CYBER_RECEIPT = 'CYPDR';
+    const CYBER_PAYMENT_PROOF = 'CPD';
+    const CYBER_DISCOUNT_PROOF = 'CYDPDR';
+
     // BAL
     const BAL = 'BAL';
     const BAL_BIKE = 'BAL_BIKE';

@@ -234,4 +234,8 @@ final class WatermarkDocTypesEnum extends Enum
     const GL_PET = 'GL_PET';
     const GL_TRVL = 'GL_TRVL';
     const GL_YTCH = 'GL_YTCH';
+    const CYBER_TAX_INVOICE_RAISED_BY_BUYER = 'TIRBB_CYB';
+    const CYBER_TAX_INVOICE = 'TI_CYB';
+    const CYBER_POLICY_SCHEDULE = 'PS_CYB';
+
 }

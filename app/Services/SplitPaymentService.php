@@ -1510,12 +1510,19 @@ class SplitPaymentService
         $isAlncOrAxa = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA]);
         LoggerService::info("Split payment Code: {$paymentCode} isAlncOrAxa: ".($isAlncOrAxa ? 'true' : 'false'));
 
+        // check if cyber quote
+        $isCyberQuote = $modelType == QuoteTypes::CYBER->value;
+        $isAwni = $insuranceProvider == InsuranceProvidersEnum::AWNI;
+        LoggerService::info("Split payment Code: {$paymentCode} isCyberQuote: ".($isCyberQuote ? 'true' : 'false'));
+
         // Only process if payment is not approved and:
         // - not from job, or
         // - from job AND is Travel/Car AND provider is ALNC/AXA
+        // - from job AND is Cyber AND provider is AWNI
         $shouldProcess = $paymentNotApproved && (
             ! $isFromJob ||
-            ($isTravelOrCarQuote && $isAlncOrAxa)
+            ($isTravelOrCarQuote && $isAlncOrAxa) ||
+            ($isCyberQuote && $isAwni)
         );
 
         LoggerService::info("Split payment Code: {$paymentCode} shouldProcess: ".($shouldProcess ? 'true' : 'false'));

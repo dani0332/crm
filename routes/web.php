@@ -3,6 +3,8 @@
 use App\Enums\EnvEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
+use App\Enums\RolesEnum;
 use App\Http\Controllers\AccuracyMatrixController;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
@@ -90,6 +92,7 @@ use App\Http\Controllers\V2\LegacyPolicyController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
+use App\Http\Controllers\V2\PolicyIssuanceController;
 use App\Http\Controllers\V2\QuoteSyncController;
 use App\Http\Controllers\V2\SavingsQuoteController;
 use App\Http\Controllers\V2\SearchController;
@@ -98,7 +101,9 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Jobs\PolicyIssuanceJob;
 use App\Models\BorLog;
+use App\Models\PolicyIssuance;
 use App\Models\CcPaymentProcess;
 use App\Services\AddBatchForNonMotors;
 use App\Services\Bor\BorPdfService;
@@ -993,6 +998,28 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         $pdfData = $borPdfService->preparePdfData($borLog, $borLog->personalQuote, true);
 
         return view('pdf.bor-document', $pdfData);
+    });
+
+    Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('check_route_access');
+
+    Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance']);
+
+
+    // Cyber Quote Policy Automation Routes for testing purposes
+    // this route is only for testing purposes to trigger the policy issuance automation
+    Route::get('/trigger-policy-document-update', function () { 
+
+        // without plan id and payments
+        // $policyIssuanceProcess = PolicyIssuance::where('id', 1682)->first();
+        // with plan id and payments
+        $policyIssuanceProcess = PolicyIssuance::where('id', 1886)->first();
+
+        $policyIssuanceProcess->status = PolicyIssuanceEnum::PENDING_STATUS;
+        $policyIssuanceProcess->completed_step = null;
+        $policyIssuanceProcess->save();
+
+        PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation'); // ✅ Pass only the ID
+        echo 'Done';
     });
 });
 

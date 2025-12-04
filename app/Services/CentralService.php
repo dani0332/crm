@@ -1556,6 +1556,8 @@ class CentralService extends BaseService
 
     private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $workflowType = null, $existingEmailData = null): void
     {
+        $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
+
         $emailData->advisorEmail = $quote->advisor->email ?? '';
         $emailData->customerName = $quote->first_name.' '.$quote->last_name;
         $emailData->advisorLandLine = $quote->advisor->landline_no ?? '';
@@ -1584,7 +1586,7 @@ class CentralService extends BaseService
         $emailData->insuredName = $quote?->latestInsured?->first_name ? strtoupper($quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name) : '-';
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
-            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
+            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Cyber])) {
             $emailData->quoteUID = $quote->uuid;
             $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
@@ -1650,7 +1652,16 @@ class CentralService extends BaseService
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
 
-        $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
+        if ($quoteTypeId == QuoteTypeId::Cyber) {
+            $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) ? (string) $quote->cyberPlanDetail->coverage : '-';
+            $emailData->planName = $quote?->cyberPlanDetail?->planName ?? '-';
+            $emailData->providerName = $quote?->cyberPlanDetail?->providerName ?? '-';
+            $emailData->policyWording = ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL') . $quote?->cyberPolicyWording?->link : '';
+            $emailData->taxInvoice = $quoteDocuments->filter(function ($document) {
+                return $document['document_type_code'] == DocumentTypeCode::CYBER_TAX_INVOICE;
+            })->first()?->watermarkedDocumentUrl ?? '';;
+        }
+
         if (
             $quoteTypeId != QuoteTypeId::Business ||
             (
@@ -1776,7 +1787,7 @@ class CentralService extends BaseService
                 return in_array($document['document_type_code'], [
                     DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS,
                     DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY,
-                    DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS,
+                    DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYBER_POLICY_SCHEDULE,
                 ]);
             })->first()?->doc_url ?? '';
 

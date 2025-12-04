@@ -181,6 +181,13 @@ return [
     'GIG_API_AUTH_CLIENT_ID' => env('GIG_API_AUTH_CLIENT_ID'),
     'GIG_API_AUTH_CLIENT_SECRET' => env('GIG_API_AUTH_CLIENT_SECRET'),
 
+
+    // AWNI Policy ISsuance API Credentials
+    'AWNIC_API_BASE_URL' => env('AWNIC_API_BASE_URL'),
+    'AWNIC_API_PARTNER_ID' => env('AWNIC_API_PARTNER_ID'),
+    'AWNIC_API_SECRET_KEY' => env('AWNIC_API_SECRET_KEY'),
+    'AWNIC_API_BROKER_NO' => env('AWNIC_API_BROKER_NO'),
+
     'LIFE_EMAIL_DATA_SOURCE' => env('LIFE_EMAIL_DATA_SOURCE', 'Life-Insurance-UAT'),
 
     /* HRM API */
