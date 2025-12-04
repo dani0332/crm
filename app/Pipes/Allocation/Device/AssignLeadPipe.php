@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Pipes\Allocation\Cyber;
+namespace App\Pipes\Allocation\Device;
 
 use App\Models\PersonalQuoteDetail;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;

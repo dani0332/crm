@@ -20,7 +20,8 @@ class AllocationRequest
         protected bool $isReassignmentJob = false,
         protected $assignmentType = AssignmentTypeEnum::SYSTEM_ASSIGNED,
         protected $evaluateTierOnly = false,
-        protected $reAssigFromAdvisorId = null
+        protected $reAssigFromAdvisorId = null,
+        protected bool $assignToHappinessUser = false
     ) {
         $this->collection = new Collection;
 
@@ -107,5 +108,15 @@ class AllocationRequest
         if ($this->isBuyLead() && $this->getBuyLeadRequest()) {
             $this->getBuyLeadRequest()->completeProcessing();
         }
+    }
+
+    public function setAssignToHappinessUser(bool $value = true)
+    {
+        $this->assignToHappinessUser = $value;
+    }
+
+    public function shouldAssignToHappinessUser()
+    {
+        return $this->assignToHappinessUser;
     }
 }
