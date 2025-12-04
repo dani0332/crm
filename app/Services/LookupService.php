@@ -17,6 +17,7 @@ use App\Models\LostReasons;
 use App\Models\MemberCategory;
 use App\Models\Nationality;
 use App\Models\PaymentMethod;
+use App\Models\PaymentStatus;
 use App\Models\QuoteStatus;
 use App\Models\SalaryBand;
 use App\Models\Tier;
@@ -25,7 +26,6 @@ use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use App\Services\Cache\CacheManager;
 use Illuminate\Support\Facades\Cache;
-use App\Models\PaymentStatus;
 
 class LookupService extends BaseService
 {

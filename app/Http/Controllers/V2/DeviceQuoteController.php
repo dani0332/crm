@@ -9,8 +9,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DeviceQuoteRequest;
 use App\Models\InsuranceProviderPlan;
 use App\Services\AMLService;
-use App\Services\Quotes\DeviceQuoteService;
 use App\Services\LookupService;
+use App\Services\Quotes\DeviceQuoteService;
 
 class DeviceQuoteController extends Controller
 {
