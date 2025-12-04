@@ -72,6 +72,7 @@ class AwnicValidationService
     public function validateRequiredData($quote): array
     {
         $customer = $quote->customer ?? null;
+        $nationality = $quote->nationality ?? null;
         
         $missing = [];
 
@@ -83,11 +84,17 @@ class AwnicValidationService
             $missing[] = 'cyber plan detail';
         }
 
+        $nationality == null && $missing[] = 'nationality';
+
         // Only check emirates id if customer exists (not null)
         if ($customer === null) {
             $missing[] = 'customer';
         } elseif (empty($customer->emirates_id_number)) {
             $missing[] = 'emirates id number';
+        }else {
+            $customer->dob !== null && $missing[] = 'dob';
+            // TODO: Add emirate of registration id validation over here
+            $customer->company_address !== null && $missing[] = 'address';
         }
 
         if (!empty($missing)) {

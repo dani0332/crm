@@ -49,25 +49,25 @@ class AwnicApiService
         $headers = $this->requestBuilder->buildIssuePolicyHeaders();
 
         $httpResponse = Awnic::post($endPoint, $payload, $headers);
-        $issuePolicy = $this->responseHandler->parseHttpResponse($httpResponse, AwnicEnum::RESPONSE_POLICY);
+        $issuePolicyResponse = $this->responseHandler->parseHttpResponse($httpResponse, AwnicEnum::RESPONSE_POLICY);
         
-        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $issuePolicy, Awnic::getBaseUrl() . $endPoint, AwnicEnum::STEP_ISSUE_POLICY, $issuePolicy['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, Awnic::getBaseUrl() . $endPoint, AwnicEnum::STEP_ISSUE_POLICY, $issuePolicyResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
-        if (! $issuePolicy['status']) {
+        if (! $issuePolicyResponse['status']) {
             LoggerService::error('API call failed', extra: [
                 'endpoint' => $endPoint,
-                'error' => $issuePolicy['error'] ?? AwnicEnum::UNKNOWN_ERROR,
-                'message' => $issuePolicy['message'] ?? null,
+                'error' => $issuePolicyResponse['error'] ?? AwnicEnum::UNKNOWN_ERROR,
+                'message' => $issuePolicyResponse['message'] ?? null,
             ]);
 
-            $response['error'] = $issuePolicy['error'];
-            $response['message'] = $issuePolicy['message'];
+            $response['error'] = $issuePolicyResponse['error'];
+            $response['message'] = $issuePolicyResponse['message'];
             $response['status'] = false;
 
             return $response;
         }
 
-        $issuePolicyResult = $issuePolicy['data'];
+        $issuePolicyResult = $issuePolicyResponse['data'];
         LoggerService::info('API call successful, updating quote and payment', extra: [
             'policy_number' => $issuePolicyResult?->policyInfo?->policyNo,
             'policy_start_date' => $issuePolicyResult?->policyInfo?->policyStartDate,
