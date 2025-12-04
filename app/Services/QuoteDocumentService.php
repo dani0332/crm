@@ -881,7 +881,7 @@ class QuoteDocumentService extends BaseService
         return true;
     }
 
-    public function getDocumentUrl($filePath, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
+    public function getDocumentUrl($filePath, $storageDisk = 'azureIM', $expiryTimeInMinutes = 5)
     {
         $expiryTime = now()->addMinutes($expiryTimeInMinutes);
 
