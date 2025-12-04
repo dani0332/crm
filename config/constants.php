@@ -183,9 +183,10 @@ return [
 
 
     // AWNI Policy ISsuance API Credentials
-    'AWNI_API_BASE_URL' => env('AWNI_API_BASE_URL'),
-    'AWNI_API_PARTNER_ID' => env('AWNI_API_PARTNER_ID'),
-    'AWNI_API_SECRET_KEY' => env('AWNI_API_SECRET_KEY'),
+    'AWNIC_API_BASE_URL' => env('AWNIC_API_BASE_URL'),
+    'AWNIC_API_PARTNER_ID' => env('AWNIC_API_PARTNER_ID'),
+    'AWNIC_API_SECRET_KEY' => env('AWNIC_API_SECRET_KEY'),
+    'AWNIC_API_BROKER_NO' => env('AWNIC_API_BROKER_NO'),
 
     'LIFE_EMAIL_DATA_SOURCE' => env('LIFE_EMAIL_DATA_SOURCE', 'Life-Insurance-UAT'),
 
