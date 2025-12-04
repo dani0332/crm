@@ -478,7 +478,7 @@ class QuoteDocumentController extends Controller
             default => null,
         };
     }
-    
+
     public function getTempUrl(Request $request)
     {
         $tempUrl = $this->quoteDocumentService->getDocumentUrl($request->filePath);
