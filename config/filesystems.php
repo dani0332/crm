@@ -86,11 +86,11 @@ return [
             'url' => env('AZURE_IM_STORAGE_URL'),
             'prefix' => null,
         ],
-        'azureHandBook' => [
+        'azureIMPrivate' => [
             'driver' => 'azure-storage-blob',
-            'connection_string' => 'DefaultEndpointsProtocol=https;AccountName='.env('AZURE_IM_STORAGE_NAME').';AccountKey='.env('AZURE_IM_STORAGE_KEY').';EndpointSuffix=core.windows.net',
-            'container' => env('AZURE_IM_POLICY_WORDING_CONTAINER'),
-            'url' => env('AZURE_IM_STORAGE_URL'),
+            'connection_string' => 'DefaultEndpointsProtocol=https;AccountName='.env('AZURE_IM_STORAGE_PRIVATE_NAME').';AccountKey='.env('AZURE_IM_STORAGE_PRIVATE_KEY').';EndpointSuffix=core.windows.net',
+            'container' => env('AZURE_IM_STORAGE_PRIVATE_CONTAINER'),
+            'url' => env('AZURE_IM_STORAGE_PRIVATE_URL'),
             'prefix' => null,
         ],
         'instantchat' => [

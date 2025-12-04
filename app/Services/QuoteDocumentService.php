@@ -196,7 +196,7 @@ class QuoteDocumentService extends BaseService
 
                 // Set the filename for Azure storage
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                Storage::disk('azureIM')->put($filePathAzure, base64_decode($file_data));
+                Storage::disk('azureIMPrivate')->put($filePathAzure, base64_decode($file_data));
             } elseif ($isPaymentReceipt) {
                 $originalName = 'Receipt-'.$data['pdf_filename'].'.pdf';
 
@@ -207,7 +207,7 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
                     return false;
                 }
@@ -225,7 +225,7 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
                     return false;
                 }
@@ -239,7 +239,7 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
                 $filePathAzure = 'documents/homeSAL/'.$fileNameAzure;
-                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
                     return false;
                 }
@@ -253,7 +253,7 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
                     return false;
                 }
@@ -266,7 +266,7 @@ class QuoteDocumentService extends BaseService
 
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_original_'.$docName;
-                $filePathAzure = $fileOrBase64->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+                $filePathAzure = $fileOrBase64->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIMPrivate');
             }
 
             // Generate a unique UUID
@@ -832,7 +832,7 @@ class QuoteDocumentService extends BaseService
         // Set the filename for Azure storage
         $watermarkedFileNameAzure = uniqid().'_'.$uuid.'_'.$docName;
         // upload file to azure
-        $filePathAzure = Storage::disk('azureIM')->putFileAs('documents/'.$documentType->folder_path, $watermarkedFile, $watermarkedFileNameAzure);
+        $filePathAzure = Storage::disk('azureIMPrivate')->putFileAs('documents/'.$documentType->folder_path, $watermarkedFile, $watermarkedFileNameAzure);
 
         // delete temp file
         if (file_exists(storage_path('temp/'.$docName))) {
@@ -881,7 +881,7 @@ class QuoteDocumentService extends BaseService
         return true;
     }
 
-    public function getDocumentUrl($filePath, $storageDisk = 'azureIM', $expiryTimeInMinutes = 5)
+    public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5)
     {
         $expiryTime = now()->addMinutes($expiryTimeInMinutes);
 
