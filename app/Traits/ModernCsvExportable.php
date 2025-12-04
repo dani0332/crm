@@ -19,23 +19,22 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 trait ModernCsvExportable
 {
     /**
-     * Download CSV file directly
+     * Download CSV file directly using memory-efficient chunked streaming
      */
     public function download(string $fileName): StreamedResponse
     {
         $fileName = $fileName.'-'.Carbon::now()->format('Y-m-d');
 
-        return new StreamedResponse(function () {
+        // Capture request parameters BEFORE entering the streaming callback
+        // This ensures all filter/query data is preserved for chunked processing
+        $requestParams = request()->all();
+
+        return new StreamedResponse(function () use ($requestParams) {
             $downloadStart = microtime(true);
             $handle = fopen('php://output', 'w');
             fputcsv($handle, $this->headings());
 
-            $data = $this->collection([]);
-            $rowsWritten = 0;
-            foreach ($data as $record) {
-                fputcsv($handle, $this->map($record));
-                $rowsWritten++;
-            }
+            $rowsWritten = $this->writeChunkedDataToStream($handle, $requestParams);
 
             if (method_exists($this, 'postDataRows')) {
                 $this->postDataRows($handle);
@@ -52,6 +51,72 @@ trait ModernCsvExportable
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="'.$fileName.'.csv"',
         ]);
+    }
+
+    /**
+     * Write data to stream using memory-efficient chunking
+     * Prioritizes chunked query processing over loading all data into memory
+     */
+    private function writeChunkedDataToStream($stream, array $requestParams): int
+    {
+        $totalRecords = 0;
+        $chunkSize = 1000;
+        $flushInterval = 5000;
+
+        // Try to use query builder for chunked processing (memory efficient)
+        $query = $this->getQuery($requestParams);
+
+        if ($query) {
+            LoggerService::info('Using chunked query processing for CSV download', extra: [
+                'export_class' => static::class,
+            ]);
+
+            // Check if exporter has custom chunked processing (e.g., InstantChat exports with MongoDB)
+            if (method_exists($this, 'processChunkedQuery')) {
+                LoggerService::info('Using custom processChunkedQuery for export');
+                $totalRecords = $this->processChunkedQuery($query, $requestParams, $stream);
+            } else {
+                // Default chunked processing for standard exports
+                $query->chunk($chunkSize, function ($records) use ($stream, &$totalRecords, $flushInterval) {
+                    foreach ($records as $record) {
+                        fputcsv($stream, $this->map($record));
+                        $totalRecords++;
+                    }
+
+                    // Flush to output and manage memory periodically
+                    if ($totalRecords % $flushInterval === 0) {
+                        ob_flush();
+                        flush();
+                        gc_collect_cycles();
+                    }
+                });
+            }
+        } else {
+            // Fallback to collection method (loads all data - use only for small datasets)
+            LoggerService::info('Using collection method for CSV download (fallback)', extra: [
+                'export_class' => static::class,
+            ]);
+
+            $data = $this->collection($requestParams);
+
+            foreach ($data as $record) {
+                fputcsv($stream, $this->map($record));
+                $totalRecords++;
+
+                // Flush periodically for large collections
+                if ($totalRecords % $flushInterval === 0) {
+                    ob_flush();
+                    flush();
+                    gc_collect_cycles();
+                }
+            }
+        }
+
+        // Final flush
+        ob_flush();
+        flush();
+
+        return $totalRecords;
     }
 
     /**
