@@ -18,7 +18,7 @@ class COU extends EmbeddedProduct
             'quoteRequest.quoteStatus',
             'quoteRequest.advisor',
             'quoteRequest.quoteRequestEntityMapping',
-            'paymentStatus'
+            'paymentStatus',
         ];
     }
 

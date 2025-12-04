@@ -4,10 +4,9 @@ namespace App\Strategies\EmbeddedProducts;
 
 use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\SageEmbeddedProductEnum;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -102,8 +101,6 @@ class EmbeddedProduct
                 $emiratesIdNumber = ($customerInsured?->insured?->id_number ?? $customer?->emirates_id_number) ?? '';
             }
 
-
-
             $item->id = $item->id;
             $item->ref_id = $item->code;
             $item->payment_date = isset($item->captured_at) ? Carbon::parse($item->captured_at)->format($dateFormat) : '';
@@ -190,8 +187,8 @@ class EmbeddedProduct
                     ->where('payments.paymentable_type', '=', 'App\\Models\\EmbeddedTransaction');
             })
             ->where('embedded_transactions.is_selected', true)
-            ->when(!empty($filters['ep_payment_status'] ?? null), function ($query) use ($filters) {
-                $query->whereIn('embedded_transactions.payment_status_id', (array)$filters['ep_payment_status']);
+            ->when(! empty($filters['ep_payment_status'] ?? null), function ($query) use ($filters) {
+                $query->whereIn('embedded_transactions.payment_status_id', (array) $filters['ep_payment_status']);
             })
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
