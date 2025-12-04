@@ -84,7 +84,9 @@ class AwnicValidationService
         }
 
         // Only check emirates id if customer exists (not null)
-        if ($customer !== null && empty($customer->emirates_id_number)) {
+        if ($customer === null) {
+            $missing[] = 'customer';
+        } elseif (empty($customer->emirates_id_number)) {
             $missing[] = 'emirates id number';
         }
 
