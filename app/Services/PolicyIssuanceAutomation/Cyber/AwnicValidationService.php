@@ -79,7 +79,7 @@ class AwnicValidationService
     {
         $customer = $quote->customer ?? null;
         $nationality = $quote->nationality ?? null;
-        $emirateOfRegistration = $quote->cyberQuote->emirateOfRegistration ?? null;
+        $emirateOfRegistration = $quote?->cyberQuote?->emirateOfRegistration ?? null;
         
         $missing = [];
 
