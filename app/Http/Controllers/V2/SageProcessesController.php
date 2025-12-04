@@ -7,9 +7,9 @@ namespace App\Http\Controllers\V2;
 use App\Enums\PermissionsEnum;
 use App\Exports\SageProcessesExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SageProcessesFilterRequest;
 use App\Services\Logger\LoggerService;
 use App\Services\SageProcessesService;
-use Illuminate\Http\Request;
 
 /**
  * Controller for managing failed sage processes
@@ -34,11 +34,13 @@ class SageProcessesController extends Controller
     /**
      * Display a listing of failed sage processes
      */
-    public function index(Request $request): \Inertia\Response|\Inertia\ResponseFactory
+    public function index(SageProcessesFilterRequest $request): \Inertia\Response|\Inertia\ResponseFactory
     {
+
+        $dropdownData = $this->sageProcessesService->dropdownData();
+
         try {
-            $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request);
-            $dropdownData = $this->sageProcessesService->dropdownData();
+            $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request->safe());
 
             $response = [
                 'failedProcesses' => $failedProcesses,
@@ -53,26 +55,23 @@ class SageProcessesController extends Controller
 
             $response = [
                 'failedProcesses' => [],
-                'insuranceProviders' => [],
-                'quoteTypes' => [],
-                'users' => [],
                 'filters' => request()->all(),
+                'dropdowns' => $dropdownData,
                 'error' => 'Failed to fetch data. Please try again.',
-                'exception' => $e->getMessage(),
             ];
         }
 
         return inertia('SageProcesses/Index', $response);
     }
 
-    public function export(Request $request)
+    public function export(SageProcessesFilterRequest $request)
     {
         try {
             // Get failed sage processes with applied filters
-            $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request, true);
+            $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request->safe(), true);
 
             // Check if there's any data to export
-            if (empty($failedProcesses) || (is_countable($failedProcesses) && count($failedProcesses) === 0)) {
+            if (empty($failedProcesses)) {
                 return response()->json([
                     'message' => 'No data available to export.',
                 ], 404);
@@ -88,7 +87,7 @@ class SageProcessesController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Export failed: '.$e->getMessage(),
+                'message' => 'Data export failed. Please try again.',
             ], 500);
         }
     }

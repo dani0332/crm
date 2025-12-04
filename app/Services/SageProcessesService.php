@@ -17,7 +17,6 @@ use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -44,7 +43,7 @@ class SageProcessesService extends BaseService
      * @param  bool  $isExport  Whether this is for export
      * @return LengthAwarePaginator|Collection|array
      */
-    public function getFailedSageProcesses(Request $request, bool $isExport = false)
+    public function getFailedSageProcesses($request, bool $isExport = false)
     {
         LoggerService::info('Initiating retrieval of failed Sage processes');
 
@@ -54,25 +53,8 @@ class SageProcessesService extends BaseService
             ->when($request->insurance_provider_id && is_array($request->insurance_provider_id) && count($request->insurance_provider_id) > 0, function ($query) use ($request) {
                 $query->whereIn('insurance_provider_id', $request->insurance_provider_id);
             })->when($request->quote_type_id, function ($query) use ($request) {
-                $directModelClasses = [];
-                $personalQuoteTypeIds = [];
 
-                foreach ($request->quote_type_id as $quote_type_id) {
-                    if ($quote_type_id == self::SEND_UPDATE_MODEL_NAME) {
-                        $directModelClasses[] = $this->sendUpdateModelClass;
-                    } else {
-                        $quoteTypeEnum = QuoteTypes::getName($quote_type_id);
-
-                        if ($quoteTypeEnum) {
-                            if (checkPersonalQuotes($quoteTypeEnum->value)) {
-                                $personalQuoteTypeIds[] = $quote_type_id;
-                            } else {
-                                $modelClass = QuoteTypes::getQuoteTypeIdToClass($quote_type_id);
-                                $directModelClasses[] = $modelClass;
-                            }
-                        }
-                    }
-                }
+                [$directModelClasses , $personalQuoteTypeIds] = $this->getDirectModelClassesAndPersonalQuoteTypeIds($request);
 
                 $query->where(function ($subQuery) use ($directModelClasses, $personalQuoteTypeIds) {
                     if (! empty($directModelClasses)) {
@@ -246,36 +228,6 @@ class SageProcessesService extends BaseService
     }
 
     /**
-     * Format the lead create date consistently across all models
-     * This handles different date formats that may come from different models
-     *
-     * @param  mixed  $item
-     */
-    protected function formatLeadCreateDate($item): ?string
-    {
-        if ($item->model && $item->model->created_at) {
-            try {
-                // Parse the date using Carbon to handle various formats
-                $createdAt = $item->model->created_at;
-
-                // If it's already a Carbon instance, format it
-                if ($createdAt instanceof Carbon) {
-                    return $createdAt->format(config('constants.DATETIME_DISPLAY_FORMAT'));
-                }
-
-                // If it's a string, try to parse it
-                return Carbon::parse($createdAt)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
-            } catch (\Exception $e) {
-                LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not parse date: '.$e->getMessage());
-
-                return $item->model->created_at; // Return original if parsing fails
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Load quoteStatus relation conditionally for models that have it
      * This is done after fetching results because we need to check the actual polymorphic model type
      *
@@ -297,6 +249,31 @@ class SageProcessesService extends BaseService
                 }
             }
         }
+    }
+
+    private function getDirectModelClassesAndPersonalQuoteTypeIds($request)
+    {
+        $directModelClasses = [];
+        $personalQuoteTypeIds = [];
+
+        foreach ($request->quote_type_id as $quote_type_id) {
+            if ($quote_type_id == self::SEND_UPDATE_MODEL_NAME) {
+                $directModelClasses[] = $this->sendUpdateModelClass;
+            } else {
+                $quoteTypeEnum = QuoteTypes::getName($quote_type_id);
+
+                if ($quoteTypeEnum) {
+                    if (checkPersonalQuotes($quoteTypeEnum->value)) {
+                        $personalQuoteTypeIds[] = $quote_type_id;
+                    } else {
+                        $modelClass = QuoteTypes::getQuoteTypeIdToClass($quote_type_id);
+                        $directModelClasses[] = $modelClass;
+                    }
+                }
+            }
+        }
+
+        return [$directModelClasses, $personalQuoteTypeIds];
     }
 
 }
