@@ -94,7 +94,6 @@ class DeviceQuoteController extends Controller
     {
         $data = $this->deviceQuoteService->getShowData($uuid);
         @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Device);
-        // dd(array_merge(compact('documentTypes', 'paymentDocument'), $data));
         return inertia('DeviceQuote/Show', array_merge(compact('documentTypes', 'paymentDocument'), $data,
         [
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
