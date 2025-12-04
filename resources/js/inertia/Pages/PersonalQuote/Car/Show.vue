@@ -3265,7 +3265,11 @@ const { openTempUrl } = useDocumentTempUrl();
             <template #item-documents="item">
               <template v-for="doc in item.documents" :key="doc">
                 <p class="my-2">
-                  <a class="text-primary-600 cursor-pointer" @click.prevent="openTempUrl(doc.path)">Document</a>
+                  <a
+                    class="text-primary-600 cursor-pointer"
+                    @click.prevent="openTempUrl(doc.path)"
+                    >Document</a
+                  >
                 </p>
               </template>
             </template>

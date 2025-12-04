@@ -11,9 +11,11 @@ This document outlines the renewal upload functionality and presents a decision 
 ### Renewal Upload Functionality
 
 1. **Upload & Create**
+
    - Upload renewal files and create new records
 
 2. **Motor Upload & Update**
+
    - Upload motor insurance renewal files and update existing records
 
 3. **Non-Motor Upload & Update**
@@ -36,7 +38,8 @@ This document outlines the renewal upload functionality and presents a decision 
 
 ### Considerations
 
-- **Private:** 
+- **Private:**
+
   - Enhanced security and access control
   - Prevents unauthorized access even to sample files
   - Aligns with security best practices

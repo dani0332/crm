@@ -82,14 +82,12 @@ const closeModal = () => {
  * Navigates to the next file in the gallery
  * Resets zoom level when navigating to a new file
  */
- const nextFile = async () => {
+const nextFile = async () => {
   if (hasNextFile.value) {
     currentFileIndex.value++;
     zoomLevel.value = 1;
     // Get the new file URL after index change
-    const documentURL = await getTempUrl(
-      currentFile.value.doc_url,
-    );
+    const documentURL = await getTempUrl(currentFile.value.doc_url);
     emit('update:currentFileURL', documentURL);
   }
 };
@@ -98,18 +96,15 @@ const closeModal = () => {
  * Navigates to the previous file in the gallery
  * Resets zoom level when navigating to  a new file
  */
- const previousFile = async () => {
+const previousFile = async () => {
   if (hasPreviousFile.value) {
     currentFileIndex.value--;
     zoomLevel.value = 1;
     // Get the new file URL after index change
-    const documentURL = await getTempUrl(
-      currentFile.value.doc_url,
-    );
+    const documentURL = await getTempUrl(currentFile.value.doc_url);
     emit('update:currentFileURL', documentURL);
   }
 };
-
 
 /**
  * Increases zoom level for the current image
