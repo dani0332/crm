@@ -988,3 +988,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return view('pdf.bor-document', $pdfData);
     });
 });
+
+  // PC assignment debug route
+  Route::get('pc-assignment-debug', [\App\Http\Controllers\API\ApiController::class, 'tagPrivateClients']);

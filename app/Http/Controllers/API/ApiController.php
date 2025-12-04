@@ -385,15 +385,15 @@ class ApiController extends Controller
     {
         LoggerService::info(self::class.': Private client tag exercise has been initiated');
 
-        $request->validate([
+        /*$request->validate([
             'batch_size' => 'required|integer|min:1',
             'cursor' => 'nullable|string',
-        ]);
+        ]);*/
 
         try {
 
-            $batchSize = $request->input('batch_size');
-            $cursor = $request->input('cursor');
+            $batchSize = 10; //$request->input('batch_size');
+            $cursor = 289040; //$request->input('cursor');
 
             $quotes = PersonalQuote::with('customer')->whereNull('pc_qualified')
                 ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
@@ -402,11 +402,12 @@ class ApiController extends Controller
                 ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht]);
 
             if ($cursor) {
-                $quotes->where('id', '>', $cursor);
+                //$quotes->where('id', '>', $cursor);
+                $quotes->where('id', $cursor);
             }
 
             $quotes = $quotes->limit($batchSize)->orderBy('created_at', 'asc')->get();
-
+      
             if ($quotes->isEmpty()) {
                 LoggerService::info(self::class.': No quotes found without PCP tag');
 
