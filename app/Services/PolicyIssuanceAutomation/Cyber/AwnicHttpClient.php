@@ -18,11 +18,11 @@ class AwnicHttpClient
 
     public function __construct()
     {
-        $this->baseUrl = rtrim(config('constants.AWNI_API_BASE_URL'), '/');
+        $this->baseUrl = rtrim(config('constants.AWNIC_API_BASE_URL'), '/');
         $this->apiTimeout = (int) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AWNI_CYBER_AUTOMATION_API_TIMEOUT);
         $this->baseHeaders = [
-            'Partner-Id' => config('constants.AWNI_API_PARTNER_ID'),
-            'Api-Key' => config('constants.AWNI_API_SECRET_KEY'),
+            'Partner-Id' => config('constants.AWNIC_API_PARTNER_ID'),
+            'Api-Key' => config('constants.AWNIC_API_SECRET_KEY'),
             'Content-Type' => 'application/json',
             'Accept' => '*/*',
         ];
