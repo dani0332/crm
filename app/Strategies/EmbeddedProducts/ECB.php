@@ -61,7 +61,7 @@ class ECB extends EmbeddedProduct
             'quoteRequest.customer.customerInsured.insured',
             'quoteRequest.quoteStatus',
             'quoteRequest.quoteRequestEntityMapping',
-            'paymentStatus'
+            'paymentStatus',
         ];
     }
 
