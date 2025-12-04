@@ -59,7 +59,7 @@ class DeviceQuoteService extends BaseQuoteService
 
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        if (request()->has('debug') && request()->debug == 'true') {
+        if (request()->has('debug') && request()->debug == true) {
             echo $query->toRawSql();
             exit;
         }

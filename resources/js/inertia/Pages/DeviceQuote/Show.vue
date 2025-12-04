@@ -238,9 +238,7 @@ const searchByTradeLicense = trigger => {
         });
       }
     })
-    .catch(err => {
-      console.log(err);
-    });
+    .catch(err => {});
 };
 
 const linkEntity = () => {
@@ -272,9 +270,7 @@ const linkEntity = () => {
         entityDetailsFound.value = false;
       }
     })
-    .catch(err => {
-      console.log(err);
-    });
+    .catch(err => {});
 };
 
 const readOnlyMode = reactive({
@@ -412,7 +408,6 @@ const onLoadAvailablePlansData = async () => {
       }
     })
     .catch(err => {
-      console.log(err);
       availablePlansTable.data = [];
     })
     .finally(() => {
@@ -442,7 +437,6 @@ const getPlanDetails = id => {
             message: 'Plan Details Not Found',
             position: 'top',
           });
-          console.log(err);
           viewButtonLoading.value = false;
         });
     }
