@@ -271,6 +271,14 @@ class SageApiService
         $preparedData['sendUpdateLog'] = $sendUpdateLog;
 
         $isEndorsementActionDisabled = app(SendUpdateLogService::class)->isEndorsementBookingActionDisabled($sendUpdateLog);
+
+        // Check if sage booking is temporarily disabled
+        if ($this->isSageBookingTempDisabled()) {
+            LoggerService::info('Sage booking is temporarily disabled', extra: ['SendUpdateQuote' => $sendUpdateLog->code]);
+
+            return ['status' => false, 'message' => 'Sage booking temporarily disabled'];
+        }
+
         if (! $isEndorsementActionDisabled) {
 
             // create AR Prepayment Premium Receipt
@@ -871,6 +879,31 @@ class SageApiService
 
         LoggerService::info('--------------------------------Sage Policy Booking process started-------------------------------');
 
+        // Dispatch the policy document job first, before any policy booking operations
+        $skipBookPolicyDocumentJob = false;
+        if ($quoteTypeId === QuoteTypeId::Travel) {
+            $quote->load('policyIssuance');
+            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
+                $skipBookPolicyDocumentJob = true;
+            }
+        }
+
+        LoggerService::info('Skipping book policy document job', extra: [
+            'skipBookPolicyDocumentJob' => $skipBookPolicyDocumentJob ? 'Yes' : 'No',
+        ]);
+        if (! $skipBookPolicyDocumentJob && ! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
+            LoggerService::info('Dispatching job to send customer documents after policy booking');
+            // dispath job to send email
+            SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
+        }
+
+        // Check if sage booking is temporarily disabled
+        if ($this->isSageBookingTempDisabled()) {
+            LoggerService::info('Sage booking is temporarily disabled', extra: ['QuoteCode' => $quote->code]);
+
+            return ['status' => false, 'message' => 'Sage booking temporarily disabled'];
+        }
+
         if (! $isPolicyBookedOnSage) {
 
             LoggerService::info('Payment frequency: '.$payment->frequency);
@@ -954,23 +987,6 @@ class SageApiService
                     return $embeddedProductSageBookingResponse;
                 }
             }
-        }
-
-        $skipBookPolicyDocumentJob = false;
-        if ($quoteTypeId === QuoteTypeId::Travel) {
-            $quote->load('policyIssuance');
-            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
-                $skipBookPolicyDocumentJob = true;
-            }
-        }
-
-        LoggerService::info('Skipping book policy document job', extra: [
-            'skipBookPolicyDocumentJob' => $skipBookPolicyDocumentJob ? 'Yes' : 'No',
-        ]);
-        if (! $skipBookPolicyDocumentJob && ! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
-            LoggerService::info('Dispatching job to send customer documents after policy booking');
-            // dispath job to send email
-            SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
         }
 
         LoggerService::info('Marking quote status as Policy Booked');
@@ -3689,6 +3705,11 @@ class SageApiService
     public function isSageRetryTimeoutEnabled()
     {
         return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED);
+    }
+
+    private function isSageBookingTempDisabled()
+    {
+        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::TEMP_DISABLE_SAGE_BOOKING);
     }
 
     public function isPaymentPaidOrCreditApproved($payment, $paymentSplits, $sageRequest)

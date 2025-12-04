@@ -24,6 +24,11 @@ class CyberQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
     }
+    
+    public function coverage(): BelongsTo
+    {
+        return $this->belongsTo(Lookup::class, 'coverage_id');
+    }
 
     public function getAuditables()
     {

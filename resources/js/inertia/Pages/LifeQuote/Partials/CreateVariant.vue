@@ -166,6 +166,8 @@ const createForm = reactive({
   isVariant: true,
   update: false,
   getQuoteLoading: false,
+  discountPremium: null,
+  isInstantPolicy: false,
 });
 
 // Ensure numeric fields are never negative
@@ -243,6 +245,9 @@ watch(
     } else {
       ridersData.value = [];
     }
+    createForm.discountPremium = props.plan?.discountPremium ?? 0;
+    createForm.isInstantPolicy =
+      props.plan?.instantPolicy ?? props.plan?.isInstantPolicy ?? false;
   },
   { deep: true },
 );
@@ -266,6 +271,8 @@ const getQuote = () => {
   createForm.actualPremium =
     Number(parseFloat(createForm.actualPremium).toFixed(2)) || 0;
   createForm.riders = processedRiders;
+  createForm.discountPremium =
+    Number(parseFloat(createForm.discountPremium).toFixed(2)) || 0;
 
   axios
     .post(`/personal-quotes/get-life-provider-plan`, {
@@ -293,6 +300,10 @@ const getQuote = () => {
         createForm.actualPremium = Math.max(
           0,
           Number(res.data.providerPlan.plan.actualPremium),
+        );
+        createForm.discountPremium = Math.max(
+          0,
+          Number(res.data.providerPlan.plan.discountPremium),
         );
         errorMessage.value = null;
       }
@@ -360,11 +371,13 @@ const handleSubmit = isValid => {
 };
 
 const onSubmit = () => {
-  const processedRiders = ridersData.value.map(rider => ({
-    ...rider,
-    price: Number(parseFloat(rider.price).toFixed(2)) || 0,
-    coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
-  }));
+  const processedRiders = isMetLife.value
+    ? []
+    : ridersData.value.map(rider => ({
+        ...rider,
+        price: Number(parseFloat(rider.price).toFixed(2)) || 0,
+        coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
+      }));
 
   createForm.loading = true;
   createForm.sumAssured =
@@ -372,6 +385,8 @@ const onSubmit = () => {
   createForm.actualPremium =
     Number(parseFloat(createForm.actualPremium).toFixed(2)) || 0;
   createForm.riders = processedRiders;
+  createForm.discountPremium =
+    Number(parseFloat(createForm.discountPremium).toFixed(2)) || 0;
 
   axios
     .post('/personal-quotes/life-plan-manual-create', {
@@ -453,6 +468,11 @@ onMounted(() => {
         ? Math.max(0, Number(props.plan.actualPremium))
         : null;
     }
+    createForm.discountPremium = props.plan?.discountPremium
+      ? Math.max(0, Number(props.plan.discountPremium))
+      : null;
+    createForm.isInstantPolicy =
+      props.plan?.instantPolicy ?? props.plan?.isInstantPolicy ?? false;
 
     // Handle rider data initialization
     if (
@@ -532,10 +552,28 @@ const validateRiderCoverValue = (value, riderId) => {
 };
 
 const formattedSumAssured = useFormattedNumberField(createForm, 'sumAssured');
+const formattedDiscountPremium = useFormattedNumberField(
+  createForm,
+  'discountPremium',
+);
 const formattedActualPremium = useFormattedNumberField(
   createForm,
   'actualPremium',
 );
+
+const totalPrice = computed(() => {
+  const discountPremium =
+    cleanFormattedValueToFloat(formattedDiscountPremium.value) || 0;
+  return props.plan.isApi &&
+    createForm.isInstantPolicy &&
+    createForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
+    ? discountPremium
+    : formattedActualPremium.value;
+});
+
+const isMetLife = computed(() => {
+  return props.plan.isApi && createForm.isInstantPolicy;
+});
 </script>
 
 <template>
@@ -673,7 +711,7 @@ const formattedActualPremium = useFormattedNumberField(
           >
           <x-input
             id="price"
-            v-model="formattedActualPremium"
+            v-model="totalPrice"
             placeholder="Enter Price"
             :rules="
               submitType === 'getQuote'
@@ -704,7 +742,17 @@ const formattedActualPremium = useFormattedNumberField(
         </div>
       </div>
 
-      <div class="mt-6">
+      <div class="mt-6" v-if="isMetLife">
+        <div class="bg-gray-100 rounded-lg p-4">
+          <p class="text-primary-700 text-sm text-center">
+            Once the variant is saved, you can add optional riders by navigating
+            to the Available Plan section and selecting "View" for the
+            corresponding plan.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6" v-if="!isMetLife">
         <h3 class="font-semibold bg-gray-100 p-4 rounded-md text-gray-700">
           RIDERS
         </h3>
@@ -734,13 +782,13 @@ const formattedActualPremium = useFormattedNumberField(
             step="any"
             @keydown="e => preventInvalidInputs(e, true)"
             class="w-full h-10 p-2 rounded-md"
-            v-model="createForm.actualPremium"
+            v-model="totalPrice"
             disabled
           />
         </div>
         <div
           class="grid grid-cols-6 items-center gap-4 p-2 border-b mb-4"
-          v-for="(rider, index) in ridersData"
+          v-for="rider in ridersData"
           :key="rider.riderId"
         >
           <span class="text-gray-700 col-span-2">{{ rider.text }}</span>

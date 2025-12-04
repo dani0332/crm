@@ -373,7 +373,7 @@ class PolicyIssuanceService
         }
     }
 
-    public function allocateLead($quoteType, $quote, $isInsurerApiStatusAlreadyFailed, $statusAPIFailed = null, $processInvolved = null)
+    public function allocateLead($quoteType, $quote, $isInsurerApiStatusAlreadyFailed, $statusAPIFailed = '', $processInvolved = '')
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' allocation of failed lead executed');
         $uuid = $quote->uuid;
@@ -401,15 +401,17 @@ class PolicyIssuanceService
 
         if ($quoteType === QuoteTypes::CAR->value) {
             // For other quote types, we need to dispatch respective failure email job
+            $actionRequired = 'Please coordinate with the IT Department to address and rectify the issue.';
+
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Going to dispatch AutomationFailedJob', extra: [
-                'actionRequired' => 'Please coordinate with the IT Department to address and rectify the issue.',
+                'actionRequired' => $actionRequired,
                 'statusAPIFailed' => $statusAPIFailed,
                 'processInvolved' => $processInvolved,
             ]);
             AutomationFailedJob::dispatch(
                 $quote->id,
                 QuoteTypeId::Car,
-                'Please coordinate with the IT Department to address and rectify the issue.',
+                $actionRequired,
                 $statusAPIFailed,
                 $processInvolved,
                 WorkflowTypeEnum::CAR_AUTOMATION_FAILED,

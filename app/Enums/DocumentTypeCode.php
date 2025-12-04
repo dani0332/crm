@@ -35,6 +35,7 @@ class DocumentTypeCode extends Enum
     const SEND_UPDATE = 'SEND_UPDATE';
     const QUOTE_AND_ENDORSEMENT = 'QUOTE_AND_ENDORSEMENT';
     const EP = 'EMBEDDED_PRODUCT';
+    const LIFE_HEALTH_QUESTIONNAIRE = 'LIFE_HQ';
 
     // This is the same as the one in the database and we are using this as a text not it's code
     // The reason behind this code is different for all lob's but text is sames that's why we are using this as a text
@@ -81,6 +82,7 @@ class DocumentTypeCode extends Enum
     const Illustration_Document = 'LIFE_ID';
     const CPS = 'CPS'; // Car Policy Schedule
     const CPC = 'CPC'; // Car Policy Certificate
+    const MTL_EID = 'MTL_EID';
 
     // HOME SAL
     const HOME_SAL = 'HOME_SAL';

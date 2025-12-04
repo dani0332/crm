@@ -293,6 +293,7 @@ class LeadDistributionReportService extends BaseService
             quoteTypeCode::Jetski => ['jetski_quote_request', 'jetski_quote_request.personal_quote_id', 'personal_quotes.id'],
             quoteTypeCode::Business => ['business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid'],
             quoteTypeCode::SAVINGS => ['savings_quote_request', 'savings_quote_request.personal_quote_id', 'personal_quotes.id'],
+            quoteTypeCode::CYBER => ['cyber_quote_request', 'cyber_quote_request.personal_quote_id', 'personal_quotes.id'],
         ];
 
         // Apply join based on LOB

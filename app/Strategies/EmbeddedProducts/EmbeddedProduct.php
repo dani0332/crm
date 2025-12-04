@@ -178,6 +178,9 @@ class EmbeddedProduct
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
             })
+            ->when(isset($filters['certificate_number']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.certificate_number', 'like', "%{$filters['certificate_number']}%");
+            })
             ->when(isset($filters['months']), function ($query) use ($filters) {
                 $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');
                 $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');

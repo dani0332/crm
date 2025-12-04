@@ -499,16 +499,7 @@ class AMLService
         return KycLog::withTrashed()->where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteRequestId,
-        ])->where(function ($ryuFilter) {
-            $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
-            $ryuFilter->orWhereNull('decision');
-        })->where(function ($aml) {
-            $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
-            $aml->orWhereNull('screening_type');
-        })->where(function ($query) {
-            $query->whereNull('screenshot');
-            $query->orWhere('screenshot', '');
-        })->get()->last() ?? [];
+        ])->standardAmlFilters()->get()->last() ?? [];
     }
 
     public function handleResponse(bool $status, string $message, bool $isAutomation = false)
@@ -595,18 +586,7 @@ class AMLService
     {
         $status = KycLog::withTrashed()->select(DB::raw('LEFT(customer_code, 3) AS splitted_customer_code'))
             ->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
-            ->where(function ($ryuFilter) {
-                $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
-                $ryuFilter->orWhereNull('decision');
-            })
-            ->where(function ($aml) {
-                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
-                $aml->orWhereNull('screening_type');
-            })
-            ->where(function ($query) {
-                $query->whereNull('screenshot');
-                $query->orWhere('screenshot', '');
-            })
+            ->standardAmlFilters()
             ->orderBy('id', 'desc')
             ->value('splitted_customer_code');
 
@@ -642,16 +622,7 @@ class AMLService
         $fetchAMLRecords = KycLog::withTrashed()->where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteRequestId,
-        ])->where(function ($ryuFilter) {
-            $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
-            $ryuFilter->orWhereNull('decision');
-        })->where(function ($aml) {
-            $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
-            $aml->orWhereNull('screening_type');
-        })->where(function ($query) {
-            $query->whereNull('screenshot');
-            $query->orWhere('screenshot', '');
-        })->pluck('decision');
+        ])->standardAmlFilters()->pluck('decision');
 
         if ($fetchAMLRecords->count() == 0) {
             return true;
@@ -1147,18 +1118,21 @@ class AMLService
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningFailed];
 
+                $actionRequired = 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection';
+                $statusAPIFailed = 'Quote Finalized But Premium Not Matched';
+
                 LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob', extra: [
-                    'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
-                    'statusAPIFailed' => 'Quote Finalized But Premium Not Matched',
-                    'processInvolved' => 'Quote Finalization',
+                    'actionRequired' => $actionRequired,
+                    'statusAPIFailed' => $statusAPIFailed,
+                    'processInvolved' => PolicyIssuanceEnum::PROCESS_INVOLVED_QUOTE_FINALIZATION,
                 ]);
 
                 AutomationFailedJob::dispatch(
                     $quoteDetails->id,
                     QuoteTypeId::Car,
-                    'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
-                    'Quote Finalized But Premium Not Matched',
-                    'Quote Finalization',
+                    $actionRequired,
+                    $statusAPIFailed,
+                    PolicyIssuanceEnum::PROCESS_INVOLVED_QUOTE_FINALIZATION,
                     WorkflowTypeEnum::CAR_AUTOMATION_FAILED
                 )->onQueue('policy-issuance-automation');
             }
@@ -1223,13 +1197,7 @@ class AMLService
         LoggerService::info('fn:getKYCLogs - AMLService');
 
         return AML::with('quotetype')->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
-            ->where(function ($aml) {
-                $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
-                $aml->orWhereNull('decision');
-            })->where(function ($query) {
-                $query->whereNull('screenshot');
-                $query->orWhere('screenshot', '');
-            })->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA])
+            ->standardAmlFilters()
             ->orderBy('created_at', 'asc')->get();
     }
 
@@ -1556,7 +1524,7 @@ class AMLService
             'created_at',
             'decision',
         ])
-            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
+            ->excludeRyuDecisionStrict()
             ->whereBetween('created_at', dateQueryFilter(request('amlCreatedStartDate'), request('amlCreatedEndDate')));
     }
 
