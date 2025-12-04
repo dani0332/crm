@@ -34,12 +34,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::POLICY_ISSUANCE_JOB);
         $this->processId = $processId;
-        if(app()->environment('local')) {
-            $timestamp = now()->timestamp;
-            $this->uniqueKey = "policy-issuance-job-id-{$processId}-{$timestamp}";
-        } else {
-            $this->uniqueKey = "policy-issuance-job-id-{$processId}";
-        }
+        $this->uniqueKey = "policy-issuance-job-id-{$processId}";
 
         $this->process = PolicyIssuance::find($processId);
 
@@ -122,12 +117,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public function uniqueId(): string
     {
         if ($this->uniqueKey === null) {
-            if(app()->environment('local')) {
-                $timestamp = now()->timestamp;
-                $this->uniqueKey = "policy-issuance-automation-id-{$this->processId}-{$timestamp}";
-            } else {
-                $this->uniqueKey = "policy-issuance-automation-id-{$this->processId}";
-            }
+            $this->uniqueKey = "policy-issuance-automation-id-{$this->processId}";
         }
 
         return $this->uniqueKey;
