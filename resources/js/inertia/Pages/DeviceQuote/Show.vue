@@ -237,8 +237,7 @@ const searchByTradeLicense = trigger => {
         });
       }
     })
-    .catch(err => {
-    });
+    .catch(err => {});
 };
 
 const linkEntity = () => {
@@ -270,8 +269,7 @@ const linkEntity = () => {
         entityDetailsFound.value = false;
       }
     })
-    .catch(err => {
-    });
+    .catch(err => {});
 };
 
 const readOnlyMode = reactive({
