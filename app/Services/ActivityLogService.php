@@ -120,11 +120,15 @@ class ActivityLogService extends BaseService
 
         } catch (\Throwable $e) {
             // Log error but don't break the request
+            // Only pass Exception to LoggerService::error(), not Error types
+            $exception = $e instanceof \Exception ? $e : null;
+            
             LoggerService::error('ActivityLogService: Failed to log HTTP request', [
                 'error' => $e->getMessage(),
+                'error_type' => get_class($e),
                 'path' => $request->path(),
                 'method' => $request->method(),
-            ], $e);
+            ], $exception);
         }
     }
 
