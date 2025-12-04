@@ -17,6 +17,7 @@ class AwnicApiService
         private AwnicRequestBuilder $requestBuilder,
         private AwnicResponseHandler $responseHandler,
         private AwnicDocumentHandler $documentHandler,
+        private AwnicQuoteUpdaterService $quoteUpdater,
     ) {}
 
     /**
@@ -73,8 +74,8 @@ class AwnicApiService
             'policy_end_date' => $issuePolicyResult?->policyInfo?->policyEndDate,
         ]);
 
-        $this->responseHandler->updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult);
-        $this->responseHandler->updatePaymentFromIssuePolicyResponse($quote->code, $issuePolicyResult);
+        $this->quoteUpdater->updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult);
+        $this->quoteUpdater->updatePaymentFromIssuePolicyResponse($quote->code, $issuePolicyResult);
         
         $response['status'] = true;
         $response['message'] = 'Policy issued successfully';
