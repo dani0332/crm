@@ -48,4 +48,37 @@ return [
      * When enabled, activities will be batched per HTTP request and inserted in bulk at the end of each request.
      */
     'batch_enabled' => env('ACTIVITY_LOGGER_BATCH_ENABLED', true),
+
+    /*
+     * Paths that should be excluded from HTTP request logging.
+     */
+    'excluded_paths' => [
+        '/health',
+        '/horizon',
+        '/telescope',
+        '/activity-log',
+        '/activity-logs',
+        '/admin/activity',
+        '/google/callback',
+    ],
+
+    /*
+     * Sensitive field keys that should be redacted in request payloads.
+     */
+    'sensitive_keys' => [
+        'password',
+        'password_confirmation',
+        'current_password',
+        'token',
+        'api_key',
+        'secret',
+        'access_token',
+        'refresh_token',
+        'authorization',
+    ],
+
+    /*
+     * Default event name for HTTP request logging.
+     */
+    'default_event' => 'Accessed',
 ];

@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Route;
@@ -16,9 +17,19 @@ use Illuminate\Support\Facades\Context;
 class ActivityLogService extends BaseService
 {
     /**
+     * HTTP methods that use query parameters as payload
+     */
+    private const QUERY_PARAM_METHODS = ['GET', 'DELETE'];
+
+    /**
+     * JSON content type
+     */
+    private const JSON_CONTENT_TYPE = 'application/json';
+
+    /**
      * Get paginated activity logs with optional filters
      *
-     * @param array $filters Optional filters: user_id, date_from, date_to
+     * @param array<string, mixed> $filters Optional filters: user_id, date_from, date_to
      * @param int $perPage
      * @return LengthAwarePaginator
      */
@@ -27,20 +38,43 @@ class ActivityLogService extends BaseService
         $query = ActivityLog::with(['causer:id,name,email', 'subject']);
 
         // Filter by user (causer) - optional
-        if (!empty($filters['user_id'])) {
-            $query->where('causer_id', $filters['user_id'])
-                ->where('causer_type', User::class);
-        }
+        $query->when(
+            !empty($filters['user_id']),
+            fn ($q) => $q->where('causer_id', $filters['user_id'])
+                ->where('causer_type', User::class)
+        );
 
-        if (!empty($filters['date_from'])) {
-            $dateFrom = Carbon::parse($filters['date_from'])->startOfDay();
-            $query->where('created_at', '>=', $dateFrom);
-        }
+        // Filter by date from
+        $query->when(
+            !empty($filters['date_from']),
+            function ($q) use ($filters) {
+                try {
+                    $dateFrom = Carbon::parse($filters['date_from'])->startOfDay();
+                    $q->where('created_at', '>=', $dateFrom);
+                } catch (InvalidFormatException $e) {
+                    LoggerService::warning('ActivityLogService: Invalid date_from format', [
+                        'date_from' => $filters['date_from'],
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        );
 
-        if (!empty($filters['date_to'])) {
-            $dateTo = Carbon::parse($filters['date_to'])->endOfDay();
-            $query->where('created_at', '<=', $dateTo);
-        }
+        // Filter by date to
+        $query->when(
+            !empty($filters['date_to']),
+            function ($q) use ($filters) {
+                try {
+                    $dateTo = Carbon::parse($filters['date_to'])->endOfDay();
+                    $q->where('created_at', '<=', $dateTo);
+                } catch (InvalidFormatException $e) {
+                    LoggerService::warning('ActivityLogService: Invalid date_to format', [
+                        'date_to' => $filters['date_to'],
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        );
 
         $query->orderBy('id', 'desc');
 
@@ -61,62 +95,22 @@ class ActivityLogService extends BaseService
             $method = $request->method();
             $path = $request->path();
             $route = $request->route();
-            $routeName = $route?->getName();
 
             // Extract controller name and method name from route action
             $logName = $this->extractLogName($route);
             
             // Build description: "User Name Sent Request to URL"
-            $userName = $user?->name;
-            $path = request()->path(); 
-            $description = sprintf('%s Sent Request to %s', $userName, $path);
+            $description = $this->buildDescription($user?->name, $path);
 
             // Collect request data
             $requestData = $this->collectRequestData($request);
 
             // Prepare properties
-            $properties = [
-                'method' => $method,
-                'path' => $path,
-                'url' => $request->fullUrl(),
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-            ];
-
-            // Add request payload if available
-            if (!empty($requestData['payload'])) {
-                $properties['request_payload'] = $this->sanitizePayload($requestData['payload']);
-            }
-
-            // Add query parameters
-            if (!empty($requestData['query_params'])) {
-                $properties['query_params'] = $requestData['query_params'];
-            }
-
-            // Add route information
-            if ($routeName) {
-                $properties['route_name'] = $routeName;
-            }
+            $properties = $this->buildProperties($request, $requestData, $route);
 
             // Log using Spatie's activity helper
             // This will automatically get the batch_uuid from LogBatch context
-            activity($logName)
-                ->causedBy($user)
-                ->withProperties($properties)
-                ->event("Accessed")
-                ->tap(function ($activity) use ($request) {
-                    // Get feature and code from Context (set by LoggerService::startFeatureLogging)
-                    $feature = Context::get('feature');
-                    $code = Context::get('code');
-                    
-                    // Set custom fields
-                    $activity->url = $request->getRequestUri();
-                    $activity->ip_address = $request->ip();
-                    $activity->user_agent = $request->userAgent();
-                    $activity->feature = $feature;
-                    $activity->code = $code;
-                })
-                ->log($description);
+            $this->createActivityLog($logName, $user, $properties, $description, $request);
 
         } catch (\Throwable $e) {
             // Log error but don't break the request
@@ -133,6 +127,78 @@ class ActivityLogService extends BaseService
     }
 
     /**
+     * Build activity log description
+     */
+    private function buildDescription(?string $userName, string $path): string
+    {
+        return sprintf('%s Sent Request to %s', $userName ?? 'Unknown User', $path);
+    }
+
+    /**
+     * Build properties array for activity log
+     *
+     * @param array<string, mixed> $requestData
+     * @return array<string, mixed>
+     */
+    private function buildProperties(Request $request, array $requestData, ?Route $route): array
+    {
+        $properties = [
+            'method' => $request->method(),
+            'path' => $request->path(),
+            'url' => $request->fullUrl(),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ];
+
+        // Add request payload if available
+        if (!empty($requestData['payload'])) {
+            $properties['request_payload'] = $this->sanitizePayload($requestData['payload']);
+        }
+
+        // Add query parameters
+        if (!empty($requestData['query_params'])) {
+            $properties['query_params'] = $requestData['query_params'];
+        }
+
+        // Add route information
+        $routeName = $route?->getName();
+        if ($routeName) {
+            $properties['route_name'] = $routeName;
+        }
+
+        return $properties;
+    }
+
+    /**
+     * Create activity log entry
+     */
+    private function createActivityLog(
+        string $logName,
+        ?\Illuminate\Contracts\Auth\Authenticatable $user,
+        array $properties,
+        string $description,
+        Request $request
+    ): void {
+        // Get feature and code from Context (set by LoggerService::startFeatureLogging)
+        $feature = Context::get('feature');
+        $code = Context::get('code');
+
+        activity($logName)
+            ->causedBy($user)
+            ->withProperties($properties)
+            ->event(config('activitylog.default_event', 'Accessed'))
+            ->tap(function ($activity) use ($request, $feature, $code) {
+                // Set custom fields (avoid duplication - these are already in properties)
+                $activity->url = $request->getRequestUri();
+                $activity->ip_address = $request->ip();
+                $activity->user_agent = $request->userAgent();
+                $activity->feature = $feature;
+                $activity->code = $code;
+            })
+            ->log($description);
+    }
+
+    /**
      * Extract log name from route action (ControllerName@methodName)
      * 
      * @param Route|null $route The route instance, which may be null for unregistered routes
@@ -141,7 +207,7 @@ class ActivityLogService extends BaseService
     private function extractLogName(?Route $route): string
     {
         if ($route === null) {
-            return config('activitylog.default_log_name');
+            return config('activitylog.default_log_name', 'default');
         }
 
         // Safe to call getActionName() here since we've verified $route is not null
@@ -156,7 +222,7 @@ class ActivityLogService extends BaseService
             }
         }
         
-        return config('activitylog.default_log_name');
+        return config('activitylog.default_log_name', 'default');
     }
 
     /**
@@ -185,45 +251,69 @@ class ActivityLogService extends BaseService
 
     /**
      * Extract payload based on HTTP method and content type
+     *
+     * @return array<string, mixed>
      */
     private function extractPayload(Request $request, string $method, string $contentType): array
     {
-        $payload = [];
+        $methodUpper = strtoupper($method);
         
         // For GET and DELETE, use query parameters as payload
-        if (in_array(strtoupper($method), ['GET', 'DELETE'])) {
+        if (in_array($methodUpper, self::QUERY_PARAM_METHODS, true)) {
             if ($request->query->count() > 0) {
-                $payload = $request->query->all();
+                return $request->query->all();
             }
-            return $payload;
+            return [];
         }
         
         // For POST, PUT, PATCH - extract based on content type
-        if (str_contains($contentType, 'application/json')) {
+        if (str_contains($contentType, self::JSON_CONTENT_TYPE)) {
             $jsonContent = $request->getContent();
             if (!empty($jsonContent)) {
                 $decoded = json_decode($jsonContent, true);
                 if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                    $payload = $decoded;
+                    return $decoded;
                 }
             }
-        }  else {
-            $payload = $request->except(array_keys($request->allFiles()));
+            return [];
         }
         
-        return $payload;
+        // For form data
+        return $request->except(array_keys($request->allFiles()));
     }
 
     /**
-     * Sanitize sensitive fields in payload
+     * Sanitize sensitive fields in payload (recursively handles nested arrays)
+     *
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
      */
     private function sanitizePayload(array $data): array
     {
-        $sensitiveKeys = ['password', 'password_confirmation', 'current_password', 'token', 'api_key', 'secret'];
-        
-        foreach ($sensitiveKeys as $key) {
-            if (isset($data[$key])) {
+        $sensitiveKeys = config('activitylog.sensitive_keys', [
+            'password',
+            'password_confirmation',
+            'current_password',
+            'token',
+            'api_key',
+            'secret',
+        ]);
+
+        foreach ($data as $key => $value) {
+            // Check if key is sensitive (case-insensitive)
+            $isSensitive = false;
+            foreach ($sensitiveKeys as $sensitiveKey) {
+                if (strcasecmp($key, $sensitiveKey) === 0) {
+                    $isSensitive = true;
+                    break;
+                }
+            }
+
+            if ($isSensitive) {
                 $data[$key] = '***REDACTED***';
+            } elseif (is_array($value)) {
+                // Recursively sanitize nested arrays
+                $data[$key] = $this->sanitizePayload($value);
             }
         }
         
@@ -258,18 +348,13 @@ class ActivityLogService extends BaseService
      */
     private function shouldSkipLogging(Request $request): bool
     {
-        $excludedPaths = [
-            '/health',
-            '/horizon',
-            '/telescope',
-            '/activity-log',
-            '/activity-logs',
-            '/admin/activity',
-            '/google/callback',
-        ];
+        $excludedPaths = config('activitylog.excluded_paths', []);
+        
+        if (empty($excludedPaths)) {
+            return false;
+        }
 
-        $path = $request->path(); 
-        $routeName = $request->route()?->getName();
+        $path = $request->path();
 
         foreach ($excludedPaths as $excludedPath) {
             $normalizedExcluded = ltrim($excludedPath, '/');
