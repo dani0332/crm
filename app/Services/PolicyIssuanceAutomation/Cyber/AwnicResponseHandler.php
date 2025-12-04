@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 
 class AwnicResponseHandler
 {
+    private const API_FAILED = "API Failed";
     /**
      * Update quote with issue policy response data
      *
@@ -50,7 +51,7 @@ class AwnicResponseHandler
             'commission_vat_applicable' => $issuePolicyResult?->policyInfo?->commissionPayableAmt,
             'commission' => $issuePolicyResult?->policyInfo?->commissionAmt,
             'commission_vat' => $issuePolicyResult?->policyInfo?->commissionVatAmt,
-            'commmission_percentage' => $issuePolicyResult?->policyInfo?->CommissionPercentage ?? 0, // TODO: need to verify commission percentage is not coming in response
+            'commmission_percentage' => $issuePolicyResult?->policyInfo?->CommissionPercentage ?? 0,
             'insurer_tax_number' => $issuePolicyResult?->policyInfo?->invoiceNo ?? null,
             'insurer_invoice_date' => $issuePolicyResult?->policyInfo?->policyIssuedDate ?? null,
             'insurer_commmission_invoice_number' => $issuePolicyResult?->policyInfo?->creditNoteNo ?? null,
@@ -77,29 +78,34 @@ class AwnicResponseHandler
     public function parseHttpResponse(Response $response, string $apiKey): array
     {
         $responseObject = $response->object();
+        $result = [
+            'status' => false,
+            'error' => $apiKey . ' ' . self::API_FAILED,
+            'message' => 'There is an Exception on AWNI API call.',
+            'data' => null,
+            'completed_step' => null,
+        ];
 
         if ($response->successful()) {
             if ($this->hasApiErrors($responseObject)) {
-                return [
+                $result = [
                     'status' => false,
-                    'error' => $responseObject?->errorList ?? $apiKey . ' API Failed',
+                    'error' => $responseObject?->errorList ?? $apiKey . ' ' . self::API_FAILED,
                     'message' => $this->extractErrorMessage($responseObject, $apiKey),
                     'data' => $responseObject == null ? null : '',
                     'completed_step' => null,
                 ];
+            } else {
+                $result = [
+                    'status' => true,
+                    'message' => 'API call successfully executed.',
+                    'error' => null,
+                    'data' => $responseObject,
+                    'completed_step' => null,
+                ];
             }
-
-            return [
-                'status' => true,
-                'message' => 'API call successfully executed.',
-                'error' => null,
-                'data' => $responseObject,
-                'completed_step' => null,
-            ];
-        }
-
-        if ($response->status() === JsonResponse::HTTP_NOT_FOUND) {
-            return [
+        } elseif ($response->status() === JsonResponse::HTTP_NOT_FOUND) {
+            $result = [
                 'status' => false,
                 'error' => '404 Not Found',
                 'message' => '404 Not Found',
@@ -108,13 +114,7 @@ class AwnicResponseHandler
             ];
         }
 
-        return [
-            'status' => false,
-            'error' => $apiKey . ' API Failed',
-            'message' => 'There is an Exception on AWNI API call.',
-            'data' => null,
-            'completed_step' => null,
-        ];
+        return $result;
     }
 
     private function hasApiErrors($responseObject): bool
@@ -134,7 +134,7 @@ class AwnicResponseHandler
             return $responseObject->message;
         }
 
-        return $responseObject ?? $apiKey . ' API Failed';
+        return $responseObject ?? $apiKey . ' ' . self::API_FAILED;
     }
 }
 

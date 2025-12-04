@@ -44,7 +44,7 @@ class AwnicApiService
         $payment = $quote->payments()->mainLeadPayment()->first();
         $splitPayment = $payment?->paymentSplits()->where('payment_method', PaymentMethodsEnum::CreditCard)->first();
 
-        $payload = $this->requestBuilder->buildIssuePolicyPayload($quote, $customer, $nationality, $planDetail, $payment, $splitPayment);
+        $payload = $this->requestBuilder->buildIssuePolicyPayload($quote, $customer, $nationality, $planDetail, $splitPayment);
         $headers = $this->requestBuilder->buildIssuePolicyHeaders();
 
         $httpResponse = Awnic::post($endPoint, $payload, $headers);
@@ -55,7 +55,7 @@ class AwnicApiService
         if (! $issuePolicy['status']) {
             LoggerService::error('API call failed', extra: [
                 'endpoint' => $endPoint,
-                'error' => $issuePolicy['error'] ?? 'Unknown error',
+                'error' => $issuePolicy['error'] ?? AwnicEnum::UNKNOWN_ERROR,
                 'message' => $issuePolicy['message'] ?? null,
             ]);
 

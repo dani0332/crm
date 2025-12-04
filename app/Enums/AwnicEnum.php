@@ -14,5 +14,8 @@ class AwnicEnum
     public const RESPONSE_POLICY = 'PolicyResponse';
     public const RESPONSE_UPLOAD_DOCUMENTS = 'UploadDocumentsResponse';
     public const RESPONSE_DOWNLOAD_DOCUMENT = 'DownloadDocumentResponse';
+
+    public const UNKNOWN_ERROR = 'Unknown error';
+    public const ALL_STEPS_ARE_EDITABLE = 'All Steps are editable';
 }
 

@@ -46,7 +46,7 @@ class AwnicBookPolicyService
         $updateBookingDetailsResponse = $this->updateBookingDetails($quote);
         if (! $updateBookingDetailsResponse['status']) {
             LoggerService::error('Update booking details failed', extra: [
-                'error' => $updateBookingDetailsResponse['error'] ?? 'Unknown error',
+                'error' => $updateBookingDetailsResponse['error'] ?? AwnicEnum::UNKNOWN_ERROR,
             ]);
 
             $response['error'] = $updateBookingDetailsResponse['error'];
@@ -60,7 +60,7 @@ class AwnicBookPolicyService
             $preCheckResult = $this->validationService->validateBookPolicy($quote);
             if (! $preCheckResult['status']) {
                 LoggerService::error('Book policy validation failed', extra: [
-                    'error' => $preCheckResult['error'] ?? 'Unknown error',
+                    'error' => $preCheckResult['error'] ?? AwnicEnum::UNKNOWN_ERROR,
                 ]);
 
                 $response['error'] = $preCheckResult['error'];
@@ -93,7 +93,7 @@ class AwnicBookPolicyService
 
             if (! $createSageProcessResponse['status']) {
                 LoggerService::error('Sage process creation failed', extra: [
-                    'error' => $createSageProcessResponse['message'] ?? 'Unknown error',
+                    'error' => $createSageProcessResponse['message'] ?? AwnicEnum::UNKNOWN_ERROR,
                 ]);
 
                 $response['error'] = $createSageProcessResponse['message'];
@@ -178,7 +178,7 @@ class AwnicBookPolicyService
 
             if (! $updateBookingDetailsResponse['status']) {
                 LoggerService::error('Booking details update failed', extra: [
-                    'error' => $updateBookingDetailsResponse['message'] ?? 'Unknown error',
+                    'error' => $updateBookingDetailsResponse['message'] ?? AwnicEnum::UNKNOWN_ERROR,
                 ]);
 
                 $response['status'] = false;
@@ -226,7 +226,7 @@ class AwnicBookPolicyService
         if ($throughAutomation) {
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
-            $response['message'] = 'All steps are editable';
+            $response['message'] = AwnicEnum::ALL_STEPS_ARE_EDITABLE;
             return $response;
         }
 
@@ -239,7 +239,7 @@ class AwnicBookPolicyService
             if (! $policyIssuance?->completed_step || $policyIssuance?->completed_step === AwnicEnum::STEP_UPLOAD_DOCUMENTS) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
-                $response['message'] = 'All Steps are editable';
+                $response['message'] = AwnicEnum::ALL_STEPS_ARE_EDITABLE;
             } elseif ($policyIssuance?->completed_step === AwnicEnum::STEP_ISSUE_POLICY) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
@@ -257,13 +257,13 @@ class AwnicBookPolicyService
         if (! $policyIssuance) {
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
-            $response['message'] = 'All Steps are editable';
+            $response['message'] = AwnicEnum::ALL_STEPS_ARE_EDITABLE;
         } elseif (
             $policyIssuance?->status === PolicyIssuanceEnum::PROCESSING_STATUS &&
             $policyIssuance?->completed_step === AwnicEnum::STEP_UPLOAD_POLICY_DOCS
         ) {
             $response['isEditBookingDetailsDisabled'] = false;
-            $response['message'] = 'All Steps are editable';
+            $response['message'] = AwnicEnum::ALL_STEPS_ARE_EDITABLE;
         }
 
         // Final return, covers all remaining paths

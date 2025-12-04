@@ -17,9 +17,8 @@ class AwnicRequestBuilder
      * @param mixed $splitPayment
      * @return array
      */
-    public function buildIssuePolicyPayload($quote, $customer, $nationality, $planDetail, $payment, $splitPayment): array
+    public function buildIssuePolicyPayload($quote, $customer, $nationality, $planDetail, $splitPayment): array
     {
-        // TODO custCODE should be coming from doppler env
         return [
             'CustName' => trim(($quote->first_name ?? '') . ' ' . ($quote->last_name ?? '')),
             'CustMobile' => $quote->mobile_no,
@@ -31,8 +30,8 @@ class AwnicRequestBuilder
             'LimitOfLiability' => $planDetail->coverage ?? null,
             'PlanName' => $planDetail->planName ?? null,
             'PolStartDate' => strtoupper(Carbon::now()->format('d-M-Y')),
-            'CustCode' => 150214,
-            'BrokerCode' => 150214,
+            'CustCode' => config('constants.AWNIC_API_BROKER_NO'),
+            'BrokerCode' => config('constants.AWNIC_API_BROKER_NO'),
             'PaymentRefNo' => $splitPayment?->reference,
             'PartnerRefNo' => $quote->code,
         ];

@@ -59,7 +59,6 @@ class AwnicDocumentHandler
      */
     private function buildAzureDocumentPath(string $relativePath): string
     {
-        // dd(rtrim(config('constants.AZURE_IM_STORAGE_URL'), '/') . rtrim(config('constants.AZURE_IM_STORAGE_CONTAINER'), '/') . '/' . ltrim($relativePath, '/'));
         return rtrim(config('constants.AZURE_IM_STORAGE_URL'), '/'). '/' . rtrim(config('constants.AZURE_IM_STORAGE_CONTAINER'), '/') . '/' . ltrim($relativePath, '/');
     }
 
@@ -121,8 +120,7 @@ class AwnicDocumentHandler
         $data['document_type_code'] = $documentCode;
 
         $quoteDocumentService = new QuoteDocumentService;
-        $document = $quoteDocumentService->uploadQuoteDocument($documentContent, $data, $quote);
-        return $document;
+        return $quoteDocumentService->uploadQuoteDocument($documentContent, $data, $quote);
     }
 
     /**

@@ -246,7 +246,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
                     'process_id' => $process->id,
                     'failed_step' => $currentStep,
                     'steps_executed' => $stepsExecuted,
-                    'error' => $response['error'] ?? 'Unknown error',
+                    'error' => $response['error'] ?? AwnicEnum::UNKNOWN_ERROR,
                 ]);
                 return $response;
             }
