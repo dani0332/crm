@@ -3,9 +3,9 @@
 namespace App\Services\PolicyIssuanceAutomation\Cyber;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AwnicEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
@@ -14,18 +14,13 @@ use Exception;
 
 class AwniInsuranceService implements PolicyIssuanceInterface
 {
-    private string $className = 'awniInsuranceService';
-    public mixed $policyIssuance = null;
 
-    public const TYPE = quoteTypeCode::CYBER;
-    public const TYPE_ID = QuoteTypeId::Cyber;
-
-    private array $stepHandlers = [];
-
-    public const UPLOAD_DOCUMENTS = 'UploadDocuments';
-    public const ISSUE_POLICY = 'IssuePolicy';
-    public const UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'UploadPolicyDocumentsToIMCRM';
-    public const BOOK_POLICY = 'BookPolicy';
+    private array $stepHandlers = [
+        AwnicEnum::STEP_ISSUE_POLICY => 'executeIssuePolicyStep',
+        AwnicEnum::STEP_UPLOAD_DOCUMENTS => 'executeUploadDocumentsStep',
+        AwnicEnum::STEP_UPLOAD_POLICY_DOCS => 'executeUploadPolicyDocumentsStep',
+        AwnicEnum::STEP_BOOK_POLICY => 'executeBookPolicyStep',
+    ];
 
     public function __construct(
         private AwnicStepExecutor $stepExecutor,
@@ -33,12 +28,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         private AwnicBookPolicyService $bookPolicyService,
         private AwnicResponseHandler $responseHandler,
     ) {
-        $this->stepHandlers = [
-            self::ISSUE_POLICY => 'executeIssuePolicyStep',
-            self::UPLOAD_DOCUMENTS => 'executeUploadDocumentsStep',
-            self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM => 'executeUploadPolicyDocumentsStep',
-            self::BOOK_POLICY => 'executeBookPolicyStep',
-        ];
     }
 
     /**
@@ -49,10 +38,10 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     private function getAPISteps(): array
     {
         return [
-            self::ISSUE_POLICY,
-            self::UPLOAD_DOCUMENTS,
-            self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
-            self::BOOK_POLICY,
+            AwnicEnum::STEP_ISSUE_POLICY,
+            AwnicEnum::STEP_UPLOAD_DOCUMENTS,
+            AwnicEnum::STEP_UPLOAD_POLICY_DOCS,
+            AwnicEnum::STEP_BOOK_POLICY,
         ];
     }
 
@@ -69,8 +58,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             $process->update(['completed_step' => $response['completed_step']]);
             $process->refresh();
             LoggerService::info('Completed step updated successfully', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'process_id' => $process->id,
                 'completed_step' => $response['completed_step'],
             ]);
@@ -119,19 +106,15 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     {
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::AWNIC_CYBER_POLICY_AUTOMATION);
         LoggerService::info('Policy issuance schedule initiated', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
             'insurer_id' => $insurer->id,
             'insurer_code' => $insurer->code,
             'automation_enabled' => $this->isPolicyIssuanceAutomationEnabled(),
         ]);
 
         if ($this->isPolicyIssuanceAutomationEnabled()) {
-            $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
+            (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, QuoteTypes::CYBER->value, self::class);
         } else {
             LoggerService::warning('Automation is disabled', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'feature' => LoggerFeatureEnum::AWNIC_CYBER_POLICY_AUTOMATION->value,
             ]);
         }
@@ -145,15 +128,23 @@ class AwniInsuranceService implements PolicyIssuanceInterface
      */
     public function executeSteps($process)
     {
+        if (! $this->isPolicyIssuanceAutomationEnabled()) {
+            LoggerService::warning('Automation is disabled', extra: [
+                'process_id' => $process->id ?? null,
+                'feature' => LoggerFeatureEnum::AWNIC_CYBER_POLICY_AUTOMATION->value,
+            ]);
+            $response['error'] = 'AWNI Cyber Automation is disabled';
+            $response['message'] = 'AWNI Cyber Automation is disabled';
+
+            return $response;
+        }
+        
         $response = ['status' => false, 'error' => null, 'message' => null];
 
-        $this->policyIssuance = $process;
         $quote = $process->model;
 
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::AWNIC_CYBER_POLICY_AUTOMATION);
         LoggerService::info('Execution started', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
             'process_id' => $process->id,
             'plan_id' => $quote->plan_id,
             'current_status' => $process->status,
@@ -161,18 +152,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         ]);
 
         try {
-            if (! $this->isPolicyIssuanceAutomationEnabled()) {
-                LoggerService::warning('Automation is disabled', extra: [
-                    'class' => $this->className,
-                    'function' => __FUNCTION__,
-                    'feature' => LoggerFeatureEnum::AWNIC_CYBER_POLICY_AUTOMATION->value,
-                ]);
-                $response['error'] = 'AWNI Cyber Automation is disabled';
-                $response['message'] = 'AWNI Cyber Automation is disabled';
-
-                return $response;
-            }
-
             $validationResult = $this->validationService->validateRequiredData($quote);
             if (!$validationResult['status']) {
                 return $validationResult;
@@ -182,8 +161,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : $this->getAPISteps()[0];
             
             LoggerService::info('Starting step sequence execution', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
+                'process_id' => $process->id,
                 'last_completed_step' => $lastCompletedStep,
                 'next_step' => $nextStepToBeExecuted,
             ]);
@@ -196,17 +174,16 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         } catch (Exception $e) {
             $response['error'] = $e->getMessage();
             LoggerService::error('Exception occurred during execution', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'process_id' => $process->id,
+                'quote_id' => $quote->id,
+                'quote_type' => QuoteTypes::CYBER->value,
+                'quote_code' => $quote->code,
             ], exception: $e);
 
             return $response;
         }
 
         LoggerService::info('Execution completed', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
             'process_id' => $process->id,
             'final_status' => $response['status'],
             'message' => $response['message'],
@@ -231,35 +208,31 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
         while ($currentStep !== null) {
             if (! in_array($currentStep, $allSteps, true)) {
-                $message = 'Unknown step encountered: ' . $currentStep;
+                $error = 'Unknown step encountered: ' . $currentStep;
                 LoggerService::error('Invalid step', extra: [
-                    'class' => $this->className,
-                    'function' => __FUNCTION__,
+                    'process_id' => $process->id,
                     'current_step' => $currentStep,
                     'valid_steps' => $allSteps,
                     'steps_executed' => $stepsExecuted,
                 ]);
 
-                return $this->responseHandler->buildStepResponse($currentStep, false, $message, $message);
+                return $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
             }
 
             $handler = $this->getStepHandler($currentStep);
             if (! $handler || ! method_exists($this->stepExecutor, $handler)) {
-                $message = 'Missing handler for step: ' . $currentStep;
+                $error = 'Missing handler for step: ' . $currentStep;
                 LoggerService::error('Handler not found for step', extra: [
-                    'class' => $this->className,
-                    'function' => __FUNCTION__,
+                    'process_id' => $process->id,
                     'current_step' => $currentStep,
                     'expected_handler' => $handler,
                     'steps_executed' => $stepsExecuted,
                 ]);
 
-                return $this->responseHandler->buildStepResponse($currentStep, false, $message, $message);
+                return $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
             }
 
             LoggerService::info('Executing step', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'step' => $currentStep,
                 'handler' => $handler,
                 'process_id' => $process->id,
@@ -270,8 +243,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
             if (isset($response['status']) && ! $response['status']) {
                 LoggerService::error('Step execution failed', extra: [
-                    'class' => $this->className,
-                    'function' => __FUNCTION__,
+                    'process_id' => $process->id,
                     'failed_step' => $currentStep,
                     'steps_executed' => $stepsExecuted,
                     'error' => $response['error'] ?? 'Unknown error',
@@ -284,8 +256,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         }
 
         LoggerService::info('All steps completed successfully', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
+            'process_id' => $process->id,
             'steps_executed' => $stepsExecuted,
             'total_steps' => count($stepsExecuted),
         ]);
@@ -311,8 +282,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         if (! $completedStep) {
             $nextStep = $allSteps[0];
             LoggerService::info('No previous step, starting from beginning', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'next_step' => $nextStep,
             ]);
             return $nextStep;
@@ -321,8 +290,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         $completedStepIndex = array_search($completedStep, $allSteps);
         if ($completedStepIndex === false) {
             LoggerService::warning('Completed step not found in valid steps', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'completed_step' => $completedStep,
                 'valid_steps' => $allSteps,
             ]);
@@ -331,8 +298,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
         if ($completedStepIndex === count($allSteps) - 1) {
             LoggerService::info('All steps completed', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'last_completed_step' => $completedStep,
             ]);
             return null;
@@ -340,8 +305,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
         $nextStep = $allSteps[$completedStepIndex + 1];
         LoggerService::info('Next step determined', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
             'completed_step' => $completedStep,
             'next_step' => $nextStep,
         ]);

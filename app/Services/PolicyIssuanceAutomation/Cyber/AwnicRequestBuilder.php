@@ -19,7 +19,7 @@ class AwnicRequestBuilder
      */
     public function buildIssuePolicyPayload($quote, $customer, $nationality, $planDetail, $payment, $splitPayment): array
     {
-        // CustCode is hardcoded, i have tried different values but it is not working
+        // TODO custCODE should be coming from doppler env
         return [
             'CustName' => trim(($quote->first_name ?? '') . ' ' . ($quote->last_name ?? '')),
             'CustMobile' => $quote->mobile_no,
@@ -30,7 +30,6 @@ class AwnicRequestBuilder
             'CustCountryCode' => $nationality?->awni_country_code ?? null,
             'LimitOfLiability' => $planDetail->coverage ?? null,
             'PlanName' => $planDetail->planName ?? null,
-            // 'PolStartDate' => $quote->policy_start_date ? strtoupper(Carbon::parse($quote->policy_start_date)->format('d-M-Y')) : strtoupper(\Carbon\Carbon::parse($payment->collection_date)->format('d-M-Y')),
             'PolStartDate' => strtoupper(Carbon::now()->format('d-M-Y')),
             'CustCode' => 150214,
             'BrokerCode' => 150214,
@@ -68,6 +67,19 @@ class AwnicRequestBuilder
     {
         return [
             "docId" => $docId,
+        ];
+    }
+
+    /**
+     * Build headers required for policy issuance API
+     *
+     * @return array
+     */
+    public function buildIssuePolicyHeaders(): array
+    {
+        return [
+            'TP-Payment-Key' => 'TP_PAYMENT',
+            'Accept' => 'application/json',
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\PolicyIssuanceAutomation\Cyber;
 
+use App\Enums\AwnicEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -12,15 +13,6 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
 class AwnicApiService
 {
-    private string $className = 'AwnicApiService';
-
-    public const ISSUE_POLICY = 'IssuePolicy';
-    public const UPLOAD_DOCUMENTS = 'UploadDocuments';
-    public const UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'UploadPolicyDocumentsToIMCRM';
-    public const POLICY_ISSUANCE_RESPONSE = 'PolicyResponse';
-    public const UPLOAD_DOCUMENTS_RESPONSE = 'UploadDocumentsResponse';
-    public const DOWNLOAD_DOCUMENT_RESPONSE = 'DownloadDocumentResponse';
-
     public function __construct(
         private AwnicRequestBuilder $requestBuilder,
         private AwnicResponseHandler $responseHandler,
@@ -37,14 +29,12 @@ class AwnicApiService
     public function issuePolicy($quote, $process): array
     {
         LoggerService::info('Initiating policy issuance API call', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
             'process_id' => $process->id,
-            'step' => self::ISSUE_POLICY,
+            'step' => AwnicEnum::STEP_ISSUE_POLICY,
             'policy_start_date' => $quote->policy_start_date,
         ]);
 
-        $response = $this->responseHandler->buildStepResponse(self::ISSUE_POLICY);
+        $response = $this->responseHandler->buildStepResponse(AwnicEnum::STEP_ISSUE_POLICY);
         $endPoint = '/cyber/generatePolicy';
         
         $customer = $quote->customer;
@@ -55,15 +45,15 @@ class AwnicApiService
         $splitPayment = $payment?->paymentSplits()->where('payment_method', PaymentMethodsEnum::CreditCard)->first();
 
         $payload = $this->requestBuilder->buildIssuePolicyPayload($quote, $customer, $nationality, $planDetail, $payment, $splitPayment);
+        $headers = $this->requestBuilder->buildIssuePolicyHeaders();
 
-        $issuePolicy = Awnic::post($endPoint, $payload, self::POLICY_ISSUANCE_RESPONSE);
+        $httpResponse = Awnic::post($endPoint, $payload, $headers);
+        $issuePolicy = $this->responseHandler->parseHttpResponse($httpResponse, AwnicEnum::RESPONSE_POLICY);
         
-        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $issuePolicy, Awnic::getBaseUrl() . $endPoint, self::ISSUE_POLICY, $issuePolicy['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $issuePolicy, Awnic::getBaseUrl() . $endPoint, AwnicEnum::STEP_ISSUE_POLICY, $issuePolicy['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
         if (! $issuePolicy['status']) {
             LoggerService::error('API call failed', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'endpoint' => $endPoint,
                 'error' => $issuePolicy['error'] ?? 'Unknown error',
                 'message' => $issuePolicy['message'] ?? null,
@@ -78,8 +68,6 @@ class AwnicApiService
 
         $issuePolicyResult = $issuePolicy['data'];
         LoggerService::info('API call successful, updating quote and payment', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
             'policy_number' => $issuePolicyResult?->policyInfo?->policyNo,
             'policy_start_date' => $issuePolicyResult?->policyInfo?->policyStartDate,
             'policy_end_date' => $issuePolicyResult?->policyInfo?->policyEndDate,
@@ -90,7 +78,7 @@ class AwnicApiService
         
         $response['status'] = true;
         $response['message'] = 'Policy issued successfully';
-        $response['completed_step'] = self::ISSUE_POLICY;
+        $response['completed_step'] = AwnicEnum::STEP_ISSUE_POLICY;
         $response['data'] = $issuePolicyResult;
 
         return $response;
@@ -106,11 +94,9 @@ class AwnicApiService
     public function uploadDocuments($quote, $process): array
     {
         $endPoint = '/cyber/uploadDocument';
-        $response = $this->responseHandler->buildStepResponse(self::UPLOAD_DOCUMENTS);
+        $response = $this->responseHandler->buildStepResponse(AwnicEnum::STEP_UPLOAD_DOCUMENTS);
         
         LoggerService::info('Starting document upload process', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
             'endpoint' => $endPoint,
             'insurer_quote_number' => $quote->insurer_quote_number,
         ]);
@@ -119,8 +105,6 @@ class AwnicApiService
         if (! $requiredDocuments || empty($requiredDocuments)) {
             $errorMessage = 'Required Documents not uploaded';
             LoggerService::warning('Missing required document', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'required_document_type' => DocumentTypeCode::CYBER_EMIRATES_ID,
                 'available_documents' => collect($quote->documents ?? [])->pluck('document_type_code')->toArray(),
             ]);
@@ -130,8 +114,8 @@ class AwnicApiService
         }
 
         $allDocsDownloaded = true;
-        $documentContentResponses = [];
-        foreach ($requiredDocuments as $requiredDocument) {
+        $documents = is_array($requiredDocuments) ? $requiredDocuments : [$requiredDocuments];
+        foreach ($documents as $requiredDocument) {
             $documentType = $this->documentHandler->getDocTypeCodeForCyber($requiredDocument['document_type_code']);
             $documentContentResponse = $this->documentHandler->fetchDocumentContent($requiredDocument['doc_url']);
             if (! $documentContentResponse['status']) {
@@ -143,19 +127,17 @@ class AwnicApiService
             $base64Content = base64_encode($documentContentResponse['content']);
 
             LoggerService::info('Preparing upload payload', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'document_type' => $documentType,
                 'document_name' => $requiredDocument['doc_name'] ?? 'Emirates_Id.png',
                 'document_size_kb' => round(strlen($base64Content) / 1024, 2),
             ]);
 
-            $payload = $this->requestBuilder->buildUploadDocumentsPayload($quote, $base64Content, $documentType);
+            $payload = $this->requestBuilder->buildUploadDocumentsPayload($quote, $base64Content, $documentType, $requiredDocument['doc_name'] ?? 'Emirates_Id.png');
 
-            $uploadResponse = Awnic::post($endPoint, $payload, self::UPLOAD_DOCUMENTS_RESPONSE);
-            $documentContentResponses[] = $uploadResponse;
+            $httpResponse = Awnic::post($endPoint, $payload);
+            $uploadResponse = $this->responseHandler->parseHttpResponse($httpResponse, AwnicEnum::RESPONSE_UPLOAD_DOCUMENTS);
 
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $uploadResponse, Awnic::getBaseUrl() . $endPoint, self::UPLOAD_DOCUMENTS, $uploadResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $uploadResponse, Awnic::getBaseUrl() . $endPoint, AwnicEnum::STEP_UPLOAD_DOCUMENTS, $uploadResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
             if (! $uploadResponse['status']) {
                 $allDocsDownloaded = false;
@@ -171,14 +153,11 @@ class AwnicApiService
             return $response;
         }
 
-        LoggerService::info('Documents uploaded successfully', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
-        ]);
+        LoggerService::info('Documents uploaded successfully');
 
         $response['status'] = true;
         $response['message'] = 'Documents uploaded successfully';
-        $response['completed_step'] = self::UPLOAD_DOCUMENTS;
+        $response['completed_step'] = AwnicEnum::STEP_UPLOAD_DOCUMENTS;
 
         return $response;
     }
@@ -193,14 +172,12 @@ class AwnicApiService
     public function uploadPolicyDocumentsToIMCRM($quote, $process): array
     {
         LoggerService::info('Starting policy documents download and upload to IMCRM', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
             'process_id' => $process->id,
-            'step' => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+            'step' => AwnicEnum::STEP_UPLOAD_POLICY_DOCS,
             'endpoint' => '/cyber/downloadDocument',
         ]);
 
-        $response = $this->responseHandler->buildStepResponse(self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
+        $response = $this->responseHandler->buildStepResponse(AwnicEnum::STEP_UPLOAD_POLICY_DOCS);
         $endPoint = '/cyber/downloadDocument';
 
         $uploadedDocumentsToIMCRM = collect();
@@ -208,15 +185,16 @@ class AwnicApiService
         foreach ($this->documentHandler->getDocTypeCodeForIMCRM($quote) as $imCrmDocKey => $docId) {
             $payload = $this->requestBuilder->buildDownloadDocumentPayload($docId);
 
-            $downloadRequest = Awnic::post($endPoint, $payload, self::DOWNLOAD_DOCUMENT_RESPONSE);
+            $httpResponse = Awnic::post($endPoint, $payload);
+            $downloadRequest = $this->responseHandler->parseHttpResponse($httpResponse, AwnicEnum::RESPONSE_DOWNLOAD_DOCUMENT);
 
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $downloadRequest, Awnic::getBaseUrl() . $endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $downloadRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $downloadRequest, Awnic::getBaseUrl() . $endPoint, AwnicEnum::STEP_UPLOAD_POLICY_DOCS, $downloadRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
             
             if(isset($downloadRequest['status'])) {
                 $docCode = $imCrmDocKey;
 
                 $documentContent = $downloadRequest['data'];
-                if ($documentContent && isset($documentContent->documentContent, $documentContent->documentName)) {
+                if ($downloadRequest['status'] && $documentContent && isset($documentContent->documentContent, $documentContent->documentName)) {
                     $quoteDocument = $this->documentHandler->uploadAndAttachToQuoteDocuments($quote, $documentContent->documentContent, $docCode, $documentContent->documentName);
                 } else {
                     $quoteDocument = null;
@@ -233,20 +211,16 @@ class AwnicApiService
 
         $allDocsDownload = $uploadedDocumentsToIMCRM->where('status', true)->count() === 3;
 
-        LoggerService::info('Document processing completed', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
-            'all_successful' => $allDocsDownload,
-            'total_documents' => $uploadedDocumentsToIMCRM->count(),
-            'successful_uploads' => $uploadedDocumentsToIMCRM->where('status', true)->count(),
-            'failed_uploads' => $uploadedDocumentsToIMCRM->where('status', false)->count(),
-        ]);
+            LoggerService::info('Document processing completed', extra: [
+                'all_successful' => $allDocsDownload,
+                'total_documents' => $uploadedDocumentsToIMCRM->count(),
+                'successful_uploads' => $uploadedDocumentsToIMCRM->where('status', true)->count(),
+                'failed_uploads' => $uploadedDocumentsToIMCRM->where('status', false)->count(),
+            ]);
 
         if (! $allDocsDownload || $uploadedDocumentsToIMCRM->isEmpty()) {
             $docsUploadToIMCRMFailed = $uploadedDocumentsToIMCRM->where('status', false)->pluck('name')->toArray();
             LoggerService::error('Failed to fetch/upload all documents', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'failed_documents' => $docsUploadToIMCRMFailed,
                 'upload_summary' => $uploadedDocumentsToIMCRM->toArray(),
             ]);
@@ -260,14 +234,12 @@ class AwnicApiService
         }
 
         LoggerService::info('All documents fetched and uploaded successfully', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
             'uploaded_documents' => $uploadedDocumentsToIMCRM->pluck('name')->toArray(),
         ]);
 
         $response['status'] = true;
         $response['message'] = 'Fetched all documents from insurer and Uploaded to IMCRM';
-        $response['completed_step'] = self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM;
+        $response['completed_step'] = AwnicEnum::STEP_UPLOAD_POLICY_DOCS;
 
         return $response;
     }

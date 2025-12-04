@@ -12,7 +12,6 @@ use App\Services\QuoteDocumentService;
 class AwnicDocumentHandler
 {
     private const ALLOWED_DOCUMENT_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
-    private string $className = 'AwnicDocumentHandler';
 
     /**
      * Fetch document content from Azure storage
@@ -28,8 +27,6 @@ class AwnicDocumentHandler
         if ($fileContent === false || $fileContent === '') {
             $message = 'Invalid or empty document content';
             LoggerService::error('Document fetch failed', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'file_path' => $filePath,
                 'relative_path' => $relativePath,
                 'error' => $message,
@@ -42,8 +39,6 @@ class AwnicDocumentHandler
         if (! $mimeType || ! in_array($mimeType, self::ALLOWED_DOCUMENT_MIME_TYPES, true)) {
             $message = 'Unsupported document type: ' . ($mimeType ?? 'unknown');
             LoggerService::error('Invalid document mime type', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'file_path' => $filePath,
                 'mime_type' => $mimeType,
                 'allowed_types' => self::ALLOWED_DOCUMENT_MIME_TYPES,

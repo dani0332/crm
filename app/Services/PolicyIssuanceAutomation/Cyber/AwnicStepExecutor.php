@@ -2,6 +2,7 @@
 
 namespace App\Services\PolicyIssuanceAutomation\Cyber;
 
+use App\Enums\AwnicEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;
@@ -9,12 +10,6 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
 class AwnicStepExecutor
 {
-    private string $className = 'AwnicStepExecutor';
-
-    public const UPLOAD_DOCUMENTS = 'UploadDocuments';
-    public const ISSUE_POLICY = 'IssuePolicy';
-    public const UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'UploadPolicyDocumentsToIMCRM';
-    public const BOOK_POLICY = 'BookPolicy';
 
     public function __construct(
         private AwnicApiService $apiService,
@@ -32,9 +27,7 @@ class AwnicStepExecutor
     public function executeUploadDocumentsStep($quote, $process): array
     {
         LoggerService::info('Starting document upload', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
-            'step' => self::UPLOAD_DOCUMENTS,
+            'step' => AwnicEnum::STEP_UPLOAD_DOCUMENTS,
             'process_id' => $process->id,
         ]);
 
@@ -42,9 +35,7 @@ class AwnicStepExecutor
 
         if (! $uploadDocumentsResponse['status']) {
             LoggerService::error('Document upload failed', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
-                'step' => self::UPLOAD_DOCUMENTS,
+                'step' => AwnicEnum::STEP_UPLOAD_DOCUMENTS,
                 'error' => $uploadDocumentsResponse['error'] ?? 'Unknown error',
                 'message' => $uploadDocumentsResponse['message'] ?? null,
             ]);
@@ -55,14 +46,13 @@ class AwnicStepExecutor
         }
 
         LoggerService::info('Document upload successful', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
-            'step' => self::UPLOAD_DOCUMENTS,
+            'step' => AwnicEnum::STEP_UPLOAD_DOCUMENTS,
         ]);
 
         return $uploadDocumentsResponse;
     }
 
+    // TODO: Add first step on top of the file
     /**
      * Execute issue policy step
      *
@@ -73,9 +63,7 @@ class AwnicStepExecutor
     public function executeIssuePolicyStep($quote, $process): array
     {
         LoggerService::info('Starting policy issuance', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
-            'step' => self::ISSUE_POLICY,
+            'step' => AwnicEnum::STEP_ISSUE_POLICY,
             'process_id' => $process->id,
             'plan_id' => $quote->plan_id,
         ]);
@@ -84,9 +72,7 @@ class AwnicStepExecutor
 
         if (! $policyIssuanceResponse['status']) {
             LoggerService::error('Policy issuance failed', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
-                'step' => self::ISSUE_POLICY,
+                'step' => AwnicEnum::STEP_ISSUE_POLICY,
                 'error' => $policyIssuanceResponse['error'] ?? 'Unknown error',
                 'message' => $policyIssuanceResponse['message'] ?? null,
             ]);
@@ -96,9 +82,7 @@ class AwnicStepExecutor
         }
 
         LoggerService::info('Policy issued successfully, updating quote status', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
-            'step' => self::ISSUE_POLICY,
+            'step' => AwnicEnum::STEP_ISSUE_POLICY,
             'policy_number' => $policyIssuanceResponse['data']->policyInfo?->policyNo ?? null,
         ]);
 
@@ -115,9 +99,7 @@ class AwnicStepExecutor
     public function executeUploadPolicyDocumentsStep($quote, $process): array
     {
         LoggerService::info('Starting policy document upload to IMCRM', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
-            'step' => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+            'step' => AwnicEnum::STEP_UPLOAD_POLICY_DOCS,
             'process_id' => $process->id,
         ]);
 
@@ -125,9 +107,7 @@ class AwnicStepExecutor
 
         if (! $uploadPolicyDocumentsToIMCRMResponse['status']) {
             LoggerService::error('Policy document upload to IMCRM failed', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
-                'step' => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+                'step' => AwnicEnum::STEP_UPLOAD_POLICY_DOCS,
                 'error' => $uploadPolicyDocumentsToIMCRMResponse['error'] ?? 'Unknown error',
                 'message' => $uploadPolicyDocumentsToIMCRMResponse['message'] ?? null,
             ]);
@@ -137,9 +117,7 @@ class AwnicStepExecutor
         }
 
         LoggerService::info('Policy documents uploaded to IMCRM successfully', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
-            'step' => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+            'step' => AwnicEnum::STEP_UPLOAD_POLICY_DOCS,
         ]);
 
         return $uploadPolicyDocumentsToIMCRMResponse;
@@ -155,9 +133,7 @@ class AwnicStepExecutor
     public function executeBookPolicyStep($quote, $process): array
     {
         LoggerService::info('Starting book policy execution', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
-            'step' => self::BOOK_POLICY,
+            'step' => AwnicEnum::STEP_BOOK_POLICY,
             'process_id' => $process->id,
             'policy_number' => $quote->policy_number,
         ]);
@@ -166,9 +142,7 @@ class AwnicStepExecutor
 
         if (! $triggerBookPolicyResponse['status']) {
             LoggerService::error('Book policy failed', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
-                'step' => self::BOOK_POLICY,
+                'step' => AwnicEnum::STEP_BOOK_POLICY,
                 'error' => $triggerBookPolicyResponse['error'] ?? 'Unknown error',
                 'message' => $triggerBookPolicyResponse['message'] ?? null,
             ]);
@@ -178,9 +152,7 @@ class AwnicStepExecutor
         }
 
         LoggerService::info('Book policy execution successful', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
-            'step' => self::BOOK_POLICY,
+            'step' => AwnicEnum::STEP_BOOK_POLICY,
         ]);
 
         return $triggerBookPolicyResponse;

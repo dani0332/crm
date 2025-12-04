@@ -2,6 +2,7 @@
 
 namespace App\Services\PolicyIssuanceAutomation\Cyber;
 
+use App\Enums\AwnicEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
@@ -18,13 +19,6 @@ class AwnicBookPolicyService
 {
     use GenericQueriesAllLobs;
 
-    private string $className = 'AwnicBookPolicyService';
-    public const TYPE = 'Cyber';
-    public const BOOK_POLICY = 'BookPolicy';
-    public const ISSUE_POLICY = 'IssuePolicy';
-    public const UPLOAD_DOCUMENTS = 'UploadDocuments';
-    public const UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'UploadPolicyDocumentsToIMCRM';
-
     public function __construct(
         private AwnicValidationService $validationService,
         private AwnicResponseHandler $responseHandler,
@@ -40,18 +34,14 @@ class AwnicBookPolicyService
     public function bookPolicy($quote, $policyIssuance = null): array
     {
         LoggerService::info('Starting book policy process', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
             'policy_number' => $quote->policy_number,
         ]);
 
-        $response = $this->responseHandler->buildStepResponse(self::BOOK_POLICY);
+        $response = $this->responseHandler->buildStepResponse(AwnicEnum::STEP_BOOK_POLICY);
 
         $updateBookingDetailsResponse = $this->updateBookingDetails($quote);
         if (! $updateBookingDetailsResponse['status']) {
             LoggerService::error('Update booking details failed', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'error' => $updateBookingDetailsResponse['error'] ?? 'Unknown error',
             ]);
 
@@ -65,8 +55,6 @@ class AwnicBookPolicyService
         $preCheckResult = $this->validationService->validateBookPolicy($quote);
         if (! $preCheckResult['status']) {
             LoggerService::error('Book policy validation failed', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'error' => $preCheckResult['error'] ?? 'Unknown error',
             ]);
 
@@ -78,23 +66,18 @@ class AwnicBookPolicyService
 
         $request = new \stdClass;
         $request->quote_id = $quote->id;
-        $request->modelType = self::TYPE;
-        $request->model_type = self::TYPE;
+        $request->modelType = QuoteTypes::CYBER->value;
+        $request->model_type = QuoteTypes::CYBER->value;
         $request->is_send_policy = false;
         $request->send_policy_type = SendPolicyTypeEnum::SAGE;
         $request->transaction_payment_status = null;
 
-        LoggerService::info('Creating Sage process', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
-        ]);
+        LoggerService::info('Creating Sage process');
         $createSageProcessResponse = (new SageApiService)->postBookPolicyToSage($request, $quote);
-        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, [], $createSageProcessResponse, '', self::BOOK_POLICY, $createSageProcessResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $policyIssuance);
+        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, [], $createSageProcessResponse, '', AwnicEnum::STEP_BOOK_POLICY, $createSageProcessResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $policyIssuance);
 
         if (! $createSageProcessResponse['status']) {
             LoggerService::error('Sage process creation failed', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
                 'error' => $createSageProcessResponse['message'] ?? 'Unknown error',
             ]);
 
@@ -104,14 +87,12 @@ class AwnicBookPolicyService
         }
 
         LoggerService::info('Book policy process completed successfully', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
             'sage_message' => $createSageProcessResponse['message'] ?? null,
         ]);
 
         $response['status'] = true;
         $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
-        $response['completed_step'] = self::BOOK_POLICY;
+        $response['completed_step'] = AwnicEnum::STEP_BOOK_POLICY;
 
         return $response;
     }
@@ -124,18 +105,13 @@ class AwnicBookPolicyService
      */
     public function updateBookingDetails($quote): array
     {
-        LoggerService::info('Starting update booking details process', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
-        ]);
+        LoggerService::info('Starting update booking details process');
         $response = ['status' => true, 'error' => null, 'message' => null];
 
         $payment = $quote->payments()->mainLeadPayment()->first();
         $bookPolicyPayload = $this->bookPolicyPayload($quote, QuoteTypes::CYBER->value, $quote->payments, $quote->quoteDocuments);
 
         LoggerService::info('Booking details prepared', extra: [
-            'class' => $this->className,
-            'function' => __FUNCTION__,
             'invoice_date' => $payment->insurer_invoice_date,
             'insurer_tax_invoice_number' => $payment->insurer_tax_number,
             'commission_vat_applicable' => $payment->commission_vat_applicable,
@@ -159,7 +135,7 @@ class AwnicBookPolicyService
                 'vat_on_commission' => $payment->commission_vat,
                 'commission_percentage' => $payment->commmission_percentage,
                 'payment_code' => $payment->code,
-                'model_type' => self::TYPE,
+                'model_type' => QuoteTypes::CYBER->value,
                 'quote_id' => $quote->id,
                 'through_automation' => true,
             ];
@@ -176,8 +152,6 @@ class AwnicBookPolicyService
                 $response['message'] = $validator->errors()->first();
 
                 LoggerService::error('Booking details validation failed', extra: [
-                    'class' => $this->className,
-                    'function' => __FUNCTION__,
                     'validation_errors' => $validator->errors()->toArray(),
                     'first_error' => $response['message'],
                 ]);
@@ -185,16 +159,11 @@ class AwnicBookPolicyService
                 return $response;
             }
 
-            LoggerService::info('Validation passed, updating booking details', extra: [
-                'class' => $this->className,
-                'function' => __FUNCTION__,
-            ]);
+            LoggerService::info('Validation passed, updating booking details');
             $updateBookingDetailsResponse = app(CentralService::class)->updateBookingDetails($updateBookingRequest, $bookPolicyRequest);
 
             if (! $updateBookingDetailsResponse['status']) {
                 LoggerService::error('Booking details update failed', extra: [
-                    'class' => $this->className,
-                    'function' => __FUNCTION__,
                     'error' => $updateBookingDetailsResponse['message'] ?? 'Unknown error',
                 ]);
 
@@ -202,10 +171,7 @@ class AwnicBookPolicyService
                 $response['error'] = $updateBookingDetailsResponse['message'];
                 $response['message'] = $updateBookingDetailsResponse['message'];
             } else {
-                LoggerService::info('Booking details updated successfully', extra: [
-                    'class' => $this->className,
-                    'function' => __FUNCTION__,
-                ]);
+                LoggerService::info('Booking details updated successfully');
             }
         } catch (Exception $e) {
             $response['status'] = false;
@@ -227,7 +193,11 @@ class AwnicBookPolicyService
      */
     public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {
-        LoggerService::info('class: ' . $this->className . ' fn: ' . __FUNCTION__ . ' Quote : ' . $quote->code);
+        LoggerService::info('Getting steps locking status for Cyber quote', extra: [
+            'quote_id' => $quote->id,
+            'quote_type' => QuoteTypes::CYBER->value,
+            'quote_code' => $quote->code,
+        ]);
         $policyIssuance = $quote->policyIssuance;
 
         $response = [
@@ -250,21 +220,21 @@ class AwnicBookPolicyService
             $policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS ||
             ($policyIssuance?->completed_step && $policyIssuance?->status == '')
         ) {
-            if (! $policyIssuance?->completed_step || $policyIssuance?->completed_step === self::UPLOAD_DOCUMENTS) {
+            if (! $policyIssuance?->completed_step || $policyIssuance?->completed_step === AwnicEnum::STEP_UPLOAD_DOCUMENTS) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'All Steps are editable';
 
                 return $response;
             }
-            if ($policyIssuance?->completed_step === self::ISSUE_POLICY) {
+            if ($policyIssuance?->completed_step === AwnicEnum::STEP_ISSUE_POLICY) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Upload Documents and Update Booking Details are editable';
 
                 return $response;
             }
-            if ($policyIssuance?->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
+            if ($policyIssuance?->completed_step === AwnicEnum::STEP_UPLOAD_POLICY_DOCS) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Booking Details is editable';
@@ -281,7 +251,7 @@ class AwnicBookPolicyService
 
         if (
             $policyIssuance?->status === PolicyIssuanceEnum::PROCESSING_STATUS &&
-            $policyIssuance?->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
+            $policyIssuance?->completed_step === AwnicEnum::STEP_UPLOAD_POLICY_DOCS
         ) {
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';
