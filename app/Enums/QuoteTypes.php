@@ -16,6 +16,7 @@ use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\CycleQuote;
+use App\Models\DeviceQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\HomeQuote;
@@ -48,7 +49,6 @@ use App\Strategies\Allocations\TravelAllocation;
 use App\Strategies\Allocations\YachtAllocation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
-use App\Models\DeviceQuote;
 
 enum QuoteTypes: string
 {

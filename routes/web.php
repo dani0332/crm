@@ -78,6 +78,7 @@ use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\V2\CustomerAcceptanceLogController;
 use App\Http\Controllers\V2\CustomerController as V2CustomerController;
 use App\Http\Controllers\V2\CycleQuoteController;
+use App\Http\Controllers\V2\DeviceQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\FollowupController;
 use App\Http\Controllers\V2\HealthRevivalQuoteController;
@@ -102,7 +103,6 @@ use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\V2\DeviceQuoteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -662,6 +662,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
         Route::post('car/change-insurer', [CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
+        Route::get('car/{quoteId}/update-ocr-webform', [CarQuoteController::class, 'updateOcrWebformData'])->name('update-ocr-webform');
 
         Route::post('/export-logs/create', [QuoteExportLogController::class, 'store'])->name('export-logs.create');
     });
@@ -890,8 +891,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Command to bulk send policy documents
-    Route::get('/run-policy-bulk-send', function () {
-
+    Route::get('/run-policy-bulk-send', function (\Illuminate\Http\Request $request) {
         // Check if user has admin role
         if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
             return response()->json(['error' => 'Not authorized'], 403);
@@ -909,12 +909,33 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         try {
-            // Execute the command
-            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+            // Check if fetching from sage_process_type flag
+            $fromSageProcess = $request->query('from_sage_process', false);
+            $startDate = $request->query('start_date');
+            $sageProcessId = $request->query('sage_process_id');
+
+            // Build command parameters
+            $params = [];
+            if ($fromSageProcess) {
+                $params['--from-sage-process'] = true;
+
+                if ($startDate) {
+                    $params['--start-date'] = $startDate;
+                }
+
+                if ($sageProcessId) {
+                    $params['--sage-process-id'] = $sageProcessId;
+                }
+            }
+
+            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents', $params);
 
             return response()->json([
                 'message' => 'Command executed successfully!',
                 'status' => 'completed',
+                'from_sage_process' => (bool) $fromSageProcess,
+                'start_date' => $startDate,
+                'sage_process_id' => $sageProcessId,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -922,7 +943,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 'status' => 'failed',
             ], 500);
         } finally {
-            // Always release the lock
             $lock->release();
         }
     })->name('run-policy-bulk-send');

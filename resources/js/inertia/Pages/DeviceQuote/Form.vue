@@ -7,17 +7,17 @@ const props = defineProps({
   quote: { type: Object, default: null },
   lookUpData: { type: Object, required: true },
   deviceMakes: { type: Array, required: true },
-
 });
 
 // Format API data for dropdowns and selects
 const mobileBrands = computed(() => {
-  return props.lookUpData?.mobileBrands?.map(item => ({
-    value: item.id,
-    label: item.text,
-  })) || [];
+  return (
+    props.lookUpData?.mobileBrands?.map(item => ({
+      value: item.id,
+      label: item.text,
+    })) || []
+  );
 });
-
 
 // Generate year options (current year and past years)
 const currentYear = new Date().getFullYear();
@@ -46,7 +46,10 @@ const selectedDeviceMake = computed(() => {
   if (!quoteForm.make_id) {
     return [];
   }
-  return deviceMakesList.value.find(item => item.value === quoteForm.make_id)?.models || [];
+  return (
+    deviceMakesList.value.find(item => item.value === quoteForm.make_id)
+      ?.models || []
+  );
 });
 
 // Generate month options
@@ -72,7 +75,11 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
-  month_of_purchase: props.quote?.device_quote?.purchase_date ? String(new Date(props.quote?.device_quote?.purchase_date).getMonth() + 1).padStart(2, '0') : '',
+  month_of_purchase: props.quote?.device_quote?.purchase_date
+    ? String(
+        new Date(props.quote?.device_quote?.purchase_date).getMonth() + 1,
+      ).padStart(2, '0')
+    : '',
   year_of_purchase: props.quote?.device_quote?.purchase_date
     ? Number(new Date(props.quote.device_quote.purchase_date).getFullYear())
     : '',
@@ -80,7 +87,6 @@ const quoteForm = useForm({
   model_id: props.quote?.device_quote?.model_id || '',
   imei: props.quote?.device_quote?.imei || '',
 });
-
 
 const { isRequired, isEmail, isMobileNo, isValidName } = useRules();
 
@@ -220,14 +226,14 @@ function onSubmit(isValid) {
           label="IMEI Number"
           required
           :rules="[
-            isRequired, 
-            (v) => !!v && /^\d{15}$/.test(v) || 'IMEI must be a 15-digit number.'
+            isRequired,
+            v =>
+              (!!v && /^\d{15}$/.test(v)) || 'IMEI must be a 15-digit number.',
           ]"
           class="w-full"
           :error="quoteForm.errors.imei"
           placeholder="Enter 15 digit IMEI number"
         />
-
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">

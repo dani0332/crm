@@ -585,6 +585,10 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
     }
 
+    public function deviceQuote()
+    {
+        return $this->hasOne(DeviceQuote::class, 'personal_quote_id', 'id');
+    }
     public function subSource()
     {
         return $this->belongsTo(Lookup::class, 'sub_source_id');
@@ -593,11 +597,5 @@ class PersonalQuote extends Model implements AuditableContract
     public function subSourceOption()
     {
         return $this->belongsTo(Lookup::class, 'sub_source_options_id');
-    }
-
-    public function deviceQuote()
-    {
-        return $this->hasOne(DeviceQuote::class, 'personal_quote_id', 'id');
-
     }
 }

@@ -1076,23 +1076,77 @@ class SplitPaymentService
         $maxRetries = 5;
 
         $response = $this->handleWithDeadlockRetries(function () use ($payment, $paymentSplits, $commission, $commissionSplitSumWithoutLastSplit) {
+            LoggerService::info('Starting commission split calculation', extra: [
+                'payment_id' => $payment->id,
+                'total_commission' => $commission,
+                'total_payment_splits' => count($paymentSplits),
+                'initial_commission_split_sum' => $commissionSplitSumWithoutLastSplit,
+                'commission_vat' => $payment->commission_vat,
+            ]);
+
             foreach ($paymentSplits as $paymentSplit) {
                 $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
+
+                LoggerService::info('Processing payment split', extra: [
+                    'payment_id' => $payment->id,
+                    'payment_split_id' => $paymentSplit->id,
+                    'sr_no' => $paymentSplit->sr_no,
+                    'calculated_commission_split' => $commissionSplitAmount,
+                    'current_commission_split_sum' => $commissionSplitSumWithoutLastSplit,
+                ]);
+
                 /* to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
                  and then subtract that amount from the total commission without vat and use the result as commission for last commission split */
                 if ($paymentSplit->sr_no == count($paymentSplits)) {
+                    $originalCommissionSplitAmount = $commissionSplitAmount;
                     $commissionSplitAmount = (float) sprintf(
                         '%.2f',
                         $commission - $commissionSplitSumWithoutLastSplit
                     );
+
+                    LoggerService::info('Last payment split - adjusting for rounding', extra: [
+                        'payment_id' => $payment->id,
+                        'payment_split_id' => $paymentSplit->id,
+                        'sr_no' => $paymentSplit->sr_no,
+                        'original_commission_split' => $originalCommissionSplitAmount,
+                        'adjusted_commission_split' => $commissionSplitAmount,
+                        'total_commission' => $commission,
+                        'commission_split_sum_without_last' => $commissionSplitSumWithoutLastSplit,
+                        'difference' => $commissionSplitAmount - $originalCommissionSplitAmount,
+                    ]);
                 } else {
                     $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
+
+                    LoggerService::info('Accumulated commission split sum', extra: [
+                        'payment_id' => $payment->id,
+                        'payment_split_id' => $paymentSplit->id,
+                        'sr_no' => $paymentSplit->sr_no,
+                        'added_amount' => $commissionSplitAmount,
+                        'new_total_sum' => $commissionSplitSumWithoutLastSplit,
+                    ]);
                 }
+
                 $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
                 /* Add Vat on commission to the first Installment of commission */
                 $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
+
+                LoggerService::info('Saving payment split with commission values', extra: [
+                    'payment_id' => $payment->id,
+                    'payment_split_id' => $paymentSplit->id,
+                    'sr_no' => $paymentSplit->sr_no,
+                    'commission_vat_applicable' => $paymentSplit->commission_vat_applicable,
+                    'commission_vat' => $paymentSplit->commission_vat,
+                    'is_first_split' => $paymentSplit->sr_no == 1,
+                ]);
+
                 $paymentSplit->save();
             }
+
+            LoggerService::info('Completed commission split calculation', extra: [
+                'payment_id' => $payment->id,
+                'total_commission' => $commission,
+                'final_commission_split_sum' => $commissionSplitSumWithoutLastSplit,
+            ]);
         }, $maxRetries);
 
         if (isset($response['status']) && in_array($response['status'], [GenericRequestEnum::FAILED, GenericRequestEnum::ERROR])) {

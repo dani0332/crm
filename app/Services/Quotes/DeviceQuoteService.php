@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\Quotes;
 
 use App\Enums\CustomerTypeEnum;
@@ -8,11 +9,11 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
-use App\Services\LookupService;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 use App\Models\DeviceMake;
+use App\Services\LookupService;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DeviceQuoteService extends BaseQuoteService
 {
@@ -172,7 +173,6 @@ class DeviceQuoteService extends BaseQuoteService
         $plansApiPassword = config('constants.KEN_API_PWD');
         $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
-
         $plansDataArr = [
             'quoteUID' => $id,
             'lang' => 'en',
@@ -266,7 +266,7 @@ class DeviceQuoteService extends BaseQuoteService
             'device' => 'DESKTOP',
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
-            'whatsappConsent'=>false,
+            'whatsappConsent' => false,
             'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
         ];
 
@@ -292,15 +292,16 @@ class DeviceQuoteService extends BaseQuoteService
             $quoteData['updated_by_id'] = Auth::id();
             $quote->update($quoteData);
 
-            if (!empty($quote->deviceQuote)) {
-                 // Combine month and year into purchase_date in Y-m format
+            if (! empty($quote->deviceQuote)) {
+                // Combine month and year into purchase_date in Y-m format
                 $purchaseDate = sprintf('%04d-%02d', $data['year_of_purchase'], $data['month_of_purchase']);
-                $quote->deviceQuote->purchase_date = $purchaseDate . '-01';
+                $quote->deviceQuote->purchase_date = $purchaseDate.'-01';
                 $quote->deviceQuote->model_id = $data['model_id'];
                 $quote->deviceQuote->make_id = $data['make_id'];
                 $quote->deviceQuote->imei = $data['imei'];
                 $quote->deviceQuote->save();
             }
+
             return $quote;
         });
     }
