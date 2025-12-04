@@ -216,12 +216,12 @@ class AwnicApiService
 
         $allDocsDownload = $uploadedDocumentsToIMCRM->where('status', true)->count() === 3;
 
-            LoggerService::info('Document processing completed', extra: [
-                'all_successful' => $allDocsDownload,
-                'total_documents' => $uploadedDocumentsToIMCRM->count(),
-                'successful_uploads' => $uploadedDocumentsToIMCRM->where('status', true)->count(),
-                'failed_uploads' => $uploadedDocumentsToIMCRM->where('status', false)->count(),
-            ]);
+        LoggerService::info('Document processing completed', extra: [
+            'all_successful' => $allDocsDownload,
+            'total_documents' => $uploadedDocumentsToIMCRM->count(),
+            'successful_uploads' => $uploadedDocumentsToIMCRM->where('status', true)->count(),
+            'failed_uploads' => $uploadedDocumentsToIMCRM->where('status', false)->count(),
+        ]);
 
         if (! $allDocsDownload || $uploadedDocumentsToIMCRM->isEmpty()) {
             $docsUploadToIMCRMFailed = $uploadedDocumentsToIMCRM->where('status', false)->pluck('name')->toArray();
