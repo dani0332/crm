@@ -12,28 +12,5 @@
   ],
   "editor.inlineSuggest.showToolbar": "always",
   "doppler.autocomplete.enable": false,
-  "doppler.hover.enable": true,
-  "search.exclude": {
-    "**/vendor": true,
-    "**/node_modules": true,
-    "**/.git": true,
-    "**/.cursor": true,
-    "**/.github": true,
-    "**/.idea": true,
-    "**/.vscode": true,
-    "**/bootstrap/cache": true,
-    "**/storage/debugbar": true,
-    "**/storage/framework": true,
-    "**/storage/temp": true,
-    "**/storage/logs/supervisor": true
-  },
-  "files.exclude": {
-    "**/node_modules": true,
-    "**/vendor": true
-  },
-  "files.watcherExclude": {
-    "**/vendor/**": true,
-    "**/node_modules/**": true,
-    "**/storage/**": true
-  }
+  "doppler.hover.enable": true
 }
