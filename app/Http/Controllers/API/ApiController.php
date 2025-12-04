@@ -31,7 +31,6 @@ use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\UpdateCustomerRepliedRequest;
-use App\Http\Resources\GenericDocumentResource;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
