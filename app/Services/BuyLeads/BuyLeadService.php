@@ -17,16 +17,20 @@ use PDF;
 
 class BuyLeadService
 {
-    private function activeRequestsCount(QuoteTypes $quoteType): int
+    private function activeRequestsCount(QuoteTypes $quoteType, bool $isCarRevival = false): int
     {
-        return (int) BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->active()->sum('requested_count');
+        return (int) BuyLeadRequest::where('quote_type_id', $quoteType->id())
+            ->where('user_id', Auth::id())
+            ->active()
+            ->when($isCarRevival, fn ($query) => $query->catA(), fn ($query) => $query->nonCatA())
+            ->sum('requested_count');
     }
 
     public function getBlLeadRemainingLimit(QuoteTypes $quoteType)
     {
-
+        $isCarRevival = $quoteType->value == QuoteTypes::CAR_CAT_A->value;
         // if the quote type is car revival, then set the quote type to car
-        if ($quoteType->value == QuoteTypes::CAR_CAT_A->value) {
+        if ($isCarRevival) {
             $quoteType = QuoteTypes::CAR;
             // check if the user has the car revival advisor role
         }
@@ -37,25 +41,25 @@ class BuyLeadService
 
         $buyLeadMaxCap = $leadAllocation?->buy_lead_max_capacity ?? 0;
 
-        return $buyLeadMaxCap - $this->activeRequestsCount($quoteType);
+        return $buyLeadMaxCap - $this->activeRequestsCount($quoteType, $isCarRevival);
     }
 
     public function isRequestAlreadySubmitted(QuoteTypes $quoteType, bool $isCarRevival = false): bool
     {
-        $buyLeadRequest = BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->notExpired()->unfulfilled();
-        if ($isCarRevival) {
-            $buyLeadRequest->where('source', LeadSourceEnum::REVIVAL);
-        }
-
-        return $buyLeadRequest->exists();
+        return BuyLeadRequest::where('quote_type_id', $quoteType->id())
+            ->where('user_id', Auth::id())
+            ->notExpired()
+            ->unfulfilled()
+            ->when($isCarRevival, fn ($query) => $query->catA(), fn ($query) => $query->nonCatA())
+            ->exists();
     }
 
     private function verifyPreChecks(RequestBuyLeadsRequest $request): ?string
     {
 
         $quoteType = $request->getQuoteType();
-        $isCarRevival = $request->getQuoteType()->value == QuoteTypes::CAR_CAT_A->value ? true : false;
-        if ($quoteType->value == QuoteTypes::CAR_CAT_A->value) {
+        $isCarRevival = $request->getQuoteType()->value == QuoteTypes::CAR_CAT_A->value;
+        if ($isCarRevival) {
             $quoteType = QuoteTypes::CAR;
         }
 
