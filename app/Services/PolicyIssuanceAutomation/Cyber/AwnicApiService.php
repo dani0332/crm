@@ -18,6 +18,7 @@ class AwnicApiService
         private AwnicResponseHandler $responseHandler,
         private AwnicDocumentHandler $documentHandler,
         private AwnicQuoteUpdaterService $quoteUpdater,
+        private AwnicValidationService $validationService,
     ) {}
 
     /**
@@ -95,6 +96,13 @@ class AwnicApiService
      */
     public function uploadDocuments($quote, $process): array
     {
+        // Validate required documents and insurer quote number added before hitting api
+        $requiredDocuments = $this->documentHandler->getDocumentByType($quote, DocumentTypeCode::CYBER_EMIRATES_ID);
+        $validationResult = $this->validationService->validateUploadDocuments($quote, $requiredDocuments);
+        if (!$validationResult['status']) {
+            return $validationResult;
+        }
+
         $endPoint = '/cyber/uploadDocument';
         $response = $this->responseHandler->buildStepResponse(AwnicEnum::STEP_UPLOAD_DOCUMENTS);
         
@@ -102,18 +110,6 @@ class AwnicApiService
             'endpoint' => $endPoint,
             'insurer_quote_number' => $quote->insurer_quote_number,
         ]);
-
-        $requiredDocuments = $this->documentHandler->getDocumentByType($quote, DocumentTypeCode::CYBER_EMIRATES_ID);
-        if (! $requiredDocuments || empty($requiredDocuments)) {
-            $errorMessage = 'Required Documents not uploaded';
-            LoggerService::warning('Missing required document', extra: [
-                'required_document_type' => DocumentTypeCode::CYBER_EMIRATES_ID,
-                'available_documents' => collect($quote->documents ?? [])->pluck('document_type_code')->toArray(),
-            ]);
-            $response['message'] = $response['error'] = $errorMessage;
-
-            return $response;
-        }
 
         $allDocsDownloaded = true;
         $documents = is_array($requiredDocuments) ? $requiredDocuments : [$requiredDocuments];
@@ -183,8 +179,15 @@ class AwnicApiService
         $endPoint = '/cyber/downloadDocument';
 
         $uploadedDocumentsToIMCRM = collect();
+        $docTypeCodeForIMCRM = $this->documentHandler->getDocTypeCodeForIMCRM($quote);
 
-        foreach ($this->documentHandler->getDocTypeCodeForIMCRM($quote) as $imCrmDocKey => $docId) {
+        // validation added before hitting api to awnic for downloading document
+        $validationResult = $this->validationService->validateDownloadDocuments($quote, $docTypeCodeForIMCRM);
+        if (!$validationResult['status']) {
+            return $validationResult;
+        }
+
+        foreach ($docTypeCodeForIMCRM as $imCrmDocKey => $docId) {
             $payload = $this->requestBuilder->buildDownloadDocumentPayload($docId);
 
             $httpResponse = Awnic::post($endPoint, $payload);

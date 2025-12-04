@@ -2,6 +2,7 @@
 
 namespace App\Services\PolicyIssuanceAutomation\Cyber;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Http\Requests\SendBookPolicyRequest;
@@ -11,6 +12,11 @@ use Illuminate\Support\Facades\Validator;
 
 class AwnicValidationService
 {
+
+    public function __construct(
+        private AwnicDocumentHandler $documentHandler,
+    ) {}
+
     /**
      * Validate book policy prerequisites
      *
@@ -118,5 +124,42 @@ class AwnicValidationService
 
         return ['status' => true];
     }
-}
 
+    public function validateUploadDocuments($quote, $requiredDocuments): array
+    {
+        if (! $requiredDocuments || empty($requiredDocuments)) {
+            return [
+                'status' => false,
+                'error' => 'Required documents not uploaded',
+                'message' => 'Required documents not uploaded',
+            ];
+        }
+
+        if ($quote->insurer_quote_number == null) {
+            return [
+                'status' => false,
+                'error' => 'Insurer quote number not found',
+                'message' => 'Insurer quote number not found',
+            ];
+        }
+
+        return ['status' => true];
+    }
+
+    public function validateDownloadDocuments($quote, $docTypeCodeForIMCRM): array
+    {
+        $missingDocs = array_keys(array_filter($docTypeCodeForIMCRM, fn($docId) => $docId === null));
+        if (!empty($missingDocs)) {
+            return [
+                'status' => false,
+                'error' => 'Missing documents: ' . implode(', ', $missingDocs),
+                'message' => 'Missing documents: ' . implode(', ', $missingDocs),
+            ];
+        }
+        return [
+            'status' => true,
+            'error' => null,
+            'message' => null,
+        ];
+    }
+}
