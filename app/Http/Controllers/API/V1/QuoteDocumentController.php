@@ -22,6 +22,7 @@ class QuoteDocumentController extends Controller
 {
     use GenericQueriesAllLobs;
 
+    public $apiService;
     protected $quoteDocumentService;
 
     public function __construct(ApiService $apiService,QuoteDocumentService $quoteDocumentService)
