@@ -27,6 +27,7 @@ const loader = reactive({
 
 const filters = reactive({
   ref_id: '',
+  certificate_number: '',
   name: '',
   date_of_purchase: '',
   chassis_number: '',
@@ -129,7 +130,6 @@ function filterTransactions(isValid) {
       preserveScroll: true,
       onFinish: () => {
         loader.table = false;
-        setQueryFilters();
       },
       onBefore: () => {
         loader.table = true;
@@ -267,6 +267,19 @@ const filteredHeaders = computed(() => {
   });
 });
 
+const showCertificateNumberFilter = computed(() => {
+  const reports = [
+    page.props.ep_enums.ECB,
+    page.props.ep_enums.RDX,
+    page.props.ep_enums.MDX,
+  ];
+
+  if (reports.includes(page.props.embeddedProduct.detail.short_code)) {
+    return true;
+  }
+  return false;
+});
+
 const showEpPaymentStatusFilter = (function () {
   const reports = [
     page.props.ep_enums.ECB,
@@ -356,6 +369,24 @@ const showEpSageStatusFilter = (function () {
             placeholder="Search by Ref-ID"
           />
         </div>
+        <div v-if="showCertificateNumberFilter">
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              EP policy number
+            </label>
+            <template #tooltip> EP policy number </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.certificate_number"
+            type="search"
+            name="certificate_number"
+            class="w-full"
+            placeholder="Search by EP policy number"
+          />
+        </div>
+
         <div v-if="embeddedProduct.detail.short_code === ep_enums.ECB">
           <x-tooltip placement="bottom">
             <label
