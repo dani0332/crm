@@ -52,10 +52,12 @@ trait SpatieActivityLog
         $code = Context::get('code');
         
         // Set extra column values
-        $activity->url = request()->getRequestUri();
+        // Check if request() is available (null in console commands and queued jobs)
+        $request = request();
+        $activity->url = $request ? $request->getRequestUri() : null;
         $activity->feature = $feature;
-        $activity->ip_address = request()->ip();
-        $activity->user_agent = request()->userAgent();
+        $activity->ip_address = $request ? $request->ip() : null;
+        $activity->user_agent = $request ? $request->userAgent() : null;
         $activity->code = $code;
 
         // For update events, ensure both old and new values are stored
