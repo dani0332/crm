@@ -22,7 +22,7 @@ class QuoteDocumentController extends Controller
 
     protected $quoteDocumentService;
 
-    public function __construct( QuoteDocumentService $quoteDocumentService)
+    public function __construct(QuoteDocumentService $quoteDocumentService)
     {
         $this->quoteDocumentService = $quoteDocumentService;
     }

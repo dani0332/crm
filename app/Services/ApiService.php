@@ -525,7 +525,7 @@ class ApiService
 
         return $genericDocuments ?? [];
     }
-    
+
     public function missingDocsReminder($quoteUuid)
     {
         try {
