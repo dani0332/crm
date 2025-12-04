@@ -126,31 +126,31 @@ class AwnicBookPolicyService
         $bookPolicyPayload = $this->bookPolicyPayload($quote, QuoteTypes::CYBER->value, $quote->payments, $quote->quoteDocuments);
 
         LoggerService::info('Booking details prepared', extra: [
-            'invoice_date' => $payment->insurer_invoice_date,
-            'insurer_tax_invoice_number' => $payment->insurer_tax_number,
-            'commission_vat_applicable' => $payment->commission_vat_applicable,
-            'total_commission' => $payment->commission,
-            'commission_percentage' => $payment->commmission_percentage,
-            'payment_code' => $payment->code,
+            'invoice_date' => $payment?->insurer_invoice_date,
+            'insurer_tax_invoice_number' => $payment?->insurer_tax_number,
+            'commission_vat_applicable' => $payment?->commission_vat_applicable,
+            'total_commission' => $payment?->commission,
+            'commission_percentage' => $payment?->commmission_percentage,
+            'payment_code' => $payment?->code,
         ]);
 
         try {
             $updateBookingRequest = [
-                'invoice_date' => $payment->insurer_invoice_date,
-                'insurer_tax_invoice_number' => $payment->insurer_tax_number,
-                'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
-                'discount' => $payment->discount_value,
+                'invoice_date' => $payment?->insurer_invoice_date,
+                'insurer_tax_invoice_number' => $payment?->insurer_tax_number,
+                'insurer_commmission_invoice_number' => $payment?->insurer_commmission_invoice_number,
+                'discount' => $payment?->discount_value,
                 'transaction_payment_status' => $bookPolicyPayload['transactionPaymentStatus'],
                 'broker_invoice_number' => $bookPolicyPayload['brokerInvoiceNo'],
-                'commission_vat_not_applicable' => $payment->commission_vat_not_applicable,
-                'commission_vat_applicable' => $payment->commission_vat_applicable,
-                'total_commission' => $payment->commission,
+                'commission_vat_not_applicable' => $payment?->commission_vat_not_applicable,
+                'commission_vat_applicable' => $payment?->commission_vat_applicable,
+                'total_commission' => $payment?->commission,
                 'invoice_description' => $bookPolicyPayload['invoiceDescription'],
-                'vat_on_commission' => $payment->commission_vat,
-                'commission_percentage' => $payment->commmission_percentage,
-                'payment_code' => $payment->code,
+                'vat_on_commission' => $payment?->commission_vat,
+                'commission_percentage' => $payment?->commmission_percentage,
+                'payment_code' => $payment?->code,
                 'model_type' => QuoteTypes::CYBER->value,
-                'quote_id' => $quote->id,
+                'quote_id' => $quote?->id,
                 'through_automation' => true,
             ];
 
