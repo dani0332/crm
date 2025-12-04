@@ -2,15 +2,18 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\SendUpdateLog;
+use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -49,6 +52,12 @@ class EndorsementReportService extends ManagementReport
                 EndorsementStatusEnum::CORRECTION_OF_POLICY_DETAILS,
             ])
             ->pluck('id')->toArray();
+
+        $statues = [SendUpdateLogStatusEnum::UPDATE_BOOKED];
+        $includeFailedBookings = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::MR_INCLUDE_FAILED_BOOKINGS);
+        if ($includeFailedBookings) {
+            $statues[] = SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED;
+        }
 
         $query = SendUpdateLog::query()
             ->select(
@@ -178,7 +187,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id')
             ->leftJoin('lookups as ls', 'personal_quotes.sub_source_id', '=', 'ls.id')
             ->leftJoin('lookups as sso', 'personal_quotes.sub_source_options_id', '=', 'sso.id')
-            ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
+            ->whereIn('send_update_logs.status', $statues)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $query);
         $this->applyFilters($query, $request);
@@ -296,7 +305,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id')
             ->leftJoin('lookups as ls', 'personal_quotes.sub_source_id', '=', 'ls.id')
-            ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
+            ->whereIn('send_update_logs.status', $statues)
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $reversalQuery);
