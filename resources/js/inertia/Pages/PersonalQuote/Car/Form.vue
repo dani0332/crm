@@ -22,6 +22,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  emirates: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const { isRequired, isEmail, maxValue, maxCharacters } = useRules();
@@ -567,6 +571,13 @@ watch(
     quoteForm.sub_source_options_id = null;
   },
 );
+
+const emirateOptions = computed(() => {
+  return props.emirates.map(emirate => ({
+    value: emirate.text,
+    label: emirate.text,
+  }));
+});
 </script>
 
 <template>
@@ -861,14 +872,15 @@ watch(
               />
             </div>
             <div class="w-1/2 px-2">
-              <x-input
-                type="text"
+              <x-select
                 v-model="quoteForm.addressObj.city"
                 placeholder="City"
+                :options="emirateOptions"
                 :rules="[isRequired]"
                 class="w-full"
                 :disabled="isCourierStatusPending"
               />
+      <!--              label="City" -->
             </div>
             <div class="w-1/2 px-2">
               <x-input

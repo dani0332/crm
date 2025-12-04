@@ -10,6 +10,7 @@ const props = defineProps({
   travelDestinations: Object,
   subSources: { type: Array, default: () => [] },
   leadSourceParams: { type: Object, default: () => ({}) },
+  emirates: { type: Array, default: () => [] },
 });
 const page = usePage();
 const travelQuoteEnum = page.props.travelQuoteEnum;
@@ -523,6 +524,13 @@ const floorLabel = computed(() => {
 
   return label;
 });
+
+const emirateOptions = computed(() => {
+  return props.emirates.map(emirate => ({
+    value: emirate.text,
+    label: emirate.text,
+  }));
+});
 </script>
 
 <template>
@@ -867,10 +875,10 @@ const floorLabel = computed(() => {
               />
             </div>
             <div class="w-1/2 px-2">
-              <x-input
-                type="text"
+              <x-select
                 v-model="quoteForm.addressObj.city"
                 placeholder="City"
+                :options="emirateOptions"
                 :rules="[isRequired]"
                 class="w-full"
                 :disabled="isCourierStatusPending"

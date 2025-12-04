@@ -404,6 +404,7 @@ class TravelController extends Controller
 
         $model = $this->genericModel;
         $subSources = $this->lookupService->getSubSource();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
         LoggerService::info('Travel create method called with parameters', [
             'type' => $request->input('type'),
@@ -417,6 +418,7 @@ class TravelController extends Controller
             'customTitles' => $customTitles,
             'fields' => $fields,
             'dropdownSource' => $dropdownSource,
+            'emirates' => $emirates,
             'renewalAdvisors' => $renewalAdvisors ?? [],
             'isRenewalUser' => $isRenewalUser,
             'subSources' => $subSources,
@@ -500,6 +502,7 @@ class TravelController extends Controller
             : 'Pending';
 
         $subSources = $this->lookupService->getSubSource();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
         return inertia('TravelQuote/Form', [
             'quote' => $record,
@@ -514,6 +517,7 @@ class TravelController extends Controller
             'customerAddressData' => $customerAddressData,
             'courierQuoteStatus' => $courierQuoteStatus,
             'subSources' => $subSources,
+            'emirates' => $emirates,
             'leadSourceParams' => [], // Empty for edit mode
         ]);
     }
