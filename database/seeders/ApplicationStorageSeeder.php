@@ -69,7 +69,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedEpEcbConfigurations();
         $this->seedUnavailableTimeThreshold();
         $this->sendUpdateEmailBirdFlow();
-        $this->seedMisreportData();
+        $this->seedBranchData();
     }
 
     private function livaCarAutomationSeed()
@@ -1049,7 +1049,7 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
-    private function seedMisreportData()
+    private function seedBranchData()
     {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_MISREPORT_JOB],
@@ -1070,6 +1070,26 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BIRD_MISREPORT_JOB_WORKFLOW],
             [
                 'value' => $birdWorkflowUrl,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BRANCH_LIVE_DATE_V1],
+            [
+                'value' => '2025-08-27 00:00:00',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BRANCH_LIVE_DATE_V2],
+            [
+                'value' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

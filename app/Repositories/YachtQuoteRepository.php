@@ -183,7 +183,7 @@ class YachtQuoteRepository extends BaseRepository
         if (isset($data['latest_insured'])) {
             $quote->emirates_id_number = $data['latest_insured']['id_type'] == 'emiratesId' ? $data['latest_insured']['id_number'] : null;
         }
-        $quote->branch_name = $quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Yacht);
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Yacht));
         
         return $quote;
     }
@@ -289,7 +289,7 @@ class YachtQuoteRepository extends BaseRepository
     private function postProcessYachtQuotes($quotes)
     {
         return $quotes->map(function ($item) {
-            $item->branch_name = $item->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Yacht);
+            $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Yacht));
             return $item;
         });
     }

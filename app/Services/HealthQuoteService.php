@@ -221,7 +221,8 @@ class HealthQuoteService extends BaseService
             'sso.description as sub_source_option_description',
             'ub.branch_id as advisor_primary_branch_id',
             'b.name as lead_branch_name',
-            'is_quote_locked'
+            'is_quote_locked',
+            'is_branch_applicable',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -397,7 +398,7 @@ class HealthQuoteService extends BaseService
     public function postProcessHealthQuotes($quotes)
     {
         return $quotes->map(function ($quote) {
-            $quote->branch_name = $quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id);
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id));
 
             return $quote;
         });

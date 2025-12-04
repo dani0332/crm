@@ -73,6 +73,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'emirate_of_your_visa_id',
             'pec_marked_at',
             'branch_id',
+            'is_branch_applicable',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
@@ -102,6 +103,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'insuranceProvider:id,text',
             'plan:id,text',
             'subSource:id,text',
+            'policyIssuedLogs',
         ]);
     }
 

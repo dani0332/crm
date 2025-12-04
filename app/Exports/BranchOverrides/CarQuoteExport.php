@@ -139,7 +139,7 @@ class CarQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
      */
     public function map($quote): array
     {
-        $branchName = $quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car);
+        $branchName = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car));
 
         return [
             $quote->code,

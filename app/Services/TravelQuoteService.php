@@ -202,6 +202,7 @@ class TravelQuoteService extends BaseService
             'sso.description as sub_source_option_description',
             'ub.branch_id as advisor_primary_branch_id',
             'b.name as lead_branch_name',
+            'tqr.is_branch_applicable',
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -448,7 +449,7 @@ class TravelQuoteService extends BaseService
     public function postProcessTravelQuotes($quotes)
     {
         return $quotes->map(function ($quote) {
-            $quote->branch_name = $quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel);
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel));
 
             return $quote;
         });

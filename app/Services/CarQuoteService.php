@@ -586,6 +586,7 @@ class CarQuoteService extends BaseService
                 'sso.description as sub_source_option_description',
                 'ub.branch_id as advisor_primary_branch_id',
                 'b.name as lead_branch_name',
+                'cqr.is_branch_applicable',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -1079,7 +1080,7 @@ class CarQuoteService extends BaseService
     public function postProcessCarQuotes($quotes)
     {
         return $quotes->map(function ($quote) {
-            $quote->branch_name = $quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car);
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car));
 
             return $quote;
         });

@@ -83,7 +83,7 @@ class SavingsQuoteService extends BaseQuoteService
     public function postProcessSavingsQuote($quotes)
     {
         return $quotes->map(function ($item) {
-            $item->branch_name = $item->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Savings);
+            $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Savings));
 
             return $item;
         });
@@ -248,7 +248,7 @@ class SavingsQuoteService extends BaseQuoteService
     public function getShowData(string $uuid)
     {
         $quote = $this->getOne($uuid, true);
-        $quote->branch_name = $quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Savings);
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Savings));
         $data = $this->getShowCommonData($quote);
 
         $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::SAVINGS_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::SAVINGS) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));

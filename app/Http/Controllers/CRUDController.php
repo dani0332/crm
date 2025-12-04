@@ -890,7 +890,7 @@ class CRUDController extends Controller
 
                 $isEpEcbPaymentPaid = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB, true);
                 $carTypeofInsurance = CarTypeInsurance::select('id', 'text')->find($record->car_type_insurance_id) ?? null;
-                $record->branch_name = $record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Car);
+                $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Car));
 
                 return inertia('PersonalQuote/Car/Show', compact([
                     'record',
@@ -1238,7 +1238,7 @@ class CRUDController extends Controller
                 $lead = $this->healthQuoteService->getLead($record->id);
                 $isAUHLead = $lead->isAUHLead(false);
                 $hasPecTag = $lead->has_pec_tag;
-                $record->branch_name = $record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id);
+                $record->branch_name = !$record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id));
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
