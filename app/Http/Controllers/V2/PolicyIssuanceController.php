@@ -55,7 +55,7 @@ class PolicyIssuanceController extends Controller
         PolicyIssuanceJob::dispatch($policyIssuance->id)->onQueue('policy-issuance-automation');
         return response()->json(
             [
-                'message' => 'Policy issuance triggered successfully',
+                'message' => 'Manual policy issuance triggered successfully',
                 'policy_issuance_id' => $policyIssuance->id,
             ], 200);
     }

@@ -74,12 +74,12 @@ const manualTriggerPolicyIssuance = async () => {
       },
     }).then(res => {
       notification.success({
-        title: res.data.message || 'Policy Issuance Triggered Successfully',
+        title: res.data.message || 'Manual Trigger Policy Issuance Successfully',
         position: 'top',
       });
     }).catch(err => {
       notification.error({
-        title: err.response.data.message || 'Failed to Trigger Policy Issuance',
+        title: err.response.data.message || 'Failed to Manual Trigger Policy Issuance',
         position: 'top',
       });
     });
@@ -195,7 +195,7 @@ const onLoadAuditLogData = async () => {
             </x-button>
           </div>
           <div
-            v-if="hasRole(rolesEnum.Engineering) && apiLogs.data?.length == 0"
+            v-if="apiLogs.data?.length == 0"
             class="flex gap-2"
             @click.stop
           >
