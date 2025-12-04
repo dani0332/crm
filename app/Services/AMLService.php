@@ -39,6 +39,7 @@ use App\Models\Customer;
 use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
 use App\Models\CycleQuote;
+use App\Models\DeviceQuote;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -104,6 +105,7 @@ class AMLService
             (int) QuoteTypes::LIFE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::SAVINGS->id() => Carbon::createFromFormat('Y-m-d', '2025-02-14'),
             (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
+            (int) QuoteTypes::DEVICE->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
         };
 
         return Carbon::createFromFormat(
@@ -123,6 +125,7 @@ class AMLService
             QuoteTypes::LIFE->id() => $quoteRequestId,
             QuoteTypes::SAVINGS->id() => $quoteRequestId,
             QuoteTypes::HOME->id() => $quoteRequestId,
+            QuoteTypes::DEVICE->id() => $quoteRequestId,
         };
     }
 
@@ -142,6 +145,7 @@ class AMLService
             QuoteTypes::LIFE->id() => LifeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::SAVINGS->id() => SavingsQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::DEVICE->id() => DeviceQuote::where($filterColumn, $quoteRequestId)->touch(),
         };
     }
 
@@ -283,6 +287,15 @@ class AMLService
         } elseif ($quoteTypeId == QuoteTypes::SAVINGS->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::SAVINGS->id())->with([
                 'savingsQuote',
+                'customer.detail',
+                'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
+                'paymentStatus',
+            ])->where('id', $quoteRequestId)->firstOrFail();
+        } elseif ($quoteTypeId == QuoteTypes::DEVICE->id()) {
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::DEVICE->id())->with([
+                'deviceQuote',
                 'customer.detail',
                 'quoteStatus',
                 'payments.paymentMethod',
@@ -2221,6 +2234,7 @@ class AMLService
             14 => 'PetQuote', // QuoteTypes::PET
             15 => 'YachtQuote', // QuoteTypes::YACHT
             16 => 'HomeQuote', // QuoteTypes::HOME
+            20 => 'DeviceQuote', // QuoteTypes::DEVICE
         ];
 
         $nonPersonalMapping = [

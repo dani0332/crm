@@ -301,7 +301,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
-        if ($bookPolicyDetails['lineOfBusiness'] == quoteTypeCode::Travel) {
+        if ($bookPolicyDetails['lineOfBusiness'] == quoteTypeCode::Travel || $bookPolicyDetails['lineOfBusiness'] == quoteTypeCode::Device) {
             $payments = $payments->map(function ($payment) use ($quoteType, $record) {
                 $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $record, $payment, true);
                 $payment->isCreditCardEnabled = $tapPaymentConfiguration['isCreditCardEnabled'];

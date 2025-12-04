@@ -1,0 +1,11 @@
+vendor/
+node_modules/
+.git/
+.cursor/
+.github/
+.idea/
+.vscode/
+storage/debugbar/
+storage/framework/
+storage/logs/supervisor/
+storage/temp/

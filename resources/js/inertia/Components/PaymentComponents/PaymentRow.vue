@@ -95,7 +95,11 @@ const getCaptureOption = computed(() => {
 
   let isCaptureButtonEnabled =
     page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
-  if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
+  if (
+    (props.quoteType === quoteTypeCodeEnum.Travel ||
+      props.quoteType === quoteTypeCodeEnum.Device) &&
+    !props.sendUpdate
+  ) {
     isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
   }
 
@@ -177,6 +181,7 @@ const shouldProcessUpdate = () => {
     quoteTypeCodeEnum.Home,
     quoteTypeCodeEnum.Bike,
     quoteTypeCodeEnum.Travel,
+    quoteTypeCodeEnum.Device,
   ];
 
   const captureOption = getCaptureOption.value;

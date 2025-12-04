@@ -114,6 +114,7 @@ class AMLController extends Controller
                     QuoteTypes::LIFE->id(),
                     QuoteTypes::SAVINGS->id(),
                     QuoteTypes::HOME->id(),
+                    QuoteTypes::DEVICE->id(),
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
@@ -501,6 +502,7 @@ class AMLController extends Controller
                 QuoteTypes::HOME->id(),
                 QuoteTypes::TRAVEL->id(),
                 QuoteTypes::BIKE->id(),
+                QuoteTypes::DEVICE->id(),
             ];
             if (in_array($quoteTypeId, $enableInsurerScreening)) {
                 session()->put('insurerAMLScreeningResponse');

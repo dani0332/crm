@@ -70,6 +70,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedUnavailableTimeThreshold();
         $this->sendUpdateEmailBirdFlow();
         $this->seedEnableMetLife();
+        $this->seedNGICarPolicyIssuance();
     }
 
     private function livaCarAutomationSeed()

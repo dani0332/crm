@@ -385,7 +385,6 @@ class CentralController extends Controller
                 app(EmbeddedProductRepository::class)->syncCarQuoteEpEcb($quote, QuoteTypeId::Car);
             }
         }
-
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
         app(TravelQuoteService::class)->updateCustomerProfileDetails($quoteType, $uuid);
 
