@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue';
+import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
 
+const notification = useNotifications('toast');
 /**
  * Component props definition
  * - modelValue: Controls the visibility of the modal (for v-model directive)
@@ -27,15 +29,21 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  currentFileURL: {
+    type: String,
+    required: true,
+  },
 });
 
 // Define emits for two-way binding with v-model
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'update:currentFileURL']);
 
 // Reactive state for the component
 const currentFileIndex = ref(props.initialIndex);
 const zoomLevel = ref(1);
 const modalRef = ref(null);
+
+const { getTempUrl } = useDocumentTempUrl();
 
 /**
  * Returns the currently displayed file object
@@ -74,23 +82,34 @@ const closeModal = () => {
  * Navigates to the next file in the gallery
  * Resets zoom level when navigating to a new file
  */
-const nextFile = () => {
+ const nextFile = async () => {
   if (hasNextFile.value) {
     currentFileIndex.value++;
     zoomLevel.value = 1;
+    // Get the new file URL after index change
+    const documentURL = await getTempUrl(
+      currentFile.value.doc_url,
+    );
+    emit('update:currentFileURL', documentURL);
   }
 };
 
 /**
  * Navigates to the previous file in the gallery
- * Resets zoom level when navigating to a new file
+ * Resets zoom level when navigating to  a new file
  */
-const previousFile = () => {
+ const previousFile = async () => {
   if (hasPreviousFile.value) {
     currentFileIndex.value--;
     zoomLevel.value = 1;
+    // Get the new file URL after index change
+    const documentURL = await getTempUrl(
+      currentFile.value.doc_url,
+    );
+    emit('update:currentFileURL', documentURL);
   }
 };
+
 
 /**
  * Increases zoom level for the current image
@@ -302,7 +321,7 @@ watch(
         >
           <div class="overflow-auto items-center justify-center">
             <img
-              :src="storageUrl + currentFile?.doc_url"
+              :src="currentFileURL"
               :style="{ transform: `scale(${zoomLevel})` }"
               class="max-w-full max-h-full"
               alt="Document Image"
@@ -314,7 +333,7 @@ watch(
           class="w-full h-80vh"
         >
           <embed
-            :src="storageUrl + currentFile?.doc_url"
+            :src="currentFileURL"
             type="application/pdf"
             class="w-full h-full"
           />
