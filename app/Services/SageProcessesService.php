@@ -219,7 +219,10 @@ class SageProcessesService extends BaseService
         try {
             $responseData = json_decode($firstFailedLog->response, true);
 
-            return $responseData['error']['message']['value'] ?? null;
+            // Safely extract nested error message value with validation
+            return ! empty($responseData['error']['message']['value'])
+                ? $responseData['error']['message']['value']
+                : null;
         } catch (\Exception $e) {
             LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not parse sage API response: '.$e->getMessage(), extra: [
                 'sage_api_log_id' => $firstFailedLog->id ?? null,
