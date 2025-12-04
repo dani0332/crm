@@ -245,7 +245,6 @@ watch(
   },
 );
 const { openTempUrl } = useDocumentTempUrl();
-
 </script>
 <template>
   <div v-if="can(permissionsEnum.SAVE_QUOTE_NOTES)">
@@ -422,9 +421,11 @@ const { openTempUrl } = useDocumentTempUrl();
               >
             </p>
             <p v-else class="max-w-[200px] truncate">
-              <a @click.prevent="openTempUrl(file.url)" class="text-primary cursor-pointer">{{
-                file.name
-              }}</a>
+              <a
+                @click.prevent="openTempUrl(file.url)"
+                class="text-primary cursor-pointer"
+                >{{ file.name }}</a
+              >
             </p>
 
             <x-icon

@@ -339,7 +339,9 @@ const { openTempUrl } = useDocumentTempUrl();
             <a
               target="_blank"
               class="text-primary-600 cursor-pointer"
-              @click.prevent="openTempUrl(item.watermarked_doc_url || item.doc_url)"
+              @click.prevent="
+                openTempUrl(item.watermarked_doc_url || item.doc_url)
+              "
             >
               {{ item.original_name }}
             </a>
@@ -458,7 +460,12 @@ const { openTempUrl } = useDocumentTempUrl();
                 :key="quoteDocument.id"
               >
                 <a
-                  @click.prevent="openTempUrl(quoteDocument.doc_url || quoteDocument.watermarked_doc_url)"
+                  @click.prevent="
+                    openTempUrl(
+                      quoteDocument.doc_url ||
+                        quoteDocument.watermarked_doc_url,
+                    )
+                  "
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
