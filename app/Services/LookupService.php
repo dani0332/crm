@@ -25,6 +25,7 @@ use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use App\Services\Cache\CacheManager;
 use Illuminate\Support\Facades\Cache;
+use App\Models\PaymentStatus;
 
 class LookupService extends BaseService
 {
@@ -282,6 +283,12 @@ class LookupService extends BaseService
         return CacheManager::remember(CacheKeyEnum::DEVICE_QUOTE_LOOKUPS, function () {
             return Capi::request('/api/v1-get-all-device-lookups', 'post');
         });
+    }
+    public function getPaymentStatuses()
+    {
+        return PaymentStatus::where('is_active', 1)
+            ->orderBy('text')
+            ->get(['id', 'text']);
     }
     public function getDeviceQuoteLookUpData()
     {
