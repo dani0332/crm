@@ -322,10 +322,9 @@ class QuoteDocumentController extends Controller
      */
     public function downloadProformaPaymentRequest(QuoteDocument $quoteDocument)
     {
-        $disk = Storage::disk('azureIM');
-
-        if ($disk->exists($quoteDocument->doc_url)) {
-            $contents = $disk->get($quoteDocument->doc_url);
+        $documentUrl = $this->quoteDocumentService->getDocumentUrl($quoteDocument->doc_url);
+        if ($documentUrl) {
+            $contents = file_get_contents($documentUrl);
 
             return response($contents)->header('content-type', $quoteDocument->doc_mime_type);
         } else {
