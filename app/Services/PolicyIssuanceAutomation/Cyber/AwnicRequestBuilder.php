@@ -17,7 +17,7 @@ class AwnicRequestBuilder
      * @param mixed $splitPayment
      * @return array
      */
-    public function buildIssuePolicyPayload($quote, $customer, $nationality, $planDetail, $splitPayment): array
+    public function buildIssuePolicyPayload($quote, $customer, $nationality, $planDetail, $splitPayment, $emirateOfRegistration): array
     {
         return [
             'CustName' => trim(($quote->first_name ?? '') . ' ' . ($quote->last_name ?? '')),
@@ -25,7 +25,7 @@ class AwnicRequestBuilder
             'CustEmail' => $quote->email,
             'CustEID' => str_replace('-', '', $customer->emirates_id_number ?? "784200012345671"),
             'CustDOB' => $customer->dob ? strtoupper(Carbon::parse($customer->dob)->format('d-M-Y')) : null,
-            'CustAddress' => $quote->company_address ?? "abc address",
+            'CustAddress' => $emirateOfRegistration?->text ?? "abc address",
             'CustCountryCode' => $nationality?->awni_country_code ?? null,
             'LimitOfLiability' => $planDetail->coverage ?? null,
             'PlanName' => $planDetail->planName ?? null,

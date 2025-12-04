@@ -73,6 +73,7 @@ class AwnicValidationService
     {
         $customer = $quote->customer ?? null;
         $nationality = $quote->nationality ?? null;
+        $emirateOfRegistration = $quote->cyberQuote->emirateOfRegistration ?? null;
         
         $missing = [];
 
@@ -85,17 +86,16 @@ class AwnicValidationService
         }
 
         $nationality == null && $missing[] = 'nationality';
+        $emirateOfRegistration == null && $missing[] = 'emirate of registration';
 
         // Only check emirates id if customer exists (not null)
         if ($customer === null) {
             $missing[] = 'customer';
-        } elseif (empty($customer->emirates_id_number)) {
-            $missing[] = 'emirates id number';
-        }else {
-            $customer->dob !== null && $missing[] = 'dob';
-            // TODO: Add emirate of registration id validation over here
-            $customer->company_address !== null && $missing[] = 'address';
+        } else {
+            empty($customer->emirates_id_number) && $missing[] = 'emirates id number';
+            $customer->dob === null && $missing[] = 'dob';
         }
+
 
         if (!empty($missing)) {
             LoggerService::error('Missing required data', extra: [

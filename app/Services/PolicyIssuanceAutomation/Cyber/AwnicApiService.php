@@ -40,12 +40,13 @@ class AwnicApiService
         
         $customer = $quote->customer;
         $nationality = $quote->nationality;
+        $emirateOfRegistration = $quote->cyberQuote->emirateOfRegistration;
         $planDetail = $quote->cyberPlanDetail;
 
         $payment = $quote->payments()->mainLeadPayment()->first();
         $splitPayment = $payment?->paymentSplits()->where('payment_method', PaymentMethodsEnum::CreditCard)->first();
 
-        $payload = $this->requestBuilder->buildIssuePolicyPayload($quote, $customer, $nationality, $planDetail, $splitPayment);
+        $payload = $this->requestBuilder->buildIssuePolicyPayload($quote, $customer, $nationality, $planDetail, $splitPayment, $emirateOfRegistration);
         $headers = $this->requestBuilder->buildIssuePolicyHeaders();
 
         $httpResponse = Awnic::post($endPoint, $payload, $headers);
