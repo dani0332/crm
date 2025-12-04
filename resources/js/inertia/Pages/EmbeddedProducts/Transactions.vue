@@ -198,10 +198,13 @@ function reSync(code) {
 }
 
 onMounted(() => {
-  setQueryStringFilters({
-    ...params,
-    ...serverOptions.value,
-  }, filters)
+  setQueryStringFilters(
+    {
+      ...params,
+      ...serverOptions.value,
+    },
+    filters,
+  );
 });
 
 watch(
@@ -234,21 +237,21 @@ const filteredHeaders = computed(() => {
       ];
       return !excludeHeaders.includes(header.value);
     } else if (
-      ![  page.props.ep_enums.ECB,
-          page.props.ep_enums.RDX,
-          page.props.ep_enums.MDX
-      ].includes(page.props.embeddedProduct.detail.short_code)) {
-
+      ![
+        page.props.ep_enums.ECB,
+        page.props.ep_enums.RDX,
+        page.props.ep_enums.MDX,
+      ].includes(page.props.embeddedProduct.detail.short_code)
+    ) {
       /** exclude these columns (from filtering out) if its -- NOT -- from ECB,RDX,MDX */
-      const excludeHeaders = [
-        'ep_api_status',
-        'ep_sage_status',
-      ];
+      const excludeHeaders = ['ep_api_status', 'ep_sage_status'];
 
-      if(page.props.embeddedProduct.detail.short_code !==
-        page.props.ep_enums.COURIER){
+      if (
+        page.props.embeddedProduct.detail.short_code !==
+        page.props.ep_enums.COURIER
+      ) {
         /** only exclude this column (from filtering out) for ECB,RDX,MDX AND COURIER */
-        excludeHeaders.push("ep_payment_status");
+        excludeHeaders.push('ep_payment_status');
       }
 
       return !excludeHeaders.includes(header.value);
@@ -414,9 +417,6 @@ const showEpSageStatusFilter = (function () {
           />
         </div>
 
-
-
-
         <div>
           <x-tooltip placement="bottom">
             <label
@@ -546,7 +546,11 @@ const showEpSageStatusFilter = (function () {
 
       <template
         #item-ref_id="item"
-        v-if="[ep_enums.ECB,ep_enums.MDX,ep_enums.RDX,ep_enums.COURIER].includes(embeddedProduct.detail.short_code)"
+        v-if="
+          [ep_enums.ECB, ep_enums.MDX, ep_enums.RDX, ep_enums.COURIER].includes(
+            embeddedProduct.detail.short_code,
+          )
+        "
       >
         <SanitizeHtml
           v-if="item.quote_request"
