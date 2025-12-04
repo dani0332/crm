@@ -10,7 +10,6 @@ use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
-use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -114,7 +113,7 @@ class EmbeddedProduct
             $item->name = $firstName.' '.$lastName;
             $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
             $item->status = $status;
-            $item->ep_payment_status = !empty($item->relationLoaded('paymentStatus')) ? $item->paymentStatus->text : '';
+            $item->ep_payment_status = $item->paymentStatus?->text ?? '';
             $item->ep_api_status = $item->policy_status ?? '';
             $item->ep_sage_status = $item->sage_status instanceof SageEmbeddedProductEnum
                 ? $item->sage_status->value
