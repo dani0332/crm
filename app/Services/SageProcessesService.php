@@ -262,7 +262,7 @@ class SageProcessesService extends BaseService
                                 $originalModel->setRelation('quoteStatus', $loadedModel->quoteStatus);
                             }
                         });
-                        
+
                 } catch (\Exception $e) {
                     LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not load quoteStatus for model type: '.$modelClass, extra: [
                         'error' => $e->getMessage(),
