@@ -75,6 +75,7 @@ class QuoteDocumentController extends Controller
      */
     public function show($id)
     {
+        // TODO: This function is not used anywhere.
         $document = $this->quoteDocumentService->getQuoteDocumentUrl($id);
         $disk = Storage::disk('azureIM');
 
