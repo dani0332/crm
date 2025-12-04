@@ -207,7 +207,7 @@ class AwnicApiService
                     'message' => $downloadRequest['message'] ?? 'Document Retrieve Failed',
                 ]);
             }
-        };
+        }
 
         $allDocsDownload = $uploadedDocumentsToIMCRM->where('status', true)->count() === 3;
 
