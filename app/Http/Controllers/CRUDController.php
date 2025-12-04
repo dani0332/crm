@@ -132,6 +132,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use App\Services\BranchAssignmentService;
+use App\Models\QuoteStatusLog;
 
 class CRUDController extends Controller
 {
@@ -466,7 +467,6 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
-                'branchOptions' => EmirateEnum::getBranchMapping(),
                 'emirateEnum' => EmirateEnum::asArray(),
                 'subSources' => $subSources,
                 'leadSourceParams' => [
@@ -1238,7 +1238,12 @@ class CRUDController extends Controller
                 $lead = $this->healthQuoteService->getLead($record->id);
                 $isAUHLead = $lead->isAUHLead(false);
                 $hasPecTag = $lead->has_pec_tag;
-                $record->branch_name = !$record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id));
+
+                $policyIssuedLog = QuoteStatusLog::where('quote_request_id', $record->id)
+                ->where('quote_type_id', QuoteTypeId::Health)
+                ->where('current_quote_status_id', QuoteStatusEnum::PolicyIssued)
+                ->first();
+                $record->branch_name = !$record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id, $policyIssuedLog));
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
@@ -1407,7 +1412,6 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
-                'branchOptions' => EmirateEnum::getBranchMapping(),
                 'emirateEnum' => EmirateEnum::asArray(),
                 'subSources' => $subSources,
             ]);
