@@ -222,57 +222,51 @@ class AwnicBookPolicyService
             'insurer_api_status' => $quote->insurer_api_status,
         ];
 
+        // Early exit (first return)
         if ($throughAutomation) {
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All steps are editable';
-
             return $response;
         }
 
-        if (
+        $shouldHandlePolicyIssuanceLogic = (
             $policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS ||
             ($policyIssuance?->completed_step && $policyIssuance?->status == '')
-        ) {
+        );
+
+        if ($shouldHandlePolicyIssuanceLogic) {
             if (! $policyIssuance?->completed_step || $policyIssuance?->completed_step === AwnicEnum::STEP_UPLOAD_DOCUMENTS) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'All Steps are editable';
-
-                return $response;
-            }
-            if ($policyIssuance?->completed_step === AwnicEnum::STEP_ISSUE_POLICY) {
+            } elseif ($policyIssuance?->completed_step === AwnicEnum::STEP_ISSUE_POLICY) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Upload Documents and Update Booking Details are editable';
-
-                return $response;
-            }
-            if ($policyIssuance?->completed_step === AwnicEnum::STEP_UPLOAD_POLICY_DOCS) {
+            } elseif ($policyIssuance?->completed_step === AwnicEnum::STEP_UPLOAD_POLICY_DOCS) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Booking Details is editable';
-
-                return $response;
             }
-
+            // Single return for this group
             return $response;
-        } elseif (! $policyIssuance) {
+        }
+
+        // handle no policyIssuance
+        if (! $policyIssuance) {
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';
-        }
-
-        if (
+        } elseif (
             $policyIssuance?->status === PolicyIssuanceEnum::PROCESSING_STATUS &&
             $policyIssuance?->completed_step === AwnicEnum::STEP_UPLOAD_POLICY_DOCS
         ) {
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';
-
-            return $response;
         }
 
+        // Final return, covers all remaining paths
         return $response;
     }
 }
