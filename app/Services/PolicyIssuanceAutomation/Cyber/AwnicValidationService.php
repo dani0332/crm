@@ -102,6 +102,9 @@ class AwnicValidationService
                 'has_payments' => (bool) $quote->payments,
                 'has_plan_detail' => (bool) $quote->cyberPlanDetail,
                 'has_emirates_id' => (bool) ($customer?->emirates_id_number),
+                'has_nationality' => (bool) ($nationality),
+                'has_dob' => (bool) ($customer?->dob),
+                'has_emirate_of_registration' => (bool) ($emirateOfRegistration),
             ]);
 
             $missingDesc = implode(', ', $missing);
