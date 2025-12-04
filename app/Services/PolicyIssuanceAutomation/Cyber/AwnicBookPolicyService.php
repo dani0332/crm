@@ -39,6 +39,10 @@ class AwnicBookPolicyService
 
         $response = $this->responseHandler->buildStepResponse(AwnicEnum::STEP_BOOK_POLICY);
 
+        // Step control
+        $processFailed = false;
+
+        // Step 1: Update booking details
         $updateBookingDetailsResponse = $this->updateBookingDetails($quote);
         if (! $updateBookingDetailsResponse['status']) {
             LoggerService::error('Update booking details failed', extra: [
@@ -47,52 +51,62 @@ class AwnicBookPolicyService
 
             $response['error'] = $updateBookingDetailsResponse['error'];
             $response['message'] = $updateBookingDetailsResponse['message'];
-
-            return $response;
+            $processFailed = true;
         }
 
-        $quote->refresh();
-        $preCheckResult = $this->validationService->validateBookPolicy($quote);
-        if (! $preCheckResult['status']) {
-            LoggerService::error('Book policy validation failed', extra: [
-                'error' => $preCheckResult['error'] ?? 'Unknown error',
-            ]);
+        // Step 2: Pre-check validation (only if previous step succeeded)
+        if (!$processFailed) {
+            $quote->refresh();
+            $preCheckResult = $this->validationService->validateBookPolicy($quote);
+            if (! $preCheckResult['status']) {
+                LoggerService::error('Book policy validation failed', extra: [
+                    'error' => $preCheckResult['error'] ?? 'Unknown error',
+                ]);
 
-            $response['error'] = $preCheckResult['error'];
-            $response['message'] = $preCheckResult['message'];
-
-            return $response;
+                $response['error'] = $preCheckResult['error'];
+                $response['message'] = $preCheckResult['message'];
+                $processFailed = true;
+            }
         }
 
-        $request = new \stdClass;
-        $request->quote_id = $quote->id;
-        $request->modelType = QuoteTypes::CYBER->value;
-        $request->model_type = QuoteTypes::CYBER->value;
-        $request->is_send_policy = false;
-        $request->send_policy_type = SendPolicyTypeEnum::SAGE;
-        $request->transaction_payment_status = null;
+        // Step 3: Create Sage process (only if previous steps succeeded)
+        if (!$processFailed) {
+            $request = new \stdClass;
+            $request->quote_id = $quote->id;
+            $request->modelType = QuoteTypes::CYBER->value;
+            $request->model_type = QuoteTypes::CYBER->value;
+            $request->is_send_policy = false;
+            $request->send_policy_type = SendPolicyTypeEnum::SAGE;
+            $request->transaction_payment_status = null;
 
-        LoggerService::info('Creating Sage process');
-        $createSageProcessResponse = (new SageApiService)->postBookPolicyToSage($request, $quote);
-        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, [], $createSageProcessResponse, '', AwnicEnum::STEP_BOOK_POLICY, $createSageProcessResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $policyIssuance);
+            LoggerService::info('Creating Sage process');
+            $createSageProcessResponse = (new SageApiService)->postBookPolicyToSage($request, $quote);
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
+                $quote,
+                [],
+                $createSageProcessResponse,
+                '',
+                AwnicEnum::STEP_BOOK_POLICY,
+                $createSageProcessResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS,
+                $policyIssuance
+            );
 
-        if (! $createSageProcessResponse['status']) {
-            LoggerService::error('Sage process creation failed', extra: [
-                'error' => $createSageProcessResponse['message'] ?? 'Unknown error',
-            ]);
+            if (! $createSageProcessResponse['status']) {
+                LoggerService::error('Sage process creation failed', extra: [
+                    'error' => $createSageProcessResponse['message'] ?? 'Unknown error',
+                ]);
 
-            $response['error'] = $createSageProcessResponse['message'];
-
-            return $response;
+                $response['error'] = $createSageProcessResponse['message'];
+                $processFailed = true;
+            } else {
+                LoggerService::info('Book policy process completed successfully', extra: [
+                    'sage_message' => $createSageProcessResponse['message'] ?? null,
+                ]);
+                $response['status'] = true;
+                $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
+                $response['completed_step'] = AwnicEnum::STEP_BOOK_POLICY;
+            }
         }
-
-        LoggerService::info('Book policy process completed successfully', extra: [
-            'sage_message' => $createSageProcessResponse['message'] ?? null,
-        ]);
-
-        $response['status'] = true;
-        $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
-        $response['completed_step'] = AwnicEnum::STEP_BOOK_POLICY;
 
         return $response;
     }
