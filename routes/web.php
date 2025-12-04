@@ -450,6 +450,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('documents/delete', [QuoteDocumentController::class, 'destroy']);
     Route::get('quotes/{quoteType}/{quote}/proforma-payment-request', [QuoteDocumentController::class, 'createProformaPaymentRequest'])->name('create.proforma.payment.request');
     Route::get('proforma-payment-request/{quote_document}/download', [QuoteDocumentController::class, 'downloadProformaPaymentRequest'])->name('download.proforma.payment.request');
+    Route::post('documents/temp-url', [QuoteDocumentController::class, 'getTempUrl'])->name('documents.temp-url');
 
     Route::post('documents/download', [QuoteDocumentController::class, 'downloadAllDocuments']);
 
@@ -988,5 +989,3 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return view('pdf.bor-document', $pdfData);
     });
 });
-
-Route::post('documents/temp-url', [QuoteDocumentController::class, 'getTempUrl'])->name('documents.temp-url');
