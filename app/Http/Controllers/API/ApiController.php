@@ -406,7 +406,7 @@ class ApiController extends Controller
             }
 
             $quotes = $quotes->limit($batchSize)->orderBy('created_at', 'asc')->get();
-      
+    
             if ($quotes->isEmpty()) {
                 LoggerService::info(self::class.': No quotes found without PCP tag');
 
