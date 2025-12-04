@@ -78,7 +78,6 @@ class SageProcessesService extends BaseService
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  mixed  $request
-     * @return void
      */
     protected function applyFilters($query, $request): void
     {
@@ -93,7 +92,6 @@ class SageProcessesService extends BaseService
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  mixed  $request
-     * @return void
      */
     protected function applyInsuranceProviderFilter($query, $request): void
     {
@@ -108,7 +106,6 @@ class SageProcessesService extends BaseService
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  mixed  $request
-     * @return void
      */
     protected function applyQuoteTypeFilter($query, $request): void
     {
@@ -140,7 +137,6 @@ class SageProcessesService extends BaseService
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  mixed  $request
-     * @return void
      */
     protected function applyOptionFilter($query, $request): void
     {
@@ -158,7 +154,6 @@ class SageProcessesService extends BaseService
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  mixed  $request
-     * @return void
      */
     protected function applyDateFilters($query, $request): void
     {
@@ -175,7 +170,6 @@ class SageProcessesService extends BaseService
      * Apply eager loading for related models to prevent N+1 queries
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return void
      */
     protected function applyEagerLoading($query): void
     {
@@ -204,7 +198,6 @@ class SageProcessesService extends BaseService
      * Apply model validation constraints
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return void
      */
     protected function applyModelValidation($query): void
     {
@@ -224,7 +217,6 @@ class SageProcessesService extends BaseService
      * Enrich results with additional computed data
      *
      * @param  mixed  $results
-     * @return void
      */
     protected function enrichResultsWithAdditionalData($results): void
     {
