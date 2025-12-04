@@ -49,7 +49,7 @@ class PolicyIssuanceService
                 default => null,
             },
             QuoteTypes::CYBER->value => match ($insurerCode) {
-                InsuranceProvidersEnum::AWNI => new AwniInsuranceService,
+                InsuranceProvidersEnum::AWNI => app(AwniInsuranceService::class),
                 default => null,
             },
             default => null,

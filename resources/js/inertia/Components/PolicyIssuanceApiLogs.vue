@@ -66,6 +66,25 @@ const togglePolicyIssuance = () => {
   });
 };
 
+const manualTriggerPolicyIssuance = async () => {
+    await axios.get(`/trigger-policy-issuance`, {
+      params: {
+        model_id: props.id,
+        quote_type_Id: props.quoteTypeId,
+      },
+    }).then(res => {
+      notification.success({
+        title: res.data.message || 'Manual Trigger Policy Issuance Successfully',
+        position: 'top',
+      });
+    }).catch(err => {
+      notification.error({
+        title: err.response.data.message || 'Failed to Manual Trigger Policy Issuance',
+        position: 'top',
+      });
+    });
+};
+
 const policyIssuanceDetail = computed(() => {
   if(!apiLogs.data) {
     return null;
@@ -124,7 +143,7 @@ const loadPolicyIssuanceLogs = async () => {
     .post(url, data)
     .then(res => {
       if (res.data.success) {
-        apiLogs.data = res.data.data;
+        apiLogs.data = res.data.data ?? [];
         notification.success({
           title: 'Policy Issuance API Logs Loaded Successfully',
           position: 'top',
@@ -162,12 +181,26 @@ const onLoadAuditLogData = async () => {
             Policy Issuance API Logs
           </h3>
           <div
-            v-if="hasRole(rolesEnum.Engineering)"
+          v-if="hasRole(rolesEnum.Engineering) && policyIssuanceId && apiLogs.data?.length > 0"
             class="flex gap-2"
             @click.stop
           >
             <x-button
               @click.stop="togglePolicyIssuance"
+              size="sm"
+              color="primary"
+              variant="outline"
+            >
+              Re-Trigger Policy Issuance
+            </x-button>
+          </div>
+          <div
+            v-if="apiLogs.data?.length == 0"
+            class="flex gap-2"
+            @click.stop
+          >
+            <x-button
+              @click.stop="manualTriggerPolicyIssuance"
               size="sm"
               color="primary"
               variant="outline"

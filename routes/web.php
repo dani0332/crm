@@ -3,6 +3,7 @@
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\RolesEnum;
 use App\Http\Controllers\AccuracyMatrixController;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
@@ -968,7 +969,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return view('pdf.bor-document', $pdfData);
     });
 
-    Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance']);
+    Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('check_route_access');
+
+    Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance']);
 
 
     // Cyber Quote Policy Automation Routes for testing purposes
@@ -978,7 +981,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         // without plan id and payments
         // $policyIssuanceProcess = PolicyIssuance::where('id', 1682)->first();
         // with plan id and payments
-        $policyIssuanceProcess = PolicyIssuance::where('id', 1689)->first();
+        $policyIssuanceProcess = PolicyIssuance::where('id', 1886)->first();
 
         $policyIssuanceProcess->status = PolicyIssuanceEnum::PENDING_STATUS;
         $policyIssuanceProcess->completed_step = null;

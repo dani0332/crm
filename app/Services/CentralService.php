@@ -1656,7 +1656,7 @@ class CentralService extends BaseService
             $emailData->policyWording = ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL') . $quote?->cyberPolicyWording?->link : '';
             $emailData->taxInvoice = $quoteDocuments->filter(function ($document) {
                 return $document['document_type_code'] == DocumentTypeCode::CYBER_TAX_INVOICE;
-            })->first()?->doc_url ?? '';;
+            })->first()?->watermarkedDocumentUrl ?? '';;
         }
 
         if (
