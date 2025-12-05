@@ -2,19 +2,19 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
-use App\Models\PersonalQuote;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\Logger\LoggerFeatureEnum;
-use App\Traits\PrivateClient;
+use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
+use App\Traits\PrivateClient;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
 
 class TagPrivateClientJob implements ShouldQueue
 {
-    use Queueable, PrivateClient;
+    use PrivateClient, Queueable;
 
     /**
      * Execute the job.
@@ -22,37 +22,33 @@ class TagPrivateClientJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            $quotes = PersonalQuote::with('customer')->whereNull('pc_qualified')
+            $quotesQuery = PersonalQuote::with('customer')->whereNull('pc_qualified')
                 ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
                 ->whereNotNull('policy_expiry_date')
                 ->where('policy_expiry_date', '>', now())
-                ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht]);
+                ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht])
+                ->orderBy('created_at', 'asc');
 
-            $quotes = $quotes->orderBy('created_at', 'asc')->get();
+            $quotesQuery->chunk(200, function ($quotes) {
+                foreach ($quotes as $quote) {
 
-            if ($quotes->isEmpty()) {
-                LoggerService::info(self::class.': No quotes found without PCP tag');
-            }
+                    $customerData = [
+                        'customer_id' => $quote->customer->id,
+                        'customer_name' => $quote->customer->first_name.' '.$quote->customer->last_name,
+                        'email' => $quote->customer->email,
+                    ];
 
-            foreach ($quotes as $quote) {
+                    LoggerService::info(self::class.': Private client tag marking activity started', extra: $customerData);
 
-                $customerData = [
-                    'customer_id' => $quote->customer->id,
-                    'customer_name' => $quote->customer->first_name.' '.$quote->customer->last_name,
-                    'email' => $quote->customer->email,
-                ];
+                    LoggerService::startQuoteLogging(QuoteTypes::getName($quote->quote_type_id)->refId($quote->uuid), LoggerFeatureEnum::PCP_CLIENT);
+                    $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
+                    LoggerService::endLogging();
 
-                LoggerService::info(self::class.': Private client tag marking activity started', extra: $customerData);
+                    LoggerService::info(self::class.': Private client tag marking activity completed', extra: $customerData);
+                }
+            });
 
-                LoggerService::startQuoteLogging(QuoteTypes::getName($quote->quote_type_id)->refId($quote->uuid), LoggerFeatureEnum::PCP_CLIENT);
-                $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
-                LoggerService::endLogging();
-
-                LoggerService::info(self::class.': Private client tag marking activity completed', extra: $customerData);
-            }
-
-             
-        LoggerService::info(self::class.': Private client tag exercise has been completed');
+            LoggerService::info(self::class.': Private client tag exercise has been completed');
 
         } catch (\Exception $e) {
             LoggerService::error(self::class.': Private client tagging exercise failed', exception: $e);
