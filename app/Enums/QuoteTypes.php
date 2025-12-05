@@ -49,6 +49,7 @@ use App\Strategies\Allocations\TravelAllocation;
 use App\Strategies\Allocations\YachtAllocation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
+use App\Strategies\Allocations\DeviceAllocation;
 
 enum QuoteTypes: string
 {
@@ -298,6 +299,7 @@ enum QuoteTypes: string
             self::HOME => new HomeAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::SAVINGS => new SavingsAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::GROUP_MEDICAL => new GroupMedicalAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
+            self::DEVICE => new DeviceAllocation($uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             default => null,
         };
 
@@ -324,6 +326,7 @@ enum QuoteTypes: string
             self::SAVINGS => [RolesEnum::SavingsAdvisor],
             self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
             self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
+            self::DEVICE => [RolesEnum::DeviceAdvisor],
             default => [],
         };
     }

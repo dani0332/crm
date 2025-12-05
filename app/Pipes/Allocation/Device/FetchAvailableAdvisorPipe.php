@@ -18,7 +18,6 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         LoggerService::info(self::class.' - Starting to fetch available Device advisor');
 
         $this->setRequest($request);
-
         if ($this->allocationRequest->shouldAssignToHappinessUser()) {
             LoggerService::info(self::class.' - Paid Device lead - Fetching Happiness Support User');
 
@@ -35,7 +34,6 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
                 'advisorName' => $advisor->name,
                 'advisorEmail' => $advisor->email,
             ]);
-
             $this->allocationRequest->setAdvisor($advisor);
 
             return $next($request);
@@ -228,7 +226,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
     private function getBackupAdvisor(): ?User
     {
-        $backupEmail = 'diya.lekhwani@myalfred.com';
+        $backupEmail = 'wasit.ali@myalfred.com';
 
         LoggerService::info(self::class.' - Fetching backup advisor by email', extra: [
             'email' => $backupEmail,

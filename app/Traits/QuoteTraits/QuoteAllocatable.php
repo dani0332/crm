@@ -276,4 +276,8 @@ trait QuoteAllocatable
     {
         return in_array($this->assignment_type, [AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD]);
     }
+    public function isAllocationFailed(): bool
+    {
+        return ! empty($this->lead_allocation_failed_at);
+    }
 }

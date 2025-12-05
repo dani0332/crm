@@ -327,9 +327,8 @@ class HandleInertiaRequests extends Middleware
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::GROUP_MEDICAL]),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
-                    // DEVICE_LEAD_ALLOCATION_DASHBOARD
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD),
+                        auth()->user()->can(PermissionsEnum::DEVICE_LEAD_ALLOCATION_DASHBOARD),
                         'Device',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::DEVICE]),
                         fn ($s) => $s->attributes(['icon' => 'box'])

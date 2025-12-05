@@ -55,7 +55,7 @@ class DeviceAllocation implements Allocation
             ])->thenReturn();
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.' - Exception occurred in Cyber allocation pipeline', extra: [
+            LoggerService::error(self::class.' - Exception occurred in Device allocation pipeline', extra: [
                 'uuid' => $this->uuid,
             ], exception: $e);
 

@@ -39,11 +39,11 @@ class EvaluateTeamPipe extends BaseAllocationPipe
         $hasRetryFlag = $lead->isAllocationFailed();
 
         $deviceQuote = $lead->deviceQuote;
-        $sicAdvisorRequested = false;
+        $sicAdvisorRequested = true;
 
-        if ($deviceQuote && isset($deviceQuote->sic_advisor_requested)) {
-            $sicAdvisorRequested = (bool) $deviceQuote->sic_advisor_requested;
-        }
+        // if ($deviceQuote && isset($deviceQuote->sic_advisor_requested)) {
+        //     $sicAdvisorRequested = (bool) $deviceQuote->sic_advisor_requested;
+        // }
 
         LoggerService::info(self::class.' - Device lead conditions evaluation', extra: [
             'isPaymentAuthorizedOrDeclined' => $isPaymentAuthorizedOrDeclined,
@@ -52,11 +52,11 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             'hasRetryFlag' => $hasRetryFlag,
         ]);
 
-        // If cyberr lead is paid, assign to Happiness Support User
+        // If device lead is paid, assign to Happiness Support User
         if ($isPaymentAuthorizedOrDeclined) {
             $this->allocationRequest->setAssignToHappinessUser(true);
 
-            LoggerService::info(self::class.' - Cyber lead is paid - Will assign to Happiness Support User', extra: [
+            LoggerService::info(self::class.' - Device lead is paid - Will assign to Happiness Support User', extra: [
                 'targetUserEmail' => DeviceAllocation::HAPPINESS_SUPPORT_USER_EMAIL,
                 'reason' => 'Payment authorized or declined',
             ]);
@@ -70,7 +70,7 @@ class EvaluateTeamPipe extends BaseAllocationPipe
                 ? 'SIC advisor explicitly requested'
                 : 'Lead has retry flag (lead_allocation_failed_at)';
 
-            LoggerService::info(self::class.' - Cyber lead will be assigned to hardcoded advisors', extra: [
+            LoggerService::info(self::class.' - Device lead will be assigned to hardcoded advisors', extra: [
                 'teamId' => $defaultTeamId,
                 'reason' => $reason,
                 'sicAdvisorRequested' => $sicAdvisorRequested,
@@ -85,6 +85,6 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             'reason' => 'Unpaid lead without SIC advisor request or retry flag',
         ]);
 
-        $this->stop('sic advisor requested is false for cyber lead', self::OK);
+        $this->stop('sic advisor requested is false for device lead', self::OK);
     }
 }

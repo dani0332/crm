@@ -16,6 +16,7 @@ use App\Services\Logger\LoggerService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Enums\TeamNameEnum;
 
 class LeadAllocationDashboardService extends BaseService
 {
@@ -25,14 +26,14 @@ class LeadAllocationDashboardService extends BaseService
     {
         try {
             $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
-
-            $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $quoteType->value)->first();
+            // get the team name for the quote type
+            $teamName = TeamNameEnum::getTeamName($quoteType);
+            $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $teamName)->first();
+       
             $advisorRoles = $quoteType->advisorRoles();
-
             if ($quoteType == QuoteTypes::SAVINGS) {
                 $advisorRoles[] = RolesEnum::SavingsManager;
             }
-
             $users = User::activeUser()
                 ->select(
                     'users.id as userId',
@@ -75,7 +76,7 @@ class LeadAllocationDashboardService extends BaseService
                     });
                 })
                 ->groupBy('users.name', 'users.id', 'la.id');
-
+           
             if (! auth()->user()->hasRole(RolesEnum::Admin)) {
                 $userTeamIds = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
                 $users = $users->whereIn('teams.id', $userTeamIds);
@@ -86,6 +87,7 @@ class LeadAllocationDashboardService extends BaseService
                 $users = $users->whereIn('users.id', $userIds);
             }
 
+       
             return $users->get();
         } catch (\Exception $e) {
             LoggerService::error($e->getMessage());

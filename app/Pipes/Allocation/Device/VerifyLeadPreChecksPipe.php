@@ -16,7 +16,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         $this->setRequest($request);
 
         $lead = $this->findLead();
-
+       
         if (! $lead) {
             LoggerService::info(self::class.' - Device lead does not meet pre-check criteria or not found');
             $this->throw('Lead does not meet pre-check criteria', self::NOT_FOUND);

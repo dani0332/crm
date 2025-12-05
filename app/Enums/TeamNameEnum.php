@@ -44,6 +44,7 @@ final class TeamNameEnum extends Enum
     public const Bike_Team = 'Bike - Team';
     public const TRAVEL_RENEWALS = 'Travel - Renewals';
     public const TRAVEL_TEAM = 'Travel - Team';
+    public const DEVICE = 'Device Insurance';
 
     /**
      * Get team ID by team name
@@ -58,5 +59,19 @@ final class TeamNameEnum extends Enum
         ];
 
         return $teamIDs[$teamName] ?? null;
+    }
+    public static function getTeamName(QuoteTypes $quoteType): string
+    {
+        return match ($quoteType) {
+            QuoteTypes::DEVICE => self::DEVICE,
+            default => $quoteType->value,
+        };
+    }
+    public static function getQuoteTypeValue(string $teamName): string
+    {
+        return match ($teamName) {
+            self::DEVICE => QuoteTypes::DEVICE->value,
+            default => $teamName,
+        };
     }
 }
