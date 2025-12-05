@@ -111,7 +111,7 @@ class GenericLobController extends Controller
                 60
             );
 
-            if (!$publicUrl) {
+            if (! $publicUrl) {
                 return response()->json(['error' => 'Failed to generate public URL'], 500);
             }
 

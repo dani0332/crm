@@ -586,7 +586,7 @@ class TravelEmailService extends BaseService
                     $pdfExpiry
                 );
 
-                if (!$publicUrl) {
+                if (! $publicUrl) {
                     LoggerService::error(self::class.' - attachTravelOCBPDFToEmail - Failed to generate temporary URL: File does not exist for uuid: '.$quoteUID);
 
                     return '';
