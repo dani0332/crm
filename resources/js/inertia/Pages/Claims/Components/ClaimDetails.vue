@@ -690,22 +690,24 @@ watch(
                   }}
                 </dd>
               </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">BANK NAME</dt>
-                <dd>{{ claim.customer_bank_accounts?.bank_name || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">ACCOUNT NAME</dt>
-                <dd>{{ claim.customer_bank_accounts?.account_name || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">IBAN</dt>
-                <dd>{{ claim.customer_bank_accounts?.iban || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">SWIFT CODE</dt>
-                <dd>{{ claim.customer_bank_accounts?.swift_code || '-' }}</dd>
-              </div>
+              <template v-if="isHealthLOB">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">BANK NAME</dt>
+                  <dd>{{ claim.customer_bank_accounts?.bank_name || '-' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ACCOUNT NAME</dt>
+                  <dd>{{ claim.customer_bank_accounts?.account_name || '-' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">IBAN</dt>
+                  <dd>{{ claim.customer_bank_accounts?.iban || '-' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">SWIFT CODE</dt>
+                  <dd>{{ claim.customer_bank_accounts?.swift_code || '-' }}</dd>
+                </div>
+              </template>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ formattedDateDmyWithTime(claim.created_at) }}</dd>
