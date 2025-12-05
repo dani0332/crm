@@ -155,7 +155,7 @@ class HRMRequestService
             $responseData = $response->json();
             $responseArray = is_array($responseData) ? $responseData : [];
 
-            //region Retrying Block
+            // region Retrying Block
             $shouldRetry = $requiresAuth
                 && $retryOnAuthFailure
                 && (
@@ -181,7 +181,7 @@ class HRMRequestService
 
                 return false;
             }
-            //endregion
+            // endregion
 
             LoggerService::info(static::class.'::sendRequest - API response received', [
                 'status_code' => $statusCode,
