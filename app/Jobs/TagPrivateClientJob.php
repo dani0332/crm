@@ -2,19 +2,19 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
-use App\Models\PersonalQuote;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\Logger\LoggerFeatureEnum;
-use App\Traits\PrivateClient;
+use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
+use App\Traits\PrivateClient;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
 
 class TagPrivateClientJob implements ShouldQueue
 {
-    use Queueable, PrivateClient;
+    use PrivateClient, Queueable;
 
     /**
      * Execute the job.
@@ -51,8 +51,7 @@ class TagPrivateClientJob implements ShouldQueue
                 LoggerService::info(self::class.': Private client tag marking activity completed', extra: $customerData);
             }
 
-             
-        LoggerService::info(self::class.': Private client tag exercise has been completed');
+            LoggerService::info(self::class.': Private client tag exercise has been completed');
 
         } catch (\Exception $e) {
             LoggerService::error(self::class.': Private client tagging exercise failed', exception: $e);
