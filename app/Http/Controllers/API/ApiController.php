@@ -3,10 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Enums\InsuranceProvidersEnum;
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exports\EmailStatusExport;
 use App\Facades\Ken;
@@ -39,7 +36,6 @@ use App\Jobs\TagPrivateClientJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
-use App\Models\PersonalQuote;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
@@ -386,8 +382,8 @@ class ApiController extends Controller
     {
         LoggerService::info(self::class.': Private client tag exercise has been initiated');
 
-        dispatch(new TagPrivateClientJob());
-        
+        dispatch(new TagPrivateClientJob);
+
         return 'Private client tagging has started!';
     }
 
