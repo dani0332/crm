@@ -284,7 +284,7 @@ class HomeEmailService extends BaseService
                 $pdfExpiry
             );
 
-            if (!$publicUrl) {
+            if (! $publicUrl) {
                 LoggerService::error(self::class.' - attachHomeOCBPDFToEmail - Failed to generate temporary URL: File does not exist');
 
                 return '';

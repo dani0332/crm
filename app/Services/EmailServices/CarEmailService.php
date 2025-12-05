@@ -744,7 +744,7 @@ class CarEmailService extends BaseService
                 10
             );
 
-            if (!$publicUrl) {
+            if (! $publicUrl) {
                 LoggerService::error(self::class.' - attachCarOCBPDF - Failed to generate temporary URL: File does not exist for Ref-ID: '.$quoteUID);
 
                 return '';
