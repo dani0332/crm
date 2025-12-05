@@ -623,7 +623,7 @@ class QuoteDocumentService extends BaseService
             LoggerService::error("Unable to read file or file is too small: $file", extra: [
                 'uuid' => $uuid,
                 'file_path' => $file,
-                'file_size' => $fileContent ? strlen($fileContent) : 0
+                'file_size' => $fileContent ? strlen($fileContent) : 0,
             ]);
             throw new \Exception("Unable to read file or file is too small: $file");
         }
@@ -631,12 +631,12 @@ class QuoteDocumentService extends BaseService
         // Save the source file
         $sourceFilePath = storage_path('temp/source_'.$docName);
         $written = file_put_contents($sourceFilePath, $fileContent);
-        
-        if ($written === false || !file_exists($sourceFilePath) || filesize($sourceFilePath) < 100) {
-            LoggerService::error("Failed to save source file to temp directory", extra: [
+
+        if ($written === false || ! file_exists($sourceFilePath) || filesize($sourceFilePath) < 100) {
+            LoggerService::error('Failed to save source file to temp directory', extra: [
                 'uuid' => $uuid,
                 'source_file_path' => $sourceFilePath,
-                'bytes_written' => $written
+                'bytes_written' => $written,
             ]);
             throw new \Exception("Failed to save source file to temp directory: $sourceFilePath");
         }
