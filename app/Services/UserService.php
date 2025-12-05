@@ -12,7 +12,6 @@ use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Monolog\Logger;
 
 class UserService extends BaseService
 {

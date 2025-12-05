@@ -11,8 +11,6 @@ class HRMRequestService
 {
     /**
      * Get access token for HRM API
-     *
-     * @return string|false
      */
     private function getAccessToken(): string|false
     {
@@ -29,6 +27,7 @@ class HRMRequestService
 
         if (empty($clientId) || empty($clientSecret) || empty($apiEndPoint)) {
             LoggerService::error(static::class.'::getAccessToken - Missing API configuration');
+
             return false;
         }
 
