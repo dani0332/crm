@@ -8,6 +8,8 @@ use App\Repositories\BusinessQuoteRepository;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use App\Services\BranchAssignmentService;
+use App\Enums\QuoteTypeId;
 
 class GroupMedicalExport implements CsvExportableInterface
 {
@@ -36,6 +38,7 @@ class GroupMedicalExport implements CsvExportableInterface
             'LEAD STATUS',
             'ADVISOR',
             'OE / AE',
+            'BRANCH',
             'PREMIUM',
             'COMPANY NAME',
             'POLICY NUMBER',
@@ -56,6 +59,8 @@ class GroupMedicalExport implements CsvExportableInterface
 
     public function map($quote): array
     {
+        $emirateOfRegistrationId = $quote->latestInsured?->entity?->emirate_of_registration_id ?? null;
+        $branch = ! $quote->is_branch_applicable ? 'N/A' : ($quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
         return [
             $quote->code,
             $quote->first_name,
@@ -63,6 +68,7 @@ class GroupMedicalExport implements CsvExportableInterface
             optional($quote->quoteStatus)->text,
             optional($quote->advisor)->name,
             optional($quote->supportUser)->name,
+            $branch,
             $quote->premium ? $quote->premium : $quote->price_with_vat,
             $quote->company_name,
             $quote->policy_number,

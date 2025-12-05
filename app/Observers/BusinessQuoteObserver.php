@@ -111,21 +111,25 @@ class BusinessQuoteObserver
                 ]);
             }
 
-            if ($businessQuote->business_type_of_insurance_id != BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
-                try {
-                    app(BranchAssignmentService::class)->saveBranchOverride($businessQuote, QuoteTypeId::Business);
-                    BusinessQuote::withoutEvents(function () use ($businessQuote, &$dirty) {
-                        $branch = app(BranchAssignmentService::class)->getBranch($businessQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Business);
-                        $businessQuote->update([
-                            'branch_id' => $branch->id,
-                        ]);
-                        $dirty = [...$dirty, 'branch_id' => $branch->id];
-                    });
-                } catch (Exception $e) {
-                    LoggerService::error('BusinessQuoteObserver - save branch data failed', [
-                        'uuid' => $businessQuote->uuid,
-                    ], exception: $e);
-                }
+            try {
+                app(BranchAssignmentService::class)->saveBranchOverride($businessQuote, QuoteTypeId::Business);
+                BusinessQuote::withoutEvents(function () use ($businessQuote, &$dirty) {
+                    $quoteTypeId = QuoteTypeId::Business;
+                    $emirateOfRegistrationId = null;
+                    if ($businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                        $quoteTypeId = QuoteTypeId::GroupMedical;
+                        $emirateOfRegistrationId = $businessQuote->latestInsured?->entity?->emirate_of_registration_id ?? null;
+                    }
+                    $branch = app(BranchAssignmentService::class)->getBranch($businessQuote?->advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirateOfRegistrationId);
+                    $businessQuote->update([
+                        'branch_id' => $branch->id,
+                    ]);
+                    $dirty = [...$dirty, 'branch_id' => $branch->id];
+                });
+            } catch (Exception $e) {
+                LoggerService::error('BusinessQuoteObserver - save branch data failed', [
+                    'uuid' => $businessQuote->uuid,
+                ], exception: $e);
             }
         }
 

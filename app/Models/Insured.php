@@ -22,4 +22,9 @@ class Insured extends Model implements AuditableContract
     {
         return $this->hasOne(InsuredKyc::class, 'insured_id', 'id');
     }
+
+    public function entity()
+    {
+        return $this->hasOne(Entity::class, 'id', 'entity_id');
+    }
 }

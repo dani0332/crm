@@ -190,8 +190,8 @@ class BranchAssignmentService extends BaseService
      */
     public function getBranch($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null, $policyIssuedLog = null)
     {
-        if ($quoteTypeId == QuoteTypeId::Health) {
-            return $this->getHealthBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $policyIssuedLog);
+        if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
+            return $this->getHealthOrGroupMedicalBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $policyIssuedLog, $quoteTypeId);
         }
 
         return $this->getBranchWithOverride($primaryAdvisorBranchId, $quoteTypeId);
@@ -203,14 +203,14 @@ class BranchAssignmentService extends BaseService
      * @param int|null $primaryAdvisorBranchId
      * @param int|null $emirateOfYourVisaId
      */
-    private function getHealthBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $policyIssuedLog)
+    private function getHealthOrGroupMedicalBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $policyIssuedLog, $quoteTypeId)
     {
         if (empty($emirateOfYourVisaId)) {
             return null;
         }
         
         // AUH V1 Logic for branch
-        if($policyIssuedLog) {
+        if($policyIssuedLog && $quoteTypeId == QuoteTypeId::Health) {
             $createdAt = Carbon::parse($policyIssuedLog->created_at);
             $auhV1Date = Carbon::parse(ApplicationStorage::where('key_name', ApplicationStorageEnums::BRANCH_LIVE_DATE_V1)->first()->value);
             $auhV2Date = Carbon::parse(ApplicationStorage::where('key_name', ApplicationStorageEnums::BRANCH_LIVE_DATE_V2)->first()->value);
@@ -239,7 +239,6 @@ class BranchAssignmentService extends BaseService
      *
      * @param int|null $primaryAdvisorBranchId
      * @param int $quoteTypeId
-     
      */
     private function getBranchWithOverride($primaryAdvisorBranchId, $quoteTypeId)
     {
@@ -249,8 +248,8 @@ class BranchAssignmentService extends BaseService
 
         // Check if there's an active override configuration for this branch and quote type
         $overrideConfig = $this->getBranchOverrideConfig($primaryAdvisorBranchId, $quoteTypeId);
-
         $targetBranchId = $overrideConfig?->target_branch_id ?? $primaryAdvisorBranchId;
+        
         $branch = self::$branches->find($targetBranchId);
 
         return $branch;
@@ -266,7 +265,7 @@ class BranchAssignmentService extends BaseService
 
     public function saveBranchOverride($quote, $quoteTypeId)
     {
-        if($quoteTypeId == QuoteTypeId::Health) {
+        if(in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
             return;
         }
 
