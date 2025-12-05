@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuoteTypes;
 use App\Http\Requests\OcrLogsRequest;
+use App\Models\CyberInsurerRequestResponses;
+use App\Models\CyberQuote;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
@@ -182,6 +184,9 @@ class AuditableController extends Controller
                     ->whereNotIn('call_type', ['oAuth', 'login']);
             case LifeQuote::class:
                 return LifeInsurerRequestResponses::with('insuranceProvider')
+                    ->whereNotIn('call_type', ['oAuth', 'login']);
+            case CyberQuote::class:
+                return CyberInsurerRequestResponses::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
             default:
                 return InsurerRequestResponse::with('insuranceProvider');

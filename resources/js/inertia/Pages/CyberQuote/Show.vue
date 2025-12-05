@@ -65,6 +65,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const canAny = permissions => useCanAny(permissions);
 const modelClass = 'App\\Models\\PersonalQuote';
+const modelClassCyber = 'App\\Models\\CyberQuote';
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
@@ -1641,8 +1642,8 @@ const copyLink = () => {
 
     <ApiLogs
       v-if="can(permissionsEnum.API_LOG_VIEW)"
-      :type="modelClass"
-      :id="$page.props.quote.id"
+      :type="modelClassCyber"
+      :id="$page.props.quote.cyber_quote?.id"
     />
 
     <PolicyIssuanceApiLogs
