@@ -390,11 +390,17 @@ class HealthQuote extends Model implements AuditableContract
     /**
      * Get all quote status logs for this model
      *
-     * @return MorphMany
+     * @return HasMany
      */
     public function quoteStatusLogs(): HasMany
     {
-        return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
+        return $this->hasMany(QuoteStatusLog::class, 'quote_request_id')->where('quote_type_id', QuoteTypeId::Health);
+    }
+
+    public function policyIssuedLogs(): HasMany
+    {
+        return $this->quoteStatusLogs()
+            ->where('current_quote_status_id', QuoteStatusEnum::PolicyIssued);
     }
 
     /**
