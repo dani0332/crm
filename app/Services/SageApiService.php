@@ -49,6 +49,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use App\Services\BranchAssignmentService;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 
 class SageApiService
 {
@@ -727,7 +728,18 @@ class SageApiService
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Payment Code: '.$payment->code.' - Capture payment process skip & proceeding with Policy Book process - Unpaid payment count: '.$unpaidPaymentCount.' - Is Insurer Payment: '.$isInsurerPayment);
         }
 
-        $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeId, $quote?->emirate_of_your_visa_id ?? null);
+        $emirate = null;
+        $quoteTypeIdForBranch = $quoteTypeId;
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $emirate = $quote?->emirate_of_your_visa_id ?? null;
+        } else if (
+            $quoteTypeId == QuoteTypeId::Business 
+            && $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
+        ) {
+            $emirate = $quote?->latestInsured?->entity?->emirate_of_registration_id ?? null;
+            $quoteTypeIdForBranch = QuoteTypeId::GroupMedical;
+        }
+        $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeIdForBranch, $emirate);
         
         if ($branch?->id == BranchEnum::ABU_DHABI->value) {
             LoggerService::info('Sage posting is not allowed for Abu Dhabi branch', extra: ['ref_id' => $quote->code, 'branch_id' => $branch?->id]);

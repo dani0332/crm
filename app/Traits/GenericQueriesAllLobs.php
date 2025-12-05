@@ -41,6 +41,7 @@ use App\Services\Reports\RenewalBatchReportService;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 
 trait GenericQueriesAllLobs
 {
@@ -838,7 +839,17 @@ trait GenericQueriesAllLobs
     {
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         $advisor = User::with('primaryBranch')->find($record?->advisor_id);
-        $branch = app(BranchAssignmentService::class)->getBranch($advisor?->primaryBranch?->branch_id, $quoteTypeId, $record?->emirate_of_your_visa_id ?? null);
+        $emirate = null;
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $emirate = $record?->emirate_of_your_visa_id ?? null;
+        } else if (
+            $quoteTypeId == QuoteTypeId::Business 
+            && $record->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
+        ) {
+            $emirate = $record?->latestInsured?->entity?->emirate_of_registration_id ?? null;
+            $quoteTypeId = QuoteTypeId::GroupMedical;
+        }
+        $branch = app(BranchAssignmentService::class)->getBranch($advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirate);
 
         LoggerService::info('Branch check for Quote', extra: [
             'ref_id' => $record->code,
