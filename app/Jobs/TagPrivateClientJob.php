@@ -33,9 +33,9 @@ class TagPrivateClientJob implements ShouldQueue
                 foreach ($quotes as $quote) {
 
                     $customerData = [
-                        'customer_id' => $quote->customer->id,
-                        'customer_name' => $quote->customer->first_name.' '.$quote->customer->last_name,
-                        'email' => $quote->customer->email,
+                        'customer_id' => $quote->customer?->id,
+                        'customer_name' => $quote->customer?->first_name.' '.$quote->customer?->last_name,
+                        'email' => $quote->customer?->email,
                     ];
 
                     LoggerService::info(self::class.': Private client tag marking activity started', extra: $customerData);
