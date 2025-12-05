@@ -1171,8 +1171,8 @@ watch(
                       :paymentMethodsForm="paymentMethodsFormReplicated"
                       :sendUpdateStatusEnum="sendUpdateStatusEnum"
                       :quoteType="quoteType"
-                      :isHealthAUHLead="
-                        page.props?.bookPolicyDetails?.isHealthAUHLead
+                      :isAbuDhabiBranch="
+                        page.props?.bookPolicyDetails?.isAbuDhabiBranch
                       "
                       @view-payment="
                         (payment, splitId, splitNo, action) =>
