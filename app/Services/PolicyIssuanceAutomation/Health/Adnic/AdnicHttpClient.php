@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
+
 use App\Enums\ApplicationStorageEnums;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
@@ -36,7 +37,7 @@ class AdnicHttpClient
 
     public function post(string $endPoint, array $payload = [], array $headers = []): Response
     {
-        $url = $this->baseUrl . $endPoint;
+        $url = $this->baseUrl.$endPoint;
         $request = $this->buildClient($headers);
 
         LoggerService::info('Initiating ADNIC API call', extra: [

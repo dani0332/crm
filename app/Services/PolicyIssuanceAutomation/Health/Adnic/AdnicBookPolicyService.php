@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
-
 use App\Enums\AdnicEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Services\Logger\LoggerService; 
 use App\Enums\QuoteTypes;
+use App\Services\Logger\LoggerService;
 
 class AdnicBookPolicyService
 {
-
-     /**
+    /**
      * Get steps locking status for UI
      *
-     * @param mixed $quote
-     * @param bool $throughAutomation
-     * @return array
+     * @param  mixed  $quote
+     * @param  bool  $throughAutomation
      */
     public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {
@@ -42,6 +39,7 @@ class AdnicBookPolicyService
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = AdnicEnum::ALL_STEPS_ARE_EDITABLE;
+
             return $response;
         }
 
@@ -64,6 +62,7 @@ class AdnicBookPolicyService
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Booking Details is editable';
             }
+
             // Single return for this group
             return $response;
         }

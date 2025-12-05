@@ -5,17 +5,13 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
 use App\Enums\AdnicEnum;
-use App\Interfaces\PolicyIssuanceInterface;
-use App\Services\Logger\LoggerService;
-use App\Services\ApplicationStorageService;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
+use App\Interfaces\PolicyIssuanceInterface;
+use App\Services\ApplicationStorageService;
+use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicStepExecutor;
-use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicValidationService;
-use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicBookPolicyService;
-use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicResponseHandler;
 use Exception;
 
 class AdnicInsuranceService implements PolicyIssuanceInterface
@@ -34,10 +30,8 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
         private AdnicResponseHandler $responseHandler,
     ) {}
 
-   /**
+    /**
      * Get API steps in order
-     *
-     * @return array
      */
     private function getAPISteps(): array
     {
@@ -52,9 +46,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
     /**
      * Update process with completed step
      *
-     * @param mixed $process
-     * @param array $response
-     * @return void
+     * @param  mixed  $process
      */
     private function updateProcessWithStep($process, array $response): void
     {
@@ -70,9 +62,6 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
 
     /**
      * Get step handler method name
-     *
-     * @param string $step
-     * @return string|null
      */
     private function getStepHandler(string $step): ?string
     {
@@ -81,8 +70,6 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
 
     /**
      * Check if policy issuance automation is enabled
-     *
-     * @return bool
      */
     public function isPolicyIssuanceAutomationEnabled(): bool
     {
@@ -91,8 +78,6 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
 
     /**
      * Check if policy issuance automation retry is enabled for timeout
-     *
-     * @return bool
      */
     public function isPolicyIssuanceAutomationRetryEnabledForTimeout(): bool
     {
@@ -102,8 +87,8 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
     /**
      * Create policy issuance schedule
      *
-     * @param mixed $quote
-     * @param mixed $insurer
+     * @param  mixed  $quote
+     * @param  mixed  $insurer
      * @return void
      */
     public function createPolicyIssuanceSchedule($quote, $insurer)
@@ -127,7 +112,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
     /**
      * Execute automation steps
      *
-     * @param mixed $process
+     * @param  mixed  $process
      * @return array
      */
     public function executeSteps($process)
@@ -157,7 +142,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
 
         try {
             $validationResult = $this->validationService->validateRequiredData($quote);
-            if (!$validationResult['status']) {
+            if (! $validationResult['status']) {
                 return $validationResult;
             }
 
@@ -199,9 +184,9 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
     /**
      * Execute step sequence
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @param string $nextStepToBeExecuted
+     * @param  mixed  $quote
+     * @param  mixed  $process
+     * @param  string  $nextStepToBeExecuted
      * @return array
      */
     private function executeStepSequence($quote, $process, $nextStepToBeExecuted)
@@ -212,7 +197,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
 
         while ($currentStep !== null) {
             if (! in_array($currentStep, $allSteps, true)) {
-                $error = 'Unknown step encountered: ' . $currentStep;
+                $error = 'Unknown step encountered: '.$currentStep;
                 LoggerService::error('Invalid step', extra: [
                     'process_id' => $process->id,
                     'current_step' => $currentStep,
@@ -225,7 +210,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
 
             $handler = $this->getStepHandler($currentStep);
             if (! $handler || ! method_exists($this->stepExecutor, $handler)) {
-                $error = 'Missing handler for step: ' . $currentStep;
+                $error = 'Missing handler for step: '.$currentStep;
                 LoggerService::error('Handler not found for step', extra: [
                     'process_id' => $process->id,
                     'current_step' => $currentStep,
@@ -252,6 +237,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
                     'steps_executed' => $stepsExecuted,
                     'error' => $response['error'] ?? AdnicEnum::UNKNOWN_ERROR,
                 ]);
+
                 return $response;
             }
 
@@ -276,8 +262,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
     /**
      * Get next step to execute
      *
-     * @param string|null $completedStep
-     * @return string|null
+     * @param  string|null  $completedStep
      */
     public function getNextStep($completedStep = null): ?string
     {
@@ -288,6 +273,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
             LoggerService::info('No previous step, starting from beginning', extra: [
                 'next_step' => $nextStep,
             ]);
+
             return $nextStep;
         }
 
@@ -297,6 +283,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
                 'completed_step' => $completedStep,
                 'valid_steps' => $allSteps,
             ]);
+
             return null;
         }
 
@@ -304,6 +291,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
             LoggerService::info('All steps completed', extra: [
                 'last_completed_step' => $completedStep,
             ]);
+
             return null;
         }
 
@@ -319,9 +307,8 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
     /**
      * Get steps locking status
      *
-     * @param mixed $quote
-     * @param bool $throughAutomation
-     * @return array
+     * @param  mixed  $quote
+     * @param  bool  $throughAutomation
      */
     public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {

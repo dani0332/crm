@@ -8,12 +8,10 @@ use App\Services\Logger\LoggerService;
 
 class AdnicValidationService
 {
-
     /**
      * Validate required data for policy issuance
      *
-     * @param mixed $quote
-     * @return array
+     * @param  mixed  $quote
      */
     public function validateRequiredData($quote): array
     {
@@ -23,11 +21,11 @@ class AdnicValidationService
 
         $missing = [];
 
-        if (!$quote->payments) {
+        if (! $quote->payments) {
             $missing[] = 'payments';
         }
 
-        if (!$quote->cyberPlanDetail) {
+        if (! $quote->cyberPlanDetail) {
             $missing[] = 'cyber plan detail';
         }
 
@@ -42,8 +40,7 @@ class AdnicValidationService
             $customer->dob === null && $missing[] = 'dob';
         }
 
-
-        if (!empty($missing)) {
+        if (! empty($missing)) {
             LoggerService::error('Missing required data', extra: [
                 'has_payments' => (bool) $quote->payments,
                 'has_plan_detail' => (bool) $quote->cyberPlanDetail,
