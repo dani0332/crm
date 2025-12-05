@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -573,17 +574,23 @@ class TravelEmailService extends BaseService
 
             // Generate a unique temporary file path (exactly like HomeEmailService)
             $tempFilePath = 'temp/'.uniqid().'.pdf';
-            Storage::disk('azureIM')->put($tempFilePath, $pdfContent);
+            Storage::disk('azureIMPrivate')->put($tempFilePath, $pdfContent);
 
             LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - PDF stored successfully at path: '.$tempFilePath.' for uuid: '.$quoteUID);
 
-            // Generate a public URL (exactly like HomeEmailService)
+            // Generate a public URL using generic method
             try {
-                // @phpstan-ignore-next-line
-                $publicUrl = Storage::disk('azureIM')->temporaryUrl(
+                $publicUrl = app(QuoteDocumentService::class)->getDocumentUrl(
                     $tempFilePath,
-                    now()->addMinutes($pdfExpiry)
+                    'azureIMPrivate',
+                    $pdfExpiry
                 );
+
+                if (!$publicUrl) {
+                    LoggerService::error(self::class.' - attachTravelOCBPDFToEmail - Failed to generate temporary URL: File does not exist for uuid: '.$quoteUID);
+
+                    return '';
+                }
             } catch (\Exception $urlException) {
                 LoggerService::error(self::class.' - attachTravelOCBPDFToEmail - Failed to generate temporary URL: '.$urlException->getMessage().' for uuid: '.$quoteUID, exception: $urlException);
 

@@ -57,6 +57,7 @@ class TmUploadLeadController extends Controller
      */
     public function store(Request $request)
     {
+        // Only storing the file in DB, no operation is performed
         $this->validate($request, [
             'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt|max:2048',
         ]);
@@ -65,7 +66,7 @@ class TmUploadLeadController extends Controller
             $tmLeadsImport = new TMLeadsImport;
             $fileNameOriginal = $request->file_name->getClientOriginalName();
             $fileNameAzure = get_guid().'_'.$fileNameOriginal;
-            $filePathAzure = $request->file('file_name')->storeAs('tmleads', $fileNameAzure, 'azureIM');
+            $filePathAzure = $request->file('file_name')->storeAs('tmleads', $fileNameAzure, 'azueIMPrivate');
 
             $tmLeadsImport->import(request()->file('file_name'));
             $countRows = $tmLeadsImport->getRowCount();

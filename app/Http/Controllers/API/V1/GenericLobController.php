@@ -17,6 +17,7 @@ use App\Models\Customer;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailServices\TravelEmailService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -101,13 +102,18 @@ class GenericLobController extends Controller
 
             // Generate a unique temporary file path
             $tempFilePath = 'temp/'.uniqid().'.pdf';
-            Storage::disk('azureIM')->put($tempFilePath, $pdf->output());
+            Storage::disk('azureIMPrivate')->put($tempFilePath, $pdf->output());
 
-            // Generate a public URL
-            $publicUrl = Storage::disk('azureIM')->temporaryUrl(
+            // Generate a public URL using generic method
+            $publicUrl = app(QuoteDocumentService::class)->getDocumentUrl(
                 $tempFilePath,
-                now()->addMinutes(60)
+                'azureIMPrivate',
+                60
             );
+
+            if (!$publicUrl) {
+                return response()->json(['error' => 'Failed to generate public URL'], 500);
+            }
 
             // Use a job to handle file deletion
             DeleteTempOCBPDFFileJob::dispatch($tempFilePath)->delay(now()->addMinutes(60));

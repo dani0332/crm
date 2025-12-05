@@ -324,7 +324,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             $documentTypeFailedCount = 0;
 
             foreach ($documentsForThisType as $quoteDocument) {
-                $documentFile = Storage::disk('azureIM')->get($quoteDocument->doc_url);
+                $documentFile = Storage::disk('azureIMPrivate')->get($quoteDocument->doc_url);
                 $docFileBase64 = base64_encode($documentFile);
                 // Create payload with guaranteed field order for GIG API
                 $payload = [];
@@ -847,7 +847,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
 
-        Storage::disk('azureIM')->put($filePathAzure, $fileContents);
+        Storage::disk('azureIMPrivate')->put($filePathAzure, $fileContents);
 
         $newDocument = $quote->documents()->create([
             'doc_name' => $docName,

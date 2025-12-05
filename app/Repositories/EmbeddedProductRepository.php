@@ -190,7 +190,7 @@ class EmbeddedProductRepository extends BaseRepository
         $fileMimeType = $file->getClientMimeType();
 
         $fileNameAzure = uniqid().'_'.$type.'_'.$docName;
-        $filePathAzure = $file->storeAs('documents/embedded_products', $fileNameAzure, 'azureIM');
+        $filePathAzure = $file->storeAs('documents/embedded_products', $fileNameAzure, 'azureIMPrivate');
 
         // generate unique uuid
         $docUuid = uniqid();

@@ -582,7 +582,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
 
-        Storage::disk('azureIM')->put($filePathAzure, $fileContents);
+        Storage::disk('azureIMPrivate')->put($filePathAzure, $fileContents);
 
         $newDocument = $quote->documents()->create([
             'doc_name' => $docName,

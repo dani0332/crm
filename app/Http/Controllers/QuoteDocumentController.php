@@ -75,9 +75,8 @@ class QuoteDocumentController extends Controller
      */
     public function show($id)
     {
-        // TODO: This function is not used anywhere.
         $document = $this->quoteDocumentService->getQuoteDocumentUrl($id);
-        $disk = Storage::disk('azureIM');
+        $disk = Storage::disk('azureIMPrivate');
 
         if ($disk->exists($document->doc_url)) {
             $contents = $disk->get($document->doc_url);
@@ -363,7 +362,7 @@ class QuoteDocumentController extends Controller
             return response()->json(['message' => 'No documents provided.'], 400);
         }
 
-        $disk = Storage::disk('azureIM');
+        $disk = Storage::disk('azureIMPrivate');
         $zipFileName = "{$request->quote['first_name']} {$request->quote['last_name']}_{$request->quote['code']}.zip";
         $zipFilePath = storage_path('temp/'.$zipFileName);
         $zip = new ZipArchive;
