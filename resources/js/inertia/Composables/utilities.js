@@ -222,8 +222,23 @@ export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') => {
 
 export const setQueryStringFilters = (params, filters) => {
   for (const [key] of Object.entries(params)) {
+    const val = params[key];
+    // Only convert to integer if it's a valid number, not an empty string,
+    // and converting it back to string matches original (preserves leading zeros, floats, etc)
+    params[key] =
+      val !== '' && !isNaN(val) && String(parseInt(val, 10)) === String(val)
+        ? parseInt(val, 10)
+        : val;
+
     if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key];
+    } else if (key.includes('[') && key.includes(']')) {
+      const baseKey = key.substring(0, key.indexOf('['));
+      if (!filters[baseKey]) {
+        filters[baseKey] = [];
+      }
+      const index = key.substring(key.indexOf('[') + 1, key.indexOf(']'));
+      filters[baseKey][index] = params[key];
     } else {
       filters[key] = params[key];
     }
