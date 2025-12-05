@@ -72,6 +72,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedEnableMetLife();
         $this->seedTempDisableSageBooking();
         $this->seedMrIncludeFailedBookings();
+        $this->seedAdnicHealthAutomation();
     }
 
     private function livaCarAutomationSeed()
@@ -98,6 +99,20 @@ class ApplicationStorageSeeder extends Seeder
 
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::LIVA_AUTOMATION_API_TIMEOUT],
+            [
+                'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedAdnicHealthAutomation()
+    {
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ADNIC_HEALTH_AUTOMATION_API_TIMEOUT],
             [
                 'value' => 90,
                 'created_at' => now(),
