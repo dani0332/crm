@@ -384,7 +384,7 @@ class ApiController extends Controller
 
         dispatch(new TagPrivateClientJob);
 
-        return 'Private client tagging has started!';
+        return apiResponse(null, Response::HTTP_OK, 'Private client tagging has started!');
     }
 
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
