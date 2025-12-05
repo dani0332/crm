@@ -65,6 +65,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const canAny = permissions => useCanAny(permissions);
 const modelClass = 'App\\Models\\PersonalQuote';
+const processingOCBEmail = ref(false);
 const modelClassCyber = 'App\\Models\\CyberQuote';
 
 const countDays = computed(() =>
@@ -80,6 +81,7 @@ const notification = useNotifications('toast');
 const modals = reactive({
   duplicate: false,
   planDetails: false,
+  sendConfirm: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -503,6 +505,33 @@ const copyLink = () => {
     notification.success({
       title: 'Link copied to clipboardd',
       position: 'top',
+    });
+};
+
+
+const confirmSendEmail = () => {
+
+  processingOCBEmail.value = true;
+  axios
+    .post(
+      `/quotes/cyber/${page.props.quote.uuid}/send-email-one-click-buy`,
+      {
+        responseType: 'json',
+      },
+    ) .then(response => {
+      processingOCBEmail.value = false;
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      processingOCBEmail.value = false;
+      console.log(error);
+    })
+    .finally(() => {
+      processingOCBEmail.value = false;
+      modals.sendConfirm = false;
     });
 };
 </script>
@@ -1164,11 +1193,39 @@ const copyLink = () => {
             class="flex justify-end gap-3 mb-4"
             v-if="availablePlansTable.data.length > 0"
           >
-            <x-button size="sm" color="orange"> Send OCB Email </x-button>
+            <x-button size="sm" color="orange"  @click.prevent="modals.sendConfirm = true"> Send OCB Email </x-button>
             <x-button size="sm" color="orange" @click.prevent="copyLink">
               Copy Link
             </x-button>
           </div>
+          <x-modal
+            v-model="modals.sendConfirm"
+            title="Send Email"
+            show-close
+            backdrop
+          >
+            <p>Are you sure send email to customer?</p>
+            <template #actions>
+              <div class="text-right space-x-4">
+                <x-button
+                  size="sm"
+                  ghost
+                  @click.prevent="modals.sendConfirm = false"
+                  :disable="processingOCBEmail"
+                >
+                  Cancel
+                </x-button>
+                <x-button
+                  size="sm"
+                  color="error"
+                  :loading="processingOCBEmail"
+                  @click.prevent="confirmSendEmail"
+                >
+                  Send
+                </x-button>
+              </div>
+            </template>
+          </x-modal>
 
           <div
             v-if="

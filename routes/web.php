@@ -198,6 +198,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         // travel routes
         Route::post('travel/{quoteUuId}/send-email-one-click-buy', [TravelController::class, 'sendEmailOneClickBuy'])->name('travelSendEmailOneClickBuy');
+
+        // cyber routes
+        Route::post('cyber/{quoteUuId}/send-email-one-click-buy', [CyberQuoteController::class, 'sendEmailOneClickBuy'])->name('cyberSendEmailOneClickBuy');
     });
     Route::get('/bike-insurance-provider-plans', [BikeQuoteController::class, 'bikePlansByInsuranceProvider']);
 

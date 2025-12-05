@@ -13,6 +13,8 @@ use App\Models\InsuranceProviderPlan;
 use App\Models\PaymentStatus;
 use App\Services\AMLService;
 use App\Services\Quotes\CyberQuoteService;
+use App\Services\Logger\LoggerService;
+use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 
 class CyberQuoteController extends Controller
 {
@@ -98,5 +100,17 @@ class CyberQuoteController extends Controller
         $data = $this->cyberQuoteService->getShowData($uuid);
 
         return inertia('CyberQuote/Show', $data);
+    }
+    public function sendEmailOneClickBuy( $quoteUuid)
+    {
+        LoggerService::startQuoteLogging(QuoteTypes::CYBER->refId($quoteUuid));
+        LoggerService::info(self::class.' - sendEmailOneClickBuy OCB email sending started for quote');
+
+        SendCyberOCBIntroEmailJob::dispatch($quoteUuid);
+        LoggerService::info(self::class.' - sendEmailOneClickBuy OCB email Job dispatched for quote ');
+
+        LoggerService::endLogging();
+
+        return response()->json(['success' => 'OCB email sent to customer']);
     }
 }
