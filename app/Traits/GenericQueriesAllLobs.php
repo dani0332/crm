@@ -840,8 +840,10 @@ trait GenericQueriesAllLobs
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         $advisor = User::with('primaryBranch')->find($record?->advisor_id);
         $emirate = null;
+        $policyIssuedLog = null;
         if ($quoteTypeId == QuoteTypeId::Health) {
             $emirate = $record?->emirate_of_your_visa_id ?? null;
+            $policyIssuedLog = $record?->policyIssuedLogs()->first();
         } else if (
             $quoteTypeId == QuoteTypeId::Business 
             && $record->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
@@ -849,7 +851,7 @@ trait GenericQueriesAllLobs
             $emirate = $record?->latestInsured?->entity?->emirate_of_registration_id ?? null;
             $quoteTypeId = QuoteTypeId::GroupMedical;
         }
-        $branch = app(BranchAssignmentService::class)->getBranch($advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirate);
+        $branch = app(BranchAssignmentService::class)->getBranch($advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirate, $policyIssuedLog);
 
         LoggerService::info('Branch check for Quote', extra: [
             'ref_id' => $record->code,
