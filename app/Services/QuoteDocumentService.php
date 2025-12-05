@@ -612,19 +612,34 @@ class QuoteDocumentService extends BaseService
             $outputFile = $outputPath = storage_path('temp/'.$docName);
         }
 
-        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
+        // Read directly from private storage
+        if (! Storage::disk('azureIMPrivate')->exists($file)) {
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
+        }
+        $fileContent = Storage::disk('azureIMPrivate')->get($file);
 
-        $encodedUrl = $this->encodeUrl($azureFilePath);
-        $fileContent = file_get_contents($encodedUrl);
-
-        if (! $fileContent) {
-            LoggerService::error("Unable to read file azureFilePath: $azureFilePath ");
-            throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
+        if (! $fileContent || strlen($fileContent) < 100) {
+            LoggerService::error("Unable to read file or file is too small: $file", extra: [
+                'uuid' => $uuid,
+                'file_path' => $file,
+                'file_size' => $fileContent ? strlen($fileContent) : 0
+            ]);
+            throw new \Exception("Unable to read file or file is too small: $file");
         }
 
         // Save the source file
         $sourceFilePath = storage_path('temp/source_'.$docName);
-        file_put_contents($sourceFilePath, $fileContent);
+        $written = file_put_contents($sourceFilePath, $fileContent);
+        
+        if ($written === false || !file_exists($sourceFilePath) || filesize($sourceFilePath) < 100) {
+            LoggerService::error("Failed to save source file to temp directory", extra: [
+                'uuid' => $uuid,
+                'source_file_path' => $sourceFilePath,
+                'bytes_written' => $written
+            ]);
+            throw new \Exception("Failed to save source file to temp directory: $sourceFilePath");
+        }
 
         try {
             // Use QPDF as our primary watermarking approach
@@ -776,10 +791,12 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
-
-        $encodedUrl = $this->encodeUrl($azureFilePath);
-        $fileContent = file_get_contents($encodedUrl);
+        // Read directly from private storage
+        if (! Storage::disk('azureIMPrivate')->exists($file)) {
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
+        }
+        $fileContent = Storage::disk('azureIMPrivate')->get($file);
 
         $manager = new ImageManager(new Driver);
 
@@ -851,10 +868,12 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
-
-        $encodedUrl = $this->encodeUrl($azureFilePath);
-        $fileContent = file_get_contents($encodedUrl);
+        // Read directly from private storage
+        if (! Storage::disk('azureIMPrivate')->exists($file)) {
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
+        }
+        $fileContent = Storage::disk('azureIMPrivate')->get($file);
 
         $tempFile = storage_path('temp/'.$docName);
         file_put_contents($tempFile, $fileContent);
