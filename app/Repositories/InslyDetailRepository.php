@@ -580,7 +580,6 @@ class InslyDetailRepository extends BaseRepository
             [$dataArr['email'], $additionalEmails] = [$tempCustomerEmail, []];
         }
 
-
         /* assign customer email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
