@@ -365,7 +365,7 @@ class EpBookingService extends BaseService
     {
         try {
             // For local storage
-            if (Storage::disk('azureIMPrivate')->exists($path)) {
+            if (Storage::disk('azureIM')->exists($path)) {
                 return true;
             }
 
@@ -396,7 +396,7 @@ class EpBookingService extends BaseService
         try {
             $fileNameAzure = uniqid()."_{$docName}";
             $docUrl = "{$dir}/{$fileNameAzure}";
-            $isSuccess = Storage::disk('azureIMPrivate')->put($docUrl, $fileContent);
+            $isSuccess = Storage::disk('azureIM')->put($docUrl, $fileContent);
 
             if (! $isSuccess) {
                 throw new Error("Process Failed, doc_name: {$docName}, doc_url: {$docUrl}");
