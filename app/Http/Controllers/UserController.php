@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\EnvEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -164,6 +165,7 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $appEnv = config('constants.APP_ENV');
         $this->validate($request, [
             'name' => 'required|max:120',
             'email' => 'required|email|unique:users',
@@ -176,11 +178,11 @@ class UserController extends Controller
 
         $employeeCode = $this->userService->getEmployeeCode($request->email);
 
-        if (empty($employeeCode)) {
-            return redirect()->back()->withInput()->withErrors(['email' => 'Employee Code Not Found']);
+        if (empty($employeeCode) && in_array($appEnv, [EnvEnum::PRODUCTION, EnvEnum::STAGING])) {
+            return redirect()->back()->withInput()->withErrors(['email' => 'Employee code not found. Please contact HR']);
+        } else {
+            $request->merge(['employee_code' => $employeeCode]);
         }
-
-        $request->merge(['employee_code' => $employeeCode]);
 
         $user = $this->userService->createUserRecord($request);
         $products = $this->getAllProducts();
