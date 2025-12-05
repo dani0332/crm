@@ -12,7 +12,6 @@ use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Monolog\Logger;
 
 class UserService extends BaseService
 {
@@ -410,7 +409,7 @@ class UserService extends BaseService
         }
 
         foreach ($employeeData as $employee) {
-            if (($employee['email'] ?? '') === $email && !empty($employee['code'])) {
+            if (($employee['email'] ?? '') === $email && ! empty($employee['code'])) {
                 return $employee['code'];
             }
         }
