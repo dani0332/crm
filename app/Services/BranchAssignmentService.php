@@ -10,8 +10,6 @@ use App\Models\Branch;
 use App\Models\BranchOverrideConfig;
 use App\Enums\EmirateEnum;
 use App\Enums\BranchEnum;
-use App\Enums\QuoteTypes;
-use Override;
 use App\Models\BranchOverride;
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
@@ -123,9 +121,13 @@ class BranchAssignmentService extends BaseService
      */
     public function hasBranchAssignment($quote, $quoteTypeId): bool
     {
-        $hasBranch = $quoteTypeId == QuoteTypeId::Health
-            ? ($quote->advisor?->primaryBranch()->exists() && $quote->emirate_of_your_visa_id !== null)
-            : $quote->advisor?->primaryBranch()->exists();
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $hasBranch = $quote->advisor?->primaryBranch()->exists() && $quote->emirate_of_your_visa_id !== null;
+        } else if ($quoteTypeId == QuoteTypeId::GroupMedical) {
+            $hasBranch = $quote->advisor?->primaryBranch()->exists() && $quote->latestInsured?->entity?->emirate_of_registration_id !== null;
+        } else {
+            $hasBranch = $quote->advisor?->primaryBranch()->exists();
+        }
 
         if (!$hasBranch) {
             LoggerService::warning('Branch missing for quote: ' . $quote->code);
@@ -171,9 +173,9 @@ class BranchAssignmentService extends BaseService
      * @param int|null $emirateOfYourVisaId      (Optional) Visa emirate ID, used for Health quotes
      * @return string                            The branch's display name, or empty string if not found
      */
-    public function getBranchName($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null, $policyIssuedLog = null): string
+    public function getBranchName($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null, $bookingDate = null): string
     {
-        $branch = $this->getBranch($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId, $policyIssuedLog);
+        $branch = $this->getBranch($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId, $bookingDate);
 
         return $branch->name ?? '';
     }
@@ -188,10 +190,10 @@ class BranchAssignmentService extends BaseService
      * @param int|null $emirateOfYourVisaId     (Optional) Visa emirate ID, required only for Health quotes
      * @return mixed|null                       The resolved branch model instance, or null if not found
      */
-    public function getBranch($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null, $policyIssuedLog = null)
+    public function getBranch($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null, $bookingDate = null)
     {
         if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
-            return $this->getHealthOrGroupMedicalBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $policyIssuedLog, $quoteTypeId);
+            return $this->getHealthOrGroupMedicalBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $bookingDate, $quoteTypeId);
         }
 
         return $this->getBranchWithOverride($primaryAdvisorBranchId, $quoteTypeId);
@@ -203,18 +205,18 @@ class BranchAssignmentService extends BaseService
      * @param int|null $primaryAdvisorBranchId
      * @param int|null $emirateOfYourVisaId
      */
-    private function getHealthOrGroupMedicalBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $policyIssuedLog, $quoteTypeId)
+    private function getHealthOrGroupMedicalBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $bookingDate, $quoteTypeId)
     {
         if (empty($emirateOfYourVisaId)) {
             return null;
         }
         
         // AUH V1 Logic for branch
-        if($policyIssuedLog && $quoteTypeId == QuoteTypeId::Health) {
-            $createdAt = Carbon::parse($policyIssuedLog->created_at);
+        if($bookingDate && $quoteTypeId == QuoteTypeId::Health) {
+            $bookingDate = Carbon::parse($bookingDate);
             $auhV1Date = Carbon::parse(ApplicationStorage::where('key_name', ApplicationStorageEnums::BRANCH_LIVE_DATE_V1)->first()->value);
             $auhV2Date = Carbon::parse(ApplicationStorage::where('key_name', ApplicationStorageEnums::BRANCH_LIVE_DATE_V2)->first()->value);
-            if($createdAt->gte($auhV1Date) && $createdAt->lt($auhV2Date)) {
+            if($bookingDate->gte($auhV1Date) && $bookingDate->lt($auhV2Date)) {
                 $emirateId = EmirateEnum::getBranchId($emirateOfYourVisaId);
                 return self::$branches->find($emirateId);
             }

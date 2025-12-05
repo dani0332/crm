@@ -397,12 +397,6 @@ class HealthQuote extends Model implements AuditableContract
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id')->where('quote_type_id', QuoteTypeId::Health);
     }
 
-    public function policyIssuedLogs(): HasMany
-    {
-        return $this->quoteStatusLogs()
-            ->where('current_quote_status_id', QuoteStatusEnum::PolicyIssued);
-    }
-
     /**
      * Check if quote has both payment link sent and initiated status in its history
      */

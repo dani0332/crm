@@ -1239,11 +1239,7 @@ class CRUDController extends Controller
                 $isAUHLead = $lead->isAUHLead(false);
                 $hasPecTag = $lead->has_pec_tag;
 
-                $policyIssuedLog = QuoteStatusLog::where('quote_request_id', $record->id)
-                ->where('quote_type_id', QuoteTypeId::Health)
-                ->where('current_quote_status_id', QuoteStatusEnum::PolicyIssued)
-                ->first();
-                $record->branch_name = !$record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id, $policyIssuedLog));
+                $record->branch_name = !$record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id, $record->policy_booking_date));
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,

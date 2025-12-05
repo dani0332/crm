@@ -103,7 +103,6 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'insuranceProvider:id,text',
             'plan:id,text',
             'subSource:id,text',
-            'policyIssuedLogs',
         ]);
     }
 

@@ -398,7 +398,7 @@ class HealthQuoteService extends BaseService
     public function postProcessHealthQuotes($quotes)
     {
         return $quotes->map(function ($quote) {
-            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id, $quote->policyIssuedLogs->first()));
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id, $quote->policy_booking_date));
 
             return $quote;
         });
