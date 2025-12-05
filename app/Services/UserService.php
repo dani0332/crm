@@ -410,7 +410,7 @@ class UserService extends BaseService
         }
 
         foreach ($employeeData as $employee) {
-            if (($employee['email'] ?? '') === $email && !empty($employee['code'])) {
+            if (strtolower($employee['email'] ?? '') === strtolower($email) && !empty($employee['code'])) {
                 return $employee['code'];
             }
         }

@@ -17,9 +17,10 @@ class HRMRequestService
     private function getAccessToken(): string|false
     {
         $cacheKey = 'hrm_api_access_token';
+        $token = Cache::get($cacheKey);
 
-        if (Cache::has($cacheKey)) {
-            return Cache::get($cacheKey);
+        if ($token) {
+            return $token;
         }
 
         $clientId = config('constants.HRM_API_CLIENT_ID');
@@ -32,12 +33,6 @@ class HRMRequestService
         }
 
         $authUrl = rtrim($apiEndPoint, '/').'/v1/auth/obtain-token';
-
-        LoggerService::error(static::class.'::getAccessToken - Params',[
-            'client_id' => $clientId,
-            'client_secret' => $clientSecret,
-            'authUrl' => $authUrl,
-        ]);
 
         try {
             // Using a separate timeout for auth if needed, or default
