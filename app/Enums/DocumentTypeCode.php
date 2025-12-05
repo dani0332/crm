@@ -142,4 +142,5 @@ class DocumentTypeCode extends Enum
     const DEVICE_SMARTPHONE_PAYMENT_RECEIPT = 'DEV_SP_PDR'; // Device Smart Phone Payment Receipt
     const DEVICE_SMARTPHONE_PAYMENT_DISCOUNT_PROOF = 'DEV_SP_DPDR'; // Device Smart Phone Payment Discount Proof
     const DEVICE_SMARTPHONE_EMIRATES_ID = 'DEV_SP_EID'; // Device Smart Phone Emirates ID
+    const DEVICE_SMARTPHONE_OTHER_DOCUMENTS = 'DEV_SP_OTHER_DOCS'; // Device Smart Phone Emirates ID
 }
