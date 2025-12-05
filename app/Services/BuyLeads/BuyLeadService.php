@@ -17,15 +17,6 @@ use PDF;
 
 class BuyLeadService
 {
-    private function activeRequestsCount(QuoteTypes $quoteType, bool $isCarRevival = false): int
-    {
-        return (int) BuyLeadRequest::where('quote_type_id', $quoteType->id())
-            ->where('user_id', Auth::id())
-            ->active()
-            ->when($isCarRevival, fn ($query) => $query->catA(), fn ($query) => $query->nonCatA())
-            ->sum('requested_count');
-    }
-
     public function getBlLeadRemainingLimit(QuoteTypes $quoteType)
     {
         $isCarRevival = $quoteType->value == QuoteTypes::CAR_CAT_A->value;
@@ -41,7 +32,9 @@ class BuyLeadService
 
         $buyLeadMaxCap = $leadAllocation?->buy_lead_max_capacity ?? 0;
 
-        return $buyLeadMaxCap - $this->activeRequestsCount($quoteType, $isCarRevival);
+        $assignedCount = $isCarRevival ? $leadAllocation->buy_lead_cat_a_allocation_count : $leadAllocation->buy_lead_allocation_count;
+
+        return $buyLeadMaxCap - $assignedCount;
     }
 
     public function isRequestAlreadySubmitted(QuoteTypes $quoteType, bool $isCarRevival = false): bool
