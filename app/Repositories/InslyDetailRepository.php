@@ -568,8 +568,14 @@ class InslyDetailRepository extends BaseRepository
 
         /* Temp Code - assign email for particular Policy id/number */
 
-        $tempEmail = 'soniax711@gmail.com';
-        $tempPolicyId = 40523841;
+        $tempEmail = 'necelrosell@yahoo.com';
+        $tempPolicyId = 45191132;
+        if ($tempPolicyId == $policy['policy_oid']) {
+            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
+        }
+
+        $tempEmail = 'Biancamarais92@gmail.com';
+        $tempPolicyId = 39236303;
         if ($tempPolicyId == $policy['policy_oid']) {
             [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
         }
