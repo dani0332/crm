@@ -266,8 +266,12 @@ class InslyDetailRepository extends BaseRepository
         $email = $policy['customer']['email'] ?? null;
 
         /* Temp Code - assign email for particular Policy id/number */
-        if ($policyID == 40523841) {
-            $email = 'soniax711@gmail.com';
+
+        if ($policyID == 45191132) {
+            $email = 'necelrosell@yahoo.com';
+        }
+        if ($policyID == 39236303) {
+            $email = 'Biancamarais92@gmail.com';
         }
         /* Temp Code - assign email for particular Policy id/number */
 
