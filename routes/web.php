@@ -988,7 +988,3 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return view('pdf.bor-document', $pdfData);
     });
 });
-
-// Route to mark leads private client
-Route::get('/pc-assignment', [\App\Http\Controllers\API\ApiController::class, 'tagPrivateClients'])
-    ->name('pc-assignment');
