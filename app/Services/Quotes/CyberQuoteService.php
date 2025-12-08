@@ -100,6 +100,8 @@ class CyberQuoteService extends BaseQuoteService
                     'insuranceProvider:id,text,code',
                     'insuranceProviderPlan',
                     'insuranceProvider',
+                    'latestInsured',
+                    'latestInsured.insuredKyc:id,insured_id',
                     'cyberQuote.coverage',
                     'payments' => function ($q) {
                         $q->with([

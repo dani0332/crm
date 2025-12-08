@@ -104,6 +104,7 @@ class AuditableController extends Controller
             'success' => true,
             'message' => 'Policy issuance API logs retrieved successfully',
             'data' => $policyIssuanceLogs,
+            'policyIssuance' => $quote->policyIssuance ?? null,
         ]);
     }
 
