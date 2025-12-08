@@ -22,4 +22,10 @@ class Insured extends Model implements AuditableContract
     {
         return $this->hasOne(InsuredKyc::class, 'insured_id', 'id');
     }
+
+    public function scopeEmirateId($query, $idNumber)
+    {
+        return $query->where('id_number', formatEmirateId($idNumber))
+            ->orWhere('id_number', str_replace('-', '', $idNumber));
+    }
 }

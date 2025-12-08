@@ -772,10 +772,7 @@ class AMLController extends Controller
         })
         ->when(!$isEntity, function ($query) use ($request) {
             $query->where('id_type', $request->id_type)
-                    ->where(function ($query) use ($request) {
-                        $query->where('id_number', $request->id_number)
-                        ->orWhere('id_number', str_replace('-', '', $request->id_number));
-                    });
+                    ->emirateId($request->id_number);
         })
         ->first();
 

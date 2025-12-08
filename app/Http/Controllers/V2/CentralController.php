@@ -226,23 +226,20 @@ class CentralController extends Controller
             // todo: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
                 ->where('id_type', 'emiratesId')
-                ->where(function ($query) use ($customerProfileRequest) {
-                    $query->where('id_number', $customerProfileRequest->emirates_id_number)
-                        ->orWhere('id_number', str_replace('-', '', $customerProfileRequest->emirates_id_number));
-                })
+                ->emirateId($customerProfileRequest->emirates_id_number)
                 ->first();
             $idNumber = $insured->id_number ?? $customerProfileRequest->emirates_id_number;
 
             $insuredPersonDetails = Insured::updateOrCreate([
                 'id_type' => 'emiratesId',
                 'id_number' => $idNumber,
+                'customer_type' => $customerProfileRequest->customer_type,
             ], [
                 'first_name' => $customerProfileRequest->insured_first_name,
                 'last_name' => $customerProfileRequest->insured_last_name,
                 'dob' => $customer->dob,
                 'nationality_id' => $customer->nationality_id,
                 'gender' => $customer->screening_gender,
-                'customer_type' => $customerProfileRequest->customer_type,
             ]);
 
             CustomerInsured::updateOrCreate([
