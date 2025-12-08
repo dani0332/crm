@@ -280,7 +280,6 @@ function onSubmit(isValid) {
                 type="text"
                 v-model="quoteForm.addressObj.street_name"
                 placeholder="Street (Optional)"
-                :rules="[isRequired]"
                 class="w-full"
                 :disabled="isCourierStatusPending"
                 :error="quoteForm.errors['addressObj.street_name']"
