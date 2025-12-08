@@ -226,7 +226,7 @@ class CentralController extends Controller
             // todo: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
                 ->where('id_type', 'emiratesId')
-                ->emirateId($customerProfileRequest->emirates_id_number)
+                ->idNumber($customerProfileRequest->emirates_id_number)
                 ->first();
             $idNumber = $insured->id_number ?? $customerProfileRequest->emirates_id_number;
 

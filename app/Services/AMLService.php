@@ -420,7 +420,8 @@ class AMLService
     public function getInsuredPersonDetails(string $idType, string $idNumber): ?object
     {
         $insuredPersonDetails = Insured::where('id_type', $idType)
-            ->emirateId($idNumber)
+            ->idNumber($idNumber)
+            ->where('customer_type', CustomerTypeEnum::Individual)
             ->first();
 
         if (! $insuredPersonDetails) {
@@ -1582,7 +1583,7 @@ class AMLService
             // todo: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
                 ->where('id_type', $request->screening_id_type)
-                ->emirateId($request->screening_id_number)
+                ->idNumber($request->screening_id_number)
                 ->first();
             $idNumber = $insured->id_number ?? $request->screening_id_number;
 

@@ -21,6 +21,7 @@ use App\Services\OCR\Validators\OCRDocumentValidator;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use App\Enums\CustomerTypeEnum;
 
 class EmiratesIdDataProcessor
 {
@@ -107,7 +108,8 @@ class EmiratesIdDataProcessor
 
             if (! $insured && ! empty($this->extractedData['eid_number'])) {
                 $insured = Insured::where('id_type', 'emiratesId')
-                    ->emirateId($this->extractedData['eid_number'])
+                    ->where('customer_type', CustomerTypeEnum::Individual)
+                    ->idNumber($this->extractedData['eid_number'])
                     ->first();
 
                 if ($insured) {
