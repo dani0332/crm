@@ -1595,7 +1595,7 @@ class AMLService
                     $query->where('id_number', $request->screening_id_number);
                 })
                 ->first();
-            $idNumber = $insured->id_number ?? $request->screening_id_number;
+            $idNumber = $insured?->id_number ?? $request->screening_id_number;
 
             $insured = Insured::updateOrCreate([
                 'customer_type' => CustomerTypeEnum::Individual,

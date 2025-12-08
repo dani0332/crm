@@ -228,7 +228,7 @@ class CentralController extends Controller
                 ->where('id_type', 'emiratesId')
                 ->emiratesIdNumber($customerProfileRequest->emirates_id_number)
                 ->first();
-            $idNumber = $insured->id_number ?? $customerProfileRequest->emirates_id_number;
+            $idNumber = $insured?->id_number ?? $customerProfileRequest->emirates_id_number;
 
             $insuredPersonDetails = Insured::updateOrCreate([
                 'id_type' => 'emiratesId',
