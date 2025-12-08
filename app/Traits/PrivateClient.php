@@ -99,7 +99,14 @@ trait PrivateClient
     // Function to check pc qualified lead and remove pc tag if not qualified
     public function removePcTagLead(string $leadUuid, int $quoteTypeId)
     {
-        $modelClass = CarQuote::class;
+        $modelClass = $quoteTypeId === QuoteTypeId::Yacht || $quoteTypeId === QuoteTypeId::Home ? PersonalQuote::class : QuoteTypes::getQuoteTypeIdToClass($quoteTypeId);
+        if (! class_exists($modelClass)) {
+            LoggerService::warning('Model class not found.', extra: [
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return false;
+        }
 
         // Find the lead model
         $model = $this->findLeadModel($modelClass, $leadUuid, $quoteTypeId);
@@ -126,8 +133,6 @@ trait PrivateClient
             // Remove pc tag from lead
             $model->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
             PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
-
-            return false;
         }
 
         // Check if lead matches PCP criteria
@@ -139,8 +144,6 @@ trait PrivateClient
             // Remove pc tag from lead
             $model->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
             PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
-
-            return false;
         }
     }
 
