@@ -8,6 +8,7 @@ use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
+use App\Traits\FileDownloaderTrait;
 use App\Traits\RenewalsImportTrait;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
@@ -23,7 +24,7 @@ use Maatwebsite\Excel\Events\AfterImport;
 
 class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchInserts, WithChunkReading, WithEvents, WithStartRow, WithValidation
 {
-    use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
+    use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures, FileDownloaderTrait;
 
     private $validCount = 0;
     private $failedCount = 0;

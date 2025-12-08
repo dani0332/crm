@@ -7,6 +7,7 @@ use App\Enums\RenewalsUploadType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
+use App\Traits\FileDownloaderTrait;
 use App\Traits\RenewalsImportTrait;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
@@ -23,7 +24,7 @@ use Maatwebsite\Excel\Row;
 
 class UploadAndCreateImport implements OnEachRow, SkipsEmptyRows, SkipsOnFailure, WithChunkReading, WithEvents, WithStartRow, WithValidation
 {
-    use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
+    use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures, FileDownloaderTrait;
 
     private $validCount = 0;
     private $failedCount = 0;
@@ -209,5 +210,10 @@ class UploadAndCreateImport implements OnEachRow, SkipsEmptyRows, SkipsOnFailure
                 }
             },
         ];
+    }
+
+    public function import($url)
+    {
+        $this->fetchFileFromUrl($url, $this->renewalsUploadLead, $this);
     }
 }
