@@ -27,6 +27,7 @@ class TagPrivateClientJob implements ShouldQueue
                 ->whereNotNull('policy_expiry_date')
                 ->where('policy_expiry_date', '>', now())
                 ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht])
+                ->whereIn('uuid', ['AXM9S3P3', 'BZ5ZCWAN', '4HANEUXM', '9K3P9QFB', 'L2AGNZQK'])
                 ->orderBy('created_at', 'asc');
 
             $quotesQuery->chunk(200, function ($quotes) {
