@@ -378,11 +378,11 @@ class ApiController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function tagPrivateClients()
+    public function tagPrivateClients(Request $request)
     {
         LoggerService::info(self::class.': Private client tag exercise has been initiated');
 
-        dispatch(new TagPrivateClientJob);
+        dispatch(new TagPrivateClientJob($request->uuids ?? []));
 
         return apiResponse(null, Response::HTTP_OK, 'Private client tagging has started!');
     }
