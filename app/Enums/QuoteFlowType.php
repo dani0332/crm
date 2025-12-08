@@ -36,7 +36,8 @@ enum QuoteFlowType: int
     case CAR_AUTOMATION_FAILED = 36;
     case CAR_MISSING_DOC_REMINDER = 37;
     case CAR_AI_ADVISOR_OCB = 39;
-
+    case DEVICE_AUTOMATED_FOLLOWUPS = 41;
+    case DEVICE_OCB_INTRO_EMAIL = 42;
     public function label(): string
     {
         return match ($this) {
@@ -71,6 +72,8 @@ enum QuoteFlowType: int
             QuoteFlowType::CAR_AUTOMATION_FAILED => 'car_automation_failed',
             QuoteFlowType::CAR_MISSING_DOC_REMINDER => 'car_missing_doc_reminder',
             QuoteFlowType::CAR_AI_ADVISOR_OCB => 'car_ai_advisor_ocb',
+            QuoteFlowType::DEVICE_AUTOMATED_FOLLOWUPS => 'device_automated_followups',
+            QuoteFlowType::DEVICE_OCB_INTRO_EMAIL => 'device_ocb_intro_email',
         };
     }
 
@@ -109,6 +112,8 @@ enum QuoteFlowType: int
             36 => QuoteFlowType::CAR_AUTOMATION_FAILED,
             37 => QuoteFlowType::CAR_MISSING_DOC_REMINDER,
             39 => QuoteFlowType::CAR_AI_ADVISOR_OCB,
+            41 => QuoteFlowType::DEVICE_AUTOMATED_FOLLOWUPS,
+            42 => QuoteFlowType::DEVICE_OCB_INTRO_EMAIL,
             default => null,  // Return null if the value doesn't match any case
         };
     }
