@@ -109,7 +109,7 @@ class EmiratesIdDataProcessor
             if (! $insured && ! empty($this->extractedData['eid_number'])) {
                 $insured = Insured::where('id_type', 'emiratesId')
                     ->where('customer_type', CustomerTypeEnum::Individual)
-                    ->idNumber($this->extractedData['eid_number'])
+                    ->emiratesIdNumber($this->extractedData['eid_number'])
                     ->first();
 
                 if ($insured) {

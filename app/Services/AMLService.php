@@ -420,7 +420,12 @@ class AMLService
     public function getInsuredPersonDetails(string $idType, string $idNumber): ?object
     {
         $insuredPersonDetails = Insured::where('id_type', $idType)
-            ->idNumber($idNumber)
+            ->when($idType == 'emiratesId', function ($query) use ($idNumber) {
+                $query->emiratesIdNumber($idNumber);
+            })
+            ->when($idType != 'emiratesId', function ($query) use ($idNumber) {
+                $query->where('id_number', $idNumber);
+            })
             ->where('customer_type', CustomerTypeEnum::Individual)
             ->first();
 
@@ -1583,7 +1588,12 @@ class AMLService
             // todo: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
                 ->where('id_type', $request->screening_id_type)
-                ->idNumber($request->screening_id_number)
+                ->when($request->screening_id_type == 'emiratesId', function ($query) use ($request) {
+                    $query->emiratesIdNumber($request->screening_id_number);
+                })
+                ->when($request->screening_id_type != 'emiratesId', function ($query) use ($request) {
+                    $query->where('id_number', $request->screening_id_number);
+                })
                 ->first();
             $idNumber = $insured->id_number ?? $request->screening_id_number;
 
