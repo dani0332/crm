@@ -208,11 +208,13 @@ class ManagementReport
         if ($lobs->isEmpty()) {
             $lobs = $this->getUserProducts($user->id)->pluck('name');
         }
+        $lobs = $lobs->map(fn ($item) => quoteTypeCode::getQuoteTypeCodeFromProductName($item));
         $lobsIds = $lobs->map(fn ($item) => (
             in_array($item, [quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical])
                 ? QuoteTypeId::Business
                 : QuoteTypes::getIdFromValue($item
                 )))
+            ->filter()
             ->toArray();
         $lobs = $lobs->toArray();
 

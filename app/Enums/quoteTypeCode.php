@@ -86,4 +86,12 @@ class quoteTypeCode extends Enum
             default => $quoteTypeCode,
         };
     }
+
+    public static function getQuoteTypeCodeFromProductName(string $productName): string
+    {
+        return match ($productName) {
+            TeamNameEnum::CYBER => self::CYBER,
+            default => $productName,
+        };
+    }
 }
