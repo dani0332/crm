@@ -198,17 +198,20 @@ class CustomerAddressService
 
     public function triggerBirdFlow($lead, $address, $actionType, $quoteTypeId)
     {
-        if ($lead->embeddedTransactions()->exists()) {
-            LoggerService::info('Checking for courier transaction for lead : '.$lead->uuid);
-            $courierEmbeddedTransaction = $lead->embeddedTransactions
-                ->filter(function ($transaction) {
-                    return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
-                });
+        if (! $lead->embeddedTransactions()->exists()) {
+            LoggerService::info('No embedded transactions found for lead : '.$lead->uuid);
+            return;
         }
+
+        LoggerService::info('Checking for courier transaction for lead : '.$lead->uuid);
+        $courierEmbeddedTransaction = $lead->embeddedTransactions
+            ->filter(function ($transaction) {
+                return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
+            });
 
         if (
             ($selectedTransaction = $courierEmbeddedTransaction?->firstWhere('is_selected', 1)) &&
-            in_array($selectedTransaction->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
+            in_array($selectedTransaction?->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
         ) {
             LoggerService::info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
             $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
