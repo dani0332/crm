@@ -38,9 +38,7 @@ trait GetUserTreeTrait
 
         $childUserIds = [$userId];
         $productName = $productType ?? quoteTypeCode::Car;
-        if ($productName === quoteTypeCode::CYBER) {
-            $productName = 'Cyber Insurance';
-        }
+        $productName = quoteTypeCode::getProductNameFromQuoteTypeCode($productName);
         $productTeam = $this->getProductByName($productName);
         
         if (! $productTeam) {

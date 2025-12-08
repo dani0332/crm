@@ -161,7 +161,8 @@ class ReportsController extends Controller
      */
     public function fetchTeamListByLob(Request $request)
     {
-        $lobId = $this->getProductByName($request->lob)->id;
+        $productName = quoteTypeCode::getProductNameFromQuoteTypeCode($request->lob);
+        $lobId = $this->getProductByName($productName)->id;
         $allTeams = $this->getTeamsByProductId($lobId)->pluck('id')->toArray();
 
         if (auth()->user()->hasAnyRole([
@@ -190,7 +191,8 @@ class ReportsController extends Controller
      */
     public function fetchAdvisorsListByLob(Request $request)
     {
-        $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob);
+        $productName = quoteTypeCode::getProductNameFromQuoteTypeCode($request->lob);
+        $usersReportToLoggedInUser = $this->getUsersByProductName($productName);
         if (! auth()->user()->hasAnyRole([
             RolesEnum::SeniorManagement,
             RolesEnum::Admin,
