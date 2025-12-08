@@ -15,6 +15,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
+use App\Enums\TeamTypeEnum;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\Tier;
@@ -170,7 +171,10 @@ class LeadDistributionReportService extends BaseService
     private function getPersonalQuoteQuery($lob)
     {
         $lobId = $this->getLobId($lob);
-        $quoteType = QuoteTypes::from($lob);
+        $quoteTypeCode = quoteTypeCode::getQuoteTypeCodeFromProductName($lob);
+        /*Doing a 2nd step because $quoteType uses methods from \App\Enums\QuoteTypes after few lines. */
+        $quoteType = QuoteTypes::from($quoteTypeCode);
+
         $parentTeam = $this->getProductByName($lob);
 
         $personalQuoteQuery = PersonalQuote::query()
