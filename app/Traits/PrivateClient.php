@@ -133,6 +133,8 @@ trait PrivateClient
             // Remove pc tag from lead
             $model->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
             PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
+
+            return;
         }
 
         // Check if lead matches PCP criteria
