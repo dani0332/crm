@@ -107,8 +107,8 @@ class EmiratesIdDataProcessor
 
             if (! $insured && ! empty($this->extractedData['eid_number'])) {
                 $insured = Insured::where('id_type', 'emiratesId')
-                ->emirateId($this->extractedData['eid_number'])
-                ->first();
+                    ->emirateId($this->extractedData['eid_number'])
+                    ->first();
 
                 if ($insured) {
                     $this->createCustomerInsuredLink($insured);

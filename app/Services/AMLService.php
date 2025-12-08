@@ -420,8 +420,8 @@ class AMLService
     public function getInsuredPersonDetails(string $idType, string $idNumber): ?object
     {
         $insuredPersonDetails = Insured::where('id_type', $idType)
-        ->emirateId($idNumber)
-        ->first();
+            ->emirateId($idNumber)
+            ->first();
 
         if (! $insuredPersonDetails) {
             $customerDetails = CustomerDetail::with(['customer:id,code,dob,gender,insured_first_name as first_name,insured_last_name as last_name,nationality_id'])

@@ -1789,8 +1789,8 @@ if (! function_exists('formatEmirateId')) {
     function formatEmirateId($idNumber): string
     {
         $eidNumber = str_replace('-', '', $idNumber);
-        $formattedIdNumber = substr($eidNumber, 0, 3) . '-' . substr($eidNumber, 3, 4)
-            . '-' . substr($eidNumber, 7, 7) . '-' . substr($eidNumber, 14, 1);
+        $formattedIdNumber = substr($eidNumber, 0, 3).'-'.substr($eidNumber, 3, 4)
+            .'-'.substr($eidNumber, 7, 7).'-'.substr($eidNumber, 14, 1);
 
         return $formattedIdNumber;
     }

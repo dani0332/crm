@@ -766,15 +766,15 @@ class AMLController extends Controller
 
         $customerType = $isEntity ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
         $insuredDetails = Insured::with('insuredKyc')
-        ->where('customer_type', $customerType)
-        ->when($isEntity, function ($query) use ($request) {
-            $query->where('trade_license_no', $request->trade_license);
-        })
-        ->when(!$isEntity, function ($query) use ($request) {
-            $query->where('id_type', $request->id_type)
+            ->where('customer_type', $customerType)
+            ->when($isEntity, function ($query) use ($request) {
+                $query->where('trade_license_no', $request->trade_license);
+            })
+            ->when(! $isEntity, function ($query) use ($request) {
+                $query->where('id_type', $request->id_type)
                     ->emirateId($request->id_number);
-        })
-        ->first();
+            })
+            ->first();
 
         $status = (bool) $insuredDetails;
         $messageType = $status ? 'found' : 'not_found';
