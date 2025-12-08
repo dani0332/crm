@@ -80,9 +80,12 @@ class MisReportJob implements ShouldQueue
     {
         $fileDate = now()->format(config('constants.MISREPORT_FILENAME_DATE_FORMAT'));
         $attachment = $this->getAttachment($fileDate);
+        $reportDate = now()->format(config('constants.MISREPORT_SUBJECT_DATE_FORMAT'));
+        $env = config('constants.APP_ENV');
+        $subject = "$env | Interim AUH→DXB Override – Weekly MIS Report | <$reportDate>";
 
         $emailData = [
-            'reportDate' => now()->format(config('constants.MISREPORT_SUBJECT_DATE_FORMAT')),
+            'subject' => $subject,
             'startDate' => $this->startDate->format(config('constants.MISREPORT_DATE_FORMAT')),
             'endDate' => $this->endDate->format(config('constants.MISREPORT_DATE_FORMAT')),
             'fileDate' => $fileDate,
