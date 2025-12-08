@@ -3,9 +3,11 @@
 namespace App\Http\Requests\Cyber;
 
 use App\Enums\PermissionsEnum;
+use App\Http\Requests\CustomerAddressRequest;
 use App\Models\Emirate;
 use App\Models\Nationality;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 
 class CyberQuoteRequest extends FormRequest
@@ -27,6 +29,9 @@ class CyberQuoteRequest extends FormRequest
      */
     public function rules(): array
     {
+        $customerAddressRequest = CustomerAddressRequest::createFrom($this)->rules();
+        $customerAddressRules = Arr::dot(['addressObj' => $customerAddressRequest]);
+
         return [
             'first_name' => 'required|between:1,20|regex:/^[a-zA-Z\s\-]+$/',
             'last_name' => 'required|between:1,50|regex:/^[a-zA-Z\s\-]+$/',
@@ -35,6 +40,7 @@ class CyberQuoteRequest extends FormRequest
             'dob' => 'required|date',
             'nationality_id' => ['required', Rule::exists(Nationality::class, 'id')],
             'emirate_of_registration_id' => ['required', Rule::exists(Emirate::class, 'id')],
+            ...$customerAddressRules
         ];
     }
 

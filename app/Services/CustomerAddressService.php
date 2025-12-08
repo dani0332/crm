@@ -8,6 +8,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Http\Requests\CustomerAddressRequest;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
 use App\Services\Logger\LoggerService;
@@ -17,13 +18,13 @@ use Illuminate\Validation\ValidationException;
 
 class CustomerAddressService
 {
-    public function createOrUpdateCustomerAddress(array $address, int $customerId, $quoteUuid)
+    public function createOrUpdateCustomerAddress(array $address, int $customerId, $quoteUuid, $quoteTypeId = null)
     {
         if (! empty(array_filter((array) $address))) {
             $address = [
                 'customer_id' => $customerId,
                 'address_type' => $address['address_type'],
-                'quote_type_id' => QuoteTypes::CAR->id(),
+                'quote_type_id' => $quoteTypeId ?? QuoteTypes::CAR->id(),
                 'quote_uuid' => $quoteUuid,
                 'office_number' => $address['villa_apartment_office_no'],
                 'floor_number' => $address['floor_no'],
@@ -35,6 +36,22 @@ class CustomerAddressService
                 'is_default' => $address['address_type'] == 'Home' ? 1 : 0,
             ];
             $this->createOrUpdateAddress($address);
+        }
+    }
+
+    public function syncCustomerAddress(Request $request, QuoteTypes $quoteType, $quote, string $email)
+    {
+        $this->validateAddress($request);
+
+        if (($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj'))))) {
+
+            if ($quote) {
+                $customerId = app(CustomerService::class)->getCustomerIdByEmail($email);
+
+                $this->sendAddressNotificationToCustomer($quote, $request->input('addressObj'), $quoteType->id());
+                $this->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $quote->uuid, $quoteType->id());
+                SyncCourierQuoteWithMacrm::dispatch($quote, $quoteType->id());
+            }
         }
     }
 

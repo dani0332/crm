@@ -15,6 +15,9 @@ use App\Services\AMLService;
 use App\Services\Quotes\CyberQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
+use App\Models\EmbeddedTransaction;
+use App\Services\CustomerAddressService;
+use App\Services\CustomerService;
 
 class CyberQuoteController extends Controller
 {
@@ -82,15 +85,18 @@ class CyberQuoteController extends Controller
     {
         $data = $this->cyberQuoteService->getFormOptions();
         $quote = $this->cyberQuoteService->getOne($uuid);
+        $customerAddressData = app(CustomerService::class)->getCustomerAddressData($quote);
 
         return inertia('CyberQuote/Form', array_merge($data, [
             'quote' => $quote,
+            'customerAddressData' => $customerAddressData,
         ]));
     }
 
     public function update(CyberQuoteRequest $request, $uuid)
     {
-        $this->cyberQuoteService->update($uuid, $request->validated());
+        $quote = $this->cyberQuoteService->update($uuid, $request->validated());
+        app(CustomerAddressService::class)->syncCustomerAddress($request, QuoteTypes::CYBER, $quote, $request->email);
 
         return redirect(route('cyber-quotes-show', $uuid))->with('message', 'Quote is updated successfully.');
     }
