@@ -434,7 +434,6 @@ class HomeRenewalService extends RenewalsUploadService
             'renewal_batch_id' => $renewalQuoteProcess->renewal_batch_id,
             'notes' => $data['notes'],
             'insurer_quote_number' => (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null,
-            'enquiry_count' => ($quote->enquiry_count && $quote->enquiry_count > 0) ? $quote->enquiry_count : 0,
         ];
 
         if (! empty($customerData['first_name'])) {
