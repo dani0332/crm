@@ -28,10 +28,10 @@ class AlfredProtect extends EmbeddedProduct
         $documents = $transaction->documents()->get();
         if (isset($documents)) {
             $docs = $documents->map(function ($document) {
-                $file = Storage::disk('azureIM')->get($document->doc_url);
+                $file = Storage::disk('azureIMPrivate')->get($document->doc_url);
                 $fileInfo = new finfo(FILEINFO_MIME_TYPE);
                 $mimeType = $fileInfo->buffer($file);
-                $filePath = Storage::disk('azureIM')->url($document->doc_url);
+                $filePath = Storage::disk('azureIMPrivate')->url($document->doc_url);
 
                 return [
                     'name' => $document->doc_name,
