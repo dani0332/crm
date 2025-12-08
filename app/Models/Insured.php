@@ -25,7 +25,9 @@ class Insured extends Model implements AuditableContract
 
     public function scopeEmirateId($query, $idNumber)
     {
-        return $query->where('id_number', formatEmirateId($idNumber))
-            ->orWhere('id_number', str_replace('-', '', $idNumber));
+        return $query->where(function ($q) use ($idNumber) {
+            $q->where('id_number', formatEmirateId($idNumber))
+                ->orWhere('id_number', str_replace('-', '', $idNumber));
+        });
     }
 }
