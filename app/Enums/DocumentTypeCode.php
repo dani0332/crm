@@ -97,8 +97,8 @@ class DocumentTypeCode extends Enum
     const POLICY_SCHEDULE = 'CPS';
 
     // CYBER document types
-    const CYBER_EMIRATES_ID = 'EID_CYB';
-    const CYBER_KYC_DOCUMENT = 'KYC_CYB';
+    const CYBER_EMIRATES_ID = 'CYB_EID';
+    const CYBER_KYC_DOCUMENT = 'CYB_KYC';
     const CYBER_POLICY_CERTIFICATE = 'PC_CYB';
     const CYBER_POLICY_SCHEDULE = 'PS_CYB';
     const CYBER_TAX_INVOICE = 'TI_CYB';
