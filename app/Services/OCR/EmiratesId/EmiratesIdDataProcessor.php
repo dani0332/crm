@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\EmiratesId;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
@@ -21,7 +22,6 @@ use App\Services\OCR\Validators\OCRDocumentValidator;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use App\Enums\CustomerTypeEnum;
 
 class EmiratesIdDataProcessor
 {
