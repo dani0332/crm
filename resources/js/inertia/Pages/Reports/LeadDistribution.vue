@@ -1,5 +1,4 @@
 <script setup>
-import { setQueryStringFilters } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   reportData: Object,
