@@ -971,8 +971,8 @@ class EmbeddedProductRepository extends BaseRepository
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $documentType = DocumentType::where('code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->where('quote_type_id', $quoteTypeId)->first();
             $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$title;
-            Storage::disk('azureIM')->put($filePathAzure, $pdfContent);
-            if (! Storage::disk('azureIM')->exists($filePathAzure)) {
+            Storage::disk('azureIMPrivate')->put($filePathAzure, $pdfContent);
+            if (! Storage::disk('azureIMPrivate')->exists($filePathAzure)) {
                 throw new Exception('Error uploading document');
             }
 
