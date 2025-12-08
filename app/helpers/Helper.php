@@ -1785,7 +1785,7 @@ if (! function_exists('getUserIpAddress')) {
     }
 }
 
-if (! function_exists('formatIdNumber')) {
+if (! function_exists('formatEmiratesIdNumber')) {
     function formatEmiratesIdNumber($idNumber): string
     {
         $eidNumber = str_replace('-', '', $idNumber);
