@@ -133,7 +133,7 @@ class CyberQuoteDataSeeder extends Seeder
     {
         $quoteDocuments = [
             [
-                'code' => 'EID_CYB',
+                'code' => 'CYB_EID',
                 'text' => 'Emirates ID',
                 'description' => 'Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.',
                 'is_active' => 1,
@@ -152,7 +152,7 @@ class CyberQuoteDataSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'KYC_CYB',
+                'code' => 'CYB_KYC',
                 'text' => 'KYC Document',
                 'description' => '',
                 'is_active' => 1,
@@ -171,7 +171,7 @@ class CyberQuoteDataSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'PC_CYB',
+                'code' => 'CYB_PC',
                 'text' => 'Policy Certificate',
                 'description' => '',
                 'is_active' => 1,
@@ -190,7 +190,7 @@ class CyberQuoteDataSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'PS_CYB',
+                'code' => 'CYB_PS',
                 'text' => 'Policy Schedule',
                 'description' => '',
                 'is_active' => 1,
@@ -209,7 +209,7 @@ class CyberQuoteDataSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'TI_CYB',
+                'code' => 'CYB_TI',
                 'text' => 'Tax Invoice',
                 'description' => null,
                 'is_active' => 1,
@@ -228,7 +228,7 @@ class CyberQuoteDataSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'TIRBB_CYB',
+                'code' => 'CYB_TIRBB',
                 'text' => 'Tax Invoice Raised By Buyer',
                 'description' => '',
                 'is_active' => 1,

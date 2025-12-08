@@ -14,6 +14,7 @@ use App\Models\PetQuote;
 use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
+use App\Enums\TeamNameEnum;
 use BenSampo\Enum\Enum;
 
 class quoteTypeCode extends Enum
@@ -75,6 +76,22 @@ class quoteTypeCode extends Enum
             CycleQuote::class => self::Cycle,
             JetskiQuote::class => self::Jetski,
             SavingsQuote::class => self::SAVINGS,
+        };
+    }
+
+    public static function getProductNameFromQuoteTypeCode(string $quoteTypeCode): string
+    {
+        return match ($quoteTypeCode) {
+            self::CYBER => TeamNameEnum::CYBER,
+            default => $quoteTypeCode,
+        };
+    }
+
+    public static function getQuoteTypeCodeFromProductName(string $productName): string
+    {
+        return match ($productName) {
+            TeamNameEnum::CYBER => self::CYBER,
+            default => $productName,
         };
     }
 }

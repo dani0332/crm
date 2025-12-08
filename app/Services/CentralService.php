@@ -1658,7 +1658,7 @@ class CentralService extends BaseService
             $emailData->providerName = $quote?->cyberPlanDetail?->providerName ?? '-';
             $emailData->policyWording = ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL') . $quote?->cyberPolicyWording?->link : '';
             $emailData->taxInvoice = $quoteDocuments->filter(function ($document) {
-                return $document['document_type_code'] == DocumentTypeCode::CYBER_TAX_INVOICE;
+                return $document['document_type_code'] == DocumentTypeCode::CYB_TI;
             })->first()?->watermarkedDocumentUrl ?? '';;
         }
 
@@ -1787,7 +1787,7 @@ class CentralService extends BaseService
                 return in_array($document['document_type_code'], [
                     DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS,
                     DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY,
-                    DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYBER_POLICY_SCHEDULE,
+                    DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS,
                 ]);
             })->first()?->doc_url ?? '';
 
