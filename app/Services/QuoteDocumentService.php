@@ -612,14 +612,17 @@ class QuoteDocumentService extends BaseService
             $outputFile = $outputPath = storage_path('temp/'.$docName);
         }
 
-        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
+        // Read directly from private storage
+        if (! Storage::disk('azureIMPrivate')->exists($file)) {
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
+        }
 
-        $encodedUrl = $this->encodeUrl($azureFilePath);
-        $fileContent = file_get_contents($encodedUrl);
+        $fileContent = Storage::disk('azureIMPrivate')->get($file);
 
         if (! $fileContent) {
-            LoggerService::error("Unable to read file azureFilePath: $azureFilePath ");
-            throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
         }
 
         // Save the source file
@@ -776,10 +779,13 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
+        // Read directly from private storage
+        if (! Storage::disk('azureIMPrivate')->exists($file)) {
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
+        }
 
-        $encodedUrl = $this->encodeUrl($azureFilePath);
-        $fileContent = file_get_contents($encodedUrl);
+        $fileContent = Storage::disk('azureIMPrivate')->get($file);
 
         $manager = new ImageManager(new Driver);
 
@@ -851,10 +857,13 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
+        // Read directly from private storage
+        if (! Storage::disk('azureIMPrivate')->exists($file)) {
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
+        }
 
-        $encodedUrl = $this->encodeUrl($azureFilePath);
-        $fileContent = file_get_contents($encodedUrl);
+        $fileContent = Storage::disk('azureIMPrivate')->get($file);
 
         $tempFile = storage_path('temp/'.$docName);
         file_put_contents($tempFile, $fileContent);
