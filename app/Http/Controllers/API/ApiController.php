@@ -33,6 +33,7 @@ use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPrivateClientJob;
+use App\Jobs\RemovePrivateClientTagJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -385,6 +386,15 @@ class ApiController extends Controller
         dispatch(new TagPrivateClientJob($request->uuids ?? []));
 
         return apiResponse(null, Response::HTTP_OK, 'Private client tagging has started!');
+    }
+
+    public function removePrivateClientTag(Request $request)
+    {
+        LoggerService::info(self::class.': Private client tag removal has been initiated');
+    
+        dispatch(new RemovePrivateClientTagJob($request->uuids ?? []));
+
+        return apiResponse(null, Response::HTTP_OK, 'Private client tag removal has started!');
     }
 
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)

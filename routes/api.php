@@ -140,3 +140,7 @@ Route::get('/heath-check', function () {
 // Route to mark leads private client
 Route::post('/pc-assignment', [ApiController::class, 'tagPrivateClients'])
     ->name('pc-assignment');
+
+// Route to remove lead private client tag
+Route::post('/remove-pc-assignment', [ApiController::class, 'removePrivateClientTag'])
+    ->name('remove-pc-assignment');

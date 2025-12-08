@@ -6,6 +6,7 @@ use App\Enums\CarRegistrationType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -93,6 +94,54 @@ trait PrivateClient
 
         // Apply PCP tags
         return $this->applyPcpTagsToLeadAndCustomer($model, $version);
+    }
+
+    // Function to check pc qualified lead and remove pc tag if not qualified
+    public function removePcTagLead(string $leadUuid, int $quoteTypeId)
+    {
+        $modelClass = CarQuote::class;
+
+        // Find the lead model
+        $model = $this->findLeadModel($modelClass, $leadUuid, $quoteTypeId);
+
+        if (! $model) {
+            return false;
+        }
+
+        // Get configs
+        $configs = null;
+
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        if ($quoteType && $quoteType instanceof QuoteTypes) {
+            $configs = app(PrivateClientConfigService::class)->evaluateConfig($quoteType, $model->nationality_id);
+        }
+        LoggerService::info('configs', ['configs' => $configs, 'uuid' => $model->uuid]);
+
+        // If no config found then remove pc tag
+        if (empty($configs)) {
+            LoggerService::warning('no configration found for this quoteType.', extra: [
+                'quoteType' => $quoteType,
+            ]);
+
+            // Remove pc tag from lead
+            $model->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
+            PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
+
+            return false;
+        }
+
+        // Check if lead matches PCP criteria
+        if (! $this->doesLeadMatchPcpCriteria($model, $configs, $modelClass, $quoteTypeId)) {
+            LoggerService::warning('Lead not matched PCP criteria.', extra: [
+                'tag_version_criteria' => $configs->toArray(),
+            ]);
+
+            // Remove pc tag from lead
+            $model->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
+            PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
+
+            return false;
+        }
     }
 
     private function findLeadModel(string $modelClass, string $leadUuid, int $quoteTypeId)
