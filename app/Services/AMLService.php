@@ -419,10 +419,12 @@ class AMLService
      */
     public function getInsuredPersonDetails(string $idType, string $idNumber): ?object
     {
-        $insuredPersonDetails = Insured::where([
-            'id_type' => $idType,
-            'id_number' => $idNumber,
-        ])->first();
+        $insuredPersonDetails = Insured::where('id_type', $idType)
+        ->where(function ($query) use ($idNumber) {
+            $query->where('id_number', $idNumber)
+            ->orWhere('id_number', str_replace('-', '', $idNumber));
+        })
+        ->first();
 
         if (! $insuredPersonDetails) {
             $customerDetails = CustomerDetail::with(['customer:id,code,dob,gender,insured_first_name as first_name,insured_last_name as last_name,nationality_id'])
@@ -1580,10 +1582,20 @@ class AMLService
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
             ]);
         } else {
+            // todo: remove get insured details after id_number format is consistent
+            $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
+                ->where('id_type', $request->screening_id_type)
+                ->where(function ($query) use ($request) {
+                    $query->where('id_number', $request->screening_id_number)
+                        ->orWhere('id_number', str_replace('-', '', $request->screening_id_number));
+                })
+                ->first();
+            $idNumber = $insured->id_number ?? $request->screening_id_number;
+
             $insured = Insured::updateOrCreate([
                 'customer_type' => CustomerTypeEnum::Individual,
                 'id_type' => $request->screening_id_type,
-                'id_number' => $request->screening_id_number,
+                'id_number' => $idNumber,
             ], [
                 'first_name' => $request->insured_first_name,
                 'last_name' => $request->insured_last_name,

@@ -106,9 +106,13 @@ class EmiratesIdDataProcessor
             $insured = $this->quote->latestInsured ?? null;
 
             if (! $insured && ! empty($this->extractedData['eid_number'])) {
-                $insured = Insured::where('id_number', $this->extractedData['eid_number'])
-                    ->where('id_type', 'emiratesId')
-                    ->first();
+                $eidNumber = $this->extractedData['eid_number'];
+                $insured = Insured::where('id_type', 'emiratesId')
+                ->where(function ($query) use ($eidNumber) {
+                    $query->where('id_number', $eidNumber)
+                        ->orWhere('id_number', str_replace('-', '', $eidNumber));
+                })
+                ->first();
 
                 if ($insured) {
                     $this->createCustomerInsuredLink($insured);
