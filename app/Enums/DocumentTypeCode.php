@@ -100,7 +100,7 @@ class DocumentTypeCode extends Enum
     const CYB_EID = 'CYB_EID';
     const CYB_KYC = 'CYB_KYC';
     const CYB_PC = 'CYB_PC';
-    const PS_CYB = 'PS_CYB';
+    const CYB_PS = 'CYB_PS';
     const CYB_TI = 'CYB_TI';
     const CYB_TIRBB = 'CYB_TIRBB';
     const CYB_CYPDR = 'CYPDR';

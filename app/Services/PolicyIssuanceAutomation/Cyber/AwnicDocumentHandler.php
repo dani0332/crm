@@ -148,7 +148,7 @@ class AwnicDocumentHandler
         return [
             DocumentTypeCode::CYB_TI => $quote->insurer_tax_invoice_doc_id,
             DocumentTypeCode::CYB_TIRBB => $quote->insurer_debit_note_doc_id,
-            DocumentTypeCode::PS_CYB => $quote->insurer_policy_doc_id,
+            DocumentTypeCode::CYB_PS => $quote->insurer_policy_doc_id,
         ];
     }
 }
