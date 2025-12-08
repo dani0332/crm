@@ -15,7 +15,6 @@ use App\Services\AMLService;
 use App\Services\Quotes\CyberQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
-use App\Models\EmbeddedTransaction;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
 
@@ -77,6 +76,10 @@ class CyberQuoteController extends Controller
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
+
+        $quoteType = $this->cyberQuoteService->quoteType;
+        $quote = $quoteType->model()->whereUuid($response->quoteUID)->first();
+        app(CustomerAddressService::class)->syncCustomerAddress($request, $quoteType, $quote, $request->email);
 
         return redirect(route('cyber-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
