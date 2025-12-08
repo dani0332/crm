@@ -97,7 +97,7 @@ class AwnicApiService
     public function uploadDocuments($quote, $process): array
     {
         // Validate required documents and insurer quote number added before hitting api
-        $requiredDocuments = $this->documentHandler->getDocumentByType($quote, DocumentTypeCode::CYBER_EMIRATES_ID);
+        $requiredDocuments = $this->documentHandler->getDocumentByType($quote, DocumentTypeCode::CYB_EID);
         $validationResult = $this->validationService->validateUploadDocuments($quote, $requiredDocuments);
         if (!$validationResult['status']) {
             return $validationResult;

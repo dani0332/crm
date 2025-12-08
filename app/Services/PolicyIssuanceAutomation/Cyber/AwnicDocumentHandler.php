@@ -132,7 +132,7 @@ class AwnicDocumentHandler
     public function getDocTypeCodeForCyber(string $documentType): string | null
     {
         return match ($documentType) {
-            DocumentTypeCode::CYBER_EMIRATES_ID => '4', // Emirates ID (Front side & Back side)
+            DocumentTypeCode::CYB_EID => '4', // Emirates ID (Front side & Back side)
             default => null
         };
     }
@@ -146,9 +146,9 @@ class AwnicDocumentHandler
     public function getDocTypeCodeForIMCRM(PersonalQuote $quote): array
     {
         return [
-            DocumentTypeCode::CYBER_TAX_INVOICE => $quote->insurer_tax_invoice_doc_id,
-            DocumentTypeCode::CYBER_TAX_INVOICE_RAISED_BY_BUYER => $quote->insurer_debit_note_doc_id,
-            DocumentTypeCode::CYBER_POLICY_SCHEDULE => $quote->insurer_policy_doc_id,
+            DocumentTypeCode::CYB_TI => $quote->insurer_tax_invoice_doc_id,
+            DocumentTypeCode::CYB_TIRBB => $quote->insurer_debit_note_doc_id,
+            DocumentTypeCode::PS_CYB => $quote->insurer_policy_doc_id,
         ];
     }
 }
