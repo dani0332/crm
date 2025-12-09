@@ -108,15 +108,11 @@ trait ExcelExportable
 
             // Get environment variables for email configuration
             $emailL_sys = config('constants.APP_ENV');
-
+            $fromEmail = config('constants.MAIL_FROM_ADDRESS');
+            $fromName = config('constants.MAIL_FROM_NAME');
             // Set email from details based on environment
-            if ($emailL_sys == EnvEnum::PRODUCTION) {
-                $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML', config('constants.MAIL_FROM_ADDRESS'));
-                $fromName = config('constants.MAIL_FROM_NAME_AML', config('constants.MAIL_FROM_NAME'));
-            } else {
-                $fromEmail = config('constants.MAIL_FROM_ADDRESS');
-                $fromName = config('constants.MAIL_FROM_NAME');
-                $emailSubject = $emailL_sys.' - '.$emailSubject;
+            if (!($emailL_sys == EnvEnum::PRODUCTION)) {
+                $emailSubject = $emailL_sys . ' - ' . $emailSubject;
             }
 
             // Generate CSV content in memory using chunking
