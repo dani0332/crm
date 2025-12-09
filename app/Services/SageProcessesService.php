@@ -55,6 +55,11 @@ class SageProcessesService extends BaseService
 
         $results = $isExport ? $query->get() : $query->simplePaginate(10);
 
+        // Append filter parameters to pagination URLs
+        if (!$isExport && $results instanceof Paginator) {
+            $results->appends($request->toArray());
+        }
+
         $this->enrichResultsWithAdditionalData($results);
 
         return $results;
