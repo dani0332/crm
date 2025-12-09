@@ -1062,7 +1062,7 @@ class AMLService
         if ($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD) {
             $vehcileColor = Lookup::where([
                 'key' => LookupsEnum::VEHICLE_COLOR,
-                'insurance_provider_id' => $paymentDetails?->insurance_provider?->id,
+                'insurance_provider_id' => $paymentDetails?->insuranceProvider?->id,
                 'code' => $vehicleDriverDetail?->vehicle_color,
             ])->first();
 
