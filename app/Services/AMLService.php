@@ -782,21 +782,14 @@ class AMLService
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload quote. Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Processing without Update Quote API call');
         }
 
-        if (! in_array($providerCode, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA])) {
-            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurance provider is not ('.InsuranceProvidersEnum::AXA.' or '.InsuranceProvidersEnum::RSA.'). Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
-
+        if (! $this->eligibleProvidersForInsurerScreening($providerCode)) {
             return false;
         }
 
-        LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Ref-ID: '.$quoteDetails->code.' - Insurance Provider ID: '.$paymentDetails->insurance_provider_id);
-
-        if ($paymentDetails->payment_methods_code !== PaymentMethodsEnum::CreditCard || $paymentDetails->payment_status_id !== PaymentStatusEnum::AUTHORISED) {
-            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Payment Method is not CREDIT CARD or Payment Status is not AUTHORIZED. Ref-ID: '.$quoteDetails->code);
-
+        if (! $this->validatePaymentDetailsForInsurerScreening($paymentDetails)) {
             return false;
         }
 
-        LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Payment Method is CREDIT CARD and Payment Status is AUTHORIZED- Ref-ID: '.$quoteDetails->code);
         $insuredPersonDetails = CustomerInsured::where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteDetails->id,
@@ -882,141 +875,7 @@ class AMLService
         }
 
         try {
-            $insuredDetails = $insuredPersonDetails?->insured;
-            $insurerScreeningPayload = [
-                'quoteUID' => $quoteDetails->uuid,
-                'quoteTypeId' => (int) $quoteTypeId,
-                'emirateDetails' => [
-                    'emirateId' => $insuredDetails?->id_type == 'emiratesId' ? str_replace('-', '', $insuredDetails?->id_number) : null,
-                    'expiryDate' => ($request['id_expiry_date'] ?? $insuredPersonDetails?->customer?->emirates_id_expiry_date) ?? null,
-                ],
-                'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
-                'chassisNumber' => $request['chassis_number'] ?? '',
-                'gender' => $this->formatGender($insuredDetails?->gender),
-                'dateOfBirth' => $insuredDetails?->dob,
-                'getQuoteEmail' => $request['get_quote_email_gig'],
-                'insuredFirstName' => $insuredDetails?->first_name,
-                'insuredLastName' => $insuredDetails?->last_name,
-            ];
-
-            if ($quoteTypeId == QuoteTypes::HOME->id()) {
-                $insurerScreeningPayload['nationalityId'] = $request['nationality_id'] ?? null;
-            }
-
-            if ($quoteTypeId == QuoteTypes::CAR->id()) {
-                $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
-                // TODO: verify if email is needed from here
-                // $insurerScreeningPayload['getQuoteEmail'] = $carQuoteRequestDetails->insurer_quote_email;
-                $vehicleDriverDetail = $quoteDetails->vehicleDriverDetail;
-
-                $nationality = Nationality::where('code', $vehicleDriverDetail?->driver_home_country_license_issuance)->first();
-                $rtaTransactionType = Lookup::where([
-                    'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
-                    'insurance_provider_id' => $paymentDetails->insurance_provider_id,
-                    'code' => $vehicleDriverDetail?->rta_transaction_type,
-                ])->first();
-
-                $rtaPlateCategory = Lookup::where([
-                    'key' => LookupsEnum::RTA_PLATE_CATEGORY,
-                    'insurance_provider_id' => $paymentDetails->insurance_provider_id,
-                    'code' => $vehicleDriverDetail?->rta_plate_category,
-                ])->first();
-
-                $vehicleColor = Lookup::where([
-                    'key' => LookupsEnum::VEHICLE_COLOR,
-                    'insurance_provider_id' => $paymentDetails->insurance_provider_id,
-                ])->whereIn('code', [$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color])->get()->pluck('text', 'code');
-
-                $bankName = Lookup::where([
-                    'key' => LookupsEnum::BANK_NAME,
-                    'insurance_provider_id' => $paymentDetails->insurance_provider_id,
-                    'code' => $vehicleDriverDetail?->bank_name,
-                ])->first();
-
-                $issuancePlace = Lookup::where([
-                    'key' => LookupsEnum::ISSUANCE_PLACE,
-                    'code' => $vehicleDriverDetail?->driver_license_issue_place,
-                ])->first();
-
-                // Ensure chassis number is sourced from CarQuoteRequestDetail as requested
-                $insurerScreeningPayload['chassisNumber'] = $carQuoteRequestDetails?->chassis_number ?? '';
-
-                $insurerScreeningPayload['rtaTransactionType'] = [
-                    'code' => $vehicleDriverDetail->rta_transaction_type ?? null,
-                    'value' => $rtaTransactionType?->text ?? null,
-                    'authority' => 'RTA',
-                ];
-
-                if ($isLIVA) {
-                    $insurerScreeningPayload['plateCode'] = $vehicleDriverDetail->vehicle_plate_code ?? null;
-                    $insurerScreeningPayload['plateNumber'] = $vehicleDriverDetail->vehicle_plate_number ?? null;
-                    $insurerScreeningPayload['registrationType'] = app(LivaInsuranceService::class)->registrationType($vehicleDriverDetail->rta_transaction_type);
-                } else {
-                    $insurerScreeningPayload['plateCodeNumber'] = $vehicleDriverDetail->vehicle_plate_code.$vehicleDriverDetail->vehicle_plate_number ?? null;
-                }
-
-                $insurerScreeningPayload['trafficCodeNumber'] = $vehicleDriverDetail?->traffic_code_number ?? null;
-                $insurerScreeningPayload['engineNumber'] = $vehicleDriverDetail?->vehicle_engine_number ?? null;
-                $insurerScreeningPayload['rtaPlateCategory'] = $rtaPlateCategory?->text ?? null;
-                $insurerScreeningPayload['vehicleColor'] = [
-                    'code' => $vehicleDriverDetail?->vehicle_color ?? null,
-                    'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_color] ?? null,
-                ];
-                $insurerScreeningPayload['plateColor'] = [
-                    'code' => $vehicleDriverDetail?->vehicle_plate_color ?? null,
-                    'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_plate_color] ?? null,
-                ];
-                $insurerScreeningPayload['bankLoan'] = $vehicleDriverDetail?->bank_loan !== null ? (bool) $vehicleDriverDetail?->bank_loan : null;
-                $insurerScreeningPayload['bankName'] = [
-                    'code' => $vehicleDriverDetail?->bank_name ?? null,
-                    'value' => $bankName?->text ?? null,
-                ];
-                $insurerScreeningPayload['firstRegistrationDate'] = $vehicleDriverDetail?->first_registration_date ?? null;
-                $insurerScreeningPayload['policyEffectiveDate'] = $isLIVA
-                    ? app(LivaInsuranceService::class)->dateFormat($quoteDetails?->policy_start_date)
-                    : ($quoteDetails?->policy_start_date ?? null);
-
-                $insurerScreeningPayload['policyExpiryDate'] = $isLIVA
-                    ? app(LivaInsuranceService::class)->dateFormat($quoteDetails?->policy_expiry_date, true)
-                    : ($quoteDetails?->policy_expiry_date ?? null);
-
-                $insurerScreeningPayload['certificateStartDate'] = $isLIVA
-                    ? app(LivaInsuranceService::class)->dateFormat($quoteDetails?->certificate_start_date)
-                    : ($quoteDetails?->certificate_start_date ?? null);
-
-                $insurerScreeningPayload['certificateEndDate'] = $isLIVA
-                    ? app(LivaInsuranceService::class)->dateFormat($quoteDetails?->certificate_end_date, true)
-                    : ($quoteDetails?->certificate_end_date ?? null);
-
-                $insurerScreeningPayload['annualMilageEstimation'] = $vehicleDriverDetail?->annual_mileage_estimate ?? null;
-                $insurerScreeningPayload['driverName'] = trim(($vehicleDriverDetail?->driver_first_name ?? '').' '.($vehicleDriverDetail?->driver_last_name ?? '')) ?: null;
-                $insurerScreeningPayload['driverDob'] = $isLIVA
-                    ? app(LivaInsuranceService::class)->dateFormat($vehicleDriverDetail?->driver_dob)
-                    : ($vehicleDriverDetail?->driver_dob ?? null);
-
-                $insurerScreeningPayload['driverGender'] = strtolower($this->formatGender($vehicleDriverDetail?->driver_gender)) ?? null;
-                $insurerScreeningPayload['driverLicenseNumber'] = $vehicleDriverDetail?->driver_license_number ?? null;
-                $insurerScreeningPayload['licenseIssuePlace'] = $issuancePlace?->text ?? null;
-                $insurerScreeningPayload['licenseIssueDate'] = $vehicleDriverDetail?->driver_license_issue_date ?? null;
-                $insurerScreeningPayload['licenseExpiryDate'] = $vehicleDriverDetail?->driver_license_expiry_date ?? null;
-                $insurerScreeningPayload['uaeDrivingExperience'] = $vehicleDriverDetail?->driver_uae_driving_experience ?? null;
-                $insurerScreeningPayload['homeCountryLicenseInsurance'] = $nationality?->text ?? null;
-                $insurerScreeningPayload['homeCountryDrivingExperience'] = $vehicleDriverDetail?->driver_home_country_driving_experience ?? null;
-                $insurerScreeningPayload['insuredAndDriverSame'] = $vehicleDriverDetail?->is_insured_and_driver_same !== null ? (bool) $vehicleDriverDetail?->is_insured_and_driver_same : null;
-                if ($isLIVA && $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD) {
-                    $vehcileColor = Lookup::where([
-                        'key' => LookupsEnum::VEHICLE_COLOR,
-                        'insurance_provider_id' => $paymentDetails->insurance_provider_id,
-                        'code' => $vehicleDriverDetail?->vehicle_color,
-                    ])->first();
-
-                    $insurerScreeningPayload['vehicleColor'] = [
-                        'code' => $vehicleDriverDetail?->vehicle_color ?? null,
-                        'value' => $vehcileColor?->text ?? null,
-                    ];
-                }
-            }
-
+            $insurerScreeningPayload = $this->buildUpdateQuoteScreeningPayload($request, $quoteTypeId, $quoteDetails, $insuredPersonDetails, $paymentDetails);
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurer AML Screening API called - Ref-ID: '.$quoteDetails->code, extra: [
                 'payload' => json_encode($insurerScreeningPayload),
             ]);
@@ -1039,6 +898,183 @@ class AMLService
 
             return false;
         }
+    }
+
+    private function eligibleProvidersForInsurerScreening($providerCode): bool
+    {
+        $eligibleProviders = [
+            InsuranceProvidersEnum::AXA,
+            InsuranceProvidersEnum::RSA,
+        ];
+
+        if (! in_array($providerCode, $eligibleProviders)) {
+            LoggerService::info('Insurance provider not supported for Insurer AML Screening', extra: ['provider_code' => $providerCode]);
+
+            return false;
+        }
+
+        LoggerService::info('Insurance provider supported for Insurer AML Screening', extra: ['provider_code' => $providerCode]);
+
+        return true;
+    }
+
+    private function validatePaymentDetailsForInsurerScreening($paymentDetails): bool
+    {
+        if ($paymentDetails?->payment_methods_code !== PaymentMethodsEnum::CreditCard || $paymentDetails?->payment_status_id !== PaymentStatusEnum::AUTHORISED) {
+            LoggerService::info('Payment method and payment status not supported for Insurer AML Screening', extra: ['payment_method_code' => $paymentDetails?->payment_methods_code, 'payment_status_id' => $paymentDetails?->payment_status_id]);
+
+            return false;
+        }
+
+        LoggerService::info('Payment method and payment status supported for Insurer AML Screening', extra: ['payment_method_code' => $paymentDetails?->payment_methods_code, 'payment_status_id' => $paymentDetails?->payment_status_id]);
+
+        return true;
+    }
+
+    private function buildUpdateQuoteScreeningPayload($request, $quoteTypeId, $quoteDetails, $insuredPersonDetails, $paymentDetails): array
+    {
+        $insuredDetails = $insuredPersonDetails?->insured;
+        $payload = [
+            'quoteUID' => $quoteDetails->uuid,
+            'quoteTypeId' => (int) $quoteTypeId,
+            'emirateDetails' => [
+                'emirateId' => $insuredDetails?->id_type == 'emiratesId' ? str_replace('-', '', $insuredDetails?->id_number) : null,
+                'expiryDate' => ($request['id_expiry_date'] ?? $insuredPersonDetails?->customer?->emirates_id_expiry_date) ?? null,
+            ],
+            'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
+            'chassisNumber' => $request['chassis_number'] ?? '',
+            'gender' => $this->formatGender($insuredDetails?->gender),
+            'dateOfBirth' => $insuredDetails?->dob,
+            'getQuoteEmail' => $request['get_quote_email_gig'] ?? null,
+            'insuredFirstName' => $insuredDetails?->first_name,
+            'insuredLastName' => $insuredDetails?->last_name,
+        ];
+
+        if ($quoteTypeId == QuoteTypes::HOME->id()) {
+            $payload['nationalityId'] = $request['nationality_id'] ?? null;
+        }
+
+        if ($quoteTypeId == QuoteTypes::CAR->id()) {
+            $payload = array_merge($payload, $this->buildUpdateQuoteScreeningCarPayload($quoteDetails, $paymentDetails));
+        }
+
+        return $payload;
+    }
+
+    private function buildUpdateQuoteScreeningCarPayload($quoteDetails, $paymentDetails): array
+    {
+        $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
+        $vehicleDriverDetail = $quoteDetails->vehicleDriverDetail;
+        $nationality = Nationality::where('code', $vehicleDriverDetail?->driver_home_country_license_issuance)->first();
+
+        $rtaTransactionType = Lookup::where([
+            'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
+            'insurance_provider_id' => $paymentDetails->insurance_provider_id,
+            'code' => $vehicleDriverDetail?->rta_transaction_type,
+        ])->first();
+
+        $rtaPlateCategory = Lookup::where([
+            'key' => LookupsEnum::RTA_PLATE_CATEGORY,
+            'insurance_provider_id' => $paymentDetails->insurance_provider_id,
+            'code' => $vehicleDriverDetail?->rta_plate_category,
+        ])->first();
+
+        $vehicleColor = Lookup::where([
+            'key' => LookupsEnum::VEHICLE_COLOR,
+            'insurance_provider_id' => $paymentDetails->insurance_provider_id,
+        ])->whereIn('code', [$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color])->get()->pluck('text', 'code');
+
+        $bankName = Lookup::where([
+            'key' => LookupsEnum::BANK_NAME,
+            'insurance_provider_id' => $paymentDetails->insurance_provider_id,
+            'code' => $vehicleDriverDetail?->bank_name,
+        ])->first();
+
+        $issuancePlace = Lookup::where([
+            'key' => LookupsEnum::ISSUANCE_PLACE,
+            'code' => $vehicleDriverDetail?->driver_license_issue_place,
+        ])->first();
+
+        $insurerScreeningPayload = [
+            'chassisNumber' => $carQuoteRequestDetails?->chassis_number ?? '',
+            'rtaTransactionType' => [
+                'code' => $vehicleDriverDetail?->rta_transaction_type ?? null,
+                'value' => $rtaTransactionType?->text ?? null,
+                'authority' => 'RTA',
+            ],
+            'trafficCodeNumber' => $vehicleDriverDetail?->traffic_code_number ?? null,
+            'engineNumber' => $vehicleDriverDetail?->vehicle_engine_number ?? null,
+            'rtaPlateCategory' => $rtaPlateCategory?->text ?? null,
+            'vehicleColor' => [
+                'code' => $vehicleDriverDetail?->vehicle_color ?? null,
+                'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_color] ?? null,
+            ],
+            'plateColor' => [
+                'code' => $vehicleDriverDetail?->vehicle_plate_color ?? null,
+                'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_plate_color] ?? null,
+            ],
+            'bankLoan' => $vehicleDriverDetail?->bank_loan !== null ? (bool) $vehicleDriverDetail?->bank_loan : null,
+            'bankName' => [
+                'code' => $vehicleDriverDetail?->bank_name ?? null,
+                'value' => $bankName?->text ?? null,
+            ],
+            'firstRegistrationDate' => $vehicleDriverDetail?->first_registration_date ?? null,
+            'policyEffectiveDate' => $quoteDetails->policy_start_date ?? null,
+            'policyExpiryDate' => $quoteDetails->policy_expiry_date ?? null,
+            'certificateStartDate' => $quoteDetails->certificate_start_date ?? null,
+            'certificateEndDate' => $quoteDetails->certificate_end_date ?? null,
+            'annualMilageEstimation' => $vehicleDriverDetail?->annual_mileage_estimate ?? null,
+            'driverName' => trim(($vehicleDriverDetail?->driver_first_name ?? '').' '.($vehicleDriverDetail?->driver_last_name ?? '')) ?: null,
+            'driverDob' => $vehicleDriverDetail?->driver_dob ?? null,
+            'driverGender' => strtolower($this->formatGender($vehicleDriverDetail?->driver_gender)) ?? null,
+            'driverLicenseNumber' => $vehicleDriverDetail?->driver_license_number ?? null,
+            'licenseIssuePlace' => $issuancePlace?->text ?? null,
+            'licenseIssueDate' => $vehicleDriverDetail?->driver_license_issue_date ?? null,
+            'licenseExpiryDate' => $vehicleDriverDetail?->driver_license_expiry_date ?? null,
+            'uaeDrivingExperience' => $vehicleDriverDetail?->driver_uae_driving_experience ?? null,
+            'homeCountryLicenseInsurance' => $nationality?->text ?? null,
+            'homeCountryDrivingExperience' => $vehicleDriverDetail?->driver_home_country_driving_experience ?? null,
+            'insuredAndDriverSame' => $vehicleDriverDetail?->is_insured_and_driver_same !== null ? (bool) $vehicleDriverDetail?->is_insured_and_driver_same : null,
+        ];
+
+        if ($paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
+            $insurerScreeningPayload = array_merge($insurerScreeningPayload, $this->buildUpdateQuoteScreeningCarPayloadForLiva($quoteDetails, $paymentDetails));
+        } else {
+            $insurerScreeningPayload['plateCodeNumber'] = $vehicleDriverDetail?->vehicle_plate_code.$vehicleDriverDetail?->vehicle_plate_number ?? null;
+        }
+
+        return $insurerScreeningPayload;
+    }
+
+    private function buildUpdateQuoteScreeningCarPayloadForLiva($quoteDetails, $paymentDetails): array
+    {
+        $vehicleDriverDetail = $quoteDetails->vehicleDriverDetail;
+
+        $insurerScreeningPayloadForLiva = [
+            'plateCode' => $vehicleDriverDetail->vehicle_plate_code ?? null,
+            'plateNumber' => $vehicleDriverDetail->vehicle_plate_number ?? null,
+            'registrationType' => app(LivaInsuranceService::class)->registrationType($vehicleDriverDetail->rta_transaction_type),
+            'policyEffectiveDate' => app(LivaInsuranceService::class)->dateFormat($quoteDetails?->policy_start_date),
+            'policyExpiryDate' => app(LivaInsuranceService::class)->dateFormat($quoteDetails?->policy_expiry_date, true),
+            'certificateStartDate' => app(LivaInsuranceService::class)->dateFormat($quoteDetails?->certificate_start_date),
+            'certificateEndDate' => app(LivaInsuranceService::class)->dateFormat($quoteDetails?->certificate_end_date, true),
+            'driverDob' => app(LivaInsuranceService::class)->dateFormat($vehicleDriverDetail?->driver_dob),
+        ];
+
+        if ($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+            $vehcileColor = Lookup::where([
+                'key' => LookupsEnum::VEHICLE_COLOR,
+                'insurance_provider_id' => $paymentDetails?->insuranceProvider?->id,
+                'code' => $vehicleDriverDetail?->vehicle_color,
+            ])->first();
+
+            $insurerScreeningPayloadForLiva['vehicleColor'] = [
+                'code' => $vehicleDriverDetail?->vehicle_color ?? null,
+                'value' => $vehcileColor?->text ?? null,
+            ];
+        }
+
+        return $insurerScreeningPayloadForLiva;
     }
 
     private function updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $quoteObject, $customerType, $insuredPersonDetails, $screeningResponse): void
