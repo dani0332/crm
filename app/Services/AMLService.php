@@ -976,24 +976,24 @@ class AMLService
                                 $sq->where('key', LookupsEnum::RTA_TRANSACTION_TYPE)
                                     ->where('code', $vehicleDriverDetail?->rta_transaction_type);
                             })
-                            ->orWhere(function ($sq) use ($vehicleDriverDetail) {
-                                $sq->where('key', LookupsEnum::RTA_PLATE_CATEGORY)
-                                    ->where('code', $vehicleDriverDetail?->rta_plate_category);
-                            })
-                            ->orWhere(function ($sq) use ($vehicleDriverDetail) {
-                                $sq->where('key', LookupsEnum::VEHICLE_COLOR)
-                                    ->whereIn('code', [$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color]);
-                            })
-                            ->orWhere(function ($sq) use ($vehicleDriverDetail) {
-                                $sq->where('key', LookupsEnum::BANK_NAME)
-                                    ->where('code', $vehicleDriverDetail?->bank_name);
-                            });
+                                ->orWhere(function ($sq) use ($vehicleDriverDetail) {
+                                    $sq->where('key', LookupsEnum::RTA_PLATE_CATEGORY)
+                                        ->where('code', $vehicleDriverDetail?->rta_plate_category);
+                                })
+                                ->orWhere(function ($sq) use ($vehicleDriverDetail) {
+                                    $sq->where('key', LookupsEnum::VEHICLE_COLOR)
+                                        ->whereIn('code', [$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color]);
+                                })
+                                ->orWhere(function ($sq) use ($vehicleDriverDetail) {
+                                    $sq->where('key', LookupsEnum::BANK_NAME)
+                                        ->where('code', $vehicleDriverDetail?->bank_name);
+                                });
                         });
                 })
-                ->orWhere(function ($q) use ($vehicleDriverDetail) {
-                    $q->where('key', LookupsEnum::ISSUANCE_PLACE)
-                        ->where('code', $vehicleDriverDetail?->driver_license_issue_place);
-                });
+                    ->orWhere(function ($q) use ($vehicleDriverDetail) {
+                        $q->where('key', LookupsEnum::ISSUANCE_PLACE)
+                            ->where('code', $vehicleDriverDetail?->driver_license_issue_place);
+                    });
             })
             ->get()
             ->groupBy('key');
