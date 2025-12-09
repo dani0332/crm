@@ -773,7 +773,6 @@ class AMLService
 
         $providerName = InsuranceProvidersEnum::getTextByCode($paymentDetails?->insuranceProvider?->code);
         $providerCode = $paymentDetails?->insuranceProvider?->code;
-        $isLIVA = $providerCode == InsuranceProvidersEnum::RSA;
 
         $vehicleDriverDetail = $quoteDetails?->vehicleDriverDetail;
         $isRenewalUpload = $quoteTypeId == QuoteTypes::CAR->id() && $providerCode == InsuranceProvidersEnum::AXA && $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD;
