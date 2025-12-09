@@ -1954,7 +1954,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           Stale for {{ countDays }}
         </p>
         <x-button
-          v-if="quote?.pcp_tag == true"
+          v-if="quote?.pc_qualified == true"
           size="sm"
           color="#BFA100"
           tag="div"
@@ -2197,6 +2197,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote.advisor_id_text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">OE/AE</dt>
+                <dd>{{ quote?.support_user_name }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
