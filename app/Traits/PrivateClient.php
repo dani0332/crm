@@ -6,7 +6,6 @@ use App\Enums\CarRegistrationType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -131,8 +130,7 @@ trait PrivateClient
             ]);
 
             // Remove pc tag from lead
-            $model->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
-            PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
+            $this->removePcTagFromLead($model);
 
             return;
         }
@@ -144,9 +142,16 @@ trait PrivateClient
             ]);
 
             // Remove pc tag from lead
+            $this->removePcTagFromLead($model);
+        }
+    }
+
+    private function removePcTagFromLead($model)
+    {
+        DB::Transaction(function () use ($model) {
             $model->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
             PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => null, 'pcp_tag_version' => null]);
-        }
+        });
     }
 
     private function findLeadModel(string $modelClass, string $leadUuid, int $quoteTypeId)
