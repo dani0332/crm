@@ -4,7 +4,10 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\SageEmbeddedProductEnum;
 use App\Exports\EmbeddedProductReport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredProtectDocumentSyncRequest;
@@ -182,6 +185,10 @@ class EmbeddedProductController extends Controller
             ],
             'ep_enums' => EmbeddedProductEnum::asArray(),
             'sync_statuses' => CourierSyncStatusEnum::withLabels(),
+            'sage_statuses' => SageEmbeddedProductEnum::withLabels(),
+            // BenSampo enums expose withLabels() helpers (built from asArray())
+            'payment_statuses' => PaymentStatusEnum::withLabels(),
+            'policy_statuses' => EmbeddedTransactionEnum::withLabels(),
         ]);
     }
 
