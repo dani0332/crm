@@ -17,6 +17,7 @@ use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Str;
+use App\Services\Pusher\PusherNotificationService;
 
 class HealthEmailService extends BaseService
 {
@@ -404,5 +405,47 @@ class HealthEmailService extends BaseService
             HealthPlanTypeEnum::typeText(HealthPlanTypeEnum::BEST->value) => 'bestPremium',
             default => null
         };
+    }
+
+    public function sendSTPAdvisorNotification($lead){
+        LoggerService::startQuoteLogging(QuoteTypes::HEALTH->refId($lead->uuid));
+        LoggerService::info(self::class." - Inside for UUID: {$lead->uuid}");
+        $advisor = User::where('id', $lead->advisor_id)->first();
+        $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION);
+        
+        app(PusherNotificationService::class)->sendSTPAdvisorNotification($lead);
+        LoggerService::info(self::class." - Pusher notification sent to advisor (ID: {$advisor->id}) for UUID: {$lead->uuid}");
+
+        $workflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_HEALTH_STP_ADVISOR_NOTIFICATION_WORKFLOW);
+        if (! $workflow) {
+            LoggerService::error(self::class." - Workflow not found for UUID: {$lead->uuid}");
+            return;
+        }
+
+        $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value);
+        if ($isFollowupExecuted) {
+            LoggerService::info('STP Advisor notification already executed');
+            return [
+                'success' => true,
+                'message' => 'STP Advisor notification already executed',
+            ];
+            return;
+        }
+        $response = app(BirdService::class)->triggerWebHookRequest($workflow, $emailData);
+        if ( in_array($response->status_code, [200, 201])) {
+            app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value, QuoteTypeId::Health);
+            LoggerService::info("STP Advisor notification sent for lead uuid: {$lead->uuid} | Time: ".now());
+            return [
+                'success' => true,
+                'message' => 'STP Advisor notification sent',
+            ];
+        } else {
+            LoggerService::error(self::class." - STP Advisor notification failed for UUID: {$lead->uuid}");
+            return [
+                'success' => false,
+                'message' => 'STP Advisor notification failed',
+            ];
+        }
+      
     }
 }

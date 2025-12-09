@@ -3,6 +3,7 @@ import OnlineStatusToggle from '../Components/OnlineStatusToggle.vue';
 import PaymentExpireNotifications from '../Components/PaymentExpireNotification.vue';
 import PaymentNotification from '../Components/PaymentNotification.vue';
 import DocumentNotification from '../Components/DocumentNotification.vue';
+import STPAdvisorNotification from '../Components/STPAdvisorNotification.vue';
 const page = usePage();
 
 const props = defineProps({
@@ -315,6 +316,7 @@ const isReceiveNotificationsEnabled = computed(() => {
               <PaymentExpireNotifications
                 v-if="isReceiveNotificationsEnabled"
               />
+              <STPAdvisorNotification v-if="isReceiveNotificationsEnabled" />
 
               <x-tooltip>
                 <x-button class="w-full" size="sm">

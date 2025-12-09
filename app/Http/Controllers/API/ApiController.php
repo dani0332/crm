@@ -61,6 +61,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\STPAdvisorNotificationRequest;
 
 class ApiController extends Controller
 {
@@ -683,5 +684,14 @@ class ApiController extends Controller
                 'quote_uuid' => $validatedData['quote_uuid'],
             ], 500);
         }
+    }
+
+    public function stpAdvisorNotification(STPAdvisorNotificationRequest $request)
+    {
+        $response = app(ApiService::class)->stpAdvisorNotification($request);
+        return response()->json([
+            'success' => $response['success'],
+            'message' => $response['message'],
+        ]);
     }
 }

@@ -598,4 +598,40 @@ class ApiService
             ];
         }
     }
+
+    public function stpAdvisorNotification($request)
+    {
+        // try {
+            $quoteType = QuoteTypes::getName($request->quoteTypeId);
+            if ($quoteType && $quoteType->value) {
+                switch ($quoteType->value) {
+                        case QuoteTypes::HEALTH->value:
+                            $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
+                            if (! $lead) {
+                                return [
+                                    'success' => false,
+                                    'message' => 'Lead not found',
+                                ];
+                            }
+                            app(HealthEmailService::class)->sendSTPAdvisorNotification($lead);
+                            return [
+                                'success' => true,
+                                'message' => 'STP Advisor notification sent',
+                            ];
+                            break;
+                 
+                    default:
+                        return [
+                            'success' => false,
+                            'message' => 'Invalid quote type',
+                        ];
+                }
+            }
+        // } catch (\Exception $e) {
+        //     return [
+        //         'success' => false,
+        //         'message' => 'STP Advisor notification failed: '.$e->getMessage(),
+        //     ];
+        // }
+    }
 }
