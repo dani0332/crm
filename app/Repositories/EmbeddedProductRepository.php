@@ -79,6 +79,9 @@ class EmbeddedProductRepository extends BaseRepository
         QuoteTypeId::Home,
         QuoteTypeId::Travel,
     ];
+    public const ALLOWED_LOBS_FOR_EPS = [
+        EmbeddedProductEnum::COURIER => [quoteTypeCode::CYBER, quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel],
+    ];
 
     public function model()
     {
@@ -472,7 +475,7 @@ class EmbeddedProductRepository extends BaseRepository
                 $response = ['success' => true];
 
             } elseif ($epShortCode == EmbeddedProductEnum::COURIER
-            && in_array(ucwords($modelType), [quoteTypeCode::CYBER, quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])) {
+            && in_array(ucwords($modelType), self::ALLOWED_LOBS_FOR_EPS[$epShortCode])) {
 
                 $quoteObject = $this->getQuoteObject($modelType, $leadId);
                 SyncCourierQuoteWithMacrm::dispatch($quoteObject, $quoteTypeId);
@@ -1143,15 +1146,16 @@ class EmbeddedProductRepository extends BaseRepository
                     ];
                     $processResponse = $this->processCancelPayment($data);
 
+                    $epShortCode = $transaction->product->embeddedProduct->short_code;
                     if (
-                        $transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
-                        && in_array($type->code, [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])
+                        $epShortCode == EmbeddedProductEnum::COURIER
+                        && in_array($type->code, self::ALLOWED_LOBS_FOR_EPS[$epShortCode])
                     ) {
                         CancelCourierQuoteOnMACRM::dispatch($transaction->quoteRequest, $type->id);
                     }
 
                     // Response is empty for success, non-empty for error
-                    if (! empty($response)) {
+                    if (! empty($processResponse)) {
                         return ['data' => $processResponse, 'code' => 403];
                     }
 
