@@ -533,7 +533,7 @@ class ApiService
             if (app(BirdService::class)->isFollowupExecuted($quoteUuid, QuoteTypes::CAR->id(), QuoteFlowType::CAR_MISSING_DOC_REMINDER->value)) {
                 LoggerService::info(self::class.': Missing docs reminder already executed');
 
-                return ['success' => false, 'message' => 'Missing docs reminder already executed'];
+                return ['success' => true, 'message' => 'Missing docs reminder already executed'];
             }
             $quote = CarQuote::where('uuid', $quoteUuid)->first();
             LoggerService::startQuoteLogging($quoteUuid);
