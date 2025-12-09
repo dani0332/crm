@@ -862,10 +862,14 @@ class SendEmailCustomerService extends BaseService
                         continue;
                     }
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
-                    $attachments[] = [
-                        'url' => $this->encodeUrl($documentURL),
-                        'name' => 'InsuranceMarket.ae™ '.$document->document_type_text.' for Policy Number '.$emailData->policy_number.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
-                    ];
+                    $documentName = 'InsuranceMarket.ae™ '.$document->document_type_text.' for Policy Number '.$emailData->policy_number.'.'.pathinfo($documentURL, PATHINFO_EXTENSION);
+                    $documentURL = app(QuoteDocumentService::class)->getDocumentUrl($documentURL);
+                    if ($documentURL) {
+                        $attachments[] = [
+                            'url' => $documentURL,
+                            'name' => $documentName,
+                        ];
+                    }
                 }
             }
 
