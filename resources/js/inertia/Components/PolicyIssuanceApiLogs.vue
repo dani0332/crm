@@ -86,23 +86,23 @@ const manualTriggerPolicyIssuance = async () => {
 };
 
 const policyIssuanceDetail = computed(() => {
-  if(!apiLogs.data) {
+  if(!apiLogs.policyIssuance) {
     return null;
   }
-  if(apiLogs.data.length === 0) {
+  if(apiLogs.policyIssuance == null) {
     return null;
   }
-  return apiLogs.data[0]?.policy_issuance;
+  return apiLogs.policyIssuance;
 });
 
 const policyIssuanceId = computed(() => {
-  if(!apiLogs.data) {
+  if(!apiLogs.policyIssuance) {
     return null;
   }
-  if(apiLogs.data.length === 0) {
+  if(apiLogs.policyIssuance == null) {
     return null;
   }
-  return apiLogs.data[0]?.policy_issuance_id;
+  return apiLogs.policyIssuance.id;
 });
 
 const apiLogs = reactive({
@@ -144,6 +144,7 @@ const loadPolicyIssuanceLogs = async () => {
     .then(res => {
       if (res.data.success) {
         apiLogs.data = res.data.data ?? [];
+        apiLogs.policyIssuance = res.data.policyIssuance ?? null;
         notification.success({
           title: 'Policy Issuance API Logs Loaded Successfully',
           position: 'top',
@@ -181,7 +182,7 @@ const onLoadAuditLogData = async () => {
             Policy Issuance API Logs
           </h3>
           <div
-          v-if="hasRole(rolesEnum.Engineering) && policyIssuanceId && apiLogs.data?.length > 0"
+          v-if="hasRole(rolesEnum.Engineering) && policyIssuanceId"
             class="flex gap-2"
             @click.stop
           >
@@ -195,7 +196,7 @@ const onLoadAuditLogData = async () => {
             </x-button>
           </div>
           <div
-            v-if="apiLogs.data?.length == 0"
+            v-if="hasRole(rolesEnum.Engineering) && apiLogs.data?.length == 0 && apiLogs.policyIssuance == null"
             class="flex gap-2"
             @click.stop
           >
@@ -227,7 +228,7 @@ const onLoadAuditLogData = async () => {
           <div class="flex items-center gap-4 my-3">
             <div v-if="policyIssuanceDetail && hasRole(rolesEnum.Engineering)">
               <p class="text-sm">
-                completed step: {{ policyIssuanceDetail.completed_step }}
+                completed step: {{ policyIssuanceDetail.completed_step ?? 'N/A' }}
                 <x-tag
                   size="xs"
                   color="success"

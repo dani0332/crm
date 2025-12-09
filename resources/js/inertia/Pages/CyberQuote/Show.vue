@@ -1697,6 +1697,12 @@ const confirmSendEmail = () => {
       :expanded="sectionExpanded"
     />
 
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.latest_insured?.insured_kyc?.id"
+    />
+
     <ApiLogs
       v-if="can(permissionsEnum.API_LOG_VIEW)"
       :type="modelClassCyber"
