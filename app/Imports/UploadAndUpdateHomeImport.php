@@ -181,7 +181,7 @@ class UploadAndUpdateHomeImport implements SkipsEmptyRows, SkipsOnFailure, ToMod
             },
         ];
     }
-    
+
     public function import($url)
     {
         $this->fetchFileFromUrl($url, $this->renewalsUploadLead, $this);
