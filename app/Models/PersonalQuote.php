@@ -411,7 +411,7 @@ class PersonalQuote extends Model implements AuditableContract
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet]);
+            ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet, QuoteTypeId::Device]);
     }
 
     // Get all insured records for this quote (multiple AML screenings)

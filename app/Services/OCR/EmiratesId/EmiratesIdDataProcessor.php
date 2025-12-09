@@ -7,7 +7,6 @@ namespace App\Services\OCR\EmiratesId;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Exceptions\OCR\OcrProcessingException;
 use App\Models\CarQuote;
 use App\Models\CustomerInsured;
@@ -15,6 +14,7 @@ use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Lookup;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
@@ -77,6 +77,10 @@ class EmiratesIdDataProcessor
     private function updateVehicleDriverDetail($quote): bool
     {
         try {
+
+            if (! method_exists($quote, 'vehicleDriverDetail')) { // As of now we only have relation vehicleDriverDetail for car quotes.
+                return false;
+            }
 
             $fieldsToUpdate = $this->getCleanData([
                 'driver_gender' => $this->extractedData['sex'],
@@ -375,8 +379,12 @@ class EmiratesIdDataProcessor
 
     private function getQuoteTypeId(): int
     {
-        // Currently only supporting Car quotes for Emirates ID OCR
-        return QuoteTypes::getId(QuoteTypes::CAR) ?? QuoteTypeId::Car;
+        // Currently only supporting Car quotes and Device (personal) quotes for Emirates ID OCR
+        return match (get_class($this->quote)) {
+            CarQuote::class => QuoteTypeId::Car,
+            PersonalQuote::class => $this->quote?->quote_type_id ?? QuoteTypeId::Car,
+            default => QuoteTypeId::Car,
+        };
     }
 
     public function getProcessingSummary(): array

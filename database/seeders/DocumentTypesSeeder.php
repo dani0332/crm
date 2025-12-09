@@ -890,6 +890,24 @@ class DocumentTypesSeeder extends Seeder
                 'business_type_of_insurance_id' => null,
                 'business_type_of_customer' => null,
             ],
+            [
+                'code' => DocumentTypeCode::PHB,
+                'text' => 'Policy Handbook',
+                'description' => '',
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypes::DEVICE->id(),
+                'folder_path' => strtolower(QuoteTypes::DEVICE->value),
+                'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+                'max_files' => 4,
+                'max_size' => 25,
+                'is_required' => 1,
+                'send_to_customer' => 1,
+                'receive_from_customer' => 0,
+                'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
+                'is_required_for_send_policy' => 1,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+            ],
         ];
 
         foreach ($quoteDocuments as $document) {

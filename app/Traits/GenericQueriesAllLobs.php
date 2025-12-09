@@ -329,7 +329,6 @@ trait GenericQueriesAllLobs
                 if ($taxDocumentsCount == count($taxDocuments)) {
                     $bookPolicyDetails['editButton'] = true;
                     $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
-
                     if ($areBookingDetailsFilled) {
                         $isMainLead = $this->checkMainLead($record, $quoteType);
                         if (! $isMainLead || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {

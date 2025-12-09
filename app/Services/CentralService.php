@@ -1575,7 +1575,7 @@ class CentralService extends BaseService
         $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? '';
         $emailData->planName = '-';
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Home])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Device])) {
             $emailData->assistanceNumber = $quote?->plan?->insuranceProvider?->roadside_phone_number ?? $emailData->assistanceNumber ?? '';
             $emailData->insuranceCompany = $quote?->plan?->insuranceProvider?->text ?? $emailData->insuranceCompany ?? '';
             $emailData->planName = $quote?->insuranceProviderPlan?->text ?? $quote?->plan?->text ?? $quote?->carPlan?->text ?? '-';
@@ -1585,7 +1585,7 @@ class CentralService extends BaseService
         $emailData->insuredName = $quote?->latestInsured?->first_name ? strtoupper($quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name) : '-';
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
-            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
+            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Device])) {
             $emailData->quoteUID = $quote->uuid;
             $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
@@ -1651,6 +1651,10 @@ class CentralService extends BaseService
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
 
+        if ($quoteTypeId == QuoteTypeId::Device) {
+            // TODO:: NGI:: we need to add device specific data here will be confirm after we have template for device.
+        }
+
         $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
         if (
             $quoteTypeId != QuoteTypeId::Business ||
@@ -1692,7 +1696,7 @@ class CentralService extends BaseService
         if (! empty($quoteDocuments)) {
             $quoteDocuments = collect($quoteDocuments);
 
-            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business])) {
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Device])) {
                 $emailData->policyCertificate = $quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [
                         DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL,
