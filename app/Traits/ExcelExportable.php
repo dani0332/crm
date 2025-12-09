@@ -111,8 +111,8 @@ trait ExcelExportable
             $fromEmail = config('constants.MAIL_FROM_ADDRESS');
             $fromName = config('constants.MAIL_FROM_NAME');
             // Set email from details based on environment
-            if (!($emailL_sys == EnvEnum::PRODUCTION)) {
-                $emailSubject = $emailL_sys . ' - ' . $emailSubject;
+            if (! ($emailL_sys == EnvEnum::PRODUCTION)) {
+                $emailSubject = $emailL_sys.' - '.$emailSubject;
             }
 
             // Generate CSV content in memory using chunking
