@@ -33,7 +33,7 @@ class RemovePrivateClientTagJob implements ShouldQueue
 
         $quotesQuery = PersonalQuote::whereNotNull('pc_qualified')
             ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
-            ->where('quote_type_id', QuoteTypeId::Car)
+            ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht])
             ->whereNotNull('policy_expiry_date')
             ->where('policy_expiry_date', '>', now());
 

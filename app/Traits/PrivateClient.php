@@ -99,6 +99,7 @@ trait PrivateClient
     public function removePcTagLead(string $leadUuid, int $quoteTypeId)
     {
         $modelClass = $quoteTypeId === QuoteTypeId::Yacht || $quoteTypeId === QuoteTypeId::Home ? PersonalQuote::class : QuoteTypes::getQuoteTypeIdToClass($quoteTypeId);
+
         if (! class_exists($modelClass)) {
             LoggerService::warning('Model class not found.', extra: [
                 'quoteTypeId' => $quoteTypeId,
