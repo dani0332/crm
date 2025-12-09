@@ -25,7 +25,7 @@ use Maatwebsite\Excel\Row;
 
 class TravelUploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEvents, WithStartRow, WithValidation
 {
-    use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures, FileDownloaderTrait;
+    use FileDownloaderTrait, Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
 
     private $validCount = 0;
     private $failedCount = 0;
