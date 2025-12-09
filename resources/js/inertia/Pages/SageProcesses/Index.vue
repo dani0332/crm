@@ -407,20 +407,28 @@ async function exportExcel() {
 
       <!-- Policy Number Column -->
       <template #item-policy_number="item">
-        <span>{{ item.model?.policy_number || item.model?.personal_quote?.policy_number || 'N/A' }}</span>
+        <span>{{
+          item.model?.policy_number ||
+          item.model?.personal_quote?.policy_number ||
+          'N/A'
+        }}</span>
       </template>
 
       <!-- Price Vat Applicable -->
       <template #item-price_vat_applicable="item">
         <span>{{
-         item.model?.payments?.[0]?.price_vat != 0 ? item.model?.payments?.[0]?.price_vat_applicable : 'N/A'
+          item.model?.payments?.[0]?.price_vat != 0
+            ? item.model?.payments?.[0]?.price_vat_applicable
+            : 'N/A'
         }}</span>
       </template>
 
       <!-- Price Vat Not Applicable -->
       <template #item-price_vat_not_applicable="item">
         <span>{{
-          item.model?.payments?.[0]?.price_vat == 0 ? item.model?.payments?.[0]?.price_vat_applicable : 'N/A'
+          item.model?.payments?.[0]?.price_vat == 0
+            ? item.model?.payments?.[0]?.price_vat_applicable
+            : 'N/A'
         }}</span>
       </template>
 
@@ -442,15 +450,13 @@ async function exportExcel() {
       <!-- Commission Vat Applicable -->
       <template #item-commission_vat_applicable="item">
         <span>{{
-          item.model?.payments?.[0]?.commission_vat_applicable || 
-          'N/A'
+          item.model?.payments?.[0]?.commission_vat_applicable || 'N/A'
         }}</span>
       </template>
       <!-- Commission Vat Applicable -->
       <template #item-commission_vat_not_applicable="item">
         <span>{{
-          item.model?.payments?.[0]?.commission_vat_not_applicable ||
-          'N/A'
+          item.model?.payments?.[0]?.commission_vat_not_applicable || 'N/A'
         }}</span>
       </template>
 
