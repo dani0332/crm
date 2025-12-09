@@ -99,7 +99,9 @@ class CyberQuoteController extends Controller
     public function update(CyberQuoteRequest $request, $uuid)
     {
         $quote = $this->cyberQuoteService->update($uuid, $request->validated());
-        app(CustomerAddressService::class)->syncCustomerAddress($request, QuoteTypes::CYBER, $quote, $request->email);
+
+        $quoteType = $this->cyberQuoteService->quoteType;
+        app(CustomerAddressService::class)->syncCustomerAddress($request, $quoteType, $quote, $request->email);
 
         return redirect(route('cyber-quotes-show', $uuid))->with('message', 'Quote is updated successfully.');
     }
