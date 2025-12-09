@@ -419,10 +419,15 @@ class AMLService
      */
     public function getInsuredPersonDetails(string $idType, string $idNumber): ?object
     {
-        $insuredPersonDetails = Insured::where([
-            'id_type' => $idType,
-            'id_number' => $idNumber,
-        ])->first();
+        $insuredPersonDetails = Insured::where('id_type', $idType)
+            ->when($idType == 'emiratesId', function ($query) use ($idNumber) {
+                $query->emiratesIdNumber($idNumber);
+            })
+            ->when($idType != 'emiratesId', function ($query) use ($idNumber) {
+                $query->where('id_number', $idNumber);
+            })
+            ->where('customer_type', CustomerTypeEnum::Individual)
+            ->first();
 
         if (! $insuredPersonDetails) {
             $customerDetails = CustomerDetail::with(['customer:id,code,dob,gender,insured_first_name as first_name,insured_last_name as last_name,nationality_id'])
@@ -1580,10 +1585,22 @@ class AMLService
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
             ]);
         } else {
+            // todo: remove get insured details after id_number format is consistent
+            $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
+                ->where('id_type', $request->screening_id_type)
+                ->when($request->screening_id_type == 'emiratesId', function ($query) use ($request) {
+                    $query->emiratesIdNumber($request->screening_id_number);
+                })
+                ->when($request->screening_id_type != 'emiratesId', function ($query) use ($request) {
+                    $query->where('id_number', $request->screening_id_number);
+                })
+                ->first();
+            $idNumber = $insured?->id_number ?? $request->screening_id_number;
+
             $insured = Insured::updateOrCreate([
                 'customer_type' => CustomerTypeEnum::Individual,
                 'id_type' => $request->screening_id_type,
-                'id_number' => $request->screening_id_number,
+                'id_number' => $idNumber,
             ], [
                 'first_name' => $request->insured_first_name,
                 'last_name' => $request->insured_last_name,
