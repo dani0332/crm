@@ -72,6 +72,7 @@ const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
 );
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const quote = page.props?.quote;
 const historyLoading = ref(false);
 
 const { isRequired } = useRules();
