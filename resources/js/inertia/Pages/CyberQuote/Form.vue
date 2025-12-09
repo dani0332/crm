@@ -97,7 +97,7 @@ const floorLabel = computed(() => {
   return label;
 });
 
-const isCourierStatusPending = computed(() => {
+const isCourierStatusNotPending = computed(() => {
   return quoteForm.courierQuoteStatus !== 'Pending';
 });
 
@@ -228,7 +228,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.addressObj.address_type"
           placeholder="Select address type"
           :options="addressTypes"
-          :disabled="isCourierStatusPending"
+          :disabled="isCourierStatusNotPending"
           filterable
           filterPlaceholder="Filter Address Type...."
           label="Address Type"
@@ -249,7 +249,7 @@ function onSubmit(isValid) {
                 :placeholder="villaApartmentOfficeLabel"
                 :rules="[isRequired]"
                 class="w-full"
-                :disabled="isCourierStatusPending"
+                :disabled="isCourierStatusNotPending"
                 :error="quoteForm.errors['addressObj.villa_apartment_office_no']"
               />
             </div>
@@ -260,7 +260,7 @@ function onSubmit(isValid) {
                 :placeholder="floorLabel"
                 :rules="[isRequired]"
                 class="w-full"
-                :disabled="isCourierStatusPending"
+                :disabled="isCourierStatusNotPending"
                 :error="quoteForm.errors['addressObj.floor_no']"
               />
             </div>
@@ -271,7 +271,7 @@ function onSubmit(isValid) {
                 :placeholder="villaBuildingLabel"
                 :rules="[isRequired]"
                 class="w-full"
-                :disabled="isCourierStatusPending"
+                :disabled="isCourierStatusNotPending"
                 :error="quoteForm.errors['addressObj.villa_building_name']"
               />
             </div>
@@ -281,7 +281,7 @@ function onSubmit(isValid) {
                 v-model="quoteForm.addressObj.street_name"
                 placeholder="Street (Optional)"
                 class="w-full"
-                :disabled="isCourierStatusPending"
+                :disabled="isCourierStatusNotPending"
                 :error="quoteForm.errors['addressObj.street_name']"
               />
             </div>
@@ -292,7 +292,7 @@ function onSubmit(isValid) {
                 placeholder="Area"
                 :rules="[isRequired]"
                 class="w-full"
-                :disabled="isCourierStatusPending"
+                :disabled="isCourierStatusNotPending"
                 :error="quoteForm.errors['addressObj.area']"
               />
             </div>
@@ -303,7 +303,7 @@ function onSubmit(isValid) {
                 placeholder="City"
                 :rules="[isRequired]"
                 class="w-full"
-                :disabled="isCourierStatusPending"
+                :disabled="isCourierStatusNotPending"
                 :error="quoteForm.errors['addressObj.city']"
               />
             </div>
@@ -313,7 +313,7 @@ function onSubmit(isValid) {
                 v-model="quoteForm.addressObj.landmark"
                 placeholder="Landmark (Optional)"
                 class="w-full"
-                :disabled="isCourierStatusPending"
+                :disabled="isCourierStatusNotPending"
                 :error="quoteForm.errors['addressObj.landmark']"
               />
             </div>

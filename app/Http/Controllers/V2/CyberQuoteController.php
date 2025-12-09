@@ -17,6 +17,7 @@ use App\Services\Logger\LoggerService;
 use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
+use App\Services\MACRMService;
 
 class CyberQuoteController extends Controller
 {
@@ -88,11 +89,19 @@ class CyberQuoteController extends Controller
     {
         $data = $this->cyberQuoteService->getFormOptions();
         $quote = $this->cyberQuoteService->getOne($uuid);
+        $quoteType = $this->cyberQuoteService->quoteType;
+
         $customerAddressData = app(CustomerService::class)->getCustomerAddressData($quote);
+
+        $courierQuoteResponse = app(MACRMService::class)->getCourierQuoteStatus($quote->uuid, $quoteType->id());
+        $courierQuoteStatus = isset($courierQuoteResponse['data']['status'])
+            ? $courierQuoteResponse['data']['status']
+            : 'Pending';
 
         return inertia('CyberQuote/Form', array_merge($data, [
             'quote' => $quote,
             'customerAddressData' => $customerAddressData,
+            'courierQuoteStatus' => $courierQuoteStatus,
         ]));
     }
 
