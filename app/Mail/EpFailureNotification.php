@@ -47,33 +47,72 @@ class EpFailureNotification extends Mailable
             'etId' => $this->etId,
         ]);
 
-        $ep = EmbeddedProduct::whereHas('prices.transactions', fn ($q) => $q->where('id', $this->etId))->first();
-        $epProductName = $ep->product_name ?? 'Unknown';
-
-        $isProd = app()->environment('production');
         $this->getEpFailureEmailConfigs();
+        
+        $epProductName = $this->getEmbeddedProductName();
+        $refId = $this->initializeQuoteData();
+        $viewData = $this->getViewData($refId, $epProductName);
 
-        // Get quote object first
-        $quoteType = QuoteTypes::getName($this->quoteTypeId)->value;
-        $this->quoteObject = $this->getQuoteObject($quoteType, $this->quoteId);
-        $refId = $this->quoteObject?->code ?? $this->quoteObject?->uuid ?? 'Unknown';
-        $subject = "❗Action Required: Embedded Product for {$epProductName} has failed for REF-ID: {$refId} – Immediate Attention Needed";
-
-        // Generate IMCRM link based on quote
-        $imcrmLink = $this->generateImcrmLink();
-        $ccEmails = explode(',', str_replace(' ', '', $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_CC]));
-        $from = $isProd ? ['alfred@notify.insurancemarket.ae', 'InsuranceMarket.ae'] : ['alfred@testnotify.alfred.ae', 'InsuranceMarket Test'];
-
-        return $this->subject($subject)
-            ->from(...$from)
+        return $this->subject($this->getEmailSubject($epProductName, $refId))
+            ->from(...$this->getFromAddress())
             ->to($this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_TO])
             ->replyTo($this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO])
-            ->cc($ccEmails)
-            ->view('email.ep-booking-job-failed', [
-                'refId' => $refId,
-                'imcrmLink' => $imcrmLink,
-                'epProductName' => $epProductName,
-            ]);
+            ->cc($this->buildCcEmails())
+            ->view('email.ep-booking-job-failed', $viewData);
+    }
+
+    private function getEmbeddedProductName(): string
+    {
+        $ep = EmbeddedProduct::whereHas('prices.transactions', fn ($q) => $q->where('id', $this->etId))->first();
+        
+        return $ep->product_name ?? 'Unknown';
+    }
+
+    private function initializeQuoteData(): string
+    {
+        $quoteType = QuoteTypes::getName($this->quoteTypeId)->value;
+        $this->quoteObject = $this->getQuoteObject($quoteType, $this->quoteId);
+        
+        return $this->quoteObject?->code ?? $this->quoteObject?->uuid ?? 'Unknown';
+    }
+
+    private function getEmailSubject(string $epProductName, string $refId): string
+    {
+        return "❗Action Required: Embedded Product for {$epProductName} has failed for REF-ID: {$refId} – Immediate Attention Needed";
+    }
+
+    private function buildCcEmails(): array
+    {
+        $ccString = $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_CC] ?? '';
+        
+        $ccEmails =  array_filter(explode(',', str_replace(' ', '', $ccString)));
+        
+        if ($advisorEmail = $this->getAdvisorEmail()) {
+            $ccEmails[] = $advisorEmail;
+        }
+        
+        return $ccEmails;
+    }
+
+    private function getAdvisorEmail(): ?string
+    {
+        return $this->quoteObject?->advisor?->email;
+    }
+
+    private function getFromAddress(): array
+    {
+        return app()->environment('production')
+            ? ['alfred@notify.insurancemarket.ae', 'InsuranceMarket.ae']
+            : ['alfred@testnotify.alfred.ae', 'InsuranceMarket Test'];
+    }
+
+    private function getViewData(string $refId, string $epProductName): array
+    {
+        return [
+            'refId' => $refId,
+            'imcrmLink' => $this->generateImcrmLink(),
+            'epProductName' => $epProductName,
+        ];
     }
 
     private function getEpFailureEmailConfigs()
