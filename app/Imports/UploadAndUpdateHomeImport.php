@@ -25,7 +25,7 @@ use Maatwebsite\Excel\Events\AfterImport;
 
 class UploadAndUpdateHomeImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, WithBatchInserts, WithChunkReading, WithEvents, WithStartRow, WithValidation
 {
-    use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures, FileDownloaderTrait;
+    use FileDownloaderTrait, Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
 
     private $validCount = 0;
     private $failedCount = 0;

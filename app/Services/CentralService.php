@@ -1686,9 +1686,9 @@ class CentralService extends BaseService
                     $policyHandBook = PolicyWording::where('quote_type_id', $quoteTypeId)
                         ->where('plan_id', $quote->plan_id)
                         ->first()?->link ?? '';
-                        
+
                     $emailData->handBookDocuments = '';
-                    if (!empty($policyHandBook)) {
+                    if (! empty($policyHandBook)) {
                         $emailData->handBookDocuments = app(QuoteDocumentService::class)->getDocumentUrl($policyHandBook, 'azureIMPrivate') ?? '';
                     }
                 }

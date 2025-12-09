@@ -117,7 +117,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Throwable;
 
-class   RenewalsUploadService
+class RenewalsUploadService
 {
     use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
 
