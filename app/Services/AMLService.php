@@ -1000,7 +1000,7 @@ class AMLService
 
         $rtaTransactionType = $lookups->get(LookupsEnum::RTA_TRANSACTION_TYPE->value)?->first();
         $rtaPlateCategory = $lookups->get(LookupsEnum::RTA_PLATE_CATEGORY->value)?->first();
-        $vehicleColor = $lookups->get(LookupsEnum::VEHICLE_COLOR->value)?->pluck('text', 'code');
+        $vehicleColor = $lookups->get(LookupsEnum::VEHICLE_COLOR->value)?->pluck('text', 'code') ?? collect();
         $bankName = $lookups->get(LookupsEnum::BANK_NAME->value)?->first();
         $issuancePlace = $lookups->get(LookupsEnum::ISSUANCE_PLACE->value)?->first();
 
