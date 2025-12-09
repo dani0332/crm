@@ -909,6 +909,7 @@ class AMLService
 
         if (! in_array($providerCode, $eligibleProviders)) {
             LoggerService::info('Insurance provider not supported for Insurer AML Screening', extra: ['provider_code' => $providerCode]);
+
             return false;
         }
 
@@ -921,6 +922,7 @@ class AMLService
     {
         if ($paymentDetails?->payment_methods_code !== PaymentMethodsEnum::CreditCard || $paymentDetails?->payment_status_id !== PaymentStatusEnum::AUTHORISED) {
             LoggerService::info('Payment method and payment status not supported for Insurer AML Screening', extra: ['payment_method_code' => $paymentDetails?->payment_methods_code, 'payment_status_id' => $paymentDetails?->payment_status_id]);
+
             return false;
         }
 
