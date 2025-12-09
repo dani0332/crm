@@ -158,4 +158,8 @@ class TravelUploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChun
             },
         ];
     }
+    public function import($url)
+    {
+        $this->fetchFileFromUrl($url, $this->renewalsUploadLead, $this);
+    }
 }

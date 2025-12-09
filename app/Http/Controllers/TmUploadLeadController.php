@@ -66,7 +66,7 @@ class TmUploadLeadController extends Controller
             $tmLeadsImport = new TMLeadsImport;
             $fileNameOriginal = $request->file_name->getClientOriginalName();
             $fileNameAzure = get_guid().'_'.$fileNameOriginal;
-            $filePathAzure = $request->file('file_name')->storeAs('tmleads', $fileNameAzure, 'azueIMPrivate');
+            $filePathAzure = $request->file('file_name')->storeAs('tmleads', $fileNameAzure, 'azureIMPrivate');
 
             $tmLeadsImport->import(request()->file('file_name'));
             $countRows = $tmLeadsImport->getRowCount();

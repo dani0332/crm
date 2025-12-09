@@ -311,4 +311,8 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
         });
     }
 
+    public function import($url)
+    {
+        $this->fetchFileFromUrl($url, $this->renewalsUploadLead, $this);
+    }
 }

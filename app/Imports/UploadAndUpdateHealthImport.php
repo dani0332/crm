@@ -210,4 +210,9 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
             },
         ];
     }
+
+    public function import($url)
+    {
+        $this->fetchFileFromUrl($url, $this->renewalsUploadLead, $this);
+    }
 }
