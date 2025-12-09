@@ -32,7 +32,7 @@ class SageProcessesFilterRequest extends FormRequest
     {
         return [
             'insurance_provider_id' => ['nullable', 'array'],
-            'insurance_provider_id.*' => ['integer', 'exists:insurance_providers,id'],
+            'insurance_provider_id.*' => ['integer', 'exists:insurance_provider,id'],
             'quote_type_id' => ['nullable', 'array'],
             'quote_type_id.*' => ['required_with:quote_type_id', 'string'],
             'option' => ['nullable', 'string'],
