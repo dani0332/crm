@@ -7,7 +7,6 @@ const props = defineProps({
   modelType: String,
   quote: Object,
   documentType: Object,
-  cdn: String,
 });
 
 const notification = useNotifications('toast');

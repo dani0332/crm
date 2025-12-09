@@ -1171,7 +1171,6 @@ function handleOcrNotification(event) {
           :notes="quoteNotes"
           :modelType="modelType"
           :quote="quote"
-          :cdn="cdnPath"
         />
         <Link
           v-if="quote?.insly_id"

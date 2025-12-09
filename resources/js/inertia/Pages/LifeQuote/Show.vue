@@ -1431,7 +1431,6 @@ const getDisplayPriceInAED = item => {
             :notes="quoteNotes"
             :modelType="modelType"
             :quote="quote"
-            :cdn="cdnPath"
           />
 
           <Link

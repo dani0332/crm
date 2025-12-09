@@ -1057,7 +1057,6 @@ class CRUDController extends Controller
             if ($this->genericModel->modelType == quoteTypeCode::Home) {
                 $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
                 $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-                $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
                 $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
                 $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
                 $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HOME->id(), $record->id);
@@ -1121,7 +1120,6 @@ class CRUDController extends Controller
                     'allowedDuplicateLOB' => $allowedDuplicateLOB,
                     'leadStatuses' => array_values($leadStatuses->toArray()),
                     'advisors' => $advisors,
-                    'cdnPath' => $cdnPath,
                     'domainPath' => $domainPath,
                     'activities' => $activities,
                     'customerAdditionalContacts' => $customerAdditionalContacts,
@@ -1196,8 +1194,6 @@ class CRUDController extends Controller
 
                     return $quoteDocument;
                 });
-
-                $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
                 $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
 
                 $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
@@ -1276,7 +1272,6 @@ class CRUDController extends Controller
                     'teams' => $teams,
                     'quoteDocuments' => fn () => array_values($quoteDocuments->toArray()),
                     'documentTypes' => $documentTypes,
-                    'cdnPath' => $cdnPath,
                     'domainPath' => $domainPath,
                     'activities' => $activities,
                     'customerAdditionalContacts' => $customerAdditionalContacts,

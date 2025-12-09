@@ -429,7 +429,6 @@ class HomeQuoteRepository extends BaseRepository
             'amlStatusName' => $amlStatusName,
             'leadSource' => LeadSourceEnum::asArray(),
             'quoteNotes' => $quoteNotes,
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'noteDocumentType' => DocumentType::where('code', DocumentTypeCode::OD)->first(),
             'sendUpdateOptions' => $sendUpdateOptions,

@@ -31,7 +31,6 @@ defineProps({
   advisors: Array,
   quoteDocuments: Array,
   documentTypes: Object,
-  cdnPath: String,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
   customerAdditionalContacts: Array,
