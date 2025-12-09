@@ -48,7 +48,7 @@ class EpFailureNotification extends Mailable
         ]);
 
         $this->getEpFailureEmailConfigs();
-        
+
         $epProductName = $this->getEmbeddedProductName();
         $refId = $this->initializeQuoteData();
         $viewData = $this->getViewData($refId, $epProductName);
@@ -64,7 +64,7 @@ class EpFailureNotification extends Mailable
     private function getEmbeddedProductName(): string
     {
         $ep = EmbeddedProduct::whereHas('prices.transactions', fn ($q) => $q->where('id', $this->etId))->first();
-        
+
         return $ep->product_name ?? 'Unknown';
     }
 
@@ -72,7 +72,7 @@ class EpFailureNotification extends Mailable
     {
         $quoteType = QuoteTypes::getName($this->quoteTypeId)->value;
         $this->quoteObject = $this->getQuoteObject($quoteType, $this->quoteId);
-        
+
         return $this->quoteObject?->code ?? $this->quoteObject?->uuid ?? 'Unknown';
     }
 
@@ -84,13 +84,13 @@ class EpFailureNotification extends Mailable
     private function buildCcEmails(): array
     {
         $ccString = $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_CC] ?? '';
-        
-        $ccEmails =  array_filter(explode(',', str_replace(' ', '', $ccString)));
-        
+
+        $ccEmails = array_filter(explode(',', str_replace(' ', '', $ccString)));
+
         if ($advisorEmail = $this->getAdvisorEmail()) {
             $ccEmails[] = $advisorEmail;
         }
-        
+
         return $ccEmails;
     }
 

@@ -11,11 +11,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Throwable;
 
 class SukoonMedexPurchaseFlowJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SendsEpFailureEmail;
+    use Dispatchable, InteractsWithQueue, Queueable, SendsEpFailureEmail, SerializesModels;
 
     public $tries = 3;
     public $timeout = 300;
