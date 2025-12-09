@@ -45,8 +45,8 @@ class CustomerAddressService
 
         if (($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj'))))) {
 
-            if ($quote) {
-                $customerId = app(CustomerService::class)->getCustomerIdByEmail($email);
+            $customerId = app(CustomerService::class)->getCustomerIdByEmail($email);
+            if ($quote && $customerId) {
 
                 $this->sendAddressNotificationToCustomer($quote, $request->input('addressObj'), $quoteType->id());
                 $this->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $quote->uuid, $quoteType->id());
