@@ -1379,7 +1379,7 @@ const getDisplayPriceInAED = item => {
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Life Detail</h2>
         <x-button
-          v-if="quote?.life_quote?.pc_qualified == true"
+          v-if="quote?.customer?.pcp_tag == true"
           size="sm"
           color="#BFA100"
           tag="div"
