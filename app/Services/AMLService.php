@@ -967,33 +967,42 @@ class AMLService
         $vehicleDriverDetail = $quoteDetails->vehicleDriverDetail;
         $nationality = Nationality::where('code', $vehicleDriverDetail?->driver_home_country_license_issuance)->first();
 
-        $rtaTransactionType = Lookup::where([
-            'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
-            'insurance_provider_id' => $paymentDetails->insurance_provider_id,
-            'code' => $vehicleDriverDetail?->rta_transaction_type,
-        ])->first();
+        $lookups = Lookup::query()
+            ->where(function ($query) use ($paymentDetails, $vehicleDriverDetail) {
+                $query->where(function ($q) use ($paymentDetails, $vehicleDriverDetail) {
+                    $q->where('insurance_provider_id', $paymentDetails->insurance_provider_id)
+                        ->where(function ($subQ) use ($vehicleDriverDetail) {
+                            $subQ->where(function ($sq) use ($vehicleDriverDetail) {
+                                $sq->where('key', LookupsEnum::RTA_TRANSACTION_TYPE)
+                                    ->where('code', $vehicleDriverDetail?->rta_transaction_type);
+                            })
+                            ->orWhere(function ($sq) use ($vehicleDriverDetail) {
+                                $sq->where('key', LookupsEnum::RTA_PLATE_CATEGORY)
+                                    ->where('code', $vehicleDriverDetail?->rta_plate_category);
+                            })
+                            ->orWhere(function ($sq) use ($vehicleDriverDetail) {
+                                $sq->where('key', LookupsEnum::VEHICLE_COLOR)
+                                    ->whereIn('code', [$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color]);
+                            })
+                            ->orWhere(function ($sq) use ($vehicleDriverDetail) {
+                                $sq->where('key', LookupsEnum::BANK_NAME)
+                                    ->where('code', $vehicleDriverDetail?->bank_name);
+                            });
+                        });
+                })
+                ->orWhere(function ($q) use ($vehicleDriverDetail) {
+                    $q->where('key', LookupsEnum::ISSUANCE_PLACE)
+                        ->where('code', $vehicleDriverDetail?->driver_license_issue_place);
+                });
+            })
+            ->get()
+            ->groupBy('key');
 
-        $rtaPlateCategory = Lookup::where([
-            'key' => LookupsEnum::RTA_PLATE_CATEGORY,
-            'insurance_provider_id' => $paymentDetails->insurance_provider_id,
-            'code' => $vehicleDriverDetail?->rta_plate_category,
-        ])->first();
-
-        $vehicleColor = Lookup::where([
-            'key' => LookupsEnum::VEHICLE_COLOR,
-            'insurance_provider_id' => $paymentDetails->insurance_provider_id,
-        ])->whereIn('code', [$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color])->get()->pluck('text', 'code');
-
-        $bankName = Lookup::where([
-            'key' => LookupsEnum::BANK_NAME,
-            'insurance_provider_id' => $paymentDetails->insurance_provider_id,
-            'code' => $vehicleDriverDetail?->bank_name,
-        ])->first();
-
-        $issuancePlace = Lookup::where([
-            'key' => LookupsEnum::ISSUANCE_PLACE,
-            'code' => $vehicleDriverDetail?->driver_license_issue_place,
-        ])->first();
+        $rtaTransactionType = $lookups->get(LookupsEnum::RTA_TRANSACTION_TYPE->value)?->first();
+        $rtaPlateCategory = $lookups->get(LookupsEnum::RTA_PLATE_CATEGORY->value)?->first();
+        $vehicleColor = $lookups->get(LookupsEnum::VEHICLE_COLOR->value)?->pluck('text', 'code');
+        $bankName = $lookups->get(LookupsEnum::BANK_NAME->value)?->first();
+        $issuancePlace = $lookups->get(LookupsEnum::ISSUANCE_PLACE->value)?->first();
 
         $insurerScreeningPayload = [
             'chassisNumber' => $carQuoteRequestDetails?->chassis_number ?? '',
