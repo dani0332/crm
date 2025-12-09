@@ -221,6 +221,7 @@ class SageProcessesService extends BaseService
     protected function enrichResultsWithAdditionalData($results): void
     {
         $this->loadQuoteStatusEagerly($results);
+        $this->loadPersonalQuoteEagerly($results);
         $this->addCollectedSageReceiptIds($results);
     }
 
@@ -365,6 +366,49 @@ class SageProcessesService extends BaseService
         }
     }
 
+    /**
+     * Load PersonalQuote relation efficiently by grouping models by type
+     * This avoids N+1 queries by loading relationships in batches
+     *
+     * @param  mixed  $results
+     */
+    protected function loadPersonalQuoteEagerly($results): void
+    {
+        $items = $results instanceof Paginator ? $results->items() : $results;
+
+        if (empty($items)) {
+            return;
+        }
+
+        // Group models by their class type to check schema once per type
+        [$modelsByType , $typesWithPersonalQuote] = $this->getModelsByTypeAndTypesWithPersonalQuote($items);
+
+        // Load quoteStatus for each model type in batch
+        foreach ($modelsByType as $modelClass => $models) {
+            if (isset($typesWithPersonalQuote[$modelClass]) && ! empty($models)) {
+                try {
+                    // Create a collection and load the relation in one query
+                    $modelCollection = collect($models);
+                    $modelIds = $modelCollection->pluck('id')->toArray();
+
+                    // Load all personalQuote records in one query
+                    $modelClass::with('personalQuote:id,uuid,code,policy_number')->whereIn('id', $modelIds)->get()
+                        ->each(function ($loadedModel) use ($modelCollection) {
+                            $originalModel = $modelCollection->firstWhere('id', $loadedModel->id);
+                            if ($originalModel && isset($loadedModel->personalQuote)) {
+                                $originalModel->setRelation('personalQuote', $loadedModel->personalQuote);
+                            }
+                        });
+
+                } catch (\Exception $e) {
+                    LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not load personalQuote for model type: '.$modelClass, extra: [
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+    }
+
     private function getDirectModelClassesAndPersonalQuoteTypeIds($request)
     {
         $directModelClasses = [];
@@ -415,6 +459,33 @@ class SageProcessesService extends BaseService
         }
 
         return [$modelsByType, $typesWithQuoteStatus];
+    }
+
+    private function getModelsByTypeAndTypesWithPersonalQuote($items)
+    {
+        $modelsByType = [];
+        $typesWithPersonalQuote = [];
+
+        foreach ($items as $item) {
+            if ($item->model) {
+                $modelClass = get_class($item->model);
+
+                if (! isset($modelsByType[$modelClass])) {
+                    $modelsByType[$modelClass] = [];
+
+                    // Check schema only once per model type
+                    if (Schema::hasColumn($item->model->getTable(), 'personal_quote_id')) {
+                        $typesWithPersonalQuote[$modelClass] = true;
+                    }
+                }
+
+                if (isset($typesWithPersonalQuote[$modelClass])) {
+                    $modelsByType[$modelClass][] = $item->model;
+                }
+            }
+        }
+
+        return [$modelsByType, $typesWithPersonalQuote];
     }
 
 }

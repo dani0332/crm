@@ -42,12 +42,24 @@ const tableHeader = computed(() => [
     width: 150,
     sortable: true,
   },
+  {
+    text: 'Price Vat Not Applicable',
+    value: 'price_vat_not_applicable',
+    width: 150,
+    sortable: true,
+  },
   { text: 'Price Vat', value: 'price_vat', width: 150, sortable: true },
   { text: 'Discount', value: 'discount_value', width: 150, sortable: true },
   { text: 'Total Price', value: 'total_price', width: 150, sortable: true },
   {
     text: 'Commission (VAT applicable)',
     value: 'commission_vat_applicable',
+    width: 150,
+    sortable: true,
+  },
+  {
+    text: 'Commission (VAT not applicable)',
+    value: 'commission_vat_not_applicable',
     width: 150,
     sortable: true,
   },
@@ -395,13 +407,20 @@ async function exportExcel() {
 
       <!-- Policy Number Column -->
       <template #item-policy_number="item">
-        <span>{{ item.model?.policy_number || 'N/A' }}</span>
+        <span>{{ item.model?.policy_number || item.model?.personal_quote?.policy_number || 'N/A' }}</span>
       </template>
 
       <!-- Price Vat Applicable -->
       <template #item-price_vat_applicable="item">
         <span>{{
-          item.model?.payments?.[0]?.price_vat_applicable || 'N/A'
+         item.model?.payments?.[0]?.price_vat != 0 ? item.model?.payments?.[0]?.price_vat_applicable : 'N/A'
+        }}</span>
+      </template>
+
+      <!-- Price Vat Not Applicable -->
+      <template #item-price_vat_not_applicable="item">
+        <span>{{
+          item.model?.payments?.[0]?.price_vat == 0 ? item.model?.payments?.[0]?.price_vat_applicable : 'N/A'
         }}</span>
       </template>
 
@@ -423,7 +442,13 @@ async function exportExcel() {
       <!-- Commission Vat Applicable -->
       <template #item-commission_vat_applicable="item">
         <span>{{
-          item.model?.payments?.[0]?.commission_vat_applicable ||
+          item.model?.payments?.[0]?.commission_vat_applicable || 
+          'N/A'
+        }}</span>
+      </template>
+      <!-- Commission Vat Applicable -->
+      <template #item-commission_vat_not_applicable="item">
+        <span>{{
           item.model?.payments?.[0]?.commission_vat_not_applicable ||
           'N/A'
         }}</span>
