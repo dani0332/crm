@@ -1761,7 +1761,7 @@ class HealthQuoteService extends BaseService
         }
 
         if (! empty($updatedLeadIds)) {
-            $supportUserName = \App\Models\User::find($supportUserId)->name;
+            $supportUserName = \App\Models\User::find($supportUserId)?->name;
 
             return $modelType.' Leads has been Assigned To '.$supportUserName;
         }
