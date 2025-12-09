@@ -863,7 +863,7 @@ class SendEmailCustomerService extends BaseService
                     }
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $documentName = 'InsuranceMarket.ae™ '.$document->document_type_text.' for Policy Number '.$emailData->policy_number.'.'.pathinfo($documentURL, PATHINFO_EXTENSION);
-                    $documentURL = app(QuoteDocumentService::class)->getDocumentUrl($documentURL);
+                    $documentURL = app(QuoteDocumentService::class)->getDocumentUrl($path);
                     if ($documentURL) {
                         $attachments[] = [
                             'url' => $documentURL,
