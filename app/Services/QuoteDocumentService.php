@@ -904,25 +904,6 @@ class QuoteDocumentService extends BaseService
     }
 
     /**
-     * Generate a temporary URL for a document stored in a specified storage disk.
-     *
-     * @param  string  $fileName  The name of the file for which to generate the temporary URL.
-     * @param  string  $storageDisk  The storage disk where the file is located. Default is 'azureIM'.
-     * @param  int  $expiryTimeInMinutes  The expiry time for the temporary URL in minutes. Default is 20 minutes.
-     * @return \Illuminate\Http\JsonResponse JSON response containing the temporary URL or an error message.
-     */
-    public function getDocumentTempURL($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
-    {
-        $url = $this->getDocumentUrl($fileName, $storageDisk, $expiryTimeInMinutes);
-
-        if ($url) {
-            return response()->json(['url' => $url]);
-        } else {
-            return response()->json(['error' => 'File does not exist on server']);
-        }
-    }
-
-    /**
      * Check if all required documents are uploaded to enable send policy to customer & book policy button in book policy section
      * Triggering from updateQuoteStatus & bookPolicyPayload
      *

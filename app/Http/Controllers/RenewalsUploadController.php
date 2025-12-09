@@ -186,7 +186,7 @@ class RenewalsUploadController extends Controller
             $fileNameAzure = get_guid().'_'.$fileNameOriginal;
 
             // Uploading file to Azure
-            $filePathAzure = $request->file('file_name')->storeAs('renewals', $fileNameAzure, 'azureIM');
+            $filePathAzure = $request->file('file_name')->storeAs('renewals', $fileNameAzure, 'azureIMPrivate');
 
             // creating upload record in database before upload start
             $this->createRenewalUploadLeadRecord($fileNameOriginal, $filePathAzure);
