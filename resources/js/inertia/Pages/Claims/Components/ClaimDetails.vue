@@ -697,7 +697,9 @@ watch(
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ACCOUNT NAME</dt>
-                  <dd>{{ claim.customer_bank_accounts?.account_name || '-' }}</dd>
+                  <dd>
+                    {{ claim.customer_bank_accounts?.account_name || '-' }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">IBAN</dt>
