@@ -185,7 +185,12 @@ class BuyLeadService
             ->where('buy_lead_requests.user_id', Auth::id())
             ->when(
                 ! is_null($isCarRevival),
-                fn ($q) => $q->where('buy_lead_requests.source', $isCarRevival ? LeadSourceEnum::REVIVAL : '!=', $isCarRevival ? LeadSourceEnum::REVIVAL : LeadSourceEnum::REVIVAL)
+                fn ($q) => $quoteType === QuoteTypes::CAR
+                    ? ($isCarRevival
+                        ? $q->where('buy_lead_requests.source', LeadSourceEnum::REVIVAL)
+                        : $q->where('buy_lead_requests.source', '!=', LeadSourceEnum::REVIVAL)
+                    )
+                    : $q
             )
             ->where('buy_lead_request_logs.quote_type_id', $quoteType->id())
             ->whereBetween('buy_lead_request_logs.created_at', [$startDate->startOfDay(), $endDate->endOfDay()])
