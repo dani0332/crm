@@ -998,11 +998,11 @@ class AMLService
                 foreach ($lookupsConfigs as $config) {
                     $query->orWhere(function ($q) use ($paymentDetails, $config) {
                         $q->where('key', $config['key']);
-                        
+
                         if ($config['requires_provider']) {
                             $q->where('insurance_provider_id', $paymentDetails->insurance_provider_id);
                         }
-                        
+
                         if (isset($config['codes'])) {
                             $q->whereIn('code', $config['codes']);
                         } elseif (isset($config['code'])) {
