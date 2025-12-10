@@ -176,6 +176,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
+    public function activeMembers()
+    {
+        return $this->members()->whereNull('deleted_at');
+    }
+
     public function plan()
     {
         return $this->belongsTo(HealthPlan::class, 'plan_id');
