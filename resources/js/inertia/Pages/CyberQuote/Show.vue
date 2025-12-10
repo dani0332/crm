@@ -72,6 +72,7 @@ const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
 );
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const quote = page.props?.quote;
 const historyLoading = ref(false);
 
 const { isRequired } = useRules();
@@ -1690,11 +1691,10 @@ const confirmSendEmail = () => {
 
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />
 
-    <AuditLogs
-      :quote-type="quoteType"
-      :id="$page.props.quote.id"
-      :quoteCode="$page.props.quote.code"
-      :expanded="sectionExpanded"
+    <ApiLogs
+      v-if="can(permissionsEnum.API_LOG_VIEW)"
+      :type="modelClassCyber"
+      :id="$page.props.quote.cyber_quote?.id"
     />
 
     <AuditLogs
@@ -1703,10 +1703,11 @@ const confirmSendEmail = () => {
       :id="quote?.latest_insured?.insured_kyc?.id"
     />
 
-    <ApiLogs
-      v-if="can(permissionsEnum.API_LOG_VIEW)"
-      :type="modelClassCyber"
-      :id="$page.props.quote.cyber_quote?.id"
+    <AuditLogs
+      :quote-type="quoteType"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
     />
 
     <PolicyIssuanceApiLogs

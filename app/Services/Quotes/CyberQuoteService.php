@@ -9,6 +9,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -100,7 +101,9 @@ class CyberQuoteService extends BaseQuoteService
                     'insuranceProvider:id,text,code',
                     'insuranceProviderPlan',
                     'insuranceProvider',
-                    'latestInsured',
+                    'latestInsured' => function ($q) {
+                        $q->where('customer_insured.quote_type_id', QuoteTypeId::Cyber);
+                    },
                     'latestInsured.insuredKyc:id,insured_id',
                     'cyberQuote.coverage',
                     'payments' => function ($q) {

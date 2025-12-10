@@ -235,6 +235,8 @@ final class ApplicationStorageEnums extends Enum
     /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
     public const INSLY_TEMP_SALES_PERSON_ID = 'INSLY_TEMP_SALES_PERSON_ID';
     public const INSLY_TEMP_POLICY_OID = 'INSLY_TEMP_POLICY_OID';
+    public const INSLY_TEMP_CUSTOMER_EMAIL = 'INSLY_TEMP_CUSTOMER_EMAIL';
+    public const INSLY_TEMP_CUSTOMER_POLICY_OID = 'INSLY_TEMP_CUSTOMER_POLICY_OID';
     /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
 
     /* AIG Workflow Integration */
