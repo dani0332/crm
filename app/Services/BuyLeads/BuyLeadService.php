@@ -188,9 +188,9 @@ class BuyLeadService
                 fn ($q) => $quoteType === QuoteTypes::CAR
                     ? ($isCarRevival
                         ? $q->where('buy_lead_requests.source', LeadSourceEnum::REVIVAL)
-                        :  $q->where(function ($query) {
+                        : $q->where(function ($query) {
                             $query->whereNull('buy_lead_requests.source')
-                                  ->orWhere('buy_lead_requests.source', '');
+                                ->orWhere('buy_lead_requests.source', '');
                         })
                     )
                     : $q
