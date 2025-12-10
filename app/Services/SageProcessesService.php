@@ -320,7 +320,7 @@ class SageProcessesService extends BaseService
                 ? $responseData['error']['message']['value']
                 : null;
         } catch (\Exception $e) {
-            LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not parse sage API response: '.$e->getMessage(), extra: [
+            LoggerService::warning('Could not parse sage API response: '.$e->getMessage(), extra: [
                 'sage_api_log_id' => $firstFailedLog->id ?? null,
             ]);
 
@@ -363,7 +363,7 @@ class SageProcessesService extends BaseService
                         });
 
                 } catch (\Exception $e) {
-                    LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not load quoteStatus for model type: '.$modelClass, extra: [
+                    LoggerService::warning('Could not load quoteStatus for model type: '.$modelClass, extra: [
                         'error' => $e->getMessage(),
                     ]);
                 }
@@ -406,7 +406,7 @@ class SageProcessesService extends BaseService
                         });
 
                 } catch (\Exception $e) {
-                    LoggerService::warning(self::class.' - '.__FUNCTION__.' - Could not load personalQuote for model type: '.$modelClass, extra: [
+                    LoggerService::warning('Could not load personalQuote for model type: '.$modelClass, extra: [
                         'error' => $e->getMessage(),
                     ]);
                 }
