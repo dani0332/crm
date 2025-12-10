@@ -272,8 +272,8 @@ class DeviceQuoteService extends BaseQuoteService
         // Make API request to save the savings quote
         $response = Capi::request('/api/device/create', 'post', $data);
 
-        if (isset($response->quoteUID)) {
-            $this->selfAssign(QuoteTypes::DEVICE, $response->quoteUID, true);
+        if (isset($response->uuid)) {
+            $this->selfAssign(QuoteTypes::DEVICE, $response->uuid, true);
         }
 
         return $response;
