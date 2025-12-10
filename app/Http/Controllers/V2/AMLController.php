@@ -496,9 +496,10 @@ class AMLController extends Controller
 
         if (! isTapEnabled()) {
             LoggerService::info('Tap integration is disabled. Skipping Insurer AML Screening process');
+
             return $insurerAMLScreeningResponse;
         }
-        
+
         LoggerService::info('Tap integration is enabled. Insurer AML Screening process started');
         $enableInsurerScreening = [
             QuoteTypes::CAR->id(),

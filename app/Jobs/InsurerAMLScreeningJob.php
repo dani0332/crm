@@ -37,14 +37,14 @@ class InsurerAMLScreeningJob implements ShouldQueue
     {
         LoggerService::info('Insurer AML Screening Job Started', extra: [
             'quote_type_id' => $this->quoteTypeID,
-            'customer_type' => $this->customerType
+            'customer_type' => $this->customerType,
         ]);
 
         $amlService->insurerAMLScreening($this->request, $this->quoteTypeID, $this->quoteDetails, $this->customerType);
 
         LoggerService::info('Insurer AML Screening Job Ended', extra: [
             'quote_type_id' => $this->quoteTypeID,
-            'customer_type' => $this->customerType
+            'customer_type' => $this->customerType,
         ]);
     }
 }
