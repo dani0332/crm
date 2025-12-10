@@ -67,7 +67,7 @@ class DocumentType extends Model implements AuditableContract
 
     public function scopeTaxDocument($query)
     {
-        $query->whereIn('code', [DocumentTypeCode::TI, DocumentTypeCode::CTIRBB,DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE, DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER])->issuingDocument()->active();
+        $query->whereIn('code', [DocumentTypeCode::TI, DocumentTypeCode::CTIRBB, DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE, DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER])->issuingDocument()->active();
     }
 
     public function scopeRequiredForSendPolicy($query)

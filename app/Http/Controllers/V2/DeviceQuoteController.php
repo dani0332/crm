@@ -6,7 +6,6 @@ use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Services\QuoteDocumentService;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\DeviceQuoteRequest;
