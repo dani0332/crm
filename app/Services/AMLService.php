@@ -978,7 +978,7 @@ class AMLService
             ],
             [
                 'key' => LookupsEnum::VEHICLE_COLOR,
-                'code' => array_filter([$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color]),
+                'codes' => array_filter([$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color]),
                 'requires_provider' => true,
             ],
             [
@@ -1003,8 +1003,8 @@ class AMLService
                             $q->where('insurance_provider_id', $paymentDetails->insurance_provider_id);
                         }
                         
-                        if (is_array($config['code'])) {
-                            $q->whereIn('code', $config['code']);
+                        if (isset($config['codes'])) {
+                            $q->whereIn('code', $config['codes']);
                         } else {
                             $q->where('code', $config['code']);
                         }
