@@ -1652,7 +1652,7 @@ const fullAddress = computed(() => {
       <h2 class="text-xl font-semibold">
         Travel Detail
         <x-button
-          v-if="quote?.pcp_tag == true"
+          v-if="quote?.pc_qualified == true"
           size="sm"
           color="#BFA100"
           tag="div"

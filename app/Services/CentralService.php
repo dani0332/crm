@@ -22,6 +22,7 @@ use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
@@ -138,13 +139,22 @@ class CentralService extends BaseService
         $parentRecord = null;
 
         if ($quoteType = QuoteTypes::tryFrom($parentType)) {
-            $parentRecord = $quoteType->model()::find($entityId);
+            $model = $quoteType->model();
+            if (strtolower($parentType) == strtolower(quoteTypeCode::Life)) {
+                $parentRecord = $model::with('lifeQuote')->find($entityId);
+            } else {
+                $parentRecord = $model::find($entityId);
+            }
         }
 
         if (! $parentRecord) {
             $repository = $this->getRepositoryObject($parentType);
             if ($repository) {
-                $parentRecord = $repository::where('id', $entityId)->first();
+                if (strtolower($parentType) == strtolower(quoteTypeCode::Life)) {
+                    $parentRecord = PersonalQuote::with('lifeQuote')->where('id', $entityId)->first();
+                } else {
+                    $parentRecord = $repository::where('id', $entityId)->first();
+                }
             }
         }
 
@@ -185,6 +195,11 @@ class CentralService extends BaseService
                     quoteTypeCode::SAVINGS,
                 ])) {
                     $response = PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob));
+                } elseif (in_array($lob, [
+                    quoteTypeCode::Life,
+                ])) {
+                    $lifeDataArr = $this->prepareLifeQuoteDuplicateData($parentRecord);
+                    $response = app(LifeQuoteService::class)->saveLifeQuote($lifeDataArr);
                 } else {
                     $repository = $this->getRepositoryObject(ucfirst($lob));
 
@@ -198,7 +213,11 @@ class CentralService extends BaseService
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
                 } elseif (isset($response->quoteUID) && isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
-                    $record = $repository::where('uuid', $response->quoteUID)->first();
+                    if (in_array($lob, [quoteTypeCode::Life])) {
+                        $record = PersonalQuote::where('uuid', $response->quoteUID)->first();
+                    } else {
+                        $record = $repository::where('uuid', $response->quoteUID)->first();
+                    }
                     if ($record) {
                         $update = [
                             'parent_duplicate_quote_id' => $parentRecord->code,
@@ -1535,12 +1554,12 @@ class CentralService extends BaseService
             'code' => $quote->code,
         ];
 
-        $this->emailDataExtend(emailData: $emailData, quote: $quote, quoteTypeId: $quoteTypeId, workflowType: $workflowType, existingEmailData: $existingEmailData);
+        $this->emailDataExtend($emailData, $quote, $quoteTypeId, $workflowType, $existingEmailData);
 
         return $emailData;
     }
 
-    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $workflowType = null, $existingEmailData = null): void
+    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $workflowType = null, $existingEmailData = null): void
     {
         $emailData->advisorEmail = $quote->advisor->email ?? '';
         $emailData->customerName = $quote->first_name.' '.$quote->last_name;
@@ -1650,8 +1669,7 @@ class CentralService extends BaseService
         ) {
             $handBookDocuments = $existingEmailData->handBookDocuments ?? [];
             if (! empty($handBookDocuments)) {
-                // Get the latest document from the array
-                $latestDocument = collect($handBookDocuments)->last();
+                $latestDocument = $quoteTypeId == QuoteTypeId::Health ? collect($handBookDocuments)->first() : collect($handBookDocuments)->last();
                 $url = $latestDocument['url'] ?? null;
 
                 if ($url) {
@@ -1669,7 +1687,7 @@ class CentralService extends BaseService
 
                     $emailData->handBookDocuments = ! empty($policyHandBook) ? config('constants.AZURE_IM_STORAGE_URL').$policyHandBook : '';
                 } else {
-                    $emailData->handBookDocuments = $storageUrl.$policyHandBook ?? '';
+                    $emailData->handBookDocuments = ! empty($policyHandBook) ? $storageUrl.$policyHandBook : '';
                 }
             }
             $emailData->handBookExt = ! empty($emailData->handBookDocuments) ? pathinfo($emailData->handBookDocuments, PATHINFO_EXTENSION) : '';
@@ -2133,17 +2151,21 @@ class CentralService extends BaseService
         LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
 
         if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
+            $actionRequired = 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.';
+            $statusAPIFailed = 'Quote Referred To Insurer UW';
+
             LoggerService::info('fn:autoCaptureAMLValidationCheck failed - Going to dispatch AutomationFailedJob', extra: [
-                'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
-                'statusAPIFailed' => 'Quote Referred To Insurer UW',
-                'processInvolved' => 'Payment Capture',
+                'actionRequired' => $actionRequired,
+                'statusAPIFailed' => $statusAPIFailed,
+                'processInvolved' => PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,
             ]);
+
             AutomationFailedJob::dispatch(
                 $quote->id,
                 QuoteTypeId::Car,
-                'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
-                'Quote Referred To Insurer UW',
-                'Payment Capture',
+                $actionRequired,
+                $statusAPIFailed,
+                PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,
                 WorkflowTypeEnum::CAR_AUTOMATION_FAILED
             )->onQueue('policy-issuance-automation');
 
@@ -2174,32 +2196,30 @@ class CentralService extends BaseService
             if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
                 LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
 
+                $shouldEmailTrigger = false;
                 if ($responsePremiumAmount > $captureAmount) {
-                    LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
-                        'actionRequired' => 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
-                        'statusAPIFailed' => 'Premium Not Matched With Insurer',
-                        'processInvolved' => 'Payment Capture',
-                    ]);
-                    AutomationFailedJob::dispatch(
-                        $quote->id,
-                        QuoteTypeId::Car,
-                        'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
-                        'Premium Not Matched With Insurer',
-                        'Payment Capture',
-                        WorkflowTypeEnum::CAR_AUTOMATION_FAILED
-                    )->onQueue('policy-issuance-automation');
+                    $shouldEmailTrigger = true;
+                    $actionRequired = 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.';
+                    $statusAPIFailed = 'Premium Not Matched With Insurer';
                 } elseif ($responsePremiumAmount != $captureAmount) {
+                    $shouldEmailTrigger = true;
+                    $actionRequired = 'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.';
+                    $statusAPIFailed = 'Quote Referred To Insurer UW';
+                }
+
+                if ($shouldEmailTrigger) {
                     LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob', extra: [
-                        'actionRequired' => 'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
-                        'statusAPIFailed' => 'Quote Referred To Insurer UW',
-                        'processInvolved' => 'Payment Capture',
+                        'actionRequired' => $actionRequired,
+                        'statusAPIFailed' => $statusAPIFailed,
+                        'processInvolved' => PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,
                     ]);
+
                     AutomationFailedJob::dispatch(
                         $quote->id,
                         QuoteTypeId::Car,
-                        'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
-                        'Quote Referred To Insurer UW',
-                        'Payment Capture',
+                        $actionRequired,
+                        $statusAPIFailed,
+                        PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,
                         WorkflowTypeEnum::CAR_AUTOMATION_FAILED
                     )->onQueue('policy-issuance-automation');
                 }
@@ -2376,5 +2396,50 @@ class CentralService extends BaseService
             ->where('start_date', '<=', $expiryDate)
             ->where('end_date', '>=', $expiryDate)
             ->first();
+    }
+
+    private function prepareLifeQuoteDuplicateData($parentRecord): array
+    {
+        $lifeDataArr = [
+            'first_name' => $parentRecord->first_name,
+            'last_name' => $parentRecord->last_name,
+            'email' => $parentRecord->email,
+            'mobile_no' => $parentRecord->mobile_no,
+        ];
+
+        if ($parentRecord instanceof PersonalQuote && $parentRecord->quote_type_id == QuoteTypeId::Life && $parentRecord->lifeQuote) {
+            $lifeQuote = $parentRecord->lifeQuote;
+            $lifeDataArr['dob'] = $lifeQuote->dob ?? $parentRecord->dob;
+            $lifeDataArr['sum_insured_value'] = $lifeQuote->sum_insured_value ?? null;
+            $lifeDataArr['nationality_id'] = $lifeQuote->nationality_id ?? $parentRecord->nationality_id ?? null;
+            $lifeDataArr['sum_insured_currency_id'] = $lifeQuote->sum_insured_currency_id ?? null;
+            $lifeDataArr['marital_status_id'] = $lifeQuote->marital_status_id ?? null;
+            $lifeDataArr['purpose_of_insurance_id'] = $lifeQuote->purpose_of_insurance_id ?? null;
+            $lifeDataArr['number_of_years_id'] = $lifeQuote->number_of_years_id ?? null;
+            $lifeDataArr['is_smoker'] = $lifeQuote->is_smoker ?? 0;
+            $lifeDataArr['gender'] = $lifeQuote->gender ?? $parentRecord->gender ?? null;
+            $lifeDataArr['others_info'] = $lifeQuote->others_info ?? null;
+            $lifeDataArr['height'] = $lifeQuote->height ?? null;
+            $lifeDataArr['weight'] = $lifeQuote->weight ?? null;
+            $lifeDataArr['bmi'] = $lifeQuote->bmi ?? null;
+            $lifeDataArr['age'] = $lifeQuote->age ?? ($lifeDataArr['dob'] ? Carbon::parse($lifeDataArr['dob'])->age : null);
+        } else {
+            $lifeDataArr['dob'] = $parentRecord->dob ?? null;
+            $lifeDataArr['sum_insured_value'] = null;
+            $lifeDataArr['nationality_id'] = $parentRecord->nationality_id ?? null;
+            $lifeDataArr['sum_insured_currency_id'] = null;
+            $lifeDataArr['marital_status_id'] = null;
+            $lifeDataArr['purpose_of_insurance_id'] = null;
+            $lifeDataArr['number_of_years_id'] = null;
+            $lifeDataArr['is_smoker'] = 0;
+            $lifeDataArr['gender'] = $parentRecord->gender ?? null;
+            $lifeDataArr['others_info'] = null;
+            $lifeDataArr['height'] = null;
+            $lifeDataArr['weight'] = null;
+            $lifeDataArr['bmi'] = null;
+            $lifeDataArr['age'] = $parentRecord->dob ? Carbon::parse($parentRecord->dob)->age : null;
+        }
+
+        return $lifeDataArr;
     }
 }

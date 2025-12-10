@@ -125,6 +125,7 @@ defineProps({
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
+const isLoadingVerificationDataUpdate = ref(false);
 
 const { formatString } = usePayment();
 
@@ -590,6 +591,26 @@ const leadStatusDisabled = computed(() => {
 const assumptionState = reactive({
   isEditing: false,
 });
+
+const refreshComponent = () => {
+  isLoadingVerificationDataUpdate.value = true;
+  onLoadAvailablePlansData();
+
+  // Reload customer verification data
+  router.reload({
+    only: ['customerVerificationData'],
+    onFinish: () => {
+      // Show success for CustomerVerificationDetails update
+      notification.success({
+        title: 'OCR webform data updated successfully',
+        position: 'top',
+      });
+
+      modals.customerVerification = false;
+      isLoadingVerificationDataUpdate.value = false;
+    },
+  });
+};
 
 const assumptionsForm = useForm({
   cylinder: page.props.record.cylinder || null,
@@ -1880,7 +1901,7 @@ const handleCancelConfirmationModal = () => {
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Car Detail</h2>
         <x-button
-          v-if="record?.pcp_tag == true"
+          v-if="record?.pc_qualified == true"
           size="sm"
           color="#BFA100"
           tag="div"
@@ -4682,8 +4703,10 @@ const handleCancelConfirmationModal = () => {
 
   <CustomerVerificationDetails
     v-if="isCustomerVerificationEnabled"
-    :quote="quote"
+    :quoteId="$page.props.record.id"
     :modals="modals"
     :customerVerificationData="customerVerificationData"
+    :isLoadingVerificationDataUpdate="isLoadingVerificationDataUpdate"
+    @ocr-webform-updated="refreshComponent"
   />
 </template>
