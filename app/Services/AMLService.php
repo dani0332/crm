@@ -1013,34 +1013,51 @@ class AMLService
         $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
         $vehicleDriverDetail = $quoteDetails->vehicleDriverDetail;
         $nationality = Nationality::where('code', $vehicleDriverDetail?->driver_home_country_license_issuance)->first();
+        $lookupsConfigs = [
+            [
+                'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
+                'code' => $vehicleDriverDetail?->rta_transaction_type,
+                'requires_provider' => true,
+            ],
+            [
+                'key' => LookupsEnum::RTA_PLATE_CATEGORY,
+                'code' => $vehicleDriverDetail?->rta_plate_category,
+                'requires_provider' => true,
+            ],
+            [
+                'key' => LookupsEnum::VEHICLE_COLOR,
+                'codes' => array_filter([$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color]),
+                'requires_provider' => true,
+            ],
+            [
+                'key' => LookupsEnum::BANK_NAME,
+                'code' => $vehicleDriverDetail?->bank_name,
+                'requires_provider' => true,
+            ],
+            [
+                'key' => LookupsEnum::ISSUANCE_PLACE,
+                'code' => $vehicleDriverDetail?->driver_license_issue_place,
+                'requires_provider' => false,
+            ],
+        ];
 
         $lookups = Lookup::query()
-            ->where(function ($query) use ($paymentDetails, $vehicleDriverDetail) {
-                $query->where(function ($q) use ($paymentDetails, $vehicleDriverDetail) {
-                    $q->where('insurance_provider_id', $paymentDetails->insurance_provider_id)
-                        ->where(function ($subQ) use ($vehicleDriverDetail) {
-                            $subQ->where(function ($sq) use ($vehicleDriverDetail) {
-                                $sq->where('key', LookupsEnum::RTA_TRANSACTION_TYPE)
-                                    ->where('code', $vehicleDriverDetail?->rta_transaction_type);
-                            })
-                                ->orWhere(function ($sq) use ($vehicleDriverDetail) {
-                                    $sq->where('key', LookupsEnum::RTA_PLATE_CATEGORY)
-                                        ->where('code', $vehicleDriverDetail?->rta_plate_category);
-                                })
-                                ->orWhere(function ($sq) use ($vehicleDriverDetail) {
-                                    $sq->where('key', LookupsEnum::VEHICLE_COLOR)
-                                        ->whereIn('code', [$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color]);
-                                })
-                                ->orWhere(function ($sq) use ($vehicleDriverDetail) {
-                                    $sq->where('key', LookupsEnum::BANK_NAME)
-                                        ->where('code', $vehicleDriverDetail?->bank_name);
-                                });
-                        });
-                })
-                    ->orWhere(function ($q) use ($vehicleDriverDetail) {
-                        $q->where('key', LookupsEnum::ISSUANCE_PLACE)
-                            ->where('code', $vehicleDriverDetail?->driver_license_issue_place);
+            ->where(function ($query) use ($paymentDetails, $lookupsConfigs) {
+                foreach ($lookupsConfigs as $config) {
+                    $query->orWhere(function ($q) use ($paymentDetails, $config) {
+                        $q->where('key', $config['key']);
+                        
+                        if ($config['requires_provider']) {
+                            $q->where('insurance_provider_id', $paymentDetails->insurance_provider_id);
+                        }
+                        
+                        if (isset($config['codes'])) {
+                            $q->whereIn('code', $config['codes']);
+                        } elseif (isset($config['code'])) {
+                            $q->where('code', $config['code']);
+                        }
                     });
+                }
             })
             ->get()
             ->groupBy('key');
