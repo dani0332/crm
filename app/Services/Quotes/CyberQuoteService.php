@@ -15,7 +15,6 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Services\CustomerInsuredService;
 use App\Services\LookupService;
-use App\Services\SplitPaymentService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -161,13 +160,6 @@ class CyberQuoteService extends BaseQuoteService
     public function getShowData(string $uuid)
     {
         $quote = $this->getOne($uuid, true);
-        
-        // Map payment status text similar to other LOBs
-        $quote->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus(
-            $quote->payment_status_id,
-            $quote->payment_status_id_text ?? $quote->paymentStatus?->text ?? null
-        );
-        
         $data = $this->getShowCommonData($quote);
 
         $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::CYBER_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::CYBER) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));
