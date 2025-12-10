@@ -719,8 +719,6 @@ class DocumentTypesSeeder extends Seeder
 
     /**
      * Seed UMAF document types for Health quotes
-     *
-     * @return void
      */
     private function seedUmafDocumentTypes(): void
     {
