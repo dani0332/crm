@@ -712,5 +712,68 @@ class DocumentTypesSeeder extends Seeder
                 $document
             );
         }
+
+        // Seed UMAF document types
+        $this->seedUmafDocumentTypes();
+    }
+
+    /**
+     * Seed UMAF document types for Health quotes
+     *
+     * @return void
+     */
+    private function seedUmafDocumentTypes(): void
+    {
+        $umafDocuments = [
+            [
+                'code' => 'UMAFDOCS',
+                'text' => 'UMAF Docs',
+                'description' => null,
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypeId::Health,
+                'folder_path' => 'health',
+                'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+                'max_files' => 2,
+                'max_size' => 25,
+                'is_required' => 0,
+                'send_to_customer' => 0,
+                'sort_order' => null,
+                'receive_from_customer' => 0,
+                'category' => DocumentTypeCode::QUOTE,
+                'is_required_for_send_policy' => 0,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+            ],
+            [
+                'code' => 'UMAFSIG',
+                'text' => 'Signature',
+                'description' => null,
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypeId::Health,
+                'folder_path' => 'health',
+                'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+                'max_files' => 1,
+                'max_size' => 25,
+                'is_required' => 0,
+                'send_to_customer' => 0,
+                'sort_order' => null,
+                'receive_from_customer' => 0,
+                'category' => DocumentTypeCode::QUOTE,
+                'is_required_for_send_policy' => 0,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+            ],
+        ];
+
+        foreach ($umafDocuments as $document) {
+            DocumentType::firstOrCreate(
+                [
+                    'code' => $document['code'],
+                    'quote_type_id' => $document['quote_type_id'],
+                    'business_type_of_insurance_id' => $document['business_type_of_insurance_id'] ?? null,
+                ],
+                $document
+            );
+        }
     }
 }
