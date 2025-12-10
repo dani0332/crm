@@ -761,9 +761,12 @@ class AMLService
         })->toArray();
     }
 
-    public function amlScreeningGIG($request, $quoteTypeId, $quoteDetails, $customerType)
+    public function insurerAMLScreening($request, $quoteTypeId, $quoteDetails, $customerType)
     {
-        LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__);
+        LoggerService::info('Insurer AML Screening Process Started', extra: [
+            'quote_type_id' => $quoteTypeId,
+            'customer_type' => $customerType
+        ]);
 
         $modelObjectAgainstQuoteType = $this->getModelObject(QuoteTypes::getName($quoteTypeId)->value);
         $paymentDetails = Payment::with('insuranceProvider')->where([
@@ -778,7 +781,10 @@ class AMLService
         $isRenewalUpload = $quoteTypeId == QuoteTypes::CAR->id() && $providerCode == InsuranceProvidersEnum::AXA && $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD;
 
         if ($isRenewalUpload) {
-            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload quote. Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Processing without Update Quote API call');
+            LoggerService::info('Renewal upload detected: Skipping Insurer Screening (Update Quote) API', extra: [
+                'quote_type_id' => $quoteTypeId,
+                'customer_type' => $customerType
+            ]);
         }
 
         if (! $this->eligibleProvidersForInsurerScreening($providerCode)) {
@@ -807,16 +813,25 @@ class AMLService
             )
         ) {
             if ($isRenewalUpload) {
-                LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload - Bypassing Update Quote API call and calling GetQuote API to filled data and proceeding to auto capture - Ref-ID: '.$quoteDetails->code);
+                LoggerService::info('Renewal upload detected: Skipping Insurer Screening (Update Quote) API call and calling GetQuote API to filled data and proceeding to auto capture', extra: [
+                    'quote_type_id' => $quoteTypeId,
+                    'customer_type' => $customerType
+                ]);
             } else {
-                LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insured and Driver are not the same - Bypassing Update Quote API call and calling GetQuote API and proceeding to auto capture - Ref-ID: '.$quoteDetails->code);
+                LoggerService::info('Insured and Driver are not the same: Skipping Insurer Screening (Update Quote) API call and calling GetQuote API to filled data and proceeding to auto capture', extra: [
+                    'quote_type_id' => $quoteTypeId,
+                    'customer_type' => $customerType
+                ]);
             }
 
             try {
                 $getQuoteResponse = $this->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails->uuid);
 
                 if ($getQuoteResponse['success']) {
-                    LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Successfully retrieved and updated quote details from insurer - Ref-ID: '.$quoteDetails->code);
+                    LoggerService::info('Successfully retrieved and updated quote details from insurer', extra: [
+                        'quote_type_id' => $quoteTypeId,
+                        'customer_type' => $customerType
+                    ]);
                     if (isset($getQuoteResponse['data']['uwApprovalStatus'])) {
                         $insurerAMLStatusForRenewalUpload = $getQuoteResponse['data']['uwApprovalStatus'] == 'Y'
                             ? AMLStatusCode::AMLScreeningCleared
@@ -830,7 +845,10 @@ class AMLService
                     }
 
                     if (! isset($insurerAMLStatusForRenewalUpload)) {
-                        LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurer AML status for renewal upload is not set - Ref-ID: '.$quoteDetails->code);
+                        LoggerService::info('Insurer AML status for renewal upload is not set: Setting to Pending', extra: [
+                            'quote_type_id' => $quoteTypeId,
+                            'customer_type' => $customerType
+                        ]);
                         $insurerAMLStatusForRenewalUpload = AMLStatusCode::AMLPending;
                     }
 
@@ -840,7 +858,11 @@ class AMLService
                         'screening_type' => $screeningType,
                     ];
                 } else {
-                    LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Failed to retrieve quote details from insurer - Ref-ID: '.$quoteDetails->code.' - Error: '.($getQuoteResponse['message'] ?? 'Unknown error'));
+                    LoggerService::info('Failed to retrieve quote details from insurer', extra: [
+                        'quote_type_id' => $quoteTypeId,
+                        'customer_type' => $customerType,
+                        'error' => $getQuoteResponse['message'] ?? 'Unknown error'
+                    ]);
                     $screeningResponse = [
                         'status' => AMLStatusCode::AMLPending,
                         'message' => $isRenewalUpload ? 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')' : 'Insured and Driver are not the same - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')',
@@ -848,19 +870,30 @@ class AMLService
                     ];
 
                     if ($providerCode == InsuranceProvidersEnum::AXA && isset($getQuoteResponse['isPolicyExpired']) && $getQuoteResponse['isPolicyExpired']) {
-                        LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Previous policy has expired - Ref-ID: '.$quoteDetails->code);
+                        LoggerService::info('Previous policy has expired: Setting to Pending', extra: [
+                            'quote_type_id' => $quoteTypeId,
+                            'customer_type' => $customerType
+                        ]);
                         $screeningResponse['message'] = PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED;
                         $screeningResponse['is_previous_policy_expired'] = $getQuoteResponse['isPolicyExpired'];
                     }
 
                     if ($quoteTypeId == QuoteTypes::CAR->id() && in_array($providerCode, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA]) && isset($getQuoteResponse['isGetQuoteAPIFailed']) && $getQuoteResponse['isGetQuoteAPIFailed']) {
-                        LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - GetQuote API failed - Ref-ID: '.$quoteDetails->code);
+                        LoggerService::info('GetQuote API failed: Setting to Pending', extra: [
+                            'quote_type_id' => $quoteTypeId,
+                            'customer_type' => $customerType,
+                            'error' => $getQuoteResponse['message'] ?? 'Unknown error'
+                        ]);
                         $screeningResponse['message'] = $getQuoteResponse['message'] ?? 'Insurer GetQuote API failed';
                         $screeningResponse['is_get_quote_api_failed'] = true;
                     }
                 }
             } catch (\Exception $e) {
-                LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Exception while calling getQuote API for renewal upload - Ref-ID: '.$quoteDetails->code.' - Error: '.$e->getMessage());
+                LoggerService::info('Exception while calling getQuote API for renewal upload', extra: [
+                    'quote_type_id' => $quoteTypeId,
+                    'customer_type' => $customerType,
+                    'error' => $e->getMessage()
+                ]);
                 $screeningResponse = [
                     'status' => AMLStatusCode::AMLPending,
                     'message' => $isRenewalUpload ? 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API exception: '.$e->getMessage().')' : 'Insured and Driver are not the same - Check Insurer AML status after GetQuote API call (GetQuote API exception: '.$e->getMessage().')',
@@ -875,14 +908,23 @@ class AMLService
 
         try {
             $insurerScreeningPayload = $this->buildUpdateQuoteScreeningPayload($request, $quoteTypeId, $quoteDetails, $insuredPersonDetails, $paymentDetails);
-            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurer AML Screening API called - Ref-ID: '.$quoteDetails->code, extra: [
-                'payload' => json_encode($insurerScreeningPayload),
+            LoggerService::info('Insurer AML Screening (Update Quote) API called', extra: [
+                'quote_type_id' => $quoteTypeId,
+                'customer_type' => $customerType,
+                'payload' => json_encode($insurerScreeningPayload)
             ]);
             $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', $insurerScreeningPayload);
-            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - '.$providerName.' Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.json_encode($screeningResponse));
+            LoggerService::info('Insurer AML Screening (Update Quote) API response received', extra: [
+                'quote_type_id' => $quoteTypeId,
+                'customer_type' => $customerType,
+                'response' => json_encode($screeningResponse)
+            ]);
 
             if ($paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA && isset($screeningResponse['isPolicyExpired']) && $screeningResponse['isPolicyExpired']) {
-                LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Previous policy has expired - Ref-ID: '.$quoteDetails->code);
+                LoggerService::info('Previous policy has expired: Setting Insurer AML status to Pending', extra: [
+                    'quote_type_id' => $quoteTypeId,
+                    'customer_type' => $customerType
+                ]);
                 $screeningResponse['status'] = AMLStatusCode::AMLPending;
                 $screeningResponse['message'] = PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED;
                 $screeningResponse['is_previous_policy_expired'] = $screeningResponse['isPolicyExpired'];
@@ -891,7 +933,13 @@ class AMLService
             $screeningResponse['screening_type'] = $screeningType;
             $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $modelObjectAgainstQuoteType, $customerType, $insuredPersonDetails, $screeningResponse);
         } catch (Exception $exception) {
-            LoggerService::error('fn:amlScreeningGIG - '.$providerName.' Screening failed - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Error: '.$exception->getMessage());
+            LoggerService::warning('Insurer AML Screening failed', extra: [
+                'quote_type_id' => $quoteTypeId,
+                'customer_type' => $customerType,
+                'provider_name' => $providerName,
+                'screening_type' => $screeningType,
+                'error' => $exception->getMessage()
+            ]);
             $screeningResponse = ['status' => AMLStatusCode::AMLPending, 'message' => $exception->getMessage(), 'screening_type' => $screeningType];
             $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $modelObjectAgainstQuoteType, $customerType, $insuredPersonDetails, $screeningResponse);
 
@@ -1110,19 +1158,30 @@ class AMLService
         $providerName = InsuranceProvidersEnum::getTextByCode($quoteDetails?->insuranceProvider?->code);
         // For renewal uploads, skip KYC logging and status updates but proceed with auto capture
         if (isset($screeningResponse['isRenewalLead']) && $screeningResponse['isRenewalLead']) {
-            LoggerService::info('fn:amlScreeningGIG - Renewal upload - Skipping KYC logging and status updates - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+            LoggerService::info('Renewal upload detected: Skipping KYC logging and status updates', extra: [
+                'quote_type_id' => $quoteTypeId,
+                'customer_type' => $customerType
+            ]);
 
             // Execute auto capture process for renewal uploads (without changing insurer_aml_status)
             if ($quoteTypeId == QuoteTypes::CAR->id()) {
                 $insurerAMLScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
                 $insurerAMLScreeningResponse['autoCaptureStatus'] = GenericRequestEnum::FAILED;
 
-                LoggerService::info(__FUNCTION__.' - Auto Capture Payment Process Triggered for Renewal Upload - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+                LoggerService::info('Auto Capture Payment Process Triggered for Renewal Upload', extra: [
+                    'quote_type_id' => $quoteTypeId,
+                    'customer_type' => $customerType
+                ]);
                 if (app(PolicyIssuanceService::class)->checkAllowedAutomations(QuoteTypes::getName($quoteTypeId)->value, $quoteDetails)) {
                     $isAutoCaptureStarted = app(CentralService::class)->autoCapturePaymentProcess($quoteTypeId, $quoteDetails);
 
                     $insurerAMLScreeningResponse['autoCaptureStatus'] = $isAutoCaptureStarted['autoCaptureStatus'];
                     $insurerAMLScreeningResponse['autoCaptureMessage'] = $isAutoCaptureStarted['autoCaptureMessage'];
+                } else {
+                    LoggerService::info('Automation not allowed. Skipping auto capture process.', extra: [
+                        'quote_type_id' => $quoteTypeId,
+                        'customer_type' => $customerType
+                    ]);
                 }
 
                 session()->put('insurerAMLScreeningResponse', [$insurerAMLScreeningResponse]);
@@ -1145,13 +1204,23 @@ class AMLService
         ];
 
         if ($isScreeningCleared) {
-            LoggerService::info('fn:amlScreeningGIG - '.$providerName.' AML Screening Cleared - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
+            LoggerService::info('Insurer AML Screening Cleared', extra: [
+                'quote_type_id' => $quoteTypeId,
+                'customer_type' => $customerType,
+                'provider_name' => $providerName,
+                'response' => $screeningResponse['message'] ?? ''
+            ]);
             $kycLogDetails['match_found'] = 0;
             $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
             $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningCleared];
         } else {
             if ($screeningResponse['status'] == AMLStatusCode::AMLPending) {
-                LoggerService::info('fn:amlScreeningGIG - '.$providerName.' AML Screening Pending - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
+                LoggerService::info('Insurer AML Screening Pending', extra: [
+                    'quote_type_id' => $quoteTypeId,
+                    'customer_type' => $customerType,
+                    'provider_name' => $providerName,
+                    'response' => $screeningResponse['message'] ?? ''
+                ]);
                 $kycLogDetails['match_found'] = 0;
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::UNKNOWN;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningPending];
@@ -1161,7 +1230,12 @@ class AMLService
                 }
 
             } else {
-                LoggerService::info('fn:amlScreeningGIG - '.$providerName.' AML Screening Failed - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
+                LoggerService::info('Insurer AML Screening Failed', extra: [
+                    'quote_type_id' => $quoteTypeId,
+                    'customer_type' => $customerType,
+                    'provider_name' => $providerName,
+                    'response' => $screeningResponse['message'] ?? ''
+                ]);
                 $kycLogDetails['match_found'] = 1;
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningFailed];
@@ -1169,7 +1243,10 @@ class AMLService
                 $actionRequired = 'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection';
                 $statusAPIFailed = 'Quote Finalized But Premium Not Matched';
 
-                LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob', extra: [
+                LoggerService::info('Going to dispatch Automation Failed Job', extra: [
+                    'quote_type_id' => $quoteTypeId,
+                    'customer_type' => $customerType,
+                    'provider_name' => $providerName,
                     'actionRequired' => $actionRequired,
                     'statusAPIFailed' => $statusAPIFailed,
                     'processInvolved' => PolicyIssuanceEnum::PROCESS_INVOLVED_QUOTE_FINALIZATION,
@@ -1187,17 +1264,30 @@ class AMLService
         }
 
         KycLog::insert($kycLogDetails);
-        LoggerService::info('fn:amlScreeningGIG - AML Screening '.$providerName.' Potential Matches inserted into kyc_logs table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+        LoggerService::info('AML Screening Potential Matches inserted into kyc_logs table', extra: [
+            'quote_type_id' => $quoteTypeId,
+            'customer_type' => $customerType,
+            'provider_name' => $providerName,
+        ]);
 
         $quoteObject::where('id', $quoteDetails->id)->update($insurerAMLStatus);
-        LoggerService::info('fn:amlScreeningGIG - Insurer AML Status updated in quote table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+        LoggerService::info('Insurer AML Status updated in quote table', extra: [
+            'quote_type_id' => $quoteTypeId,
+            'customer_type' => $customerType,
+            'provider_name' => $providerName,
+            'insurer_aml_status' => $insurerAMLStatus['insurer_aml_status'] ?? 'N/A',
+        ]);
         $quoteDetails->refresh();
 
         if ($this->shouldProcessAutomation($quoteTypeId, $quoteDetails)) {
             $insurerAMLScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
             $insurerAMLScreeningResponse['autoCaptureStatus'] = GenericRequestEnum::FAILED;
 
-            LoggerService::info(__FUNCTION__.' - Auto Capture Payment Process Triggered - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+            LoggerService::info('Auto Capture Payment Process Triggered', extra: [
+                'quote_type_id' => $quoteTypeId,
+                'customer_type' => $customerType,
+                'provider_name' => $providerName,
+            ]);
             if (app(PolicyIssuanceService::class)->checkAllowedAutomations(QuoteTypes::getName($quoteTypeId)->value, $quoteDetails)) {
                 $isAutoCaptureStarted = app(CentralService::class)->autoCapturePaymentProcess($quoteTypeId, $quoteDetails);
 
