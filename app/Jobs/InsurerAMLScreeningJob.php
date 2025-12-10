@@ -35,9 +35,16 @@ class InsurerAMLScreeningJob implements ShouldQueue
      */
     public function handle(AMLService $amlService): void
     {
-        LoggerService::startQuoteLogging($this->quoteDetails['code']);
-        LoggerService::info('Insurer AML Screening Job Started');
-        $amlService->amlScreeningGIG($this->request, $this->quoteTypeID, $this->quoteDetails, $this->customerType);
-        LoggerService::info('Insurer AML Screening Job Ended');
+        LoggerService::info('Insurer AML Screening Job Started', extra: [
+            'quote_type_id' => $this->quoteTypeID,
+            'customer_type' => $this->customerType,
+        ]);
+
+        $amlService->insurerAMLScreening($this->request, $this->quoteTypeID, $this->quoteDetails, $this->customerType);
+
+        LoggerService::info('Insurer AML Screening Job Ended', extra: [
+            'quote_type_id' => $this->quoteTypeID,
+            'customer_type' => $this->customerType,
+        ]);
     }
 }
