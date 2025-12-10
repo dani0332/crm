@@ -1005,7 +1005,7 @@ class AMLService
                         
                         if (isset($config['codes'])) {
                             $q->whereIn('code', $config['codes']);
-                        } else {
+                        } elseif (isset($config['code'])) {
                             $q->where('code', $config['code']);
                         }
                     });
