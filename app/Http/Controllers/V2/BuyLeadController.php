@@ -168,6 +168,11 @@ class BuyLeadController extends Controller
                     WHEN blr.quote_type_id = 3 THEN hqr.created_at
                     ELSE NULL
                 END AS lead_created_at,
+                CASE
+                    WHEN blr.quote_type_id = 1 THEN cqr.source
+                    WHEN blr.quote_type_id = 3 THEN hqr.source
+                    ELSE NULL
+                END AS source,
                 users.name AS advisor,
                 users.employee_code AS advisor_code,
                 users.email AS advisor_email,
