@@ -45,7 +45,7 @@ class NgiRequestBuilder
                 'customer_address_country' => 'UAE',
             ],
             'device_info' => [
-                'imei_no' => $deviceQuote?->imei_number ?? null,
+                'imei_no' => $deviceQuote?->imei ?? null,
                 'serial_no' => $deviceQuote?->serial_number ?? '',
                 'mw_start_date' => $quote->policy_start_date
                     ? Carbon::parse($quote->policy_start_date)->format('Y-m-d')

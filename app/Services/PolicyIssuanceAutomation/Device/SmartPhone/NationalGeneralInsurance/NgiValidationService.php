@@ -89,7 +89,7 @@ class NgiValidationService
         if (! $deviceQuote) {
             $missing[] = 'device quote details';
         } else {
-            if (empty($deviceQuote->imei_number)) {
+            if (empty($deviceQuote->imei)) {
                 $missing[] = 'IMEI number';
             }
         }
@@ -110,7 +110,7 @@ class NgiValidationService
             LoggerService::error('Missing required data', extra: [
                 'has_payments' => (bool) ($quote->payments && ! $quote->payments->isEmpty()),
                 'has_device_quote' => (bool) $deviceQuote,
-                'has_imei' => (bool) ($deviceQuote?->imei_number),
+                'has_imei' => (bool) ($deviceQuote?->imei),
                 'has_insurer_quote_number' => (bool) $quote->insurer_quote_number,
                 'has_customer' => (bool) $customer,
                 'has_emirates_id' => (bool) ($customer?->emirates_id_number),

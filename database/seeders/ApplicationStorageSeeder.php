@@ -72,6 +72,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedEnableMetLife();
         $this->seedTempDisableSageBooking();
         $this->seedMrIncludeFailedBookings();
+        $this->seedDeviceSmartphonePolicyIssuanceSettings();
     }
 
     private function livaCarAutomationSeed()
@@ -1098,7 +1099,10 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+    }
 
+    private function seedDeviceSmartphonePolicyIssuanceSettings()
+    {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::DEVICE_SEND_POLICY_TEMPLATE],
             [
@@ -1148,7 +1152,6 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
 
     }
 }
