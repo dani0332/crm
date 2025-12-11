@@ -59,7 +59,7 @@ class quoteTypeCode extends Enum
     const SAVINGS = 'Savings';
     const Marine = 'Marine';
     const CompanyCar = 'CompanyCar';
-    const DEVICE = 'Device';
+    const Device = 'Device';
 
     public static function getName($value)
     {
@@ -76,7 +76,7 @@ class quoteTypeCode extends Enum
             CycleQuote::class => self::Cycle,
             JetskiQuote::class => self::Jetski,
             SavingsQuote::class => self::SAVINGS,
-            DeviceQuote::class => self::DEVICE,
+            DeviceQuote::class => self::Device,
         };
     }
 }
