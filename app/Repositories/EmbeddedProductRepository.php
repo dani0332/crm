@@ -77,6 +77,11 @@ class EmbeddedProductRepository extends BaseRepository
         QuoteTypeId::Bike,
         QuoteTypeId::Home,
         QuoteTypeId::Travel,
+        QuoteTypeId::Device,
+    ];
+
+    public const ALLOWED_LOBS_FOR_EPS = [
+        EmbeddedProductEnum::COURIER => [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel, quoteTypeCode::Device],
     ];
 
     public function model()
@@ -428,7 +433,7 @@ class EmbeddedProductRepository extends BaseRepository
         ];
 
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
+        if (! in_array($quoteTypeId, self::ALLOWED_LOBS)) {
             LoggerService::info('fetchSendDocumentsByLead - Only car, bike, home & travel lob are allowed', extra: $extra);
 
             return ['success' => false, 'message' => 'Only car, bike, home & travel lob are allowed'];
@@ -471,7 +476,7 @@ class EmbeddedProductRepository extends BaseRepository
                 $response = ['success' => true];
 
             } elseif ($epShortCode == EmbeddedProductEnum::COURIER
-            && in_array(ucwords($modelType), [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])) {
+            && in_array(ucwords($modelType), self::ALLOWED_LOBS_FOR_EPS[$epShortCode])) {
 
                 $quoteObject = $this->getQuoteObject($modelType, $leadId);
                 SyncCourierQuoteWithMacrm::dispatch($quoteObject, $quoteTypeId);
@@ -1048,7 +1053,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCancelEmbeddedProducts($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
+        if (! in_array($quoteTypeId, self::ALLOWED_LOBS)) {
             return false;
         }
 
@@ -1144,13 +1149,13 @@ class EmbeddedProductRepository extends BaseRepository
 
                     if (
                         $transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
-                        && in_array($type->code, [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])
+                        && in_array($type->code, self::ALLOWED_LOBS_FOR_EPS[EmbeddedProductEnum::COURIER])
                     ) {
                         CancelCourierQuoteOnMACRM::dispatch($transaction->quoteRequest, $type->id);
                     }
 
                     // Response is empty for success, non-empty for error
-                    if (! empty($response)) {
+                    if (! empty($processResponse)) {
                         return ['data' => $processResponse, 'code' => 403];
                     }
 
@@ -1227,7 +1232,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCapturePayment($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
+        if (! in_array($quoteTypeId, self::ALLOWED_LOBS)) {
             return false;
         }
 

@@ -73,6 +73,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTempDisableSageBooking();
         $this->seedMrIncludeFailedBookings();
         $this->seedDeviceSmartphonePolicyIssuanceSettings();
+        $this->seedLegacyPolicyKeys();
     }
 
     private function livaCarAutomationSeed()
@@ -1152,6 +1153,48 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+    }
 
+    private function seedLegacyPolicyKeys()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::INSLY_TEMP_SALES_PERSON_ID],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::INSLY_TEMP_POLICY_OID],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::INSLY_TEMP_CUSTOMER_EMAIL],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::INSLY_TEMP_CUSTOMER_POLICY_OID],
+            [
+                'value' => '2025-11-27 12:00:00',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 }
