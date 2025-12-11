@@ -244,7 +244,8 @@ class OCRService
             $data,
             $documentCategory,
             $isSendUpdateEligibleForOCR,
-            $quoteType
+            $quoteType,
+            $documentType->code
         );
 
         $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
