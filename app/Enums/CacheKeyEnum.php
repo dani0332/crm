@@ -8,7 +8,6 @@ enum CacheKeyEnum: string
     case SAVINGS_QUOTE_LOOKUPS = 'savings_quote_lookups';
     case SUB_SOURCES = 'sub_sources';
     case CYBER_QUOTE_LOOKUPS = 'cyber_quote_lookups';
-    case SUB_SOURCES = 'sub_sources';
     case HRM_API_ACCESS_TOKEN = 'hrm_api_access_token';
     public function expiry()
     {
@@ -17,7 +16,6 @@ enum CacheKeyEnum: string
             self::SAVINGS_QUOTE_LOOKUPS => now()->endOfDay(),
             self::SUB_SOURCES => now()->endOfDay(),
             self::CYBER_QUOTE_LOOKUPS => now()->endOfDay(),
-            self::SUB_SOURCES => now()->endOfDay(),
             self::HRM_API_ACCESS_TOKEN => now()->addHour(),
             default => now()->addHour(),
         };
