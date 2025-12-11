@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
 use App\Enums\AdnicEnum;
-use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Facades\AdnicHttpFacade;
@@ -161,7 +160,6 @@ class AdnicApiService
                 }
             }
         }
-
 
         if (! $allDocsDownloaded) {
             $response['message'] = 'Some documents failed to upload';

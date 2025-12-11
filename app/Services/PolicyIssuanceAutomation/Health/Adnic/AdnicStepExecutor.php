@@ -7,13 +7,12 @@ namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 use App\Enums\AdnicEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
+use App\Models\HealthInsurerRequestResponse;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use App\Models\HealthInsurerRequestResponse;
 
-class AdnicStepExecutor {
-
-
+class AdnicStepExecutor
+{
     public $healthInsurerRequestResponse = null;
     public $healthInsurerRequest = '';
     public $healthInsurerResponse = '';
@@ -72,7 +71,7 @@ class AdnicStepExecutor {
 
         $this->healthInsurerRequestResponse = HealthInsurerRequestResponse::where('quote_uuid', $quote->uuid)->first();
 
-        $uploadDocumentsResponse = $this->apiService->uploadDocuments($quote, $process , $this->healthInsurerRequestResponse);
+        $uploadDocumentsResponse = $this->apiService->uploadDocuments($quote, $process, $this->healthInsurerRequestResponse);
 
         if (! $uploadDocumentsResponse['status']) {
             LoggerService::error('Document upload failed', extra: [

@@ -76,8 +76,7 @@ class AdnicDocumentHandler
     /**
      * Get document by type from quote documents
      *
-     * @param mixed $quote
-     * @param array $documentTypeCodes
+     * @param  mixed  $quote
      * @return Collection|null
      */
     public function getDocumentByType($quote, array $documentTypeCodes)

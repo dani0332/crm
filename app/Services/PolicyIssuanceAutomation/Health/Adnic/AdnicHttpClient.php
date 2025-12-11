@@ -18,7 +18,6 @@ class AdnicHttpClient
     private array $authParam;
     private array $baseHeaders;
     private int $apiTimeout;
-
     private string $partnerId;
     private string $partnerReferenceNo;
 
