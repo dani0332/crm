@@ -1786,13 +1786,12 @@ if (! function_exists('getUserIpAddress')) {
 }
 
 if (! function_exists('formatEmiratesIdNumber')) {
-    function formatEmiratesIdNumber($eidNumber): string
+    function formatEmiratesIdNumber($idNumber): string
     {
-        $eidNumber = str_replace('-', '', $eidNumber);
-        if (strlen($eidNumber ?? '') == 15) {
-            $eidNumber = substr($eidNumber, 0, 3).'-'.substr($eidNumber, 3, 4)
-                .'-'.substr($eidNumber, 7, 7).'-'.substr($eidNumber, 14, 1);
-        }
-        return $eidNumber;
+        $eidNumber = str_replace('-', '', $idNumber);
+        $formattedIdNumber = substr($eidNumber, 0, 3).'-'.substr($eidNumber, 3, 4)
+            .'-'.substr($eidNumber, 7, 7).'-'.substr($eidNumber, 14, 1);
+
+        return $formattedIdNumber;
     }
 }
