@@ -30,7 +30,7 @@ class NgiApiService
      * @param mixed $process
      * @return array
      */
-    public function createPolicyFromQuote($quote, $process): array
+    public function createPolicyFromQuote($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
     {
         LoggerService::info('Initiating CreatePolicyFromQuote API call', extra: [
             'process_id' => $process->id,
@@ -41,13 +41,14 @@ class NgiApiService
         $response = $this->responseHandler->buildStepResponse(NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE);
         $endPoint = '/api/Policy/CreatePolicyFromQuoteBW';
 
-        $customer = $quote->customer;
-        $deviceQuote = $quote->deviceQuote;
+        $customer = $customer??$quote?->customer;
+        $deviceQuote = $deviceQuote??$quote?->deviceQuote;
+        $latestInsured = $latestInsured??$quote?->latestInsured;
 
         $payment = $quote->payments()->mainLeadPayment()->first();
         $splitPayment = $payment?->paymentSplits()->where('payment_method', PaymentMethodsEnum::CreditCard)->first();
 
-        $payload = $this->requestBuilder->buildCreatePolicyFromQuotePayload($quote, $customer, $deviceQuote, $splitPayment ?? $payment);
+        $payload = $this->requestBuilder->buildCreatePolicyFromQuotePayload($quote, $customer, $deviceQuote, $splitPayment ?? $payment, $latestInsured);
         $headers = $this->requestBuilder->buildCreatePolicyHeaders();
 
         $httpResponse = Ngi::post($endPoint, $payload, $headers);
@@ -101,7 +102,7 @@ class NgiApiService
      * @param mixed $process
      * @return array
      */
-    public function getPolicyDocuments($quote, $process): array
+    public function getPolicyDocuments($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
     {
         LoggerService::info('Initiating GetPolicyDocuments API call', extra: [
             'process_id' => $process->id,
@@ -174,7 +175,7 @@ class NgiApiService
      * @param mixed $process
      * @return array
      */
-    public function uploadPolicyDocumentsToIMCRM($quote, $process): array
+    public function uploadPolicyDocumentsToIMCRM($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
     {
         LoggerService::info('Starting policy documents download and upload to IMCRM', extra: [
             'process_id' => $process->id,

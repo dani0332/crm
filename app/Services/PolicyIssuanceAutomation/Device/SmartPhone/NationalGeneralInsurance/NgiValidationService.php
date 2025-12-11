@@ -75,10 +75,9 @@ class NgiValidationService
      * @param mixed $quote
      * @return array
      */
-    public function validateRequiredData($quote): array
+    public function validateRequiredData($quote, $customer = null, $deviceQuote = null, $latestInsured = null): array
     {
-        $customer = $quote->customer ?? null;
-        $deviceQuote = $quote->deviceQuote ?? null;
+        $emiratesIdNumber = ($latestInsured?->id_type == 'emiratesId') ? $latestInsured?->id_number : ($customer?->emirates_id_number ?? null);
 
         $missing = [];
 
@@ -101,7 +100,7 @@ class NgiValidationService
         if ($customer === null) {
             $missing[] = 'customer';
         } else {
-            if (empty($customer->emirates_id_number)) {
+            if (empty($emiratesIdNumber)) {
                 $missing[] = 'emirates id number';
             }
         }
@@ -113,7 +112,7 @@ class NgiValidationService
                 'has_imei' => (bool) ($deviceQuote?->imei),
                 'has_insurer_quote_number' => (bool) $quote->insurer_quote_number,
                 'has_customer' => (bool) $customer,
-                'has_emirates_id' => (bool) ($customer?->emirates_id_number),
+                'has_emirates_id' => (bool) ($emiratesIdNumber),
             ]);
 
             $missingDesc = implode(', ', $missing);

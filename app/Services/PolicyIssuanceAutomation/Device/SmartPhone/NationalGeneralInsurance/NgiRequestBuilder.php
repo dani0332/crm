@@ -17,8 +17,9 @@ class NgiRequestBuilder
      * @param mixed $payment
      * @return array
      */
-    public function buildCreatePolicyFromQuotePayload($quote, $customer, $deviceQuote, $payment): array
+    public function buildCreatePolicyFromQuotePayload($quote, $customer, $deviceQuote, $payment, $latestInsured): array
     {
+        $emiratesIdNumber = ($latestInsured?->id_type == 'emiratesId') ? $latestInsured?->id_number : ($customer?->emirates_id_number ?? null);
         return [
             'client_reference_number' => $quote->code ?? null,
             'quote_reference_number' => $quote->insurer_quote_number,
@@ -36,7 +37,7 @@ class NgiRequestBuilder
                 'customer_whatsapp_no' => null,
                 'customer_email_id' => $quote->email ?? null,
                 'customer_id_type' => 'EID',
-                'customer_id_no' => $this->formatEmiratesId($customer?->emirates_id_number),
+                'customer_id_no' => $this->formatEmiratesId($emiratesIdNumber),
                 'customer_id_expiry_date' => $customer?->emirates_id_expiry_date
                     ? Carbon::parse($customer->emirates_id_expiry_date)->format('Y-m-d')
                     : null,
@@ -46,7 +47,7 @@ class NgiRequestBuilder
             ],
             'device_info' => [
                 'imei_no' => $deviceQuote?->imei ?? null,
-                'serial_no' => $deviceQuote?->serial_number ?? '',
+                'serial_no' => '',
                 'mw_start_date' => $quote->policy_start_date
                     ? Carbon::parse($quote->policy_start_date)->format('Y-m-d')
                     : Carbon::now()->format('Y-m-d'),

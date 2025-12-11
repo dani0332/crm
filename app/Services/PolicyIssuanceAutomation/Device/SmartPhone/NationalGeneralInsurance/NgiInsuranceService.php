@@ -153,7 +153,10 @@ class NgiInsuranceService implements PolicyIssuanceInterface
         ]);
 
         try {
-            $validationResult = $this->validationService->validateRequiredData($quote);
+            $customer = $quote->customer ?? null;
+            $deviceQuote = $quote->deviceQuote ?? null;
+            $latestInsured = $quote?->latestInsured ?? null;
+            $validationResult = $this->validationService->validateRequiredData($quote, $customer, $deviceQuote, $latestInsured);
             if (! $validationResult['status']) {
                 return $validationResult;
             }
@@ -167,7 +170,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
                 'next_step' => $nextStepToBeExecuted,
             ]);
 
-            $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted);
+            $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted, $customer, $deviceQuote, $latestInsured);
 
             $response['status'] = $executeStepSequence['status'];
             $response['message'] = $executeStepSequence['message'];
@@ -201,7 +204,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
      * @param string $nextStepToBeExecuted
      * @return array
      */
-    private function executeStepSequence($quote, $process, $nextStepToBeExecuted)
+    private function executeStepSequence($quote, $process, $nextStepToBeExecuted, $customer = null, $deviceQuote = null, $latestInsured = null)
     {
         $currentStep = $nextStepToBeExecuted;
         $allSteps = $this->getAPISteps();
@@ -239,7 +242,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
                 'process_id' => $process->id,
             ]);
 
-            $response = $this->stepExecutor->{$handler}($quote, $process);
+            $response = $this->stepExecutor->{$handler}($quote, $process, $customer, $deviceQuote, $latestInsured);
             $stepsExecuted[] = $currentStep;
 
             if (isset($response['status']) && ! $response['status']) {

@@ -24,7 +24,7 @@ class NgiStepExecutor
      * @param mixed $process
      * @return array
      */
-    public function executeCreatePolicyFromQuoteStep($quote, $process): array
+    public function executeCreatePolicyFromQuoteStep($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
     {
         LoggerService::info('Starting policy creation from quote', extra: [
             'step' => NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
@@ -32,7 +32,7 @@ class NgiStepExecutor
             'insurer_quote_number' => $quote->insurer_quote_number,
         ]);
 
-        $createPolicyResponse = $this->apiService->createPolicyFromQuote($quote, $process);
+        $createPolicyResponse = $this->apiService->createPolicyFromQuote($quote, $process, $customer, $deviceQuote, $latestInsured);
 
         if (! $createPolicyResponse['status']) {
             LoggerService::error('Policy creation failed', extra: [
@@ -66,7 +66,7 @@ class NgiStepExecutor
      * @param mixed $process
      * @return array
      */
-    public function executeGetPolicyDocumentsStep($quote, $process): array
+    public function executeGetPolicyDocumentsStep($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
     {
         LoggerService::info('Starting get policy documents', extra: [
             'step' => NgiEnum::STEP_GET_POLICY_DOCUMENTS,
@@ -74,7 +74,7 @@ class NgiStepExecutor
             'policy_number' => $quote->policy_number,
         ]);
 
-        $getPolicyDocumentsResponse = $this->apiService->getPolicyDocuments($quote, $process);
+        $getPolicyDocumentsResponse = $this->apiService->getPolicyDocuments($quote, $process, $customer, $deviceQuote, $latestInsured);
 
         if (! $getPolicyDocumentsResponse['status']) {
             LoggerService::error('Get policy documents failed', extra: [
@@ -108,14 +108,14 @@ class NgiStepExecutor
      * @param mixed $process
      * @return array
      */
-    public function executeUploadPolicyDocumentsStep($quote, $process): array
+    public function executeUploadPolicyDocumentsStep($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
     {
         LoggerService::info('Starting policy document upload to IMCRM', extra: [
             'step' => NgiEnum::STEP_UPLOAD_POLICY_DOCS,
             'process_id' => $process->id,
         ]);
 
-        $uploadPolicyDocumentsToIMCRMResponse = $this->apiService->uploadPolicyDocumentsToIMCRM($quote, $process);
+        $uploadPolicyDocumentsToIMCRMResponse = $this->apiService->uploadPolicyDocumentsToIMCRM($quote, $process, $customer, $deviceQuote, $latestInsured);
 
         if (! $uploadPolicyDocumentsToIMCRMResponse['status']) {
             LoggerService::error('Policy document upload to IMCRM failed', extra: [
@@ -148,7 +148,7 @@ class NgiStepExecutor
      * @param mixed $process
      * @return array
      */
-    public function executeBookPolicyStep($quote, $process): array
+    public function executeBookPolicyStep($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
     {
         LoggerService::info('Starting book policy execution', extra: [
             'step' => NgiEnum::STEP_BOOK_POLICY,
@@ -156,7 +156,7 @@ class NgiStepExecutor
             'policy_number' => $quote->policy_number,
         ]);
 
-        $triggerBookPolicyResponse = $this->bookPolicyService->bookPolicy($quote, $process);
+        $triggerBookPolicyResponse = $this->bookPolicyService->bookPolicy($quote, $process, $customer, $deviceQuote, $latestInsured);
 
         if (! $triggerBookPolicyResponse['status']) {
             LoggerService::error('Book policy failed', extra: [

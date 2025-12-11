@@ -56,7 +56,7 @@ class NgiHttpClient
 
             if ($response->successful()) {
                 $data = $response->json();
-                $this->authToken = $data['token'] ?? null;
+                $this->authToken = $data['access_token'] ?? null;
 
                 LoggerService::info('NGI authentication successful');
 
