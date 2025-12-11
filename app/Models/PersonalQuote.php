@@ -173,6 +173,11 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->hasOne(LifeQuote::class);
     }
 
+    public function vehicleDriverDetail()
+    {
+        return $this->morphOne(VehicleDriverDetail::class, 'quoteable');
+    }
+
     /**
      * @param  $date
      * @return string
