@@ -528,6 +528,8 @@ class SplitPaymentService
                 return DocumentTypeCode::GMQPD_RECEIPT;
             case QuoteTypes::SAVINGS->value:
                 return DocumentTypeCode::SPD_RECEIPT;
+            case QuoteTypes::DEVICE->value:
+                return DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_RECEIPT;
             default:
                 return DocumentTypeCode::CPD_RECEIPT;
         }
@@ -1228,7 +1230,7 @@ class SplitPaymentService
         }
 
         $computedPrice = 0;
-        $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike, quoteTypeCode::Home];
+        $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike, quoteTypeCode::Home, quoteTypeCode::Device];
 
         if ($send_update_id > 0) {
             $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);

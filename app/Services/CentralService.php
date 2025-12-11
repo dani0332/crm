@@ -40,7 +40,6 @@ use App\Jobs\AutomationFailedJob;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
-use App\Models\BrokerCommission;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\CustomerAddress;
@@ -245,7 +244,7 @@ class CentralService extends BaseService
     public function assignLeadToAdvisor($request)
     {
         $leadsIds = $request->assigned_lead_id;
-        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::SAVINGS, quoteTypeCode::Home];
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::SAVINGS, quoteTypeCode::Home, quoteTypeCode::Device];
         $quoteBatch = QuoteBatches::latest()->first();
         LoggerService::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
@@ -1603,7 +1602,7 @@ class CentralService extends BaseService
         $emailData->insuredName = $quote?->latestInsured?->first_name ? strtoupper($quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name) : '-';
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
-            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
+            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Device])) {
             $emailData->quoteUID = $quote->uuid;
             $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
@@ -1669,6 +1668,11 @@ class CentralService extends BaseService
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
 
+        if ($quoteTypeId == QuoteTypeId::Device) {
+            // TODO:: NGI:: when we have template variables then we can decide what to nject for device
+            $emailData->planName = $quote?->insuranceProviderPlan?->text ?? '-';
+        }
+
         $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
         if (
             $quoteTypeId != QuoteTypeId::Business ||
@@ -1691,8 +1695,12 @@ class CentralService extends BaseService
                 }
             } else {
                 $policyHandBook = $quoteDocuments->filter(function ($document) {
-                    return in_array($document['document_type_code'], [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH]);
-                })->first()?->doc_url ?? '';
+                    return in_array($document['document_type_code'], [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH, DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_HANDBOOK]);
+                })->first();
+
+                $policyHandBook = ! empty($policyHandBook?->watermarked_doc_url)
+                    ? $policyHandBook->watermarked_doc_url
+                    : ($policyHandBook?->doc_url ?? '');
 
                 if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life])) {
                     $policyHandBook = PolicyWording::where('quote_type_id', $quoteTypeId)
@@ -1710,13 +1718,18 @@ class CentralService extends BaseService
         if (! empty($quoteDocuments)) {
             $quoteDocuments = collect($quoteDocuments);
 
-            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business])) {
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Device])) {
                 $emailData->policyCertificate = $quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [
                         DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL,
                         DocumentTypeCode::PC_YTCH, DocumentTypeCode::COMP_PC, DocumentTypeCode::IND_PC, DocumentTypeCode::COMP_POLIC, DocumentTypeCode::FIDEL_POC,
+                        DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_CERTIFICATE,
                     ]);
-                })->first()?->doc_url ?? '';
+                })->first();
+
+                $emailData->policyCertificate = ! empty($emailData?->policyCertificate?->watermarked_doc_url)
+                    ? $emailData->policyCertificate->watermarked_doc_url
+                    : ($emailData->policyCertificate?->doc_url ?? '');
 
                 if (empty($emailData->policyCertificate)) {
                     LoggerService::info('Policy Certificate not found.');
@@ -1730,7 +1743,11 @@ class CentralService extends BaseService
             if ($quoteTypeId == QuoteTypeId::Health) {
                 $emailData->signedMedicalApplicationForm = $quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::SMAF_HLTH;
-                })->first()?->doc_url ?? '';
+                })->first();
+
+                $emailData->signedMedicalApplicationForm = ! empty($emailData?->signedMedicalApplicationForm?->watermarked_doc_url)
+                    ? $emailData->signedMedicalApplicationForm->watermarked_doc_url
+                    : ($emailData?->signedMedicalApplicationForm?->doc_url ?? '');
 
                 if (empty($emailData->signedMedicalApplicationForm)) {
                     LoggerService::info('Signed Medical Application Form not found.');
@@ -1750,7 +1767,11 @@ class CentralService extends BaseService
             ) {
                 $emailData->eCard = $quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [DocumentTypeCode::GH_EC, DocumentTypeCode::ECARD_HLTH]);
-                })->first()?->doc_url ?? '';
+                })->first();
+
+                $emailData->eCard = ! empty($emailData?->eCard?->watermarked_doc_url)
+                    ? $emailData->eCard->watermarked_doc_url
+                    : ($emailData?->eCard?->doc_url ?? '');
 
                 if (empty($emailData->eCard)) {
                     LoggerService::info('E-Card not found.');
@@ -1768,7 +1789,11 @@ class CentralService extends BaseService
             ) {
                 $emailData->networkList = $quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::GH_NL;
-                })->first()?->doc_url ?? '';
+                })->first();
+
+                $emailData->networkList = ! empty($emailData?->networkList?->watermarked_doc_url)
+                    ? $emailData->networkList->watermarked_doc_url
+                    : ($emailData?->networkList?->doc_url ?? '');
 
                 if (empty($emailData->networkList)) {
                     LoggerService::info('Network List not found.');
@@ -1781,7 +1806,11 @@ class CentralService extends BaseService
             if ($quoteTypeId == QuoteTypeId::Life) {
                 $emailData->applicationCopy = $quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::AC_LIFE;
-                })->first()?->doc_url ?? '';
+                })->first();
+
+                $emailData->applicationCopy = ! empty($emailData?->applicationCopy?->watermarked_doc_url)
+                    ? $emailData->applicationCopy->watermarked_doc_url
+                    : ($emailData?->applicationCopy?->doc_url ?? '');
 
                 if (empty($emailData->applicationCopy)) {
                     LoggerService::info('Application Copy not found.');
@@ -1795,9 +1824,13 @@ class CentralService extends BaseService
                 return in_array($document['document_type_code'], [
                     DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS,
                     DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY,
-                    DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS,
+                    DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE,
                 ]);
-            })->first()?->doc_url ?? '';
+            })->first();
+
+            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url)
+                ? $emailData->policySchedule->watermarked_doc_url
+                : ($emailData?->policySchedule?->doc_url ?? '');
 
             if (empty($emailData->policySchedule)) {
                 LoggerService::info('Policy Schedule not found.');

@@ -644,6 +644,7 @@ class ApiController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
     public function deviceQuoteSendOCB(Request $request)
     {
         return response()->json([

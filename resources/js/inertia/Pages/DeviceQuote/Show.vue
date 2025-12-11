@@ -54,6 +54,7 @@ const props = defineProps({
   paymentDocument: Array,
   emailStatuses: Array,
   isFuncsEnabled: Object,
+  paymentGatewayEnum: Array,
 });
 
 const page = usePage();
@@ -1584,6 +1585,8 @@ const copyLink = () => {
       :expanded="sectionExpanded"
       :quoteType="'Device'"
       :isFuncsEnabled="isFuncsEnabled"
+      :isPlanDetailSectionEnabled="true"
+      :paymentGatewayEnum="paymentGatewayEnum"
     />
 
     <QuotePayments

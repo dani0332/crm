@@ -244,6 +244,7 @@ enum QuoteTypes: string
             'JSK' => self::JETSKI,
             'SAV' => self::SAVINGS,
             'SP' => self::DEVICE,
+            'DEV' => self::DEVICE,
         ];
 
         return $codes[$code] ?? null;

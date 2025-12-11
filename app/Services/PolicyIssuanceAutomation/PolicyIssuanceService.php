@@ -43,7 +43,6 @@ class PolicyIssuanceService
             QuoteTypes::CAR->value => match ($insurerCode) {
                 InsuranceProvidersEnum::RSA => new LivaInsuranceService,
                 InsuranceProvidersEnum::AXA => new GIGInsuranceService,
-
                 default => null,
             },
             default => null,
