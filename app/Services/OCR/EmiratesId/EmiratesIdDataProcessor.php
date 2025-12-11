@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\EmiratesId;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
 use App\Exceptions\OCR\OcrProcessingException;
@@ -109,8 +110,9 @@ class EmiratesIdDataProcessor
             $insured = $this->quote->latestInsured ?? null;
 
             if (! $insured && ! empty($this->extractedData['eid_number'])) {
-                $insured = Insured::where('id_number', $this->extractedData['eid_number'])
-                    ->where('id_type', 'emiratesId')
+                $insured = Insured::where('id_type', 'emiratesId')
+                    ->where('customer_type', CustomerTypeEnum::Individual)
+                    ->emiratesIdNumber($this->extractedData['eid_number'])
                     ->first();
 
                 if ($insured) {
