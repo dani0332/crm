@@ -141,4 +141,6 @@ class DocumentTypeCode extends Enum
 
     /* Health Quote */
     const HEA_EID = 'HEAEID'; // Emirates ID
+    public const HEA_VISA = 'VISA_Hlth'; // Visa
+    public const HEA_PAS = 'HlthPAS'; // Passport
 }

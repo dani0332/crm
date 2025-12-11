@@ -95,16 +95,27 @@ class AdnicApiService
      * @param mixed $policyIssuance
      * @return array
      */
-    public function uploadDocuments($quote, $process): array
+    public function uploadDocuments($quote, $process, $healthInsurerRequestResponse): array
     {
+
+        $healthInsurerRequest = json_decode($healthInsurerRequestResponse->request);
+        $healthInsurerResponse = json_decode($healthInsurerRequestResponse->response);
+
+        $insuredInfoDetails = [];
+        if ($healthInsurerRequest && isset($healthInsurerRequest->InsuredInfo)) {
+            $insuredInfoDetails = $healthInsurerRequest->InsuredInfo;
+        }
+
         // Validate required documents and insurer quote number added before hitting api
-        $requiredDocuments = $this->documentHandler->getDocumentByType($quote, DocumentTypeCode::HEA_EID);
-        $validationResult = $this->validationService->validateUploadDocuments($quote, $requiredDocuments);
+        $documentsToUpload = $this->documentHandler->getQuoteDocumentTypeCodessToUpload();
+        $quoteDocumentTypeCodes = $documentsToUpload->keys()->toArray();
+        $quoteDocuments = $this->documentHandler->getDocumentByType($quote, $quoteDocumentTypeCodes);
+        $validationResult = $this->validationService->validateUploadDocuments($quote, $quoteDocuments, $insuredInfoDetails);
         if (!$validationResult['status']) {
             return $validationResult;
         }
 
-        $endPoint = '/cyber/uploadDocument';
+        $endPoint = '/UploadDocument';
         $response = $this->responseHandler->buildStepResponse(AdnicEnum::STEP_UPLOAD_DOCUMENTS);
 
         LoggerService::info('Starting document upload process', extra: [
@@ -113,36 +124,46 @@ class AdnicApiService
         ]);
 
         $allDocsDownloaded = true;
-        $documents = is_array($requiredDocuments) ? $requiredDocuments : [$requiredDocuments];
-        foreach ($documents as $requiredDocument) {
-            $documentType = $this->documentHandler->getDocTypeCodeForHealth($requiredDocument['document_type_code']);
-            $documentContentResponse = $this->documentHandler->fetchDocumentContent($requiredDocument['doc_url']);
-            if (! $documentContentResponse['status']) {
-                $response['message'] = $response['error'] = $documentContentResponse['message'];
+        $documents = is_array($quoteDocuments) ? $quoteDocuments : [$quoteDocuments];
 
-                return $response;
-            }
+        foreach ($insuredInfoDetails as $memberIndex => $insuredMember) {
+            $memberSeqNo = $insuredMember?->MemberSeqNo ?? $memberIndex;
+            $memberDocumentUploads[$memberSeqNo] = [];
 
-            $base64Content = base64_encode($documentContentResponse['content']);
+            foreach ($documents as $docTypeCode => $quoteDocument) {
+                $quoteDocument = $quoteDocuments->firstWhere('document_type_code', $docTypeCode);
+                $insurerDocumentCode = $this->documentHandler->getInsurerDocCodeForHealth($quoteDocument->document_type_code);
+                $documentContentResponse = $this->documentHandler->fetchDocumentContent($quoteDocument->doc_url);
+                if (! $documentContentResponse['status']) {
+                    $response['message'] = $response['error'] = $documentContentResponse['message'];
 
-            LoggerService::info('Preparing upload payload', extra: [
-                'document_type' => $documentType,
-                'document_name' => $requiredDocument['doc_name'] ?? 'Emirates_Id.png',
-                'document_size_kb' => round(strlen($base64Content) / 1024, 2),
-            ]);
+                    return $response;
+                }
 
-            $payload = $this->requestBuilder->buildUploadDocumentsPayload($quote, $base64Content, $documentType, $requiredDocument['doc_name'] ?? 'Emirates_Id.png');
+                $base64Content = base64_encode($documentContentResponse['content']);
 
-            $httpResponse = AdnicHttpFacade::post($endPoint, $payload);
-            $uploadResponse = $this->responseHandler->parseHttpResponse($httpResponse, AdnicEnum::RESPONSE_UPLOAD_DOCUMENTS);
+                LoggerService::info('Preparing upload payload', extra: [
+                    'document_type' => $docTypeCode,
+                    'insurer_document_code' => $insurerDocumentCode,
+                    'document_name' => $quoteDocument->original_name ?? $quoteDocument->doc_name,
+                    'document_size_kb' => round(strlen($base64Content) / 1024, 2),
+                ]);
 
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $uploadResponse, AdnicHttpFacade::getBaseUrl() . $endPoint, AdnicEnum::STEP_UPLOAD_DOCUMENTS, $uploadResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+                $payload = $this->requestBuilder->buildUploadDocumentsPayload($base64Content, $healthInsurerResponse, $insuredMember, $insurerDocumentCode, $quoteDocument);
 
-            if (! $uploadResponse['status']) {
-                $allDocsDownloaded = false;
-                break;
+                $httpResponse = AdnicHttpFacade::post($endPoint, $payload);
+                $uploadDocResponse = $this->responseHandler->parseHttpResponse($httpResponse, AdnicEnum::RESPONSE_UPLOAD_DOCUMENTS);
+                $uploadDocResponse['MemberSeqNo'] = $memberSeqNo;
+
+                app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $uploadDocResponse, AdnicHttpFacade::getBaseUrl() . $endPoint, AdnicEnum::STEP_UPLOAD_DOCUMENTS, $uploadDocResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+
+                if (! $uploadDocResponse['status']) {
+                    $allDocsDownloaded = false;
+                    break;
+                }
             }
         }
+
 
         if (! $allDocsDownloaded) {
             $response['message'] = 'Some documents failed to upload';

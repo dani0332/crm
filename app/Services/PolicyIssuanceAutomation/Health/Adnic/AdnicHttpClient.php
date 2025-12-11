@@ -19,14 +19,21 @@ class AdnicHttpClient
     private array $baseHeaders;
     private int $apiTimeout;
 
+    private string $partnerId;
+    private string $partnerReferenceNo;
+
     public function __construct()
     {
-        $this->baseUrl = config('constants.ADNIC_API_BASE_URL', '').'/dev/MedicalProductAPI/MedicalAPI.svc/API/Medical';
         $this->apiTimeout = (int) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ADNIC_HEALTH_AUTOMATION_API_TIMEOUT);
+
+        $this->partnerId = config('constants.ADNIC_PARTNER_ID');
+        $this->partnerReferenceNo = config('constants.ADNIC_PARTNER_REFERENCE_NO');
+        $this->baseUrl = config('constants.ADNIC_API_BASE_URL', '').'/dev/MedicalProductAPI/MedicalAPI.svc/API/Medical';
         $this->authParam = [
             'Authorization' => config('constants.ADNIC_AUTHORIZATION_TOKEN'),
             'Ocp-Apim-Subscription-Key' => config('constants.ADNIC_SUBSCRIPTION_KEY'),
         ];
+
         $this->baseHeaders = [
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
@@ -38,7 +45,7 @@ class AdnicHttpClient
     public function post(string $endPoint, array $payload = [], array $headers = []): Response
     {
         $url = $this->baseUrl.$endPoint;
-        $request = $this->buildClient($headers);
+        $httpClient = $this->buildClient($headers);
 
         LoggerService::info('Initiating ADNIC API call', extra: [
             'endpoint' => $endPoint,
@@ -48,7 +55,7 @@ class AdnicHttpClient
         ]);
 
         try {
-            $response = $request->post($url, $payload);
+            $response = $httpClient->post($url, $payload);
 
             if ($response->failed()) {
                 LoggerService::error('ADNIC API HTTP error response', extra: [
@@ -86,4 +93,13 @@ class AdnicHttpClient
         return $this->baseUrl;
     }
 
+    public function getPartnerId(): string
+    {
+        return $this->partnerId;
+    }
+
+    public function getPartnerReferenceNo(): string
+    {
+        return $this->partnerReferenceNo;
+    }
 }

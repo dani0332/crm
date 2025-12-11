@@ -26,7 +26,7 @@ class AdnicResponseHandler
     }
 
     /**
-     * Normalize HTTP response from AWNI into consistent structure
+     * Normalize HTTP response from ADNIC into consistent structure
      */
     public function parseHttpResponse(Response $response, string $apiKey): array
     {
@@ -34,7 +34,7 @@ class AdnicResponseHandler
         $result = [
             'status' => false,
             'error' => $apiKey.' '.self::API_FAILED,
-            'message' => 'There is an Exception on AWNI API call.',
+            'message' => 'There is an Exception on ADNIC API call.',
             'data' => null,
             'completed_step' => null,
         ];

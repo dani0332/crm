@@ -6,13 +6,20 @@ namespace App\Enums;
 
 class AdnicEnum
 {
+    public const RESPONSIBLE_PERSON_DEFAULT_EMAIL = 'hitesh.motwani@insurancemarket.ae'; // TODO:: Shereen will let us know the when business confirmed the email
+    public const RESPONSIBLE_PERSON_DEFAULT_MOBILE = '+971505636254'; // TODO:: Shereen will let us know the when business confirmed the mobile
+
+    public const DEFAULT_EMIRATE_OF_YOUR_VISA = 2;
+
     public const STEP_ISSUE_POLICY = 'IssuePolicy';
     public const STEP_UPLOAD_DOCUMENTS = 'UploadDocuments';
     public const STEP_UPLOAD_POLICY_DOCS = 'UploadPolicyDocumentsToIMCRM';
     public const STEP_BOOK_POLICY = 'BookPolicy';
+
     public const RESPONSE_POLICY = 'PolicyResponse';
     public const RESPONSE_UPLOAD_DOCUMENTS = 'UploadDocumentsResponse';
     public const RESPONSE_DOWNLOAD_DOCUMENT = 'DownloadDocumentResponse';
+
     public const UNKNOWN_ERROR = 'Unknown error';
     public const ALL_STEPS_ARE_EDITABLE = 'All Steps are editable';
 }

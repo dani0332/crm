@@ -86,19 +86,43 @@ class AdnicDocumentHandler {
      * Get document by type from quote documents
      *
      * @param mixed $quote
-     * @param string $documentTypeCode
-     * @return array|null
+     * @param array $documentTypeCodes
+     * @return Collection|null
      */
-    public function getDocumentByType($quote, string $documentTypeCode): ?array
+    public function getDocumentByType($quote, array $documentTypeCodes)
     {
         $documents = collect($quote->documents ?? []);
-        $documents = $documents->where('document_type_code', $documentTypeCode);
+        $documents = $documents->whereIn('document_type_code', $documentTypeCodes);
 
         if ($documents->isEmpty() || $documents->count() === 0) {
             return null;
         }
 
-        return is_array($documents) ? $documents : $documents->toArray();
+        return $documents;
+    }
+
+    public function getQuoteDocumentTypeCodessToUpload()
+    {
+        return collect([
+            DocumentTypeCode::HEA_VISA => [
+                'code' => DocumentTypeCode::HEA_VISA,
+                'insurerDocCode' => '6',
+                'insurerDocName' => 'Insured Visa Copy',
+                'uploaded' => false,
+            ],
+            DocumentTypeCode::HEA_PAS => [
+                'code' => DocumentTypeCode::HEA_PAS,
+                'insurerDocCode' => '1',
+                'insurerDocName' => 'Insured Passport',
+                'uploaded' => false,
+            ],
+            DocumentTypeCode::HEA_EID => [
+                'code' => DocumentTypeCode::HEA_EID,
+                'insurerDocCode' => '3',
+                'insurerDocName' => 'Emirates ID',
+                'uploaded' => false,
+            ],
+        ]);
     }
 
     /**
@@ -125,15 +149,17 @@ class AdnicDocumentHandler {
     }
 
     /**
-     * Map document types to AWNI document type codes
+     * Map document types to Adnic document type codes
      *
      * @param string $documentType
      * @return string|null
      */
-    public function getDocTypeCodeForHealth(string $documentType): string | null
+    public function getInsurerDocCodeForHealth(string $documentType): string | null
     {
         return match ($documentType) {
-            DocumentTypeCode::HEA_EID => '4', // Emirates ID (Front side & Back side)
+            DocumentTypeCode::HEA_EID => '3', // Emirates ID (Front side & Back side)
+            DocumentTypeCode::HEA_VISA => '6', // Visa
+            DocumentTypeCode::HEA_PAS => '1', // Passport
             default => null
         };
     }

@@ -36,8 +36,8 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
     private function getAPISteps(): array
     {
         return [
-            AdnicEnum::STEP_ISSUE_POLICY,
             AdnicEnum::STEP_UPLOAD_DOCUMENTS,
+            AdnicEnum::STEP_ISSUE_POLICY,
             AdnicEnum::STEP_UPLOAD_POLICY_DOCS,
             AdnicEnum::STEP_BOOK_POLICY,
         ];

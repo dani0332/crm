@@ -125,9 +125,9 @@ class AdnicValidationService
         return ['status' => true];
     }
 
-    public function validateUploadDocuments($quote, $requiredDocuments): array
+    public function validateUploadDocuments($quote, $quoteDocuments, $insuredInfoDetails): array
     {
-        if (! $requiredDocuments || empty($requiredDocuments)) {
+        if (! $quoteDocuments || $quoteDocuments->isEmpty()) {
             return [
                 'status' => false,
                 'error' => 'Required documents not uploaded',
@@ -135,11 +135,11 @@ class AdnicValidationService
             ];
         }
 
-        if ($quote->insurer_quote_number == null) {
+        if (! $insuredInfoDetails || empty($insuredInfoDetails)) {
             return [
                 'status' => false,
-                'error' => 'Insurer quote number not found',
-                'message' => 'Insurer quote number not found',
+                'error' => 'Insured info details not found',
+                'message' => 'Insured info details not found',
             ];
         }
 

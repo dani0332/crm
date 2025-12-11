@@ -9,9 +9,15 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-
+use App\Models\HealthInsurerRequestResponse;
 
 class AdnicStepExecutor {
+
+
+    public $healthInsurerRequestResponse = null;
+    public $healthInsurerRequest = '';
+    public $healthInsurerResponse = '';
+
     public function __construct(
         private AdnicApiService $apiService,
         private AdnicBookPolicyService $bookPolicyService,
@@ -67,7 +73,9 @@ class AdnicStepExecutor {
             'process_id' => $process->id,
         ]);
 
-        $uploadDocumentsResponse = $this->apiService->uploadDocuments($quote, $process);
+        $this->healthInsurerRequestResponse = HealthInsurerRequestResponse::where('quote_uuid', $quote->uuid)->first();
+
+        $uploadDocumentsResponse = $this->apiService->uploadDocuments($quote, $process , $this->healthInsurerRequestResponse);
 
         if (! $uploadDocumentsResponse['status']) {
             LoggerService::error('Document upload failed', extra: [

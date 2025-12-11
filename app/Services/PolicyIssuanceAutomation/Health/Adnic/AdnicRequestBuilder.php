@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
+use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicHttpClient;
 use Carbon\Carbon;
 
 class AdnicRequestBuilder {
+
+    public function __construct(
+        private AdnicHttpClient $httpClient,
+    ) {}
 
      /**
      * Build payload for issue policy API
@@ -48,14 +53,22 @@ class AdnicRequestBuilder {
      * @param string $documentName
      * @return array
      */
-    public function buildUploadDocumentsPayload($quote, string $base64Content, string $documentType, string $documentName = 'Emirates_Id.png'): array
+    public function buildUploadDocumentsPayload(string $base64Content, $healthInsurerResponse, $insuredMember, $insurerDocCode, $quoteDocument): array
     {
         return [
-            "QuoteRefNo" => $quote->insurer_quote_number,
-            "DocCategory" => $documentType,
-            "DocName" => $documentName,
-            "DocContent" => $base64Content,
-        ];
+            'PartnerInfo' => [
+                'PartnerId' => $this->httpClient->getPartnerId(),
+            ],
+            'DocumentInfo' => [
+                'QuotationNo' => $healthInsurerResponse?->QuoteInfo?->QuotationNo,
+                'MemberSeqNo' => $insuredMember?->MemberSeqNo,
+                'DocumentType' => $insurerDocCode,
+                'DocumentName' => $quoteDocument->original_name ?? $quoteDocument->doc_name,
+                'DocumentUploadDate' => now()->toISOString(),
+                'IsDocumentValidated' => 'Y',
+                'DocumentContent' => $base64Content,
+            ],
+        ];;
     }
 
     /**
