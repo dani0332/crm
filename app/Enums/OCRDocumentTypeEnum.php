@@ -3,7 +3,6 @@
 namespace App\Enums;
 
 use App\Models\DocumentType;
-use App\Enums\DocumentTypeCode;
 
 enum OCRDocumentTypeEnum: string
 {

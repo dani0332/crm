@@ -2,7 +2,6 @@
 
 namespace App\Services\OCR;
 
-use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;

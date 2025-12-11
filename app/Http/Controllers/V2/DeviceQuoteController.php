@@ -4,14 +4,14 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
-use App\Http\Controllers\Controller;
 use App\Enums\QuoteStatusEnum;
-use App\Services\QuoteDocumentService;
 use App\Enums\QuoteTypes;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\DeviceQuoteRequest;
 use App\Models\InsuranceProviderPlan;
 use App\Services\AMLService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 use App\Services\Quotes\DeviceQuoteService;
 
 class DeviceQuoteController extends Controller
@@ -86,10 +86,11 @@ class DeviceQuoteController extends Controller
     public function show($uuid)
     {
         $data = $this->deviceQuoteService->getShowData($uuid);
+
         return inertia('DeviceQuote/Show', array_merge($data,
-        [
-            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
-        ]));
+            [
+                'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+            ]));
     }
 
 }

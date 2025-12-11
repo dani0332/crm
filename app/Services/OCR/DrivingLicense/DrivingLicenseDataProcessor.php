@@ -48,8 +48,8 @@ class DrivingLicenseDataProcessor
                 $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote, $processedData['vehicle_driver_detail_fields']);
             }
 
-              // Trigger OCR success validation
-              $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
+            // Trigger OCR success validation
+            $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
                 'quoteId' => $this->quote->id,
                 'quoteableType' => get_class($this->quote),
             ]);

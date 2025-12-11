@@ -55,7 +55,7 @@ class EmiratesIdDataProcessor
             $insuredUpdated = $this->updateInsuredTable($insured);
             $kycUpdated = $this->updateInsuredKycTable($insured);
             $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
-           
+
             // Trigger OCR success validation
             $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
                 'quoteId' => $this->quote->id,
