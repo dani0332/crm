@@ -18,6 +18,7 @@ use App\Services\LookupService;
 use App\Services\SplitPaymentService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CyberQuoteService extends BaseQuoteService
 {
