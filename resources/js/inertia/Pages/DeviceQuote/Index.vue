@@ -379,9 +379,11 @@ const computedDevicePlans = computed(() => {
 });
 
 const computeddeviceCoverages = computed(() => {
-  return page.props.deviceCoverages?.map(item => ({
+  const coverages = page.props?.deviceCoverages;
+  if (!Array.isArray(coverages)) return [];
+  return coverages.map(item => ({
     value: item.id,
-    label: '$ ' + item.text,
+    label: `$ ${item.text}`,
   }));
 });
 </script>
