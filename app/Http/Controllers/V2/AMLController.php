@@ -491,40 +491,44 @@ class AMLController extends Controller
 
     private function InsurerScreening($quoteTypeId, $AMLCheckRequest, $updateQuote)
     {
-        LoggerService::info(self::class.' fn: '.__FUNCTION__);
+        LoggerService::startQuoteLogging($updateQuote, LoggerFeatureEnum::INSURER_AML_SCREENING_WITH_KYC_DOCUMENT);
         $insurerAMLScreeningResponse = [];
 
-        if (isTapEnabled()) {
-            LoggerService::info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process start');
-            $enableInsurerScreening = [
-                QuoteTypes::CAR->id(),
-                QuoteTypes::HOME->id(),
-                QuoteTypes::TRAVEL->id(),
-                QuoteTypes::BIKE->id(),
-            ];
-            if (in_array($quoteTypeId, $enableInsurerScreening)) {
-                session()->put('insurerAMLScreeningResponse');
-                InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
-                $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
-                if (! empty($getInsurerScreeningResponse)) {
-                    $insurerAMLScreeningResponse = [
-                        'status' => $getInsurerScreeningResponse['status'],
-                        'message' => $getInsurerScreeningResponse['message'],
-                        'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
-                        'isRenewalLead' => $getInsurerScreeningResponse['isRenewalLead'] ?? false,
-                        'is_previous_policy_expired' => $getInsurerScreeningResponse['is_previous_policy_expired'] ?? false,
-                        'is_get_quote_api_failed' => $getInsurerScreeningResponse['is_get_quote_api_failed'] ?? false,
-                    ];
+        if (! isTapEnabled()) {
+            LoggerService::info('Tap integration is disabled. Skipping Insurer AML Screening process');
 
-                    if (isset($getInsurerScreeningResponse['autoCaptureStatus'])) {
-                        $insurerAMLScreeningResponse['autoCaptureStatus'] = $getInsurerScreeningResponse['autoCaptureStatus'];
-                        $insurerAMLScreeningResponse['autoCaptureMessage'] = $getInsurerScreeningResponse['autoCaptureMessage'];
-                    }
-                }
-                session()->forget('insurerAMLScreeningResponse');
-            }
-            LoggerService::info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process completed');
+            return $insurerAMLScreeningResponse;
         }
+
+        LoggerService::info('Tap integration is enabled. Insurer AML Screening process started');
+        $enableInsurerScreening = [
+            QuoteTypes::CAR->id(),
+            QuoteTypes::HOME->id(),
+            QuoteTypes::TRAVEL->id(),
+            QuoteTypes::BIKE->id(),
+        ];
+        if (in_array($quoteTypeId, $enableInsurerScreening)) {
+            session()->put('insurerAMLScreeningResponse');
+            InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
+            $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
+            if (! empty($getInsurerScreeningResponse)) {
+                $insurerAMLScreeningResponse = [
+                    'status' => $getInsurerScreeningResponse['status'],
+                    'message' => $getInsurerScreeningResponse['message'],
+                    'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
+                    'isRenewalLead' => $getInsurerScreeningResponse['isRenewalLead'] ?? false,
+                    'is_previous_policy_expired' => $getInsurerScreeningResponse['is_previous_policy_expired'] ?? false,
+                    'is_get_quote_api_failed' => $getInsurerScreeningResponse['is_get_quote_api_failed'] ?? false,
+                ];
+
+                if (isset($getInsurerScreeningResponse['autoCaptureStatus'])) {
+                    $insurerAMLScreeningResponse['autoCaptureStatus'] = $getInsurerScreeningResponse['autoCaptureStatus'];
+                    $insurerAMLScreeningResponse['autoCaptureMessage'] = $getInsurerScreeningResponse['autoCaptureMessage'];
+                }
+            }
+            session()->forget('insurerAMLScreeningResponse');
+        }
+        LoggerService::info('Insurer AML Screening process completed');
 
         return $insurerAMLScreeningResponse;
     }
