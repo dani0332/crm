@@ -82,11 +82,6 @@ class EmiratesIdDataProcessor
     private function updateVehicleDriverDetail($quote): bool
     {
         try {
-
-            if (! method_exists($quote, 'vehicleDriverDetail')) { // As of now we only have relation vehicleDriverDetail for car quotes.
-                return false;
-            }
-
             $fieldsToUpdate = $this->getCleanData([
                 'driver_gender' => $this->extractedData['sex'],
             ]);
