@@ -111,8 +111,8 @@ class OCRDocumentValidator
         $insuredKycDetails = $insuredDetails->insuredKyc;
 
         // Determine success flag
-        $result = $vehicleDriverDetails && $vehicleDriverDetails->driver_gender;
-        $result = $result && $insuredDetails && empty(array_filter(self::FIELDS_TO_VERIFY['INSURED_FIELDS'],
+        //$result = $vehicleDriverDetails && $vehicleDriverDetails->driver_gender;
+        $result = $insuredDetails && empty(array_filter(self::FIELDS_TO_VERIFY['INSURED_FIELDS'],
             fn ($field) => empty($insuredDetails->$field)
         ));
         $result = $result && $insuredKycDetails && empty(array_filter(self::FIELDS_TO_VERIFY['INSURED_KYC_FIELDS'],
