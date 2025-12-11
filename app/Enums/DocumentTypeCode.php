@@ -138,4 +138,7 @@ class DocumentTypeCode extends Enum
     const COMP_Polic = 'COMP_Polic'; // Holiday Homes Policy Schedule
     const FIDEL_POS = 'FIDEL_POS'; // Goods In Transit Policy Schedule
     const IND_PS = 'IND_PS'; // Group Travel Policy Schedule
+
+    /* Health Quote */
+    const HEA_EID = 'HEAEID'; // Emirates ID
 }
