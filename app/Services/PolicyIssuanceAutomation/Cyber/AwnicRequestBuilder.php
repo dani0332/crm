@@ -27,7 +27,7 @@ class AwnicRequestBuilder
             'CustName' => trim(($quote->first_name ?? '') . ' ' . ($quote->last_name ?? '')),
             'CustMobile' => $quote->mobile_no,
             'CustEmail' => $quote->email,
-            'CustEID' => str_replace('-', '', $emiratesIdNumber ?? "784200012345671"),
+            'CustEID' => str_replace('-', '', $emiratesIdNumber),
             'CustDOB' => $customer?->dob ? strtoupper(Carbon::parse($customer->dob)->format('d-M-Y')) : null,
             'CustAddress' => $emirateOfRegistration?->text ?? "",
             'CustCountryCode' => $nationality?->awni_country_code ?? null,
