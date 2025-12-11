@@ -1066,7 +1066,11 @@ class EpEcbService extends EpBookingService
 
     private function getDocumentsInfo(): array
     {
-        $documentsInfo = $this->quote->documents()->whereIn('document_type_code', [QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY])
+        $carQuoteDocumentCodes = [QuoteDocumentsEnum::CAR_MULKIY];
+        $carQuoteDocumentCodes[] = $this->quote?->registration_type == CarRegistrationType::COMPANY 
+            ? QuoteDocumentsEnum::COMPANY_CAR_EMIRATE_ID : QuoteDocumentsEnum::CAR_EMIRATE_ID;
+
+        $documentsInfo = $this->quote->documents()->whereIn('document_type_code', $carQuoteDocumentCodes)
             ->select('document_type_code', 'doc_name', 'doc_url')
             ->get()
             ->unique('document_type_code')
