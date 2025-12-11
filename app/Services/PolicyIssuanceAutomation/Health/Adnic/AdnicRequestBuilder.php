@@ -7,8 +7,8 @@ namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicHttpClient;
 use Carbon\Carbon;
 
-class AdnicRequestBuilder {
-
+class AdnicRequestBuilder
+{
     public function __construct(
         private AdnicHttpClient $httpClient,
     ) {}
@@ -16,23 +16,22 @@ class AdnicRequestBuilder {
      /**
      * Build payload for issue policy API
      *
-     * @param mixed $quote
-     * @param mixed $customer
-     * @param mixed $nationality
-     * @param mixed $planDetail
-     * @param mixed $payment
-     * @param mixed $splitPayment
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $customer
+     * @param  mixed  $nationality
+     * @param  mixed  $planDetail
+     * @param  mixed  $payment
+     * @param  mixed  $splitPayment
      */
     public function buildIssuePolicyPayload($quote, $customer, $nationality, $planDetail, $splitPayment, $emirateOfRegistration): array
     {
         return [
-            'CustName' => trim(($quote->first_name ?? '') . ' ' . ($quote->last_name ?? '')),
+            'CustName' => trim(($quote->first_name ?? '').' '.($quote->last_name ?? '')),
             'CustMobile' => $quote->mobile_no,
             'CustEmail' => $quote->email,
-            'CustEID' => str_replace('-', '', $customer->emirates_id_number ?? "784200012345671"),
+            'CustEID' => str_replace('-', '', $customer->emirates_id_number ?? '784200012345671'),
             'CustDOB' => $customer?->dob ? strtoupper(Carbon::parse($customer->dob)->format('d-M-Y')) : null,
-            'CustAddress' => $emirateOfRegistration?->text ?? "",
+            'CustAddress' => $emirateOfRegistration?->text ?? '',
             'CustCountryCode' => $nationality?->awni_country_code ?? null,
             'LimitOfLiability' => $planDetail->coverage ?? null,
             'PlanName' => $planDetail->planName ?? null,
@@ -47,11 +46,7 @@ class AdnicRequestBuilder {
     /**
      * Build payload for upload documents API
      *
-     * @param mixed $quote
-     * @param string $base64Content
-     * @param string $documentType
-     * @param string $documentName
-     * @return array
+     * @param  mixed  $quote
      */
     public function buildUploadDocumentsPayload(string $base64Content, $healthInsurerResponse, $insuredMember, $insurerDocCode, $quoteDocument): array
     {
@@ -74,20 +69,17 @@ class AdnicRequestBuilder {
     /**
      * Build payload for download document API
      *
-     * @param mixed $docId
-     * @return array
+     * @param  mixed  $docId
      */
     public function buildDownloadDocumentPayload($docId): array
     {
         return [
-            "docId" => $docId,
+            'docId' => $docId,
         ];
     }
 
     /**
      * Build headers required for policy issuance API
-     *
-     * @return array
      */
     public function buildIssuePolicyHeaders(): array
     {

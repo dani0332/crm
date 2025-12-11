@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
-use App\Enums\QuoteStatusEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
 
-class AdnicQuoteUpdaterService {
-
+class AdnicQuoteUpdaterService
+{
     public function updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult): void
     {
         $quote->update([
