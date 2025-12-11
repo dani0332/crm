@@ -843,7 +843,7 @@ trait GenericQueriesAllLobs
         if ($quoteTypeId == QuoteTypeId::Health) {
             $emirate = $record?->emirate_of_your_visa_id ?? null;
         } else if (
-            $quoteTypeId == QuoteTypeId::Business 
+            in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical]) 
             && $record->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
         ) {
             $emirate = $record?->latestInsured?->entity?->emirate_of_registration_id ?? null;
