@@ -6,6 +6,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Http\Requests\SendBookPolicyRequest;
+use App\Services\CustomerInsuredService;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Support\Facades\Validator;
@@ -78,6 +79,10 @@ class AwnicValidationService
     public function validateRequiredData($quote): array
     {
         $customer = $quote->customer ?? null;
+        $emiratesIdNumber = null;
+        if (isset($quote->latestInsured)) {
+            $emiratesIdNumber = $quote->latestInsured['id_type'] == 'emiratesId' ? $quote->latestInsured['id_number'] : null;
+        }
         $nationality = $quote->nationality ?? null;
         $emirateOfRegistration = $quote?->cyberQuote?->emirateOfRegistration ?? null;
         
@@ -98,7 +103,7 @@ class AwnicValidationService
         if ($customer === null) {
             $missing[] = 'customer';
         } else {
-            empty($customer->emirates_id_number) && $missing[] = 'emirates id number';
+            empty($emiratesIdNumber) && $missing[] = 'emirates id number';
             $customer->dob === null && $missing[] = 'dob';
         }
 
@@ -107,7 +112,7 @@ class AwnicValidationService
             LoggerService::error('Missing required data', extra: [
                 'has_payments' => (bool) $quote->payments,
                 'has_plan_detail' => (bool) $quote->cyberPlanDetail,
-                'has_emirates_id' => (bool) ($customer?->emirates_id_number),
+                'has_emirates_id' => (bool) ($emiratesIdNumber),
                 'has_nationality' => (bool) ($nationality),
                 'has_dob' => (bool) ($customer?->dob),
                 'has_emirate_of_registration' => (bool) ($emirateOfRegistration),
