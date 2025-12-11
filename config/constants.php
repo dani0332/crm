@@ -181,6 +181,12 @@ return [
     'GIG_API_AUTH_CLIENT_ID' => env('GIG_API_AUTH_CLIENT_ID'),
     'GIG_API_AUTH_CLIENT_SECRET' => env('GIG_API_AUTH_CLIENT_SECRET'),
 
+    // NGI (National General Insurance) Policy Issuance API Credentials for Device/Smartphone
+    'NGI_API_BASE_URL' => env('NGI_API_BASE_URL', 'https://devwp.waypoint-systems.com:446/TPAClientAPI'),
+    'NGI_API_CLIENT_CODE' => env('NGI_API_CLIENT_CODE', 'IM'),
+    'NGI_API_CLIENT_ID' => env('NGI_API_CLIENT_ID'),
+    'NGI_API_CLIENT_SECRET' => env('NGI_API_CLIENT_SECRET'),
+
     'LIFE_EMAIL_DATA_SOURCE' => env('LIFE_EMAIL_DATA_SOURCE', 'Life-Insurance-UAT'),
 
     /* HRM API */

@@ -47,4 +47,6 @@ enum LoggerFeatureEnum: string
     case POLICY_ISSUANCE_JOB = 'policy-issuance-job';
     case CC_PAYMENT_PROCESS_COMMAND = 'cc-payment-process-command';
     case SEND_AND_BOOK_POLICY_FAILED_BULK_EMAIL_JOB = 'send-and-book-policy-failed-bulk-email-job';
+    case CHECK_DOCUMENT_UPLOAD_AFTER_PAYMENT = 'check-document-upload-after-payment';
+    case NGI_SMARTPHONE_POLICY_AUTOMATION = 'ngi-smartphone-policy-automation';
 }
