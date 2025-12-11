@@ -140,13 +140,22 @@ class CentralService extends BaseService
         $parentRecord = null;
 
         if ($quoteType = QuoteTypes::tryFrom($parentType)) {
-            $parentRecord = $quoteType->model()::find($entityId);
+            $model = $quoteType->model();
+            if (strtolower($parentType) == strtolower(quoteTypeCode::Life)) {
+                $parentRecord = $model::with('lifeQuote')->find($entityId);
+            } else {
+                $parentRecord = $model::find($entityId);
+            }
         }
 
         if (! $parentRecord) {
             $repository = $this->getRepositoryObject($parentType);
             if ($repository) {
-                $parentRecord = $repository::where('id', $entityId)->first();
+                if (strtolower($parentType) == strtolower(quoteTypeCode::Life)) {
+                    $parentRecord = PersonalQuote::with('lifeQuote')->where('id', $entityId)->first();
+                } else {
+                    $parentRecord = $repository::where('id', $entityId)->first();
+                }
             }
         }
 
@@ -187,6 +196,11 @@ class CentralService extends BaseService
                     quoteTypeCode::SAVINGS,
                 ])) {
                     $response = PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob));
+                } elseif (in_array($lob, [
+                    quoteTypeCode::Life,
+                ])) {
+                    $lifeDataArr = $this->prepareLifeQuoteDuplicateData($parentRecord);
+                    $response = app(LifeQuoteService::class)->saveLifeQuote($lifeDataArr);
                 } else {
                     $repository = $this->getRepositoryObject(ucfirst($lob));
 
@@ -200,7 +214,11 @@ class CentralService extends BaseService
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
                 } elseif (isset($response->quoteUID) && isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
-                    $record = $repository::where('uuid', $response->quoteUID)->first();
+                    if (in_array($lob, [quoteTypeCode::Life])) {
+                        $record = PersonalQuote::where('uuid', $response->quoteUID)->first();
+                    } else {
+                        $record = $repository::where('uuid', $response->quoteUID)->first();
+                    }
                     if ($record) {
                         $update = [
                             'parent_duplicate_quote_id' => $parentRecord->code,
@@ -2425,5 +2443,50 @@ class CentralService extends BaseService
             ->where('start_date', '<=', $expiryDate)
             ->where('end_date', '>=', $expiryDate)
             ->first();
+    }
+
+    private function prepareLifeQuoteDuplicateData($parentRecord): array
+    {
+        $lifeDataArr = [
+            'first_name' => $parentRecord->first_name,
+            'last_name' => $parentRecord->last_name,
+            'email' => $parentRecord->email,
+            'mobile_no' => $parentRecord->mobile_no,
+        ];
+
+        if ($parentRecord instanceof PersonalQuote && $parentRecord->quote_type_id == QuoteTypeId::Life && $parentRecord->lifeQuote) {
+            $lifeQuote = $parentRecord->lifeQuote;
+            $lifeDataArr['dob'] = $lifeQuote->dob ?? $parentRecord->dob;
+            $lifeDataArr['sum_insured_value'] = $lifeQuote->sum_insured_value ?? null;
+            $lifeDataArr['nationality_id'] = $lifeQuote->nationality_id ?? $parentRecord->nationality_id ?? null;
+            $lifeDataArr['sum_insured_currency_id'] = $lifeQuote->sum_insured_currency_id ?? null;
+            $lifeDataArr['marital_status_id'] = $lifeQuote->marital_status_id ?? null;
+            $lifeDataArr['purpose_of_insurance_id'] = $lifeQuote->purpose_of_insurance_id ?? null;
+            $lifeDataArr['number_of_years_id'] = $lifeQuote->number_of_years_id ?? null;
+            $lifeDataArr['is_smoker'] = $lifeQuote->is_smoker ?? 0;
+            $lifeDataArr['gender'] = $lifeQuote->gender ?? $parentRecord->gender ?? null;
+            $lifeDataArr['others_info'] = $lifeQuote->others_info ?? null;
+            $lifeDataArr['height'] = $lifeQuote->height ?? null;
+            $lifeDataArr['weight'] = $lifeQuote->weight ?? null;
+            $lifeDataArr['bmi'] = $lifeQuote->bmi ?? null;
+            $lifeDataArr['age'] = $lifeQuote->age ?? ($lifeDataArr['dob'] ? Carbon::parse($lifeDataArr['dob'])->age : null);
+        } else {
+            $lifeDataArr['dob'] = $parentRecord->dob ?? null;
+            $lifeDataArr['sum_insured_value'] = null;
+            $lifeDataArr['nationality_id'] = $parentRecord->nationality_id ?? null;
+            $lifeDataArr['sum_insured_currency_id'] = null;
+            $lifeDataArr['marital_status_id'] = null;
+            $lifeDataArr['purpose_of_insurance_id'] = null;
+            $lifeDataArr['number_of_years_id'] = null;
+            $lifeDataArr['is_smoker'] = 0;
+            $lifeDataArr['gender'] = $parentRecord->gender ?? null;
+            $lifeDataArr['others_info'] = null;
+            $lifeDataArr['height'] = null;
+            $lifeDataArr['weight'] = null;
+            $lifeDataArr['bmi'] = null;
+            $lifeDataArr['age'] = $parentRecord->dob ? Carbon::parse($parentRecord->dob)->age : null;
+        }
+
+        return $lifeDataArr;
     }
 }

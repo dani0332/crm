@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\EmiratesId;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
@@ -56,7 +57,12 @@ class EmiratesIdDataProcessor
             $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
 
             // Trigger OCR success validation
-            $isOCRSuccess = app(OCRDocumentValidator::class)->validateEIDFields($this->quote->id);
+            $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
+                'quoteId' => $this->quote->id,
+                'quoteableType' => get_class($this->quote),
+            ]);
+
+            $isOCRSuccess = $ocrDocumentValidator->validateEIDFields($this->documentTypeCode);
             LoggerService::info('EmiratesId data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($this->extractedData));
 
             DB::commit();
@@ -77,11 +83,6 @@ class EmiratesIdDataProcessor
     private function updateVehicleDriverDetail($quote): bool
     {
         try {
-
-            if (! method_exists($quote, 'vehicleDriverDetail')) { // As of now we only have relation vehicleDriverDetail for car quotes.
-                return false;
-            }
-
             $fieldsToUpdate = $this->getCleanData([
                 'driver_gender' => $this->extractedData['sex'],
             ]);
@@ -110,8 +111,9 @@ class EmiratesIdDataProcessor
             $insured = $this->quote->latestInsured ?? null;
 
             if (! $insured && ! empty($this->extractedData['eid_number'])) {
-                $insured = Insured::where('id_number', $this->extractedData['eid_number'])
-                    ->where('id_type', 'emiratesId')
+                $insured = Insured::where('id_type', 'emiratesId')
+                    ->where('customer_type', CustomerTypeEnum::Individual)
+                    ->emiratesIdNumber($this->extractedData['eid_number'])
                     ->first();
 
                 if ($insured) {
