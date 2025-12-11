@@ -3461,7 +3461,7 @@ class RenewalsUploadService
         $gigInsuranceProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
         
         // if current insurance provider is LIVA(RSA) then check if the plan is related to GIG(AXA)
-        if(isset($currentInsuranceProvider) && $currentInsuranceProvider->code == InsuranceProvidersEnum::RSA && $gigInsuranceProvider) {
+        if($currentInsuranceProvider != null && $currentInsuranceProvider->code == InsuranceProvidersEnum::RSA && $gigInsuranceProvider) {
             // check if the plan is related to GIG(AXA)
             $isGigPlan = CarPlan::where('text', $leadData->plan_name)->where('repair_type', $leadData->plan_type)->where('provider_id', $gigInsuranceProvider->id)->first();
             if (! $isGigPlan) {
