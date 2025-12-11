@@ -109,4 +109,42 @@ class DeviceEmailService extends BaseService
             LoggerService::info("sendDeviceAutomatedFollowups - Error triggering event having response status code: {$response?->status_code}");
         }
     }
+
+    public function sendZeroPlansEmail($lead)
+    {
+        try {
+       
+        $advisor = User::find($lead->advisor_id);
+        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_DEVICE_OCB_INTRO_EMAIL)->first();
+        if (! $workflowUrl) {
+            return [
+                'success' => false,
+                'message' => 'Workflow URL not found',
+            ];
+        }
+        $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::DEVICE_ZERO_PLANS_EMAIL);
+        $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
+
+        if ($response ) {
+            return [
+                'success' => true,
+                'message' => 'Zero plans email sent successfully',
+            ];
+        } else {
+            return [
+                'success' => false,
+                'message' => 'Error sending zero plans email',
+            ];
+        }
+    } catch (\Throwable $th) {
+        LoggerService::error(self::class.': Error sending zero plans email',  [
+            'error' => $th->getMessage(),
+            'quote_uuid' => $lead->uuid,
+        ]);
+        return [
+            'success' => false,
+            'message' => 'Something went wrong while sending zero plans email for quote ',
+        ];
+    }
+    }
 }

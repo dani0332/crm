@@ -73,4 +73,5 @@ final class WorkflowTypeEnum extends Enum
     public const DEVICE_AUTOMATED_FOLLOWUPS = 'device_automated_followups';
     public const DEVICE_OCB_INTRO_EMAIL = 'device_ocb_intro_email';
     public const DEVICE_OCB_INTRO_WHATSAPP = 'device_ocb_intro_whatsapp';
+    public const DEVICE_ZERO_PLANS_EMAIL = 'device_zero_plans_email';
 }
