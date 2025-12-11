@@ -22,12 +22,11 @@ class AdnicApiService
         private AdnicValidationService $validationService,
     ) {}
 
-      /**
+    /**
      * Issue policy API call
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function issuePolicy($quote, $process): array
     {
@@ -54,7 +53,7 @@ class AdnicApiService
         $httpResponse = AdnicHttpFacade::post($endPoint, $payload, $headers);
         $issuePolicyResponse = $this->responseHandler->parseHttpResponse($httpResponse, AdnicEnum::RESPONSE_POLICY);
 
-        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, AdnicHttpFacade::getBaseUrl() . $endPoint, AdnicEnum::STEP_ISSUE_POLICY, $issuePolicyResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, AdnicHttpFacade::getBaseUrl().$endPoint, AdnicEnum::STEP_ISSUE_POLICY, $issuePolicyResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
         if (! $issuePolicyResponse['status']) {
             LoggerService::error('API call failed', extra: [
@@ -91,16 +90,15 @@ class AdnicApiService
     /**
      * Upload documents API call
      *
-     * @param mixed $quote
-     * @param mixed $policyIssuance
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $policyIssuance
      */
     public function uploadDocuments($quote, $process): array
     {
         // Validate required documents and insurer quote number added before hitting api
         $requiredDocuments = $this->documentHandler->getDocumentByType($quote, DocumentTypeCode::HEA_EID);
         $validationResult = $this->validationService->validateUploadDocuments($quote, $requiredDocuments);
-        if (!$validationResult['status']) {
+        if (! $validationResult['status']) {
             return $validationResult;
         }
 
@@ -136,7 +134,7 @@ class AdnicApiService
             $httpResponse = AdnicHttpFacade::post($endPoint, $payload);
             $uploadResponse = $this->responseHandler->parseHttpResponse($httpResponse, AdnicEnum::RESPONSE_UPLOAD_DOCUMENTS);
 
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $uploadResponse, AdnicHttpFacade::getBaseUrl() . $endPoint, AdnicEnum::STEP_UPLOAD_DOCUMENTS, $uploadResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $uploadResponse, AdnicHttpFacade::getBaseUrl().$endPoint, AdnicEnum::STEP_UPLOAD_DOCUMENTS, $uploadResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
             if (! $uploadResponse['status']) {
                 $allDocsDownloaded = false;
@@ -164,9 +162,8 @@ class AdnicApiService
     /**
      * Upload policy documents to IMCRM
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function uploadPolicyDocumentsToIMCRM($quote, $process): array
     {
@@ -184,7 +181,7 @@ class AdnicApiService
 
         // validation added before hitting api to awnic for downloading document
         $validationResult = $this->validationService->validateDownloadDocuments($quote, $docTypeCodeForIMCRM);
-        if (!$validationResult['status']) {
+        if (! $validationResult['status']) {
             return $validationResult;
         }
 
@@ -194,9 +191,9 @@ class AdnicApiService
             $httpResponse = AdnicHttpFacade::post($endPoint, $payload);
             $downloadRequest = $this->responseHandler->parseHttpResponse($httpResponse, AdnicEnum::RESPONSE_DOWNLOAD_DOCUMENT);
 
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $downloadRequest, AdnicHttpFacade::getBaseUrl() . $endPoint, AdnicEnum::STEP_UPLOAD_POLICY_DOCS, $downloadRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $downloadRequest, AdnicHttpFacade::getBaseUrl().$endPoint, AdnicEnum::STEP_UPLOAD_POLICY_DOCS, $downloadRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
-            if(isset($downloadRequest['status'])) {
+            if (isset($downloadRequest['status'])) {
                 $docCode = $imCrmDocKey;
 
                 $documentContent = $downloadRequest['data'];
@@ -231,7 +228,7 @@ class AdnicApiService
                 'upload_summary' => $uploadedDocumentsToIMCRM->toArray(),
             ]);
 
-            $error = 'Policy Issuance is pending as ' . implode(',', $docsUploadToIMCRMFailed) . ' documents are not uploaded';
+            $error = 'Policy Issuance is pending as '.implode(',', $docsUploadToIMCRMFailed).' documents are not uploaded';
             $response['error'] = $error;
             $response['message'] = $error;
             $response['status'] = false;

@@ -10,8 +10,8 @@ use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
-
-class AdnicStepExecutor {
+class AdnicStepExecutor
+{
     public function __construct(
         private AdnicApiService $apiService,
         private AdnicBookPolicyService $bookPolicyService,
@@ -20,9 +20,8 @@ class AdnicStepExecutor {
     /**
      * Execute issue policy step
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function executeIssuePolicyStep($quote, $process): array
     {
@@ -56,9 +55,8 @@ class AdnicStepExecutor {
     /**
      * Execute upload documents step
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function executeUploadDocumentsStep($quote, $process): array
     {
@@ -91,9 +89,8 @@ class AdnicStepExecutor {
     /**
      * Execute upload policy documents step
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function executeUploadPolicyDocumentsStep($quote, $process): array
     {
@@ -125,9 +122,8 @@ class AdnicStepExecutor {
     /**
      * Execute book policy step
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function executeBookPolicyStep($quote, $process): array
     {

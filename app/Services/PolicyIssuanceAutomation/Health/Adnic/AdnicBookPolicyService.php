@@ -7,10 +7,10 @@ namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 use App\Enums\AdnicEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
-use App\Services\Logger\LoggerService;
 use App\Enums\SendPolicyTypeEnum;
 use App\Http\Requests\BookPolicyRequest;
 use App\Services\CentralService;
+use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\Validator;
 
 class AdnicBookPolicyService
 {
-
     use GenericQueriesAllLobs;
 
     public function __construct(
@@ -30,9 +29,8 @@ class AdnicBookPolicyService
     /**
      * Execute book policy process
      *
-     * @param mixed $quote
-     * @param mixed $policyIssuance
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $policyIssuance
      */
     public function bookPolicy($quote, $policyIssuance = null): array
     {
@@ -58,7 +56,7 @@ class AdnicBookPolicyService
         }
 
         // Step 2: Pre-check validation (only if previous step succeeded)
-        if (!$processFailed) {
+        if (! $processFailed) {
             $quote->refresh();
             $preCheckResult = $this->validationService->validateBookPolicy($quote);
             if (! $preCheckResult['status']) {
@@ -73,7 +71,7 @@ class AdnicBookPolicyService
         }
 
         // Step 3: Create Sage process (only if previous steps succeeded)
-        if (!$processFailed) {
+        if (! $processFailed) {
             $request = new \stdClass;
             $request->quote_id = $quote->id;
             $request->modelType = QuoteTypes::HEALTH->value;
@@ -117,8 +115,7 @@ class AdnicBookPolicyService
     /**
      * Update booking details
      *
-     * @param mixed $quote
-     * @return array
+     * @param  mixed  $quote
      */
     public function updateBookingDetails($quote): array
     {
@@ -159,7 +156,7 @@ class AdnicBookPolicyService
 
             request()->merge($updateBookingRequest);
 
-            $bookPolicyRequest = new BookPolicyRequest();
+            $bookPolicyRequest = new BookPolicyRequest;
             $validator = Validator::make($updateBookingRequest, $bookPolicyRequest->rules());
             $bookPolicyRequest->withValidator($validator);
 
@@ -192,8 +189,8 @@ class AdnicBookPolicyService
             }
         } catch (Exception $e) {
             $response['status'] = false;
-            $response['error'] = 'Booking update error: ' . $e->getMessage();
-            $response['message'] = 'An error occurred while updating booking details: ' . $e->getMessage();
+            $response['error'] = 'Booking update error: '.$e->getMessage();
+            $response['message'] = 'An error occurred while updating booking details: '.$e->getMessage();
 
             LoggerService::error('Exception during booking update', exception: $e);
         }

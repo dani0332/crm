@@ -4,17 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
-use App\Services\Logger\LoggerService;
-use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Http\Requests\SendBookPolicyRequest;
+use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Support\Facades\Validator;
 
 class AdnicValidationService
 {
-
     public function __construct(
         private AdnicDocumentHandler $documentHandler,
     ) {}
@@ -22,8 +20,7 @@ class AdnicValidationService
     /**
      * Validate book policy prerequisites
      *
-     * @param mixed $quote
-     * @return array
+     * @param  mixed  $quote
      */
     public function validateBookPolicy($quote): array
     {
@@ -41,7 +38,7 @@ class AdnicValidationService
             ];
             request()->merge($requestData);
 
-            $sendBookPolicyRequest = new SendBookPolicyRequest();
+            $sendBookPolicyRequest = new SendBookPolicyRequest;
             $validator = Validator::make($requestData, $sendBookPolicyRequest->rules());
             $sendBookPolicyRequest->withValidator($validator);
 
@@ -50,10 +47,10 @@ class AdnicValidationService
                 $response['error'] = $validator->errors()->first() ?? 'SendBookPolicyRequest validation failed';
                 $response['message'] = $validator->errors()->first();
 
-            LoggerService::error('Validation failed', extra: [
-                'validation_errors' => $validator->errors()->toArray(),
-                'first_error' => $response['message'],
-            ]);
+                LoggerService::error('Validation failed', extra: [
+                    'validation_errors' => $validator->errors()->toArray(),
+                    'first_error' => $response['message'],
+                ]);
 
                 return $response;
             }
@@ -62,8 +59,8 @@ class AdnicValidationService
             $response['message'] = 'All book policy prerequisites validated successfully';
         } catch (Exception $e) {
             $response['status'] = false;
-            $response['error'] = 'Validation error: ' . $e->getMessage();
-            $response['message'] = 'An error occurred during validation: ' . $e->getMessage();
+            $response['error'] = 'Validation error: '.$e->getMessage();
+            $response['message'] = 'An error occurred during validation: '.$e->getMessage();
 
             LoggerService::error('Exception during validation', exception: $e);
         }
@@ -148,14 +145,15 @@ class AdnicValidationService
 
     public function validateDownloadDocuments($quote, $docTypeCodeForIMCRM): array
     {
-        $missingDocs = array_keys(array_filter($docTypeCodeForIMCRM, fn($docId) => $docId === null));
-        if (!empty($missingDocs)) {
+        $missingDocs = array_keys(array_filter($docTypeCodeForIMCRM, fn ($docId) => $docId === null));
+        if (! empty($missingDocs)) {
             return [
                 'status' => false,
-                'error' => 'Missing documents: ' . implode(', ', $missingDocs),
-                'message' => 'Missing documents: ' . implode(', ', $missingDocs),
+                'error' => 'Missing documents: '.implode(', ', $missingDocs),
+                'message' => 'Missing documents: '.implode(', ', $missingDocs),
             ];
         }
+
         return [
             'status' => true,
             'error' => null,

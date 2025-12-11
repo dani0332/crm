@@ -6,19 +6,16 @@ namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
+use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
-use App\Models\PersonalQuote;
 
-class AdnicDocumentHandler {
-
+class AdnicDocumentHandler
+{
     private const ALLOWED_DOCUMENT_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 
     /**
      * Fetch document content from Azure storage
-     *
-     * @param string $relativePath
-     * @return array
      */
     public function fetchDocumentContent(string $relativePath): array
     {
@@ -38,7 +35,7 @@ class AdnicDocumentHandler {
 
         $mimeType = $this->detectMimeType($fileContent);
         if (! $mimeType || ! in_array($mimeType, self::ALLOWED_DOCUMENT_MIME_TYPES, true)) {
-            $message = 'Unsupported document type: ' . ($mimeType ?? 'unknown');
+            $message = 'Unsupported document type: '.($mimeType ?? 'unknown');
             LoggerService::error('Invalid document mime type', extra: [
                 'file_path' => $filePath,
                 'mime_type' => $mimeType,
@@ -54,20 +51,14 @@ class AdnicDocumentHandler {
 
     /**
      * Build Azure document path from relative path
-     *
-     * @param string $relativePath
-     * @return string
      */
     private function buildAzureDocumentPath(string $relativePath): string
     {
-        return rtrim(config('constants.AZURE_IM_STORAGE_URL'), '/'). '/' . rtrim(config('constants.AZURE_IM_STORAGE_CONTAINER'), '/') . '/' . ltrim($relativePath, '/');
+        return rtrim(config('constants.AZURE_IM_STORAGE_URL'), '/').'/'.rtrim(config('constants.AZURE_IM_STORAGE_CONTAINER'), '/').'/'.ltrim($relativePath, '/');
     }
 
     /**
      * Detect MIME type of file content
-     *
-     * @param string $fileContent
-     * @return string|null
      */
     private function detectMimeType(string $fileContent): ?string
     {
@@ -85,9 +76,7 @@ class AdnicDocumentHandler {
     /**
      * Get document by type from quote documents
      *
-     * @param mixed $quote
-     * @param string $documentTypeCode
-     * @return array|null
+     * @param  mixed  $quote
      */
     public function getDocumentByType($quote, string $documentTypeCode): ?array
     {
@@ -104,10 +93,10 @@ class AdnicDocumentHandler {
     /**
      * Upload document to IMCRM and attach to quote
      *
-     * @param mixed $quote
-     * @param string $documentContent Base64 encoded document content
-     * @param string $documentCode
-     * @param string|null $originalName
+     * @param  mixed  $quote
+     * @param  string  $documentContent  Base64 encoded document content
+     * @param  string  $documentCode
+     * @param  string|null  $originalName
      * @return mixed
      */
     public function uploadAndAttachToQuoteDocuments($quote, $documentContent, $documentCode, $originalName = null)
@@ -121,16 +110,14 @@ class AdnicDocumentHandler {
         $data['document_type_code'] = $documentCode;
 
         $quoteDocumentService = new QuoteDocumentService;
+
         return $quoteDocumentService->uploadQuoteDocument($documentContent, $data, $quote);
     }
 
     /**
      * Map document types to AWNI document type codes
-     *
-     * @param string $documentType
-     * @return string|null
      */
-    public function getDocTypeCodeForHealth(string $documentType): string | null
+    public function getDocTypeCodeForHealth(string $documentType): ?string
     {
         return match ($documentType) {
             DocumentTypeCode::HEA_EID => '4', // Emirates ID (Front side & Back side)
@@ -140,9 +127,6 @@ class AdnicDocumentHandler {
 
     /**
      * Map document types to IMCRM document type codes
-     *
-     * @param PersonalQuote $quote
-     * @return array
      */
     public function getDocTypeCodeForIMCRM(PersonalQuote $quote): array
     {
