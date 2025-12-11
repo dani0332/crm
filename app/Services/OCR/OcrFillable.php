@@ -174,11 +174,11 @@ trait OcrFillable
         }
     }
 
-    private function fillMulkiya(Model $quote, object $data)
+    private function fillMulkiya(Model $quote, object $data, string $documentTypeCode)
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new MulkiyaDataProcessor($quote, $data, $this->documentTypeCode);
+            $processor = new MulkiyaDataProcessor($quote, $data, $documentTypeCode);
 
             $success = $processor->processMulkiyaData();
 
@@ -205,11 +205,11 @@ trait OcrFillable
         }
     }
 
-    private function fillDrivingLicense(Model $quote, object $data)
+    private function fillDrivingLicense(Model $quote, object $data, string $documentTypeCode)
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new DrivingLicenseDataProcessor($quote, $data, $this->documentTypeCode);
+            $processor = new DrivingLicenseDataProcessor($quote, $data, $documentTypeCode);
 
             $success = $processor->processDrivingLicenseData();
 
@@ -295,8 +295,8 @@ trait OcrFillable
                 OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER => $this->fillTaxInvoiceRaisedByBuyer($quote, $data),
                 OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE => $this->fillCertificateOfIssuance($quote, $data),
                 OCRDocumentTypeEnum::ID_CARD => $this->fillEmiratesId($quote, $data, $documentTypeCode),
-                OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data),
-                OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data),
+                OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data, $documentTypeCode),
+                OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data, $documentTypeCode),
                 OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE => in_array($quoteType, [QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL], true)
                     ? $this->fillPolicySchedule($quote, $data)
                     : $this->fillMotorInsurancePolicySchedule($quote, $data),
