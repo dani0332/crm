@@ -103,7 +103,7 @@ class AwnicValidationService
         if ($customer === null) {
             $missing[] = 'customer';
         } else {
-            empty($emiratesIdNumber) && $missing[] = 'emirates id number';
+            (empty($emiratesIdNumber) || $emiratesIdNumber == null) && $missing[] = 'emirates id number';
             $customer->dob === null && $missing[] = 'dob';
         }
 
