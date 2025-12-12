@@ -89,7 +89,7 @@ class ClaimsService extends BaseService
                 'claimRequestDetails' => function ($query) {
                     $query->with('serviceType:id,code,text');
                 },
-                'manager:id,name', 
+                'manager:id,name',
             ]);
 
         $this->query = ClaimRequest::select([
