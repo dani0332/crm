@@ -189,8 +189,8 @@ class ClaimUpdateRequest extends FormRequest
             'quote_type_id.exists' => 'Selected line of business is invalid.',
             'claim_type_id.required' => 'Claim type is required.',
             'claim_type_id.exists' => 'Selected claim type is invalid.',
-            'car_model_year.min' => 'Vehicle year must be after 1900.',
-            'car_model_year.max' => 'Vehicle year cannot be more than one year in the future.',
+            'model_year.min' => 'Vehicle year must be after 1900.',
+            'model_year.max' => 'Vehicle year cannot be more than one year in the future.',
             'approved_repair_amount.numeric' => 'Approved repair amount must be a number.',
             'approved_repair_amount.min' => 'Approved repair amount must be greater than or equal to 0.',
             'approved_total_loss_amount.numeric' => 'Approved total loss amount must be a number.',
@@ -229,7 +229,7 @@ class ClaimUpdateRequest extends FormRequest
             'approved_repair_amount' => 'approved repair amount',
             'approved_total_loss_amount' => 'approved total loss amount',
             'approved_cash_loss_amount' => 'approved cash loss amount',
-            'claim_denial_reason' => 'claim denial reason',
+            'claim_decline_reason' => 'claim denial reason',
             'claim_request_type_id' => 'claim request type',
             'service_type_id' => 'service type',
             'request_reference_number' => 'request reference number',
@@ -257,7 +257,7 @@ class ClaimUpdateRequest extends FormRequest
             'car_make' => $this->car_make ? trim($this->car_make) : null,
             'car_model' => $this->car_model ? trim($this->car_model) : null,
             'incident_story' => $this->incident_story ? trim($this->incident_story) : null,
-            'claim_denial_reason' => $this->claim_denial_reason ? trim($this->claim_denial_reason) : null,
+            'claim_decline_reason' => $this->claim_decline_reason ? trim($this->claim_decline_reason) : null,
             'request_reference_number' => $this->request_reference_number ? trim($this->request_reference_number) : null,
         ]);
     }

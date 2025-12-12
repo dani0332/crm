@@ -145,7 +145,7 @@ class ClaimStoreRequest extends FormRequest
                 'numeric',
                 'min:0',
             ],
-            'claim_denial_reason' => [
+            'claim_decline_reason' => [
                 'nullable',
                 'string',
                 'max:2000',
@@ -228,7 +228,7 @@ class ClaimStoreRequest extends FormRequest
             'approved_repair_amount' => 'approved repair amount',
             'approved_total_loss_amount' => 'approved total loss amount',
             'approved_cash_loss_amount' => 'approved cash loss amount',
-            'claim_denial_reason' => 'claim denial reason',
+            'claim_decline_reason' => 'claim decline reason',
             'claim_request_type_id' => 'claim request type',
             'service_type_id' => 'service type',
             'request_reference_number' => 'request reference number',
@@ -256,7 +256,7 @@ class ClaimStoreRequest extends FormRequest
             'car_make' => $this->car_make ? trim($this->car_make) : null,
             'car_model' => $this->car_model ? trim($this->car_model) : null,
             'incident_story' => $this->incident_story ? trim($this->incident_story) : null,
-            'claim_denial_reason' => $this->claim_denial_reason ? trim($this->claim_denial_reason) : null,
+            'claim_decline_reason' => $this->claim_decline_reason ? trim($this->claim_decline_reason) : null,
             'request_reference_number' => $this->request_reference_number ? trim($this->request_reference_number) : null,
         ]);
     }
