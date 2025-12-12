@@ -5,11 +5,11 @@
   ✓ example
 
    PASS  Tests\Unit\Jobs\LifeSyncHealthQuestionnaireJobTest
-  ✓ job constructor sets properties                                      0.21s  
+  ✓ job constructor sets properties                                      0.17s  
   ✓ handle success                                                       0.03s  
   ✓ handle with error response                                           0.03s  
   ✓ handle with exception                                                0.03s  
-  ✓ handle with array result success true                                0.04s  
+  ✓ handle with array result success true                                0.03s  
   ✓ middleware returns array                                             0.03s  
   ✓ job implements should queue                                          0.03s  
   ✓ job uses correct traits                                              0.03s  
@@ -62,11 +62,11 @@
   ✓ get mime type from extension empty string                            0.04s  
   ✓ get mime type from extension with dots                               0.03s  
   ✓ get mime type from extension mixed case                              0.03s  
-  ✓ service constructor initializes dependencies                         0.04s  
-  ✓ upload to metlife data structure validation                          0.03s  
-  ✓ upload to metlife with provider code                                 0.03s  
-  ✓ upload to metlife document name handling                             0.04s  
-  ✓ upload to metlife with special characters in policy number           0.03s  
+  ✓ service constructor initializes dependencies                         0.03s  
+  ✓ upload to metlife data structure validation                          0.04s  
+  ✓ upload to metlife with provider code                                 0.05s  
+  ✓ upload to metlife document name handling                             0.05s  
+  ✓ upload to metlife with special characters in policy number           0.04s  
   ✓ upload to metlife response consistency                               0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeCacheServiceTest
@@ -86,7 +86,7 @@
   ✓ exception handling                                                   0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeResponseServiceTest
-  ✓ create response success                                              0.11s  
+  ✓ create response success                                              0.12s  
   ✓ create response failure                                              0.03s  
   ✓ handle upload response success                                       0.03s  
   ✓ handle upload response nested file reference                         0.03s  
@@ -106,15 +106,15 @@
   ✓ exception handling                                                   0.03s  
 
    FAIL  Tests\Unit\Services\MetLife\MetLifeValidationServiceTest
-  ✓ is session valid with valid session                                  0.11s  
+  ✓ is session valid with valid session                                  0.10s  
   ✓ is session valid with expired session                                0.03s  
-  ✓ is session valid with null session id original                       0.04s  
+  ✓ is session valid with null session id original                       0.03s  
   ✓ is csrf token valid with valid token                                 0.03s  
   ✓ is csrf token valid with expired token                               0.03s  
-  ✓ validate response with valid response                                0.04s  
+  ✓ validate response with valid response                                0.03s  
   ✓ validate response with invalid response                              0.03s  
   ✓ handle exception returns correct format                              0.03s  
-  ⨯ should validate payment logic coverage                               0.04s  
+  ⨯ should validate payment logic coverage                               0.03s  
   ✓ is provider metlife with valid provider                              0.03s  
   ✓ is provider metlife with invalid provider                            0.03s  
   ✓ is provider metlife with null provider                               0.04s  
@@ -148,8 +148,8 @@
   ✓ validation methods return boolean                                    0.03s  
 
    PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.71s  
-  ✓ validates required fields when creating life quote                   0.24s  
+  ✓ can create a life quote using actual controller method               0.52s  
+  ✓ validates required fields when creating life quote                   0.05s  
 
    FAIL  Tests\Feature\MetLifeIntegrationTest
   ⨯ initialize with successful api response                              0.07s  
@@ -551,5 +551,5 @@ Failed asserting that true is false.
 
 
   Tests:    21 failed, 131 passed (362 assertions)
-  Duration: 7.15s
+  Duration: 5.89s
 
