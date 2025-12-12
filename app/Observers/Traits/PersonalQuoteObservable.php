@@ -46,7 +46,7 @@ trait PersonalQuoteObservable
 
             // For now PolicyCancelled Handling is only for Bike
             if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyCancelled &&
-            ($personalQuote->isBike() || $personalQuote->isHome())) {
+            ($personalQuote->isBike() || $personalQuote->isHome() || $personalQuote->isCyber())) {
                 $this->handleBikePolicyCancelled($personalQuote);
             }
         }
@@ -193,7 +193,7 @@ trait PersonalQuoteObservable
     private function handleBikePolicyCancelled(PersonalQuote $personalQuote): void
     {
         try {
-            EmbeddedProductRepository::cancelEmbeddedProducts($personalQuote->id, quoteTypeCode::Bike);
+            EmbeddedProductRepository::cancelEmbeddedProducts($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
         } catch (Exception $e) {
             Log::error('PersonalQuoteObserver - cancel embedded products failed', [
                 'error' => $e->getMessage(),
