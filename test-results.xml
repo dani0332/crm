@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="/home/runner/work/blanka/blanka/phpunit.xml" tests="3" assertions="40" errors="0" failures="0" skipped="0" time="0.563347">
+    <testsuite name="Unit" tests="1" assertions="1" errors="0" failures="0" skipped="0" time="0.001486">
+      <testsuite name="Tests\Unit\ExampleTest" file="Example (Tests\Unit\Example)" tests="1" assertions="1" errors="0" failures="0" skipped="0" time="0.001486">
+        <testcase name="Example" file="Example (Tests\Unit\Example)::Example" class="Tests\Unit\ExampleTest" classname="Tests.Unit.ExampleTest" assertions="1" time="0.001486"/>
+      </testsuite>
+    </testsuite>
+    <testsuite name="Feature" tests="2" assertions="39" errors="0" failures="0" skipped="0" time="0.561861">
+      <testsuite name="Tests\Feature\LifeQuoteTest" file="tests/Feature/LifeQuoteTest.php" tests="2" assertions="39" errors="0" failures="0" skipped="0" time="0.561861">
+        <testcase name="can create a life quote using actual controller method" file="tests/Feature/LifeQuoteTest.php::can create a life quote using actual controller method" class="Tests\Feature\LifeQuoteTest" classname="Tests.Feature.LifeQuoteTest" assertions="20" time="0.368831"/>
+        <testcase name="validates required fields when creating life quote" file="tests/Feature/LifeQuoteTest.php::validates required fields when creating life quote" class="Tests\Feature\LifeQuoteTest" classname="Tests.Feature.LifeQuoteTest" assertions="19" time="0.193030"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>
