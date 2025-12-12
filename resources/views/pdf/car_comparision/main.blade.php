@@ -455,7 +455,7 @@
 	 <!-- first page with first banner image -->
      <div class="page">
         <div class="hero-image">
-            <img src="{{ public_path('images/car-banner-pdf-1.png') }}" 
+            <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/personal_car_first_page.jpg') }}" 
             alt="Car Banner 1">
         </div>
     </div>
@@ -463,7 +463,7 @@
     <!-- second page with second banner image -->
     <div class="page">
         <div class="hero-image">
-            <img src="{{ public_path('images/car-pdf-banner-2.png') }}" alt="Car Banner 2">
+            <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/personal_car_second_page.jpg') }}" alt="Car Banner 2">
         </div>
     </div>
 
@@ -721,14 +721,14 @@
      <!-- third page with second banner image -->
      <div class="page" style="page-break-before: always !important;">
         <div class="hero-image">
-            <img src="{{ public_path('images/home_pdf_second_last_page_with_header.jpg') }}" alt="Car Banner 2">
+            <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/personal_car_second_last_page.jpg') }}" alt="Car Banner 2">
         </div>
     </div>
 
     <!-- fourth page with second banner image -->
     <div class="page">
         <div class="hero-image" style="height: auto; max-height: 1170px;">
-            <img src="{{ public_path('images/car-comparision-4-image-1.png') }}" alt="Car Banner 2" style="height: auto; max-height: 1170px;">
+            <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/personal_car_last_page.jpg') }}" alt="Car Banner 2" style="height: auto; max-height: 1170px;">
         </div>
     </div>
     
