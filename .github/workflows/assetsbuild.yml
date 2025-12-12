@@ -10,6 +10,9 @@ on:
     branches:
       - pest-feature-tests1
 
+permissions:
+     pull-requests: write
+     contents: read
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,9 +20,6 @@ jobs:
       fail-fast: true
       matrix:
         php: [8.2]
-    permissions:
-     pull-requests: write
-     contents: read
 
     steps:
       - name: Clone repository
