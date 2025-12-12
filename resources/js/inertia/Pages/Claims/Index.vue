@@ -629,10 +629,6 @@ watch(
         {{ phone_number }}
       </template>
 
-      <template #item-line_of_business="{ line_of_business }">
-        {{ line_of_business?.text }}
-      </template>
-
       <template #item-quote_type="{ quote_type }">
         {{ quote_type?.text }}
       </template>
@@ -671,10 +667,6 @@ watch(
 
       <template #item-model_year="{ claim_request_details }">
         {{ claim_request_details.model_year }}
-      </template>
-
-      <template #item-claims_status="{ claims_status }">
-        {{ claims_status?.text }}
       </template>
 
       <template #item-manager="{ manager }">

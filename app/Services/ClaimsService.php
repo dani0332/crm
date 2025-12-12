@@ -37,11 +37,60 @@ class ClaimsService extends BaseService
 
     protected $searchPrefix = 'claims.';
     protected $query;
+    protected $claimListQuery;
     protected $perPage = 15;
 
     public function __construct()
     {
         parent::__construct();
+
+        $this->claimListQuery = ClaimRequest::select([
+            'id',
+            'uuid',
+            'code',
+            'incident',
+            'incident_date',
+            'first_name',
+            'last_name',
+            'email',
+            'mobile_no',
+            'customer_id',
+            'source',
+            'manager_id',
+            'manager_assigned_date',
+            'quote_uuid',
+            'quote_type_id',
+            'personal_quote_id',
+            'insurance_provider_id',
+            'policy_number',
+            'claim_number',
+            'claim_status_id',
+            'claim_sub_status_id',
+            'claim_type_id',
+            'claim_request_type_id',
+            'complaint_status_id',
+            'complaint_datetime',
+            'complaint_notes',
+            'next_followup_datetime',
+            'next_followup_notes',
+            'whatsapp_consent',
+            'approved_repair_amount',
+            'approved_total_loss_amount',
+            'approved_cash_loss_amount',
+            'claim_decline_reason',
+            'created_at',
+        ])
+            ->with([
+                'quoteType:id,code,text',
+                'insuranceProvider:id,code,text',
+                'claimStatus:id,text',
+                'claimSubStatus:id,text',
+                'claimType:id,code,text',
+                'claimRequestDetails' => function ($query) {
+                    $query->with('serviceType:id,code,text');
+                },
+                'manager:id,name', 
+            ]);
 
         $this->query = ClaimRequest::select([
             'id',
@@ -105,7 +154,7 @@ class ClaimsService extends BaseService
     {
         // Apply filters
         $filters = $this->getFilters($request);
-        $query = $this->applyFilters($this->query, $filters);
+        $query = $this->applyFilters($this->claimListQuery, $filters);
 
         return $query->simplePaginate($this->perPage)->withQueryString();
     }
