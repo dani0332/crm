@@ -9,24 +9,24 @@
   ✓ handle success                                                       0.03s  
   ✓ handle with error response                                           0.03s  
   ✓ handle with exception                                                0.03s  
-  ✓ handle with array result success true                                0.03s  
-  ✓ middleware returns array                                             0.04s  
-  ✓ job implements should queue                                          0.04s  
-  ✓ job uses correct traits                                              0.05s  
-  ✓ job properties are correctly typed                                   0.04s  
+  ✓ handle with array result success true                                0.04s  
+  ✓ middleware returns array                                             0.03s  
+  ✓ job implements should queue                                          0.03s  
+  ✓ job uses correct traits                                              0.03s  
+  ✓ job properties are correctly typed                                   0.03s  
   ✓ job has required methods                                             0.03s  
   ✓ job methods are public                                               0.03s  
-  ✓ job constructor accepts array                                        0.02s  
-  ✓ job constructor with empty array                                     0.04s  
+  ✓ job constructor accepts array                                        0.03s  
+  ✓ job constructor with empty array                                     0.02s  
   ✓ job constructor with minimal data                                    0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MTLHealthQuestionnaireServiceTest
-  ✓ is health questionnaire validation                                   0.15s  
-  ✓ extract health questionnaire success                                 0.05s  
-  ✓ extract health questionnaire not found                               0.04s  
+  ✓ is health questionnaire validation                                   0.18s  
+  ✓ extract health questionnaire success                                 0.03s  
+  ✓ extract health questionnaire not found                               0.03s  
   ✓ extract health questionnaire empty fields                            0.03s  
   ✓ extract health questionnaire missing submitted data                  0.03s  
-  ✓ extract health questionnaire missing fields                          0.04s  
+  ✓ extract health questionnaire missing fields                          0.03s  
   ✓ is health questionnaire with missing required fields                 0.03s  
   ✓ is health questionnaire with empty array                             0.03s  
   ✓ is health questionnaire with null                                    0.03s  
@@ -35,7 +35,7 @@
   ✓ extract health questionnaire with multiple forms                     0.03s  
   ✓ service instantiation                                                0.03s  
   ✓ service has required methods                                         0.03s  
-  ✓ service methods are private or public                                0.03s  
+  ✓ service methods are private or public                                0.02s  
 
    FAIL  Tests\Unit\Services\MetLife\MetLifeApiServiceTest
   ✓ is metlife enabled returns boolean                                   0.17s  
@@ -58,16 +58,16 @@
   ✓ get api version returns string                                       0.03s  
   ⨯ accepted document mime types contains expected types                 0.04s  
   ⨯ accepted document mime types is array                                0.03s  
-  ✓ get mime type from extension doc                                     0.04s  
+  ✓ get mime type from extension doc                                     0.03s  
   ✓ get mime type from extension empty string                            0.04s  
   ✓ get mime type from extension with dots                               0.04s  
   ✓ get mime type from extension mixed case                              0.04s  
   ✓ service constructor initializes dependencies                         0.04s  
-  ✓ upload to metlife data structure validation                          0.03s  
+  ✓ upload to metlife data structure validation                          0.04s  
   ✓ upload to metlife with provider code                                 0.04s  
   ✓ upload to metlife document name handling                             0.04s  
-  ✓ upload to metlife with special characters in policy number           0.03s  
-  ✓ upload to metlife response consistency                               0.03s  
+  ✓ upload to metlife with special characters in policy number           0.04s  
+  ✓ upload to metlife response consistency                               0.04s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeCacheServiceTest
   ✓ load session returns cached data                                     0.32s  
@@ -148,8 +148,8 @@
   ✓ validation methods return boolean                                    0.03s  
 
    PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.52s  
-  ✓ validates required fields when creating life quote                   0.11s  
+  ✓ can create a life quote using actual controller method               0.69s  
+  ✓ validates required fields when creating life quote                   0.05s  
 
    FAIL  Tests\Feature\MetLifeIntegrationTest
   ⨯ initialize with successful api response                              0.06s  
@@ -164,7 +164,7 @@
   ⨯ invalid credentials response                                         0.03s  
   ✓ cache clear removes all data                                         0.03s  
   ⨯ get api version                                                      0.03s  
-  ⨯ is metlife enabled returns boolean                                   0.04s  
+  ⨯ is metlife enabled returns boolean                                   0.03s  
   ⨯ upload validation missing policy number                              0.03s  
   ⨯ upload validation missing file                                       0.03s  
   ⨯ upload validation empty policy number                                0.03s  
@@ -551,5 +551,5 @@ Failed asserting that true is false.
 
 
   Tests:    21 failed, 131 passed (362 assertions)
-  Duration: 6.20s
+  Duration: 6.16s
 
