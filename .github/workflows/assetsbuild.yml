@@ -181,7 +181,7 @@ jobs:
         uses: peter-evans/create-pull-request@v6
 
         with:
-          token: ${{ secrets.SERVICE_ACCOUNT01_PAT }}
+          token: ${{ secrets.SERVICE_ACCOUN_PAT }}
           commit-message: 'chore: build JS/CSS assets'
           branch: 'auto/build-assets-${{ github.event.pull_request.number }}'
           base: ${{ github.event.pull_request.base.ref }}
