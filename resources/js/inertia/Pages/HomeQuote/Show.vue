@@ -1159,7 +1159,7 @@ function handleOcrNotification(event) {
           Stale for {{ countDays }}
         </p>
         <x-button
-          v-if="quote?.home_quote?.pc_qualified == true"
+          v-if="quote?.customer?.pcp_tag == true"
           size="sm"
           color="#BFA100"
           tag="div"

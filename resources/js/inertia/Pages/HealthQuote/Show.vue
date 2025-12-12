@@ -1954,7 +1954,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           Stale for {{ countDays }}
         </p>
         <x-button
-          v-if="quote?.pc_qualified == true"
+          v-if="quote?.pcp_tag == true"
           size="sm"
           color="#BFA100"
           tag="div"

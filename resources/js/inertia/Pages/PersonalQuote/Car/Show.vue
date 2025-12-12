@@ -1901,7 +1901,7 @@ const handleCancelConfirmationModal = () => {
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Car Detail</h2>
         <x-button
-          v-if="record?.pc_qualified == true"
+          v-if="record?.pcp_tag == true"
           size="sm"
           color="#BFA100"
           tag="div"

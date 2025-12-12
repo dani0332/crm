@@ -63,6 +63,12 @@ class PolicyIssuanceService
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
+        LoggerService::info('Policy Issuance Allowed Automations Check', extra: [
+            'quote_type' => $quoteType,
+            'insurance_provider' => $insuranceProvider?->code ?? 'N/A',
+            'registration_type' => $quote?->registration_type ?? 'N/A',
+        ]);
+
         if (! $insuranceProvider) {
             return false;
         }

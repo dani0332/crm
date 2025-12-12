@@ -192,8 +192,8 @@ return [
 
     /* HRM API */
     'HRM_API_ENDPOINT' => env('HRM_API_ENDPOINT', ''),
-    'HRM_API_USERNAME' => env('HRM_API_USERNAME', ''),
-    'HRM_API_PASSWORD' => env('HRM_API_PASSWORD', ''),
+    'HRM_API_CLIENT_ID' => env('HRM_API_CLIENT_ID', ''),
+    'HRM_API_CLIENT_SECRET' => env('HRM_API_CLIENT_SECRET', ''),
     'HRM_API_TIMEOUT' => env('HRM_API_TIMEOUT', 30),
     'DECLARATION_BASE_URL' => env('DECLARATION_BASE_URL', ''),
 

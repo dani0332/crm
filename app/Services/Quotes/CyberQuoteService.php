@@ -169,6 +169,12 @@ class CyberQuoteService extends BaseQuoteService
         );
         
         $data = $this->getShowCommonData($quote);
+        
+        // Generate plan-specific URL if plan and provider are available
+        $planURL = $this->generatePlanURL($quote);
+        if ($planURL) {
+            $data['planURL'] = $planURL;
+        }
 
         $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::CYBER_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::CYBER) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));
 
@@ -341,5 +347,23 @@ class CyberQuoteService extends BaseQuoteService
     public function getCyberCoverages()
     {
         return app(LookupService::class)->getCyberCoverages();
+    }
+
+    private function generatePlanURL($quote): ?string
+    {
+        $plan = $quote->plan_id ? $quote->insuranceProviderPlan : null;
+        $insuranceProvider = $quote->insurance_provider_id ? $quote->insuranceProvider : null;
+        
+        if ($plan && $insuranceProvider && $insuranceProvider->code) {
+            $planForLink = (object) [
+                'id' => $plan->id,
+                'providerCode' => $insuranceProvider->code,
+            ];
+            
+            return $this->getEcomQuoteLink($this->quoteType, $quote->uuid, $planForLink);
+        }
+        
+        // Return null - base URL from getShowCommonData will be used
+        return null;
     }
 }
