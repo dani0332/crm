@@ -202,7 +202,7 @@ jobs:
         if: steps.cpr.outputs.pull-request-number != ''
         uses: hmarr/auto-approve-action@v3
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.SERVICE_ACCOUNT_PAT }}
           pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
       - name: Auto-merge the PR
         if: steps.cpr.outputs.pull-request-number != ''
