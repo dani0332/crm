@@ -80,7 +80,7 @@ class EmbeddedProductRepository extends BaseRepository
         QuoteTypeId::Travel,
     ];
     public const ALLOWED_LOBS_FOR_EPS = [
-        EmbeddedProductEnum::COURIER => [quoteTypeCode::CYBER, quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel],
+        EmbeddedProductEnum::COURIER => [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel, quoteTypeCode::CYBER],
     ];
 
     public function model()
