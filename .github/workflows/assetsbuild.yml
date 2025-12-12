@@ -67,6 +67,8 @@ jobs:
           # Store last 50 lines of output for summary
           tail -50 test-output.txt > test-output-summary.txt
 
+          # Exit with the test exit code to properly reflect test outcome
+          # continue-on-error: true ensures workflow continues even if tests fail
           exit $TEST_EXIT_CODE
 
       - name: Read Test Output
