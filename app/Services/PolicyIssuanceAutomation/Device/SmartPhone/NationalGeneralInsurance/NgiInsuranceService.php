@@ -252,7 +252,6 @@ class NgiInsuranceService implements PolicyIssuanceInterface
                     'steps_executed' => $stepsExecuted,
                     'error' => $response['error'] ?? NgiEnum::UNKNOWN_ERROR,
                 ]);
-
                 return $response;
             }
 

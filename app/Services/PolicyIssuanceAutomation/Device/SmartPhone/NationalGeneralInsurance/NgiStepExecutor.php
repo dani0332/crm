@@ -68,6 +68,9 @@ class NgiStepExecutor
      */
     public function executeGetPolicyDocumentsStep($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
     {
+
+        // need to check 3 minutes difference
+
         LoggerService::info('Starting get policy documents', extra: [
             'step' => NgiEnum::STEP_GET_POLICY_DOCUMENTS,
             'process_id' => $process->id,
@@ -167,8 +170,8 @@ class NgiStepExecutor
             app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus(
                 $quote,
                 QuoteTypes::DEVICE->value,
-                PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID,
-                PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
+                PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID, // TODO::: NGI:: confirm it
+                PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, // TODO::: NGI:: confirm it
                 'Send And Book Policy'
             );
 
