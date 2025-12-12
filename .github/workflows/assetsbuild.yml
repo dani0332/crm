@@ -22,9 +22,7 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: true
+      
       - name: Install PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -35,11 +33,6 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Copy environment file
-        run: cp .env.example .env || true
-
-      - name: Generate application key
-        run: php artisan key:generate || true
       - name: Run Tests
         id: tests
         continue-on-error: true
