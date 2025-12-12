@@ -50,7 +50,7 @@ class CustomerAddressService
 
                 $this->sendAddressNotificationToCustomer($quote, $request->input('addressObj'), $quoteType->id());
                 $this->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $quote->uuid, $quoteType->id());
-                SyncCourierQuoteWithMacrm::dispatch($quote, $quoteType->id());
+                // SyncCourierQuoteWithMacrm::dispatch($quote, $quoteType->id());
             }
         }
     }
