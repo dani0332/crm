@@ -1,18 +1,16 @@
 name: Build JS and CSS assets
 
 on:
-#  pull_request:
-#    branches:
-#      - develop
-#      - main
-#    types: [opened, reopened, edited, synchronize]
-  push:
+  pull_request:
     branches:
-      - pest-feature-tests1
+      - develop
+      - main
+      - test-env-deployment
+    types: [opened, reopened, edited, synchronize]
 
 permissions:
      pull-requests: write
-     contents: read
+     contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,6 +22,9 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
       - name: Install PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -163,8 +164,6 @@ jobs:
               issue_number: prNumber,
               body: commentBody,
             });
-      # - name: Run Tests
-      #   run: vendor/bin/pest
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -176,11 +175,6 @@ jobs:
 
       - run: yarn && yarn lint --fix && yarn vite build && yarn vite build --config vite-worker.config.js
 
-      # - name: Push changes
-      #   uses: stefanzweifel/git-auto-commit-action@v5
-      #   with:
-      #     commit_message: yarn prod
-
       - name: Create Pull Request for built assets
         id: cpr
         uses: peter-evans/create-pull-request@v6
@@ -189,7 +183,7 @@ jobs:
           token: ${{ secrets.SERVICE_ACCOUNT_PAT }}
           commit-message: 'chore: build JS/CSS assets'
           branch: 'auto/build-assets-${{ github.event.pull_request.number }}'
-          base: ${{ github.event.pull_request.head.ref }}
+          base: ${{ github.event.pull_request.base.ref }}
           title: 'Auto build JS and CSS assets'
           body: |
             This PR was automatically created by the Build JS/CSS Assets workflow.
