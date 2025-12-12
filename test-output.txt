@@ -2,10 +2,10 @@
   [30;43;1m WARN [39;49;22m Your XML configuration validates against a deprecated schema. Migrate your XML configuration using "--migrate-configuration"!
 
    PASS  Tests\Unit\ExampleTest
-  ✓ example
+  ✓ example                                                              0.01s  
 
    PASS  Tests\Unit\Jobs\LifeSyncHealthQuestionnaireJobTest
-  ✓ job constructor sets properties                                      0.18s  
+  ✓ job constructor sets properties                                      0.28s  
   ✓ handle success                                                       0.03s  
   ✓ handle with error response                                           0.03s  
   ✓ handle with exception                                                0.03s  
@@ -22,12 +22,12 @@
 
    PASS  Tests\Unit\Services\MetLife\MTLHealthQuestionnaireServiceTest
   ✓ is health questionnaire validation                                   0.15s  
-  ✓ extract health questionnaire success                                 0.03s  
+  ✓ extract health questionnaire success                                 0.04s  
   ✓ extract health questionnaire not found                               0.03s  
   ✓ extract health questionnaire empty fields                            0.03s  
   ✓ extract health questionnaire missing submitted data                  0.03s  
   ✓ extract health questionnaire missing fields                          0.03s  
-  ✓ is health questionnaire with missing required fields                 0.03s  
+  ✓ is health questionnaire with missing required fields                 0.04s  
   ✓ is health questionnaire with empty array                             0.03s  
   ✓ is health questionnaire with null                                    0.03s  
   ✓ is health questionnaire case sensitivity                             0.03s  
@@ -86,7 +86,7 @@
   ✓ exception handling                                                   0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeResponseServiceTest
-  ✓ create response success                                              0.11s  
+  ✓ create response success                                              0.10s  
   ✓ create response failure                                              0.03s  
   ✓ handle upload response success                                       0.03s  
   ✓ handle upload response nested file reference                         0.03s  
@@ -135,8 +135,8 @@
   ✓ validate response with missing status                                0.03s  
   ✓ validate response with string status                                 0.03s  
   ✓ validate response with integer status                                0.03s  
-  ✓ validate response with empty array                                   0.03s  
-  ✓ handle exception with different exception types                      0.03s  
+  ✓ validate response with empty array                                   0.05s  
+  ✓ handle exception with different exception types                      0.04s  
   ✓ handle exception with empty action                                   0.03s  
   ✓ handle exception with special characters in action                   0.03s  
   ⨯ should validate payment with integration disabled                    0.03s  
@@ -148,8 +148,8 @@
   ✓ validation methods return boolean                                    0.03s  
 
    PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.53s  
-  ✓ validates required fields when creating life quote                   0.05s  
+  ✓ can create a life quote using actual controller method               0.92s  
+  ✓ validates required fields when creating life quote                   0.14s  
 
    FAIL  Tests\Feature\MetLifeIntegrationTest
   ⨯ initialize with successful api response                              0.06s  
@@ -551,5 +551,5 @@ Failed asserting that true is false.
 
 
   Tests:    21 failed, 131 passed (362 assertions)
-  Duration: 6.23s
+  Duration: 6.65s
 
