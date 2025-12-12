@@ -5,37 +5,37 @@
   ✓ example
 
    PASS  Tests\Unit\Jobs\LifeSyncHealthQuestionnaireJobTest
-  ✓ job constructor sets properties                                      0.19s  
+  ✓ job constructor sets properties                                      0.22s  
   ✓ handle success                                                       0.03s  
-  ✓ handle with error response                                           0.02s  
+  ✓ handle with error response                                           0.03s  
   ✓ handle with exception                                                0.03s  
   ✓ handle with array result success true                                0.03s  
   ✓ middleware returns array                                             0.03s  
-  ✓ job implements should queue                                          0.04s  
-  ✓ job uses correct traits                                              0.05s  
+  ✓ job implements should queue                                          0.03s  
+  ✓ job uses correct traits                                              0.03s  
   ✓ job properties are correctly typed                                   0.03s  
   ✓ job has required methods                                             0.03s  
   ✓ job methods are public                                               0.03s  
-  ✓ job constructor accepts array                                        0.04s  
-  ✓ job constructor with empty array                                     0.04s  
+  ✓ job constructor accepts array                                        0.03s  
+  ✓ job constructor with empty array                                     0.03s  
   ✓ job constructor with minimal data                                    0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MTLHealthQuestionnaireServiceTest
-  ✓ is health questionnaire validation                                   0.16s  
+  ✓ is health questionnaire validation                                   0.15s  
   ✓ extract health questionnaire success                                 0.04s  
   ✓ extract health questionnaire not found                               0.03s  
-  ✓ extract health questionnaire empty fields                            0.03s  
-  ✓ extract health questionnaire missing submitted data                  0.03s  
-  ✓ extract health questionnaire missing fields                          0.03s  
-  ✓ is health questionnaire with missing required fields                 0.03s  
-  ✓ is health questionnaire with empty array                             0.03s  
-  ✓ is health questionnaire with null                                    0.03s  
-  ✓ is health questionnaire case sensitivity                             0.03s  
+  ✓ extract health questionnaire empty fields                            0.04s  
+  ✓ extract health questionnaire missing submitted data                  0.04s  
+  ✓ extract health questionnaire missing fields                          0.04s  
+  ✓ is health questionnaire with missing required fields                 0.05s  
+  ✓ is health questionnaire with empty array                             0.06s  
+  ✓ is health questionnaire with null                                    0.05s  
+  ✓ is health questionnaire case sensitivity                             0.05s  
   ✓ is health questionnaire with extra fields                            0.04s  
   ✓ extract health questionnaire with multiple forms                     0.03s  
-  ✓ service instantiation                                                0.04s  
-  ✓ service has required methods                                         0.03s  
-  ✓ service methods are private or public                                0.02s  
+  ✓ service instantiation                                                0.03s  
+  ✓ service has required methods                                         0.04s  
+  ✓ service methods are private or public                                0.03s  
 
    FAIL  Tests\Unit\Services\MetLife\MetLifeApiServiceTest
   ✓ is metlife enabled returns boolean                                   0.19s  
@@ -86,7 +86,7 @@
   ✓ exception handling                                                   0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeResponseServiceTest
-  ✓ create response success                                              0.11s  
+  ✓ create response success                                              0.10s  
   ✓ create response failure                                              0.03s  
   ✓ handle upload response success                                       0.03s  
   ✓ handle upload response nested file reference                         0.04s  
@@ -148,8 +148,8 @@
   ✓ validation methods return boolean                                    0.03s  
 
    PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.71s  
-  ✓ validates required fields when creating life quote                   0.05s  
+  ✓ can create a life quote using actual controller method               0.77s  
+  ✓ validates required fields when creating life quote                   0.17s  
 
    FAIL  Tests\Feature\MetLifeIntegrationTest
   ⨯ initialize with successful api response                              0.07s  
@@ -551,5 +551,5 @@ Failed asserting that true is false.
 
 
   Tests:    21 failed, 131 passed (362 assertions)
-  Duration: 6.85s
+  Duration: 6.90s
 
