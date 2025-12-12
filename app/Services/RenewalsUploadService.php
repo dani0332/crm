@@ -1682,7 +1682,7 @@ class RenewalsUploadService
 
         $provider = InsuranceProvider::where('text', $data['provider_name'])->first();
 
-        $leadValidationErrors = [];
+        $leadValidationErrors = collect();
         $leadData = (object) $data;
         $isGenesisLead = $this->isGenesisLead($leadData, $provider, $leadValidationErrors);
 
