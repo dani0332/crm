@@ -5,10 +5,10 @@
   ✓ example
 
    PASS  Tests\Unit\Jobs\LifeSyncHealthQuestionnaireJobTest
-  ✓ job constructor sets properties                                      0.23s  
+  ✓ job constructor sets properties                                      0.19s  
   ✓ handle success                                                       0.03s  
   ✓ handle with error response                                           0.03s  
-  ✓ handle with exception                                                0.02s  
+  ✓ handle with exception                                                0.03s  
   ✓ handle with array result success true                                0.03s  
   ✓ middleware returns array                                             0.03s  
   ✓ job implements should queue                                          0.03s  
@@ -18,10 +18,10 @@
   ✓ job methods are public                                               0.03s  
   ✓ job constructor accepts array                                        0.03s  
   ✓ job constructor with empty array                                     0.03s  
-  ✓ job constructor with minimal data                                    0.03s  
+  ✓ job constructor with minimal data                                    0.04s  
 
    PASS  Tests\Unit\Services\MetLife\MTLHealthQuestionnaireServiceTest
-  ✓ is health questionnaire validation                                   0.19s  
+  ✓ is health questionnaire validation                                   0.14s  
   ✓ extract health questionnaire success                                 0.03s  
   ✓ extract health questionnaire not found                               0.03s  
   ✓ extract health questionnaire empty fields                            0.03s  
@@ -59,7 +59,7 @@
   ⨯ accepted document mime types contains expected types                 0.03s  
   ⨯ accepted document mime types is array                                0.03s  
   ✓ get mime type from extension doc                                     0.03s  
-  ✓ get mime type from extension empty string                            0.03s  
+  ✓ get mime type from extension empty string                            0.04s  
   ✓ get mime type from extension with dots                               0.03s  
   ✓ get mime type from extension mixed case                              0.03s  
   ✓ service constructor initializes dependencies                         0.03s  
@@ -70,7 +70,7 @@
   ✓ upload to metlife response consistency                               0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeCacheServiceTest
-  ✓ load session returns cached data                                     0.30s  
+  ✓ load session returns cached data                                     0.31s  
   ✓ cache session stores data                                            0.03s  
   ✓ cache tokens stores data                                             0.03s  
   ✓ load cached session data with type casting                           0.03s  
@@ -148,8 +148,8 @@
   ✓ validation methods return boolean                                    0.03s  
 
    PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.52s  
-  ✓ validates required fields when creating life quote                   0.05s  
+  ✓ can create a life quote using actual controller method               1.04s  
+  ✓ validates required fields when creating life quote                   0.13s  
 
    FAIL  Tests\Feature\MetLifeIntegrationTest
   ⨯ initialize with successful api response                              0.06s  
@@ -551,5 +551,5 @@ Failed asserting that true is false.
 
 
   Tests:    21 failed, 131 passed (362 assertions)
-  Duration: 5.89s
+  Duration: 6.65s
 
