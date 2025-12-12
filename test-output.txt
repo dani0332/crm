@@ -2,11 +2,11 @@
   [30;43;1m WARN [39;49;22m Your XML configuration validates against a deprecated schema. Migrate your XML configuration using "--migrate-configuration"!
 
    PASS  Tests\Unit\ExampleTest
-  ✓ example                                                              0.01s  
+  ✓ example
 
    PASS  Tests\Unit\Jobs\LifeSyncHealthQuestionnaireJobTest
-  ✓ job constructor sets properties                                      0.16s  
-  ✓ handle success                                                       0.03s  
+  ✓ job constructor sets properties                                      0.22s  
+  ✓ handle success                                                       0.05s  
   ✓ handle with error response                                           0.03s  
   ✓ handle with exception                                                0.03s  
   ✓ handle with array result success true                                0.04s  
@@ -21,13 +21,13 @@
   ✓ job constructor with minimal data                                    0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MTLHealthQuestionnaireServiceTest
-  ✓ is health questionnaire validation                                   0.16s  
-  ✓ extract health questionnaire success                                 0.05s  
-  ✓ extract health questionnaire not found                               0.05s  
+  ✓ is health questionnaire validation                                   0.15s  
+  ✓ extract health questionnaire success                                 0.03s  
+  ✓ extract health questionnaire not found                               0.03s  
   ✓ extract health questionnaire empty fields                            0.03s  
   ✓ extract health questionnaire missing submitted data                  0.03s  
   ✓ extract health questionnaire missing fields                          0.03s  
-  ✓ is health questionnaire with missing required fields                 0.04s  
+  ✓ is health questionnaire with missing required fields                 0.03s  
   ✓ is health questionnaire with empty array                             0.03s  
   ✓ is health questionnaire with null                                    0.03s  
   ✓ is health questionnaire case sensitivity                             0.03s  
@@ -43,8 +43,8 @@
   ✓ get mime type from extension docx                                    0.03s  
   ✓ get mime type from extension unknown                                 0.03s  
   ✓ get mime type from extension case insensitive                        0.03s  
-  ⨯ accepted document mime types structure                               0.03s  
-  ✓ service initialization properties                                    0.03s  
+  ⨯ accepted document mime types structure                               0.05s  
+  ✓ service initialization properties                                    0.05s  
   ✓ upload to metlife validation missing policy number                   0.03s  
   ✓ upload to metlife validation missing file                            0.03s  
   ✓ upload to metlife validation empty policy number                     0.03s  
@@ -86,7 +86,7 @@
   ✓ exception handling                                                   0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeResponseServiceTest
-  ✓ create response success                                              0.10s  
+  ✓ create response success                                              0.11s  
   ✓ create response failure                                              0.03s  
   ✓ handle upload response success                                       0.03s  
   ✓ handle upload response nested file reference                         0.03s  
@@ -114,7 +114,7 @@
   ✓ validate response with valid response                                0.03s  
   ✓ validate response with invalid response                              0.03s  
   ✓ handle exception returns correct format                              0.03s  
-  ⨯ should validate payment logic coverage                               0.03s  
+  ⨯ should validate payment logic coverage                               0.04s  
   ✓ is provider metlife with valid provider                              0.03s  
   ✓ is provider metlife with invalid provider                            0.03s  
   ✓ is provider metlife with null provider                               0.04s  
@@ -136,19 +136,19 @@
   ✓ validate response with string status                                 0.03s  
   ✓ validate response with integer status                                0.03s  
   ✓ validate response with empty array                                   0.04s  
-  ✓ handle exception with different exception types                      0.03s  
-  ✓ handle exception with empty action                                   0.03s  
-  ✓ handle exception with special characters in action                   0.03s  
-  ⨯ should validate payment with integration disabled                    0.03s  
-  ⨯ should validate payment with integration null                        0.03s  
-  ⨯ should validate payment with integration false                       0.04s  
-  ⨯ should validate payment with integration string true                 0.03s  
-  ⨯ should validate payment with integration string false                0.03s  
-  ✓ is integration enabled returns boolean                               0.03s  
+  ✓ handle exception with different exception types                      0.04s  
+  ✓ handle exception with empty action                                   0.04s  
+  ✓ handle exception with special characters in action                   0.05s  
+  ⨯ should validate payment with integration disabled                    0.04s  
+  ⨯ should validate payment with integration null                        0.04s  
+  ⨯ should validate payment with integration false                       0.05s  
+  ⨯ should validate payment with integration string true                 0.04s  
+  ⨯ should validate payment with integration string false                0.04s  
+  ✓ is integration enabled returns boolean                               0.05s  
   ✓ validation methods return boolean                                    0.03s  
 
    PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.62s  
+  ✓ can create a life quote using actual controller method               0.69s  
   ✓ validates required fields when creating life quote                   0.05s  
 
    FAIL  Tests\Feature\MetLifeIntegrationTest
@@ -165,7 +165,7 @@
   ✓ cache clear removes all data                                         0.03s  
   ⨯ get api version                                                      0.03s  
   ⨯ is metlife enabled returns boolean                                   0.04s  
-  ⨯ upload validation missing policy number                              0.03s  
+  ⨯ upload validation missing policy number                              0.04s  
   ⨯ upload validation missing file                                       0.03s  
   ⨯ upload validation empty policy number                                0.04s  
   ⨯ upload validation empty file                                         0.03s  
@@ -551,5 +551,5 @@ Failed asserting that true is false.
 
 
   Tests:    21 failed, 131 passed (362 assertions)
-  Duration: 6.84s
+  Duration: 6.59s
 
