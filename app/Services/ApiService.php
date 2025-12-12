@@ -601,7 +601,7 @@ class ApiService
 
     public function stpAdvisorNotification($request)
     {
-        // try {
+        try {
             $quoteType = QuoteTypes::getName($request->quoteTypeId);
             if ($quoteType && $quoteType->value) {
                 switch ($quoteType->value) {
@@ -627,11 +627,11 @@ class ApiService
                         ];
                 }
             }
-        // } catch (\Exception $e) {
-        //     return [
-        //         'success' => false,
-        //         'message' => 'STP Advisor notification failed: '.$e->getMessage(),
-        //     ];
-        // }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'STP Advisor notification failed: '.$e->getMessage(),
+            ];
+        }
     }
 }

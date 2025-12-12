@@ -10,32 +10,23 @@ let worker;
 
 const listen = () => {
   if (!page.props.auth?.user?.id) {
-    console.warn('STP Advisor Notification - User not authenticated, skipping setup');
     return;
   }
   
   if (!page.props.pusherKey || !page.props.pusherCluster) {
-    console.warn('STP Advisor Notification - Pusher credentials missing, skipping setup');
     return;
   }
   
-  console.log('STP Advisor Notification - Setting up listener');
-  console.log('Channel:', channelName);
-  console.log('Event:', eventName);
-  console.log('User ID:', page.props.auth.user.id);
+ 
   worker = new SharedWorker('/build/workers/pusher.worker.js');
 
   worker.port.addEventListener('message', e => {
-    console.log('STP Advisor Notification received:', e.data);
-    console.log('Current user ID:', page.props.auth.user.id);
-    console.log('Notification advisorId:', e.data.advisorId);
     
-    // Convert both to numbers for comparison to handle type mismatches
+    // Convert both to numbers for comparison to handle type mismatchesp
     const notificationAdvisorId = Number(e.data.advisorId);
     const currentUserId = Number(page.props.auth.user.id);
     
     if (notificationAdvisorId === currentUserId) {
-      console.log('STP Advisor Notification matched - showing notification');
       showNotification.value = true;
       notificationData.value = {
         imageUrl: '/image/alfred-theme.png',
@@ -46,18 +37,14 @@ const listen = () => {
         timeout: 10000,
       };
       hideNotificationTimeOut();
-    } else {
-      console.log('STP Advisor Notification - IDs do not match, ignoring');
-    }
+    } 
   });
 
   worker.onerror = function (error) {
-    console.error('STP Advisor Notification worker error:', error);
     worker.port.close();
   };
 
   worker.port.onmessageerror = function (error) {
-    console.error('STP Advisor Notification port message error:', error);
   };
 
   worker.port.start();
@@ -71,7 +58,6 @@ const listen = () => {
     pusherCluster: page.props.pusherCluster,
   });
   
-  console.log('STP Advisor Notification - Subscription message sent');
 };
 
 const hideNotification = () => {

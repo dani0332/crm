@@ -11,6 +11,7 @@ class PusherNotificationService extends BaseService
 {
     public function sendSTPAdvisorNotification($lead)
     {
+        try {
         $advisor = User::where('id', $lead->advisor_id)->first();
         
         if (!$advisor || !$advisor->id) {
@@ -28,5 +29,13 @@ class PusherNotificationService extends BaseService
         LoggerService::info(self::class." - Broadcasting STP notification to advisor (ID: {$advisor->id}) for UUID: {$lead->uuid}");
         broadcast(new AdvisorNotificationPushed($pusherData, $advisor->id));
         LoggerService::info(self::class." - Pusher notification broadcasted to advisor (ID: {$advisor->id}) for UUID: {$lead->uuid}");
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': STP advisor notification broadcasting failed',  [
+                'uuid' => $lead->uuid,
+                'advisor_id' => $advisor->id,
+                'error' => $e->getMessage(),
+            ]);
+            return;
+        }
     }
 }
