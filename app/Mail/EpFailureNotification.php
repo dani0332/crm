@@ -50,7 +50,6 @@ class EpFailureNotification extends Mailable
         $ep = EmbeddedProduct::whereHas('prices.transactions', fn ($q) => $q->where('id', $this->etId))->first();
         $epProductName = $ep->product_name ?? 'Unknown';
 
-        $isProd = app()->environment('production');
         $this->getEpFailureEmailConfigs();
 
         // Get quote object first
@@ -61,14 +60,17 @@ class EpFailureNotification extends Mailable
 
         // Generate IMCRM link based on quote
         $imcrmLink = $this->generateImcrmLink();
+
+        $fromEmail = explode(',', str_replace(' ', '', $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM]));
+        $toEmail = explode(',', str_replace(' ', '', $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_TO]));
+        $replyToEmail = explode(',', str_replace(' ', '', $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO]));
         $ccEmails = explode(',', str_replace(' ', '', $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_CC]));
-        $from = $isProd ? ['alfred@notify.insurancemarket.ae', 'InsuranceMarket.ae'] : ['alfred@testnotify.alfred.ae', 'InsuranceMarket Test'];
 
         return $this->subject($subject)
-            ->from(...$from)
-            ->to($this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_TO])
-            ->replyTo($this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO])
-            ->cc($ccEmails)
+            ->from(...array_slice($fromEmail, 0, 2)) // for email & name
+            ->to(...array_slice($toEmail, 0, 1)) // only email address
+            ->replyTo(...array_slice($replyToEmail, 0, 2))
+            ->cc($ccEmails) // multiple cc emails
             ->view('email.ep-booking-job-failed', [
                 'refId' => $refId,
                 'imcrmLink' => $imcrmLink,
@@ -79,6 +81,7 @@ class EpFailureNotification extends Mailable
     private function getEpFailureEmailConfigs()
     {
         $epEcbAppStorageKeys = [
+            ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM,
             ApplicationStorageEnums::EP_FAILURE_EMAIL_TO,
             ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO,
             ApplicationStorageEnums::EP_FAILURE_EMAIL_CC,
