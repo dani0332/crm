@@ -1690,9 +1690,13 @@ class RenewalsUploadService
         $provider = $isGenesisLead['status'] ? $isGenesisLead['gigInsuranceProvider'] : $provider;
 
         // This is added for production error where sometime user change the plan name or repair type after the batch upload
-        if(! $provider) {
-            LoggerService::info($logPrefix.' Provider not found due to change of plan name or repair type after the batch upload');
-            return false;
+        if (! $provider) {
+            LoggerService::warning($logPrefix. ' Provider not found due to change of plan name or repair type after the batch upload', extra: [
+                'provider' => $data['provider_name'] ?? null,
+                'quote_uuid' => $quote->uuid,
+            ]);
+
+            return 'Provider not found: '.($data['provider_name'] ?? 'N/A');
         }
 
         $carPlan = CarPlan::where([
@@ -1708,6 +1712,18 @@ class RenewalsUploadService
                 CarPlanAddonsCode::BREAKDOWN_COVER,
             ])->with('carAddonOptions');
         }])->first();
+
+        if (! $carPlan) {
+            LoggerService::warning($logPrefix.' Plan not found', extra: [
+                'provider' => $data['provider_name'] ?? null,
+                'plan' => $data['plan_name'] ?? null,
+                'plan_type' => $data['plan_type'] ?? null,
+                'provider_id' => $provider->id,
+                'quote_uuid' => $quote->uuid,
+            ]);
+
+            return 'Car plan not found for provider: '.($data['provider_name'] ?? 'N/A').', plan: '.($data['plan_name'] ?? 'N/A').', type: '.($data['plan_type'] ?? 'N/A');
+        }
 
         $planData = [
             'quoteUID' => $quote->uuid,
