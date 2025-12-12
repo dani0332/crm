@@ -99,7 +99,7 @@ Before proceeding, ensure that you have the following prerequisites installed on
 - Docker
 - Docker Compose
 
-## Configuration
+## Configurations
 
 The provided configuration is a basic setup that you can customize according to your requirements. Some ports may already be in use by other services on your system, so you may need to mirror those ports using Docker, these environment variable are necessary it will help you configure according to your need. You can use the "localenvs_docker" which already have these keys set by default at Doppler, There is already configuration available on doppler "localenvs_docker" if you configure with this env configuration everything run smoothly
 
