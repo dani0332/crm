@@ -120,7 +120,7 @@ class ClaimNextFollowUpUpdateRequest extends FormRequest
                     $now = new \DateTime;
                     $maxDate = new \DateTime('+15 days');
 
-                    \Log::info('NextFollowUp - Custom validation:', [
+                    LoggerService::info('NextFollowUp - Custom validation:', [
                         'selected_date' => $selectedDate->format('Y-m-d H:i:s'),
                         'current_time' => $now->format('Y-m-d H:i:s'),
                         'max_date' => $maxDate->format('Y-m-d H:i:s'),
