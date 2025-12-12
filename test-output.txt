@@ -4,10 +4,552 @@
    PASS  Tests\Unit\ExampleTest
   ✓ example
 
-   PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.37s  
-  ✓ validates required fields when creating life quote                   0.19s  
+   PASS  Tests\Unit\Jobs\LifeSyncHealthQuestionnaireJobTest
+  ✓ job constructor sets properties                                      0.17s  
+  ✓ handle success                                                       0.03s  
+  ✓ handle with error response                                           0.04s  
+  ✓ handle with exception                                                0.03s  
+  ✓ handle with array result success true                                0.03s  
+  ✓ middleware returns array                                             0.03s  
+  ✓ job implements should queue                                          0.03s  
+  ✓ job uses correct traits                                              0.03s  
+  ✓ job properties are correctly typed                                   0.03s  
+  ✓ job has required methods                                             0.03s  
+  ✓ job methods are public                                               0.03s  
+  ✓ job constructor accepts array                                        0.03s  
+  ✓ job constructor with empty array                                     0.03s  
+  ✓ job constructor with minimal data                                    0.03s  
 
-  Tests:    3 passed (40 assertions)
-  Duration: 0.65s
+   PASS  Tests\Unit\Services\MetLife\MTLHealthQuestionnaireServiceTest
+  ✓ is health questionnaire validation                                   0.15s  
+  ✓ extract health questionnaire success                                 0.04s  
+  ✓ extract health questionnaire not found                               0.04s  
+  ✓ extract health questionnaire empty fields                            0.04s  
+  ✓ extract health questionnaire missing submitted data                  0.04s  
+  ✓ extract health questionnaire missing fields                          0.03s  
+  ✓ is health questionnaire with missing required fields                 0.03s  
+  ✓ is health questionnaire with empty array                             0.04s  
+  ✓ is health questionnaire with null                                    0.03s  
+  ✓ is health questionnaire case sensitivity                             0.03s  
+  ✓ is health questionnaire with extra fields                            0.04s  
+  ✓ extract health questionnaire with multiple forms                     0.03s  
+  ✓ service instantiation                                                0.03s  
+  ✓ service has required methods                                         0.03s  
+  ✓ service methods are private or public                                0.03s  
+
+   FAIL  Tests\Unit\Services\MetLife\MetLifeApiServiceTest
+  ✓ is metlife enabled returns boolean                                   0.17s  
+  ✓ get mime type from extension pdf                                     0.03s  
+  ✓ get mime type from extension docx                                    0.03s  
+  ✓ get mime type from extension unknown                                 0.03s  
+  ✓ get mime type from extension case insensitive                        0.03s  
+  ⨯ accepted document mime types structure                               0.03s  
+  ✓ service initialization properties                                    0.03s  
+  ✓ upload to metlife validation missing policy number                   0.03s  
+  ✓ upload to metlife validation missing file                            0.03s  
+  ✓ upload to metlife validation empty policy number                     0.03s  
+  ✓ upload to metlife validation empty file                              0.03s  
+  ✓ response structure consistency                                       0.03s  
+  ✓ upload to metlife with valid data structure                          0.03s  
+  ✓ upload to metlife with null policy number                            0.03s  
+  ✓ upload to metlife with null file                                     0.03s  
+  ✓ upload to metlife with whitespace policy number                      0.05s  
+  ✓ upload to metlife with whitespace file                               0.04s  
+  ✓ get api version returns string                                       0.04s  
+  ⨯ accepted document mime types contains expected types                 0.03s  
+  ⨯ accepted document mime types is array                                0.03s  
+  ✓ get mime type from extension doc                                     0.03s  
+  ✓ get mime type from extension empty string                            0.03s  
+  ✓ get mime type from extension with dots                               0.03s  
+  ✓ get mime type from extension mixed case                              0.03s  
+  ✓ service constructor initializes dependencies                         0.03s  
+  ✓ upload to metlife data structure validation                          0.03s  
+  ✓ upload to metlife with provider code                                 0.03s  
+  ✓ upload to metlife document name handling                             0.04s  
+  ✓ upload to metlife with special characters in policy number           0.03s  
+  ✓ upload to metlife response consistency                               0.03s  
+
+   PASS  Tests\Unit\Services\MetLife\MetLifeCacheServiceTest
+  ✓ load session returns cached data                                     0.35s  
+  ✓ cache session stores data                                            0.04s  
+  ✓ cache tokens stores data                                             0.03s  
+  ✓ load cached session data with type casting                           0.04s  
+  ✓ clear cache removes all data                                         0.04s  
+
+   PASS  Tests\Unit\Services\MetLife\MetLifeRequestServiceTest
+  ✓ make request get success                                             0.10s  
+  ✓ make request post success                                            0.03s  
+  ✓ make request unsupported method                                      0.03s  
+  ✓ make request failure                                                 0.03s  
+  ✓ build headers with auth                                              0.04s  
+  ✓ build headers without auth                                           0.04s  
+  ✓ exception handling                                                   0.04s  
+
+   PASS  Tests\Unit\Services\MetLife\MetLifeResponseServiceTest
+  ✓ create response success                                              0.11s  
+  ✓ create response failure                                              0.04s  
+  ✓ handle upload response success                                       0.04s  
+  ✓ handle upload response nested file reference                         0.04s  
+  ✓ handle upload response failure                                       0.04s  
+  ✓ handle http response success                                         0.03s  
+  ✓ handle http response failure                                         0.03s  
+  ✓ handle exception response                                            0.03s  
+  ✓ response structure consistency                                       0.03s  
+
+   PASS  Tests\Unit\Services\MetLife\MetLifeSimpleTest
+  ✓ request service http calls                                           0.13s  
+  ✓ cache service operations                                             0.03s  
+  ✓ validation service logic                                             0.03s  
+  ✓ http headers building                                                0.04s  
+  ✓ cache clear functionality                                            0.03s  
+  ✓ response validation                                                  0.03s  
+  ✓ exception handling                                                   0.03s  
+
+   FAIL  Tests\Unit\Services\MetLife\MetLifeValidationServiceTest
+  ✓ is session valid with valid session                                  0.11s  
+  ✓ is session valid with expired session                                0.03s  
+  ✓ is session valid with null session id original                       0.04s  
+  ✓ is csrf token valid with valid token                                 0.03s  
+  ✓ is csrf token valid with expired token                               0.03s  
+  ✓ validate response with valid response                                0.04s  
+  ✓ validate response with invalid response                              0.03s  
+  ✓ handle exception returns correct format                              0.03s  
+  ⨯ should validate payment logic coverage                               0.04s  
+  ✓ is provider metlife with valid provider                              0.03s  
+  ✓ is provider metlife with invalid provider                            0.03s  
+  ✓ is provider metlife with null provider                               0.04s  
+  ✓ is provider metlife with empty string provider                       0.03s  
+  ✓ is provider metlife case sensitivity                                 0.03s  
+  ✓ is csrf token valid with null token                                  0.03s  
+  ✓ is csrf token valid with null created at                             0.03s  
+  ✓ is csrf token valid with both null                                   0.03s  
+  ✓ is csrf token valid with zero timeout                                0.04s  
+  ✓ is csrf token valid with negative timeout                            0.03s  
+  ✓ is session valid with null session id                                0.03s  
+  ✓ is session valid with null created at                                0.03s  
+  ✓ is session valid with both null                                      0.03s  
+  ✓ is session valid with zero timeout                                   0.03s  
+  ✓ is session valid with negative timeout                               0.04s  
+  ✓ is session valid exactly at timeout                                  0.03s  
+  ✓ is csrf token valid exactly at timeout                               0.03s  
+  ✓ validate response with missing status                                0.04s  
+  ✓ validate response with string status                                 0.03s  
+  ✓ validate response with integer status                                0.03s  
+  ✓ validate response with empty array                                   0.04s  
+  ✓ handle exception with different exception types                      0.03s  
+  ✓ handle exception with empty action                                   0.03s  
+  ✓ handle exception with special characters in action                   0.04s  
+  ⨯ should validate payment with integration disabled                    0.03s  
+  ⨯ should validate payment with integration null                        0.03s  
+  ⨯ should validate payment with integration false                       0.04s  
+  ⨯ should validate payment with integration string true                 0.03s  
+  ⨯ should validate payment with integration string false                0.03s  
+  ✓ is integration enabled returns boolean                               0.03s  
+  ✓ validation methods return boolean                                    0.03s  
+
+   PASS  Tests\Feature\LifeQuoteTest
+  ✓ can create a life quote using actual controller method               0.90s  
+  ✓ validates required fields when creating life quote                   0.05s  
+
+   FAIL  Tests\Feature\MetLifeIntegrationTest
+  ⨯ initialize with successful api response                              0.06s  
+  ⨯ login with successful api response                                   0.03s  
+  ✓ cache session and load                                               0.03s  
+  ✓ cached session data with type casting                                0.04s  
+  ✓ expired session detection                                            0.03s  
+  ✓ valid session detection                                              0.03s  
+  ✓ session at timeout boundary                                          0.04s  
+  ⨯ api failure response                                                 0.03s  
+  ⨯ network timeout handling                                             0.03s  
+  ⨯ invalid credentials response                                         0.04s  
+  ✓ cache clear removes all data                                         0.03s  
+  ⨯ get api version                                                      0.03s  
+  ⨯ is metlife enabled returns boolean                                   0.05s  
+  ⨯ upload validation missing policy number                              0.04s  
+  ⨯ upload validation missing file                                       0.04s  
+  ⨯ upload validation empty policy number                                0.05s  
+  ⨯ upload validation empty file                                         0.04s  
+  ⨯ response structure consistency                                       0.04s  
+  ✓ null session validation                                              0.05s  
+  ✓ response validation                                                  0.04s  
+  ✓ exception handling                                                   0.04s  
+  ✓ provider metlife check                                               0.04s  
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Unit\Services\MetLife\MetLifeApiServic…  ReflectionException   
+  Property App\Services\MetLife\MetLifeApiService::$acceptedDocumentMimeTypes does not exist
+
+  at tests/Unit/Services/MetLife/MetLifeApiServiceTest.php:84
+     80▕ 
+     81▕     public function test_accepted_document_mime_types_structure()
+     82▕     {
+     83▕         $reflection = new \ReflectionClass($this->service);
+  ➜  84▕         $property = $reflection->getProperty('acceptedDocumentMimeTypes');
+     85▕         $property->setAccessible(true);
+     86▕ 
+     87▕         $mimeTypes = $property->getValue($this->service);
+     88▕
+
+  1   tests/Unit/Services/MetLife/MetLifeApiServiceTest.php:84
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Unit\Services\MetLife\MetLifeApiServic…  ReflectionException   
+  Property App\Services\MetLife\MetLifeApiService::$acceptedDocumentMimeTypes does not exist
+
+  at tests/Unit/Services/MetLife/MetLifeApiServiceTest.php:263
+    259▕ 
+    260▕     public function test_accepted_document_mime_types_contains_expected_types()
+    261▕     {
+    262▕         $reflection = new \ReflectionClass($this->service);
+  ➜ 263▕         $property = $reflection->getProperty('acceptedDocumentMimeTypes');
+    264▕         $property->setAccessible(true);
+    265▕ 
+    266▕         $mimeTypes = $property->getValue($this->service);
+    267▕
+
+  1   tests/Unit/Services/MetLife/MetLifeApiServiceTest.php:263
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Unit\Services\MetLife\MetLifeApiServic…  ReflectionException   
+  Property App\Services\MetLife\MetLifeApiService::$acceptedDocumentMimeTypes does not exist
+
+  at tests/Unit/Services/MetLife/MetLifeApiServiceTest.php:284
+    280▕ 
+    281▕     public function test_accepted_document_mime_types_is_array()
+    282▕     {
+    283▕         $reflection = new \ReflectionClass($this->service);
+  ➜ 284▕         $property = $reflection->getProperty('acceptedDocumentMimeTypes');
+    285▕         $property->setAccessible(true);
+    286▕ 
+    287▕         $mimeTypes = $property->getValue($this->service);
+    288▕
+
+  1   tests/Unit/Services/MetLife/MetLifeApiServiceTest.php:284
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Unit\Services\MetLife\MetLifeValidationServiceTest > should…   
+  MetLife with integration enabled should skip payment validation
+Failed asserting that true is false.
+
+  at tests/Unit/Services/MetLife/MetLifeValidationServiceTest.php:125
+    121▕         });
+    122▕ 
+    123▕         // Test case 1: MetLife provider with integration enabled (should return false)
+    124▕         $result = $this->service->shouldValidatePayment(InsuranceProviderEnum::MTL->value);
+  ➜ 125▕         $this->assertFalse($result, 'MetLife with integration enabled should skip payment validation');
+    126▕ 
+    127▕         // Test case 2: Other provider (should return true)
+    128▕         $result = $this->service->shouldValidatePayment('AXA');
+    129▕         $this->assertTrue($result, 'Other providers should always validate payment');
+
+  1   tests/Unit/Services/MetLife/MetLifeValidationServiceTest.php:125
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Unit\Services\MetLife\MetLifeValidationServiceTest > should…   
+  MetLife with integration disabled returns false due to logic bug
+Failed asserting that true is false.
+
+  at tests/Unit/Services/MetLife/MetLifeValidationServiceTest.php:350
+    346▕         });
+    347▕ 
+    348▕         // Test case: MetLife provider with integration disabled (should return false due to logic bug)
+    349▕         $result = $this->service->shouldValidatePayment(InsuranceProviderEnum::MTL->value);
+  ➜ 350▕         $this->assertFalse($result, 'MetLife with integration disabled returns false due to logic bug');
+    351▕     }
+    352▕ 
+    353▕     public function test_should_validate_payment_with_integration_null()
+    354▕     {
+
+  1   tests/Unit/Services/MetLife/MetLifeValidationServiceTest.php:350
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Unit\Services\MetLife\MetLifeValidationServiceTest > should…   
+  MetLife with integration null returns false due to logic bug
+Failed asserting that true is false.
+
+  at tests/Unit/Services/MetLife/MetLifeValidationServiceTest.php:362
+    358▕         });
+    359▕ 
+    360▕         // Test case: MetLife provider with integration null (should return false due to logic bug)
+    361▕         $result = $this->service->shouldValidatePayment(InsuranceProviderEnum::MTL->value);
+  ➜ 362▕         $this->assertFalse($result, 'MetLife with integration null returns false due to logic bug');
+    363▕     }
+    364▕ 
+    365▕     public function test_should_validate_payment_with_integration_false()
+    366▕     {
+
+  1   tests/Unit/Services/MetLife/MetLifeValidationServiceTest.php:362
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Unit\Services\MetLife\MetLifeValidationServiceTest > should…   
+  MetLife with integration false returns false due to logic bug
+Failed asserting that true is false.
+
+  at tests/Unit/Services/MetLife/MetLifeValidationServiceTest.php:374
+    370▕         });
+    371▕ 
+    372▕         // Test case: MetLife provider with integration false (should return false due to logic bug)
+    373▕         $result = $this->service->shouldValidatePayment(InsuranceProviderEnum::MTL->value);
+  ➜ 374▕         $this->assertFalse($result, 'MetLife with integration false returns false due to logic bug');
+    375▕     }
+    376▕ 
+    377▕     public function test_should_validate_payment_with_integration_string_true()
+    378▕     {
+
+  1   tests/Unit/Services/MetLife/MetLifeValidationServiceTest.php:374
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Unit\Services\MetLife\MetLifeValidationServiceTest > should…   
+  MetLife with integration as string "1" should skip payment validation
+Failed asserting that true is false.
+
+  at tests/Unit/Services/MetLife/MetLifeValidationServiceTest.php:386
+    382▕         });
+    383▕ 
+    384▕         // Test case: MetLife provider with integration as string '1' (should return false)
+    385▕         $result = $this->service->shouldValidatePayment(InsuranceProviderEnum::MTL->value);
+  ➜ 386▕         $this->assertFalse($result, 'MetLife with integration as string "1" should skip payment validation');
+    387▕     }
+    388▕ 
+    389▕     public function test_should_validate_payment_with_integration_string_false()
+    390▕     {
+
+  1   tests/Unit/Services/MetLife/MetLifeValidationServiceTest.php:386
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Unit\Services\MetLife\MetLifeValidationServiceTest > should…   
+  MetLife with integration as string "0" returns false due to logic bug
+Failed asserting that true is false.
+
+  at tests/Unit/Services/MetLife/MetLifeValidationServiceTest.php:398
+    394▕         });
+    395▕ 
+    396▕         // Test case: MetLife provider with integration as string '0' (should return false due to logic bug)
+    397▕         $result = $this->service->shouldValidatePayment(InsuranceProviderEnum::MTL->value);
+  ➜ 398▕         $this->assertFalse($result, 'MetLife with integration as string "0" returns false due to logic bug');
+    399▕     }
+    400▕ 
+    401▕     public function test_is_integration_enabled_returns_boolean()
+    402▕     {
+
+  1   tests/Unit/Services/MetLife/MetLifeValidationServiceTest.php:398
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > initialize with…  TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
+
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
+
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:32
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > login with succ…  TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
+
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
+
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:50
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > api failure res…  TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
+
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
+
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:133
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > network timeout…  TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
+
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
+
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:146
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > invalid credent…  TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
+
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
+
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:162
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > get api version   TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
+
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
+
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:191
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > is metlife enab…  TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
+
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
+
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:200
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > upload validati…  TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
+
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
+
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:208
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > upload validati…  TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
+
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
+
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:219
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > upload validati…  TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
+
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
+
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:230
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > upload validati…  TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
+
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
+
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:241
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > response struct…  TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
+
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
+
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:252
+
+
+  Tests:    21 failed, 131 passed (362 assertions)
+  Duration: 7.22s
 

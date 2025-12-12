@@ -1,13 +1,50 @@
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
 
-  [30;43;1m WARN [39;49;22m Your XML configuration validates against a deprecated schema. Migrate your XML configuration using "--migrate-configuration"!
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:230
 
-   PASS  Tests\Unit\ExampleTest
-  ✓ example
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > upload validati…  TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
 
-   PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.37s  
-  ✓ validates required fields when creating life quote                   0.19s  
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
 
-  Tests:    3 passed (40 assertions)
-  Duration: 0.65s
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:241
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MetLifeIntegrationTest > response struct…  TypeError   
+  Cannot assign null to property App\Services\MetLife\MetLifeApiService::$baseUrl of type string
+
+  at app/Services/MetLife/MetLifeApiService.php:42
+     38▕     private MetLifeValidationService $validator;
+     39▕ 
+     40▕     public function __construct()
+     41▕     {
+  ➜  42▕         $this->baseUrl = config('constants.METLIFE_API_BASE_URL');
+     43▕         $this->apiVersion = config('constants.METLIFE_API_VERSION', '3');
+     44▕         $this->username = config('constants.METLIFE_USERNAME');
+     45▕         $this->password = config('constants.METLIFE_PASSWORD');
+     46▕         $this->timeout = (int) config('constants.METLIFE_API_TIMEOUT', 30);
+
+  1   app/Services/MetLife/MetLifeApiService.php:42
+  2   tests/Feature/MetLifeIntegrationTest.php:252
+
+
+  Tests:    21 failed, 131 passed (362 assertions)
+  Duration: 7.22s
 
