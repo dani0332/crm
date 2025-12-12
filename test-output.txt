@@ -5,16 +5,16 @@
   ✓ example
 
    PASS  Tests\Unit\Jobs\LifeSyncHealthQuestionnaireJobTest
-  ✓ job constructor sets properties                                      0.16s  
+  ✓ job constructor sets properties                                      0.35s  
   ✓ handle success                                                       0.03s  
   ✓ handle with error response                                           0.03s  
   ✓ handle with exception                                                0.03s  
-  ✓ handle with array result success true                                0.03s  
-  ✓ middleware returns array                                             0.03s  
-  ✓ job implements should queue                                          0.03s  
+  ✓ handle with array result success true                                0.04s  
+  ✓ middleware returns array                                             0.04s  
+  ✓ job implements should queue                                          0.04s  
   ✓ job uses correct traits                                              0.03s  
-  ✓ job properties are correctly typed                                   0.02s  
-  ✓ job has required methods                                             0.02s  
+  ✓ job properties are correctly typed                                   0.03s  
+  ✓ job has required methods                                             0.03s  
   ✓ job methods are public                                               0.03s  
   ✓ job constructor accepts array                                        0.03s  
   ✓ job constructor with empty array                                     0.03s  
@@ -25,7 +25,7 @@
   ✓ extract health questionnaire success                                 0.03s  
   ✓ extract health questionnaire not found                               0.03s  
   ✓ extract health questionnaire empty fields                            0.03s  
-  ✓ extract health questionnaire missing submitted data                  0.03s  
+  ✓ extract health questionnaire missing submitted data                  0.04s  
   ✓ extract health questionnaire missing fields                          0.03s  
   ✓ is health questionnaire with missing required fields                 0.03s  
   ✓ is health questionnaire with empty array                             0.03s  
@@ -97,7 +97,7 @@
   ✓ response structure consistency                                       0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeSimpleTest
-  ✓ request service http calls                                           0.12s  
+  ✓ request service http calls                                           0.13s  
   ✓ cache service operations                                             0.03s  
   ✓ validation service logic                                             0.03s  
   ✓ http headers building                                                0.03s  
@@ -148,7 +148,7 @@
   ✓ validation methods return boolean                                    0.03s  
 
    PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.72s  
+  ✓ can create a life quote using actual controller method               0.61s  
   ✓ validates required fields when creating life quote                   0.05s  
 
    FAIL  Tests\Feature\MetLifeIntegrationTest
@@ -158,10 +158,10 @@
   ✓ cached session data with type casting                                0.04s  
   ✓ expired session detection                                            0.03s  
   ✓ valid session detection                                              0.03s  
-  ✓ session at timeout boundary                                          0.04s  
-  ⨯ api failure response                                                 0.04s  
-  ⨯ network timeout handling                                             0.04s  
-  ⨯ invalid credentials response                                         0.04s  
+  ✓ session at timeout boundary                                          0.03s  
+  ⨯ api failure response                                                 0.03s  
+  ⨯ network timeout handling                                             0.03s  
+  ⨯ invalid credentials response                                         0.03s  
   ✓ cache clear removes all data                                         0.03s  
   ⨯ get api version                                                      0.03s  
   ⨯ is metlife enabled returns boolean                                   0.03s  
@@ -551,5 +551,5 @@ Failed asserting that true is false.
 
 
   Tests:    21 failed, 131 passed (362 assertions)
-  Duration: 6.11s
+  Duration: 6.47s
 
