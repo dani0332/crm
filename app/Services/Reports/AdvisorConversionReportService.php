@@ -416,6 +416,8 @@ class AdvisorConversionReportService extends BaseService
             quoteTypeCode::Life => PermissionsEnum::LIFE_CONVERSION_REPORT,
             quoteTypeCode::Home => PermissionsEnum::HOME_CONVERSION_REPORT,
             quoteTypeCode::SAVINGS => PermissionsEnum::SAVINGS_CONVERSION_REPORT,
+
+            quoteTypeCode::Device => PermissionsEnum::DEVICE_CONVERSION_REPORT,
         ];
 
         $lobs = array_filter($lobs, function ($permission, $lob) {

@@ -297,6 +297,8 @@ class AdvisorDistributionReportService extends BaseService
             quoteTypeCode::Life => PermissionsEnum::LIFE_DISTRIBUTION_REPORT,
             quoteTypeCode::Home => PermissionsEnum::HOME_DISTRIBUTION_REPORT,
             quoteTypeCode::SAVINGS => PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
+
+            quoteTypeCode::Device => PermissionsEnum::DEVICE_DISTRIBUTION_REPORT,
         ];
 
         $lobs = array_filter($lobs, function ($permission, $lob) {

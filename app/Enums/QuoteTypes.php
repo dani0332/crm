@@ -325,6 +325,7 @@ enum QuoteTypes: string
             self::SAVINGS => [RolesEnum::SavingsAdvisor],
             self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
             self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
+            self::DEVICE => [RolesEnum::DeviceAdvisor],
             default => [],
         };
     }
@@ -434,7 +435,20 @@ enum QuoteTypes: string
                 self::CORPLINE,
                 self::GROUP_MEDICAL,
             ],
+            self::DEVICE => [
+                TeamNameEnum::DEVICE_INSURANCE,
+            ],
             default => [$this],
+        };
+    }
+
+    public static function getQuoteTypesFromTeamName(string $teamName)
+    {
+        return match ($teamName) {
+            TeamNameEnum::DEVICE_INSURANCE => [
+                self::DEVICE,
+            ],
+            default => [],
         };
     }
 

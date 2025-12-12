@@ -45,6 +45,8 @@ final class TeamNameEnum extends Enum
     public const TRAVEL_RENEWALS = 'Travel - Renewals';
     public const TRAVEL_TEAM = 'Travel - Team';
 
+    public const DEVICE_INSURANCE = 'Device Insurance';
+
     /**
      * Get team ID by team name
      *

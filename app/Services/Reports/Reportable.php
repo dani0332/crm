@@ -175,7 +175,7 @@ trait Reportable
             quoteTypeCode::CORPLINE => quoteTypeCode::CORPLINE,
             quoteTypeCode::GroupMedical => quoteTypeCode::GroupMedical,
             quoteTypeCode::SAVINGS => quoteTypeCode::SAVINGS,
-
+            quoteTypeCode::Device => quoteTypeCode::Device,
         ];
     }
 

@@ -258,6 +258,7 @@ class ReportService extends BaseService
             QuoteTypes::CYCLE,
             QuoteTypes::JETSKI,
             QuoteTypes::SAVINGS,
+            QuoteTypes::DEVICE,
         ];
 
         $allowedLOBs = [];
