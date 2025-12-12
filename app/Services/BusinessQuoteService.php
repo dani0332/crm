@@ -144,6 +144,7 @@ class BusinessQuoteService extends BaseService
                 '),
                 'ub.branch_id as advisor_primary_branch_id',
                 'b.name as lead_branch_name',
+                'b.id as lead_branch_id',
                 'bqr.is_branch_applicable',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')

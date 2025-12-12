@@ -221,6 +221,7 @@ class HealthQuoteService extends BaseService
             'sso.description as sub_source_option_description',
             'ub.branch_id as advisor_primary_branch_id',
             'b.name as lead_branch_name',
+            'b.id as lead_branch_id',
             'is_quote_locked',
             'is_branch_applicable',
         )

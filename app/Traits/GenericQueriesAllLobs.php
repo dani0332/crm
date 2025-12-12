@@ -849,7 +849,16 @@ trait GenericQueriesAllLobs
             $emirate = $record?->latestInsured?->entity?->emirate_of_registration_id ?? null;
             $quoteTypeId = QuoteTypeId::GroupMedical;
         }
-        $branch = app(BranchAssignmentService::class)->getBranch($advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirate);
+
+        if($record->is_branch_applicable == 0) {
+            return false;
+        }
+
+        if(isset($record->lead_branch_id) && $record->lead_branch_id) {
+            return $record->lead_branch_id == BranchEnum::ABU_DHABI->value;
+        }
+
+        $branch = $record->branch ?? app(BranchAssignmentService::class)->getBranch($advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirate);
 
         LoggerService::info('Branch check for Quote', extra: [
             'ref_id' => $record->code,
