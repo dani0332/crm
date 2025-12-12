@@ -744,7 +744,7 @@ class CarEmailService extends BaseService
                 10
             );
 
-            if (! $publicUrl) {
+            if (! $url) {
                 LoggerService::error(self::class.' - attachCarOCBPDF - Failed to generate temporary URL: File does not exist for Ref-ID: '.$quoteUID);
 
                 return '';
@@ -753,9 +753,9 @@ class CarEmailService extends BaseService
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
 
-            LoggerService::info(self::class.' - attachCarOCBPDF - Public URL generated for Ref-ID: '.$quoteUID.' | URL: '.$publicUrl);
+            LoggerService::info(self::class.' - attachCarOCBPDF - Public URL generated for Ref-ID: '.$quoteUID.' | URL: '.$url);
 
-            return $publicUrl;
+            return $url;
         } catch (\Exception $e) {
             // Log the error details
             LoggerService::error(self::class." - Error: attachCarOCBPDF - Error attaching PDF  | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $code]);

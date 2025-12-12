@@ -904,6 +904,27 @@ class QuoteDocumentService extends BaseService
     }
 
     /**
+     * Get document file extension from file path
+     *
+     * @param string $filePath
+     * @return string
+     */
+    public function getDocumentExtension($filePath)
+    {
+        if (empty($filePath)) {
+            return '';
+        }
+
+        // Clean the URL by removing query parameters
+        $cleanPath = strtok($filePath, '?');
+        
+        // Remove trailing whitespace
+        $cleanPath = preg_replace('/\s+$/m', '', $cleanPath);
+
+        return pathinfo($cleanPath, PATHINFO_EXTENSION);
+    }
+
+    /**
      * Check if all required documents are uploaded to enable send policy to customer & book policy button in book policy section
      * Triggering from updateQuoteStatus & bookPolicyPayload
      *

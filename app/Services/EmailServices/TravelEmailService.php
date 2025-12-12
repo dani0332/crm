@@ -580,13 +580,13 @@ class TravelEmailService extends BaseService
 
             // Generate a public URL using generic method
             try {
-                $publicUrl = app(QuoteDocumentService::class)->getDocumentUrl(
+                $url = app(QuoteDocumentService::class)->getDocumentUrl(
                     $tempFilePath,
                     'azureIMPrivate',
                     $pdfExpiry
                 );
 
-                if (! $publicUrl) {
+                if (! $url) {
                     LoggerService::error(self::class.' - attachTravelOCBPDFToEmail - Failed to generate temporary URL: File does not exist for uuid: '.$quoteUID);
 
                     return '';
@@ -600,9 +600,9 @@ class TravelEmailService extends BaseService
             // Schedule deletion after expiry time
             $this->scheduleFileDeletion($tempFilePath, $pdfExpiry);
 
-            LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - Final URL for Bird workflow: '.$publicUrl.' for uuid: '.$quoteUID);
+            LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - Final URL for Bird workflow: '.$url.' for uuid: '.$quoteUID);
 
-            return $publicUrl;
+            return $url;
         } catch (Exception $e) {
             LoggerService::error(self::class." - attachTravelOCBPDFToEmail - Error: {$e->getMessage()} for uuid: {$quoteUID}", exception: $e);
 
