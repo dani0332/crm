@@ -5,16 +5,16 @@
   ✓ example
 
    PASS  Tests\Unit\Jobs\LifeSyncHealthQuestionnaireJobTest
-  ✓ job constructor sets properties                                      0.16s  
+  ✓ job constructor sets properties                                      0.18s  
   ✓ handle success                                                       0.03s  
   ✓ handle with error response                                           0.03s  
   ✓ handle with exception                                                0.03s  
   ✓ handle with array result success true                                0.03s  
   ✓ middleware returns array                                             0.03s  
   ✓ job implements should queue                                          0.03s  
-  ✓ job uses correct traits                                              0.03s  
-  ✓ job properties are correctly typed                                   0.03s  
-  ✓ job has required methods                                             0.03s  
+  ✓ job uses correct traits                                              0.05s  
+  ✓ job properties are correctly typed                                   0.05s  
+  ✓ job has required methods                                             0.04s  
   ✓ job methods are public                                               0.03s  
   ✓ job constructor accepts array                                        0.03s  
   ✓ job constructor with empty array                                     0.03s  
@@ -22,13 +22,13 @@
 
    PASS  Tests\Unit\Services\MetLife\MTLHealthQuestionnaireServiceTest
   ✓ is health questionnaire validation                                   0.15s  
-  ✓ extract health questionnaire success                                 0.05s  
-  ✓ extract health questionnaire not found                               0.05s  
-  ✓ extract health questionnaire empty fields                            0.04s  
+  ✓ extract health questionnaire success                                 0.04s  
+  ✓ extract health questionnaire not found                               0.03s  
+  ✓ extract health questionnaire empty fields                            0.03s  
   ✓ extract health questionnaire missing submitted data                  0.03s  
   ✓ extract health questionnaire missing fields                          0.03s  
   ✓ is health questionnaire with missing required fields                 0.03s  
-  ✓ is health questionnaire with empty array                             0.04s  
+  ✓ is health questionnaire with empty array                             0.03s  
   ✓ is health questionnaire with null                                    0.03s  
   ✓ is health questionnaire case sensitivity                             0.03s  
   ✓ is health questionnaire with extra fields                            0.03s  
@@ -148,8 +148,8 @@
   ✓ validation methods return boolean                                    0.03s  
 
    PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.72s  
-  ✓ validates required fields when creating life quote                   0.05s  
+  ✓ can create a life quote using actual controller method               0.53s  
+  ✓ validates required fields when creating life quote                   0.16s  
 
    FAIL  Tests\Feature\MetLifeIntegrationTest
   ⨯ initialize with successful api response                              0.06s  
@@ -551,5 +551,5 @@ Failed asserting that true is false.
 
 
   Tests:    21 failed, 131 passed (362 assertions)
-  Duration: 6.43s
+  Duration: 6.36s
 
