@@ -1691,7 +1691,7 @@ class RenewalsUploadService
 
         // This is added for production error where sometime user change the plan name or repair type after the batch upload
         if (! $provider) {
-            LoggerService::warning($logPrefix. ' Provider not found due to change of plan name or repair type after the batch upload', extra: [
+            LoggerService::warning($logPrefix.' Provider not found due to change of plan name or repair type after the batch upload', extra: [
                 'provider' => $data['provider_name'] ?? null,
                 'quote_uuid' => $quote->uuid,
             ]);
@@ -2273,7 +2273,7 @@ class RenewalsUploadService
                                 $isGenesisLead = $this->isGenesisLead($leadData, $insuranceProvider, $leadValidationErrors);
 
                                 // if the lead is a Genesis lead, then the Insurer Quote No is not required
-                                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && ! $leadData->insurer_quote_no && !$isGenesisLead['status']) {
+                                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && ! $leadData->insurer_quote_no && ! $isGenesisLead['status']) {
                                     $leadValidationErrors->push('Insurer Quote No is required');
                                 }
 
@@ -3460,14 +3460,12 @@ class RenewalsUploadService
         return true;
     }
 
-
     /**
      * Criteria to identify if the lead is a Genesis lead if insurance provider is LIVA(RSA) and plan is related to GIG(AXA)
      *
      * @param [type] $leadData
      * @param [type] $currentInsuranceProvider
      * @param [type] $leadValidationErrors
-     * @return array
      */
     private function isGenesisLead($leadData, $currentInsuranceProvider, &$leadValidationErrors): array
     {
@@ -3475,20 +3473,21 @@ class RenewalsUploadService
         $status = false;
         $carPlan = null;
         $gigInsuranceProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
-        
+
         // if current insurance provider is LIVA(RSA) then check if the plan is related to GIG(AXA)
-        if($currentInsuranceProvider != null && $currentInsuranceProvider->code == InsuranceProvidersEnum::RSA && $gigInsuranceProvider) {
+        if ($currentInsuranceProvider != null && $currentInsuranceProvider->code == InsuranceProvidersEnum::RSA && $gigInsuranceProvider) {
             // check if the plan is related to GIG(AXA)
             $isGigPlan = CarPlan::where('text', $leadData->plan_name)->where('repair_type', $leadData->plan_type)->where('provider_id', $gigInsuranceProvider->id)->first();
             if (! $isGigPlan) {
                 $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type for Genesis Lead');
             }
-            LoggerService::info('isGenesisLead - isGigPlan: ' . ($isGigPlan ? 'true' : 'false'));
+            LoggerService::info('isGenesisLead - isGigPlan: '.($isGigPlan ? 'true' : 'false'));
             $status = $isGigPlan ? true : false;
             $carPlan = $isGigPlan ? $isGigPlan : null;
         }
 
         LoggerService::info('fn: isGenesisLead - status: '.$status);
+
         // return the status
         return ['status' => $status, 'carPlan' => $carPlan, 'gigInsuranceProvider' => $gigInsuranceProvider];
     }
