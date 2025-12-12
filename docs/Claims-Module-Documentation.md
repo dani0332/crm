@@ -118,16 +118,20 @@ The Claims Module follows a layered architecture pattern:
 - **Purpose**: Comprehensive business logic layer for all claim operations
 - **Key Features**:
   - Extends `BaseService` with `CentralTrait` for common functionality
-  - Handles CAPI integration for policy search and claim creation
+  - Pre-configured query builders in constructor with optimized field selection and eager loading
+  - Comprehensive filtering system supporting exact, partial, date range, and nested relationship filters
+  - Handles CAPI integration for policy search during claim creation only
   - Manages complex LOB-specific business rules and validations
-  - Implements status transition logic with automatic closure detection
-  - Provides dropdown data management for forms
-  - Handles document management with S3 integration
-  - Supports AI message optimization integration
-  - Manages complaint and follow-up workflows
-  - Implements comprehensive audit logging and activity tracking
-  - Supports export functionality with filtering
-  - Optimized query building with eager loading and field selection
+  - Implements status transition logic with automatic closure detection based on LOB
+  - Provides comprehensive dropdown data management for forms (LOB, statuses, types, managers, car data)
+  - Handles document management with Azure Storage (upload, delete, ZIP creation)
+  - Supports AI message optimization via InstantWriter facade
+  - Manages complaint status with automatic claim reopening logic
+  - Manages follow-up workflows with datetime tracking
+  - Retrieves history/logs from claim_activities and audits tables for client-side pagination
+  - Implements comprehensive audit logging with user context via LoggerService
+  - Supports export functionality with same filtering as listing
+  - Observer helper methods for automatic status updates based on field changes
 
 ### 4. Request Validation
 
@@ -163,22 +167,48 @@ The Claims module implements comprehensive validation through multiple Form Requ
 #### `ClaimRequestObserver`
 
 - **Location**: `app/Observers/ClaimRequestObserver.php`
-- **Purpose**: Handles automatic business logic triggers based on field changes
+- **Purpose**: Handles automatic business logic triggers based on field changes using Eloquent observers
 - **Key Features**:
-  - **Claim Number Monitoring**: Auto-updates sub-status when claim number is entered
-  - **Sub-Status Monitoring**: Triggers closure logic based on LOB-specific closure states
-  - **Approval Amount Monitoring**: Auto-updates sub-statuses for Car/Bike LOB when amounts are entered
-  - **Status Change Monitoring**: Prepared for Google review email dispatch
-  - **Comprehensive Logging**: All changes logged with user context
+  - **Strict Typing**: Uses `declare(strict_types=1)` for type safety
+  - **Service Integration**: Creates ClaimsService instance to handle business logic
+  - **Field Change Detection**: Uses `isDirty()` and `getOriginal()` for precise change tracking
+  - **Empty-to-Filled Logic**: Only triggers updates when values change from empty to filled (prevents duplicate triggers)
+  - **LOB-Aware Logic**: Uses `isCarOrBikeLOB()` helper method for conditional approval amount monitoring
+  - **Two-Phase Lifecycle**: Implements both `creating()` and `updating()` events
 
-#### Monitored Fields
+#### Observer Lifecycle Events
 
-- `claim_number` - Triggers sub-status update to registered status
-- `claim_sub_status_id` - Triggers closure logic evaluation
-- `approved_repair_amount` - Car/Bike specific status update
-- `approved_total_loss_amount` - Car/Bike specific status update
-- `approved_cash_loss_amount` - Car/Bike specific status update
-- `claim_status_id` - Future Google review integration
+**`creating(ClaimRequest $claimRequest)` Event:**
+- Triggered before new claim is saved to database
+- Checks if `claim_number` is already provided during creation
+- If claim_number exists, immediately sets appropriate registered status
+- Useful for batch imports or API-created claims with pre-existing claim numbers
+
+**`updating(ClaimRequest $claimRequest)` Event:**
+- Triggered before claim updates are saved
+- Monitors multiple fields for changes using `isDirty()` method
+- Implements conditional logic based on LOB type
+- Executes appropriate service methods for status updates
+- All status changes happen before database commit
+
+#### Monitored Fields & Triggers
+
+| Field | Trigger Condition | Action | LOB-Specific |
+| ----- | ----------------- | ------ | ------------ |
+| `claim_number` | Empty → Filled | `updateClaimSubStatusToClaimRegistered()` | Car LOB gets "awaiting inspection" variant |
+| `claim_sub_status_id` | Any change | Check closure with `checkSubStatusForClaimClosure()`, call `markClaimAsClosed()` if true | Yes - different closure states per LOB |
+| `approved_repair_amount` | Empty → Filled | `updateClaimSubStatusToRepairApprovedAndWIP()` | Car/Bike only |
+| `approved_total_loss_amount` | Empty → Filled | `updateClaimSubStatusToTotalLossOfferLetterShared()` | Car/Bike only |
+| `approved_cash_loss_amount` | Empty → Filled | `updateClaimSubStatusToCashLossApproved()` | Car/Bike only |
+| `claim_status_id` | Any change (commented out) | `dispatchGoogleReviewEmail()` when closing | Future feature |
+
+#### Observer Design Patterns
+
+- **Guard Clauses**: Checks `if (empty($original) && !empty($new))` to prevent duplicate triggers
+- **Service Delegation**: All business logic delegated to ClaimsService methods (SRP)
+- **No Direct DB Queries**: Uses model methods and relationships only
+- **Logging in Service**: Observer focuses on detection, service handles logging
+- **Idempotent Operations**: Service methods handle their own status lookups and validations
 
 ## Business Logic & Workflow
 
@@ -206,26 +236,56 @@ The Claims module implements comprehensive validation through multiple Form Requ
 
 ### Status Transition Logic
 
-The Claims module implements sophisticated status transition logic:
+The Claims module implements sophisticated status transition logic through the `ClaimRequestObserver`:
 
 1. **Automatic Status Updates**: Observer pattern triggers status updates based on field changes
+   - Monitors `claim_number`, `claim_sub_status_id`, `approved_repair_amount`, `approved_total_loss_amount`, `approved_cash_loss_amount`, `claim_status_id`
+   - Only triggers updates when values change from empty to filled
+   - Calls ClaimsService methods for status updates
+
 2. **LOB-Specific Closure Logic**: Different closure criteria for each line of business
-3. **Approval-Based Transitions**: Status updates when approval amounts are entered
-4. **Business Rule Enforcement**: Validation ensures proper status flow
+   - **Car/Motor**: Repair completed and settled, Total loss paid and settled, Cash loss paid and settled, Claim withdrawn, Claim denied
+   - **Health**: Claim paid, Request approved, Answered & closed, Claim denied, Claim withdrawn
+   - **Life**: Claim paid, Claim denied
+   - Implemented in `checkSubStatusForClaimClosure()` method
+
+3. **Approval-Based Transitions**: Car/Bike LOB only - Status updates when approval amounts are entered
+   - `approved_repair_amount` → "Repair approved & work in progress"
+   - `approved_total_loss_amount` → "Total Loss Offer Letter shared"
+   - `approved_cash_loss_amount` → "Cash loss approved"
+
+4. **Complaint Status Logic**: Opening a complaint automatically reopens a closed claim
+   - Implemented in `updateComplaintStatus()` service method
+
+5. **Business Rule Enforcement**: Validation ensures proper status flow at controller and request validation layers
 
 ### Integration Points
 
 #### CAPI Integration
 
-- **Policy Search**: Used only during claim creation for policy lookup
-- **Claim Creation**: New claims are created through CAPI integration
-- **Error Handling**: Graceful handling of CAPI timeouts and errors
+- **Policy Search**: Used only during claim creation for policy lookup via `searchActivePolicies()` method
+  - Searches `personal_quotes` table with active policy status
+  - Supports filtering by email, policy number, and quote type
+  - Includes Car-specific fields (make, model, year, plate) via conditional joins
+  - Returns paginated results with 15 items per page
+- **Claim Creation**: New claims are created through CAPI endpoint `/api/claims/save-claim` via CustomerPortalApiFacade
+  - Transforms form data to API format
+  - Filters out null values before sending
+  - Includes LOB-specific fields (car details for Car LOB, health details for Health LOB)
+- **Error Handling**: Comprehensive error logging with structured context via LoggerService
 
 #### AI Integration
 
-- **Message Optimization**: AI-powered customer message optimization
-- **Dual Messages**: Support for both customer and AI-optimized messages
-- **Integration Points**: Connected to InstantWriter AI service
+- **Message Optimization**: AI-powered customer message optimization via InstantWriter facade
+  - Endpoint: `/message-optimizer/optimize` (POST)
+  - Sends original message and claim reference UUID
+  - Returns optimized message for professional customer communication
+  - Used in claim sub-status update and notification workflow
+- **Dual Messages**: Support for both customer and AI-optimized messages stored in ClaimActivity
+  - `comment` field stores original customer message
+  - `comment_ai` field stores AI-optimized version
+- **Integration Points**: Connected to InstantWriterAIFacade for external AI service communication
+- **Error Handling**: Comprehensive logging with message context for debugging
 
 #### Document Management
 
@@ -315,19 +375,27 @@ The Claims module uses a comprehensive Vue.js component architecture:
 
 ### Document Routes
 
-- `POST /claim/{uuid}/documents` - Upload documents (claims.documents.store)
-- `DELETE /claim/{uuid}/documents/{document}` - Delete document (claims.documents.destroy)
-- `POST /claim/documents/get-s3-temp-url` - Get S3 temp URL (claims.documents.get-s3-temp-url)
-- `GET /claim/{uuid}/documents/download-all` - Download all as ZIP (claims.documents.download-all)
+| Method | Endpoint | Name | Purpose | Permission |
+| ------ | -------- | ---- | ------- | ---------- |
+| POST | `/claim/{claim:uuid}/documents` | `claims.documents.store` | Upload documents (multi-file support) | CLAIM_DOCUMENT_UPLOAD |
+| DELETE | `/claim/{claim:uuid}/documents/{document}` | `claims.documents.destroy` | Delete document with validation | CLAIM_DOCUMENT_DELETE |
+| POST | `/claim/documents/get-s3-temp-url` | `claims.documents.get-s3-temp-url` | Get Azure Storage temp URL for viewing | CLAIM_DOCUMENT_S3_URL |
+| GET | `/claim/{claim:uuid}/documents/download-all` | `claims.documents.download-all` | Download all as ZIP | CLAIM_DOWNLOAD_ALL_DOCUMENTS |
 
-### Additional Routes
+### Route Binding Patterns
 
-- `POST /claim/{uuid}/update-complaint-status` - Update complaint status
-- `POST /claim/{uuid}/update-next-follow-up` - Update next follow-up
-- `GET /claim/{uuid}/complaint-status-logs` - Get complaint logs
-- `GET /claim/{uuid}/next-follow-up-logs` - Get follow-up logs
-- `POST /claim/{uuid}/make-additional-contact-primary` - Make contact primary
-- `POST /claim/export` - Export claims data
+**Standard UUID Binding:**
+- Most routes use `{uuid}` parameter matching against `ClaimRequest.uuid` field
+- Controller methods receive UUID as string parameter
+
+**Route Model Binding:**
+- Routes with `{claim:uuid}` automatically bind to ClaimRequest model by UUID field
+- Controller methods receive ClaimRequest model instance directly
+- Laravel automatically returns 404 if claim not found
+
+**Special Bindings:**
+- `{claimStatus}` in optimize-message route binds to ClaimStatus model
+- `{document}` in document delete route binds to QuoteDocument model
 
 ## Development Guidelines
 
@@ -600,10 +668,13 @@ The system automatically updates claim statuses based on:
 
 #### Status Transition Rules
 
-- Claims automatically close when reaching terminal sub-statuses
-- Complaint status affects main claim status
-- Manager assignment triggers date tracking
-- Follow-up dates enable overdue tracking
+- **Automatic Closure**: Claims automatically close when sub-status reaches terminal states defined per LOB in `checkSubStatusForClaimClosure()`
+- **Complaint Reopening**: Opening a complaint automatically reopens a closed claim via `markClaimAsOpen()`
+- **Manager Assignment**: Assignment triggers `manager_assigned_date` timestamp via `assignManager()` model method
+- **Follow-up Tracking**: `next_followup_datetime` enables overdue tracking and filtering
+- **Decline Reason Closure**: Setting `claim_decline_reason` automatically closes the claim in `updateClaimDetails()`
+- **Approval-Based Status**: Car/Bike claims auto-update sub-status when approval amounts are entered (observer pattern)
+- **Initial Status Setting**: New claims get "New claim" status; claims with claim_number get appropriate "registered" status based on LOB
 
 #### LOB-Specific Rules
 
@@ -613,31 +684,63 @@ The system automatically updates claim statuses based on:
 
 #### Dynamic Field Management
 
-- **Model-Based Fillable**: Uses `getFillable()` from models for dynamic field handling
-- **Form-Specific Fields**: Additional fields like `incident_story`, `whatsapp_consent` added programmatically
-- **Filtered Updates**: Specific methods use `array_intersect()` to limit fields for targeted updates
-- **Automatic Sync**: Field definitions automatically stay in sync with model changes
+- **Model-Based Fillable**: Uses `getFillable()` from ClaimRequest and ClaimRequestDetail models for dynamic field handling
+  - `updateClaim()`: Merges model fillable with form-specific fields ['incident_story', 'whatsapp_consent', 'selected_policy_id', 'policy_not_listed']
+  - `updateClaimDetails()`: Uses `array_intersect()` to limit to specific fields only
+- **Form-Specific Fields**: Additional fields added programmatically that aren't in model fillable
+  - `incident_story` mapped to `incident` field during processing
+  - `whatsapp_consent` for customer communication preference
+- **Filtered Updates**: Specific update methods limit fields for targeted operations
+  - `updateClaimDetails()`: Only allows claim_type_id, claim_number, claim_decline_reason, claim_request_type_id, incident_date, plate_number, car_make, car_model, model_year, service_type_id
+  - Uses `array_intersect($modelFillable, $allowedFields)` pattern
+- **LOB-Specific Field Clearing**: `updateClaim()` clears inappropriate fields based on quote_type_id
+  - Car LOB: Clears health fields (service_type_id, request_reference_number)
+  - Health LOB: Clears car fields (car_make, car_model, model_year, plate_number)
+  - Other LOBs: Clears both car and health fields
+- **Automatic Sync**: Field definitions automatically stay in sync with model changes - no hardcoded field lists except for targeted updates
 
 ## API Endpoints
 
-### Web Routes
+### Web Routes (All under '/claim' prefix except index)
 
-| Method | Endpoint                                 | Name                       | Purpose             |
-| ------ | ---------------------------------------- | -------------------------- | ------------------- |
-| GET    | `/claims`                                | `claims.index`             | List claims         |
-| GET    | `/claim/create`                          | `claims.create`            | Show create form    |
-| POST   | `/claim`                                 | `claims.store`             | Create claim        |
-| GET    | `/claim/{uuid}`                          | `claims.show`              | Show claim details  |
-| GET    | `/claim/{uuid}/edit`                     | `claims.edit`              | Show edit form      |
-| PUT    | `/claim/{uuid}`                          | `claims.update`            | Update claim        |
-| POST   | `/claim/search-policies`                 | `claims.search-policies`   | Search policies     |
-| POST   | `/claim/update-details/{uuid}`           | `claims.update.details`    | Update details      |
-| POST   | `/claim/update-statuses/{uuid}`          | `claims.update.status`     | Update status       |
-| POST   | `/claims/{claim:uuid}/send-notification` | `claims.send-notification` | Send notification   |
-| POST   | `/claims/{claim:uuid}/complaint-status`  | `claims.complaint-status`  | Update complaint    |
-| POST   | `/claims/{claim:uuid}/next-follow-up`    | `claims.next-follow-up`    | Update follow-up    |
-| GET    | `/claims/{claim:uuid}/lead-history`      | `claims.lead-history`      | Get status history  |
-| GET    | `/claims/{claim:uuid}/sub-status-logs`   | `claims.sub-status-logs`   | Get sub-status logs |
+**Basic CRUD:**
+| Method | Endpoint | Name | Purpose | Permission |
+| ------ | -------- | ---- | ------- | ---------- |
+| GET | `/claim` | `claims.index` | List claims with filtering | CLAIM_LIST |
+| GET | `/claim/create` | `claims.create` | Show create form with dropdowns | CLAIM_CREATE |
+| POST | `/claim` | `claims.store` | Create claim via CAPI | CLAIM_CREATE |
+| GET | `/claim/{uuid}` | `claims.show` | Show claim details with all relationships | CLAIM_SHOW |
+| GET | `/claim/{uuid}/edit` | `claims.edit` | Show edit form | CLAIM_EDIT |
+| PUT | `/claim/{uuid}` | `claims.update` | Update claim (general form) | CLAIM_EDIT |
+
+**Search & Export:**
+| Method | Endpoint | Name | Purpose | Permission |
+| ------ | -------- | ---- | ------- | ---------- |
+| POST | `/claim/search-policies` | `claims.search-policies` | AJAX policy search for claim creation | CLAIM_CREATE |
+| POST | `/claim/export` | `claims.export` | Export to CSV or email | CLAIMS_EXPORT_DATA |
+
+**Targeted Updates (UUID route binding):**
+| Method | Endpoint | Name | Purpose | Permission |
+| ------ | -------- | ---- | ------- | ---------- |
+| POST | `/claim/{claim:uuid}/update-details` | `claims.update.details` | Update claim details (specific fields) | CLAIM_EDIT |
+| POST | `/claim/{claim:uuid}/update-status` | `claims.update.status` | Update main claim status | CLAIMS_STATUS_UPDATE |
+| POST | `/claim/{claim:uuid}/update-complaint-status` | `claims.update.complaint-status` | Update complaint status | CLAIM_EDIT |
+| POST | `/claim/{claim:uuid}/update-next-follow-up` | `claims.update.next-follow-up` | Update follow-up datetime | CLAIM_EDIT |
+| POST | `/claim/{claim:uuid}/send-notification` | `claims.send-notification` | Send notification with sub-status | CLAIMS_SUB_STATUS_UPDATE |
+| POST | `/claim/{claim:uuid}/make-additional-contact-primary` | `claims.make-additional-contact-primary` | Make contact primary | CLAIM_EDIT |
+
+**AI & Communication:**
+| Method | Endpoint | Name | Purpose | Permission |
+| ------ | -------- | ---- | ------- | ---------- |
+| POST | `/claim/{claimStatus}/optimize-message` | `claims.optimize-message` | AJAX AI message optimization | CLAIMS_SUB_STATUS_UPDATE |
+
+**History & Logs (JSON responses for DataTables):**
+| Method | Endpoint | Name | Purpose | Permission |
+| ------ | -------- | ---- | ------- | ---------- |
+| GET | `/claim/{claim:uuid}/lead-history` | `claims.lead-history` | Get main status history | CLAIM_SHOW |
+| GET | `/claim/{claim:uuid}/sub-status-logs` | `claims.sub-status-logs` | Get sub-status changes | CLAIM_SHOW |
+| GET | `/claim/{claim:uuid}/complaint-status-logs` | `claims.complaint-status-logs` | Get complaint logs from audit | CLAIM_SHOW |
+| GET | `/claim/{claim:uuid}/next-follow-up-logs` | `claims.next-follow-up-logs` | Get follow-up logs from audit | CLAIM_SHOW |
 
 ### API Response Format
 
@@ -796,12 +899,27 @@ From `PermissionsEnum`:
 
 #### Document Management
 
-- **Polymorphic Relations**: Claims can have multiple document types
-- **Document Categories**: Claim-specific document categorization
-- **Upload Tracking**: Complete audit trail for documents
-- **ZIP Creation**: Bulk document download functionality
-- **Document Validation**: File existence and structure validation
-- **Azure Storage Integration**: Documents stored on Azure blob storage
+- **Storage Backend**: Azure Storage via `azureIM` disk configuration
+- **Polymorphic Relations**: Claims use `quote_documentable` morphMany relationship for documents
+- **Document Categories**: LOB-specific document types via `getClaimDocumentTypes($quoteTypeId)`
+  - Filters by category 'CLAIM' and quote_type_id
+  - Returns grouped and sorted document types
+- **Upload Tracking**: Complete audit trail via Auditable trait on QuoteDocument model
+  - Tracks created_by user via relationship
+  - Records upload timestamps and metadata
+- **Multi-Upload Support**: `uploadClaimDocuments()` handles multiple files with error tracking
+  - Returns success/error counts
+  - Provides detailed error messages per file
+  - Uses QuoteDocumentService for actual upload logic
+- **ZIP Creation**: Bulk document download via `createDocumentsZip()`
+  - Creates ZIP in `storage/temp/` directory
+  - Handles duplicate filenames automatically
+  - Validates document existence on Azure Storage
+  - Auto-cleanup on errors
+  - Returns processed document count and file path
+- **Document Validation**: File existence validation against Azure Storage
+- **S3-Compatible URLs**: Temporary URL generation via `getDocumentTempURL()` from QuoteDocumentService
+- **Delete Protection**: Business logic validation before document deletion
 
 ## Development Guidelines
 
@@ -852,35 +970,55 @@ From `PermissionsEnum`:
 
 1. **Query Optimization**
 
-   - Use eager loading with specific field selection
-   - Implement proper database indexing
-   - Use `simplePaginate()` for large datasets
+   - **Pre-configured Query Builders**: ClaimsService constructor initializes optimized queries with specific field selection
+     - `$claimListQuery`: 22 selected fields + 5 relationships with field selection for listing
+     - `$query`: Same fields + additional relationships (customerBankAccounts, personalQuote) for detail view
+   - **Eager Loading**: Uses `with()` with field selection to prevent N+1 queries
+     - Example: `'quoteType:id,code,text'` loads only needed fields
+   - **Nested Eager Loading**: `'claimRequestDetails' => function($query) { $query->with('serviceType:id,code,text'); }`
+   - **Pagination**: Uses `simplePaginate($perPage)` (15 items default) for better performance on large datasets
+   - **Conditional Joins**: Policy search uses conditional Car-specific joins only when `quote_type_id = Car`
+   - **Database Indexing**: Indexes on `uuid`, `code`, `claim_status_id`, `claim_sub_status_id`, `manager_id` for filter performance
 
 2. **Caching Strategy**
 
-   - Cache dropdown data
-   - Cache frequently accessed lookups
-   - Implement query result caching
+   - Dropdown data methods query database each time (consider adding cache layer)
+   - Frequently accessed lookups: ClaimTypes, ClaimStatuses, QuoteTypes
+   - Potential caching: `Cache::remember('claim-dropdown-data', 3600, fn() => $this->getDropdownData())`
 
-3. **Frontend Optimization**
-   - Lazy load components
-   - Implement virtual scrolling for large lists
-   - Use computed properties for reactive data
+3. **Filter Optimization**
+
+   - **Exact Match Filters**: Use `where()` for exact matches (fastest)
+   - **Partial Match Filters**: Use `where('field', 'like', '%value%')` for names only
+   - **Nested Filters**: Use `whereHas()` for car details filtering on related table
+   - **Date Range Filters**: Use `whereBetween()` for efficient date filtering
+   - **NULL Checks**: Use `whereNull()`/`whereNotNull()` for assignment status
+
+4. **Frontend Optimization**
+
+   - **Client-Side Pagination**: History/logs load all data once, paginate in frontend (reduces requests)
+   - **Lazy Loading**: Use Inertia.js partial reloads for sections
+   - **DataTables**: Efficient rendering of large datasets in frontend
+   - **Conditional Rendering**: Use `v-if` with permission checks to reduce DOM size
 
 ### Maintenance & Updates
 
 #### Update Protocol
 
-1. Review current patterns before making changes
-2. Update documentation with new features
-3. Update cursor rules (`.cursor/rules/claim-module-architecture.mdc`) with new patterns
-4. Validate security implementations
-5. Test pattern consistency across modules
-6. Update frontend patterns to align with backend
-7. Verify permission systems after changes
-8. Ensure proper logging implementation
-9. Review performance impact
-10. Update inline documentation
+1. **Review Current Implementation**: Read ClaimsService, ClaimsController, and Observer code before changes
+2. **Update Models**: Add/modify fields in ClaimRequest or ClaimRequestDetail models first
+3. **Update Service Layer**: Implement business logic in ClaimsService with comprehensive logging
+4. **Update Controller**: Add/modify controller methods with proper validation and permission middleware
+5. **Update Validation**: Create/modify Form Request classes with LOB-specific rules
+6. **Update Observer**: Add field monitoring if automatic triggers needed
+7. **Update Routes**: Add routes to `routes/web.php` under claims group with proper naming
+8. **Update Permissions**: Add new permission constants to PermissionsEnum if needed
+9. **Update Frontend**: Create/modify Vue components following Composition API patterns
+10. **Update Documentation**: Update both this file and `.cursor/rules/claim-module-architecture.mdc`
+11. **Update Enums**: Add new status/type constants to ClaimsEnum if needed
+12. **Test Thoroughly**: Test CRUD, filtering, LOB-specific logic, permissions, and observer triggers
+13. **Review Logging**: Ensure all new operations log with LoggerService
+14. **Performance Check**: Review query optimization and N+1 query prevention
 
 #### Monitoring & Logging
 
@@ -892,29 +1030,227 @@ From `PermissionsEnum`:
 
 ---
 
+## Implementation-Specific Technical Patterns
+
+### History & Logs Architecture
+
+The Claims module implements a dual-source logging system:
+
+#### 1. ClaimActivity Table (Status Changes)
+
+**Purpose**: Track main status and sub-status changes with user comments and AI-optimized messages
+
+**Schema**:
+```
+claim_activities:
+  - claim_request_id (foreign key)
+  - claim_uuid (string reference)
+  - status_id (foreign key to claim_statuses)
+  - comment (original message)
+  - comment_ai (AI-optimized message)
+  - created_by_id (foreign key to users)
+  - created_at, updated_at
+```
+
+**Usage**:
+- `getClaimLeadHistory()`: Queries claim_activities joined with claim_statuses where `status_type = 'statuses'`
+- `getClaimSubStatusLogs()`: Queries claim_activities joined with claim_statuses where `status_type = 'sub-statuses'`
+- Both return chronologically ordered data for frontend client-side pagination
+- Frontend calculates "old status" from previous record in chronological order
+
+#### 2. Audits Table (Field Changes)
+
+**Purpose**: Track all model field changes via OwenIt\Auditing package
+
+**Schema**:
+```
+audits:
+  - auditable_type (model class)
+  - auditable_id (model ID)
+  - user_id (who made change)
+  - old_values (JSON)
+  - new_values (JSON)
+  - created_at, updated_at
+```
+
+**Usage**:
+- `getComplaintStatusLogs()`: Extracts complaint_status_id, complaint_datetime, complaint_notes from JSON
+- `getNextFollowUpLogs()`: Extracts next_followup_datetime, next_followup_notes from JSON
+- Uses MySQL JSON functions: `JSON_UNQUOTE(JSON_EXTRACT(new_values, '$.field_name'))`
+- Joins with claim_statuses table to get status text from IDs
+- Returns data with old/new value pairs for comprehensive change tracking
+
+#### 3. Logger Service (Application Logs)
+
+**Purpose**: Structured application logging with context
+
+**Pattern**:
+```php
+LoggerService::info(self::class.'::'.__FUNCTION__.' - Message', extra: [
+    'claim_uuid' => $claim->uuid,
+    'field' => 'value',
+    'user_id' => Auth::id(),
+]);
+```
+
+**Levels**: info, warning, error
+**Context**: Always includes class::method, claim identifiers, user_id
+
+### Constructor Pattern in ClaimsService
+
+**Pre-configured Query Builders**:
+```php
+public function __construct()
+{
+    parent::__construct();
+    
+    // List query - optimized for pagination
+    $this->claimListQuery = ClaimRequest::select([/* 22 fields */])
+        ->with([/* 5 relationships */]);
+    
+    // Detail query - includes additional relationships
+    $this->query = ClaimRequest::select([/* same fields */])
+        ->with([/* 7 relationships including customerBankAccounts */]);
+}
+```
+
+**Benefits**:
+- Eliminates query duplication across methods
+- Ensures consistent field selection
+- Pre-loads relationships for N+1 prevention
+- Easy to maintain - change in one place
+
+### Validation Pattern - LOB-Specific Rules
+
+**ClaimDetailsUpdateRequest Example**:
+```php
+public function rules(): array
+{
+    return [/* base rules */];
+}
+
+protected function withValidator($validator)
+{
+    $validator->after(function ($validator) {
+        $quoteTypeId = $this->input('quote_type_id');
+        
+        if ($quoteTypeId == QuoteTypeId::Car) {
+            $this->validateCarFields($validator);
+        }
+        
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $this->validateHealthFields($validator);
+        }
+    });
+}
+
+private function validateCarFields($validator): void
+{
+    // Interdependent validation: all or nothing
+    $carFields = ['plate_number', 'car_make', 'car_model', 'model_year'];
+    $filledFields = array_filter($carFields, fn($field) => $this->filled($field));
+    
+    if (count($filledFields) > 0 && count($filledFields) < 4) {
+        $validator->errors()->add('car_details', 'All car fields required');
+    }
+}
+```
+
+**Pattern Benefits**:
+- Conditional validation based on LOB
+- Interdependent field validation
+- Clean separation of validation logic
+- Easy to extend for new LOBs
+
+### Route Model Binding Pattern
+
+**Standard Binding** (`{uuid}`):
+```php
+Route::get('/{uuid}', [ClaimsController::class, 'show']);
+
+public function show($uuid)
+{
+    $claim = $this->claimsService->getClaimById($uuid);
+}
+```
+
+**Explicit Model Binding** (`{claim:uuid}`):
+```php
+Route::post('/{claim:uuid}/update-details', [...]);
+
+public function updateClaimDetails(ClaimDetailsUpdateRequest $request, ClaimRequest $claim)
+{
+    // $claim is automatically resolved by UUID
+}
+```
+
+**Benefits of Explicit Binding**:
+- Auto 404 if claim not found
+- Type-hinted parameter
+- No service call needed for model retrieval
+- Cleaner controller methods
+
 ## Quick Reference
 
 ### Key Files
 
-- **Controller**: `app/Http/Controllers/ClaimsController.php`
-- **Service**: `app/Services/ClaimsService.php`
-- **Models**: `app/Models/ClaimRequest.php`, `app/Models/ClaimRequestDetail.php`
-- **Observer**: `app/Observers/ClaimRequestObserver.php`
-- **Enums**: `app/Enums/ClaimsEnum.php`
+- **Controller**: `app/Http/Controllers/ClaimsController.php` (740 lines)
+- **Service**: `app/Services/ClaimsService.php` (1,551 lines)
+- **Models**: 
+  - `app/Models/ClaimRequest.php` (288 lines)
+  - `app/Models/ClaimRequestDetail.php` (158 lines)
+  - `app/Models/ClaimActivity.php` (147 lines)
+  - `app/Models/CustomerBankAccount.php`
+- **Observer**: `app/Observers/ClaimRequestObserver.php` (89 lines)
+- **Enums**: `app/Enums/ClaimsEnum.php` (330 lines)
 - **Frontend**: `resources/js/inertia/Pages/Claims/`
 
 ### Common Commands
 
 ```bash
 # Run claim-related tests
-php artisan test --filter=Claims
+doppler run -- php artisan test --filter=Claims
 
 # Seed claim statuses
-php artisan db:seed --class=ClaimStatusesSeeder
+doppler run -- php artisan db:seed --class=ClaimStatusesSeeder
 
 # Clear claim-related cache
-php artisan cache:forget claims.*
+doppler run -- php artisan cache:forget claims.*
+
+# Generate claim export
+doppler run -- php artisan claims:export
+
+# Check claim observer registration
+doppler run -- php artisan model:show ClaimRequest
+
+# View claim routes
+doppler run -- php artisan route:list --name=claims
 ```
+
+### Key Configuration
+
+**Azure Storage**:
+- Disk: `azureIM`
+- Container configured in `.env` via Doppler
+- Temp directory: `storage/temp/`
+
+**Pagination**:
+- Default per page: 15 (`$perPage` property in ClaimsService)
+- Uses `simplePaginate()` for performance
+
+**CAPI Integration**:
+- Facade: `CustomerPortalApiFacade`
+- Endpoint: `/api/claims/save-claim`
+- Policy search during claim creation only
+
+**AI Integration**:
+- Facade: `InstantWriterAIFacade`
+- Endpoint: `/message-optimizer/optimize`
+
+**Permissions**:
+- Defined in: `app/Enums/PermissionsEnum.php`
+- Applied via middleware in controller constructor
+- Checked in frontend via `useCan()` composable
 
 ### Support Contacts
 
@@ -922,7 +1258,87 @@ php artisan cache:forget claims.*
 - **Business Analyst**: [BA contact]
 - **System Administrator**: [Admin contact]
 
+## Technical Implementation Summary
+
+### Key Design Decisions
+
+1. **Observer Pattern for Automatic Status Updates**
+   - Monitors field changes in `updating()` and `creating()` events
+   - Only triggers on empty-to-filled transitions to prevent duplicates
+   - Delegates all business logic to ClaimsService for testability
+   - LOB-aware logic using helper methods
+
+2. **Dual Query Builder Pattern**
+   - `$claimListQuery` for pagination/listing (minimal relationships)
+   - `$query` for detail views (full relationships)
+   - Pre-configured in constructor for consistency
+   - Reduces query duplication and ensures optimization
+
+3. **Dynamic Field Management**
+   - Uses model `getFillable()` for flexibility
+   - `array_intersect()` for targeted update methods
+   - LOB-specific field clearing on quote_type_id changes
+   - Avoids hardcoded field lists except for security-filtered updates
+
+4. **Client-Side Pagination for History**
+   - Server returns all records in chronological order
+   - Frontend DataTable handles pagination/sorting
+   - Reduces server requests for frequently accessed data
+   - Frontend calculates "previous value" from chronological order
+
+5. **Dual Logging System**
+   - ClaimActivity for status changes with user comments
+   - Audits table for all field changes (automatic via trait)
+   - LoggerService for application-level structured logging
+   - Three-level approach ensures comprehensive audit trail
+
+6. **LOB-Specific Validation**
+   - Base rules in Form Request `rules()` method
+   - LOB-specific validation in `withValidator()->after()` callback
+   - Interdependent field validation (all-or-nothing for car fields)
+   - Service type required conditionally based on request type
+
+7. **CAPI Integration Pattern**
+   - Only used for claim creation and policy search
+   - Updates handled within current system (no CAPI calls)
+   - Graceful error handling with structured logging
+   - Null value filtering before API calls
+
+8. **Document Management**
+   - Azure Storage backend via `azureIM` disk
+   - Polymorphic relationship for flexibility
+   - Multi-file upload with per-file error tracking
+   - ZIP creation with duplicate filename handling
+   - Temporary URL generation for secure access
+
+### Best Practices Demonstrated
+
+- **Strict Typing**: All classes use `declare(strict_types=1)`
+- **Comprehensive Logging**: Every operation logs with context
+- **Permission Checks**: Middleware on controller + composable in frontend
+- **Error Handling**: Try-catch blocks with structured error logging
+- **Validation**: Server-side validation mirrored in frontend
+- **Query Optimization**: Eager loading, field selection, proper indexing
+- **Code Organization**: Service layer separation, single responsibility
+- **Audit Trail**: Auditable trait on all models
+- **Security**: UUID-based routing, CSRF protection, input sanitization
+
+### Common Pitfalls to Avoid
+
+1. **Observer Infinite Loops**: Always use guard clauses checking `isDirty()` and empty-to-filled logic
+2. **N+1 Queries**: Always eager load relationships in service constructor queries
+3. **Hardcoded Field Lists**: Use model `getFillable()` for flexibility
+4. **Missing User Context**: Always pass `Auth::id()` to logging
+5. **Validation Bypass**: Never skip validation even for internal updates
+6. **Status Inconsistency**: Always use service methods for status updates (observer triggers)
+7. **Document Cleanup**: Always cleanup temp files in try-catch finally blocks
+8. **LOB Logic Duplication**: Centralize LOB checks in helper methods
+9. **Missing Permissions**: Add middleware AND frontend permission checks
+10. **Incomplete Logging**: Log both success and error cases with context
+
 ---
 
-_Last Updated: [Current Date]_
-_Version: 1.0_
+**Last Updated**: December 12, 2025
+**Version**: 2.0 (Implementation-Synced)
+**Module Status**: Production-Ready
+**Lines of Code**: ~3,300+ (Backend only)
